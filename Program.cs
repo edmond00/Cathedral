@@ -4,30 +4,7 @@ using System.Text;
 using System.Text.Json;
 
 // Single definition of the system prompt to avoid duplication
-const string SYSTEM_PROMPT = @"You are a masterful fantasy RPG dungeon master and storyteller. Your role is to create immersive, engaging adventures in a rich fantasy world. 
-
-CORE PRINCIPLES:
-- Create vivid, atmospheric descriptions that bring scenes to life
-- Present meaningful choices that impact the story
-- Maintain internal consistency within fantasy lore and world-building
-- Balance challenge with player agency
-- Respond to player actions with logical consequences
-
-STORYTELLING STYLE:
-- Use descriptive, evocative language that engages the senses
-- Create memorable NPCs with distinct personalities and motivations  
-- Build tension through pacing and strategic reveals
-- Incorporate classic fantasy elements: magic, mythical creatures, ancient ruins, mysterious artifacts
-- Frame scenarios with clear objectives while allowing creative solutions
-
-INTERACTION GUIDELINES:
-- Present 2-4 meaningful choices when appropriate
-- Ask clarifying questions when player intent is unclear
-- Describe both immediate and environmental details
-- Maintain the narrative flow while being responsive to player decisions
-- Use a tone that is engaging but not overly verbose
-
-Remember: You are the guide through an epic adventure. Make every moment feel significant and every choice matter.";
+const string SYSTEM_PROMPT = @"You are a masterful fantasy RPG dungeon master and storyteller. Your role is to create immersive, engaging adventures in a rich fantasy world.";
 
 static async Task PreCacheSystemPrompt(HttpClient http)
 {
@@ -36,53 +13,93 @@ static async Task PreCacheSystemPrompt(HttpClient http)
     // Use the shared system prompt constant
     var systemPrompt = SYSTEM_PROMPT;
     
-    try
+    var maxRetries = 5;
+    var baseDelay = 2000;
+    
+    for (int attempt = 1; attempt <= maxRetries; attempt++)
     {
-        // Use chat completions endpoint to match the actual conversation format
-        var warmupRequest = new
+        try
         {
-            model = "local",
-            messages = new[]
+            // Use chat completions endpoint to match the actual conversation format
+            var warmupRequest = new
             {
-                new { role = "system", content = systemPrompt }
-            },
-            slot_id = 0,
-            cache_prompt = true,
-            max_tokens = 1, // Minimal generation
-            temperature = 0.1,
-            stream = false // No need to stream for warmup
-        };
-        
-        // Save warmup request to file for analysis
-        var requestsDir = Path.Combine(Directory.GetCurrentDirectory(), "requests");
-        Directory.CreateDirectory(requestsDir);
-        var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-        var warmupFileName = Path.Combine(requestsDir, $"warmup_{timestamp}.json");
-        var warmupJson = JsonSerializer.Serialize(warmupRequest, new JsonSerializerOptions 
-        { 
-            WriteIndented = true,
-            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        });
-        await File.WriteAllTextAsync(warmupFileName, warmupJson);
-        Console.WriteLine($"[DEBUG] Warmup request saved to: {warmupFileName}");
+                model = "local",
+                messages = new[]
+                {
+                    new { role = "system", content = systemPrompt }
+                },
+                slot_id = 0,
+                cache_prompt = true,
+                max_tokens = 1, // Minimal generation
+                temperature = 0.1,
+                stream = false // No need to stream for warmup
+            };
+            
+            // Save warmup request to file for analysis (only on first attempt)
+            if (attempt == 1)
+            {
+                var requestsDir = Path.Combine(Directory.GetCurrentDirectory(), "requests");
+                Directory.CreateDirectory(requestsDir);
+                var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+                var warmupFileName = Path.Combine(requestsDir, $"warmup_{timestamp}.json");
+                var warmupJson = JsonSerializer.Serialize(warmupRequest, new JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
+                await File.WriteAllTextAsync(warmupFileName, warmupJson);
+                Console.WriteLine($"[DEBUG] Warmup request saved to: {warmupFileName}");
+            }
 
-        var jsonContent = JsonContent.Create(warmupRequest);
-        var response = await http.PostAsync("v1/chat/completions", jsonContent);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            Console.WriteLine("✓ System prompt cached in slot 0 successfully!");
+            var jsonContent = JsonContent.Create(warmupRequest);
+            var response = await http.PostAsync("v1/chat/completions", jsonContent);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("✓ System prompt cached in slot 0 successfully!");
+                return; // Success, exit the retry loop
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                if (attempt < maxRetries)
+                {
+                    var delay = baseDelay * attempt; // Linear backoff
+                    Console.WriteLine($"Model still loading, retrying pre-cache in {delay/1000} seconds... (attempt {attempt}/{maxRetries})");
+                    await Task.Delay(delay);
+                    continue;
+                }
+                else
+                {
+                    Console.WriteLine($"Warning: Failed to pre-cache system prompt after {maxRetries} attempts: {response.StatusCode}");
+                    Console.WriteLine($"Response: {errorContent}");
+                    return;
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Warning: Failed to pre-cache system prompt: {response.StatusCode}");
+                Console.WriteLine($"Response: {errorContent}");
+                return;
+            }
         }
-        else
+        catch (HttpRequestException ex) when (ex.Message.Contains("503") && attempt < maxRetries)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Warning: Failed to pre-cache system prompt: {response.StatusCode}");
-            Console.WriteLine($"Response: {errorContent}");
+            var delay = baseDelay * attempt;
+            Console.WriteLine($"Service unavailable during pre-cache, retrying in {delay/1000} seconds... (attempt {attempt}/{maxRetries})");
+            await Task.Delay(delay);
         }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Warning: Error pre-caching system prompt: {ex.Message}");
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Error pre-caching system prompt (attempt {attempt}/{maxRetries}): {ex.Message}");
+            if (attempt >= maxRetries)
+            {
+                Console.WriteLine("Pre-caching failed, but continuing without cache optimization.");
+                return;
+            }
+            await Task.Delay(baseDelay);
+        }
     }
 }
 
@@ -162,7 +179,10 @@ Console.CancelKeyPress += (s, e) =>
 
 try
 {
-    using var http = new HttpClient { BaseAddress = new Uri(baseUrl) };
+    using var http = new HttpClient { 
+        BaseAddress = new Uri(baseUrl),
+        Timeout = TimeSpan.FromMinutes(10) // Increased timeout for model loading
+    };
 
     // Quick health check to see if server is already running
     bool serverRunning = false;
@@ -193,7 +213,7 @@ try
             Environment.Exit(1);
         }
         
-        var serverPath = Path.Combine(projectRoot, "models", "llama-b6686-bin-win-cuda-12.4-x64", "llama-server.exe");
+        var serverPath = Path.Combine(projectRoot, "models", "llama", "llama-server.exe");
         var modelPath = Path.Combine(projectRoot, "models", "phi-4-q2_k.gguf");
         
         if (!File.Exists(serverPath))
@@ -214,7 +234,7 @@ try
         var startInfo = new ProcessStartInfo
         {
             FileName = serverPath,
-            Arguments = $"-m \"{modelPath}\" -c 4096 --port 8080 --cache-type-k f16 --cache-type-v f16 --repeat-penalty 1.1 --frequency-penalty 0.5 --dry-multiplier 0.8 -ngl 99 --slot-save-path cache --verbose",
+            Arguments = $"-m \"{modelPath}\" -c 4096 --port 8080 --cache-type-k f16 --cache-type-v f16 --repeat-penalty 1.1 --frequency-penalty 0.5 --dry-multiplier 0.8 -ngl 0 --slot-save-path cache --verbose",
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
@@ -278,39 +298,78 @@ try
         await Task.Delay(2000);
         
         // Wait for the server to start (with timeout)
-        var timeout = TimeSpan.FromSeconds(60); // Increased timeout for model loading
+        var timeout = TimeSpan.FromMinutes(8); // Generous timeout for model loading (slightly less than HttpClient timeout)
         var startTime = DateTime.Now;
         var retryCount = 0;
         
         Console.Error.WriteLine("Waiting for llama server to load model...");
+        Console.Error.WriteLine("Note: Phi-4 is a large model and may take 2-5 minutes to load depending on your hardware.");
         
         while (DateTime.Now - startTime < timeout)
         {
             try
             {
-                using var ping = await http.GetAsync("v1/models");
-                ping.EnsureSuccessStatusCode();
-                serverRunning = true;
-                Console.Error.WriteLine("Llama server started successfully.");
-                // Give the model a bit more time to fully load
-                await Task.Delay(3000);
+                // Test if the model is actually ready by making a minimal chat request
+                var testRequest = new
+                {
+                    model = "local",
+                    messages = new[]
+                    {
+                        new { role = "user", content = "test" }
+                    },
+                    max_tokens = 1,
+                    temperature = 0.1
+                };
                 
-                // Pre-cache the system prompt to avoid TTFT penalty
-                await PreCacheSystemPrompt(http);
-                break;
+                var testResponse = await http.PostAsJsonAsync("v1/chat/completions", testRequest);
+                
+                if (testResponse.IsSuccessStatusCode)
+                {
+                    serverRunning = true;
+                    Console.Error.WriteLine("Llama server and model loaded successfully.");
+                    
+                    // Try to pre-cache the system prompt, but don't fail if it doesn't work
+                    try
+                    {
+                        await PreCacheSystemPrompt(http);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Warning: Pre-caching failed, continuing anyway: {ex.Message}");
+                    }
+                    break;
+                }
+                else if (testResponse.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+                {
+                    retryCount++;
+                    var elapsedSeconds = (DateTime.Now - startTime).TotalSeconds;
+                    if (retryCount % 5 == 0) // Log every 5 retries
+                    {
+                        Console.Error.WriteLine($"Model still loading... ({elapsedSeconds:F0}s elapsed, attempt {retryCount})");
+                    }
+                    await Task.Delay(3000); // Wait 3 seconds before retrying for 503 errors
+                }
+                else
+                {
+                    // Some other error, try again after shorter delay
+                    await Task.Delay(1000);
+                }
             }
             catch (HttpRequestException ex) when (ex.Message.Contains("503") || ex.Message.Contains("Service Unavailable"))
             {
                 retryCount++;
+                var elapsedSeconds = (DateTime.Now - startTime).TotalSeconds;
                 if (retryCount % 5 == 0) // Log every 5 retries
                 {
-                    Console.Error.WriteLine($"Server still loading model... (attempt {retryCount})");
+                    Console.Error.WriteLine($"Model still loading... ({elapsedSeconds:F0}s elapsed, attempt {retryCount})");
                 }
-                await Task.Delay(2000); // Wait 2 seconds before retrying for 503 errors
+                await Task.Delay(3000); // Wait 3 seconds before retrying for 503 errors
             }
-            catch
+            catch (Exception ex)
             {
-                await Task.Delay(1000); // Wait 1 second before retrying for other errors
+                // For other exceptions (like network issues), wait and retry
+                Console.Error.WriteLine($"Server connection failed: {ex.Message}");
+                await Task.Delay(2000);
             }
         }
         
