@@ -234,7 +234,7 @@ try
         var startInfo = new ProcessStartInfo
         {
             FileName = serverPath,
-            Arguments = $"-m \"{modelPath}\" -c 4096 --port 8080 --cache-type-k f16 --cache-type-v f16 --repeat-penalty 1.1 --frequency-penalty 0.5 --dry-multiplier 0.8 -ngl 0 --slot-save-path cache --verbose",
+            Arguments = $"-m \"{modelPath}\" -c 4096 --port 8080 --cache-type-k f16 --cache-type-v f16 --repeat-penalty 1.1 --frequency-penalty 0.5 --dry-multiplier 0.8 -ngl 99 --slot-save-path cache --verbose",
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
