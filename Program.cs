@@ -1,5 +1,9 @@
 ﻿using Cathedral.LLM;
 
+GlyphSphereLauncher.LaunchGlyphSphere();
+
+/*
+
 // Test the new LLM server interface
 const string SYSTEM_PROMPT = @"You are a masterful fantasy RPG dungeon master and storyteller. Your role is to create immersive, engaging adventures in a rich fantasy world.";
 
@@ -224,3 +228,5 @@ Console.ReadKey();
 
 Console.WriteLine("\nStopping server...");
 // The server will be stopped automatically when the LlamaServerManager is disposed
+
+*/
