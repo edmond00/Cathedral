@@ -13,6 +13,7 @@ using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Drawing.Processing;
 
 
 using Vector3 = OpenTK.Mathematics.Vector3;
@@ -131,22 +132,16 @@ public static class GlyphSphereLauncher
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-            Console.WriteLine("OpenGL Version: " + GL.GetString(StringName.Version));
-            Console.WriteLine("OpenGL Renderer: " + GL.GetString(StringName.Renderer));
-
             // Build shader
             program = CreateProgram(vertexShaderSrc, fragmentShaderSrc);
             GL.UseProgram(program);
             
             // Build sphere low-res
             BuildSphere(28, 28, 1.0f);
-            Console.WriteLine($"Built sphere with {vertices.Count} vertices, instanceCount: {instanceCount}");
 
             // Build glyph atlas
             glyphInfos = BuildGlyphAtlas(GlyphSet, glyphCell, glyphPixelSize, out Image<Rgba32> atlasImage);
-            Console.WriteLine($"Built glyph atlas: {atlasImage.Width}x{atlasImage.Height}, glyphs: {glyphInfos.Length}");
             glyphTexture = LoadTexture(atlasImage);
-            Console.WriteLine($"Loaded texture ID: {glyphTexture}");
 
             atlasImage.Dispose();
 
@@ -226,13 +221,11 @@ public static class GlyphSphereLauncher
 
             // Fill instance buffer now
             UpdateInstanceBuffer();
-            Console.WriteLine("Updated instance buffer");
 
             // Set texture uniform
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, glyphTexture);
             int texLoc = GL.GetUniformLocation(program, "uAtlas");
-            Console.WriteLine($"Texture uniform location: {texLoc}");
             GL.Uniform1(texLoc, 0);
 
             // Set initial projection
@@ -245,12 +238,6 @@ public static class GlyphSphereLauncher
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            if (firstFrame)
-            {
-                Console.WriteLine($"First frame - instanceCount: {instanceCount}, program: {program}");
-                firstFrame = false;
-            }
-            
             base.OnRenderFrame(args);
 
             // Input -> camera control
@@ -280,26 +267,8 @@ public static class GlyphSphereLauncher
             var view = GetViewMatrix();
             var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
 
-            if (firstFrame)
-            {
-                Console.WriteLine($"Camera - yaw: {yaw}, pitch: {pitch}, distance: {distance}");
-                float yawR = MathHelper.DegreesToRadians(yaw);
-                float pitchR = MathHelper.DegreesToRadians(pitch);
-                Vector3 camDir = new Vector3(
-                    MathF.Cos(pitchR) * MathF.Cos(yawR),
-                    MathF.Sin(pitchR),
-                    MathF.Cos(pitchR) * MathF.Sin(yawR)
-                );
-                Vector3 camPos = -camDir * distance;
-                Console.WriteLine($"Camera position: {camPos}");
-            }
-
             int viewLoc = GL.GetUniformLocation(program, "uView");
             int projLoc = GL.GetUniformLocation(program, "uProj");
-            if (firstFrame)
-            {
-                Console.WriteLine($"Uniform locations - view: {viewLoc}, proj: {projLoc}");
-            }
             GL.UniformMatrix4(viewLoc, false, ref view);
             GL.UniformMatrix4(projLoc, false, ref proj);
 
@@ -310,8 +279,6 @@ public static class GlyphSphereLauncher
 
             SwapBuffers();
         }
-
-        private static bool firstFrame = true;
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
@@ -478,24 +445,21 @@ public static class GlyphSphereLauncher
             {
                 int cx = i % cols;
                 int cy = i / cols;
-                var glyph = glyphs[i];
+                var glyph = glyphs[i].ToString();
                 int x = cx * cellSize;
                 int y = cy * cellSize;
 
-                // For now, create a simple colored rectangle instead of text
-                // TODO: Add SixLabors.ImageSharp.Drawing package for proper text rendering
-                byte intensity = (byte)(255 * i / glyphs.Length);
-                var pixelColor = new Rgba32(intensity, intensity, intensity, 255);
-                
-                // Draw a simple rectangle pattern for each glyph
-                for (int py = y + 4; py < y + cellSize - 4; py++)
+                // Draw the actual glyph character
+                atlas.Mutate(ctx =>
                 {
-                    for (int px = x + 4; px < x + cellSize - 4; px++)
+                    var textOptions = new RichTextOptions(font)
                     {
-                        if (px < atlasW && py < atlasH)
-                            atlas[px, py] = pixelColor;
-                    }
-                }
+                        Origin = new PointF(x + (cellSize - fontPxSize) / 2f, y + (cellSize - fontPxSize) / 4f),
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top
+                    };
+                    ctx.DrawText(textOptions, glyph, Color.White);
+                });
 
                 infos[i] = new GlyphInfo
                 {
@@ -658,8 +622,8 @@ uniform sampler2D uAtlas;
 void main()
 {
     vec4 t = texture(uAtlas, vUv);
-    // For debugging - show color even if texture is black
-    FragColor = vec4(vColor.rgb * 0.8 + t.rgb * 0.2, 1.0);
+    // Use the texture alpha channel for glyph visibility, multiply by vertex color
+    FragColor = vec4(vColor.rgb * t.a, t.a);
 }
 ";
     }
