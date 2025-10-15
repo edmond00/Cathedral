@@ -118,7 +118,7 @@ public static class GlyphSphereLauncher
 
         // Glyphs
         const string GlyphSet = "@#%*+=-:. "; // from dense to sparse
-        const int glyphPixelSize = 48; // raster size
+        const int glyphPixelSize = 40; // raster size - back to larger size for visibility
         const int glyphCell = 56; // cell in atlas
 
         public GlyphSphereWindow(GameWindowSettings g, NativeWindowSettings n) : base(g, n)
@@ -433,11 +433,11 @@ public static class GlyphSphereLauncher
                     fam = coll.Add("FreeMono.ttf");
                 else
                     fam = SystemFonts.Families.First(); // fallback - not ideal but works
-                font = fam.CreateFont(fontPxSize, FontStyle.Regular);
+                font = fam.CreateFont(fontPxSize, FontStyle.Regular); // Back to regular style
             }
             catch
             {
-                font = SystemFonts.CreateFont(SystemFonts.Families.First().Name, fontPxSize);
+                font = SystemFonts.CreateFont(SystemFonts.Families.First().Name, fontPxSize, FontStyle.Regular);
             }
 
             var infos = new GlyphInfo[glyphs.Length];
@@ -452,12 +452,14 @@ public static class GlyphSphereLauncher
                 // Draw the actual glyph character
                 atlas.Mutate(ctx =>
                 {
+                    // Use the original positioning that was working
                     var textOptions = new RichTextOptions(font)
                     {
-                        Origin = new PointF(x + (cellSize - fontPxSize) / 2f, y + (cellSize - fontPxSize) / 4f),
+                        Origin = new PointF(x + 4, y + fontPxSize),
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Top
                     };
+                    // Use bright white color to ensure maximum contrast
                     ctx.DrawText(textOptions, glyph, Color.White);
                 });
 
@@ -534,11 +536,11 @@ public static class GlyphSphereLauncher
 
         private Vector4 MapColorFromNoise(float n)
         {
-            // simple gradient sea -> sand -> grass -> rock
-            if (n < 0.45f) return new Vector4(0.0f, 0.2f + n * 0.5f, 0.6f + n * 0.2f, 1f); // sea bluish
-            if (n < 0.5f) return new Vector4(0.8f, 0.7f, 0.4f, 1f); // sand
-            if (n < 0.75f) return new Vector4(0.1f, 0.6f, 0.1f, 1f); // green
-            return new Vector4(0.5f, 0.5f, 0.5f, 1f); // rock
+            // Brighter, more contrasting colors for better text visibility
+            if (n < 0.45f) return new Vector4(0.2f, 0.6f, 1.0f, 1f); // bright sea blue
+            if (n < 0.5f) return new Vector4(1.0f, 0.9f, 0.3f, 1f); // bright sand yellow
+            if (n < 0.75f) return new Vector4(0.3f, 1.0f, 0.3f, 1f); // bright green
+            return new Vector4(0.9f, 0.9f, 0.9f, 1f); // light gray rock
         }
 
         private int CreateProgram(string vsSrc, string fsSrc)
@@ -621,9 +623,17 @@ uniform sampler2D uAtlas;
 
 void main()
 {
-    vec4 t = texture(uAtlas, vUv);
-    // Use the texture alpha channel for glyph visibility, multiply by vertex color
-    FragColor = vec4(vColor.rgb * t.a, t.a);
+    vec4 texSample = texture(uAtlas, vUv);
+    
+    // Use luminance of texture as mask for the glyph
+    float luminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
+    
+    // Show all characters in white where there's text content
+    if (luminance > 0.1) {
+        FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    } else {
+        discard;
+    }
 }
 ";
     }
