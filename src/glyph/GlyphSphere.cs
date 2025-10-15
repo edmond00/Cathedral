@@ -118,7 +118,7 @@ public static class GlyphSphereLauncher
 
         // Glyphs
         const string GlyphSet = "@#%*+=-:. "; // from dense to sparse
-        const int glyphPixelSize = 40; // raster size - back to larger size for visibility
+        const int glyphPixelSize = 32; // raster size - smaller but with working positioning
         const int glyphCell = 56; // cell in atlas
 
         public GlyphSphereWindow(GameWindowSettings g, NativeWindowSettings n) : base(g, n)
@@ -628,9 +628,9 @@ void main()
     // Use luminance of texture as mask for the glyph
     float luminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
     
-    // Show all characters in white where there's text content
+    // Show vertex color where there's text content
     if (luminance > 0.1) {
-        FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        FragColor = vec4(vColor.rgb, 1.0);
     } else {
         discard;
     }
