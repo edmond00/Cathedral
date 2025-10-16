@@ -439,6 +439,12 @@ public static class GlyphSphereLauncher
                 var gi = glyphInfos[v.GlyphIndex];
                 // uvRect: x,y,w,h in normalized 0..1
                 var uvx = gi.UvX; var uvy = gi.UvY; var uvw = gi.UvW; var uvh = gi.UvH;
+                
+                // Debug: Print UV rect for first few vertices
+                if (i < 3)
+                {
+                    Console.WriteLine($"Vertex {i}: GlyphIndex={v.GlyphIndex} '{v.GlyphChar}' -> UvRect({uvx:F3}, {uvy:F3}, {uvw:F3}, {uvh:F3})");
+                }
 
                 // color
                 Vector4 col = v.Color;
@@ -533,6 +539,9 @@ public static class GlyphSphereLauncher
                     UvW = (float)cellSize / atlasW,
                     UvH = (float)cellSize / atlasH
                 };
+
+                // Debug: Print UV coordinates for each glyph
+                Console.WriteLine($"Glyph[{i}] '{glyphs[i]}' -> UV({infos[i].UvX:F3}, {infos[i].UvY:F3}, {infos[i].UvW:F3}, {infos[i].UvH:F3}) at atlas({x}, {y})");
             }
 
             return infos;
@@ -548,9 +557,14 @@ public static class GlyphSphereLauncher
             img.CopyPixelDataTo(pixels);
 
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, img.Width, img.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            
+            // Use nearest neighbor filtering to avoid bleeding between atlas cells
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            
+            // Set wrapping to clamp to avoid edge artifacts
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             return tex;
         }
 
@@ -573,6 +587,12 @@ public static class GlyphSphereLauncher
                     int gi = (int)(n * (GlyphSet.Length - 1));
                     gi = Math.Clamp(gi, 0, GlyphSet.Length - 1);
                     Vector4 col = MapColorFromNoise(n);
+
+                    // Debug: Print first few vertex mappings
+                    if (vertices.Count < 5)
+                    {
+                        Console.WriteLine($"Vertex {vertices.Count}: noise={n:F3} -> glyph_index={gi} -> '{GlyphSet[gi]}'");
+                    }
 
                     vertices.Add(new Vertex { Position = pos, GlyphIndex = gi, GlyphChar = GlyphSet[gi], Noise = n, Color = col });
                 }
