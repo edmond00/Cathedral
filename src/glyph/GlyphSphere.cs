@@ -115,11 +115,15 @@ public static class GlyphSphereLauncher
         float yaw = 0;
         float pitch = 0;
         float distance = 3.2f;
+        
+        // Debug shader modes
+        int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe
+        int debugProgram1, debugProgram2, debugProgram3;
 
         // Glyphs
         const string GlyphSet = "@#%*+=-:. "; // from dense to sparse
-        const int glyphPixelSize = 32; // raster size - smaller but with working positioning
-        const int glyphCell = 56; // cell in atlas
+        const int glyphPixelSize = 25; // raster size
+        const int glyphCell = 50; // cell in atlas
 
         public GlyphSphereWindow(GameWindowSettings g, NativeWindowSettings n) : base(g, n)
         {
@@ -134,6 +138,12 @@ public static class GlyphSphereLauncher
 
             // Build shader
             program = CreateProgram(vertexShaderSrc, fragmentShaderSrc);
+            
+            // Build debug shaders
+            debugProgram1 = CreateProgram(vertexShaderSrc, debugFragmentSrc1); // vertex colors only
+            debugProgram2 = CreateProgram(vertexShaderSrc, debugFragmentSrc2); // texture only
+            debugProgram3 = CreateProgram(vertexShaderSrc, debugFragmentSrc3); // wireframe
+            
             GL.UseProgram(program);
             
             // Build sphere low-res
@@ -141,6 +151,20 @@ public static class GlyphSphereLauncher
 
             // Build glyph atlas
             glyphInfos = BuildGlyphAtlas(GlyphSet, glyphCell, glyphPixelSize, out Image<Rgba32> atlasImage);
+            
+            // Save atlas texture for debugging
+            try 
+            {
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string filename = $"atlas_debug_{timestamp}.png";
+                atlasImage.SaveAsPng(filename);
+                Console.WriteLine($"Saved atlas texture to: {filename}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Could not save atlas texture: {ex.Message}");
+            }
+            
             glyphTexture = LoadTexture(atlasImage);
 
             atlasImage.Dispose();
@@ -256,6 +280,21 @@ public static class GlyphSphereLauncher
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.S))
                 distance = MathF.Min(10f, distance + zoomSpeed * (float)args.Time);
 
+            // Debug shader switching (D key)
+            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D))
+            {
+                debugShaderMode = (debugShaderMode + 1) % 4;
+                string description = debugShaderMode switch
+                {
+                    0 => "Normal rendering (texture + vertex colors)",
+                    1 => "Vertex colors only (no texture masking)",
+                    2 => "Texture only (white on black)",
+                    3 => "Wireframe/Debug view",
+                    _ => "Unknown"
+                };
+                Console.WriteLine($"Debug shader mode: {debugShaderMode} - {description}");
+            }
+
             // Update instances if you want dynamic changes (we keep static atlas mapping here)
             // UpdateInstanceBuffer(); // call if glyphs/colors change over time
 
@@ -267,10 +306,31 @@ public static class GlyphSphereLauncher
             var view = GetViewMatrix();
             var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
 
-            int viewLoc = GL.GetUniformLocation(program, "uView");
-            int projLoc = GL.GetUniformLocation(program, "uProj");
+            // Select shader program based on debug mode
+            int currentProgram = debugShaderMode switch
+            {
+                0 => program,           // normal rendering
+                1 => debugProgram1,     // vertex colors only
+                2 => debugProgram2,     // texture only
+                3 => debugProgram3,     // wireframe
+                _ => program
+            };
+            
+            GL.UseProgram(currentProgram);
+            
+            int viewLoc = GL.GetUniformLocation(currentProgram, "uView");
+            int projLoc = GL.GetUniformLocation(currentProgram, "uProj");
             GL.UniformMatrix4(viewLoc, false, ref view);
             GL.UniformMatrix4(projLoc, false, ref proj);
+            
+            // Set texture uniform for current program
+            int texLoc = GL.GetUniformLocation(currentProgram, "uAtlas");
+            if (texLoc >= 0)
+            {
+                GL.ActiveTexture(TextureUnit.Texture0);
+                GL.BindTexture(TextureTarget.Texture2D, glyphTexture);
+                GL.Uniform1(texLoc, 0);
+            }
 
             // Draw instanced quads
             GL.BindVertexArray(vao);
@@ -428,16 +488,19 @@ public static class GlyphSphereLauncher
             {
                 var coll = new FontCollection();
                 FontFamily fam;
-                // try to install FreeMono.ttf from working dir, otherwise fallback
+                // Try to use a cleaner monospace font
                 if (System.IO.File.Exists("FreeMono.ttf"))
                     fam = coll.Add("FreeMono.ttf");
                 else
-                    fam = SystemFonts.Families.First(); // fallback - not ideal but works
-                font = fam.CreateFont(fontPxSize, FontStyle.Regular); // Back to regular style
+                {
+                    // Use first available font family as fallback
+                    fam = SystemFonts.Families.First();
+                }
+                font = fam.CreateFont(fontPxSize, FontStyle.Regular);
             }
             catch
             {
-                font = SystemFonts.CreateFont(SystemFonts.Families.First().Name, fontPxSize, FontStyle.Regular);
+                font = SystemFonts.CreateFont("Consolas", fontPxSize, FontStyle.Regular);
             }
 
             var infos = new GlyphInfo[glyphs.Length];
@@ -452,12 +515,11 @@ public static class GlyphSphereLauncher
                 // Draw the actual glyph character
                 atlas.Mutate(ctx =>
                 {
-                    // Use the original positioning that was working
                     var textOptions = new RichTextOptions(font)
                     {
-                        Origin = new PointF(x + 4, y + fontPxSize),
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        VerticalAlignment = VerticalAlignment.Top
+                        Origin = new PointF(x + cellSize / 2f, y + cellSize / 2f),
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center
                     };
                     // Use bright white color to ensure maximum contrast
                     ctx.DrawText(textOptions, glyph, Color.White);
@@ -631,6 +693,71 @@ void main()
     // Show vertex color where there's text content
     if (luminance > 0.1) {
         FragColor = vec4(vColor.rgb, 1.0);
+    } else {
+        discard;
+    }
+}
+";
+
+        // Debug shader 1: Show vertex colors only (no texture masking)
+        private readonly string debugFragmentSrc1 = @"
+#version 330 core
+in vec2 vUv;
+in vec4 vColor;
+out vec4 FragColor;
+
+uniform sampler2D uAtlas;
+
+void main()
+{
+    // Show vertex color directly - no texture masking
+    FragColor = vColor;
+}
+";
+
+        // Debug shader 2: Show texture only (black and white)
+        private readonly string debugFragmentSrc2 = @"
+#version 330 core
+in vec2 vUv;
+in vec4 vColor;
+out vec4 FragColor;
+
+uniform sampler2D uAtlas;
+
+void main()
+{
+    vec4 texSample = texture(uAtlas, vUv);
+    float luminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
+    
+    // Show texture content in white
+    if (luminance > 0.1) {
+        FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    } else {
+        discard;
+    }
+}
+";
+
+        // Debug shader 3: Show wireframe/outline
+        private readonly string debugFragmentSrc3 = @"
+#version 330 core
+in vec2 vUv;
+in vec4 vColor;
+out vec4 FragColor;
+
+uniform sampler2D uAtlas;
+
+void main()
+{
+    vec4 texSample = texture(uAtlas, vUv);
+    float luminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
+    
+    // Show edges only
+    vec2 grid = abs(fract(vUv * 10.0) - 0.5);
+    float line = smoothstep(0.0, 0.05, min(grid.x, grid.y));
+    
+    if (luminance > 0.1) {
+        FragColor = vec4(mix(vec3(1.0, 0.0, 0.0), vColor.rgb, line), 1.0);
     } else {
         discard;
     }
