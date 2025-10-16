@@ -482,10 +482,13 @@ public static class GlyphSphereLauncher
 
         private GlyphInfo[] BuildGlyphAtlas(string glyphs, int cellSize, int fontPxSize, out Image<Rgba32> atlas)
         {
-            int cols = 8;
-            int rows = (int)Math.Ceiling(glyphs.Length / (double)cols);
+            int cols = glyphs.Length; // Put all glyphs in a single row for testing
+            int rows = 1;
             int atlasW = cols * cellSize;
             int atlasH = rows * cellSize;
+            
+            Console.WriteLine($"Atlas: {glyphs.Length} glyphs, {cols}x{rows} grid, {atlasW}x{atlasH} pixels, {cellSize}x{cellSize} cells");
+            
             atlas = new Image<Rgba32>(atlasW, atlasH, Color.Transparent);
 
             // load font - try some common monospace; fallback to system family
@@ -517,6 +520,8 @@ public static class GlyphSphereLauncher
                 var glyph = glyphs[i].ToString();
                 int x = cx * cellSize;
                 int y = cy * cellSize;
+                
+                Console.WriteLine($"Glyph[{i}] '{glyph}' -> grid({cx},{cy}) -> pixels({x},{y})");
 
                 // Draw the actual glyph character
                 atlas.Mutate(ctx =>
