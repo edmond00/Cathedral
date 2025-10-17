@@ -388,30 +388,8 @@ public static class GlyphSphereLauncher
             var rayDir = Vector3.Normalize(pFar - pNear);
             var rayOrig = pNear;
 
-            // Alternative approach: project vertices to screen space and find closest to mouse
-            int newHover = FindClosestVertexInScreenSpace(mouse);
-            
-            // Fix off-by-one: offset by one row DOWN (add one latitude row)
-            if (newHover >= 0)
-            {
-                int lonCount = 28;
-                int rowSize = lonCount + 1; // 29 vertices per row
-                
-                // Offset by one row DOWN (add one latitude row)
-                int adjustedHover = newHover + rowSize;
-                if (adjustedHover < vertices.Count)
-                {
-                    hoveredVertexIndex = adjustedHover;
-                }
-                else
-                {
-                    hoveredVertexIndex = newHover; // Keep original if offset would go out of bounds
-                }
-            }
-            else
-            {
-                hoveredVertexIndex = newHover;
-            }
+            // Use ray-sphere intersection to find exact point on sphere
+            hoveredVertexIndex = FindVertexByRaySphereIntersection(rayOrig, rayDir);
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -496,6 +474,63 @@ public static class GlyphSphereLauncher
             return (bestDist < 20 * 20) ? best : -1; // 20 pixel threshold
         }
 
+        private int FindBetterMatch(int baseVertex, OpenTK.Mathematics.Vector2 mousePos)
+        {
+            if (baseVertex < 0) return baseVertex;
+            
+            int lonCount = 28;
+            int rowSize = lonCount + 1;
+            
+            // Try several nearby vertices and pick the one that feels most accurate
+            int[] candidates = new int[]
+            {
+                baseVertex,                    // Original
+                baseVertex + rowSize,         // One row down (south)
+                baseVertex - rowSize,         // One row up (north)  
+                baseVertex + 1,               // One column right (east)
+                baseVertex - 1,               // One column left (west)
+                baseVertex + rowSize + 1,     // Southeast
+                baseVertex + rowSize - 1,     // Southwest  
+                baseVertex - rowSize + 1,     // Northeast
+                baseVertex - rowSize - 1      // Northwest
+            };
+            
+            var view = GetViewMatrix();
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
+            var viewProj = view * proj;
+            
+            float bestDist = float.MaxValue;
+            int best = baseVertex;
+            
+            foreach (int candidate in candidates)
+            {
+                if (candidate < 0 || candidate >= vertices.Count) continue;
+                
+                var worldPos = new Vector4(vertices[candidate].Position, 1.0f);
+                var clipPos = worldPos * viewProj;
+                
+                if (clipPos.W <= 0) continue;
+                
+                var ndc = new Vector3(clipPos.X / clipPos.W, clipPos.Y / clipPos.W, clipPos.Z / clipPos.W);
+                if (ndc.X < -1 || ndc.X > 1 || ndc.Y < -1 || ndc.Y > 1) continue;
+                
+                var screenX = (ndc.X + 1.0f) * 0.5f * Size.X;
+                var screenY = (1.0f - ndc.Y) * 0.5f * Size.Y;
+                
+                float dx = screenX - mousePos.X;
+                float dy = screenY - mousePos.Y;
+                float dist = dx * dx + dy * dy;
+                
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    best = candidate;
+                }
+            }
+            
+            return best;
+        }
+
         private int RayPickNearestVertex(Vector3 rayO, Vector3 rayD, float pickRadius)
         {
             // Simple distance-based picking - find closest vertex to ray
@@ -516,6 +551,57 @@ public static class GlyphSphereLauncher
                 }
             }
             return best;
+        }
+
+        private int FindVertexByRaySphereIntersection(Vector3 rayOrigin, Vector3 rayDirection)
+        {
+            // Find intersection of ray with sphere at radius 1.0
+            float sphereRadius = 1.0f;
+            Vector3 sphereCenter = Vector3.Zero;
+            
+            Vector3 oc = rayOrigin - sphereCenter;
+            float a = Vector3.Dot(rayDirection, rayDirection);
+            float b = 2.0f * Vector3.Dot(oc, rayDirection);
+            float c = Vector3.Dot(oc, oc) - sphereRadius * sphereRadius;
+            float discriminant = b * b - 4 * a * c;
+            
+            if (discriminant < 0)
+                return -1; // No intersection
+            
+            // Use nearest intersection point
+            float t = (-b - MathF.Sqrt(discriminant)) / (2 * a);
+            if (t < 0)
+                t = (-b + MathF.Sqrt(discriminant)) / (2 * a);
+            
+            if (t < 0)
+                return -1; // Behind camera
+            
+            Vector3 intersectionPoint = rayOrigin + rayDirection * t;
+            
+            // Find closest vertex to intersection point, but only consider front-facing vertices
+            Vector3 cameraPos = rayOrigin;
+            float minDistSq = float.MaxValue;
+            int closestVertex = -1;
+            
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                Vector3 vertexPos = vertices[i].Position;
+                Vector3 vertexNormal = Vector3.Normalize(vertexPos); // For unit sphere, position is normal
+                Vector3 toCam = Vector3.Normalize(cameraPos - vertexPos);
+                
+                // Only consider vertices facing towards camera (front-facing)
+                if (Vector3.Dot(vertexNormal, toCam) > 0)
+                {
+                    float distSq = Vector3.DistanceSquared(vertexPos, intersectionPoint);
+                    if (distSq < minDistSq)
+                    {
+                        minDistSq = distSq;
+                        closestVertex = i;
+                    }
+                }
+            }
+            
+            return closestVertex;
         }
 
         private Matrix4 GetViewMatrix()
