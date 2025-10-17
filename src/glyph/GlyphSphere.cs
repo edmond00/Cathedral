@@ -388,8 +388,16 @@ public static class GlyphSphereLauncher
             var rayDir = Vector3.Normalize(pFar - pNear);
             var rayOrig = pNear;
 
-            // Use ray-sphere intersection to find exact point on sphere
-            hoveredVertexIndex = FindVertexByRaySphereIntersection(rayOrig, rayDir);
+            // Use ray-quad intersection to find the exact quad hit by the mouse
+            int newHover = FindVertexByRaySphereIntersection(rayOrig, rayDir);
+            
+            // Debug output when hover changes
+            if (newHover != hoveredVertexIndex && newHover >= 0)
+            {
+                Console.WriteLine($"Mouse: ({mouse.X:F0}, {mouse.Y:F0}) -> Vertex {newHover} at {vertices[newHover].Position}");
+            }
+            
+            hoveredVertexIndex = newHover;
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -555,47 +563,57 @@ public static class GlyphSphereLauncher
 
         private int FindVertexByRaySphereIntersection(Vector3 rayOrigin, Vector3 rayDirection)
         {
-            // Find intersection of ray with sphere at radius 1.0
-            float sphereRadius = 1.0f;
-            Vector3 sphereCenter = Vector3.Zero;
-            
-            Vector3 oc = rayOrigin - sphereCenter;
-            float a = Vector3.Dot(rayDirection, rayDirection);
-            float b = 2.0f * Vector3.Dot(oc, rayDirection);
-            float c = Vector3.Dot(oc, oc) - sphereRadius * sphereRadius;
-            float discriminant = b * b - 4 * a * c;
-            
-            if (discriminant < 0)
-                return -1; // No intersection
-            
-            // Use nearest intersection point
-            float t = (-b - MathF.Sqrt(discriminant)) / (2 * a);
-            if (t < 0)
-                t = (-b + MathF.Sqrt(discriminant)) / (2 * a);
-            
-            if (t < 0)
-                return -1; // Behind camera
-            
-            Vector3 intersectionPoint = rayOrigin + rayDirection * t;
-            
-            // Find closest vertex to intersection point, but only consider front-facing vertices
+            // Test ray intersection with each rendered quad
             Vector3 cameraPos = rayOrigin;
-            float minDistSq = float.MaxValue;
+            float closestT = float.MaxValue;
             int closestVertex = -1;
             
             for (int i = 0; i < vertices.Count; i++)
             {
-                Vector3 vertexPos = vertices[i].Position;
-                Vector3 vertexNormal = Vector3.Normalize(vertexPos); // For unit sphere, position is normal
+                var v = vertices[i];
+                Vector3 vertexPos = v.Position;
+                Vector3 vertexNormal = Vector3.Normalize(vertexPos);
                 Vector3 toCam = Vector3.Normalize(cameraPos - vertexPos);
                 
-                // Only consider vertices facing towards camera (front-facing)
-                if (Vector3.Dot(vertexNormal, toCam) > 0)
+                // Only consider front-facing vertices
+                if (Vector3.Dot(vertexNormal, toCam) <= 0) continue;
+                
+                // Calculate the quad's tangent space (same as UpdateInstanceBuffer)
+                var normal = Vector3.Normalize(v.Position);
+                Vector3 pole = Vector3.UnitY;
+                var poleProj = pole - normal * Vector3.Dot(pole, normal);
+                if (poleProj.LengthSquared < 1e-6f)
+                    poleProj = Vector3.Cross(normal, Vector3.UnitX);
+                poleProj = Vector3.Normalize(poleProj);
+                var right = Vector3.Normalize(Vector3.Cross(poleProj, normal));
+                var up = poleProj;
+                float size = 0.045f; // Same as in UpdateInstanceBuffer
+                
+                // Calculate quad plane normal (facing camera)
+                Vector3 quadNormal = Vector3.Normalize(Vector3.Cross(right, up));
+                
+                // Ray-plane intersection
+                float denom = Vector3.Dot(rayDirection, quadNormal);
+                if (Math.Abs(denom) < 1e-6f) continue; // Ray parallel to quad
+                
+                float t = Vector3.Dot(vertexPos - rayOrigin, quadNormal) / denom;
+                if (t < 0) continue; // Behind ray origin
+                
+                // Get intersection point
+                Vector3 intersectionPoint = rayOrigin + rayDirection * t;
+                
+                // Check if intersection is within quad bounds
+                Vector3 toIntersection = intersectionPoint - vertexPos;
+                float rightProj = Vector3.Dot(toIntersection, right);
+                float upProj = Vector3.Dot(toIntersection, up);
+                
+                float quadHalfSize = size; // quad extends from -size to +size in each direction
+                if (Math.Abs(rightProj) <= quadHalfSize && Math.Abs(upProj) <= quadHalfSize)
                 {
-                    float distSq = Vector3.DistanceSquared(vertexPos, intersectionPoint);
-                    if (distSq < minDistSq)
+                    // Ray hits this quad
+                    if (t < closestT)
                     {
-                        minDistSq = distSq;
+                        closestT = t;
                         closestVertex = i;
                     }
                 }
