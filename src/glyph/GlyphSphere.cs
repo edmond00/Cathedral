@@ -616,7 +616,7 @@ public static class GlyphSphereLauncher
                 // Map normalized noise to glyph index
                 int gi = (int)(normalizedNoise * GlyphSet.Length);
                 gi = Math.Clamp(gi, 0, GlyphSet.Length - 1);
-                Vector4 col = MapColorFromNoise(n);
+                Vector4 col = MapColorFromGlyphIndex(gi);
 
                 // Count glyph usage
                 glyphCounts[gi]++;
@@ -682,13 +682,23 @@ public static class GlyphSphereLauncher
             instanceCount = vertices.Count;
         }
 
-        private Vector4 MapColorFromNoise(float n)
+        private Vector4 MapColorFromGlyphIndex(int glyphIndex)
         {
-            // Brighter, more contrasting colors for better text visibility
-            if (n < 0.45f) return new Vector4(0.2f, 0.6f, 1.0f, 1f); // bright sea blue
-            if (n < 0.5f) return new Vector4(1.0f, 0.9f, 0.3f, 1f); // bright sand yellow
-            if (n < 0.75f) return new Vector4(0.3f, 1.0f, 0.3f, 1f); // bright green
-            return new Vector4(0.9f, 0.9f, 0.9f, 1f); // light gray rock
+            // Map colors to terrain types based on glyph index (elevation)
+            return glyphIndex switch
+            {
+                0 => new Vector4(0.1f, 0.1f, 0.4f, 1f),    // '@' - Deep water (dark blue)
+                1 => new Vector4(0.2f, 0.4f, 0.8f, 1f),    // '#' - Deep water (medium blue)
+                2 => new Vector4(0.3f, 0.6f, 1.0f, 1f),    // '%' - Shallow water (light blue)
+                3 => new Vector4(0.8f, 0.7f, 0.4f, 1f),    // '*' - Beach/Sand (sandy yellow)
+                4 => new Vector4(0.6f, 0.8f, 0.3f, 1f),    // '+' - Low plains (light green)
+                5 => new Vector4(0.4f, 0.7f, 0.2f, 1f),    // '=' - Hills (medium green)
+                6 => new Vector4(0.3f, 0.5f, 0.1f, 1f),    // '-' - High hills (dark green)
+                7 => new Vector4(0.5f, 0.4f, 0.3f, 1f),    // ':' - Lower mountains (brown)
+                8 => new Vector4(0.6f, 0.5f, 0.4f, 1f),    // '.' - High mountains (light brown/grey)
+                9 => new Vector4(0.9f, 0.9f, 0.9f, 1f),    // ' ' - Peaks (white/snow)
+                _ => new Vector4(1.0f, 0.0f, 1.0f, 1f)     // Error color (magenta)
+            };
         }
 
         private int CreateProgram(string vsSrc, string fsSrc)
