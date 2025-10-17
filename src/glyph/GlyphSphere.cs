@@ -578,6 +578,10 @@ public static class GlyphSphereLauncher
             vertices.Clear();
             indices.Clear();
 
+            // Collect noise statistics
+            var noiseValues = new List<float>();
+            var glyphCounts = new int[GlyphSet.Length];
+
             for (int lat = 0; lat <= latCount; lat++)
             {
                 float theta = lat * MathF.PI / latCount; // 0..PI
@@ -588,19 +592,42 @@ public static class GlyphSphereLauncher
                     float sinP = MathF.Sin(phi), cosP = MathF.Cos(phi);
                     Vector3 pos = new Vector3(cosP * sinT, cosT, sinP * sinT) * radius;
                     float n = SimplexNoise.Noise(pos.X * 1.6f, pos.Y * 1.6f, pos.Z * 1.6f) * 0.5f + 0.5f;
-                    // map noise to glyph index and color
-                    int gi = (int)(n * (GlyphSet.Length - 1));
-                    gi = Math.Clamp(gi, 0, GlyphSet.Length - 1);
-                    Vector4 col = MapColorFromNoise(n);
+                    // Collect noise value for statistics
+                    noiseValues.Add(n);
 
-                    // Debug: Print first few vertex mappings
-                    if (vertices.Count < 5)
-                    {
-                        Console.WriteLine($"Vertex {vertices.Count}: noise={n:F3} -> glyph_index={gi} -> '{GlyphSet[gi]}'");
-                    }
-
-                    vertices.Add(new Vertex { Position = pos, GlyphIndex = gi, GlyphChar = GlyphSet[gi], Noise = n, Color = col });
+                    vertices.Add(new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = GlyphSet[0], Noise = n, Color = Vector4.One });
                 }
+            }
+
+            // Find actual noise range and normalize
+            float minNoise = noiseValues.Min();
+            float maxNoise = noiseValues.Max();
+            float noiseRange = maxNoise - minNoise;
+
+            // Reassign glyph indices with normalized noise
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                var vertex = vertices[i];
+                float n = vertex.Noise;
+                
+                // Normalize noise to 0-1 range
+                float normalizedNoise = (n - minNoise) / noiseRange;
+                
+                // Map normalized noise to glyph index
+                int gi = (int)(normalizedNoise * GlyphSet.Length);
+                gi = Math.Clamp(gi, 0, GlyphSet.Length - 1);
+                Vector4 col = MapColorFromNoise(n);
+
+                // Count glyph usage
+                glyphCounts[gi]++;
+
+                // Debug: Print first few vertex mappings
+                if (i < 5)
+                {
+                    Console.WriteLine($"Vertex {i}: noise={n:F3} -> normalized={normalizedNoise:F3} -> glyph_index={gi} -> '{GlyphSet[gi]}'");
+                }
+
+                vertices[i] = new Vertex { Position = vertex.Position, GlyphIndex = gi, GlyphChar = GlyphSet[gi], Noise = n, Color = col };
             }
 
             int lonp1 = lonCount + 1;
@@ -614,6 +641,40 @@ public static class GlyphSphereLauncher
                     int d = lat * lonp1 + (lon + 1);
                     indices.Add((uint)a); indices.Add((uint)b); indices.Add((uint)c);
                     indices.Add((uint)c); indices.Add((uint)d); indices.Add((uint)a);
+                }
+            }
+
+            // Calculate and print noise statistics
+            if (noiseValues.Count > 0)
+            {
+                noiseValues.Sort();
+                float min = noiseValues[0];
+                float max = noiseValues[noiseValues.Count - 1];
+                float mean = noiseValues.Average();
+                float median = noiseValues[noiseValues.Count / 2];
+                
+                // Calculate standard deviation
+                double sumSquaredDiffs = noiseValues.Sum(x => Math.Pow(x - mean, 2));
+                float stdDev = (float)Math.Sqrt(sumSquaredDiffs / noiseValues.Count);
+
+                // Calculate percentiles
+                float p10 = noiseValues[(int)(noiseValues.Count * 0.1)];
+                float p25 = noiseValues[(int)(noiseValues.Count * 0.25)];
+                float p75 = noiseValues[(int)(noiseValues.Count * 0.75)];
+                float p90 = noiseValues[(int)(noiseValues.Count * 0.9)];
+
+                Console.WriteLine($"\nNoise Distribution Statistics ({noiseValues.Count} vertices):");
+                Console.WriteLine($"  Min: {min:F3}, Max: {max:F3}");
+                Console.WriteLine($"  Mean: {mean:F3}, Median: {median:F3}, StdDev: {stdDev:F3}");
+                Console.WriteLine($"  Percentiles - P10: {p10:F3}, P25: {p25:F3}, P75: {p75:F3}, P90: {p90:F3}");
+
+                Console.WriteLine($"\nGlyph Distribution:");
+                for (int i = 0; i < GlyphSet.Length; i++)
+                {
+                    float percentage = (glyphCounts[i] / (float)noiseValues.Count) * 100f;
+                    float expectedRange = (float)i / GlyphSet.Length;
+                    float nextRange = (float)(i + 1) / GlyphSet.Length;
+                    Console.WriteLine($"  '{GlyphSet[i]}' (index {i}): {glyphCounts[i]} vertices ({percentage:F1}%) - Expected range: [{expectedRange:F3}, {nextRange:F3})");
                 }
             }
 
