@@ -104,6 +104,11 @@ public static class GlyphSphereLauncher
         int instanceVbo;
         int glyphTexture;
         int indexCount;
+        
+        // Background sphere (opaque backdrop)
+        int backgroundProgram;
+        int backgroundVao, backgroundVbo, backgroundEbo;
+        int backgroundIndexCount;
 
         // Data
         List<Vertex> vertices = new List<Vertex>();
@@ -115,6 +120,10 @@ public static class GlyphSphereLauncher
         float yaw = 0;
         float pitch = 0;
         float distance = 3.2f;
+        
+        // Mouse interaction
+        int hoveredVertexIndex = -1;
+        int lastHoveredVertexIndex = -2;
         
         // Debug shader modes
         int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe
@@ -143,11 +152,17 @@ public static class GlyphSphereLauncher
             debugProgram1 = CreateProgram(vertexShaderSrc, debugFragmentSrc1); // vertex colors only
             debugProgram2 = CreateProgram(vertexShaderSrc, debugFragmentSrc2); // texture only
             debugProgram3 = CreateProgram(vertexShaderSrc, debugFragmentSrc3); // wireframe
+
+            // Build background sphere shader
+            backgroundProgram = CreateProgram(backgroundVertexShaderSrc, backgroundFragmentShaderSrc);
             
             GL.UseProgram(program);
             
             // Build sphere low-res
             BuildSphere(28, 28, 1.0f);
+            
+            // Create background sphere (90% radius, opaque)
+            BuildBackgroundSphere(28, 28, 0.9f);
 
             // Build glyph atlas
             glyphInfos = BuildGlyphAtlas(GlyphSet, glyphCell, glyphPixelSize, out Image<Rgba32> atlasImage);
@@ -295,8 +310,8 @@ public static class GlyphSphereLauncher
                 Console.WriteLine($"Debug shader mode: {debugShaderMode} - {description}");
             }
 
-            // Update instances if you want dynamic changes (we keep static atlas mapping here)
-            // UpdateInstanceBuffer(); // call if glyphs/colors change over time
+            // Update instances for dynamic color changes (hover highlighting)
+            UpdateInstanceBuffer();
 
             // Clear
             GL.ClearColor(0f, 0f, 0f, 1f);
@@ -305,6 +320,20 @@ public static class GlyphSphereLauncher
             // Build view & proj
             var view = GetViewMatrix();
             var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
+
+            // Render background sphere first (opaque backdrop)
+            GL.UseProgram(backgroundProgram);
+            var model = Matrix4.Identity; // Background sphere at origin
+            int bgViewLoc = GL.GetUniformLocation(backgroundProgram, "uView");
+            int bgProjLoc = GL.GetUniformLocation(backgroundProgram, "uProj");
+            int bgModelLoc = GL.GetUniformLocation(backgroundProgram, "uModel");
+            GL.UniformMatrix4(bgViewLoc, false, ref view);
+            GL.UniformMatrix4(bgProjLoc, false, ref proj);
+            GL.UniformMatrix4(bgModelLoc, false, ref model);
+            
+            GL.BindVertexArray(backgroundVao);
+            GL.DrawElements(PrimitiveType.Triangles, backgroundIndexCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
+            GL.BindVertexArray(0);
 
             // Select shader program based on debug mode
             int currentProgram = debugShaderMode switch
@@ -338,6 +367,51 @@ public static class GlyphSphereLauncher
             GL.BindVertexArray(0);
 
             SwapBuffers();
+        }
+
+        protected override void OnMouseMove(MouseMoveEventArgs e)
+        {
+            base.OnMouseMove(e);
+            
+            // Update hovered vertex for red highlighting
+            var mouse = MousePosition;
+            var ndcX = (float)(mouse.X / Size.X * 2.0 - 1.0);
+            var ndcY = (float)(1.0 - mouse.Y / Size.Y * 2.0);
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
+            var invVP = (GetViewMatrix() * proj).Inverted();
+            Vector4 near = new Vector4(ndcX, ndcY, -1f, 1f);
+            Vector4 far = new Vector4(ndcX, ndcY, 1f, 1f);
+            Vector4 pN = near * invVP;
+            Vector4 pF = far * invVP;
+            var pNear = new Vector3(pN.X / pN.W, pN.Y / pN.W, pN.Z / pN.W);
+            var pFar = new Vector3(pF.X / pF.W, pF.Y / pF.W, pF.Z / pF.W);
+            var rayDir = Vector3.Normalize(pFar - pNear);
+            var rayOrig = pNear;
+
+            // Alternative approach: project vertices to screen space and find closest to mouse
+            int newHover = FindClosestVertexInScreenSpace(mouse);
+            
+            // Fix off-by-one: offset by one row DOWN (add one latitude row)
+            if (newHover >= 0)
+            {
+                int lonCount = 28;
+                int rowSize = lonCount + 1; // 29 vertices per row
+                
+                // Offset by one row DOWN (add one latitude row)
+                int adjustedHover = newHover + rowSize;
+                if (adjustedHover < vertices.Count)
+                {
+                    hoveredVertexIndex = adjustedHover;
+                }
+                else
+                {
+                    hoveredVertexIndex = newHover; // Keep original if offset would go out of bounds
+                }
+            }
+            else
+            {
+                hoveredVertexIndex = newHover;
+            }
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -380,8 +454,51 @@ public static class GlyphSphereLauncher
             // done in OnRenderFrame per-frame; kept for completeness
         }
 
+        private int FindClosestVertexInScreenSpace(OpenTK.Mathematics.Vector2 mousePos)
+        {
+            var view = GetViewMatrix();
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
+            var viewProj = view * proj;
+            
+            float bestDist = float.MaxValue;
+            int best = -1;
+            
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                var worldPos = new Vector4(vertices[i].Position, 1.0f);
+                var clipPos = worldPos * viewProj;
+                
+                // Skip if behind camera
+                if (clipPos.W <= 0) continue;
+                
+                // Convert to NDC
+                var ndc = new Vector3(clipPos.X / clipPos.W, clipPos.Y / clipPos.W, clipPos.Z / clipPos.W);
+                
+                // Skip if outside NDC cube  
+                if (ndc.X < -1 || ndc.X > 1 || ndc.Y < -1 || ndc.Y > 1) continue;
+                
+                // Convert to screen space
+                var screenX = (ndc.X + 1.0f) * 0.5f * Size.X;
+                var screenY = (1.0f - ndc.Y) * 0.5f * Size.Y;
+                
+                // Calculate distance to mouse
+                float dx = screenX - mousePos.X;
+                float dy = screenY - mousePos.Y;
+                float dist = dx * dx + dy * dy;
+                
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    best = i;
+                }
+            }
+            
+            return (bestDist < 20 * 20) ? best : -1; // 20 pixel threshold
+        }
+
         private int RayPickNearestVertex(Vector3 rayO, Vector3 rayD, float pickRadius)
         {
+            // Simple distance-based picking - find closest vertex to ray
             float bestT = float.MaxValue;
             int best = -1;
             for (int i = 0; i < vertices.Count; i++)
@@ -389,7 +506,7 @@ public static class GlyphSphereLauncher
                 var v = vertices[i].Position;
                 Vector3 w = v - rayO;
                 float proj = Vector3.Dot(w, rayD);
-                if (proj < 0) continue;
+                if (proj < 0) continue; // Behind ray origin
                 Vector3 closest = rayO + rayD * proj;
                 float d2 = Vector3.DistanceSquared(closest, v);
                 if (d2 < pickRadius * pickRadius && proj < bestT)
@@ -446,8 +563,12 @@ public static class GlyphSphereLauncher
                     Console.WriteLine($"Vertex {i}: GlyphIndex={v.GlyphIndex} '{v.GlyphChar}' -> UvRect({uvx:F3}, {uvy:F3}, {uvw:F3}, {uvh:F3})");
                 }
 
-                // color
+                // color - use red if this vertex is hovered, otherwise use terrain color
                 Vector4 col = v.Color;
+                if (i == hoveredVertexIndex)
+                {
+                    col = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+                }
 
                 int baseIdx = i * 18;
                 data[baseIdx + 0] = v.Position.X;
@@ -682,6 +803,62 @@ public static class GlyphSphereLauncher
             instanceCount = vertices.Count;
         }
 
+        private void BuildBackgroundSphere(int latCount, int lonCount, float radius)
+        {
+            var backgroundVertices = new List<Vector3>();
+            var backgroundIndices = new List<uint>();
+
+            // Generate vertices for background sphere
+            for (int lat = 0; lat <= latCount; lat++)
+            {
+                float theta = lat * MathF.PI / latCount; // 0..PI
+                float sinT = MathF.Sin(theta), cosT = MathF.Cos(theta);
+                for (int lon = 0; lon <= lonCount; lon++)
+                {
+                    float phi = lon * 2f * MathF.PI / lonCount; // 0..2PI
+                    float sinP = MathF.Sin(phi), cosP = MathF.Cos(phi);
+                    Vector3 pos = new Vector3(cosP * sinT, cosT, sinP * sinT) * radius;
+                    backgroundVertices.Add(pos);
+                }
+            }
+
+            // Generate indices for background sphere
+            int lonp1 = lonCount + 1;
+            for (int lat = 0; lat < latCount; lat++)
+            {
+                for (int lon = 0; lon < lonCount; lon++)
+                {
+                    int a = lat * lonp1 + lon;
+                    int b = (lat + 1) * lonp1 + lon;
+                    int c = (lat + 1) * lonp1 + (lon + 1);
+                    int d = lat * lonp1 + (lon + 1);
+                    backgroundIndices.Add((uint)a); backgroundIndices.Add((uint)b); backgroundIndices.Add((uint)c);
+                    backgroundIndices.Add((uint)c); backgroundIndices.Add((uint)d); backgroundIndices.Add((uint)a);
+                }
+            }
+
+            backgroundIndexCount = backgroundIndices.Count;
+
+            // Create background sphere VAO/VBO/EBO
+            backgroundVao = GL.GenVertexArray();
+            backgroundVbo = GL.GenBuffer();
+            backgroundEbo = GL.GenBuffer();
+
+            GL.BindVertexArray(backgroundVao);
+
+            // Upload vertices
+            GL.BindBuffer(BufferTarget.ArrayBuffer, backgroundVbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, backgroundVertices.Count * 3 * sizeof(float), backgroundVertices.ToArray(), BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+
+            // Upload indices
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, backgroundEbo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, backgroundIndices.Count * sizeof(uint), backgroundIndices.ToArray(), BufferUsageHint.StaticDraw);
+
+            GL.BindVertexArray(0);
+        }
+
         private Vector4 MapColorFromGlyphIndex(int glyphIndex)
         {
             // Map colors to terrain types based on glyph index (elevation)
@@ -857,6 +1034,31 @@ void main()
     } else {
         discard;
     }
+}
+";
+
+        // Background sphere shaders (simple solid sphere)
+        private readonly string backgroundVertexShaderSrc = @"
+#version 330 core
+layout(location = 0) in vec3 aPosition;
+
+uniform mat4 uView;
+uniform mat4 uProj;
+uniform mat4 uModel;
+
+void main()
+{
+    gl_Position = uProj * uView * uModel * vec4(aPosition, 1.0);
+}";
+
+        private readonly string backgroundFragmentShaderSrc = @"
+#version 330 core
+out vec4 FragColor;
+
+void main()
+{
+    // Dark opaque color for the background sphere
+    FragColor = vec4(0.05, 0.05, 0.1, 1.0); // Very dark blue-grey
 }
 ";
     }
