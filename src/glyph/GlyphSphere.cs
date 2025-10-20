@@ -19,6 +19,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using Vector3 = OpenTK.Mathematics.Vector3;
 using Vector4 = OpenTK.Mathematics.Vector4;
 using Matrix4 = OpenTK.Mathematics.Matrix4;
+using static Cathedral.Glyph.BiomeDatabase;
 
 namespace Cathedral.Glyph
 {
@@ -131,8 +132,8 @@ public static class GlyphSphereLauncher
         int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe
         int debugProgram1, debugProgram2, debugProgram3;
 
-        // Glyphs
-        const string GlyphSet = "@#%*+=-:. "; // from dense to sparse
+        // Glyphs - includes biome and location characters
+        const string GlyphSet = " ⬤◭⋀:☷~≈⣿☨⍝⚄⑆⍡⑈⑇♣♫◈⟑⟁♆⁌☵ω⁜▟≋@#%*+=-.";
         const int glyphPixelSize = 25; // raster size
         const int glyphCell = 50; // cell in atlas
 
@@ -816,7 +817,7 @@ public static class GlyphSphereLauncher
             var noiseValues = new List<float>();
             var glyphCounts = new int[GlyphSet.Length];
 
-            // Apply noise to all vertices
+            // Apply noise and biome generation to all vertices
             for (int i = 0; i < vertices.Count; i++)
             {
                 var vertex = vertices[i];
@@ -836,45 +837,56 @@ public static class GlyphSphereLauncher
                 float perlinNoise2 = Perlin.Noise(p2.X, p2.Y, p2.Z);
                 float perlinNoise3 = Perlin.Noise(p3.X, p3.Y, p3.Z);
                 
-                // Combine the noise values similar to the old code's biome logic
-                float n = (perlinNoise1 + perlinNoise2 + perlinNoise3) / 3.0f;
-                n = n * 0.5f + 0.5f; // Normalize to 0-1 range
+                // Determine biome based on the three noise layers (matching Unity logic)
+                BiomeType biome = DetermineBiome(perlinNoise1, perlinNoise2, perlinNoise3);
+                
+                // Calculate location spawn chance and determine if a location should spawn
+                LocationType? location = DetermineLocation(biome, pos);
+                
+                // Get glyph and color based on location first, then biome
+                char glyphChar;
+                Vector3 color;
+                if (location.HasValue)
+                {
+                    glyphChar = location.Value.Glyph;
+                    color = location.Value.Color;
+                }
+                else
+                {
+                    glyphChar = biome.Glyph;
+                    color = biome.Color;
+                }
+                
+                // Convert to Vector4 color for vertex (normalize from 0-255 to 0-1 range)
+                Vector4 vertexColor = new Vector4(color.X / 255.0f, color.Y / 255.0f, color.Z / 255.0f, 1.0f);
+                
+                // Find glyph index in the glyph set (fallback to first if not found)
+                int glyphIndex = GlyphSet.IndexOf(glyphChar);
+                if (glyphIndex == -1) glyphIndex = 0;
                 
                 // Collect noise value for statistics
+                float n = (perlinNoise1 + perlinNoise2 + perlinNoise3) / 3.0f;
                 noiseValues.Add(n);
 
-                vertices[i] = new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = GlyphSet[0], Noise = n, Color = Vector4.One };
+                vertices[i] = new Vertex { Position = pos, GlyphIndex = glyphIndex, GlyphChar = glyphChar, Noise = n, Color = vertexColor };
             }
 
-            // Find actual noise range and normalize
-            float minNoise = noiseValues.Min();
-            float maxNoise = noiseValues.Max();
-            float noiseRange = maxNoise - minNoise;
-
-            // Reassign glyph indices with normalized noise
+            // Count glyph usage and debug output for biome-based assignments
+            var biomeCounts = new Dictionary<string, int>();
+            var locationCounts = new Dictionary<string, int>();
+            
             for (int i = 0; i < vertices.Count; i++)
             {
                 var vertex = vertices[i];
-                float n = vertex.Noise;
                 
-                // Normalize noise to 0-1 range
-                float normalizedNoise = (n - minNoise) / noiseRange;
-                
-                // Map normalized noise to glyph index
-                int gi = (int)(normalizedNoise * GlyphSet.Length);
-                gi = Math.Clamp(gi, 0, GlyphSet.Length - 1);
-                Vector4 col = MapColorFromGlyphIndex(gi);
-
                 // Count glyph usage
-                glyphCounts[gi]++;
+                glyphCounts[vertex.GlyphIndex]++;
 
                 // Debug: Print first few vertex mappings
                 if (i < 5)
                 {
-                    Console.WriteLine($"Vertex {i}: noise={n:F3} -> normalized={normalizedNoise:F3} -> glyph_index={gi} -> '{GlyphSet[gi]}'");
+                    Console.WriteLine($"Vertex {i}: noise={vertex.Noise:F3} -> glyph='{vertex.GlyphChar}' -> color=({vertex.Color.X:F2},{vertex.Color.Y:F2},{vertex.Color.Z:F2})");
                 }
-
-                vertices[i] = new Vertex { Position = vertex.Position, GlyphIndex = gi, GlyphChar = GlyphSet[gi], Noise = n, Color = col };
             }
 
             // Calculate and print noise statistics
@@ -901,13 +913,14 @@ public static class GlyphSphereLauncher
                 Console.WriteLine($"  Mean: {mean:F3}, Median: {median:F3}, StdDev: {stdDev:F3}");
                 Console.WriteLine($"  Percentiles - P10: {p10:F3}, P25: {p25:F3}, P75: {p75:F3}, P90: {p90:F3}");
 
-                Console.WriteLine($"\nGlyph Distribution:");
+                Console.WriteLine($"\nBiome-Based Glyph Distribution:");
                 for (int i = 0; i < GlyphSet.Length; i++)
                 {
-                    float percentage = (glyphCounts[i] / (float)noiseValues.Count) * 100f;
-                    float expectedRange = (float)i / GlyphSet.Length;
-                    float nextRange = (float)(i + 1) / GlyphSet.Length;
-                    Console.WriteLine($"  '{GlyphSet[i]}' (index {i}): {glyphCounts[i]} vertices ({percentage:F1}%) - Expected range: [{expectedRange:F3}, {nextRange:F3})");
+                    if (glyphCounts[i] > 0)
+                    {
+                        float percentage = (glyphCounts[i] / (float)noiseValues.Count) * 100f;
+                        Console.WriteLine($"  '{GlyphSet[i]}' (index {i}): {glyphCounts[i]} vertices ({percentage:F1}%)");
+                    }
                 }
             }
 
@@ -1162,6 +1175,67 @@ public static class GlyphSphereLauncher
                 9 => new Vector4(0.9f, 0.9f, 0.9f, 1f),    // ' ' - Peaks (white/snow)
                 _ => new Vector4(1.0f, 0.0f, 1.0f, 1f)     // Error color (magenta)
             };
+        }
+
+        private BiomeType DetermineBiome(float perlinNoise1, float perlinNoise2, float perlinNoise3)
+        {
+            // Based on Unity Microworld.cs biome classification logic
+            // perlinNoise1: water classification (-1 to 1 range)
+            // perlinNoise2: cities/forests/fields classification (-1 to 1 range)  
+            // perlinNoise3: mountains classification (-1 to 1 range)
+
+            // Water classification (perlinNoise1)
+            if (perlinNoise1 <= -0.25f)
+                return Biomes["ocean"];
+            else if (perlinNoise1 <= 0.0f)
+                return Biomes["sea"];
+            else if (perlinNoise1 <= 0.065f)
+                return Biomes["coast"];
+
+            // Mountain classification (perlinNoise3)
+            if (perlinNoise3 >= 0.3f)
+                return Biomes["peak"];
+            else if (perlinNoise3 >= 0.15f)
+                return Biomes["mountain"];
+
+            // Land biomes classification (perlinNoise2)
+            if (perlinNoise2 >= 0.2f)
+                return Biomes["city"];
+            else if (perlinNoise2 >= -0.1f)
+                return Biomes["forest"];
+            else
+                return Biomes["field"];
+        }
+
+        private LocationType? DetermineLocation(BiomeType biome, Vector3 position)
+        {
+            // Generate a pseudo-random value based on position for consistency
+            // Use a simple hash function based on position coordinates
+            int seed = (int)(position.X * 1000 + position.Y * 2000 + position.Z * 3000);
+            var random = new Random(Math.Abs(seed));
+            
+            // Check if a location should spawn based on biome density
+            if (random.NextDouble() > biome.Density)
+                return null;
+
+            // Get locations that can spawn in this biome
+            var compatibleLocations = new List<LocationType>();
+            foreach (var locationPair in Locations)
+            {
+                var location = locationPair.Value;
+                if (location.AllowedBiomes.Contains(biome.Name))
+                {
+                    compatibleLocations.Add(location);
+                }
+            }
+
+            // If no compatible locations, return null
+            if (compatibleLocations.Count == 0)
+                return null;
+
+            // Randomly select a compatible location
+            int locationIndex = random.Next(compatibleLocations.Count);
+            return compatibleLocations[locationIndex];
         }
 
         private int CreateProgram(string vsSrc, string fsSrc)
