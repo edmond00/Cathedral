@@ -168,17 +168,17 @@ public static class GlyphSphereLauncher
             glyphInfos = BuildGlyphAtlas(GlyphSet, glyphCell, glyphPixelSize, out Image<Rgba32> atlasImage);
             
             // Save atlas texture for debugging
-            try 
-            {
-                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string filename = $"atlas_debug_{timestamp}.png";
-                atlasImage.SaveAsPng(filename);
-                Console.WriteLine($"Saved atlas texture to: {filename}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Could not save atlas texture: {ex.Message}");
-            }
+            // try 
+            // {
+            //     string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            //     string filename = $"atlas_debug_{timestamp}.png";
+            //     // atlasImage.SaveAsPng(filename);
+            //     Console.WriteLine($"Saved atlas texture to: {filename}");
+            // }
+            // catch (Exception ex)
+            // {
+            //     Console.WriteLine($"Could not save atlas texture: {ex.Message}");
+            // }
             
             glyphTexture = LoadTexture(atlasImage);
 
@@ -716,24 +716,25 @@ public static class GlyphSphereLauncher
             
             atlas = new Image<Rgba32>(atlasW, atlasH, Color.Transparent);
 
-            // load font - try some common monospace; fallback to system family
+            // load font - always use FreeMono.ttf from assets/fonts
             Font font;
             try
             {
                 var coll = new FontCollection();
-                FontFamily fam;
-                // Try to use a cleaner monospace font
-                if (System.IO.File.Exists("FreeMono.ttf"))
-                    fam = coll.Add("FreeMono.ttf");
+                string fontPath = "assets/fonts/FreeMono.ttf";
+                if (System.IO.File.Exists(fontPath))
+                {
+                    var fam = coll.Add(fontPath);
+                    font = fam.CreateFont(fontPxSize, FontStyle.Regular);
+                }
                 else
                 {
-                    // Use first available font family as fallback
-                    fam = SystemFonts.Families.First();
+                    throw new FileNotFoundException($"Required font not found: {fontPath}");
                 }
-                font = fam.CreateFont(fontPxSize, FontStyle.Regular);
             }
             catch
             {
+                // Fallback only if the project font is missing
                 font = SystemFonts.CreateFont("Consolas", fontPxSize, FontStyle.Regular);
             }
 
