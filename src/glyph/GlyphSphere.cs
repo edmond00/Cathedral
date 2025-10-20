@@ -20,6 +20,8 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 using Vector4 = OpenTK.Mathematics.Vector4;
 using Matrix4 = OpenTK.Mathematics.Matrix4;
 
+namespace Cathedral.Glyph
+{
 
 public static class SimplexNoise
 {
@@ -1167,4 +1169,5 @@ void main()
 }
 ";
     }
+}
 }

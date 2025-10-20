@@ -1,4 +1,5 @@
 ﻿using Cathedral.LLM;
+using Cathedral.Glyph;
 
 GlyphSphereLauncher.LaunchGlyphSphere();
 

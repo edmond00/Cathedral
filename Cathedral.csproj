@@ -10,6 +10,13 @@
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
+  <!-- Exclude deprecated code from build -->
+  <ItemGroup>
+    <Compile Remove="DEPRECATED\**" />
+    <EmbeddedResource Remove="DEPRECATED\**" />
+    <None Remove="DEPRECATED\**" />
+  </ItemGroup>
+
   <!-- NuGet Package References -->
   <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.9.4" />
