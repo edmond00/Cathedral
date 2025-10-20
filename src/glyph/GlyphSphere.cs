@@ -121,7 +121,7 @@ public static class GlyphSphereLauncher
         // Camera
         float yaw = 0;
         float pitch = 0;
-        float distance = 3.2f;
+        float distance = 80.0f; // Adjusted for radius=25 sphere
         
         // Mouse interaction
         int hoveredVertexIndex = -1;
@@ -160,11 +160,13 @@ public static class GlyphSphereLauncher
             
             GL.UseProgram(program);
             
-            // Build sphere low-res
-            BuildSphere(28, 28, 1.0f);
+            // Build sphere with parameters matching old Unity code
+            // Old code: radius=25, divisions=5 (TextSphere parameters)
+            // Use subdivision levels for icosphere (3-4 levels gives good detail)
+            BuildSphere(4, 0, 25.0f);
             
             // Create background sphere (90% radius, opaque)
-            BuildBackgroundSphere(28, 28, 0.9f);
+            BuildBackgroundSphere(4, 0, 22.5f); // 90% of 25.0f radius, using icosphere
 
             // Build glyph atlas
             glyphInfos = BuildGlyphAtlas(GlyphSet, glyphCell, glyphPixelSize, out Image<Rgba32> atlasImage);
@@ -283,7 +285,7 @@ public static class GlyphSphereLauncher
 
             // Input -> camera control
             const float rotSpeed = 60f;
-            const float zoomSpeed = 1.5f;
+            const float zoomSpeed = 15.0f; // Increased for larger sphere
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left))
                 yaw -= rotSpeed * (float)args.Time;
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right))
@@ -293,9 +295,9 @@ public static class GlyphSphereLauncher
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down))
                 pitch = Math.Clamp(pitch - rotSpeed * (float)args.Time, -89f, 89f);
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.W))
-                distance = MathF.Max(0.5f, distance - zoomSpeed * (float)args.Time);
+                distance = MathF.Max(30.0f, distance - zoomSpeed * (float)args.Time); // Min distance to see radius=25 sphere
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.S))
-                distance = MathF.Min(10f, distance + zoomSpeed * (float)args.Time);
+                distance = MathF.Min(200f, distance + zoomSpeed * (float)args.Time); // Max distance
 
             // Debug shader switching (D key)
             if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D))
@@ -589,7 +591,7 @@ public static class GlyphSphereLauncher
                 poleProj = Vector3.Normalize(poleProj);
                 var right = Vector3.Normalize(Vector3.Cross(poleProj, normal));
                 var up = poleProj;
-                float size = 0.045f; // Same as in UpdateInstanceBuffer
+                float size = 2.0f; // Same as in UpdateInstanceBuffer
                 
                 // Calculate quad plane normal (facing camera)
                 Vector3 quadNormal = Vector3.Normalize(Vector3.Cross(right, up));
@@ -656,18 +658,18 @@ public static class GlyphSphereLauncher
                 poleProj = Vector3.Normalize(poleProj);
                 var right = Vector3.Normalize(Vector3.Cross(poleProj, normal));
                 var up = poleProj;
-                float size = 0.045f; // quad scale
+                float size = 2.0f; // quad scale - increased for radius=25 sphere
 
                 // uv rect: glyphInfos[v.GlyphIndex]
                 var gi = glyphInfos[v.GlyphIndex];
                 // uvRect: x,y,w,h in normalized 0..1
                 var uvx = gi.UvX; var uvy = gi.UvY; var uvw = gi.UvW; var uvh = gi.UvH;
                 
-                // Debug: Print UV rect for first few vertices
-                if (i < 3)
-                {
-                    Console.WriteLine($"Vertex {i}: GlyphIndex={v.GlyphIndex} '{v.GlyphChar}' -> UvRect({uvx:F3}, {uvy:F3}, {uvw:F3}, {uvh:F3})");
-                }
+                // Debug: Print UV rect for first few vertices (commented out to avoid spam in render loop)
+                // if (i < 3)
+                // {
+                //     Console.WriteLine($"Vertex {i}: GlyphIndex={v.GlyphIndex} '{v.GlyphChar}' -> UvRect({uvx:F3}, {uvy:F3}, {uvw:F3}, {uvh:F3})");
+                // }
 
                 // color - use red if this vertex is hovered, otherwise use terrain color
                 Vector4 col = v.Color;
@@ -798,33 +800,50 @@ public static class GlyphSphereLauncher
             // Set wrapping to clamp to avoid edge artifacts
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            Console.WriteLine($"Loaded texture ID {tex}, size {img.Width}x{img.Height}");
             return tex;
         }
 
-        private void BuildSphere(int latCount, int lonCount, float radius)
+        private void BuildSphere(int subdivisions, int unused, float radius)
         {
             vertices.Clear();
             indices.Clear();
+
+            // Build icosphere using subdivision
+            BuildIcosphere(subdivisions, radius);
 
             // Collect noise statistics
             var noiseValues = new List<float>();
             var glyphCounts = new int[GlyphSet.Length];
 
-            for (int lat = 0; lat <= latCount; lat++)
+            // Apply noise to all vertices
+            for (int i = 0; i < vertices.Count; i++)
             {
-                float theta = lat * MathF.PI / latCount; // 0..PI
-                float sinT = MathF.Sin(theta), cosT = MathF.Cos(theta);
-                for (int lon = 0; lon <= lonCount; lon++)
-                {
-                    float phi = lon * 2f * MathF.PI / lonCount; // 0..2PI
-                    float sinP = MathF.Sin(phi), cosP = MathF.Cos(phi);
-                    Vector3 pos = new Vector3(cosP * sinT, cosT, sinP * sinT) * radius;
-                    float n = SimplexNoise.Noise(pos.X * 1.6f, pos.Y * 1.6f, pos.Z * 1.6f) * 0.5f + 0.5f;
-                    // Collect noise value for statistics
-                    noiseValues.Add(n);
+                var vertex = vertices[i];
+                Vector3 pos = vertex.Position;
+                
+                // Multi-scale Perlin noise like the old Unity code
+                // Generate random offsets (using simple deterministic approach for now)
+                Vector3 off1 = new Vector3(1337.0f, 2468.0f, 9876.0f);
+                Vector3 off2 = new Vector3(5432.0f, 8765.0f, 1234.0f);
+                Vector3 off3 = new Vector3(9999.0f, 3333.0f, 7777.0f);
+                
+                Vector3 p1 = (off1 + pos) / 12f;
+                Vector3 p2 = (off2 + pos) / 3f;
+                Vector3 p3 = (off3 + pos) / 8f;
+                
+                float perlinNoise1 = Perlin.Noise(p1.X, p1.Y, p1.Z);
+                float perlinNoise2 = Perlin.Noise(p2.X, p2.Y, p2.Z);
+                float perlinNoise3 = Perlin.Noise(p3.X, p3.Y, p3.Z);
+                
+                // Combine the noise values similar to the old code's biome logic
+                float n = (perlinNoise1 + perlinNoise2 + perlinNoise3) / 3.0f;
+                n = n * 0.5f + 0.5f; // Normalize to 0-1 range
+                
+                // Collect noise value for statistics
+                noiseValues.Add(n);
 
-                    vertices.Add(new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = GlyphSet[0], Noise = n, Color = Vector4.One });
-                }
+                vertices[i] = new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = GlyphSet[0], Noise = n, Color = Vector4.One };
             }
 
             // Find actual noise range and normalize
@@ -856,20 +875,6 @@ public static class GlyphSphereLauncher
                 }
 
                 vertices[i] = new Vertex { Position = vertex.Position, GlyphIndex = gi, GlyphChar = GlyphSet[gi], Noise = n, Color = col };
-            }
-
-            int lonp1 = lonCount + 1;
-            for (int lat = 0; lat < latCount; lat++)
-            {
-                for (int lon = 0; lon < lonCount; lon++)
-                {
-                    int a = lat * lonp1 + lon;
-                    int b = (lat + 1) * lonp1 + lon;
-                    int c = (lat + 1) * lonp1 + (lon + 1);
-                    int d = lat * lonp1 + (lon + 1);
-                    indices.Add((uint)a); indices.Add((uint)b); indices.Add((uint)c);
-                    indices.Add((uint)c); indices.Add((uint)d); indices.Add((uint)a);
-                }
             }
 
             // Calculate and print noise statistics
@@ -908,41 +913,130 @@ public static class GlyphSphereLauncher
 
             // for this prototype we use only vertices for instancing (one instance per vertex)
             instanceCount = vertices.Count;
+            Console.WriteLine($"Generated {vertices.Count} vertices, {indices.Count} indices, instanceCount = {instanceCount}");
         }
 
-        private void BuildBackgroundSphere(int latCount, int lonCount, float radius)
+        private void BuildIcosphere(int subdivisions, float radius)
+        {
+            // Create base icosahedron
+            float t = (1.0f + MathF.Sqrt(5.0f)) / 2.0f; // golden ratio
+            float scale = radius / MathF.Sqrt(1 + t * t);
+
+            // 12 vertices of icosahedron
+            var baseVertices = new List<Vector3>
+            {
+                new Vector3(-1,  t,  0) * scale,
+                new Vector3( 1,  t,  0) * scale,
+                new Vector3(-1, -t,  0) * scale,
+                new Vector3( 1, -t,  0) * scale,
+                
+                new Vector3( 0, -1,  t) * scale,
+                new Vector3( 0,  1,  t) * scale,
+                new Vector3( 0, -1, -t) * scale,
+                new Vector3( 0,  1, -t) * scale,
+                
+                new Vector3( t,  0, -1) * scale,
+                new Vector3( t,  0,  1) * scale,
+                new Vector3(-t,  0, -1) * scale,
+                new Vector3(-t,  0,  1) * scale
+            };
+
+            // Normalize to sphere surface
+            for (int i = 0; i < baseVertices.Count; i++)
+            {
+                baseVertices[i] = Vector3.Normalize(baseVertices[i]) * radius;
+            }
+
+            // 20 triangular faces of icosahedron
+            var baseIndices = new List<uint>
+            {
+                // 5 faces around point 0
+                0, 11, 5,   0, 5, 1,    0, 1, 7,    0, 7, 10,   0, 10, 11,
+                
+                // 5 adjacent faces
+                1, 5, 9,    5, 11, 4,   11, 10, 2,  10, 7, 6,   7, 1, 8,
+                
+                // 5 faces around point 3
+                3, 9, 4,    3, 4, 2,    3, 2, 6,    3, 6, 8,    3, 8, 9,
+                
+                // 5 adjacent faces
+                4, 9, 5,    2, 4, 11,   6, 2, 10,   8, 6, 7,    9, 8, 1
+            };
+
+            // Start with base icosahedron
+            var currentVertices = new List<Vector3>(baseVertices);
+            var currentIndices = new List<uint>(baseIndices);
+
+            // Subdivide
+            for (int level = 0; level < subdivisions; level++)
+            {
+                var newVertices = new List<Vector3>(currentVertices);
+                var newIndices = new List<uint>();
+                var midPointCache = new Dictionary<(int, int), int>();
+
+                // Process each triangle
+                for (int i = 0; i < currentIndices.Count; i += 3)
+                {
+                    uint i1 = currentIndices[i];
+                    uint i2 = currentIndices[i + 1];
+                    uint i3 = currentIndices[i + 2];
+
+                    // Get midpoints (or create them)
+                    int a = GetMidpoint(i1, i2, currentVertices, newVertices, midPointCache, radius);
+                    int b = GetMidpoint(i2, i3, currentVertices, newVertices, midPointCache, radius);
+                    int c = GetMidpoint(i3, i1, currentVertices, newVertices, midPointCache, radius);
+
+                    // Create 4 new triangles from 1 old triangle
+                    newIndices.AddRange(new uint[] { i1, (uint)a, (uint)c });
+                    newIndices.AddRange(new uint[] { i2, (uint)b, (uint)a });
+                    newIndices.AddRange(new uint[] { i3, (uint)c, (uint)b });
+                    newIndices.AddRange(new uint[] { (uint)a, (uint)b, (uint)c });
+                }
+
+                currentVertices = newVertices;
+                currentIndices = newIndices;
+            }
+
+            // Convert to vertex objects
+            vertices.Clear();
+            indices.Clear();
+
+            foreach (var pos in currentVertices)
+            {
+                vertices.Add(new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = GlyphSet[0], Noise = 0, Color = Vector4.One });
+            }
+
+            indices.AddRange(currentIndices);
+        }
+
+        private int GetMidpoint(uint i1, uint i2, List<Vector3> oldVertices, List<Vector3> newVertices, Dictionary<(int, int), int> cache, float radius)
+        {
+            // Ensure consistent ordering for cache key
+            var key = i1 < i2 ? ((int)i1, (int)i2) : ((int)i2, (int)i1);
+
+            if (cache.TryGetValue(key, out int cachedIndex))
+            {
+                return cachedIndex;
+            }
+
+            // Create new midpoint
+            Vector3 mid = (oldVertices[(int)i1] + oldVertices[(int)i2]) / 2.0f;
+            mid = Vector3.Normalize(mid) * radius; // Project to sphere surface
+
+            int newIndex = newVertices.Count;
+            newVertices.Add(mid);
+            cache[key] = newIndex;
+
+            return newIndex;
+        }
+
+        private void BuildBackgroundSphere(int subdivisions, int unused, float radius)
         {
             var backgroundVertices = new List<Vector3>();
             var backgroundIndices = new List<uint>();
 
-            // Generate vertices for background sphere
-            for (int lat = 0; lat <= latCount; lat++)
-            {
-                float theta = lat * MathF.PI / latCount; // 0..PI
-                float sinT = MathF.Sin(theta), cosT = MathF.Cos(theta);
-                for (int lon = 0; lon <= lonCount; lon++)
-                {
-                    float phi = lon * 2f * MathF.PI / lonCount; // 0..2PI
-                    float sinP = MathF.Sin(phi), cosP = MathF.Cos(phi);
-                    Vector3 pos = new Vector3(cosP * sinT, cosT, sinP * sinT) * radius;
-                    backgroundVertices.Add(pos);
-                }
-            }
-
-            // Generate indices for background sphere
-            int lonp1 = lonCount + 1;
-            for (int lat = 0; lat < latCount; lat++)
-            {
-                for (int lon = 0; lon < lonCount; lon++)
-                {
-                    int a = lat * lonp1 + lon;
-                    int b = (lat + 1) * lonp1 + lon;
-                    int c = (lat + 1) * lonp1 + (lon + 1);
-                    int d = lat * lonp1 + (lon + 1);
-                    backgroundIndices.Add((uint)a); backgroundIndices.Add((uint)b); backgroundIndices.Add((uint)c);
-                    backgroundIndices.Add((uint)c); backgroundIndices.Add((uint)d); backgroundIndices.Add((uint)a);
-                }
-            }
+            // Generate icosphere for background
+            BuildIcosphereGeometry(subdivisions, radius, backgroundVertices, backgroundIndices);
 
             backgroundIndexCount = backgroundIndices.Count;
 
@@ -964,6 +1058,91 @@ public static class GlyphSphereLauncher
             GL.BufferData(BufferTarget.ElementArrayBuffer, backgroundIndices.Count * sizeof(uint), backgroundIndices.ToArray(), BufferUsageHint.StaticDraw);
 
             GL.BindVertexArray(0);
+        }
+
+        private void BuildIcosphereGeometry(int subdivisions, float radius, List<Vector3> outVertices, List<uint> outIndices)
+        {
+            // Create base icosahedron
+            float t = (1.0f + MathF.Sqrt(5.0f)) / 2.0f; // golden ratio
+            float scale = radius / MathF.Sqrt(1 + t * t);
+
+            // 12 vertices of icosahedron
+            var baseVertices = new List<Vector3>
+            {
+                new Vector3(-1,  t,  0) * scale,
+                new Vector3( 1,  t,  0) * scale,
+                new Vector3(-1, -t,  0) * scale,
+                new Vector3( 1, -t,  0) * scale,
+                
+                new Vector3( 0, -1,  t) * scale,
+                new Vector3( 0,  1,  t) * scale,
+                new Vector3( 0, -1, -t) * scale,
+                new Vector3( 0,  1, -t) * scale,
+                
+                new Vector3( t,  0, -1) * scale,
+                new Vector3( t,  0,  1) * scale,
+                new Vector3(-t,  0, -1) * scale,
+                new Vector3(-t,  0,  1) * scale
+            };
+
+            // Normalize to sphere surface
+            for (int i = 0; i < baseVertices.Count; i++)
+            {
+                baseVertices[i] = Vector3.Normalize(baseVertices[i]) * radius;
+            }
+
+            // 20 triangular faces of icosahedron
+            var baseIndices = new List<uint>
+            {
+                // 5 faces around point 0
+                0, 11, 5,   0, 5, 1,    0, 1, 7,    0, 7, 10,   0, 10, 11,
+                
+                // 5 adjacent faces
+                1, 5, 9,    5, 11, 4,   11, 10, 2,  10, 7, 6,   7, 1, 8,
+                
+                // 5 faces around point 3
+                3, 9, 4,    3, 4, 2,    3, 2, 6,    3, 6, 8,    3, 8, 9,
+                
+                // 5 adjacent faces
+                4, 9, 5,    2, 4, 11,   6, 2, 10,   8, 6, 7,    9, 8, 1
+            };
+
+            // Start with base icosahedron
+            var currentVertices = new List<Vector3>(baseVertices);
+            var currentIndices = new List<uint>(baseIndices);
+
+            // Subdivide
+            for (int level = 0; level < subdivisions; level++)
+            {
+                var newVertices = new List<Vector3>(currentVertices);
+                var newIndices = new List<uint>();
+                var midPointCache = new Dictionary<(int, int), int>();
+
+                // Process each triangle
+                for (int i = 0; i < currentIndices.Count; i += 3)
+                {
+                    uint i1 = currentIndices[i];
+                    uint i2 = currentIndices[i + 1];
+                    uint i3 = currentIndices[i + 2];
+
+                    // Get midpoints (or create them)
+                    int a = GetMidpoint(i1, i2, currentVertices, newVertices, midPointCache, radius);
+                    int b = GetMidpoint(i2, i3, currentVertices, newVertices, midPointCache, radius);
+                    int c = GetMidpoint(i3, i1, currentVertices, newVertices, midPointCache, radius);
+
+                    // Create 4 new triangles from 1 old triangle
+                    newIndices.AddRange(new uint[] { i1, (uint)a, (uint)c });
+                    newIndices.AddRange(new uint[] { i2, (uint)b, (uint)a });
+                    newIndices.AddRange(new uint[] { i3, (uint)c, (uint)b });
+                    newIndices.AddRange(new uint[] { (uint)a, (uint)b, (uint)c });
+                }
+
+                currentVertices = newVertices;
+                currentIndices = newIndices;
+            }
+
+            outVertices.AddRange(currentVertices);
+            outIndices.AddRange(currentIndices);
         }
 
         private Vector4 MapColorFromGlyphIndex(int glyphIndex)
