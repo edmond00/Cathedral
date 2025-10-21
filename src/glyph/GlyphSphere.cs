@@ -134,7 +134,7 @@ public static class GlyphSphereLauncher
 
         // Glyphs - includes biome and location characters
         const string GlyphSet = " ⬤◭⋀:☷~≈⣿☨⍝⚄⑆⍡⑈⑇♣♫◈⟑⟁♆⁌☵ω⁜▟≋@#%*+=-.";
-        const int glyphPixelSize = 25; // raster size
+        const int glyphPixelSize = 35; // raster size
         const int glyphCell = 50; // cell in atlas
 
         public GlyphSphereWindow(GameWindowSettings g, NativeWindowSettings n) : base(g, n)
@@ -164,26 +164,26 @@ public static class GlyphSphereLauncher
             // Build sphere with parameters matching old Unity code
             // Old code: radius=25, divisions=5 (TextSphere parameters)
             // Use subdivision levels for icosphere (3-4 levels gives good detail)
-            BuildSphere(4, 0, 25.0f);
+            BuildSphere(6, 0, 25.0f);
             
             // Create background sphere (90% radius, opaque)
-            BuildBackgroundSphere(4, 0, 22.5f); // 90% of 25.0f radius, using icosphere
+            BuildBackgroundSphere(5, 0, 24.5f); // 90% of 25.0f radius, using icosphere
 
             // Build glyph atlas
             glyphInfos = BuildGlyphAtlas(GlyphSet, glyphCell, glyphPixelSize, out Image<Rgba32> atlasImage);
             
             // Save atlas texture for debugging
-            // try 
-            // {
-            //     string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            //     string filename = $"atlas_debug_{timestamp}.png";
-            //     // atlasImage.SaveAsPng(filename);
-            //     Console.WriteLine($"Saved atlas texture to: {filename}");
-            // }
-            // catch (Exception ex)
-            // {
-            //     Console.WriteLine($"Could not save atlas texture: {ex.Message}");
-            // }
+            try 
+            {
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string filename = $"atlas_debug.png";
+                atlasImage.SaveAsPng(filename);
+                Console.WriteLine($"Saved atlas texture to: {filename}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Could not save atlas texture: {ex.Message}");
+            }
             
             glyphTexture = LoadTexture(atlasImage);
 
@@ -659,7 +659,7 @@ public static class GlyphSphereLauncher
                 poleProj = Vector3.Normalize(poleProj);
                 var right = Vector3.Normalize(Vector3.Cross(poleProj, normal));
                 var up = poleProj;
-                float size = 2.0f; // quad scale - increased for radius=25 sphere
+                float size = 0.3f; // quad scale - increased for radius=25 sphere
 
                 // uv rect: glyphInfos[v.GlyphIndex]
                 var gi = glyphInfos[v.GlyphIndex];
