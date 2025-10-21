@@ -45,7 +45,7 @@ namespace Cathedral.Glyph
     {
         public static readonly Dictionary<string, BiomeType> Biomes = new Dictionary<string, BiomeType>
         {
-            ["plain"] = new BiomeType("plain", ' ', new Vector3(0, 255, 0), 1.3f, 0.06f),
+            ["plain"] = new BiomeType("plain", '"', new Vector3(0, 255, 0), 1.3f, 0.06f),
             ["forest"] = new BiomeType("forest", '⬤', new Vector3(0, 85, 0), 1.3f, 0.03f),
             ["mountain"] = new BiomeType("mountain", '◭', new Vector3(130, 130, 130), 1.3f, 0.05f),
             ["peak"] = new BiomeType("peak", '⋀', new Vector3(255, 255, 255), 1.3f, 0.2f),

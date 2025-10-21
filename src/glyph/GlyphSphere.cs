@@ -1181,32 +1181,41 @@ public static class GlyphSphereLauncher
 
         private BiomeType DetermineBiome(float perlinNoise1, float perlinNoise2, float perlinNoise3)
         {
-            // Based on Unity Microworld.cs biome classification logic
+            // Based on Unity Microworld.cs biome classification logic (exact match)
             // perlinNoise1: water classification (-1 to 1 range)
             // perlinNoise2: cities/forests/fields classification (-1 to 1 range)  
             // perlinNoise3: mountains classification (-1 to 1 range)
 
-            // Water classification (perlinNoise1)
+            // WATER (perlinNoise1)
             if (perlinNoise1 <= -0.25f)
                 return Biomes["ocean"];
-            else if (perlinNoise1 <= 0.0f)
+            if (perlinNoise1 <= 0.0f)
                 return Biomes["sea"];
-            else if (perlinNoise1 <= 0.065f)
-                return Biomes["coast"];
 
-            // Mountain classification (perlinNoise3)
-            if (perlinNoise3 >= 0.3f)
+            // MOUNTAIN (perlinNoise3)
+            if (perlinNoise3 > 0.5f)
                 return Biomes["peak"];
-            else if (perlinNoise3 >= 0.15f)
+            if (perlinNoise3 > 0.3f)
                 return Biomes["mountain"];
 
-            // Land biomes classification (perlinNoise2)
-            if (perlinNoise2 >= 0.2f)
+            // CITY (perlinNoise2)
+            if (perlinNoise2 < -0.4f)
                 return Biomes["city"];
-            else if (perlinNoise2 >= -0.1f)
+
+            // COAST (perlinNoise1)
+            if (perlinNoise1 <= 0.065f)
+                return Biomes["coast"];
+
+            // FOREST (perlinNoise2)
+            if (perlinNoise2 > 0.25f)
                 return Biomes["forest"];
-            else
+
+            // FIELD (perlinNoise2)
+            if (perlinNoise2 < -0.15f)
                 return Biomes["field"];
+
+            // PLAIN (default fallback)
+            return Biomes["plain"];
         }
 
         private LocationType? DetermineLocation(BiomeType biome, Vector3 position)
