@@ -1,0 +1,57 @@
+type;noun;groups;sign;color;size;biomes;toward_a_location;at_the_location;go_in;need_to_be_found;can_reclick;continue_narration;moods;icon
+church;churcn;;☨;100,100,100;1.3;plain,field,city;toward a church;at the church;go in the church;;FALSE;FALSE;hallowed,solemn,reverent,echoing,ornate,sacred,serene;church
+dungeon;dungeon;;⍝;60,60,60;1.3;mountain;toward a dungeon;at the dungeon;go in the dungeon;TRUE;FALSE;TRUE;dank,shadowy,oppressive,labyrinthine,forbidding,forgotten,haunted;dungeon
+castle;castle;;⚄;150,150,150;1.3;mountain,plain;toward a castle;in the castle;enter in the castle;;FALSE;TRUE;imposing,fortified,grand,weathered,watchful,crumbling,enduring;castle
+village;village;;⑆;150,100,100;1.3;plain;toward a village;in the village;enter in the village;;FALSE;TRUE;quaint,rustic,bustling,modest,welcoming,timeworn,peaceful;village
+observatory;observatory;;⍡;150,100,100;1.3;mountain,coast;toward an observatory;at the observatory;go in the observatory;;FALSE;TRUE;astral,scholarly,isolated,towering,celestial,mystical,ethereal;observatory
+stable;stable;;⑈;150,100,100;1.3;plain,field;toward a stable;at the stable;go in the stable;;FALSE;TRUE;muddy,straw-laden,earthy,fragrant,homely,chaotic,weathered;stable
+farm;farm;;⑇;150,100,100;1.3;field;toward a farm;at the farm;go in the farm;;FALSE;TRUE;fertile,tilled,abundant,sunlit,verdant,overgrown,scattered;farm
+grove;grove;;♣;0,85,0;1.3;forest;toward a grove;in the grove;enter in the grove;TRUE;FALSE;TRUE;secluded,enchanted,lush,serene,mystical,twilight-lit,whispering;grove
+amphitheater;amphitheater;;♫;220,120,80;1.3;city;toward a amphitheater;at the amphitheater;go in the amphitheater;;FALSE;TRUE;majestic,crumbling,historic,resonant,weathered,ornate,ceremonial;amphitheater
+monastery;monastery;;◈;100,100,100;1.3;peak;toward a monastery;in the monastery;enter in the monastery;TRUE;FALSE;TRUE;secluded,ascetic,serene,stoic,contemplative,austere,harmonious;monastery
+mine;mine;;⟑;100,100,100;1.3;mountain;toward a mine;inside the mine;enter inside the mine;TRUE;TRUE;TRUE;dark,industrial,clamorous,sooty,dusty,oppressive,echoing;mine
+cave;cave;;⟁;100,100,100;1.3;mountain;toward a cave;inside the cave;enter inside the cave;TRUE;FALSE;TRUE;gloomy,damp,forlorn,twisting,primeval,menacing,subterranean;cave
+shrine;shrine;;♆;100,100,100;1.3;forest;toward a shrine;at the shrine;go in the shrine;TRUE;FALSE;TRUE;sacred,ornate,hidden,forgotten,enchanted,spiritual,mystical;shrine
+tavern;tavern;;⁌;220,120,80;1.3;plain,city,field,coast;toward a tavern;at the tavern;go in the tavern;;TRUE;TRUE;rowdy,smoky,raucous,warm,welcoming,boisterous,dim-lit;tavern
+catacombs;catacombs;;◙;100,100,100;1.3;mountain;toward catacombs;in the catacombs;enter in the catacombs;TRUE;FALSE;TRUE;macabre,labyrinthine,whispering,unholy,ancient,sepulchral,haunting;catacombs
+market;market;;☵;220,120,80;1.3;city,field;toward a market;in the market;enter in the market;;TRUE;TRUE;bustling,colorful,noisy,crowded,lively,fragrant,chaotic;market
+stadium;stadium;;⏣;180,110,110;1.3;city;toward a stadium;at the stadium;go in the stadium;;FALSE;TRUE;colossal,deafening,resonant,grand,echoing,crowded,cheering;stadium
+forum;forum;;⌬;220,120,80;1.3;city;toward a forum;at the forum;go in the forum;;FALSE;TRUE;debate-filled,marble-clad,historic,bustling,open-air,philosophical,civic;forum
+academy;academy;;Ω;180,110,110;1.3;city;toward an academy;at the academy;go in the academy;;FALSE;TRUE;erudite,cloistered,illuminated,silent,hallowed,scholarly,ancient;academy
+sanatorium;sanatorium;;Θ;180,110,110;1.3;city,field;toward a sanatorium;at the sanatorium;go in the sanatorium;;FALSE;TRUE;dreary,isolated,sterile,haunted,forlorn,sanitized,echoing;sanatorium
+cathedral;cathedral;;Ψ;180,110,110;1.3;city;toward a cathedral;at the cathedral;go in the cathedral;;FALSE;TRUE;gothic,venerable,celestial,ornate,looming,sanctified,hallowed;cathedral
+institute;institute;;Φ;180,110,110;1.3;city,field;toward an institute;at the institute;go in the institute;;FALSE;TRUE;strict,scholarly,structured,grand,rigid,forbidding,storied;institute
+library;library;;ω;180,110,110;1.3;city;toward a library;at the library;go in the library;;TRUE;TRUE;dusty,labyrinthine,hushed,venerable,dim-lit,leather-scented,arcane;bibliotheca
+bank;bank;;$;220,120,80;1.3;city;toward a bank;at the bank;go in the bank;;FALSE;TRUE;vaulted,marble-clad,fortified,guarded,imposing,gilded,storied;bank
+port;port;;⁜;220,120,80;1.1;coast;toward a port;in the port;go in the port;;FALSE;TRUE;salty,bustling,briny,weathered,chaotic,hectic,wind-whipped;port
+forge;forge;;▟;130,130,130;0.8;city,field;toward a forge;at the forge;go in the forge;;FALSE;TRUE;blazing,metallic,grimy,smoky,hammering,scorched,industrial;forge
+workshop;workshop;;▙;150,100,100;0.8;city,field;toward a workshop;at the workshop;go in the workshop;;FALSE;TRUE;cluttered,inventive,ingenious,tinkering,chaotic,handcrafted,experimental;workshop
+reef;reef;;▴;130,130,130;1.3;ocean;toward a reef;at the reef;go in the reef;TRUE;FALSE;TRUE;coral-laden,hidden,vibrant,treacherous,serene,submerged,prismatic;reef
+mist;mist;;▒;40,40,150;1.3;ocean;toward some mist;inside the mist;enter inside the mist;TRUE;FALSE;TRUE;thick,cloying,ominous,rolling,ghostly,dense,persistent;mist
+haze;haze;;░;40,40,130;1.3;ocean;toward some haze;inside the haze;enter inside the haze;TRUE;FALSE;TRUE;veiled,spectral,obscured,drifting,phantasmal,silent,ethereal;haze
+snowfield;snowfield;;⣿;255,255,255;1.3;peak;toward a snowfield;at the snowfield;go in the snowfield;;FALSE;TRUE;frostbitten,glacial,blinding,vast,crunching,desolate,icy;snowfield
+ice_lake;ice_lake;;≋;255,255,255;1.3;peak;toward an ice lake;at the ice lake;go in the ice lake;;FALSE;TRUE;frozen,reflective,tranquil,biting,mirrored,serene,perilous;ice_lake
+lake;lake;;≋;0,200,200;1.3;plain,forest;toward a lake;at the lake;go in the lake;;FALSE;TRUE;pristine,shimmering,placid,hidden,sacred,crystalline,reflective;lake
+ruins;ruins;;⑆;20,55,20;1.3;forest;toward some ruins;at the ruins;go in the ruins;TRUE;FALSE;TRUE;toppled,ivy-clad,weathered,haunted,ancient,forgotten,majestic;ruins
+sunken_city;sunken_city;;☷;50,50,100;1.3;ocean;toward a sunken city;at the sunken city;go in the sunken city;TRUE;FALSE;TRUE;drowned,haunted,coral-covered,forgotten,submerged,mythic,ruinous;sunken_city
+ancient_city;ancient_city;;☷;255,255,255;1.3;peak;toward an ancient city;at the ancient city;go in the ancient city;TRUE;FALSE;TRUE;colossal,echoing,haunted,storied,overgrown,crumbling,immortal;ancient_city
+swamp;swamp;;≋;40,85,0;1.3;forest,coast;toward a swamp;at the swamp;go in the swamp;;FALSE;TRUE;soggy,festering,gloopy,primordial,mosquito-infested,misty,treacherous;swamp
+circus;circus;;ʘ;220,120,80;1.3;field;toward a circus;at the circus;go in the circus;;FALSE;TRUE;festive,crowded,garish,wondrous,chaotic,theatrical,miraculous;circus
+ice_cave;ice_cave;;⟑;255,255,255;1.3;peak;toward an ice cave;inside the ice cave;go inside the ice cave;TRUE;FALSE;TRUE;biting,glacial,crystalline,haunting,echoing,perilous,frozen;ice_cave
+oasis;oasis;;♠;0,85,40;1.3;forest;toward an oasis;in the oasis;enter in the oasis;TRUE;FALSE;TRUE;lush,hidden,shimmering,sanctified,serene,oasis-like,mirage;oasis
+assassin_guild;assassin_guild;;⬖;180,60,40;1.3;city;toward the assassin guild;at the assassin guild;go in the assassin guild;TRUE;FALSE;TRUE;shadowy,secretive,forbidding,elite,underground,whispering,murderous;assassin_guild
+villa;villa;;◈;220,120,80;1.3;city;toward a villa;at the villa;go in the villa;;FALSE;TRUE;lavish,secluded,manicured,opulent,marble-clad,ornamental,decadent;villa
+my_field;my_field;;⣿;100,250,0;1.2;field;toward my field;at my field;go in my field;TRUE;TRUE;TRUE;rolling,fertile,sun-dappled,fallow,windswept,overgrown,tranquil;field
+my_stable;my_stable;;⑈;180,120,100;1.3;plain,field;toward a stable;at my stable;go in my stable;TRUE;TRUE;TRUE;muddy,straw-laden,earthy,fragrant,homely,chaotic,weathered;stable
+my_farm;my_farm;;⑇;180,120,100;1.3;field;toward a farm;at my farm;go in my farm;TRUE;TRUE;TRUE;fertile,tilled,abundant,sunlit,verdant,overgrown,scattered;farm
+my_forge;my_forge;;▟;150,150,150;0.8;city,field;toward a forge;at my forge;go in my forge;TRUE;TRUE;TRUE;blazing,metallic,grimy,smoky,hammering,scorched,industrial;forge
+my_workshop;my_workshop;;▙;180,120,100;0.8;city,field;toward a workshop;at my workshop;go in my workshop;TRUE;TRUE;TRUE;cluttered,inventive,ingenious,tinkering,chaotic,handcrafted,experimental;workshop
+my_tavern;my_tavern;;⁌;240,140,90;1.3;plain,city,field,coast;toward a tavern;at my tavern;go in my tavern;TRUE;TRUE;TRUE;rowdy,smoky,raucous,warm,welcoming,boisterous,dim-lit;tavern
+my_villa;my_villa;;◈;240,140,90;1.3;city;toward my villa;at my villa;go in my villa;TRUE;TRUE;TRUE;lavish,secluded,manicured,opulent,marble-clad,ornamental,decadent;villa
+black_market;market;;☵;110,60,40;1.3;city;toward a black market;in the black market;enter in the black market;TRUE;TRUE;TRUE;forbidden,underground,whispering,shadowed,hidden,clandestine,lawless;black_market
+brothel;brothel;;♥;200,60,40;1.3;city;toward a borthel;in the brothel;enter in the brothel;TRUE;FALSE;TRUE;decadent,opulent,sinful,perfumed,dim-lit,whispered,voluptuous;brothel
+ash_field;ash_field;;░;60,60,60;1.3;plain,forest,city,coast,mountain,peak,field,sea,ocean;toward an ash field;inside the ash field;enter inside the ash field;TRUE;FALSE;FALSE;charred,desolate,smoldering,ashen,scorched,forlorn,blighted;ash_field
+bronze_statue;bronze_statue;;☿;150,0,0;1.3;forest,plain,mountain,coast;toward a bronze statue;at the bronze statue;go at the bronze statue;TRUE;FALSE;TRUE;towering,bronzed,weathered,historic,iconic,glimmering,stately;bronze_statue
+prison;prison;;◍;150,150,150;1.3;mountain;toward a prison;at the prison;go in the prison;;FALSE;TRUE;forbidding,barred,oppressive,crumbling,claustrophobic,echoing,grim;prison
+goblin_town;goblin_town;;♆;255,0,0;1.3;mountain;toward a goblin town;at the goblin town;go in the goblin town;TRUE;FALSE;TRUE;ramshackle,squalid,crowded,lively,filthy,grimy,shanty-lined;goblin_town
+empress_crypt;empress_crypt;;☼;255,0,0;1.3;mountain;toward the empress tomb;in the empress tomb;enter in the empress tomb;TRUE;FALSE;FALSE;imperial,guarded,sepulchral,ornate,forbidden,sanctified,haunting;empress_crypt

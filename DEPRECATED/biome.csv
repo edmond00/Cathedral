@@ -1,0 +1,10 @@
+type;noun;groups;sign;color;size;density;travel_duration;toward_a_location;at_the_location;travelling_in_a_biome;accident_risk;can_reclick;moods;icon
+plain;plain;;"""";0,255,0;1.3;0.06;0.5;toward a plain;in the plain;traversing some plains;0.01;FALSE;vast,windswept,lonely,open,desolate,golden,boundless;plain
+forest;forest;;⬤;0,85,0;1.3;0.03;1;toward a forest;in the forest;crossing a forest;0.3;FALSE;shadowed,tangled,ancient,whispering,misty,eerie,primeval;forest
+mountain;mountain;;◭;130,130,130;1.3;0.05;3;toward a mountain;on the mountain;crossing a mountain;0.3;FALSE;rugged,towering,perilous,windswept,desolate,craggy,solemn;mountain
+peak;peak;;⋀;255,255,255;1.3;0.2;5;toward a peak;on the peak;climbing a peak;0.5;FALSE;jagged,lofty,exposed,treacherous,glacial,solitary,unyielding;peak
+coast;coast;;:;255,255,0;1.3;0.2;2;toward a coast;along the coast;following the coast;0.05;FALSE;briny,windswept,forlorn,rocky,tempestuous,bleak,mist-laden;coast
+city;city;;☷;150,100,100;1.3;0.4;0.1;toward a city;in the city;traversing a city;0.02;FALSE;bustling,grimy,labyrinthine,riotous,fortified,shadowy,teeming;city
+sea;sea;;~;120,180,255;1.3;0.01;4;toward the sea;on the sea;traversing the sea;0.75;FALSE;boundless,roiling,fathomless,merciless,uncharted,restless,stormy;sea
+ocean;ocean;;≈;0,0,200;1.3;0.02;8;toward the ocean;on the ocean;traversing the ocean;0.9;FALSE;abyssal,endless,wrathful,relentless,churning,vast,primeval;ocean
+field;field;;⣿;80,200,0;1.2;0.1;0.3;toward a field;in the field;traversing some fields;0.01;FALSE;rolling,fertile,sun-dappled,fallow,windswept,overgrown,tranquil;field
