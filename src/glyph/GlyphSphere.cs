@@ -132,8 +132,8 @@ public static class GlyphSphereLauncher
         int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe
         int debugProgram1, debugProgram2, debugProgram3;
 
-        // Glyphs - includes biome and location characters
-        const string GlyphSet = " ⬤◭⋀:☷~≈⣿☨⍝⚄⑆⍡⑈⑇♣♫◈⟑⟁♆⁌☵ω⁜▟≋@#%*+=-.";
+        // Glyphs - dynamically generated from BiomeData
+        static string GlyphSet => BiomeDatabase.GenerateGlyphSet();
         const int glyphPixelSize = 35; // raster size
         const int glyphCell = 50; // cell in atlas
 
@@ -170,7 +170,9 @@ public static class GlyphSphereLauncher
             BuildBackgroundSphere(5, 0, 24.5f); // 90% of 25.0f radius, using icosphere
 
             // Build glyph atlas
-            glyphInfos = BuildGlyphAtlas(GlyphSet, glyphCell, glyphPixelSize, out Image<Rgba32> atlasImage);
+            string dynamicGlyphSet = GlyphSet;
+            Console.WriteLine($"Generated GlyphSet: \"{dynamicGlyphSet}\" ({dynamicGlyphSet.Length} characters)");
+            glyphInfos = BuildGlyphAtlas(dynamicGlyphSet, glyphCell, glyphPixelSize, out Image<Rgba32> atlasImage);
             
             // Save atlas texture for debugging
             try 
