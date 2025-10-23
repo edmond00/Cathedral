@@ -122,7 +122,7 @@ public static class GlyphSphereLauncher
         // Camera
         float yaw = 0;
         float pitch = 0;
-        float distance = 80.0f; // Adjusted for radius=25 sphere
+        float distance = CAMERA_DEFAULT_DISTANCE; // Adjusted for sphere radius
         
         // Mouse interaction
         int hoveredVertexIndex = -1;
@@ -136,6 +136,14 @@ public static class GlyphSphereLauncher
         static string GlyphSet => BiomeDatabase.GenerateGlyphSet();
         const int glyphPixelSize = 35; // raster size
         const int glyphCell = 50; // cell in atlas
+        
+        // Shared constants to avoid hardcoded duplicates
+        const float QUAD_SIZE = 0.3f; // Size of each glyph quad on the sphere
+        const float VERTEX_SHADER_SIZE_MULTIPLIER = 2.0f; // Multiplier used in vertex shader
+        const float SPHERE_RADIUS = 25.0f; // Main sphere radius
+        const float CAMERA_DEFAULT_DISTANCE = 80.0f; // Default camera distance
+        const float CAMERA_MIN_DISTANCE = 30.0f; // Minimum camera distance
+        const float CAMERA_MAX_DISTANCE = 200f; // Maximum camera distance
 
         public GlyphSphereWindow(GameWindowSettings g, NativeWindowSettings n) : base(g, n)
         {
@@ -164,10 +172,10 @@ public static class GlyphSphereLauncher
             // Build sphere with parameters matching old Unity code
             // Old code: radius=25, divisions=5 (TextSphere parameters)
             // Use subdivision levels for icosphere (3-4 levels gives good detail)
-            BuildSphere(6, 0, 25.0f);
+            BuildSphere(6, 0, SPHERE_RADIUS);
             
             // Create background sphere (90% radius, opaque)
-            BuildBackgroundSphere(5, 0, 24.5f); // 90% of 25.0f radius, using icosphere
+            BuildBackgroundSphere(5, 0, SPHERE_RADIUS * 0.9f); // 90% of sphere radius, using icosphere
 
             // Build glyph atlas
             string dynamicGlyphSet = GlyphSet;
@@ -298,9 +306,9 @@ public static class GlyphSphereLauncher
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down))
                 pitch = Math.Clamp(pitch - rotSpeed * (float)args.Time, -89f, 89f);
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.W))
-                distance = MathF.Max(30.0f, distance - zoomSpeed * (float)args.Time); // Min distance to see radius=25 sphere
+                distance = MathF.Max(CAMERA_MIN_DISTANCE, distance - zoomSpeed * (float)args.Time); // Min distance to see sphere
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.S))
-                distance = MathF.Min(200f, distance + zoomSpeed * (float)args.Time); // Max distance
+                distance = MathF.Min(CAMERA_MAX_DISTANCE, distance + zoomSpeed * (float)args.Time); // Max distance
 
             // Debug shader switching (D key)
             if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D))
@@ -382,21 +390,16 @@ public static class GlyphSphereLauncher
             
             // Update hovered vertex for red highlighting
             var mouse = MousePosition;
-            var ndcX = (float)(mouse.X / Size.X * 2.0 - 1.0);
-            var ndcY = (float)(1.0 - mouse.Y / Size.Y * 2.0);
-            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
-            var invVP = (GetViewMatrix() * proj).Inverted();
-            Vector4 near = new Vector4(ndcX, ndcY, -1f, 1f);
-            Vector4 far = new Vector4(ndcX, ndcY, 1f, 1f);
-            Vector4 pN = near * invVP;
-            Vector4 pF = far * invVP;
-            var pNear = new Vector3(pN.X / pN.W, pN.Y / pN.W, pN.Z / pN.W);
-            var pFar = new Vector3(pF.X / pF.W, pF.Y / pF.W, pF.Z / pF.W);
-            var rayDir = Vector3.Normalize(pFar - pNear);
-            var rayOrig = pNear;
+            var (rayOrig, rayDir) = GetMouseRay(mouse);
 
             // Use ray-quad intersection to find the exact quad hit by the mouse
             int newHover = FindVertexByRaySphereIntersection(rayOrig, rayDir);
+            
+            // If ray-quad intersection fails, fall back to screen-space distance
+            if (newHover == -1)
+            {
+                newHover = FindClosestVertexInScreenSpace(mouse);
+            }
             
             // Debug output when hover changes
             if (newHover != hoveredVertexIndex && newHover >= 0)
@@ -414,18 +417,7 @@ public static class GlyphSphereLauncher
             {
                 // Simple ray pick
                 var mouse = MousePosition;
-                var ndcX = (float)(mouse.X / Size.X * 2.0 - 1.0);
-                var ndcY = (float)(1.0 - mouse.Y / Size.Y * 2.0);
-                var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
-                var invVP = (GetViewMatrix() * proj).Inverted();
-                Vector4 near = new Vector4(ndcX, ndcY, -1f, 1f);
-                Vector4 far = new Vector4(ndcX, ndcY, 1f, 1f);
-                Vector4 pN = near * invVP;
-                Vector4 pF = far * invVP;
-                var pNear = new Vector3(pN.X / pN.W, pN.Y / pN.W, pN.Z / pN.W);
-                var pFar = new Vector3(pF.X / pF.W, pF.Y / pF.W, pF.Z / pF.W);
-                var rayDir = Vector3.Normalize(pFar - pNear);
-                var rayOrig = pNear;
+                var (rayOrig, rayDir) = GetMouseRay(mouse);
 
                 int hitIdx = RayPickNearestVertex(rayOrig, rayDir, 0.05f);
                 if (hitIdx >= 0)
@@ -570,59 +562,51 @@ public static class GlyphSphereLauncher
 
         private int FindVertexByRaySphereIntersection(Vector3 rayOrigin, Vector3 rayDirection)
         {
-            // Test ray intersection with each rendered quad
-            Vector3 cameraPos = rayOrigin;
-            float closestT = float.MaxValue;
+            // First, intersect ray with the sphere to get the intersection point on sphere surface
+            float sphereRadius = SPHERE_RADIUS; // Match the sphere radius used in BuildSphere
+            Vector3 sphereCenter = Vector3.Zero;
+            
+            // Ray-sphere intersection
+            Vector3 oc = rayOrigin - sphereCenter;
+            float a = Vector3.Dot(rayDirection, rayDirection);
+            float b = 2.0f * Vector3.Dot(oc, rayDirection);
+            float c = Vector3.Dot(oc, oc) - sphereRadius * sphereRadius;
+            
+            float discriminant = b * b - 4 * a * c;
+            if (discriminant < 0) return -1; // Ray doesn't hit sphere
+            
+            // Get the closest intersection point (we want the front face)
+            float t1 = (-b - MathF.Sqrt(discriminant)) / (2.0f * a);
+            float t2 = (-b + MathF.Sqrt(discriminant)) / (2.0f * a);
+            
+            float t = (t1 > 0) ? t1 : t2; // Use closest positive t
+            if (t < 0) return -1;
+            
+            Vector3 intersectionPoint = rayOrigin + rayDirection * t;
+            
+            // Now find the closest vertex to this intersection point on the sphere
+            float closestDist = float.MaxValue;
             int closestVertex = -1;
             
             for (int i = 0; i < vertices.Count; i++)
             {
                 var v = vertices[i];
                 Vector3 vertexPos = v.Position;
-                Vector3 vertexNormal = Vector3.Normalize(vertexPos);
-                Vector3 toCam = Vector3.Normalize(cameraPos - vertexPos);
                 
-                // Only consider front-facing vertices
+                // Check if this vertex is on the front-facing side of the sphere
+                Vector3 vertexNormal = Vector3.Normalize(vertexPos);
+                Vector3 toCam = Vector3.Normalize(rayOrigin - vertexPos);
                 if (Vector3.Dot(vertexNormal, toCam) <= 0) continue;
                 
-                // Calculate the quad's tangent space (same as UpdateInstanceBuffer)
-                var normal = Vector3.Normalize(v.Position);
-                Vector3 pole = Vector3.UnitY;
-                var poleProj = pole - normal * Vector3.Dot(pole, normal);
-                if (poleProj.LengthSquared < 1e-6f)
-                    poleProj = Vector3.Cross(normal, Vector3.UnitX);
-                poleProj = Vector3.Normalize(poleProj);
-                var right = Vector3.Normalize(Vector3.Cross(poleProj, normal));
-                var up = poleProj;
-                float size = 2.0f; // Same as in UpdateInstanceBuffer
+                // Calculate distance from intersection point to this vertex
+                float dist = Vector3.Distance(intersectionPoint, vertexPos);
                 
-                // Calculate quad plane normal (facing camera)
-                Vector3 quadNormal = Vector3.Normalize(Vector3.Cross(right, up));
-                
-                // Ray-plane intersection
-                float denom = Vector3.Dot(rayDirection, quadNormal);
-                if (Math.Abs(denom) < 1e-6f) continue; // Ray parallel to quad
-                
-                float t = Vector3.Dot(vertexPos - rayOrigin, quadNormal) / denom;
-                if (t < 0) continue; // Behind ray origin
-                
-                // Get intersection point
-                Vector3 intersectionPoint = rayOrigin + rayDirection * t;
-                
-                // Check if intersection is within quad bounds
-                Vector3 toIntersection = intersectionPoint - vertexPos;
-                float rightProj = Vector3.Dot(toIntersection, right);
-                float upProj = Vector3.Dot(toIntersection, up);
-                
-                float quadHalfSize = size; // quad extends from -size to +size in each direction
-                if (Math.Abs(rightProj) <= quadHalfSize && Math.Abs(upProj) <= quadHalfSize)
+                // Only consider vertices within a reasonable range (based on quad size)
+                float maxDist = QUAD_SIZE * VERTEX_SHADER_SIZE_MULTIPLIER; // Max distance to consider
+                if (dist <= maxDist && dist < closestDist)
                 {
-                    // Ray hits this quad
-                    if (t < closestT)
-                    {
-                        closestT = t;
-                        closestVertex = i;
-                    }
+                    closestDist = dist;
+                    closestVertex = i;
                 }
             }
             
@@ -643,6 +627,41 @@ public static class GlyphSphereLauncher
             return Matrix4.LookAt(camPos, Vector3.Zero, Vector3.UnitY);
         }
 
+        private (Vector3 rayOrigin, Vector3 rayDirection) GetMouseRay(OpenTK.Mathematics.Vector2 mousePos)
+        {
+            // Convert mouse position to NDC
+            var ndcX = (float)(mousePos.X / Size.X * 2.0 - 1.0);
+            var ndcY = (float)(1.0 - mousePos.Y / Size.Y * 2.0);
+            
+            // Get camera position directly from camera parameters
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 rayOrigin = -camDir * distance; // Camera position
+            
+            // Calculate ray direction using proper inverse projection
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
+            var view = GetViewMatrix();
+            var invViewProj = (view * proj).Inverted();
+            
+            // Transform mouse position to world space direction
+            Vector4 nearPoint = new Vector4(ndcX, ndcY, -1f, 1f);
+            Vector4 farPoint = new Vector4(ndcX, ndcY, 1f, 1f);
+            Vector4 nearWorld = nearPoint * invViewProj;
+            Vector4 farWorld = farPoint * invViewProj;
+            
+            nearWorld /= nearWorld.W;
+            farWorld /= farWorld.W;
+            
+            var rayDirection = Vector3.Normalize(new Vector3(farWorld.X - nearWorld.X, farWorld.Y - nearWorld.Y, farWorld.Z - nearWorld.Z));
+            
+            return (rayOrigin, rayDirection);
+        }
+
         private void UpdateInstanceBuffer()
         {
             // Build instance data per vertex
@@ -661,7 +680,7 @@ public static class GlyphSphereLauncher
                 poleProj = Vector3.Normalize(poleProj);
                 var right = Vector3.Normalize(Vector3.Cross(poleProj, normal));
                 var up = poleProj;
-                float size = 0.3f; // quad scale - increased for radius=25 sphere
+                float size = QUAD_SIZE; // quad scale - increased for radius=25 sphere
 
                 // uv rect: glyphInfos[v.GlyphIndex]
                 var gi = glyphInfos[v.GlyphIndex];
@@ -1292,7 +1311,7 @@ public static class GlyphSphereLauncher
         }
 
         // very small shaders: expand instanced quad via local pos.xy (attrib 0) and instance data
-        private readonly string vertexShaderSrc = @"
+        private readonly string vertexShaderSrc = $@"
 #version 330 core
 layout(location = 0) in vec2 aLocalPos;    // quad local pos (-0.5..0.5)
 layout(location = 1) in vec2 aLocalUV;
@@ -1311,13 +1330,13 @@ out vec2 vUv;
 out vec4 vColor;
 
 void main()
-{
+{{
     // local quad point to world:
-    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * 2.0;
+    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * {VERTEX_SHADER_SIZE_MULTIPLIER};
     gl_Position = uProj * uView * vec4(worldPos, 1.0);
     vUv = vec2(iUvRect.x + aLocalUV.x * iUvRect.z, iUvRect.y + aLocalUV.y * iUvRect.w);
     vColor = iColor;
-}";
+}}";
 
         private readonly string fragmentShaderSrc = @"
 #version 330 core
