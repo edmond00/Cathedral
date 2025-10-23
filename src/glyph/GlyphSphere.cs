@@ -140,7 +140,7 @@ public static class GlyphSphereLauncher
         Vector3 debugRayDirection = Vector3.Zero;
         Vector3 debugIntersectionPoint = Vector3.Zero;
         OpenTK.Mathematics.Vector2 debugMousePos = OpenTK.Mathematics.Vector2.Zero;
-        bool debugShowMarkers = true; // Toggle with 'M' key
+        bool debugShowMarkers = false; // Toggle with 'M' key
         
         // Debug camera system
         bool debugCameraMode = false; // Toggle between main camera and debug camera
@@ -198,7 +198,7 @@ public static class GlyphSphereLauncher
             BuildSphere(6, 0, SPHERE_RADIUS);
             
             // Create background sphere (90% radius, opaque)
-            BuildBackgroundSphere(5, 0, SPHERE_RADIUS * 0.9f); // 90% of sphere radius, using icosphere
+            BuildBackgroundSphere(5, 0, SPHERE_RADIUS * 0.98f); // 90% of sphere radius, using icosphere
 
             // Build glyph atlas
             string dynamicGlyphSet = GlyphSet;
@@ -488,10 +488,10 @@ public static class GlyphSphereLauncher
                 Console.WriteLine($"Mouse: ({mouse.X:F0}, {mouse.Y:F0}) -> NDC: ({x:F2}, {y:F2}) -> 3D: ({mouseProjection.X:F2}, {mouseProjection.Y:F2}, {mouseProjection.Z:F2})");
             }
 
-            // Use ray-quad intersection to find the exact quad hit by the mouse
-            int newHover = FindVertexByRaySphereIntersection(rayOrig, rayDir);
+            // Use the green dot intersection point to find the closest vertex
+            int newHover = FindVertexByMagentaRayIntersection(mouse);
             
-            // If ray-quad intersection fails, fall back to screen-space distance
+            // If intersection fails, fall back to screen-space distance
             if (newHover == -1)
             {
                 newHover = FindClosestVertexInScreenSpace(mouse);
@@ -634,6 +634,67 @@ public static class GlyphSphereLauncher
             return best;
         }
 
+        private int FindVertexByMagentaRayIntersection(OpenTK.Mathematics.Vector2 mousePos)
+        {
+            // Get mouse projection on screen grid
+            Vector3 mouseProjection = GetMouseProjectionOnScreen(mousePos);
+            
+            // Get main camera position
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate ray from camera through mouse projection
+            Vector3 rayOrigin = cameraPos;
+            Vector3 rayDirection = Vector3.Normalize(mouseProjection - cameraPos);
+            
+            // Calculate ray-sphere intersection (same logic as green dot)
+            Vector3 sphereCenter = Vector3.Zero;
+            float sphereRadius = SPHERE_RADIUS;
+            
+            Vector3 oc = rayOrigin - sphereCenter;
+            float a = Vector3.Dot(rayDirection, rayDirection);
+            float b = 2.0f * Vector3.Dot(oc, rayDirection);
+            float c = Vector3.Dot(oc, oc) - sphereRadius * sphereRadius;
+            
+            float discriminant = b * b - 4 * a * c;
+            
+            if (discriminant < 0) return -1; // No intersection
+            
+            // Get the closest intersection point (same as green dot)
+            float sqrtDiscriminant = MathF.Sqrt(discriminant);
+            float t = (-b - sqrtDiscriminant) / (2.0f * a);
+            
+            if (t <= 0) return -1; // Intersection behind camera
+            
+            Vector3 intersectionPoint = rayOrigin + rayDirection * t;
+            
+            // Find the closest vertex to this intersection point
+            float closestDist = float.MaxValue;
+            int closestVertex = -1;
+            
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                Vector3 vertexPos = vertices[i].Position;
+                float dist = Vector3.Distance(intersectionPoint, vertexPos);
+                
+                // Only consider vertices within a reasonable range
+                float maxDist = QUAD_SIZE * VERTEX_SHADER_SIZE_MULTIPLIER;
+                if (dist <= maxDist && dist < closestDist)
+                {
+                    closestDist = dist;
+                    closestVertex = i;
+                }
+            }
+            
+            return closestVertex;
+        }
+
         private int RayPickNearestVertex(Vector3 rayO, Vector3 rayD, float pickRadius)
         {
             // Simple distance-based picking - find closest vertex to ray
@@ -656,58 +717,7 @@ public static class GlyphSphereLauncher
             return best;
         }
 
-        private int FindVertexByRaySphereIntersection(Vector3 rayOrigin, Vector3 rayDirection)
-        {
-            // First, intersect ray with the sphere to get the intersection point on sphere surface
-            float sphereRadius = SPHERE_RADIUS; // Match the sphere radius used in BuildSphere
-            Vector3 sphereCenter = Vector3.Zero;
-            
-            // Ray-sphere intersection
-            Vector3 oc = rayOrigin - sphereCenter;
-            float a = Vector3.Dot(rayDirection, rayDirection);
-            float b = 2.0f * Vector3.Dot(oc, rayDirection);
-            float c = Vector3.Dot(oc, oc) - sphereRadius * sphereRadius;
-            
-            float discriminant = b * b - 4 * a * c;
-            if (discriminant < 0) return -1; // Ray doesn't hit sphere
-            
-            // Get the closest intersection point (we want the front face)
-            float t1 = (-b - MathF.Sqrt(discriminant)) / (2.0f * a);
-            float t2 = (-b + MathF.Sqrt(discriminant)) / (2.0f * a);
-            
-            float t = (t1 > 0) ? t1 : t2; // Use closest positive t
-            if (t < 0) return -1;
-            
-            Vector3 intersectionPoint = rayOrigin + rayDirection * t;
-            
-            // Now find the closest vertex to this intersection point on the sphere
-            float closestDist = float.MaxValue;
-            int closestVertex = -1;
-            
-            for (int i = 0; i < vertices.Count; i++)
-            {
-                var v = vertices[i];
-                Vector3 vertexPos = v.Position;
-                
-                // Check if this vertex is on the front-facing side of the sphere
-                Vector3 vertexNormal = Vector3.Normalize(vertexPos);
-                Vector3 toCam = Vector3.Normalize(rayOrigin - vertexPos);
-                if (Vector3.Dot(vertexNormal, toCam) <= 0) continue;
-                
-                // Calculate distance from intersection point to this vertex
-                float dist = Vector3.Distance(intersectionPoint, vertexPos);
-                
-                // Only consider vertices within a reasonable range (based on quad size)
-                float maxDist = QUAD_SIZE * VERTEX_SHADER_SIZE_MULTIPLIER; // Max distance to consider
-                if (dist <= maxDist && dist < closestDist)
-                {
-                    closestDist = dist;
-                    closestVertex = i;
-                }
-            }
-            
-            return closestVertex;
-        }
+
 
         private Matrix4 GetViewMatrix()
         {
