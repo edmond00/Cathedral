@@ -142,6 +142,11 @@ public static class GlyphSphereLauncher
         OpenTK.Mathematics.Vector2 debugMousePos = OpenTK.Mathematics.Vector2.Zero;
         bool debugShowMarkers = true; // Toggle with 'M' key
         
+        // Debug camera system
+        bool debugCameraMode = false; // Toggle between main camera and debug camera
+        int debugCameraAngle = 0; // 0=side view, 1=top view, 2=front view, etc.
+        float debugCameraDistance = 120.0f; // Distance for debug camera (adjustable with W/S)
+        
         // Debug shader modes
         int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe
         int debugProgram1, debugProgram2, debugProgram3;
@@ -323,10 +328,29 @@ public static class GlyphSphereLauncher
                 pitch = Math.Clamp(pitch + rotSpeed * (float)args.Time, -89f, 89f);
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down))
                 pitch = Math.Clamp(pitch - rotSpeed * (float)args.Time, -89f, 89f);
+            // W/S controls - different behavior for main vs debug camera
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.W))
-                distance = MathF.Max(CAMERA_MIN_DISTANCE, distance - zoomSpeed * (float)args.Time); // Min distance to see sphere
+            {
+                if (debugCameraMode)
+                {
+                    debugCameraDistance = MathF.Max(50.0f, debugCameraDistance - zoomSpeed * (float)args.Time);
+                }
+                else
+                {
+                    distance = MathF.Max(CAMERA_MIN_DISTANCE, distance - zoomSpeed * (float)args.Time);
+                }
+            }
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.S))
-                distance = MathF.Min(CAMERA_MAX_DISTANCE, distance + zoomSpeed * (float)args.Time); // Max distance
+            {
+                if (debugCameraMode)
+                {
+                    debugCameraDistance = MathF.Min(300.0f, debugCameraDistance + zoomSpeed * (float)args.Time);
+                }
+                else
+                {
+                    distance = MathF.Min(CAMERA_MAX_DISTANCE, distance + zoomSpeed * (float)args.Time);
+                }
+            }
 
             // Debug shader switching (D key)
             if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D))
@@ -348,6 +372,30 @@ public static class GlyphSphereLauncher
             {
                 debugShowMarkers = !debugShowMarkers;
                 Console.WriteLine($"Debug markers: {(debugShowMarkers ? "ON" : "OFF")}");
+            }
+
+            // Debug camera toggle (C key)
+            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.C))
+            {
+                debugCameraMode = !debugCameraMode;
+                string cameraType = debugCameraMode ? "Debug camera" : "Main camera";
+                string controls = debugCameraMode ? " (Use W/S to move closer/farther, V to change angle)" : " (Use W/S to zoom, arrows to rotate)";
+                Console.WriteLine($"Camera switched to: {cameraType}{controls}");
+            }
+
+            // Debug camera angle switching (V key) - only when in debug camera mode
+            if (debugCameraMode && KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.V))
+            {
+                debugCameraAngle = (debugCameraAngle + 1) % 4;
+                string angleDesc = debugCameraAngle switch
+                {
+                    0 => "Side view (X-axis)",
+                    1 => "Top view (Y-axis)", 
+                    2 => "Front view (Z-axis)",
+                    3 => "Diagonal view",
+                    _ => "Unknown"
+                };
+                Console.WriteLine($"Debug camera angle: {angleDesc}");
             }
 
             // Update debug info
@@ -663,7 +711,12 @@ public static class GlyphSphereLauncher
 
         private Matrix4 GetViewMatrix()
         {
-            // build camera from yaw/pitch/distance
+            if (debugCameraMode)
+            {
+                return GetDebugCameraMatrix();
+            }
+            
+            // build main camera from yaw/pitch/distance
             float yawR = MathHelper.DegreesToRadians(yaw);
             float pitchR = MathHelper.DegreesToRadians(pitch);
             Vector3 camDir = new Vector3(
@@ -673,6 +726,42 @@ public static class GlyphSphereLauncher
             );
             Vector3 camPos = -camDir * distance;
             return Matrix4.LookAt(camPos, Vector3.Zero, Vector3.UnitY);
+        }
+
+        private Matrix4 GetDebugCameraMatrix()
+        {
+            Vector3 debugCamPos;
+            Vector3 upVector;
+            
+            switch (debugCameraAngle)
+            {
+                case 0: // Side view (looking from positive X axis)
+                    debugCamPos = new Vector3(debugCameraDistance, 0, 0);
+                    upVector = Vector3.UnitY;
+                    break;
+                    
+                case 1: // Top view (looking from positive Y axis) 
+                    debugCamPos = new Vector3(0, debugCameraDistance, 0);
+                    upVector = Vector3.UnitZ; // Z is "up" when looking from above
+                    break;
+                    
+                case 2: // Front view (looking from positive Z axis)
+                    debugCamPos = new Vector3(0, 0, debugCameraDistance);
+                    upVector = Vector3.UnitY;
+                    break;
+                    
+                case 3: // Diagonal view
+                    debugCamPos = new Vector3(debugCameraDistance * 0.7f, debugCameraDistance * 0.5f, debugCameraDistance * 0.7f);
+                    upVector = Vector3.UnitY;
+                    break;
+                    
+                default:
+                    debugCamPos = new Vector3(debugCameraDistance, 0, 0);
+                    upVector = Vector3.UnitY;
+                    break;
+            }
+            
+            return Matrix4.LookAt(debugCamPos, Vector3.Zero, upVector);
         }
 
         private (Vector3 rayOrigin, Vector3 rayDirection) GetMouseRay(OpenTK.Mathematics.Vector2 mousePos)
@@ -1573,6 +1662,18 @@ public static class GlyphSphereLauncher
                 Vector3 mouseProjection = GetMouseProjectionOnScreen(debugMousePos);
                 debugVertices.Add(mouseProjection);
                 debugColors.Add(new Vector3(1, 0, 0)); // Red marker for mouse projection
+                
+                // Add orthogonal ray through mouse projection point
+                AddMouseOrthogonalRay(mouseProjection);
+                
+                // Add yellow marker where orthogonal ray intersects the sphere
+                AddSphereIntersectionMarker(mouseProjection);
+                
+                // Add magenta ray from camera to cursor projection
+                AddCameraToMouseRay(mouseProjection);
+                
+                // Add green marker where magenta ray intersects the sphere
+                AddMagentaRaySphereIntersection(mouseProjection);
             }
             
             // Upload and render debug geometry
@@ -1635,6 +1736,187 @@ public static class GlyphSphereLauncher
             debugColors.Add(color);
             debugVertices.Add(center + forward);
             debugColors.Add(color);
+        }
+
+        private void AddMouseOrthogonalRay(Vector3 mouseProjection)
+        {
+            // Get camera properties to calculate the screen normal
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate camera basis vectors to get screen normal
+            Vector3 up = Vector3.UnitY;
+            Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
+            Vector3 cameraUp = Vector3.Cross(right, camDir);
+            
+            // Calculate the screen normal (perpendicular to the screen grid)
+            // The screen plane is spanned by 'right' and 'cameraUp' vectors
+            // The normal to this plane is their cross product
+            Vector3 screenNormal = Vector3.Normalize(Vector3.Cross(right, cameraUp));
+            
+            // Make sure the normal points away from the camera (toward the scene)
+            if (Vector3.Dot(screenNormal, camDir) < 0)
+            {
+                screenNormal = -screenNormal;
+            }
+            
+            Vector3 rayDirection = screenNormal;
+            
+            // Create a ray extending both directions from the mouse projection point
+            float rayLength = 100.0f; // Increased length to make it more visible
+            Vector3 rayStart = mouseProjection - rayDirection * rayLength;
+            Vector3 rayEnd = mouseProjection + rayDirection * rayLength;
+            
+            // Add the orthogonal ray as a cyan line
+            AddDebugLine(rayStart, rayEnd, new Vector3(0, 1, 1)); // Cyan color
+            
+            // Optional: Add small markers at the endpoints to show the full extent
+            debugVertices.Add(rayStart);
+            debugColors.Add(new Vector3(0, 0.5f, 0.5f)); // Dark cyan dot at start
+            debugVertices.Add(rayEnd);
+            debugColors.Add(new Vector3(0, 0.5f, 0.5f)); // Dark cyan dot at end
+        }
+
+        private void AddSphereIntersectionMarker(Vector3 mouseProjection)
+        {
+            // Get camera properties for the ray direction
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate camera basis vectors to get screen normal
+            Vector3 up = Vector3.UnitY;
+            Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
+            Vector3 cameraUp = Vector3.Cross(right, camDir);
+            
+            // Calculate the screen normal (same as in AddMouseOrthogonalRay)
+            Vector3 screenNormal = Vector3.Normalize(Vector3.Cross(right, cameraUp));
+            if (Vector3.Dot(screenNormal, camDir) < 0)
+            {
+                screenNormal = -screenNormal;
+            }
+            
+            // The orthogonal ray starts from the mouse projection and goes in screen normal direction
+            Vector3 rayOrigin = mouseProjection;
+            Vector3 rayDirection = screenNormal;
+            
+            // Calculate ray-sphere intersection
+            Vector3 sphereCenter = Vector3.Zero;
+            float sphereRadius = SPHERE_RADIUS;
+            
+            // Ray-sphere intersection math
+            Vector3 oc = rayOrigin - sphereCenter;
+            float a = Vector3.Dot(rayDirection, rayDirection);
+            float b = 2.0f * Vector3.Dot(oc, rayDirection);
+            float c = Vector3.Dot(oc, oc) - sphereRadius * sphereRadius;
+            
+            float discriminant = b * b - 4 * a * c;
+            
+            if (discriminant >= 0)
+            {
+                // Calculate both intersection points
+                float sqrtDiscriminant = MathF.Sqrt(discriminant);
+                float t1 = (-b - sqrtDiscriminant) / (2.0f * a);
+                float t2 = (-b + sqrtDiscriminant) / (2.0f * a);
+                
+                // Add markers for both intersection points (entry and exit)
+                if (t1 > 0) // Only show if intersection is in front of ray origin
+                {
+                    Vector3 intersection1 = rayOrigin + rayDirection * t1;
+                    debugVertices.Add(intersection1);
+                    debugColors.Add(new Vector3(1, 1, 0)); // Yellow marker for first intersection
+                }
+                
+                // Note: Only showing the first (closest) intersection to avoid unwanted line artifacts
+            }
+        }
+
+        private void AddCameraToMouseRay(Vector3 mouseProjection)
+        {
+            // Get main camera position
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate ray direction from camera to mouse projection
+            Vector3 rayDirection = Vector3.Normalize(mouseProjection - cameraPos);
+            
+            // Extend the ray in both directions
+            float rayLength = 100.0f; // Same length as orthogonal ray
+            Vector3 rayStart = cameraPos - rayDirection * rayLength;
+            Vector3 rayEnd = mouseProjection + rayDirection * rayLength;
+            
+            // Add extended magenta ray
+            AddDebugLine(rayStart, rayEnd, new Vector3(1, 0, 1)); // Magenta color
+            
+            // Add markers at key points
+            debugVertices.Add(cameraPos);
+            debugColors.Add(new Vector3(0.8f, 0, 0.8f)); // Dark magenta marker for camera position
+            
+            debugVertices.Add(rayStart);
+            debugColors.Add(new Vector3(0.5f, 0, 0.5f)); // Dark magenta dot at ray start
+            
+            debugVertices.Add(rayEnd);
+            debugColors.Add(new Vector3(0.5f, 0, 0.5f)); // Dark magenta dot at ray end
+        }
+
+        private void AddMagentaRaySphereIntersection(Vector3 mouseProjection)
+        {
+            // Get main camera position
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate ray from camera through mouse projection
+            Vector3 rayOrigin = cameraPos;
+            Vector3 rayDirection = Vector3.Normalize(mouseProjection - cameraPos);
+            
+            // Calculate ray-sphere intersection
+            Vector3 sphereCenter = Vector3.Zero;
+            float sphereRadius = SPHERE_RADIUS;
+            
+            // Ray-sphere intersection math
+            Vector3 oc = rayOrigin - sphereCenter;
+            float a = Vector3.Dot(rayDirection, rayDirection);
+            float b = 2.0f * Vector3.Dot(oc, rayDirection);
+            float c = Vector3.Dot(oc, oc) - sphereRadius * sphereRadius;
+            
+            float discriminant = b * b - 4 * a * c;
+            
+            if (discriminant >= 0)
+            {
+                // Calculate the closest intersection point (entry point)
+                float sqrtDiscriminant = MathF.Sqrt(discriminant);
+                float t1 = (-b - sqrtDiscriminant) / (2.0f * a);
+                
+                if (t1 > 0) // Only show if intersection is in front of camera
+                {
+                    Vector3 intersection = rayOrigin + rayDirection * t1;
+                    debugVertices.Add(intersection);
+                    debugColors.Add(new Vector3(0, 1, 0)); // Green marker for magenta ray intersection
+                }
+            }
         }
 
         // vertex structure for per-vertex bookkeeping
