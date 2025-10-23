@@ -431,6 +431,15 @@ public static class GlyphSphereLauncher
             debugRayDirection = rayDir;
             debugMousePos = mouse;
 
+            // Debug: Print mouse coordinates and conversion
+            if (debugShowMarkers && (int)mouse.Y % 100 < 5) // Print occasionally to avoid spam
+            {
+                float x = (2.0f * mouse.X) / Size.X - 1.0f;
+                float y = 1.0f - (2.0f * mouse.Y) / Size.Y;
+                var mouseProjection = GetMouseProjectionOnScreen(mouse);
+                Console.WriteLine($"Mouse: ({mouse.X:F0}, {mouse.Y:F0}) -> NDC: ({x:F2}, {y:F2}) -> 3D: ({mouseProjection.X:F2}, {mouseProjection.Y:F2}, {mouseProjection.Z:F2})");
+            }
+
             // Use ray-quad intersection to find the exact quad hit by the mouse
             int newHover = FindVertexByRaySphereIntersection(rayOrig, rayDir);
             
@@ -811,9 +820,14 @@ public static class GlyphSphereLauncher
 
         private Vector3 GetMouseProjectionOnScreen(OpenTK.Mathematics.Vector2 mousePos)
         {
+            // Apply a pixel-based offset to correct for coordinate system mismatch
+            // This accounts for window borders, DPI scaling, or OpenTK coordinate system differences
+            const float pixelOffsetY = 38.0f; // Adjust this value as needed
+            float correctedMouseY = mousePos.Y + pixelOffsetY;
+            
             // Convert mouse position to normalized screen coordinates [-1, 1]
             float x = (2.0f * mousePos.X) / Size.X - 1.0f;
-            float y = 1.0f - (2.0f * mousePos.Y) / Size.Y;
+            float y = 1.0f - (2.0f * correctedMouseY) / Size.Y;
             
             // Get camera properties
             float yawR = MathHelper.DegreesToRadians(yaw);
@@ -829,6 +843,9 @@ public static class GlyphSphereLauncher
             Vector3 up = Vector3.UnitY;
             Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
             Vector3 cameraUp = Vector3.Cross(right, camDir);
+            
+            // Debug: Try inverting cameraUp to test coordinate system
+            // cameraUp = -cameraUp; // Uncomment to test if this fixes Y alignment
             
             // Screen parameters (same as in AddScreenCanvasGrid)
             float fovY = MathHelper.DegreesToRadians(60f);
