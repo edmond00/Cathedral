@@ -113,6 +113,12 @@ public static class GlyphSphereLauncher
         int backgroundVao, backgroundVbo, backgroundEbo;
         int backgroundIndexCount;
 
+        // Debug rendering
+        int debugProgram;
+        int debugVao, debugVbo;
+        List<Vector3> debugVertices = new List<Vector3>();
+        List<Vector3> debugColors = new List<Vector3>();
+
         // Data
         List<Vertex> vertices = new List<Vertex>();
         List<uint> indices = new List<uint>();
@@ -127,6 +133,14 @@ public static class GlyphSphereLauncher
         // Mouse interaction
         int hoveredVertexIndex = -1;
         int lastHoveredVertexIndex = -2;
+        
+        // Debug visualization
+        Vector3 debugCameraPos = Vector3.Zero;
+        Vector3 debugRayOrigin = Vector3.Zero;
+        Vector3 debugRayDirection = Vector3.Zero;
+        Vector3 debugIntersectionPoint = Vector3.Zero;
+        OpenTK.Mathematics.Vector2 debugMousePos = OpenTK.Mathematics.Vector2.Zero;
+        bool debugShowMarkers = true; // Toggle with 'M' key
         
         // Debug shader modes
         int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe
@@ -166,6 +180,10 @@ public static class GlyphSphereLauncher
 
             // Build background sphere shader
             backgroundProgram = CreateProgram(backgroundVertexShaderSrc, backgroundFragmentShaderSrc);
+            
+            // Build debug rendering shader
+            debugProgram = CreateProgram(debugVertexShaderSrc, debugFragmentShaderSrc);
+            SetupDebugRendering();
             
             GL.UseProgram(program);
             
@@ -325,6 +343,16 @@ public static class GlyphSphereLauncher
                 Console.WriteLine($"Debug shader mode: {debugShaderMode} - {description}");
             }
 
+            // Debug markers toggle (M key)
+            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.M))
+            {
+                debugShowMarkers = !debugShowMarkers;
+                Console.WriteLine($"Debug markers: {(debugShowMarkers ? "ON" : "OFF")}");
+            }
+
+            // Update debug info
+            UpdateDebugInfo();
+
             // Update instances for dynamic color changes (hover highlighting)
             UpdateInstanceBuffer();
 
@@ -381,6 +409,12 @@ public static class GlyphSphereLauncher
             GL.DrawElementsInstanced(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero, instanceCount);
             GL.BindVertexArray(0);
 
+            // Render debug markers if enabled
+            if (debugShowMarkers)
+            {
+                RenderDebugMarkers(view, proj);
+            }
+
             SwapBuffers();
         }
 
@@ -391,6 +425,11 @@ public static class GlyphSphereLauncher
             // Update hovered vertex for red highlighting
             var mouse = MousePosition;
             var (rayOrig, rayDir) = GetMouseRay(mouse);
+
+            // Store debug info
+            debugRayOrigin = rayOrig;
+            debugRayDirection = rayDir;
+            debugMousePos = mouse;
 
             // Use ray-quad intersection to find the exact quad hit by the mouse
             int newHover = FindVertexByRaySphereIntersection(rayOrig, rayDir);
@@ -629,11 +668,11 @@ public static class GlyphSphereLauncher
 
         private (Vector3 rayOrigin, Vector3 rayDirection) GetMouseRay(OpenTK.Mathematics.Vector2 mousePos)
         {
-            // Convert mouse position to NDC
-            var ndcX = (float)(mousePos.X / Size.X * 2.0 - 1.0);
-            var ndcY = (float)(1.0 - mousePos.Y / Size.Y * 2.0);
+            // Convert mouse position to normalized screen coordinates [-1, 1]
+            float x = (2.0f * mousePos.X) / Size.X - 1.0f;
+            float y = 1.0f - (2.0f * mousePos.Y) / Size.Y;
             
-            // Get camera position directly from camera parameters
+            // Get camera position
             float yawR = MathHelper.DegreesToRadians(yaw);
             float pitchR = MathHelper.DegreesToRadians(pitch);
             Vector3 camDir = new Vector3(
@@ -643,23 +682,172 @@ public static class GlyphSphereLauncher
             );
             Vector3 rayOrigin = -camDir * distance; // Camera position
             
-            // Calculate ray direction using proper inverse projection
-            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
-            var view = GetViewMatrix();
-            var invViewProj = (view * proj).Inverted();
+            // Calculate camera basis vectors
+            Vector3 up = Vector3.UnitY;
+            Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
+            Vector3 cameraUp = Vector3.Cross(right, camDir);
             
-            // Transform mouse position to world space direction
-            Vector4 nearPoint = new Vector4(ndcX, ndcY, -1f, 1f);
-            Vector4 farPoint = new Vector4(ndcX, ndcY, 1f, 1f);
-            Vector4 nearWorld = nearPoint * invViewProj;
-            Vector4 farWorld = farPoint * invViewProj;
+            // Calculate field of view and aspect ratio
+            float fovY = MathHelper.DegreesToRadians(60f);
+            float aspect = (float)Size.X / Size.Y;
             
-            nearWorld /= nearWorld.W;
-            farWorld /= farWorld.W;
-            
-            var rayDirection = Vector3.Normalize(new Vector3(farWorld.X - nearWorld.X, farWorld.Y - nearWorld.Y, farWorld.Z - nearWorld.Z));
+            // Calculate the direction for the ray
+            float tanHalfFov = MathF.Tan(fovY / 2.0f);
+            Vector3 rayDirection = Vector3.Normalize(
+                camDir + 
+                (right * x * tanHalfFov * aspect) + 
+                (cameraUp * y * tanHalfFov)
+            );
             
             return (rayOrigin, rayDirection);
+        }
+
+        private Vector3 UnprojectMouse(OpenTK.Mathematics.Vector2 mousePos)
+        {
+            // Convert mouse position to normalized screen coordinates
+            float x = (2.0f * mousePos.X) / Size.X - 1.0f;
+            float y = 1.0f - (2.0f * mousePos.Y) / Size.Y;
+            
+            // Get camera position and direction
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate camera basis vectors
+            Vector3 up = Vector3.UnitY;
+            Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
+            Vector3 cameraUp = Vector3.Cross(right, camDir);
+            
+            // Project mouse position to a point in front of the camera (on near plane)
+            float fovY = MathHelper.DegreesToRadians(60f);
+            float aspect = (float)Size.X / Size.Y;
+            float nearDist = 0.1f; // Distance from camera to near plane
+            
+            float tanHalfFov = MathF.Tan(fovY / 2.0f);
+            Vector3 nearPlanePos = cameraPos + camDir * nearDist;
+            Vector3 mouseWorldPos = nearPlanePos + 
+                (right * x * tanHalfFov * aspect * nearDist) + 
+                (cameraUp * y * tanHalfFov * nearDist);
+            
+            return mouseWorldPos;
+        }
+
+        private void AddScreenCanvasGrid()
+        {
+            // Get camera properties
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate camera basis vectors
+            Vector3 up = Vector3.UnitY;
+            Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
+            Vector3 cameraUp = Vector3.Cross(right, camDir);
+            
+            // Screen parameters
+            float fovY = MathHelper.DegreesToRadians(60f);
+            float aspect = (float)Size.X / Size.Y;
+            float nearDist = 1.0f; // Distance from camera where we draw the screen
+            
+            float tanHalfFov = MathF.Tan(fovY / 2.0f);
+            float screenHeight = 2.0f * tanHalfFov * nearDist;
+            float screenWidth = screenHeight * aspect;
+            
+            // Screen center position
+            Vector3 screenCenter = cameraPos + camDir * nearDist;
+            
+            // Screen corners
+            Vector3 topLeft = screenCenter + (-right * screenWidth * 0.5f) + (cameraUp * screenHeight * 0.5f);
+            Vector3 topRight = screenCenter + (right * screenWidth * 0.5f) + (cameraUp * screenHeight * 0.5f);
+            Vector3 bottomLeft = screenCenter + (-right * screenWidth * 0.5f) + (cameraUp * -screenHeight * 0.5f);
+            Vector3 bottomRight = screenCenter + (right * screenWidth * 0.5f) + (cameraUp * -screenHeight * 0.5f);
+            
+            // Draw screen border (white)
+            Vector3 gridColor = new Vector3(1, 1, 1); // White
+            AddDebugLine(topLeft, topRight, gridColor);
+            AddDebugLine(topRight, bottomRight, gridColor);
+            AddDebugLine(bottomRight, bottomLeft, gridColor);
+            AddDebugLine(bottomLeft, topLeft, gridColor);
+            
+            // Draw grid lines
+            int gridLines = 10;
+            
+            // Vertical lines
+            for (int i = 1; i < gridLines; i++)
+            {
+                float t = (float)i / gridLines;
+                Vector3 top = Vector3.Lerp(topLeft, topRight, t);
+                Vector3 bottom = Vector3.Lerp(bottomLeft, bottomRight, t);
+                AddDebugLine(top, bottom, gridColor * 0.5f); // Dimmed white
+            }
+            
+            // Horizontal lines  
+            for (int i = 1; i < gridLines; i++)
+            {
+                float t = (float)i / gridLines;
+                Vector3 leftPoint = Vector3.Lerp(topLeft, bottomLeft, t);
+                Vector3 rightPoint = Vector3.Lerp(topRight, bottomRight, t);
+                AddDebugLine(leftPoint, rightPoint, gridColor * 0.5f); // Dimmed white
+            }
+            
+            // Draw center cross (brighter white)
+            Vector3 centerH1 = screenCenter + (-right * screenWidth * 0.1f);
+            Vector3 centerH2 = screenCenter + (right * screenWidth * 0.1f);
+            Vector3 centerV1 = screenCenter + (cameraUp * screenHeight * 0.1f);
+            Vector3 centerV2 = screenCenter + (cameraUp * -screenHeight * 0.1f);
+            AddDebugLine(centerH1, centerH2, gridColor);
+            AddDebugLine(centerV1, centerV2, gridColor);
+        }
+
+        private Vector3 GetMouseProjectionOnScreen(OpenTK.Mathematics.Vector2 mousePos)
+        {
+            // Convert mouse position to normalized screen coordinates [-1, 1]
+            float x = (2.0f * mousePos.X) / Size.X - 1.0f;
+            float y = 1.0f - (2.0f * mousePos.Y) / Size.Y;
+            
+            // Get camera properties
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate camera basis vectors
+            Vector3 up = Vector3.UnitY;
+            Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
+            Vector3 cameraUp = Vector3.Cross(right, camDir);
+            
+            // Screen parameters (same as in AddScreenCanvasGrid)
+            float fovY = MathHelper.DegreesToRadians(60f);
+            float aspect = (float)Size.X / Size.Y;
+            float nearDist = 1.0f; // Same distance as the screen grid
+            
+            float tanHalfFov = MathF.Tan(fovY / 2.0f);
+            float screenHeight = 2.0f * tanHalfFov * nearDist;
+            float screenWidth = screenHeight * aspect;
+            
+            // Screen center position
+            Vector3 screenCenter = cameraPos + camDir * nearDist;
+            
+            // Calculate the exact position on the screen plane
+            Vector3 mouseOnScreen = screenCenter + 
+                (right * x * screenWidth * 0.5f) + 
+                (cameraUp * y * screenHeight * 0.5f);
+            
+            return mouseOnScreen;
         }
 
         private void UpdateInstanceBuffer()
@@ -1294,6 +1482,144 @@ public static class GlyphSphereLauncher
             return prog;
         }
 
+        private void SetupDebugRendering()
+        {
+            debugVao = GL.GenVertexArray();
+            debugVbo = GL.GenBuffer();
+            
+            GL.BindVertexArray(debugVao);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, debugVbo);
+            
+            // Setup vertex attributes for position (vec3) + color (vec3)
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
+            GL.EnableVertexAttribArray(1);
+            
+            GL.BindVertexArray(0);
+        }
+
+        private void UpdateDebugInfo()
+        {
+            // Update camera position for debug display
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            debugCameraPos = -camDir * distance;
+
+            // Calculate ray-sphere intersection for debug display
+            if (debugRayDirection != Vector3.Zero)
+            {
+                Vector3 oc = debugRayOrigin;
+                float a = Vector3.Dot(debugRayDirection, debugRayDirection);
+                float b = 2.0f * Vector3.Dot(oc, debugRayDirection);
+                float c = Vector3.Dot(oc, oc) - SPHERE_RADIUS * SPHERE_RADIUS;
+                
+                float discriminant = b * b - 4 * a * c;
+                if (discriminant >= 0)
+                {
+                    float t1 = (-b - MathF.Sqrt(discriminant)) / (2.0f * a);
+                    float t2 = (-b + MathF.Sqrt(discriminant)) / (2.0f * a);
+                    float t = (t1 > 0) ? t1 : t2;
+                    if (t > 0)
+                    {
+                        debugIntersectionPoint = debugRayOrigin + debugRayDirection * t;
+                    }
+                }
+            }
+        }
+
+        private void RenderDebugMarkers(Matrix4 view, Matrix4 proj)
+        {
+            GL.UseProgram(debugProgram);
+            
+            // Set uniforms
+            int viewLoc = GL.GetUniformLocation(debugProgram, "uView");
+            int projLoc = GL.GetUniformLocation(debugProgram, "uProj");
+            GL.UniformMatrix4(viewLoc, false, ref view);
+            GL.UniformMatrix4(projLoc, false, ref proj);
+            
+            // Build debug geometry
+            debugVertices.Clear();
+            debugColors.Clear();
+            
+            // Only show screen canvas grid (white lines)
+            AddScreenCanvasGrid();
+            
+            // Add mouse projection marker on screen grid
+            if (debugMousePos != OpenTK.Mathematics.Vector2.Zero)
+            {
+                Vector3 mouseProjection = GetMouseProjectionOnScreen(debugMousePos);
+                debugVertices.Add(mouseProjection);
+                debugColors.Add(new Vector3(1, 0, 0)); // Red marker for mouse projection
+            }
+            
+            // Upload and render debug geometry
+            if (debugVertices.Count > 0)
+            {
+                float[] data = new float[debugVertices.Count * 6];
+                for (int i = 0; i < debugVertices.Count; i++)
+                {
+                    data[i * 6 + 0] = debugVertices[i].X;
+                    data[i * 6 + 1] = debugVertices[i].Y;
+                    data[i * 6 + 2] = debugVertices[i].Z;
+                    data[i * 6 + 3] = debugColors[i].X;
+                    data[i * 6 + 4] = debugColors[i].Y;
+                    data[i * 6 + 5] = debugColors[i].Z;
+                }
+                
+                GL.BindVertexArray(debugVao);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, debugVbo);
+                GL.BufferData(BufferTarget.ArrayBuffer, data.Length * sizeof(float), data, BufferUsageHint.DynamicDraw);
+                
+                // Render points
+                GL.PointSize(10.0f);
+                GL.DrawArrays(PrimitiveType.Points, 0, debugVertices.Count);
+                
+                // Render lines
+                GL.DrawArrays(PrimitiveType.Lines, 0, debugVertices.Count);
+                
+                GL.BindVertexArray(0);
+            }
+        }
+
+        private void AddDebugLine(Vector3 start, Vector3 end, Vector3 color)
+        {
+            debugVertices.Add(start);
+            debugColors.Add(color);
+            debugVertices.Add(end);
+            debugColors.Add(color);
+        }
+
+        private void AddDebugCross(Vector3 center, float size, Vector3 color)
+        {
+            Vector3 right = Vector3.UnitX * size;
+            Vector3 up = Vector3.UnitY * size;
+            Vector3 forward = Vector3.UnitZ * size;
+            
+            // X axis
+            debugVertices.Add(center - right);
+            debugColors.Add(color);
+            debugVertices.Add(center + right);
+            debugColors.Add(color);
+            
+            // Y axis
+            debugVertices.Add(center - up);
+            debugColors.Add(color);
+            debugVertices.Add(center + up);
+            debugColors.Add(color);
+            
+            // Z axis
+            debugVertices.Add(center - forward);
+            debugColors.Add(color);
+            debugVertices.Add(center + forward);
+            debugColors.Add(color);
+        }
+
         // vertex structure for per-vertex bookkeeping
         private class Vertex
         {
@@ -1449,6 +1775,34 @@ void main()
 {
     // Dark opaque color for the background sphere
     FragColor = vec4(0.05, 0.05, 0.1, 1.0); // Very dark blue-grey
+}
+";
+
+        // Debug shaders for rendering debug markers
+        private readonly string debugVertexShaderSrc = @"
+#version 330 core
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec3 aColor;
+
+uniform mat4 uView;
+uniform mat4 uProj;
+
+out vec3 vColor;
+
+void main()
+{
+    gl_Position = uProj * uView * vec4(aPosition, 1.0);
+    vColor = aColor;
+}";
+
+        private readonly string debugFragmentShaderSrc = @"
+#version 330 core
+in vec3 vColor;
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vec4(vColor, 1.0);
 }
 ";
     }
