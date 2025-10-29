@@ -1211,12 +1211,290 @@ namespace Cathedral.Glyph
             return mouseOnScreen;
         }
 
-        // Stub methods for debug visualization
-        private void AddScreenCanvasGrid() { }
-        private void AddMouseOrthogonalRay(Vector3 mouseProjection) { }
-        private void AddSphereIntersectionMarker(Vector3 mouseProjection) { }
-        private void AddCameraToMouseRay(Vector3 mouseProjection) { }
-        private void AddMagentaRaySphereIntersection(Vector3 mouseProjection) { }
+        // Debug visualization methods
+        private void AddScreenCanvasGrid()
+        {
+            // Get camera properties
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate camera basis vectors
+            Vector3 up = Vector3.UnitY;
+            Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
+            Vector3 cameraUp = Vector3.Cross(right, camDir);
+            
+            // Screen parameters
+            float fovY = MathHelper.DegreesToRadians(60f);
+            float aspect = (float)Size.X / Size.Y;
+            float nearDist = 1.0f; // Distance from camera where we draw the screen
+            
+            float tanHalfFov = MathF.Tan(fovY / 2.0f);
+            float screenHeight = 2.0f * tanHalfFov * nearDist;
+            float screenWidth = screenHeight * aspect;
+            
+            // Screen center position
+            Vector3 screenCenter = cameraPos + camDir * nearDist;
+            
+            // Screen corners
+            Vector3 topLeft = screenCenter + (-right * screenWidth * 0.5f) + (cameraUp * screenHeight * 0.5f);
+            Vector3 topRight = screenCenter + (right * screenWidth * 0.5f) + (cameraUp * screenHeight * 0.5f);
+            Vector3 bottomLeft = screenCenter + (-right * screenWidth * 0.5f) + (cameraUp * -screenHeight * 0.5f);
+            Vector3 bottomRight = screenCenter + (right * screenWidth * 0.5f) + (cameraUp * -screenHeight * 0.5f);
+            
+            // Draw screen border (white)
+            Vector3 gridColor = new Vector3(1, 1, 1); // White
+            AddDebugLine(topLeft, topRight, gridColor);
+            AddDebugLine(topRight, bottomRight, gridColor);
+            AddDebugLine(bottomRight, bottomLeft, gridColor);
+            AddDebugLine(bottomLeft, topLeft, gridColor);
+            
+            // Draw grid lines
+            int gridLines = 10;
+            
+            // Vertical lines
+            for (int i = 1; i < gridLines; i++)
+            {
+                float t = (float)i / gridLines;
+                Vector3 top = Vector3.Lerp(topLeft, topRight, t);
+                Vector3 bottom = Vector3.Lerp(bottomLeft, bottomRight, t);
+                AddDebugLine(top, bottom, gridColor * 0.5f); // Dimmed white
+            }
+            
+            // Horizontal lines  
+            for (int i = 1; i < gridLines; i++)
+            {
+                float t = (float)i / gridLines;
+                Vector3 leftPoint = Vector3.Lerp(topLeft, bottomLeft, t);
+                Vector3 rightPoint = Vector3.Lerp(topRight, bottomRight, t);
+                AddDebugLine(leftPoint, rightPoint, gridColor * 0.5f); // Dimmed white
+            }
+            
+            // Draw center cross (brighter white)
+            Vector3 centerH1 = screenCenter + (-right * screenWidth * 0.1f);
+            Vector3 centerH2 = screenCenter + (right * screenWidth * 0.1f);
+            Vector3 centerV1 = screenCenter + (cameraUp * screenHeight * 0.1f);
+            Vector3 centerV2 = screenCenter + (cameraUp * -screenHeight * 0.1f);
+            AddDebugLine(centerH1, centerH2, gridColor);
+            AddDebugLine(centerV1, centerV2, gridColor);
+        }
+
+        private void AddMouseOrthogonalRay(Vector3 mouseProjection)
+        {
+            // Get camera properties to calculate the screen normal
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate camera basis vectors to get screen normal
+            Vector3 up = Vector3.UnitY;
+            Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
+            Vector3 cameraUp = Vector3.Cross(right, camDir);
+            
+            // Calculate the screen normal (perpendicular to the screen grid)
+            Vector3 screenNormal = Vector3.Normalize(Vector3.Cross(right, cameraUp));
+            
+            // Make sure the normal points away from the camera (toward the scene)
+            if (Vector3.Dot(screenNormal, camDir) < 0)
+            {
+                screenNormal = -screenNormal;
+            }
+            
+            Vector3 rayDirection = screenNormal;
+            
+            // Create a ray extending both directions from the mouse projection point
+            float rayLength = 100.0f; // Increased length to make it more visible
+            Vector3 rayStart = mouseProjection - rayDirection * rayLength;
+            Vector3 rayEnd = mouseProjection + rayDirection * rayLength;
+            
+            // Add the orthogonal ray as a cyan line
+            AddDebugLine(rayStart, rayEnd, new Vector3(0, 1, 1)); // Cyan color
+            
+            // Optional: Add small markers at the endpoints to show the full extent
+            debugVertices.Add(rayStart);
+            debugColors.Add(new Vector3(0, 0.5f, 0.5f)); // Dark cyan dot at start
+            debugVertices.Add(rayEnd);
+            debugColors.Add(new Vector3(0, 0.5f, 0.5f)); // Dark cyan dot at end
+        }
+
+        private void AddSphereIntersectionMarker(Vector3 mouseProjection)
+        {
+            // Get camera properties for the ray direction
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate camera basis vectors to get screen normal
+            Vector3 up = Vector3.UnitY;
+            Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
+            Vector3 cameraUp = Vector3.Cross(right, camDir);
+            
+            // Calculate the screen normal (same as in AddMouseOrthogonalRay)
+            Vector3 screenNormal = Vector3.Normalize(Vector3.Cross(right, cameraUp));
+            if (Vector3.Dot(screenNormal, camDir) < 0)
+            {
+                screenNormal = -screenNormal;
+            }
+            
+            // The orthogonal ray starts from the mouse projection and goes in screen normal direction
+            Vector3 rayOrigin = mouseProjection;
+            Vector3 rayDirection = screenNormal;
+            
+            // Calculate ray-sphere intersection
+            Vector3 sphereCenter = Vector3.Zero;
+            float sphereRadius = SPHERE_RADIUS;
+            
+            // Ray-sphere intersection math
+            Vector3 oc = rayOrigin - sphereCenter;
+            float a = Vector3.Dot(rayDirection, rayDirection);
+            float b = 2.0f * Vector3.Dot(oc, rayDirection);
+            float c = Vector3.Dot(oc, oc) - sphereRadius * sphereRadius;
+            
+            float discriminant = b * b - 4 * a * c;
+            
+            if (discriminant >= 0)
+            {
+                // Calculate both intersection points
+                float sqrtDiscriminant = MathF.Sqrt(discriminant);
+                float t1 = (-b - sqrtDiscriminant) / (2.0f * a);
+                float t2 = (-b + sqrtDiscriminant) / (2.0f * a);
+                
+                // Add markers for both intersection points (entry and exit)
+                if (t1 > 0) // Only show if intersection is in front of ray origin
+                {
+                    Vector3 intersection1 = rayOrigin + rayDirection * t1;
+                    debugVertices.Add(intersection1);
+                    debugColors.Add(new Vector3(1, 1, 0)); // Yellow marker for first intersection
+                }
+                
+                // Note: Only showing the first (closest) intersection to avoid unwanted line artifacts
+            }
+        }
+
+        private void AddCameraToMouseRay(Vector3 mouseProjection)
+        {
+            // Get main camera position
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate ray direction from camera to mouse projection
+            Vector3 rayDirection = Vector3.Normalize(mouseProjection - cameraPos);
+            
+            // Extend the ray in both directions
+            float rayLength = 100.0f; // Same length as orthogonal ray
+            Vector3 rayStart = cameraPos - rayDirection * rayLength;
+            Vector3 rayEnd = mouseProjection + rayDirection * rayLength;
+            
+            // Add extended magenta ray
+            AddDebugLine(rayStart, rayEnd, new Vector3(1, 0, 1)); // Magenta color
+            
+            // Add markers at key points
+            debugVertices.Add(cameraPos);
+            debugColors.Add(new Vector3(0.8f, 0, 0.8f)); // Dark magenta marker for camera position
+            
+            debugVertices.Add(rayStart);
+            debugColors.Add(new Vector3(0.5f, 0, 0.5f)); // Dark magenta dot at ray start
+            
+            debugVertices.Add(rayEnd);
+            debugColors.Add(new Vector3(0.5f, 0, 0.5f)); // Dark magenta dot at ray end
+        }
+
+        private void AddMagentaRaySphereIntersection(Vector3 mouseProjection)
+        {
+            // Get main camera position
+            float yawR = MathHelper.DegreesToRadians(yaw);
+            float pitchR = MathHelper.DegreesToRadians(pitch);
+            Vector3 camDir = new Vector3(
+                MathF.Cos(pitchR) * MathF.Cos(yawR),
+                MathF.Sin(pitchR),
+                MathF.Cos(pitchR) * MathF.Sin(yawR)
+            );
+            Vector3 cameraPos = -camDir * distance;
+            
+            // Calculate ray from camera through mouse projection
+            Vector3 rayOrigin = cameraPos;
+            Vector3 rayDirection = Vector3.Normalize(mouseProjection - cameraPos);
+            
+            // Calculate ray-sphere intersection
+            Vector3 sphereCenter = Vector3.Zero;
+            float sphereRadius = SPHERE_RADIUS;
+            
+            // Ray-sphere intersection math
+            Vector3 oc = rayOrigin - sphereCenter;
+            float a = Vector3.Dot(rayDirection, rayDirection);
+            float b = 2.0f * Vector3.Dot(oc, rayDirection);
+            float c = Vector3.Dot(oc, oc) - sphereRadius * sphereRadius;
+            
+            float discriminant = b * b - 4 * a * c;
+            
+            if (discriminant >= 0)
+            {
+                // Calculate the closest intersection point (entry point)
+                float sqrtDiscriminant = MathF.Sqrt(discriminant);
+                float t1 = (-b - sqrtDiscriminant) / (2.0f * a);
+                
+                if (t1 > 0) // Only show if intersection is in front of camera
+                {
+                    Vector3 intersection = rayOrigin + rayDirection * t1;
+                    debugVertices.Add(intersection);
+                    debugColors.Add(new Vector3(0, 1, 0)); // Green marker for magenta ray intersection
+                }
+            }
+        }
+
+        private void AddDebugLine(Vector3 start, Vector3 end, Vector3 color)
+        {
+            debugVertices.Add(start);
+            debugColors.Add(color);
+            debugVertices.Add(end);
+            debugColors.Add(color);
+        }
+
+        private void AddDebugCross(Vector3 center, float size, Vector3 color)
+        {
+            Vector3 right = Vector3.UnitX * size;
+            Vector3 up = Vector3.UnitY * size;
+            Vector3 forward = Vector3.UnitZ * size;
+            
+            // X axis
+            debugVertices.Add(center - right);
+            debugColors.Add(color);
+            debugVertices.Add(center + right);
+            debugColors.Add(color);
+            
+            // Y axis
+            debugVertices.Add(center - up);
+            debugColors.Add(color);
+            debugVertices.Add(center + up);
+            debugColors.Add(color);
+            
+            // Z axis
+            debugVertices.Add(center - forward);
+            debugColors.Add(color);
+            debugVertices.Add(center + forward);
+            debugColors.Add(color);
+        }
 
         // Vertex and GlyphInfo structures
         private class Vertex

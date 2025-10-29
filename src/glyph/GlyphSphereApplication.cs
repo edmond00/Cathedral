@@ -6,10 +6,19 @@ using OpenTK.Windowing.Desktop;
 
 namespace Cathedral.Glyph
 {
+    public static class GlyphSphereLauncher
+    {
+        // Public method you call from your terminal-based app.
+        public static void LaunchGlyphSphere(int windowWidth = 900, int windowHeight = 900)
+        {
+            GlyphSphereApplication.Launch(windowWidth, windowHeight);
+        }
+    }
+
     public class GlyphSphereApplication
     {
-        private GlyphSphereCore core;
-        private GlyphSphereInterface interfaces;
+        private GlyphSphereCore? core;
+        private GlyphSphereInterface? interfaces;
 
         public static void Launch(int windowWidth = 900, int windowHeight = 900)
         {
