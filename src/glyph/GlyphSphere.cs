@@ -83,19 +83,8 @@ public static class GlyphSphereLauncher
     // Public method you call from your terminal-based app.
     public static void LaunchGlyphSphere(int windowWidth = 900, int windowHeight = 900)
     {
-        // OpenTK/GLFW requires running on the main thread
-        var native = new NativeWindowSettings()
-        {
-            ClientSize = new OpenTK.Mathematics.Vector2i(windowWidth, windowHeight),
-            Title = "Glyph Sphere Prototype",
-            Flags = ContextFlags.Default,
-            API = ContextAPI.OpenGL,
-            APIVersion = new Version(3, 3),
-            WindowBorder = WindowBorder.Resizable
-        };
-
-        using var window = new GlyphSphereWindow(GameWindowSettings.Default, native);
-        window.Run();
+        // Use the integrated application
+        GlyphSphereApplication.Launch(windowWidth, windowHeight);
     }
 
     // Small helper window deriving GameWindow
