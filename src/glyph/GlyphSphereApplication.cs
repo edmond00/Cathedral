@@ -3,6 +3,7 @@ using System;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using Cathedral.Glyph.Microworld;
 
 namespace Cathedral.Glyph
 {
@@ -18,7 +19,7 @@ namespace Cathedral.Glyph
     public class GlyphSphereApplication
     {
         private GlyphSphereCore? core;
-        private GlyphSphereInterface? interfaces;
+        private MicroworldInterface? interfaces;
 
         public static void Launch(int windowWidth = 900, int windowHeight = 900)
         {
@@ -33,7 +34,7 @@ namespace Cathedral.Glyph
             };
 
             using var core = new GlyphSphereCore(GameWindowSettings.Default, native);
-            var interfaces = new GlyphSphereInterface(core);
+            var interfaces = new MicroworldInterface(core);
             
             // Set up event handlers for enhanced mouse interaction
             interfaces.VertexHoverEvent += (index, glyph, color) =>
@@ -44,15 +45,15 @@ namespace Cathedral.Glyph
             interfaces.VertexClickEvent += (index, glyph, color, noise) =>
             {
                 // Enhanced click feedback could go here
-                var (biome, location, avgNoise) = interfaces.GetBiomeInfoAt(index);
+                var (biome, location, avgNoise) = interfaces.GetDetailedBiomeInfoAt(index);
                 Console.WriteLine($"Clicked vertex {index}: biome='{biome.Name}' location='{location?.Name ?? "none"}' noise={avgNoise:F3}");
             };
             
-            // Generate biomes once the core is loaded
+            // Generate world once the core is loaded
             core.CoreLoaded += () =>
             {
-                Console.WriteLine("Generating biomes...");
-                interfaces.GenerateBiomes();
+                Console.WriteLine("Generating microworld...");
+                interfaces.GenerateWorld();
             };
 
             core.Run();
