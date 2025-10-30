@@ -27,6 +27,7 @@ namespace Cathedral.Glyph
             // Subscribe to core events
             core.VertexHovered += OnVertexHovered;
             core.VertexClicked += OnVertexClicked;
+            core.UpdateRequested += OnUpdateRequested;
         }
 
         // Public interface properties and methods for vertex manipulation
@@ -75,6 +76,13 @@ namespace Cathedral.Glyph
         /// <param name="vertexIndex">Index of the vertex</param>
         /// <returns>Color as System.Numerics.Vector3 (RGB 0-255 range)</returns>
         protected abstract System.Numerics.Vector3 GetColorAt(int vertexIndex);
+
+        /// <summary>
+        /// Update method called at regular intervals to animate world elements.
+        /// Implementations can use this to animate water, clouds, or other dynamic elements.
+        /// </summary>
+        /// <param name="deltaTime">Time elapsed since last update in seconds</param>
+        public abstract void Update(float deltaTime);
 
         // Common utility methods available to all implementations
         public void ClearAllGlyphs()
@@ -175,6 +183,12 @@ namespace Cathedral.Glyph
                              $", noise {noiseValue:F3}");
             
             VertexClickEvent?.Invoke(vertexIndex, glyph, color, noiseValue);
+        }
+
+        private void OnUpdateRequested(float deltaTime)
+        {
+            // Call the abstract Update method that concrete implementations must provide
+            Update(deltaTime);
         }
     }
 }

@@ -18,6 +18,12 @@ namespace Cathedral.Glyph.Microworld
     {
         // Store world data for each vertex
         private readonly Dictionary<int, VertexWorldData> vertexData = new Dictionary<int, VertexWorldData>();
+        
+        // Track vertices that need water animation (sea and ocean biomes without locations)
+        private readonly HashSet<int> waterVertices = new HashSet<int>();
+        
+        // Random generator for water animation
+        private readonly Random animationRandom = new Random();
 
         public MicroworldInterface(GlyphSphereCore glyphSphereCore) : base(glyphSphereCore)
         {
@@ -80,6 +86,12 @@ namespace Cathedral.Glyph.Microworld
                     GlyphChar = glyphChar,
                     Color = color
                 };
+                
+                // Track water vertices for animation (sea/ocean biomes without locations)
+                if ((biome.Name == "sea" || biome.Name == "ocean") && !location.HasValue)
+                {
+                    waterVertices.Add(i);
+                }
                 
                 // Set the vertex properties using the interface
                 SetVertexGlyph(i, glyphChar, color);
@@ -230,6 +242,45 @@ namespace Cathedral.Glyph.Microworld
             float avgNoise = (perlinNoise1 + perlinNoise2 + perlinNoise3) / 3.0f;
             
             return (biome, location, avgNoise);
+        }
+
+        public override void Update(float deltaTime)
+        {
+            // Animate water vertices (sea and ocean biomes)
+            foreach (int vertexIndex in waterVertices)
+            {
+                if (vertexData.TryGetValue(vertexIndex, out var data))
+                {
+                    char newGlyph;
+                    
+                    // Animate based on biome type:
+                    // Sea: alternate between '~' and '≈'
+                    // Ocean: alternate between '≈' and '≋'
+                    if (data.Biome.Name == "sea")
+                    {
+                        // Sea animation: '~' and '≈'
+                        newGlyph = animationRandom.NextDouble() < 0.5 ? '~' : '≈';
+                    }
+                    else if (data.Biome.Name == "ocean")
+                    {
+                        // Ocean animation: '≈' and '≋'
+                        newGlyph = animationRandom.NextDouble() < 0.5 ? '≈' : '≋';
+                    }
+                    else
+                    {
+                        // Fallback - shouldn't happen
+                        newGlyph = data.GlyphChar;
+                    }
+                    
+                    // Update the glyph in the vertex data
+                    var updatedData = data;
+                    updatedData.GlyphChar = newGlyph;
+                    vertexData[vertexIndex] = updatedData;
+                    
+                    // Update the visual representation
+                    SetVertexGlyph(vertexIndex, newGlyph, data.Color);
+                }
+            }
         }
 
         // Data structure to store world information for each vertex

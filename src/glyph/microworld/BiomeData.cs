@@ -51,7 +51,7 @@ namespace Cathedral.Glyph.Microworld
             ["peak"] = new BiomeType("peak", '⋀', new Vector3(255, 255, 255), 1.3f, 0.2f),
             ["coast"] = new BiomeType("coast", ':', new Vector3(255, 255, 0), 1.3f, 0.2f),
             ["city"] = new BiomeType("city", '☷', new Vector3(150, 100, 100), 1.3f, 0.4f),
-            ["sea"] = new BiomeType("sea", '~', new Vector3(120, 180, 255), 1.3f, 0.01f),
+            ["sea"] = new BiomeType("sea", '~', new Vector3(60, 100, 225), 1.3f, 0.01f),
             ["ocean"] = new BiomeType("ocean", '≈', new Vector3(0, 0, 200), 1.3f, 0.02f),
             ["field"] = new BiomeType("field", '⣿', new Vector3(80, 200, 0), 1.2f, 0.1f),
         };

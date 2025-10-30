@@ -69,26 +69,32 @@ namespace Cathedral.Glyph
         float debugCameraDistance = 120.0f; // Distance for debug camera (adjustable with W/S)
         
         // Debug shader modes
-        int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe
-        int debugProgram1, debugProgram2, debugProgram3;
+        int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe, 4=grayscale
+        int debugProgram1, debugProgram2, debugProgram3, debugProgram4;
 
         // Shared constants to avoid hardcoded duplicates
         const float QUAD_SIZE = 0.3f; // Size of each glyph quad on the sphere
         const float VERTEX_SHADER_SIZE_MULTIPLIER = 2.0f; // Multiplier used in vertex shader
         const float SPHERE_RADIUS = 25.0f; // Main sphere radius
+        const int SPHERE_SUBDIVISIONS = 5; // Icosphere subdivision level (affects vertex density)
         const float CAMERA_DEFAULT_DISTANCE = 80.0f; // Default camera distance
         const float CAMERA_MIN_DISTANCE = 30.0f; // Minimum camera distance
         const float CAMERA_MAX_DISTANCE = 200f; // Maximum camera distance
         
         // Default glyph settings
         const char DEFAULT_GLYPH = '.';
-        const int GLYPH_PIXEL_SIZE = 35; // raster size
+        const int GLYPH_PIXEL_SIZE = 65; // raster size
         const int GLYPH_CELL = 50; // cell in atlas
+
+        // Update timing for interface animations
+        const float UPDATE_INTERVAL = 0.1f; // Update every 0.5 seconds (2 Hz)
+        private float updateTimer = 0.0f;
 
         // Events for interface interaction
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexHovered;
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexClicked;
         public event Action? CoreLoaded;
+        public event Action<float>? UpdateRequested;
 
         public GlyphSphereCore(GameWindowSettings g, NativeWindowSettings n) : base(g, n)
         {
@@ -161,6 +167,7 @@ namespace Cathedral.Glyph
             debugProgram1 = CreateProgram(vertexShaderSrc, debugFragmentSrc1); // vertex colors only
             debugProgram2 = CreateProgram(vertexShaderSrc, debugFragmentSrc2); // texture only
             debugProgram3 = CreateProgram(vertexShaderSrc, debugFragmentSrc3); // wireframe
+            debugProgram4 = CreateProgram(vertexShaderSrc, debugFragmentSrc4); // grayscale
 
             // Build background sphere shader
             backgroundProgram = CreateProgram(backgroundVertexShaderSrc, backgroundFragmentShaderSrc);
@@ -172,10 +179,10 @@ namespace Cathedral.Glyph
             GL.UseProgram(program);
             
             // Build sphere with default glyphs (green dots)
-            BuildSphere(6, 0, SPHERE_RADIUS);
+            BuildSphere(SPHERE_SUBDIVISIONS, 0, SPHERE_RADIUS);
             
             // Create background sphere (90% radius, opaque)
-            BuildBackgroundSphere(5, 0, SPHERE_RADIUS * 0.98f);
+            BuildBackgroundSphere(SPHERE_SUBDIVISIONS, 0, SPHERE_RADIUS * 0.98f);
 
             // Build glyph atlas with default glyph
             string defaultGlyphSet = DEFAULT_GLYPH.ToString();
@@ -287,6 +294,14 @@ namespace Cathedral.Glyph
             // Input -> camera control
             HandleInput(args);
 
+            // Update timing for interface animations
+            updateTimer += (float)args.Time;
+            if (updateTimer >= UPDATE_INTERVAL)
+            {
+                UpdateRequested?.Invoke((float)args.Time);
+                updateTimer = 0.0f;
+            }
+
             // Update debug info
             UpdateDebugInfo();
 
@@ -357,13 +372,14 @@ namespace Cathedral.Glyph
             // Debug shader switching (D key)
             if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D))
             {
-                debugShaderMode = (debugShaderMode + 1) % 4;
+                debugShaderMode = (debugShaderMode + 1) % 5;
                 string description = debugShaderMode switch
                 {
                     0 => "Normal rendering (texture + vertex colors)",
                     1 => "Vertex colors only (no texture masking)",
                     2 => "Texture only (white on black)",
                     3 => "Wireframe/Debug view",
+                    4 => "Grayscale (luminosity-based grayscale)",
                     _ => "Unknown"
                 };
                 Console.WriteLine($"Debug shader mode: {debugShaderMode} - {description}");
@@ -426,6 +442,7 @@ namespace Cathedral.Glyph
                 1 => debugProgram1,     // vertex colors only
                 2 => debugProgram2,     // texture only
                 3 => debugProgram3,     // wireframe
+                4 => debugProgram4,     // grayscale
                 _ => program
             };
             
@@ -1590,6 +1607,26 @@ void main() {
     vec2 grid = abs(fract(vUv * 10.0) - 0.5);
     float line = smoothstep(0.0, 0.05, min(grid.x, grid.y));
     if (luminance > 0.1) { FragColor = vec4(mix(vec3(1.0, 0.0, 0.0), vColor.rgb, line), 1.0); } else { discard; }
+}";
+
+        private readonly string debugFragmentSrc4 = @"
+#version 330 core
+in vec2 vUv;
+in vec4 vColor;
+out vec4 FragColor;
+uniform sampler2D uAtlas;
+void main() {
+    vec4 texSample = texture(uAtlas, vUv);
+    float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
+    
+    if (texLuminance > 0.1) {
+        // Compute luminosity of the original vertex color
+        float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
+        // Use the luminosity as a grayscale value
+        FragColor = vec4(colorLuminance, colorLuminance, colorLuminance, 1.0);
+    } else {
+        discard;
+    }
 }";
 
         private readonly string backgroundVertexShaderSrc = @"
