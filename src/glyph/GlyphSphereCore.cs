@@ -13,6 +13,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Drawing.Processing;
+using Cathedral.Pathfinding;
 
 using Vector3 = OpenTK.Mathematics.Vector3;
 using Vector4 = OpenTK.Mathematics.Vector4;
@@ -50,6 +51,11 @@ namespace Cathedral.Glyph
         float yaw = 0;
         float pitch = 0;
         float distance = CAMERA_DEFAULT_DISTANCE;
+        
+        // Camera following
+        private Vector3? _cameraTarget = null;
+        private bool _cameraFollowing = false;
+        private const float CAMERA_FOLLOW_SPEED = 2.0f;
         
         // Mouse interaction
         int hoveredVertexIndex = -1;
@@ -89,6 +95,10 @@ namespace Cathedral.Glyph
         // Update timing for interface animations
         const float UPDATE_INTERVAL = 0.1f; // Update every 0.5 seconds (2 Hz)
         private float updateTimer = 0.0f;
+
+        // Pathfinding
+        private GlyphSphereGraph? _graph;
+        private PathfindingService? _pathfindingService;
 
         // Events for interface interaction
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexHovered;
@@ -211,6 +221,9 @@ namespace Cathedral.Glyph
             // For mouse click reading
             CursorState = CursorState.Normal;
             
+            // Initialize pathfinding
+            InitializePathfinding();
+            
             // Fire loaded event for interface setup
             CoreLoaded?.Invoke();
         }
@@ -293,6 +306,9 @@ namespace Cathedral.Glyph
 
             // Input -> camera control
             HandleInput(args);
+
+            // Update camera following
+            UpdateCameraFollowing((float)args.Time);
 
             // Update timing for interface animations
             updateTimer += (float)args.Time;
@@ -492,11 +508,8 @@ namespace Cathedral.Glyph
             {
                 hoveredVertexIndex = newHover;
                 
-                // Fire event for interface
-                if (newHover >= 0)
-                {
-                    VertexHovered?.Invoke(newHover, mouse);
-                }
+                // Fire event for interface (including -1 for "no hover")
+                VertexHovered?.Invoke(newHover, mouse);
             }
         }
 
@@ -1656,5 +1669,106 @@ void main() { gl_Position = uProj * uView * vec4(aPosition, 1.0); vColor = aColo
 in vec3 vColor;
 out vec4 FragColor;
 void main() { FragColor = vec4(vColor, 1.0); }";
+
+        // Pathfinding methods
+        private void InitializePathfinding()
+        {
+            _pathfindingService = new PathfindingService();
+            _graph = new GlyphSphereGraph(this);
+            
+            var debugInfo = _graph.GetDebugInfo();
+            Console.WriteLine($"Pathfinding initialized: {debugInfo.nodes} nodes, {debugInfo.edges} edges, {debugInfo.avgConnections:F1} avg connections per node");
+        }
+
+        /// <summary>
+        /// Gets the pathfinding graph for the sphere
+        /// </summary>
+        public GlyphSphereGraph? GetGraph() => _graph;
+
+        /// <summary>
+        /// Gets the pathfinding service
+        /// </summary>
+        public PathfindingService? GetPathfindingService() => _pathfindingService;
+
+        /// <summary>
+        /// Requests pathfinding between two vertices asynchronously
+        /// </summary>
+        public System.Threading.Tasks.Task<Cathedral.Pathfinding.Path?> FindPathAsync(int fromVertex, int toVertex)
+        {
+            if (_pathfindingService == null || _graph == null)
+                throw new InvalidOperationException("Pathfinding not initialized");
+
+            return _pathfindingService.FindPathAsync(_graph, fromVertex, toVertex);
+        }
+
+        /// <summary>
+        /// Finds the closest vertex to a world position
+        /// </summary>
+        public int FindClosestVertex(Vector3 worldPosition)
+        {
+            if (_graph == null)
+                return -1;
+
+            var numericPos = new System.Numerics.Vector3(worldPosition.X, worldPosition.Y, worldPosition.Z);
+            return _graph.FindClosestNode(numericPos);
+        }
+
+        /// <summary>
+        /// Sets the camera to follow a specific vertex
+        /// </summary>
+        public void SetCameraTarget(int vertexIndex)
+        {
+            if (vertexIndex >= 0 && vertexIndex < vertices.Count)
+            {
+                _cameraTarget = GetVertexPosition(vertexIndex);
+                _cameraFollowing = true;
+            }
+        }
+
+        /// <summary>
+        /// Stops camera following and returns to manual control
+        /// </summary>
+        public void StopCameraFollowing()
+        {
+            _cameraFollowing = false;
+            _cameraTarget = null;
+        }
+
+        /// <summary>
+        /// Updates camera following logic
+        /// </summary>
+        private void UpdateCameraFollowing(float deltaTime)
+        {
+            if (!_cameraFollowing || !_cameraTarget.HasValue)
+                return;
+
+            Vector3 targetPos = _cameraTarget.Value;
+            
+            // Calculate desired yaw and pitch to look at the target
+            float targetYaw = MathF.Atan2(targetPos.X, targetPos.Z);
+            float targetPitch = MathF.Asin(targetPos.Y / targetPos.Length);
+            
+            // Smoothly interpolate camera angles
+            float lerpSpeed = CAMERA_FOLLOW_SPEED * deltaTime;
+            yaw = LerpAngle(yaw, targetYaw, lerpSpeed);
+            pitch = MathHelper.Lerp(pitch, targetPitch, lerpSpeed);
+        }
+
+        /// <summary>
+        /// Interpolates between two angles, handling wraparound
+        /// </summary>
+        private static float LerpAngle(float from, float to, float t)
+        {
+            float diff = to - from;
+            while (diff > MathF.PI) diff -= 2 * MathF.PI;
+            while (diff < -MathF.PI) diff += 2 * MathF.PI;
+            return from + diff * t;
+        }
+
+        protected override void OnUnload()
+        {
+            _pathfindingService?.Dispose();
+            base.OnUnload();
+        }
     }
 }

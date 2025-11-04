@@ -3,8 +3,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using OpenTK.Mathematics;
 using static Cathedral.Glyph.Microworld.BiomeDatabase;
+using Cathedral.Pathfinding;
 
 using Vector3 = OpenTK.Mathematics.Vector3;
 
@@ -25,8 +27,35 @@ namespace Cathedral.Glyph.Microworld
         // Random generator for water animation
         private readonly Random animationRandom = new Random();
 
+        // Avatar system
+        private int _avatarVertex = -1;
+        private VertexWorldData? _originalAvatarData;
+        private Cathedral.Pathfinding.Path? _currentPath;
+        private Cathedral.Pathfinding.Path? _hoveredPath;
+        private int _hoveredVertex = -1;
+        private int _pathIndex = 0;
+        private float _moveTimer = 0.0f;
+        
+        // Threading support for hover paths
+        private Cathedral.Pathfinding.Path? _pendingHoverPath;
+        private int _pendingHoverVertex = -1;
+        
+        private const float MOVE_SPEED = 2.0f; // Moves per second
+        private const char AVATAR_CHAR = '☻';
+        private const char PATH_WAYPOINT_CHAR = '.';
+        private const char PATH_DESTINATION_CHAR = '+';
+
         public MicroworldInterface(GlyphSphereCore glyphSphereCore) : base(glyphSphereCore)
         {
+            // Subscribe to our own events to handle avatar interactions
+            VertexHoverEvent += (vertexIndex, glyph, color) => 
+            {
+                if (vertexIndex >= 0)
+                    HandleVertexHovered(vertexIndex);
+                else
+                    HandleVertexUnhovered();
+            };
+            VertexClickEvent += (vertexIndex, glyph, color, noiseValue) => HandleVertexClicked(vertexIndex);
         }
 
         public override void GenerateWorld()
@@ -108,6 +137,9 @@ namespace Cathedral.Glyph.Microworld
             // Print statistics using the base class utilities
             PrintNoiseStatistics(noiseValues, "Microworld Noise Distribution Statistics");
             PrintGlyphStatistics(glyphCounts, VertexCount, "Microworld Biome-Based Glyph Distribution");
+            
+            // Initialize avatar at a random suitable location
+            InitializeAvatar();
         }
 
         public override (string primaryType, string secondaryType, float noiseValue) GetWorldInfoAt(int vertexIndex)
@@ -124,6 +156,12 @@ namespace Cathedral.Glyph.Microworld
 
         protected override char GetGlyphAt(int vertexIndex)
         {
+            // Avatar takes priority over biome data
+            if (vertexIndex == _avatarVertex)
+            {
+                return AVATAR_CHAR;
+            }
+
             if (vertexData.TryGetValue(vertexIndex, out var data))
             {
                 return data.GlyphChar;
@@ -133,6 +171,12 @@ namespace Cathedral.Glyph.Microworld
 
         protected override System.Numerics.Vector3 GetColorAt(int vertexIndex)
         {
+            // Avatar takes priority over biome data
+            if (vertexIndex == _avatarVertex)
+            {
+                return new System.Numerics.Vector3(255, 255, 0); // Yellow for avatar
+            }
+
             if (vertexData.TryGetValue(vertexIndex, out var data))
             {
                 return data.Color;
@@ -246,11 +290,20 @@ namespace Cathedral.Glyph.Microworld
 
         public override void Update(float deltaTime)
         {
+            // Process pending hover path from background thread
+            ProcessPendingHoverPath();
+            
+            // Update avatar movement
+            UpdateMovement(deltaTime);
+            
             // Animate water vertices (sea and ocean biomes)
             foreach (int vertexIndex in waterVertices)
             {
                 if (vertexData.TryGetValue(vertexIndex, out var data))
                 {
+                    // Skip water animation if this vertex has the avatar
+                    if (vertexIndex == _avatarVertex) continue;
+
                     char newGlyph;
                     
                     // Animate based on biome type:
@@ -282,6 +335,250 @@ namespace Cathedral.Glyph.Microworld
                 }
             }
         }
+
+        // Avatar Management Methods
+        private void InitializeAvatar()
+        {
+            // Find a suitable starting location (preferably plain or field biome)
+            var suitableVertices = new List<int>();
+            
+            foreach (var kvp in vertexData)
+            {
+                var biome = kvp.Value.Biome;
+                if (biome.Name == "plain" || biome.Name == "field" || biome.Name == "coast")
+                {
+                    suitableVertices.Add(kvp.Key);
+                }
+            }
+
+            if (suitableVertices.Count == 0)
+            {
+                // Fallback: use any non-water vertex
+                foreach (var kvp in vertexData)
+                {
+                    var biome = kvp.Value.Biome;
+                    if (biome.Name != "sea" && biome.Name != "ocean")
+                    {
+                        suitableVertices.Add(kvp.Key);
+                    }
+                }
+            }
+
+            if (suitableVertices.Count > 0)
+            {
+                _avatarVertex = suitableVertices[animationRandom.Next(suitableVertices.Count)];
+                PlaceAvatar(_avatarVertex);
+                
+                // Set initial camera target
+                core.SetCameraTarget(_avatarVertex);
+                
+                Console.WriteLine($"Avatar placed at vertex {_avatarVertex} ({vertexData[_avatarVertex].Biome.Name})");
+            }
+        }
+
+        private void PlaceAvatar(int vertexIndex)
+        {
+            // Store the original data if we're moving to a new vertex
+            if (_avatarVertex != -1 && _avatarVertex != vertexIndex && _originalAvatarData.HasValue)
+            {
+                RestoreVertexData(_avatarVertex, _originalAvatarData.Value);
+            }
+
+            // Store the new vertex data
+            if (vertexData.TryGetValue(vertexIndex, out var data))
+            {
+                _originalAvatarData = data;
+            }
+
+            // Set avatar character and color
+            _avatarVertex = vertexIndex;
+            var avatarColor = new System.Numerics.Vector3(255, 255, 0); // Yellow for avatar
+            SetVertexGlyph(vertexIndex, AVATAR_CHAR, avatarColor);
+        }
+
+        private void RestoreVertexData(int vertexIndex, VertexWorldData data)
+        {
+            SetVertexGlyph(vertexIndex, data.GlyphChar, data.Color);
+        }
+
+        public void HandleVertexHovered(int vertexIndex)
+        {
+            Console.WriteLine($"HandleVertexHovered: vertex {vertexIndex}, avatar at {_avatarVertex}");
+            
+            if (_avatarVertex == -1 || vertexIndex == _avatarVertex) return;
+
+            // Clear any existing hover path first
+            if (_hoveredVertex != vertexIndex)
+            {
+                ClearHoveredPath();
+            }
+
+            _hoveredVertex = vertexIndex;
+            
+            // Request path to hovered vertex
+            var pathfindingService = core.GetPathfindingService();
+            var graph = core.GetGraph();
+            
+            if (pathfindingService != null && graph != null)
+            {
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        var path = await pathfindingService.FindPathAsync(graph, _avatarVertex, vertexIndex);
+                        
+                        // Schedule path update on the main thread if still hovering the same vertex
+                        if (_hoveredVertex == vertexIndex)
+                        {
+                            // Store the path for main thread processing
+                            _pendingHoverPath = path;
+                            _pendingHoverVertex = vertexIndex;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Pathfinding error: {ex.Message}");
+                    }
+                });
+            }
+        }
+
+        public void HandleVertexUnhovered()
+        {
+            Console.WriteLine("HandleVertexUnhovered: clearing hover path");
+            _hoveredVertex = -1;
+            ClearHoveredPath();
+        }
+
+        private void ProcessPendingHoverPath()
+        {
+            if (_pendingHoverPath != null && _pendingHoverVertex == _hoveredVertex)
+            {
+                UpdateHoveredPath(_pendingHoverPath);
+                _pendingHoverPath = null;
+                _pendingHoverVertex = -1;
+            }
+        }
+
+        public void HandleVertexClicked(int vertexIndex)
+        {
+            if (_avatarVertex == -1 || vertexIndex == _avatarVertex) return;
+
+            // Start movement to clicked vertex
+            var pathfindingService = core.GetPathfindingService();
+            var graph = core.GetGraph();
+            
+            if (pathfindingService != null && graph != null)
+            {
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        var path = await pathfindingService.FindPathAsync(graph, _avatarVertex, vertexIndex);
+                        
+                        if (path != null && path.Length > 1)
+                        {
+                            StartMovement(path);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Pathfinding error: {ex.Message}");
+                    }
+                });
+            }
+        }
+
+        private void UpdateHoveredPath(Cathedral.Pathfinding.Path? path)
+        {
+            ClearHoveredPath();
+            _hoveredPath = path;
+            
+            if (path != null && path.Length > 1)
+            {
+                // Show path visualization
+                for (int i = 1; i < path.Length - 1; i++) // Skip start (avatar) and end (destination)
+                {
+                    int nodeId = path.GetNode(i);
+                    var waypointColor = new System.Numerics.Vector3(128, 128, 255); // Light blue for waypoints
+                    SetVertexGlyph(nodeId, PATH_WAYPOINT_CHAR, waypointColor);
+                }
+
+                // Mark destination
+                if (path.Length > 1)
+                {
+                    int destNode = path.GetNode(path.Length - 1);
+                    var destColor = new System.Numerics.Vector3(255, 128, 128); // Light red for destination
+                    SetVertexGlyph(destNode, PATH_DESTINATION_CHAR, destColor);
+                }
+            }
+        }
+
+        private void ClearHoveredPath()
+        {
+            if (_hoveredPath != null && _hoveredPath.Length > 1)
+            {
+                // Restore original glyphs for path visualization
+                for (int i = 1; i < _hoveredPath.Length; i++) // Skip start (avatar)
+                {
+                    int nodeId = _hoveredPath.GetNode(i);
+                    if (nodeId != _avatarVertex && vertexData.TryGetValue(nodeId, out var data))
+                    {
+                        SetVertexGlyph(nodeId, data.GlyphChar, data.Color);
+                    }
+                }
+            }
+            _hoveredPath = null;
+        }
+
+        private void StartMovement(Cathedral.Pathfinding.Path path)
+        {
+            _currentPath = path;
+            _pathIndex = 0; // Start at avatar position
+            _moveTimer = 0.0f;
+            ClearHoveredPath(); // Clear any hover visualization
+        }
+
+        private void UpdateMovement(float deltaTime)
+        {
+            if (_currentPath == null || _pathIndex >= _currentPath.Length - 1) return;
+
+            _moveTimer += deltaTime;
+            
+            if (_moveTimer >= 1.0f / MOVE_SPEED)
+            {
+                _moveTimer = 0.0f;
+                _pathIndex++;
+                
+                if (_pathIndex < _currentPath.Length)
+                {
+                    int nextVertex = _currentPath.GetNode(_pathIndex);
+                    PlaceAvatar(nextVertex);
+                    
+                    // Update camera to follow avatar
+                    core.SetCameraTarget(nextVertex);
+                    
+                    if (_pathIndex >= _currentPath.Length - 1)
+                    {
+                        // Movement complete
+                        _currentPath = null;
+                        Console.WriteLine($"Avatar arrived at vertex {_avatarVertex}");
+                    }
+                }
+            }
+        }
+
+
+
+        /// <summary>
+        /// Gets the current avatar vertex index
+        /// </summary>
+        public int GetAvatarVertex() => _avatarVertex;
+
+        /// <summary>
+        /// Checks if the avatar is currently moving
+        /// </summary>
+        public bool IsAvatarMoving() => _currentPath != null;
 
         // Data structure to store world information for each vertex
         private struct VertexWorldData

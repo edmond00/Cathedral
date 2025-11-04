@@ -154,17 +154,25 @@ namespace Cathedral.Glyph
         // Event handlers for core mouse interactions
         private void OnVertexHovered(int vertexIndex, OpenTK.Mathematics.Vector2 mousePos)
         {
-            // Get vertex information and fire interface event
-            Vector3 pos = GetVertexPosition(vertexIndex);
-            
-            // Get actual glyph and color from the implementation
-            char glyph = GetGlyphAt(vertexIndex);
-            var color3 = GetColorAt(vertexIndex);
-            Vector4 color = new Vector4(color3.X / 255.0f, color3.Y / 255.0f, color3.Z / 255.0f, 1.0f);
-            
-            Console.WriteLine($"Mouse: ({mousePos.X:F0}, {mousePos.Y:F0}) -> Vertex {vertexIndex} at {pos}");
-            
-            VertexHoverEvent?.Invoke(vertexIndex, glyph, color);
+            if (vertexIndex >= 0)
+            {
+                // Get vertex information and fire interface event
+                Vector3 pos = GetVertexPosition(vertexIndex);
+                
+                // Get actual glyph and color from the implementation
+                char glyph = GetGlyphAt(vertexIndex);
+                var color3 = GetColorAt(vertexIndex);
+                Vector4 color = new Vector4(color3.X / 255.0f, color3.Y / 255.0f, color3.Z / 255.0f, 1.0f);
+                
+                Console.WriteLine($"Mouse: ({mousePos.X:F0}, {mousePos.Y:F0}) -> Vertex {vertexIndex} at {pos}");
+                
+                VertexHoverEvent?.Invoke(vertexIndex, glyph, color);
+            }
+            else
+            {
+                // Mouse is not over any vertex - fire unhover event
+                VertexHoverEvent?.Invoke(-1, ' ', new Vector4(0, 0, 0, 0));
+            }
         }
 
         private void OnVertexClicked(int vertexIndex, OpenTK.Mathematics.Vector2 mousePos)
