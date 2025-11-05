@@ -40,6 +40,9 @@ namespace Cathedral.Glyph.Microworld
         private Cathedral.Pathfinding.Path? _pendingHoverPath;
         private int _pendingHoverVertex = -1;
         
+        // Threading support for movement paths
+        private Cathedral.Pathfinding.Path? _pendingMovementPath;
+        
         private const float MOVE_SPEED = 2.0f; // Moves per second
         private const char AVATAR_CHAR = '☻';
         private const char PATH_WAYPOINT_CHAR = '.';
@@ -293,6 +296,9 @@ namespace Cathedral.Glyph.Microworld
             // Process pending hover path from background thread
             ProcessPendingHoverPath();
             
+            // Process pending movement from background thread
+            ProcessPendingMovement();
+            
             // Update avatar movement
             UpdateMovement(deltaTime);
             
@@ -303,6 +309,9 @@ namespace Cathedral.Glyph.Microworld
                 {
                     // Skip water animation if this vertex has the avatar
                     if (vertexIndex == _avatarVertex) continue;
+                    
+                    // Skip water animation if this vertex is part of the hover path
+                    if (IsVertexInHoverPath(vertexIndex)) continue;
 
                     char newGlyph;
                     
@@ -367,16 +376,13 @@ namespace Cathedral.Glyph.Microworld
             if (suitableVertices.Count > 0)
             {
                 _avatarVertex = suitableVertices[animationRandom.Next(suitableVertices.Count)];
-                PlaceAvatar(_avatarVertex);
+                PlaceAvatar(_avatarVertex, centerCamera: true); // Center camera only during initialization
                 
-                // Set initial camera target
-                core.SetCameraTarget(_avatarVertex);
-                
-                Console.WriteLine($"Avatar placed at vertex {_avatarVertex} ({vertexData[_avatarVertex].Biome.Name})");
+                Console.WriteLine($"Avatar initialized at vertex {_avatarVertex} ({vertexData[_avatarVertex].Biome.Name})");
             }
         }
 
-        private void PlaceAvatar(int vertexIndex)
+        private void PlaceAvatar(int vertexIndex, bool centerCamera = false)
         {
             // Store the original data if we're moving to a new vertex
             if (_avatarVertex != -1 && _avatarVertex != vertexIndex && _originalAvatarData.HasValue)
@@ -394,6 +400,15 @@ namespace Cathedral.Glyph.Microworld
             _avatarVertex = vertexIndex;
             var avatarColor = new System.Numerics.Vector3(255, 255, 0); // Yellow for avatar
             SetVertexGlyph(vertexIndex, AVATAR_CHAR, avatarColor);
+            
+            Console.WriteLine($"Avatar {(centerCamera ? "placed" : "moved")} at vertex {vertexIndex}");
+            
+            // Only center camera if explicitly requested - do this AFTER avatar is fully set
+            if (centerCamera)
+            {
+                Console.WriteLine($"Centering camera on avatar at vertex {vertexIndex}...");
+                core.CenterCameraOnGlyph(vertexIndex);
+            }
         }
 
         private void RestoreVertexData(int vertexIndex, VertexWorldData data)
@@ -403,8 +418,6 @@ namespace Cathedral.Glyph.Microworld
 
         public void HandleVertexHovered(int vertexIndex)
         {
-            Console.WriteLine($"HandleVertexHovered: vertex {vertexIndex}, avatar at {_avatarVertex}");
-            
             if (_avatarVertex == -1 || vertexIndex == _avatarVertex) return;
 
             // Clear any existing hover path first
@@ -445,7 +458,6 @@ namespace Cathedral.Glyph.Microworld
 
         public void HandleVertexUnhovered()
         {
-            Console.WriteLine("HandleVertexUnhovered: clearing hover path");
             _hoveredVertex = -1;
             ClearHoveredPath();
         }
@@ -460,8 +472,32 @@ namespace Cathedral.Glyph.Microworld
             }
         }
 
+        private void ProcessPendingMovement()
+        {
+            if (_pendingMovementPath != null)
+            {
+                Console.WriteLine("Starting movement from pending path");
+                StartMovement(_pendingMovementPath);
+                _pendingMovementPath = null;
+            }
+        }
+
+        private bool IsVertexInHoverPath(int vertexIndex)
+        {
+            if (_hoveredPath == null) return false;
+            
+            for (int i = 0; i < _hoveredPath.Length; i++)
+            {
+                if (_hoveredPath.GetNode(i) == vertexIndex)
+                    return true;
+            }
+            return false;
+        }
+
         public void HandleVertexClicked(int vertexIndex)
         {
+            Console.WriteLine($"HandleVertexClicked: vertex {vertexIndex}, avatar at {_avatarVertex}");
+            
             if (_avatarVertex == -1 || vertexIndex == _avatarVertex) return;
 
             // Start movement to clicked vertex
@@ -478,12 +514,18 @@ namespace Cathedral.Glyph.Microworld
                         
                         if (path != null && path.Length > 1)
                         {
-                            StartMovement(path);
+                            Console.WriteLine($"Path found for movement: {path.Length} nodes");
+                            // Schedule movement on main thread
+                            _pendingMovementPath = path;
+                        }
+                        else
+                        {
+                            Console.WriteLine("No path found for movement or path too short");
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Pathfinding error: {ex.Message}");
+                        Console.WriteLine($"Movement pathfinding error: {ex.Message}");
                     }
                 });
             }
@@ -553,10 +595,7 @@ namespace Cathedral.Glyph.Microworld
                 if (_pathIndex < _currentPath.Length)
                 {
                     int nextVertex = _currentPath.GetNode(_pathIndex);
-                    PlaceAvatar(nextVertex);
-                    
-                    // Update camera to follow avatar
-                    core.SetCameraTarget(nextVertex);
+                    PlaceAvatar(nextVertex, centerCamera: false); // Don't center camera during movement
                     
                     if (_pathIndex >= _currentPath.Length - 1)
                     {

@@ -52,10 +52,7 @@ namespace Cathedral.Glyph
         float pitch = 0;
         float distance = CAMERA_DEFAULT_DISTANCE;
         
-        // Camera following
-        private Vector3? _cameraTarget = null;
-        private bool _cameraFollowing = false;
-        private const float CAMERA_FOLLOW_SPEED = 2.0f;
+        // Camera following - removed, will be replaced with simpler implementation
         
         // Mouse interaction
         int hoveredVertexIndex = -1;
@@ -307,9 +304,6 @@ namespace Cathedral.Glyph
             // Input -> camera control
             HandleInput(args);
 
-            // Update camera following
-            UpdateCameraFollowing((float)args.Time);
-
             // Update timing for interface animations
             updateTimer += (float)args.Time;
             if (updateTimer >= UPDATE_INTERVAL)
@@ -353,13 +347,21 @@ namespace Cathedral.Glyph
             const float zoomSpeed = 15.0f;
             
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left))
+            {
                 yaw -= rotSpeed * (float)args.Time;
+            }
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right))
+            {
                 yaw += rotSpeed * (float)args.Time;
+            }
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up))
-                pitch = Math.Clamp(pitch + rotSpeed * (float)args.Time, -89f, 89f);
+            {
+                pitch = Math.Clamp(pitch + rotSpeed * (float)args.Time, -85f, 85f); // Clamp to avoid pole issues
+            }
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down))
-                pitch = Math.Clamp(pitch - rotSpeed * (float)args.Time, -89f, 89f);
+            {
+                pitch = Math.Clamp(pitch - rotSpeed * (float)args.Time, -85f, 85f); // Clamp to avoid pole issues
+            }
             
             // W/S controls - different behavior for main vs debug camera
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.W))
@@ -370,7 +372,7 @@ namespace Cathedral.Glyph
                 }
                 else
                 {
-                    distance = MathF.Max(CAMERA_MIN_DISTANCE, distance - zoomSpeed * (float)args.Time);
+                    distance = MathF.Max(0.1f, distance - zoomSpeed * (float)args.Time); // Remove min limit (keep minimal 0.1)
                 }
             }
             if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.S))
@@ -381,7 +383,7 @@ namespace Cathedral.Glyph
                 }
                 else
                 {
-                    distance = MathF.Min(CAMERA_MAX_DISTANCE, distance + zoomSpeed * (float)args.Time);
+                    distance += zoomSpeed * (float)args.Time; // Remove max distance limit
                 }
             }
 
@@ -1714,55 +1716,37 @@ void main() { FragColor = vec4(vColor, 1.0); }";
         }
 
         /// <summary>
-        /// Sets the camera to follow a specific vertex
+        /// Gets the triangle indices for the icosphere mesh
         /// </summary>
-        public void SetCameraTarget(int vertexIndex)
+        public List<uint> GetTriangleIndices()
+        {
+            return new List<uint>(indices);
+        }
+
+        /// <summary>
+        /// Centers the camera on a specific glyph, positioning it to focus on that location
+        /// </summary>
+        public void CenterCameraOnGlyph(int vertexIndex)
         {
             if (vertexIndex >= 0 && vertexIndex < vertices.Count)
             {
-                _cameraTarget = GetVertexPosition(vertexIndex);
-                _cameraFollowing = true;
+                Vector3 glyphPosition = GetVertexPosition(vertexIndex);
+                
+                // The camera looks at origin (0,0,0) from distance
+                // Position camera along the same direction as the glyph
+                Vector3 glyphDirection = Vector3.Normalize(glyphPosition);
+                
+                // Calculate spherical coordinates for camera position
+                yaw = MathHelper.RadiansToDegrees(MathF.Atan2(glyphDirection.X, glyphDirection.Z));
+                pitch = MathHelper.RadiansToDegrees(MathF.Asin(glyphDirection.Y));
+                
+                // Clamp pitch to avoid gimbal lock near poles
+                pitch = Math.Clamp(pitch, -85f, 85f);
+                
+                Console.WriteLine($"Camera centered on glyph {vertexIndex} at {glyphPosition}");
+                Console.WriteLine($"  Camera angles: yaw={yaw:F1}°, pitch={pitch:F1}° (clamped)");
+                Console.WriteLine($"  Glyph direction: {glyphDirection}");
             }
-        }
-
-        /// <summary>
-        /// Stops camera following and returns to manual control
-        /// </summary>
-        public void StopCameraFollowing()
-        {
-            _cameraFollowing = false;
-            _cameraTarget = null;
-        }
-
-        /// <summary>
-        /// Updates camera following logic
-        /// </summary>
-        private void UpdateCameraFollowing(float deltaTime)
-        {
-            if (!_cameraFollowing || !_cameraTarget.HasValue)
-                return;
-
-            Vector3 targetPos = _cameraTarget.Value;
-            
-            // Calculate desired yaw and pitch to look at the target
-            float targetYaw = MathF.Atan2(targetPos.X, targetPos.Z);
-            float targetPitch = MathF.Asin(targetPos.Y / targetPos.Length);
-            
-            // Smoothly interpolate camera angles
-            float lerpSpeed = CAMERA_FOLLOW_SPEED * deltaTime;
-            yaw = LerpAngle(yaw, targetYaw, lerpSpeed);
-            pitch = MathHelper.Lerp(pitch, targetPitch, lerpSpeed);
-        }
-
-        /// <summary>
-        /// Interpolates between two angles, handling wraparound
-        /// </summary>
-        private static float LerpAngle(float from, float to, float t)
-        {
-            float diff = to - from;
-            while (diff > MathF.PI) diff -= 2 * MathF.PI;
-            while (diff < -MathF.PI) diff += 2 * MathF.PI;
-            return from + diff * t;
         }
 
         protected override void OnUnload()

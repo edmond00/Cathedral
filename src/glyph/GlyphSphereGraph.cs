@@ -53,7 +53,15 @@ namespace Cathedral.Glyph
                 ConnectVertices(v2, v0);
             }
 
-            Console.WriteLine($"GlyphSphereGraph built: {NodeCount} nodes, {_edgeCosts.Count} unique edges");
+            var debugInfo = GetDebugInfo();
+            Console.WriteLine($"GlyphSphereGraph built: {debugInfo.nodes} nodes, {debugInfo.edges} edges, {debugInfo.avgConnections:F1} avg connections/node");
+            
+            // Log some connection examples for verification
+            for (int i = 0; i < Math.Min(5, NodeCount); i++)
+            {
+                var connections = _adjacencyList[i];
+                Console.WriteLine($"  Vertex {i}: connected to {connections.Count} vertices: [{string.Join(", ", connections.Take(6))}{(connections.Count > 6 ? "..." : "")}]");
+            }
         }
 
         /// <summary>
@@ -62,6 +70,10 @@ namespace Cathedral.Glyph
         private void ConnectVertices(int v1, int v2)
         {
             if (v1 == v2) return;
+
+            // Check if connection already exists
+            var edge = (Math.Min(v1, v2), Math.Max(v1, v2));
+            if (_edgeCosts.ContainsKey(edge)) return;
 
             // Add to adjacency lists
             _adjacencyList[v1].Add(v2);
@@ -75,52 +87,21 @@ namespace Cathedral.Glyph
             float distance = Vector3.Distance(pos1, pos2);
             
             // Store cost for both directions (undirected graph)
-            var edge1 = (Math.Min(v1, v2), Math.Max(v1, v2));
-            _edgeCosts[edge1] = distance;
+            _edgeCosts[edge] = distance;
         }
 
         /// <summary>
-        /// Gets triangle indices from the core (temporary implementation - will need proper mesh access)
+        /// Gets triangle indices from the core icosphere mesh
         /// </summary>
         private List<int> GetTriangleIndices()
         {
-            // This is a placeholder - we need to add triangle access to GlyphSphereCore
-            // For now, we'll create connections based on proximity (temporary solution)
+            // Get the actual triangle indices from the icosphere mesh
+            var coreIndices = _core.GetTriangleIndices();
             var triangles = new List<int>();
             
-            // Simple proximity-based connection as fallback
-            // This will be replaced once we have proper triangle access
-            for (int i = 0; i < NodeCount; i++)
+            foreach (uint index in coreIndices)
             {
-                var otkPos1 = _core.GetVertexPosition(i);
-                var pos1 = new Vector3(otkPos1.X, otkPos1.Y, otkPos1.Z);
-                var nearbyVertices = new List<(int index, float distance)>();
-                
-                for (int j = i + 1; j < NodeCount; j++)
-                {
-                    var otkPos2 = _core.GetVertexPosition(j);
-                    var pos2 = new Vector3(otkPos2.X, otkPos2.Y, otkPos2.Z);
-                    float distance = Vector3.Distance(pos1, pos2);
-                    
-                    // Only connect vertices that are reasonably close (adjust threshold as needed)
-                    if (distance < 8.0f) // This threshold may need adjustment
-                    {
-                        nearbyVertices.Add((j, distance));
-                    }
-                }
-                
-                // Connect to closest neighbors (simulate triangle connectivity)
-                nearbyVertices.Sort((a, b) => a.distance.CompareTo(b.distance));
-                int connectionsPerVertex = Math.Min(8, nearbyVertices.Count); // Limit connections
-                
-                for (int k = 0; k < connectionsPerVertex; k++)
-                {
-                    int neighbor = nearbyVertices[k].index;
-                    // Create fake triangles for the connectivity
-                    triangles.Add(i);
-                    triangles.Add(neighbor);
-                    triangles.Add((i + neighbor) % NodeCount); // Third vertex to complete triangle
-                }
+                triangles.Add((int)index);
             }
             
             return triangles;
