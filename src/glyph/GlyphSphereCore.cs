@@ -64,7 +64,8 @@ namespace Cathedral.Glyph
         Vector3 debugRayDirection = Vector3.Zero;
         Vector3 debugIntersectionPoint = Vector3.Zero;
         OpenTK.Mathematics.Vector2 debugMousePos = OpenTK.Mathematics.Vector2.Zero;
-        bool debugShowMarkers = false; // Toggle with 'M' key
+        bool debugShowMarkers = true; // Toggle with 'M' key - enabled by default for avatar debugging
+        int debugAvatarVertex = -1; // Track avatar vertex for debug ray
         
         // Debug camera system
         bool debugCameraMode = false; // Toggle between main camera and debug camera
@@ -417,6 +418,20 @@ namespace Cathedral.Glyph
                 string cameraType = debugCameraMode ? "Debug camera" : "Main camera";
                 string controls = debugCameraMode ? " (Use W/S to move closer/farther, V to change angle)" : " (Use W/S to zoom, arrows to rotate)";
                 Console.WriteLine($"Camera switched to: {cameraType}{controls}");
+            }
+
+            // Center camera on avatar (SPACE key)
+            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Space))
+            {
+                if (debugAvatarVertex >= 0)
+                {
+                    CenterCameraOnGlyph(debugAvatarVertex);
+                    Console.WriteLine($"🎯 Camera re-centered on avatar at vertex {debugAvatarVertex} (Press SPACE anytime to re-focus)");
+                }
+                else
+                {
+                    Console.WriteLine("❌ No avatar found - cannot center camera. Avatar must be placed first.");
+                }
             }
 
             // Debug camera angle switching (V key)
@@ -1168,6 +1183,12 @@ namespace Cathedral.Glyph
             
             AddScreenCanvasGrid();
             
+            // Add camera-to-avatar debug ray every frame
+            if (debugAvatarVertex >= 0)
+            {
+                AddDebugCameraToAvatarRay(debugAvatarVertex);
+            }
+            
             if (debugMousePos != OpenTK.Mathematics.Vector2.Zero)
             {
                 Vector3 mouseProjection = GetMouseProjectionOnScreen(debugMousePos);
@@ -1411,7 +1432,7 @@ namespace Cathedral.Glyph
                 {
                     Vector3 intersection1 = rayOrigin + rayDirection * t1;
                     debugVertices.Add(intersection1);
-                    debugColors.Add(new Vector3(1, 1, 0)); // Yellow marker for first intersection
+                    debugColors.Add(new Vector3(0, 1, 1)); // Cyan marker for sphere intersection (was yellow)
                 }
                 
                 // Note: Only showing the first (closest) intersection to avoid unwanted line artifacts
@@ -1730,22 +1751,73 @@ void main() { FragColor = vec4(vColor, 1.0); }";
         {
             if (vertexIndex >= 0 && vertexIndex < vertices.Count)
             {
-                Vector3 glyphPosition = GetVertexPosition(vertexIndex);
+                Vector3 avatarPosition = GetVertexPosition(vertexIndex);
                 
-                // The camera looks at origin (0,0,0) from distance
-                // Position camera along the same direction as the glyph
-                Vector3 glyphDirection = Vector3.Normalize(glyphPosition);
+                // STEP 1: Put camera exactly at the yellow marker (avatar) position
+                // We want: cameraPos = avatarPosition
+                // Since the camera calculation is: cameraPos = -camDir * distance
+                // We need to solve: avatarPosition = -camDir * distance
+                // Therefore: camDir = -avatarPosition / distance
                 
-                // Calculate spherical coordinates for camera position
-                yaw = MathHelper.RadiansToDegrees(MathF.Atan2(glyphDirection.X, glyphDirection.Z));
-                pitch = MathHelper.RadiansToDegrees(MathF.Asin(glyphDirection.Y));
+                // Set distance to the avatar's distance from origin
+                distance = avatarPosition.Length;
+                
+                // Calculate the camera direction to place camera at avatar position
+                Vector3 camDir = -avatarPosition.Normalized();
+                
+                // Convert camDir to yaw and pitch angles
+                yaw = MathHelper.RadiansToDegrees(MathF.Atan2(camDir.Z, camDir.X));
+                pitch = MathHelper.RadiansToDegrees(MathF.Asin(camDir.Y));
                 
                 // Clamp pitch to avoid gimbal lock near poles
                 pitch = Math.Clamp(pitch, -85f, 85f);
                 
-                Console.WriteLine($"Camera centered on glyph {vertexIndex} at {glyphPosition}");
-                Console.WriteLine($"  Camera angles: yaw={yaw:F1}°, pitch={pitch:F1}° (clamped)");
-                Console.WriteLine($"  Glyph direction: {glyphDirection}");
+                // Store avatar vertex for continuous debug ray rendering
+                debugAvatarVertex = vertexIndex;
+                
+                // Verify the calculation
+                Vector3 calculatedCameraPos = -camDir * distance;
+                
+                Console.WriteLine($"📍 Camera moved to yellow marker position");
+                Console.WriteLine($"  Target avatar position: {avatarPosition}");
+                Console.WriteLine($"  Calculated camera pos: {calculatedCameraPos}");
+                Console.WriteLine($"  Position match: {Vector3.Distance(avatarPosition, calculatedCameraPos) < 0.01f}");
+                Console.WriteLine($"  Camera angles: yaw={yaw:F1}°, pitch={pitch:F1}°");
+            }
+        }
+
+        /// <summary>
+        /// Adds a debug ray from camera position to avatar glyph for visual debugging
+        /// </summary>
+        private void AddDebugCameraToAvatarRay(int avatarVertexIndex)
+        {
+            if (avatarVertexIndex >= 0 && avatarVertexIndex < vertices.Count)
+            {
+                // Calculate current camera position using same logic as GetViewMatrix
+                float yawR = MathHelper.DegreesToRadians(yaw);
+                float pitchR = MathHelper.DegreesToRadians(pitch);
+                Vector3 camDir = new Vector3(
+                    MathF.Cos(pitchR) * MathF.Cos(yawR),
+                    MathF.Sin(pitchR),
+                    MathF.Cos(pitchR) * MathF.Sin(yawR)
+                );
+                Vector3 cameraPos = -camDir * distance;
+                
+                Vector3 avatarPos = GetVertexPosition(avatarVertexIndex);
+                
+                // Camera-to-avatar debug ray: cyan camera marker, yellow avatar marker
+                debugVertices.Add(cameraPos);
+                debugColors.Add(new Vector3(0.0f, 1.0f, 1.0f)); // Cyan for camera position
+                
+                debugVertices.Add(avatarPos);
+                debugColors.Add(new Vector3(1.0f, 1.0f, 0.0f)); // Yellow for avatar position (target)
+                
+                Console.WriteLine($"  *** CAMERA-TO-AVATAR DEBUG RAY ADDED ***");
+                Console.WriteLine($"  Camera at {cameraPos}");
+                Console.WriteLine($"  Avatar at {avatarPos}");
+                Console.WriteLine($"  Ray length: {Vector3.Distance(cameraPos, avatarPos):F2}");
+                Console.WriteLine($"  Total debug vertices count: {debugVertices.Count}");
+                Console.WriteLine($"  Debug markers enabled: {debugShowMarkers}");
             }
         }
 
