@@ -95,17 +95,20 @@ namespace Cathedral.Glyph.Microworld
                 // Get glyph and color based on location first, then biome
                 char glyphChar;
                 System.Numerics.Vector3 color;
+                float size;
                 if (location.HasValue)
                 {
                     glyphChar = location.Value.Glyph;
                     var locColor = location.Value.Color;
                     color = new System.Numerics.Vector3(locColor.X, locColor.Y, locColor.Z);
+                    size = location.Value.Size;
                 }
                 else
                 {
                     glyphChar = biome.Glyph;
                     var biomeColor = biome.Color;
                     color = new System.Numerics.Vector3(biomeColor.X, biomeColor.Y, biomeColor.Z);
+                    size = biome.Size;
                 }
                 
                 // Store world data for this vertex
@@ -125,8 +128,9 @@ namespace Cathedral.Glyph.Microworld
                     waterVertices.Add(i);
                 }
                 
-                // Set the vertex properties using the interface
-                SetVertexGlyph(i, glyphChar, color);
+                // Set the vertex properties using the interface with size factor
+                var vec4Color = new Vector4(color.X / 255.0f, color.Y / 255.0f, color.Z / 255.0f, 1.0f);
+                SetVertexGlyph(i, glyphChar, vec4Color, size);
                 
                 // Collect statistics
                 noiseValues.Add(avgNoise);
@@ -339,8 +343,9 @@ namespace Cathedral.Glyph.Microworld
                     updatedData.GlyphChar = newGlyph;
                     vertexData[vertexIndex] = updatedData;
                     
-                    // Update the visual representation
-                    SetVertexGlyph(vertexIndex, newGlyph, data.Color);
+                    // Update the visual representation with original biome size
+                    var vec4Color = new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, 1.0f);
+                    SetVertexGlyph(vertexIndex, newGlyph, vec4Color, data.Biome.Size);
                 }
             }
         }
@@ -413,7 +418,10 @@ namespace Cathedral.Glyph.Microworld
 
         private void RestoreVertexData(int vertexIndex, VertexWorldData data)
         {
-            SetVertexGlyph(vertexIndex, data.GlyphChar, data.Color);
+            // Determine size based on location first, then biome
+            float size = data.Location?.Size ?? data.Biome.Size;
+            var vec4Color = new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, 1.0f);
+            SetVertexGlyph(vertexIndex, data.GlyphChar, vec4Color, size);
         }
 
         public void HandleVertexHovered(int vertexIndex)
@@ -566,7 +574,10 @@ namespace Cathedral.Glyph.Microworld
                     int nodeId = _hoveredPath.GetNode(i);
                     if (nodeId != _avatarVertex && vertexData.TryGetValue(nodeId, out var data))
                     {
-                        SetVertexGlyph(nodeId, data.GlyphChar, data.Color);
+                        // Determine size based on location first, then biome
+                        float size = data.Location?.Size ?? data.Biome.Size;
+                        var vec4Color = new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, 1.0f);
+                        SetVertexGlyph(nodeId, data.GlyphChar, vec4Color, size);
                     }
                 }
             }

@@ -48,6 +48,21 @@ namespace Cathedral.Glyph
             var vec4Color = new Vector4(color.X / 255.0f, color.Y / 255.0f, color.Z / 255.0f, 1.0f);
             core.SetVertexGlyph(index, glyph, vec4Color);
         }
+        
+        public void SetVertexGlyph(int index, char glyph, Vector4 color, float size)
+        {
+            core.SetVertexGlyph(index, glyph, color, size);
+        }
+        
+        public void SetVertexBiome(int index, string biomeName, Vector4? colorOverride = null)
+        {
+            core.SetVertexBiome(index, biomeName, colorOverride);
+        }
+        
+        public void SetVertexLocation(int index, string locationName, Vector4? colorOverride = null)
+        {
+            core.SetVertexLocation(index, locationName, colorOverride);
+        }
 
         // Abstract methods that concrete implementations must provide
         /// <summary>

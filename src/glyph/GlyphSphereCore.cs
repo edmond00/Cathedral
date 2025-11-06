@@ -64,7 +64,7 @@ namespace Cathedral.Glyph
         Vector3 debugRayDirection = Vector3.Zero;
         Vector3 debugIntersectionPoint = Vector3.Zero;
         OpenTK.Mathematics.Vector2 debugMousePos = OpenTK.Mathematics.Vector2.Zero;
-        bool debugShowMarkers = true; // Toggle with 'M' key - enabled by default for avatar debugging
+        bool debugShowMarkers = false; // Toggle with 'M' key - enabled by default for avatar debugging
         int debugAvatarVertex = -1; // Track avatar vertex for debug ray
         
         // Debug camera system
@@ -114,7 +114,7 @@ namespace Cathedral.Glyph
         
         private string currentGlyphSet = DEFAULT_GLYPH.ToString();
         
-        public void SetVertexGlyph(int index, char glyph, Vector4 color)
+        public void SetVertexGlyph(int index, char glyph, Vector4 color, float size = 1.0f)
         {
             if (index >= 0 && index < vertices.Count)
             {
@@ -134,8 +134,33 @@ namespace Cathedral.Glyph
                     GlyphIndex = glyphIndex,
                     GlyphChar = glyph,
                     Noise = vertices[index].Noise,
-                    Color = color
+                    Color = color,
+                    Size = size
                 };
+            }
+        }
+        
+        /// <summary>
+        /// Sets a vertex glyph using BiomeType/LocationType data, automatically using the appropriate size factor
+        /// </summary>
+        public void SetVertexBiome(int index, string biomeName, Vector4? colorOverride = null)
+        {
+            if (Cathedral.Glyph.Microworld.BiomeDatabase.Biomes.TryGetValue(biomeName, out var biome))
+            {
+                Vector4 color = colorOverride ?? new Vector4(biome.Color.X / 255f, biome.Color.Y / 255f, biome.Color.Z / 255f, 1.0f);
+                SetVertexGlyph(index, biome.Glyph, color, biome.Size);
+            }
+        }
+        
+        /// <summary>
+        /// Sets a vertex glyph using LocationType data, automatically using the appropriate size factor
+        /// </summary>
+        public void SetVertexLocation(int index, string locationName, Vector4? colorOverride = null)
+        {
+            if (Cathedral.Glyph.Microworld.BiomeDatabase.Locations.TryGetValue(locationName, out var location))
+            {
+                Vector4 color = colorOverride ?? new Vector4(location.Color.X / 255f, location.Color.Y / 255f, location.Color.Z / 255f, 1.0f);
+                SetVertexGlyph(index, location.Glyph, color, location.Size);
             }
         }
         
@@ -710,7 +735,8 @@ namespace Cathedral.Glyph
                     GlyphIndex = 0,
                     GlyphChar = DEFAULT_GLYPH,
                     Noise = 0,
-                    Color = new Vector4(0.0f, 1.0f, 0.0f, 1.0f) // Green color
+                    Color = new Vector4(0.0f, 1.0f, 0.0f, 1.0f), // Green color
+                    Size = 1.0f // Default size
                 };
             }
 
@@ -805,7 +831,7 @@ namespace Cathedral.Glyph
 
             foreach (var pos in currentVertices)
             {
-                vertices.Add(new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = DEFAULT_GLYPH, Noise = 0, Color = Vector4.One });
+                vertices.Add(new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = DEFAULT_GLYPH, Noise = 0, Color = Vector4.One, Size = 1.0f });
             }
 
             indices.AddRange(currentIndices);
@@ -976,7 +1002,7 @@ namespace Cathedral.Glyph
                 poleProj = Vector3.Normalize(poleProj);
                 var right = Vector3.Normalize(Vector3.Cross(poleProj, normal));
                 var up = poleProj;
-                float size = QUAD_SIZE;
+                float size = QUAD_SIZE * v.Size;
 
                 var gi = glyphInfos[v.GlyphIndex];
                 var uvx = gi.UvX; var uvy = gi.UvY; var uvw = gi.UvW; var uvh = gi.UvH;
@@ -1557,6 +1583,7 @@ namespace Cathedral.Glyph
             public char GlyphChar;
             public float Noise;
             public Vector4 Color;
+            public float Size; // Size factor from BiomeType/LocationType
         }
 
         private struct GlyphInfo
@@ -1753,19 +1780,23 @@ void main() { FragColor = vec4(vColor, 1.0); }";
             {
                 Vector3 avatarPosition = GetVertexPosition(vertexIndex);
                 
-                // STEP 1: Put camera exactly at the yellow marker (avatar) position
-                // We want: cameraPos = avatarPosition
-                // Since the camera calculation is: cameraPos = -camDir * distance
-                // We need to solve: avatarPosition = -camDir * distance
-                // Therefore: camDir = -avatarPosition / distance
+                // Store the current camera distance before moving (for drone positioning)
+                float originalDistance = distance;
                 
-                // Set distance to the avatar's distance from origin
-                distance = avatarPosition.Length;
+                // STEP 1: Position camera at avatar position (this we know works)
+                // Calculate the direction from sphere center to avatar
+                Vector3 fromCenterToAvatar = avatarPosition.Normalized();
                 
-                // Calculate the camera direction to place camera at avatar position
-                Vector3 camDir = -avatarPosition.Normalized();
+                // STEP 2: Move camera back along the same line to create "drone above" effect
+                // The camera should be on the line from center through avatar, but at original distance
+                Vector3 dronePosition = fromCenterToAvatar * originalDistance;
                 
-                // Convert camDir to yaw and pitch angles
+                // STEP 3: Calculate camera angles to look toward sphere center from drone position
+                // camDir should point from drone position toward sphere center
+                Vector3 camDir = -dronePosition.Normalized();
+                
+                // Update camera parameters
+                distance = originalDistance; // Keep original zoom level
                 yaw = MathHelper.RadiansToDegrees(MathF.Atan2(camDir.Z, camDir.X));
                 pitch = MathHelper.RadiansToDegrees(MathF.Asin(camDir.Y));
                 
@@ -1778,10 +1809,12 @@ void main() { FragColor = vec4(vColor, 1.0); }";
                 // Verify the calculation
                 Vector3 calculatedCameraPos = -camDir * distance;
                 
-                Console.WriteLine($"📍 Camera moved to yellow marker position");
-                Console.WriteLine($"  Target avatar position: {avatarPosition}");
+                Console.WriteLine($"� Camera positioned like drone above avatar");
+                Console.WriteLine($"  Avatar position: {avatarPosition}");
+                Console.WriteLine($"  Drone position: {dronePosition}");
                 Console.WriteLine($"  Calculated camera pos: {calculatedCameraPos}");
-                Console.WriteLine($"  Position match: {Vector3.Distance(avatarPosition, calculatedCameraPos) < 0.01f}");
+                Console.WriteLine($"  Position match: {Vector3.Distance(dronePosition, calculatedCameraPos) < 0.01f}");
+                Console.WriteLine($"  Original distance preserved: {originalDistance:F2}");
                 Console.WriteLine($"  Camera angles: yaw={yaw:F1}°, pitch={pitch:F1}°");
             }
         }
@@ -1811,13 +1844,6 @@ void main() { FragColor = vec4(vColor, 1.0); }";
                 
                 debugVertices.Add(avatarPos);
                 debugColors.Add(new Vector3(1.0f, 1.0f, 0.0f)); // Yellow for avatar position (target)
-                
-                Console.WriteLine($"  *** CAMERA-TO-AVATAR DEBUG RAY ADDED ***");
-                Console.WriteLine($"  Camera at {cameraPos}");
-                Console.WriteLine($"  Avatar at {avatarPos}");
-                Console.WriteLine($"  Ray length: {Vector3.Distance(cameraPos, avatarPos):F2}");
-                Console.WriteLine($"  Total debug vertices count: {debugVertices.Count}");
-                Console.WriteLine($"  Debug markers enabled: {debugShowMarkers}");
             }
         }
 
