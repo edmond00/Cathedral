@@ -334,7 +334,7 @@ namespace Cathedral.Glyph
             updateTimer += (float)args.Time;
             if (updateTimer >= UPDATE_INTERVAL)
             {
-                UpdateRequested?.Invoke((float)args.Time);
+                UpdateRequested?.Invoke(updateTimer);
                 updateTimer = 0.0f;
             }
 
@@ -558,16 +558,31 @@ namespace Cathedral.Glyph
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
             base.OnMouseDown(e);
+            Console.WriteLine($"Mouse button pressed: {e.Button}");
             if (e.Button == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left)
             {
+                Console.WriteLine("Left mouse button detected");
                 var mouse = MousePosition;
-                var (rayOrig, rayDir) = GetMouseRay(mouse);
+                Console.WriteLine($"Mouse position: {mouse}");
 
-                int hitIdx = RayPickNearestVertex(rayOrig, rayDir, 0.05f);
+                // Use the same vertex detection method as hover detection
+                int hitIdx = FindVertexByMagentaRayIntersection(mouse);
+                
+                if (hitIdx == -1)
+                {
+                    hitIdx = FindClosestVertexInScreenSpace(mouse);
+                }
+                
+                Console.WriteLine($"Hit vertex index: {hitIdx}");
                 if (hitIdx >= 0)
                 {
+                    Console.WriteLine($"Firing VertexClicked event for vertex {hitIdx}");
                     // Fire event for interface
                     VertexClicked?.Invoke(hitIdx, mouse);
+                }
+                else
+                {
+                    Console.WriteLine("No vertex hit");
                 }
             }
         }

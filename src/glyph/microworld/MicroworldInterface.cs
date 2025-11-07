@@ -43,10 +43,13 @@ namespace Cathedral.Glyph.Microworld
         // Threading support for movement paths
         private Cathedral.Pathfinding.Path? _pendingMovementPath;
         
-        private const float MOVE_SPEED = 2.0f; // Moves per second
+        private const float MOVE_SPEED = 5.0f; // Moves per second (debugging to understand timing)
         private const char AVATAR_CHAR = '☻';
         private const char PATH_WAYPOINT_CHAR = '.';
         private const char PATH_DESTINATION_CHAR = '+';
+        
+        // Debug counter for timing
+        private int _debugFrameCount = 0;
 
         public MicroworldInterface(GlyphSphereCore glyphSphereCore) : base(glyphSphereCore)
         {
@@ -58,7 +61,10 @@ namespace Cathedral.Glyph.Microworld
                 else
                     HandleVertexUnhovered();
             };
-            VertexClickEvent += (vertexIndex, glyph, color, noiseValue) => HandleVertexClicked(vertexIndex);
+            VertexClickEvent += (vertexIndex, glyph, color, noiseValue) => {
+                Console.WriteLine($"VertexClickEvent triggered for vertex {vertexIndex}");
+                HandleVertexClicked(vertexIndex);
+            };
         }
 
         public override void GenerateWorld()
@@ -297,6 +303,13 @@ namespace Cathedral.Glyph.Microworld
 
         public override void Update(float deltaTime)
         {
+            // Debug: Show deltaTime every 60 frames (about once per second)
+            _debugFrameCount++;
+            if (_debugFrameCount % 60 == 0)
+            {
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Update called: deltaTime={deltaTime:F6}s (frame #{_debugFrameCount})");
+            }
+
             // Process pending hover path from background thread
             ProcessPendingHoverPath();
             
@@ -406,7 +419,14 @@ namespace Cathedral.Glyph.Microworld
             var avatarColor = new System.Numerics.Vector3(255, 255, 0); // Yellow for avatar
             SetVertexGlyph(vertexIndex, AVATAR_CHAR, avatarColor);
             
-            Console.WriteLine($"Avatar {(centerCamera ? "placed" : "moved")} at vertex {vertexIndex}");
+            if (centerCamera)
+            {
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Avatar placed at vertex {vertexIndex}");
+            }
+            else
+            {
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Avatar moved at vertex {vertexIndex}");
+            }
             
             // Only center camera if explicitly requested - do this AFTER avatar is fully set
             if (centerCamera)
@@ -506,11 +526,24 @@ namespace Cathedral.Glyph.Microworld
         {
             Console.WriteLine($"HandleVertexClicked: vertex {vertexIndex}, avatar at {_avatarVertex}");
             
-            if (_avatarVertex == -1 || vertexIndex == _avatarVertex) return;
+            if (_avatarVertex == -1)
+            {
+                Console.WriteLine("Cannot handle click: avatar not initialized");
+                return;
+            }
+            
+            if (vertexIndex == _avatarVertex)
+            {
+                Console.WriteLine("Cannot handle click: clicked on avatar vertex");
+                return;
+            }
 
             // Start movement to clicked vertex
             var pathfindingService = core.GetPathfindingService();
             var graph = core.GetGraph();
+            
+            Console.WriteLine($"Pathfinding service available: {pathfindingService != null}");
+            Console.WriteLine($"Graph available: {graph != null}");
             
             if (pathfindingService != null && graph != null)
             {
@@ -586,6 +619,7 @@ namespace Cathedral.Glyph.Microworld
 
         private void StartMovement(Cathedral.Pathfinding.Path path)
         {
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] StartMovement: Beginning {path.Length}-step path");
             _currentPath = path;
             _pathIndex = 0; // Start at avatar position
             _moveTimer = 0.0f;
@@ -596,10 +630,17 @@ namespace Cathedral.Glyph.Microworld
         {
             if (_currentPath == null || _pathIndex >= _currentPath.Length - 1) return;
 
+            // Calculate threshold for this frame
+            float threshold = 1.0f / MOVE_SPEED;
+            
+            // Log detailed timing every frame when moving
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] UpdateMovement: deltaTime={deltaTime:F6}s, moveTimer={_moveTimer:F6}s, threshold={threshold:F6}s, MOVE_SPEED={MOVE_SPEED}");
+
             _moveTimer += deltaTime;
             
-            if (_moveTimer >= 1.0f / MOVE_SPEED)
+            if (_moveTimer >= threshold)
             {
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] MOVE TRIGGERED: moveTimer={_moveTimer:F6}s >= threshold={threshold:F6}s");
                 _moveTimer = 0.0f;
                 _pathIndex++;
                 
@@ -612,7 +653,7 @@ namespace Cathedral.Glyph.Microworld
                     {
                         // Movement complete
                         _currentPath = null;
-                        Console.WriteLine($"Avatar arrived at vertex {_avatarVertex}");
+                        Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Avatar arrived at vertex {_avatarVertex}");
                     }
                 }
             }
