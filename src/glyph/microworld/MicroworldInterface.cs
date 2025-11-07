@@ -329,6 +329,7 @@ namespace Cathedral.Glyph.Microworld
                     
                     // Skip water animation if this vertex is part of the hover path
                     if (IsVertexInHoverPath(vertexIndex)) continue;
+                    if (animationRandom.NextDouble() < 0.8) continue;
 
                     char newGlyph;
                     
@@ -448,6 +449,12 @@ namespace Cathedral.Glyph.Microworld
         {
             if (_avatarVertex == -1 || vertexIndex == _avatarVertex) return;
 
+            // Don't show hover paths while avatar is moving
+            if (IsAvatarMoving())
+            {
+                return;
+            }
+
             // Clear any existing hover path first
             if (_hoveredVertex != vertexIndex)
             {
@@ -538,6 +545,13 @@ namespace Cathedral.Glyph.Microworld
                 return;
             }
 
+            // Don't allow new movement while avatar is already moving
+            if (IsAvatarMoving())
+            {
+                Console.WriteLine("Cannot handle click: avatar is already moving");
+                return;
+            }
+
             // Start movement to clicked vertex
             var pathfindingService = core.GetPathfindingService();
             var graph = core.GetGraph();
@@ -624,6 +638,7 @@ namespace Cathedral.Glyph.Microworld
             _pathIndex = 0; // Start at avatar position
             _moveTimer = 0.0f;
             ClearHoveredPath(); // Clear any hover visualization
+            _hoveredVertex = -1; // Clear hover state
         }
 
         private void UpdateMovement(float deltaTime)
@@ -647,7 +662,7 @@ namespace Cathedral.Glyph.Microworld
                 if (_pathIndex < _currentPath.Length)
                 {
                     int nextVertex = _currentPath.GetNode(_pathIndex);
-                    PlaceAvatar(nextVertex, centerCamera: false); // Don't center camera during movement
+                    PlaceAvatar(nextVertex, centerCamera: true); // Focus camera on avatar with each step
                     
                     if (_pathIndex >= _currentPath.Length - 1)
                     {
