@@ -1,5 +1,13 @@
 ﻿using Cathedral.LLM;
+using Cathedral.LLM.JsonConstraints;
 using Cathedral.Glyph;
+
+// Test the new JsonConstraint system
+Console.WriteLine("=== JSON Constraint Generator Test ===");
+JsonConstraintTest.TestJsonConstraintGeneration();
+
+Console.WriteLine("\nPress any key to launch GlyphSphere...");
+Console.ReadKey();
 
 GlyphSphereLauncher.LaunchGlyphSphere();
 
