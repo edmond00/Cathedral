@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Linq;
 
 namespace Cathedral.LLM.JsonConstraints;
 
@@ -118,7 +119,8 @@ public static class JsonConstraintGenerator
         var rangeRuleName = $"float-{field.Min}-{field.Max}";
         if (!processedRules.Any(r => r.StartsWith(rangeRuleName)))
         {
-            processedRules.Add($"{rangeRuleName} ::= [\"-\"]? [0-9]+ \".\" [0-9]+");
+            // Limit decimal places to 1-4 digits to prevent excessively long numbers
+            processedRules.Add($"{rangeRuleName} ::= [\"-\"]? [0-9]+ \".\" [0-9]{{1,4}}");
         }
         
         // Add the main rule
@@ -374,8 +376,37 @@ public static class JsonConstraintGenerator
     
     private static string GenerateIntegerRange(int min, int max)
     {
-        // For simplicity, use a basic integer pattern
-        // In a full implementation, you'd want more sophisticated range handling
+        // Handle exact value case (min == max)
+        if (min == max)
+        {
+            return $"\"{min}\"";
+        }
+        
+        // For ranges, we'll implement simple patterns for common small ranges
+        // For larger or complex ranges, we'll use a basic pattern and rely on validation
+        
+        // Single digit ranges (0-9)
+        if (min >= 0 && max <= 9 && max - min < 10)
+        {
+            var digits = string.Join("", Enumerable.Range(min, max - min + 1));
+            return $"[{digits}]";
+        }
+        
+        // Small two-digit ranges (10-99) - simplified patterns
+        if (min >= 1 && max <= 20)
+        {
+            // Pattern for 1-20: single digits 1-9 or 1X or 20
+            return "([1-9] | \"1\" [0-9] | \"20\")";
+        }
+        
+        if (min >= 1 && max <= 10)
+        {
+            // Pattern for 1-10: single digits 1-9 or 10
+            return "([1-9] | \"10\")";
+        }
+        
+        // For other ranges, use a simplified pattern
+        // This is not perfect but works for most cases
         if (min >= 0)
         {
             return "[0-9]+";

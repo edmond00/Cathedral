@@ -4,55 +4,35 @@ using Cathedral.Glyph;
 
 Console.WriteLine("=== Cathedral Application ===\n");
 Console.WriteLine("Choose an option:");
-Console.WriteLine("1. Test JSON Constraint Generator (basic)");
-Console.WriteLine("2. Test JSON Constraints with LLM integration");
-Console.WriteLine("3. Quick validation test (debug JSON issues)");
-Console.WriteLine("4. Debug GBNF integration errors");
-Console.WriteLine("5. Launch GlyphSphere");
-Console.WriteLine("6. Exit");
+Console.WriteLine("1. Run LLM integration tests (JSON constraints)");
+Console.WriteLine("2. Launch GlyphSphere");
+Console.WriteLine("3. Exit");
 
-Console.Write("\nEnter your choice (1-6): ");
+Console.Write("\nEnter your choice (1-3): ");
 var choice = Console.ReadLine();
 
 switch (choice)
 {
     case "1":
-        Console.WriteLine("\n=== JSON Constraint Generator Test ===");
-        JsonConstraintTest.TestJsonConstraintGeneration();
-        break;
-        
-    case "2":
         Console.WriteLine("\n=== JSON Constraint LLM Integration Tests ===");
         Console.WriteLine("This will start the LLM server and run comprehensive tests...");
         Console.WriteLine("Press Enter to continue or Ctrl+C to cancel.");
         Console.ReadLine();
-        
         await JsonConstraintTest.TestWithLLM();
         break;
 
-    case "3":
-        Console.WriteLine("\n=== Quick Validation Test ===");
-        ValidationQuickTest.TestValidation();
-        break;
-        
-    case "4":
-        Console.WriteLine("\n=== GBNF Integration Debug ===");
-        await Cathedral.SimpleGBNFTest.RunDebugTest();
-        break;
-        
-    case "5":
+    case "2":
         Console.WriteLine("\n=== Launching GlyphSphere ===");
         GlyphSphereLauncher.LaunchGlyphSphere();
         break;
-        
-    case "6":
+
+    case "3":
         Console.WriteLine("Goodbye!");
         Environment.Exit(0);
         break;
-        
+
     default:
-        Console.WriteLine("Invalid choice. Running basic JSON tests...");
-        JsonConstraintTest.TestJsonConstraintGeneration();
+        Console.WriteLine("Invalid choice. Exiting.");
         break;
 }
 

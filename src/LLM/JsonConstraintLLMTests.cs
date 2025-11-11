@@ -181,6 +181,115 @@ public static class JsonConstraintLLMTests
                 Schema = JsonConstraintDemo.CreateQuestSchema(),
                 PromptTemplate = "Generate a complete fantasy quest with objectives"
             }
+            ,
+            // Edge case: Optional field omitted / empty
+            new TestScenario
+            {
+                TestName = "Optional Field Empty",
+                Schema = new CompositeField("character", new JsonField[]
+                {
+                    new StringField("name", 1, 20),
+                    new OptionalField("nickname", new StringField("nickname", 1, 10))
+                }),
+                PromptTemplate = "Generate a character. The optional nickname may be omitted."
+            },
+
+            // Edge case: Boundary values (min and max)
+            new TestScenario
+            {
+                TestName = "Boundary Values",
+                Schema = new CompositeField("stats", new JsonField[]
+                {
+                    new IntField("minVal", 0, 0),
+                    new IntField("maxVal", 9999, 9999)
+                }),
+                PromptTemplate = "Generate numeric boundary values exactly matching the required min/max."
+            },
+
+            // Edge case: Empty array allowed and max-length arrays
+            new TestScenario
+            {
+                TestName = "Array Edge Cases",
+                Schema = new CompositeField("inventory", new JsonField[]
+                {
+                    new StringField("owner", 3, 20),
+                    new ArrayField("items", new StringField("item", 1, 30), 0, 5)
+                }),
+                PromptTemplate = "Generate an inventory, arrays may be empty or contain up to 5 items."
+            },
+
+            // Edge case: Strings with special characters and escapes
+            new TestScenario
+            {
+                TestName = "Special Characters String",
+                Schema = new CompositeField("message", new JsonField[]
+                {
+                    new StringField("content", 1, 100)
+                }),
+                PromptTemplate = "Generate a JSON message that may include punctuation and special characters like \" \\ / \n \t and emojis 😊."
+            },
+
+            // Edge case: Deeply nested variants
+            new TestScenario
+            {
+                TestName = "Nested Variants",
+                Schema = new CompositeField("event", new JsonField[]
+                {
+                    new VariantField("payload",
+                        new CompositeField("typeA", new JsonField[]
+                        {
+                            new StringField("aName", 1, 20),
+                            new ArrayField("aList", new IntField("inner", 0, 5), 0, 3)
+                        }),
+                        new CompositeField("typeB", new JsonField[]
+                        {
+                            new VariantField("sub",
+                                new CompositeField("subX", new JsonField[] { new StringField("x",1,5) }),
+                                new CompositeField("subY", new JsonField[] { new IntField("y",1,3) })
+                            )
+                        })
+                    )
+                }),
+                PromptTemplate = "Generate an event using nested variants and ensure structure validity."
+            },
+
+            // Edge case: Empty optional field
+            new TestScenario
+            {
+                TestName = "Empty Optional Field",
+                Schema = new CompositeField("profile", new JsonField[]
+                {
+                    new StringField("username", 3, 20),
+                    new OptionalField("bio", new StringField("bio", 0, 200))
+                }),
+                PromptTemplate = "Generate a user profile where the bio field might be empty or missing."
+            },
+
+            // Edge case: Template with minimal and maximal generation lengths
+            new TestScenario
+            {
+                TestName = "Template Extremes",
+                Schema = new CompositeField("response", new JsonField[]
+                {
+                    new TemplateStringField("minimal", "Hi <generated>", 1, 1),
+                    new TemplateStringField("extensive", "Story: <generated>", 50, 100)
+                }),
+                PromptTemplate = "Generate responses with very short and very long generated parts."
+            },
+
+            // Edge case: Mixed boolean and exact value constraints
+            new TestScenario
+            {
+                TestName = "Boolean and Exact Values",
+                Schema = new CompositeField("config", new JsonField[]
+                {
+                    new BooleanField("enabled"),
+                    new IntField("exactPort", 8080, 8080), 
+                    new FloatField("exactRatio", 1.0, 1.0),
+                    new BooleanField("debug")
+                }),
+                PromptTemplate = "Generate configuration with exact values and boolean settings."
+            }
         };
     }
 
