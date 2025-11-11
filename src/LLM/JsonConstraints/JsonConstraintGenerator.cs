@@ -103,6 +103,9 @@ public static class JsonConstraintGenerator
             processedRules.Add($"{rangeRuleName} ::= {GenerateIntegerRange(field.Min, field.Max)}");
         }
         
+        // Add the main rule
+        processedRules.Add(rule);
+        
         return ruleName;
     }
     
@@ -117,6 +120,9 @@ public static class JsonConstraintGenerator
         {
             processedRules.Add($"{rangeRuleName} ::= [\"-\"]? [0-9]+ \".\" [0-9]+");
         }
+        
+        // Add the main rule
+        processedRules.Add(rule);
         
         return ruleName;
     }

@@ -1,0 +1,342 @@
+using System.Text;
+using Cathedral.LLM.JsonConstraints;
+
+namespace Cathedral.LLM;
+
+/// <summary>
+/// Comprehensive tests for JSON constraints using the LLM server
+/// </summary>
+public static class JsonConstraintLLMTests
+{
+    public class TestResult
+    {
+        public string TestName { get; set; } = "";
+        public JsonField Schema { get; set; } = null!;
+        public string Prompt { get; set; } = "";
+        public string LLMResponse { get; set; } = "";
+        public bool IsValid { get; set; }
+        public List<string> ValidationErrors { get; set; } = new();
+        public TimeSpan ResponseTime { get; set; }
+        public string GbnfUsed { get; set; } = "";
+        public string TemplateUsed { get; set; } = "";
+    }
+
+    /// <summary>
+    /// Run comprehensive JSON constraint tests with the LLM
+    /// </summary>
+    public static async Task<List<TestResult>> RunAllTests(LlamaServerManager llmManager, string systemPrompt = "")
+    {
+        Console.WriteLine("=== JSON Constraint LLM Integration Tests ===\n");
+
+        var results = new List<TestResult>();
+        
+        // Test scenarios
+        var testScenarios = CreateTestScenarios();
+
+        // Create a specialized LLM instance for JSON generation
+        var jsonSystemPrompt = string.IsNullOrEmpty(systemPrompt) 
+            ? "You are a JSON data generator. You must follow the exact format specified and generate realistic data that matches the constraints. Always respond with valid JSON only, no additional text."
+            : systemPrompt;
+
+        var llmSlotId = await llmManager.CreateInstanceAsync(jsonSystemPrompt);
+        Console.WriteLine($"✓ Created JSON generator LLM instance with slot ID: {llmSlotId}\n");
+
+        int testNumber = 1;
+        foreach (var scenario in testScenarios)
+        {
+            Console.WriteLine($"Running Test {testNumber}: {scenario.TestName}");
+            var result = await RunSingleTest(llmManager, llmSlotId, scenario);
+            results.Add(result);
+            
+            PrintTestResult(result);
+            Console.WriteLine();
+            testNumber++;
+
+            // Reset the LLM instance between tests to avoid context pollution
+            llmManager.ResetInstance(llmSlotId);
+            await Task.Delay(500); // Small delay between tests
+        }
+
+        PrintSummary(results);
+        return results;
+    }
+
+    private static List<TestScenario> CreateTestScenarios()
+    {
+        return new List<TestScenario>
+        {
+            // Simple field tests (wrapped in composite for proper JSON structure)
+            new TestScenario
+            {
+                TestName = "Simple Character Name",
+                Schema = new CompositeField("character", new JsonField[]
+                {
+                    new StringField("name", 3, 15)
+                }),
+                PromptTemplate = "Generate a fantasy character name"
+            },
+            
+            new TestScenario
+            {
+                TestName = "Character Level",
+                Schema = new CompositeField("character", new JsonField[]
+                {
+                    new IntField("level", 1, 20)
+                }),
+                PromptTemplate = "Generate a character level"
+            },
+            
+            new TestScenario
+            {
+                TestName = "Character Class Choice",
+                Schema = new CompositeField("character", new JsonField[]
+                {
+                    new ChoiceField<string>("class", "warrior", "mage", "rogue", "archer")
+                }),
+                PromptTemplate = "Choose a character class"
+            },
+            
+            // Composite tests
+            new TestScenario
+            {
+                TestName = "Simple Character",
+                Schema = new CompositeField("character", new JsonField[]
+                {
+                    new StringField("name", 3, 20),
+                    new IntField("level", 1, 100),
+                    new ChoiceField<string>("class", "warrior", "mage", "rogue"),
+                    new BooleanField("isAlive")
+                }),
+                PromptTemplate = "Generate a fantasy game character"
+            },
+            
+            new TestScenario
+            {
+                TestName = "Character with Stats",
+                Schema = new CompositeField("character", new JsonField[]
+                {
+                    new StringField("name", 3, 25),
+                    new CompositeField("stats", new JsonField[]
+                    {
+                        new IntField("strength", 1, 20),
+                        new IntField("dexterity", 1, 20),
+                        new IntField("intelligence", 1, 20)
+                    }),
+                    new FloatField("health", 10.0, 100.0)
+                }),
+                PromptTemplate = "Generate a character with statistics"
+            },
+            
+            // Array tests
+            new TestScenario
+            {
+                TestName = "Character Skills",
+                Schema = new CompositeField("character", new JsonField[]
+                {
+                    new StringField("name", 3, 20),
+                    new ArrayField("skills", new StringField("skill", 3, 15), 1, 4)
+                }),
+                PromptTemplate = "Generate a character with a list of skills"
+            },
+            
+            // Template string tests
+            new TestScenario
+            {
+                TestName = "Character Dialogue",
+                Schema = new CompositeField("dialogue", new JsonField[]
+                {
+                    new StringField("speaker", 3, 20),
+                    new TemplateStringField("text", "says <generated>", 10, 50)
+                }),
+                PromptTemplate = "Generate character dialogue"
+            },
+            
+            // Variant tests
+            new TestScenario
+            {
+                TestName = "Game Event (Variants)",
+                Schema = new CompositeField("event", new JsonField[]
+                {
+                    new ChoiceField<string>("type", "combat", "dialogue"),
+                    new VariantField("data",
+                        new CompositeField("combat", new JsonField[]
+                        {
+                            new StringField("enemy", 3, 20),
+                            new IntField("enemyLevel", 1, 50)
+                        }),
+                        new CompositeField("dialogue", new JsonField[]
+                        {
+                            new StringField("npc", 3, 20),
+                            new StringField("message", 10, 100)
+                        })
+                    )
+                }),
+                PromptTemplate = "Generate a game event (either combat or dialogue)"
+            },
+            
+            // Complex nested test
+            new TestScenario
+            {
+                TestName = "Complete Quest",
+                Schema = JsonConstraintDemo.CreateQuestSchema(),
+                PromptTemplate = "Generate a complete fantasy quest with objectives"
+            }
+        };
+    }
+
+    private static async Task<TestResult> RunSingleTest(LlamaServerManager llmManager, int slotId, TestScenario scenario)
+    {
+        var result = new TestResult
+        {
+            TestName = scenario.TestName,
+            Schema = scenario.Schema
+        };
+
+        try
+        {
+            // Generate GBNF and template
+            var gbnf = JsonConstraintGenerator.GenerateGBNF(scenario.Schema);
+            var template = JsonConstraintGenerator.GenerateTemplate(scenario.Schema);
+            
+            result.GbnfUsed = gbnf;
+            result.TemplateUsed = template;
+
+            // Create the prompt
+            var prompt = $@"{scenario.PromptTemplate}
+
+Please generate JSON data that exactly matches this template format:
+{template}
+
+Respond with valid JSON only, no additional text or explanations.";
+
+            result.Prompt = prompt;
+
+            var responseBuilder = new StringBuilder();
+            var startTime = DateTime.UtcNow;
+            var completed = false;
+
+            // Make the LLM request with GBNF grammar constraints
+            await llmManager.ContinueRequestAsync(
+                slotId,
+                prompt,
+                onTokenStreamed: (token, _) =>
+                {
+                    responseBuilder.Append(token);
+                },
+                onCompleted: (_, response, wasCancelled) =>
+                {
+                    completed = true;
+                    result.LLMResponse = response.Trim();
+                    result.ResponseTime = DateTime.UtcNow - startTime;
+                },
+                gbnfGrammar: gbnf  // Pass GBNF grammar directly
+            );
+
+            // Wait for completion
+            while (!completed)
+            {
+                await Task.Delay(100);
+            }
+
+            // Validate the response
+            List<string> validationErrors;
+            result.IsValid = JsonValidator.ValidateJson(result.LLMResponse, scenario.Schema, out validationErrors);
+            result.ValidationErrors = validationErrors;
+        }
+        catch (Exception ex)
+        {
+            result.IsValid = false;
+            result.ValidationErrors.Add($"Test execution error: {ex.Message}");
+        }
+
+        return result;
+    }
+
+    private static void PrintTestResult(TestResult result)
+    {
+        var status = result.IsValid ? "✓ PASS" : "✗ FAIL";
+        Console.WriteLine($"  {status} - {result.TestName}");
+        Console.WriteLine($"    Response Time: {result.ResponseTime.TotalMilliseconds:F0}ms");
+        
+        if (!string.IsNullOrEmpty(result.LLMResponse))
+        {
+            var preview = result.LLMResponse.Length > 100 
+                ? result.LLMResponse.Substring(0, 100) + "..."
+                : result.LLMResponse;
+            Console.WriteLine($"    LLM Output: {preview.Replace("\n", "\\n")}");
+        }
+
+        if (!result.IsValid && result.ValidationErrors.Any())
+        {
+            Console.WriteLine("    Validation Errors:");
+            foreach (var error in result.ValidationErrors.Take(3))
+            {
+                Console.WriteLine($"      • {error}");
+            }
+            if (result.ValidationErrors.Count > 3)
+            {
+                Console.WriteLine($"      • ... and {result.ValidationErrors.Count - 3} more errors");
+            }
+        }
+    }
+
+    private static void PrintSummary(List<TestResult> results)
+    {
+        Console.WriteLine("=== Test Summary ===");
+        var totalTests = results.Count;
+        var passedTests = results.Count(r => r.IsValid);
+        var failedTests = totalTests - passedTests;
+        
+        Console.WriteLine($"Total Tests: {totalTests}");
+        Console.WriteLine($"Passed: {passedTests} ({(passedTests * 100.0 / totalTests):F1}%)");
+        Console.WriteLine($"Failed: {failedTests} ({(failedTests * 100.0 / totalTests):F1}%)");
+        
+        var avgResponseTime = results.Where(r => r.ResponseTime.TotalMilliseconds > 0)
+                                    .Average(r => r.ResponseTime.TotalMilliseconds);
+        Console.WriteLine($"Average Response Time: {avgResponseTime:F0}ms");
+
+        if (failedTests > 0)
+        {
+            Console.WriteLine("\nFailed Tests:");
+            foreach (var failure in results.Where(r => !r.IsValid))
+            {
+                Console.WriteLine($"  • {failure.TestName}");
+            }
+        }
+
+        Console.WriteLine("\nTest Categories:");
+        var categoryStats = results.GroupBy(r => GetTestCategory(r.TestName))
+                                  .Select(g => new 
+                                  {
+                                      Category = g.Key,
+                                      Total = g.Count(),
+                                      Passed = g.Count(r => r.IsValid)
+                                  });
+        
+        foreach (var category in categoryStats)
+        {
+            var passRate = category.Passed * 100.0 / category.Total;
+            Console.WriteLine($"  {category.Category}: {category.Passed}/{category.Total} ({passRate:F1}%)");
+        }
+    }
+
+    private static string GetTestCategory(string testName)
+    {
+        return testName.ToLower() switch
+        {
+            var name when name.Contains("simple") => "Simple Fields",
+            var name when name.Contains("array") => "Arrays",
+            var name when name.Contains("variant") => "Variants",
+            var name when name.Contains("dialogue") || name.Contains("template") => "Templates",
+            var name when name.Contains("quest") || name.Contains("complete") => "Complex",
+            _ => "Composite"
+        };
+    }
+
+    private class TestScenario
+    {
+        public string TestName { get; set; } = "";
+        public JsonField Schema { get; set; } = null!;
+        public string PromptTemplate { get; set; } = "";
+    }
+}

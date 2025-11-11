@@ -163,64 +163,339 @@ public static class JsonConstraintDemo
 }
 
 /// <summary>
-/// Utility class for validating LLM-generated JSON against schemas
+/// Comprehensive utility class for validating LLM-generated JSON against schemas
 /// </summary>
 public static class JsonValidator
 {
     /// <summary>
-    /// Basic validation that checks if a JSON string could match a schema structure
-    /// This is a simplified validator - a full implementation would be more comprehensive
+    /// Validates a JSON string against a JsonField schema with detailed error reporting
     /// </summary>
-    public static bool ValidateBasicStructure(string jsonString, JsonField schema)
+    /// <param name="jsonString">The JSON string to validate</param>
+    /// <param name="schema">The schema to validate against</param>
+    /// <param name="errors">List of validation errors found</param>
+    /// <returns>True if valid, false otherwise</returns>
+    public static bool ValidateJson(string jsonString, JsonField schema, out List<string> errors)
     {
+        errors = new List<string>();
+        
+        if (string.IsNullOrWhiteSpace(jsonString))
+        {
+            errors.Add("JSON string is null or empty");
+            return false;
+        }
+
         try
         {
             using var document = System.Text.Json.JsonDocument.Parse(jsonString);
-            return ValidateElement(document.RootElement, schema);
+            return ValidateElement(document.RootElement, schema, "", errors);
         }
-        catch (System.Text.Json.JsonException)
+        catch (System.Text.Json.JsonException ex)
         {
+            errors.Add($"Invalid JSON format: {ex.Message}");
             return false;
         }
     }
 
-    private static bool ValidateElement(System.Text.Json.JsonElement element, JsonField field)
+    /// <summary>
+    /// Simple validation that returns only true/false
+    /// </summary>
+    public static bool ValidateJson(string jsonString, JsonField schema)
     {
-        return field switch
+        return ValidateJson(jsonString, schema, out _);
+    }
+
+    private static bool ValidateElement(System.Text.Json.JsonElement element, JsonField field, string path, List<string> errors)
+    {
+        var currentPath = string.IsNullOrEmpty(path) ? field.Name : $"{path}.{field.Name}";
+        
+        try
         {
-            IntField intField => element.ValueKind == System.Text.Json.JsonValueKind.Number &&
-                               element.TryGetInt32(out var intVal) &&
-                               intVal >= intField.Min && intVal <= intField.Max,
+            return field switch
+            {
+                IntField intField => ValidateIntField(element, intField, currentPath, errors),
+                FloatField floatField => ValidateFloatField(element, floatField, currentPath, errors),
+                StringField stringField => ValidateStringField(element, stringField, currentPath, errors),
+                BooleanField boolField => ValidateBooleanField(element, boolField, currentPath, errors),
+                ChoiceField<string> stringChoice => ValidateStringChoiceField(element, stringChoice, currentPath, errors),
+                ChoiceField<int> intChoice => ValidateIntChoiceField(element, intChoice, currentPath, errors),
+                TemplateStringField templateField => ValidateTemplateStringField(element, templateField, currentPath, errors),
+                ArrayField arrayField => ValidateArrayField(element, arrayField, currentPath, errors),
+                CompositeField compositeField => ValidateCompositeField(element, compositeField, currentPath, errors),
+                VariantField variantField => ValidateVariantField(element, variantField, currentPath, errors),
+                OptionalField optionalField => ValidateOptionalField(element, optionalField, currentPath, errors),
+                _ => AddError(errors, currentPath, $"Unsupported field type: {field.GetType().Name}")
+            };
+        }
+        catch (Exception ex)
+        {
+            AddError(errors, currentPath, $"Validation exception: {ex.Message}");
+            return false;
+        }
+    }
+
+    private static bool ValidateIntField(System.Text.Json.JsonElement element, IntField field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.Number)
+        {
+            AddError(errors, path, $"Expected integer, got {element.ValueKind}");
+            return false;
+        }
+
+        if (!element.TryGetInt32(out var value))
+        {
+            AddError(errors, path, "Value is not a valid 32-bit integer");
+            return false;
+        }
+
+        if (value < field.Min || value > field.Max)
+        {
+            AddError(errors, path, $"Value {value} is outside range [{field.Min}, {field.Max}]");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool ValidateFloatField(System.Text.Json.JsonElement element, FloatField field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.Number)
+        {
+            AddError(errors, path, $"Expected number, got {element.ValueKind}");
+            return false;
+        }
+
+        if (!element.TryGetDouble(out var value))
+        {
+            AddError(errors, path, "Value is not a valid number");
+            return false;
+        }
+
+        if (value < field.Min || value > field.Max)
+        {
+            AddError(errors, path, $"Value {value} is outside range [{field.Min}, {field.Max}]");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool ValidateStringField(System.Text.Json.JsonElement element, StringField field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.String)
+        {
+            AddError(errors, path, $"Expected string, got {element.ValueKind}");
+            return false;
+        }
+
+        var value = element.GetString() ?? "";
+        if (value.Length < field.MinLength || value.Length > field.MaxLength)
+        {
+            AddError(errors, path, $"String length {value.Length} is outside range [{field.MinLength}, {field.MaxLength}]");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool ValidateBooleanField(System.Text.Json.JsonElement element, BooleanField field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.True && 
+            element.ValueKind != System.Text.Json.JsonValueKind.False)
+        {
+            AddError(errors, path, $"Expected boolean, got {element.ValueKind}");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool ValidateStringChoiceField(System.Text.Json.JsonElement element, ChoiceField<string> field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.String)
+        {
+            AddError(errors, path, $"Expected string choice, got {element.ValueKind}");
+            return false;
+        }
+
+        var value = element.GetString();
+        if (!field.Options.Contains(value))
+        {
+            AddError(errors, path, $"Value '{value}' is not in allowed choices: [{string.Join(", ", field.Options)}]");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool ValidateIntChoiceField(System.Text.Json.JsonElement element, ChoiceField<int> field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.Number)
+        {
+            AddError(errors, path, $"Expected integer choice, got {element.ValueKind}");
+            return false;
+        }
+
+        if (!element.TryGetInt32(out var value))
+        {
+            AddError(errors, path, "Value is not a valid integer");
+            return false;
+        }
+
+        if (!field.Options.Contains(value))
+        {
+            AddError(errors, path, $"Value {value} is not in allowed choices: [{string.Join(", ", field.Options)}]");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool ValidateTemplateStringField(System.Text.Json.JsonElement element, TemplateStringField field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.String)
+        {
+            AddError(errors, path, $"Expected string, got {element.ValueKind}");
+            return false;
+        }
+
+        var value = element.GetString() ?? "";
+        
+        // For template strings, we validate that it follows the template pattern
+        if (field.Template.Contains("<generated>"))
+        {
+            var beforeMarker = field.Template.Substring(0, field.Template.IndexOf("<generated>"));
+            var afterMarker = field.Template.Substring(field.Template.IndexOf("<generated>") + "<generated>".Length);
             
-            FloatField floatField => element.ValueKind == System.Text.Json.JsonValueKind.Number &&
-                                   element.TryGetDouble(out var doubleVal) &&
-                                   doubleVal >= floatField.Min && doubleVal <= floatField.Max,
+            if (!value.StartsWith(beforeMarker) || !value.EndsWith(afterMarker))
+            {
+                AddError(errors, path, $"Template string does not match pattern. Expected format: '{field.Template.Replace("<generated>", "[generated text]")}'");
+                return false;
+            }
             
-            StringField stringField => element.ValueKind == System.Text.Json.JsonValueKind.String &&
-                                     element.GetString()!.Length >= stringField.MinLength &&
-                                     element.GetString()!.Length <= stringField.MaxLength,
-            
-            BooleanField => element.ValueKind == System.Text.Json.JsonValueKind.True ||
-                           element.ValueKind == System.Text.Json.JsonValueKind.False,
-            
-            ChoiceField<string> stringChoice => element.ValueKind == System.Text.Json.JsonValueKind.String &&
-                                              stringChoice.Options.Contains(element.GetString()),
-            
-            ChoiceField<int> intChoice => element.ValueKind == System.Text.Json.JsonValueKind.Number &&
-                                        element.TryGetInt32(out var choiceIntVal) &&
-                                        intChoice.Options.Contains(choiceIntVal),
-            
-            CompositeField composite => element.ValueKind == System.Text.Json.JsonValueKind.Object &&
-                                      composite.Fields.All(childField =>
-                                          element.TryGetProperty(childField.Name, out var childElement) &&
-                                          ValidateElement(childElement, childField)),
-            
-            ArrayField arrayField => element.ValueKind == System.Text.Json.JsonValueKind.Array &&
-                                   element.GetArrayLength() >= arrayField.MinLength &&
-                                   element.GetArrayLength() <= arrayField.MaxLength &&
-                                   element.EnumerateArray().All(item => ValidateElement(item, arrayField.ElementType)),
-            
-            _ => true // For unsupported types, assume valid
-        };
+            var generatedPart = value.Substring(beforeMarker.Length, value.Length - beforeMarker.Length - afterMarker.Length);
+            if (generatedPart.Length < field.MinGenLength || generatedPart.Length > field.MaxGenLength)
+            {
+                AddError(errors, path, $"Generated portion length {generatedPart.Length} is outside range [{field.MinGenLength}, {field.MaxGenLength}]");
+                return false;
+            }
+        }
+        else
+        {
+            // Exact match for non-template strings
+            if (value != field.Template)
+            {
+                AddError(errors, path, $"Expected exact value '{field.Template}', got '{value}'");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ValidateArrayField(System.Text.Json.JsonElement element, ArrayField field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.Array)
+        {
+            AddError(errors, path, $"Expected array, got {element.ValueKind}");
+            return false;
+        }
+
+        var length = element.GetArrayLength();
+        if (length < field.MinLength || length > field.MaxLength)
+        {
+            AddError(errors, path, $"Array length {length} is outside range [{field.MinLength}, {field.MaxLength}]");
+            return false;
+        }
+
+        var isValid = true;
+        var index = 0;
+        foreach (var item in element.EnumerateArray())
+        {
+            var itemPath = $"{path}[{index}]";
+            if (!ValidateElement(item, field.ElementType, itemPath.Substring(0, itemPath.LastIndexOf('.')), errors))
+            {
+                isValid = false;
+            }
+            index++;
+        }
+
+        return isValid;
+    }
+
+    private static bool ValidateCompositeField(System.Text.Json.JsonElement element, CompositeField field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.Object)
+        {
+            AddError(errors, path, $"Expected object, got {element.ValueKind}");
+            return false;
+        }
+
+        var isValid = true;
+
+        // Check that all required fields are present
+        foreach (var childField in field.Fields)
+        {
+            if (element.TryGetProperty(childField.Name, out var childElement))
+            {
+                if (!ValidateElement(childElement, childField, path, errors))
+                {
+                    isValid = false;
+                }
+            }
+            else if (!(childField is OptionalField))
+            {
+                AddError(errors, $"{path}.{childField.Name}", "Required field is missing");
+                isValid = false;
+            }
+        }
+
+        return isValid;
+    }
+
+    private static bool ValidateVariantField(System.Text.Json.JsonElement element, VariantField field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.Object)
+        {
+            AddError(errors, path, $"Expected object for variant, got {element.ValueKind}");
+            return false;
+        }
+
+        // Try to match against any of the variants
+        var variantErrors = new List<List<string>>();
+        
+        foreach (var variant in field.Variants)
+        {
+            var variantSpecificErrors = new List<string>();
+            if (ValidateElement(element, variant, path, variantSpecificErrors))
+            {
+                return true; // Found a matching variant
+            }
+            variantErrors.Add(variantSpecificErrors);
+        }
+
+        // If no variant matched, add errors for all variants
+        AddError(errors, path, $"Value does not match any of the {field.Variants.Length} possible variants:");
+        for (int i = 0; i < field.Variants.Length; i++)
+        {
+            errors.Add($"  Variant {i + 1} ({field.Variants[i].Name}) errors:");
+            foreach (var error in variantErrors[i])
+            {
+                errors.Add($"    {error}");
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ValidateOptionalField(System.Text.Json.JsonElement element, OptionalField field, string path, List<string> errors)
+    {
+        // For optional fields, we validate the inner field if the element exists
+        return ValidateElement(element, field.InnerField, path, errors);
+    }
+
+    private static bool AddError(List<string> errors, string path, string message)
+    {
+        errors.Add($"{path}: {message}");
+        return false;
     }
 }

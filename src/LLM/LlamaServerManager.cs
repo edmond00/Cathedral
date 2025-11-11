@@ -156,17 +156,19 @@ public class LlamaServerManager : IDisposable
     }
     
     /// <summary>
-    /// Continues a conversation with an existing instance
+    /// Continue a conversation with an LLM instance, optionally using GBNF grammar constraints
     /// </summary>
     /// <param name="slotId">The instance slot ID</param>
     /// <param name="userMessage">The user's message</param>
     /// <param name="onTokenStreamed">Hook called for each new token (token, slotId)</param>
     /// <param name="onCompleted">Hook called when request ends (slotId, fullResponse, wasCancelled)</param>
+    /// <param name="gbnfGrammar">Optional GBNF grammar string to constrain the output format</param>
     public async Task ContinueRequestAsync(
         int slotId, 
         string userMessage, 
         Action<string, int>? onTokenStreamed = null,
-        Action<int, string, bool>? onCompleted = null)
+        Action<int, string, bool>? onCompleted = null,
+        string? gbnfGrammar = null)
     {
         if (!_instances.TryGetValue(slotId, out var instance))
         {
@@ -189,19 +191,25 @@ public class LlamaServerManager : IDisposable
             var startTime = DateTime.Now;
             var fullResponse = new StringBuilder();
             
-            // Create the request
-            var request = new
+            // Create the base request
+            var requestData = new Dictionary<string, object>
             {
-                model = "local",
-                messages = instance.GetMessages(),
-                max_tokens = 2048,
-                stream = true,
-                cache_prompt = true,
-                slot_id = slotId
+                ["model"] = "local",
+                ["messages"] = instance.GetMessages(),
+                ["max_tokens"] = 2048,
+                ["stream"] = true,
+                ["cache_prompt"] = true,
+                ["slot_id"] = slotId
             };
             
+            // Add GBNF grammar if provided
+            if (!string.IsNullOrWhiteSpace(gbnfGrammar))
+            {
+                requestData["grammar"] = gbnfGrammar;
+            }
+            
             // Send request
-            var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", request, cancellationToken.Token);
+            var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", requestData, cancellationToken.Token);
             response.EnsureSuccessStatusCode();
             
             // Process streaming response
@@ -221,7 +229,15 @@ public class LlamaServerManager : IDisposable
                     try
                     {
                         using var doc = JsonDocument.Parse(jsonData);
-                        var choices = doc.RootElement.GetProperty("choices");
+                        var rootElement = doc.RootElement;
+                        
+                        // Debug: Log the JSON structure if needed
+                        if (!rootElement.TryGetProperty("choices", out var choices))
+                        {
+                            Console.WriteLine($"DEBUG: Missing 'choices' in response: {jsonData}");
+                            continue;
+                        }
+                        
                         if (choices.GetArrayLength() > 0)
                         {
                             var choice = choices[0];
@@ -270,6 +286,11 @@ public class LlamaServerManager : IDisposable
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error in request for slot {slotId}: {ex.Message}");
+            Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.Error.WriteLine($"Inner exception: {ex.InnerException.Message}");
+            }
             onCompleted?.Invoke(slotId, "", false);
             RequestCompleted?.Invoke(this, new RequestCompletedEventArgs(slotId, "", DateTime.Now - DateTime.Now, false));
         }

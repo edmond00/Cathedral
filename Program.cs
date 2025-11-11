@@ -2,14 +2,62 @@
 using Cathedral.LLM.JsonConstraints;
 using Cathedral.Glyph;
 
-// Test the new JsonConstraint system
-Console.WriteLine("=== JSON Constraint Generator Test ===");
-JsonConstraintTest.TestJsonConstraintGeneration();
+Console.WriteLine("=== Cathedral Application ===\n");
+Console.WriteLine("Choose an option:");
+Console.WriteLine("1. Test JSON Constraint Generator (basic)");
+Console.WriteLine("2. Test JSON Constraints with LLM integration");
+Console.WriteLine("3. Quick validation test (debug JSON issues)");
+Console.WriteLine("4. Debug GBNF integration errors");
+Console.WriteLine("5. Launch GlyphSphere");
+Console.WriteLine("6. Exit");
 
-Console.WriteLine("\nPress any key to launch GlyphSphere...");
+Console.Write("\nEnter your choice (1-6): ");
+var choice = Console.ReadLine();
+
+switch (choice)
+{
+    case "1":
+        Console.WriteLine("\n=== JSON Constraint Generator Test ===");
+        JsonConstraintTest.TestJsonConstraintGeneration();
+        break;
+        
+    case "2":
+        Console.WriteLine("\n=== JSON Constraint LLM Integration Tests ===");
+        Console.WriteLine("This will start the LLM server and run comprehensive tests...");
+        Console.WriteLine("Press Enter to continue or Ctrl+C to cancel.");
+        Console.ReadLine();
+        
+        await JsonConstraintTest.TestWithLLM();
+        break;
+
+    case "3":
+        Console.WriteLine("\n=== Quick Validation Test ===");
+        ValidationQuickTest.TestValidation();
+        break;
+        
+    case "4":
+        Console.WriteLine("\n=== GBNF Integration Debug ===");
+        await Cathedral.SimpleGBNFTest.RunDebugTest();
+        break;
+        
+    case "5":
+        Console.WriteLine("\n=== Launching GlyphSphere ===");
+        GlyphSphereLauncher.LaunchGlyphSphere();
+        break;
+        
+    case "6":
+        Console.WriteLine("Goodbye!");
+        Environment.Exit(0);
+        break;
+        
+    default:
+        Console.WriteLine("Invalid choice. Running basic JSON tests...");
+        JsonConstraintTest.TestJsonConstraintGeneration();
+        break;
+}
+
+Console.WriteLine("\nPress any key to exit...");
 Console.ReadKey();
-
-GlyphSphereLauncher.LaunchGlyphSphere();
 
 /*
 
@@ -84,7 +132,8 @@ await llmManager.ContinueRequestAsync(
     {
         conversationCompleted = true;
         Console.WriteLine($"\n✓ Conversation completed. Response length: {response.Length} characters");
-    }
+    },
+    gbnfGrammar: null
 );
 
 // Wait for completion
@@ -111,7 +160,8 @@ await llmManager.ContinueRequestAsync(
     {
         assistantCompleted = true;
         Console.WriteLine($"\n✓ Assistant response completed.");
-    }
+    },
+    gbnfGrammar: null
 );
 
 // Wait for assistant completion
@@ -136,7 +186,8 @@ await llmManager.ContinueRequestAsync(
     {
         contextCompleted = true;
         Console.WriteLine($"\n✓ Context-aware response completed.");
-    }
+    },
+    gbnfGrammar: null
 );
 
 // Wait for completion
@@ -162,7 +213,8 @@ await llmManager.ContinueRequestAsync(
     {
         resetCompleted = true;
         Console.WriteLine($"\n✓ Reset test completed. (Should not remember previous conversation)");
-    }
+    },
+    gbnfGrammar: null
 );
 
 // Wait for completion
@@ -209,7 +261,8 @@ if (args.Length > 0 && args[0] == "--test-cancel")
             {
                 cancelTestCompleted = true;
                 Console.WriteLine($"\n✓ Cancellation test - WasCancelled: {wasCancelled}");
-            }
+            },
+            gbnfGrammar: null
         );
     });
     
