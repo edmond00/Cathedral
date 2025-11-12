@@ -30,7 +30,7 @@ public static class JsonConstraintGenerator
         }
         
         // Add basic JSON primitives
-        AppendBasicJsonRules(builder);
+        AppendBasicJsonRules(builder, processedRules);
         
         return builder.ToString();
     }
@@ -78,7 +78,9 @@ public static class JsonConstraintGenerator
         return field switch
         {
             IntField intField => GenerateIntFieldRule(intField, processedRules),
+            ConstantIntField constIntField => GenerateConstantIntFieldRule(constIntField, processedRules),
             FloatField floatField => GenerateFloatFieldRule(floatField, processedRules),
+            ConstantFloatField constFloatField => GenerateConstantFloatFieldRule(constFloatField, processedRules),
             StringField stringField => GenerateStringFieldRule(stringField, processedRules),
             BooleanField boolField => GenerateBooleanFieldRule(boolField, processedRules),
             ChoiceField<string> stringChoice => GenerateStringChoiceFieldRule(stringChoice, processedRules),
@@ -115,11 +117,10 @@ public static class JsonConstraintGenerator
         var ruleName = SanitizeRuleName(field.Name);
         var rule = $"{ruleName} ::= float-{field.Min}-{field.Max}";
         
-        // For simplicity, we'll use a general float pattern and rely on the LLM to respect bounds
         var rangeRuleName = $"float-{field.Min}-{field.Max}";
         if (!processedRules.Any(r => r.StartsWith(rangeRuleName)))
         {
-            // Limit decimal places to 1-4 digits to prevent excessively long numbers
+            // Generate range pattern for floating point numbers
             processedRules.Add($"{rangeRuleName} ::= [\"-\"]? [0-9]+ \".\" [0-9]{{1,4}}");
         }
         
@@ -128,7 +129,29 @@ public static class JsonConstraintGenerator
         
         return ruleName;
     }
-    
+
+    private static string GenerateConstantIntFieldRule(ConstantIntField field, HashSet<string> processedRules)
+    {
+        var ruleName = SanitizeRuleName(field.Name);
+        var rule = $"{ruleName} ::= \"{field.Value}\"";
+        
+        // Constant fields generate a literal numeric value with quotes in GBNF rule
+        processedRules.Add(rule);
+        
+        return ruleName;
+    }
+
+    private static string GenerateConstantFloatFieldRule(ConstantFloatField field, HashSet<string> processedRules)
+    {
+        var ruleName = SanitizeRuleName(field.Name);
+        var rule = $"{ruleName} ::= \"{field.Value}\"";
+        
+        // Constant fields generate a literal numeric value with quotes in GBNF rule
+        processedRules.Add(rule);
+        
+        return ruleName;
+    }
+
     private static string GenerateStringFieldRule(StringField field, HashSet<string> processedRules)
     {
         var ruleName = SanitizeRuleName(field.Name);
@@ -295,7 +318,9 @@ public static class JsonConstraintGenerator
         return field switch
         {
             IntField intField => $"<integer between {intField.Min}–{intField.Max}>",
+            ConstantIntField constIntField => constIntField.Value,
             FloatField floatField => $"<float between {floatField.Min}–{floatField.Max}>",
+            ConstantFloatField constFloatField => constFloatField.Value,
             StringField stringField => $"<string of {stringField.MinLength}–{stringField.MaxLength} characters>",
             BooleanField => "<boolean: true or false>",
             ChoiceField<string> stringChoice => $"<choice between {JsonSerializer.Serialize(stringChoice.Options)}>",
@@ -376,12 +401,6 @@ public static class JsonConstraintGenerator
     
     private static string GenerateIntegerRange(int min, int max)
     {
-        // Handle exact value case (min == max)
-        if (min == max)
-        {
-            return $"\"{min}\"";
-        }
-        
         // For ranges, we'll implement simple patterns for common small ranges
         // For larger or complex ranges, we'll use a basic pattern and rely on validation
         
@@ -423,15 +442,23 @@ public static class JsonConstraintGenerator
         return new string(name.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray());
     }
     
-    private static void AppendBasicJsonRules(StringBuilder builder)
+    private static void AppendBasicJsonRules(StringBuilder builder, HashSet<string> processedRules)
     {
         builder.AppendLine();
         builder.AppendLine("# Basic JSON primitives");
-        builder.AppendLine("ws ::= [ \\t\\n\\r]*");
-        builder.AppendLine("string ::= \"\\\"\" [^\"\\\\]* \"\\\"\"");
-        builder.AppendLine("number ::= [\"-\"]? [0-9]+ (\".\" [0-9]+)?");
-        builder.AppendLine("integer ::= [\"-\"]? [0-9]+");
-        builder.AppendLine("boolean ::= \"true\" | \"false\"");
-        builder.AppendLine("null ::= \"null\"");
+        
+        // Only add basic rules that haven't been added by field-specific generation
+        if (!processedRules.Any(r => r.StartsWith("ws ::=")))
+            builder.AppendLine("ws ::= [ \\t\\n\\r]*");
+        if (!processedRules.Any(r => r.StartsWith("string ::=")))
+            builder.AppendLine("string ::= \"\\\"\" [^\"\\\\]* \"\\\"\"");
+        if (!processedRules.Any(r => r.StartsWith("number ::=")))
+            builder.AppendLine("number ::= [\"-\"]? [0-9]+ (\".\" [0-9]+)?");
+        if (!processedRules.Any(r => r.StartsWith("integer ::=")))
+            builder.AppendLine("integer ::= [\"-\"]? [0-9]+");
+        if (!processedRules.Any(r => r.StartsWith("boolean ::=")))
+            builder.AppendLine("boolean ::= \"true\" | \"false\"");
+        if (!processedRules.Any(r => r.StartsWith("null ::=")))
+            builder.AppendLine("null ::= \"null\"");
     }
 }

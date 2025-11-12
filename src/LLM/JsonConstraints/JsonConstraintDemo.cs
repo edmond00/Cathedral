@@ -213,7 +213,9 @@ public static class JsonValidator
             return field switch
             {
                 IntField intField => ValidateIntField(element, intField, currentPath, errors),
+                ConstantIntField constIntField => ValidateConstantIntField(element, constIntField, currentPath, errors),
                 FloatField floatField => ValidateFloatField(element, floatField, currentPath, errors),
+                ConstantFloatField constFloatField => ValidateConstantFloatField(element, constFloatField, currentPath, errors),
                 StringField stringField => ValidateStringField(element, stringField, currentPath, errors),
                 BooleanField boolField => ValidateBooleanField(element, boolField, currentPath, errors),
                 ChoiceField<string> stringChoice => ValidateStringChoiceField(element, stringChoice, currentPath, errors),
@@ -256,6 +258,29 @@ public static class JsonValidator
         return true;
     }
 
+    private static bool ValidateConstantIntField(System.Text.Json.JsonElement element, ConstantIntField field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.Number)
+        {
+            AddError(errors, path, $"Expected integer, got {element.ValueKind}");
+            return false;
+        }
+
+        if (!element.TryGetInt32(out var value))
+        {
+            AddError(errors, path, "Value is not a valid 32-bit integer");
+            return false;
+        }
+
+        if (value != field.Value)
+        {
+            AddError(errors, path, $"Expected constant value {field.Value}, got {value}");
+            return false;
+        }
+
+        return true;
+    }
+
     private static bool ValidateFloatField(System.Text.Json.JsonElement element, FloatField field, string path, List<string> errors)
     {
         if (element.ValueKind != System.Text.Json.JsonValueKind.Number)
@@ -273,6 +298,29 @@ public static class JsonValidator
         if (value < field.Min || value > field.Max)
         {
             AddError(errors, path, $"Value {value} is outside range [{field.Min}, {field.Max}]");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool ValidateConstantFloatField(System.Text.Json.JsonElement element, ConstantFloatField field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.Number)
+        {
+            AddError(errors, path, $"Expected number, got {element.ValueKind}");
+            return false;
+        }
+
+        if (!element.TryGetDouble(out var value))
+        {
+            AddError(errors, path, "Value is not a valid number");
+            return false;
+        }
+
+        if (Math.Abs(value - field.Value) > 0.0001) // Use epsilon for float comparison
+        {
+            AddError(errors, path, $"Expected constant value {field.Value}, got {value}");
             return false;
         }
 

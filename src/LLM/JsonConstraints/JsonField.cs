@@ -18,12 +18,28 @@ public record IntField(string Name, int Min, int Max) : JsonField(Name)
 }
 
 /// <summary>
+/// Represents a constant integer field with a fixed value
+/// </summary>
+public record ConstantIntField(string Name, int Value) : JsonField(Name)
+{
+    public int Value { get; init; } = Value;
+}
+
+/// <summary>
 /// Represents a floating-point field with min/max constraints
 /// </summary>
 public record FloatField(string Name, double Min, double Max) : JsonField(Name)
 {
     public double Min { get; init; } = Min <= Max ? Min : throw new ArgumentException("Min value cannot be greater than max value");
     public double Max { get; init; } = Max;
+}
+
+/// <summary>
+/// Represents a constant floating-point field with a fixed value
+/// </summary>
+public record ConstantFloatField(string Name, double Value) : JsonField(Name)
+{
+    public double Value { get; init; } = Value;
 }
 
 /// <summary>

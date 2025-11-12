@@ -200,8 +200,8 @@ public static class JsonConstraintLLMTests
                 TestName = "Boundary Values",
                 Schema = new CompositeField("stats", new JsonField[]
                 {
-                    new IntField("minVal", 0, 0),
-                    new IntField("maxVal", 9999, 9999)
+                    new ConstantIntField("minVal", 0),
+                    new ConstantIntField("maxVal", 9999)
                 }),
                 PromptTemplate = "Generate numeric boundary values exactly matching the required min/max."
             },
@@ -284,8 +284,8 @@ public static class JsonConstraintLLMTests
                 Schema = new CompositeField("config", new JsonField[]
                 {
                     new BooleanField("enabled"),
-                    new IntField("exactPort", 8080, 8080), 
-                    new FloatField("exactRatio", 1.0, 1.0),
+                    new ConstantIntField("exactPort", 8080), 
+                    new ConstantFloatField("exactRatio", 1.0),
                     new BooleanField("debug")
                 }),
                 PromptTemplate = "Generate configuration with exact values and boolean settings."
@@ -309,6 +309,14 @@ public static class JsonConstraintLLMTests
             
             result.GbnfUsed = gbnf;
             result.TemplateUsed = template;
+
+            // Debug output for failing constant field tests
+            if (scenario.TestName == "Boundary Values" || scenario.TestName == "Boolean and Exact Values")
+            {
+                Console.WriteLine($"\n--- DEBUG: GBNF for {scenario.TestName} ---");
+                Console.WriteLine(gbnf);
+                Console.WriteLine("--- END DEBUG ---\n");
+            }
 
             // Create the prompt
             var prompt = $@"{scenario.PromptTemplate}
