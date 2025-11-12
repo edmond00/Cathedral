@@ -17,7 +17,7 @@ public class JsonConstraintTest
             var testSchema = new CompositeField("TestEvent", new JsonField[]
             {
                 new StringField("name", 3, 20),
-                new IntField("level", 1, 50),
+                new DigitField("level", 2),  // 2-digit level (00-99)
                 new ChoiceField<string>("type", "fire", "water", "earth", "air"),
                 new BooleanField("isActive")
             });
@@ -103,7 +103,7 @@ public class JsonConstraintTest
         var schema = new CompositeField("person", new JsonField[]
         {
             new StringField("name", 2, 20),
-            new IntField("age", 0, 120),
+            new DigitField("age", 3),    // 3-digit age (000-999)
             new BooleanField("active")
         });
 

@@ -18,7 +18,7 @@ public static class JsonConstraintDemo
             new VariantField("content",
                 new CompositeField("combat", new JsonField[]
                 {
-                    new IntField("enemyLevel", 1, 100),
+                    new DigitField("enemyLevel", 3),  // 3-digit enemy level (000-999)
                     new ChoiceField<string>("enemyType", "goblin", "dragon", "bandit")
                 }),
                 new CompositeField("dialogue", new JsonField[]
@@ -44,18 +44,18 @@ public static class JsonConstraintDemo
         return new CompositeField("Character", new JsonField[]
         {
             new StringField("name", 3, 20),
-            new IntField("age", 0, 120),
+            new DigitField("age", 3),    // 3-digit age (000-999)
             new ChoiceField<string>("class", "warrior", "mage", "rogue", "archer"),
             new CompositeField("stats", new JsonField[]
             {
-                new IntField("strength", 1, 10),
-                new IntField("dexterity", 1, 10),
-                new IntField("intelligence", 1, 10),
-                new IntField("constitution", 1, 10)
+                new DigitField("strength", 2),     // 2-digit strength (00-99)
+                new DigitField("dexterity", 2),    // 2-digit dexterity (00-99)
+                new DigitField("intelligence", 2), // 2-digit intelligence (00-99)
+                new DigitField("constitution", 2)  // 2-digit constitution (00-99)
             }),
             new ArrayField("skills", new StringField("skill", 3, 15), 0, 5),
             new OptionalField("backstory", new StringField("backstory", 50, 500)),
-            new FloatField("health", 1.0, 100.0)
+            new DigitField("health", 3)  // 3-digit health (000-999)
         });
     }
 
@@ -74,18 +74,18 @@ public static class JsonConstraintDemo
                 {
                     new StringField("description", 10, 100),
                     new BooleanField("completed"),
-                    new OptionalField("reward", new IntField("gold", 0, 1000))
+                    new OptionalField("reward", new DigitField("gold", 4))  // 4-digit gold (0000-9999)
                 }), 1, 5),
             new VariantField("questType",
                 new CompositeField("killQuest", new JsonField[]
                 {
                     new StringField("targetType", 3, 20),
-                    new IntField("targetCount", 1, 50)
+                    new DigitField("targetCount", 2)  // 2-digit target count (00-99)
                 }),
                 new CompositeField("fetchQuest", new JsonField[]
                 {
                     new StringField("itemName", 3, 30),
-                    new IntField("quantity", 1, 20),
+                    new DigitField("quantity", 2),    // 2-digit quantity (00-99)
                     new StringField("location", 5, 40)
                 }),
                 new CompositeField("escortQuest", new JsonField[]
@@ -212,9 +212,8 @@ public static class JsonValidator
         {
             return field switch
             {
-                IntField intField => ValidateIntField(element, intField, currentPath, errors),
+                DigitField digitField => ValidateDigitField(element, digitField, currentPath, errors),
                 ConstantIntField constIntField => ValidateConstantIntField(element, constIntField, currentPath, errors),
-                FloatField floatField => ValidateFloatField(element, floatField, currentPath, errors),
                 ConstantFloatField constFloatField => ValidateConstantFloatField(element, constFloatField, currentPath, errors),
                 StringField stringField => ValidateStringField(element, stringField, currentPath, errors),
                 BooleanField boolField => ValidateBooleanField(element, boolField, currentPath, errors),
@@ -235,23 +234,27 @@ public static class JsonValidator
         }
     }
 
-    private static bool ValidateIntField(System.Text.Json.JsonElement element, IntField field, string path, List<string> errors)
+    private static bool ValidateDigitField(System.Text.Json.JsonElement element, DigitField field, string path, List<string> errors)
     {
-        if (element.ValueKind != System.Text.Json.JsonValueKind.Number)
+        if (element.ValueKind != System.Text.Json.JsonValueKind.String)
         {
-            AddError(errors, path, $"Expected integer, got {element.ValueKind}");
+            AddError(errors, path, $"Expected string, got {element.ValueKind}");
             return false;
         }
 
-        if (!element.TryGetInt32(out var value))
+        var value = element.GetString()!;
+        
+        // Check if it has the exact expected number of digits
+        if (value.Length != field.DigitCount)
         {
-            AddError(errors, path, "Value is not a valid 32-bit integer");
+            AddError(errors, path, $"Expected {field.DigitCount}-digit string, got {value.Length} characters: {value}");
             return false;
         }
 
-        if (value < field.Min || value > field.Max)
+        // Validate all characters are digits
+        if (!value.All(char.IsDigit))
         {
-            AddError(errors, path, $"Value {value} is outside range [{field.Min}, {field.Max}]");
+            AddError(errors, path, $"Expected all digits, got non-digit characters in: {value}");
             return false;
         }
 
@@ -275,29 +278,6 @@ public static class JsonValidator
         if (value != field.Value)
         {
             AddError(errors, path, $"Expected constant value {field.Value}, got {value}");
-            return false;
-        }
-
-        return true;
-    }
-
-    private static bool ValidateFloatField(System.Text.Json.JsonElement element, FloatField field, string path, List<string> errors)
-    {
-        if (element.ValueKind != System.Text.Json.JsonValueKind.Number)
-        {
-            AddError(errors, path, $"Expected number, got {element.ValueKind}");
-            return false;
-        }
-
-        if (!element.TryGetDouble(out var value))
-        {
-            AddError(errors, path, "Value is not a valid number");
-            return false;
-        }
-
-        if (value < field.Min || value > field.Max)
-        {
-            AddError(errors, path, $"Value {value} is outside range [{field.Min}, {field.Max}]");
             return false;
         }
 

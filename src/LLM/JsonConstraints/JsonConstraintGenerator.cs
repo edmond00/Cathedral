@@ -77,9 +77,8 @@ public static class JsonConstraintGenerator
         
         return field switch
         {
-            IntField intField => GenerateIntFieldRule(intField, processedRules),
+            DigitField digitField => GenerateDigitFieldRule(digitField, processedRules),
             ConstantIntField constIntField => GenerateConstantIntFieldRule(constIntField, processedRules),
-            FloatField floatField => GenerateFloatFieldRule(floatField, processedRules),
             ConstantFloatField constFloatField => GenerateConstantFloatFieldRule(constFloatField, processedRules),
             StringField stringField => GenerateStringFieldRule(stringField, processedRules),
             BooleanField boolField => GenerateBooleanFieldRule(boolField, processedRules),
@@ -94,37 +93,14 @@ public static class JsonConstraintGenerator
         };
     }
     
-    private static string GenerateIntFieldRule(IntField field, HashSet<string> processedRules)
+    private static string GenerateDigitFieldRule(DigitField field, HashSet<string> processedRules)
     {
         var ruleName = SanitizeRuleName(field.Name);
-        var rule = $"{ruleName} ::= integer-{field.Min}-{field.Max}";
         
-        // Generate the specific integer range rule
-        var rangeRuleName = $"integer-{field.Min}-{field.Max}";
-        if (!processedRules.Any(r => r.StartsWith(rangeRuleName)))
-        {
-            processedRules.Add($"{rangeRuleName} ::= {GenerateIntegerRange(field.Min, field.Max)}");
-        }
+        // Generate GBNF rule for exactly N digits as a quoted string (to allow leading zeros)
+        var digitPattern = string.Join(" ", Enumerable.Repeat("[0-9]", field.DigitCount));
+        var rule = $"{ruleName} ::= \"\\\"\" {digitPattern} \"\\\"\"";
         
-        // Add the main rule
-        processedRules.Add(rule);
-        
-        return ruleName;
-    }
-    
-    private static string GenerateFloatFieldRule(FloatField field, HashSet<string> processedRules)
-    {
-        var ruleName = SanitizeRuleName(field.Name);
-        var rule = $"{ruleName} ::= float-{field.Min}-{field.Max}";
-        
-        var rangeRuleName = $"float-{field.Min}-{field.Max}";
-        if (!processedRules.Any(r => r.StartsWith(rangeRuleName)))
-        {
-            // Generate range pattern for floating point numbers
-            processedRules.Add($"{rangeRuleName} ::= [\"-\"]? [0-9]+ \".\" [0-9]{{1,4}}");
-        }
-        
-        // Add the main rule
         processedRules.Add(rule);
         
         return ruleName;
@@ -317,9 +293,8 @@ public static class JsonConstraintGenerator
     {
         return field switch
         {
-            IntField intField => $"<integer between {intField.Min}–{intField.Max}>",
+            DigitField digitField => $"<{digitField.DigitCount}-digit string>",
             ConstantIntField constIntField => constIntField.Value,
-            FloatField floatField => $"<float between {floatField.Min}–{floatField.Max}>",
             ConstantFloatField constFloatField => constFloatField.Value,
             StringField stringField => $"<string of {stringField.MinLength}–{stringField.MaxLength} characters>",
             BooleanField => "<boolean: true or false>",
@@ -396,43 +371,6 @@ public static class JsonConstraintGenerator
         else
         {
             return placeholder?.ToString() ?? "<unknown>";
-        }
-    }
-    
-    private static string GenerateIntegerRange(int min, int max)
-    {
-        // For ranges, we'll implement simple patterns for common small ranges
-        // For larger or complex ranges, we'll use a basic pattern and rely on validation
-        
-        // Single digit ranges (0-9)
-        if (min >= 0 && max <= 9 && max - min < 10)
-        {
-            var digits = string.Join("", Enumerable.Range(min, max - min + 1));
-            return $"[{digits}]";
-        }
-        
-        // Small two-digit ranges (10-99) - simplified patterns
-        if (min >= 1 && max <= 20)
-        {
-            // Pattern for 1-20: single digits 1-9 or 1X or 20
-            return "([1-9] | \"1\" [0-9] | \"20\")";
-        }
-        
-        if (min >= 1 && max <= 10)
-        {
-            // Pattern for 1-10: single digits 1-9 or 10
-            return "([1-9] | \"10\")";
-        }
-        
-        // For other ranges, use a simplified pattern
-        // This is not perfect but works for most cases
-        if (min >= 0)
-        {
-            return "[0-9]+";
-        }
-        else
-        {
-            return "[\"-\"]? [0-9]+";
         }
     }
     

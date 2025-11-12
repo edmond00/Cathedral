@@ -81,7 +81,7 @@ public static class JsonConstraintLLMTests
                 TestName = "Character Level",
                 Schema = new CompositeField("character", new JsonField[]
                 {
-                    new IntField("level", 1, 20)
+                    new DigitField("level", 2)  // 2-digit level (01-99)
                 }),
                 PromptTemplate = "Generate a character level"
             },
@@ -103,7 +103,7 @@ public static class JsonConstraintLLMTests
                 Schema = new CompositeField("character", new JsonField[]
                 {
                     new StringField("name", 3, 20),
-                    new IntField("level", 1, 100),
+                    new DigitField("level", 2),  // 2-digit level (00-99)
                     new ChoiceField<string>("class", "warrior", "mage", "rogue"),
                     new BooleanField("isAlive")
                 }),
@@ -118,11 +118,11 @@ public static class JsonConstraintLLMTests
                     new StringField("name", 3, 25),
                     new CompositeField("stats", new JsonField[]
                     {
-                        new IntField("strength", 1, 20),
-                        new IntField("dexterity", 1, 20),
-                        new IntField("intelligence", 1, 20)
+                        new DigitField("strength", 2),    // 2-digit strength (00-99)
+                        new DigitField("dexterity", 2),   // 2-digit dexterity (00-99)
+                        new DigitField("intelligence", 2) // 2-digit intelligence (00-99)
                     }),
-                    new FloatField("health", 10.0, 100.0)
+                    new DigitField("health", 3)  // 3-digit health (000-999)
                 }),
                 PromptTemplate = "Generate a character with statistics"
             },
@@ -162,7 +162,7 @@ public static class JsonConstraintLLMTests
                         new CompositeField("combat", new JsonField[]
                         {
                             new StringField("enemy", 3, 20),
-                            new IntField("enemyLevel", 1, 50)
+                            new DigitField("enemyLevel", 2)  // 2-digit enemy level (00-99)
                         }),
                         new CompositeField("dialogue", new JsonField[]
                         {
@@ -239,13 +239,13 @@ public static class JsonConstraintLLMTests
                         new CompositeField("typeA", new JsonField[]
                         {
                             new StringField("aName", 1, 20),
-                            new ArrayField("aList", new IntField("inner", 0, 5), 0, 3)
+                            new ArrayField("aList", new DigitField("inner", 1), 0, 3)  // 1-digit inner values (0-9)
                         }),
                         new CompositeField("typeB", new JsonField[]
                         {
                             new VariantField("sub",
                                 new CompositeField("subX", new JsonField[] { new StringField("x",1,5) }),
-                                new CompositeField("subY", new JsonField[] { new IntField("y",1,3) })
+                                new CompositeField("subY", new JsonField[] { new DigitField("y", 1) })  // 1-digit y (0-9)
                             )
                         })
                     )
@@ -309,14 +309,6 @@ public static class JsonConstraintLLMTests
             
             result.GbnfUsed = gbnf;
             result.TemplateUsed = template;
-
-            // Debug output for failing constant field tests
-            if (scenario.TestName == "Boundary Values" || scenario.TestName == "Boolean and Exact Values")
-            {
-                Console.WriteLine($"\n--- DEBUG: GBNF for {scenario.TestName} ---");
-                Console.WriteLine(gbnf);
-                Console.WriteLine("--- END DEBUG ---\n");
-            }
 
             // Create the prompt
             var prompt = $@"{scenario.PromptTemplate}

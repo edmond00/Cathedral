@@ -9,12 +9,11 @@ public abstract record JsonField(string Name)
 }
 
 /// <summary>
-/// Represents an integer field with min/max constraints
+/// Represents a numeric field with a fixed number of digits (0-padded)
 /// </summary>
-public record IntField(string Name, int Min, int Max) : JsonField(Name)
+public record DigitField(string Name, int DigitCount = 1) : JsonField(Name)
 {
-    public int Min { get; init; } = Min <= Max ? Min : throw new ArgumentException("Min value cannot be greater than max value");
-    public int Max { get; init; } = Max;
+    public int DigitCount { get; init; } = DigitCount > 0 ? DigitCount : throw new ArgumentException("DigitCount must be greater than 0");
 }
 
 /// <summary>
@@ -23,15 +22,6 @@ public record IntField(string Name, int Min, int Max) : JsonField(Name)
 public record ConstantIntField(string Name, int Value) : JsonField(Name)
 {
     public int Value { get; init; } = Value;
-}
-
-/// <summary>
-/// Represents a floating-point field with min/max constraints
-/// </summary>
-public record FloatField(string Name, double Min, double Max) : JsonField(Name)
-{
-    public double Min { get; init; } = Min <= Max ? Min : throw new ArgumentException("Min value cannot be greater than max value");
-    public double Max { get; init; } = Max;
 }
 
 /// <summary>

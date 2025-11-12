@@ -20,7 +20,7 @@ namespace Cathedral.LLM
                 var nameSchema = new CompositeField("character", new JsonField[]
                 {
                     new StringField("name", 1, 50),
-                    new IntField("age", 1, 150),
+                    new DigitField("age", 3),  // 3-digit age (000-999)
                     new ChoiceField<string>("occupation", "wizard", "warrior", "rogue", "cleric")
                 });
                 

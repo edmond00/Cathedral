@@ -32,7 +32,7 @@ public static class ValidationQuickTest
         // Test 2: Character level
         var levelSchema = new CompositeField("character", new JsonField[]
         {
-            new IntField("level", 1, 20)
+            new DigitField("level", 2)  // 2-digit level (00-99)
         });
 
         var levelJson = """{"level":5}""";
