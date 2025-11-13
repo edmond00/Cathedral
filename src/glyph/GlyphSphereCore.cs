@@ -95,11 +95,19 @@ namespace Cathedral.Glyph
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexClicked;
         public event Action? CoreLoaded;
         public event Action<float>? UpdateRequested;
+        
+        // Terminal HUD
+        private Cathedral.Terminal.TerminalHUD? _terminal;
 
         public GlyphSphereCore(GameWindowSettings g, NativeWindowSettings n, Camera camera) : base(g, n)
         {
             _camera = camera ?? throw new ArgumentNullException(nameof(camera));
         }
+        
+        /// <summary>
+        /// Gets the terminal HUD instance, or null if not initialized
+        /// </summary>
+        public Cathedral.Terminal.TerminalHUD? Terminal => _terminal;
 
         // Public interface for vertex manipulation
         public int VertexCount => vertices.Count;
@@ -247,9 +255,136 @@ namespace Cathedral.Glyph
             // Initialize pathfinding
             InitializePathfinding();
             
+            // Initialize terminal HUD (80x25 is a classic terminal size)
+            try 
+            {
+                _terminal = new Cathedral.Terminal.TerminalHUD(80, 25, 16, 14);
+                _terminal.CellClicked += OnTerminalCellClicked;
+                _terminal.CellHovered += OnTerminalCellHovered;
+                
+                // Setup initial terminal content
+                SetupTerminalDemo();
+                
+                Console.WriteLine("Terminal: HUD integrated with GlyphSphereCore");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Terminal: Failed to initialize HUD - {ex.Message}");
+                _terminal = null;
+            }
+            
+            // Wire up vertex events to update terminal
+            VertexHovered += OnVertexHovered;
+            VertexClicked += OnVertexClicked;
+            
             // Fire loaded event for interface setup
             CoreLoaded?.Invoke();
         }
+
+        #region Terminal Management
+        
+        private void SetupTerminalDemo()
+        {
+            if (_terminal == null) return;
+            
+            // Clear terminal
+            _terminal.Clear();
+            
+            // Draw title box
+            _terminal.DrawBox(2, 2, 76, 5, Cathedral.Terminal.Utils.BoxStyle.Double, 
+                              Cathedral.Terminal.Utils.Colors.Cyan, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.CenteredText(3, "CATHEDRAL GLYPH SPHERE", Cathedral.Terminal.Utils.Colors.Yellow, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.CenteredText(4, "Terminal HUD Integration Demo", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.CenteredText(5, "Click on terminal cells or sphere vertices to interact", Cathedral.Terminal.Utils.Colors.Gray, Cathedral.Terminal.Utils.Colors.Black);
+            
+            // Draw info panel
+            _terminal.DrawBox(2, 8, 35, 10, Cathedral.Terminal.Utils.BoxStyle.Single, 
+                              Cathedral.Terminal.Utils.Colors.Green, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(3, 9, "Controls:", Cathedral.Terminal.Utils.Colors.Green, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(3, 10, "• Mouse: Rotate camera", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(3, 11, "• Scroll: Zoom in/out", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(3, 12, "• Click: Select vertex", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(3, 13, "• M: Toggle debug markers", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(3, 14, "• D: Cycle debug shaders", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(3, 15, "• Space: Avatar movement", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(3, 16, "• ESC: Exit application", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            
+            // Draw status panel
+            _terminal.DrawBox(40, 8, 38, 10, Cathedral.Terminal.Utils.BoxStyle.Single, 
+                              Cathedral.Terminal.Utils.Colors.Blue, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(41, 9, "Status:", Cathedral.Terminal.Utils.Colors.Blue, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(41, 10, "Vertices: " + vertices.Count.ToString(), Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(41, 11, "Hovered: None", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(41, 12, "Selected: None", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            
+            // Draw progress bar demo
+            _terminal.Text(3, 20, "System Status:", Cathedral.Terminal.Utils.Colors.Yellow, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.ProgressBar(3, 21, 30, 75.0f, Cathedral.Terminal.Utils.Colors.Green, Cathedral.Terminal.Utils.Colors.DarkGray, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(35, 21, "75%", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            
+            // Footer
+            _terminal.CenteredText(23, "Terminal HUD is now active - hover and click to test interaction", 
+                                  Cathedral.Terminal.Utils.Colors.Gray, Cathedral.Terminal.Utils.Colors.Black);
+        }
+        
+        private void OnTerminalCellClicked(int x, int y)
+        {
+            Console.WriteLine($"Terminal: Cell clicked at ({x}, {y})");
+            // Example: Set a marker on the clicked cell
+            if (_terminal != null)
+            {
+                _terminal.SetCell(x, y, '@', Cathedral.Terminal.Utils.Colors.Yellow, Cathedral.Terminal.Utils.Colors.Red);
+                // Update click coordinates in status panel
+                _terminal.Text(41, 13, "Clicked: " + $"({x},{y})".PadRight(15), Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            }
+        }
+        
+        private void OnTerminalCellHovered(int x, int y)
+        {
+            // Show coordinates in top-left corner
+            if (_terminal != null)
+            {
+                _terminal.Text(1, 1, $"Terminal: ({x:D2},{y:D2})", Cathedral.Terminal.Utils.Colors.Cyan, Cathedral.Terminal.Utils.Colors.Black);
+            }
+        }
+        
+        private void OnVertexHovered(int vertexIndex, OpenTK.Mathematics.Vector2 mousePos)
+        {
+            if (_terminal != null)
+            {
+                if (vertexIndex >= 0)
+                {
+                    _terminal.Text(41, 11, "Hovered: " + vertexIndex.ToString().PadRight(15), 
+                                  Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+                    _terminal.Text(1, 1, $"Sphere: Vertex {vertexIndex}", Cathedral.Terminal.Utils.Colors.Yellow, Cathedral.Terminal.Utils.Colors.Black);
+                }
+                else
+                {
+                    _terminal.Text(41, 11, "Hovered: None".PadRight(15), 
+                                  Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+                    _terminal.Text(1, 1, "Sphere: No vertex", Cathedral.Terminal.Utils.Colors.Gray, Cathedral.Terminal.Utils.Colors.Black);
+                }
+            }
+        }
+        
+        private void OnVertexClicked(int vertexIndex, OpenTK.Mathematics.Vector2 mousePos)
+        {
+            if (_terminal != null)
+            {
+                _terminal.Text(41, 12, "Selected: " + vertexIndex.ToString().PadRight(15), 
+                              Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+                
+                // Show vertex position information
+                if (vertexIndex >= 0 && vertexIndex < vertices.Count)
+                {
+                    var pos = vertices[vertexIndex].Position;
+                    _terminal.Text(41, 14, $"Pos: ({pos.X:F1},{pos.Y:F1},{pos.Z:F1})".PadRight(20), 
+                                  Cathedral.Terminal.Utils.Colors.Cyan, Cathedral.Terminal.Utils.Colors.Black);
+                }
+            }
+        }
+        
+        #endregion
 
         private void SetupInstancedRendering()
         {
@@ -364,6 +499,12 @@ namespace Cathedral.Glyph
                 RenderDebugMarkers(view, proj);
             }
 
+            // Render terminal HUD overlay
+            if (_terminal != null)
+            {
+                _terminal.Render(Size);
+            }
+
             SwapBuffers();
         }
 
@@ -466,6 +607,13 @@ namespace Cathedral.Glyph
             base.OnMouseMove(e);
             
             var mouse = MousePosition;
+            
+            // Handle terminal input first (HUD takes priority)
+            if (_terminal != null)
+            {
+                _terminal.HandleMouseMove(mouse, Size);
+            }
+            
             var (rayOrig, rayDir) = GetMouseRay(mouse);
 
             // Store debug info
@@ -473,20 +621,23 @@ namespace Cathedral.Glyph
             debugRayDirection = rayDir;
             debugMousePos = mouse;
 
-            // Find hovered vertex
-            int newHover = FindVertexByMagentaRayIntersection(mouse);
-            
-            if (newHover == -1)
+            // Find hovered vertex (only if mouse is not over terminal)
+            if (_terminal == null || !_terminal.IsPositionInTerminal(mouse, Size))
             {
-                newHover = FindClosestVertexInScreenSpace(mouse);
-            }
-            
-            if (newHover != hoveredVertexIndex)
-            {
-                hoveredVertexIndex = newHover;
+                int newHover = FindVertexByMagentaRayIntersection(mouse);
                 
-                // Fire event for interface (including -1 for "no hover")
-                VertexHovered?.Invoke(newHover, mouse);
+                if (newHover == -1)
+                {
+                    newHover = FindClosestVertexInScreenSpace(mouse);
+                }
+                
+                if (newHover != hoveredVertexIndex)
+                {
+                    hoveredVertexIndex = newHover;
+                    
+                    // Fire event for interface (including -1 for "no hover")
+                    VertexHovered?.Invoke(newHover, mouse);
+                }
             }
         }
 
@@ -494,10 +645,19 @@ namespace Cathedral.Glyph
         {
             base.OnMouseDown(e);
             Console.WriteLine($"Mouse button pressed: {e.Button}");
+            
+            var mouse = MousePosition;
+            
+            // Handle terminal input first (HUD takes priority)
+            if (_terminal != null && _terminal.HandleMouseDown(mouse, Size, e.Button))
+            {
+                Console.WriteLine("Terminal handled mouse click");
+                return; // Terminal handled the event
+            }
+            
             if (e.Button == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left)
             {
-                Console.WriteLine("Left mouse button detected");
-                var mouse = MousePosition;
+                Console.WriteLine("Left mouse button detected - processing 3D interaction");
                 Console.WriteLine($"Mouse position: {mouse}");
 
                 // Use the same vertex detection method as hover detection
@@ -519,6 +679,17 @@ namespace Cathedral.Glyph
                 {
                     Console.WriteLine("No vertex hit");
                 }
+            }
+        }
+
+        protected override void OnMouseUp(MouseButtonEventArgs e)
+        {
+            base.OnMouseUp(e);
+            
+            // Handle terminal input
+            if (_terminal != null)
+            {
+                _terminal.HandleMouseUp(e.Button);
             }
         }
 
@@ -1691,6 +1862,7 @@ void main() { FragColor = vec4(vColor, 1.0); }";
         protected override void OnUnload()
         {
             _pathfindingService?.Dispose();
+            _terminal?.Dispose();
             base.OnUnload();
         }
     }

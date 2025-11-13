@@ -6,10 +6,11 @@ using Cathedral.Engine;
 Console.WriteLine("=== Cathedral Application ===\n");
 Console.WriteLine("Choose an option:");
 Console.WriteLine("1. Run LLM integration tests (JSON constraints)");
-Console.WriteLine("2. Launch GlyphSphere");
-Console.WriteLine("3. Exit");
+Console.WriteLine("2. Launch GlyphSphere with Terminal HUD");
+Console.WriteLine("3. Test Terminal Module (standalone)");
+Console.WriteLine("4. Exit");
 
-Console.Write("\nEnter your choice (1-3): ");
+Console.Write("\nEnter your choice (1-4): ");
 var choice = Console.ReadLine();
 
 switch (choice)
@@ -23,7 +24,7 @@ switch (choice)
         break;
 
     case "2":
-        Console.WriteLine("\n=== Launching GlyphSphere ===");
+        Console.WriteLine("\n=== Launching GlyphSphere with Terminal HUD ===");
         
         // Example: Create and configure camera externally
         Console.WriteLine("Camera setup options:");
@@ -64,6 +65,19 @@ switch (choice)
         break;
 
     case "3":
+        Console.WriteLine("\n=== Testing Terminal Module ===");
+        try 
+        {
+            Cathedral.Terminal.Tests.TerminalTest.RunTests();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Terminal test failed: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        }
+        break;
+
+    case "4":
         Console.WriteLine("Goodbye!");
         Environment.Exit(0);
         break;
