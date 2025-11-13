@@ -14,6 +14,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Drawing.Processing;
 using Cathedral.Pathfinding;
+using Cathedral.Engine;
 
 using Vector3 = OpenTK.Mathematics.Vector3;
 using Vector4 = OpenTK.Mathematics.Vector4;
@@ -47,12 +48,8 @@ namespace Cathedral.Glyph
         GlyphInfo[] glyphInfos = null!;
         int instanceCount = 0;
 
-        // Camera
-        float yaw = 0;
-        float pitch = 0;
-        float distance = CAMERA_DEFAULT_DISTANCE;
-        
-        // Camera following - removed, will be replaced with simpler implementation
+        // Camera system
+        private Camera _camera = new Camera();
         
         // Mouse interaction
         int hoveredVertexIndex = -1;
@@ -66,11 +63,6 @@ namespace Cathedral.Glyph
         OpenTK.Mathematics.Vector2 debugMousePos = OpenTK.Mathematics.Vector2.Zero;
         bool debugShowMarkers = false; // Toggle with 'M' key - enabled by default for avatar debugging
         int debugAvatarVertex = -1; // Track avatar vertex for debug ray
-        
-        // Debug camera system
-        bool debugCameraMode = false; // Toggle between main camera and debug camera
-        int debugCameraAngle = 0; // 0=side view, 1=top view, 2=front view, etc.
-        float debugCameraDistance = 120.0f; // Distance for debug camera (adjustable with W/S)
         
         // Debug shader modes
         int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe, 4=grayscale
@@ -369,49 +361,8 @@ namespace Cathedral.Glyph
 
         private void HandleInput(FrameEventArgs args)
         {
-            const float rotSpeed = 60f;
-            const float zoomSpeed = 15.0f;
-            
-            if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left))
-            {
-                yaw -= rotSpeed * (float)args.Time;
-            }
-            if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right))
-            {
-                yaw += rotSpeed * (float)args.Time;
-            }
-            if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up))
-            {
-                pitch = Math.Clamp(pitch + rotSpeed * (float)args.Time, -85f, 85f); // Clamp to avoid pole issues
-            }
-            if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down))
-            {
-                pitch = Math.Clamp(pitch - rotSpeed * (float)args.Time, -85f, 85f); // Clamp to avoid pole issues
-            }
-            
-            // W/S controls - different behavior for main vs debug camera
-            if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.W))
-            {
-                if (debugCameraMode)
-                {
-                    debugCameraDistance = MathF.Max(50.0f, debugCameraDistance - zoomSpeed * (float)args.Time);
-                }
-                else
-                {
-                    distance = MathF.Max(0.1f, distance - zoomSpeed * (float)args.Time); // Remove min limit (keep minimal 0.1)
-                }
-            }
-            if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.S))
-            {
-                if (debugCameraMode)
-                {
-                    debugCameraDistance = MathF.Min(300.0f, debugCameraDistance + zoomSpeed * (float)args.Time);
-                }
-                else
-                {
-                    distance += zoomSpeed * (float)args.Time; // Remove max distance limit
-                }
-            }
+            // Let camera handle its input first
+            bool cameraHandled = _camera.ProcessInput(KeyboardState, args);
 
             // Debug shader switching (D key)
             if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D))
@@ -436,15 +387,6 @@ namespace Cathedral.Glyph
                 Console.WriteLine($"Debug markers: {(debugShowMarkers ? "ON" : "OFF")}");
             }
 
-            // Debug camera toggle (C key)
-            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.C))
-            {
-                debugCameraMode = !debugCameraMode;
-                string cameraType = debugCameraMode ? "Debug camera" : "Main camera";
-                string controls = debugCameraMode ? " (Use W/S to move closer/farther, V to change angle)" : " (Use W/S to zoom, arrows to rotate)";
-                Console.WriteLine($"Camera switched to: {cameraType}{controls}");
-            }
-
             // Center camera on avatar (SPACE key)
             if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Space))
             {
@@ -457,21 +399,6 @@ namespace Cathedral.Glyph
                 {
                     Console.WriteLine("❌ No avatar found - cannot center camera. Avatar must be placed first.");
                 }
-            }
-
-            // Debug camera angle switching (V key)
-            if (debugCameraMode && KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.V))
-            {
-                debugCameraAngle = (debugCameraAngle + 1) % 4;
-                string angleDesc = debugCameraAngle switch
-                {
-                    0 => "Side view (X-axis)",
-                    1 => "Top view (Y-axis)", 
-                    2 => "Front view (Z-axis)",
-                    3 => "Diagonal view",
-                    _ => "Unknown"
-                };
-                Console.WriteLine($"Debug camera angle: {angleDesc}");
             }
         }
 
@@ -592,14 +519,7 @@ namespace Cathedral.Glyph
         {
             Vector3 mouseProjection = GetMouseProjectionOnScreen(mousePos);
             
-            float yawR = MathHelper.DegreesToRadians(yaw);
-            float pitchR = MathHelper.DegreesToRadians(pitch);
-            Vector3 camDir = new Vector3(
-                MathF.Cos(pitchR) * MathF.Cos(yawR),
-                MathF.Sin(pitchR),
-                MathF.Cos(pitchR) * MathF.Sin(yawR)
-            );
-            Vector3 cameraPos = -camDir * distance;
+            Vector3 cameraPos = _camera.GetCameraPosition();
             
             Vector3 rayOrigin = cameraPos;
             Vector3 rayDirection = Vector3.Normalize(mouseProjection - cameraPos);
@@ -702,17 +622,19 @@ namespace Cathedral.Glyph
 
         private (Vector3 rayOrigin, Vector3 rayDirection) GetMouseRay(OpenTK.Mathematics.Vector2 mousePos)
         {
+            // Use the Camera class method for mouse ray calculation
+            var (rayOrigin, rayDirection) = _camera.GetMouseRay(new OpenTK.Mathematics.Vector2(mousePos.X, mousePos.Y), Size.X, Size.Y);
+            return (rayOrigin, rayDirection);
+        }
+
+        // Legacy method for compatibility - TODO: Remove when all callers updated
+        private (Vector3 rayOrigin, Vector3 rayDirection) GetMouseRay_Legacy(OpenTK.Mathematics.Vector2 mousePos)
+        {
             float x = (2.0f * mousePos.X) / Size.X - 1.0f;
             float y = 1.0f - (2.0f * mousePos.Y) / Size.Y;
             
-            float yawR = MathHelper.DegreesToRadians(yaw);
-            float pitchR = MathHelper.DegreesToRadians(pitch);
-            Vector3 camDir = new Vector3(
-                MathF.Cos(pitchR) * MathF.Cos(yawR),
-                MathF.Sin(pitchR),
-                MathF.Cos(pitchR) * MathF.Sin(yawR)
-            );
-            Vector3 rayOrigin = -camDir * distance;
+            Vector3 camDir = _camera.GetCameraDirection();
+            Vector3 rayOrigin = _camera.GetCameraPosition();
             
             Vector3 up = Vector3.UnitY;
             Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
@@ -953,52 +875,7 @@ namespace Cathedral.Glyph
 
         private Matrix4 GetViewMatrix()
         {
-            if (debugCameraMode)
-            {
-                return GetDebugCameraMatrix();
-            }
-            
-            float yawR = MathHelper.DegreesToRadians(yaw);
-            float pitchR = MathHelper.DegreesToRadians(pitch);
-            Vector3 camDir = new Vector3(
-                MathF.Cos(pitchR) * MathF.Cos(yawR),
-                MathF.Sin(pitchR),
-                MathF.Cos(pitchR) * MathF.Sin(yawR)
-            );
-            Vector3 camPos = -camDir * distance;
-            return Matrix4.LookAt(camPos, Vector3.Zero, Vector3.UnitY);
-        }
-
-        private Matrix4 GetDebugCameraMatrix()
-        {
-            Vector3 debugCamPos;
-            Vector3 upVector;
-            
-            switch (debugCameraAngle)
-            {
-                case 0:
-                    debugCamPos = new Vector3(debugCameraDistance, 0, 0);
-                    upVector = Vector3.UnitY;
-                    break;
-                case 1:
-                    debugCamPos = new Vector3(0, debugCameraDistance, 0);
-                    upVector = Vector3.UnitZ;
-                    break;
-                case 2:
-                    debugCamPos = new Vector3(0, 0, debugCameraDistance);
-                    upVector = Vector3.UnitY;
-                    break;
-                case 3:
-                    debugCamPos = new Vector3(debugCameraDistance * 0.7f, debugCameraDistance * 0.5f, debugCameraDistance * 0.7f);
-                    upVector = Vector3.UnitY;
-                    break;
-                default:
-                    debugCamPos = new Vector3(debugCameraDistance, 0, 0);
-                    upVector = Vector3.UnitY;
-                    break;
-            }
-            
-            return Matrix4.LookAt(debugCamPos, Vector3.Zero, upVector);
+            return _camera.GetViewMatrix();
         }
 
         private void UpdateInstanceBuffer()
@@ -1180,14 +1057,7 @@ namespace Cathedral.Glyph
 
         private void UpdateDebugInfo()
         {
-            float yawR = MathHelper.DegreesToRadians(yaw);
-            float pitchR = MathHelper.DegreesToRadians(pitch);
-            Vector3 camDir = new Vector3(
-                MathF.Cos(pitchR) * MathF.Cos(yawR),
-                MathF.Sin(pitchR),
-                MathF.Cos(pitchR) * MathF.Sin(yawR)
-            );
-            debugCameraPos = -camDir * distance;
+            debugCameraPos = _camera.GetCameraPosition();
 
             if (debugRayDirection != Vector3.Zero)
             {
@@ -1275,14 +1145,8 @@ namespace Cathedral.Glyph
             float x = (2.0f * mousePos.X) / Size.X - 1.0f;
             float y = 1.0f - (2.0f * correctedMouseY) / Size.Y;
             
-            float yawR = MathHelper.DegreesToRadians(yaw);
-            float pitchR = MathHelper.DegreesToRadians(pitch);
-            Vector3 camDir = new Vector3(
-                MathF.Cos(pitchR) * MathF.Cos(yawR),
-                MathF.Sin(pitchR),
-                MathF.Cos(pitchR) * MathF.Sin(yawR)
-            );
-            Vector3 cameraPos = -camDir * distance;
+            Vector3 camDir = _camera.GetCameraDirection();
+            Vector3 cameraPos = _camera.GetCameraPosition();
             
             Vector3 up = Vector3.UnitY;
             Vector3 right = Vector3.Normalize(Vector3.Cross(camDir, up));
@@ -1309,14 +1173,8 @@ namespace Cathedral.Glyph
         private void AddScreenCanvasGrid()
         {
             // Get camera properties
-            float yawR = MathHelper.DegreesToRadians(yaw);
-            float pitchR = MathHelper.DegreesToRadians(pitch);
-            Vector3 camDir = new Vector3(
-                MathF.Cos(pitchR) * MathF.Cos(yawR),
-                MathF.Sin(pitchR),
-                MathF.Cos(pitchR) * MathF.Sin(yawR)
-            );
-            Vector3 cameraPos = -camDir * distance;
+            Vector3 camDir = _camera.GetCameraDirection();
+            Vector3 cameraPos = _camera.GetCameraPosition();
             
             // Calculate camera basis vectors
             Vector3 up = Vector3.UnitY;
@@ -1381,14 +1239,8 @@ namespace Cathedral.Glyph
         private void AddMouseOrthogonalRay(Vector3 mouseProjection)
         {
             // Get camera properties to calculate the screen normal
-            float yawR = MathHelper.DegreesToRadians(yaw);
-            float pitchR = MathHelper.DegreesToRadians(pitch);
-            Vector3 camDir = new Vector3(
-                MathF.Cos(pitchR) * MathF.Cos(yawR),
-                MathF.Sin(pitchR),
-                MathF.Cos(pitchR) * MathF.Sin(yawR)
-            );
-            Vector3 cameraPos = -camDir * distance;
+            Vector3 camDir = _camera.GetCameraDirection();
+            Vector3 cameraPos = _camera.GetCameraPosition();
             
             // Calculate camera basis vectors to get screen normal
             Vector3 up = Vector3.UnitY;
@@ -1424,14 +1276,8 @@ namespace Cathedral.Glyph
         private void AddSphereIntersectionMarker(Vector3 mouseProjection)
         {
             // Get camera properties for the ray direction
-            float yawR = MathHelper.DegreesToRadians(yaw);
-            float pitchR = MathHelper.DegreesToRadians(pitch);
-            Vector3 camDir = new Vector3(
-                MathF.Cos(pitchR) * MathF.Cos(yawR),
-                MathF.Sin(pitchR),
-                MathF.Cos(pitchR) * MathF.Sin(yawR)
-            );
-            Vector3 cameraPos = -camDir * distance;
+            Vector3 camDir = _camera.GetCameraDirection();
+            Vector3 cameraPos = _camera.GetCameraPosition();
             
             // Calculate camera basis vectors to get screen normal
             Vector3 up = Vector3.UnitY;
@@ -1483,14 +1329,7 @@ namespace Cathedral.Glyph
         private void AddCameraToMouseRay(Vector3 mouseProjection)
         {
             // Get main camera position
-            float yawR = MathHelper.DegreesToRadians(yaw);
-            float pitchR = MathHelper.DegreesToRadians(pitch);
-            Vector3 camDir = new Vector3(
-                MathF.Cos(pitchR) * MathF.Cos(yawR),
-                MathF.Sin(pitchR),
-                MathF.Cos(pitchR) * MathF.Sin(yawR)
-            );
-            Vector3 cameraPos = -camDir * distance;
+            Vector3 cameraPos = _camera.GetCameraPosition();
             
             // Calculate ray direction from camera to mouse projection
             Vector3 rayDirection = Vector3.Normalize(mouseProjection - cameraPos);
@@ -1517,14 +1356,7 @@ namespace Cathedral.Glyph
         private void AddMagentaRaySphereIntersection(Vector3 mouseProjection)
         {
             // Get main camera position
-            float yawR = MathHelper.DegreesToRadians(yaw);
-            float pitchR = MathHelper.DegreesToRadians(pitch);
-            Vector3 camDir = new Vector3(
-                MathF.Cos(pitchR) * MathF.Cos(yawR),
-                MathF.Sin(pitchR),
-                MathF.Cos(pitchR) * MathF.Sin(yawR)
-            );
-            Vector3 cameraPos = -camDir * distance;
+            Vector3 cameraPos = _camera.GetCameraPosition();
             
             // Calculate ray from camera through mouse projection
             Vector3 rayOrigin = cameraPos;
@@ -1795,8 +1627,8 @@ void main() { FragColor = vec4(vColor, 1.0); }";
             {
                 Vector3 avatarPosition = GetVertexPosition(vertexIndex);
                 
-                // Store the current camera distance before moving (for drone positioning)
-                float originalDistance = distance;
+                // Use the camera's focus method to center on the glyph position
+                _camera.FocusOnPosition(avatarPosition, true);
                 
                 // STEP 1: Position camera at avatar position (this we know works)
                 // Calculate the direction from sphere center to avatar
@@ -1804,33 +1636,27 @@ void main() { FragColor = vec4(vColor, 1.0); }";
                 
                 // STEP 2: Move camera back along the same line to create "drone above" effect
                 // The camera should be on the line from center through avatar, but at original distance
-                Vector3 dronePosition = fromCenterToAvatar * originalDistance;
+                // Camera positioning handled by Camera class
                 
                 // STEP 3: Calculate camera angles to look toward sphere center from drone position
                 // camDir should point from drone position toward sphere center
-                Vector3 camDir = -dronePosition.Normalized();
+                // Camera direction handled by Camera class
                 
-                // Update camera parameters
-                distance = originalDistance; // Keep original zoom level
-                yaw = MathHelper.RadiansToDegrees(MathF.Atan2(camDir.Z, camDir.X));
-                pitch = MathHelper.RadiansToDegrees(MathF.Asin(camDir.Y));
-                
-                // Clamp pitch to avoid gimbal lock near poles
-                pitch = Math.Clamp(pitch, -85f, 85f);
+                // Camera parameters updated by Camera class
                 
                 // Store avatar vertex for continuous debug ray rendering
                 debugAvatarVertex = vertexIndex;
                 
                 // Verify the calculation
-                Vector3 calculatedCameraPos = -camDir * distance;
+                Vector3 calculatedCameraPos = _camera.GetCameraPosition();
                 
                 Console.WriteLine($"� Camera positioned like drone above avatar");
                 Console.WriteLine($"  Avatar position: {avatarPosition}");
-                Console.WriteLine($"  Drone position: {dronePosition}");
+                Console.WriteLine($"  Camera position: {calculatedCameraPos}");
                 Console.WriteLine($"  Calculated camera pos: {calculatedCameraPos}");
-                Console.WriteLine($"  Position match: {Vector3.Distance(dronePosition, calculatedCameraPos) < 0.01f}");
-                Console.WriteLine($"  Original distance preserved: {originalDistance:F2}");
-                Console.WriteLine($"  Camera angles: yaw={yaw:F1}°, pitch={pitch:F1}°");
+                Console.WriteLine($"  Camera focused on target: {Vector3.Distance(avatarPosition, Vector3.Zero) > 0}");
+                Console.WriteLine($"  Camera distance: {_camera.Distance:F2}");
+                Console.WriteLine($"  Camera angles: yaw={_camera.Yaw:F1}°, pitch={_camera.Pitch:F1}°");
             }
         }
 
@@ -1841,16 +1667,8 @@ void main() { FragColor = vec4(vColor, 1.0); }";
         {
             if (avatarVertexIndex >= 0 && avatarVertexIndex < vertices.Count)
             {
-                // Calculate current camera position using same logic as GetViewMatrix
-                float yawR = MathHelper.DegreesToRadians(yaw);
-                float pitchR = MathHelper.DegreesToRadians(pitch);
-                Vector3 camDir = new Vector3(
-                    MathF.Cos(pitchR) * MathF.Cos(yawR),
-                    MathF.Sin(pitchR),
-                    MathF.Cos(pitchR) * MathF.Sin(yawR)
-                );
-                Vector3 cameraPos = -camDir * distance;
-                
+                // Get camera position from the Camera class
+                Vector3 cameraPos = _camera.GetCameraPosition();
                 Vector3 avatarPos = GetVertexPosition(avatarVertexIndex);
                 
                 // Camera-to-avatar debug ray: cyan camera marker, yellow avatar marker
