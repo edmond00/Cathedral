@@ -1,6 +1,7 @@
 ﻿using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
 using Cathedral.Glyph;
+using Cathedral.Engine;
 
 Console.WriteLine("=== Cathedral Application ===\n");
 Console.WriteLine("Choose an option:");
@@ -23,7 +24,43 @@ switch (choice)
 
     case "2":
         Console.WriteLine("\n=== Launching GlyphSphere ===");
-        GlyphSphereLauncher.LaunchGlyphSphere();
+        
+        // Example: Create and configure camera externally
+        Console.WriteLine("Camera setup options:");
+        Console.WriteLine("1. Default camera settings");
+        Console.WriteLine("2. Custom positioned camera (side view)");
+        Console.WriteLine("3. Debug camera (top-down view)");
+        Console.Write("Choose camera setup (1-3): ");
+        
+        var cameraChoice = Console.ReadLine();
+        var camera = new Camera();
+        
+        switch (cameraChoice)
+        {
+            case "1":
+                // Default camera - no changes needed
+                Console.WriteLine("Using default camera settings");
+                break;
+                
+            case "2":
+                // Custom positioned camera
+                camera.SetCameraParameters(yaw: 45f, pitch: -20f, distance: 100f);
+                Console.WriteLine("Camera positioned at 45° yaw, -20° pitch, 100 units distance");
+                break;
+                
+            case "3":
+                // Debug camera in top-down view
+                camera.SetDebugCameraParameters(debugMode: true, angle: 1, distance: 150f);
+                Console.WriteLine("Debug camera enabled - top-down view");
+                break;
+                
+            default:
+                Console.WriteLine("Invalid choice, using default camera settings");
+                break;
+        }
+        
+        // Launch with the configured camera
+        GlyphSphereLauncher.LaunchGlyphSphere(camera);
         break;
 
     case "3":

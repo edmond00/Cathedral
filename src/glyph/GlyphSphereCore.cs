@@ -49,7 +49,7 @@ namespace Cathedral.Glyph
         int instanceCount = 0;
 
         // Camera system
-        private Camera _camera = new Camera();
+        private Camera _camera;
         
         // Mouse interaction
         int hoveredVertexIndex = -1;
@@ -96,13 +96,21 @@ namespace Cathedral.Glyph
         public event Action? CoreLoaded;
         public event Action<float>? UpdateRequested;
 
-        public GlyphSphereCore(GameWindowSettings g, NativeWindowSettings n) : base(g, n)
+        public GlyphSphereCore(GameWindowSettings g, NativeWindowSettings n, Camera camera) : base(g, n)
         {
+            _camera = camera ?? throw new ArgumentNullException(nameof(camera));
         }
 
         // Public interface for vertex manipulation
         public int VertexCount => vertices.Count;
         public Vector3 GetVertexPosition(int index) => vertices[index].Position;
+        
+        // Public access to camera for external control
+        /// <summary>
+        /// Gets the camera instance for external manipulation.
+        /// This allows you to control camera settings, respond to events, or implement custom camera behaviors.
+        /// </summary>
+        public Camera Camera => _camera;
         
         private string currentGlyphSet = DEFAULT_GLYPH.ToString();
         

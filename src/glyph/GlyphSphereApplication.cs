@@ -4,6 +4,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using Cathedral.Glyph.Microworld;
+using Cathedral.Engine;
 
 namespace Cathedral.Glyph
 {
@@ -14,6 +15,12 @@ namespace Cathedral.Glyph
         {
             GlyphSphereApplication.Launch(windowWidth, windowHeight);
         }
+        
+        // Public method that accepts a custom camera
+        public static void LaunchGlyphSphere(Camera camera, int windowWidth = 900, int windowHeight = 900)
+        {
+            GlyphSphereApplication.Launch(camera, windowWidth, windowHeight);
+        }
     }
 
     public class GlyphSphereApplication
@@ -22,6 +29,13 @@ namespace Cathedral.Glyph
         private MicroworldInterface? interfaces;
 
         public static void Launch(int windowWidth = 900, int windowHeight = 900)
+        {
+            // Create camera with default settings for glyph sphere
+            var camera = new Camera();
+            Launch(camera, windowWidth, windowHeight);
+        }
+        
+        public static void Launch(Camera camera, int windowWidth = 900, int windowHeight = 900)
         {
             var native = new NativeWindowSettings()
             {
@@ -32,8 +46,8 @@ namespace Cathedral.Glyph
                 APIVersion = new Version(3, 3),
                 WindowBorder = WindowBorder.Resizable
             };
-
-            using var core = new GlyphSphereCore(GameWindowSettings.Default, native);
+            
+            using var core = new GlyphSphereCore(GameWindowSettings.Default, native, camera);
             var interfaces = new MicroworldInterface(core);
             
             // Set up event handlers for enhanced mouse interaction
