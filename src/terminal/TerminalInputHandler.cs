@@ -12,6 +12,7 @@ namespace Cathedral.Terminal
     {
         private readonly TerminalView _view;
         private readonly TerminalRenderer _renderer;
+        private Func<float>? _getBorderHeight;
         
         // Mouse state tracking
         private Vector2i? _hoveredCell;
@@ -48,6 +49,26 @@ namespace Cathedral.Terminal
         /// </summary>
         public bool IsRightMouseDown => _rightMouseDown;
 
+        #endregion
+
+        #region Border Height
+        
+        /// <summary>
+        /// Sets the border height function delegate
+        /// </summary>
+        public void SetBorderHeightFunction(Func<float> getBorderHeight)
+        {
+            _getBorderHeight = getBorderHeight;
+        }
+        
+        /// <summary>
+        /// Gets the window border height for mouse position correction
+        /// </summary>
+        private float GetWindowBorderHeight()
+        {
+            return _getBorderHeight?.Invoke() ?? 0f;
+        }
+        
         #endregion
 
         #region Mouse Input
@@ -131,11 +152,15 @@ namespace Cathedral.Terminal
         /// <returns>Cell coordinates (0-based), or null if outside terminal area</returns>
         public Vector2i? ScreenToCell(Vector2 screenPos, Vector2i windowSize)
         {
+            // Apply border height correction to mouse position
+            float borderHeight = GetWindowBorderHeight();
+            Vector2 correctedScreenPos = new Vector2(screenPos.X, screenPos.Y + borderHeight);
+            
             // Get terminal layout information
             var (terminalSize, cellSize, offset) = _renderer.GetLayoutInfo(windowSize);
             
             // Convert screen position to terminal-local coordinates
-            Vector2 localPos = screenPos - offset;
+            Vector2 localPos = correctedScreenPos - offset;
             
             // Check if position is within terminal bounds
             if (localPos.X < 0 || localPos.X >= terminalSize.X ||
@@ -145,8 +170,13 @@ namespace Cathedral.Terminal
             }
             
             // Convert to cell coordinates
-            int cellX = (int)(localPos.X / cellSize.X);
-            int cellY = (int)(localPos.Y / cellSize.Y);
+            // Note: Renderer positions cells by their centers, so we need to adjust
+            float cellXFloat = (localPos.X + cellSize.X * 0.5f) / cellSize.X;
+            float cellYFloat = (localPos.Y + cellSize.Y * 0.5f) / cellSize.Y;
+            
+            // Use floor for proper cell boundary detection
+            int cellX = (int)Math.Floor(cellXFloat);
+            int cellY = (int)Math.Floor(cellYFloat);
             
             // Clamp to valid range (defensive programming)
             cellX = Math.Clamp(cellX, 0, _view.Width - 1);

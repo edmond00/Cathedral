@@ -265,10 +265,10 @@ namespace Cathedral.Terminal
             int instanceIndex = 0;
             foreach (var (x, y, cell) in _view.EnumerateCells())
             {
-                // Calculate screen position (bottom-left origin)
+                // Calculate screen position (top-left origin)
                 Vector3 position = new Vector3(
                     offset.X + x * cellSize.X,
-                    windowSize.Y - (offset.Y + (y + 1) * cellSize.Y), // Flip Y for OpenGL coordinates
+                    offset.Y + y * cellSize.Y, // Direct mapping for screen coordinates
                     0.0f
                 );
                 

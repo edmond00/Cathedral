@@ -93,6 +93,18 @@ namespace Cathedral.Terminal
 
         #endregion
 
+        #region Configuration
+
+        /// <summary>
+        /// Sets the border height function for mouse position correction
+        /// </summary>
+        public void SetBorderHeightFunction(Func<float> getBorderHeight)
+        {
+            _inputHandler.SetBorderHeightFunction(getBorderHeight);
+        }
+
+        #endregion
+
         #region Cell Operations
 
         /// <summary>
@@ -325,8 +337,8 @@ namespace Cathedral.Terminal
             if (!_visible || _disposed)
                 return;
             
-            // Create orthographic projection matrix for HUD rendering
-            Matrix4 projection = Matrix4.CreateOrthographic(windowSize.X, windowSize.Y, -1.0f, 1.0f);
+            // Create orthographic projection matrix for screen coordinates (top-left origin)
+            Matrix4 projection = Matrix4.CreateOrthographicOffCenter(0, windowSize.X, windowSize.Y, 0, -1.0f, 1.0f);
             
             _renderer.Render(projection, windowSize);
         }

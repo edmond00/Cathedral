@@ -44,7 +44,7 @@ namespace Cathedral.Glyph
                 Flags = ContextFlags.Default,
                 API = ContextAPI.OpenGL,
                 APIVersion = new Version(3, 3),
-                WindowBorder = WindowBorder.Resizable
+                WindowBorder = WindowBorder.Resizable  // Changed back to resizable to measure borders
             };
             
             using var core = new GlyphSphereCore(GameWindowSettings.Default, native, camera);

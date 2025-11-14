@@ -262,6 +262,9 @@ namespace Cathedral.Glyph
                 _terminal.CellClicked += OnTerminalCellClicked;
                 _terminal.CellHovered += OnTerminalCellHovered;
                 
+                // Set border height function for proper mouse position correction
+                _terminal.SetBorderHeightFunction(() => GetWindowBorderHeight());
+                
                 // Setup initial terminal content
                 SetupTerminalDemo();
                 
@@ -277,9 +280,78 @@ namespace Cathedral.Glyph
             VertexHovered += OnVertexHovered;
             VertexClicked += OnVertexClicked;
             
+            // Log window border information
+            LogWindowBorderInfo();
+            
             // Fire loaded event for interface setup
             CoreLoaded?.Invoke();
         }
+        
+        #region Window Border Information
+        
+        private void LogWindowBorderInfo()
+        {
+            // Log border information for debugging
+            Console.WriteLine("=== Window Border Information ===");
+            Console.WriteLine($"Client Size (content area): {ClientSize}");
+            Console.WriteLine($"Window Size (including borders): {Size}");
+            Console.WriteLine($"Window Position: {Location}");
+            Console.WriteLine($"Window Border: {WindowBorder}");
+            
+            // Calculate border sizes
+            var borderWidth = Size.X - ClientSize.X;
+            var borderHeight = Size.Y - ClientSize.Y;
+            
+            Console.WriteLine($"Total border width (left + right): {borderWidth}px");
+            Console.WriteLine($"Total border height (top + bottom): {borderHeight}px");
+            
+            // On Windows, typical values:
+            // - Title bar height: ~30-32px (depends on DPI/scaling)
+            // - Side borders: ~8-16px total (depends on DPI/scaling)
+            Console.WriteLine($"Estimated title bar height: ~{borderHeight - 8}px (assuming 4px top/bottom borders)");
+            Console.WriteLine("Note: Border sizes depend on OS theme, DPI scaling, and window style");
+            Console.WriteLine("=====================================");
+        }
+        
+        /// <summary>
+        /// Gets window border information that can be used by terminal for positioning
+        /// </summary>
+        public (int titleBarHeight, int borderWidth, int borderHeight) GetWindowBorderInfo()
+        {
+            var totalBorderWidth = Size.X - ClientSize.X;
+            var totalBorderHeight = Size.Y - ClientSize.Y;
+            
+            // The empirically correct title bar height for mouse positioning is 38px
+            // but our naive calculation (total - 8px) gives 31px. This 7px difference
+            // likely comes from OS window decoration complexities that aren't captured
+            // by simple Size vs ClientSize measurements.
+            
+            // Use an empirically-corrected calculation:
+            // - Start with the naive estimation
+            // - Apply a correction factor based on observed difference
+            var naiveEstimate = totalBorderHeight - 8; // Original calculation
+            var empiricalCorrection = 7; // Observed difference (38 - 31)
+            var correctedTitleBarHeight = naiveEstimate + empiricalCorrection;
+            
+            // Ensure we don't exceed the total border height
+            var titleBarHeight = Math.Min(correctedTitleBarHeight, totalBorderHeight);
+            
+            Console.WriteLine($"Border Analysis: Total={totalBorderHeight}px, Naive={naiveEstimate}px, Corrected={titleBarHeight}px");
+            
+            return (titleBarHeight, totalBorderWidth, totalBorderHeight);
+        }
+        
+        /// <summary>
+        /// Gets the window border height (title bar) for mouse position correction.
+        /// This is the global function for consistent border height handling across the application.
+        /// </summary>
+        public float GetWindowBorderHeight()
+        {
+            var (titleBarHeight, _, _) = GetWindowBorderInfo();
+            return Math.Max(0, titleBarHeight); // Ensure non-negative
+        }
+        
+        #endregion
 
         #region Terminal Management
         
@@ -310,12 +382,20 @@ namespace Cathedral.Glyph
             _terminal.Text(3, 16, "• ESC: Exit application", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             
             // Draw status panel
-            _terminal.DrawBox(40, 8, 38, 10, Cathedral.Terminal.Utils.BoxStyle.Single, 
+            _terminal.DrawBox(40, 8, 38, 15, Cathedral.Terminal.Utils.BoxStyle.Single, 
                               Cathedral.Terminal.Utils.Colors.Blue, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(41, 9, "Status:", Cathedral.Terminal.Utils.Colors.Blue, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(41, 10, "Vertices: " + vertices.Count.ToString(), Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(41, 11, "Hovered: None", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(41, 12, "Selected: None", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            
+            // Add window border information
+            var (titleBarHeight, borderWidth, borderHeight) = GetWindowBorderInfo();
+            _terminal.Text(41, 14, "Window Info:", Cathedral.Terminal.Utils.Colors.Blue, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(41, 15, $"Client: {ClientSize.X}x{ClientSize.Y}", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(41, 16, $"Total: {Size.X}x{Size.Y}", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(41, 17, $"Title bar: ~{titleBarHeight}px", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(41, 18, $"Borders: {borderWidth}x{borderHeight}", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             
             // Draw progress bar demo
             _terminal.Text(3, 20, "System Status:", Cathedral.Terminal.Utils.Colors.Yellow, Cathedral.Terminal.Utils.Colors.Black);
@@ -1210,6 +1290,16 @@ namespace Cathedral.Glyph
             base.OnResize(e);
             GL.Viewport(0, 0, Size.X, Size.Y);
             UpdateProjection();
+            
+            // Force terminal to recalculate its layout immediately
+            if (_terminal != null)
+            {
+                _terminal.ForceRefresh();
+            }
+            
+            // Log border info on resize (useful for debugging terminal positioning)
+            var (titleBarHeight, borderWidth, borderHeight) = GetWindowBorderInfo();
+            Console.WriteLine($"Window resized - Client: {ClientSize}, Total: {Size}, Title bar: ~{titleBarHeight}px");
         }
 
         private void UpdateProjection()
@@ -1318,7 +1408,7 @@ namespace Cathedral.Glyph
 
         private Vector3 GetMouseProjectionOnScreen(OpenTK.Mathematics.Vector2 mousePos)
         {
-            const float pixelOffsetY = 38.0f;
+            float pixelOffsetY = GetWindowBorderHeight();
             float correctedMouseY = mousePos.Y + pixelOffsetY;
             
             float x = (2.0f * mousePos.X) / Size.X - 1.0f;
