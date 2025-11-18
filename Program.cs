@@ -2,15 +2,18 @@
 using Cathedral.LLM.JsonConstraints;
 using Cathedral.Glyph;
 using Cathedral.Engine;
+using Cathedral.Glyph.Microworld.LocationSystem;
+using Cathedral.Glyph.Microworld.LocationSystem.Generators;
 
 Console.WriteLine("=== Cathedral Application ===\n");
 Console.WriteLine("Choose an option:");
 Console.WriteLine("1. Run LLM integration tests (JSON constraints)");
 Console.WriteLine("2. Launch GlyphSphere with Terminal HUD");
 Console.WriteLine("3. Test Terminal Module (standalone)");
-Console.WriteLine("4. Exit");
+Console.WriteLine("4. Test Forest Location System Demo");
+Console.WriteLine("5. Exit");
 
-Console.Write("\nEnter your choice (1-4): ");
+Console.Write("\nEnter your choice (1-5): ");
 var choice = Console.ReadLine();
 
 switch (choice)
@@ -78,6 +81,11 @@ switch (choice)
         break;
 
     case "4":
+        Console.WriteLine("\n=== Forest Location System Demo ===");
+        await TestForestLocationSystem();
+        break;
+
+    case "5":
         Console.WriteLine("Goodbye!");
         Environment.Exit(0);
         break;
@@ -89,6 +97,66 @@ switch (choice)
 
 Console.WriteLine("\nPress any key to exit...");
 Console.ReadKey();
+
+static async Task TestForestLocationSystem()
+{
+    Console.WriteLine("Starting Forest Location System demonstration...\n");
+    
+    // Create forest generator
+    var forestGenerator = new ForestFeatureGenerator();
+    
+    // Generate different forest instances
+    var forestIds = new[] { "forest_001", "forest_002", "forest_003" };
+    
+    foreach (var forestId in forestIds)
+    {
+        Console.WriteLine($"=== {forestId.ToUpper()} ===");
+        
+        // Generate context (natural language description)
+        var context = forestGenerator.GenerateContext(forestId);
+        Console.WriteLine($"Context: {context}");
+        Console.WriteLine();
+        
+        // Generate blueprint (structured data)
+        var blueprint = forestGenerator.GenerateBlueprint(forestId);
+        
+        Console.WriteLine($"Forest Type: {blueprint.LocationType}");
+        Console.WriteLine($"Sublocations: {blueprint.Sublocations.Count}");
+        
+        // Show some interesting sublocations
+        Console.WriteLine("Notable sublocations:");
+        foreach (var (id, sublocation) in blueprint.Sublocations.Take(5))
+        {
+            Console.WriteLine($"  - {sublocation.Name}: {sublocation.Description}");
+        }
+        
+        // Show state categories
+        Console.WriteLine("\nEnvironmental states:");
+        foreach (var (categoryId, category) in blueprint.StateCategories.Take(3))
+        {
+            Console.WriteLine($"  - {category.Name}: {string.Join(", ", category.PossibleStates.Keys.Take(3))}");
+        }
+        
+        // Generate constraints for LLM
+        var constraints = Blueprint2Constraint.GenerateActionConstraints(blueprint, "forest_edge", new Dictionary<string, string>());
+        
+        Console.WriteLine($"\nGenerated JSON constraint field for LLM action generation");
+        Console.WriteLine($"Constraint type: {constraints.GetType().Name}");
+        
+        Console.WriteLine("\n" + new string('-', 60) + "\n");
+        
+        // Add a small delay for readability
+        await Task.Delay(1000);
+    }
+    
+    Console.WriteLine("Forest Location System demo completed!");
+    Console.WriteLine("This system demonstrates:");
+    Console.WriteLine("✓ Procedural forest generation with environmental variation");
+    Console.WriteLine("✓ Hierarchical sublocation systems with conditional access");
+    Console.WriteLine("✓ State-dependent content and action generation");
+    Console.WriteLine("✓ JSON constraint generation for LLM integration");
+    Console.WriteLine("✓ Deterministic seeding for consistent locations");
+}
 
 /*
 

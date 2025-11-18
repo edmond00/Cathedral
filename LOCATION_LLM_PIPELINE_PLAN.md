@@ -4,8 +4,6 @@
 
 This document outlines the implementation plan for a location-based LLM Dungeon Master pipeline that generates contextual actions and consequences based on game state and location blueprints. The system leverages the existing JSON constraint framework to ensure LLM outputs conform to game rules.
 
-**Final Implementation Goal**: A terminal-based demo showcasing the complete forest exploration system where players can interactively explore procedurally generated forest blueprints through a series of constrained LLM-generated actions with realistic consequences and state progression.
-
 ## Architecture Overview
 
 ```
@@ -577,152 +575,6 @@ var actionConstraints = new CompositeField("ActionChoice",
 - [ ] Create save/load functionality
 - [ ] Add state validation and recovery
 
-### Phase 5: Terminal Demo Implementation (Days 15-17)
-
-#### Step 5.1: Forest Exploration Demo
-- [ ] Create interactive terminal interface for forest exploration
-- [ ] Implement random forest blueprint generation system
-- [ ] Build action list generation and display system
-- [ ] Add player input handling for action selection
-- [ ] Implement random success/failure resolution mechanics
-
-#### Step 5.2: Game Loop Integration
-- [ ] Create state update system based on action outcomes
-- [ ] Implement location/sublocation progression tracking
-- [ ] Build new action generation after state changes
-- [ ] Add context display showing current location and state
-- [ ] Create demo loop: Generate → Display → Choose → Resolve → Update → Repeat
-
-#### Step 5.3: Demo Polish & Testing
-- [ ] Add clear terminal output formatting and user prompts
-- [ ] Implement demo session persistence (save/resume exploration)
-- [ ] Create comprehensive demo scenarios (different forest variants)
-- [ ] Add debug mode showing blueprint structure and state transitions
-- [ ] Performance testing with multiple forest generation cycles
-
-## Terminal Demo: Forest Exploration Game Loop
-
-The final implementation will showcase the complete system through an interactive terminal-based forest exploration demo. This demo serves as both a proof-of-concept and a testing platform for the location blueprint mechanics.
-
-### Demo Architecture
-
-```
-Demo Start
-     ↓
- Generate Random Forest Blueprint (based on timestamp seed)
-     ↓
-Set Initial State: {time_of_day: "morning", weather: "clear", wildlife_state: "calm"}
-Set Initial Location: "forest_edge"
-     ↓
-┌───────────────────────────────── GAME LOOP ─────────────────────────────────┐
-│ 1. Display Current Context                                                    │
-│    - Show current sublocation name and description                          │
-│    - Display current state categories (time, weather, wildlife)            │
-│    - Show any items/companions gained in previous actions                   │
-│                                                                             │
-│ 2. Generate Action Constraints                                              │
-│    - Use Blueprint2Constraint.GenerateActionConstraints()                  │
-│    - Based on current sublocation + current state combination              │
-│    - Create GBNF grammar and JSON template                                 │
-│                                                                             │
-│ 3. Generate Action List via LLM                                            │
-│    - Send context + constraints to LLM (phi3/phi4)                        │
-│    - LLM generates 3-5 contextual actions respecting constraints           │
-│    - Each action has: description, difficulty, related_skill               │
-│                                                                             │
-│ 4. Present Choices to Player                                               │
-│    - Display numbered list of available actions                            │
-│    - Show difficulty and skill for each action                             │
-│    - Allow player to select by number (1-5)                               │
-│                                                                             │
-│ 5. Resolve Action Success/Failure                                          │
-│    - Random roll vs difficulty (simple: roll 1d6, succeed if >= difficulty) │
-│    - Apply success_consequences OR failure_consequences                     │
-│    - Update game state and current sublocation accordingly                 │
-│                                                                             │
-│ 6. Display Action Results                                                  │
-│    - Show what happened (success/failure description)                      │
-│    - Display any state changes, location changes, items gained             │
-│    - Update context for next iteration                                     │
-│                                                                             │
-│ 7. Check for Demo End Conditions                                           │
-│    - Player reaches special locations (ancient grove center, summit)       │
-│    - Player chooses to "Leave the forest"                                  │
-│    - Time limit reached (20 actions max)                                   │
-│                                                                             │
-└───────────────────────────────────────────────────────────────────────────────┘
-                                         ↓
-                                    Loop Back to 1
-                                         ↓
-                                 Demo End → Show Summary
-```
-
-### Sample Demo Session
-
-```
-=== Forest Exploration Demo ===
-Generating forest blueprint for 'forest_1732012345'...
-
---- TURN 1 ---
-Location: Forest Edge
-Time: Morning | Weather: Clear | Wildlife: Calm
-
-You stand where the open meadow meets the ancient forest. Towering oaks create
-a natural cathedral overhead, their branches filtering the morning sunlight
-into dappled golden patterns on the moss-covered ground.
-
-Available Actions:
-1. [Easy] Follow the main forest path deeper into the woods (navigation)
-2. [Medium] Search the edge area for useful plants or herbs (nature_lore)
-3. [Easy] Examine the largest oak tree near the entrance (perception)
-4. [Medium] Listen carefully for sounds deeper in the forest (survival)
-
-Choose an action (1-4): 1
-
-Rolling 1d6 vs difficulty 1... Rolled 4 - SUCCESS!
-
-You follow the well-worn path as it winds between the massive tree trunks.
-After a few minutes of walking, you arrive at a fork where the path splits.
-
-Location changed: forest_edge → path_fork
-
---- TURN 2 ---
-Location: Path Fork
-Time: Morning | Weather: Clear | Wildlife: Calm
-
-The main trail splits here into three directions. To the left, you hear the
-bubbling of water. Straight ahead, the path continues into darker, denser woods.
-To the right, you notice disturbed undergrowth where something large passed recently.
-
-Available Actions:
-1. [Easy] Take the left path toward the water sounds (navigation)
-2. [Medium] Follow the main path into the deep woods (navigation)
-3. [Hard] Investigate the disturbed undergrowth to the right (tracking)
-4. [Medium] Climb a nearby tree to get a better view (athletics)
-5. [Easy] Rest here and observe the area quietly (perception)
-
-Choose an action (1-5): 3
-
-Rolling 1d6 vs difficulty 4... Rolled 2 - FAILURE!
-
-As you examine the broken branches and trampled earth, you accidentally step
-on a dry twig. The loud crack echoes through the forest, and you hear rustling
-as nearby animals flee from the disturbance.
-
-Wildlife state changed: calm → alert
-
-[...demo continues for up to 20 turns or until player reaches end goal...]
-```
-
-### Demo Features
-
-- **Procedural Forest Generation**: Each demo run creates a unique forest layout
-- **State Persistence**: Player choices affect future action availability
-- **Realistic Progression**: Small steps gradually reveal the forest structure
-- **LLM Integration**: Actions generated dynamically based on current context
-- **Clear Feedback**: Every action shows immediate and long-term consequences
-- **Exploration Goals**: Hidden areas and special features to discover
-
 ## Design Principles
 
 ### 1. Deterministic Generation with High Variance
@@ -884,14 +736,14 @@ var constraints = Blueprint2Constraint.GenerateActionConstraints(
 ## Files to Create
 
 ### Core Infrastructure
-1. `/src/LLM/LocationSystem/LocationBlueprint.cs` - Core data structures
-2. `/src/LLM/LocationSystem/LocationFeatureGenerator.cs` - Abstract base class
-3. `/src/LLM/LocationSystem/Blueprint2Constraint.cs` - Constraint generation
-4. `/src/LLM/LocationSystem/GameStateManager.cs` - State persistence
+1. `/src/glyph/microworld/LocationSystem/LocationBlueprint.cs` - Core data structures
+2. `/src/glyph/microworld/LocationSystem/LocationFeatureGenerator.cs` - Abstract base class
+3. `/src/glyph/microworld/LocationSystem/Blueprint2Constraint.cs` - Constraint generation
+4. `/src/glyph/microworld/LocationSystem/GameStateManager.cs` - State persistence
 
 ### Location Implementations  
-5. `/src/microworld/LocationSystem/Generators/ForestFeatureGenerator.cs` (Reference implementation)
-9. `/src/microworld/LocationSystem/LocationGeneratorFactory.cs`
+5. `/src/glyph/microworld/LocationSystem/Generators/ForestFeatureGenerator.cs` (Reference implementation)
+9. `/src/glyph/microworld/LocationSystem/LocationGeneratorFactory.cs`
 
 ### Integration & Testing
 10. `/src/microworld/LocationSystem/LocationDMPipeline.cs` - Main orchestration
@@ -899,14 +751,8 @@ var constraints = Blueprint2Constraint.GenerateActionConstraints(
 12. `/tests/LocationSystem/Blueprint2ConstraintTests.cs` - Constraint tests  
 13. `/tests/LocationSystem/LocationDMIntegrationTests.cs` - E2E tests
 
-### Terminal Demo
-14. `/src/microworld/Demo/ForestExplorationDemo.cs` - Interactive terminal demo
-15. `/src/microworld/Demo/DemoGameLoop.cs` - Game state and action resolution loop
-16. `/src/microworld/Demo/TerminalInterface.cs` - User interface and display formatting
-
 ## Success Metrics
 
-### Core System Metrics
 - **Deterministic Generation**: Same location ID always produces identical features across visits
 - **Blueprint Variance**: Different locations of same type have 80%+ unique sublocation combinations
 - **Constraint Adherence**: 100% of LLM outputs validate against generated schemas
@@ -920,16 +766,4 @@ var constraints = Blueprint2Constraint.GenerateActionConstraints(
 - **Small LLM Compatibility**: Works effectively with 1B-7B parameter models
 - **Action Granularity**: 95%+ of actions represent small, logical steps rather than major changes
 
-### Terminal Demo Metrics
-- **Demo Completeness**: Full game loop functional from forest generation to action resolution
-- **User Experience**: Clear, intuitive terminal interface with helpful prompts and feedback
-- **Session Engagement**: Average demo session lasts 8-15 actions before natural conclusion
-- **Exploration Depth**: Players discover 60%+ of available sublocations in typical session
-- **Action Variety**: LLM generates 4-6 distinct action types per sublocation on average
-- **State Progression**: Observable consequences from player choices within 1-3 action cycles
-- **Error Handling**: Graceful recovery from invalid inputs or LLM generation failures
-- **Performance Consistency**: Demo maintains <2 second response time throughout 20+ action cycles
-
 This pipeline will create a robust, scalable system for location-based narrative generation that maintains game consistency while leveraging the creativity of local LLMs. The system emphasizes simulation-like depth and granular progression, making each location feel like a richly detailed, systematically explorable space rather than a simple menu of abstract choices.
-
-**The terminal demo will serve as a concrete proof-of-concept, demonstrating how the abstract blueprint system translates into engaging, interactive gameplay with meaningful player agency and realistic world simulation.**
