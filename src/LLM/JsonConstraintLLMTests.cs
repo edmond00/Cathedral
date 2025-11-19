@@ -289,6 +289,19 @@ public static class JsonConstraintLLMTests
                     new BooleanField("debug")
                 }),
                 PromptTemplate = "Generate configuration with exact values and boolean settings."
+            },
+
+            // Edge case: Array comma handling (prevent leading commas)
+            new TestScenario
+            {
+                TestName = "Array Comma Validation",
+                Schema = new CompositeField("test", new JsonField[]
+                {
+                    new ArrayField("emptyAllowed", new StringField("item", 1, 10), 0, 3),
+                    new ArrayField("oneRequired", new StringField("item", 1, 10), 1, 2),
+                    new ArrayField("multiRequired", new StringField("item", 1, 10), 2, 4)
+                }),
+                PromptTemplate = "Generate arrays that test proper comma placement. Ensure no leading commas appear in JSON arrays."
             }
         };
     }

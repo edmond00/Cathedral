@@ -4,6 +4,7 @@ using Cathedral.Glyph;
 using Cathedral.Engine;
 using Cathedral.Glyph.Microworld.LocationSystem;
 using Cathedral.Glyph.Microworld.LocationSystem.Generators;
+using System.Text;
 
 Console.WriteLine("=== Cathedral Application ===\n");
 Console.WriteLine("Choose an option:");
@@ -100,62 +101,189 @@ Console.ReadKey();
 
 static async Task TestForestLocationSystem()
 {
-    Console.WriteLine("Starting Forest Location System demonstration...\n");
+    Console.WriteLine("=== Forest Location System with LLM Integration Demo ===\n");
     
     // Create forest generator
     var forestGenerator = new ForestFeatureGenerator();
     
-    // Generate different forest instances
-    var forestIds = new[] { "forest_001", "forest_002", "forest_003" };
+    // Generate one random forest for LLM testing
+    var forestId = "forest_001";
+    Console.WriteLine($"=== {forestId.ToUpper()} ===");
     
-    foreach (var forestId in forestIds)
+    // Generate context (natural language description)
+    var context = forestGenerator.GenerateContext(forestId);
+    Console.WriteLine($"Context: {context}");
+    Console.WriteLine();
+    
+    // Generate blueprint (structured data)
+    var blueprint = forestGenerator.GenerateBlueprint(forestId);
+    
+    Console.WriteLine($"Forest Type: {blueprint.LocationType}");
+    Console.WriteLine($"Sublocations: {blueprint.Sublocations.Count}");
+    
+    // Show some interesting sublocations
+    Console.WriteLine("Notable sublocations:");
+    foreach (var (id, sublocation) in blueprint.Sublocations.Take(5))
     {
-        Console.WriteLine($"=== {forestId.ToUpper()} ===");
-        
-        // Generate context (natural language description)
-        var context = forestGenerator.GenerateContext(forestId);
-        Console.WriteLine($"Context: {context}");
-        Console.WriteLine();
-        
-        // Generate blueprint (structured data)
-        var blueprint = forestGenerator.GenerateBlueprint(forestId);
-        
-        Console.WriteLine($"Forest Type: {blueprint.LocationType}");
-        Console.WriteLine($"Sublocations: {blueprint.Sublocations.Count}");
-        
-        // Show some interesting sublocations
-        Console.WriteLine("Notable sublocations:");
-        foreach (var (id, sublocation) in blueprint.Sublocations.Take(5))
-        {
-            Console.WriteLine($"  - {sublocation.Name}: {sublocation.Description}");
-        }
-        
-        // Show state categories
-        Console.WriteLine("\nEnvironmental states:");
-        foreach (var (categoryId, category) in blueprint.StateCategories.Take(3))
-        {
-            Console.WriteLine($"  - {category.Name}: {string.Join(", ", category.PossibleStates.Keys.Take(3))}");
-        }
-        
-        // Generate constraints for LLM
-        var constraints = Blueprint2Constraint.GenerateActionConstraints(blueprint, "forest_edge", new Dictionary<string, string>());
-        
-        Console.WriteLine($"\nGenerated JSON constraint field for LLM action generation");
-        Console.WriteLine($"Constraint type: {constraints.GetType().Name}");
-        
-        Console.WriteLine("\n" + new string('-', 60) + "\n");
-        
-        // Add a small delay for readability
-        await Task.Delay(1000);
+        Console.WriteLine($"  - {sublocation.Name}: {sublocation.Description}");
     }
     
-    Console.WriteLine("Forest Location System demo completed!");
+    // Show state categories
+    Console.WriteLine("\nEnvironmental states:");
+    foreach (var (categoryId, category) in blueprint.StateCategories.Take(3))
+    {
+        Console.WriteLine($"  - {category.Name}: {string.Join(", ", category.PossibleStates.Keys.Take(3))}");
+    }
+    
+    // Generate constraints for LLM
+    var currentStates = new Dictionary<string, string>
+    {
+        ["time_of_day"] = "morning",
+        ["weather"] = "clear",
+        ["wildlife_state"] = "calm"
+    };
+    
+    var constraints = Blueprint2Constraint.GenerateActionConstraints(blueprint, "forest_edge", currentStates);
+    
+    Console.WriteLine($"\nGenerated JSON constraint field for LLM action generation");
+    Console.WriteLine($"Constraint type: {constraints.GetType().Name}");
+    
+    // Generate GBNF grammar and template
+    var gbnf = JsonConstraintGenerator.GenerateGBNF(constraints);
+    var template = JsonConstraintGenerator.GenerateTemplate(constraints);
+    
+    Console.WriteLine("\n" + new string('=', 60));
+    Console.WriteLine("GENERATED JSON TEMPLATE:");
+    Console.WriteLine(template);
+    Console.WriteLine("\n" + new string('=', 60));
+    Console.WriteLine("GENERATED GBNF GRAMMAR:");
+    Console.WriteLine(gbnf);
+    Console.WriteLine(new string('=', 60) + "\n");
+    
+    // Start LLM integration
+    Console.WriteLine("Starting LLM Server for action generation...");
+    
+    using var llmManager = new LlamaServerManager();
+    var serverStarted = false;
+
+    await llmManager.StartServerAsync(
+        isReady =>
+        {
+            serverStarted = isReady;
+            if (isReady)
+            {
+                Console.WriteLine("✓ LLM Server started successfully!");
+            }
+            else
+                Console.WriteLine("✗ Failed to start LLM server!");
+        },
+        modelAlias: "tiny"); // Use the small model for testing
+
+    if (!serverStarted)
+    {
+        Console.WriteLine("Cannot run LLM integration without server. Showing system structure only.");
+        return;
+    }
+
+    try
+    {
+        // Create specialized DM system prompt
+        var systemPrompt = @"You are a skilled Dungeon Master for a fantasy RPG. You are currently managing a forest exploration scenario.
+Your role is to suggest appropriate player actions based on the current game state and environment.
+Always respond with valid JSON in the exact format specified. Be creative but realistic within the fantasy forest setting.";
+
+        var llmSlotId = await llmManager.CreateInstanceAsync(systemPrompt);
+        Console.WriteLine($"✓ Created DM LLM instance with slot ID: {llmSlotId}\n");
+
+        // Create the DM prompt
+        var dmPrompt = $@"The player is currently in a {blueprint.LocationType} at the {blueprint.Sublocations["forest_edge"].Name}.
+
+Current situation:
+- Location: {blueprint.Sublocations["forest_edge"].Description}
+- Time: {currentStates["time_of_day"]}  
+- Weather: {currentStates["weather"]}
+- Wildlife: {currentStates["wildlife_state"]}
+- Environment: {context}
+
+As the Dungeon Master, suggest appropriate actions the player could take in this situation. Consider the environment, current conditions, and available sublocations.
+
+Generate a JSON response with suggested actions that exactly matches this template format:
+{template}
+
+Respond with valid JSON only, no additional text or explanations.";
+
+        Console.WriteLine("SENDING PROMPT TO LLM:");
+        Console.WriteLine(new string('-', 40));
+        Console.WriteLine(dmPrompt);
+        Console.WriteLine(new string('-', 40) + "\n");
+
+        var responseBuilder = new StringBuilder();
+        var completed = false;
+        var startTime = DateTime.UtcNow;
+
+        Console.WriteLine("Waiting for LLM response...\n");
+
+        // Make the LLM request with GBNF grammar constraints
+        await llmManager.ContinueRequestAsync(
+            llmSlotId,
+            dmPrompt,
+            onTokenStreamed: (token, _) =>
+            {
+                Console.Write(token); // Stream output in real-time
+                responseBuilder.Append(token);
+            },
+            onCompleted: (_, response, wasCancelled) =>
+            {
+                completed = true;
+            },
+            gbnfGrammar: gbnf // Apply the GBNF grammar constraints
+        );
+
+        // Wait for completion
+        while (!completed)
+        {
+            await Task.Delay(100);
+        }
+
+        var llmResponse = responseBuilder.ToString().Trim();
+        var responseTime = DateTime.UtcNow - startTime;
+
+        Console.WriteLine($"\n\n{new string('=', 60)}");
+        Console.WriteLine("LLM RESPONSE ANALYSIS:");
+        Console.WriteLine($"Response time: {responseTime.TotalMilliseconds:F2}ms");
+        Console.WriteLine($"Response length: {llmResponse.Length} characters");
+        
+        // Validate the response against our JSON schema
+        var isValid = JsonValidator.ValidateJson(llmResponse, constraints, out var validationErrors);
+        
+        Console.WriteLine($"JSON Validation: {(isValid ? "✓ VALID" : "✗ INVALID")}");
+        if (!isValid)
+        {
+            Console.WriteLine("Validation Errors:");
+            foreach (var error in validationErrors)
+            {
+                Console.WriteLine($"  - {error}");
+            }
+        }
+
+        Console.WriteLine($"{new string('=', 60)}\n");
+
+    }
+    finally
+    {
+        Console.WriteLine("Stopping LLM server...");
+        // Server will be stopped automatically when llmManager is disposed
+    }
+    
+    Console.WriteLine("Forest Location System with LLM integration demo completed!");
     Console.WriteLine("This system demonstrates:");
     Console.WriteLine("✓ Procedural forest generation with environmental variation");
     Console.WriteLine("✓ Hierarchical sublocation systems with conditional access");
     Console.WriteLine("✓ State-dependent content and action generation");
     Console.WriteLine("✓ JSON constraint generation for LLM integration");
-    Console.WriteLine("✓ Deterministic seeding for consistent locations");
+    Console.WriteLine("✓ GBNF grammar generation for structured LLM output");
+    Console.WriteLine("✓ Real-time LLM action generation with validation");
+    Console.WriteLine("✓ Complete DM pipeline from game state to suggested actions");
 }
 
 /*

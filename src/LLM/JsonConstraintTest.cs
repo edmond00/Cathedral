@@ -1,4 +1,5 @@
 using Cathedral.LLM.JsonConstraints;
+using Cathedral;
 
 namespace Cathedral.LLM;
 
@@ -33,6 +34,9 @@ public class JsonConstraintTest
             Console.WriteLine("Generated Template:");
             Console.WriteLine(template);
             Console.WriteLine();
+
+            // Test ArrayField GBNF generation fix
+            ArrayFieldTest.TestArrayFieldGBNF();
 
             // Test the validator
             TestJsonValidator();

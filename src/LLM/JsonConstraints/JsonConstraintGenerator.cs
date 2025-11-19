@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Linq;
+using Cathedral.Glyph.Microworld.LocationSystem;
 
 namespace Cathedral.LLM.JsonConstraints;
 
@@ -80,6 +81,7 @@ public static class JsonConstraintGenerator
             DigitField digitField => GenerateDigitFieldRule(digitField, processedRules),
             ConstantIntField constIntField => GenerateConstantIntFieldRule(constIntField, processedRules),
             ConstantFloatField constFloatField => GenerateConstantFloatFieldRule(constFloatField, processedRules),
+            ConstantStringField constStringField => GenerateConstantStringFieldRule(constStringField, processedRules),
             StringField stringField => GenerateStringFieldRule(stringField, processedRules),
             BooleanField boolField => GenerateBooleanFieldRule(boolField, processedRules),
             ChoiceField<string> stringChoice => GenerateStringChoiceFieldRule(stringChoice, processedRules),
@@ -123,6 +125,18 @@ public static class JsonConstraintGenerator
         var rule = $"{ruleName} ::= \"{field.Value}\"";
         
         // Constant fields generate a literal numeric value with quotes in GBNF rule
+        processedRules.Add(rule);
+        
+        return ruleName;
+    }
+
+    private static string GenerateConstantStringFieldRule(ConstantStringField field, HashSet<string> processedRules)
+    {
+        var ruleName = SanitizeRuleName(field.Name);
+        var escapedValue = field.Value.Replace("\"", "\\\""); // Escape quotes in the string value
+        var rule = $"{ruleName} ::= \"\\\"{escapedValue}\\\"\"";
+        
+        // Constant string fields generate a literal quoted string in GBNF rule
         processedRules.Add(rule);
         
         return ruleName;
@@ -209,37 +223,43 @@ public static class JsonConstraintGenerator
         var elementRuleName = GenerateFieldRule(field.ElementType, processedRules);
         
         var rule = new StringBuilder();
-        rule.Append(ruleName + " ::= \"[\"");
+        rule.Append(ruleName + " ::= \"[\" ");
         
         if (field.MinLength == 0)
         {
-            rule.Append(" (");
+            // For arrays that can be empty, allow either empty array or array starting with element
+            rule.Append("(");
+            if (field.MaxLength > 0)
+            {
+                // First element (no leading comma)
+                rule.Append(elementRuleName);
+                
+                // Additional optional elements (with leading comma)
+                for (int i = 1; i < field.MaxLength; i++)
+                {
+                    rule.Append(" (\",\" " + elementRuleName + ")?");
+                }
+            }
+            rule.Append(")?");
         }
         else
         {
-            rule.Append(" ");
-        }
-        
-        // Generate pattern for required elements
-        for (int i = 0; i < field.MinLength; i++)
-        {
-            if (i > 0) rule.Append(" \",\" ");
-            rule.Append(elementRuleName);
-        }
-        
-        // Generate pattern for optional elements
-        if (field.MaxLength > field.MinLength)
-        {
-            var optionalCount = field.MaxLength - field.MinLength;
-            for (int i = 0; i < optionalCount; i++)
+            // For arrays with required elements, start with required elements
+            for (int i = 0; i < field.MinLength; i++)
             {
-                rule.Append(" (\",\" " + elementRuleName + ")?");
+                if (i > 0) rule.Append(" \",\" ");
+                rule.Append(elementRuleName);
             }
-        }
-        
-        if (field.MinLength == 0)
-        {
-            rule.Append(")?");
+            
+            // Add optional elements beyond the minimum
+            if (field.MaxLength > field.MinLength)
+            {
+                var optionalCount = field.MaxLength - field.MinLength;
+                for (int i = 0; i < optionalCount; i++)
+                {
+                    rule.Append(" (\",\" " + elementRuleName + ")?");
+                }
+            }
         }
         
         rule.Append(" \"]\"");
