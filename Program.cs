@@ -215,241 +215,380 @@ Console.ReadKey();
 
 static async Task TestForestLocationSystem()
 {
-    Console.WriteLine("=== Forest Location System with LLM Integration Demo ===\n");
+    Console.WriteLine("=== Interactive Forest Adventure Demo ===\n");
     
     // Create forest generator
     var forestGenerator = new ForestFeatureGenerator();
-    
-    // Generate one random forest for LLM testing
     var forestId = "forest_001";
-    Console.WriteLine($"=== {forestId.ToUpper()} ===");
-    
-    // Generate context (natural language description)
-    var context = forestGenerator.GenerateContext(forestId);
-    Console.WriteLine($"Context: {context}");
-    Console.WriteLine();
     
     // Generate blueprint (structured data)
     var blueprint = forestGenerator.GenerateBlueprint(forestId);
     
-    Console.WriteLine($"Forest Type: {blueprint.LocationType}");
-    Console.WriteLine($"Sublocations: {blueprint.Sublocations.Count}");
-    
-    // Show some interesting sublocations
-    Console.WriteLine("Notable sublocations:");
-    foreach (var (id, sublocation) in blueprint.Sublocations.Take(5))
-    {
-        Console.WriteLine($"  - {sublocation.Name}: {sublocation.Description}");
-    }
-    
-    // Show state categories
-    Console.WriteLine("\nEnvironmental states:");
-    foreach (var (categoryId, category) in blueprint.StateCategories.Take(3))
-    {
-        Console.WriteLine($"  - {category.Name}: {string.Join(", ", category.PossibleStates.Keys.Take(3))}");
-    }
-    
-    // Generate constraints for LLM
+    // Initial game state
+    var currentSublocation = "forest_edge";
     var currentStates = new Dictionary<string, string>
     {
         ["time_of_day"] = "morning",
-        ["weather"] = "clear",
-        ["wildlife_state"] = "calm"
+        ["weather"] = "clear", 
+        ["wildlife_state"] = "calm",
+        ["seasonal_state"] = "summer"
     };
+
+    Console.WriteLine($"=== ENTERING {forestId.ToUpper()} ===\n");
     
-    var constraints = Blueprint2Constraint.GenerateActionConstraints(blueprint, "forest_edge", currentStates, 7);
-    
-    Console.WriteLine($"\nGenerated JSON constraint field for LLM action generation");
-    Console.WriteLine($"Constraint type: {constraints.GetType().Name}");
-    
-    // Generate GBNF grammar and template
-    var gbnf = JsonConstraintGenerator.GenerateGBNF(constraints);
-    var template = JsonConstraintGenerator.GenerateTemplate(constraints);
-    
-    Console.WriteLine("\n" + new string('=', 60));
-    Console.WriteLine("GENERATED JSON TEMPLATE:");
-    Console.WriteLine(template);
-    Console.WriteLine("\n" + new string('=', 60));
-    Console.WriteLine("GENERATED GBNF GRAMMAR:");
-    Console.WriteLine(gbnf);
-    Console.WriteLine(new string('=', 60) + "\n");
-    
-    // Start LLM integration
-    Console.WriteLine("Starting LLM Server for action generation...");
-    
+    // Start LLM Server
+    Console.WriteLine("Starting LLM Server...");
     using var llmManager = new LlamaServerManager();
     var serverStarted = false;
 
     await llmManager.StartServerAsync(
-        isReady =>
-        {
-            serverStarted = isReady;
-            if (isReady)
-            {
-                Console.WriteLine("✓ LLM Server started successfully!");
-            }
-            else
-                Console.WriteLine("✗ Failed to start LLM server!");
-        },
-        modelAlias: "tiny"); // Use the small model for testing
+        isReady => serverStarted = isReady,
+        modelAlias: "tiny");
 
     if (!serverStarted)
     {
-        Console.WriteLine("Cannot run LLM integration without server. Showing system structure only.");
+        Console.WriteLine("✗ Cannot run interactive demo without LLM server.");
         return;
     }
 
-    try
+    Console.WriteLine("✓ LLM Server started successfully!\n");
+
+    // Initialize prompt constructors
+    var director = new DirectorPromptConstructor(blueprint, currentSublocation, currentStates, 5);
+    var narrator = new NarratorPromptConstructor(blueprint, currentSublocation, currentStates);
+
+    // Initialize gameplay logger
+    var logger = new GameplayLogger(forestId);
+    Console.WriteLine($"✓ Logging to: {logger.GetLogFilePath()}");
+
+    // Create LLM instances with different roles
+    var directorSlotId = await llmManager.CreateInstanceAsync(director.GetSystemPrompt());
+    var narratorSlotId = await llmManager.CreateInstanceAsync(narrator.GetSystemPrompt());
+
+    Console.WriteLine("✓ Created Director LLM instance (action generation)");
+    Console.WriteLine("✓ Created Narrator LLM instance (storytelling)\n");
+
+    // Game loop variables
+    PlayerAction? previousAction = null;
+    var turnNumber = 1;
+    var gameRunning = true;
+
+    Console.WriteLine("Welcome to the Interactive Forest Adventure!");
+    Console.WriteLine("Type 'quit' at any time to exit the game.\n");
+    Console.WriteLine(new string('=', 80));
+
+    while (gameRunning)
     {
-        // Create specialized DM system prompt
-        var systemPrompt = @"You are a skilled Dungeon Master for a fantasy RPG. You are currently managing a forest exploration scenario.
-Your role is to suggest appropriate player actions based on the current game state and environment.
-Always respond with valid JSON in the exact format specified. Be creative but realistic within the fantasy forest setting.";
+        Console.WriteLine($"\n--- TURN {turnNumber} ---\n");
 
-        var llmSlotId = await llmManager.CreateInstanceAsync(systemPrompt);
-        Console.WriteLine($"✓ Created DM LLM instance with slot ID: {llmSlotId}\n");
+        // Log turn start
+        logger.LogTurnStart(turnNumber, currentSublocation, currentStates);
 
-        // Create the DM prompt for generating 7 actions in one call
-        var dmPrompt = $@"The player is currently in a {blueprint.LocationType} at the {blueprint.Sublocations["forest_edge"].Name}.
-
-Current situation:
-- Location: {blueprint.Sublocations["forest_edge"].Description}
-- Time: {currentStates["time_of_day"]}  
-- Weather: {currentStates["weather"]}
-- Wildlife: {currentStates["wildlife_state"]}
-- Environment: {context}
-
-As the Dungeon Master, generate 7 different action options the player could take in this situation. Provide variety - consider different approaches like exploration, interaction, combat preparation, skill use, environmental manipulation, etc.
-
-Generate a JSON response with 7 action choices that exactly matches this template format:
-{template}
-
-Respond with valid JSON only, no additional text or explanations.";
-
-        Console.WriteLine("SENDING PROMPT TO LLM FOR 7 ACTION GENERATION:");
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine(dmPrompt);
-        Console.WriteLine(new string('-', 50) + "\n");
-
-        var responseBuilder = new StringBuilder();
-        var completed = false;
-        var startTime = DateTime.UtcNow;
-
-        Console.WriteLine("Waiting for LLM response (generating 7 actions)...\n");
-
-        // Make the LLM request with GBNF grammar constraints
-        await llmManager.ContinueRequestAsync(
-            llmSlotId,
-            dmPrompt,
-            onTokenStreamed: (token, _) =>
-            {
-                Console.Write(token); // Stream output in real-time
-                responseBuilder.Append(token);
-            },
-            onCompleted: (_, response, wasCancelled) =>
-            {
-                completed = true;
-            },
-            gbnfGrammar: gbnf
-        );
-
-        // Wait for completion
-        while (!completed)
+        // Step 1: Director generates action choices
+        Console.WriteLine("🎲 Director is generating action choices...");
+        
+        var directorPrompt = director.ConstructPrompt(previousAction);
+        var directorGbnf = director.GetGbnf();
+        
+        // Log director request
+        logger.LogDirectorRequest(directorPrompt, directorGbnf);
+        
+        var (actionResponse, directorResponseTime) = await GetLLMResponseWithTiming(llmManager, directorSlotId, directorPrompt, directorGbnf);
+        
+        if (string.IsNullOrEmpty(actionResponse))
         {
-            await Task.Delay(100);
+            Console.WriteLine("✗ Failed to generate actions. Ending game.");
+            logger.LogGameEnd("Failed to generate actions");
+            break;
         }
 
-        var llmResponse = responseBuilder.ToString().Trim();
-        var responseTime = DateTime.UtcNow - startTime;
-
-        Console.WriteLine($"\n\n{new string('=', 60)}");
-        Console.WriteLine("LLM RESPONSE ANALYSIS:");
-        Console.WriteLine($"Response time: {responseTime.TotalMilliseconds:F2}ms");
-        Console.WriteLine($"Response length: {llmResponse.Length} characters");
+        // Validate and parse actions
+        var isValid = JsonValidator.ValidateJson(actionResponse, director.GetConstraints(), out var validationErrors);
         
-        // Validate the response against our JSON schema
-        var isValid = JsonValidator.ValidateJson(llmResponse, constraints, out var validationErrors);
+        // Log director response
+        logger.LogDirectorResponse(actionResponse, directorResponseTime, isValid, validationErrors.ToList());
         
-        Console.WriteLine($"JSON Validation: {(isValid ? "✓ VALID" : "✗ INVALID")}");
         if (!isValid)
         {
-            Console.WriteLine("Validation Errors:");
-            foreach (var error in validationErrors.Take(5))
+            Console.WriteLine("✗ Invalid action response generated. Ending game.");
+            foreach (var error in validationErrors.Take(3))
             {
-                Console.WriteLine($"  - {error}");
+                Console.WriteLine($"  Error: {error}");
             }
+            logger.LogGameEnd("Invalid action response generated");
+            break;
         }
 
-        // Parse and display the 7 actions
-        if (isValid)
+        var actionChoices = NarratorPromptConstructor.ParseActionChoices(actionResponse);
+        var actionTexts = NarratorPromptConstructor.ExtractActionChoices(actionResponse);
+
+        if (actionChoices.Count == 0)
         {
-            try
+            Console.WriteLine("✗ No valid actions generated. Ending game.");
+            logger.LogGameEnd("No valid actions generated");
+            break;
+        }
+
+        // Step 2: Narrator presents the situation
+        Console.WriteLine("📖 Narrator is crafting the scene...\n");
+        
+        var narratorPrompt = narrator.ConstructPrompt(previousAction, actionTexts);
+        var narratorGbnf = narrator.GetGbnf(previousAction?.WasSuccessful);
+        
+        // Log narrator request
+        logger.LogNarratorRequest(narratorPrompt, narratorGbnf);
+        
+        var (narrativeResponse, narratorResponseTime) = await GetLLMResponseWithTiming(llmManager, narratorSlotId, narratorPrompt, narratorGbnf);
+        
+        // Log narrator response
+        logger.LogNarratorResponse(narrativeResponse, narratorResponseTime);
+        
+        if (!string.IsNullOrEmpty(narrativeResponse))
+        {
+            // Display the narrative
+            Console.WriteLine(new string('─', 80));
+            Console.WriteLine(narrativeResponse);
+            Console.WriteLine(new string('─', 80));
+        }
+
+        // Step 3: Present action choices to player
+        Console.WriteLine("\n🎯 AVAILABLE ACTIONS:");
+        Console.WriteLine();
+        for (int i = 0; i < actionChoices.Count; i++)
+        {
+            var choice = actionChoices[i];
+            Console.WriteLine($"[{i + 1}] {choice.ActionText}");
+            Console.WriteLine($"     Skill: {choice.Skill} | Difficulty: {choice.Difficulty}/5 | Risk: {choice.Risk}");
+            Console.WriteLine();
+        }
+
+        // Step 4: Get player choice
+        var playerChoice = GetPlayerChoice(actionChoices.Count);
+        
+        if (playerChoice == -1)
+        {
+            Console.WriteLine("\nThanks for playing! Farewell, adventurer.");
+            logger.LogGameEnd("Player quit");
+            gameRunning = false;
+            continue;
+        }
+
+        var selectedAction = actionChoices[playerChoice - 1];
+        Console.WriteLine($"\n➤ You chose: {selectedAction.ActionText}");
+        
+        // Log player action
+        logger.LogPlayerAction(playerChoice, selectedAction.ActionText);
+
+        // Step 5: Simulate action outcome (simplified for demo)
+        var outcome = SimulateActionOutcome(selectedAction, actionResponse, playerChoice - 1);
+        
+        // Log action outcome
+        logger.LogActionOutcome(outcome);
+        
+        // Update game state based on outcome
+        ApplyActionOutcome(outcome, ref currentSublocation, currentStates, director, narrator);
+        
+        previousAction = outcome;
+        turnNumber++;
+
+        // Add a pause between turns
+        Console.WriteLine("\nPress Enter to continue to the next turn...");
+        Console.ReadLine();
+        Console.Clear();
+    }
+
+    Console.WriteLine("\n" + new string('=', 80));
+    Console.WriteLine("ADVENTURE COMPLETED");
+    logger.LogGameEnd("Demo completed successfully");
+    Console.WriteLine($"📝 Complete session log saved to: {logger.GetLogFilePath()}");
+    Console.WriteLine("This interactive demo showcased:");
+    Console.WriteLine("✓ Modular Director/Narrator LLM architecture");
+    Console.WriteLine("✓ Dynamic action generation with JSON constraints");
+    Console.WriteLine("✓ Immersive narrative storytelling");
+    Console.WriteLine("✓ Interactive player choice system");
+    Console.WriteLine("✓ Game state management and progression");
+    Console.WriteLine("✓ Real-time LLM integration for dual-role gameplay");
+    Console.WriteLine("✓ Complete session logging for analysis");
+    Console.WriteLine(new string('=', 80));
+}
+
+// Helper methods for interactive game loop
+
+/// <summary>
+/// Gets LLM response with optional GBNF grammar and logging
+/// </summary>
+static async Task<(string response, TimeSpan responseTime)> GetLLMResponseWithTiming(LlamaServerManager llmManager, int slotId, string prompt, string? gbnf = null)
+{
+    var responseBuilder = new StringBuilder();
+    var completed = false;
+    var startTime = DateTime.UtcNow;
+
+    await llmManager.ContinueRequestAsync(
+        slotId,
+        prompt,
+        onTokenStreamed: (token, _) => responseBuilder.Append(token),
+        onCompleted: (_, response, wasCancelled) => completed = true,
+        gbnfGrammar: gbnf
+    );
+
+    // Wait for completion
+    while (!completed)
+    {
+        await Task.Delay(100);
+    }
+
+    var responseTime = DateTime.UtcNow - startTime;
+    return (responseBuilder.ToString().Trim(), responseTime);
+}
+
+/// <summary>
+/// Gets player's action choice from input
+/// </summary>
+static int GetPlayerChoice(int maxChoices)
+{
+    while (true)
+    {
+        Console.Write($"\nChoose an action (1-{maxChoices}) or 'quit' to exit: ");
+        var input = Console.ReadLine()?.Trim().ToLower();
+
+        if (input == "quit" || input == "q" || input == "exit")
+        {
+            return -1; // Signal to quit
+        }
+
+        if (int.TryParse(input, out var choice) && choice >= 1 && choice <= maxChoices)
+        {
+            return choice;
+        }
+
+        Console.WriteLine($"Invalid choice. Please enter a number between 1 and {maxChoices}, or 'quit' to exit.");
+    }
+}
+
+/// <summary>
+/// Simulates action outcome (simplified for demo)
+/// </summary>
+static PlayerAction SimulateActionOutcome(ActionChoice selectedAction, string fullActionResponse, int actionIndex)
+{
+    var random = new Random();
+    var success = random.NextDouble() > 0.3; // 70% success rate for demo
+    
+    var outcome = new PlayerAction
+    {
+        ActionText = selectedAction.ActionText,
+        WasSuccessful = success
+    };
+
+    // Parse the full action data for consequences
+    try
+    {
+        using var doc = JsonDocument.Parse(fullActionResponse);
+        if (doc.RootElement.TryGetProperty("actions", out var actionsArray))
+        {
+            var actions = actionsArray.EnumerateArray().ToList();
+            if (actionIndex < actions.Count)
             {
-                using var doc = JsonDocument.Parse(llmResponse);
-                if (doc.RootElement.TryGetProperty("actions", out var actionsArray))
+                var actionData = actions[actionIndex];
+                
+                string consequenceType = success ? "success_consequences" : "failure_consequences";
+                
+                if (actionData.TryGetProperty(consequenceType, out var consequences))
                 {
-                    Console.WriteLine($"\n{new string('=', 60)}");
-                    Console.WriteLine("7 GENERATED ACTION OPTIONS:");
-                    Console.WriteLine($"{new string('=', 60)}");
-                    
-                    var actionIndex = 1;
-                    foreach (var actionElement in actionsArray.EnumerateArray())
+                    // Parse success consequences
+                    if (success && consequences.TryGetProperty("state_changes", out var stateChanges))
                     {
-                        Console.WriteLine($"\n{actionIndex}. ");
-                        
-                        if (actionElement.TryGetProperty("action_text", out var actionTextElement))
+                        if (stateChanges.TryGetProperty("category", out var category) && 
+                            stateChanges.TryGetProperty("new_state", out var newState))
                         {
-                            Console.WriteLine($"   Action: {actionTextElement.GetString()}");
+                            var categoryStr = category.GetString();
+                            var newStateStr = newState.GetString();
+                            
+                            if (!string.IsNullOrEmpty(categoryStr) && !string.IsNullOrEmpty(newStateStr) && 
+                                categoryStr != "none" && newStateStr != "none")
+                            {
+                                outcome.StateChanges[categoryStr] = newStateStr;
+                            }
                         }
-                        
-                        if (actionElement.TryGetProperty("related_skill", out var skillElement))
-                        {
-                            Console.WriteLine($"   Skill: {skillElement.GetString()}");
-                        }
-                        
-                        if (actionElement.TryGetProperty("difficulty", out var diffElement))
-                        {
-                            Console.WriteLine($"   Difficulty: {diffElement.GetInt32()}/5");
-                        }
-                        
-                        if (actionElement.TryGetProperty("failure_consequences", out var failElement) &&
-                            failElement.TryGetProperty("type", out var failTypeElement))
-                        {
-                            Console.WriteLine($"   Risk: {failTypeElement.GetString()}");
-                        }
-                        
-                        actionIndex++;
                     }
                     
-                    Console.WriteLine($"\n{new string('-', 40)}");
-                    Console.WriteLine($"Successfully generated all 7 actions in {responseTime.TotalMilliseconds:F0}ms");
+                    if (success)
+                    {
+                        if (consequences.TryGetProperty("sublocation_change", out var sublocChange))
+                        {
+                            var newSubloc = sublocChange.GetString();
+                            if (!string.IsNullOrEmpty(newSubloc) && newSubloc != "none")
+                            {
+                                outcome.NewSublocation = newSubloc;
+                            }
+                        }
+                        
+                        if (consequences.TryGetProperty("item_gained", out var itemGained))
+                        {
+                            var item = itemGained.GetString();
+                            if (!string.IsNullOrEmpty(item) && item != "none")
+                            {
+                                outcome.ItemGained = item;
+                            }
+                        }
+                        
+                        if (consequences.TryGetProperty("companion_gained", out var companionGained))
+                        {
+                            var companion = companionGained.GetString();
+                            if (!string.IsNullOrEmpty(companion) && companion != "none")
+                            {
+                                outcome.CompanionGained = companion;
+                            }
+                        }
+                    }
+                    
+                    // Set outcome description
+                    if (consequences.TryGetProperty("description", out var description))
+                    {
+                        outcome.Outcome = description.GetString() ?? "";
+                    }
+                    else if (consequences.TryGetProperty("type", out var failureType))
+                    {
+                        outcome.Outcome = failureType.GetString() ?? "";
+                    }
                 }
             }
-            catch (JsonException ex)
-            {
-                Console.WriteLine($"JSON parsing error: {ex.Message}");
-            }
         }
-
-        Console.WriteLine($"{new string('=', 60)}\n");
-
     }
-    finally
+    catch (JsonException)
     {
-        Console.WriteLine("Stopping LLM server...");
-        // Server will be stopped automatically when llmManager is disposed
+        // Fallback outcome if parsing fails
+        outcome.Outcome = success ? "Your action succeeded!" : "Your action didn't go as planned.";
     }
-    
-    Console.WriteLine("Forest Location System with LLM integration demo completed!");
-    Console.WriteLine("This system demonstrates:");
-    Console.WriteLine("✓ Procedural forest generation with environmental variation");
-    Console.WriteLine("✓ Hierarchical sublocation systems with conditional access");
-    Console.WriteLine("✓ State-dependent content and action generation");
-    Console.WriteLine("✓ JSON constraint generation for LLM integration");
-    Console.WriteLine("✓ GBNF grammar generation for structured LLM output");
-    Console.WriteLine("✓ Array-based action generation (7 actions in single call)");
-    Console.WriteLine("✓ Real-time LLM streaming with structured validation");
-    Console.WriteLine("✓ Complete DM pipeline from game state to action options");
+
+    if (string.IsNullOrEmpty(outcome.Outcome))
+    {
+        outcome.Outcome = success ? "Your action was successful!" : "Your attempt failed.";
+    }
+
+    return outcome;
+}
+
+/// <summary>
+/// Applies action outcome to game state
+/// </summary>
+static void ApplyActionOutcome(PlayerAction outcome, ref string currentSublocation, 
+    Dictionary<string, string> currentStates, DirectorPromptConstructor director, NarratorPromptConstructor narrator)
+{
+    // Apply state changes
+    foreach (var (category, newState) in outcome.StateChanges)
+    {
+        currentStates[category] = newState;
+    }
+
+    // Apply sublocation change
+    if (!string.IsNullOrEmpty(outcome.NewSublocation))
+    {
+        currentSublocation = outcome.NewSublocation;
+    }
+
+    // Update both prompt constructors with new state
+    director.UpdateGameState(currentSublocation, currentStates);
+    narrator.UpdateGameState(currentSublocation, currentStates);
 }
 
 /*
