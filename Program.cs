@@ -409,7 +409,7 @@ Respond with valid JSON only, no additional text or explanations.";
                         
                         if (actionElement.TryGetProperty("difficulty", out var diffElement))
                         {
-                            Console.WriteLine($"   Difficulty: {diffElement.GetString()}/5");
+                            Console.WriteLine($"   Difficulty: {diffElement.GetInt32()}/5");
                         }
                         
                         if (actionElement.TryGetProperty("failure_consequences", out var failElement) &&

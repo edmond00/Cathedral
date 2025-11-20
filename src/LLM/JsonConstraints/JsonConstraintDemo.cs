@@ -1,4 +1,5 @@
 using Cathedral.LLM.JsonConstraints;
+using Cathedral.Glyph.Microworld.LocationSystem;
 
 namespace Cathedral.LLM.JsonConstraints;
 
@@ -215,6 +216,7 @@ public static class JsonValidator
                 DigitField digitField => ValidateDigitField(element, digitField, currentPath, errors),
                 ConstantIntField constIntField => ValidateConstantIntField(element, constIntField, currentPath, errors),
                 ConstantFloatField constFloatField => ValidateConstantFloatField(element, constFloatField, currentPath, errors),
+                ConstantStringField constStringField => ValidateConstantStringField(element, constStringField, currentPath, errors),
                 StringField stringField => ValidateStringField(element, stringField, currentPath, errors),
                 BooleanField boolField => ValidateBooleanField(element, boolField, currentPath, errors),
                 ChoiceField<string> stringChoice => ValidateStringChoiceField(element, stringChoice, currentPath, errors),
@@ -301,6 +303,24 @@ public static class JsonValidator
         if (Math.Abs(value - field.Value) > 0.0001) // Use epsilon for float comparison
         {
             AddError(errors, path, $"Expected constant value {field.Value}, got {value}");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool ValidateConstantStringField(System.Text.Json.JsonElement element, ConstantStringField field, string path, List<string> errors)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.String)
+        {
+            AddError(errors, path, $"Expected string, got {element.ValueKind}");
+            return false;
+        }
+
+        var value = element.GetString();
+        if (value != field.Value)
+        {
+            AddError(errors, path, $"Expected constant value \"{field.Value}\", got \"{value}\"");
             return false;
         }
 

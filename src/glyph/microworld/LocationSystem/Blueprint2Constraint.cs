@@ -108,12 +108,20 @@ public static class Blueprint2Constraint
 
         if (availableStateChanges.Any())
         {
-            return new OptionalField("state_changes",
-                new VariantField("state_change", availableStateChanges.ToArray()));
+            // Add a "no change" option to the variants
+            availableStateChanges.Add(new CompositeField("no_state_change",
+                new ConstantStringField("category", "none"),
+                new ConstantStringField("new_state", "none")
+            ));
+            
+            return new VariantField("state_changes", availableStateChanges.ToArray());
         }
         else
         {
-            return new OptionalField("state_changes", new ConstantStringField("no_change", "none"));
+            // If no state changes are available, return a simple "none" field
+            return new CompositeField("state_changes",
+                new ConstantStringField("category", "none"),
+                new ConstantStringField("new_state", "none"));
         }
     }
 
@@ -159,9 +167,9 @@ public static class Blueprint2Constraint
         }
 
         return accessibleSublocations.Any()
-            ? new OptionalField("sublocation_change",
-                new ChoiceField<string>("sublocation_change", accessibleSublocations.ToArray()))
-            : new OptionalField("sublocation_change", new ConstantStringField("no_movement", "none"));
+            ? new ChoiceField<string>("sublocation_change", 
+                accessibleSublocations.Concat(new[] { "none" }).ToArray())
+            : new ConstantStringField("sublocation_change", "none");
     }
 
     /// <summary>
@@ -178,9 +186,9 @@ public static class Blueprint2Constraint
             .ToArray();
 
         return availableItems.Any()
-            ? new OptionalField("item_gained",
-                new ChoiceField<string>("item_gained", availableItems))
-            : new OptionalField("item_gained", new ConstantStringField("no_item", "none"));
+            ? new ChoiceField<string>("item_gained", 
+                availableItems.Concat(new[] { "none" }).ToArray())
+            : new ConstantStringField("item_gained", "none");
     }
 
     /// <summary>
@@ -197,9 +205,9 @@ public static class Blueprint2Constraint
             .ToArray();
 
         return availableCompanions.Any()
-            ? new OptionalField("companion_gained",
-                new ChoiceField<string>("companion_gained", availableCompanions))
-            : new OptionalField("companion_gained", new ConstantStringField("no_companion", "none"));
+            ? new ChoiceField<string>("companion_gained", 
+                availableCompanions.Concat(new[] { "none" }).ToArray())
+            : new ConstantStringField("companion_gained", "none");
     }
 
     /// <summary>
@@ -215,10 +223,9 @@ public static class Blueprint2Constraint
             .Distinct()
             .ToArray();
 
-        return availableQuests.Any()
-            ? new OptionalField("quest_gained",
-                new ChoiceField<string>("quest_gained", availableQuests))
-            : new OptionalField("quest_gained", new ConstantStringField("no_quest", "none"));
+        var questOptions = availableQuests.ToList();
+        questOptions.Add("none");
+        return new ChoiceField<string>("quest_gained", questOptions.ToArray());
     }
 
     /// <summary>
