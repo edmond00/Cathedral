@@ -24,8 +24,22 @@ public static class JsonConstraintGenerator
         builder.AppendLine("root ::= " + GenerateFieldRule(root, processedRules));
         builder.AppendLine();
         
-        // Add all the generated rules
-        foreach (var rule in processedRules.OrderBy(r => r))
+        // Add all the generated rules, but deduplicate by rule name
+        var rulesByName = new Dictionary<string, string>();
+        foreach (var rule in processedRules)
+        {
+            var parts = rule.Split(new[] { " ::= " }, StringSplitOptions.None);
+            if (parts.Length == 2)
+            {
+                var ruleName = parts[0];
+                if (!rulesByName.ContainsKey(ruleName))
+                {
+                    rulesByName[ruleName] = rule;
+                }
+            }
+        }
+        
+        foreach (var rule in rulesByName.Values.OrderBy(r => r))
         {
             builder.AppendLine(rule);
         }
@@ -181,7 +195,7 @@ public static class JsonConstraintGenerator
     private static string GenerateIntChoiceFieldRule(ChoiceField<int> field, HashSet<string> processedRules)
     {
         var ruleName = SanitizeRuleName(field.Name);
-        var choices = field.Options.Select(opt => opt.ToString());
+        var choices = field.Options.Select(opt => $"\"{opt}\"");
         var rule = $"{ruleName} ::= {string.Join(" | ", choices)}";
         processedRules.Add(rule);
         
@@ -316,6 +330,7 @@ public static class JsonConstraintGenerator
             DigitField digitField => $"<{digitField.DigitCount}-digit string>",
             ConstantIntField constIntField => constIntField.Value,
             ConstantFloatField constFloatField => constFloatField.Value,
+            ConstantStringField constStringField => constStringField.Value,
             StringField stringField => $"<string of {stringField.MinLength}–{stringField.MaxLength} characters>",
             BooleanField => "<boolean: true or false>",
             ChoiceField<string> stringChoice => $"<choice between {JsonSerializer.Serialize(stringChoice.Options)}>",
@@ -396,8 +411,8 @@ public static class JsonConstraintGenerator
     
     private static string SanitizeRuleName(string name)
     {
-        // Replace invalid characters with underscores
-        return new string(name.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray());
+        // Replace invalid characters with hyphens (GBNF standard)
+        return new string(name.Select(c => char.IsLetterOrDigit(c) ? c : '-').ToArray());
     }
     
     private static void AppendBasicJsonRules(StringBuilder builder, HashSet<string> processedRules)

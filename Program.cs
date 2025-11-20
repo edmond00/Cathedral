@@ -6,6 +6,119 @@ using Cathedral.Glyph.Microworld.LocationSystem;
 using Cathedral.Glyph.Microworld.LocationSystem.Generators;
 using System.Text;
 
+// GBNF Validation Function
+static async Task ValidateGbnfFile(string filePath)
+{
+    try
+    {
+        Console.WriteLine($"Validating GBNF file: {filePath}");
+        Console.WriteLine("=" + new string('=', 50));
+
+        // Read the GBNF content
+        if (!File.Exists(filePath))
+        {
+            Console.WriteLine($"❌ ERROR: File not found: {filePath}");
+            return;
+        }
+
+        var gbnfContent = await File.ReadAllTextAsync(filePath);
+        Console.WriteLine($"✅ File loaded successfully ({gbnfContent.Length} characters)");
+
+        // Try to use the GBNF with the LLM manager
+        using var llmManager = new LlamaServerManager();
+        
+        Console.WriteLine("🔄 Starting LLM server...");
+        bool serverStarted = false;
+        await llmManager.StartServerAsync(started => serverStarted = started);
+        
+        if (!serverStarted)
+        {
+            Console.WriteLine("❌ Failed to start LLM server");
+            return;
+        }
+
+        var slotId = await llmManager.CreateInstanceAsync("You are a helpful assistant.");
+        Console.WriteLine($"✅ Created LLM instance: {slotId}");
+
+        // Attempt to make a request with the GBNF grammar
+        try
+        {
+            Console.WriteLine("🔄 Testing GBNF syntax with LLM...");
+            Console.WriteLine("📝 LLM Response:");
+            Console.WriteLine(new string('-', 40));
+            
+            bool completed = false;
+            var fullResponse = new StringBuilder();
+            
+            await llmManager.ContinueRequestAsync(
+                slotId: slotId,
+                userMessage: "Generate a simple valid response:",
+                onTokenStreamed: (token, id) => {
+                    Console.Write(token);  // Print tokens as they arrive
+                    fullResponse.Append(token);
+                },
+                onCompleted: (id, response, cancelled) => {
+                    completed = true;
+                    Console.WriteLine();
+                    Console.WriteLine(new string('-', 40));
+                    if (cancelled)
+                    {
+                        Console.WriteLine("⚠️ Request was cancelled");
+                    }
+                },
+                gbnfGrammar: gbnfContent  // This is where GBNF syntax errors would be caught
+            );
+
+            // Wait for completion with timeout
+            var timeout = DateTime.Now.AddSeconds(30);
+            while (!completed && DateTime.Now < timeout)
+            {
+                await Task.Delay(100);
+            }
+
+            if (!completed)
+            {
+                Console.WriteLine("❌ Request timed out");
+                return;
+            }
+
+            Console.WriteLine("✅ GBNF syntax validation PASSED!");
+            Console.WriteLine($"✅ Response length: {fullResponse.Length} characters");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ GBNF syntax validation FAILED!");
+            Console.WriteLine($"❌ Error: {ex.Message}");
+            
+            // Try to extract more specific error information
+            if (ex.Message.Contains("grammar") || ex.Message.Contains("syntax") || ex.Message.Contains("parse"))
+            {
+                Console.WriteLine("🔍 This appears to be a GBNF syntax error.");
+                Console.WriteLine("💡 Common issues:");
+                Console.WriteLine("   - Missing or extra quotes");
+                Console.WriteLine("   - Invalid character class syntax");
+                Console.WriteLine("   - Undefined rule references");
+                Console.WriteLine("   - Malformed regex patterns");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ FATAL ERROR: {ex.Message}");
+    }
+}
+
+// Check for special GBNF validation mode
+Console.WriteLine($"Debug: args.Length = {args.Length}");
+if (args.Length > 0) Console.WriteLine($"Debug: args[0] = '{args[0]}'");
+if (args.Length > 1) Console.WriteLine($"Debug: args[1] = '{args[1]}'");
+
+if (args.Length >= 2 && args[0] == "validate-gbnf")
+{
+    await ValidateGbnfFile(args[1]);
+    return;
+}
+
 Console.WriteLine("=== Cathedral Application ===\n");
 Console.WriteLine("Choose an option:");
 Console.WriteLine("1. Run LLM integration tests (JSON constraints)");
