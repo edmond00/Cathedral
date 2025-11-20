@@ -5,6 +5,7 @@ using Cathedral.Engine;
 using Cathedral.Glyph.Microworld.LocationSystem;
 using Cathedral.Glyph.Microworld.LocationSystem.Generators;
 using System.Text;
+using System.Text.Json;
 
 // GBNF Validation Function
 static async Task ValidateGbnfFile(string filePath)
@@ -256,7 +257,7 @@ static async Task TestForestLocationSystem()
         ["wildlife_state"] = "calm"
     };
     
-    var constraints = Blueprint2Constraint.GenerateActionConstraints(blueprint, "forest_edge", currentStates);
+    var constraints = Blueprint2Constraint.GenerateActionConstraints(blueprint, "forest_edge", currentStates, 7);
     
     Console.WriteLine($"\nGenerated JSON constraint field for LLM action generation");
     Console.WriteLine($"Constraint type: {constraints.GetType().Name}");
@@ -308,7 +309,7 @@ Always respond with valid JSON in the exact format specified. Be creative but re
         var llmSlotId = await llmManager.CreateInstanceAsync(systemPrompt);
         Console.WriteLine($"✓ Created DM LLM instance with slot ID: {llmSlotId}\n");
 
-        // Create the DM prompt
+        // Create the DM prompt for generating 7 actions in one call
         var dmPrompt = $@"The player is currently in a {blueprint.LocationType} at the {blueprint.Sublocations["forest_edge"].Name}.
 
 Current situation:
@@ -318,23 +319,23 @@ Current situation:
 - Wildlife: {currentStates["wildlife_state"]}
 - Environment: {context}
 
-As the Dungeon Master, suggest appropriate actions the player could take in this situation. Consider the environment, current conditions, and available sublocations.
+As the Dungeon Master, generate 7 different action options the player could take in this situation. Provide variety - consider different approaches like exploration, interaction, combat preparation, skill use, environmental manipulation, etc.
 
-Generate a JSON response with suggested actions that exactly matches this template format:
+Generate a JSON response with 7 action choices that exactly matches this template format:
 {template}
 
 Respond with valid JSON only, no additional text or explanations.";
 
-        Console.WriteLine("SENDING PROMPT TO LLM:");
-        Console.WriteLine(new string('-', 40));
+        Console.WriteLine("SENDING PROMPT TO LLM FOR 7 ACTION GENERATION:");
+        Console.WriteLine(new string('-', 50));
         Console.WriteLine(dmPrompt);
-        Console.WriteLine(new string('-', 40) + "\n");
+        Console.WriteLine(new string('-', 50) + "\n");
 
         var responseBuilder = new StringBuilder();
         var completed = false;
         var startTime = DateTime.UtcNow;
 
-        Console.WriteLine("Waiting for LLM response...\n");
+        Console.WriteLine("Waiting for LLM response (generating 7 actions)...\n");
 
         // Make the LLM request with GBNF grammar constraints
         await llmManager.ContinueRequestAsync(
@@ -349,7 +350,7 @@ Respond with valid JSON only, no additional text or explanations.";
             {
                 completed = true;
             },
-            gbnfGrammar: gbnf // Apply the GBNF grammar constraints
+            gbnfGrammar: gbnf
         );
 
         // Wait for completion
@@ -373,9 +374,60 @@ Respond with valid JSON only, no additional text or explanations.";
         if (!isValid)
         {
             Console.WriteLine("Validation Errors:");
-            foreach (var error in validationErrors)
+            foreach (var error in validationErrors.Take(5))
             {
                 Console.WriteLine($"  - {error}");
+            }
+        }
+
+        // Parse and display the 7 actions
+        if (isValid)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(llmResponse);
+                if (doc.RootElement.TryGetProperty("actions", out var actionsArray))
+                {
+                    Console.WriteLine($"\n{new string('=', 60)}");
+                    Console.WriteLine("7 GENERATED ACTION OPTIONS:");
+                    Console.WriteLine($"{new string('=', 60)}");
+                    
+                    var actionIndex = 1;
+                    foreach (var actionElement in actionsArray.EnumerateArray())
+                    {
+                        Console.WriteLine($"\n{actionIndex}. ");
+                        
+                        if (actionElement.TryGetProperty("action_text", out var actionTextElement))
+                        {
+                            Console.WriteLine($"   Action: {actionTextElement.GetString()}");
+                        }
+                        
+                        if (actionElement.TryGetProperty("related_skill", out var skillElement))
+                        {
+                            Console.WriteLine($"   Skill: {skillElement.GetString()}");
+                        }
+                        
+                        if (actionElement.TryGetProperty("difficulty", out var diffElement))
+                        {
+                            Console.WriteLine($"   Difficulty: {diffElement.GetString()}/5");
+                        }
+                        
+                        if (actionElement.TryGetProperty("failure_consequences", out var failElement) &&
+                            failElement.TryGetProperty("type", out var failTypeElement))
+                        {
+                            Console.WriteLine($"   Risk: {failTypeElement.GetString()}");
+                        }
+                        
+                        actionIndex++;
+                    }
+                    
+                    Console.WriteLine($"\n{new string('-', 40)}");
+                    Console.WriteLine($"Successfully generated all 7 actions in {responseTime.TotalMilliseconds:F0}ms");
+                }
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON parsing error: {ex.Message}");
             }
         }
 
@@ -395,8 +447,9 @@ Respond with valid JSON only, no additional text or explanations.";
     Console.WriteLine("✓ State-dependent content and action generation");
     Console.WriteLine("✓ JSON constraint generation for LLM integration");
     Console.WriteLine("✓ GBNF grammar generation for structured LLM output");
-    Console.WriteLine("✓ Real-time LLM action generation with validation");
-    Console.WriteLine("✓ Complete DM pipeline from game state to suggested actions");
+    Console.WriteLine("✓ Array-based action generation (7 actions in single call)");
+    Console.WriteLine("✓ Real-time LLM streaming with structured validation");
+    Console.WriteLine("✓ Complete DM pipeline from game state to action options");
 }
 
 /*

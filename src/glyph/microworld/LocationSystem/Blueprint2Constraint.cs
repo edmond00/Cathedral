@@ -17,11 +17,13 @@ public static class Blueprint2Constraint
     /// <param name="blueprint">The location blueprint defining structure and rules</param>
     /// <param name="currentSublocation">Player's current sublocation ID</param>
     /// <param name="currentStates">Current active states mapped by category ID</param>
-    /// <returns>Composite JSON field defining valid action structure</returns>
+    /// <param name="numberOfActions">Number of action choices to generate (default: 7)</param>
+    /// <returns>Array field defining valid action choices structure</returns>
     public static JsonField GenerateActionConstraints(
         LocationBlueprint blueprint,
         string currentSublocation,
-        Dictionary<string, string> currentStates)
+        Dictionary<string, string> currentStates,
+        int numberOfActions = 7)
     {
         if (blueprint == null)
             throw new ArgumentNullException(nameof(blueprint));
@@ -31,13 +33,21 @@ public static class Blueprint2Constraint
             throw new ArgumentNullException(nameof(currentStates));
         if (!blueprint.Sublocations.ContainsKey(currentSublocation))
             throw new ArgumentException($"Sublocation '{currentSublocation}' not found in blueprint", nameof(currentSublocation));
+        if (numberOfActions < 1 || numberOfActions > 20)
+            throw new ArgumentException("Number of actions must be between 1 and 20", nameof(numberOfActions));
 
-        return new CompositeField("ActionChoice",
-            new StringField("action_text", 10, 100),        // LLM-generated action description
+        // Define the structure of a single action
+        var singleActionField = new CompositeField("Action",
+            new TemplateStringField("action_text", "try to <generated>", 10, 280),  // LLM-generated action with "try to" prefix
             GenerateSuccessConstraints(blueprint, currentSublocation, currentStates),
             GenerateFailureConstraints(),                    // LLM-generated failure consequences
             new ChoiceField<string>("related_skill", GetAvailableSkills()),
             new ChoiceField<int>("difficulty", 1, 2, 3, 4, 5)
+        );
+
+        // Wrap in an array field that generates exactly the specified number of actions
+        return new CompositeField("ActionChoices",
+            new ArrayField("actions", singleActionField, numberOfActions, numberOfActions)
         );
     }
 
