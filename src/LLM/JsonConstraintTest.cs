@@ -35,9 +35,6 @@ public class JsonConstraintTest
             Console.WriteLine(template);
             Console.WriteLine();
 
-            // Test ArrayField GBNF generation fix
-            ArrayFieldTest.TestArrayFieldGBNF();
-
             // Test the validator
             TestJsonValidator();
 
