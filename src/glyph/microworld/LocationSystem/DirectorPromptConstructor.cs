@@ -13,6 +13,7 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         private JsonField? _currentConstraints;
         private string? _currentTemplate;
         private string? _currentGbnf;
+        private bool _isFirstRequest = true;
 
         public DirectorPromptConstructor(
             LocationBlueprint blueprint, 
@@ -104,6 +105,28 @@ Focus on mechanical variety and strategic options that fit the current situation
         /// </summary>
         public override string ConstructPrompt(PlayerAction? previousAction = null, List<string>? availableActions = null)
         {
+            // Mark that we've moved past the first request if there's a previous action
+            if (previousAction != null && _isFirstRequest)
+            {
+                _isFirstRequest = false;
+            }
+
+            // Use different prompt generation based on whether this is the first request
+            if (_isFirstRequest)
+            {
+                return ConstructInitialPrompt();
+            }
+            else
+            {
+                return ConstructFollowUpPrompt(previousAction);
+            }
+        }
+
+        /// <summary>
+        /// Constructs the initial exploration prompt for the first action choices
+        /// </summary>
+        private string ConstructInitialPrompt()
+        {
             var currentSublocationData = Blueprint.Sublocations[CurrentSublocation];
             var contextBuilder = new StringBuilder();
 
@@ -125,16 +148,80 @@ Focus on mechanical variety and strategic options that fit the current situation
             }
             contextBuilder.AppendLine();
 
-            // Previous action context (if any)
+            // Connected locations for movement options
+            if (Blueprint.SublocationConnections.TryGetValue(CurrentSublocation, out var connections))
+            {
+                contextBuilder.AppendLine("ACCESSIBLE AREAS:");
+                foreach (var connectionId in connections.Take(5)) // Limit to avoid prompt bloat
+                {
+                    if (Blueprint.Sublocations.TryGetValue(connectionId, out var connectedLocation))
+                    {
+                        contextBuilder.AppendLine($"- {connectedLocation.Name}: {connectedLocation.Description}");
+                    }
+                }
+                contextBuilder.AppendLine();
+            }
+
+            // Generation instructions for initial exploration
+            contextBuilder.AppendLine($"TASK: Generate {_numberOfActions} diverse action options for the current situation.");
+            contextBuilder.AppendLine("Consider different approaches:");
+            contextBuilder.AppendLine("- Exploration and movement");
+            contextBuilder.AppendLine("- Environmental interaction");
+            contextBuilder.AppendLine("- Skill-based actions");
+            contextBuilder.AppendLine("- Social interaction (if applicable)");
+            contextBuilder.AppendLine("- Preparation and planning");
+            contextBuilder.AppendLine("- Creative problem-solving");
+            contextBuilder.AppendLine("- Risk vs. reward decisions");
+            contextBuilder.AppendLine();
+
+            // Template instruction
+            contextBuilder.AppendLine("Generate a JSON response that exactly matches this template format:");
+            contextBuilder.AppendLine(_currentTemplate);
+            contextBuilder.AppendLine();
+            contextBuilder.AppendLine("Respond with valid JSON only, no additional text or explanations.");
+
+            return contextBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Constructs a follow-up prompt that emphasizes relevance to the previous action
+        /// </summary>
+        private string ConstructFollowUpPrompt(PlayerAction? previousAction)
+        {
+            var currentSublocationData = Blueprint.Sublocations[CurrentSublocation];
+            var contextBuilder = new StringBuilder();
+
+            // Current location details
+            contextBuilder.AppendLine($"CURRENT GAME STATE:");
+            contextBuilder.AppendLine($"Location Type: {Blueprint.LocationType}");
+            contextBuilder.AppendLine($"Current Sublocation: {currentSublocationData.Name}");
+            contextBuilder.AppendLine($"Description: {currentSublocationData.Description}");
+            contextBuilder.AppendLine();
+
+            // Environmental states
+            contextBuilder.AppendLine("ENVIRONMENTAL CONDITIONS:");
+            foreach (var (stateCategory, currentValue) in CurrentStates)
+            {
+                if (Blueprint.StateCategories.TryGetValue(stateCategory, out var category))
+                {
+                    contextBuilder.AppendLine($"- {category.Name}: {currentValue}");
+                }
+            }
+            contextBuilder.AppendLine();
+
+            // EMPHASIZED: Previous action context
             if (previousAction != null)
             {
-                contextBuilder.AppendLine("PREVIOUS ACTION RESULT:");
-                contextBuilder.AppendLine($"- Action Taken: {previousAction.ActionText}");
-                contextBuilder.AppendLine($"- Outcome: {(previousAction.WasSuccessful ? "Success" : "Failure")} - {previousAction.Outcome}");
+                contextBuilder.AppendLine("═══════════════════════════════════════");
+                contextBuilder.AppendLine("PREVIOUS ACTION AND ITS CONSEQUENCES:");
+                contextBuilder.AppendLine("═══════════════════════════════════════");
+                contextBuilder.AppendLine($"Action Taken: {previousAction.ActionText}");
+                contextBuilder.AppendLine($"Outcome: {(previousAction.WasSuccessful ? "SUCCESS" : "FAILURE")} - {previousAction.Outcome}");
                 
                 if (previousAction.StateChanges.Any())
                 {
-                    contextBuilder.AppendLine("- State Changes:");
+                    contextBuilder.AppendLine();
+                    contextBuilder.AppendLine("State Changes Caused:");
                     foreach (var (category, newState) in previousAction.StateChanges)
                     {
                         contextBuilder.AppendLine($"  • {category} → {newState}");
@@ -143,8 +230,10 @@ Focus on mechanical variety and strategic options that fit the current situation
 
                 if (!string.IsNullOrEmpty(previousAction.NewSublocation))
                 {
-                    contextBuilder.AppendLine($"- Location: Moved to {previousAction.NewSublocation}");
+                    contextBuilder.AppendLine();
+                    contextBuilder.AppendLine($"Location Changed: Now at {previousAction.NewSublocation}");
                 }
+                contextBuilder.AppendLine("═══════════════════════════════════════");
                 contextBuilder.AppendLine();
             }
 
@@ -162,16 +251,25 @@ Focus on mechanical variety and strategic options that fit the current situation
                 contextBuilder.AppendLine();
             }
 
-            // Generation instructions
-            contextBuilder.AppendLine($"TASK: Generate {_numberOfActions} diverse action options for the current situation.");
-            contextBuilder.AppendLine("Consider different approaches:");
-            contextBuilder.AppendLine("- Exploration and movement");
-            contextBuilder.AppendLine("- Environmental interaction");
-            contextBuilder.AppendLine("- Skill-based actions");
-            contextBuilder.AppendLine("- Social interaction (if applicable)");
-            contextBuilder.AppendLine("- Preparation and planning");
-            contextBuilder.AppendLine("- Creative problem-solving");
-            contextBuilder.AppendLine("- Risk vs. reward decisions");
+            // Generation instructions focused on follow-up actions
+            contextBuilder.AppendLine($"TASK: Generate {_numberOfActions} action options that DIRECTLY BUILD UPON the previous action.");
+            contextBuilder.AppendLine();
+            contextBuilder.AppendLine("CRITICAL REQUIREMENTS:");
+            contextBuilder.AppendLine("- Actions should be logical next steps following what the player just did");
+            contextBuilder.AppendLine("- Consider the immediate consequences and opportunities created by the previous action");
+            contextBuilder.AppendLine("- If the previous action succeeded, suggest ways to capitalize on or extend that success");
+            contextBuilder.AppendLine("- If the previous action failed, suggest alternative approaches or ways to recover");
+            contextBuilder.AppendLine("- Include options that react to any state changes that occurred");
+            contextBuilder.AppendLine("- Maintain narrative continuity - the player's story should flow naturally");
+            contextBuilder.AppendLine();
+            contextBuilder.AppendLine("Action types to consider:");
+            contextBuilder.AppendLine("- Direct follow-up: Continue or complete what was started");
+            contextBuilder.AppendLine("- Reactive response: Respond to what just happened");
+            contextBuilder.AppendLine("- Alternative approach: Try a different method related to the same goal");
+            contextBuilder.AppendLine("- Exploitation: Take advantage of new opportunities created");
+            contextBuilder.AppendLine("- Investigation: Examine the results or consequences more closely");
+            contextBuilder.AppendLine("- Mitigation: Deal with negative effects or complications");
+            contextBuilder.AppendLine("- Pivot: Change strategy based on what was learned");
             contextBuilder.AppendLine();
 
             // Template instruction

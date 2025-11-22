@@ -243,7 +243,7 @@ static async Task TestForestLocationSystem()
 
     await llmManager.StartServerAsync(
         isReady => serverStarted = isReady,
-        modelAlias: "tiny");
+        modelAlias: "medium");
 
     if (!serverStarted)
     {
