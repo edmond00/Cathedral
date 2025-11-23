@@ -89,9 +89,17 @@ public class LLMActionExecutor : IDisposable
             
             if (outcome == null)
             {
-                Console.WriteLine("LLMActionExecutor: Director LLM failed, using fallback");
+                Console.Error.WriteLine("LLMActionExecutor: Director LLM failed to generate outcome");
                 LLMLogger.LogFallback("Director LLM returned null outcome");
-                return _fallbackExecutor.ExecuteAction(actionText, currentState, blueprint);
+                
+                // Return error result instead of silent fallback
+                return ActionResult.CreateFailure(
+                    "ERROR: Failed to process your action.\n\n" +
+                    "The LLM did not return a valid outcome. This could be due to:\n" +
+                    "- LLM server timeout\n" +
+                    "- Invalid response format\n" +
+                    "- Slot conflict (already processing)\n\n" +
+                    "Check logs/llm_communication_*.log for details.");
             }
 
             // Convert LLM outcome to ActionResult
@@ -100,9 +108,13 @@ public class LLMActionExecutor : IDisposable
         catch (Exception ex)
         {
             Console.Error.WriteLine($"LLMActionExecutor: Error in LLM execution: {ex.Message}");
-            Console.WriteLine("LLMActionExecutor: Falling back to SimpleActionExecutor");
             LLMLogger.LogFallback($"Exception: {ex.Message}");
-            return _fallbackExecutor.ExecuteAction(actionText, currentState, blueprint);
+            
+            // Return error result instead of silent fallback
+            return ActionResult.CreateFailure(
+                $"ERROR: Exception during action processing.\n\n" +
+                $"Error: {ex.Message}\n\n" +
+                $"Check logs/llm_communication_*.log for details.");
         }
     }
 
@@ -236,13 +248,6 @@ public class LLMActionExecutor : IDisposable
         LocationBlueprint blueprint,
         PlayerAction? previousAction)
     {
-        // Build prompt for outcome generation
-        var director = new DirectorPromptConstructor(
-            blueprint,
-            currentState.CurrentSublocation,
-            currentState.CurrentStates,
-            numberOfActions: 1); // We only need outcome, not new actions
-
         var systemPrompt = @"You are the DIRECTOR of a fantasy RPG game. Generate the outcome of a player action as JSON.
 
 Your response MUST be valid JSON with this structure:
@@ -250,7 +255,7 @@ Your response MUST be valid JSON with this structure:
     ""success"": true or false,
     ""narrative"": ""description of what happened"",
     ""state_changes"": {""category"": ""new_state""},
-    ""new_sublocation"": ""optional new location"",
+    ""new_sublocation"": ""optional new location or null"",
     ""items_gained"": [""optional items""],
     ""ends_interaction"": true or false
 }
@@ -272,13 +277,17 @@ ACTION TAKEN:
 
 Generate the JSON outcome for this action.";
 
+        // Generate GBNF grammar using JsonConstraintGenerator infrastructure
+        var outcomeConstraints = GenerateOutcomeConstraints(blueprint, currentState.CurrentSublocation, currentState.CurrentStates);
+        var gbnfGrammar = JsonConstraintGenerator.GenerateGBNF(outcomeConstraints);
+
         Console.WriteLine($"LLMActionExecutor: Requesting outcome from Director LLM for action: {actionText}");
 
         var response = await RequestFromLLMAsync(
             _directorSlotId,
             systemPrompt,
             userPrompt,
-            null, // No GBNF for now - would need to define outcome schema
+            gbnfGrammar,
             timeoutSeconds: 25);
 
         if (string.IsNullOrWhiteSpace(response))
@@ -288,6 +297,73 @@ Generate the JSON outcome for this action.";
 
         // Parse outcome
         return ParseOutcomeFromJson(response);
+    }
+
+    /// <summary>
+    /// Generates JSON constraints for action outcome format using JsonConstraintGenerator infrastructure.
+    /// </summary>
+    private JsonField GenerateOutcomeConstraints(
+        LocationBlueprint blueprint,
+        string currentSublocation,
+        Dictionary<string, string> currentStates)
+    {
+        // Get accessible sublocations for movement
+        var accessibleSublocations = new List<string> { "none" };
+        if (blueprint.SublocationConnections.ContainsKey(currentSublocation))
+        {
+            accessibleSublocations.AddRange(blueprint.SublocationConnections[currentSublocation]);
+        }
+
+        // Get available items from content
+        var availableItems = new List<string> { "none" };
+        if (blueprint.ContentMap.ContainsKey(currentSublocation))
+        {
+            var content = blueprint.ContentMap[currentSublocation];
+            if (content.ContainsKey("default"))
+            {
+                availableItems.AddRange(content["default"].AvailableItems);
+            }
+            // Add items from state-specific content
+            foreach (var state in currentStates.Values)
+            {
+                if (content.ContainsKey(state))
+                {
+                    availableItems.AddRange(content[state].AvailableItems);
+                }
+            }
+        }
+
+        // State changes can be empty or specify a category/state change
+        var stateChangeOptions = new List<CompositeField>
+        {
+            new CompositeField("no_change", 
+                new ConstantStringField("category", "none"),
+                new ConstantStringField("new_state", "none"))
+        };
+
+        // Add possible state changes for each category
+        foreach (var (categoryId, category) in blueprint.StateCategories)
+        {
+            var possibleStates = category.PossibleStates.Keys.ToArray();
+            if (possibleStates.Length > 0)
+            {
+                stateChangeOptions.Add(new CompositeField($"change_{categoryId}",
+                    new ConstantStringField("category", categoryId),
+                    new ChoiceField<string>("new_state", possibleStates)));
+            }
+        }
+
+        // Build the outcome structure
+        // Note: new_sublocation can be null or a string value
+        // Use ChoiceField to allow "none" as the value (we'll handle null parsing)
+        return new CompositeField("ActionOutcome",
+            new BooleanField("success"),
+            new StringField("narrative", 20, 300),
+            new VariantField("state_changes", stateChangeOptions.ToArray()),
+            new ChoiceField<string>("new_sublocation", accessibleSublocations.Concat(new[] { "none" }).ToArray()),
+            new ArrayField("items_gained", new ChoiceField<string>("item", availableItems.Distinct().ToArray()), 0, 3),
+            new BooleanField("ends_interaction")
+        );
     }
 
     /// <summary>
@@ -479,10 +555,11 @@ Generate the JSON outcome for this action.";
                 }
             }
 
-            // Parse new sublocation
+            // Parse new sublocation (treat "none" as null)
             if (root.TryGetProperty("new_sublocation", out var sublocationElement))
             {
-                outcome.NewSublocation = sublocationElement.GetString();
+                var sublocationValue = sublocationElement.GetString();
+                outcome.NewSublocation = sublocationValue == "none" ? null : sublocationValue;
             }
 
             // Parse items gained
