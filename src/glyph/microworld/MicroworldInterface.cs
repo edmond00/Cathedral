@@ -51,6 +51,22 @@ namespace Cathedral.Glyph.Microworld
         // Debug counter for timing
         private int _debugFrameCount = 0;
 
+        // Events for location travel mode
+        public event Action<AvatarArrivalInfo>? AvatarArrivedAtLocation;
+
+        /// <summary>
+        /// Detailed information about avatar arrival at a vertex
+        /// </summary>
+        public record AvatarArrivalInfo(
+            int VertexIndex,
+            LocationType? Location,
+            BiomeType Biome,
+            float NoiseValue,
+            char Glyph,
+            Vector3 Position,
+            List<int> NeighboringVertices
+        );
+
         public MicroworldInterface(GlyphSphereCore glyphSphereCore) : base(glyphSphereCore)
         {
             // Subscribe to our own events to handle avatar interactions
@@ -539,10 +555,12 @@ namespace Cathedral.Glyph.Microworld
                 return;
             }
             
+            // Allow clicking on avatar vertex - let GameController handle it
+            // (GameController can enter location interaction mode)
             if (vertexIndex == _avatarVertex)
             {
-                Console.WriteLine("Cannot handle click: clicked on avatar vertex");
-                return;
+                Console.WriteLine("HandleVertexClicked: Clicked on avatar vertex (allowing passthrough to GameController)");
+                return; // Don't block - let event propagate to GameController
             }
 
             // Don't allow new movement while avatar is already moving
@@ -639,6 +657,49 @@ namespace Cathedral.Glyph.Microworld
             _moveTimer = 0.0f;
             ClearHoveredPath(); // Clear any hover visualization
             _hoveredVertex = -1; // Clear hover state
+            
+            // Highlight the travel path
+            DrawTravelPath();
+        }
+        
+        private void DrawTravelPath()
+        {
+            if (_currentPath == null || _currentPath.Length <= 1) return;
+            
+            // Highlight path with yellow/gold color
+            var pathColor = new System.Numerics.Vector3(255, 215, 0); // Gold
+            var destColor = new System.Numerics.Vector3(255, 255, 128); // Bright yellow for destination
+            
+            // Draw waypoints (skip avatar position)
+            for (int i = 1; i < _currentPath.Length - 1; i++)
+            {
+                int nodeId = _currentPath.GetNode(i);
+                SetVertexGlyph(nodeId, PATH_WAYPOINT_CHAR, pathColor);
+            }
+            
+            // Highlight destination
+            if (_currentPath.Length > 1)
+            {
+                int destNode = _currentPath.GetNode(_currentPath.Length - 1);
+                SetVertexGlyph(destNode, PATH_DESTINATION_CHAR, destColor);
+            }
+        }
+        
+        private void ClearTravelPath()
+        {
+            if (_currentPath == null || _currentPath.Length <= 1) return;
+            
+            // Restore original glyphs for the path
+            for (int i = 1; i < _currentPath.Length; i++) // Skip avatar position
+            {
+                int nodeId = _currentPath.GetNode(i);
+                if (nodeId != _avatarVertex && vertexData.TryGetValue(nodeId, out var data))
+                {
+                    float size = data.Location?.Size ?? data.Biome.Size;
+                    var vec4Color = new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, 1.0f);
+                    SetVertexGlyph(nodeId, data.GlyphChar, vec4Color, size);
+                }
+            }
         }
 
         private void UpdateMovement(float deltaTime)
@@ -662,13 +723,43 @@ namespace Cathedral.Glyph.Microworld
                 if (_pathIndex < _currentPath.Length)
                 {
                     int nextVertex = _currentPath.GetNode(_pathIndex);
+                    
+                    // Restore the previous vertex to its original appearance (no longer on path ahead)
+                    if (_pathIndex > 0 && vertexData.TryGetValue(_currentPath.GetNode(_pathIndex - 1), out var prevData))
+                    {
+                        if (_currentPath.GetNode(_pathIndex - 1) != _avatarVertex)
+                        {
+                            float size = prevData.Location?.Size ?? prevData.Biome.Size;
+                            var vec4Color = new Vector4(prevData.Color.X / 255.0f, prevData.Color.Y / 255.0f, prevData.Color.Z / 255.0f, 1.0f);
+                            SetVertexGlyph(_currentPath.GetNode(_pathIndex - 1), prevData.GlyphChar, vec4Color, size);
+                        }
+                    }
+                    
                     PlaceAvatar(nextVertex, centerCamera: true); // Focus camera on avatar with each step
                     
                     if (_pathIndex >= _currentPath.Length - 1)
                     {
-                        // Movement complete
+                        // Movement complete - clear travel path visualization
+                        ClearTravelPath();
                         _currentPath = null;
                         Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Avatar arrived at vertex {_avatarVertex}");
+                        
+                        // Fire arrival event with detailed location info
+                        if (vertexData.TryGetValue(_avatarVertex, out var data))
+                        {
+                            var neighbors = GetNeighboringVertices(_avatarVertex);
+                            var position = GetVertexPosition(_avatarVertex);
+                            var arrivalInfo = new AvatarArrivalInfo(
+                                _avatarVertex,
+                                data.Location,
+                                data.Biome,
+                                data.NoiseValue,
+                                data.GlyphChar,
+                                position,
+                                neighbors
+                            );
+                            AvatarArrivedAtLocation?.Invoke(arrivalInfo);
+                        }
                     }
                 }
             }
@@ -685,6 +776,54 @@ namespace Cathedral.Glyph.Microworld
         /// Checks if the avatar is currently moving
         /// </summary>
         public bool IsAvatarMoving() => _currentPath != null;
+
+        /// <summary>
+        /// Gets location and biome info for the current avatar position
+        /// </summary>
+        public (LocationType? location, BiomeType biome) GetCurrentLocationInfo()
+        {
+            if (_avatarVertex >= 0 && vertexData.TryGetValue(_avatarVertex, out var data))
+            {
+                return (data.Location, data.Biome);
+            }
+            return (null, Biomes["plain"]); // Default fallback
+        }
+
+        /// <summary>
+        /// Checks if the avatar is currently at a location (not just any vertex)
+        /// </summary>
+        public bool IsAtLocation()
+        {
+            return _avatarVertex >= 0 && 
+                   vertexData.TryGetValue(_avatarVertex, out var data) && 
+                   data.Location.HasValue;
+        }
+
+        /// <summary>
+        /// Gets the neighboring vertices for a given vertex
+        /// </summary>
+        public List<int> GetNeighboringVertices(int vertexIndex)
+        {
+            var neighbors = new List<int>();
+            var graph = core.GetGraph();
+            if (graph != null && graph.ContainsNode(vertexIndex))
+            {
+                neighbors.AddRange(graph.GetConnectedNodes(vertexIndex));
+            }
+            return neighbors;
+        }
+
+        /// <summary>
+        /// Gets detailed information about a specific vertex
+        /// </summary>
+        public (BiomeType biome, LocationType? location, float noiseValue, char glyph)? GetVertexInfo(int vertexIndex)
+        {
+            if (vertexData.TryGetValue(vertexIndex, out var data))
+            {
+                return (data.Biome, data.Location, data.NoiseValue, data.GlyphChar);
+            }
+            return null;
+        }
 
         // Data structure to store world information for each vertex
         private struct VertexWorldData

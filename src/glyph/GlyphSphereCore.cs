@@ -255,30 +255,25 @@ namespace Cathedral.Glyph
             // Initialize pathfinding
             InitializePathfinding();
             
-            // Initialize terminal HUD (80x25 is a classic terminal size)
+            // Initialize terminal HUD (100x30 for Location Travel Mode UI)
             try 
             {
-                _terminal = new Cathedral.Terminal.TerminalHUD(80, 25, 16, 14);
-                _terminal.CellClicked += OnTerminalCellClicked;
-                _terminal.CellHovered += OnTerminalCellHovered;
+                _terminal = new Cathedral.Terminal.TerminalHUD(100, 30, 16, 14);
+                // Event handlers removed - terminal events will be handled by game modes
                 
                 // Set border height function for proper mouse position correction
                 _terminal.SetBorderHeightFunction(() => GetWindowBorderHeight());
                 
-                // Setup initial terminal content
-                SetupTerminalDemo();
+                // Terminal starts hidden - will be shown by game modes as needed
+                _terminal.Visible = false;
                 
-                Console.WriteLine("Terminal: HUD integrated with GlyphSphereCore");
+                Console.WriteLine("Terminal: HUD integrated with GlyphSphereCore (100x30 for Location Travel Mode)");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Terminal: Failed to initialize HUD - {ex.Message}");
                 _terminal = null;
             }
-            
-            // Wire up vertex events to update terminal
-            VertexHovered += OnVertexHovered;
-            VertexClicked += OnVertexClicked;
             
             // Log window border information
             LogWindowBorderInfo();
@@ -355,6 +350,9 @@ namespace Cathedral.Glyph
 
         #region Terminal Management
         
+        // DEPRECATED: Old terminal demo setup - replaced by LocationTravelMode system
+        // Kept for reference but no longer called
+        /*
         private void SetupTerminalDemo()
         {
             if (_terminal == null) return;
@@ -406,7 +404,10 @@ namespace Cathedral.Glyph
             _terminal.CenteredText(23, "Terminal HUD is now active - hover and click to test interaction", 
                                   Cathedral.Terminal.Utils.Colors.Gray, Cathedral.Terminal.Utils.Colors.Black);
         }
+        */
         
+        // DEPRECATED: Old terminal event handlers - replaced by game-specific handlers
+        /*
         private void OnTerminalCellClicked(int x, int y)
         {
             Console.WriteLine($"Terminal: Cell clicked at ({x}, {y})");
@@ -463,6 +464,7 @@ namespace Cathedral.Glyph
                 }
             }
         }
+        */
         
         #endregion
 

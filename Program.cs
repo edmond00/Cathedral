@@ -2,6 +2,7 @@
 using Cathedral.LLM.JsonConstraints;
 using Cathedral.Glyph;
 using Cathedral.Engine;
+using Cathedral.Game;
 using Cathedral.Glyph.Microworld.LocationSystem;
 using Cathedral.Glyph.Microworld.LocationSystem.Generators;
 using System.Text;
@@ -126,9 +127,10 @@ Console.WriteLine("1. Run LLM integration tests (JSON constraints)");
 Console.WriteLine("2. Launch GlyphSphere with Terminal HUD");
 Console.WriteLine("3. Test Terminal Module (standalone)");
 Console.WriteLine("4. Test Forest Location System Demo");
-Console.WriteLine("5. Exit");
+Console.WriteLine("5. Launch Location Travel Mode (Phase 1)");
+Console.WriteLine("6. Exit");
 
-Console.Write("\nEnter your choice (1-5): ");
+Console.Write("\nEnter your choice (1-6): ");
 var choice = Console.ReadLine();
 
 switch (choice)
@@ -201,6 +203,15 @@ switch (choice)
         break;
 
     case "5":
+        Console.WriteLine("\n=== Location Travel Mode (Phase 1) ===");
+        Console.WriteLine("This is the new integrated mode combining GlyphSphere + Terminal + Location System");
+        Console.WriteLine("Phase 1: Core framework with mode transitions");
+        Console.WriteLine("Press Enter to continue or Ctrl+C to cancel.");
+        Console.ReadLine();
+        Cathedral.Game.LocationTravelModeLauncher.Launch();
+        break;
+
+    case "6":
         Console.WriteLine("Goodbye!");
         Environment.Exit(0);
         break;
