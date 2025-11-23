@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cathedral.Glyph;
 using Cathedral.Glyph.Microworld;
 using Cathedral.Glyph.Microworld.LocationSystem;
@@ -31,9 +32,19 @@ public class LocationTravelGameController : IDisposable
     // Feature generators for different location types
     private readonly Dictionary<string, LocationFeatureGenerator> _generators = new();
     
+    // Action executors
+    private readonly SimpleActionExecutor _simpleActionExecutor;
+    private LLMActionExecutor? _llmActionExecutor; // Optional - requires LLamaServerManager
+    
+    // Current blueprint for location interaction
+    private LocationBlueprint? _currentBlueprint;
+    
     // UI state for interaction
     private List<string> _currentActions = new();
     private string _currentNarrative = "";
+    private bool _waitingForClickToExit = false;
+    private bool _isLoadingLLMContent = false;
+    private string _loadingMessage = "Thinking...";
     
     // Events
     public event Action<GameMode, GameMode>? ModeChanged;
@@ -52,6 +63,10 @@ public class LocationTravelGameController : IDisposable
         _core = core ?? throw new ArgumentNullException(nameof(core));
         _interface = microworldInterface ?? throw new ArgumentNullException(nameof(microworldInterface));
         
+        // Initialize action executors
+        _simpleActionExecutor = new SimpleActionExecutor();
+        _llmActionExecutor = null; // Will be set via SetLLMActionExecutor()
+        
         // Initialize with WorldView mode
         _currentMode = GameMode.WorldView;
         
@@ -65,6 +80,29 @@ public class LocationTravelGameController : IDisposable
         InitializeTerminalUI();
         
         Console.WriteLine("LocationTravelGameController: Initialized in WorldView mode");
+    }
+    
+    /// <summary>
+    /// Updates the game controller (called every frame).
+    /// Used to animate loading indicators.
+    /// </summary>
+    public void Update()
+    {
+        // Update loading animation if currently loading
+        if (_isLoadingLLMContent && _terminalUI != null)
+        {
+            _terminalUI.ShowLoadingIndicator(_loadingMessage);
+        }
+    }
+
+    /// <summary>
+    /// Sets the LLM action executor for Phase 5.
+    /// If not set, falls back to SimpleActionExecutor.
+    /// </summary>
+    public void SetLLMActionExecutor(LLMActionExecutor executor)
+    {
+        _llmActionExecutor = executor;
+        Console.WriteLine("LocationTravelGameController: LLM action executor enabled");
     }
     
     /// <summary>
@@ -103,6 +141,15 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode != GameMode.LocationInteraction || _terminalUI == null)
             return;
         
+        // If waiting for click to exit, any click returns to world view
+        if (_waitingForClickToExit)
+        {
+            Console.WriteLine("LocationTravelGameController: User clicked, returning to world view");
+            _waitingForClickToExit = false;
+            SetMode(GameMode.WorldView);
+            return;
+        }
+        
         int? actionIndex = _terminalUI.GetHoveredAction(x, y);
         if (actionIndex.HasValue && actionIndex.Value >= 0 && actionIndex.Value < _currentActions.Count)
         {
@@ -127,20 +174,120 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void ExecuteAction(int actionIndex)
     {
-        if (_currentLocationState == null || actionIndex < 0 || actionIndex >= _currentActions.Count)
+        // Fire and forget the async execution
+        _ = ExecuteActionAsync(actionIndex);
+    }
+
+    /// <summary>
+    /// Executes a selected action (async version).
+    /// </summary>
+    private async Task ExecuteActionAsync(int actionIndex)
+    {
+        if (_currentLocationState == null || _currentBlueprint == null || 
+            actionIndex < 0 || actionIndex >= _currentActions.Count)
             return;
         
-        string action = _currentActions[actionIndex];
+        string actionText = _currentActions[actionIndex];
         
-        // TODO: This will be replaced with LLM-generated results in Phase 5
-        // For now, just show a placeholder result
-        _terminalUI?.ShowResultMessage($"You chose: {action}\n\n(Action execution will be implemented in Phase 5 with LLM integration)", true);
+        Console.WriteLine($"LocationTravelGameController: Executing action - {actionText}");
         
-        Console.WriteLine($"LocationTravelGameController: Executed action - {action}");
+        // Show loading indicator if using LLM
+        if (_llmActionExecutor != null && _terminalUI != null)
+        {
+            _isLoadingLLMContent = true;
+            _loadingMessage = "Processing action...";
+            _terminalUI.ShowLoadingIndicator(_loadingMessage);
+        }
         
-        // TODO: Update location state based on action result
-        // TODO: Check for failure conditions
-        // TODO: Generate new actions based on result
+        // Get the last action for context (if any)
+        var lastAction = _currentLocationState.GetLastAction();
+        
+        // Execute the action using LLM executor if available, otherwise fall back to simple
+        ActionResult result;
+        if (_llmActionExecutor != null)
+        {
+            Console.WriteLine("LocationTravelGameController: Using LLM action executor");
+            result = await _llmActionExecutor.ExecuteActionAsync(
+                actionText, _currentLocationState, _currentBlueprint, lastAction);
+        }
+        else
+        {
+            Console.WriteLine("LocationTravelGameController: Using simple action executor (LLM not available)");
+            result = _simpleActionExecutor.ExecuteAction(actionText, _currentLocationState, _currentBlueprint);
+        }
+        
+        // Clear loading flag
+        _isLoadingLLMContent = false;
+        
+        // Create player action record
+        var playerAction = new PlayerAction
+        {
+            ActionText = actionText,
+            Outcome = result.NarrativeOutcome,
+            WasSuccessful = result.Success,
+            StateChanges = result.StateChanges,
+            NewSublocation = result.NewSublocation,
+            ItemGained = result.ItemsGained?.FirstOrDefault()
+        };
+        
+        // Apply the result to the location state
+        _currentLocationState = _currentLocationState.ApplyActionResult(result, playerAction);
+        _locationStates[_currentLocationVertex] = _currentLocationState;
+        
+        Console.WriteLine($"LocationTravelGameController: Action result - Success: {result.Success}, Ends: {result.EndsInteraction}");
+        
+        // Check if interaction ends (failure or successful exit)
+        if (result.EndsInteraction)
+        {
+            HandleInteractionEnd(result);
+            return;
+        }
+        
+        // Update narrative with result
+        _currentNarrative = result.NarrativeOutcome;
+        
+        // Generate new actions (or use provided ones)
+        if (result.NewActions != null && result.NewActions.Count > 0)
+        {
+            _currentActions = result.NewActions;
+        }
+        else
+        {
+            // Regenerate actions based on new state
+            await RegenerateActionsAsync();
+        }
+        
+        // Re-render the UI with new state
+        await RenderLocationUIAsync();
+    }
+    
+    /// <summary>
+    /// Handles the end of a location interaction (success or failure).
+    /// </summary>
+    private void HandleInteractionEnd(ActionResult result)
+    {
+        if (_currentLocationState == null)
+            return;
+        
+        // Show final message
+        if (result.Success)
+        {
+            Console.WriteLine($"LocationTravelGameController: Location interaction ended successfully");
+            _terminalUI?.ShowResultMessage(result.NarrativeOutcome + "\n\nClick anywhere to return to world view...", true);
+        }
+        else
+        {
+            Console.WriteLine($"LocationTravelGameController: Location interaction FAILED");
+            _terminalUI?.ShowResultMessage($"FAILURE: {result.NarrativeOutcome}\n\nClick anywhere to return to world view...", false);
+        }
+        
+        // Fire exit event
+        LocationExited?.Invoke(_currentLocationState);
+        
+        // Set flag to wait for user click before exiting
+        _waitingForClickToExit = true;
+        
+        Console.WriteLine("LocationTravelGameController: Waiting for user click to return to world view...");
     }
 
     /// <summary>
@@ -289,10 +436,10 @@ public class LocationTravelGameController : IDisposable
             // For now, use forest generator for all locations
             // TODO: Map location types to appropriate generators
             var generator = _generators.GetValueOrDefault("forest") ?? _generators.Values.First();
-            var blueprint = generator.GenerateBlueprint(locationId);
+            _currentBlueprint = generator.GenerateBlueprint(locationId);
             
             // Create initial state
-            locationState = LocationInstanceState.FromBlueprint(locationId, blueprint);
+            locationState = LocationInstanceState.FromBlueprint(locationId, _currentBlueprint);
             _locationStates[vertexIndex] = locationState;
             
             Console.WriteLine($"LocationTravelGameController: Created new location state for {locationId}");
@@ -303,10 +450,15 @@ public class LocationTravelGameController : IDisposable
             locationState = locationState.WithNewVisit();
             _locationStates[vertexIndex] = locationState;
             
+            // Regenerate blueprint for existing location
+            var generator = _generators.GetValueOrDefault("forest") ?? _generators.Values.First();
+            _currentBlueprint = generator.GenerateBlueprint(locationState.LocationId);
+            
             Console.WriteLine($"LocationTravelGameController: Returning to existing location (visit #{locationState.VisitCount})");
         }
 
         _currentLocationState = locationState;
+        _currentLocationVertex = vertexIndex;
         SetMode(GameMode.LocationInteraction);
         LocationEntered?.Invoke(locationState);
     }
@@ -327,10 +479,10 @@ public class LocationTravelGameController : IDisposable
             // Default to forest generator if biome type not found
             var generatorKey = _generators.ContainsKey(biomeType.Name) ? biomeType.Name : "forest";
             var generator = _generators.GetValueOrDefault(generatorKey) ?? _generators.Values.First();
-            var blueprint = generator.GenerateBlueprint(locationId);
+            _currentBlueprint = generator.GenerateBlueprint(locationId);
             
             // Create initial state
-            locationState = LocationInstanceState.FromBlueprint(locationId, blueprint);
+            locationState = LocationInstanceState.FromBlueprint(locationId, _currentBlueprint);
             _locationStates[vertexIndex] = locationState;
             
             Console.WriteLine($"LocationTravelGameController: Created new biome interaction state for {biomeType.Name} at vertex {vertexIndex}");
@@ -341,10 +493,16 @@ public class LocationTravelGameController : IDisposable
             locationState = locationState.WithNewVisit();
             _locationStates[vertexIndex] = locationState;
             
+            // Regenerate blueprint for existing biome
+            var generatorKey = _generators.ContainsKey(biomeType.Name) ? biomeType.Name : "forest";
+            var generator = _generators.GetValueOrDefault(generatorKey) ?? _generators.Values.First();
+            _currentBlueprint = generator.GenerateBlueprint(locationState.LocationId);
+            
             Console.WriteLine($"LocationTravelGameController: Returning to existing biome (visit #{locationState.VisitCount})");
         }
 
         _currentLocationState = locationState;
+        _currentLocationVertex = vertexIndex;
         SetMode(GameMode.LocationInteraction);
         LocationEntered?.Invoke(locationState);
     }
@@ -430,6 +588,9 @@ public class LocationTravelGameController : IDisposable
     {
         Console.WriteLine("LocationTravelGameController: Entered LocationInteraction mode");
         
+        // Reset exit flag
+        _waitingForClickToExit = false;
+        
         // Show terminal for interaction
         if (_core.Terminal != null)
         {
@@ -448,6 +609,15 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void RenderLocationUI()
     {
+        // Fire and forget the async rendering
+        _ = RenderLocationUIAsync();
+    }
+
+    /// <summary>
+    /// Renders the location UI with current state (async version).
+    /// </summary>
+    private async Task RenderLocationUIAsync()
+    {
         if (_terminalUI == null || _currentLocationState == null)
             return;
         
@@ -459,11 +629,94 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
-        // Generate mock actions for now (will be replaced with LLM in Phase 5)
-        _currentActions = GenerateMockActions();
+        // Show loading indicator if using LLM
+        if (_llmActionExecutor != null)
+        {
+            _isLoadingLLMContent = true;
+            _loadingMessage = "Generating actions...";
+            _terminalUI.ShowLoadingIndicator(_loadingMessage);
+        }
         
-        // Generate mock narrative
-        _currentNarrative = GenerateMockNarrative(blueprint);
+        // Generate actions using LLM if available
+        var lastAction = _currentLocationState.GetLastAction();
+        if (_llmActionExecutor != null)
+        {
+            Console.WriteLine("RenderLocationUIAsync: Requesting actions from LLM...");
+            var llmActions = await _llmActionExecutor.GenerateActionsAsync(_currentLocationState, blueprint, lastAction);
+            if (llmActions == null || llmActions.Count == 0)
+            {
+                Console.Error.WriteLine("RenderLocationUIAsync: Failed to generate actions from LLM");
+                _isLoadingLLMContent = false;
+                _terminalUI?.ShowResultMessage(
+                    "ERROR: Failed to generate actions.\n\n" +
+                    "The LLM did not return valid actions. This could be due to:\n" +
+                    "- LLM server not responding\n" +
+                    "- Invalid response format\n" +
+                    "- Timeout\n\n" +
+                    "Check logs/llm_communication_*.log for details.\n\n" +
+                    "Click anywhere to return to world view...",
+                    false
+                );
+                _waitingForClickToExit = true;
+                return;
+            }
+            _currentActions = llmActions;
+        }
+        else
+        {
+            Console.Error.WriteLine("RenderLocationUIAsync: LLM executor not available");
+            _isLoadingLLMContent = false;
+            _terminalUI?.ShowResultMessage(
+                "ERROR: LLM system not initialized.\n\n" +
+                "The location interaction system requires LLM to be enabled.\n" +
+                "Restart the application with LLM enabled.\n\n" +
+                "Click anywhere to return to world view...",
+                false
+            );
+            _waitingForClickToExit = true;
+            return;
+        }
+        
+        // Update loading message for narrative generation
+        if (_llmActionExecutor != null)
+        {
+            _loadingMessage = "Generating narrative...";
+            _terminalUI.ShowLoadingIndicator(_loadingMessage);
+        }
+        
+        // Generate narrative using LLM if available
+        if (_llmActionExecutor != null)
+        {
+            Console.WriteLine("RenderLocationUIAsync: Requesting narrative from LLM...");
+            var llmNarrative = await _llmActionExecutor.GenerateNarrativeAsync(_currentLocationState, blueprint, lastAction, _currentActions);
+            if (string.IsNullOrWhiteSpace(llmNarrative))
+            {
+                Console.Error.WriteLine("RenderLocationUIAsync: Failed to generate narrative from LLM");
+                _isLoadingLLMContent = false;
+                _terminalUI?.ShowResultMessage(
+                    "ERROR: Failed to generate narrative.\n\n" +
+                    "The LLM did not return a valid narrative description. This could be due to:\n" +
+                    "- LLM server not responding\n" +
+                    "- Invalid response format\n" +
+                    "- Timeout\n\n" +
+                    "Check logs/llm_communication_*.log for details.\n\n" +
+                    "Click anywhere to return to world view...",
+                    false
+                );
+                _waitingForClickToExit = true;
+                return;
+            }
+            _currentNarrative = llmNarrative;
+        }
+        else
+        {
+            // This shouldn't happen since we checked earlier, but handle it anyway
+            Console.Error.WriteLine("RenderLocationUIAsync: LLM executor not available for narrative");
+            _currentNarrative = "ERROR: LLM not available";
+        }
+        
+        // Clear loading flag
+        _isLoadingLLMContent = false;
         
         // Get current state info
         string locationName = blueprint.LocationType; // Using type as name for now
@@ -487,34 +740,43 @@ public class LocationTravelGameController : IDisposable
         
         Console.WriteLine($"LocationTravelGameController: Terminal UI rendered for {locationName} ({sublocation})");
     }
-    
-    /// <summary>
-    /// Generates mock actions for testing (will be replaced with LLM in Phase 5).
-    /// </summary>
-    private List<string> GenerateMockActions()
-    {
-        return new List<string>
-        {
-            "Examine the surrounding area carefully",
-            "Search for useful items or resources",
-            "Look for signs of wildlife or other travelers",
-            "Rest and observe the environment for a while",
-            "Continue deeper into the forest along the main path",
-            "Return to world view (ESC also works)"
-        };
-    }
-    
-    /// <summary>
-    /// Generates mock narrative for testing (will be replaced with LLM in Phase 5).
-    /// </summary>
-    private string GenerateMockNarrative(LocationBlueprint blueprint)
-    {
-        return $"You find yourself at a {blueprint.LocationType}. The {_currentLocationState?.CurrentStates.GetValueOrDefault("weather", "clear")} sky filters through the canopy above. " +
-               $"Birds chirp in the distance, and the path ahead splits in multiple directions. " +
-               $"What will you do?\n\n" +
-               $"(This is a mock narrative. LLM-generated narratives will be added in Phase 5.)";
-    }
 
+    /// <summary>
+    /// Regenerates actions based on current state.
+    /// </summary>
+    private async Task RegenerateActionsAsync()
+    {
+        if (_currentLocationState == null || _currentBlueprint == null)
+            return;
+
+        var lastAction = _currentLocationState.GetLastAction();
+        
+        if (_llmActionExecutor != null)
+        {
+            Console.WriteLine("RegenerateActionsAsync: Requesting actions from LLM...");
+            var llmActions = await _llmActionExecutor.GenerateActionsAsync(_currentLocationState, _currentBlueprint, lastAction);
+            if (llmActions == null || llmActions.Count == 0)
+            {
+                Console.Error.WriteLine("RegenerateActionsAsync: Failed to regenerate actions from LLM");
+                _terminalUI?.ShowResultMessage(
+                    "ERROR: Failed to generate new actions.\n\n" +
+                    "The LLM did not return valid actions after your last action.\n" +
+                    "Check logs/llm_communication_*.log for details.\n\n" +
+                    "Click anywhere to return to world view...",
+                    false
+                );
+                _waitingForClickToExit = true;
+                return;
+            }
+            _currentActions = llmActions;
+        }
+        else
+        {
+            Console.Error.WriteLine("RegenerateActionsAsync: LLM executor not available");
+            _currentActions = new List<string> { "ERROR: LLM not available" };
+        }
+    }
+    
     /// <summary>
     /// Gets debug information about current state.
     /// </summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
@@ -6,6 +7,7 @@ using Cathedral.Glyph;
 using Cathedral.Glyph.Microworld;
 using Cathedral.Game;
 using Cathedral.Engine;
+using Cathedral.LLM;
 
 namespace Cathedral.Game;
 
@@ -15,13 +17,13 @@ namespace Cathedral.Game;
 /// </summary>
 public static class LocationTravelModeLauncher
 {
-    public static void Launch(int windowWidth = 1200, int windowHeight = 900)
+    public static void Launch(int windowWidth = 1200, int windowHeight = 900, bool useLLM = true)
     {
         var camera = new Camera();
-        Launch(camera, windowWidth, windowHeight);
+        Launch(camera, windowWidth, windowHeight, useLLM);
     }
 
-    public static void Launch(Camera camera, int windowWidth = 1200, int windowHeight = 900)
+    public static void Launch(Camera camera, int windowWidth = 1200, int windowHeight = 900, bool useLLM = true)
     {
         Console.WriteLine("=== Launching Location Travel Mode ===\n");
         
@@ -40,6 +42,67 @@ public static class LocationTravelModeLauncher
         
         // Create game controller AFTER core is set up
         LocationTravelGameController? gameController = null;
+        
+        // LLM components (optional - Phase 5)
+        LlamaServerManager? llamaServer = null;
+        LLMActionExecutor? llmExecutor = null;
+        
+        // Initialize LLM if requested
+        if (useLLM)
+        {
+            Console.WriteLine("=== Initializing LLM System (Phase 5) ===");
+            
+            // Initialize logging for LLM communications
+            LLMLogger.Initialize();
+            Console.WriteLine("✓ LLM communication logging enabled");
+            
+            try
+            {
+                llamaServer = new LlamaServerManager();
+                
+                // Set up server ready callback
+                bool serverReady = false;
+                llamaServer.ServerReady += (sender, e) =>
+                {
+                    serverReady = e.IsReady;
+                    if (e.IsReady)
+                    {
+                        Console.WriteLine("✓ LLM Server is ready");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"✗ LLM Server failed: {e.Message}");
+                    }
+                };
+                
+                // Start server with "tiny" model (qwen2-0.5b) - faster but less sophisticated
+                // Use "medium" for phi-4 (better quality but slower)
+                Console.WriteLine("Starting LLM server with 'tiny' model...");
+                var startTask = llamaServer.StartServerAsync(
+                    onServerReady: (ready) =>
+                    {
+                        if (ready)
+                        {
+                            Console.WriteLine("✓ LLM server started successfully");
+                        }
+                    },
+                    modelAlias: "tiny" // or "medium" for better quality
+                );
+                
+                // Don't block - server will start in background
+                Console.WriteLine("LLM server starting (this may take 30-60 seconds)...");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"✗ Failed to initialize LLM: {ex.Message}");
+                Console.WriteLine("  Continuing without LLM (will use fallback executor)");
+                llamaServer = null;
+            }
+        }
+        else
+        {
+            Console.WriteLine("=== LLM Disabled - Using Simple Action Executor ===");
+        }
         
         // Set up event handlers for enhanced interaction
         microworldInterface.VertexHoverEvent += (index, glyph, color) =>
@@ -61,6 +124,35 @@ public static class LocationTravelModeLauncher
             
             Console.WriteLine("Creating game controller...");
             gameController = new LocationTravelGameController(core, microworldInterface);
+            
+            // Set up LLM action executor if server is ready
+            if (llamaServer != null && llamaServer.IsServerReady)
+            {
+                Console.WriteLine("Setting up LLM action executor...");
+                try
+                {
+                    var simpleExecutor = new SimpleActionExecutor();
+                    llmExecutor = new LLMActionExecutor(llamaServer, simpleExecutor);
+                    
+                    // Initialize async
+                    _ = Task.Run(async () =>
+                    {
+                        await llmExecutor.InitializeAsync();
+                        gameController.SetLLMActionExecutor(llmExecutor);
+                        Console.WriteLine("✓ LLM action executor ready");
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"✗ Failed to create LLM executor: {ex.Message}");
+                    llmExecutor = null;
+                }
+            }
+            else if (llamaServer != null)
+            {
+                Console.WriteLine("LLM server not ready yet - will use fallback executor for now");
+                Console.WriteLine("(The LLM may become available during gameplay)");
+            }
             
             // Wire up game controller events
             gameController.ModeChanged += (oldMode, newMode) =>
@@ -97,6 +189,12 @@ public static class LocationTravelModeLauncher
                 Console.WriteLine($"MicroworldInterface: Avatar arrived at vertex {arrivalInfo.VertexIndex}, location: {arrivalInfo.Location?.Name ?? "none"}");
                 Console.WriteLine($"  Biome: {arrivalInfo.Biome.Name}, Neighbors: {arrivalInfo.NeighboringVertices.Count}");
                 gameController?.OnAvatarArrived(arrivalInfo.VertexIndex);
+            };
+            
+            // Wire up update loop for loading animations
+            core.UpdateRequested += (deltaTime) =>
+            {
+                gameController?.Update();
             };
             
             Console.WriteLine("\n=== Location Travel Mode Ready ===");
@@ -137,6 +235,10 @@ public static class LocationTravelModeLauncher
         core.Run();
         
         // Cleanup
+        Console.WriteLine("Shutting down...");
+        llmExecutor?.Dispose(); // Log LLM statistics
         gameController?.Dispose();
+        llamaServer?.Dispose();
+        Console.WriteLine("Cleanup complete");
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Cathedral.Glyph.Microworld.LocationSystem;
@@ -163,6 +164,60 @@ public record LocationInstanceState
             VisitCount = VisitCount + 1,
             LastVisited = DateTime.UtcNow
         };
+    }
+
+    /// <summary>
+    /// Applies an action result to this location state.
+    /// Creates a new state with all changes from the action result applied.
+    /// </summary>
+    public LocationInstanceState ApplyActionResult(ActionResult actionResult, PlayerAction action)
+    {
+        if (actionResult == null)
+            throw new ArgumentNullException(nameof(actionResult));
+        if (action == null)
+            throw new ArgumentNullException(nameof(action));
+
+        // Start with current state
+        var newState = this;
+        
+        // Add action to history with incremented turn counts
+        newState = newState.WithAction(action);
+        
+        // Apply state changes
+        if (actionResult.StateChanges.Count > 0)
+        {
+            newState = newState.WithStates(actionResult.StateChanges);
+        }
+        
+        // Apply sublocation change
+        if (actionResult.NewSublocation != null)
+        {
+            newState = newState.WithSublocation(actionResult.NewSublocation);
+        }
+        
+        return newState;
+    }
+
+    /// <summary>
+    /// Gets the last action taken, or null if no actions have been taken.
+    /// </summary>
+    public PlayerAction? GetLastAction()
+    {
+        return ActionHistory.Count > 0 ? ActionHistory[^1] : null;
+    }
+
+    /// <summary>
+    /// Gets the last N actions taken.
+    /// </summary>
+    public List<PlayerAction> GetRecentActions(int count)
+    {
+        if (count <= 0)
+            return new List<PlayerAction>();
+        
+        int startIndex = Math.Max(0, ActionHistory.Count - count);
+        int takeCount = Math.Min(count, ActionHistory.Count);
+        
+        return ActionHistory.Skip(startIndex).Take(takeCount).ToList();
     }
 
     /// <summary>

@@ -139,6 +139,24 @@ namespace Cathedral.Glyph.Interaction
         }
         
         /// <summary>
+        /// Clears the action menu area (used during loading)
+        /// </summary>
+        public void ClearActionMenu()
+        {
+            _actionRegions.Clear();
+            _hoveredActionIndex = null;
+            
+            // Clear action menu area
+            for (int y = ACTION_MENU_START_Y - 1; y < TERMINAL_HEIGHT; y++)
+            {
+                for (int x = 0; x < TERMINAL_WIDTH; x++)
+                {
+                    _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
+                }
+            }
+        }
+        
+        /// <summary>
         /// Renders the action menu with mouse-hover support
         /// </summary>
         public void RenderActionMenu(List<string> actions, int? hoveredIndex = null)
@@ -344,6 +362,91 @@ namespace Cathedral.Glyph.Interaction
             }
         }
         
+        private static readonly string[] LoadingFrames = new[]
+        {
+            "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"  // Braille spinner
+        };
+        
+        private int _loadingFrameIndex = 0;
+        private DateTime _lastFrameUpdate = DateTime.Now;
+        
+        /// <summary>
+        /// Shows an animated loading indicator while waiting for LLM response
+        /// Call repeatedly to animate (e.g., every frame)
+        /// </summary>
+        public void ShowLoadingIndicator(string message = "Thinking...")
+        {
+            Vector4 loadingColor = new Vector4(0.8f, 0.8f, 0.0f, 1.0f); // Yellow
+            Vector4 spinnerColor = new Vector4(1.0f, 1.0f, 0.0f, 1.0f); // Bright yellow
+            
+            // Update animation frame every 100ms
+            if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds > 100)
+            {
+                _loadingFrameIndex = (_loadingFrameIndex + 1) % LoadingFrames.Length;
+                _lastFrameUpdate = DateTime.Now;
+            }
+            
+            string spinner = LoadingFrames[_loadingFrameIndex];
+            
+            // Clear action menu to prevent clicks on old actions
+            ClearActionMenu();
+            
+            // Clear narrative area
+            for (int yPos = NARRATIVE_START_Y; yPos < ACTION_MENU_START_Y - 1; yPos++)
+            {
+                for (int xPos = 0; xPos < TERMINAL_WIDTH; xPos++)
+                {
+                    _terminal.SetCell(xPos, yPos, ' ', NarrativeColor, BackgroundColor);
+                }
+            }
+            
+            // Show animated spinner and message
+            string loadingText = $"{spinner}  {message}  {spinner}";
+            int loadingY = NARRATIVE_START_Y + NARRATIVE_HEIGHT / 2;
+            int loadingX = (TERMINAL_WIDTH - loadingText.Length) / 2;
+            _terminal.Text(loadingX, loadingY, loadingText, loadingColor, BackgroundColor);
+            
+            // Add animated dots below
+            string dots = new string('.', (_loadingFrameIndex % 4));
+            string hint = $"Please wait{dots}";
+            int hintY = loadingY + 2;
+            int hintX = (TERMINAL_WIDTH - hint.Length) / 2;
+            _terminal.Text(hintX, hintY, hint, StatusBarColor, BackgroundColor);
+            
+            // Add progress indicator (alternating bars)
+            int barWidth = 30;
+            int barY = loadingY - 2;
+            int barX = (TERMINAL_WIDTH - barWidth) / 2;
+            string progressBar = GenerateProgressBar(barWidth, _loadingFrameIndex);
+            _terminal.Text(barX, barY, progressBar, spinnerColor, BackgroundColor);
+        }
+        
+        /// <summary>
+        /// Generates an animated progress bar
+        /// </summary>
+        private string GenerateProgressBar(int width, int frame)
+        {
+            var bar = new System.Text.StringBuilder();
+            bar.Append('[');
+            
+            for (int i = 0; i < width - 2; i++)
+            {
+                // Create a moving wave effect
+                int pos = (frame + i) % 8;
+                if (pos < 2)
+                    bar.Append('█');
+                else if (pos < 4)
+                    bar.Append('▓');
+                else if (pos < 6)
+                    bar.Append('▒');
+                else
+                    bar.Append('░');
+            }
+            
+            bar.Append(']');
+            return bar.ToString();
+        }
+        
         /// <summary>
         /// Shows a result message (success or failure) temporarily in the narrative area
         /// </summary>
@@ -374,6 +477,12 @@ namespace Cathedral.Glyph.Interaction
                     _terminal.Text(x, y, line, color, BackgroundColor);
                 }
             }
+            
+            // Add instruction to click to continue
+            string instruction = success ? "(Click anywhere to continue)" : "(Click anywhere to exit)";
+            int instructionY = ACTION_MENU_START_Y - 2;
+            int instructionX = (TERMINAL_WIDTH - instruction.Length) / 2;
+            _terminal.Text(instructionX, instructionY, instruction, StatusBarColor, BackgroundColor);
         }
         
         /// <summary>

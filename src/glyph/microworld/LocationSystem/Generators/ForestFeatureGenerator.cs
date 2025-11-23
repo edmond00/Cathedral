@@ -62,7 +62,42 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
         var blueprint = new LocationBlueprint(locationId, "forest", stateCategories, sublocations, connections, contentMap);
         
         if (!ValidateBlueprint(blueprint))
+        {
+            // Debug: Print validation details
+            Console.WriteLine($"Blueprint validation failed for forest {locationId}");
+            Console.WriteLine($"State categories: {stateCategories.Count}");
+            foreach (var (catId, cat) in stateCategories)
+            {
+                var hasDefault = cat.PossibleStates.ContainsKey(cat.DefaultStateId);
+                Console.WriteLine($"  {catId}: default={cat.DefaultStateId}, hasDefault={hasDefault}");
+                if (!hasDefault)
+                {
+                    Console.WriteLine($"    Available states: {string.Join(", ", cat.PossibleStates.Keys)}");
+                }
+            }
+            Console.WriteLine($"Sublocations: {sublocations.Count}");
+            foreach (var (subId, sub) in sublocations)
+            {
+                var parentExists = sub.ParentSublocationId == null || sublocations.ContainsKey(sub.ParentSublocationId);
+                Console.WriteLine($"  {subId}: parent={sub.ParentSublocationId ?? "null"}, parentExists={parentExists}");
+            }
+            Console.WriteLine($"Connections: {connections.Count}");
+            foreach (var (subId, connList) in connections)
+            {
+                var sublocationExists = sublocations.ContainsKey(subId);
+                Console.WriteLine($"  {subId}: exists={sublocationExists}, connections={connList.Count}");
+                foreach (var connId in connList)
+                {
+                    var connExists = sublocations.ContainsKey(connId);
+                    if (!connExists)
+                    {
+                        Console.WriteLine($"    -> {connId}: INVALID (doesn't exist)");
+                    }
+                }
+            }
+            
             throw new InvalidOperationException($"Generated invalid blueprint for forest {locationId}");
+        }
             
         return blueprint;
     }
