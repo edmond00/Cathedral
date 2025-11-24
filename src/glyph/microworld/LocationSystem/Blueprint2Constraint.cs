@@ -13,16 +13,19 @@ public static class Blueprint2Constraint
 {
     /// <summary>
     /// Generates JSON field constraints for LLM action generation based on current game state
+    /// Each action gets a randomly sampled skill from the provided list
     /// </summary>
     /// <param name="blueprint">The location blueprint defining structure and rules</param>
     /// <param name="currentSublocation">Player's current sublocation ID</param>
     /// <param name="currentStates">Current active states mapped by category ID</param>
+    /// <param name="relatedSkills">Array of skills to use for each action (one per action)</param>
     /// <param name="numberOfActions">Number of action choices to generate (default: 7)</param>
     /// <returns>Array field defining valid action choices structure</returns>
     public static JsonField GenerateActionConstraints(
         LocationBlueprint blueprint,
         string currentSublocation,
         Dictionary<string, string> currentStates,
+        string[] relatedSkills,
         int numberOfActions = 7)
     {
         if (blueprint == null)
@@ -31,23 +34,33 @@ public static class Blueprint2Constraint
             throw new ArgumentException("Current sublocation cannot be null or empty", nameof(currentSublocation));
         if (currentStates == null)
             throw new ArgumentNullException(nameof(currentStates));
+        if (relatedSkills == null || relatedSkills.Length == 0)
+            throw new ArgumentException("Related skills array cannot be null or empty", nameof(relatedSkills));
+        if (relatedSkills.Length != numberOfActions)
+            throw new ArgumentException($"Related skills array must have exactly {numberOfActions} elements", nameof(relatedSkills));
         if (!blueprint.Sublocations.ContainsKey(currentSublocation))
             throw new ArgumentException($"Sublocation '{currentSublocation}' not found in blueprint", nameof(currentSublocation));
         if (numberOfActions < 1 || numberOfActions > 20)
             throw new ArgumentException("Number of actions must be between 1 and 20", nameof(numberOfActions));
 
-        // Define the structure of a single action
-        var singleActionField = new CompositeField("Action",
-            new TemplateStringField("action_text", "try to <generated>", 10, 280),  // LLM-generated action with "try to" prefix
-            GenerateSuccessConstraints(blueprint, currentSublocation, currentStates),
-            GenerateFailureConstraints(),                    // LLM-generated failure consequences
-            new ChoiceField<string>("related_skill", GetAvailableSkills()),
-            new ChoiceField<int>("difficulty", 1, 2, 3, 4, 5)
-        );
+        // Create individual action fields, each with its own hardcoded skill
+        // Each action at position i MUST use skill[i]
+        // Use InlineConstantStringField to avoid rule name collisions - it inlines the value instead of creating a reusable rule
+        var actionFields = new JsonField[numberOfActions];
+        for (int i = 0; i < numberOfActions; i++)
+        {
+            actionFields[i] = new CompositeField($"action_{i + 1}",
+                GenerateSuccessConstraints(blueprint, currentSublocation, currentStates),
+                GenerateFailureConstraints(),
+                new ChoiceField<string>("difficulty", "trivial", "easy", "basic", "moderate", "hard", "very_hard", "extreme"),
+                new InlineConstantStringField("related_skill", relatedSkills[i]),
+                new TemplateStringField("action_text", "try to <generated>", 10, 280)
+            );
+        }
 
-        // Wrap in an array field that generates exactly the specified number of actions
+        // Use TupleField to create a fixed-length array where each position has a specific skill
         return new CompositeField("ActionChoices",
-            new ArrayField("actions", singleActionField, numberOfActions, numberOfActions)
+            new TupleField("actions", actionFields)
         );
     }
 

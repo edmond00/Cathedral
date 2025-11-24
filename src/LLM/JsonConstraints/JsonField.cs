@@ -97,3 +97,21 @@ public record OptionalField(string Name, JsonField InnerField) : JsonField(Name)
 {
     public JsonField InnerField { get; init; } = InnerField ?? throw new ArgumentNullException(nameof(InnerField));
 }
+
+/// <summary>
+/// Represents a fixed-length array where each position has a specific type (heterogeneous tuple)
+/// Used when each array element must have different constraints (e.g., different skills per action)
+/// </summary>
+public record TupleField(string Name, params JsonField[] Elements) : JsonField(Name)
+{
+    public JsonField[] Elements { get; init; } = Elements?.Length > 0 ? Elements : throw new ArgumentException("Elements cannot be null or empty");
+}
+
+/// <summary>
+/// Represents a constant string field that generates its value inline in the parent rule
+/// rather than creating a separate reusable rule. Use when the same field name needs different values.
+/// </summary>
+public record InlineConstantStringField(string Name, string Value) : JsonField(Name)
+{
+    public string Value { get; init; } = Value ?? throw new ArgumentNullException(nameof(Value));
+}

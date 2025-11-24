@@ -408,7 +408,8 @@ namespace Cathedral.Glyph.Interaction
             
             // Add animated dots below
             string dots = new string('.', (_loadingFrameIndex % 4));
-            string hint = $"Please wait{dots}";
+            string space = new string(' ', (_loadingFrameIndex % 4));
+            string hint = $"{space}Please wait{dots}";
             int hintY = loadingY + 2;
             int hintX = (TERMINAL_WIDTH - hint.Length) / 2;
             _terminal.Text(hintX, hintY, hint, StatusBarColor, BackgroundColor);

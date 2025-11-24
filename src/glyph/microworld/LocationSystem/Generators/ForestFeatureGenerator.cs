@@ -215,7 +215,16 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                 "Large boulders draped in thick, soft moss",
                 "deep_woods", new List<string> { "deep_woods" },
                 new List<string>(), new List<string>(),
-                new Dictionary<string, string>())
+                new Dictionary<string, string>()),
+                
+            ["hidden_trail"] = new("hidden_trail", "Hidden Trail", 
+                "Barely visible path winding through dense undergrowth",
+                "path_fork", new List<string> { "path_fork", "deep_woods" },
+                new List<string>(), new List<string>(),
+                new Dictionary<string, string>
+                {
+                    ["path_visibility"] = "faint_trail"
+                })
         };
         
         // Add density-specific sublocations
@@ -227,9 +236,21 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                 new List<string>(), new List<string> { "storm" }, // Dangerous in storms
                 new Dictionary<string, string>());
                 
+            sublocations["small_clearing"] = new("small_clearing", "Small Clearing", 
+                "Tiny open space in the dense undergrowth",
+                "dense_thicket", new List<string> { "dense_thicket" },
+                new List<string>(), new List<string>(),
+                new Dictionary<string, string>());
+                
             sublocations["canopy_break"] = new("canopy_break", "Canopy Break", 
                 "Fallen giant tree creates a gap in the dense canopy overhead",
                 "deep_woods", new List<string> { "deep_woods", "sunlit_glade" },
+                new List<string>(), new List<string>(),
+                new Dictionary<string, string>());
+                
+            sublocations["sunlit_glade"] = new("sunlit_glade", "Sunlit Glade", 
+                "Bright clearing where sunlight streams through the broken canopy",
+                "canopy_break", new List<string> { "canopy_break" },
                 new List<string>(), new List<string>(),
                 new Dictionary<string, string>());
         }
@@ -251,6 +272,11 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                         "stream_crossing", new List<string> { "stream_crossing", "reed_bed" },
                         new List<string>(), new List<string>(),
                         new Dictionary<string, string>());
+                    sublocations["reed_bed"] = new("reed_bed", "Reed Bed", 
+                        "Tall reeds growing along the water's edge",
+                        "stream_bank", new List<string> { "stream_bank" },
+                        new List<string>(), new List<string>(),
+                        new Dictionary<string, string>());
                     sublocations["upstream_pool"] = new("upstream_pool", "Upstream Pool", 
                         "Deep, crystal-clear pool perfect for drinking and reflection",
                         "stream_crossing", new List<string> { "stream_crossing" },
@@ -270,12 +296,22 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                         "hidden_pond", new List<string> { "hidden_pond" },
                         new List<string>(), new List<string>(),
                         new Dictionary<string, string>());
+                    sublocations["lily_pad_area"] = new("lily_pad_area", "Lily Pad Area", 
+                        "Floating lily pads cover part of the pond surface",
+                        "hidden_pond", new List<string> { "hidden_pond" },
+                        new List<string>(), new List<string>(),
+                        new Dictionary<string, string>());
                     break;
                     
                 case 2: // Waterfall
                     sublocations["waterfall_base"] = new("waterfall_base", "Waterfall Base", 
                         "Cascading water creates a misty, moss-covered grotto",
                         "deep_woods", new List<string> { "deep_woods", "behind_falls" },
+                        new List<string>(), new List<string>(),
+                        new Dictionary<string, string>());
+                    sublocations["behind_falls"] = new("behind_falls", "Behind the Waterfall", 
+                        "Hidden cave behind the cascading water",
+                        "waterfall_base", new List<string> { "waterfall_base" },
                         new List<string>(), new List<string>(),
                         new Dictionary<string, string>());
                     break;
@@ -300,6 +336,11 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                 "steep_climb", new List<string> { "steep_climb", "overlook" },
                 new List<string>(), new List<string>(),
                 new Dictionary<string, string>());
+            sublocations["overlook"] = new("overlook", "Scenic Overlook", 
+                "Stunning panoramic view across the treetops",
+                "ridge_top", new List<string> { "ridge_top" },
+                new List<string>(), new List<string>(),
+                new Dictionary<string, string>());
             sublocations["rocky_outcrop"] = new("rocky_outcrop", "Rocky Outcrop", 
                 "Weathered stone formation jutting from the hillside",
                 "hill_base", new List<string> { "hill_base", "steep_climb" },
@@ -320,6 +361,16 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                     "Sacred heart of the ancient trees where time seems to stand still",
                     "ancient_grove_entrance", new List<string> { "ancient_grove_entrance", "spirit_tree" },
                     new List<string> { "calm" }, new List<string> { "agitated" }, // Requires calm wildlife
+                    new Dictionary<string, string>());
+                sublocations["ritual_stones"] = new("ritual_stones", "Ritual Stones", 
+                    "Ancient standing stones arranged in a sacred pattern",
+                    "ancient_grove_entrance", new List<string> { "ancient_grove_entrance" },
+                    new List<string>(), new List<string>(),
+                    new Dictionary<string, string>());
+                sublocations["spirit_tree"] = new("spirit_tree", "Spirit Tree", 
+                    "Ancient tree that radiates a profound spiritual presence",
+                    "grove_center", new List<string> { "grove_center" },
+                    new List<string>(), new List<string>(),
                     new Dictionary<string, string>());
                 break;
                 
@@ -350,18 +401,38 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                     {
                         ["access_state"] = "blocked" // Requires clearing
                     });
+                sublocations["vine_archway"] = new("vine_archway", "Vine-Covered Archway", 
+                    "Crumbling stone archway draped in flowering vines",
+                    "moss_covered_ruins", new List<string> { "moss_covered_ruins" },
+                    new List<string>(), new List<string>(),
+                    new Dictionary<string, string>());
+                sublocations["hidden_chamber"] = new("hidden_chamber", "Hidden Chamber", 
+                    "Secret underground room beneath the collapsed structure",
+                    "collapsed_structure", new List<string> { "collapsed_structure" },
+                    new List<string>(), new List<string>(),
+                    new Dictionary<string, string>());
                 break;
                 
             case 3: // Cave System
+                // Cave entrance parent depends on whether rocky outcrop exists
+                var caveParent = hasElevationChange ? "rocky_outcrop" : "deep_woods";
+                var caveConnections = hasElevationChange 
+                    ? new List<string> { "rocky_outcrop", "entrance_chamber" }
+                    : new List<string> { "deep_woods", "entrance_chamber" };
                 sublocations["cave_entrance"] = new("cave_entrance", "Cave Entrance", 
                     "Dark opening in a moss-covered hillside exhaling cool, damp air",
-                    "rocky_outcrop", new List<string> { "rocky_outcrop", "entrance_chamber" },
+                    caveParent, caveConnections,
                     new List<string>(), new List<string>(),
                     new Dictionary<string, string>());
                 sublocations["entrance_chamber"] = new("entrance_chamber", "Cave Entrance Chamber", 
                     "Twilight zone where forest light gradually fades into darkness",
                     "cave_entrance", new List<string> { "cave_entrance", "deeper_tunnels" },
                     new List<string>(), new List<string> { "night" }, // Need light source at night
+                    new Dictionary<string, string>());
+                sublocations["deeper_tunnels"] = new("deeper_tunnels", "Deeper Tunnels", 
+                    "Dark passages leading deeper into the cave system",
+                    "entrance_chamber", new List<string> { "entrance_chamber" },
+                    new List<string>(), new List<string>(),
                     new Dictionary<string, string>());
                 break;
                 
@@ -370,6 +441,16 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                     "Circular meadow surrounded by ancient stones and flowering trees",
                     "deep_woods", new List<string> { "deep_woods", "stone_circle", "meditation_spot" },
                     new List<string> { "calm" }, new List<string> { "hunting" }, // Requires peaceful atmosphere
+                    new Dictionary<string, string>());
+                sublocations["stone_circle"] = new("stone_circle", "Stone Circle", 
+                    "Ancient megalithic circle humming with subtle energy",
+                    "sacred_clearing", new List<string> { "sacred_clearing" },
+                    new List<string>(), new List<string>(),
+                    new Dictionary<string, string>());
+                sublocations["meditation_spot"] = new("meditation_spot", "Meditation Spot", 
+                    "Peaceful place perfect for quiet contemplation",
+                    "sacred_clearing", new List<string> { "sacred_clearing" },
+                    new List<string>(), new List<string>(),
                     new Dictionary<string, string>());
                 break;
         }
@@ -391,6 +472,12 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
             new List<string>(), new List<string>(),
             new Dictionary<string, string>());
             
+        sublocations["log_interior"] = new("log_interior", "Hollow Log Interior", 
+            "Dark hollow inside the fallen log, filled with moss and fungi",
+            "fallen_log", new List<string> { "fallen_log" },
+            new List<string>(), new List<string>(),
+            new Dictionary<string, string>());
+            
         sublocations["berry_patch"] = new("berry_patch", "Wild Berry Patch", 
             "Thorny bushes heavy with ripe berries attract birds and small animals",
             "outer_grove", new List<string> { "outer_grove" },
@@ -403,6 +490,12 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
         sublocations["large_oak"] = new("large_oak", "Ancient Oak", 
             "Enormous oak tree with thick branches perfect for climbing",
             "outer_grove", new List<string> { "outer_grove", "tree_canopy" },
+            new List<string>(), new List<string>(),
+            new Dictionary<string, string>());
+            
+        sublocations["tree_canopy"] = new("tree_canopy", "Oak Tree Canopy", 
+            "High up in the branches with a bird's-eye view of the forest",
+            "large_oak", new List<string> { "large_oak" },
             new List<string>(), new List<string>(),
             new Dictionary<string, string>());
             

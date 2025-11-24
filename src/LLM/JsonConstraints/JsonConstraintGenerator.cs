@@ -95,12 +95,14 @@ public static class JsonConstraintGenerator
             DigitField digitField => GenerateDigitFieldRule(digitField, processedRules),
             ConstantIntField constIntField => GenerateConstantIntFieldRule(constIntField, processedRules),
             ConstantFloatField constFloatField => GenerateConstantFloatFieldRule(constFloatField, processedRules),
+            InlineConstantStringField inlineConstStringField => GenerateInlineConstantStringFieldRule(inlineConstStringField),
             ConstantStringField constStringField => GenerateConstantStringFieldRule(constStringField, processedRules),
             StringField stringField => GenerateStringFieldRule(stringField, processedRules),
             BooleanField boolField => GenerateBooleanFieldRule(boolField, processedRules),
             ChoiceField<string> stringChoice => GenerateStringChoiceFieldRule(stringChoice, processedRules),
             ChoiceField<int> intChoice => GenerateIntChoiceFieldRule(intChoice, processedRules),
             TemplateStringField templateField => GenerateTemplateStringFieldRule(templateField, processedRules),
+            TupleField tupleField => GenerateTupleFieldRule(tupleField, processedRules),
             ArrayField arrayField => GenerateArrayFieldRule(arrayField, processedRules),
             CompositeField compositeField => GenerateCompositeFieldRule(compositeField, processedRules),
             VariantField variantField => GenerateVariantFieldRule(variantField, processedRules),
@@ -142,6 +144,14 @@ public static class JsonConstraintGenerator
         processedRules.Add(rule);
         
         return ruleName;
+    }
+
+    private static string GenerateInlineConstantStringFieldRule(InlineConstantStringField field)
+    {
+        // Inline constant string fields don't create a separate rule
+        // Instead, return the literal pattern to be inlined in the parent rule
+        var escapedValue = field.Value.Replace("\"", "\\\""); // Escape quotes in the string value
+        return $"\"\\\"{escapedValue}\\\"\"";
     }
 
     private static string GenerateConstantStringFieldRule(ConstantStringField field, HashSet<string> processedRules)
@@ -282,6 +292,33 @@ public static class JsonConstraintGenerator
         return ruleName;
     }
     
+    private static string GenerateTupleFieldRule(TupleField field, HashSet<string> processedRules)
+    {
+        var ruleName = SanitizeRuleName(field.Name);
+        
+        // Generate rules for each element
+        var elementRules = new List<string>();
+        for (int i = 0; i < field.Elements.Length; i++)
+        {
+            elementRules.Add(GenerateFieldRule(field.Elements[i], processedRules));
+        }
+        
+        // Build array rule with specific types for each position
+        var rule = new StringBuilder();
+        rule.Append(ruleName + " ::= \"[\" ");
+        
+        for (int i = 0; i < elementRules.Count; i++)
+        {
+            if (i > 0) rule.Append(" \",\" ");
+            rule.Append(elementRules[i]);
+        }
+        
+        rule.Append(" \"]\"");
+        
+        processedRules.Add(rule.ToString());
+        return ruleName;
+    }
+    
     private static string GenerateCompositeFieldRule(CompositeField field, HashSet<string> processedRules)
     {
         var ruleName = SanitizeRuleName(field.Name);
@@ -330,12 +367,14 @@ public static class JsonConstraintGenerator
             DigitField digitField => $"<{digitField.DigitCount}-digit string>",
             ConstantIntField constIntField => constIntField.Value,
             ConstantFloatField constFloatField => constFloatField.Value,
+            InlineConstantStringField inlineConstStringField => inlineConstStringField.Value,
             ConstantStringField constStringField => constStringField.Value,
             StringField stringField => $"<string of {stringField.MinLength}–{stringField.MaxLength} characters>",
             BooleanField => "<boolean: true or false>",
             ChoiceField<string> stringChoice => $"<choice between {JsonSerializer.Serialize(stringChoice.Options)}>",
             ChoiceField<int> intChoice => $"<choice between {JsonSerializer.Serialize(intChoice.Options)}>",
             TemplateStringField templateField => GenerateTemplateStringPlaceholder(templateField),
+            TupleField tupleField => GenerateTupleTemplatePlaceholder(tupleField),
             ArrayField arrayField => GenerateArrayTemplatePlaceholder(arrayField),
             CompositeField compositeField => GenerateCompositeTemplatePlaceholder(compositeField),
             VariantField variantField => GenerateVariantTemplatePlaceholder(variantField),
@@ -359,6 +398,16 @@ public static class JsonConstraintGenerator
     {
         var elementPlaceholder = GenerateTemplateObject(field.ElementType);
         return $"<array of {field.MinLength}–{field.MaxLength} elements, each element should be: {FormatPlaceholder(elementPlaceholder)}>";
+    }
+    
+    private static object[] GenerateTupleTemplatePlaceholder(TupleField field)
+    {
+        var elements = new object[field.Elements.Length];
+        for (int i = 0; i < field.Elements.Length; i++)
+        {
+            elements[i] = GenerateTemplateObject(field.Elements[i]);
+        }
+        return elements;
     }
     
     private static Dictionary<string, object> GenerateCompositeTemplatePlaceholder(CompositeField field)
