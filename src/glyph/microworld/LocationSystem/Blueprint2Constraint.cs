@@ -66,29 +66,115 @@ public static class Blueprint2Constraint
 
     /// <summary>
     /// Generates constraints for successful action consequences
+    /// Returns a VariantField where LLM must choose ONE consequence type
     /// </summary>
     private static JsonField GenerateSuccessConstraints(
         LocationBlueprint blueprint,
         string currentSublocation,
         Dictionary<string, string> currentStates)
     {
-        return new CompositeField("success_consequences",
-            GenerateCategorizedStateChangeConstraints(blueprint, currentSublocation, currentStates),
-            GenerateHierarchicalSublocationChangeConstraints(blueprint, currentSublocation, currentStates),
-            GenerateItemGainConstraints(blueprint, currentSublocation, currentStates),
-            GenerateCompanionGainConstraints(blueprint, currentSublocation, currentStates),
-            GenerateQuestGainConstraints(blueprint, currentSublocation, currentStates)
-        );
+        var variants = new List<CompositeField>();
+
+        // State change consequence
+        var stateChangeField = GenerateCategorizedStateChangeConstraints(blueprint, currentSublocation, currentStates);
+        if (stateChangeField is VariantField stateVariant && stateVariant.Variants.Length > 1)
+        {
+            // If there are actual state change options (not just "none"), add them as separate variants
+            foreach (var variant in stateVariant.Variants)
+            {
+                if (variant.Name != "no_state_change")
+                {
+                    variants.Add(new CompositeField($"success_{variant.Name}",
+                        new InlineConstantStringField("consequence_type", variant.Name),
+                        variant.Fields[0], // category field
+                        variant.Fields[1]  // new_state field
+                    ));
+                }
+            }
+        }
+
+        // Movement consequence
+        var sublocationField = GenerateHierarchicalSublocationChangeConstraints(blueprint, currentSublocation, currentStates);
+        if (sublocationField is ChoiceField<string> sublocationChoice && sublocationChoice.Options.Length > 1)
+        {
+            variants.Add(new CompositeField("success_movement",
+                new InlineConstantStringField("consequence_type", "movement"),
+                sublocationField
+            ));
+        }
+
+        // Item gained consequence
+        var itemField = GenerateItemGainConstraints(blueprint, currentSublocation, currentStates);
+        if (itemField is ChoiceField<string> itemChoice && itemChoice.Options.Length > 1)
+        {
+            variants.Add(new CompositeField("success_item",
+                new InlineConstantStringField("consequence_type", "item_gained"),
+                itemField
+            ));
+        }
+
+        // Companion gained consequence
+        var companionField = GenerateCompanionGainConstraints(blueprint, currentSublocation, currentStates);
+        if (companionField is ChoiceField<string> companionChoice && companionChoice.Options.Length > 1)
+        {
+            variants.Add(new CompositeField("success_companion",
+                new InlineConstantStringField("consequence_type", "companion_gained"),
+                companionField
+            ));
+        }
+
+        // Quest gained consequence
+        var questField = GenerateQuestGainConstraints(blueprint, currentSublocation, currentStates);
+        if (questField is ChoiceField<string> questChoice && questChoice.Options.Length > 1)
+        {
+            variants.Add(new CompositeField("success_quest",
+                new InlineConstantStringField("consequence_type", "quest_gained"),
+                questField
+            ));
+        }
+
+        // Always add a "none" option
+        variants.Add(new CompositeField("success_none",
+            new InlineConstantStringField("consequence_type", "none")
+        ));
+
+        return new VariantField("success_consequences", variants.ToArray());
     }
 
     /// <summary>
-    /// Generates constraints for failure consequences (LLM has creative freedom here)
+    /// Generates constraints for failure consequences
+    /// Returns a VariantField where LLM must choose ONE failure type
     /// </summary>
     private static JsonField GenerateFailureConstraints()
     {
-        return new CompositeField("failure_consequences",
-            new ChoiceField<string>("type", "damage", "lost", "injured", "startled_wildlife", "equipment_loss", "exhaustion", "none"),
-            new StringField("description", 5, 50)
+        return new VariantField("failure_consequences",
+            new CompositeField("failure_damage",
+                new InlineConstantStringField("consequence_type", "damage"),
+                new StringField("description", 5, 50)
+            ),
+            new CompositeField("failure_lost",
+                new InlineConstantStringField("consequence_type", "lost"),
+                new StringField("description", 5, 50)
+            ),
+            new CompositeField("failure_injured",
+                new InlineConstantStringField("consequence_type", "injured"),
+                new StringField("description", 5, 50)
+            ),
+            new CompositeField("failure_startled_wildlife",
+                new InlineConstantStringField("consequence_type", "startled_wildlife"),
+                new StringField("description", 5, 50)
+            ),
+            new CompositeField("failure_equipment_loss",
+                new InlineConstantStringField("consequence_type", "equipment_loss"),
+                new StringField("description", 5, 50)
+            ),
+            new CompositeField("failure_exhaustion",
+                new InlineConstantStringField("consequence_type", "exhaustion"),
+                new StringField("description", 5, 50)
+            ),
+            new CompositeField("failure_none",
+                new InlineConstantStringField("consequence_type", "none")
+            )
         );
     }
 
