@@ -50,11 +50,11 @@ public static class Blueprint2Constraint
         for (int i = 0; i < numberOfActions; i++)
         {
             actionFields[i] = new CompositeField($"action_{i + 1}",
-                GenerateSuccessConstraints(blueprint, currentSublocation, currentStates),
-                GenerateFailureConstraints(),
-                new ChoiceField<string>("difficulty", "trivial", "easy", "basic", "moderate", "hard", "very_hard", "extreme"),
                 new InlineConstantStringField("related_skill", relatedSkills[i]),
-                new TemplateStringField("action_text", "try to <generated>", 10, 280)
+                new TemplateStringField("action_text", "try to <generated>", 10, 280, "a short description of the action related to a specific skill , written in 2nd person"),
+                new ChoiceField<string>("difficulty", new[] { "trivial", "easy", "basic", "moderate", "hard", "very_hard", "extreme" }, "how challenging this action is"),
+                GenerateSuccessConstraints(blueprint, currentSublocation, currentStates),
+                GenerateFailureConstraints()
             );
         }
 
@@ -85,7 +85,7 @@ public static class Blueprint2Constraint
                 if (variant.Name != "no_state_change")
                 {
                     variants.Add(new CompositeField($"success_{variant.Name}",
-                        new InlineConstantStringField("consequence_type", variant.Name),
+                        new InlineConstantStringField("consequence_type", variant.Name, "identifies which type of consequence occurred"),
                         variant.Fields[0], // category field
                         variant.Fields[1]  // new_state field
                     ));
@@ -98,7 +98,7 @@ public static class Blueprint2Constraint
         if (sublocationField is ChoiceField<string> sublocationChoice && sublocationChoice.Options.Length > 1)
         {
             variants.Add(new CompositeField("success_movement",
-                new InlineConstantStringField("consequence_type", "movement"),
+                new InlineConstantStringField("consequence_type", "movement", "identifies which type of consequence occurred"),
                 sublocationField
             ));
         }
@@ -108,7 +108,7 @@ public static class Blueprint2Constraint
         if (itemField is ChoiceField<string> itemChoice && itemChoice.Options.Length > 1)
         {
             variants.Add(new CompositeField("success_item",
-                new InlineConstantStringField("consequence_type", "item_gained"),
+                new InlineConstantStringField("consequence_type", "item_gained", "identifies which type of consequence occurred"),
                 itemField
             ));
         }
@@ -118,7 +118,7 @@ public static class Blueprint2Constraint
         if (companionField is ChoiceField<string> companionChoice && companionChoice.Options.Length > 1)
         {
             variants.Add(new CompositeField("success_companion",
-                new InlineConstantStringField("consequence_type", "companion_gained"),
+                new InlineConstantStringField("consequence_type", "companion_gained", "identifies which type of consequence occurred"),
                 companionField
             ));
         }
@@ -128,17 +128,17 @@ public static class Blueprint2Constraint
         if (questField is ChoiceField<string> questChoice && questChoice.Options.Length > 1)
         {
             variants.Add(new CompositeField("success_quest",
-                new InlineConstantStringField("consequence_type", "quest_gained"),
+                new InlineConstantStringField("consequence_type", "quest_gained", "identifies which type of consequence occurred"),
                 questField
             ));
         }
 
         // Always add a "none" option
         variants.Add(new CompositeField("success_none",
-            new InlineConstantStringField("consequence_type", "none")
+            new InlineConstantStringField("consequence_type", "none", "identifies which type of consequence occurred")
         ));
 
-        return new VariantField("success_consequences", variants.ToArray());
+        return new VariantField("success_consequences", variants.ToArray(), "what happens if this action succeeds - choose ONE consequence type among: state change, movement, item gained, companion gained, quest gained, or none");
     }
 
     /// <summary>
@@ -147,35 +147,35 @@ public static class Blueprint2Constraint
     /// </summary>
     private static JsonField GenerateFailureConstraints()
     {
-        return new VariantField("failure_consequences",
+        return new VariantField("failure_consequences", new CompositeField[] {
             new CompositeField("failure_damage",
-                new InlineConstantStringField("consequence_type", "damage"),
-                new StringField("description", 5, 50)
+                new InlineConstantStringField("consequence_type", "damage", "identifies which type of consequence occurred"),
+                new StringField("description", 5, 50, "brief description of physical harm taken")
             ),
             new CompositeField("failure_lost",
-                new InlineConstantStringField("consequence_type", "lost"),
-                new StringField("description", 5, 50)
+                new InlineConstantStringField("consequence_type", "lost", "identifies which type of consequence occurred"),
+                new StringField("description", 5, 50, "brief description of becoming disoriented or lost")
             ),
             new CompositeField("failure_injured",
-                new InlineConstantStringField("consequence_type", "injured"),
-                new StringField("description", 5, 50)
+                new InlineConstantStringField("consequence_type", "injured", "identifies which type of consequence occurred"),
+                new StringField("description", 5, 50, "brief description of injury sustained")
             ),
             new CompositeField("failure_startled_wildlife",
-                new InlineConstantStringField("consequence_type", "startled_wildlife"),
-                new StringField("description", 5, 50)
+                new InlineConstantStringField("consequence_type", "startled_wildlife", "identifies which type of consequence occurred"),
+                new StringField("description", 5, 50, "brief description of wildlife disturbance")
             ),
             new CompositeField("failure_equipment_loss",
-                new InlineConstantStringField("consequence_type", "equipment_loss"),
-                new StringField("description", 5, 50)
+                new InlineConstantStringField("consequence_type", "equipment_loss", "identifies which type of consequence occurred"),
+                new StringField("description", 5, 50, "brief description of equipment damage or loss")
             ),
             new CompositeField("failure_exhaustion",
-                new InlineConstantStringField("consequence_type", "exhaustion"),
-                new StringField("description", 5, 50)
+                new InlineConstantStringField("consequence_type", "exhaustion", "identifies which type of consequence occurred"),
+                new StringField("description", 5, 50, "brief description of fatigue or exhaustion")
             ),
             new CompositeField("failure_none",
-                new InlineConstantStringField("consequence_type", "none")
+                new InlineConstantStringField("consequence_type", "none", "identifies which type of consequence occurred")
             )
-        );
+        }, "what happens if this action fails - choose ONE consequence type among: damage, lost, injured, startled_wildlife, equipment_loss, exhaustion, or none");
     }
 
     /// <summary>

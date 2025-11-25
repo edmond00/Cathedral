@@ -12,7 +12,7 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         private readonly int _numberOfActions;
         private readonly Random _skillRng;
         private JsonField? _currentConstraints;
-        private string? _currentTemplate;
+        private string? _currentHints;
         private string? _currentGbnf;
         private string[]? _currentSkills;
         private bool _isFirstRequest = true;
@@ -40,13 +40,13 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         }
 
         /// <summary>
-        /// Gets the JSON template for the current constraints
+        /// Gets the field hints for the current constraints
         /// </summary>
-        public string GetTemplate()
+        public string GetHints()
         {
-            if (_currentTemplate == null)
+            if (_currentHints == null)
                 RegenerateConstraints();
-            return _currentTemplate!;
+            return _currentHints!;
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         }
 
         /// <summary>
-        /// Regenerates the JSON constraints, template, and GBNF grammar based on current game state
+        /// Regenerates the JSON constraints, hints, and GBNF grammar based on current game state
         /// Samples new skills for each action to ensure variety
         /// </summary>
         public void RegenerateConstraints()
@@ -80,7 +80,7 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
             
             _currentConstraints = Blueprint2Constraint.GenerateActionConstraints(
                 Blueprint, CurrentSublocation, CurrentStates, _currentSkills, _numberOfActions);
-            _currentTemplate = JsonConstraintGenerator.GenerateTemplate(_currentConstraints);
+            _currentHints = JsonConstraintGenerator.GenerateHints(_currentConstraints);
             _currentGbnf = JsonConstraintGenerator.GenerateGBNF(_currentConstraints);
         }
 
@@ -221,10 +221,10 @@ Focus on mechanical variety and strategic options that fit the current situation
             contextBuilder.AppendLine("- Risk vs. reward decisions");
             contextBuilder.AppendLine();
 
-            // Template instruction
-            contextBuilder.AppendLine("Generate a JSON response that exactly matches this template format:");
-            contextBuilder.AppendLine(_currentTemplate);
+            // Field reference
+            contextBuilder.AppendLine(_currentHints);
             contextBuilder.AppendLine();
+            contextBuilder.AppendLine("Generate a valid JSON response with the above fields. Structure your response as an object with an 'actions' array.");
             contextBuilder.AppendLine("Respond with valid JSON only, no additional text or explanations.");
 
             return contextBuilder.ToString();
@@ -326,10 +326,10 @@ Focus on mechanical variety and strategic options that fit the current situation
             contextBuilder.AppendLine("- Pivot: Change strategy based on what was learned");
             contextBuilder.AppendLine();
 
-            // Template instruction
-            contextBuilder.AppendLine("Generate a JSON response that exactly matches this template format:");
-            contextBuilder.AppendLine(_currentTemplate);
+            // Field reference
+            contextBuilder.AppendLine(_currentHints);
             contextBuilder.AppendLine();
+            contextBuilder.AppendLine("Generate a valid JSON response with the above fields. Structure your response as an object with an 'actions' array.");
             contextBuilder.AppendLine("Respond with valid JSON only, no additional text or explanations.");
 
             return contextBuilder.ToString();

@@ -71,6 +71,102 @@ public static class JsonConstraintGenerator
         return json;
     }
 
+    /// <summary>
+    /// Generates a flat list of field hints from a JsonField structure
+    /// Each hint describes a field's purpose and possible values without showing the full JSON structure
+    /// Duplicate field names are deduplicated - only the first occurrence is included
+    /// </summary>
+    /// <param name="root">The root field definition</param>
+    /// <returns>A formatted string with hints for each unique field</returns>
+    public static string GenerateHints(JsonField root)
+    {
+        var hints = new Dictionary<string, string>();
+        CollectHints(root, hints);
+        
+        var builder = new StringBuilder();
+        builder.AppendLine("FIELD REFERENCE:");
+        builder.AppendLine("The JSON response should contain the following fields:");
+        builder.AppendLine();
+        
+        foreach (var (fieldName, hintText) in hints.OrderBy(h => h.Key))
+        {
+            builder.AppendLine($"• {fieldName}: {hintText}");
+        }
+        
+        return builder.ToString();
+    }
+
+    private static void CollectHints(JsonField field, Dictionary<string, string> hints)
+    {
+        // Skip if we've already seen this field name (deduplicate)
+        if (hints.ContainsKey(field.Name))
+            return;
+        
+        // Get the hint text (custom or default)
+        string hintText = field.Hint ?? GenerateDefaultHint(field);
+        hints[field.Name] = hintText;
+        
+        // Recursively collect hints from child fields
+        switch (field)
+        {
+            case CompositeField composite:
+                foreach (var childField in composite.Fields)
+                {
+                    CollectHints(childField, hints);
+                }
+                break;
+                
+            case VariantField variant:
+                foreach (var variantField in variant.Variants)
+                {
+                    CollectHints(variantField, hints);
+                }
+                break;
+                
+            case ArrayField array:
+                CollectHints(array.ElementType, hints);
+                break;
+                
+            case TupleField tuple:
+                foreach (var element in tuple.Elements)
+                {
+                    CollectHints(element, hints);
+                }
+                break;
+                
+            case OptionalField optional:
+                CollectHints(optional.InnerField, hints);
+                break;
+        }
+    }
+
+    private static string GenerateDefaultHint(JsonField field)
+    {
+        return field switch
+        {
+            DigitField digitField => $"{digitField.DigitCount}-digit numeric string",
+            ConstantIntField constInt => $"always {constInt.Value}",
+            ConstantFloatField constFloat => $"always {constFloat.Value}",
+            ConstantStringField constString => $"always \"{constString.Value}\"",
+            InlineConstantStringField inlineConst => $"always \"{inlineConst.Value}\"",
+            StringField stringField => stringField.MinLength == stringField.MaxLength 
+                ? $"text of exactly {stringField.MinLength} characters"
+                : $"text of {stringField.MinLength}–{stringField.MaxLength} characters",
+            BooleanField => "true or false",
+            ChoiceField<string> stringChoice => $"choose from: {string.Join(", ", stringChoice.Options.Select(o => $"\"{o}\""))}",
+            ChoiceField<int> intChoice => $"choose from: {string.Join(", ", intChoice.Options)}",
+            TemplateStringField templateField => $"{templateField.Template.Replace("<generated>", $"<{templateField.MinGenLength}–{templateField.MaxGenLength} chars>")}",
+            ArrayField arrayField => arrayField.MinLength == arrayField.MaxLength
+                ? $"array of exactly {arrayField.MinLength} elements"
+                : $"array of {arrayField.MinLength}–{arrayField.MaxLength} elements",
+            TupleField tupleField => $"array of exactly {tupleField.Elements.Length} elements (heterogeneous)",
+            CompositeField => "object with nested fields",
+            VariantField variantField => $"choose one of {variantField.Variants.Length} possible structures",
+            OptionalField => "optional field",
+            _ => "field"
+        };
+    }
+
     private static string CleanJsonTemplate(string json)
     {
         return json.Replace("\\u0022", "\"")     // quotes

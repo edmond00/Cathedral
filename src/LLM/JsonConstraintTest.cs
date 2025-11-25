@@ -35,6 +35,12 @@ public class JsonConstraintTest
             Console.WriteLine(template);
             Console.WriteLine();
 
+            // Generate Hints
+            var hints = JsonConstraintGenerator.GenerateHints(testSchema);
+            Console.WriteLine("Generated Hints:");
+            Console.WriteLine(hints);
+            Console.WriteLine();
+
             // Test the validator
             TestJsonValidator();
 
