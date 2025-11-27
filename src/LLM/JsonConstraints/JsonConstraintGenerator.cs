@@ -103,8 +103,13 @@ public static class JsonConstraintGenerator
             return;
         
         // Get the hint text (custom or default)
-        string hintText = field.Hint ?? GenerateDefaultHint(field);
-        hints[field.Name] = hintText;
+        string? hintText = field.Hint ?? GenerateDefaultHint(field);
+        
+        // Skip if hint is null (explicitly filtered out)
+        if (hintText != null)
+        {
+            hints[field.Name] = hintText;
+        }
         
         // Recursively collect hints from child fields
         switch (field)
@@ -140,15 +145,21 @@ public static class JsonConstraintGenerator
         }
     }
 
-    private static string GenerateDefaultHint(JsonField field)
+    private static string? GenerateDefaultHint(JsonField field)
     {
         return field switch
         {
+            // Constants are hidden by default (return null)
+            ConstantIntField => null,
+            ConstantFloatField => null,
+            ConstantStringField => null,
+            InlineConstantStringField => null,
+            
+            // CompositeFields are hidden by default (return null) unless they have a custom hint
+            CompositeField => null,
+            
+            // Other field types get default hints
             DigitField digitField => $"{digitField.DigitCount}-digit numeric string",
-            ConstantIntField constInt => $"always {constInt.Value}",
-            ConstantFloatField constFloat => $"always {constFloat.Value}",
-            ConstantStringField constString => $"always \"{constString.Value}\"",
-            InlineConstantStringField inlineConst => $"always \"{inlineConst.Value}\"",
             StringField stringField => stringField.MinLength == stringField.MaxLength 
                 ? $"text of exactly {stringField.MinLength} characters"
                 : $"text of {stringField.MinLength}–{stringField.MaxLength} characters",
@@ -160,7 +171,6 @@ public static class JsonConstraintGenerator
                 ? $"array of exactly {arrayField.MinLength} elements"
                 : $"array of {arrayField.MinLength}–{arrayField.MaxLength} elements",
             TupleField tupleField => $"array of exactly {tupleField.Elements.Length} elements (heterogeneous)",
-            CompositeField => "object with nested fields",
             VariantField variantField => $"choose one of {variantField.Variants.Length} possible structures",
             OptionalField => "optional field",
             _ => "field"

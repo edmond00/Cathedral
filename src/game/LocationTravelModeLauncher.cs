@@ -134,12 +134,19 @@ public static class LocationTravelModeLauncher
                     var simpleExecutor = new SimpleActionExecutor();
                     llmExecutor = new LLMActionExecutor(llamaServer, simpleExecutor);
                     
-                    // Initialize async
+                    // Initialize async and set immediately when ready
                     _ = Task.Run(async () =>
                     {
-                        await llmExecutor.InitializeAsync();
-                        gameController.SetLLMActionExecutor(llmExecutor);
-                        Console.WriteLine("✓ LLM action executor ready");
+                        try
+                        {
+                            await llmExecutor.InitializeAsync();
+                            gameController.SetLLMActionExecutor(llmExecutor);
+                            Console.WriteLine("✓ LLM action executor ready");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"✗ Failed to initialize LLM executor: {ex.Message}");
+                        }
                     });
                 }
                 catch (Exception ex)
@@ -150,8 +157,28 @@ public static class LocationTravelModeLauncher
             }
             else if (llamaServer != null)
             {
-                Console.WriteLine("LLM server not ready yet - will use fallback executor for now");
-                Console.WriteLine("(The LLM may become available during gameplay)");
+                Console.WriteLine("LLM server not ready yet - will set up executor when available");
+                
+                // Set up a callback to initialize executor when server becomes ready
+                llamaServer.ServerReady += async (sender, e) =>
+                {
+                    if (e.IsReady && llmExecutor == null && gameController != null)
+                    {
+                        Console.WriteLine("LLM server became ready - setting up executor...");
+                        try
+                        {
+                            var simpleExecutor = new SimpleActionExecutor();
+                            var executor = new LLMActionExecutor(llamaServer, simpleExecutor);
+                            await executor.InitializeAsync();
+                            gameController.SetLLMActionExecutor(executor);
+                            Console.WriteLine("✓ LLM action executor ready (delayed initialization)");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"✗ Failed to initialize delayed LLM executor: {ex.Message}");
+                        }
+                    }
+                };
             }
             
             // Wire up game controller events

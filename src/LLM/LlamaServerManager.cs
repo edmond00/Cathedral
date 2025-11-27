@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Cathedral.Game;
 
 namespace Cathedral.LLM;
 
@@ -35,6 +36,63 @@ public class LlamaServerManager : IDisposable
     
     public bool IsServerReady => _isServerReady;
     
+    // Helper methods for logging
+    private async Task LogErrorAsync(string message)
+    {
+        Console.Error.WriteLine(message);
+        if (_logWriter != null)
+        {
+            try
+            {
+                await _logWriter.WriteLineAsync($"[ERROR] {DateTime.Now:HH:mm:ss.fff} {message}");
+                await _logWriter.FlushAsync();
+            }
+            catch { /* Ignore log write errors */ }
+        }
+    }
+    
+    private void LogError(string message)
+    {
+        Console.Error.WriteLine(message);
+        if (_logWriter != null)
+        {
+            try
+            {
+                _logWriter.WriteLine($"[ERROR] {DateTime.Now:HH:mm:ss.fff} {message}");
+                _logWriter.Flush();
+            }
+            catch { /* Ignore log write errors */ }
+        }
+    }
+    
+    private async Task LogWarningAsync(string message)
+    {
+        Console.WriteLine($"WARNING: {message}");
+        if (_logWriter != null)
+        {
+            try
+            {
+                await _logWriter.WriteLineAsync($"[WARNING] {DateTime.Now:HH:mm:ss.fff} {message}");
+                await _logWriter.FlushAsync();
+            }
+            catch { /* Ignore log write errors */ }
+        }
+    }
+    
+    private void LogWarning(string message)
+    {
+        Console.WriteLine($"WARNING: {message}");
+        if (_logWriter != null)
+        {
+            try
+            {
+                _logWriter.WriteLine($"[WARNING] {DateTime.Now:HH:mm:ss.fff} {message}");
+                _logWriter.Flush();
+            }
+            catch { /* Ignore log write errors */ }
+        }
+    }
+    
     public LlamaServerManager(string? baseUrl = null)
     {
         _baseUrl = baseUrl ?? "http://127.0.0.1:8080/";
@@ -62,6 +120,7 @@ public class LlamaServerManager : IDisposable
     /// <param name="serverPath">Optional custom server executable path</param>
     public async Task StartServerAsync(Action<bool>? onServerReady = null, string? modelAlias = null, string? modelPath = null, string? serverPath = null)
     {
+        var startTime = DateTime.Now;
         try
         {
             // Check if server is already running
@@ -71,6 +130,9 @@ public class LlamaServerManager : IDisposable
                 Console.WriteLine("Llama server is already running.");
                 ServerReady?.Invoke(this, new ServerStatusEventArgs(true, "Server already running"));
                 onServerReady?.Invoke(true);
+                
+                // Log to LLM logger if available
+                try { LLMLogger.LogServerInitResult(true, "Server already running", (DateTime.Now - startTime).TotalSeconds); } catch { }
                 return;
             }
             
@@ -83,11 +145,14 @@ public class LlamaServerManager : IDisposable
             // Find paths
             var (resolvedServerPath, resolvedModelPath) = ResolvePaths(serverPath, modelPath, _currentModelAlias);
             
+            // Log initialization start
+            try { LLMLogger.LogServerInitStart(_currentModelAlias, resolvedServerPath, resolvedModelPath); } catch { }
+            
             // Validate paths
             if (!File.Exists(resolvedServerPath))
             {
                 var errorMsg = $"Llama server not found at: {resolvedServerPath}";
-                Console.Error.WriteLine(errorMsg);
+                LogError(errorMsg);
                 ServerReady?.Invoke(this, new ServerStatusEventArgs(false, errorMsg));
                 onServerReady?.Invoke(false);
                 return;
@@ -96,7 +161,7 @@ public class LlamaServerManager : IDisposable
             if (!File.Exists(resolvedModelPath))
             {
                 var errorMsg = $"Model file not found at: {resolvedModelPath}";
-                Console.Error.WriteLine(errorMsg);
+                LogError(errorMsg);
                 ServerReady?.Invoke(this, new ServerStatusEventArgs(false, errorMsg));
                 onServerReady?.Invoke(false);
                 return;
@@ -110,8 +175,12 @@ public class LlamaServerManager : IDisposable
             
             _isServerReady = isReady;
             var message = isReady ? "Server started successfully" : "Server failed to start";
+            var duration = (DateTime.Now - startTime).TotalSeconds;
             
             Console.WriteLine(isReady ? "✓ Llama server and model loaded successfully." : "✗ Failed to start Llama server.");
+            
+            // Log result
+            try { LLMLogger.LogServerInitResult(isReady, message, duration); } catch { }
             
             ServerReady?.Invoke(this, new ServerStatusEventArgs(isReady, message));
             onServerReady?.Invoke(isReady);
@@ -119,7 +188,12 @@ public class LlamaServerManager : IDisposable
         catch (Exception ex)
         {
             var errorMsg = $"Error starting server: {ex.Message}";
-            Console.Error.WriteLine(errorMsg);
+            var duration = (DateTime.Now - startTime).TotalSeconds;
+            LogError(errorMsg);
+            
+            // Log error
+            try { LLMLogger.LogServerInitResult(false, errorMsg, duration); } catch { }
+            
             ServerReady?.Invoke(this, new ServerStatusEventArgs(false, errorMsg));
             onServerReady?.Invoke(false);
         }
@@ -146,10 +220,16 @@ public class LlamaServerManager : IDisposable
         {
             await PreCacheSystemPromptAsync(instance);
             Console.WriteLine($"✓ Created instance {slotId} with system prompt cached.");
+            
+            // Log successful creation
+            try { LLMLogger.LogInstanceCreated(slotId, "Instance", true); } catch { }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Warning: Failed to pre-cache system prompt for instance {slotId}: {ex.Message}");
+            LogWarning($"Failed to pre-cache system prompt for instance {slotId}: {ex.Message}");
+            
+            // Log creation with warning
+            try { LLMLogger.LogInstanceCreated(slotId, "Instance", false, ex.Message); } catch { }
         }
         
         return slotId;
@@ -177,7 +257,11 @@ public class LlamaServerManager : IDisposable
         
         if (instance.IsActive)
         {
-            throw new InvalidOperationException($"Instance {slotId} is already processing a request.");
+            await LogWarningAsync($"Instance {slotId} is already marked as active. This may indicate a previous request didn't complete properly.");
+            await LogWarningAsync($"Forcing instance to inactive state and proceeding...");
+            instance.IsActive = false;
+            instance.CurrentRequestCancellation?.Cancel();
+            instance.CurrentRequestCancellation = null;
         }
         
         instance.IsActive = true;
@@ -234,7 +318,7 @@ public class LlamaServerManager : IDisposable
                         // Debug: Log the JSON structure if needed
                         if (!rootElement.TryGetProperty("choices", out var choices))
                         {
-                            Console.WriteLine($"DEBUG: Missing 'choices' in response: {jsonData}");
+                            await LogWarningAsync($"Missing 'choices' in response: {jsonData}");
                             continue;
                         }
                         
@@ -268,7 +352,18 @@ public class LlamaServerManager : IDisposable
             var duration = DateTime.Now - startTime;
             var wasCancelled = cancellationToken.Token.IsCancellationRequested;
             
-            if (!wasCancelled)
+            // Check for empty response (slot busy or other issues)
+            if (!wasCancelled && string.IsNullOrWhiteSpace(responseText))
+            {
+                var details = $"Empty response after {duration.TotalMilliseconds:F0}ms - likely slot busy or server overload";
+                await LogWarningAsync($"Slot {slotId} returned empty response after {duration.TotalMilliseconds}ms");
+                await LogWarningAsync($"This usually indicates the slot was busy or the server rejected the request");
+                
+                // Log slot issue
+                try { LLMLogger.LogSlotIssue(slotId, "Empty Response", details); } catch { }
+            }
+            
+            if (!wasCancelled && !string.IsNullOrWhiteSpace(responseText))
             {
                 instance.AddAssistantResponse(responseText);
             }
@@ -277,27 +372,52 @@ public class LlamaServerManager : IDisposable
             onCompleted?.Invoke(slotId, responseText, wasCancelled);
             RequestCompleted?.Invoke(this, new RequestCompletedEventArgs(slotId, responseText, duration, wasCancelled));
         }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            // Request timeout - more specific than OperationCanceledException
+            await LogErrorAsync($"Timeout in request for slot {slotId}: Request exceeded HttpClient timeout");
+            onCompleted?.Invoke(slotId, "", false);
+            RequestCompleted?.Invoke(this, new RequestCompletedEventArgs(slotId, "", DateTime.Now - DateTime.Now, false));
+        }
         catch (OperationCanceledException)
         {
-            // Request was cancelled
+            // Request was cancelled by user
             onCompleted?.Invoke(slotId, "", true);
             RequestCompleted?.Invoke(this, new RequestCompletedEventArgs(slotId, "", DateTime.Now - DateTime.Now, true));
         }
+        catch (HttpRequestException ex)
+        {
+            // Network/HTTP error - server may be overloaded or connection lost
+            await LogErrorAsync($"HTTP Error in request for slot {slotId}: {ex.Message}");
+            if (ex.StatusCode.HasValue)
+            {
+                await LogErrorAsync($"Status code: {ex.StatusCode.Value}");
+            }
+            await LogErrorAsync($"This may indicate: server overload, connection timeout, or server not responding");
+            onCompleted?.Invoke(slotId, "", false);
+            RequestCompleted?.Invoke(this, new RequestCompletedEventArgs(slotId, "", DateTime.Now - DateTime.Now, false));
+        }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error in request for slot {slotId}: {ex.Message}");
-            Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
+            await LogErrorAsync($"Error in request for slot {slotId}: {ex.Message}");
+            await LogErrorAsync($"Exception type: {ex.GetType().Name}");
+            await LogErrorAsync($"Stack trace: {ex.StackTrace}");
             if (ex.InnerException != null)
             {
-                Console.Error.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                await LogErrorAsync($"Inner exception: {ex.InnerException.Message}");
             }
             onCompleted?.Invoke(slotId, "", false);
             RequestCompleted?.Invoke(this, new RequestCompletedEventArgs(slotId, "", DateTime.Now - DateTime.Now, false));
         }
         finally
         {
+            // CRITICAL: Always clean up instance state, even if exceptions occurred
             instance.IsActive = false;
             instance.CurrentRequestCancellation = null;
+            
+            // Add a small delay to allow server to fully clean up the slot
+            // This prevents rapid-fire requests from overwhelming the same slot
+            await Task.Delay(50);
         }
     }
     
@@ -543,7 +663,7 @@ public class LlamaServerManager : IDisposable
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error logging stdout: {ex.Message}");
+                LogError($"Error logging stdout: {ex.Message}");
             }
         });
         
@@ -564,7 +684,7 @@ public class LlamaServerManager : IDisposable
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error logging stderr: {ex.Message}");
+                LogError($"Error logging stderr: {ex.Message}");
             }
         });
         

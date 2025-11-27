@@ -44,9 +44,14 @@ public class LLMActionExecutor : IDisposable
 
         try
         {
+            Console.WriteLine("LLMActionExecutor: Initializing Director and Narrator slots...");
+            
             // Create dedicated slots for Director and Narrator
             _directorSlotId = await _llamaServer.CreateInstanceAsync("You are a game director.");
+            LLMLogger.LogInstanceCreated(_directorSlotId, "Director", true);
+            
             _narratorSlotId = await _llamaServer.CreateInstanceAsync("You are a game narrator.");
+            LLMLogger.LogInstanceCreated(_narratorSlotId, "Narrator", true);
             
             _isInitialized = true;
             Console.WriteLine($"LLMActionExecutor: Created Director slot {_directorSlotId}, Narrator slot {_narratorSlotId}");
@@ -54,6 +59,7 @@ public class LLMActionExecutor : IDisposable
         catch (Exception ex)
         {
             Console.Error.WriteLine($"LLMActionExecutor: Failed to initialize: {ex.Message}");
+            LLMLogger.LogInstanceCreated(-1, "LLMActionExecutor", false, ex.Message);
             _isInitialized = false;
         }
     }
@@ -77,8 +83,19 @@ public class LLMActionExecutor : IDisposable
         // If LLM is disabled, not initialized, or server not ready, use fallback
         if (!_useLLM || !_isInitialized || !_llamaServer.IsServerReady)
         {
-            Console.WriteLine("LLMActionExecutor: Using fallback executor (LLM disabled, not initialized, or server not ready)");
-            LLMLogger.LogFallback("LLM disabled, not initialized, or server not ready");
+            var reason = !_useLLM ? "LLM disabled" : 
+                        !_isInitialized ? "LLM not initialized" : 
+                        "Server not ready";
+            Console.WriteLine($"LLMActionExecutor: Using fallback executor ({reason})");
+            LLMLogger.LogFallback($"Fallback used: {reason}");
+            return _fallbackExecutor.ExecuteAction(actionText, currentState, blueprint);
+        }
+        
+        // Additional safety check - verify slots are valid
+        if (_directorSlotId < 0 || _narratorSlotId < 0)
+        {
+            Console.Error.WriteLine("LLMActionExecutor: Invalid slot IDs - using fallback");
+            LLMLogger.LogFallback($"Invalid slot IDs: Director={_directorSlotId}, Narrator={_narratorSlotId}");
             return _fallbackExecutor.ExecuteAction(actionText, currentState, blueprint);
         }
 
@@ -127,8 +144,11 @@ public class LLMActionExecutor : IDisposable
         LocationBlueprint blueprint,
         PlayerAction? previousAction = null)
     {
-        if (!_useLLM || !_isInitialized || !_llamaServer.IsServerReady)
+        if (!_useLLM || !_isInitialized || !_llamaServer.IsServerReady || _directorSlotId < 0)
         {
+            var reason = !_useLLM ? "disabled" : !_isInitialized ? "not initialized" : 
+                        !_llamaServer.IsServerReady ? "server not ready" : "invalid director slot";
+            Console.Error.WriteLine($"GenerateActionsAsync: Cannot generate actions - LLM {reason}");
             return null;
         }
 
@@ -150,17 +170,30 @@ public class LLMActionExecutor : IDisposable
 
             Console.WriteLine($"LLMActionExecutor: Requesting actions from Director LLM...");
 
-            // Request from LLM
-            var response = await RequestFromLLMAsync(
-                _directorSlotId,
-                systemPrompt,
-                userPrompt,
-                gbnf,
-                timeoutSeconds: 30);
+            // Request from LLM with retry on empty response
+            string? response = null;
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                response = await RequestFromLLMAsync(
+                    _directorSlotId,
+                    systemPrompt,
+                    userPrompt,
+                    gbnf,
+                    timeoutSeconds: 30);
+
+                if (!string.IsNullOrWhiteSpace(response))
+                    break;
+                    
+                if (attempt == 0)
+                {
+                    Console.WriteLine("LLMActionExecutor: Director returned empty response, retrying after delay...");
+                    await Task.Delay(200); // Wait before retry
+                }
+            }
 
             if (string.IsNullOrWhiteSpace(response))
             {
-                Console.WriteLine("LLMActionExecutor: Director returned empty response");
+                Console.Error.WriteLine("LLMActionExecutor: Director returned empty response after retry");
                 return null;
             }
 
@@ -193,8 +226,11 @@ public class LLMActionExecutor : IDisposable
         PlayerAction? previousAction = null,
         List<string>? availableActions = null)
     {
-        if (!_useLLM || !_isInitialized || !_llamaServer.IsServerReady)
+        if (!_useLLM || !_isInitialized || !_llamaServer.IsServerReady || _narratorSlotId < 0)
         {
+            var reason = !_useLLM ? "disabled" : !_isInitialized ? "not initialized" : 
+                        !_llamaServer.IsServerReady ? "server not ready" : "invalid narrator slot";
+            Console.Error.WriteLine($"GenerateNarrativeAsync: Cannot generate narrative - LLM {reason}");
             return null;
         }
 
@@ -215,17 +251,30 @@ public class LLMActionExecutor : IDisposable
 
             Console.WriteLine($"LLMActionExecutor: Requesting narrative from Narrator LLM...");
 
-            // Request from LLM
-            var response = await RequestFromLLMAsync(
-                _narratorSlotId,
-                systemPrompt,
-                userPrompt,
-                gbnf,
-                timeoutSeconds: 20);
+            // Request from LLM with retry on empty response
+            string? response = null;
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                response = await RequestFromLLMAsync(
+                    _narratorSlotId,
+                    systemPrompt,
+                    userPrompt,
+                    gbnf,
+                    timeoutSeconds: 20);
+
+                if (!string.IsNullOrWhiteSpace(response))
+                    break;
+                    
+                if (attempt == 0)
+                {
+                    Console.WriteLine("LLMActionExecutor: Narrator returned empty response, retrying after delay...");
+                    await Task.Delay(200); // Wait before retry
+                }
+            }
 
             if (string.IsNullOrWhiteSpace(response))
             {
-                Console.WriteLine("LLMActionExecutor: Narrator returned empty response");
+                Console.Error.WriteLine("LLMActionExecutor: Narrator returned empty response after retry");
                 return null;
             }
 
@@ -386,7 +435,10 @@ Generate the JSON outcome for this action.";
         var tcs = new TaskCompletionSource<string>();
         var responseBuilder = new System.Text.StringBuilder();
 
-        // Set up callbacks
+        // Set up callbacks with proper event handler references for cleanup
+        EventHandler<TokenStreamedEventArgs>? tokenHandler = null;
+        EventHandler<RequestCompletedEventArgs>? completedHandler = null;
+
         void OnToken(string token, int slot)
         {
             if (slot == slotId)
@@ -410,9 +462,12 @@ Generate the JSON outcome for this action.";
             }
         }
 
-        // Register callbacks
-        _llamaServer.TokenStreamed += (sender, e) => OnToken(e.Token, e.SlotId);
-        _llamaServer.RequestCompleted += (sender, e) => OnCompleted(e.SlotId, e.FullResponse, e.WasCancelled);
+        // Register callbacks with stored references for cleanup
+        tokenHandler = (sender, e) => OnToken(e.Token, e.SlotId);
+        completedHandler = (sender, e) => OnCompleted(e.SlotId, e.FullResponse, e.WasCancelled);
+        
+        _llamaServer.TokenStreamed += tokenHandler;
+        _llamaServer.RequestCompleted += completedHandler;
 
         try
         {
@@ -468,6 +523,14 @@ Generate the JSON outcome for this action.";
             _totalDurationMs += duration;
             return null;
         }
+        finally
+        {
+            // CRITICAL: Unregister event handlers to prevent memory leaks and race conditions
+            if (tokenHandler != null)
+                _llamaServer.TokenStreamed -= tokenHandler;
+            if (completedHandler != null)
+                _llamaServer.RequestCompleted -= completedHandler;
+        }
     }
 
     /// <summary>
@@ -477,14 +540,26 @@ Generate the JSON outcome for this action.";
     {
         try
         {
+            // Check for empty response first
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                Console.Error.WriteLine("LLMActionExecutor: Cannot parse empty JSON response");
+                LLMLogger.LogParseError("Director", "", "Empty response from LLM");
+                return null;
+            }
+            
             // Try to extract JSON if there's extra text
             var jsonStart = json.IndexOf('{');
             var jsonEnd = json.LastIndexOf('}');
             
-            if (jsonStart >= 0 && jsonEnd > jsonStart)
+            if (jsonStart < 0 || jsonEnd <= jsonStart)
             {
-                json = json.Substring(jsonStart, jsonEnd - jsonStart + 1);
+                Console.Error.WriteLine($"LLMActionExecutor: No valid JSON found in response (length: {json.Length})");
+                LLMLogger.LogParseError("Director", json, "No valid JSON structure found");
+                return null;
             }
+            
+            json = json.Substring(jsonStart, jsonEnd - jsonStart + 1);
 
             using var document = JsonDocument.Parse(json);
             var root = document.RootElement;
@@ -525,14 +600,26 @@ Generate the JSON outcome for this action.";
     {
         try
         {
+            // Check for empty response first
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                Console.Error.WriteLine("LLMActionExecutor: Cannot parse empty JSON response");
+                LLMLogger.LogParseError("Director", "", "Empty response from LLM");
+                return null;
+            }
+            
             // Try to extract JSON if there's extra text
             var jsonStart = json.IndexOf('{');
             var jsonEnd = json.LastIndexOf('}');
             
-            if (jsonStart >= 0 && jsonEnd > jsonStart)
+            if (jsonStart < 0 || jsonEnd <= jsonStart)
             {
-                json = json.Substring(jsonStart, jsonEnd - jsonStart + 1);
+                Console.Error.WriteLine($"LLMActionExecutor: No valid JSON found in outcome response (length: {json.Length})");
+                LLMLogger.LogParseError("Director", json, "No valid JSON structure found in outcome");
+                return null;
             }
+            
+            json = json.Substring(jsonStart, jsonEnd - jsonStart + 1);
 
             using var document = JsonDocument.Parse(json);
             var root = document.RootElement;

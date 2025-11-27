@@ -37,6 +37,8 @@ public static class LLMLogger
             {
                 File.WriteAllText(_logFilePath, $"=== LLM Communication Log ===\n");
                 File.AppendAllText(_logFilePath, $"Session started: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n");
+                File.AppendAllText(_logFilePath, $"OS: {Environment.OSVersion}\n");
+                File.AppendAllText(_logFilePath, $"Platform: {Environment.Is64BitOperatingSystem} bit\n");
                 File.AppendAllText(_logFilePath, $"{'=',-80}\n\n");
             }
             
@@ -46,6 +48,121 @@ public static class LLMLogger
         {
             Console.Error.WriteLine($"LLMLogger: Failed to initialize: {ex.Message}");
             _isEnabled = false;
+        }
+    }
+    
+    /// <summary>
+    /// Logs server initialization start.
+    /// </summary>
+    public static void LogServerInitStart(string modelAlias, string serverPath, string modelPath)
+    {
+        if (!_isEnabled || _logFilePath == null) return;
+        
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"\n[{DateTime.Now:HH:mm:ss.fff}] SERVER INITIALIZATION START");
+            sb.AppendLine($"{'-',-80}");
+            sb.AppendLine($"Model Alias: {modelAlias}");
+            sb.AppendLine($"Server Path: {serverPath}");
+            sb.AppendLine($"Model Path: {modelPath}");
+            sb.AppendLine($"Server Exists: {File.Exists(serverPath)}");
+            sb.AppendLine($"Model Exists: {File.Exists(modelPath)}");
+            sb.AppendLine($"{'=',-80}\n");
+            
+            lock (_lockObject)
+            {
+                File.AppendAllText(_logFilePath, sb.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMLogger: Failed to log server init: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Logs server initialization result.
+    /// </summary>
+    public static void LogServerInitResult(bool success, string message, double durationSeconds)
+    {
+        if (!_isEnabled || _logFilePath == null) return;
+        
+        try
+        {
+            var sb = new StringBuilder();
+            var status = success ? "✓ SUCCESS" : "✗ FAILED";
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] SERVER INITIALIZATION - {status}");
+            sb.AppendLine($"{'-',-80}");
+            sb.AppendLine($"Duration: {durationSeconds:F1}s");
+            sb.AppendLine($"Message: {message}");
+            sb.AppendLine($"Server Ready: {success}");
+            sb.AppendLine($"{'=',-80}\n");
+            
+            lock (_lockObject)
+            {
+                File.AppendAllText(_logFilePath, sb.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMLogger: Failed to log server result: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Logs slot/instance creation.
+    /// </summary>
+    public static void LogInstanceCreated(int slotId, string role, bool success, string? errorMessage = null)
+    {
+        if (!_isEnabled || _logFilePath == null) return;
+        
+        try
+        {
+            var sb = new StringBuilder();
+            var status = success ? "✓" : "✗";
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] {status} Instance Created: Slot {slotId} ({role})");
+            if (!success && errorMessage != null)
+            {
+                sb.AppendLine($"  Error: {errorMessage}");
+            }
+            sb.AppendLine();
+            
+            lock (_lockObject)
+            {
+                File.AppendAllText(_logFilePath, sb.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMLogger: Failed to log instance creation: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Logs slot busy/empty response issues.
+    /// </summary>
+    public static void LogSlotIssue(int slotId, string issueType, string details)
+    {
+        if (!_isEnabled || _logFilePath == null) return;
+        
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] ⚠ SLOT ISSUE - Slot {slotId}");
+            sb.AppendLine($"{'-',-80}");
+            sb.AppendLine($"Issue Type: {issueType}");
+            sb.AppendLine($"Details: {details}");
+            sb.AppendLine($"{'=',-80}\n");
+            
+            lock (_lockObject)
+            {
+                File.AppendAllText(_logFilePath, sb.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMLogger: Failed to log slot issue: {ex.Message}");
         }
     }
     

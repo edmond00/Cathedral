@@ -664,12 +664,15 @@ public class LocationTravelGameController : IDisposable
         }
         else
         {
-            Console.Error.WriteLine("RenderLocationUIAsync: LLM executor not available");
+            Console.Error.WriteLine("RenderLocationUIAsync: LLM executor not available yet");
             _isLoadingLLMContent = false;
             _terminalUI?.ShowResultMessage(
-                "ERROR: LLM system not initialized.\n\n" +
-                "The location interaction system requires LLM to be enabled.\n" +
-                "Restart the application with LLM enabled.\n\n" +
+                "PLEASE WAIT: LLM system is still initializing...\n\n" +
+                "The LLM server is starting up. This can take 30-60 seconds.\n" +
+                "Please wait a moment and try clicking on the location again.\n\n" +
+                "If this message persists after a minute, check that:\n" +
+                "- The LLM server started successfully\n" +
+                "- Check logs/llm_communication_*.log for errors\n\n" +
                 "Click anywhere to return to world view...",
                 false
             );
