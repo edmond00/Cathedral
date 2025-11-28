@@ -591,6 +591,13 @@ public class LocationTravelGameController : IDisposable
         // Reset exit flag
         _waitingForClickToExit = false;
         
+        // Reset LLM conversation histories to avoid pattern repetition from previous locations
+        if (_llmActionExecutor != null)
+        {
+            Console.WriteLine("LocationTravelGameController: Resetting LLM instances for new location");
+            _llmActionExecutor.ResetForNewLocation();
+        }
+        
         // Show terminal for interaction
         if (_core.Terminal != null)
         {

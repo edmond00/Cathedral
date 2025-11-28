@@ -19,6 +19,7 @@ public class LlamaServerManager : IDisposable
     private int _nextSlotId = 0;
     private bool _isServerReady = false;
     private bool _disposed = false;
+    private int _contextSize = 4096; // Default context size for both server and instances
     
     // Model aliases and their corresponding file names
     private readonly Dictionary<string, string> _modelAliases = new()
@@ -36,7 +37,29 @@ public class LlamaServerManager : IDisposable
     
     public bool IsServerReady => _isServerReady;
     
+    /// <summary>
+    /// Gets the context size configured for the server and instances
+    /// </summary>
+    public int ContextSize => _contextSize;
+    
     // Helper methods for logging
+    
+    /// <summary>
+    /// Checks if an error message indicates a context length overflow
+    /// </summary>
+    private bool IsContextLengthError(string errorMessage)
+    {
+        if (string.IsNullOrEmpty(errorMessage)) return false;
+        
+        var lowerMessage = errorMessage.ToLower();
+        return lowerMessage.Contains("context") && lowerMessage.Contains("length") ||
+               lowerMessage.Contains("context") && lowerMessage.Contains("size") ||
+               lowerMessage.Contains("exceeds") && lowerMessage.Contains("context") ||
+               lowerMessage.Contains("too long") ||
+               lowerMessage.Contains("max context") ||
+               lowerMessage.Contains("context window");
+    }
+    
     private async Task LogErrorAsync(string message)
     {
         Console.Error.WriteLine(message);
@@ -118,9 +141,14 @@ public class LlamaServerManager : IDisposable
     /// <param name="modelAlias">Model alias to use ("tiny" or "medium"). Defaults to "tiny"</param>
     /// <param name="modelPath">Optional custom model path (overrides alias)</param>
     /// <param name="serverPath">Optional custom server executable path</param>
-    public async Task StartServerAsync(Action<bool>? onServerReady = null, string? modelAlias = null, string? modelPath = null, string? serverPath = null)
+    /// <param name="contextSize">Maximum context size in tokens (default: 4096). Used for both server and all instances.</param>
+    public async Task StartServerAsync(Action<bool>? onServerReady = null, string? modelAlias = null, string? modelPath = null, string? serverPath = null, int contextSize = 4096)
     {
         var startTime = DateTime.Now;
+        
+        // Store the context size for use in instances
+        _contextSize = contextSize;
+        
         try
         {
             // Check if server is already running
@@ -168,7 +196,7 @@ public class LlamaServerManager : IDisposable
             }
             
             // Start the server process
-            await StartServerProcessAsync(resolvedServerPath, resolvedModelPath);
+            await StartServerProcessAsync(resolvedServerPath, resolvedModelPath, _contextSize);
             
             // Wait for server to be ready
             var isReady = await WaitForServerReadyAsync();
@@ -203,8 +231,9 @@ public class LlamaServerManager : IDisposable
     /// Creates a new LLM instance with the given system prompt
     /// </summary>
     /// <param name="systemPrompt">The system prompt for this instance</param>
+    /// <param name="maxContextTokens">Maximum context size in tokens (default: uses server's context size)</param>
     /// <returns>The slot ID for this instance</returns>
-    public async Task<int> CreateInstanceAsync(string systemPrompt)
+    public async Task<int> CreateInstanceAsync(string systemPrompt, int? maxContextTokens = null)
     {
         if (!_isServerReady)
         {
@@ -212,7 +241,10 @@ public class LlamaServerManager : IDisposable
         }
         
         var slotId = _nextSlotId++;
-        var instance = new LlamaInstance(slotId, systemPrompt);
+        var instance = new LlamaInstance(slotId, systemPrompt)
+        {
+            MaxContextTokens = maxContextTokens ?? _contextSize
+        };
         _instances[slotId] = instance;
         
         // Pre-cache the system prompt
@@ -274,6 +306,18 @@ public class LlamaServerManager : IDisposable
         {
             var startTime = DateTime.Now;
             var fullResponse = new StringBuilder();
+            
+            // Check if conversation history is too long and trim if needed
+            int estimatedTokens = instance.EstimateConversationTokens();
+            if (estimatedTokens > instance.MaxContextTokens - 512)
+            {
+                await LogWarningAsync($"Slot {slotId}: Conversation exceeds context window ({estimatedTokens} tokens). Trimming history...");
+                int removedCount = instance.TrimToFitContext();
+                await LogWarningAsync($"Slot {slotId}: Removed {removedCount} old messages to fit context window");
+                
+                // Log to LLM logger
+                try { LLMLogger.LogSlotIssue(slotId, "Context Trimmed", $"Removed {removedCount} messages, estimated {estimatedTokens} tokens"); } catch { }
+            }
             
             // Create the base request
             var requestData = new Dictionary<string, object>
@@ -387,6 +431,47 @@ public class LlamaServerManager : IDisposable
         }
         catch (HttpRequestException ex)
         {
+            // Check if this is a context length error
+            if (ex.StatusCode == System.Net.HttpStatusCode.BadRequest && IsContextLengthError(ex.Message))
+            {
+                await LogWarningAsync($"Slot {slotId}: Context length exceeded. Attempting to trim and retry...");
+                
+                // Force aggressive trimming
+                int removedCount = instance.TrimToFitContext(instance.MaxContextTokens / 2);
+                await LogWarningAsync($"Slot {slotId}: Aggressively trimmed {removedCount} messages. Retrying request...");
+                
+                // Retry the request with trimmed history
+                try
+                {
+                    // Recursive call with trimmed history (user message already added)
+                    // Remove the user message first to avoid duplication
+                    if (instance.ConversationHistory.Count > 0)
+                    {
+                        var lastMsg = instance.ConversationHistory[instance.ConversationHistory.Count - 1];
+                        dynamic dynMsg = lastMsg;
+                        if (dynMsg.role == "user")
+                        {
+                            instance.ConversationHistory.RemoveAt(instance.ConversationHistory.Count - 1);
+                        }
+                    }
+                    
+                    // Reset active state for retry
+                    instance.IsActive = false;
+                    instance.CurrentRequestCancellation = null;
+                    
+                    await LogWarningAsync($"Slot {slotId}: Retrying request after context trim...");
+                    await ContinueRequestAsync(slotId, userMessage, onTokenStreamed, onCompleted, gbnfGrammar);
+                    return; // Exit after retry
+                }
+                catch (Exception retryEx)
+                {
+                    await LogErrorAsync($"Slot {slotId}: Retry after context trim failed: {retryEx.Message}");
+                    onCompleted?.Invoke(slotId, "", false);
+                    RequestCompleted?.Invoke(this, new RequestCompletedEventArgs(slotId, "", DateTime.Now - DateTime.Now, false));
+                    return;
+                }
+            }
+            
             // Network/HTTP error - server may be overloaded or connection lost
             await LogErrorAsync($"HTTP Error in request for slot {slotId}: {ex.Message}");
             if (ex.StatusCode.HasValue)
@@ -463,6 +548,49 @@ public class LlamaServerManager : IDisposable
         
         instance.Reset();
         Console.WriteLine($"✓ Reset instance {slotId}.");
+    }
+    
+    /// <summary>
+    /// Manually trims an instance's conversation history to fit within context window.
+    /// Removes oldest messages while keeping system prompt and recent messages.
+    /// </summary>
+    /// <param name="slotId">The instance slot ID</param>
+    /// <param name="maxTokens">Optional: custom max tokens (defaults to instance's MaxContextTokens - 512)</param>
+    /// <returns>Number of messages removed</returns>
+    public int TrimInstanceContext(int slotId, int? maxTokens = null)
+    {
+        if (!_instances.TryGetValue(slotId, out var instance))
+        {
+            throw new ArgumentException($"Instance with slot ID {slotId} not found.");
+        }
+        
+        if (instance.IsActive)
+        {
+            throw new InvalidOperationException($"Cannot trim instance {slotId} while it's processing a request.");
+        }
+        
+        int estimatedBefore = instance.EstimateConversationTokens();
+        int removedCount = instance.TrimToFitContext(maxTokens);
+        int estimatedAfter = instance.EstimateConversationTokens();
+        
+        Console.WriteLine($"✓ Trimmed instance {slotId}: removed {removedCount} messages ({estimatedBefore} → {estimatedAfter} tokens).");
+        
+        return removedCount;
+    }
+    
+    /// <summary>
+    /// Gets the estimated token count for an instance's conversation history.
+    /// </summary>
+    /// <param name="slotId">The instance slot ID</param>
+    /// <returns>Estimated token count</returns>
+    public int GetInstanceTokenCount(int slotId)
+    {
+        if (!_instances.TryGetValue(slotId, out var instance))
+        {
+            throw new ArgumentException($"Instance with slot ID {slotId} not found.");
+        }
+        
+        return instance.EstimateConversationTokens();
     }
     
     /// <summary>
@@ -622,14 +750,14 @@ public class LlamaServerManager : IDisposable
         return (resolvedServerPath, resolvedModelPath);
     }
     
-    private async Task StartServerProcessAsync(string serverPath, string modelPath)
+    private async Task StartServerProcessAsync(string serverPath, string modelPath, int contextSize)
     {
         var logFilePath = Path.Combine(Environment.CurrentDirectory, "llama-server.log");
         
         var startInfo = new ProcessStartInfo
         {
             FileName = serverPath,
-            Arguments = $"-m \"{modelPath}\" -c 4096 --port 8080 --cache-type-k f16 --cache-type-v f16 --repeat-penalty 1.1 --frequency-penalty 0.5 --dry-multiplier 0.8 -ngl 99 --slot-save-path cache --verbose",
+            Arguments = $"-m \"{modelPath}\" -c {contextSize} --port 8080 --cache-type-k f16 --cache-type-v f16 --repeat-penalty 1.1 --frequency-penalty 0.5 --dry-multiplier 0.8 -ngl 99 --slot-save-path cache --verbose",
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,

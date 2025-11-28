@@ -68,6 +68,7 @@ public class LlamaInstance
     public bool IsActive { get; internal set; }
     public DateTime CreatedAt { get; }
     public DateTime LastUsed { get; internal set; }
+    public int MaxContextTokens { get; set; } = 4096; // Default context size
     
     internal CancellationTokenSource? CurrentRequestCancellation { get; set; }
     
@@ -118,5 +119,105 @@ public class LlamaInstance
     public object[] GetMessages()
     {
         return ConversationHistory.ToArray();
+    }
+    
+    /// <summary>
+    /// Estimates the number of tokens in a text string.
+    /// Uses rough approximation: 1 token ≈ 4 characters for English text.
+    /// </summary>
+    private int EstimateTokenCount(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return 0;
+        // Rough approximation: average 4 characters per token
+        return (int)Math.Ceiling(text.Length / 4.0);
+    }
+    
+    /// <summary>
+    /// Estimates the total token count of the current conversation history.
+    /// </summary>
+    public int EstimateConversationTokens()
+    {
+        int total = 0;
+        foreach (dynamic message in ConversationHistory)
+        {
+            string content = message.content;
+            total += EstimateTokenCount(content);
+            total += 4; // Add overhead for message formatting
+        }
+        return total;
+    }
+    
+    /// <summary>
+    /// Trims the conversation history to fit within the context window.
+    /// Keeps the system prompt and most recent messages.
+    /// </summary>
+    /// <param name="maxTokens">Maximum tokens to keep (defaults to MaxContextTokens - 512 for response buffer)</param>
+    /// <returns>Number of messages removed</returns>
+    public int TrimToFitContext(int? maxTokens = null)
+    {
+        int targetTokens = maxTokens ?? (MaxContextTokens - 512); // Reserve 512 tokens for response
+        int currentTokens = EstimateConversationTokens();
+        
+        if (currentTokens <= targetTokens)
+            return 0; // No trimming needed
+        
+        // Always keep system prompt (first message)
+        var systemPrompt = ConversationHistory[0];
+        var messages = ConversationHistory.Skip(1).ToList();
+        
+        int removedCount = 0;
+        
+        // Remove oldest messages (after system prompt) until we fit
+        while (messages.Count > 0 && currentTokens > targetTokens)
+        {
+            var removed = messages[0];
+            messages.RemoveAt(0);
+            removedCount++;
+            
+            // Recalculate token count
+            dynamic msg = removed;
+            string content = msg.content;
+            currentTokens -= EstimateTokenCount(content) + 4;
+        }
+        
+        // Rebuild conversation history
+        ConversationHistory.Clear();
+        ConversationHistory.Add(systemPrompt);
+        ConversationHistory.AddRange(messages);
+        
+        return removedCount;
+    }
+    
+    /// <summary>
+    /// Creates a trimmed copy of the conversation history that fits in the context window.
+    /// Does not modify the original history.
+    /// </summary>
+    /// <param name="maxTokens">Maximum tokens to keep</param>
+    /// <returns>Trimmed message array</returns>
+    public object[] GetTrimmedMessages(int? maxTokens = null)
+    {
+        int targetTokens = maxTokens ?? (MaxContextTokens - 512);
+        int currentTokens = EstimateConversationTokens();
+        
+        if (currentTokens <= targetTokens)
+            return GetMessages();
+        
+        // Always keep system prompt
+        var result = new List<object> { ConversationHistory[0] };
+        var messages = ConversationHistory.Skip(1).ToList();
+        
+        // Remove oldest messages until we fit
+        while (messages.Count > 0 && currentTokens > targetTokens)
+        {
+            var removed = messages[0];
+            messages.RemoveAt(0);
+            
+            dynamic msg = removed;
+            string content = msg.content;
+            currentTokens -= EstimateTokenCount(content) + 4;
+        }
+        
+        result.AddRange(messages);
+        return result.ToArray();
     }
 }

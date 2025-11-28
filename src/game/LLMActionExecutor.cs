@@ -713,6 +713,41 @@ Generate the JSON outcome for this action.";
         _useLLM = enabled;
         Console.WriteLine($"LLMActionExecutor: LLM usage {(enabled ? "enabled" : "disabled")}");
     }
+    
+    /// <summary>
+    /// Resets the conversation history for both Director and Narrator instances.
+    /// Should be called when entering a new location to prevent pattern repetition.
+    /// </summary>
+    public void ResetForNewLocation()
+    {
+        if (!_isInitialized || !_llamaServer.IsServerReady)
+        {
+            Console.WriteLine("LLMActionExecutor: Cannot reset - not initialized or server not ready");
+            return;
+        }
+        
+        try
+        {
+            // Reset both Director and Narrator conversation histories
+            if (_directorSlotId >= 0)
+            {
+                _llamaServer.ResetInstance(_directorSlotId);
+                Console.WriteLine($"LLMActionExecutor: Reset Director slot {_directorSlotId} for new location");
+                LLMLogger.LogSlotIssue(_directorSlotId, "Reset", "Conversation history cleared for new location");
+            }
+            
+            if (_narratorSlotId >= 0)
+            {
+                _llamaServer.ResetInstance(_narratorSlotId);
+                Console.WriteLine($"LLMActionExecutor: Reset Narrator slot {_narratorSlotId} for new location");
+                LLMLogger.LogSlotIssue(_narratorSlotId, "Reset", "Conversation history cleared for new location");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMActionExecutor: Error resetting instances: {ex.Message}");
+        }
+    }
 
     /// <summary>
     /// Logs session statistics when the executor is disposed.
