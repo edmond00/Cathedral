@@ -179,7 +179,7 @@ public class LLMActionExecutor : IDisposable
                     systemPrompt,
                     userPrompt,
                     gbnf,
-                    timeoutSeconds: 30);
+                    timeoutSeconds: 60);
 
                 if (!string.IsNullOrWhiteSpace(response))
                     break;
@@ -260,7 +260,7 @@ public class LLMActionExecutor : IDisposable
                     systemPrompt,
                     userPrompt,
                     gbnf,
-                    timeoutSeconds: 20);
+                    timeoutSeconds: 60);
 
                 if (!string.IsNullOrWhiteSpace(response))
                     break;
@@ -337,7 +337,7 @@ Generate the JSON outcome for this action.";
             systemPrompt,
             userPrompt,
             gbnfGrammar,
-            timeoutSeconds: 25);
+            timeoutSeconds: 60);
 
         if (string.IsNullOrWhiteSpace(response))
         {

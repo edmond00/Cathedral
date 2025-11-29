@@ -13,12 +13,12 @@ public static class Blueprint2Constraint
 {
     /// <summary>
     /// Generates JSON field constraints for LLM action generation based on current game state
-    /// Each action gets a pre-determined success consequence and 3 skill candidates to choose from
+    /// Each action gets a pre-determined success consequence and 5 skill candidates to choose from
     /// </summary>
     /// <param name="blueprint">The location blueprint defining structure and rules</param>
     /// <param name="currentSublocation">Player's current sublocation ID</param>
     /// <param name="currentStates">Current active states mapped by category ID</param>
-    /// <param name="skillCandidates">Array of 3-skill arrays, one set of candidates per action</param>
+    /// <param name="skillCandidates">Array of 5-skill arrays, one set of candidates per action</param>
     /// <param name="numberOfActions">Number of action choices to generate (default: 7)</param>
     /// <returns>Array field defining valid action choices structure</returns>
     public static JsonField GenerateActionConstraints(
@@ -38,8 +38,8 @@ public static class Blueprint2Constraint
             throw new ArgumentException("Skill candidates array cannot be null or empty", nameof(skillCandidates));
         if (skillCandidates.Length != numberOfActions)
             throw new ArgumentException($"Skill candidates array must have exactly {numberOfActions} elements", nameof(skillCandidates));
-        if (skillCandidates.Any(sc => sc == null || sc.Length != 3))
-            throw new ArgumentException("Each skill candidate set must contain exactly 3 skills", nameof(skillCandidates));
+        if (skillCandidates.Any(sc => sc == null || sc.Length != 5))
+            throw new ArgumentException("Each skill candidate set must contain exactly 5 skills", nameof(skillCandidates));
         if (!blueprint.Sublocations.ContainsKey(currentSublocation))
             throw new ArgumentException($"Sublocation '{currentSublocation}' not found in blueprint", nameof(currentSublocation));
         if (numberOfActions < 1 || numberOfActions > 20)
@@ -70,11 +70,11 @@ public static class Blueprint2Constraint
                 sampledConsequence,
                 
                 // 2. Skill candidates preview (constant, for LLM awareness)
-                new InlineConstantStringField("skill_candidates", skillCandidatesStr, "the 3 skills you can choose from for this action"),
+                new InlineConstantStringField("skill_candidates", skillCandidatesStr, "the 5 skills you can choose from for this action"),
                 
-                // 3. Related skill (LLM chooses from 3 candidates)
+                // 3. Related skill (LLM chooses from 5 candidates)
                 // CRITICAL: Keep JSON field name as "related_skill" but use unique GBNF rule name
-                new ChoiceField<string>("related_skill", skillCandidates[i], "choose the most appropriate skill from the 3 candidates provided for this action") 
+                new ChoiceField<string>("related_skill", skillCandidates[i], "choose the most appropriate skill from the 5 candidates provided for this action") 
                 { 
                     RuleName = $"related_skill_{i + 1}" // Unique GBNF rule per action
                 },

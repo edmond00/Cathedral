@@ -15,7 +15,7 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         private JsonField? _currentConstraints;
         private string? _currentHints;
         private string? _currentGbnf;
-        private string[][]? _currentSkills; // Each action has 3 skill candidates
+        private string[][]? _currentSkills; // Each action has 5 skill candidates
         private bool _isFirstRequest = true;
 
         public DirectorPromptConstructor(
@@ -62,7 +62,7 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
 
         /// <summary>
         /// Gets the currently sampled skill candidates for debugging/logging
-        /// Returns an array where each element contains 3 skill options
+        /// Returns an array where each element contains 5 skill options
         /// </summary>
         public string[][] GetCurrentSkillCandidates()
         {
@@ -73,11 +73,11 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
 
         /// <summary>
         /// Regenerates the JSON constraints, hints, and GBNF grammar based on current game state
-        /// Samples 3 skill candidates for each action to give LLM choice while maintaining variety
+        /// Samples 5 skill candidates for each action to give LLM choice while maintaining variety
         /// </summary>
         public void RegenerateConstraints()
         {
-            // Sample 3 skill candidates for each action
+            // Sample 5 skill candidates for each action
             _currentSkills = SampleSkillCandidates(_numberOfActions);
             
             _currentConstraints = Blueprint2Constraint.GenerateActionConstraints(
@@ -87,8 +87,8 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         }
 
         /// <summary>
-        /// Randomly samples 3 skill candidates for each action
-        /// Returns an array where each element is a 3-skill array
+        /// Randomly samples 5 skill candidates for each action
+        /// Returns an array where each element is a 5-skill array
         /// Samples without replacement to avoid skill repetition
         /// </summary>
         private string[][] SampleSkillCandidates(int actionCount)
@@ -102,14 +102,14 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
             for (int i = 0; i < actionCount; i++)
             {
                 // Refill the pool if we've used all skills
-                if (availableSkills.Count < 3)
+                if (availableSkills.Count < 5)
                 {
                     availableSkills = new List<string>(allSkills);
                 }
                 
-                // Sample 3 different skills for this action
-                var candidates = new string[3];
-                for (int j = 0; j < 3; j++)
+                // Sample 5 different skills for this action
+                var candidates = new string[5];
+                for (int j = 0; j < 5; j++)
                 {
                     int index = _skillRng.Next(availableSkills.Count);
                     candidates[j] = availableSkills[index];
@@ -219,10 +219,18 @@ Focus on mechanical variety and strategic options that fit the current situation
             // Generation instructions for initial exploration
             contextBuilder.AppendLine($"TASK: Generate {_numberOfActions} diverse action options for the current situation.");
             contextBuilder.AppendLine();
+            
+            // Show all possible skills that can be used
+            var allUniqueSkills = _currentSkills!
+                .SelectMany(sc => sc)
+                .Distinct()
+                .OrderBy(s => s);
+            contextBuilder.AppendLine($"ALL AVAILABLE SKILLS: {string.Join(", ", allUniqueSkills)}");
+            contextBuilder.AppendLine();
+            
             contextBuilder.AppendLine("IMPORTANT: Each action has been assigned:");
             contextBuilder.AppendLine("- A pre-determined SUCCESS consequence (already fixed in the constraints)");
-            contextBuilder.AppendLine("- A pre-determined FAILURE consequence (already fixed in the constraints)");
-            contextBuilder.AppendLine("- 3 skill candidates to choose from");
+            contextBuilder.AppendLine("- 5 skill candidates to choose from (LLM chooses 1)");
             contextBuilder.AppendLine();
             contextBuilder.AppendLine("Skill candidates for each action:");
             for (int i = 0; i < _currentSkills!.Length; i++)
@@ -326,10 +334,18 @@ Focus on mechanical variety and strategic options that fit the current situation
             // Generation instructions focused on follow-up actions
             contextBuilder.AppendLine($"TASK: Generate {_numberOfActions} action options that DIRECTLY BUILD UPON the previous action.");
             contextBuilder.AppendLine();
+            
+            // Show all possible skills that can be used
+            var allUniqueSkills = _currentSkills!
+                .SelectMany(sc => sc)
+                .Distinct()
+                .OrderBy(s => s);
+            contextBuilder.AppendLine($"ALL AVAILABLE SKILLS: {string.Join(", ", allUniqueSkills)}");
+            contextBuilder.AppendLine();
+            
             contextBuilder.AppendLine("IMPORTANT: Each action has been assigned:");
             contextBuilder.AppendLine("- A pre-determined SUCCESS consequence (already fixed)");
-            contextBuilder.AppendLine("- A pre-determined FAILURE consequence (already fixed)");
-            contextBuilder.AppendLine("- 3 skill candidates to choose from");
+            contextBuilder.AppendLine("- 5 skill candidates to choose from (LLM chooses 1)");
             contextBuilder.AppendLine();
             contextBuilder.AppendLine("Skill candidates for each action:");
             for (int i = 0; i < _currentSkills!.Length; i++)
