@@ -1,5 +1,6 @@
 using Cathedral.Glyph.Microworld.LocationSystem;
 using Cathedral.LLM.JsonConstraints;
+using Cathedral.Game;
 
 namespace Cathedral.Glyph.Microworld.LocationSystem
 {
@@ -51,6 +52,6 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         /// <summary>
         /// Constructs the user prompt for the current situation
         /// </summary>
-        public abstract string ConstructPrompt(PlayerAction? previousAction = null, List<string>? availableActions = null);
+        public abstract string ConstructPrompt(PlayerAction? previousAction = null, List<ActionInfo>? availableActions = null);
     }
 }

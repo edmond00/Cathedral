@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
+using Cathedral.Game;
 
 namespace Cathedral.Glyph.Interaction
 {
@@ -159,7 +160,7 @@ namespace Cathedral.Glyph.Interaction
         /// <summary>
         /// Renders the action menu with mouse-hover support
         /// </summary>
-        public void RenderActionMenu(List<string> actions, int? hoveredIndex = null)
+        public void RenderActionMenu(List<ActionInfo> actions, int? hoveredIndex = null)
         {
             _actionRegions.Clear();
             
@@ -177,32 +178,23 @@ namespace Cathedral.Glyph.Interaction
             
             for (int i = 0; i < actions.Count && y < maxY; i++)
             {
-                string action = actions[i];
+                ActionInfo actionInfo = actions[i];
+                string displayText = actionInfo.GetFormattedDisplayText();
                 bool isHovered = hoveredIndex.HasValue && hoveredIndex.Value == i;
                 Vector4 color = isHovered ? ActionHoverColor : ActionNormalColor;
                 
-                // Format: "1. Action text here"
-                string prefix = $"{i + 1}. ";
-                int prefixLen = prefix.Length;
-                int maxActionWidth = TERMINAL_WIDTH - 4 - prefixLen; // Margins + prefix
+                // No number prefix, just the formatted text
+                int maxActionWidth = TERMINAL_WIDTH - 4; // Just margins
                 
                 // Wrap action text if needed
-                List<string> actionLines = WrapText(action, maxActionWidth);
+                List<string> actionLines = WrapText(displayText, maxActionWidth);
                 
                 int startY = y;
                 
-                // Render first line with number prefix
-                if (actionLines.Count > 0)
+                // Render all lines
+                for (int lineIdx = 0; lineIdx < actionLines.Count && y < maxY; lineIdx++)
                 {
-                    _terminal.Text(2, y, prefix + actionLines[0], color, BackgroundColor);
-                    y++;
-                }
-                
-                // Render continuation lines with indentation
-                for (int lineIdx = 1; lineIdx < actionLines.Count && y < maxY; lineIdx++)
-                {
-                    string indent = new string(' ', prefixLen);
-                    _terminal.Text(2, y, indent + actionLines[lineIdx], color, BackgroundColor);
+                    _terminal.Text(2, y, actionLines[lineIdx], color, BackgroundColor);
                     y++;
                 }
                 
@@ -259,7 +251,7 @@ namespace Cathedral.Glyph.Interaction
         /// <summary>
         /// Updates hover state based on mouse position and re-renders actions if needed
         /// </summary>
-        public void UpdateHover(int mouseX, int mouseY, List<string> actions)
+        public void UpdateHover(int mouseX, int mouseY, List<ActionInfo> actions)
         {
             int? newHoveredIndex = GetHoveredAction(mouseX, mouseY);
             
@@ -494,7 +486,7 @@ namespace Cathedral.Glyph.Interaction
             string sublocation,
             int turnCount,
             string narrative,
-            List<string> actions,
+            List<ActionInfo> actions,
             string timeOfDay = "",
             string weather = "",
             string statusMessage = "")

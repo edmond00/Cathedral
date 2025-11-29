@@ -178,9 +178,6 @@ namespace Cathedral.Glyph
                 char glyph = GetGlyphAt(vertexIndex);
                 var color3 = GetColorAt(vertexIndex);
                 Vector4 color = new Vector4(color3.X / 255.0f, color3.Y / 255.0f, color3.Z / 255.0f, 1.0f);
-                
-                Console.WriteLine($"Mouse: ({mousePos.X:F0}, {mousePos.Y:F0}) -> Vertex {vertexIndex} at {pos}");
-                
                 VertexHoverEvent?.Invoke(vertexIndex, glyph, color);
             }
             else

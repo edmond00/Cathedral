@@ -331,8 +331,6 @@ namespace Cathedral.Glyph
             // Ensure we don't exceed the total border height
             var titleBarHeight = Math.Min(correctedTitleBarHeight, totalBorderHeight);
             
-            Console.WriteLine($"Border Analysis: Total={totalBorderHeight}px, Naive={naiveEstimate}px, Corrected={titleBarHeight}px");
-            
             return (titleBarHeight, totalBorderWidth, totalBorderHeight);
         }
         

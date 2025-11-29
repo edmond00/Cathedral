@@ -1,4 +1,5 @@
 using System.Text;
+using Cathedral.Game;
 
 namespace Cathedral.Glyph.Microworld.LocationSystem
 {
@@ -110,7 +111,7 @@ You do NOT:
         /// <summary>
         /// Constructs the Narrator prompt for creating immersive story presentation
         /// </summary>
-        public override string ConstructPrompt(PlayerAction? previousAction = null, List<string>? availableActions = null)
+        public override string ConstructPrompt(PlayerAction? previousAction = null, List<ActionInfo>? availableActions = null)
         {
             var currentSublocationData = Blueprint.Sublocations[CurrentSublocation];
             var promptBuilder = new StringBuilder();
@@ -182,7 +183,8 @@ You do NOT:
                 promptBuilder.AppendLine("AVAILABLE ACTION CHOICES (to present naturally in your narrative):");
                 for (int i = 0; i < availableActions.Count; i++)
                 {
-                    promptBuilder.AppendLine($"{i + 1}. {availableActions[i]}");
+                    // Use the formatted display text with skill prefix
+                    promptBuilder.AppendLine($"{i + 1}. {availableActions[i].GetFormattedDisplayText()}");
                 }
                 promptBuilder.AppendLine();
             }

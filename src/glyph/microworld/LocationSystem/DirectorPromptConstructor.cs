@@ -1,4 +1,5 @@
 using Cathedral.LLM.JsonConstraints;
+using Cathedral.Game;
 using System.Text;
 
 namespace Cathedral.Glyph.Microworld.LocationSystem
@@ -14,7 +15,7 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         private JsonField? _currentConstraints;
         private string? _currentHints;
         private string? _currentGbnf;
-        private string[]? _currentSkills;
+        private string[][]? _currentSkills; // Each action has 3 skill candidates
         private bool _isFirstRequest = true;
 
         public DirectorPromptConstructor(
@@ -60,9 +61,10 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         }
 
         /// <summary>
-        /// Gets the currently selected skills for each action
+        /// Gets the currently sampled skill candidates for debugging/logging
+        /// Returns an array where each element contains 3 skill options
         /// </summary>
-        public string[] GetCurrentSkills()
+        public string[][] GetCurrentSkillCandidates()
         {
             if (_currentSkills == null)
                 RegenerateConstraints();
@@ -71,12 +73,12 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
 
         /// <summary>
         /// Regenerates the JSON constraints, hints, and GBNF grammar based on current game state
-        /// Samples new skills for each action to ensure variety
+        /// Samples 3 skill candidates for each action to give LLM choice while maintaining variety
         /// </summary>
         public void RegenerateConstraints()
         {
-            // Sample a different skill for each action
-            _currentSkills = SampleRandomSkills(_numberOfActions);
+            // Sample 3 skill candidates for each action
+            _currentSkills = SampleSkillCandidates(_numberOfActions);
             
             _currentConstraints = Blueprint2Constraint.GenerateActionConstraints(
                 Blueprint, CurrentSublocation, CurrentStates, _currentSkills, _numberOfActions);
@@ -85,25 +87,38 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         }
 
         /// <summary>
-        /// Randomly samples multiple skills from the available skills, one for each action
+        /// Randomly samples 3 skill candidates for each action
+        /// Returns an array where each element is a 3-skill array
+        /// Samples without replacement to avoid skill repetition
         /// </summary>
-        private string[] SampleRandomSkills(int count)
+        private string[][] SampleSkillCandidates(int actionCount)
         {
-            var skills = new[]
-            {
-                "strength", "dexterity", "constitution",
-                "intelligence", "wisdom", "charisma",
-                "athletics", "stealth", "perception",
-                "survival", "nature_lore", "tracking",
-                "navigation", "climbing", "swimming"
-            };
+            var allSkills = Blueprint2Constraint.GetAvailableSkillsList();
             
-            var sampledSkills = new string[count];
-            for (int i = 0; i < count; i++)
+            // Create a temporary list for sampling without replacement
+            var availableSkills = new List<string>(allSkills);
+            
+            var skillCandidates = new string[actionCount][];
+            for (int i = 0; i < actionCount; i++)
             {
-                sampledSkills[i] = skills[_skillRng.Next(skills.Length)];
+                // Refill the pool if we've used all skills
+                if (availableSkills.Count < 3)
+                {
+                    availableSkills = new List<string>(allSkills);
+                }
+                
+                // Sample 3 different skills for this action
+                var candidates = new string[3];
+                for (int j = 0; j < 3; j++)
+                {
+                    int index = _skillRng.Next(availableSkills.Count);
+                    candidates[j] = availableSkills[index];
+                    availableSkills.RemoveAt(index);
+                }
+                
+                skillCandidates[i] = candidates;
             }
-            return sampledSkills;
+            return skillCandidates;
         }
 
         /// <summary>
@@ -142,7 +157,7 @@ Focus on mechanical variety and strategic options that fit the current situation
         /// <summary>
         /// Constructs the Director prompt for generating action choices
         /// </summary>
-        public override string ConstructPrompt(PlayerAction? previousAction = null, List<string>? availableActions = null)
+        public override string ConstructPrompt(PlayerAction? previousAction = null, List<ActionInfo>? availableActions = null)
         {
             // Mark that we've moved past the first request if there's a previous action
             if (previousAction != null && _isFirstRequest)
@@ -204,12 +219,22 @@ Focus on mechanical variety and strategic options that fit the current situation
             // Generation instructions for initial exploration
             contextBuilder.AppendLine($"TASK: Generate {_numberOfActions} diverse action options for the current situation.");
             contextBuilder.AppendLine();
-            contextBuilder.AppendLine("IMPORTANT: Each action is assigned a specific skill:");
+            contextBuilder.AppendLine("IMPORTANT: Each action has been assigned:");
+            contextBuilder.AppendLine("- A pre-determined SUCCESS consequence (already fixed in the constraints)");
+            contextBuilder.AppendLine("- A pre-determined FAILURE consequence (already fixed in the constraints)");
+            contextBuilder.AppendLine("- 3 skill candidates to choose from");
+            contextBuilder.AppendLine();
+            contextBuilder.AppendLine("Skill candidates for each action:");
             for (int i = 0; i < _currentSkills!.Length; i++)
             {
-                contextBuilder.AppendLine($"  Action {i + 1}: {_currentSkills[i]} skill");
+                contextBuilder.AppendLine($"  Action {i + 1}: {string.Join(", ", _currentSkills[i])}");
             }
-            contextBuilder.AppendLine("Each action must creatively involve its assigned skill in this context.");
+            contextBuilder.AppendLine();
+            contextBuilder.AppendLine("Your task: Generate SHORT actions (3-8 words) that:");
+            contextBuilder.AppendLine("1. Use one of the provided skill candidates appropriately");
+            contextBuilder.AppendLine("2. Logically lead to the pre-determined success consequence");
+            contextBuilder.AppendLine("3. Make sense if the failure consequence occurs instead");
+            contextBuilder.AppendLine("4. Are contextually appropriate for the current location and situation");
             contextBuilder.AppendLine();
             contextBuilder.AppendLine("Consider different approaches:");
             contextBuilder.AppendLine("- Exploration and movement");
@@ -301,12 +326,21 @@ Focus on mechanical variety and strategic options that fit the current situation
             // Generation instructions focused on follow-up actions
             contextBuilder.AppendLine($"TASK: Generate {_numberOfActions} action options that DIRECTLY BUILD UPON the previous action.");
             contextBuilder.AppendLine();
-            contextBuilder.AppendLine("IMPORTANT: Each action is assigned a specific skill:");
+            contextBuilder.AppendLine("IMPORTANT: Each action has been assigned:");
+            contextBuilder.AppendLine("- A pre-determined SUCCESS consequence (already fixed)");
+            contextBuilder.AppendLine("- A pre-determined FAILURE consequence (already fixed)");
+            contextBuilder.AppendLine("- 3 skill candidates to choose from");
+            contextBuilder.AppendLine();
+            contextBuilder.AppendLine("Skill candidates for each action:");
             for (int i = 0; i < _currentSkills!.Length; i++)
             {
-                contextBuilder.AppendLine($"  Action {i + 1}: {_currentSkills[i]} skill");
+                contextBuilder.AppendLine($"  Action {i + 1}: {string.Join(", ", _currentSkills[i])}");
             }
-            contextBuilder.AppendLine("Each action must creatively involve its assigned skill while building upon what just happened.");
+            contextBuilder.AppendLine();
+            contextBuilder.AppendLine("Generate SHORT actions (3-8 words) that:");
+            contextBuilder.AppendLine("1. Build upon what just happened");
+            contextBuilder.AppendLine("2. Use one skill from the candidates appropriately");
+            contextBuilder.AppendLine("3. Lead logically to the pre-determined consequences");
             contextBuilder.AppendLine();
             contextBuilder.AppendLine("CRITICAL REQUIREMENTS:");
             contextBuilder.AppendLine("- Actions should be logical next steps following what the player just did");

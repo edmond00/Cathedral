@@ -166,9 +166,60 @@ public class LlamaServerManager : IDisposable
             
             Console.WriteLine("Starting llama server...");
             
-            // Set the current model alias
-            _currentModelAlias = modelAlias ?? "tiny";
-            Console.WriteLine($"Using model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
+            // Set the current model alias - auto-select largest if null
+            if (modelAlias == null)
+            {
+                var largestModel = FindLargestGgufModel();
+                if (largestModel != null)
+                {
+                    // Check if this model is in our aliases
+                    var matchingAlias = _modelAliases.FirstOrDefault(kvp => kvp.Value == largestModel).Key;
+                    if (matchingAlias != null)
+                    {
+                        _currentModelAlias = matchingAlias;
+                        // Get file size for display
+                        try
+                        {
+                            var projectRoot = AppDomain.CurrentDomain.BaseDirectory;
+                            while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "models")))
+                            {
+                                projectRoot = Directory.GetParent(projectRoot)?.FullName;
+                            }
+                            if (projectRoot != null)
+                            {
+                                var fileInfo = new FileInfo(Path.Combine(projectRoot, "models", largestModel));
+                                Console.WriteLine($"Auto-selected largest model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]}) - {fileInfo.Length / (1024.0 * 1024.0):F1} MB");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Auto-selected largest model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
+                            }
+                        }
+                        catch
+                        {
+                            Console.WriteLine($"Auto-selected largest model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
+                        }
+                    }
+                    else
+                    {
+                        // Model not in aliases - this shouldn't happen with the current logic,
+                        // but handle it gracefully by falling back to tiny
+                        _currentModelAlias = "tiny";
+                        Console.WriteLine($"Auto-selected model not in aliases, using default: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
+                    }
+                }
+                else
+                {
+                    // Fallback to tiny if no models found
+                    _currentModelAlias = "tiny";
+                    Console.WriteLine($"No models found for auto-selection, using default: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
+                }
+            }
+            else
+            {
+                _currentModelAlias = modelAlias;
+                Console.WriteLine($"Using model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
+            }
             
             // Find paths
             var (resolvedServerPath, resolvedModelPath) = ResolvePaths(serverPath, modelPath, _currentModelAlias);
@@ -701,6 +752,51 @@ public class LlamaServerManager : IDisposable
     
     // Private helper methods
     
+    /// <summary>
+    /// Finds the largest GGUF model file in the models directory
+    /// </summary>
+    /// <returns>The filename of the largest GGUF model, or null if none found</returns>
+    private string? FindLargestGgufModel()
+    {
+        try
+        {
+            var currentDir = AppDomain.CurrentDomain.BaseDirectory;
+            var projectRoot = currentDir;
+            
+            // Navigate up to find the directory containing the models folder
+            while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "models")))
+            {
+                projectRoot = Directory.GetParent(projectRoot)?.FullName;
+            }
+            
+            if (projectRoot == null)
+            {
+                return null;
+            }
+            
+            var modelsDir = Path.Combine(projectRoot, "models");
+            var ggufFiles = Directory.GetFiles(modelsDir, "*.gguf", SearchOption.TopDirectoryOnly);
+            
+            if (ggufFiles.Length == 0)
+            {
+                return null;
+            }
+            
+            // Find the largest file by size
+            var largestFile = ggufFiles
+                .Select(f => new FileInfo(f))
+                .OrderByDescending(fi => fi.Length)
+                .First();
+            
+            return largestFile.Name;
+        }
+        catch (Exception ex)
+        {
+            LogWarning($"Error finding largest GGUF model: {ex.Message}");
+            return null;
+        }
+    }
+    
     private async Task<bool> IsServerRunningAsync()
     {
         try
@@ -736,7 +832,15 @@ public class LlamaServerManager : IDisposable
         string resolvedModelPath;
         if (modelPath != null)
         {
-            resolvedModelPath = modelPath;
+            // If modelPath is just a filename (not a full path), resolve it relative to models directory
+            if (!Path.IsPathRooted(modelPath) && !modelPath.Contains(Path.DirectorySeparatorChar) && !modelPath.Contains(Path.AltDirectorySeparatorChar))
+            {
+                resolvedModelPath = Path.Combine(projectRoot, "models", modelPath);
+            }
+            else
+            {
+                resolvedModelPath = modelPath;
+            }
         }
         else if (_modelAliases.TryGetValue(modelAlias, out var modelFileName))
         {

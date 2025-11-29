@@ -7,6 +7,12 @@ public abstract record JsonField(string Name, string? Hint = null)
 {
     public string Name { get; init; } = Name ?? throw new ArgumentNullException(nameof(Name));
     public string? Hint { get; init; } = Hint;
+    
+    /// <summary>
+    /// Optional custom rule name for GBNF generation.
+    /// If null, uses Name. Allows multiple fields with same JSON name but different GBNF rules.
+    /// </summary>
+    public string? RuleName { get; init; } = null;
 }
 
 /// <summary>

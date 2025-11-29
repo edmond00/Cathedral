@@ -194,7 +194,8 @@ public static class JsonConstraintGenerator
     
     private static string GenerateFieldRule(JsonField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        // Use custom rule name if provided, otherwise use field name
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         
         return field switch
         {
@@ -219,7 +220,7 @@ public static class JsonConstraintGenerator
     
     private static string GenerateDigitFieldRule(DigitField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         
         // Generate GBNF rule for exactly N digits as a quoted string (to allow leading zeros)
         var digitPattern = string.Join(" ", Enumerable.Repeat("[0-9]", field.DigitCount));
@@ -232,7 +233,7 @@ public static class JsonConstraintGenerator
 
     private static string GenerateConstantIntFieldRule(ConstantIntField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         var rule = $"{ruleName} ::= \"{field.Value}\"";
         
         // Constant fields generate a literal numeric value with quotes in GBNF rule
@@ -243,7 +244,7 @@ public static class JsonConstraintGenerator
 
     private static string GenerateConstantFloatFieldRule(ConstantFloatField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         var rule = $"{ruleName} ::= \"{field.Value}\"";
         
         // Constant fields generate a literal numeric value with quotes in GBNF rule
@@ -262,7 +263,7 @@ public static class JsonConstraintGenerator
 
     private static string GenerateConstantStringFieldRule(ConstantStringField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         var escapedValue = field.Value.Replace("\"", "\\\""); // Escape quotes in the string value
         var rule = $"{ruleName} ::= \"\\\"{escapedValue}\\\"\"";
         
@@ -274,7 +275,7 @@ public static class JsonConstraintGenerator
 
     private static string GenerateStringFieldRule(StringField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         var stringRuleName = $"string-{field.MinLength}-{field.MaxLength}";
         
         if (!processedRules.Any(r => r.StartsWith(stringRuleName)))
@@ -300,7 +301,8 @@ public static class JsonConstraintGenerator
     
     private static string GenerateStringChoiceFieldRule(ChoiceField<string> field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        // Use custom rule name if provided, otherwise use field name
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         var choices = field.Options.Select(opt => "\"\\\"" + opt + "\\\"\"");
         var rule = $"{ruleName} ::= {string.Join(" | ", choices)}";
         processedRules.Add(rule);
@@ -310,7 +312,8 @@ public static class JsonConstraintGenerator
     
     private static string GenerateIntChoiceFieldRule(ChoiceField<int> field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        // Use custom rule name if provided, otherwise use field name
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         var choices = field.Options.Select(opt => $"\"{opt}\"");
         var rule = $"{ruleName} ::= {string.Join(" | ", choices)}";
         processedRules.Add(rule);
@@ -320,7 +323,7 @@ public static class JsonConstraintGenerator
     
     private static string GenerateTemplateStringFieldRule(TemplateStringField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         // For template strings, we need to identify the <generated> placeholder
         var template = field.Template;
         var generatedMarker = "<generated>";
@@ -349,7 +352,7 @@ public static class JsonConstraintGenerator
     
     private static string GenerateArrayFieldRule(ArrayField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         var elementRuleName = GenerateFieldRule(field.ElementType, processedRules);
         
         var rule = new StringBuilder();
@@ -400,7 +403,7 @@ public static class JsonConstraintGenerator
     
     private static string GenerateTupleFieldRule(TupleField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         
         // Generate rules for each element
         var elementRules = new List<string>();
@@ -427,7 +430,8 @@ public static class JsonConstraintGenerator
     
     private static string GenerateCompositeFieldRule(CompositeField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        // Use custom rule name if provided, otherwise use field name
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         var rule = new StringBuilder();
         rule.Append(ruleName + " ::= \"{\"");
         
@@ -448,7 +452,7 @@ public static class JsonConstraintGenerator
     
     private static string GenerateVariantFieldRule(VariantField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         var variants = field.Variants.Select(variant => GenerateFieldRule(variant, processedRules));
         var rule = $"{ruleName} ::= {string.Join(" | ", variants)}";
         processedRules.Add(rule);
@@ -458,7 +462,7 @@ public static class JsonConstraintGenerator
     
     private static string GenerateOptionalFieldRule(OptionalField field, HashSet<string> processedRules)
     {
-        var ruleName = SanitizeRuleName(field.Name);
+        var ruleName = SanitizeRuleName(field.RuleName ?? field.Name);
         var innerRuleName = GenerateFieldRule(field.InnerField, processedRules);
         var rule = $"{ruleName} ::= {innerRuleName}?";
         processedRules.Add(rule);

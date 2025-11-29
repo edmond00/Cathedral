@@ -13,19 +13,19 @@ public static class Blueprint2Constraint
 {
     /// <summary>
     /// Generates JSON field constraints for LLM action generation based on current game state
-    /// Each action gets a randomly sampled skill from the provided list
+    /// Each action gets a pre-determined success consequence and 3 skill candidates to choose from
     /// </summary>
     /// <param name="blueprint">The location blueprint defining structure and rules</param>
     /// <param name="currentSublocation">Player's current sublocation ID</param>
     /// <param name="currentStates">Current active states mapped by category ID</param>
-    /// <param name="relatedSkills">Array of skills to use for each action (one per action)</param>
+    /// <param name="skillCandidates">Array of 3-skill arrays, one set of candidates per action</param>
     /// <param name="numberOfActions">Number of action choices to generate (default: 7)</param>
     /// <returns>Array field defining valid action choices structure</returns>
     public static JsonField GenerateActionConstraints(
         LocationBlueprint blueprint,
         string currentSublocation,
         Dictionary<string, string> currentStates,
-        string[] relatedSkills,
+        string[][] skillCandidates,
         int numberOfActions = 7)
     {
         if (blueprint == null)
@@ -34,27 +34,64 @@ public static class Blueprint2Constraint
             throw new ArgumentException("Current sublocation cannot be null or empty", nameof(currentSublocation));
         if (currentStates == null)
             throw new ArgumentNullException(nameof(currentStates));
-        if (relatedSkills == null || relatedSkills.Length == 0)
-            throw new ArgumentException("Related skills array cannot be null or empty", nameof(relatedSkills));
-        if (relatedSkills.Length != numberOfActions)
-            throw new ArgumentException($"Related skills array must have exactly {numberOfActions} elements", nameof(relatedSkills));
+        if (skillCandidates == null || skillCandidates.Length == 0)
+            throw new ArgumentException("Skill candidates array cannot be null or empty", nameof(skillCandidates));
+        if (skillCandidates.Length != numberOfActions)
+            throw new ArgumentException($"Skill candidates array must have exactly {numberOfActions} elements", nameof(skillCandidates));
+        if (skillCandidates.Any(sc => sc == null || sc.Length != 3))
+            throw new ArgumentException("Each skill candidate set must contain exactly 3 skills", nameof(skillCandidates));
         if (!blueprint.Sublocations.ContainsKey(currentSublocation))
             throw new ArgumentException($"Sublocation '{currentSublocation}' not found in blueprint", nameof(currentSublocation));
         if (numberOfActions < 1 || numberOfActions > 20)
             throw new ArgumentException("Number of actions must be between 1 and 20", nameof(numberOfActions));
 
-        // Create individual action fields, each with its own hardcoded skill
-        // Each action at position i MUST use skill[i]
-        // Use InlineConstantStringField to avoid rule name collisions - it inlines the value instead of creating a reusable rule
+        // Generate all possible success consequences once
+        var allSuccessConsequences = GenerateAllSuccessConsequences(blueprint, currentSublocation, currentStates);
+        
+        // Create individual action fields with pre-determined outcomes
         var actionFields = new JsonField[numberOfActions];
+        var rng = new Random();
+        
         for (int i = 0; i < numberOfActions; i++)
         {
+            // Sample a random success consequence for this action (create a new instance)
+            var consequenceIndex = rng.Next(allSuccessConsequences.Count);
+            var baseConsequence = allSuccessConsequences[consequenceIndex];
+            
+            // CRITICAL: Give unique GBNF rule name to create different success outcomes per action
+            // This ensures each action can have a different success outcome
+            var sampledConsequence = RenameConsequenceField(baseConsequence, $"success_consequence_{i + 1}");
+            
+            // Format skill candidates as a readable string for hints
+            string skillCandidatesStr = string.Join(", ", skillCandidates[i]);
+            
             actionFields[i] = new CompositeField($"action_{i + 1}",
-                new InlineConstantStringField("related_skill", relatedSkills[i]),
-                new TemplateStringField("action_text", "try to <generated>", 10, 280, "a short description of the action related to a specific skill , written in 2nd person"),
-                new ChoiceField<string>("difficulty", new[] { "trivial", "easy", "basic", "moderate", "hard", "very_hard", "extreme" }, "how challenging this action is"),
-                GenerateSuccessConstraints(blueprint, currentSublocation, currentStates),
-                GenerateFailureConstraints()
+                // 1. Pre-determined success consequence (constant, not chosen by LLM)
+                sampledConsequence,
+                
+                // 2. Skill candidates preview (constant, for LLM awareness)
+                new InlineConstantStringField("skill_candidates", skillCandidatesStr, "the 3 skills you can choose from for this action"),
+                
+                // 3. Related skill (LLM chooses from 3 candidates)
+                // CRITICAL: Keep JSON field name as "related_skill" but use unique GBNF rule name
+                new ChoiceField<string>("related_skill", skillCandidates[i], "choose the most appropriate skill from the 3 candidates provided for this action") 
+                { 
+                    RuleName = $"related_skill_{i + 1}" // Unique GBNF rule per action
+                },
+                
+                // 4. Action text (LLM generates based on skill and consequences)
+                new TemplateStringField("action_text", "try to <generated>", 5, 100, 
+                    "Generate a SHORT action (3-8 words) that uses the chosen skill and logically leads to the success consequence. Write in 2nd person. The action should make sense with both success and failure outcomes."),
+                
+                // 5. Difficulty (LLM chooses freely)
+                new ChoiceField<string>("difficulty", new[] { "trivial", "easy", "basic", "moderate", "hard", "very_hard", "extreme" }, 
+                    "estimate how challenging this action would be for an average adventurer"),
+                
+                // 6. Failure consequence (LLM chooses from list) - LAST FIELD
+                new ChoiceField<string>("failure_consequence", GetFailureConsequenceOptions(), "choose the most likely failure consequence if this action fails")
+                {
+                    RuleName = $"failure_consequence_{i + 1}" // Unique GBNF rule per action
+                }
             );
         }
 
@@ -65,10 +102,179 @@ public static class Blueprint2Constraint
     }
 
     /// <summary>
-    /// Generates constraints for successful action consequences
-    /// Returns a VariantField where LLM must choose ONE consequence type
+    /// Generates a list of all possible success consequence fields as inline constants
+    /// Each consequence is returned as a complete JsonField ready to be inserted
     /// </summary>
-    private static JsonField GenerateSuccessConstraints(
+    private static List<JsonField> GenerateAllSuccessConsequences(
+        LocationBlueprint blueprint,
+        string currentSublocation,
+        Dictionary<string, string> currentStates)
+    {
+        var consequences = new List<JsonField>();
+
+        // State change consequences
+        foreach (var (categoryId, category) in blueprint.StateCategories)
+        {
+            if (CanInfluenceStateCategory(blueprint, currentSublocation, categoryId))
+            {
+                var possibleStates = GetAccessibleStates(category, currentStates);
+                foreach (var stateId in possibleStates)
+                {
+                    consequences.Add(new CompositeField("success_consequence",
+                        new InlineConstantStringField("consequence_type", $"state_change_{categoryId}", 
+                            $"state change: {categoryId} -> {stateId}"),
+                        new InlineConstantStringField("category", categoryId),
+                        new InlineConstantStringField("new_state", stateId)
+                    ));
+                }
+            }
+        }
+
+        // Movement consequences
+        var currentSubLocation = blueprint.Sublocations[currentSublocation];
+        var accessibleSublocations = new List<string>();
+        
+        if (blueprint.SublocationConnections.ContainsKey(currentSublocation))
+        {
+            foreach (var connectedId in blueprint.SublocationConnections[currentSublocation])
+            {
+                var connected = blueprint.Sublocations[connectedId];
+                if (CanAccessSublocation(connected, currentStates))
+                {
+                    accessibleSublocations.Add(connectedId);
+                }
+            }
+        }
+        
+        foreach (var (sublocationId, sublocation) in blueprint.Sublocations)
+        {
+            if (sublocation.ParentSublocationId == currentSublocation &&
+                CanAccessSublocation(sublocation, currentStates))
+            {
+                accessibleSublocations.Add(sublocationId);
+            }
+        }
+        
+        if (currentSubLocation.ParentSublocationId != null)
+        {
+            accessibleSublocations.Add(currentSubLocation.ParentSublocationId);
+        }
+        
+        foreach (var sublocationId in accessibleSublocations)
+        {
+            consequences.Add(new CompositeField("success_consequence",
+                new InlineConstantStringField("consequence_type", "movement", 
+                    $"move to sublocation: {sublocationId}"),
+                new InlineConstantStringField("new_sublocation", sublocationId)
+            ));
+        }
+
+        // Item gain consequences
+        var availableItems = GetAvailableContent(blueprint, currentSublocation, currentStates)
+            .SelectMany(content => content.AvailableItems)
+            .Distinct()
+            .ToList();
+        
+        foreach (var item in availableItems)
+        {
+            consequences.Add(new CompositeField("success_consequence",
+                new InlineConstantStringField("consequence_type", "item_gained", 
+                    $"gain item: {item}"),
+                new InlineConstantStringField("item_name", item)
+            ));
+        }
+
+        // Companion gain consequences
+        var availableCompanions = GetAvailableContent(blueprint, currentSublocation, currentStates)
+            .SelectMany(content => content.AvailableCompanions)
+            .Distinct()
+            .ToList();
+        
+        foreach (var companion in availableCompanions)
+        {
+            consequences.Add(new CompositeField("success_consequence",
+                new InlineConstantStringField("consequence_type", "companion_gained", 
+                    $"gain companion: {companion}"),
+                new InlineConstantStringField("companion_name", companion)
+            ));
+        }
+
+        // Quest gain consequences
+        var availableQuests = GetAvailableContent(blueprint, currentSublocation, currentStates)
+            .SelectMany(content => content.AvailableQuests)
+            .Distinct()
+            .ToList();
+        
+        foreach (var quest in availableQuests)
+        {
+            consequences.Add(new CompositeField("success_consequence",
+                new InlineConstantStringField("consequence_type", "quest_gained", 
+                    $"gain quest: {quest}"),
+                new InlineConstantStringField("quest_name", quest)
+            ));
+        }
+
+        // Always include "none" option
+        consequences.Add(new CompositeField("success_consequence",
+            new InlineConstantStringField("consequence_type", "none", 
+                "no special consequence, just narrative progression")
+        ));
+
+        return consequences;
+    }
+
+    /// <summary>
+    /// Gets all possible failure consequence types for LLM to choose from
+    /// </summary>
+    private static string[] GetFailureConsequenceOptions()
+    {
+        return new[] { 
+            "injured", 
+            "lost", 
+            "equipment_loss", 
+            "exhaustion", 
+            "attacked", 
+            "disease", 
+        };
+    }
+
+    /// <summary>
+    /// Renames a success consequence field to create a unique GBNF rule per action
+    /// This allows each action to have a different pre-determined success outcome
+    /// </summary>
+    private static JsonField RenameConsequenceField(JsonField consequence, string newName)
+    {
+        if (consequence is CompositeField composite)
+        {
+            // Create new instances of all fields with the new name
+            var newFields = new JsonField[composite.Fields.Length];
+            for (int i = 0; i < composite.Fields.Length; i++)
+            {
+                var field = composite.Fields[i];
+                if (field is InlineConstantStringField inlineConst)
+                {
+                    newFields[i] = new InlineConstantStringField(inlineConst.Name, inlineConst.Value, inlineConst.Hint);
+                }
+                else
+                {
+                    newFields[i] = field; // Other types can be safely reused
+                }
+            }
+            // Keep JSON field name as "success_consequence" but use unique GBNF rule name
+            return new CompositeField("success_consequence", newFields, "the pre-determined success consequence for this action")
+            {
+                RuleName = newName // Unique GBNF rule per action
+            };
+        }
+        return consequence;
+    }
+
+    /// <summary>
+    /// OLD METHOD - Generates constraints for successful action consequences
+    /// Returns a VariantField where LLM must choose ONE consequence type
+    /// KEPT FOR REFERENCE - NOT USED ANYMORE
+    /// </summary>
+    private static JsonField GenerateSuccessConstraints_OLD(
         LocationBlueprint blueprint,
         string currentSublocation,
         Dictionary<string, string> currentStates)
@@ -141,42 +347,7 @@ public static class Blueprint2Constraint
         return new VariantField("success_consequences", variants.ToArray(), "what happens if this action succeeds - choose ONE consequence type among: state change, movement, item gained, companion gained, quest gained, or none");
     }
 
-    /// <summary>
-    /// Generates constraints for failure consequences
-    /// Returns a VariantField where LLM must choose ONE failure type
-    /// </summary>
-    private static JsonField GenerateFailureConstraints()
-    {
-        return new VariantField("failure_consequences", new CompositeField[] {
-            new CompositeField("failure_damage",
-                new InlineConstantStringField("consequence_type", "damage", "identifies which type of consequence occurred"),
-                new StringField("description", 5, 50, "brief description of physical harm taken")
-            ),
-            new CompositeField("failure_lost",
-                new InlineConstantStringField("consequence_type", "lost", "identifies which type of consequence occurred"),
-                new StringField("description", 5, 50, "brief description of becoming disoriented or lost")
-            ),
-            new CompositeField("failure_injured",
-                new InlineConstantStringField("consequence_type", "injured", "identifies which type of consequence occurred"),
-                new StringField("description", 5, 50, "brief description of injury sustained")
-            ),
-            new CompositeField("failure_startled_wildlife",
-                new InlineConstantStringField("consequence_type", "startled_wildlife", "identifies which type of consequence occurred"),
-                new StringField("description", 5, 50, "brief description of wildlife disturbance")
-            ),
-            new CompositeField("failure_equipment_loss",
-                new InlineConstantStringField("consequence_type", "equipment_loss", "identifies which type of consequence occurred"),
-                new StringField("description", 5, 50, "brief description of equipment damage or loss")
-            ),
-            new CompositeField("failure_exhaustion",
-                new InlineConstantStringField("consequence_type", "exhaustion", "identifies which type of consequence occurred"),
-                new StringField("description", 5, 50, "brief description of fatigue or exhaustion")
-            ),
-            new CompositeField("failure_none",
-                new InlineConstantStringField("consequence_type", "none", "identifies which type of consequence occurred")
-            )
-        }, "what happens if this action fails - choose ONE consequence type among: damage, lost, injured, startled_wildlife, equipment_loss, exhaustion, or none");
-    }
+
 
     /// <summary>
     /// Generates state change constraints based on what state categories can be influenced
@@ -437,18 +608,30 @@ public static class Blueprint2Constraint
     }
 
     /// <summary>
-    /// Returns available skills for action constraints
+    /// Returns available skills for action constraints as array
     /// </summary>
-    private static string[] GetAvailableSkills()
+    public static string[] GetAvailableSkills()
     {
         return new[]
         {
-            "strength", "dexterity", "constitution",
-            "intelligence", "wisdom", "charisma",
+            "smithing", "crafting", "running",
+            "mathematics", "information inquiring", "charm",
             "athletics", "stealth", "perception",
             "survival", "nature_lore", "tracking",
-            "navigation", "climbing", "swimming"
+            "navigation", "climbing", "swimming",
+            "poetry", "history_lore", "equitation",
+            "astronomy", "body language", "mining",
+            "poisoning", "coprophilia", "politics",
+            "intimidation", "joking", "singing"
         };
+    }
+
+    /// <summary>
+    /// Returns available skills for action constraints as list (for easier manipulation)
+    /// </summary>
+    public static List<string> GetAvailableSkillsList()
+    {
+        return new List<string>(GetAvailableSkills());
     }
 }
 

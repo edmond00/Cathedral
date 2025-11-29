@@ -40,7 +40,7 @@ public class LocationTravelGameController : IDisposable
     private LocationBlueprint? _currentBlueprint;
     
     // UI state for interaction
-    private List<string> _currentActions = new();
+    private List<ActionInfo> _currentActions = new();
     private string _currentNarrative = "";
     private bool _waitingForClickToExit = false;
     private bool _isLoadingLLMContent = false;
@@ -153,7 +153,7 @@ public class LocationTravelGameController : IDisposable
         int? actionIndex = _terminalUI.GetHoveredAction(x, y);
         if (actionIndex.HasValue && actionIndex.Value >= 0 && actionIndex.Value < _currentActions.Count)
         {
-            Console.WriteLine($"LocationTravelGameController: Action {actionIndex.Value + 1} selected: {_currentActions[actionIndex.Value]}");
+            Console.WriteLine($"LocationTravelGameController: Action {actionIndex.Value + 1} selected: {_currentActions[actionIndex.Value].ActionText}");
             ExecuteAction(actionIndex.Value);
         }
     }
@@ -187,7 +187,7 @@ public class LocationTravelGameController : IDisposable
             actionIndex < 0 || actionIndex >= _currentActions.Count)
             return;
         
-        string actionText = _currentActions[actionIndex];
+        string actionText = _currentActions[actionIndex].ActionText;
         
         Console.WriteLine($"LocationTravelGameController: Executing action - {actionText}");
         
@@ -249,7 +249,8 @@ public class LocationTravelGameController : IDisposable
         // Generate new actions (or use provided ones)
         if (result.NewActions != null && result.NewActions.Count > 0)
         {
-            _currentActions = result.NewActions;
+            // Convert List<string> to List<ActionInfo>
+            _currentActions = result.NewActions.Select(a => new ActionInfo(a)).ToList();
         }
         else
         {
@@ -783,7 +784,7 @@ public class LocationTravelGameController : IDisposable
         else
         {
             Console.Error.WriteLine("RegenerateActionsAsync: LLM executor not available");
-            _currentActions = new List<string> { "ERROR: LLM not available" };
+            _currentActions = new List<ActionInfo> { new ActionInfo("ERROR: LLM not available") };
         }
     }
     

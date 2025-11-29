@@ -139,7 +139,7 @@ public class LLMActionExecutor : IDisposable
     /// Generates action choices using Director LLM.
     /// Returns null on failure (caller should use fallback).
     /// </summary>
-    public async Task<List<string>?> GenerateActionsAsync(
+    public async Task<List<ActionInfo>?> GenerateActionsAsync(
         LocationInstanceState currentState,
         LocationBlueprint blueprint,
         PlayerAction? previousAction = null)
@@ -224,7 +224,7 @@ public class LLMActionExecutor : IDisposable
         LocationInstanceState currentState,
         LocationBlueprint blueprint,
         PlayerAction? previousAction = null,
-        List<string>? availableActions = null)
+        List<ActionInfo>? availableActions = null)
     {
         if (!_useLLM || !_isInitialized || !_llamaServer.IsServerReady || _narratorSlotId < 0)
         {
@@ -536,7 +536,7 @@ Generate the JSON outcome for this action.";
     /// <summary>
     /// Parses actions from Director JSON response.
     /// </summary>
-    private List<string>? ParseActionsFromJson(string json)
+    private List<ActionInfo>? ParseActionsFromJson(string json)
     {
         try
         {
@@ -567,15 +567,24 @@ Generate the JSON outcome for this action.";
             // Look for "actions" array
             if (root.TryGetProperty("actions", out var actionsElement))
             {
-                var actions = new List<string>();
+                var actions = new List<ActionInfo>();
+                int actionIndex = 0;
                 foreach (var action in actionsElement.EnumerateArray())
                 {
+                    actionIndex++;
                     if (action.TryGetProperty("action_text", out var textElement))
                     {
                         var text = textElement.GetString();
                         if (!string.IsNullOrWhiteSpace(text))
                         {
-                            actions.Add(text);
+                            // Extract related_skill (now always uses this name in JSON)
+                            string relatedSkill = "";
+                            if (action.TryGetProperty("related_skill", out var skillElement))
+                            {
+                                relatedSkill = skillElement.GetString() ?? "";
+                            }
+                            
+                            actions.Add(new ActionInfo(text, relatedSkill));
                         }
                     }
                 }

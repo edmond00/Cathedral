@@ -343,7 +343,9 @@ static async Task TestForestLocationSystem()
         // Step 2: Narrator presents the situation
         Console.WriteLine("📖 Narrator is crafting the scene...\n");
         
-        var narratorPrompt = narrator.ConstructPrompt(previousAction, actionTexts);
+        // Convert action texts to ActionInfo (with empty skill for now since we're not parsing it)
+        var actionInfos = actionTexts.Select(text => new ActionInfo(text, "")).ToList();
+        var narratorPrompt = narrator.ConstructPrompt(previousAction, actionInfos);
         var narratorGbnf = narrator.GetGbnf(previousAction?.WasSuccessful);
         
         // Log narrator request
