@@ -135,23 +135,25 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         /// </summary>
         public override string GetSystemPrompt()
         {
-            return @"You are the DIRECTOR of a fantasy RPG game. Your role is purely mechanical - you generate structured action options for the player based on the current game state.
+            return @"You are the DIRECTOR of a fantasy RPG game. You generate structured action options based on game state.
 
-Your responsibilities:
-- Analyze the current location, environment, and game state
-- Generate diverse, contextually appropriate action options
-- Provide variety in action types: exploration, interaction, combat preparation, skill use, environmental manipulation, social interaction, etc.
-- Consider different approaches: direct action, careful observation, creative problem-solving, risk/reward balance
-- Ensure actions match the current environment and available opportunities
-- Output only valid JSON in the exact format specified
+CRITICAL REQUIREMENT:
+Each action must be COHERENT with its assigned skill and pre-determined consequences. The action text must logically lead to the success consequence when using the specified skill, and make sense even if the failure consequence occurs instead.
 
-You do NOT:
-- Provide narrative descriptions or storytelling
-- Address the player directly
-- Add flavor text or atmospheric descriptions
-- Make decisions for the player
+Action Text Guidelines:
+- Straightforward and direct (3-8 words)
+- Purely mechanical - describe what the player DOES
+- NO atmospheric descriptions, flavor text, or narrative elements (that's the Narrator's job)
+- Focus on the concrete action being attempted
+- Write in 2nd person
 
-Focus on mechanical variety and strategic options that fit the current situation.";
+Each action has:
+- Skill candidates (choose the most appropriate one)
+- Pre-determined success consequence (your action must lead to this)
+- Variable failure consequence (choose the most likely failure outcome)
+- Difficulty level (estimate based on the action)
+
+Generate diverse action types considering different approaches. Output only valid JSON in the specified format.";
         }
 
         /// <summary>
@@ -185,14 +187,12 @@ Focus on mechanical variety and strategic options that fit the current situation
             var contextBuilder = new StringBuilder();
 
             // Current location details
-            contextBuilder.AppendLine($"CURRENT GAME STATE:");
-            contextBuilder.AppendLine($"Location Type: {Blueprint.LocationType}");
-            contextBuilder.AppendLine($"Current Sublocation: {currentSublocationData.Name}");
-            contextBuilder.AppendLine($"Description: {currentSublocationData.Description}");
+            contextBuilder.AppendLine($"LOCATION: {currentSublocationData.Name} ({Blueprint.LocationType})");
+            contextBuilder.AppendLine($"{currentSublocationData.Description}");
             contextBuilder.AppendLine();
 
             // Environmental states
-            contextBuilder.AppendLine("ENVIRONMENTAL CONDITIONS:");
+            contextBuilder.AppendLine("CONDITIONS:");
             foreach (var (stateCategory, currentValue) in CurrentStates)
             {
                 if (Blueprint.StateCategories.TryGetValue(stateCategory, out var category))
@@ -216,49 +216,21 @@ Focus on mechanical variety and strategic options that fit the current situation
                 contextBuilder.AppendLine();
             }
 
-            // Generation instructions for initial exploration
-            contextBuilder.AppendLine($"TASK: Generate {_numberOfActions} diverse action options for the current situation.");
-            contextBuilder.AppendLine();
-            
             // Show all possible skills that can be used
             var allUniqueSkills = _currentSkills!
                 .SelectMany(sc => sc)
                 .Distinct()
                 .OrderBy(s => s);
-            contextBuilder.AppendLine($"ALL AVAILABLE SKILLS: {string.Join(", ", allUniqueSkills)}");
+            contextBuilder.AppendLine($"AVAILABLE SKILLS: {string.Join(", ", allUniqueSkills)}");
             contextBuilder.AppendLine();
             
-            contextBuilder.AppendLine("IMPORTANT: Each action has been assigned:");
-            contextBuilder.AppendLine("- A pre-determined SUCCESS consequence (already fixed in the constraints)");
-            contextBuilder.AppendLine("- 5 skill candidates to choose from (LLM chooses 1)");
-            contextBuilder.AppendLine();
-            contextBuilder.AppendLine("Skill candidates for each action:");
-            for (int i = 0; i < _currentSkills!.Length; i++)
-            {
-                contextBuilder.AppendLine($"  Action {i + 1}: {string.Join(", ", _currentSkills[i])}");
-            }
-            contextBuilder.AppendLine();
-            contextBuilder.AppendLine("Your task: Generate SHORT actions (3-8 words) that:");
-            contextBuilder.AppendLine("1. Use one of the provided skill candidates appropriately");
-            contextBuilder.AppendLine("2. Logically lead to the pre-determined success consequence");
-            contextBuilder.AppendLine("3. Make sense if the failure consequence occurs instead");
-            contextBuilder.AppendLine("4. Are contextually appropriate for the current location and situation");
-            contextBuilder.AppendLine();
-            contextBuilder.AppendLine("Consider different approaches:");
-            contextBuilder.AppendLine("- Exploration and movement");
-            contextBuilder.AppendLine("- Environmental interaction");
-            contextBuilder.AppendLine("- Skill-based actions");
-            contextBuilder.AppendLine("- Social interaction (if applicable)");
-            contextBuilder.AppendLine("- Preparation and planning");
-            contextBuilder.AppendLine("- Creative problem-solving");
-            contextBuilder.AppendLine("- Risk vs. reward decisions");
+            // Core task
+            contextBuilder.AppendLine("TASK: Generate diverse actions that are coherent with their assigned skills and consequences.");
+            contextBuilder.AppendLine("Consider different approaches based on the situation.");
             contextBuilder.AppendLine();
 
             // Field reference
             contextBuilder.AppendLine(_currentHints);
-            contextBuilder.AppendLine();
-            contextBuilder.AppendLine("Generate a valid JSON response with the above fields. Structure your response as an object with an 'actions' array.");
-            contextBuilder.AppendLine("Respond with valid JSON only, no additional text or explanations.");
 
             return contextBuilder.ToString();
         }
@@ -272,14 +244,12 @@ Focus on mechanical variety and strategic options that fit the current situation
             var contextBuilder = new StringBuilder();
 
             // Current location details
-            contextBuilder.AppendLine($"CURRENT GAME STATE:");
-            contextBuilder.AppendLine($"Location Type: {Blueprint.LocationType}");
-            contextBuilder.AppendLine($"Current Sublocation: {currentSublocationData.Name}");
-            contextBuilder.AppendLine($"Description: {currentSublocationData.Description}");
+            contextBuilder.AppendLine($"LOCATION: {currentSublocationData.Name} ({Blueprint.LocationType})");
+            contextBuilder.AppendLine($"{currentSublocationData.Description}");
             contextBuilder.AppendLine();
 
             // Environmental states
-            contextBuilder.AppendLine("ENVIRONMENTAL CONDITIONS:");
+            contextBuilder.AppendLine("CONDITIONS:");
             foreach (var (stateCategory, currentValue) in CurrentStates)
             {
                 if (Blueprint.StateCategories.TryGetValue(stateCategory, out var category))
@@ -293,25 +263,18 @@ Focus on mechanical variety and strategic options that fit the current situation
             if (previousAction != null)
             {
                 contextBuilder.AppendLine("═══════════════════════════════════════");
-                contextBuilder.AppendLine("PREVIOUS ACTION AND ITS CONSEQUENCES:");
-                contextBuilder.AppendLine("═══════════════════════════════════════");
-                contextBuilder.AppendLine($"Action Taken: {previousAction.ActionText}");
+                contextBuilder.AppendLine("PREVIOUS ACTION:");
+                contextBuilder.AppendLine($"Action: {previousAction.ActionText}");
                 contextBuilder.AppendLine($"Outcome: {(previousAction.WasSuccessful ? "SUCCESS" : "FAILURE")} - {previousAction.Outcome}");
                 
                 if (previousAction.StateChanges.Any())
                 {
-                    contextBuilder.AppendLine();
-                    contextBuilder.AppendLine("State Changes Caused:");
-                    foreach (var (category, newState) in previousAction.StateChanges)
-                    {
-                        contextBuilder.AppendLine($"  • {category} → {newState}");
-                    }
+                    contextBuilder.AppendLine($"State Changes: {string.Join(", ", previousAction.StateChanges.Select(sc => $"{sc.Key} → {sc.Value}"))}");
                 }
 
                 if (!string.IsNullOrEmpty(previousAction.NewSublocation))
                 {
-                    contextBuilder.AppendLine();
-                    contextBuilder.AppendLine($"Location Changed: Now at {previousAction.NewSublocation}");
+                    contextBuilder.AppendLine($"Moved to: {previousAction.NewSublocation}");
                 }
                 contextBuilder.AppendLine("═══════════════════════════════════════");
                 contextBuilder.AppendLine();
@@ -331,56 +294,22 @@ Focus on mechanical variety and strategic options that fit the current situation
                 contextBuilder.AppendLine();
             }
 
-            // Generation instructions focused on follow-up actions
-            contextBuilder.AppendLine($"TASK: Generate {_numberOfActions} action options that DIRECTLY BUILD UPON the previous action.");
-            contextBuilder.AppendLine();
-            
             // Show all possible skills that can be used
             var allUniqueSkills = _currentSkills!
                 .SelectMany(sc => sc)
                 .Distinct()
                 .OrderBy(s => s);
-            contextBuilder.AppendLine($"ALL AVAILABLE SKILLS: {string.Join(", ", allUniqueSkills)}");
+            contextBuilder.AppendLine($"AVAILABLE SKILLS: {string.Join(", ", allUniqueSkills)}");
             contextBuilder.AppendLine();
             
-            contextBuilder.AppendLine("IMPORTANT: Each action has been assigned:");
-            contextBuilder.AppendLine("- A pre-determined SUCCESS consequence (already fixed)");
-            contextBuilder.AppendLine("- 5 skill candidates to choose from (LLM chooses 1)");
-            contextBuilder.AppendLine();
-            contextBuilder.AppendLine("Skill candidates for each action:");
-            for (int i = 0; i < _currentSkills!.Length; i++)
-            {
-                contextBuilder.AppendLine($"  Action {i + 1}: {string.Join(", ", _currentSkills[i])}");
-            }
-            contextBuilder.AppendLine();
-            contextBuilder.AppendLine("Generate SHORT actions (3-8 words) that:");
-            contextBuilder.AppendLine("1. Build upon what just happened");
-            contextBuilder.AppendLine("2. Use one skill from the candidates appropriately");
-            contextBuilder.AppendLine("3. Lead logically to the pre-determined consequences");
-            contextBuilder.AppendLine();
-            contextBuilder.AppendLine("CRITICAL REQUIREMENTS:");
-            contextBuilder.AppendLine("- Actions should be logical next steps following what the player just did");
-            contextBuilder.AppendLine("- Consider the immediate consequences and opportunities created by the previous action");
-            contextBuilder.AppendLine("- If the previous action succeeded, suggest ways to capitalize on or extend that success");
-            contextBuilder.AppendLine("- If the previous action failed, suggest alternative approaches or ways to recover");
-            contextBuilder.AppendLine("- Include options that react to any state changes that occurred");
-            contextBuilder.AppendLine("- Maintain narrative continuity - the player's story should flow naturally");
-            contextBuilder.AppendLine();
-            contextBuilder.AppendLine("Action types to consider:");
-            contextBuilder.AppendLine("- Direct follow-up: Continue or complete what was started");
-            contextBuilder.AppendLine("- Reactive response: Respond to what just happened");
-            contextBuilder.AppendLine("- Alternative approach: Try a different method related to the same goal");
-            contextBuilder.AppendLine("- Exploitation: Take advantage of new opportunities created");
-            contextBuilder.AppendLine("- Investigation: Examine the results or consequences more closely");
-            contextBuilder.AppendLine("- Mitigation: Deal with negative effects or complications");
-            contextBuilder.AppendLine("- Pivot: Change strategy based on what was learned");
+            // Core task
+            contextBuilder.AppendLine("TASK: Generate actions that DIRECTLY BUILD UPON the previous action.");
+            contextBuilder.AppendLine("Actions must be coherent with their assigned skills and consequences.");
+            contextBuilder.AppendLine("Consider approaches that respond to what just happened (follow-up, react, capitalize, recover, investigate, pivot).");
             contextBuilder.AppendLine();
 
             // Field reference
             contextBuilder.AppendLine(_currentHints);
-            contextBuilder.AppendLine();
-            contextBuilder.AppendLine("Generate a valid JSON response with the above fields. Structure your response as an object with an 'actions' array.");
-            contextBuilder.AppendLine("Respond with valid JSON only, no additional text or explanations.");
 
             return contextBuilder.ToString();
         }
