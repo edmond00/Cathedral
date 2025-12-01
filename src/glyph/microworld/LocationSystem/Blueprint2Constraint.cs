@@ -69,25 +69,22 @@ public static class Blueprint2Constraint
                 // 1. Pre-determined success consequence (constant, not chosen by LLM)
                 sampledConsequence,
                 
-                // 2. Skill candidates preview (constant, for LLM awareness)
-                new InlineConstantStringField("skill_candidates", skillCandidatesStr, "the 5 skills you can choose from for this action"),
-                
-                // 3. Related skill (LLM chooses from 5 candidates)
+                // 2. Related skill (LLM chooses from 5 candidates)
                 // CRITICAL: Keep JSON field name as "related_skill" but use unique GBNF rule name
-                new ChoiceField<string>("related_skill", skillCandidates[i], "choose the most appropriate skill from the 5 candidates provided for this action") 
+                new ChoiceField<string>("related_skill", skillCandidates[i], "choose the most appropriate skill for this action") 
                 { 
                     RuleName = $"related_skill_{i + 1}" // Unique GBNF rule per action
                 },
                 
-                // 4. Action text (LLM generates based on skill and consequences)
+                // 3. Action text (LLM generates based on skill and consequences)
                 new TemplateStringField("action_text", "try to <generated>", 5, 100, 
                     "Generate a SHORT action (3-8 words) that uses the chosen skill and logically leads to the success consequence. Write in 2nd person. The action should make sense with both success and failure outcomes."),
                 
-                // 5. Difficulty (LLM chooses freely)
+                // 4. Difficulty (LLM chooses freely)
                 new ChoiceField<string>("difficulty", new[] { "trivial", "easy", "basic", "moderate", "hard", "very_hard", "extreme" }, 
                     "estimate how challenging this action would be for an average adventurer"),
                 
-                // 6. Failure consequence (LLM chooses from list) - LAST FIELD
+                // 5. Failure consequence (LLM chooses from list) - LAST FIELD
                 new ChoiceField<string>("failure_consequence", GetFailureConsequenceOptions(), "choose the most likely failure consequence if this action fails")
                 {
                     RuleName = $"failure_consequence_{i + 1}" // Unique GBNF rule per action
