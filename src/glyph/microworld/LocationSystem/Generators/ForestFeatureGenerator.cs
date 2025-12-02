@@ -23,11 +23,9 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
         var timeOfDay = Rng.Next(4); // 0=dawn, 1=morning, 2=afternoon, 3=dusk
         var weather = Rng.Next(4); // 0=clear, 1=misty, 2=drizzle, 3=storm
         var wildlifeActivity = Rng.Next(3); // 0=quiet, 1=active, 2=agitated
-        var seasonalFeatures = Rng.Next(4); // 0=spring, 1=summer, 2=autumn, 3=winter
         
         return $"Ancient {GetTreeDescription(canopyDensity)} spread overhead, creating a {GetCanopyDescription(canopyDensity)} canopy. " +
                $"The {GetTimeDescription(timeOfDay)} light {GetLightFilterDescription(canopyDensity)} through the branches. " +
-               $"The air is {GetWeatherDescription(weather)} and filled with the scent of {GetSeasonalScents(seasonalFeatures)}. " +
                $"Wildlife seems {GetWildlifeDescription(wildlifeActivity)}, {GetWildlifeSounds(wildlifeActivity)}. " +
                $"{GetSpecialEnvironmentalFeatures()}";
     }
@@ -113,11 +111,11 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                 "time_of_day", "Time of Day",
                 new Dictionary<string, LocationState>
                 {
-                    ["dawn"] = new("dawn", "Dawn", "First light filters through the canopy, casting long shadows"),
-                    ["morning"] = new("morning", "Morning", "Bright daylight illuminates the forest floor in dappled patterns"),
-                    ["afternoon"] = new("afternoon", "Afternoon", "Warm afternoon sun creates shifting light and shadow"),
-                    ["dusk"] = new("dusk", "Dusk", "Golden light fades as shadows lengthen between the trees"),
-                    ["night"] = new("night", "Night", "Darkness envelops the forest, lit only by pale moonlight")
+                    ["dawn"] = new("dawn", "Dawn", "First light filters through the canopy, casting long shadows", "dawn breaks"),
+                    ["morning"] = new("morning", "Morning", "Bright daylight illuminates the forest floor in dappled patterns", "sun rises"),
+                    ["afternoon"] = new("afternoon", "Afternoon", "Warm afternoon sun creates shifting light and shadow", "noon passes"),
+                    ["dusk"] = new("dusk", "Dusk", "Golden light fades as shadows lengthen between the trees", "dusk falls"),
+                    ["night"] = new("night", "Night", "Darkness envelops the forest, lit only by pale moonlight", "night falls")
                 },
                 "morning", StateScope.Location),
                 
@@ -125,10 +123,10 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                 "weather", "Weather Conditions",
                 new Dictionary<string, LocationState>
                 {
-                    ["clear"] = new("clear", "Clear", "Bright sky visible through the canopy overhead"),
-                    ["misty"] = new("misty", "Misty", "Soft fog drifts between the tree trunks, reducing visibility"),
-                    ["drizzle"] = new("drizzle", "Light Rain", "Gentle rain patters on leaves, creating a steady rhythm"),
-                    ["storm"] = new("storm", "Storm", "Heavy rain and wind shake the canopy violently overhead")
+                    ["clear"] = new("clear", "Clear", "Bright sky visible through the canopy overhead", "sky clears"),
+                    ["misty"] = new("misty", "Misty", "Soft fog drifts between the tree trunks, reducing visibility", "mist rises"),
+                    ["drizzle"] = new("drizzle", "Light Rain", "Gentle rain patters on leaves, creating a steady rhythm", "rain starts"),
+                    ["storm"] = new("storm", "Storm", "Heavy rain and wind shake the canopy violently overhead", "storm brews")
                 },
                 "clear", StateScope.Location),
                 
@@ -136,10 +134,10 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                 "wildlife_state", "Wildlife Activity",
                 new Dictionary<string, LocationState>
                 {
-                    ["calm"] = new("calm", "Calm", "Animals go about their normal activities peacefully"),
-                    ["alert"] = new("alert", "Alert", "Wildlife is wary and watching, sensing potential danger"),
-                    ["agitated"] = new("agitated", "Agitated", "Animals are disturbed and fleeing, leaving the area"),
-                    ["hunting"] = new("hunting", "Hunting", "Predators are actively stalking through the underbrush")
+                    ["calm"] = new("calm", "Calm", "Animals go about their normal activities peacefully", "peace returns"),
+                    ["alert"] = new("alert", "Alert", "Wildlife is wary and watching, sensing potential danger", "animals alert"),
+                    ["agitated"] = new("agitated", "Agitated", "Animals are disturbed and fleeing, leaving the area", "beasts flee"),
+                    ["hunting"] = new("hunting", "Hunting", "Predators are actively stalking through the underbrush", "predators hunt")
                 },
                 "calm", StateScope.Location),
                 
@@ -147,23 +145,12 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                 "path_visibility", "Trail Condition",
                 new Dictionary<string, LocationState>
                 {
-                    ["clear_trail"] = new("clear_trail", "Clear Trail", "Well-defined path is easy to follow"),
-                    ["faint_trail"] = new("faint_trail", "Faint Trail", "Barely visible track requires careful attention"),
-                    ["overgrown"] = new("overgrown", "Overgrown", "Path is heavily choked with vegetation"),
-                    ["lost"] = new("lost", "Lost Path", "No visible trail remains, navigation is by landmarks only")
+                    ["clear_trail"] = new("clear_trail", "Clear Trail", "Well-defined path is easy to follow", "path clears"),
+                    ["faint_trail"] = new("faint_trail", "Faint Trail", "Barely visible track requires careful attention", "trail fades"),
+                    ["overgrown"] = new("overgrown", "Overgrown", "Path is heavily choked with vegetation", "brush grows"),
+                    ["lost"] = new("lost", "Lost Path", "No visible trail remains, navigation is by landmarks only", "path vanishes")
                 },
-                "clear_trail", StateScope.Sublocation),
-                
-            ["seasonal_state"] = new(
-                "seasonal_state", "Seasonal Features",
-                new Dictionary<string, LocationState>
-                {
-                    ["spring"] = new("spring", "Spring Growth", "New leaves and flowers bloom throughout the forest"),
-                    ["summer"] = new("summer", "Summer Abundance", "Dense foliage and active wildlife fill the woods"),
-                    ["autumn"] = new("autumn", "Autumn Colors", "Brilliant fall colors paint the canopy overhead"),
-                    ["winter"] = new("winter", "Winter Dormancy", "Bare branches and dormant vegetation dominate")
-                },
-                "summer", StateScope.Location)
+                "clear_trail", StateScope.Sublocation)
         };
     }
     
@@ -482,10 +469,7 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
             "Thorny bushes heavy with ripe berries attract birds and small animals",
             "outer_grove", new List<string> { "outer_grove" },
             new List<string>(), new List<string>(),
-            new Dictionary<string, string>
-            {
-                ["seasonal_state"] = "summer" // Best in summer
-            });
+            new Dictionary<string, string>());
             
         sublocations["large_oak"] = new("large_oak", "Ancient Oak", 
             "Enormous oak tree with thick branches perfect for climbing",
@@ -637,14 +621,6 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
             new List<string>(),
             new List<string>(),
             new List<string> { "navigate_by_stars", "listen_for_night_sounds", "make_camp" });
-            
-        // Add seasonal content
-        sublocationContentMap["autumn"] = new LocationContent(
-            new List<string> { "fallen_leaves", "nuts_and_seeds", "mushrooms" },
-            new List<string>(),
-            new List<string>(),
-            new List<string>(),
-            new List<string> { "gather_fallen_nuts", "track_animal_preparations", "enjoy_fall_colors" });
     }
     
     /// <summary>

@@ -242,7 +242,6 @@ static async Task TestForestLocationSystem()
         ["time_of_day"] = "morning",
         ["weather"] = "clear", 
         ["wildlife_state"] = "calm",
-        ["seasonal_state"] = "summer"
     };
 
     Console.WriteLine($"=== ENTERING {forestId.ToUpper()} ===\n");

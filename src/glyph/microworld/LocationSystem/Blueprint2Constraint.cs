@@ -54,22 +54,22 @@ public static class Blueprint2Constraint
         
         for (int i = 0; i < numberOfActions; i++)
         {
-            // Sample a random success consequence for this action (create a new instance)
+            // Sample a random success consequence for this action (simple string label)
             var consequenceIndex = rng.Next(allSuccessConsequences.Count);
-            var baseConsequence = allSuccessConsequences[consequenceIndex];
-            
-            // CRITICAL: Give unique GBNF rule name to create different success outcomes per action
-            // This ensures each action can have a different success outcome
-            var sampledConsequence = RenameConsequenceField(baseConsequence, $"success_consequence_{i + 1}");
+            var consequenceLabel = allSuccessConsequences[consequenceIndex];
             
             // Format skill candidates as a readable string for hints
             string skillCandidatesStr = string.Join(", ", skillCandidates[i]);
             
             actionFields[i] = new CompositeField($"action_{i + 1}",
-                // 1. Pre-determined success consequence (constant, not chosen by LLM)
-                sampledConsequence,
+                // 1. Pre-determined success consequence (constant string, not chosen by LLM)
+                new InlineConstantStringField("success_consequence", consequenceLabel, 
+                    $"the pre-determined success consequence: {consequenceLabel}")
+                { 
+                    RuleName = $"success_consequence_{i + 1}" // Unique GBNF rule per action
+                },
                 
-                // 2. Related skill (LLM chooses from 5 candidates)
+                // 2. Related skill (LLM chooses from candidates)
                 // CRITICAL: Keep JSON field name as "related_skill" but use unique GBNF rule name
                 new ChoiceField<string>("related_skill", skillCandidates[i], "choose the most appropriate skill for this action") 
                 { 
@@ -99,17 +99,17 @@ public static class Blueprint2Constraint
     }
 
     /// <summary>
-    /// Generates a list of all possible success consequence fields as inline constants
-    /// Each consequence is returned as a complete JsonField ready to be inserted
+    /// Generates a list of all possible success consequence labels (simple strings)
+    /// Each consequence is returned as a simple string label (1-3 words)
     /// </summary>
-    private static List<JsonField> GenerateAllSuccessConsequences(
+    private static List<string> GenerateAllSuccessConsequences(
         LocationBlueprint blueprint,
         string currentSublocation,
         Dictionary<string, string> currentStates)
     {
-        var consequences = new List<JsonField>();
+        var consequences = new List<string>();
 
-        // State change consequences
+        // State change consequences - use the Label from LocationState
         foreach (var (categoryId, category) in blueprint.StateCategories)
         {
             if (CanInfluenceStateCategory(blueprint, currentSublocation, categoryId))
@@ -117,17 +117,13 @@ public static class Blueprint2Constraint
                 var possibleStates = GetAccessibleStates(category, currentStates);
                 foreach (var stateId in possibleStates)
                 {
-                    consequences.Add(new CompositeField("success_consequence",
-                        new InlineConstantStringField("consequence_type", $"state_change_{categoryId}", 
-                            $"state change: {categoryId} -> {stateId}"),
-                        new InlineConstantStringField("category", categoryId),
-                        new InlineConstantStringField("new_state", stateId)
-                    ));
+                    var state = category.PossibleStates[stateId];
+                    consequences.Add(state.Label);
                 }
             }
         }
 
-        // Movement consequences
+        // Movement consequences - use "enter {name}" or "reach {name}"
         var currentSubLocation = blueprint.Sublocations[currentSublocation];
         var accessibleSublocations = new List<string>();
         
@@ -159,14 +155,13 @@ public static class Blueprint2Constraint
         
         foreach (var sublocationId in accessibleSublocations)
         {
-            consequences.Add(new CompositeField("success_consequence",
-                new InlineConstantStringField("consequence_type", "movement", 
-                    $"move to sublocation: {sublocationId}"),
-                new InlineConstantStringField("new_sublocation", sublocationId)
-            ));
+            var sublocation = blueprint.Sublocations[sublocationId];
+            // Create a short label like "enter grove" or "reach path"
+            var shortName = SimplifyLocationName(sublocation.Name);
+            consequences.Add($"enter {shortName}");
         }
 
-        // Item gain consequences
+        // Item gain consequences - use "gain {item}"
         var availableItems = GetAvailableContent(blueprint, currentSublocation, currentStates)
             .SelectMany(content => content.AvailableItems)
             .Distinct()
@@ -174,14 +169,10 @@ public static class Blueprint2Constraint
         
         foreach (var item in availableItems)
         {
-            consequences.Add(new CompositeField("success_consequence",
-                new InlineConstantStringField("consequence_type", "item_gained", 
-                    $"gain item: {item}"),
-                new InlineConstantStringField("item_name", item)
-            ));
+            consequences.Add($"gain {item}");
         }
 
-        // Companion gain consequences
+        // Companion gain consequences - use "meet {companion}"
         var availableCompanions = GetAvailableContent(blueprint, currentSublocation, currentStates)
             .SelectMany(content => content.AvailableCompanions)
             .Distinct()
@@ -189,14 +180,10 @@ public static class Blueprint2Constraint
         
         foreach (var companion in availableCompanions)
         {
-            consequences.Add(new CompositeField("success_consequence",
-                new InlineConstantStringField("consequence_type", "companion_gained", 
-                    $"gain companion: {companion}"),
-                new InlineConstantStringField("companion_name", companion)
-            ));
+            consequences.Add($"meet {companion}");
         }
 
-        // Quest gain consequences
+        // Quest gain consequences - use "discover {quest}"
         var availableQuests = GetAvailableContent(blueprint, currentSublocation, currentStates)
             .SelectMany(content => content.AvailableQuests)
             .Distinct()
@@ -204,20 +191,24 @@ public static class Blueprint2Constraint
         
         foreach (var quest in availableQuests)
         {
-            consequences.Add(new CompositeField("success_consequence",
-                new InlineConstantStringField("consequence_type", "quest_gained", 
-                    $"gain quest: {quest}"),
-                new InlineConstantStringField("quest_name", quest)
-            ));
+            consequences.Add($"discover {quest}");
         }
 
-        // Always include "none" option
-        consequences.Add(new CompositeField("success_consequence",
-            new InlineConstantStringField("consequence_type", "none", 
-                "no special consequence, just narrative progression")
-        ));
+        // Always include "nothing happens" option
+        consequences.Add("nothing happens");
 
         return consequences;
+    }
+
+    /// <summary>
+    /// Simplifies a location name to 1-2 words for consequence labels
+    /// Examples: "Ancient Forest Path" -> "path", "Main Grove" -> "grove"
+    /// </summary>
+    private static string SimplifyLocationName(string name)
+    {
+        // Take the last word if multi-word, or the full name if single word
+        var words = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return words.Length > 0 ? words[^1].ToLower() : name.ToLower();
     }
 
     /// <summary>
@@ -233,37 +224,6 @@ public static class Blueprint2Constraint
             "attacked", 
             "disease", 
         };
-    }
-
-    /// <summary>
-    /// Renames a success consequence field to create a unique GBNF rule per action
-    /// This allows each action to have a different pre-determined success outcome
-    /// </summary>
-    private static JsonField RenameConsequenceField(JsonField consequence, string newName)
-    {
-        if (consequence is CompositeField composite)
-        {
-            // Create new instances of all fields with the new name
-            var newFields = new JsonField[composite.Fields.Length];
-            for (int i = 0; i < composite.Fields.Length; i++)
-            {
-                var field = composite.Fields[i];
-                if (field is InlineConstantStringField inlineConst)
-                {
-                    newFields[i] = new InlineConstantStringField(inlineConst.Name, inlineConst.Value, inlineConst.Hint);
-                }
-                else
-                {
-                    newFields[i] = field; // Other types can be safely reused
-                }
-            }
-            // Keep JSON field name as "success_consequence" but use unique GBNF rule name
-            return new CompositeField("success_consequence", newFields, "the pre-determined success consequence for this action")
-            {
-                RuleName = newName // Unique GBNF rule per action
-            };
-        }
-        return consequence;
     }
 
     /// <summary>
@@ -619,7 +579,8 @@ public static class Blueprint2Constraint
             "poetry", "history_lore", "equitation",
             "astronomy", "body language", "mining",
             "poisoning", "coprophilia", "politics",
-            "intimidation", "joking", "singing"
+            "intimidation", "joking", "singing",
+            "economy", "business", "management",
         };
     }
 

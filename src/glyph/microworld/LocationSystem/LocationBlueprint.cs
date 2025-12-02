@@ -22,6 +22,58 @@ public record LocationBlueprint(
     public Dictionary<string, Sublocation> Sublocations { get; init; } = Sublocations ?? throw new ArgumentNullException(nameof(Sublocations));
     public Dictionary<string, List<string>> SublocationConnections { get; init; } = SublocationConnections ?? throw new ArgumentNullException(nameof(SublocationConnections));
     public Dictionary<string, Dictionary<string, LocationContent>> ContentMap { get; init; } = ContentMap ?? throw new ArgumentNullException(nameof(ContentMap));
+    
+    /// <summary>
+    /// Maps simple 1-3 word labels to their full state resolution (category + state)
+    /// Built automatically from all LocationState labels across all categories
+    /// Used to resolve simple consequence strings like "night falls" back to {category: "time_of_day", state: "night"}
+    /// </summary>
+    public Dictionary<string, StateResolution> StateResolutionMap { get; init; } = BuildStateResolutionMap(StateCategories);
+    
+    private static Dictionary<string, StateResolution> BuildStateResolutionMap(Dictionary<string, StateCategory> categories)
+    {
+        var map = new Dictionary<string, StateResolution>();
+        var seenLabels = new HashSet<string>();
+        
+        foreach (var (categoryId, category) in categories)
+        {
+            foreach (var (stateId, state) in category.PossibleStates)
+            {
+                if (seenLabels.Contains(state.Label))
+                {
+                    throw new InvalidOperationException(
+                        $"Duplicate state label '{state.Label}' found. All state labels must be unique within a location.");
+                }
+                
+                seenLabels.Add(state.Label);
+                map[state.Label] = new StateResolution(categoryId, stateId, state.Label);
+            }
+        }
+        
+        return map;
+    }
+    
+    /// <summary>
+    /// Resolves a simple label string to its category and state ID
+    /// </summary>
+    public StateResolution? ResolveLabel(string label)
+    {
+        return StateResolutionMap.TryGetValue(label, out var resolution) ? resolution : null;
+    }
+}
+
+/// <summary>
+/// Resolution of a simple label to its full state information
+/// </summary>
+public record StateResolution(
+    string CategoryId,
+    string StateId,
+    string Label
+)
+{
+    public string CategoryId { get; init; } = CategoryId ?? throw new ArgumentNullException(nameof(CategoryId));
+    public string StateId { get; init; } = StateId ?? throw new ArgumentNullException(nameof(StateId));
+    public string Label { get; init; } = Label ?? throw new ArgumentNullException(nameof(Label));
 }
 
 /// <summary>
@@ -50,6 +102,7 @@ public record LocationState(
     string Id,
     string Name,
     string Description,
+    string Label,
     List<string>? RequiredStates = null,
     List<string>? ForbiddenStates = null
 )
@@ -57,6 +110,7 @@ public record LocationState(
     public string Id { get; init; } = Id ?? throw new ArgumentNullException(nameof(Id));
     public string Name { get; init; } = Name ?? throw new ArgumentNullException(nameof(Name));
     public string Description { get; init; } = Description ?? throw new ArgumentNullException(nameof(Description));
+    public string Label { get; init; } = Label ?? throw new ArgumentNullException(nameof(Label));
     public List<string> RequiredStates { get; init; } = RequiredStates ?? new List<string>();
     public List<string> ForbiddenStates { get; init; } = ForbiddenStates ?? new List<string>();
 }
