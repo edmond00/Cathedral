@@ -113,7 +113,7 @@ public static class LLMLogger
     /// <summary>
     /// Logs slot/instance creation.
     /// </summary>
-    public static void LogInstanceCreated(int slotId, string role, bool success, string? errorMessage = null)
+    public static void LogInstanceCreated(int slotId, string role, bool success, string? errorMessage = null, string? systemPrompt = null)
     {
         if (!_isEnabled || _logFilePath == null) return;
         
@@ -125,6 +125,13 @@ public static class LLMLogger
             if (!success && errorMessage != null)
             {
                 sb.AppendLine($"  Error: {errorMessage}");
+            }
+            if (success && !string.IsNullOrEmpty(systemPrompt))
+            {
+                sb.AppendLine($"{'-',-80}");
+                sb.AppendLine($"SYSTEM PROMPT:");
+                sb.AppendLine(WrapText(systemPrompt, 76));
+                sb.AppendLine($"{'=',-80}");
             }
             sb.AppendLine();
             
@@ -169,7 +176,7 @@ public static class LLMLogger
     /// <summary>
     /// Logs a request to the LLM.
     /// </summary>
-    public static void LogRequest(string role, int slotId, string systemPrompt, string userPrompt, string? gbnf = null)
+    public static void LogRequest(string role, int slotId, string userPrompt, string? gbnf = null)
     {
         if (!_isEnabled || _logFilePath == null) return;
         
@@ -178,9 +185,6 @@ public static class LLMLogger
             var sb = new StringBuilder();
             sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] REQUEST → {role} (Slot {slotId})");
             sb.AppendLine($"{'-',-80}");
-            sb.AppendLine($"SYSTEM PROMPT:");
-            sb.AppendLine(WrapText(systemPrompt, 76));
-            sb.AppendLine();
             sb.AppendLine($"USER PROMPT:");
             sb.AppendLine(WrapText(userPrompt, 76));
             

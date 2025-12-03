@@ -46,12 +46,12 @@ public class LLMActionExecutor : IDisposable
         {
             Console.WriteLine("LLMActionExecutor: Initializing Director and Narrator slots...");
             
-            // Create dedicated slots for Director and Narrator
-            _directorSlotId = await _llamaServer.CreateInstanceAsync("You are a game director.");
-            LLMLogger.LogInstanceCreated(_directorSlotId, "Director", true);
+            // Create dedicated slots for Director and Narrator with their actual system prompts
+            var directorSystemPrompt = GetDirectorSystemPrompt();
+            var narratorSystemPrompt = GetNarratorSystemPrompt();
             
-            _narratorSlotId = await _llamaServer.CreateInstanceAsync("You are a game narrator.");
-            LLMLogger.LogInstanceCreated(_narratorSlotId, "Narrator", true);
+            _directorSlotId = await _llamaServer.CreateInstanceAsync(directorSystemPrompt);
+            _narratorSlotId = await _llamaServer.CreateInstanceAsync(narratorSystemPrompt);
             
             _isInitialized = true;
             Console.WriteLine($"LLMActionExecutor: Created Director slot {_directorSlotId}, Narrator slot {_narratorSlotId}");
@@ -176,7 +176,6 @@ public class LLMActionExecutor : IDisposable
             {
                 response = await RequestFromLLMAsync(
                     _directorSlotId,
-                    systemPrompt,
                     userPrompt,
                     gbnf,
                     timeoutSeconds: 60);
@@ -257,7 +256,6 @@ public class LLMActionExecutor : IDisposable
             {
                 response = await RequestFromLLMAsync(
                     _narratorSlotId,
-                    systemPrompt,
                     userPrompt,
                     gbnf,
                     timeoutSeconds: 60);
@@ -297,26 +295,6 @@ public class LLMActionExecutor : IDisposable
         LocationBlueprint blueprint,
         PlayerAction? previousAction)
     {
-        var systemPrompt = @"You are the DIRECTOR of a fantasy RPG game. Generate the outcome of a player action as JSON.
-
-Your response MUST be valid JSON with this structure:
-{
-    ""success"": true or false,
-    ""narrative"": ""description of what happened"",
-    ""state_changes"": {""category"": ""new_state""},
-    ""new_sublocation"": ""optional new location or null"",
-    ""items_gained"": [""optional items""],
-    ""ends_interaction"": true or false
-}
-
-Rules:
-- 70% of actions should succeed
-- 15% should critically fail (ends_interaction: true)
-- 15% should have neutral/minor outcomes
-- Narrative should be 2-3 sentences
-- State changes are optional
-- Critical failures must end the interaction";
-
         var userPrompt = $@"CURRENT STATE:
 Location: {currentState.CurrentSublocation}
 Turn: {currentState.CurrentTurnCount}
@@ -334,7 +312,6 @@ Generate the JSON outcome for this action.";
 
         var response = await RequestFromLLMAsync(
             _directorSlotId,
-            systemPrompt,
             userPrompt,
             gbnfGrammar,
             timeoutSeconds: 60);
@@ -420,7 +397,6 @@ Generate the JSON outcome for this action.";
     /// </summary>
     private async Task<string?> RequestFromLLMAsync(
         int slotId,
-        string systemPrompt,
         string userPrompt,
         string? gbnfGrammar,
         int timeoutSeconds)
@@ -429,7 +405,7 @@ Generate the JSON outcome for this action.";
         var roleName = slotId == _directorSlotId ? "Director" : "Narrator";
         
         // Log request
-        LLMLogger.LogRequest(roleName, slotId, systemPrompt, userPrompt, gbnfGrammar);
+        LLMLogger.LogRequest(roleName, slotId, userPrompt, gbnfGrammar);
         _totalRequests++;
         
         var tcs = new TaskCompletionSource<string>();
@@ -768,6 +744,58 @@ Generate the JSON outcome for this action.";
             var avgDuration = _totalDurationMs / _totalRequests;
             LLMLogger.LogStatistics(_totalRequests, _successfulRequests, _failedRequests, avgDuration);
         }
+    }
+    
+    /// <summary>
+    /// Gets the Director's system prompt (must match what DirectorPromptConstructor.GetSystemPrompt() returns).
+    /// </summary>
+    private static string GetDirectorSystemPrompt()
+    {
+        return @"You are the DIRECTOR of a fantasy RPG game. You generate structured action options based on game state.
+
+CRITICAL REQUIREMENT:
+Each action must be COHERENT with its assigned skill and pre-determined consequences. The action text must logically lead to the success consequence when using the specified skill, and make sense even if the failure consequence occurs instead.
+
+Action Text Guidelines:
+- Straightforward and direct (3-8 words)
+- Purely mechanical - describe what the player DOES
+- NO atmospheric descriptions, flavor text, or narrative elements (that's the Narrator's job)
+- Focus on the concrete action being attempted
+- Write in 2nd person
+
+Each action has:
+- Skill candidates (choose the most appropriate one)
+- Pre-determined success consequence (your action must lead to this)
+- Variable failure consequence (choose the most likely failure outcome)
+- Difficulty level (estimate based on the action)
+
+Generate diverse action types considering different approaches. Output only valid JSON in the specified format.";
+    }
+    
+    /// <summary>
+    /// Gets the Narrator's system prompt (must match what NarratorPromptConstructor.GetSystemPrompt() returns).
+    /// </summary>
+    private static string GetNarratorSystemPrompt()
+    {
+        return @"You are the NARRATOR of a fantasy RPG game. You create poetic, atmospheric descriptions that bring the story to life.
+
+Your role:
+- Narrate outcomes with emotional tone appropriate to success or failure
+- Create vivid, immersive descriptions of the game world
+- Address the player as 'you' (never 'the player')
+- Use evocative, cryptic language that compresses information into imagery
+
+Your style:
+- Structured but poetic
+- Cryptic and atmospheric
+- Concise yet evocative
+- Emotionally resonant
+
+You do NOT:
+- Write long descriptions
+- Generate new action options
+- Make decisions for the player
+- List specific choices explicitly";
     }
 }
 

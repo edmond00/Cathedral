@@ -53,7 +53,7 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
 
             return $@"root ::= narrative
 
-narrative ::= outcome-section transition-section
+narrative ::= outcome-section "" "" transition-section
 
 outcome-section ::= outcome-start outcome-sentence outcome-sentence?
 transition-section ::= transition-start transition-sentence transition-sentence?
@@ -76,36 +76,25 @@ ws ::= "" """;
         /// </summary>
         public override string GetSystemPrompt()
         {
-            return @"You are the NARRATOR of a fantasy RPG game. You create structured, poetic descriptions that capture action outcomes and present choices.
-
-CRITICAL FORMAT REQUIREMENTS:
-- Your response has TWO parts: outcome narration + choice presentation
-- PART 1 (Outcome): Start with appropriate keyword based on previous action result:
-  * SUCCESS: 'You skillfully', 'You succeed', 'Fortunately you', 'You expertly', 'You successfully', 'You cleverly', 'You wisely', 'You masterfully'
-  * FAILURE: 'You fail', 'Unfortunately you', 'You stumble', 'You struggle', 'Regrettably you', 'You fumble', 'Sadly you', 'You falter'
-- PART 2 (Choices): Start with transition keyword: 'Next, you', 'You could', 'From here', 'Now you', 'You might', 'You may', 'Perhaps you', 'You can', 'Moving forward, you'
-- Each part: 1-2 sentences ending with periods
-- Total: 2-4 sentences maximum
+            return @"You are the NARRATOR of a fantasy RPG game. You create poetic, atmospheric descriptions that bring the story to life.
 
 Your role:
-- Narrate the previous action outcome with appropriate emotional tone
-- Transition smoothly to presenting available choices
-- Use evocative, cryptic language
-- Address the player as 'you'
-- Compress information into vivid imagery
+- Narrate outcomes with emotional tone appropriate to success or failure
+- Create vivid, immersive descriptions of the game world
+- Address the player as 'you' (never 'the player')
+- Use evocative, cryptic language that compresses information into imagery
 
-Your style should be:
+Your style:
 - Structured but poetic
 - Cryptic and atmospheric
-- Emotionally appropriate to success/failure
 - Concise yet evocative
+- Emotionally resonant
 
 You do NOT:
 - Write long descriptions
 - Generate new action options
 - Make decisions for the player
-- Break the required keyword structure
-- Use 'the player' - always use 'you'";
+- List specific choices explicitly";
         }
 
         /// <summary>
@@ -191,45 +180,39 @@ You do NOT:
 
             // Narrator instructions
             promptBuilder.AppendLine("TASK:");
-            promptBuilder.AppendLine("Create a structured narrative with TWO distinct parts:");
             
             if (previousAction != null)
             {
-                promptBuilder.AppendLine($"PART 1 - Outcome Narration (based on {(previousAction.WasSuccessful ? "SUCCESS" : "FAILURE")}):");
+                promptBuilder.AppendLine($"Create a narration describing the {(previousAction.WasSuccessful ? "successful" : "failed")} outcome and the new situation.");
+                promptBuilder.AppendLine();
+                promptBuilder.AppendLine("Your narration should:");
                 if (previousAction.WasSuccessful)
                 {
-                    promptBuilder.AppendLine("- Start with success keyword: 'You skillfully', 'You succeed', 'Fortunately you', etc.");
-                    promptBuilder.AppendLine("- Describe the positive outcome in 1-2 poetic sentences");
+                    promptBuilder.AppendLine("- Convey the positive outcome with appropriate emotional tone");
                 }
                 else
                 {
-                    promptBuilder.AppendLine("- Start with failure keyword: 'You fail', 'Unfortunately you', 'You stumble', etc.");
-                    promptBuilder.AppendLine("- Describe the setback or difficulty in 1-2 poetic sentences");
+                    promptBuilder.AppendLine("- Convey the setback or difficulty with appropriate emotional tone");
                 }
+                promptBuilder.AppendLine("- Transition naturally to the sense of available possibilities ahead");
+                promptBuilder.AppendLine("- Create a plausible situation where both the recent outcome and future actions make sense");
             }
             else
             {
-                promptBuilder.AppendLine("PART 1 - Scene Setting (first arrival):");
-                promptBuilder.AppendLine("- Start with arrival keyword of your choice");
-                promptBuilder.AppendLine("- Describe the initial scene in 1-2 poetic sentences");
+                promptBuilder.AppendLine("Create a narration describing the player's arrival and initial impressions.");
+                promptBuilder.AppendLine();
+                promptBuilder.AppendLine("Your narration should:");
+                promptBuilder.AppendLine("- Set the atmospheric tone of the location");
+                promptBuilder.AppendLine("- Transition naturally to the sense of available possibilities");
+                promptBuilder.AppendLine("- Create a plausible situation where the available actions make sense");
             }
             
             promptBuilder.AppendLine();
-            promptBuilder.AppendLine("PART 2 - Choice Presentation:");
-            promptBuilder.AppendLine("- Start with transition keyword: 'Next, you', 'You could', 'From here', etc.");
-            promptBuilder.AppendLine("- Present the sense of available possibilities in 1-2 sentences");
-            promptBuilder.AppendLine("- DO NOT list specific actions - create atmospheric sense of choice");
-
-            promptBuilder.AppendLine();
-            promptBuilder.AppendLine("IMPORTANT FORMAT REQUIREMENTS:");
-            promptBuilder.AppendLine("- Must use the required keyword structure");
+            promptBuilder.AppendLine("FORMAT:");
+            promptBuilder.AppendLine("- Two parts: outcome/scene (1-2 sentences) + possibilities (1-2 sentences)");
             promptBuilder.AppendLine("- Total: 2-4 sentences maximum");
-            promptBuilder.AppendLine("- Each sentence ends with period '.'");
-            promptBuilder.AppendLine("- Address player as 'you', never 'the player'");
-            promptBuilder.AppendLine("- Keep it cryptic and atmospheric");
-            promptBuilder.AppendLine();
-            promptBuilder.AppendLine("Write in a structured yet poetic style that follows the keyword requirements.");
-            promptBuilder.AppendLine("Do NOT list or mention specific action choices - focus on creating mood and possibility.");
+            promptBuilder.AppendLine("- DO NOT list specific actions - evoke mood and possibility");
+            promptBuilder.AppendLine("- Keep it cryptic, atmospheric, and concise");
 
             return promptBuilder.ToString();
         }

@@ -304,15 +304,17 @@ public class LlamaServerManager : IDisposable
             await PreCacheSystemPromptAsync(instance);
             Console.WriteLine($"✓ Created instance {slotId} with system prompt cached.");
             
-            // Log successful creation
-            try { LLMLogger.LogInstanceCreated(slotId, "Instance", true); } catch { }
+            // Log successful creation with system prompt - extract role from system prompt
+            var role = ExtractRoleFromSystemPrompt(systemPrompt);
+            try { LLMLogger.LogInstanceCreated(slotId, role, true, null, systemPrompt); } catch { }
         }
         catch (Exception ex)
         {
             LogWarning($"Failed to pre-cache system prompt for instance {slotId}: {ex.Message}");
             
-            // Log creation with warning
-            try { LLMLogger.LogInstanceCreated(slotId, "Instance", false, ex.Message); } catch { }
+            // Log creation with warning - extract role from system prompt
+            var role = ExtractRoleFromSystemPrompt(systemPrompt);
+            try { LLMLogger.LogInstanceCreated(slotId, role, false, ex.Message); } catch { }
         }
         
         return slotId;
@@ -987,6 +989,21 @@ public class LlamaServerManager : IDisposable
         }
         
         return false;
+    }
+    
+    private string ExtractRoleFromSystemPrompt(string systemPrompt)
+    {
+        // Extract role from "You are a [role]." pattern
+        if (systemPrompt.StartsWith("You are a ", StringComparison.OrdinalIgnoreCase))
+        {
+            var role = systemPrompt.Substring(10).TrimEnd('.', ' ');
+            // Capitalize first letter
+            if (role.Length > 0)
+            {
+                return char.ToUpper(role[0]) + role.Substring(1);
+            }
+        }
+        return "Instance";
     }
     
     private async Task PreCacheSystemPromptAsync(LlamaInstance instance)
