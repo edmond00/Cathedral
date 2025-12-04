@@ -126,6 +126,39 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
             FlushToFile();
         }
 
+        public void LogCriticScoring(List<Cathedral.Game.ScoredAction> scoredActions, List<Cathedral.Game.ParsedAction> selectedActions, Cathedral.Game.ScoringStatistics stats)
+        {
+            _logBuffer.AppendLine($"🔍 CRITIC EVALUATION (Turn {_turnNumber})");
+            _logBuffer.AppendLine($"Timestamp: {DateTime.Now:HH:mm:ss.fff}");
+            _logBuffer.AppendLine($"Total Actions Evaluated: {scoredActions.Count}");
+            _logBuffer.AppendLine($"Actions Selected: {selectedActions.Count}");
+            _logBuffer.AppendLine($"Total Evaluation Time: {stats.TotalEvaluationTime:F0}ms");
+            _logBuffer.AppendLine();
+            
+            _logBuffer.AppendLine("SCORING STATISTICS:");
+            _logBuffer.AppendLine($"  Average Score: {stats.AverageScore:F3}");
+            _logBuffer.AppendLine($"  Score Range: {stats.LowestScore:F3} - {stats.HighestScore:F3}");
+            _logBuffer.AppendLine($"  Avg Skill Score: {stats.AverageSkillScore:F3}");
+            _logBuffer.AppendLine($"  Avg Consequence Score: {stats.AverageConsequenceScore:F3}");
+            _logBuffer.AppendLine($"  Avg Context Score: {stats.AverageContextScore:F3}");
+            _logBuffer.AppendLine();
+            
+            _logBuffer.AppendLine("ALL ACTIONS WITH SCORES:");
+            _logBuffer.AppendLine("-".PadRight(80, '-'));
+            for (int i = 0; i < scoredActions.Count; i++)
+            {
+                var scored = scoredActions[i];
+                var selected = selectedActions.Contains(scored.Action) ? "✓ SELECTED" : "  REJECTED";
+                _logBuffer.AppendLine($"[{i + 1}] {selected} | Total: {scored.TotalScore:F3} | Skill: {scored.SkillScore:F3} | Conseq: {scored.ConsequenceScore:F3} | Context: {scored.ContextScore:F3}");
+                _logBuffer.AppendLine($"    Action: {scored.Action.ActionText}");
+                _logBuffer.AppendLine($"    Skill: {scored.Action.Skill} | Success: {scored.Action.SuccessConsequence}");
+                _logBuffer.AppendLine();
+            }
+            _logBuffer.AppendLine("-".PadRight(80, '-'));
+            _logBuffer.AppendLine();
+            FlushToFile();
+        }
+
         public void LogActionOutcome(PlayerAction outcome)
         {
             _logBuffer.AppendLine($"⚡ ACTION OUTCOME (Turn {_turnNumber})");
