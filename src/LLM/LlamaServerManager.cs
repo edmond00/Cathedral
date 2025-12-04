@@ -321,6 +321,120 @@ public class LlamaServerManager : IDisposable
     }
     
     /// <summary>
+    /// Gets token probabilities for the next token without streaming.
+    /// Used by the Critic role for probability-based evaluation.
+    /// </summary>
+    /// <param name="slotId">The instance slot ID</param>
+    /// <param name="userMessage">The user's message/question</param>
+    /// <param name="constrainedTokens">Expected tokens to extract probabilities for (e.g., ["yes", "no"])</param>
+    /// <param name="gbnfGrammar">Optional GBNF grammar to constrain output</param>
+    /// <returns>Dictionary mapping tokens to their probabilities</returns>
+    public async Task<Dictionary<string, double>> GetNextTokenProbabilitiesAsync(
+        int slotId,
+        string userMessage,
+        string[] constrainedTokens,
+        string? gbnfGrammar = null)
+    {
+        if (!_instances.TryGetValue(slotId, out var instance))
+        {
+            throw new ArgumentException($"Instance with slot ID {slotId} not found.");
+        }
+        
+        if (instance.IsActive)
+        {
+            throw new InvalidOperationException($"Instance {slotId} is currently processing another request.");
+        }
+        
+        instance.IsActive = true;
+        instance.AddUserMessage(userMessage);
+        
+        try
+        {
+            // Create request with logprobs enabled
+            var requestData = new Dictionary<string, object>
+            {
+                ["model"] = "local",
+                ["messages"] = instance.GetMessages(),
+                ["max_tokens"] = 1,
+                ["logprobs"] = true,
+                ["top_logprobs"] = Math.Max(constrainedTokens.Length, 5), // Get at least top 5
+                ["stream"] = false,
+                ["cache_prompt"] = true,
+                ["slot_id"] = slotId
+            };
+            
+            if (!string.IsNullOrWhiteSpace(gbnfGrammar))
+            {
+                requestData["grammar"] = gbnfGrammar;
+            }
+            
+            var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", requestData);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Failed to get token probabilities: {response.StatusCode} - {errorContent}");
+            }
+            
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            
+            // Parse the response to extract logprobs
+            using var doc = JsonDocument.Parse(jsonResponse);
+            var root = doc.RootElement;
+            
+            var probabilities = new Dictionary<string, double>();
+            
+            if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+            {
+                var choice = choices[0];
+                
+                if (choice.TryGetProperty("logprobs", out var logprobs) &&
+                    logprobs.TryGetProperty("content", out var content) &&
+                    content.GetArrayLength() > 0)
+                {
+                    var tokenInfo = content[0];
+                    
+                    if (tokenInfo.TryGetProperty("top_logprobs", out var topLogprobs))
+                    {
+                        foreach (var logprobEntry in topLogprobs.EnumerateArray())
+                        {
+                            if (logprobEntry.TryGetProperty("token", out var tokenElement) &&
+                                logprobEntry.TryGetProperty("logprob", out var logprobElement))
+                            {
+                                var token = tokenElement.GetString();
+                                var logprob = logprobElement.GetDouble();
+                                
+                                if (token != null)
+                                {
+                                    // Convert log probability to probability: p = exp(logprob)
+                                    var probability = Math.Exp(logprob);
+                                    probabilities[token.Trim().ToLower()] = probability;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Ensure all constrained tokens are present (with 0 if not found)
+            foreach (var token in constrainedTokens)
+            {
+                var normalizedToken = token.Trim().ToLower();
+                if (!probabilities.ContainsKey(normalizedToken))
+                {
+                    probabilities[normalizedToken] = 0.0;
+                }
+            }
+            
+            return probabilities;
+        }
+        finally
+        {
+            instance.IsActive = false;
+        }
+    }
+    
+    /// <summary>
     /// Continue a conversation with an LLM instance, optionally using GBNF grammar constraints
     /// </summary>
     /// <param name="slotId">The instance slot ID</param>

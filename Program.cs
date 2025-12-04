@@ -128,9 +128,10 @@ Console.WriteLine("2. Launch GlyphSphere with Terminal HUD");
 Console.WriteLine("3. Test Terminal Module (standalone)");
 Console.WriteLine("4. Test Forest Location System Demo");
 Console.WriteLine("5. Launch Location Travel Mode (Phase 1)");
-Console.WriteLine("6. Exit");
+Console.WriteLine("6. Test Critic Evaluator (token probabilities)");
+Console.WriteLine("7. Exit");
 
-Console.Write("\nEnter your choice (1-6): ");
+Console.Write("\nEnter your choice (1-7): ");
 var choice = Console.ReadLine();
 
 switch (choice)
@@ -212,6 +213,14 @@ switch (choice)
         break;
 
     case "6":
+        Console.WriteLine("\n=== Testing Critic Evaluator ===");
+        Console.WriteLine("This will test the Critic's ability to evaluate actions using token probabilities...");
+        Console.WriteLine("Press Enter to continue or Ctrl+C to cancel.");
+        Console.ReadLine();
+        await TestCriticEvaluator();
+        break;
+
+    case "7":
         Console.WriteLine("Goodbye!");
         Environment.Exit(0);
         break;
@@ -223,6 +232,157 @@ switch (choice)
 
 Console.WriteLine("\nPress any key to exit...");
 Console.ReadKey();
+
+static async Task TestCriticEvaluator()
+{
+    Console.WriteLine("\n=== Critic Evaluator Test Suite ===\n");
+    
+    // Start LLM Server
+    Console.WriteLine("Starting LLM Server...");
+    using var llmManager = new LlamaServerManager();
+    var serverStarted = false;
+
+    await llmManager.StartServerAsync(
+        isReady => serverStarted = isReady,
+        modelAlias: "tiny");
+
+    if (!serverStarted)
+    {
+        Console.WriteLine("✗ Cannot run Critic tests without LLM server.");
+        return;
+    }
+
+    Console.WriteLine("✓ LLM Server started successfully!\n");
+
+    // Initialize Critic Evaluator
+    using var critic = new CriticEvaluator(llmManager);
+    await critic.InitializeAsync();
+    Console.WriteLine("✓ Critic Evaluator initialized\n");
+
+    Console.WriteLine(new string('=', 80));
+    
+    // Test 1: Action-Skill Coherence
+    Console.WriteLine("\n--- TEST 1: Action-Skill Coherence ---\n");
+    
+    var testCases = new[]
+    {
+        ("Climb a tall tree to scout the area", "Athletics"),
+        ("Pick the lock on an old chest", "Lockpicking"),
+        ("Swim across a raging river", "Cooking"),  // Intentionally incoherent
+        ("Persuade the guard to let you pass", "Persuasion"),
+        ("Cast a fireball at the enemies", "Swimming")  // Intentionally incoherent
+    };
+
+    foreach (var (action, skill) in testCases)
+    {
+        Console.WriteLine($"Action: {action}");
+        Console.WriteLine($"Skill:  {skill}");
+        
+        var coherenceScore = await critic.EvaluateActionSkillCoherence(action, skill);
+        
+        Console.WriteLine($"Coherence Score: {coherenceScore:F4} ({coherenceScore * 100:F1}%)");
+        Console.WriteLine($"Assessment: {GetCoherenceAssessment(coherenceScore)}");
+        Console.WriteLine();
+    }
+
+    Console.WriteLine(new string('-', 80));
+
+    // Test 2: Action-Consequence Plausibility
+    Console.WriteLine("\n--- TEST 2: Action-Consequence Plausibility ---\n");
+    
+    var consequenceTests = new[]
+    {
+        ("Light a campfire in the clearing", "The area becomes warm and illuminated"),
+        ("Attack the dragon with a wooden sword", "You slay the ancient dragon effortlessly"),  // Implausible
+        ("Drink from the poisoned well", "You feel refreshed and energized"),  // Implausible
+        ("Study the ancient tome for hours", "You gain knowledge of forgotten spells"),
+        ("Jump off a cliff without protection", "You land safely and continue walking")  // Implausible
+    };
+
+    foreach (var (action, consequence) in consequenceTests)
+    {
+        Console.WriteLine($"Action:      {action}");
+        Console.WriteLine($"Consequence: {consequence}");
+        
+        var plausibilityScore = await critic.EvaluateActionConsequencePlausibility(action, consequence);
+        
+        Console.WriteLine($"Plausibility Score: {plausibilityScore:F4} ({plausibilityScore * 100:F1}%)");
+        Console.WriteLine($"Assessment: {GetPlausibilityAssessment(plausibilityScore)}");
+        Console.WriteLine();
+    }
+
+    Console.WriteLine(new string('-', 80));
+
+    // Test 3: Narrative Quality
+    Console.WriteLine("\n--- TEST 3: Narrative Quality ---\n");
+    
+    var narrativeTests = new[]
+    {
+        ("You walk into the forest. It is dark. There are trees.", "engaging and vivid"),
+        ("As twilight descends, the ancient forest beckons with whispered secrets and dancing shadows.", "engaging and vivid"),
+        ("Thing happen. You do stuff. End.", "engaging and vivid"),  // Poor quality
+        ("The warrior raised his blade, determination burning in his eyes as thunder rumbled overhead.", "dramatic and exciting")
+    };
+
+    foreach (var (narrative, criterion) in narrativeTests)
+    {
+        Console.WriteLine($"Narrative: {narrative}");
+        Console.WriteLine($"Criterion: {criterion}");
+        
+        var qualityScore = await critic.EvaluateNarrativeQuality(narrative, criterion);
+        
+        Console.WriteLine($"Quality Score: {qualityScore:F4} ({qualityScore * 100:F1}%)");
+        Console.WriteLine($"Assessment: {GetQualityAssessment(qualityScore)}");
+        Console.WriteLine();
+    }
+
+    Console.WriteLine(new string('=', 80));
+    
+    // Display statistics
+    Console.WriteLine("\n--- CRITIC STATISTICS ---\n");
+    var stats = critic.GetStatistics();
+    Console.WriteLine($"Total Evaluations: {stats.totalEvaluations}");
+    Console.WriteLine($"Total Duration:    {stats.totalDurationMs:F0}ms");
+    if (stats.totalEvaluations > 0)
+    {
+        Console.WriteLine($"Average Duration:  {stats.totalDurationMs / stats.totalEvaluations:F0}ms per evaluation");
+    }
+    
+    Console.WriteLine("\n✓ All Critic tests completed!");
+}
+
+static string GetCoherenceAssessment(double score)
+{
+    return score switch
+    {
+        >= 0.8 => "✓ Highly coherent",
+        >= 0.6 => "○ Moderately coherent",
+        >= 0.4 => "△ Somewhat coherent",
+        _ => "✗ Incoherent"
+    };
+}
+
+static string GetPlausibilityAssessment(double score)
+{
+    return score switch
+    {
+        >= 0.8 => "✓ Highly plausible",
+        >= 0.6 => "○ Moderately plausible",
+        >= 0.4 => "△ Somewhat plausible",
+        _ => "✗ Implausible"
+    };
+}
+
+static string GetQualityAssessment(double score)
+{
+    return score switch
+    {
+        >= 0.8 => "✓ High quality",
+        >= 0.6 => "○ Good quality",
+        >= 0.4 => "△ Acceptable quality",
+        _ => "✗ Poor quality"
+    };
+}
 
 static async Task TestForestLocationSystem()
 {

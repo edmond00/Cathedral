@@ -305,6 +305,40 @@ public static class LLMLogger
     }
     
     /// <summary>
+    /// Logs a Critic evaluation with probability scores.
+    /// </summary>
+    public static void LogCriticEvaluation(int slotId, string question, double ratio, double pYes, double pNo, double durationMs)
+    {
+        if (!_isEnabled || _logFilePath == null) return;
+        
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] CRITIC EVALUATION (Slot {slotId})");
+            sb.AppendLine($"{'-',-80}");
+            sb.AppendLine($"QUESTION:");
+            sb.AppendLine(WrapText(question, 76));
+            sb.AppendLine();
+            sb.AppendLine($"PROBABILITIES:");
+            sb.AppendLine($"  Yes: {pYes:F4} ({pYes * 100:F1}%)");
+            sb.AppendLine($"  No:  {pNo:F4} ({pNo * 100:F1}%)");
+            sb.AppendLine();
+            sb.AppendLine($"RATIO: {ratio:F4} ({ratio * 100:F1}% confidence)");
+            sb.AppendLine($"Duration: {durationMs:F0}ms");
+            sb.AppendLine($"{'=',-80}\n");
+            
+            lock (_lockObject)
+            {
+                File.AppendAllText(_logFilePath, sb.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMLogger: Failed to log critic evaluation: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
     /// Logs session statistics.
     /// </summary>
     public static void LogStatistics(int totalRequests, int successCount, int failureCount, double avgDurationMs)
