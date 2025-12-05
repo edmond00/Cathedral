@@ -408,7 +408,21 @@ public class LlamaServerManager : IDisposable
                                 {
                                     // Convert log probability to probability: p = exp(logprob)
                                     var probability = Math.Exp(logprob);
-                                    probabilities[token.Trim().ToLower()] = probability;
+                                    
+                                    // Store both the original token and normalized version
+                                    probabilities[token] = probability;
+                                    
+                                    // Also store case-insensitive version for easier lookup
+                                    var normalizedToken = token.Trim().ToLower();
+                                    if (!probabilities.ContainsKey(normalizedToken))
+                                    {
+                                        probabilities[normalizedToken] = probability;
+                                    }
+                                    else
+                                    {
+                                        // Accumulate probability if multiple tokens normalize to same string
+                                        probabilities[normalizedToken] += probability;
+                                    }
                                 }
                             }
                         }

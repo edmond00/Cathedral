@@ -130,6 +130,8 @@ response ::= ""yes"" | ""no""";
         try
         {
             // Get token probabilities for "yes" and "no"
+            // The LlamaServerManager will normalize tokens (trim + lowercase) and also
+            // store original tokens, so we'll capture variations like " yes", "Yes", etc.
             var probabilities = await _llamaServer.GetNextTokenProbabilitiesAsync(
                 _criticSlotId,
                 question,

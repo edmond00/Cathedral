@@ -142,7 +142,8 @@ public class LLMActionExecutor : IDisposable
     public async Task<List<ActionInfo>?> GenerateActionsAsync(
         LocationInstanceState currentState,
         LocationBlueprint blueprint,
-        PlayerAction? previousAction = null)
+        PlayerAction? previousAction = null,
+        int numberOfActions = 6)
     {
         if (!_useLLM || !_isInitialized || !_llamaServer.IsServerReady || _directorSlotId < 0)
         {
@@ -158,7 +159,7 @@ public class LLMActionExecutor : IDisposable
                 blueprint,
                 currentState.CurrentSublocation,
                 currentState.CurrentStates,
-                numberOfActions: 6);
+                numberOfActions: numberOfActions);
 
             // Update director with current state
             director.UpdateGameState(currentState.CurrentSublocation, currentState.CurrentStates);
@@ -212,6 +213,83 @@ public class LLMActionExecutor : IDisposable
         {
             Console.Error.WriteLine($"LLMActionExecutor: Error generating actions: {ex.Message}");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Generates actions and returns both ActionInfo list and raw JSON for parsing.
+    /// Used by the new flow that needs to parse and score actions.
+    /// </summary>
+    public async Task<(List<ActionInfo>? actions, string? rawJson)> GenerateActionsWithRawJsonAsync(
+        LocationInstanceState currentState,
+        LocationBlueprint blueprint,
+        PlayerAction? previousAction = null,
+        int numberOfActions = 6)
+    {
+        if (!_useLLM || !_isInitialized || !_llamaServer.IsServerReady || _directorSlotId < 0)
+        {
+            var reason = !_useLLM ? "disabled" : !_isInitialized ? "not initialized" : 
+                        !_llamaServer.IsServerReady ? "server not ready" : "invalid director slot";
+            Console.Error.WriteLine($"GenerateActionsWithRawJsonAsync: Cannot generate actions - LLM {reason}");
+            return (null, null);
+        }
+
+        try
+        {
+            var director = new DirectorPromptConstructor(
+                blueprint,
+                currentState.CurrentSublocation,
+                currentState.CurrentStates,
+                numberOfActions: numberOfActions);
+
+            director.UpdateGameState(currentState.CurrentSublocation, currentState.CurrentStates);
+
+            var systemPrompt = director.GetSystemPrompt();
+            var userPrompt = director.ConstructPrompt(previousAction, null);
+            var gbnf = director.GetGbnf();
+
+            Console.WriteLine($"LLMActionExecutor: Requesting {numberOfActions} actions from Director LLM...");
+
+            string? response = null;
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                response = await RequestFromLLMAsync(
+                    _directorSlotId,
+                    userPrompt,
+                    gbnf,
+                    timeoutSeconds: 60);
+
+                if (!string.IsNullOrWhiteSpace(response))
+                    break;
+                    
+                if (attempt == 0)
+                {
+                    Console.WriteLine("LLMActionExecutor: Director returned empty response, retrying after delay...");
+                    await Task.Delay(200);
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                Console.Error.WriteLine("LLMActionExecutor: Director returned empty response after retry");
+                return (null, null);
+            }
+
+            var actions = ParseActionsFromJson(response);
+            
+            if (actions == null || actions.Count == 0)
+            {
+                Console.WriteLine("LLMActionExecutor: Failed to parse actions from Director response");
+                return (null, null);
+            }
+
+            Console.WriteLine($"LLMActionExecutor: Generated {actions.Count} actions from Director LLM");
+            return (actions, response); // Return both ActionInfo and raw JSON
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMActionExecutor: Error generating actions: {ex.Message}");
+            return (null, null);
         }
     }
 
@@ -284,6 +362,64 @@ public class LLMActionExecutor : IDisposable
             Console.Error.WriteLine($"LLMActionExecutor: Error generating narrative: {ex.Message}");
             return null;
         }
+    }
+
+    /// <summary>
+    /// Generates a failure narrative using the Narrator LLM.
+    /// Called when an action fails to provide dramatic closure.
+    /// </summary>
+    public async Task<string?> GenerateFailureNarrativeAsync(
+        LocationInstanceState currentState,
+        LocationBlueprint blueprint,
+        PlayerAction lastAction,
+        string outcomeDescription)
+    {
+        if (!_useLLM || !_isInitialized || !_llamaServer.IsServerReady || _narratorSlotId < 0)
+        {
+            var reason = !_useLLM ? "disabled" : !_isInitialized ? "not initialized" : 
+                        !_llamaServer.IsServerReady ? "server not ready" : "invalid narrator slot";
+            Console.Error.WriteLine($"GenerateFailureNarrativeAsync: Cannot generate narrative - LLM {reason}");
+            return null;
+        }
+
+        try
+        {
+            var userPrompt = $@"FAILURE OUTCOME:
+The player attempted: {lastAction.ActionText}
+Result: {outcomeDescription}
+
+Write a dramatic 2-3 sentence narrative describing this failure and its consequences.";
+
+            Console.WriteLine($"LLMActionExecutor: Requesting failure narrative from Narrator LLM...");
+
+            string? response = await RequestFromLLMAsync(
+                _narratorSlotId,
+                userPrompt,
+                gbnfGrammar: null, // Free-form narrative
+                timeoutSeconds: 30);
+
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                Console.Error.WriteLine("LLMActionExecutor: Narrator returned empty failure narrative");
+                return null;
+            }
+
+            Console.WriteLine($"LLMActionExecutor: Generated failure narrative from Narrator LLM");
+            return response.Trim();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMActionExecutor: Error generating failure narrative: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets the underlying LlamaServerManager (needed for Critic initialization).
+    /// </summary>
+    public LlamaServerManager GetLlamaServerManager()
+    {
+        return _llamaServer;
     }
 
     /// <summary>

@@ -98,70 +98,25 @@ public class ActionScorer
         PlayerAction previousAction)
     {
         // Build a question that captures the context
-        var outcomeDescription = previousAction.WasSuccessful ? "succeeded" : "failed";
-        var question = $"The player just attempted to '{previousAction.ActionText}' and it {outcomeDescription}. " +
-                      $"Would '{currentAction.ActionText}' make sense as a logical next action in this situation?";
-        
-        // Use the Critic's yes/no evaluation
-        return await _critic.EvaluateYesNoQuestion(question);
+        var question = $@"Previous action: {previousAction.ActionText}
+Previous outcome: {(previousAction.WasSuccessful ? "Success" : "Failure")} - {previousAction.Outcome}
+
+Current action being considered: {currentAction.ActionText}
+
+Does this new action make logical sense as a follow-up to the previous action and its outcome?";
+
+        // Use narrative quality evaluation as a proxy for context coherence
+        return await _critic.EvaluateNarrativeQuality(question, "logical and coherent sequence");
     }
     
     /// <summary>
-    /// Selects the top-k highest scored actions.
+    /// Truncates text for display purposes.
     /// </summary>
-    public List<ParsedAction> SelectTopK(List<ScoredAction> scoredActions, int k)
+    private static string TruncateText(string text, int maxLength)
     {
-        return scoredActions
-            .Take(k)
-            .Select(s => s.Action)
-            .ToList();
-    }
-    
-    /// <summary>
-    /// Gets statistics about the scoring results.
-    /// </summary>
-    public ScoringStatistics GetStatistics(List<ScoredAction> scoredActions)
-    {
-        if (scoredActions.Count == 0)
-        {
-            return new ScoringStatistics();
-        }
-        
-        return new ScoringStatistics
-        {
-            TotalActions = scoredActions.Count,
-            AverageScore = scoredActions.Average(a => a.TotalScore),
-            HighestScore = scoredActions.Max(a => a.TotalScore),
-            LowestScore = scoredActions.Min(a => a.TotalScore),
-            AverageSkillScore = scoredActions.Average(a => a.SkillScore),
-            AverageConsequenceScore = scoredActions.Average(a => a.ConsequenceScore),
-            AverageContextScore = scoredActions.Average(a => a.ContextScore),
-            TotalEvaluationTime = scoredActions.Sum(a => a.EvaluationDurationMs)
-        };
-    }
-    
-    /// <summary>
-    /// Helper to truncate text for display.
-    /// </summary>
-    private string TruncateText(string text, int maxLength)
-    {
-        if (text.Length <= maxLength)
+        if (string.IsNullOrEmpty(text) || text.Length <= maxLength)
             return text;
+        
         return text.Substring(0, maxLength - 3) + "...";
     }
-}
-
-/// <summary>
-/// Statistics about action scoring results.
-/// </summary>
-public class ScoringStatistics
-{
-    public int TotalActions { get; set; }
-    public double AverageScore { get; set; }
-    public double HighestScore { get; set; }
-    public double LowestScore { get; set; }
-    public double AverageSkillScore { get; set; }
-    public double AverageConsequenceScore { get; set; }
-    public double AverageContextScore { get; set; }
-    public double TotalEvaluationTime { get; set; }
 }

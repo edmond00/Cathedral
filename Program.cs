@@ -423,8 +423,8 @@ static async Task TestForestLocationSystem()
 
     Console.WriteLine("✓ LLM Server started successfully!\n");
 
-    // Initialize prompt constructors (Director generates 12 actions now)
-    var director = new DirectorPromptConstructor(blueprint, currentSublocation, currentStates, 12);
+    // Initialize prompt constructors
+    var director = new DirectorPromptConstructor(blueprint, currentSublocation, currentStates, 5);
     var narrator = new NarratorPromptConstructor(blueprint, currentSublocation, currentStates);
 
     // Initialize gameplay logger
@@ -436,16 +436,7 @@ static async Task TestForestLocationSystem()
     var narratorSlotId = await llmManager.CreateInstanceAsync(narrator.GetSystemPrompt());
 
     Console.WriteLine("✓ Created Director LLM instance (action generation)");
-    Console.WriteLine("✓ Created Narrator LLM instance (storytelling)");
-    
-    // Initialize Critic evaluator
-    using var critic = new CriticEvaluator(llmManager);
-    await critic.InitializeAsync();
-    var scorer = new ActionScorer(critic);
-    Console.WriteLine("✓ Created Critic LLM instance (action evaluation)\n");
-    
-    // Initialize outcome simulator
-    var outcomeSimulator = new ActionOutcomeSimulator(defaultSuccessRate: 0.7);
+    Console.WriteLine("✓ Created Narrator LLM instance (storytelling)\n");
 
     // Game loop variables
     PlayerAction? previousAction = null;
@@ -499,6 +490,7 @@ static async Task TestForestLocationSystem()
         }
 
         var actionChoices = NarratorPromptConstructor.ParseActionChoices(actionResponse);
+        var actionTexts = NarratorPromptConstructor.ExtractActionChoices(actionResponse);
 
         if (actionChoices.Count == 0)
         {
@@ -507,39 +499,11 @@ static async Task TestForestLocationSystem()
             break;
         }
 
-        // Step 2: Parse actions and score them with Critic
-        var parsedActions = actionChoices.Select((ac, idx) => new ParsedAction
-        {
-            ActionText = ac.ActionText,
-            Skill = ac.Skill,
-            Difficulty = ac.Difficulty.ToString(),
-            SuccessConsequence = "unknown", // Will be extracted from JSON
-            FailureConsequence = "unknown",
-            OriginalIndex = idx
-        }).ToList();
-        
-        // Extract consequences from full JSON response
-        ExtractConsequencesFromJson(actionResponse, parsedActions);
-        
-        // Score all actions with Critic
-        var scoredActions = await scorer.ScoreActionsAsync(parsedActions, previousAction);
-        
-        // Select top 6 actions
-        var topActions = scorer.SelectTopK(scoredActions, 6);
-        
-        // Log scoring results
-        var scoringStats = scorer.GetStatistics(scoredActions);
-        logger.LogCriticScoring(scoredActions, topActions, scoringStats);
-        
-        Console.WriteLine($"✓ Selected top 6 actions (from {parsedActions.Count} generated)");
-        Console.WriteLine($"  Score range: {scoringStats.LowestScore:F3} - {scoringStats.HighestScore:F3}");
-        Console.WriteLine($"  Average score: {scoringStats.AverageScore:F3}\n");
-
-        // Step 3: Narrator presents the situation
+        // Step 2: Narrator presents the situation
         Console.WriteLine("📖 Narrator is crafting the scene...\n");
         
-        // Convert top actions to ActionInfo
-        var actionInfos = topActions.Select(a => new ActionInfo(a.ActionText, a.Skill)).ToList();
+        // Convert action texts to ActionInfo (with empty skill for now since we're not parsing it)
+        var actionInfos = actionTexts.Select(text => new ActionInfo(text, "")).ToList();
         var narratorPrompt = narrator.ConstructPrompt(previousAction, actionInfos);
         var narratorGbnf = narrator.GetGbnf(previousAction?.WasSuccessful);
         
@@ -559,20 +523,19 @@ static async Task TestForestLocationSystem()
             Console.WriteLine(new string('─', 80));
         }
 
-        // Step 4: Present action choices to player (top 6 only)
+        // Step 3: Present action choices to player
         Console.WriteLine("\n🎯 AVAILABLE ACTIONS:");
         Console.WriteLine();
-        for (int i = 0; i < topActions.Count; i++)
+        for (int i = 0; i < actionChoices.Count; i++)
         {
-            var action = topActions[i];
-            var scored = scoredActions.First(s => s.Action == action);
-            Console.WriteLine($"[{i + 1}] {action.ActionText}");
-            Console.WriteLine($"     Skill: {action.Skill} | Difficulty: {action.Difficulty} | Score: {scored.TotalScore:F3}");
+            var choice = actionChoices[i];
+            Console.WriteLine($"[{i + 1}] {choice.ActionText}");
+            Console.WriteLine($"     Skill: {choice.Skill} | Difficulty: {choice.Difficulty}/5 | Risk: {choice.Risk}");
             Console.WriteLine();
         }
 
-        // Step 5: Get player choice
-        var playerChoice = GetPlayerChoice(topActions.Count);
+        // Step 4: Get player choice
+        var playerChoice = GetPlayerChoice(actionChoices.Count);
         
         if (playerChoice == -1)
         {
@@ -582,48 +545,20 @@ static async Task TestForestLocationSystem()
             continue;
         }
 
-        var selectedAction = topActions[playerChoice - 1];
+        var selectedAction = actionChoices[playerChoice - 1];
         Console.WriteLine($"\n➤ You chose: {selectedAction.ActionText}");
         
         // Log player action
         logger.LogPlayerAction(playerChoice, selectedAction.ActionText);
 
-        // Step 6: Simulate action outcome (programmatic RNG)
-        var outcome = outcomeSimulator.SimulateOutcome(selectedAction, actionResponse, selectedAction.OriginalIndex);
+        // Step 5: Simulate action outcome (simplified for demo)
+        var outcome = SimulateActionOutcome(selectedAction, actionResponse, playerChoice - 1);
         
         // Log action outcome
         logger.LogActionOutcome(outcome);
         
-        // Step 7: Check outcome - if failure, end game with final narrative
-        if (!outcome.WasSuccessful)
-        {
-            Console.WriteLine("\n" + new string('─', 80));
-            Console.WriteLine("❌ YOUR ACTION FAILED!");
-            Console.WriteLine(new string('─', 80));
-            
-            // Call Narrator for final failure narrative
-            Console.WriteLine("\n📖 Narrator describes your failure...\n");
-            
-            var failurePrompt = narrator.ConstructPrompt(outcome, actionInfos);
-            var failureGbnf = narrator.GetGbnf(false); // false = failure
-            
-            var (failureNarrative, failureTime) = await GetLLMResponseWithTiming(llmManager, narratorSlotId, failurePrompt, failureGbnf);
-            
-            Console.WriteLine(new string('─', 80));
-            Console.WriteLine(failureNarrative);
-            Console.WriteLine(new string('─', 80));
-            
-            logger.LogNarratorResponse(failureNarrative, failureTime);
-            logger.LogGameEnd($"Player failed: {outcome.Outcome}");
-            
-            Console.WriteLine("\n💀 GAME OVER 💀");
-            Console.WriteLine($"You survived {turnNumber} turn(s).");
-            gameRunning = false;
-            continue;
-        }
-        
-        // Success - update game state and continue
-        outcomeSimulator.ApplyOutcome(outcome, ref currentSublocation, currentStates, director, narrator);
+        // Update game state based on outcome
+        ApplyActionOutcome(outcome, ref currentSublocation, currentStates, director, narrator);
         
         previousAction = outcome;
         turnNumber++;
@@ -650,39 +585,6 @@ static async Task TestForestLocationSystem()
 }
 
 // Helper methods for interactive game loop
-
-/// <summary>
-/// Extracts success and failure consequences from the Director's JSON response.
-/// </summary>
-static void ExtractConsequencesFromJson(string jsonResponse, List<ParsedAction> actions)
-{
-    try
-    {
-        using var doc = JsonDocument.Parse(jsonResponse);
-        if (doc.RootElement.TryGetProperty("actions", out var actionsArray))
-        {
-            var jsonActions = actionsArray.EnumerateArray().ToList();
-            for (int i = 0; i < Math.Min(actions.Count, jsonActions.Count); i++)
-            {
-                var jsonAction = jsonActions[i];
-                
-                if (jsonAction.TryGetProperty("success_consequence", out var successProp))
-                {
-                    actions[i].SuccessConsequence = successProp.GetString() ?? "";
-                }
-                
-                if (jsonAction.TryGetProperty("failure_consequence", out var failureProp))
-                {
-                    actions[i].FailureConsequence = failureProp.GetString() ?? "";
-                }
-            }
-        }
-    }
-    catch (JsonException ex)
-    {
-        Console.WriteLine($"Warning: Failed to extract consequences from JSON: {ex.Message}");
-    }
-}
 
 /// <summary>
 /// Gets LLM response with optional GBNF grammar and logging
@@ -735,7 +637,131 @@ static int GetPlayerChoice(int maxChoices)
     }
 }
 
+/// <summary>
+/// Simulates action outcome (simplified for demo)
+/// </summary>
+static PlayerAction SimulateActionOutcome(ActionChoice selectedAction, string fullActionResponse, int actionIndex)
+{
+    var random = new Random();
+    var success = random.NextDouble() > 0.3; // 70% success rate for demo
+    
+    var outcome = new PlayerAction
+    {
+        ActionText = selectedAction.ActionText,
+        WasSuccessful = success
+    };
 
+    // Parse the full action data for consequences
+    try
+    {
+        using var doc = JsonDocument.Parse(fullActionResponse);
+        if (doc.RootElement.TryGetProperty("actions", out var actionsArray))
+        {
+            var actions = actionsArray.EnumerateArray().ToList();
+            if (actionIndex < actions.Count)
+            {
+                var actionData = actions[actionIndex];
+                
+                string consequenceType = success ? "success_consequences" : "failure_consequences";
+                
+                if (actionData.TryGetProperty(consequenceType, out var consequences))
+                {
+                    // Parse success consequences
+                    if (success && consequences.TryGetProperty("state_changes", out var stateChanges))
+                    {
+                        if (stateChanges.TryGetProperty("category", out var category) && 
+                            stateChanges.TryGetProperty("new_state", out var newState))
+                        {
+                            var categoryStr = category.GetString();
+                            var newStateStr = newState.GetString();
+                            
+                            if (!string.IsNullOrEmpty(categoryStr) && !string.IsNullOrEmpty(newStateStr) && 
+                                categoryStr != "none" && newStateStr != "none")
+                            {
+                                outcome.StateChanges[categoryStr] = newStateStr;
+                            }
+                        }
+                    }
+                    
+                    if (success)
+                    {
+                        if (consequences.TryGetProperty("sublocation_change", out var sublocChange))
+                        {
+                            var newSubloc = sublocChange.GetString();
+                            if (!string.IsNullOrEmpty(newSubloc) && newSubloc != "none")
+                            {
+                                outcome.NewSublocation = newSubloc;
+                            }
+                        }
+                        
+                        if (consequences.TryGetProperty("item_gained", out var itemGained))
+                        {
+                            var item = itemGained.GetString();
+                            if (!string.IsNullOrEmpty(item) && item != "none")
+                            {
+                                outcome.ItemGained = item;
+                            }
+                        }
+                        
+                        if (consequences.TryGetProperty("companion_gained", out var companionGained))
+                        {
+                            var companion = companionGained.GetString();
+                            if (!string.IsNullOrEmpty(companion) && companion != "none")
+                            {
+                                outcome.CompanionGained = companion;
+                            }
+                        }
+                    }
+                    
+                    // Set outcome description
+                    if (consequences.TryGetProperty("description", out var description))
+                    {
+                        outcome.Outcome = description.GetString() ?? "";
+                    }
+                    else if (consequences.TryGetProperty("type", out var failureType))
+                    {
+                        outcome.Outcome = failureType.GetString() ?? "";
+                    }
+                }
+            }
+        }
+    }
+    catch (JsonException)
+    {
+        // Fallback outcome if parsing fails
+        outcome.Outcome = success ? "Your action succeeded!" : "Your action didn't go as planned.";
+    }
+
+    if (string.IsNullOrEmpty(outcome.Outcome))
+    {
+        outcome.Outcome = success ? "Your action was successful!" : "Your attempt failed.";
+    }
+
+    return outcome;
+}
+
+/// <summary>
+/// Applies action outcome to game state
+/// </summary>
+static void ApplyActionOutcome(PlayerAction outcome, ref string currentSublocation, 
+    Dictionary<string, string> currentStates, DirectorPromptConstructor director, NarratorPromptConstructor narrator)
+{
+    // Apply state changes
+    foreach (var (category, newState) in outcome.StateChanges)
+    {
+        currentStates[category] = newState;
+    }
+
+    // Apply sublocation change
+    if (!string.IsNullOrEmpty(outcome.NewSublocation))
+    {
+        currentSublocation = outcome.NewSublocation;
+    }
+
+    // Update both prompt constructors with new state
+    director.UpdateGameState(currentSublocation, currentStates);
+    narrator.UpdateGameState(currentSublocation, currentStates);
+}
 
 /*
 

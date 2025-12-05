@@ -1,165 +1,135 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using Cathedral.Glyph.Microworld.LocationSystem;
 
 namespace Cathedral.Game;
 
 /// <summary>
-/// Handles programmatic simulation of action outcomes.
-/// Determines success/failure via RNG and applies consequences from action data.
+/// Simulates action outcomes programmatically using RNG.
+/// Replaces LLM-based outcome generation with deterministic simulation.
 /// </summary>
 public class ActionOutcomeSimulator
 {
     private readonly Random _random;
-    private readonly double _defaultSuccessRate;
     
-    public ActionOutcomeSimulator(double defaultSuccessRate = 0.7, int? seed = null)
+    // Success rate configuration
+    private const double DefaultSuccessRate = 0.70; // 70% success rate
+    
+    public ActionOutcomeSimulator()
     {
-        _random = seed.HasValue ? new Random(seed.Value) : new Random();
-        _defaultSuccessRate = defaultSuccessRate;
+        _random = new Random();
+    }
+    
+    public ActionOutcomeSimulator(int seed)
+    {
+        _random = new Random(seed);
     }
     
     /// <summary>
-    /// Simulates the outcome of a selected action.
-    /// Uses RNG for success/failure, then parses consequences from the action JSON.
+    /// Simulates the outcome of a parsed action.
+    /// Uses RNG to determine success/failure and applies consequences from action data.
     /// </summary>
-    public PlayerAction SimulateOutcome(
+    public ActionResult SimulateOutcome(
         ParsedAction selectedAction,
-        string fullActionResponse,
-        int actionIndex)
+        LocationInstanceState currentState,
+        LocationBlueprint blueprint)
     {
-        // Determine success/failure
-        var success = _random.NextDouble() < _defaultSuccessRate;
+        if (selectedAction == null)
+            throw new ArgumentNullException(nameof(selectedAction));
         
-        var outcome = new PlayerAction
+        // Determine success based on RNG
+        // Future: could factor in difficulty, skill levels, etc.
+        bool success = _random.NextDouble() < DefaultSuccessRate;
+        
+        if (success)
         {
-            ActionText = selectedAction.ActionText,
-            WasSuccessful = success
-        };
-
-        // Parse the full action data for consequences
-        try
+            return CreateSuccessResult(selectedAction);
+        }
+        else
         {
-            using var doc = JsonDocument.Parse(fullActionResponse);
-            if (doc.RootElement.TryGetProperty("actions", out var actionsArray))
+            return CreateFailureResult(selectedAction);
+        }
+    }
+    
+    /// <summary>
+    /// Creates an ActionResult for a successful action.
+    /// </summary>
+    private ActionResult CreateSuccessResult(ParsedAction action)
+    {
+        var stateChanges = new Dictionary<string, string>();
+        
+        // Apply state changes from success consequences
+        if (action.SuccessStateChanges != null)
+        {
+            foreach (var (category, newState) in action.SuccessStateChanges)
             {
-                var actions = actionsArray.EnumerateArray().ToList();
-                if (actionIndex < actions.Count)
+                if (!string.IsNullOrEmpty(category) && !string.IsNullOrEmpty(newState) &&
+                    category != "none" && newState != "none")
                 {
-                    var actionData = actions[actionIndex];
-                    
-                    // For the new schema, we have success_consequence and failure_consequence as labels
-                    // Extract them directly from the action
-                    if (success && actionData.TryGetProperty("success_consequence", out var successConseq))
-                    {
-                        outcome.Outcome = successConseq.GetString() ?? "";
-                        
-                        // Map consequence labels to state changes
-                        var consequenceLabel = outcome.Outcome;
-                        ApplyConsequenceLabel(consequenceLabel, outcome);
-                    }
-                    else if (!success && actionData.TryGetProperty("failure_consequence", out var failureConseq))
-                    {
-                        outcome.Outcome = failureConseq.GetString() ?? "";
-                    }
+                    stateChanges[category] = newState;
                 }
             }
         }
-        catch (JsonException ex)
+        
+        // Extract items gained
+        var itemsGained = new List<string>();
+        if (action.SuccessItemsGained != null)
         {
-            Console.WriteLine($"Warning: Failed to parse action consequences: {ex.Message}");
-            // Fallback outcome if parsing fails
-            outcome.Outcome = success ? "Your action succeeded!" : "Your action didn't go as planned.";
+            itemsGained.AddRange(action.SuccessItemsGained
+                .Where(item => !string.IsNullOrEmpty(item) && item != "none"));
         }
-
-        if (string.IsNullOrEmpty(outcome.Outcome))
+        
+        // Extract companions gained
+        var companionsGained = new List<string>();
+        if (action.SuccessCompanionsGained != null)
         {
-            outcome.Outcome = success ? "Your action was successful!" : "Your attempt failed.";
+            companionsGained.AddRange(action.SuccessCompanionsGained
+                .Where(companion => !string.IsNullOrEmpty(companion) && companion != "none"));
         }
-
-        return outcome;
+        
+        // Determine sublocation change
+        string? newSublocation = null;
+        if (!string.IsNullOrEmpty(action.SuccessSublocationChange) && 
+            action.SuccessSublocationChange != "none")
+        {
+            newSublocation = action.SuccessSublocationChange;
+        }
+        
+        return ActionResult.CreateSuccess(
+            narrative: action.SuccessConsequence ?? "Your action succeeded!",
+            stateChanges: stateChanges,
+            newSublocation: newSublocation,
+            itemsGained: itemsGained.Count > 0 ? itemsGained : null,
+            endsInteraction: false);
     }
     
     /// <summary>
-    /// Applies consequences based on the consequence label.
-    /// Maps labels like "beasts flee", "noon passes" to actual state changes.
+    /// Creates an ActionResult for a failed action.
+    /// Failures end the interaction.
     /// </summary>
-    private void ApplyConsequenceLabel(string label, PlayerAction outcome)
+    private ActionResult CreateFailureResult(ParsedAction action)
     {
-        // Map consequence labels to state changes
-        switch (label.ToLower())
+        var failureDescription = action.FailureConsequence ?? "Your action failed.";
+        
+        // Add failure type context if available
+        if (!string.IsNullOrEmpty(action.FailureType) && action.FailureType != "none")
         {
-            case "beasts flee":
-                outcome.StateChanges["wildlife_state"] = "fled";
-                break;
-                
-            case "beasts approach":
-                outcome.StateChanges["wildlife_state"] = "approaching";
-                break;
-                
-            case "noon passes":
-                outcome.StateChanges["time_of_day"] = "noon";
-                break;
-                
-            case "dusk falls":
-                outcome.StateChanges["time_of_day"] = "dusk";
-                break;
-                
-            case "night falls":
-                outcome.StateChanges["time_of_day"] = "night";
-                break;
-                
-            case "rain begins":
-                outcome.StateChanges["weather"] = "rain";
-                break;
-                
-            case "storm arrives":
-                outcome.StateChanges["weather"] = "storm";
-                break;
-                
-            case "fog thickens":
-                outcome.StateChanges["weather"] = "fog";
-                break;
-                
-            case "trail clears":
-                outcome.StateChanges["trail_condition"] = "clear_trail";
-                break;
-                
-            case "trail obscured":
-                outcome.StateChanges["trail_condition"] = "obscured";
-                break;
-                
-            // Add more mappings as needed
+            failureDescription = $"{failureDescription} ({action.FailureType})";
         }
+        
+        return ActionResult.CreateFailure(
+            narrative: failureDescription);
     }
     
     /// <summary>
-    /// Applies an action outcome to the game state.
-    /// Updates sublocation and state categories based on the outcome.
+    /// Configurable success check for future enhancement.
+    /// Can factor in difficulty, player stats, etc.
     /// </summary>
-    public void ApplyOutcome(
-        PlayerAction outcome,
-        ref string currentSublocation,
-        Dictionary<string, string> currentStates,
-        DirectorPromptConstructor director,
-        NarratorPromptConstructor narrator)
+    public bool RollSuccess(int difficulty = 3, double baseRate = DefaultSuccessRate)
     {
-        // Apply state changes
-        foreach (var (category, newState) in outcome.StateChanges)
-        {
-            currentStates[category] = newState;
-        }
-
-        // Apply sublocation change
-        if (!string.IsNullOrEmpty(outcome.NewSublocation))
-        {
-            currentSublocation = outcome.NewSublocation;
-        }
-
-        // Update both prompt constructors with new state
-        director.UpdateGameState(currentSublocation, currentStates);
-        narrator.UpdateGameState(currentSublocation, currentStates);
+        // Simple implementation for now
+        // Future: difficulty could modify success rate
+        return _random.NextDouble() < baseRate;
     }
 }

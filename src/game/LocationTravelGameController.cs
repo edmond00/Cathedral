@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Cathedral.Glyph;
 using Cathedral.Glyph.Microworld;
 using Cathedral.Glyph.Microworld.LocationSystem;
@@ -35,12 +36,16 @@ public class LocationTravelGameController : IDisposable
     // Action executors
     private readonly SimpleActionExecutor _simpleActionExecutor;
     private LLMActionExecutor? _llmActionExecutor; // Optional - requires LLamaServerManager
+    private ActionOutcomeSimulator _actionOutcomeSimulator;
+    private CriticEvaluator? _criticEvaluator;
+    private ActionScorer? _actionScorer;
     
     // Current blueprint for location interaction
     private LocationBlueprint? _currentBlueprint;
     
     // UI state for interaction
     private List<ActionInfo> _currentActions = new();
+    private List<ParsedAction> _currentParsedActions = new();
     private string _currentNarrative = "";
     private bool _waitingForClickToExit = false;
     private bool _isLoadingLLMContent = false;
@@ -66,6 +71,7 @@ public class LocationTravelGameController : IDisposable
         // Initialize action executors
         _simpleActionExecutor = new SimpleActionExecutor();
         _llmActionExecutor = null; // Will be set via SetLLMActionExecutor()
+        _actionOutcomeSimulator = new ActionOutcomeSimulator();
         
         // Initialize with WorldView mode
         _currentMode = GameMode.WorldView;
@@ -102,6 +108,29 @@ public class LocationTravelGameController : IDisposable
     public void SetLLMActionExecutor(LLMActionExecutor executor)
     {
         _llmActionExecutor = executor;
+        
+        // Also initialize Critic and ActionScorer
+        if (executor != null)
+        {
+            _criticEvaluator = new CriticEvaluator(executor.GetLlamaServerManager());
+            
+            // Initialize Critic asynchronously
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _criticEvaluator.InitializeAsync();
+                    _actionScorer = new ActionScorer(_criticEvaluator);
+                    Console.WriteLine("LocationTravelGameController: Critic evaluator initialized");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"LocationTravelGameController: Failed to initialize Critic - {ex.Message}");
+                    _criticEvaluator = null;
+                }
+            });
+        }
+        
         Console.WriteLine("LocationTravelGameController: LLM action executor enabled");
     }
     
@@ -195,48 +224,105 @@ public class LocationTravelGameController : IDisposable
         if (_llmActionExecutor != null && _terminalUI != null)
         {
             _isLoadingLLMContent = true;
-            _loadingMessage = "Processing action...";
+            _loadingMessage = "Determining outcome...";
             _terminalUI.ShowLoadingIndicator(_loadingMessage);
         }
         
         // Get the last action for context (if any)
         var lastAction = _currentLocationState.GetLastAction();
         
-        // Execute the action using LLM executor if available, otherwise fall back to simple
+        // [7] Determine outcome PROGRAMMATICALLY using ActionOutcomeSimulator
         ActionResult result;
-        if (_llmActionExecutor != null)
+        if (actionIndex < _currentParsedActions.Count && _currentParsedActions[actionIndex] != null)
         {
-            Console.WriteLine("LocationTravelGameController: Using LLM action executor");
-            result = await _llmActionExecutor.ExecuteActionAsync(
-                actionText, _currentLocationState, _currentBlueprint, lastAction);
+            Console.WriteLine("LocationTravelGameController: Using programmatic outcome simulation");
+            result = _actionOutcomeSimulator.SimulateOutcome(
+                _currentParsedActions[actionIndex],
+                _currentLocationState,
+                _currentBlueprint);
         }
         else
         {
-            Console.WriteLine("LocationTravelGameController: Using simple action executor (LLM not available)");
+            // Fallback if parsed actions not available
+            Console.WriteLine("LocationTravelGameController: Parsed action not available, using simple executor");
             result = _simpleActionExecutor.ExecuteAction(actionText, _currentLocationState, _currentBlueprint);
         }
         
         // Clear loading flag
         _isLoadingLLMContent = false;
         
+        // [9] Check outcome and handle failure/success
+        if (!result.Success)
+        {
+            // FAILURE - Generate dramatic failure narrative via Narrator
+            Console.WriteLine("LocationTravelGameController: Action FAILED - generating failure narrative");
+            
+            if (_llmActionExecutor != null && _terminalUI != null)
+            {
+                _isLoadingLLMContent = true;
+                _loadingMessage = "Narrating your demise...";
+                _terminalUI.ShowLoadingIndicator(_loadingMessage);
+            }
+            
+            // Create temporary player action for narrative context
+            var failedAction = new PlayerAction
+            {
+                ActionText = actionText,
+                Outcome = result.NarrativeOutcome,
+                WasSuccessful = false
+            };
+            
+            // Request failure narrative from Narrator
+            string? failureNarrative = null;
+            if (_llmActionExecutor != null)
+            {
+                failureNarrative = await _llmActionExecutor.GenerateFailureNarrativeAsync(
+                    _currentLocationState,
+                    _currentBlueprint,
+                    failedAction,
+                    result.NarrativeOutcome);
+            }
+            
+            _isLoadingLLMContent = false;
+            
+            // Update result with enhanced narrative
+            result = ActionResult.CreateFailure(
+                failureNarrative ?? result.NarrativeOutcome);
+            
+            // Apply the failed action to state
+            var playerAction = new PlayerAction
+            {
+                ActionText = actionText,
+                Outcome = result.NarrativeOutcome,
+                WasSuccessful = false
+            };
+            
+            _currentLocationState = _currentLocationState.ApplyActionResult(result, playerAction);
+            _locationStates[_currentLocationVertex] = _currentLocationState;
+            
+            HandleInteractionEnd(result);
+            return;
+        }
+        
+        // SUCCESS - Continue with new actions
+        Console.WriteLine("LocationTravelGameController: Action SUCCEEDED");
+        
         // Create player action record
-        var playerAction = new PlayerAction
+        var successPlayerAction = new PlayerAction
         {
             ActionText = actionText,
             Outcome = result.NarrativeOutcome,
-            WasSuccessful = result.Success,
+            WasSuccessful = true,
             StateChanges = result.StateChanges,
             NewSublocation = result.NewSublocation,
             ItemGained = result.ItemsGained?.FirstOrDefault()
         };
         
         // Apply the result to the location state
-        _currentLocationState = _currentLocationState.ApplyActionResult(result, playerAction);
+        _currentLocationState = _currentLocationState.ApplyActionResult(result, successPlayerAction);
         _locationStates[_currentLocationVertex] = _currentLocationState;
         
-        Console.WriteLine($"LocationTravelGameController: Action result - Success: {result.Success}, Ends: {result.EndsInteraction}");
-        
-        // Check if interaction ends (failure or successful exit)
+        // Check if this is a successful exit
         if (result.EndsInteraction)
         {
             HandleInteractionEnd(result);
@@ -246,17 +332,8 @@ public class LocationTravelGameController : IDisposable
         // Update narrative with result
         _currentNarrative = result.NarrativeOutcome;
         
-        // Generate new actions (or use provided ones)
-        if (result.NewActions != null && result.NewActions.Count > 0)
-        {
-            // Convert List<string> to List<ActionInfo>
-            _currentActions = result.NewActions.Select(a => new ActionInfo(a)).ToList();
-        }
-        else
-        {
-            // Regenerate actions based on new state
-            await RegenerateActionsAsync();
-        }
+        // Regenerate actions based on new state
+        await RegenerateActionsAsync();
         
         // Re-render the UI with new state
         await RenderLocationUIAsync();
@@ -645,13 +722,15 @@ public class LocationTravelGameController : IDisposable
             _terminalUI.ShowLoadingIndicator(_loadingMessage);
         }
         
-        // Generate actions using LLM if available
+        // Generate actions using LLM if available - Use RegenerateActionsAsync to get Critic evaluation
         var lastAction = _currentLocationState.GetLastAction();
         if (_llmActionExecutor != null)
         {
-            Console.WriteLine("RenderLocationUIAsync: Requesting actions from LLM...");
-            var llmActions = await _llmActionExecutor.GenerateActionsAsync(_currentLocationState, blueprint, lastAction);
-            if (llmActions == null || llmActions.Count == 0)
+            Console.WriteLine("RenderLocationUIAsync: Requesting actions from LLM with Critic evaluation...");
+            await RegenerateActionsAsync();
+            
+            // Check if actions were successfully generated
+            if (_currentActions == null || _currentActions.Count == 0)
             {
                 Console.Error.WriteLine("RenderLocationUIAsync: Failed to generate actions from LLM");
                 _isLoadingLLMContent = false;
@@ -668,7 +747,6 @@ public class LocationTravelGameController : IDisposable
                 _waitingForClickToExit = true;
                 return;
             }
-            _currentActions = llmActions;
         }
         else
         {
@@ -764,9 +842,15 @@ public class LocationTravelGameController : IDisposable
         
         if (_llmActionExecutor != null)
         {
-            Console.WriteLine("RegenerateActionsAsync: Requesting actions from LLM...");
-            var llmActions = await _llmActionExecutor.GenerateActionsAsync(_currentLocationState, _currentBlueprint, lastAction);
-            if (llmActions == null || llmActions.Count == 0)
+            // [1] Generate 12 actions via Director (with raw JSON for parsing)
+            Console.WriteLine("RegenerateActionsAsync: Requesting 12 actions from Director LLM...");
+            var (llmActions, rawJson) = await _llmActionExecutor.GenerateActionsWithRawJsonAsync(
+                _currentLocationState, 
+                _currentBlueprint, 
+                lastAction,
+                numberOfActions: 12);
+            
+            if (llmActions == null || llmActions.Count == 0 || string.IsNullOrEmpty(rawJson))
             {
                 Console.Error.WriteLine("RegenerateActionsAsync: Failed to regenerate actions from LLM");
                 _terminalUI?.ShowResultMessage(
@@ -779,12 +863,60 @@ public class LocationTravelGameController : IDisposable
                 _waitingForClickToExit = true;
                 return;
             }
-            _currentActions = llmActions;
+            
+            // [2] Parse into ParsedAction objects with full consequence data
+            var parsedActions = ActionParser.ParseDirectorResponse(rawJson);
+            
+            if (parsedActions == null || parsedActions.Count == 0)
+            {
+                Console.Error.WriteLine("RegenerateActionsAsync: Failed to parse actions from JSON");
+                _currentParsedActions = llmActions.Select((action, index) => new ParsedAction
+                {
+                    ActionText = action.ActionText,
+                    Skill = action.RelatedSkill,
+                    OriginalIndex = index
+                }).ToList();
+                _currentActions = llmActions.Take(6).ToList();
+                return;
+            }
+            
+            // [3] Score via Critic (if available and we have enough actions)
+            if (_actionScorer != null && _criticEvaluator != null && parsedActions.Count > 6)
+            {
+                try
+                {
+                    Console.WriteLine($"RegenerateActionsAsync: Scoring {parsedActions.Count} actions with Critic...");
+                    var scoredActions = await _actionScorer.ScoreActionsAsync(parsedActions, lastAction);
+                    
+                    // [4] Select top 6
+                    var topActions = scoredActions.Take(6).ToList();
+                    _currentParsedActions = topActions.Select(s => s.Action).ToList();
+                    _currentActions = _currentParsedActions.Select(a => new ActionInfo(a.ActionText, a.Skill)).ToList();
+                    
+                    Console.WriteLine($"RegenerateActionsAsync: Selected top 6 actions based on Critic scores");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"RegenerateActionsAsync: Critic scoring failed - {ex.Message}");
+                    Console.WriteLine("Falling back to using all generated actions");
+                    _currentParsedActions = parsedActions.Take(6).ToList();
+                    _currentActions = llmActions.Take(6).ToList();
+                }
+            }
+            else
+            {
+                // No Critic or not enough actions - use first 6 actions
+                var reason = _actionScorer == null ? "Critic not available" : "Not enough actions for scoring";
+                Console.WriteLine($"RegenerateActionsAsync: {reason}, using first 6 actions");
+                _currentParsedActions = parsedActions.Take(6).ToList();
+                _currentActions = llmActions.Take(6).ToList();
+            }
         }
         else
         {
             Console.Error.WriteLine("RegenerateActionsAsync: LLM executor not available");
             _currentActions = new List<ActionInfo> { new ActionInfo("ERROR: LLM not available") };
+            _currentParsedActions = new List<ParsedAction>();
         }
     }
     
@@ -810,6 +942,9 @@ public class LocationTravelGameController : IDisposable
         {
             _interface.VertexClickEvent -= OnVertexClicked;
         }
+        
+        // Dispose Critic evaluator
+        _criticEvaluator?.Dispose();
         
         Console.WriteLine("LocationTravelGameController: Disposed");
     }
