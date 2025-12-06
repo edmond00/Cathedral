@@ -893,17 +893,14 @@ CRITICAL REQUIREMENT:
 Each action must be COHERENT with its assigned skill and pre-determined consequences. The action text must logically lead to the success consequence when using the specified skill, and make sense even if the failure consequence occurs instead.
 
 Action Text Guidelines:
-- Straightforward and direct (3-8 words)
+- Straightforward and direct (6-12 words)
 - Purely mechanical - describe what the player DOES
 - NO atmospheric descriptions, flavor text, or narrative elements (that's the Narrator's job)
 - Focus on the concrete action being attempted
-- Write in 2nd person
 
 Each action has:
 - Skill candidates (choose the most appropriate one)
 - Pre-determined success consequence (your action must lead to this)
-- Variable failure consequence (choose the most likely failure outcome)
-- Difficulty level (estimate based on the action)
 
 Generate diverse action types considering different approaches. Output only valid JSON in the specified format.";
     }

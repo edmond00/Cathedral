@@ -71,24 +71,14 @@ public static class Blueprint2Constraint
                 
                 // 2. Related skill (LLM chooses from candidates)
                 // CRITICAL: Keep JSON field name as "related_skill" but use unique GBNF rule name
-                new ChoiceField<string>("related_skill", skillCandidates[i], "choose the most appropriate skill for this action") 
+                new ChoiceField<string>("related_skill", skillCandidates[i], "choose a skill that is related to actions that can lead to the success consequence") 
                 { 
                     RuleName = $"related_skill_{i + 1}" // Unique GBNF rule per action
                 },
                 
-                // 3. Action text (LLM generates based on skill and consequences)
+                // 3. Action text (LLM generates based on skill and success consequence only)
                 new TemplateStringField("action_text", "try to <generated>", 5, 100, 
-                    "Generate a SHORT action (3-8 words) that uses the chosen skill and logically leads to the success consequence. Write in 2nd person. The action should make sense with both success and failure outcomes."),
-                
-                // 4. Difficulty (LLM chooses freely)
-                new ChoiceField<string>("difficulty", new[] { "trivial", "easy", "basic", "moderate", "hard", "very_hard", "extreme" }, 
-                    "estimate how challenging this action would be for an average adventurer"),
-                
-                // 5. Failure consequence (LLM chooses from list) - LAST FIELD
-                new ChoiceField<string>("failure_consequence", GetFailureConsequenceOptions(), "choose the most likely failure consequence if this action fails")
-                {
-                    RuleName = $"failure_consequence_{i + 1}" // Unique GBNF rule per action
-                }
+                    "Generate a concrete action (6-12 words) that uses the chosen skill, can take place in the current location, and logically leads to the success consequence. Write in 2nd person. Focus on concrete, specific actions.")
             );
         }
 

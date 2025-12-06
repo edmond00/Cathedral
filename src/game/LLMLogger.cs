@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Cathedral.Game;
@@ -421,5 +423,114 @@ public static class LLMLogger
     {
         if (string.IsNullOrWhiteSpace(text)) return 0;
         return text.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Length;
+    }
+    
+    /// <summary>
+    /// Logs the second Critic pass evaluation (difficulty and failure consequences).
+    /// </summary>
+    public static void LogCriticSecondPass(
+        string actionText,
+        string difficulty,
+        double difficultyScore,
+        string mostPlausibleFailure,
+        Dictionary<string, double> failureConsequencePlausibilities)
+    {
+        if (!_isEnabled || _logFilePath == null) return;
+        
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] CRITIC SECOND PASS - Action Difficulty Evaluation");
+            sb.AppendLine($"{'-',-80}");
+            sb.AppendLine($"ACTION:");
+            sb.AppendLine($"  {actionText}");
+            sb.AppendLine();
+            sb.AppendLine($"DIFFICULTY:");
+            sb.AppendLine($"  Label: {difficulty}");
+            sb.AppendLine($"  Score: {difficultyScore:F4} ({difficultyScore * 100:F1}%)");
+            sb.AppendLine();
+            sb.AppendLine($"FAILURE CONSEQUENCE PLAUSIBILITIES:");
+            foreach (var kvp in failureConsequencePlausibilities.OrderByDescending(kvp => kvp.Value))
+            {
+                sb.AppendLine($"  {kvp.Key,-20}: {kvp.Value:F4} ({kvp.Value * 100:F1}%)");
+            }
+            sb.AppendLine();
+            sb.AppendLine($"SELECTED FAILURE: {mostPlausibleFailure}");
+            sb.AppendLine($"{'=',-80}\n");
+            
+            lock (_lockObject)
+            {
+                File.AppendAllText(_logFilePath, sb.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMLogger: Failed to log second critic pass: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Logs RNG roll for outcome determination.
+    /// </summary>
+    public static void LogRNGRoll(
+        string actionText,
+        double difficultyScore,
+        double successProbability,
+        double roll,
+        bool success)
+    {
+        if (!_isEnabled || _logFilePath == null) return;
+        
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] 🎲 RNG OUTCOME DETERMINATION");
+            sb.AppendLine($"{'-',-80}");
+            sb.AppendLine($"ACTION: {actionText}");
+            sb.AppendLine();
+            sb.AppendLine($"DIFFICULTY:");
+            sb.AppendLine($"  Difficulty Score: {difficultyScore:F4} ({difficultyScore * 100:F1}%)");
+            sb.AppendLine($"  Success Threshold: {successProbability:F4} ({successProbability * 100:F1}%)");
+            sb.AppendLine();
+            sb.AppendLine($"RNG ROLL:");
+            sb.AppendLine($"  Roll Value: {roll:F4}");
+            sb.AppendLine($"  Result: {(success ? "✓ SUCCESS" : "✗ FAILURE")} (roll {(success ? "<" : ">=")} threshold)");
+            sb.AppendLine($"{'=',-80}\n");
+            
+            lock (_lockObject)
+            {
+                File.AppendAllText(_logFilePath, sb.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMLogger: Failed to log RNG roll: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Logs general errors.
+    /// </summary>
+    public static void LogError(string errorMessage)
+    {
+        if (!_isEnabled || _logFilePath == null) return;
+        
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] ❌ ERROR");
+            sb.AppendLine($"{'-',-80}");
+            sb.AppendLine($"  {errorMessage}");
+            sb.AppendLine($"{'=',-80}\n");
+            
+            lock (_lockObject)
+            {
+                File.AppendAllText(_logFilePath, sb.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMLogger: Failed to log error: {ex.Message}");
+        }
     }
 }

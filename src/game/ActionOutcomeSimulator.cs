@@ -28,19 +28,25 @@ public class ActionOutcomeSimulator
     
     /// <summary>
     /// Simulates the outcome of a parsed action.
-    /// Uses RNG to determine success/failure and applies consequences from action data.
+    /// Uses RNG or forced outcome to determine success/failure and applies consequences from action data.
     /// </summary>
+    /// <param name="selectedAction">The action to simulate</param>
+    /// <param name="currentState">Current location state</param>
+    /// <param name="blueprint">Location blueprint</param>
+    /// <param name="forceSuccess">If specified, forces success/failure instead of using RNG</param>
+    /// <param name="overrideFailureConsequence">If specified, overrides the failure consequence label</param>
     public ActionResult SimulateOutcome(
         ParsedAction selectedAction,
         LocationInstanceState currentState,
-        LocationBlueprint blueprint)
+        LocationBlueprint blueprint,
+        bool? forceSuccess = null,
+        string? overrideFailureConsequence = null)
     {
         if (selectedAction == null)
             throw new ArgumentNullException(nameof(selectedAction));
         
-        // Determine success based on RNG
-        // Future: could factor in difficulty, skill levels, etc.
-        bool success = _random.NextDouble() < DefaultSuccessRate;
+        // Determine success based on forced value or RNG
+        bool success = forceSuccess ?? (_random.NextDouble() < DefaultSuccessRate);
         
         if (success)
         {
@@ -48,7 +54,7 @@ public class ActionOutcomeSimulator
         }
         else
         {
-            return CreateFailureResult(selectedAction);
+            return CreateFailureResult(selectedAction, overrideFailureConsequence);
         }
     }
     
@@ -108,12 +114,14 @@ public class ActionOutcomeSimulator
     /// Creates an ActionResult for a failed action.
     /// Failures end the interaction.
     /// </summary>
-    private ActionResult CreateFailureResult(ParsedAction action)
+    /// <param name="action">The failed action</param>
+    /// <param name="overrideConsequence">Optional override for failure consequence (from Critic evaluation)</param>
+    private ActionResult CreateFailureResult(ParsedAction action, string? overrideConsequence = null)
     {
-        var failureDescription = action.FailureConsequence ?? "Your action failed.";
+        var failureDescription = overrideConsequence ?? action.FailureConsequence ?? "Your action failed.";
         
-        // Add failure type context if available
-        if (!string.IsNullOrEmpty(action.FailureType) && action.FailureType != "none")
+        // Add failure type context if available (only if not overridden)
+        if (overrideConsequence == null && !string.IsNullOrEmpty(action.FailureType) && action.FailureType != "none")
         {
             failureDescription = $"{failureDescription} ({action.FailureType})";
         }

@@ -34,6 +34,9 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         /// </summary>
         public string GetGbnf(bool? wasSuccessful = null)
         {
+            // Define arrival keywords for first narration (no previous action)
+            var arrivalKeywords = @"""You arrive"" | ""You find yourself"" | ""You stumble upon"" | ""You discover"" | ""You enter"" | ""You emerge into"" | ""You step into"" | ""You come upon"" | ""You reach""";
+            
             // Define success keywords
             var successKeywords = @"""You skillfully"" | ""You succeed"" | ""Fortunately you"" | ""You expertly"" | ""You successfully"" | ""You cleverly"" | ""You wisely"" | ""You masterfully""";
             
@@ -48,7 +51,7 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
             {
                 true => successKeywords,
                 false => failureKeywords,
-                null => $"{successKeywords} | {failureKeywords}" // First turn - allow both
+                null => arrivalKeywords // First turn - use arrival keywords
             };
 
             return $@"root ::= narrative
@@ -211,7 +214,7 @@ You do NOT:
             promptBuilder.AppendLine("FORMAT:");
             promptBuilder.AppendLine("- Two parts: outcome/scene (1-2 sentences) + possibilities (1-2 sentences)");
             promptBuilder.AppendLine("- Total: 2-4 sentences maximum");
-            promptBuilder.AppendLine("- DO NOT list specific actions - evoke mood and possibility");
+            promptBuilder.AppendLine("- evoke mood and possibilities");
             promptBuilder.AppendLine("- Keep it cryptic, atmospheric, and concise");
 
             return promptBuilder.ToString();

@@ -396,6 +396,9 @@ public class LlamaServerManager : IDisposable
                     
                     if (tokenInfo.TryGetProperty("top_logprobs", out var topLogprobs))
                     {
+                        // First pass: collect all tokens with their probabilities
+                        var tokenVariants = new Dictionary<string, List<(string original, double prob)>>();
+                        
                         foreach (var logprobEntry in topLogprobs.EnumerateArray())
                         {
                             if (logprobEntry.TryGetProperty("token", out var tokenElement) &&
@@ -409,22 +412,30 @@ public class LlamaServerManager : IDisposable
                                     // Convert log probability to probability: p = exp(logprob)
                                     var probability = Math.Exp(logprob);
                                     
-                                    // Store both the original token and normalized version
+                                    // Store original token
                                     probabilities[token] = probability;
                                     
-                                    // Also store case-insensitive version for easier lookup
+                                    // Group by normalized version
                                     var normalizedToken = token.Trim().ToLower();
-                                    if (!probabilities.ContainsKey(normalizedToken))
+                                    if (!tokenVariants.ContainsKey(normalizedToken))
                                     {
-                                        probabilities[normalizedToken] = probability;
+                                        tokenVariants[normalizedToken] = new List<(string, double)>();
                                     }
-                                    else
-                                    {
-                                        // Accumulate probability if multiple tokens normalize to same string
-                                        probabilities[normalizedToken] += probability;
-                                    }
+                                    tokenVariants[normalizedToken].Add((token, probability));
                                 }
                             }
+                        }
+                        
+                        // Second pass: for normalized tokens, use the AVERAGE probability of variants
+                        // This represents the model's true belief accounting for formatting uncertainty
+                        foreach (var kvp in tokenVariants)
+                        {
+                            var normalizedToken = kvp.Key;
+                            var variants = kvp.Value;
+                            
+                            // Use the average probability across all variants
+                            var avgProbability = variants.Average(v => v.prob);
+                            probabilities[normalizedToken] = avgProbability;
                         }
                     }
                 }

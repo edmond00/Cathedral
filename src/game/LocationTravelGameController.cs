@@ -209,6 +209,7 @@ public class LocationTravelGameController : IDisposable
 
     /// <summary>
     /// Executes a selected action (async version).
+    /// Now includes second Critic pass to evaluate difficulty and determine outcome.
     /// </summary>
     private async Task ExecuteActionAsync(int actionIndex)
     {
@@ -218,33 +219,106 @@ public class LocationTravelGameController : IDisposable
         
         string actionText = _currentActions[actionIndex].ActionText;
         
-        Console.WriteLine($"LocationTravelGameController: Executing action - {actionText}");
+        Console.WriteLine($"\n{'=',-80}");
+        Console.WriteLine($"ACTION EXECUTION PIPELINE");
+        Console.WriteLine($"{'=',-80}");
+        Console.WriteLine($"Selected action: {actionText}");
         
         // Show loading indicator if using LLM
         if (_llmActionExecutor != null && _terminalUI != null)
         {
             _isLoadingLLMContent = true;
-            _loadingMessage = "Determining outcome...";
+            _loadingMessage = "Evaluating action difficulty...";
             _terminalUI.ShowLoadingIndicator(_loadingMessage);
         }
         
         // Get the last action for context (if any)
         var lastAction = _currentLocationState.GetLastAction();
         
-        // [7] Determine outcome PROGRAMMATICALLY using ActionOutcomeSimulator
+        // [NEW] Second Critic Pass - Evaluate difficulty and failure consequences
+        ActionDifficultyResult? difficultyResult = null;
+        if (actionIndex < _currentParsedActions.Count && 
+            _currentParsedActions[actionIndex] != null &&
+            _criticEvaluator != null)
+        {
+            try
+            {
+                Console.WriteLine($"\n[SECOND CRITIC PASS] Evaluating selected action...");
+                var difficultyEvaluator = new ActionDifficultyEvaluator(_criticEvaluator);
+                difficultyResult = await difficultyEvaluator.EvaluateSelectedActionAsync(
+                    _currentParsedActions[actionIndex],
+                    _currentLocationState,
+                    _currentBlueprint);
+                
+                Console.WriteLine($"[SECOND CRITIC PASS] Complete - Difficulty: {difficultyResult.Difficulty}, Likely failure: {difficultyResult.MostPlausibleFailure}");
+                
+                // Log the difficulty evaluation
+                LLMLogger.LogCriticSecondPass(
+                    actionText,
+                    difficultyResult.Difficulty,
+                    difficultyResult.DifficultyScore,
+                    difficultyResult.MostPlausibleFailure,
+                    difficultyResult.FailureConsequencePlausibilities);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[SECOND CRITIC PASS] Failed: {ex.Message}");
+                LLMLogger.LogError($"Second Critic Pass failed: {ex.Message}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"\n[SECOND CRITIC PASS] Skipped - Critic not available or parsed action missing");
+        }
+        
+        // Update loading message
+        if (_llmActionExecutor != null && _terminalUI != null)
+        {
+            _loadingMessage = "Determining outcome...";
+            _terminalUI.ShowLoadingIndicator(_loadingMessage);
+        }
+        
+        // [7] Determine outcome - Now uses difficulty result from Critic
         ActionResult result;
         if (actionIndex < _currentParsedActions.Count && _currentParsedActions[actionIndex] != null)
         {
-            Console.WriteLine("LocationTravelGameController: Using programmatic outcome simulation");
+            Console.WriteLine($"\n[OUTCOME SIMULATION] Using programmatic outcome simulation");
+            
+            // Determine success/failure based on difficulty if available
+            bool actionSucceeds = true;
+            string? overrideFailureConsequence = null;
+            
+            if (difficultyResult != null)
+            {
+                var difficultyEvaluator = new ActionDifficultyEvaluator(_criticEvaluator!);
+                Console.WriteLine($"[OUTCOME SIMULATION] Difficulty score: {difficultyResult.DifficultyScore:F4} ({difficultyResult.Difficulty})");
+                Console.WriteLine($"[OUTCOME SIMULATION] Success probability: {(0.95 - (difficultyResult.DifficultyScore * 0.55)):F4} ({((0.95 - (difficultyResult.DifficultyScore * 0.55)) * 100):F1}%)");
+                
+                actionSucceeds = difficultyEvaluator.DetermineActionSuccess(
+                    difficultyResult.DifficultyScore, 
+                    actionText: actionText,
+                    logRoll: true);
+                overrideFailureConsequence = difficultyResult.MostPlausibleFailure;
+                
+                Console.WriteLine($"[OUTCOME SIMULATION] Final result: {(actionSucceeds ? "SUCCESS" : "FAILURE")}");
+                
+                if (!actionSucceeds && overrideFailureConsequence != null)
+                {
+                    Console.WriteLine($"[OUTCOME SIMULATION] Using Critic-determined failure consequence: {overrideFailureConsequence}");
+                }
+            }
+            
             result = _actionOutcomeSimulator.SimulateOutcome(
                 _currentParsedActions[actionIndex],
                 _currentLocationState,
-                _currentBlueprint);
+                _currentBlueprint,
+                forceSuccess: difficultyResult != null ? actionSucceeds : (bool?)null,
+                overrideFailureConsequence: overrideFailureConsequence);
         }
         else
         {
             // Fallback if parsed actions not available
-            Console.WriteLine("LocationTravelGameController: Parsed action not available, using simple executor");
+            Console.WriteLine($"\n[OUTCOME SIMULATION] Parsed action not available, using simple executor");
             result = _simpleActionExecutor.ExecuteAction(actionText, _currentLocationState, _currentBlueprint);
         }
         
@@ -885,8 +959,12 @@ public class LocationTravelGameController : IDisposable
             {
                 try
                 {
-                    Console.WriteLine($"RegenerateActionsAsync: Scoring {parsedActions.Count} actions with Critic...");
-                    var scoredActions = await _actionScorer.ScoreActionsAsync(parsedActions, lastAction);
+                    Console.WriteLine($"RegenerateActionsAsync: Scoring {parsedActions.Count} actions with Critic First Pass...");
+                    var scoredActions = await _actionScorer.ScoreActionsAsync(
+                        parsedActions, 
+                        lastAction,
+                        _currentLocationState.CurrentSublocation,
+                        _currentBlueprint);
                     
                     // [4] Select top 6
                     var topActions = scoredActions.Take(6).ToList();
