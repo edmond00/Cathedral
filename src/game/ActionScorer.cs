@@ -158,7 +158,8 @@ Does this new action make logical sense as a follow-up to the previous action an
             return 0.5; // Neutral if sublocation not found
         }
         
-        var question = $@"Location: {sublocationData.Name} - {sublocationData.Description}
+        var question = $@"Location: {blueprint.LocationType}
+Sublocation: {sublocationData.Name} - {sublocationData.Description}
 
 Action being considered: {action.ActionText}
 

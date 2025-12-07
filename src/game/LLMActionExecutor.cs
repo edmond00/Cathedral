@@ -155,6 +155,9 @@ public class LLMActionExecutor : IDisposable
 
         try
         {
+            // Reset Director slot to clear conversation history (keep only system prompt)
+            _llamaServer.ResetInstance(_directorSlotId);
+            
             var director = new DirectorPromptConstructor(
                 blueprint,
                 currentState.CurrentSublocation,
@@ -890,7 +893,7 @@ Generate the JSON outcome for this action.";
         return @"You are the DIRECTOR of a fantasy RPG game. You generate structured action options based on game state.
 
 CRITICAL REQUIREMENT:
-Each action must be COHERENT with its assigned skill and pre-determined consequences. The action text must logically lead to the success consequence when using the specified skill, and make sense even if the failure consequence occurs instead.
+Each action must be COHERENT with its assigned skill and consequences. The action text must logically lead to the success consequence when using the specified skill, and make sense even if the failure consequence occurs instead.
 
 Action Text Guidelines:
 - Straightforward and direct (6-12 words)
@@ -899,8 +902,8 @@ Action Text Guidelines:
 - Focus on the concrete action being attempted
 
 Each action has:
+- success consequence (your action must lead to this)
 - Skill candidates (choose the most appropriate one)
-- Pre-determined success consequence (your action must lead to this)
 
 Generate diverse action types considering different approaches. Output only valid JSON in the specified format.";
     }

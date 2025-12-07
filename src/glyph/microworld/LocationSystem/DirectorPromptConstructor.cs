@@ -137,8 +137,11 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
         {
             return @"You are the DIRECTOR of a fantasy RPG game. You generate structured action options based on game state.
 
-CRITICAL REQUIREMENT:
-Each action must be COHERENT with its assigned skill and pre-determined success consequence. The action text must logically lead to the success consequence when using the specified skill.
+GENERATION PROCESS:
+For each action, work in this order:
+1. Consider the success consequence
+2. Choose the most appropriate skill from candidates that could lead to this consequence
+3. Write a specific, concrete action that uses this skill to achieve the consequence
 
 Action Text Guidelines:
 - Straightforward and direct (6-12 words)
@@ -147,10 +150,6 @@ Action Text Guidelines:
 - NO atmospheric descriptions, flavor text, or narrative elements (that's the Narrator's job)
 - Focus on the concrete action being attempted
 - Ensure the action makes sense in the given location and environmental conditions
-
-Each action has:
-- Pre-determined success consequence (your action must lead to this)
-- Skill candidates (choose the most appropriate one)
 
 Generate diverse action types considering different approaches. Output only valid JSON in the specified format.";
         }

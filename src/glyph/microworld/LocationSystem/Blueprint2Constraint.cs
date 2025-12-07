@@ -62,23 +62,23 @@ public static class Blueprint2Constraint
             string skillCandidatesStr = string.Join(", ", skillCandidates[i]);
             
             actionFields[i] = new CompositeField($"action_{i + 1}",
-                // 1. Pre-determined success consequence (constant string, not chosen by LLM)
+                // 1. Success consequence (constant string, not chosen by LLM)
                 new InlineConstantStringField("success_consequence", consequenceLabel, 
-                    $"the pre-determined success consequence: {consequenceLabel}")
+                    $"what happens if the action succeeds")
                 { 
                     RuleName = $"success_consequence_{i + 1}" // Unique GBNF rule per action
                 },
                 
                 // 2. Related skill (LLM chooses from candidates)
                 // CRITICAL: Keep JSON field name as "related_skill" but use unique GBNF rule name
-                new ChoiceField<string>("related_skill", skillCandidates[i], "choose a skill that is related to actions that can lead to the success consequence") 
+                new ChoiceField<string>("related_skill", skillCandidates[i], "choose the most appropriate skill that could achieve this consequence") 
                 { 
                     RuleName = $"related_skill_{i + 1}" // Unique GBNF rule per action
                 },
                 
-                // 3. Action text (LLM generates based on skill and success consequence only)
+                // 3. Action text (LLM generates based on consequence and skill)
                 new TemplateStringField("action_text", "try to <generated>", 5, 100, 
-                    "Generate a concrete action (6-12 words) that uses the chosen skill, can take place in the current location, and logically leads to the success consequence. Write in 2nd person. Focus on concrete, specific actions.")
+                    "Generate a concrete action (6-12 words) using the chosen skill that could lead to the consequence. Must be possible in the current location. Write in 2nd person.")
             );
         }
 

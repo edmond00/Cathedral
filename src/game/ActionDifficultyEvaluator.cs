@@ -145,7 +145,7 @@ public class ActionDifficultyEvaluator
         // Trivial (0.0) = 95% success
         // Moderate (0.5) = 70% success
         // Extreme (1.0) = 40% success
-        var successProbability = 0.95 - (difficultyScore * 0.55);
+        var successProbability = 0.95 - (difficultyScore * 0.90);
         
         var roll = random.NextDouble();
         bool success = roll < successProbability;
