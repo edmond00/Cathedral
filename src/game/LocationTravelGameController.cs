@@ -406,10 +406,7 @@ public class LocationTravelGameController : IDisposable
         // Update narrative with result
         _currentNarrative = result.NarrativeOutcome;
         
-        // Regenerate actions based on new state
-        await RegenerateActionsAsync();
-        
-        // Re-render the UI with new state
+        // Re-render the UI with new state (this will regenerate actions)
         await RenderLocationUIAsync();
     }
     

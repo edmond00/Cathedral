@@ -391,14 +391,35 @@ public class LLMActionExecutor : IDisposable
 The player attempted: {lastAction.ActionText}
 Result: {outcomeDescription}
 
-Write a dramatic 2-3 sentence narrative describing this failure and its consequences.";
+Write a dramatic narrative describing this failure and its consequences.
+
+FORMAT:
+- Maximum 4 sentences
+- Start with a failure keyword
+- Describe the consequences vividly
+- Keep it atmospheric and dramatic";
+
+            // GBNF grammar to constrain failure narrative structure
+            var failureGrammar = @"root ::= failure-narrative
+
+failure-narrative ::= failure-start sentence sentence? sentence? sentence?
+
+failure-start ::= ""You fail"" | ""Unfortunately you"" | ""You stumble"" | ""You struggle"" | ""Regrettably you"" | ""You fumble"" | ""Sadly you"" | ""You falter"" | ""Your attempt fails"" | ""Disaster strikes""
+
+sentence ::= "" "" words "".""
+
+words ::= word (ws word)*
+
+word ::= [a-zA-Z0-9',;:-]+
+
+ws ::= "" """;
 
             Console.WriteLine($"LLMActionExecutor: Requesting failure narrative from Narrator LLM...");
 
             string? response = await RequestFromLLMAsync(
                 _narratorSlotId,
                 userPrompt,
-                gbnfGrammar: null, // Free-form narrative
+                gbnfGrammar: failureGrammar,
                 timeoutSeconds: 30);
 
             if (string.IsNullOrWhiteSpace(response))
