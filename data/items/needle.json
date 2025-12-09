@@ -1,0 +1,18 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Threading",
+            "item_skills": [
+                "Sewing",
+                "Embroidery",
+                "Tailoring"
+            ]
+        },
+        {
+            "handling_skill": "Picking",
+            "item_skills": [
+                "Lockpicking"
+            ]
+        }
+    ]
+}

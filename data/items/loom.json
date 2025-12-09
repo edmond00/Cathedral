@@ -1,0 +1,13 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Weaving",
+            "item_skills": [
+                "Weaving",
+                "Crafting",
+                "Tailoring",
+                "Designing"
+            ]
+        }
+    ]
+}

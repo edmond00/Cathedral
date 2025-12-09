@@ -1,0 +1,13 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Sawing",
+            "item_skills": [
+                "Carpentry",
+                "Woodcutting",
+                "Crafting",
+                "Sculpting"
+            ]
+        }
+    ]
+}

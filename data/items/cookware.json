@@ -1,0 +1,12 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Culinary Work",
+            "item_skills": [
+                "Cooking",
+                "Bakery",
+                "Brewing"
+            ]
+        }
+    ]
+}

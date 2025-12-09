@@ -1,0 +1,12 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Swordsmanship",
+            "item_skills": [
+                "Striking",
+                "Parrying",
+                "Disarming"
+            ]
+        }
+    ]
+}

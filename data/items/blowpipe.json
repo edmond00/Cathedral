@@ -1,0 +1,13 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Glassblowing",
+            "item_skills": [
+                "Glasswork",
+                "Crafting",
+                "Sculpting",
+                "Designing"
+            ]
+        }
+    ]
+}

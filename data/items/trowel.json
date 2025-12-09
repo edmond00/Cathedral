@@ -1,0 +1,13 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Troweling",
+            "item_skills": [
+                "Masonry",
+                "Sculpting",
+                "Crafting",
+                "Pottery"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Wielding Blade",
+            "item_skills": [
+                "Surgery",
+                "Anatomy",
+                "Medicine",
+                "Carving"
+            ]
+        }
+    ]
+}

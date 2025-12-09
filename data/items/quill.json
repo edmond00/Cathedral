@@ -1,0 +1,15 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Writing",
+            "item_skills": [
+                "Drawing",
+                "Recording",
+                "Cartography",
+                "Counterfeiting",
+                "Poetry",
+                "History"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Wielding Pickaxe",
+            "item_skills": [
+                "Mining",
+                "Striking",
+                "Masonry",
+                "Climbing"
+            ]
+        }
+    ]
+}

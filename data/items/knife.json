@@ -1,0 +1,21 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Wielding Blade",
+            "item_skills": [
+                "Carving",
+                "Butchery",
+                "Hunting",
+                "Surgery"
+            ]
+        },
+        {
+            "handling_skill": "Throwing",
+            "item_skills": [
+                "Throwing",
+                "Hunting",
+                "Striking"
+            ]
+        }
+    ]
+}

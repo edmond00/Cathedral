@@ -1,0 +1,22 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Hammering",
+            "item_skills": [
+                "Blacksmithing",
+                "Masonry",
+                "Sculpting",
+                "Carpentry",
+                "Crafting"
+            ]
+        },
+        {
+            "handling_skill": "Striking",
+            "item_skills": [
+                "Striking",
+                "Brawling",
+                "Wrestling"
+            ]
+        }
+    ]
+}

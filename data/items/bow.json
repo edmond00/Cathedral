@@ -1,0 +1,21 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Archery",
+            "item_skills": [
+                "Hunting",
+                "Aiming",
+                "Striking",
+                "Scouting"
+            ]
+        },
+        {
+            "handling_skill": "Crafting",
+            "item_skills": [
+                "Crafting",
+                "Carving",
+                "Carpentry"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Shielding",
+            "item_skills": [
+                "Parrying",
+                "Striking",
+                "Brawling",
+                "Wrestling"
+            ]
+        }
+    ]
+}

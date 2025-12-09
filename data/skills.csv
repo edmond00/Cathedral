@@ -1,0 +1,212 @@
+body_part,skill,secondary_body_part
+Lower Limbs,Running,Feet
+Lower Limbs,Jumping,Upper Limbs
+Lower Limbs,Sprinting,Backbone
+Lower Limbs,Striding,Thorax
+Lower Limbs,Dodging,Eyes
+
+Upper Limbs,Pushing,Backbone
+Upper Limbs,Lifting,Lower Limbs
+Upper Limbs,Striking,Thorax
+Upper Limbs,Pulling,Fingers
+Upper Limbs,Wrestling,Viscera
+
+Thorax,Singing,Heart
+Thorax,Chanting,Tongue
+Thorax,Bellowing,Viscera
+Thorax,Reciting,Cerebrum
+
+Viscera,Fortitude,Backbone
+Viscera,Endurance,Thorax
+Viscera,Digestion,Tongue
+Viscera,Stamina,Heart
+Viscera,Resisting,Backbone
+
+Heart,Charm,Tongue
+Heart,Empathy,Eyes
+Heart,Courage,Backbone
+Heart,Passion,Thorax
+Heart,Resolve,Cerebellum
+
+Fingers,Picking,Cerebellum
+Fingers,Chiseling,Ears
+Fingers,Threading,Tongue
+Fingers,Wielding Blade,Upper Limbs
+
+Feet,Equilibrium,Cerebellum
+Feet,Stealth,Ears
+Feet,Scouting,Eyes
+Feet,Skulking,Nose
+Feet,Gliding,Cerebellum
+
+Backbone,Composure,Tongue
+Backbone,Posture,Thorax
+Backbone,Stance,Upper Limbs
+Backbone,Alignment,Cerebrum
+
+Ears,Music,Hippocampus
+Ears,Opera,Heart
+Ears,Hearing,Nose
+Ears,Whispering,Tongue
+Ears,Detecting,Eyes
+
+Eyes,Observation,Ears
+Eyes,Reading,Cerebrum
+Eyes,Spotting,Tongue
+Eyes,Scanning,Backbone
+Eyes,Archery,Cerebellum
+
+Tongue,Speaking,Hippocampus
+Tongue,Persuasion,Cerebrum
+Tongue,Bargaining,Eyes
+Tongue,Deception,Heart
+Tongue,Threatening,Thorax
+
+Nose,Cooking,Tongue
+Nose,Tracking,Eyes
+Nose,Smelling,Heart
+Nose,Foraging,Upper Limbs
+Nose,Sniffing,Fingers
+
+Cerebrum,Mathematics,Anamnesis
+Cerebrum,Logic,Pineal Gland
+Cerebrum,Rhetoric,Tongue
+Cerebrum,Analysis,Eyes
+Cerebrum,Planning,Backbone
+
+Cerebellum,Crafting,Fingers
+Cerebellum,Balancing,Backbone
+Cerebellum,Riding,Lower Limbs
+
+Anamnesis,History Lore,Pineal Gland
+Anamnesis,Recollection,Anamnesis
+Anamnesis,Memorizing,Cerebrum
+Anamnesis,Remembering,Heart
+Anamnesis,Writing,Fingers
+
+Hippocampus,Poetry,Heart
+Hippocampus,Theater,Tongue
+Hippocampus,Dreaming,Eyes
+Hippocampus,Designing,Fingers
+Hippocampus,Inventing,Upper Limbs
+
+Pineal Gland,Philosophy,Cerebrum
+Pineal Gland,Intuition,Pineal Gland
+Pineal Gland,Meditating,Heart
+Pineal Gland,Reflecting,Eyes
+Pineal Gland,Pondering,Tongue
+
+Lower Limbs,Kicking,Upper Limbs
+Lower Limbs,Swimming,Thorax
+Lower Limbs,Rope Work,Upper Limbs
+
+Upper Limbs,Grappling,Viscera
+Upper Limbs,Swordsmanship,Eyes
+Upper Limbs,Shielding,Cerebellum
+Upper Limbs,Weightlifting,Backbone
+Upper Limbs,Throwing,Eyes
+
+Feet,Brawling,Upper Limbs
+
+Fingers,Pickpocketing,Cerebellum
+Fingers,Writing,Cerebrum
+Fingers,Writing,Eyes
+Fingers,Brushwork,Hippocampus
+Fingers,Chiseling,Cerebrum
+Fingers,Threading,Eyes
+Fingers,Threading,Cerebrum
+Fingers,Weaving,Cerebellum
+
+Backbone,Counterfeinting,Eyes
+
+Viscera,Survivalism,Cerebrum
+
+Thorax,Shouting,Viscera
+Thorax,Preaching,Heart
+
+Heart,Seducing,Tongue
+Heart,Begging,Eyes
+Heart,Praying,Pineal Gland
+
+Ears,Composing,Cerebrum
+
+Eyes,Stalking,Feet
+Eyes,Investigating,Cerebrum
+Eyes,Searching,Nose
+
+Tongue,Gossiping,Ears
+Tongue,Storytelling,Hippocampus
+Tongue,Deceiving,Eyes
+Tongue,Lying,Cerebrum
+Tongue,Intimidating,Thorax
+Tongue,Teaching,Cerebrum
+Tongue,Leading,Heart
+Tongue,Etiquette,Backbone
+
+Nose,Archery,Eyes
+Nose,Netting,Fingers
+
+Cerebrum,Geometry,Anamnesis
+Cerebrum,Arithmetic,Fingers
+Cerebrum,Algebra,Pineal Gland
+Cerebrum,Astronomy,Eyes
+Cerebrum,Geography,Anamnesis
+Cerebrum,Writing,Fingers
+Cerebrum,Biology,Eyes
+Cerebrum,Physics,Pineal Gland
+Cerebrum,Cryptography,Anamnesis
+Cerebrum,History,Anamnesis
+Cerebrum,Theology,Pineal Gland
+Cerebrum,Anthropology,Tongue
+Cerebrum,Tactics,Eyes
+Cerebrum,Strategy,Pineal Gland
+Cerebrum,Engineering,Fingers
+Cerebrum,Mechanics,Eyes
+Cerebrum,Chemistry,Nose
+Cerebrum,Alchemy,Pineal Gland
+
+Cerebellum,Performing,Thorax
+
+Anamnesis,Navigation,Eyes
+Anamnesis,Medicine,Cerebrum
+Anamnesis,Anatomy,Eyes
+Anamnesis,Wielding Blade,Fingers
+Anamnesis,Herbalism,Nose
+Anamnesis,Toxicology,Tongue
+Anamnesis,Botany,Eyes
+Anamnesis,Zoology,Eyes
+
+Cerebellum,Dancing,Feet
+
+Fingers,Sawing,Cerebellum
+Fingers,Hammering,Upper Limbs
+Fingers,Troweling,Backbone
+Fingers,Wheel Working,Eyes
+Fingers,Glassblowing,Eyes
+Fingers,Rope Work,Cerebellum
+
+Upper Limbs,Wielding Axe,Backbone
+Upper Limbs,Wielding Pickaxe,Viscera
+Upper Limbs,Wielding Blade,Nose
+
+Nose,Culinary Work,Cerebrum
+Nose,Culinary Work,Fingers
+
+Feet,Angling,Nose
+Feet,Camping,Cerebrum
+Feet,Bushcraft,Nose
+Feet,Pirating,Upper Limbs
+Feet,Seamanship,Eyes
+
+Upper Limbs,Tannery,Nose
+
+Feet,Shoplifting,Fingers
+Feet,Burglary,Eyes
+Feet,Disguising,Hippocampus
+
+Cerebrum,Ballistics,Eyes
+Cerebrum,Pyrotechnics,Fingers
+
+Cerebellum,Juggling,Fingers
+
+Eyes,Observing,Cerebrum

@@ -1,0 +1,13 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Angling",
+            "item_skills": [
+                "Fishing",
+                "Survivalism",
+                "Camping",
+                "Hunting"
+            ]
+        }
+    ]
+}

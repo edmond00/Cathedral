@@ -1,0 +1,13 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Picking",
+            "item_skills": [
+                "Lockpicking",
+                "Burglary",
+                "Crafting",
+                "Shoplifting"
+            ]
+        }
+    ]
+}

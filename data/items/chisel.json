@@ -1,0 +1,14 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Chiseling",
+            "item_skills": [
+                "Etching",
+                "Carving",
+                "Sculpting",
+                "Masonry",
+                "Crafting"
+            ]
+        }
+    ]
+}

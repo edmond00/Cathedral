@@ -1,0 +1,14 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Rope Work",
+            "item_skills": [
+                "Rope Knotting",
+                "Climbing",
+                "Trapping",
+                "Sailing",
+                "Camping"
+            ]
+        }
+    ]
+}

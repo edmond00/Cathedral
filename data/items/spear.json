@@ -1,0 +1,21 @@
+{
+    "conversions": [
+        {
+            "handling_skill": "Wielding Polearm",
+            "item_skills": [
+                "Hunting",
+                "Striking",
+                "Fishing",
+                "Throwing"
+            ]
+        },
+        {
+            "handling_skill": "Crafting",
+            "item_skills": [
+                "Crafting",
+                "Carving",
+                "Carpentry"
+            ]
+        }
+    ]
+}
