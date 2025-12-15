@@ -99,6 +99,9 @@ public class LocationTravelGameController : IDisposable
         {
             _terminalUI.ShowLoadingIndicator(_loadingMessage);
         }
+        
+        // Update popup terminal with location info
+        UpdatePopupTerminal();
     }
 
     /// <summary>
@@ -1008,6 +1011,63 @@ public class LocationTravelGameController : IDisposable
         info += $"Cached Locations: {_locationStates.Count}\n";
         info += $"Registered Generators: {string.Join(", ", _generators.Keys)}\n";
         return info;
+    }
+    
+    /// <summary>
+    /// Gets the location name at the specified vertex index.
+    /// Returns null if no location exists or if vertex is invalid.
+    /// </summary>
+    public string? GetLocationNameAtVertex(int vertexIndex)
+    {
+        if (vertexIndex < 0)
+            return null;
+            
+        var (biome, location, noise) = _interface.GetDetailedBiomeInfoAt(vertexIndex);
+        
+        if (location.HasValue)
+        {
+            return location.Value.Name;
+        }
+        
+        // Return biome name as fallback
+        return biome.Name;
+    }
+    
+    /// <summary>
+    /// Updates the popup terminal with location info based on hovered vertex.
+    /// Should be called every frame or when hover changes.
+    /// </summary>
+    public void UpdatePopupTerminal()
+    {
+        if (_core.PopupTerminal == null)
+            return;
+            
+        // Clear popup by default
+        _core.PopupTerminal.Clear();
+        
+        // Only show popup during WorldView mode (for travel destination selection)
+        if (_currentMode != GameMode.WorldView)
+            return;
+        
+        // Get hovered vertex from core
+        int hoveredVertex = _core.HoveredVertexIndex;
+        
+        // If no vertex is hovered or hovering over invalid vertex, leave popup empty
+        if (hoveredVertex < 0)
+            return;
+        
+        // Get location name at hovered vertex
+        string? locationName = GetLocationNameAtVertex(hoveredVertex);
+        
+        if (!string.IsNullOrEmpty(locationName))
+        {
+            // Draw location name centered in the popup with white text on black background
+            // Only cells with text will have black background, others remain transparent
+            int centerY = _core.PopupTerminal.Height / 2;
+            _core.PopupTerminal.DrawCenteredText(centerY, locationName, 
+                Cathedral.Terminal.Utils.Colors.White, 
+                Cathedral.Terminal.Utils.Colors.Black);
+        }
     }
 
     public void Dispose()

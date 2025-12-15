@@ -98,6 +98,9 @@ namespace Cathedral.Glyph
         
         // Terminal HUD
         private Cathedral.Terminal.TerminalHUD? _terminal;
+        
+        // Popup Terminal HUD (mouse-following)
+        private Cathedral.Terminal.PopupTerminalHUD? _popupTerminal;
 
         public GlyphSphereCore(GameWindowSettings g, NativeWindowSettings n, Camera camera) : base(g, n)
         {
@@ -108,6 +111,16 @@ namespace Cathedral.Glyph
         /// Gets the terminal HUD instance, or null if not initialized
         /// </summary>
         public Cathedral.Terminal.TerminalHUD? Terminal => _terminal;
+        
+        /// <summary>
+        /// Gets the popup terminal HUD instance, or null if not initialized
+        /// </summary>
+        public Cathedral.Terminal.PopupTerminalHUD? PopupTerminal => _popupTerminal;
+        
+        /// <summary>
+        /// Gets the currently hovered vertex index, or -1 if no vertex is hovered
+        /// </summary>
+        public int HoveredVertexIndex => hoveredVertexIndex;
 
         // Public interface for vertex manipulation
         public int VertexCount => vertices.Count;
@@ -268,11 +281,16 @@ namespace Cathedral.Glyph
                 _terminal.Visible = false;
                 
                 Console.WriteLine("Terminal: HUD integrated with GlyphSphereCore (100x30 for Location Travel Mode)");
+                
+                // Initialize popup terminal (30x30, shares atlas with main terminal)
+                _popupTerminal = new Cathedral.Terminal.PopupTerminalHUD(30, 30, 16, _terminal.Atlas);
+                Console.WriteLine("Popup Terminal: HUD integrated with GlyphSphereCore (30x30 mouse-following)");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Terminal: Failed to initialize HUD - {ex.Message}");
                 _terminal = null;
+                _popupTerminal = null;
             }
             
             // Log window border information
@@ -584,6 +602,12 @@ namespace Cathedral.Glyph
             {
                 _terminal.Render(Size);
             }
+            
+            // Render popup terminal on top of everything
+            if (_popupTerminal != null)
+            {
+                _popupTerminal.Render(Size);
+            }
 
             SwapBuffers();
         }
@@ -687,6 +711,12 @@ namespace Cathedral.Glyph
             base.OnMouseMove(e);
             
             var mouse = MousePosition;
+            
+            // Update popup terminal position (always follows mouse)
+            if (_popupTerminal != null)
+            {
+                _popupTerminal.SetMousePosition(mouse);
+            }
             
             // Handle terminal input first (HUD takes priority)
             if (_terminal != null)
