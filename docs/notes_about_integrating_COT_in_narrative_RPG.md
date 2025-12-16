@@ -197,6 +197,23 @@ it should be possible to reuse the code of `src/LLM`.
 - return a score based on the ratio of this sum
 
 
+## Required content to create
+
+- several narration node, linked together, representing the exploration of a forest
+- various skills, skill not related to forest exploration also needed to verify how LLM handle this case
+- various items, ok to focus on items that can be found in a forest (plants, ...), items gameplay will be added later but grouping/tagging system could be needed to efficiently link item to narration nodes
+- avatar class, including placeholders for future features (inventory, humors) as having this placeholders can help checking the base flow
+- UI (reusing already implemented char based terminal like UI/HUD/Popup)
+- main flow : LLM communication /player interation, can be inspired by the current mode 5 of the app
+- including this new flow in the mode 5
+
+### Deprecated content to remove or ignore
+
+- data/skills.csv and data/items are deprecated
+- current location blueprint system (src/glyph/microworld/LocationBlueprint.cs, src/glyph/microworld/LocationGenerator.cs, ...) will be deprecated and replace by the more flexible Narration Node system
+- current narration UI/narration system need to be replaced
+
+
 # Demo Flow Example
 
 The demo will focus on a forest exploration
