@@ -196,6 +196,13 @@ it should be possible to reuse the code of `src/LLM`.
 - sum up probabilites of yes and no for each questions
 - return a score based on the ratio of this sum
 
+### about llm slots/cache
+
+- system prompt will be the skill persona description and will be cached
+- every skill will use a different slot
+- previous request are not cached so the llm input will always be "skill persona system prompt (cached)" + "some request"
+(yes/no based evaluations are not linked to a skill and can use their own slot) 
+
 
 ## Required content to create
 
