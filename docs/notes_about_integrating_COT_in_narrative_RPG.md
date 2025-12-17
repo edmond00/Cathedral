@@ -116,9 +116,8 @@ Will at first be defined by :
 ## Context Keywords
 
 - **Context keywords** of an observation narration text are highlighted like a link in website text
-- Through a **LLM evaluation**,  each keywords is associatied with a **thinking skill** (strategy, intuition, focus, logic, ...)
-- putting the mouse over this keyword will show the corresponding **thinking skill**
-- clicking on this skill will trigger the **thinking* process
+- clicking on the keyword show a pop up with the available thinking skills
+- clicking on a thinking skill will start the thinking narration on this keyword
 
 ## Thinking
 

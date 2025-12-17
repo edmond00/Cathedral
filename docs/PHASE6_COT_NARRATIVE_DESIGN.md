@@ -8,14 +8,15 @@
 
 ## Table of Contents
 1. [Overview](#overview)
-2. [Core Concepts](#core-concepts)
-3. [Data Structures](#data-structures)
-4. [LLM Integration Strategy](#llm-integration-strategy)
-5. [Player Interaction Flow](#player-interaction-flow)
-6. [UI Specifications](#ui-specifications)
-7. [Implementation Phases](#implementation-phases)
-8. [Forest Content Examples](#forest-content-examples)
-9. [Technical Considerations](#technical-considerations)
+2. [Design Clarifications](#design-clarifications)
+3. [Core Concepts](#core-concepts)
+4. [Data Structures](#data-structures)
+5. [LLM Integration Strategy](#llm-integration-strategy)
+6. [Player Interaction Flow](#player-interaction-flow)
+7. [UI Specifications](#ui-specifications)
+8. [Implementation Phases](#implementation-phases)
+9. [Forest Content Examples](#forest-content-examples)
+10. [Technical Considerations](#technical-considerations)
 
 ---
 
@@ -45,6 +46,71 @@ Create a narrative RPG where:
 
 ---
 
+## Design Clarifications
+
+This section documents key design decisions clarified during initial planning:
+
+### Body Parts & Skills
+- **Phase 6 Scope**: Body parts tracked but not used in skill calculations. Skill levels are static (1-10), used only for action skill checks.
+- **Future Feature**: Body part levels will define skill level bounds and XP progression rates. Successful skill checks will grant XP toward level-ups.
+
+### Humors
+- **Phase 6 Scope**: Track humor changes from outcomes, no mechanical effects yet (placeholder).
+- **Future Feature**: Humors will affect skill check probabilities, unlock/lock certain actions or thinking skills, and modify narrative tone availability.
+
+### LLM Generation Logic
+- **Outcome Selection**: When thinking skill generates 2-5 actions, LLM selects most coherent outcome match for each action from the keyword's possible outcomes list.
+- **Action Skill Selection**: LLM can choose ANY of the avatar's action skills but must thoughtfully pick most appropriate skills (constrained to 2-5 total actions).
+- **Failure Outcomes**: Predefined list of generic failures (humor changes). LLM evaluator scores each for coherence with the failed action. Highest scoring failure is selected (similar to existing CriticEvaluator pattern).
+
+### Data Architecture
+- **Skills as C# Classes**: data/skills.csv is deprecated. Each skill is a concrete C# class inheriting from abstract `Skill` base class.
+- **Persona Prompts**: Hardcoded in Observation and Thinking skill classes. Action skills have no prompts (only used for skill checks).
+- **Skill Registry**: Central `SkillRegistry.cs` provides queries by function, category, ID.
+
+### Player Constraints
+- **Exhausted Thinking Attempts**: When player uses all 3 thinking attempts, keywords become disabled. Player MUST pick one action from current thinking block (cannot abandon).
+- **Non-Transition Outcomes**: When outcome is NOT a new narration node (e.g., acquire item only), thinking skill generates final narration from its persona POV, shows "Continue" button, exits to WorldView.
+
+### Integration Strategy
+- **Mode 5 Replacement**: Phase 6 completely replaces current LocationBlueprint-based Mode 5.
+- **Acquired Resources**: 
+  - Items & Companions: Placeholder lists in Avatar class, no immediate effects
+  - Skills: Proper skill instances immediately available for next narration phase
+
+### Error Handling
+- **GBNF Constraints**: All LLM requests use GBNF to prevent malformed JSON. Action arrays constrained to 2-5 items minimum.
+- **Keyword Fallback**: Two-tier approach:
+  1. First attempt: Prompt LLM to use keywords, no GBNF constraint on narration text (natural)
+  2. Fallback: If <3 keywords returned, use GBNF with keyword intro examples (simple strings like "There is moss") to force inclusion
+
+### Outcome System
+- **Outcome Representation**: Outcomes converted to natural language strings using predefined formats:
+  - Learn skill: `"learn {skill.name}"`
+  - Acquire item: `"acquire {item.name}"`
+  - Transition: `"transition {node_id}"`
+  - Humor change: `"increase {humor} by {amount}"`
+- **Outcome Parsing**: System uses predefined format patterns to parse strings back into concrete actions
+- **Shared Outcomes**: Multiple keywords can reference the same outcome
+- **One Outcome Per Action**: Each generated action has exactly one preselected outcome
+
+### Skill System Details
+- **No Categories**: Skills do NOT have category property. Only functions (Observation/Thinking/Action) and body part associations matter.
+- **Initial Levels**: Random distribution (1-10) for all learned skills
+- **Multi-Function Skills**: Some skills have 2+ functions (e.g., Mycology = Observation + Thinking). Future may support all 3 functions on single skill.
+
+### UI/UX Behavior
+- **Keyword Interaction**: No keyword descriptions. Hover = subtle color highlight. Click = show thinking skill selection popup (single click).
+- **Action Text Format**: LLM generates actions starting with "try to ..." (GBNF constrained). UI displays only the part after "try to ".
+- **Observation Rendering**: Draw each observation block immediately as generated. Only highlight/enable keywords after ALL observation blocks complete. Scroll starts at top.
+
+### Technical Details
+- **Outcome Narration**: Thinking skill that generated the action narrates the outcome from its persona POV (not neutral Narrator).
+- **Slot Persistence**: Skill slots persist across narration nodes. Only system prompts are cached, not conversation history.
+- **Failure Evaluation**: Reuse existing CriticEvaluator code, adapt to new system. Same yes/no probability pattern, Slot 50.
+
+---
+
 ## Core Concepts
 
 ### Narration Node
@@ -66,13 +132,22 @@ Represents a discrete narrative context (a location within a location, a specifi
 ### Avatar
 Defined by:
 - **Body Parts**: 17 parts with levels (Lower Limbs, Eyes, Cerebrum, etc.)
-- **Skills**: 50 learned skills (from bank of 300)
+  - Future feature: Body part levels will define skill level bounds and XP progression rates
+  - Phase 6: Body parts tracked but not used in skill check calculations
+- **Skills**: ~50 learned skills (from bank of 300)
   - ~10 Observation skills (generate perceptions)
-  - ~20 Thinking skills (generate reasoning and actions)
+  - ~20 Thinking skills (generate reasoning + actions)
   - ~20 Action skills (used for skill checks)
-- **Humors**: 10 humors with quantities (placeholder, no mechanics yet)
+  - Each skill has individual level (1-10)
+  - Future feature: Successful skill checks grant XP, level up at threshold
+  - Phase 6: Skill levels static, only used for action skill checks
+- **Humors**: 10 humors with quantities (placeholder for Phase 6)
   - Black Bile, Yellow Bile, Appetitus, Melancholia, Ether
   - Phlegm, Blood, Voluptas, Laetitia, Euphoria
+  - Future feature: Affect skill check probabilities, unlock/lock actions, modify narrative availability
+  - Phase 6: Track changes from outcomes, no mechanical effects yet
+- **Inventory**: Placeholder list for acquired items
+- **Companions**: Placeholder list for acquired companions
 
 ### Skills
 Each skill has:
@@ -107,10 +182,29 @@ public record NarrationNode(
 
 public record Outcome(
     OutcomeType Type,                                   // Transition, Item, Skill, Companion, Humor
-    string Description,                                 // Neutral description of outcome
-    string TargetId,                                    // NodeId, ItemId, SkillId, etc.
+    string TargetId,                                    // NodeId, ItemId, SkillId, CompanionId
     Dictionary<string, int>? HumorChanges               // Optional humor deltas
-);
+)
+{
+    // Convert outcome to natural language string for LLM
+    public string ToNaturalLanguageString() => Type switch
+    {
+        OutcomeType.Transition => $"transition {TargetId}",
+        OutcomeType.Item => $"acquire {TargetId}",
+        OutcomeType.Skill => $"learn {TargetId}",
+        OutcomeType.Companion => $"befriend {TargetId}",
+        OutcomeType.Humor => string.Join(", ", HumorChanges!.Select(kvp => 
+            $"{(kvp.Value > 0 ? "increase" : "decrease")} {kvp.Key} by {Math.Abs(kvp.Value)}")),
+        _ => "unknown outcome"
+    };
+    
+    // Parse natural language string back to outcome
+    public static Outcome FromNaturalLanguageString(string outcomeStr, List<Outcome> possibleOutcomes)
+    {
+        // Match against possible outcomes by their string representation
+        return possibleOutcomes.First(o => o.ToNaturalLanguageString() == outcomeStr);
+    }
+};
 
 public enum OutcomeType
 {
@@ -146,14 +240,35 @@ public class Avatar
 
 ### Skill
 ```csharp
-public record Skill(
-    string SkillId,                           // "observation", "algebraic_analysis"
-    string SkillName,                         // "Observation", "Algebraic Analysis"
-    List<SkillFunction> Functions,            // [Observation], [Thinking], [Action], etc.
-    List<string> BodyParts,                   // ["Eyes", "Ears"]
-    int Level,                                // 1-10, used for skill checks
-    string PersonaPrompt                      // Cached LLM system prompt
-);
+public abstract class Skill
+{
+    public abstract string SkillId { get; }           // "observation", "algebraic_analysis"
+    public abstract string DisplayName { get; }       // "Observation", "Algebraic Analysis"
+    public abstract SkillFunction[] Functions { get; } // Can have multiple functions (1-3)
+    public abstract string[] BodyParts { get; }       // Associated body parts (1-2)
+    public int Level { get; set; }                    // 1-10, used for skill checks (random initial)
+    
+    // Only for Observation and Thinking skills
+    public virtual string? PersonaPrompt => null;     // Hardcoded LLM system prompt
+}
+
+// Example implementation
+public class ObservationSkill : Skill
+{
+    public override string SkillId => "observation";
+    public override string DisplayName => "Observation";
+    public override SkillFunction[] Functions => new[] { SkillFunction.Observation };
+    public override string[] BodyParts => new[] { "Eyes", "Ears" };
+    
+    public override string PersonaPrompt => @"
+You are the inner voice of OBSERVATION, the avatar's ability to perceive their environment.
+
+You are methodical, detail-oriented, and precise. You notice things others miss: the texture of surfaces, the direction of light, the exact distance between objects. You describe what you see in concrete, measurable terms. You count, measure, estimate. You note colors, shapes, sizes.
+
+You do not interpret or theorize. You simply report what the eyes and ears detect. You are the foundation upon which other skills build their reasoning.
+
+When narrating, you speak in clear, factual sentences. No flowery language. No metaphors. Just observations.";
+}
 
 public enum SkillFunction
 {
@@ -217,6 +332,7 @@ Slot 51:    Narrator (outcome descriptions) [reuses existing Narrator]
 - **Consistency**: Each skill maintains personality across entire session
 - **Scalability**: 50 skill slots << LlamaServer's slot limit
 - **Memory**: No context bloat (no conversation history accumulation)
+- **Persistence**: Slots persist across narration node transitions (only system prompts cached, not history)
 
 ### LLM Request Flow
 
@@ -225,6 +341,7 @@ Slot 51:    Narrator (outcome descriptions) [reuses existing Narrator]
 // Select 2-3 observation skills randomly
 var observationSkills = avatar.GetObservationSkills().OrderBy(_ => rng.Next()).Take(3);
 
+// Generate and display blocks progressively
 foreach (var skill in observationSkills)
 {
     int slotId = skillToSlotMapping[skill.SkillId];
@@ -255,14 +372,21 @@ foreach (var skill in observationSkills)
     );
     
     var observation = ParseObservationResponse(response);
-    narrationState.AddBlock(new NarrationBlock(
+    var block = new NarrationBlock(
         Type: NarrationBlockType.Observation,
-        SkillName: skill.SkillName,
+        SkillName: skill.DisplayName,
         Content: observation.NarrationText,
         Keywords: observation.ExtractedKeywords,
         Actions: null
-    ));
+    );
+    narrationState.AddBlock(block);
+    
+    // Immediately render this block (keywords not yet clickable)
+    await ui.RenderNarrationBlock(block, keywordsEnabled: false);
 }
+
+// All observation blocks complete - now enable keyword interaction
+await ui.EnableKeywords(narrationState.GetAllKeywords());
 ```
 
 #### Thinking Generation
@@ -285,11 +409,17 @@ var possibleOutcomes = currentNode.OutcomesByKeyword[keyword];
 // Build thinking request
 var thinkingRequest = BuildThinkingRequest(
     keyword: keyword,
-    context: currentNode.NeutralDescription,
+    node: currentNode,
     possibleOutcomes: possibleOutcomes,
-    actionSkills: avatar.GetActionSkills(),
+    actionSkills: avatar.GetActionSkills(), // LLM can choose ANY, must pick most appropriate
     avatarState: avatar
 );
+
+// Instructions to LLM:
+// - Generate 2-5 actions (enforced by GBNF minItems/maxItems)
+// - For each action, select most coherent outcome from possibleOutcomes list
+// - For each action, select most appropriate action skill from avatar's action skills
+// - Actions should follow logically from CoT reasoning
 
 // Constrain output: CoT reasoning + list of (action_skill, outcome, action_text)
 var schema = CreateThinkingSchema(avatar.GetActionSkills(), possibleOutcomes);
@@ -305,10 +435,10 @@ var response = await llamaServer.ContinueRequestAsync(
 var thinking = ParseThinkingResponse(response);
 narrationState.AddBlock(new NarrationBlock(
     Type: NarrationBlockType.Thinking,
-    SkillName: thinkingSkill.SkillName,
-    Content: thinking.ReasoningText,
+    SkillName: thinkingSkill.DisplayName,
+    Text: thinking.ReasoningText,
     Keywords: null,
-    Actions: thinking.GeneratedActions
+    Actions: thinking.GeneratedActions // 2-5 actions, each with preselected outcome
 ));
 ```
 
@@ -327,10 +457,83 @@ var difficulty = await actionDifficultyEvaluator.EvaluateDifficultyAsync(selecte
 bool success = RollSkillCheck(selectedAction.RelatedSkill.Level, difficulty);
 
 if (success) {
-    return selectedAction.PreselectedOutcome; // From thinking phase
+    var outcome = selectedAction.PreselectedOutcome;
+    // Thinking skill generates outcome narration from its persona POV
+    var outcomeNarration = await GenerateOutcomeNarration(
+        thinkingSkill: selectedAction.ThinkingSkill,
+        action: selectedAction,
+        outcome: outcome,
+        context: context
+    );
+    return (outcome, outcomeNarration);
 } else {
-    return await DetermineFailureOutcome(selectedAction, context);
+    var failureOutcome = await DetermineFailureOutcome(selectedAction, context);
+    var failureNarration = await GenerateOutcomeNarration(
+        thinkingSkill: selectedAction.ThinkingSkill,
+        action: selectedAction,
+        outcome: failureOutcome,
+        context: context
+    );
+    return (failureOutcome, failureNarration);
 }
+
+// Failure outcome determination
+async Task<Outcome> DetermineFailureOutcome(ParsedAction action, NarrationContext context)
+{
+    // Predefined list of generic failure outcomes
+    var genericFailures = new List<Outcome>
+    {
+        new Outcome(OutcomeType.Humor, HumorChanges: new() { ["Black Bile"] = +3 }), // Frustration
+        new Outcome(OutcomeType.Humor, HumorChanges: new() { ["Yellow Bile"] = +2 }), // Irritation
+        new Outcome(OutcomeType.Humor, HumorChanges: new() { ["Phlegm"] = +2 }),      // Resignation
+        new Outcome(OutcomeType.Humor, HumorChanges: new() { ["Melancholia"] = +1 }), // Disappointment
+        // Add more generic failures as needed
+    };
+    
+    // Use LLM evaluator to score each failure for coherence
+    // Similar to existing CriticEvaluator pattern:
+    // - Ask yes/no: "Is [failure] a coherent consequence of [action] in [context]?"
+    // - Sum yes probabilities for each failure
+    // - Return failure with highest yes probability average
+    
+    var failureScores = new Dictionary<Outcome, float>();
+    foreach (var failure in genericFailures)
+    {
+        // Reuse existing CriticEvaluator pattern (Slot 50)
+        // Ask yes/no: "Is [failure] coherent with [action] in [context]?"
+        var coherenceScore = await criticEvaluator.EvaluateCoherenceAsync(action, failure, context);
+        failureScores[failure] = coherenceScore;
+    }
+    
+    return failureScores.OrderByDescending(kvp => kvp.Value).First().Key;
+}
+
+// Outcome narration from thinking skill's POV
+async Task<string> GenerateOutcomeNarration(
+    Skill thinkingSkill, 
+    ParsedAction action, 
+    Outcome outcome, 
+    NarrationContext context)
+{
+    int slotId = skillToSlotMapping[thinkingSkill.SkillId];
+    
+    var narratorRequest = BuildOutcomeNarrationRequest(
+        action: action,
+        outcome: outcome,
+        context: context,
+        thinkingSkillPersona: thinkingSkill.DisplayName
+    );
+    
+    var response = await llamaServer.ContinueRequestAsync(
+        slotId,  // Use thinking skill's slot (with its cached persona prompt)
+        narratorRequest,
+        gbnfGrammar: SimpleStringSchema(minLength: 50, maxLength: 200)
+    );
+    
+    return response.Trim();
+}
+
+// Note: Adapt existing CriticEvaluator to work with NarrationNode context instead of LocationBlueprint
 ```
 
 ### JSON Schemas
@@ -346,6 +549,46 @@ var observationSchema = new CompositeField("ObservationResponse", new JsonField[
         maxLength: 5
     )
 });
+
+// Keyword constraint strategy:
+// 1. First attempt: Prompt LLM to use keywords, but NO GBNF constraint on narration_text
+//    - More natural narration
+//    - LLM might fail to include keywords
+// 2. Fallback (if first attempt returns 0 keywords): Use GBNF with keyword intro examples
+//    - Each keyword has intro_example: "moss" => "There is moss"
+//    - Constrain narration_text to start with one of the intro examples
+//    - Forces keyword inclusion but less natural
+
+async Task<ObservationResponse> GenerateObservationWithKeywordFallback(
+    Skill observationSkill, 
+    NarrationNode node)
+{
+    // First attempt: Natural narration, prompted but not constrained
+    var response = await llamaServer.ContinueRequestAsync(
+        slotId: GetSlotForSkill(observationSkill),
+        prompt: BuildObservationPrompt(node, promptKeywordUsage: true),
+        gbnfGrammar: GenerateGBNF(observationSchema) // Still constrains JSON structure
+    );
+    
+    var parsed = JsonSerializer.Deserialize<ObservationResponse>(response);
+    
+    if (parsed.HighlightedKeywords.Count >= 3)
+    {
+        return parsed; // Success!
+    }
+    
+    // Fallback: Use keyword intro examples to force inclusion
+    var keywordIntros = node.Keywords.Select(k => node.KeywordIntroExamples[k]).ToList();
+    var constrainedSchema = CreateObservationSchemaWithIntros(observationSchema, keywordIntros);
+    
+    response = await llamaServer.ContinueRequestAsync(
+        slotId: GetSlotForSkill(observationSkill),
+        prompt: BuildObservationPrompt(node, promptKeywordUsage: true),
+        gbnfGrammar: GenerateGBNF(constrainedSchema) // Now constrains narration to start with intro
+    );
+    
+    return JsonSerializer.Deserialize<ObservationResponse>(response);
+}
 ```
 
 **Example Output**:
@@ -366,10 +609,11 @@ var thinkingSchema = new CompositeField("ThinkingResponse", new JsonField[]
         {
             new ChoiceField<string>("action_skill", actionSkillNames),
             new ChoiceField<string>("outcome_id", outcomeIds),
-            new StringField("action_description", minLength: 20, maxLength: 150)
+            new PrefixedStringField("action_description", prefix: "try to ", minLength: 30, maxLength: 160)
+            // UI displays only the part after "try to "
         }),
-        minLength: 3,
-        maxLength: 6
+        minLength: 2,  // GBNF enforces at least 2 actions
+        maxLength: 5   // GBNF enforces at most 5 actions
     )
 });
 ```
@@ -380,23 +624,28 @@ var thinkingSchema = new CompositeField("ThinkingResponse", new JsonField[]
   "reasoning_text": "The moss indicates a moist microclimate. Brute Force could tear it away to check for hidden crevices. Observation could examine the growth patterns for age and water flow. Mycology would identify edible species.",
   "actions": [
     {
-      "action_skill": "Brute Force",
-      "outcome_id": "discover_hidden_item",
-      "action_description": "You grip the moss-covered stone and wrench it aside with raw strength."
+      "action_skill": "brute_force",
+      "outcome": "acquire rare_mushroom",
+      "action_description": "try to tear away the moss to expose what lies beneath the stone"
     },
     {
-      "action_skill": "Observation",
-      "outcome_id": "transition_to_stream",
-      "action_description": "You trace the moss growth pattern downhill, following the water source."
+      "action_skill": "observation",
+      "outcome": "transition hidden_stream",
+      "action_description": "try to follow the moss growth pattern downhill to trace water flow"
     },
     {
-      "action_skill": "Mycology",
-      "outcome_id": "acquire_mushroom",
-      "action_description": "You carefully harvest the pale mushrooms nestled in the moss."
+      "action_skill": "mycology",
+      "outcome": "acquire rare_mushroom",
+      "action_description": "try to carefully harvest the pale mushrooms growing in the moss"
     }
   ]
 }
 ```
+
+**Note**: UI displays actions without the "try to " prefix:
+- `> [Brute Force] tear away the moss to expose what lies beneath the stone`
+- `> [Observation] follow the moss growth pattern downhill to trace water flow`
+- `> [Mycology] carefully harvest the pale mushrooms growing in the moss`
 
 ---
 
@@ -447,7 +696,7 @@ var thinkingSchema = new CompositeField("ThinkingResponse", new JsonField[]
 │ - LLM generates CoT         │
 │   reasoning + actions       │
 │ - Display thinking block    │
-│ - Show 3-6 clickable        │
+│ - Show 2-5 clickable        │
 │   actions                   │
 └────────┬────────────────────┘
          │
@@ -458,6 +707,11 @@ var thinkingSchema = new CompositeField("ThinkingResponse", new JsonField[]
 │ - Click different keyword   │
 │   (if attempts > 0)         │
 │ - Click action to execute   │
+│                             │
+│ If attempts = 0:            │
+│ - Keywords disabled         │
+│ - MUST pick one action      │
+│   from current thinking     │
 └────────┬────────────────────┘
          │ action clicked
          ▼
@@ -479,25 +733,21 @@ var thinkingSchema = new CompositeField("ThinkingResponse", new JsonField[]
 └────────┬────────────────────┘
          │
          ▼
-      ┌──┴──┐
-      │ Is  │
-      │ new │
-      │node?│
-      └──┬──┘
-         │ yes
-         ▼
-┌─────────────────┐
-│  CLEAR UI       │
-│  Loop to        │
-│  ENTER NODE     │
-└─────────────────┘
-         │ no
-         ▼
-┌─────────────────┐
-│  EXIT LOCATION  │
-│  Return to      │
-│  WorldView      │
-└─────────────────┘
+    Is outcome a
+    transition to
+    new node?
+         │
+    ┌────┴────┐
+    │ YES     │ NO
+    ▼         ▼
+┌─────────────────┐  ┌─────────────────────────────┐
+│  CLEAR UI       │  │  FINAL NARRATION            │
+│  Loop to        │  │  - Thinking skill generates │
+│  ENTER NODE     │  │    outcome narration in its │
+│  (new node)     │  │    persona voice             │
+└─────────────────┘  │  - Show "Continue" button   │
+                     │  - Click → Exit to WorldView│
+                     └─────────────────────────────┘
 ```
 
 ### Thinking Attempt Limit
@@ -540,14 +790,16 @@ After 3 keyword explorations, player must commit to one of the generated actions
 │ (north side), light patterns (dappled). Possible transformations: physical force on stone,      │
 │ mycological extraction from moss, trajectory analysis following water flow.                      │
 │                                                                                                  │
-│   > [Brute Force] You grip the moss-covered stone and wrench it aside.                          │
-│   > [Observation] You trace the moss growth pattern downhill, following the water source.       │ Lines 17-28 (Actions)
-│   > [Mycology] You carefully harvest the pale mushrooms nestled in the moss.                    │
+│   > [Brute Force] tear away the moss to expose what lies beneath the stone                     │
+│   > [Observation] follow the moss growth pattern downhill to trace water flow                   │ Lines 17-28 (Actions)
+│   > [Mycology] carefully harvest the pale mushrooms growing in the moss                         │
 │                                                                                                  │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ Hover keywords for details • Click keywords to think (3 attempts remaining)                     │ Line 29 (Status)
+│ Hover keywords to highlight • Click keywords to think (3 attempts remaining)                    │ Line 29 (Status)
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Note**: Action text displayed without "try to " prefix (removed from LLM output)
 
 ### Color Scheme
 
@@ -564,29 +816,16 @@ After 3 keyword explorations, player must commit to one of the generated actions
 | Skill in action | Green | Black | `[Brute Force]` |
 | Status bar | Gray50 | Black | Subtle instructions |
 
-### Popup Terminal (Keyword Hover)
+### Keyword Hover Behavior
 
-```
-┌─────────────────────────────┐
-│ moss                        │
-│─────────────────────────────│
-│ A thick carpet of green     │
-│ moss covering the stone.    │
-│                             │
-│ Thinking skills:            │
-│ • Mycology                  │
-│ • Observation               │
-│ • Algebraic Analysis        │
-│                             │
-│ [Click to select skill]     │
-└─────────────────────────────┘
-```
+**Hover State**:
+- Keyword color changes slightly (e.g., Cyan → White)
+- No popup on hover
+- Visual feedback only
 
-**Behavior**:
-- Appears at mouse position when hovering keyword
-- Shows keyword description (from node data)
-- Lists available thinking skills (all ~20)
-- Click keyword → show skill selection popup
+**Click Behavior**:
+- Single click on keyword → show thinking skill selection popup immediately
+- No intermediate description display
 
 ### Popup Terminal (Thinking Skill Selection)
 
@@ -609,47 +848,74 @@ After 3 keyword explorations, player must commit to one of the generated actions
 ```
 
 **Behavior**:
+- Appears when player clicks a keyword (single click)
 - Shows all ~20 thinking skills
 - Scrollable if needed (max 20 lines)
-- Click skill → generate thinking narration
+- Click skill → generate thinking narration, decrement thinking attempts
 - ESC → cancel, no thinking attempt consumed
+- **No keyword descriptions**: Keywords have no stored descriptions (not in node data)
+
+### Keyword Interaction
+
+**Hover State**:
+- Keyword color changes from Cyan to White
+- No popup on hover, only visual feedback
+- Indicates keyword is clickable
+
+**Click Behavior**:
+- Single click → immediately show thinking skill selection popup
+- No intermediate description step
+- One-step interaction for better flow
 
 ### Scrolling Behavior
 
 **Narration Area**: Lines 2-16 (15 lines visible)
+- Each observation block rendered immediately as generated
+- Keywords NOT clickable until all observation blocks complete
 - If narration blocks exceed 15 lines, track scroll offset
 - Mouse wheel scrolls narration
 - New blocks always added at bottom
-- Auto-scroll to bottom when new block added
+- Scroll position starts at top
+- Auto-scroll to bottom when new block added (optional)
 
 **Action Area**: Lines 17-28 (12 lines available)
-- Actions from current thinking block only (3-6 actions)
-- No scrolling needed (max 6 actions × 2 lines each = 12 lines)
+- Actions from current thinking block only (2-5 actions)
+- No scrolling needed (max 5 actions × 2 lines each = 10 lines)
 
 ---
 
 ## Implementation Phases
 
 ### Phase 1: Foundation (Week 1-2)
-**Goal**: Core data structures and skill loading
+**Goal**: Core data structures and skill definitions
 
 **Tasks**:
 1. Create `Avatar.cs` class
-   - Body part levels (hardcoded initial values)
-   - Skill inventory (hardcoded 50 skills)
+   - Body part levels (hardcoded initial values, 17 parts)
+   - Skill collection with levels
    - Humor tracking (10 humors, placeholder)
-2. Create `Skill.cs` record
-   - Load from enhanced data/skills.csv (add function tags)
-   - Parse persona prompts from new data/skill_prompts/ folder
-3. Create `NarrationNode.cs` record
+   - Inventory placeholder (List<string>)
+   - Companions placeholder (List<string>)
+2. Create `Skill.cs` abstract class
+   - Abstract base class with SkillId, DisplayName, Functions, BodyParts, Level, PersonaPrompt
+   - Create concrete skill classes: ~10 Observation, ~20 Thinking, ~20 Action
+   - Hardcode persona prompts in Observation and Thinking skill classes
+   - Action skills have no persona prompts (only used for skill checks)
+3. Create `SkillRegistry.cs`
+   - Central registry of all available skills
+   - Methods to query skills by function, category, ID
+4. Create `NarrationNode.cs` record
    - NarrationNode, Outcome, OutcomeType
-4. Create `NarrationState.cs` record
+   - Add KeywordIntroExamples dictionary for fallback
+5. Create `NarrationState.cs` record
    - NarrationState, NarrationBlock, enums
-5. Create `ForestNarrationNodeGenerator.cs`
+6. Create `ForestNarrationNodeGenerator.cs`
    - Generates 10 forest nodes with keywords and outcomes
    - Entry node selection logic
 
 **Deliverable**: Data layer complete, can instantiate all core objects
+
+**Note**: data/skills.csv is now deprecated and replaced by C# skill class definitions
 
 ---
 
@@ -663,7 +929,7 @@ After 3 keyword explorations, player must commit to one of the generated actions
 2. Create `ObservationExecutor.cs`
    - Manages observation skill slots (0-9)
    - Creates instances with cached persona prompts
-   - Sends observation requests with GBNF constraints
+   - Implements keyword fallback strategy (natural first, constrained if failed)
    - Parses JSON responses
 3. Create `KeywordRenderer.cs`
    - Parse narration text, identify keywords
