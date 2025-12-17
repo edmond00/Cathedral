@@ -109,6 +109,15 @@ This section documents key design decisions clarified during initial planning:
 - **Slot Persistence**: Skill slots persist across narration nodes. Only system prompts are cached, not conversation history.
 - **Failure Evaluation**: Reuse existing CriticEvaluator code, adapt to new system. Same yes/no probability pattern, Slot 50.
 
+### Implementation Assumptions
+
+Minor details resolved with reasonable defaults:
+
+- **Generic Failure Humor Values**: Initial values (+3 Black Bile, +2 Yellow Bile, etc.) are placeholders. Tune during playtesting based on player feedback.
+- **ParsedAction Structure**: Include reference to thinking skill that generated the action (needed for outcome narration from that skill's POV).
+- **Shared Outcomes**: Multiple keywords can reference same outcome (e.g., two keywords both have "acquire rare_mushroom"). LLM outputs natural language string, system parses by matching against keyword's possible outcomes list.
+- **Multi-Function Skills**: Start with ~5-10 skills having 2+ functions. Add additional functions opportunistically when designing skills if it makes sense conceptually.
+
 ---
 
 ## Core Concepts
