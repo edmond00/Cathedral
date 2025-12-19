@@ -282,9 +282,14 @@ public class NarrativeSystemDemo
         var selectedAction = thinkingResult.Actions.First();
         Console.WriteLine($"Simulating click on action: '{selectedAction.ActionText}'\n");
         
-        // Initialize action execution components
-        var actionScorer = new ActionScorer(new CriticEvaluator(llamaServer));
-        var difficultyEvaluator = new ActionDifficultyEvaluator(new CriticEvaluator(llamaServer));
+        // Initialize action execution components with Critic
+        Console.WriteLine("Initializing Critic evaluator...");
+        var criticEvaluator = new CriticEvaluator(llamaServer);
+        await criticEvaluator.InitializeAsync();
+        Console.WriteLine();
+        
+        var actionScorer = new ActionScorer(criticEvaluator);
+        var difficultyEvaluator = new ActionDifficultyEvaluator(criticEvaluator);
         var outcomeNarrator = new OutcomeNarrator(llamaServer, slotManager);
         var outcomeApplicator = new OutcomeApplicator();
         var actionController = new ActionExecutionController(

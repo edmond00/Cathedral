@@ -60,17 +60,33 @@ public class ActionExecutionController
                 "The skill required for this action is unavailable.");
         }
 
-        // Calculate difficulty based on avatar state and context
-        int difficulty = _difficultyEvaluator.CalculateDifficulty(
-            action.ActionText,
-            actionSkill,
-            _avatar);
-
-        // Perform skill check
-        bool succeeded = _actionScorer.RollSkillCheck(
-            actionSkill,
-            difficulty,
-            _avatar);
+        Console.WriteLine($"\n🎯 Evaluating action difficulty with Critic...");
+        
+        // Use Critic to evaluate difficulty (returns 0.0=easy to 1.0=hard)
+        var difficultyQuestion = $"Is the action '{action.ActionText}' difficult to perform?";
+        double difficultyScore = await _difficultyEvaluator.EvaluateCoherence(difficultyQuestion);
+        
+        Console.WriteLine($"   Difficulty score: {difficultyScore:F3} ({(difficultyScore < 0.3 ? "easy" : difficultyScore < 0.7 ? "moderate" : "hard")})");
+        
+        // Convert difficulty score to success probability
+        // Easy (0.0) = 95% success, Moderate (0.5) = 70% success, Hard (1.0) = 40% success
+        double successProbability = 0.95 - (difficultyScore * 0.55);
+        
+        // Adjust for skill level (body part value from 1-10)
+        string bodyPartName = actionSkill.BodyParts.Length > 0 ? actionSkill.BodyParts[0].ToLower() : "hands";
+        int bodyPartValue = _avatar.BodyParts.TryGetValue(bodyPartName, out int bpValue) ? bpValue : 5;
+        
+        // Body part adds up to 10% success chance
+        successProbability += (bodyPartValue - 5) * 0.02;
+        successProbability = Math.Clamp(successProbability, 0.1, 0.95);
+        
+        // Roll for success
+        var rng = new Random();
+        double roll = rng.NextDouble();
+        bool succeeded = roll < successProbability;
+        
+        Console.WriteLine($"   Success probability: {successProbability:F2} (body part '{bodyPartName}': {bodyPartValue})");
+        Console.WriteLine($"   Roll: {roll:F3} → {(succeeded ? "✓ SUCCESS" : "✗ FAILURE")}\n");
 
         // Determine actual outcome
         Outcome actualOutcome;
@@ -94,7 +110,7 @@ public class ActionExecutionController
             thinkingSkillUsed,
             actualOutcome,
             succeeded,
-            difficulty,
+            difficultyScore,
             _avatar,
             cancellationToken);
 
@@ -103,7 +119,7 @@ public class ActionExecutionController
             Action = action,
             ActionSkill = actionSkill,
             ThinkingSkill = thinkingSkillUsed,
-            Difficulty = difficulty,
+            Difficulty = difficultyScore,
             Succeeded = succeeded,
             ActualOutcome = actualOutcome,
             Narration = narration
@@ -169,7 +185,7 @@ public class ActionExecutionResult
     public ParsedNarrativeAction Action { get; set; } = null!;
     public Skill? ActionSkill { get; set; }
     public Skill ThinkingSkill { get; set; } = null!;
-    public int Difficulty { get; set; }
+    public double Difficulty { get; set; }
     public bool Succeeded { get; set; }
     public Outcome ActualOutcome { get; set; } = null!;
     public string Narration { get; set; } = "";

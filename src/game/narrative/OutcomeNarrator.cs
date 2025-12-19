@@ -33,7 +33,7 @@ public class OutcomeNarrator
         Skill thinkingSkill,
         Outcome outcome,
         bool succeeded,
-        int difficulty,
+        double difficulty,
         Avatar avatar,
         CancellationToken cancellationToken = default)
     {
@@ -99,16 +99,17 @@ public class OutcomeNarrator
         Skill thinkingSkill,
         Outcome outcome,
         bool succeeded,
-        int difficulty,
+        double difficulty,
         Avatar avatar)
     {
         string outcomeDescription = outcome.ToNaturalLanguageString();
         string successStatus = succeeded ? "succeeded" : "failed";
+        string difficultyDesc = difficulty < 0.3 ? "easy" : difficulty < 0.7 ? "moderate" : "hard";
 
         return $@"You ({thinkingSkill.DisplayName}) suggested the following action:
 ""{action.ActionText}""
 
-The action used the {actionSkill.DisplayName} skill (difficulty: {difficulty}/20).
+The action used the {actionSkill.DisplayName} skill (difficulty: {difficultyDesc}).
 
 The action {successStatus}.
 
