@@ -123,20 +123,29 @@ if (args.Length >= 2 && args[0] == "validate-gbnf")
 
 Console.WriteLine("=== Cathedral Application ===\n");
 Console.WriteLine("Choose an option:");
-Console.WriteLine("1. Run LLM integration tests (JSON constraints)");
-Console.WriteLine("2. Launch GlyphSphere with Terminal HUD");
-Console.WriteLine("3. Test Terminal Module (standalone)");
-Console.WriteLine("4. Test Forest Location System Demo");
-Console.WriteLine("5. Launch Location Travel Mode (Phase 1)");
-Console.WriteLine("6. Test Critic Evaluator (token probabilities)");
-Console.WriteLine("7. Exit");
+Console.WriteLine("1. Launch Narrative RPG System (Phase 6 - Chain-of-Thought)");
+Console.WriteLine("2. Run LLM integration tests (JSON constraints)");
+Console.WriteLine("3. Launch GlyphSphere with Terminal HUD");
+Console.WriteLine("4. Test Terminal Module (standalone)");
+Console.WriteLine("5. Test Forest Location System Demo");
+Console.WriteLine("6. Launch Location Travel Mode (Phase 1)");
+Console.WriteLine("7. Test Critic Evaluator (token probabilities)");
+Console.WriteLine("8. Exit");
 
-Console.Write("\nEnter your choice (1-7): ");
+Console.Write("\nEnter your choice (1-8): ");
 var choice = Console.ReadLine();
 
 switch (choice)
 {
     case "1":
+        Console.WriteLine("\n=== Narrative RPG System (Chain-of-Thought) ===");
+        Console.WriteLine("This launches the Phase 6 narrative system with observation, thinking, and action phases.");
+        Console.WriteLine("Press Enter to continue or Ctrl+C to cancel.");
+        Console.ReadLine();
+        await Cathedral.Game.Narrative.NarrativeSystemDemo.RunDemo();
+        break;
+
+    case "2":
         Console.WriteLine("\n=== JSON Constraint LLM Integration Tests ===");
         Console.WriteLine("This will start the LLM server and run comprehensive tests...");
         Console.WriteLine("Press Enter to continue or Ctrl+C to cancel.");
@@ -144,7 +153,7 @@ switch (choice)
         await JsonConstraintTest.TestWithLLM();
         break;
 
-    case "2":
+    case "3":
         Console.WriteLine("\n=== Launching GlyphSphere with Terminal HUD ===");
         
         // Example: Create and configure camera externally
@@ -185,7 +194,7 @@ switch (choice)
         GlyphSphereLauncher.LaunchGlyphSphere(camera);
         break;
 
-    case "3":
+    case "4":
         Console.WriteLine("\n=== Testing Terminal Module ===");
         try 
         {
@@ -198,12 +207,12 @@ switch (choice)
         }
         break;
 
-    case "4":
+    case "5":
         Console.WriteLine("\n=== Forest Location System Demo ===");
         await TestForestLocationSystem();
         break;
 
-    case "5":
+    case "6":
         Console.WriteLine("\n=== Location Travel Mode (Phase 1) ===");
         Console.WriteLine("This is the new integrated mode combining GlyphSphere + Terminal + Location System");
         Console.WriteLine("Phase 1: Core framework with mode transitions");
@@ -212,7 +221,7 @@ switch (choice)
         Cathedral.Game.LocationTravelModeLauncher.Launch();
         break;
 
-    case "6":
+    case "7":
         Console.WriteLine("\n=== Testing Critic Evaluator ===");
         Console.WriteLine("This will test the Critic's ability to evaluate actions using token probabilities...");
         Console.WriteLine("Press Enter to continue or Ctrl+C to cancel.");
@@ -220,7 +229,7 @@ switch (choice)
         await TestCriticEvaluator();
         break;
 
-    case "7":
+    case "8":
         Console.WriteLine("Goodbye!");
         Environment.Exit(0);
         break;

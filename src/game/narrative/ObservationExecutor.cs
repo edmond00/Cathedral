@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
@@ -10,11 +11,12 @@ namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// Response from observation LLM request.
+/// Keywords are extracted from narration text, not provided by LLM.
 /// </summary>
 public class ObservationResponse
 {
+    [JsonPropertyName("narration_text")]
     public string NarrationText { get; set; } = "";
-    public List<string> HighlightedKeywords { get; set; } = new();
 }
 
 /// <summary>
@@ -26,13 +28,12 @@ public class ObservationExecutor
 {
     private readonly LlamaServerManager _llamaServer;
     private readonly ObservationPromptConstructor _promptConstructor;
-    private readonly Dictionary<string, int> _skillSlotMapping = new();
-    private readonly HashSet<int> _activeSlots = new();
-    private int _nextObservationSlot = 0; // Slots 0-9 for observation skills
+    private readonly SkillSlotManager _slotManager;
     
-    public ObservationExecutor(LlamaServerManager llamaServer)
+    public ObservationExecutor(LlamaServerManager llamaServer, SkillSlotManager slotManager)
     {
         _llamaServer = llamaServer ?? throw new ArgumentNullException(nameof(llamaServer));
+        _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
         _promptConstructor = new ObservationPromptConstructor();
     }
     
@@ -59,12 +60,19 @@ public class ObservationExecutor
         {
             var response = await GenerateObservationNaturalAsync(slotId, node, avatar);
             
-            if (response.HighlightedKeywords.Count >= 3)
+            // Extract keywords from response text to check quality
+            var segments = new KeywordRenderer().ParseNarrationWithKeywords(
+                response.NarrationText,
+                node.Keywords
+            );
+            int keywordCount = segments.Count(s => s.IsKeyword);
+            
+            if (keywordCount >= 3)
             {
                 return response; // Success!
             }
             
-            Console.WriteLine($"ObservationExecutor: Natural prompt returned {response.HighlightedKeywords.Count} keywords, trying fallback");
+            Console.WriteLine($"ObservationExecutor: Natural prompt returned {keywordCount} keywords, trying fallback");
         }
         catch (Exception ex)
         {
@@ -81,12 +89,12 @@ public class ObservationExecutor
         Avatar avatar)
     {
         var prompt = _promptConstructor.BuildObservationPrompt(node, avatar, promptKeywordUsage: true);
-        var schema = CreateObservationSchema(node.Keywords);
+        var schema = CreateObservationSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         
         var response = await RequestFromLLMAsync(slotId, prompt, gbnf);
         
-        return ParseObservationResponse(response ?? "");
+        return ParseObservationResponse(response ?? "", node.Keywords);
     }
     
     private async Task<ObservationResponse> GenerateObservationWithFallbackAsync(
@@ -95,12 +103,12 @@ public class ObservationExecutor
         Avatar avatar)
     {
         var prompt = _promptConstructor.BuildObservationPromptWithIntros(node, avatar);
-        var schema = CreateObservationSchema(node.Keywords);
+        var schema = CreateObservationSchemaWithIntros(node);
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         
         var response = await RequestFromLLMAsync(slotId, prompt, gbnf);
         
-        return ParseObservationResponse(response ?? "");
+        return ParseObservationResponse(response ?? "", node.Keywords);
     }
     
     /// <summary>
@@ -166,7 +174,10 @@ public class ObservationExecutor
                 return null;
             }
             
-            return await tcs.Task;
+            var result = await tcs.Task;
+            Console.WriteLine($"ObservationExecutor: Request completed, response length: {result?.Length ?? 0}");
+            
+            return result;
         }
         catch (Exception ex)
         {
@@ -182,44 +193,49 @@ public class ObservationExecutor
     
     private async Task<int> GetOrCreateSlotForSkillAsync(Skill skill)
     {
-        if (_skillSlotMapping.TryGetValue(skill.SkillId, out int existingSlot))
-        {
-            return existingSlot;
-        }
-        
-        // Create new slot with cached persona prompt
-        int slotId = _nextObservationSlot++;
-        
-        if (slotId >= 10)
-        {
-            throw new InvalidOperationException("Too many observation skills (max 10)");
-        }
-        
-        await _llamaServer.CreateInstanceAsync(skill.PersonaPrompt!, slotId);
-        _skillSlotMapping[skill.SkillId] = slotId;
-        _activeSlots.Add(slotId);
-        
-        Console.WriteLine($"ObservationExecutor: Created slot {slotId} for {skill.DisplayName}");
-        
-        return slotId;
+        return await _slotManager.GetOrCreateSlotForSkillAsync(skill);
     }
     
-    private CompositeField CreateObservationSchema(List<string> availableKeywords)
+    private CompositeField CreateObservationSchema()
     {
         return new CompositeField("ObservationResponse",
-            new StringField("narration_text", MinLength: 50, MaxLength: 300),
-            new ArrayField("highlighted_keywords",
-                new ChoiceField<string>("keyword", availableKeywords.ToArray()),
-                MinLength: 0,  // Allow 0 for natural attempt
-                MaxLength: 5
+            new StringField("narration_text", MinLength: 50, MaxLength: 300)
+        );
+    }
+    
+    private CompositeField CreateObservationSchemaWithIntros(NarrationNode node)
+    {
+        // For fallback: Use TemplateStringField to FORCE starting with a keyword intro
+        // This guarantees at least one keyword will be in the output
+        var introExamples = node.KeywordIntroExamples.Take(3).ToList();
+        
+        if (introExamples.Count == 0)
+        {
+            // Fallback to simple schema if no intro examples
+            return CreateObservationSchema();
+        }
+        
+        // Build template with first intro example
+        // The <generated> placeholder tells the LLM where to continue generating
+        var firstIntro = introExamples.First().Value;
+        
+        return new CompositeField("ObservationResponse",
+            new TemplateStringField(
+                "narration_text",
+                Template: firstIntro + " <generated>",  // Fixed intro + placeholder for LLM generation
+                MinGenLength: 50,      // LLM must generate at least 50 more chars after intro
+                MaxGenLength: 250      // Up to 250 more chars
             )
         );
     }
     
-    private ObservationResponse ParseObservationResponse(string jsonResponse)
+    private ObservationResponse ParseObservationResponse(string jsonResponse, List<string> availableKeywords)
     {
         try
         {
+            Console.WriteLine($"ObservationExecutor: Parsing JSON response ({jsonResponse.Length} chars)");
+            Console.WriteLine($"ObservationExecutor: Raw JSON: {jsonResponse}");
+            
             var options = new JsonSerializerOptions 
             { 
                 PropertyNameCaseInsensitive = true 
@@ -227,10 +243,12 @@ public class ObservationExecutor
             
             var response = JsonSerializer.Deserialize<ObservationResponse>(jsonResponse, options);
             
-            if (response == null)
+            if (response == null || string.IsNullOrWhiteSpace(response.NarrationText))
             {
-                throw new JsonException("Deserialized response is null");
+                throw new JsonException("Deserialized response is null or empty");
             }
+            
+            Console.WriteLine($"ObservationExecutor: Successfully parsed narration ({response.NarrationText.Length} chars)");
             
             return response;
         }
@@ -242,8 +260,7 @@ public class ObservationExecutor
             // Return empty response on parse failure
             return new ObservationResponse
             {
-                NarrationText = "You observe the environment carefully.",
-                HighlightedKeywords = new List<string>()
+                NarrationText = "You observe the environment carefully."
             };
         }
     }

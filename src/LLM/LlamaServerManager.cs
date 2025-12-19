@@ -20,6 +20,7 @@ public class LlamaServerManager : IDisposable
     private bool _isServerReady = false;
     private bool _disposed = false;
     private int _contextSize = 4096; // Default context size for both server and instances
+    private string? _sessionLogDir = null; // Directory for this server session's logs
     
     // Model aliases and their corresponding file names
     private readonly Dictionary<string, string> _modelAliases = new()
@@ -166,6 +167,12 @@ public class LlamaServerManager : IDisposable
             
             Console.WriteLine("Starting llama server...");
             
+            // Create session log directory
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+            _sessionLogDir = Path.Combine("logs", $"llm_session_{timestamp}");
+            Directory.CreateDirectory(_sessionLogDir);
+            Console.WriteLine($"LLM logs will be saved to: {_sessionLogDir}");
+            
             // Set the current model alias - auto-select largest if null
             if (modelAlias == null)
             {
@@ -298,6 +305,14 @@ public class LlamaServerManager : IDisposable
         };
         _instances[slotId] = instance;
         
+        // Create instance log directory and save system prompt
+        if (_sessionLogDir != null)
+        {
+            var instanceLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}");
+            Directory.CreateDirectory(instanceLogDir);
+            await File.WriteAllTextAsync(Path.Combine(instanceLogDir, "system_prompt.txt"), systemPrompt);
+        }
+        
         // Pre-cache the system prompt
         try
         {
@@ -347,6 +362,18 @@ public class LlamaServerManager : IDisposable
         
         instance.IsActive = true;
         instance.AddUserMessage(userMessage);
+        instance.RequestCount++;
+        
+        // Create request log directory for Critic evaluations
+        string? requestLogDir = null;
+        if (_sessionLogDir != null)
+        {
+            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}");
+            Directory.CreateDirectory(requestLogDir);
+            
+            // Save user question
+            await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+        }
         
         try
         {
@@ -366,6 +393,21 @@ public class LlamaServerManager : IDisposable
             if (!string.IsNullOrWhiteSpace(gbnfGrammar))
             {
                 requestData["grammar"] = gbnfGrammar;
+            }
+            
+            // Save full context and GBNF to log (for Critic)
+            if (requestLogDir != null)
+            {
+                // Save full context (all messages sent to LLM)
+                var messagesArray = (object[])requestData["messages"];
+                var contextJson = JsonSerializer.Serialize(messagesArray, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "full_context.json"), contextJson);
+                
+                // Save GBNF grammar if provided
+                if (!string.IsNullOrWhiteSpace(gbnfGrammar))
+                {
+                    await File.WriteAllTextAsync(Path.Combine(requestLogDir, "gbnf_constraints.txt"), gbnfGrammar);
+                }
             }
             
             var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", requestData);
@@ -451,6 +493,30 @@ public class LlamaServerManager : IDisposable
                 }
             }
             
+            // Log yes/no probabilities for Critic evaluations
+            if (requestLogDir != null)
+            {
+                var probsText = new StringBuilder();
+                probsText.AppendLine("Token Probabilities:");
+                foreach (var kvp in probabilities.OrderByDescending(kvp => kvp.Value))
+                {
+                    probsText.AppendLine($"  {kvp.Key}: {kvp.Value:F6} ({kvp.Value * 100:F2}%)");
+                }
+                
+                // Calculate yes/no ratio if applicable
+                if (probabilities.ContainsKey("yes") && probabilities.ContainsKey("no"))
+                {
+                    var pYes = probabilities["yes"];
+                    var pNo = probabilities["no"];
+                    var total = pYes + pNo;
+                    var ratio = total > 0 ? pYes / total : 0.5;
+                    probsText.AppendLine();
+                    probsText.AppendLine($"Yes/No Ratio: {ratio:F6} ({ratio * 100:F2}%)");
+                }
+                
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "yes_no_probs.txt"), probsText.ToString());
+            }
+            
             return probabilities;
         }
         finally
@@ -490,6 +556,18 @@ public class LlamaServerManager : IDisposable
         
         instance.IsActive = true;
         instance.AddUserMessage(userMessage);
+        instance.RequestCount++;
+        
+        // Create request log directory
+        string? requestLogDir = null;
+        if (_sessionLogDir != null)
+        {
+            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}");
+            Directory.CreateDirectory(requestLogDir);
+            
+            // Save user message
+            await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+        }
         
         var cancellationToken = new CancellationTokenSource();
         instance.CurrentRequestCancellation = cancellationToken;
@@ -526,6 +604,21 @@ public class LlamaServerManager : IDisposable
             if (!string.IsNullOrWhiteSpace(gbnfGrammar))
             {
                 requestData["grammar"] = gbnfGrammar;
+            }
+            
+            // Save full context and GBNF to log (AFTER building request to ensure user message is included)
+            if (requestLogDir != null)
+            {
+                // Save full context (all messages sent to LLM) - use the same array from requestData
+                var messagesArray = (object[])requestData["messages"];
+                var contextJson = JsonSerializer.Serialize(messagesArray, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "full_context.json"), contextJson);
+                
+                // Save GBNF grammar if provided
+                if (!string.IsNullOrWhiteSpace(gbnfGrammar))
+                {
+                    await File.WriteAllTextAsync(Path.Combine(requestLogDir, "gbnf_constraints.txt"), gbnfGrammar);
+                }
             }
             
             // Send request
@@ -602,6 +695,12 @@ public class LlamaServerManager : IDisposable
             if (!wasCancelled && !string.IsNullOrWhiteSpace(responseText))
             {
                 instance.AddAssistantResponse(responseText);
+            }
+            
+            // Save response to log
+            if (requestLogDir != null)
+            {
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "llm_response.txt"), responseText);
             }
             
             // Invoke completion callbacks

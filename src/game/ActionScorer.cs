@@ -182,6 +182,41 @@ Is this action specific and concrete (rather than abstract or overly general)?";
     }
     
     /// <summary>
+    /// Performs a skill check with d20 roll against difficulty.
+    /// Used by the narrative system for action execution.
+    /// </summary>
+    public bool RollSkillCheck(Narrative.Skill skill, int difficulty, Narrative.Avatar avatar)
+    {
+        // Get relevant body part value
+        int bodyPartValue = GetBodyPartValueForSkill(skill, avatar);
+        
+        // Roll d20
+        var random = new Random();
+        int roll = random.Next(1, 21);
+        
+        int total = roll + bodyPartValue;
+        bool success = total >= difficulty;
+        
+        Console.WriteLine($"ActionScorer: Skill check - {skill.DisplayName} (BP:{bodyPartValue}) + d20({roll}) = {total} vs DC {difficulty} → {(success ? "SUCCESS" : "FAILURE")}");
+        
+        return success;
+    }
+    
+    /// <summary>
+    /// Gets the body part value most relevant to a skill.
+    /// Maps skill function to appropriate body part.
+    /// </summary>
+    private int GetBodyPartValueForSkill(Narrative.Skill skill, Narrative.Avatar avatar)
+    {
+        // Use primary body part from skill's BodyParts array
+        string bodyPartName = skill.BodyParts.Length > 0 
+            ? skill.BodyParts[0].ToLower() 
+            : "hands";
+        
+        return avatar.BodyParts.TryGetValue(bodyPartName, out int value) ? value : 5;
+    }
+    
+    /// <summary>
     /// Truncates text for display purposes.
     /// </summary>
     private static string TruncateText(string text, int maxLength)

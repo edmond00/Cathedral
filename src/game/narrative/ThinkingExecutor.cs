@@ -17,18 +17,16 @@ public class ThinkingExecutor
 {
     private readonly LlamaServerManager _llmManager;
     private readonly ThinkingPromptConstructor _promptConstructor;
-    
-    // Thinking skills use slots 10-29
-    private const int THINKING_SLOT_START = 10;
-    private const int THINKING_SLOT_END = 29;
-    private readonly Dictionary<string, int> _skillSlots = new();
+    private readonly SkillSlotManager _slotManager;
 
     public ThinkingExecutor(
         LlamaServerManager llmManager,
-        ThinkingPromptConstructor promptConstructor)
+        ThinkingPromptConstructor promptConstructor,
+        SkillSlotManager slotManager)
     {
         _llmManager = llmManager;
         _promptConstructor = promptConstructor;
+        _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
     }
 
     /// <summary>
@@ -37,38 +35,7 @@ public class ThinkingExecutor
     /// </summary>
     private async Task<int> GetOrCreateSlotForSkillAsync(Skill skill)
     {
-        if (_skillSlots.TryGetValue(skill.SkillId, out int existingSlot))
-        {
-            return existingSlot;
-        }
-
-        // Find next available slot
-        int nextSlot = THINKING_SLOT_START;
-        while (nextSlot <= THINKING_SLOT_END && _skillSlots.ContainsValue(nextSlot))
-        {
-            nextSlot++;
-        }
-
-        if (nextSlot > THINKING_SLOT_END)
-        {
-            // Out of slots, evict the least recently used
-            // For now, just use the first slot
-            nextSlot = THINKING_SLOT_START;
-            var toRemove = _skillSlots.FirstOrDefault(kvp => kvp.Value == nextSlot);
-            if (toRemove.Key != null)
-            {
-                _skillSlots.Remove(toRemove.Key);
-            }
-        }
-
-        _skillSlots[skill.SkillId] = nextSlot;
-
-        // Note: Can't pre-assign slots. CreateInstanceAsync returns auto-incremented slot.
-        // For now, create instance and track it.
-        int actualSlot = await _llmManager.CreateInstanceAsync(skill.PersonaPrompt);
-        _skillSlots[skill.SkillId] = actualSlot;
-
-        return actualSlot;
+        return await _slotManager.GetOrCreateSlotForSkillAsync(skill);
     }
 
     /// <summary>
@@ -185,7 +152,10 @@ public class ThinkingExecutor
                 ElementType: new CompositeField("Action",
                     new ChoiceField<string>("action_skill", validActionSkills.ToArray()),
                     new ChoiceField<string>("outcome", validOutcomes.ToArray()),
-                    new StringField("action_description", MinLength: 30, MaxLength: 160)
+                    new TemplateStringField("action_description", 
+                        Template: "try to <generated>",
+                        MinGenLength: 10,
+                        MaxGenLength: 140)
                 ),
                 MinLength: 2,
                 MaxLength: 5

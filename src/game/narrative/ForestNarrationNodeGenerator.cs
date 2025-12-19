@@ -20,6 +20,12 @@ public class ForestNarrationNodeGenerator
         // Node 1: Sun-Dappled Clearing (Entry Node)
         var clearingOutcomes = new Dictionary<string, List<Outcome>>
         {
+            ["dappled shadows"] = new()
+            {
+                new Outcome(OutcomeType.Transition, "hollow_oak", null),
+                new Outcome(OutcomeType.Skill, "perception", null),
+                new Outcome(OutcomeType.Humor, "", new() { ["Melancholia"] = +2 })
+            },
             ["moss-covered stone"] = new()
             {
                 new Outcome(OutcomeType.Transition, "hidden_stream", null),
@@ -93,6 +99,18 @@ public class ForestNarrationNodeGenerator
                 new Outcome(OutcomeType.Item, "skipping_stone", null),
                 new Outcome(OutcomeType.Skill, "geology", null),
                 new Outcome(OutcomeType.Transition, "rock_outcrop", null)
+            },
+            ["ferns and reeds"] = new()
+            {
+                new Outcome(OutcomeType.Item, "reed_bundle", null),
+                new Outcome(OutcomeType.Skill, "botany", null),
+                new Outcome(OutcomeType.Humor, "", new() { ["Phlegm"] = +2 })
+            },
+            ["dragonflies"] = new()
+            {
+                new Outcome(OutcomeType.Skill, "entomology", null),
+                new Outcome(OutcomeType.Companion, "dragonfly", null),
+                new Outcome(OutcomeType.Humor, "", new() { ["Blood"] = +3 })
             }
         };
         

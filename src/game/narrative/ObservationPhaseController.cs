@@ -16,9 +16,9 @@ public class ObservationPhaseController
     private readonly KeywordRenderer _keywordRenderer;
     private readonly Random _random = new();
     
-    public ObservationPhaseController(LlamaServerManager llamaServer)
+    public ObservationPhaseController(LlamaServerManager llamaServer, SkillSlotManager slotManager)
     {
-        _observationExecutor = new ObservationExecutor(llamaServer);
+        _observationExecutor = new ObservationExecutor(llamaServer, slotManager);
         _keywordRenderer = new KeywordRenderer();
     }
     
@@ -62,22 +62,29 @@ public class ObservationPhaseController
                     avatar
                 );
                 
-                // Validate keywords are from the node's keyword list
-                var validKeywords = observation.HighlightedKeywords
-                    .Where(k => currentNode.Keywords.Contains(k, StringComparer.OrdinalIgnoreCase))
+                // Extract keywords from narration text
+                var segments = _keywordRenderer.ParseNarrationWithKeywords(
+                    observation.NarrationText,
+                    currentNode.Keywords
+                );
+                
+                var foundKeywords = segments
+                    .Where(s => s.IsKeyword)
+                    .Select(s => s.KeywordValue!)
+                    .Distinct()
                     .ToList();
                 
                 var block = new NarrationBlock(
                     Type: NarrationBlockType.Observation,
                     SkillName: skill.DisplayName,
                     Text: observation.NarrationText,
-                    Keywords: validKeywords,
+                    Keywords: foundKeywords,
                     Actions: null
                 );
                 
                 narrationBlocks.Add(block);
                 
-                Console.WriteLine($"ObservationPhaseController: Generated observation with {validKeywords.Count} keywords");
+                Console.WriteLine($"ObservationPhaseController: Generated observation with {foundKeywords.Count} keywords");
             }
             catch (Exception ex)
             {

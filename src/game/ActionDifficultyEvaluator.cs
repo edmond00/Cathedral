@@ -31,6 +31,14 @@ public class ActionDifficultyEvaluator
     }
     
     /// <summary>
+    /// Evaluates coherence using the Critic (wrapper for generic yes/no questions).
+    /// </summary>
+    public async Task<double> EvaluateCoherence(string question)
+    {
+        return await _critic.EvaluateYesNoQuestion(question);
+    }
+    
+    /// <summary>
     /// Evaluates a selected action to determine its difficulty and possible failure consequences.
     /// This is called AFTER the player chooses an action but BEFORE execution.
     /// </summary>
@@ -162,6 +170,32 @@ public class ActionDifficultyEvaluator
         }
         
         return success;
+    }
+    
+    /// <summary>
+    /// Calculates difficulty for a narrative action based on action text and skill.
+    /// Returns difficulty as a number from 1-20 (D&D style).
+    /// </summary>
+    public int CalculateDifficulty(string actionText, Narrative.Skill skill, Narrative.Avatar avatar)
+    {
+        // Simple heuristic-based difficulty calculation
+        // In future, could use Critic LLM to evaluate
+        
+        int baseDifficulty = 10; // Medium difficulty
+        
+        // Adjust based on action complexity (word count, specific verbs)
+        int wordCount = actionText.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+        if (wordCount > 15) baseDifficulty += 2; // Complex actions are harder
+        if (wordCount < 6) baseDifficulty -= 2;  // Simple actions are easier
+        
+        // Check for difficulty keywords
+        string lowerAction = actionText.ToLower();
+        if (lowerAction.Contains("carefully") || lowerAction.Contains("precisely")) baseDifficulty += 2;
+        if (lowerAction.Contains("quickly") || lowerAction.Contains("hastily")) baseDifficulty += 3;
+        if (lowerAction.Contains("gently") || lowerAction.Contains("slowly")) baseDifficulty -= 1;
+        
+        // Clamp to 1-20
+        return Math.Clamp(baseDifficulty, 1, 20);
     }
 }
 

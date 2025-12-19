@@ -18,7 +18,7 @@ public class ObservationPromptConstructor
         Avatar avatar,
         bool promptKeywordUsage = true)
     {
-        var prompt = $@"You are in this environment:
+        var prompt = $@"You are observing this scene:
 
 {node.NeutralDescription}";
 
@@ -26,18 +26,17 @@ public class ObservationPromptConstructor
         {
             prompt += $@"
 
-Notable elements you might observe (try to include 3-5 of these):
-{string.Join("\n", node.Keywords.Select(k => $"- {k}"))}";
+Notable elements you should describe in your narration (include 3-5 of these):
+{string.Join(", ", node.Keywords)}";
         }
 
         prompt += @"
 
-Generate a narration of your observations. Your narration must be between 50 and 300 characters.
+Generate a brief narration (50-300 characters) from your perspective that describes what you observe. Include specific details about the notable elements.
 
 Respond in JSON format:
 {
-  ""narration_text"": ""string (your observation narration)"",
-  ""highlighted_keywords"": [""keyword1"", ""keyword2"", ...]
+  ""narration_text"": ""your observation narration""
 }";
 
         return prompt;
@@ -46,27 +45,35 @@ Respond in JSON format:
     /// <summary>
     /// Builds an observation request with keyword intro constraints for fallback.
     /// Used when the natural prompt fails to include enough keywords.
+    /// Forces the LLM to start with a keyword intro to guarantee keyword inclusion.
     /// </summary>
     public string BuildObservationPromptWithIntros(
         NarrationNode node,
         Avatar avatar)
     {
-        var introExamples = string.Join("\n", node.KeywordIntroExamples
-            .Select(kvp => $"- {kvp.Key}: \"{kvp.Value}\""));
+        // Get a few intro examples
+        var introExamples = node.KeywordIntroExamples.Take(3).ToList();
+        
+        var examplesText = string.Join("\n", introExamples.Select(kvp => 
+            $"Example: \"{kvp.Value} [continue observation...]\""));
 
-        var prompt = $@"You are in this environment:
+        var prompt = $@"You are observing this scene:
 
 {node.NeutralDescription}
 
-Your narration MUST start with one of these phrases:
-{introExamples}
+Your narration MUST begin with one of these keyword introductions:
+{string.Join("\n", introExamples.Select(kvp => $"- Start with: \"{kvp.Value}\""))}
 
-Generate a narration of your observations. Your narration must be between 50 and 300 characters and MUST include at least 3 of the notable elements.
+{examplesText}
+
+IMPORTANT: Your narration MUST:
+1. Start with one of the exact phrases above
+2. Include at least 3 of these keywords naturally: {string.Join(", ", node.Keywords)}
+3. Be 50-300 characters total
 
 Respond in JSON format:
 {{
-  ""narration_text"": ""string (your observation narration)"",
-  ""highlighted_keywords"": [""keyword1"", ""keyword2"", ...]
+  ""narration_text"": ""your observation starting with one of the required phrases""
 }}";
 
         return prompt;

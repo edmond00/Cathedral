@@ -10,16 +10,20 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public class Avatar
 {
-    public Dictionary<string, int> BodyPartLevels { get; init; }  // 17 body parts, level 1-10
-    public List<Skill> LearnedSkills { get; set; }                // ~50 skills max
+    public Dictionary<string, int> BodyParts { get; init; }      // 17 body parts, level 1-10 (for skill checks)
+    public Dictionary<string, int> BodyPartLevels { get; init; }  // Alias for BodyParts
+    public List<Skill> Skills { get; set; }                       // Current skills (for execution)
+    public List<Skill> LearnedSkills { get; set; }                // Alias for Skills
     public Dictionary<string, int> Humors { get; set; }           // 10 humors, 0-100 range
-    public List<string> Inventory { get; set; }                   // Items (placeholder)
-    public List<string> Companions { get; set; }                  // Animal companions (placeholder)
+    public List<string> Inventory { get; set; }                   // Items
+    public List<string> Companions { get; set; }                  // Animal companions
     
     public Avatar()
     {
-        BodyPartLevels = InitializeBodyParts();
-        LearnedSkills = new List<Skill>();
+        BodyParts = InitializeBodyParts();
+        BodyPartLevels = BodyParts;  // Same reference
+        Skills = new List<Skill>();
+        LearnedSkills = Skills;      // Same reference
         Humors = InitializeHumors();
         Inventory = new List<string>();
         Companions = new List<string>();
@@ -65,13 +69,17 @@ public class Avatar
         var thinkingSkills = registry.GetThinkingSkills().OrderBy(_ => random.Next()).Take(20).ToList();
         var actionSkills = registry.GetActionSkills().OrderBy(_ => random.Next()).Take(20).ToList();
         
-        LearnedSkills = observationSkills.Concat(thinkingSkills).Concat(actionSkills)
+        var selectedSkills = observationSkills.Concat(thinkingSkills).Concat(actionSkills)
             .Distinct()
             .Take(skillCount)
             .ToList();
         
+        // Clear and repopulate the existing list to maintain the reference
+        Skills.Clear();
+        Skills.AddRange(selectedSkills);
+        
         // Randomize skill levels (1-10)
-        foreach (var skill in LearnedSkills)
+        foreach (var skill in Skills)
         {
             skill.Level = random.Next(1, 11);
         }

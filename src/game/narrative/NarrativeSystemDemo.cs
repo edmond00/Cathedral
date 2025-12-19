@@ -11,6 +11,32 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public class NarrativeSystemDemo
 {
+    /// <summary>
+    /// Main entry point for running the narrative system demo.
+    /// Runs both Phase 1 (foundation) and Phase 2 (observation) demos.
+    /// </summary>
+    public static async Task RunDemo()
+    {
+        Console.WriteLine("╔═══════════════════════════════════════════════════════════╗");
+        Console.WriteLine("║   Phase 6: Chain-of-Thought Narrative RPG System Demo    ║");
+        Console.WriteLine("╚═══════════════════════════════════════════════════════════╝");
+        Console.WriteLine();
+        
+        // Phase 1: Foundation
+        RunPhase1Demo();
+        
+        Console.WriteLine("\nPress Enter to continue to Phase 2 (LLM Observation System)...");
+        Console.ReadLine();
+        
+        // Phase 2: Observation System
+        await RunPhase2DemoAsync();
+        
+        Console.WriteLine("\n╔═══════════════════════════════════════════════════════════╗");
+        Console.WriteLine("║   Demo Complete - Phases 1-4 Implemented Successfully    ║");
+        Console.WriteLine("║   Ready for Phase 5 (UI Polish) and Phase 6 (Content)    ║");
+        Console.WriteLine("╚═══════════════════════════════════════════════════════════╝");
+    }
+    
     public static void RunPhase1Demo()
     {
         Console.WriteLine("=== Phase 1: Narrative System Foundation Demo ===\n");
@@ -18,7 +44,7 @@ public class NarrativeSystemDemo
         // Initialize components
         var registry = SkillRegistry.Instance;
         var avatar = new Avatar();
-        avatar.InitializeSkills(registry, skillCount: 10); // Small set for demo
+        avatar.InitializeSkills(registry, skillCount: 50); // Ensure all skill types are included
         
         var forestGenerator = new ForestNarrationNodeGenerator();
         var entryNode = forestGenerator.GetRandomEntryNode();
@@ -75,7 +101,7 @@ public class NarrativeSystemDemo
         // Initialize components
         var registry = SkillRegistry.Instance;
         var avatar = new Avatar();
-        avatar.InitializeSkills(registry, skillCount: 10);
+        avatar.InitializeSkills(registry, skillCount: 50); // Ensure all skill types are included
         
         var forestGenerator = new ForestNarrationNodeGenerator();
         var entryNode = forestGenerator.GetRandomEntryNode();
@@ -105,8 +131,11 @@ public class NarrativeSystemDemo
             
             Console.WriteLine("LLM server ready!\n");
             
+            // Create shared slot manager for skill reuse across all executors
+            var slotManager = new SkillSlotManager(llamaServer);
+            
             // Create observation phase controller
-            var observationController = new ObservationPhaseController(llamaServer);
+            var observationController = new ObservationPhaseController(llamaServer, slotManager);
             
             Console.WriteLine($"Node: {entryNode.NodeName}");
             Console.WriteLine($"Available keywords: {string.Join(", ", entryNode.Keywords)}\n");
@@ -138,10 +167,149 @@ public class NarrativeSystemDemo
             Console.WriteLine($"Keywords: {string.Join(", ", allKeywords)}\n");
             
             Console.WriteLine("=== Phase 2: Observation System Operational! ===");
+            
+            // Phases 3-4: Test thinking and action execution if we have keywords
+            if (allKeywords.Count > 0)
+            {
+                Console.WriteLine("\nPress Enter to test Phases 3-4 (Thinking + Action Execution)...");
+                Console.ReadLine();
+                await TestPhases3And4Async(llamaServer, slotManager, entryNode, avatar, allKeywords);
+            }
         }
         finally
         {
             llamaServer?.Dispose();
         }
+    }
+    
+    private static async Task TestPhases3And4Async(
+        LlamaServerManager llamaServer,
+        SkillSlotManager slotManager,
+        NarrationNode node,
+        Avatar avatar,
+        List<string> availableKeywords)
+    {
+        Console.WriteLine("\n=== Phase 3: Thinking System Demo ===\n");
+        
+        // Find a keyword that has outcomes defined
+        string? selectedKeyword = null;
+        List<Outcome>? possibleOutcomes = null;
+        
+        foreach (var keyword in availableKeywords)
+        {
+            if (node.OutcomesByKeyword.TryGetValue(keyword.ToLowerInvariant(), out possibleOutcomes))
+            {
+                selectedKeyword = keyword;
+                break;
+            }
+        }
+        
+        // If no extracted keywords have outcomes, use any keyword from the node that has outcomes
+        if (selectedKeyword == null)
+        {
+            var keywordWithOutcomes = node.OutcomesByKeyword.FirstOrDefault(kvp => kvp.Value.Count > 0);
+            if (keywordWithOutcomes.Key != null)
+            {
+                selectedKeyword = keywordWithOutcomes.Key;
+                possibleOutcomes = keywordWithOutcomes.Value;
+                Console.WriteLine("(No extracted keywords had outcomes, using node keyword instead)\n");
+            }
+            else
+            {
+                Console.WriteLine("No outcomes defined for any keywords!");
+                return;
+            }
+        }
+        
+        Console.WriteLine($"Simulating click on keyword: '{selectedKeyword}'\n");
+        foreach (var outcome in possibleOutcomes)
+        {
+            Console.WriteLine($"  - {outcome.ToNaturalLanguageString()}");
+        }
+        Console.WriteLine();
+        
+        // Initialize thinking system components (reusing slotManager from observation phase)
+        var thinkingPromptConstructor = new ThinkingPromptConstructor();
+        var thinkingExecutor = new ThinkingExecutor(llamaServer, thinkingPromptConstructor, slotManager);
+        var thinkingController = new ThinkingPhaseController(thinkingExecutor, avatar);
+        
+        // Simulate selecting a thinking skill (just pick the first one)
+        var thinkingSkills = avatar.GetThinkingSkills();
+        if (thinkingSkills.Count == 0)
+        {
+            Console.WriteLine("No thinking skills available!");
+            return;
+        }
+        
+        var selectedThinkingSkill = thinkingSkills.First();
+        Console.WriteLine($"Simulating selection of thinking skill: {selectedThinkingSkill.DisplayName}\n");
+        Console.WriteLine("Generating Chain-of-Thought reasoning and actions...\n");
+        
+        // Execute thinking phase
+        var state = new NarrationState { CurrentNodeId = node.NodeId };
+        var thinkingResult = await thinkingController.ExecuteThinkingPhaseAsync(
+            selectedThinkingSkill,
+            selectedKeyword,
+            node,
+            state
+        );
+        
+        Console.WriteLine($"[{selectedThinkingSkill.DisplayName}]");
+        Console.WriteLine($"{thinkingResult.ReasoningText}\n");
+        
+        if (thinkingResult.Actions.Count == 0)
+        {
+            Console.WriteLine("Failed to generate actions.\n");
+            return;
+        }
+        
+        Console.WriteLine($"Generated {thinkingResult.Actions.Count} actions:");
+        for (int i = 0; i < thinkingResult.Actions.Count; i++)
+        {
+            var action = thinkingResult.Actions[i];
+            var displayText = action.ActionText.Replace("try to ", "");
+            Console.WriteLine($"  {i + 1}. {displayText}");
+            Console.WriteLine($"     (Skill: {action.ActionSkillId}, Outcome: {action.PreselectedOutcome.ToNaturalLanguageString()})");
+        }
+        Console.WriteLine();
+        
+        Console.WriteLine("=== Phase 3: Thinking System Operational! ===\n");
+        
+        // Phase 4: Action Execution
+        Console.WriteLine("=== Phase 4: Action Execution Demo ===\n");
+        
+        // Simulate selecting the first action
+        var selectedAction = thinkingResult.Actions.First();
+        Console.WriteLine($"Simulating click on action: '{selectedAction.ActionText}'\n");
+        
+        // Initialize action execution components
+        var actionScorer = new ActionScorer(new CriticEvaluator(llamaServer));
+        var difficultyEvaluator = new ActionDifficultyEvaluator(new CriticEvaluator(llamaServer));
+        var outcomeNarrator = new OutcomeNarrator(llamaServer, slotManager);
+        var outcomeApplicator = new OutcomeApplicator();
+        var actionController = new ActionExecutionController(
+            actionScorer,
+            difficultyEvaluator,
+            outcomeNarrator,
+            outcomeApplicator,
+            avatar
+        );
+        
+        Console.WriteLine("Executing action with skill check...\n");
+        
+        // Execute the action
+        var executionResult = await actionController.ExecuteActionAsync(
+            selectedAction,
+            node,
+            selectedThinkingSkill
+        );
+        
+        Console.WriteLine($"[{executionResult.ThinkingSkill.DisplayName}]");
+        Console.WriteLine($"{executionResult.Narration}\n");
+        Console.WriteLine($"Action: {executionResult.Succeeded}");
+        Console.WriteLine($"Difficulty: {executionResult.Difficulty}/20");
+        Console.WriteLine($"Outcome: {executionResult.ActualOutcome.ToNaturalLanguageString()}\n");
+        
+        Console.WriteLine("=== Phase 4: Action Execution Operational! ===");
     }
 }
