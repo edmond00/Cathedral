@@ -177,6 +177,9 @@ public class ObservationExecutor
             var result = await tcs.Task;
             Console.WriteLine($"ObservationExecutor: Request completed, response length: {result?.Length ?? 0}");
             
+            // Small delay to ensure LlamaServerManager's finally block completes cleanup
+            await Task.Delay(100);
+            
             return result;
         }
         catch (Exception ex)

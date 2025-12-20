@@ -364,11 +364,14 @@ public class LlamaServerManager : IDisposable
         instance.AddUserMessage(userMessage);
         instance.RequestCount++;
         
+        var startTime = DateTime.Now;
+        var timestamp = startTime.ToString("HH-mm-ss-fff");
+        
         // Create request log directory for Critic evaluations
         string? requestLogDir = null;
         if (_sessionLogDir != null)
         {
-            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}");
+            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
             Directory.CreateDirectory(requestLogDir);
             
             // Save user question
@@ -517,6 +520,19 @@ public class LlamaServerManager : IDisposable
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "yes_no_probs.txt"), probsText.ToString());
             }
             
+            // Save timing information
+            if (requestLogDir != null)
+            {
+                var endTime = DateTime.Now;
+                var duration = endTime - startTime;
+                var timingText = new StringBuilder();
+                timingText.AppendLine("Request Timing:");
+                timingText.AppendLine($"  Start:    {startTime:yyyy-MM-dd HH:mm:ss.fff}");
+                timingText.AppendLine($"  End:      {endTime:yyyy-MM-dd HH:mm:ss.fff}");
+                timingText.AppendLine($"  Duration: {duration.TotalMilliseconds:F0}ms ({duration.TotalSeconds:F2}s)");
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "timing.txt"), timingText.ToString());
+            }
+            
             return probabilities;
         }
         finally
@@ -558,11 +574,14 @@ public class LlamaServerManager : IDisposable
         instance.AddUserMessage(userMessage);
         instance.RequestCount++;
         
+        var requestStartTime = DateTime.Now;
+        var timestamp = requestStartTime.ToString("HH-mm-ss-fff");
+        
         // Create request log directory
         string? requestLogDir = null;
         if (_sessionLogDir != null)
         {
-            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}");
+            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
             Directory.CreateDirectory(requestLogDir);
             
             // Save user message
@@ -574,7 +593,7 @@ public class LlamaServerManager : IDisposable
         
         try
         {
-            var startTime = DateTime.Now;
+            var llmStartTime = DateTime.Now;
             var fullResponse = new StringBuilder();
             
             // Check if conversation history is too long and trim if needed
@@ -678,7 +697,7 @@ public class LlamaServerManager : IDisposable
             }
             
             var responseText = fullResponse.ToString();
-            var duration = DateTime.Now - startTime;
+            var duration = DateTime.Now - llmStartTime;
             var wasCancelled = cancellationToken.Token.IsCancellationRequested;
             
             // Check for empty response (slot busy or other issues)
@@ -701,6 +720,26 @@ public class LlamaServerManager : IDisposable
             if (requestLogDir != null)
             {
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "llm_response.txt"), responseText);
+                
+                // Save timing information
+                var requestEndTime = DateTime.Now;
+                var totalDuration = requestEndTime - requestStartTime;
+                var timingText = new StringBuilder();
+                timingText.AppendLine("Request Timing:");
+                timingText.AppendLine($"  Request Start: {requestStartTime:yyyy-MM-dd HH:mm:ss.fff}");
+                timingText.AppendLine($"  LLM Start:     {llmStartTime:yyyy-MM-dd HH:mm:ss.fff}");
+                timingText.AppendLine($"  Response End:  {requestEndTime:yyyy-MM-dd HH:mm:ss.fff}");
+                timingText.AppendLine();
+                timingText.AppendLine("Durations:");
+                timingText.AppendLine($"  Setup Time:    {(llmStartTime - requestStartTime).TotalMilliseconds:F0}ms");
+                timingText.AppendLine($"  LLM Duration:  {duration.TotalMilliseconds:F0}ms ({duration.TotalSeconds:F2}s)");
+                timingText.AppendLine($"  Total:         {totalDuration.TotalMilliseconds:F0}ms ({totalDuration.TotalSeconds:F2}s)");
+                timingText.AppendLine();
+                timingText.AppendLine("Status:");
+                timingText.AppendLine($"  Cancelled:     {wasCancelled}");
+                timingText.AppendLine($"  Empty Result:  {string.IsNullOrWhiteSpace(responseText)}");
+                timingText.AppendLine($"  Response Len:  {responseText.Length} chars");
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "timing.txt"), timingText.ToString());
             }
             
             // Invoke completion callbacks

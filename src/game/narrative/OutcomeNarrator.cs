@@ -179,7 +179,12 @@ Respond in JSON format:
                 null,
                 grammar);
 
-            return await tcs.Task;
+            var result = await tcs.Task;
+            
+            // Small delay to ensure LlamaServerManager's finally block completes cleanup
+            await Task.Delay(100);
+            
+            return result;
         }
         catch (Exception ex)
         {
