@@ -38,27 +38,25 @@ Available action skills you can use:
 Possible outcomes if actions succeed:
 {string.Join("\n", outcomeStrings.Select(o => $"- {o}"))}
 
-Your task:
-1. Generate a Chain-of-Thought reasoning (100-400 characters) explaining how the available action skills could be used to achieve the possible outcomes in the context of ""{keyword}"".
+Task:
+Generate actions using the available action skills.
 
-2. Based on your reasoning, generate 2-5 concrete actions. Each action must:
-   - Select the MOST APPROPRIATE action skill from the available list
-   - Select the MOST COHERENT outcome from the possible outcomes
-   - Start with ""try to "" followed by a specific action description (30-160 characters total)
+First, write a short internal reasoning text (persona-style),
+explaining how this skill interprets the situation and finds links
+between the context and the available action skills.
 
-Think carefully about which action skills and outcomes fit together logically.
+Then generate 2–5 concrete actions.
 
-Respond in JSON format:
-{{
-  ""reasoning_text"": ""your chain-of-thought reasoning"",
-  ""actions"": [
-    {{
-      ""action_skill"": ""skill_id"",
-      ""outcome"": ""outcome string"",
-      ""action_description"": ""try to ...""
-    }}
-  ]
-}}";
+Rules:
+- Tone and reasoning must strongly reflect the skill persona.
+- Coherence matters, but persona perspective matters more.
+- Each action starts with 'try to'.
+- Actions should feel like natural conclusions of the reasoning.
+
+Output fields:
+- reasoning_text
+- actions[] with: action_skill, outcome, action_description
+";
 
         return prompt;
     }
