@@ -16,7 +16,7 @@ public class ThinkingPromptConstructor
     public string BuildThinkingPrompt(
         string keyword,
         NarrationNode node,
-        List<Outcome> possibleOutcomes,
+        List<OutcomeBase> possibleOutcomes,
         List<Skill> actionSkills,
         Avatar avatar)
     {
@@ -30,7 +30,7 @@ public class ThinkingPromptConstructor
         
         var prompt = $@"You are analyzing the keyword ""{keyword}"" in this context:
 
-{node.NeutralDescription}
+{node.GenerateNeutralDescription(avatar.CurrentLocationId)}
 
 Available action skills you can use:
 {string.Join("\n", actionSkills.Select(s => $"- {s.SkillId}: {s.DisplayName}"))}

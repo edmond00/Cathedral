@@ -68,6 +68,6 @@ public class ParsedNarrativeAction
     public string ActionSkillId { get; set; } = "";           // Which action skill to use for check
     public Skill? ActionSkill { get; set; }                   // Resolved skill reference
     public Skill ThinkingSkill { get; set; } = null!;         // Which thinking skill generated this
-    public Outcome PreselectedOutcome { get; set; } = null!;  // Success outcome chosen by thinking skill
+    public OutcomeBase PreselectedOutcome { get; set; } = null!;  // Success outcome chosen by thinking skill
     public string Keyword { get; set; } = "";                 // Keyword this action relates to
 }

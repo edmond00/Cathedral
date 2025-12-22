@@ -31,7 +31,7 @@ public class OutcomeNarrator
         ParsedNarrativeAction action,
         Skill actionSkill,
         Skill thinkingSkill,
-        Outcome outcome,
+        OutcomeBase outcome,
         bool succeeded,
         double difficulty,
         Avatar avatar,
@@ -97,7 +97,7 @@ public class OutcomeNarrator
         ParsedNarrativeAction action,
         Skill actionSkill,
         Skill thinkingSkill,
-        Outcome outcome,
+        OutcomeBase outcome,
         bool succeeded,
         double difficulty,
         Avatar avatar)
@@ -198,7 +198,7 @@ Respond in JSON format:
     /// <summary>
     /// Generates a simple fallback narration when LLM fails.
     /// </summary>
-    private string GenerateFallbackNarration(ParsedNarrativeAction action, bool succeeded, Outcome outcome)
+    private string GenerateFallbackNarration(ParsedNarrativeAction action, bool succeeded, OutcomeBase outcome)
     {
         if (succeeded)
         {

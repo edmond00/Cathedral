@@ -20,7 +20,7 @@ public class ObservationPromptConstructor
     {
         var prompt = $@"You are observing this scene:
 
-{node.NeutralDescription}";
+{node.GenerateNeutralDescription(avatar.CurrentLocationId)}";
 
         if (promptKeywordUsage && node.Keywords.Count > 0)
         {
@@ -52,17 +52,19 @@ Respond in JSON format:
         Avatar avatar)
     {
         // Get a few intro examples
-        var introExamples = node.KeywordIntroExamples.Take(3).ToList();
+        // Generate intro examples dynamically from the first 3 keywords
+        var keywords = node.Keywords.Take(3).ToList();
+        var introExamples = keywords.Select(k => $"You notice {k}").ToList();
         
-        var examplesText = string.Join("\n", introExamples.Select(kvp => 
-            $"Example: \"{kvp.Value} [continue observation...]\""));
+        var examplesText = string.Join("\n", introExamples.Select(intro => 
+            $"Example: \"{intro} [continue observation...]\""));
 
         var prompt = $@"You are observing this scene:
 
-{node.NeutralDescription}
+{node.GenerateNeutralDescription(avatar.CurrentLocationId)}
 
 Your narration MUST begin with one of these keyword introductions:
-{string.Join("\n", introExamples.Select(kvp => $"- Start with: \"{kvp.Value}\""))}
+{string.Join("\n", introExamples.Select(intro => $"- Start with: \"{intro}\""))}
 
 {examplesText}
 

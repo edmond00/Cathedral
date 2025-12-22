@@ -46,7 +46,7 @@ public class ThinkingExecutor
         Skill thinkingSkill,
         string keyword,
         NarrationNode node,
-        List<Outcome> possibleOutcomes,
+        List<OutcomeBase> possibleOutcomes,
         List<Skill> actionSkills,
         Avatar avatar,
         CancellationToken cancellationToken = default)
@@ -172,7 +172,7 @@ public class ThinkingExecutor
     /// Parses the LLM JSON response into a ThinkingResponse.
     /// Returns null if parsing fails.
     /// </summary>
-    private ThinkingResponse? ParseThinkingResponse(string jsonResponse, List<Outcome> possibleOutcomes)
+    private ThinkingResponse? ParseThinkingResponse(string jsonResponse, List<OutcomeBase> possibleOutcomes)
     {
         try
         {
@@ -190,11 +190,12 @@ public class ThinkingExecutor
                 string outcomeStr = actionElement.GetProperty("outcome").GetString() ?? "";
                 string actionDesc = actionElement.GetProperty("action_description").GetString() ?? "";
 
-                // Parse outcome from natural language string
-                try
+                // Parse outcome by matching natural language string
+                var outcome = possibleOutcomes.FirstOrDefault(o => 
+                    o.ToNaturalLanguageString().Equals(outcomeStr, StringComparison.OrdinalIgnoreCase));
+                
+                if (outcome != null)
                 {
-                    var outcome = Outcome.FromNaturalLanguageString(outcomeStr, possibleOutcomes);
-                    
                     actions.Add(new ParsedNarrativeAction
                     {
                         ActionSkillId = actionSkill,
@@ -202,10 +203,10 @@ public class ThinkingExecutor
                         ActionText = actionDesc
                     });
                 }
-                catch (InvalidOperationException)
+                else
                 {
                     // Couldn't parse this outcome, skip it
-                    continue;
+                    Console.WriteLine($"ThinkingExecutor: Could not match outcome string '{outcomeStr}'");
                 }
             }
 

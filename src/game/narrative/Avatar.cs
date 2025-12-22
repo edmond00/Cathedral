@@ -17,6 +17,7 @@ public class Avatar
     public Dictionary<string, int> Humors { get; set; }           // 10 humors, 0-100 range
     public List<string> Inventory { get; set; }                   // Items
     public List<string> Companions { get; set; }                  // Animal companions
+    public int CurrentLocationId { get; set; }                    // Current location ID (used as RNG seed)
     
     public Avatar()
     {

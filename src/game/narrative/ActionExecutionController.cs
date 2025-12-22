@@ -89,7 +89,7 @@ public class ActionExecutionController
         Console.WriteLine($"   Roll: {roll:F3} → {(succeeded ? "✓ SUCCESS" : "✗ FAILURE")}\n");
 
         // Determine actual outcome
-        Outcome actualOutcome;
+        OutcomeBase actualOutcome;
         if (succeeded)
         {
             actualOutcome = action.PreselectedOutcome;
@@ -101,7 +101,7 @@ public class ActionExecutionController
         }
 
         // Apply outcome to game state
-        _outcomeApplicator.ApplyOutcome(actualOutcome, _avatar);
+        await _outcomeApplicator.ApplyOutcomeAsync(actualOutcome, _avatar);
 
         // Generate narration from thinking skill's perspective
         string narration = await _outcomeNarrator.NarrateOutcomeAsync(
@@ -130,24 +130,24 @@ public class ActionExecutionController
     /// Determines what outcome occurs when an action fails.
     /// Uses CriticEvaluator to score predefined generic failures for coherence.
     /// </summary>
-    private async Task<Outcome> DetermineFailureOutcomeAsync(ParsedNarrativeAction action, NarrationNode currentNode)
+    private async Task<OutcomeBase> DetermineFailureOutcomeAsync(ParsedNarrativeAction action, NarrationNode currentNode)
     {
         // Predefined list of generic failure outcomes
-        var genericFailures = new List<(Outcome outcome, string description)>
+        var genericFailures = new List<(HumorOutcome outcome, string description)>
         {
-            (new Outcome(OutcomeType.Humor, "", new Dictionary<string, int> { ["Black Bile"] = 3 }), "frustration and self-criticism"),
-            (new Outcome(OutcomeType.Humor, "", new Dictionary<string, int> { ["Yellow Bile"] = 2 }), "irritation and impatience"),
-            (new Outcome(OutcomeType.Humor, "", new Dictionary<string, int> { ["Phlegm"] = 2 }), "resignation and acceptance"),
-            (new Outcome(OutcomeType.Humor, "", new Dictionary<string, int> { ["Melancholia"] = 1 }), "mild disappointment"),
-            (new Outcome(OutcomeType.Humor, "", new Dictionary<string, int> { ["Ether"] = 1 }), "momentary confusion")
+            (new HumorOutcome("Black Bile", 3, "frustration and self-criticism"), "frustration and self-criticism"),
+            (new HumorOutcome("Yellow Bile", 2, "irritation and impatience"), "irritation and impatience"),
+            (new HumorOutcome("Phlegm", 2, "resignation and acceptance"), "resignation and acceptance"),
+            (new HumorOutcome("Melancholia", 1, "mild disappointment"), "mild disappointment"),
+            (new HumorOutcome("Ether", 1, "momentary confusion"), "momentary confusion")
         };
         
         // Use CriticEvaluator to score each failure for coherence with action/context
-        var failureScores = new Dictionary<Outcome, double>();
+        var failureScores = new Dictionary<HumorOutcome, double>();
         
         foreach (var (outcome, description) in genericFailures)
         {
-            var question = $"In the context '{currentNode.NeutralDescription}', if the action '{action.ActionText}' fails, is '{description}' a coherent emotional consequence?";
+            var question = $"In the context '{currentNode.GenerateNeutralDescription(_avatar.CurrentLocationId)}', if the action '{action.ActionText}' fails, is '{description}' a coherent emotional consequence?";
             var coherenceScore = await _difficultyEvaluator.EvaluateCoherence(question);
             failureScores[outcome] = coherenceScore;
         }
@@ -171,7 +171,7 @@ public class ActionExecutionController
             ThinkingSkill = thinkingSkill,
             Difficulty = 0,
             Succeeded = false,
-            ActualOutcome = new Outcome(OutcomeType.Humor, "", null),
+            ActualOutcome = new HumorOutcome("Melancholia", 1, "inability to act"),
             Narration = reason
         };
     }
@@ -187,6 +187,6 @@ public class ActionExecutionResult
     public Skill ThinkingSkill { get; set; } = null!;
     public double Difficulty { get; set; }
     public bool Succeeded { get; set; }
-    public Outcome ActualOutcome { get; set; } = null!;
+    public OutcomeBase ActualOutcome { get; set; } = null!;
     public string Narration { get; set; } = "";
 }

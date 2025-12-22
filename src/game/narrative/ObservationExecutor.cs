@@ -210,17 +210,17 @@ public class ObservationExecutor
     {
         // For fallback: Use TemplateStringField to FORCE starting with a keyword intro
         // This guarantees at least one keyword will be in the output
-        var introExamples = node.KeywordIntroExamples.Take(3).ToList();
+        var keywords = node.Keywords.Take(3).ToList();
         
-        if (introExamples.Count == 0)
+        if (keywords.Count == 0)
         {
-            // Fallback to simple schema if no intro examples
+            // Fallback to simple schema if no keywords
             return CreateObservationSchema();
         }
         
-        // Build template with first intro example
+        // Build template with first keyword intro: "You notice {keyword}"
         // The <generated> placeholder tells the LLM where to continue generating
-        var firstIntro = introExamples.First().Value;
+        var firstIntro = $"You notice {keywords.First()}";
         
         return new CompositeField("ObservationResponse",
             new TemplateStringField(

@@ -46,8 +46,7 @@ public class NarrativeSystemDemo
         var avatar = new Avatar();
         avatar.InitializeSkills(registry, skillCount: 50); // Ensure all skill types are included
         
-        var forestGenerator = new ForestNarrationNodeGenerator();
-        var entryNode = forestGenerator.GetRandomEntryNode();
+        var entryNode = NodeRegistry.GetRandomEntryNode();
         
         // Display avatar info
         Console.WriteLine($"Avatar initialized with {avatar.LearnedSkills.Count} skills:");
@@ -67,18 +66,16 @@ public class NarrativeSystemDemo
         Console.WriteLine();
         
         // Display entry node
-        Console.WriteLine($"Entry Node: {entryNode.NodeName}");
-        Console.WriteLine($"Description: {entryNode.NeutralDescription}");
+        Console.WriteLine($"Entry Node: {entryNode.DisplayName}");
+        Console.WriteLine($"Description: {entryNode.GenerateNeutralDescription(avatar.CurrentLocationId)}");
         Console.WriteLine($"\nKeywords ({entryNode.Keywords.Count}):");
         foreach (var keyword in entryNode.Keywords)
         {
-            if (entryNode.OutcomesByKeyword.TryGetValue(keyword, out var outcomes))
+            var outcomes = entryNode.GetOutcomesForKeyword(keyword);
+            Console.WriteLine($"  - {keyword} ({outcomes.Count} possible outcomes)");
+            foreach (var outcome in outcomes.Take(2))
             {
-                Console.WriteLine($"  - {keyword} ({outcomes.Count} possible outcomes)");
-                foreach (var outcome in outcomes.Take(2))
-                {
-                    Console.WriteLine($"      → {outcome.ToNaturalLanguageString()}");
-                }
+                Console.WriteLine($"      → {outcome.ToNaturalLanguageString()}");
             }
         }
         Console.WriteLine();
@@ -103,8 +100,7 @@ public class NarrativeSystemDemo
         var avatar = new Avatar();
         avatar.InitializeSkills(registry, skillCount: 50); // Ensure all skill types are included
         
-        var forestGenerator = new ForestNarrationNodeGenerator();
-        var entryNode = forestGenerator.GetRandomEntryNode();
+        var entryNode = NodeRegistry.GetRandomEntryNode();
         
         // Initialize LLM server
         Console.WriteLine("Initializing LLM server...");
@@ -137,8 +133,8 @@ public class NarrativeSystemDemo
             // Create observation phase controller
             var observationController = new ObservationPhaseController(llamaServer, slotManager);
             
-            Console.WriteLine($"Node: {entryNode.NodeName}");
-            Console.WriteLine($"Available keywords: {string.Join(", ", entryNode.Keywords)}\n");
+            Console.WriteLine($"Node: {entryNode.NodeId}");
+            Console.WriteLine($"Available keywordDisplaystring.Join(", ", entryNode.Keywords)}\n");
             
             // Execute observation phase
             var narrationBlocks = await observationController.ExecuteObservationPhaseAsync(
@@ -193,25 +189,26 @@ public class NarrativeSystemDemo
         
         // Find a keyword that has outcomes defined
         string? selectedKeyword = null;
-        List<Outcome>? possibleOutcomes = null;
+        List<OutcomeBase>? possibleOutcomes = null;
         
         foreach (var keyword in availableKeywords)
         {
-            if (node.OutcomesByKeyword.TryGetValue(keyword.ToLowerInvariant(), out possibleOutcomes))
+            possibleOutcomes = node.GetOutcomesForKeyword(keyword);
+            if (possibleOutcomes.Count > 0)
             {
                 selectedKeyword = keyword;
                 break;
             }
         }
         
-        // If no extracted keywords have outcomes, use any keyword from the node that has outcomes
+        // If no extracted keywords have outcomes, use any keyword from the node
         if (selectedKeyword == null)
         {
-            var keywordWithOutcomes = node.OutcomesByKeyword.FirstOrDefault(kvp => kvp.Value.Count > 0);
-            if (keywordWithOutcomes.Key != null)
+            var allNodeKeywords = node.Keywords;
+            if (allNodeKeywords.Count > 0)
             {
-                selectedKeyword = keywordWithOutcomes.Key;
-                possibleOutcomes = keywordWithOutcomes.Value;
+                selectedKeyword = allNodeKeywords[0];
+                possibleOutcomes = node.GetOutcomesForKeyword(selectedKeyword);
                 Console.WriteLine("(No extracted keywords had outcomes, using node keyword instead)\n");
             }
             else

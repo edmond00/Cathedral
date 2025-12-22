@@ -65,9 +65,13 @@ public class ThinkingPhaseController
         CancellationToken cancellationToken = default)
     {
         // Get possible outcomes for this keyword
-        if (!node.OutcomesByKeyword.TryGetValue(keyword.ToLowerInvariant(), out var possibleOutcomes))
+        var possibleOutcomes = node.GetOutcomesForKeyword(keyword);
+        
+        // Always add FeelGoodOutcome as a fallback option
+        var feelGoodOutcome = new FeelGoodOutcome();
+        if (!possibleOutcomes.Any(o => o is FeelGoodOutcome))
         {
-            possibleOutcomes = new List<Outcome>();
+            possibleOutcomes.Add(feelGoodOutcome);
         }
 
         // Get action skills
@@ -115,7 +119,7 @@ public class ThinkingPhaseController
     /// </summary>
     private List<ParsedNarrativeAction> GenerateFallbackActions(
         string keyword,
-        List<Outcome> possibleOutcomes,
+        List<OutcomeBase> possibleOutcomes,
         List<Skill> actionSkills)
     {
         var random = new Random();
@@ -133,12 +137,12 @@ public class ThinkingPhaseController
             var actionSkill = actionSkills[random.Next(actionSkills.Count)];
 
             // Generate simple action text based on outcome type
-            string actionText = outcome.Type switch
+            string actionText = outcome switch
             {
-                OutcomeType.Skill => $"try to study the {keyword} to learn {outcome.TargetId}",
-                OutcomeType.Item => $"try to obtain {outcome.TargetId} from the {keyword}",
-                OutcomeType.Companion => $"try to befriend {outcome.TargetId} near the {keyword}",
-                OutcomeType.Transition => $"try to explore the {keyword} to discover {outcome.TargetId}",
+                Item item => $"try to obtain {item.DisplayName} from the {keyword}",
+                NarrationNode node => $"try to explore the {keyword} to discover {node.NodeId}",
+                FeelGoodOutcome => $"try to appreciate the {keyword}",
+                HumorOutcome => $"try to contemplate the {keyword}",
                 _ => $"try to interact with the {keyword}"
             };
 

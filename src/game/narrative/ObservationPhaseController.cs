@@ -31,7 +31,7 @@ public class ObservationPhaseController
         Avatar avatar,
         int skillCount = 3)
     {
-        Console.WriteLine($"ObservationPhaseController: Starting observation phase for {currentNode.NodeName}");
+        Console.WriteLine($"ObservationPhaseController: Starting observation phase for {currentNode.NodeId}");
         
         // Select 2-3 observation skills randomly
         var observationSkills = avatar.GetObservationSkills()
