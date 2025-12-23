@@ -7,6 +7,8 @@ using Cathedral.Glyph.Microworld;
 using Cathedral.Glyph.Microworld.LocationSystem;
 using Cathedral.Glyph.Microworld.LocationSystem.Generators;
 using Cathedral.Glyph.Interaction;
+using Cathedral.Game.Narrative;
+using Cathedral.LLM;
 
 namespace Cathedral.Game;
 
@@ -26,6 +28,10 @@ public class LocationTravelGameController : IDisposable
     private LocationInstanceState? _currentLocationState;
     private int _currentLocationVertex = -1;
     private int _destinationVertex = -1;
+    
+    // Phase 6 state
+    private Phase6GameController? _phase6Controller;
+    private bool _isInPhase6Mode = false;
     
     // Location state storage (keyed by vertex index)
     private readonly Dictionary<int, LocationInstanceState> _locationStates = new();
@@ -94,6 +100,13 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public void Update()
     {
+        // If in Phase 6 mode, update Phase 6 controller instead
+        if (_isInPhase6Mode && _phase6Controller != null)
+        {
+            _phase6Controller.Update();
+            return;
+        }
+        
         // Update loading animation if currently loading
         if (_isLoadingLLMContent && _terminalUI != null)
         {
@@ -488,6 +501,22 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnVertexClicked(int vertexIndex, char glyph, OpenTK.Mathematics.Vector4 color, float noise)
     {
+        // If in Phase 6 mode, forward click to Phase 6 controller
+        if (_isInPhase6Mode && _phase6Controller != null)
+        {
+            // Get mouse position
+            var mousePos = _core.MouseState?.Position ?? OpenTK.Mathematics.Vector2.Zero;
+            var screenX = (int)mousePos.X;
+            var screenY = (int)mousePos.Y;
+            
+            // Convert to terminal coordinates (assuming 12x20 char size)
+            int termX = screenX / 12;
+            int termY = screenY / 20;
+            
+            Task.Run(async () => await _phase6Controller.OnMouseClickAsync(termX, termY, mousePos));
+            return;
+        }
+        
         // Only process clicks in WorldView mode
         if (_currentMode != GameMode.WorldView)
         {
@@ -579,6 +608,15 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void StartLocationInteraction(int vertexIndex, Cathedral.Glyph.Microworld.LocationType locationType)
     {
+        // PHASE 6 INTEGRATION: Launch Phase 6 for forest locations if LLM is available
+        if (_llmActionExecutor != null && locationType.ToString().Contains("Forest", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine($"LocationTravelGameController: Launching Phase 6 for forest at vertex {vertexIndex}");
+            _ = LaunchPhase6ForestAsync(vertexIndex);
+            return;
+        }
+
+        // Legacy system (for non-forest locations or when LLM unavailable)
         // Get or create location state
         if (!_locationStates.TryGetValue(vertexIndex, out var locationState))
         {
@@ -616,11 +654,91 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
+    /// Launch Phase 6 Chain-of-Thought system for forest locations
+    /// </summary>
+    private async Task LaunchPhase6ForestAsync(int vertexIndex)
+    {
+        if (_llmActionExecutor == null) return;
+
+        try
+        {
+            // Create or get avatar for this session
+            Avatar avatar;
+            if (!_locationStates.TryGetValue(vertexIndex, out var existingState))
+            {
+                // Create new avatar
+                avatar = new Avatar();
+                var skillRegistry = SkillRegistry.Instance;
+                avatar.InitializeSkills(skillRegistry, skillCount: 50);
+                avatar.CurrentLocationId = vertexIndex;
+            }
+            else
+            {
+                // TODO: Restore avatar from existing state
+                avatar = new Avatar();
+                var skillRegistry = SkillRegistry.Instance;
+                avatar.InitializeSkills(skillRegistry, skillCount: 50);
+                avatar.CurrentLocationId = vertexIndex;
+            }
+
+            // Launch Phase 6
+            _phase6Controller = await Phase6ModeLauncher.LaunchFromLocationTravelAsync(
+                _core,
+                avatar,
+                _llmActionExecutor.GetLlamaServerManager()
+            );
+            
+            if (_phase6Controller != null)
+            {
+                // Wire up exit event
+                _phase6Controller.OnExitRequested += () =>
+                {
+                    Console.WriteLine("Phase 6 exit requested - returning to world view");
+                    ExitPhase6Mode();
+                };
+                
+                // Enter Phase 6 mode
+                _isInPhase6Mode = true;
+                Console.WriteLine("Entered Phase 6 mode");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR launching Phase 6: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
+        }
+    }
+    
+    /// <summary>
+    /// Exit Phase 6 mode and return to world view
+    /// </summary>
+    private void ExitPhase6Mode()
+    {
+        _isInPhase6Mode = false;
+        _phase6Controller = null;
+        
+        // Hide terminal
+        if (_core.Terminal != null)
+            _core.Terminal.Visible = false;
+        
+        Console.WriteLine("Exited Phase 6 mode - back to world view");
+    }
+
+    /// <summary>
     /// Starts biome interaction mode (when there's no specific location).
     /// Treats the biome itself as an interactive location.
     /// </summary>
     private void StartBiomeInteraction(int vertexIndex, Cathedral.Glyph.Microworld.BiomeType biomeType)
     {
+        // PHASE 6 INTEGRATION: Launch Phase 6 for forest biomes if LLM is available
+        if (_llmActionExecutor != null && biomeType.Name.Contains("forest", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine($"LocationTravelGameController: Launching Phase 6 for forest biome at vertex {vertexIndex}");
+            _ = LaunchPhase6ForestAsync(vertexIndex);
+            return;
+        }
+
+        // Legacy system (for non-forest biomes or when LLM unavailable)
         // Get or create location state for this biome
         if (!_locationStates.TryGetValue(vertexIndex, out var locationState))
         {
