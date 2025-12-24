@@ -1142,7 +1142,7 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void StartPhase6ForestInteraction(int vertexIndex)
     {
-        if (_core.Terminal == null || _llmActionExecutor == null || _skillSlotManager == null)
+        if (_core.Terminal == null || _core.PopupTerminal == null || _llmActionExecutor == null || _skillSlotManager == null)
         {
             Console.Error.WriteLine("Phase6ForestController: Cannot start - missing dependencies");
             return;
@@ -1153,6 +1153,8 @@ public class LocationTravelGameController : IDisposable
             // Create Phase 6 controller
             _phase6Controller = new Phase6ForestController(
                 _core.Terminal,
+                _core.PopupTerminal,
+                _core,
                 _llmActionExecutor.GetLlamaServerManager(),
                 _skillSlotManager
             );
@@ -1195,6 +1197,19 @@ public class LocationTravelGameController : IDisposable
         _currentLocationVertex = -1;
         
         SetMode(GameMode.WorldView);
+    }
+    
+    /// <summary>
+    /// Closes the Phase 6 thinking skill popup if it's open.
+    /// Returns true if popup was closed, false otherwise.
+    /// </summary>
+    public bool ClosePhase6Popup()
+    {
+        if (_isInPhase6Mode && _phase6Controller != null)
+        {
+            return _phase6Controller.ClosePopup();
+        }
+        return false;
     }
 
     public void Dispose()

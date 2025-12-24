@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using Cathedral.Game.Narrative;
 using Cathedral.LLM;
 using Cathedral.Terminal;
+using Cathedral.Glyph;
+using OpenTK.Mathematics;
 
 namespace Cathedral.Game;
 
@@ -16,11 +18,13 @@ public class Phase6ForestController
     private readonly Phase6NarrationState _narrationState = new();
     private readonly NarrationScrollBuffer _scrollBuffer;
     private readonly Phase6ObservationUI _ui;
+    private readonly TerminalThinkingSkillPopup _skillPopup;
     
     // Dependencies
     private readonly Avatar _avatar;
     private NarrationNode _currentNode;
     private readonly ObservationPhaseController _observationController;
+    private readonly GlyphSphereCore _core;
     
     // Mouse tracking
     private int _lastMouseX = 0;
@@ -28,11 +32,17 @@ public class Phase6ForestController
     
     public Phase6ForestController(
         TerminalHUD terminal,
+        PopupTerminalHUD popup,
+        GlyphSphereCore core,
         LlamaServerManager llamaServer,
         SkillSlotManager slotManager)
     {
         if (terminal == null)
             throw new ArgumentNullException(nameof(terminal));
+        if (popup == null)
+            throw new ArgumentNullException(nameof(popup));
+        if (core == null)
+            throw new ArgumentNullException(nameof(core));
         if (llamaServer == null)
             throw new ArgumentNullException(nameof(llamaServer));
         if (slotManager == null)
@@ -40,6 +50,8 @@ public class Phase6ForestController
         
         _ui = new Phase6ObservationUI(terminal);
         _scrollBuffer = new NarrationScrollBuffer(maxWidth: 96); // Terminal width - 4 for margins
+        _skillPopup = new TerminalThinkingSkillPopup(popup);
+        _core = core;
         
         // Initialize avatar with random skills
         _avatar = new Avatar();
@@ -161,6 +173,19 @@ public class Phase6ForestController
         _lastMouseX = mouseX;
         _lastMouseY = mouseY;
         
+        // If popup is visible, update popup hover
+        if (_skillPopup.IsVisible)
+        {
+            // Simple hover detection: row 1-N corresponds to skill indices
+            // This is a simplified version - proper implementation would need popup bounds
+            var skills = _skillPopup.GetSkills();
+            var fixedPos = _skillPopup.GetFixedPosition();
+            
+            // For now, just update popup hover (simplified)
+            _skillPopup.UpdateHover(mouseX, mouseY);
+            return;
+        }
+        
         // Update hovered keyword
         string? newHoveredKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
         
@@ -176,14 +201,34 @@ public class Phase6ForestController
     /// </summary>
     public void OnMouseClick(int mouseX, int mouseY)
     {
+        // If popup is visible, handle popup click (closes popup for now)
+        if (_skillPopup.IsVisible)
+        {
+            _skillPopup.HandleClick(mouseX, mouseY);
+            Console.WriteLine("Phase6ForestController: Popup closed");
+            return;
+        }
+        
         // Check if clicked on a keyword
         string? clickedKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
         
         if (clickedKeyword != null && _narrationState.ThinkingAttemptsRemaining > 0)
         {
             Console.WriteLine($"Phase6ForestController: Clicked keyword: {clickedKeyword}");
-            // TODO: Show thinking skill selection popup
-            // This will be implemented in the next phase
+            
+            // Show thinking skill selection popup
+            var thinkingSkills = _avatar.GetThinkingSkills();
+            
+            // Convert terminal coordinates to screen coordinates
+            // Terminal cell (mouseX, mouseY) needs to be converted to pixel coordinates
+            // Using the core's window to get cell size
+            float borderHeight = _core.GetWindowBorderHeight();
+            int cellSize = 16; // TODO: Get from terminal
+            float screenX = mouseX * cellSize;
+            float screenY = mouseY * cellSize + borderHeight;
+            
+            _skillPopup.Show(new Vector2(screenX, screenY), thinkingSkills);
+            Console.WriteLine($"Phase6ForestController: Showing {thinkingSkills.Count} thinking skills");
         }
     }
     
@@ -216,6 +261,25 @@ public class Phase6ForestController
     /// Check if there's an error.
     /// </summary>
     public bool HasError => _narrationState.ErrorMessage != null;
+    
+    /// <summary>
+    /// Check if the thinking skill popup is visible.
+    /// </summary>
+    public bool IsPopupVisible => _skillPopup.IsVisible;
+    
+    /// <summary>
+    /// Close the thinking skill popup if it's open.
+    /// Returns true if popup was closed, false if it wasn't open.
+    /// </summary>
+    public bool ClosePopup()
+    {
+        if (_skillPopup.IsVisible)
+        {
+            _skillPopup.Hide();
+            return true;
+        }
+        return false;
+    }
     
     /// <summary>
     /// Get the current narration state.
