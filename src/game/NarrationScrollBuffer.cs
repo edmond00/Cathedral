@@ -7,54 +7,56 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game;
 
 /// <summary>
-/// Manages scrollable narration history with viewport rendering
-/// Tracks all NarrationBlock instances and renders only visible lines
+/// Manages scrollable narration blocks with viewport rendering.
+/// Stores full narration history and renders only visible portion.
 /// </summary>
 public class NarrationScrollBuffer
 {
     private readonly List<NarrationBlock> _blocks = new();
+    private readonly List<RenderedLine> _renderedLines = new();
     private int _scrollOffset = 0;
-    private readonly int _visibleLines;
     private readonly int _maxWidth;
-    
-    // Cached rendered lines for performance
-    private List<RenderedLine> _cachedLines = new();
-    private bool _isDirty = true;
 
-    public NarrationScrollBuffer(int visibleLines, int maxWidth)
+    public int ScrollOffset => _scrollOffset;
+    public int TotalLines => _renderedLines.Count;
+
+    public NarrationScrollBuffer(int maxWidth)
     {
-        _visibleLines = visibleLines;
         _maxWidth = maxWidth;
     }
 
-    public int BlockCount => _blocks.Count;
-    public int ScrollOffset => _scrollOffset;
-    public int TotalLines => _cachedLines.Count;
-    public bool CanScrollUp => _scrollOffset > 0;
-    public bool CanScrollDown => _scrollOffset + _visibleLines < _cachedLines.Count;
-
     /// <summary>
-    /// Add a new narration block to the history
+    /// Add a narration block and re-render all lines.
     /// </summary>
     public void AddBlock(NarrationBlock block)
     {
         _blocks.Add(block);
-        _isDirty = true;
+        RegenerateRenderedLines();
+        
+        // Don't auto-scroll - let user see from the top
+        // User can scroll down if needed
     }
 
     /// <summary>
-    /// Clear all blocks and reset scroll
+    /// Get visible lines for the viewport.
     /// </summary>
-    public void Clear()
+    public List<RenderedLine> GetVisibleLines(int startLine, int visibleCount)
     {
-        _blocks.Clear();
-        _cachedLines.Clear();
-        _scrollOffset = 0;
-        _isDirty = true;
+        if (_renderedLines.Count == 0)
+            return new List<RenderedLine>();
+
+        // Start from current scroll offset
+        int actualStart = Math.Max(0, Math.Min(_scrollOffset, _renderedLines.Count - 1));
+        int actualCount = Math.Min(visibleCount, _renderedLines.Count - actualStart);
+
+        if (actualCount <= 0)
+            return new List<RenderedLine>();
+
+        return _renderedLines.Skip(actualStart).Take(actualCount).ToList();
     }
 
     /// <summary>
-    /// Scroll up by specified number of lines
+    /// Scroll up by specified number of lines.
     /// </summary>
     public void ScrollUp(int lines = 1)
     {
@@ -62,146 +64,110 @@ public class NarrationScrollBuffer
     }
 
     /// <summary>
-    /// Scroll down by specified number of lines
+    /// Scroll down by specified number of lines.
     /// </summary>
     public void ScrollDown(int lines = 1)
     {
-        int maxOffset = Math.Max(0, _cachedLines.Count - _visibleLines);
-        _scrollOffset = Math.Min(maxOffset, _scrollOffset + lines);
+        int maxScroll = Math.Max(0, _renderedLines.Count - 1);
+        _scrollOffset = Math.Min(maxScroll, _scrollOffset + lines);
     }
 
     /// <summary>
-    /// Scroll to bottom (show most recent content)
+    /// Scroll to the bottom of the buffer.
     /// </summary>
-    public void ScrollToBottom()
+    public void ScrollToBottom(int viewportHeight = 27)
     {
-        RebuildCacheIfNeeded();
-        _scrollOffset = Math.Max(0, _cachedLines.Count - _visibleLines);
+        // Position scroll so the last line is at the bottom of viewport
+        int maxScroll = Math.Max(0, _renderedLines.Count - viewportHeight);
+        _scrollOffset = maxScroll;
     }
 
     /// <summary>
-    /// Scroll to top
+    /// Can we scroll up?
     /// </summary>
-    public void ScrollToTop()
+    public bool CanScrollUp() => _scrollOffset > 0;
+
+    /// <summary>
+    /// Can we scroll down?
+    /// </summary>
+    public bool CanScrollDown(int visibleLines) => _scrollOffset + visibleLines < _renderedLines.Count;
+
+    /// <summary>
+    /// Clear all blocks and rendered lines.
+    /// </summary>
+    public void Clear()
     {
+        _blocks.Clear();
+        _renderedLines.Clear();
         _scrollOffset = 0;
     }
 
     /// <summary>
-    /// Get visible lines for rendering (from current viewport)
+    /// Regenerate all rendered lines from blocks with word wrapping.
     /// </summary>
-    public List<RenderedLine> GetVisibleLines()
+    private void RegenerateRenderedLines()
     {
-        RebuildCacheIfNeeded();
-        
-        if (_cachedLines.Count == 0)
-            return new List<RenderedLine>();
+        _renderedLines.Clear();
 
-        int endIndex = Math.Min(_scrollOffset + _visibleLines, _cachedLines.Count);
-        return _cachedLines.GetRange(_scrollOffset, endIndex - _scrollOffset);
-    }
-
-    /// <summary>
-    /// Get all blocks (for keyword extraction, etc.)
-    /// </summary>
-    public IReadOnlyList<NarrationBlock> GetAllBlocks() => _blocks.AsReadOnly();
-
-    /// <summary>
-    /// Get all keywords from observation blocks
-    /// </summary>
-    public List<string> GetAllKeywords()
-    {
-        var keywords = new List<string>();
         foreach (var block in _blocks)
         {
-            if (block.Type == NarrationBlockType.Observation && block.Keywords != null)
+            // Add skill name header (if present)
+            if (!string.IsNullOrEmpty(block.SkillName))
             {
-                keywords.AddRange(block.Keywords);
+                _renderedLines.Add(new RenderedLine(
+                    Text: $"[{block.SkillName.ToUpper()}]",
+                    Type: LineType.Header,
+                    BlockType: block.Type,
+                    Keywords: null
+                ));
+                
+                // Empty line after header
+                _renderedLines.Add(new RenderedLine(
+                    Text: "",
+                    Type: LineType.Empty,
+                    BlockType: block.Type,
+                    Keywords: null
+                ));
             }
-        }
-        return keywords.Distinct().ToList();
-    }
 
-    /// <summary>
-    /// Rebuild cached lines from blocks (word wrap + formatting)
-    /// </summary>
-    private void RebuildCacheIfNeeded()
-    {
-        if (!_isDirty) return;
-
-        _cachedLines.Clear();
-
-        foreach (var block in _blocks)
-        {
-            // Add skill header
-            string header = $"[{block.SkillName.ToUpper()}]";
-            _cachedLines.Add(new RenderedLine(header, LineType.SkillHeader, block));
-
-            // Add content (word-wrapped)
+            // Wrap and add narration content
             var wrappedLines = WrapText(block.Text, _maxWidth);
             foreach (var line in wrappedLines)
             {
-                var lineType = block.Type switch
-                {
-                    NarrationBlockType.Observation => LineType.ObservationText,
-                    NarrationBlockType.Thinking => LineType.ThinkingText,
-                    NarrationBlockType.Action => LineType.ActionText,
-                    NarrationBlockType.Outcome => LineType.OutcomeText,
-                    _ => LineType.NarrativeText
-                };
-                _cachedLines.Add(new RenderedLine(line, lineType, block));
+                _renderedLines.Add(new RenderedLine(
+                    Text: line,
+                    Type: LineType.Content,
+                    BlockType: block.Type,
+                    Keywords: block.Keywords // Associate keywords with this line
+                ));
             }
 
-            // Add actions if present
-            if (block.Actions != null && block.Actions.Count > 0)
-            {
-                _cachedLines.Add(new RenderedLine("", LineType.NarrativeText, block)); // Blank line
-                
-                foreach (var action in block.Actions)
-                {
-                    // Format: > [Skill Name] action description (without "try to ")
-                    string actionSkillName = action.ActionSkill?.DisplayName ?? "Unknown";
-                    string description = action.DisplayText;
-                    
-                    // Remove "try to " prefix if present
-                    if (description.StartsWith("try to ", StringComparison.OrdinalIgnoreCase))
-                    {
-                        description = description.Substring(7);
-                    }
-                    
-                    string actionLine = $"  > [{actionSkillName}] {description}";
-                    
-                    // Word wrap if needed
-                    var actionWrapped = WrapText(actionLine, _maxWidth);
-                    foreach (var line in actionWrapped)
-                    {
-                        _cachedLines.Add(new RenderedLine(line, LineType.ActionItem, block, action));
-                    }
-                }
-            }
-
-            // Add blank line between blocks
-            _cachedLines.Add(new RenderedLine("", LineType.NarrativeText, block));
+            // Empty line after block
+            _renderedLines.Add(new RenderedLine(
+                Text: "",
+                Type: LineType.Empty,
+                BlockType: block.Type,
+                Keywords: null
+            ));
         }
-
-        _isDirty = false;
     }
 
     /// <summary>
-    /// Word wrap text to fit width, preserving paragraphs
+    /// Wrap text at word boundaries.
     /// </summary>
     private List<string> WrapText(string text, int maxWidth)
     {
         var lines = new List<string>();
-        if (string.IsNullOrWhiteSpace(text))
+        
+        if (string.IsNullOrEmpty(text))
         {
             lines.Add("");
             return lines;
         }
 
-        string[] paragraphs = text.Split(new[] { '\n', '\r' }, StringSplitOptions.None);
+        var paragraphs = text.Split(new[] { '\n', '\r' }, StringSplitOptions.None);
 
-        foreach (string paragraph in paragraphs)
+        foreach (var paragraph in paragraphs)
         {
             if (string.IsNullOrWhiteSpace(paragraph))
             {
@@ -209,12 +175,12 @@ public class NarrationScrollBuffer
                 continue;
             }
 
-            string[] words = paragraph.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            StringBuilder currentLine = new StringBuilder();
+            var words = paragraph.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var currentLine = new StringBuilder();
 
-            foreach (string word in words)
+            foreach (var word in words)
             {
-                string testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
+                var testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
 
                 if (testLine.Length <= maxWidth)
                 {
@@ -224,13 +190,14 @@ public class NarrationScrollBuffer
                 }
                 else
                 {
+                    // Line would be too long, start new line
                     if (currentLine.Length > 0)
                     {
                         lines.Add(currentLine.ToString());
                         currentLine.Clear();
                     }
 
-                    // Handle very long words
+                    // If single word is too long, force it on its own line
                     if (word.Length > maxWidth)
                     {
                         lines.Add(word.Substring(0, maxWidth));
@@ -251,27 +218,29 @@ public class NarrationScrollBuffer
 
         return lines;
     }
+
+    /// <summary>
+    /// Get all blocks for external access.
+    /// </summary>
+    public IReadOnlyList<NarrationBlock> GetBlocks() => _blocks.AsReadOnly();
 }
 
 /// <summary>
-/// Represents a single rendered line with formatting metadata
+/// A single rendered line with metadata.
 /// </summary>
 public record RenderedLine(
     string Text,
     LineType Type,
-    NarrationBlock SourceBlock,
-    ParsedNarrativeAction? Action = null
+    NarrationBlockType BlockType,
+    List<string>? Keywords
 );
 
+/// <summary>
+/// Type of rendered line.
+/// </summary>
 public enum LineType
 {
-    SkillHeader,        // [OBSERVATION]
-    ObservationText,    // Gray observation text
-    ThinkingText,       // Yellow thinking text
-    ActionText,         // White action announcement
-    OutcomeText,        // Outcome result text
-    NarrativeText,      // Generic text
-    ActionItem          // Clickable action item (> [Skill] description)
+    Header,   // Skill name header
+    Content,  // Narration text
+    Empty     // Spacing
 }
-
-

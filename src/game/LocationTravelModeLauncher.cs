@@ -246,6 +246,13 @@ public static class LocationTravelModeLauncher
                 if (gameController?.CurrentMode == GameMode.LocationInteraction)
                 {
                     Console.WriteLine("ESC pressed - exiting location");
+                    
+                    // Check if in Phase 6 mode
+                    if (gameController is LocationTravelGameController ltgc)
+                    {
+                        ltgc.ExitPhase6Mode();
+                    }
+                    
                     gameController.EndLocationInteraction();
                 }
             }
