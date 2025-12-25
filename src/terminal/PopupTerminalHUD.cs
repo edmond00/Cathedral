@@ -15,10 +15,8 @@ namespace Cathedral.Terminal
         
         private bool _disposed;
         private Vector2 _mousePosition;
-
-        /// <summary>
-        /// Creates a new popup terminal HUD
-        /// </summary>
+    private bool _isFixedMode = false;
+    private (int minX, int minY, int maxX, int maxY)? _lastVisualBounds = null;
         /// <param name="width">Width in characters</param>
         /// <param name="height">Height in characters</param>
         /// <param name="cellSize">Cell size in pixels (should match main terminal)</param>
@@ -109,9 +107,13 @@ namespace Cathedral.Terminal
 
         /// <summary>
         /// Updates the mouse position that the popup should follow
+        /// (only if not in fixed mode)
         /// </summary>
         public void SetMousePosition(Vector2 position)
         {
+            if (_isFixedMode)
+                return; // Don't update position when fixed
+                
             _mousePosition = position;
             _renderer.SetMousePosition(position);
         }
@@ -122,6 +124,30 @@ namespace Cathedral.Terminal
         public Vector2 GetMousePosition()
         {
             return _mousePosition;
+        }
+        
+        /// <summary>
+        /// Sets whether the popup should stay fixed at current position (true)
+        /// or follow the mouse (false, default behavior)
+        /// </summary>
+        public void SetFixedMode(bool isFixed)
+        {
+            _isFixedMode = isFixed;
+        }
+        
+        /// <summary>
+        /// Gets whether the popup is in fixed mode
+        /// </summary>
+        public bool IsFixedMode => _isFixedMode;
+        
+        /// <summary>
+        /// Gets the screen-space bounds of the popup in pixels.
+        /// Returns null if popup is not visible or has no content.
+        /// Bounds are (left, top, right, bottom) in screen pixel coordinates.
+        /// </summary>
+        public (float left, float top, float right, float bottom)? GetScreenBounds(Vector2i windowSize)
+        {
+            return _renderer.GetCalculatedScreenBounds(windowSize);
         }
         
         /// <summary>
@@ -171,6 +197,7 @@ namespace Cathedral.Terminal
 
             // Calculate visual bounds and update renderer
             var visualBounds = CalculateVisualBounds();
+            _lastVisualBounds = visualBounds;
             _renderer.SetVisualBounds(visualBounds);
 
             // Create orthographic projection (top-left origin)

@@ -283,7 +283,7 @@ namespace Cathedral.Glyph
                 Console.WriteLine("Terminal: HUD integrated with GlyphSphereCore (100x30 for Location Travel Mode)");
                 
                 // Initialize popup terminal (30x30, shares atlas with main terminal)
-                _popupTerminal = new Cathedral.Terminal.PopupTerminalHUD(30, 30, 16, _terminal.Atlas);
+                _popupTerminal = new Cathedral.Terminal.PopupTerminalHUD(40, 40, 16, _terminal.Atlas);
                 Console.WriteLine("Popup Terminal: HUD integrated with GlyphSphereCore (30x30 mouse-following)");
             }
             catch (Exception ex)
@@ -712,7 +712,7 @@ namespace Cathedral.Glyph
             
             var mouse = MousePosition;
             
-            // Update popup terminal position (always follows mouse)
+            // Update popup terminal position (only if not in fixed mode)
             if (_popupTerminal != null)
             {
                 _popupTerminal.SetMousePosition(mouse);

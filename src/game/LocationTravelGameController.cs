@@ -9,6 +9,7 @@ using Cathedral.Glyph.Microworld.LocationSystem.Generators;
 using Cathedral.Glyph.Interaction;
 using Cathedral.LLM;
 using Cathedral.Game.Narrative;
+using Cathedral.Terminal;
 
 namespace Cathedral.Game;
 
@@ -69,6 +70,11 @@ public class LocationTravelGameController : IDisposable
     public GameMode CurrentMode => _currentMode;
     public LocationInstanceState? CurrentLocationState => _currentLocationState;
     public bool IsAtLocation => _currentMode == GameMode.LocationInteraction && _currentLocationState != null;
+    
+    /// <summary>
+    /// Gets the terminal input handler for coordinate conversion (null if no terminal).
+    /// </summary>
+    public TerminalInputHandler? GetTerminalInputHandler() => _core.Terminal?.InputHandler;
 
     public LocationTravelGameController(GlyphSphereCore core, MicroworldInterface microworldInterface)
     {
@@ -1150,13 +1156,22 @@ public class LocationTravelGameController : IDisposable
         
         try
         {
+            // Get terminal input handler for coordinate conversion
+            var inputHandler = GetTerminalInputHandler();
+            if (inputHandler is null)
+            {
+                Console.WriteLine("LocationTravelGameController: Cannot enter Phase 6 mode - no terminal input handler");
+                return;
+            }
+            
             // Create Phase 6 controller
             _phase6Controller = new Phase6ForestController(
                 _core.Terminal,
                 _core.PopupTerminal,
                 _core,
                 _llmActionExecutor.GetLlamaServerManager(),
-                _skillSlotManager
+                _skillSlotManager,
+                inputHandler
             );
             
             // Mark as active

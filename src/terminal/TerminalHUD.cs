@@ -90,6 +90,11 @@ namespace Cathedral.Terminal
         /// Currently hovered cell coordinates
         /// </summary>
         public Vector2i? HoveredCell => _inputHandler.HoveredCell;
+        
+        /// <summary>
+        /// Access to the input handler for coordinate conversion
+        /// </summary>
+        public TerminalInputHandler InputHandler => _inputHandler;
 
         #endregion
 

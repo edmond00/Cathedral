@@ -44,8 +44,9 @@ public class TerminalThinkingSkillPopup
         _hoveredSkillIndex = null;
         _scrollOffset = 0;
         
-        // Set popup to fixed position (it will stay here until updated)
+        // Set popup to fixed position and enable fixed mode
         _popup.SetMousePosition(_fixedPosition);
+        _popup.SetFixedMode(true);
         
         Render();
     }
@@ -56,6 +57,7 @@ public class TerminalThinkingSkillPopup
     public void Hide()
     {
         _popup.Clear();
+        _popup.SetFixedMode(false); // Return to mouse-following mode
         _thinkingSkills.Clear();
         _hoveredSkillIndex = null;
     }
@@ -66,19 +68,15 @@ public class TerminalThinkingSkillPopup
     public bool IsVisible => _thinkingSkills.Count > 0;
     
     /// <summary>
-    /// Update hover state based on mouse position relative to popup.
+    /// Update hover state based on screen pixel mouse position.
     /// Returns true if hover state changed.
     /// </summary>
-    public bool UpdateHover(int mouseX, int mouseY)
+    public bool UpdateHover(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
     {
         if (!IsVisible)
             return false;
         
-        // Convert screen mouse position to popup-relative position
-        // Note: This is approximate since we don't have exact popup pixel bounds
-        // We'll use cell-based detection
-        
-        int? newHoveredIndex = GetSkillIndexAtPosition(mouseX, mouseY);
+        int? newHoveredIndex = GetSkillIndexAtPosition(screenX, screenY, windowSize, cellPixelSize);
         
         if (newHoveredIndex != _hoveredSkillIndex)
         {
@@ -91,29 +89,66 @@ public class TerminalThinkingSkillPopup
     }
     
     /// <summary>
-    /// Get the skill index at the given mouse position, or null if none.
+    /// Get the skill index at the given screen pixel position, or null if none.
     /// </summary>
-    private int? GetSkillIndexAtPosition(int mouseX, int mouseY)
+    private int? GetSkillIndexAtPosition(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
     {
-        // This is a simplified version - we'd need more precise bounds
-        // For now, we'll just return null (hover will be updated by the controller)
-        // TODO: Implement proper popup bounds detection
+        // Get popup screen bounds
+        var bounds = _popup.GetScreenBounds(windowSize);
+        if (bounds == null)
+            return null;
+        
+        var (left, top, right, bottom) = bounds.Value;
+        
+        // Check if position is inside popup bounds
+        if (screenX < left || screenX > right || screenY < top || screenY > bottom)
+            return null;
+        
+        // Convert screen position to popup-local cell coordinates
+        float relativeX = screenX - left;
+        float relativeY = screenY - top;
+        int cellX = (int)(relativeX / cellPixelSize);
+        int cellY = (int)(relativeY / cellPixelSize);
+        
+        // Check if we're in the skill list area (row 1 to MAX_VISIBLE_SKILLS+1, within popup width)
+        if (cellY < 1 || cellY > MAX_VISIBLE_SKILLS || cellX < 0 || cellX >= POPUP_WIDTH)
+            return null;
+        
+        // Calculate skill index (accounting for scroll)
+        int skillIndex = (cellY - 1) + _scrollOffset;
+        
+        // Validate skill index
+        if (skillIndex >= 0 && skillIndex < _thinkingSkills.Count)
+            return skillIndex;
+        
         return null;
     }
     
     /// <summary>
-    /// Handle click at the given position.
-    /// Returns the selected skill, or null if clicked outside or on close.
+    /// Handle click at the given screen pixel position.
+    /// Returns the selected skill, or null if clicked outside.
     /// </summary>
-    public Skill? HandleClick(int mouseX, int mouseY)
+    public Skill? HandleClick(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
     {
         if (!IsVisible)
             return null;
         
-        // For now, any click closes the popup
-        // TODO: Implement actual skill selection
-        Hide();
-        return null;
+        // Check if clicked inside popup
+        int? skillIndex = GetSkillIndexAtPosition(screenX, screenY, windowSize, cellPixelSize);
+        
+        if (skillIndex.HasValue)
+        {
+            // Clicked on a skill - return it
+            var selectedSkill = _thinkingSkills[skillIndex.Value];
+            Hide();
+            return selectedSkill;
+        }
+        else
+        {
+            // Clicked outside popup - close it
+            Hide();
+            return null;
+        }
     }
     
     /// <summary>

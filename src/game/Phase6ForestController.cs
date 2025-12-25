@@ -25,6 +25,7 @@ public class Phase6ForestController
     private NarrationNode _currentNode;
     private readonly ObservationPhaseController _observationController;
     private readonly GlyphSphereCore _core;
+    private readonly TerminalInputHandler _terminalInputHandler;
     
     // Mouse tracking
     private int _lastMouseX = 0;
@@ -35,7 +36,8 @@ public class Phase6ForestController
         PopupTerminalHUD popup,
         GlyphSphereCore core,
         LlamaServerManager llamaServer,
-        SkillSlotManager slotManager)
+        SkillSlotManager slotManager,
+        TerminalInputHandler terminalInputHandler)
     {
         if (terminal == null)
             throw new ArgumentNullException(nameof(terminal));
@@ -47,11 +49,14 @@ public class Phase6ForestController
             throw new ArgumentNullException(nameof(llamaServer));
         if (slotManager == null)
             throw new ArgumentNullException(nameof(slotManager));
+        if (terminalInputHandler == null)
+            throw new ArgumentNullException(nameof(terminalInputHandler));
         
         _ui = new Phase6ObservationUI(terminal);
         _scrollBuffer = new NarrationScrollBuffer(maxWidth: 96); // Terminal width - 4 for margins
         _skillPopup = new TerminalThinkingSkillPopup(popup);
         _core = core;
+        _terminalInputHandler = terminalInputHandler;
         
         // Initialize avatar with random skills
         _avatar = new Avatar();
@@ -173,16 +178,17 @@ public class Phase6ForestController
         _lastMouseX = mouseX;
         _lastMouseY = mouseY;
         
-        // If popup is visible, update popup hover
+        // If popup is visible, update popup hover with screen coordinates
         if (_skillPopup.IsVisible)
         {
-            // Simple hover detection: row 1-N corresponds to skill indices
-            // This is a simplified version - proper implementation would need popup bounds
-            var skills = _skillPopup.GetSkills();
-            var fixedPos = _skillPopup.GetFixedPosition();
+            // Convert terminal cell coordinates to screen pixel coordinates
+            Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.Size);
             
-            // For now, just update popup hover (simplified)
-            _skillPopup.UpdateHover(mouseX, mouseY);
+            // Get cell size for hit detection
+            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.Size);
+            int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
+            
+            _skillPopup.UpdateHover(screenPos.X, screenPos.Y, _core.Size, cellPixelSize);
             return;
         }
         
@@ -201,11 +207,26 @@ public class Phase6ForestController
     /// </summary>
     public void OnMouseClick(int mouseX, int mouseY)
     {
-        // If popup is visible, handle popup click (closes popup for now)
+        // If popup is visible, handle popup click with screen coordinates
         if (_skillPopup.IsVisible)
         {
-            _skillPopup.HandleClick(mouseX, mouseY);
-            Console.WriteLine("Phase6ForestController: Popup closed");
+            // Convert terminal cell coordinates to screen pixel coordinates
+            Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.Size);
+            
+            // Get cell size for hit detection
+            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.Size);
+            int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
+            
+            var selectedSkill = _skillPopup.HandleClick(screenPos.X, screenPos.Y, _core.Size, cellPixelSize);
+            if (selectedSkill != null)
+            {
+                Console.WriteLine($"Phase6ForestController: Selected skill: {selectedSkill.DisplayName}");
+                // TODO: Process skill selection
+            }
+            else
+            {
+                Console.WriteLine("Phase6ForestController: Popup closed (clicked outside)");
+            }
             return;
         }
         
@@ -219,16 +240,11 @@ public class Phase6ForestController
             // Show thinking skill selection popup
             var thinkingSkills = _avatar.GetThinkingSkills();
             
-            // Convert terminal coordinates to screen coordinates
-            // Terminal cell (mouseX, mouseY) needs to be converted to pixel coordinates
-            // Using the core's window to get cell size
-            float borderHeight = _core.GetWindowBorderHeight();
-            int cellSize = 16; // TODO: Get from terminal
-            float screenX = mouseX * cellSize;
-            float screenY = mouseY * cellSize + borderHeight;
+            // Convert terminal cell coordinates to screen pixel coordinates
+            Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.Size);
             
-            _skillPopup.Show(new Vector2(screenX, screenY), thinkingSkills);
-            Console.WriteLine($"Phase6ForestController: Showing {thinkingSkills.Count} thinking skills");
+            _skillPopup.Show(screenPos, thinkingSkills);
+            Console.WriteLine($"Phase6ForestController: Showing {thinkingSkills.Count} thinking skills at screen position ({screenPos.X}, {screenPos.Y})");
         }
     }
     
