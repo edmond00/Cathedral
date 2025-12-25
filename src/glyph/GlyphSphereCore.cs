@@ -600,6 +600,15 @@ namespace Cathedral.Glyph
             // Render terminal HUD overlay
             if (_terminal != null)
             {
+                // Darken terminal if popup is active (in fixed mode with visible content)
+                bool popupActive = false;
+                if (_popupTerminal != null && _popupTerminal.IsFixedMode)
+                {
+                    // Check if popup has any visible content
+                    popupActive = _popupTerminal.View.EnumerateCells().Any(c => c.cell.Character != ' ' || c.cell.BackgroundColor.W > 0.01f);
+                }
+                _terminal.SetDarkenFactor(popupActive ? 0.5f : 1.0f);
+                
                 _terminal.Render(Size);
             }
             

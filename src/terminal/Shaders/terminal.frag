@@ -5,14 +5,15 @@ in vec4 vBgColor;
 
 uniform sampler2D uGlyphAtlas;
 uniform int uRenderPass;
+uniform float uDarkenFactor;
 
 out vec4 FragColor;
 
 void main()
 {
     if (uRenderPass == 0) {
-        // Background pass - render solid background
-        FragColor = vBgColor;
+        // Background pass - render solid background with darkening
+        FragColor = vec4(vBgColor.rgb * uDarkenFactor, vBgColor.a);
     } else {
         // Glyph pass - render character with atlas texture
         vec4 atlasTexel = texture(uGlyphAtlas, vUV);
@@ -24,7 +25,7 @@ void main()
             discard; // Transparent areas of the glyph
         }
         
-        // Apply text color with glyph alpha
-        FragColor = vec4(vTextColor.rgb, vTextColor.a * glyphAlpha);
+        // Apply text color with glyph alpha and darkening
+        FragColor = vec4(vTextColor.rgb * uDarkenFactor, vTextColor.a * glyphAlpha);
     }
 }

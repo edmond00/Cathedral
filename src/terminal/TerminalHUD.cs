@@ -355,6 +355,15 @@ namespace Cathedral.Terminal
         {
             _renderer.ForceRefresh();
         }
+        
+        /// <summary>
+        /// Sets the darken factor for the terminal (0.0 = black, 1.0 = normal).
+        /// Used to dim the terminal when overlays are displayed.
+        /// </summary>
+        public void SetDarkenFactor(float factor)
+        {
+            _renderer.SetDarkenFactor(factor);
+        }
 
         #endregion
 

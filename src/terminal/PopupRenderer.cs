@@ -231,6 +231,10 @@ namespace Cathedral.Terminal
             int projLoc = GL.GetUniformLocation(_program, "uProjection");
             GL.UniformMatrix4(projLoc, false, ref projectionMatrix);
             
+            // Set darken factor (always 1.0 for popup - no darkening)
+            int darkenLoc = GL.GetUniformLocation(_program, "uDarkenFactor");
+            GL.Uniform1(darkenLoc, 1.0f);
+            
             // Bind atlas texture
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, _atlas.TextureId);
