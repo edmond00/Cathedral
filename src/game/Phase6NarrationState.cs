@@ -35,9 +35,9 @@ public class Phase6NarrationState
     public string LoadingMessage { get; set; } = "Loading...";
 
     /// <summary>
-    /// Currently hovered keyword (null if none).
+    /// Currently hovered keyword region (null if none).
     /// </summary>
-    public string? HoveredKeyword { get; set; } = null;
+    public KeywordRegion? HoveredKeyword { get; set; } = null;
 
     /// <summary>
     /// Thinking attempts remaining (starts at 3, decrements on keyword click).

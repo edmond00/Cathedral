@@ -105,7 +105,7 @@ public class Phase6ObservationUI
     public void RenderObservationBlocks(
         NarrationScrollBuffer scrollBuffer,
         int scrollOffset,
-        string? hoveredKeyword = null)
+        KeywordRegion? hoveredKeyword = null)
     {
         _keywordRegions.Clear();
         
@@ -161,7 +161,7 @@ public class Phase6ObservationUI
         List<string>? keywords,
         int startX,
         int y,
-        string? hoveredKeyword)
+        KeywordRegion? hoveredKeyword)
     {
         if (string.IsNullOrEmpty(text))
             return;
@@ -205,14 +205,18 @@ public class Phase6ObservationUI
             
             // Render keyword with highlighting
             string keywordText = text.Substring(start, length);
-            bool isHovered = hoveredKeyword != null && 
-                           keyword.Equals(hoveredKeyword, StringComparison.OrdinalIgnoreCase);
-            Vector4 keywordColor = isHovered ? KeywordHoverColor : KeywordNormalColor;
-            
-            _terminal.Text(currentX, y, keywordText, keywordColor, BackgroundColor);
             
             // Track keyword region for click detection
-            _keywordRegions.Add(new KeywordRegion(keyword, y, currentX, currentX + keywordText.Length - 1));
+            var keywordRegion = new KeywordRegion(keyword, y, currentX, currentX + keywordText.Length - 1);
+            _keywordRegions.Add(keywordRegion);
+            
+            // Check if this specific region is hovered (not just any instance of the keyword)
+            bool isHovered = hoveredKeyword != null &&
+                           hoveredKeyword.Y == y &&
+                           hoveredKeyword.StartX == currentX &&
+                           hoveredKeyword.EndX == currentX + keywordText.Length - 1;
+            Vector4 keywordColor = isHovered ? KeywordHoverColor : KeywordNormalColor;
+            _terminal.Text(currentX, y, keywordText, keywordColor, BackgroundColor);
             
             currentX += keywordText.Length;
             currentPos = start + length;
@@ -227,15 +231,15 @@ public class Phase6ObservationUI
     }
     
     /// <summary>
-    /// Get the keyword under the mouse cursor, or null if none.
+    /// Get the keyword region under the mouse cursor, or null if none.
     /// </summary>
-    public string? GetHoveredKeyword(int mouseX, int mouseY)
+    public KeywordRegion? GetHoveredKeyword(int mouseX, int mouseY)
     {
         foreach (var region in _keywordRegions)
         {
             if (mouseY == region.Y && mouseX >= region.StartX && mouseX <= region.EndX)
             {
-                return region.Keyword;
+                return region;
             }
         }
         return null;

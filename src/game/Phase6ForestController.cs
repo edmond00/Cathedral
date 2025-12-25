@@ -192,8 +192,8 @@ public class Phase6ForestController
             return;
         }
         
-        // Update hovered keyword
-        string? newHoveredKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
+        // Update hovered keyword region
+        KeywordRegion? newHoveredKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
         
         if (newHoveredKeyword != _narrationState.HoveredKeyword)
         {
@@ -231,7 +231,7 @@ public class Phase6ForestController
         }
         
         // Check if clicked on a keyword
-        string? clickedKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
+        KeywordRegion? clickedKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
         
         if (clickedKeyword != null && _narrationState.ThinkingAttemptsRemaining > 0)
         {

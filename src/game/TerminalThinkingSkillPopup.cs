@@ -168,7 +168,7 @@ public class TerminalThinkingSkillPopup
         _popup.Fill(0, 0, POPUP_WIDTH, popupHeight, ' ', SkillNormalColor, BackgroundColor);
         
         // Draw border
-        _popup.DrawBox(0, 0, POPUP_WIDTH, popupHeight, BorderColor, TransparentColor);
+        _popup.DrawBox(0, 0, POPUP_WIDTH, popupHeight, BorderColor, BackgroundColor);
         
         // Draw title
         string title = "Select Thinking Skill";
