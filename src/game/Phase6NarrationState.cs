@@ -55,6 +55,31 @@ public class Phase6NarrationState
     public List<ActionRegion> ActionRegions { get; set; } = new();
 
     /// <summary>
+    /// Is the scrollbar currently being dragged?
+    /// </summary>
+    public bool IsScrollbarDragging { get; set; } = false;
+
+    /// <summary>
+    /// Mouse Y position when scrollbar drag started.
+    /// </summary>
+    public int ScrollbarDragStartY { get; set; } = 0;
+
+    /// <summary>
+    /// Scroll offset when scrollbar drag started.
+    /// </summary>
+    public int ScrollbarDragStartOffset { get; set; } = 0;
+
+    /// <summary>
+    /// Current scrollbar thumb position and size (Y, Height).
+    /// </summary>
+    public (int StartY, int Height) ScrollbarThumb { get; set; } = (0, 0);
+
+    /// <summary>
+    /// Is mouse hovering over scrollbar thumb?
+    /// </summary>
+    public bool IsScrollbarThumbHovered { get; set; } = false;
+
+    /// <summary>
     /// Thinking attempts remaining (starts at 3, decrements on keyword click).
     /// </summary>
     public int ThinkingAttemptsRemaining { get; set; } = 3;

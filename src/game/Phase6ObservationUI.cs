@@ -22,6 +22,9 @@ public class Phase6ObservationUI
     private const int STATUS_BAR_HEIGHT = 1;
     private const int NARRATIVE_START_Y = HEADER_HEIGHT;
     private const int NARRATIVE_HEIGHT = TERMINAL_HEIGHT - HEADER_HEIGHT - STATUS_BAR_HEIGHT;
+    private const int SCROLLBAR_X = TERMINAL_WIDTH - 1; // Right edge
+    private const int SCROLLBAR_TRACK_START_Y = NARRATIVE_START_Y;
+    private const int SCROLLBAR_TRACK_HEIGHT = NARRATIVE_HEIGHT;
     
     // Colors
     private static readonly Vector4 HeaderColor = new(0.0f, 0.8f, 1.0f, 1.0f); // Cyan
@@ -33,6 +36,9 @@ public class Phase6ObservationUI
     private static readonly Vector4 ActionHoverColor = new(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
     private static readonly Vector4 ActionSkillColor = new(0.5f, 1.0f, 0.5f, 1.0f); // Light green
     private static readonly Vector4 ReasoningColor = new(0.8f, 0.8f, 0.9f, 1.0f); // Light purple-gray
+    private static readonly Vector4 ScrollbarTrackColor = new(0.3f, 0.3f, 0.3f, 1.0f); // Dark gray
+    private static readonly Vector4 ScrollbarThumbColor = new(0.6f, 0.6f, 0.6f, 1.0f); // Medium gray
+    private static readonly Vector4 ScrollbarThumbHoverColor = new(0.8f, 0.8f, 0.8f, 1.0f); // Light gray
     private static readonly Vector4 StatusBarColor = new(0.5f, 0.5f, 0.5f, 1.0f); // Gray
     private static readonly Vector4 BackgroundColor = new(0.0f, 0.0f, 0.0f, 1.0f); // Black
     private static readonly Vector4 ErrorColor = new(1.0f, 0.3f, 0.3f, 1.0f); // Red
@@ -126,8 +132,8 @@ public class Phase6ObservationUI
             }
         }
         
-        // Get visible lines
-        var visibleLines = scrollBuffer.GetVisibleLines(0, NARRATIVE_HEIGHT);
+        // Get visible lines based on scroll offset
+        var visibleLines = scrollBuffer.GetVisibleLines(scrollOffset, NARRATIVE_HEIGHT);
         
         int currentY = NARRATIVE_START_Y;
         foreach (var renderedLine in visibleLines)
@@ -325,6 +331,102 @@ public class Phase6ObservationUI
             }
         }
         return null;
+    }
+    
+    /// <summary>
+    /// Render the scrollbar on the right edge.
+    /// Returns the thumb position (StartY, Height) for hit detection.
+    /// </summary>
+    public (int StartY, int Height) RenderScrollbar(
+        NarrationScrollBuffer scrollBuffer,
+        int scrollOffset,
+        bool isThumbHovered)
+    {
+        int trackStartY = SCROLLBAR_TRACK_START_Y;
+        int trackHeight = SCROLLBAR_TRACK_HEIGHT;
+        int scrollbarX = SCROLLBAR_X;
+        
+        // Draw track
+        for (int y = trackStartY; y < trackStartY + trackHeight; y++)
+        {
+            _terminal.SetCell(scrollbarX, y, '│', ScrollbarTrackColor, BackgroundColor);
+        }
+        
+        // Calculate thumb size and position
+        int totalLines = scrollBuffer.TotalLines;
+        int visibleLines = NARRATIVE_HEIGHT;
+        
+        // If content fits in viewport, no thumb needed
+        if (totalLines <= visibleLines)
+        {
+            return (0, 0);
+        }
+        
+        // Calculate thumb size (proportional to visible area)
+        float visibleRatio = (float)visibleLines / totalLines;
+        int thumbHeight = Math.Max(2, (int)(trackHeight * visibleRatio));
+        
+        // Calculate thumb position based on scroll offset
+        int maxScrollOffset = totalLines - visibleLines;
+        float scrollRatio = maxScrollOffset > 0 ? (float)scrollOffset / maxScrollOffset : 0f;
+        int maxThumbY = trackHeight - thumbHeight;
+        int thumbY = trackStartY + (int)(maxThumbY * scrollRatio);
+        
+        // Render thumb
+        Vector4 thumbColor = isThumbHovered ? ScrollbarThumbHoverColor : ScrollbarThumbColor;
+        for (int y = thumbY; y < thumbY + thumbHeight; y++)
+        {
+            _terminal.SetCell(scrollbarX, y, '█', thumbColor, BackgroundColor);
+        }
+        
+        return (thumbY, thumbHeight);
+    }
+    
+    /// <summary>
+    /// Check if mouse is over scrollbar thumb.
+    /// </summary>
+    public bool IsMouseOverScrollbarThumb(int mouseX, int mouseY, (int StartY, int Height) thumb)
+    {
+        if (thumb.Height == 0) return false; // No thumb rendered
+        return mouseX == SCROLLBAR_X &&
+               mouseY >= thumb.StartY &&
+               mouseY < thumb.StartY + thumb.Height;
+    }
+    
+    /// <summary>
+    /// Check if mouse is over scrollbar track (but not thumb).
+    /// </summary>
+    public bool IsMouseOverScrollbarTrack(int mouseX, int mouseY, (int StartY, int Height) thumb)
+    {
+        if (mouseX != SCROLLBAR_X) return false;
+        int trackStartY = SCROLLBAR_TRACK_START_Y;
+        int trackEndY = trackStartY + SCROLLBAR_TRACK_HEIGHT;
+        
+        bool inTrack = mouseY >= trackStartY && mouseY < trackEndY;
+        bool onThumb = thumb.Height > 0 && mouseY >= thumb.StartY && mouseY < thumb.StartY + thumb.Height;
+        
+        return inTrack && !onThumb;
+    }
+    
+    /// <summary>
+    /// Calculate scroll offset from mouse Y position on scrollbar.
+    /// </summary>
+    public int CalculateScrollOffsetFromMouseY(int mouseY, NarrationScrollBuffer scrollBuffer)
+    {
+        int trackStartY = SCROLLBAR_TRACK_START_Y;
+        int trackHeight = SCROLLBAR_TRACK_HEIGHT;
+        int totalLines = scrollBuffer.TotalLines;
+        int visibleLines = NARRATIVE_HEIGHT;
+        
+        // Clamp mouse Y to track bounds
+        int relativeY = Math.Clamp(mouseY - trackStartY, 0, trackHeight - 1);
+        
+        // Calculate scroll offset
+        int maxScrollOffset = Math.Max(0, totalLines - visibleLines);
+        float scrollRatio = (float)relativeY / (trackHeight - 1);
+        int newOffset = (int)(maxScrollOffset * scrollRatio);
+        
+        return Math.Clamp(newOffset, 0, maxScrollOffset);
     }
     
     /// <summary>

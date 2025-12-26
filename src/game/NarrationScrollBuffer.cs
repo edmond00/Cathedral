@@ -83,6 +83,15 @@ public class NarrationScrollBuffer
     }
 
     /// <summary>
+    /// Set the scroll offset directly (for scrollbar dragging).
+    /// </summary>
+    public void SetScrollOffset(int offset)
+    {
+        int maxScroll = Math.Max(0, _renderedLines.Count - 1);
+        _scrollOffset = Math.Clamp(offset, 0, maxScroll);
+    }
+
+    /// <summary>
     /// Can we scroll up?
     /// </summary>
     public bool CanScrollUp() => _scrollOffset > 0;

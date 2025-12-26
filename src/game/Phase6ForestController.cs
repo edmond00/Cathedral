@@ -250,6 +250,13 @@ public class Phase6ForestController
             _narrationState.HoveredAction
         );
         
+        // Render scrollbar and update thumb region
+        _narrationState.ScrollbarThumb = _ui.RenderScrollbar(
+            _scrollBuffer,
+            _narrationState.ScrollOffset,
+            _narrationState.IsScrollbarThumbHovered
+        );
+        
         // Render status bar
         string statusMessage = _narrationState.ThinkingAttemptsRemaining > 0
             ? $"Hover keywords to highlight • Click keywords to think ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)"
@@ -277,6 +284,48 @@ public class Phase6ForestController
             
             _skillPopup.UpdateHover(screenPos.X, screenPos.Y, _core.Size, cellPixelSize);
             return;
+        }
+        
+        // Stop dragging if mouse button was released
+        if (_narrationState.IsScrollbarDragging && !_terminalInputHandler.IsLeftMouseDown)
+        {
+            _narrationState.IsScrollbarDragging = false;
+            Console.WriteLine("Phase6ForestController: Stopped scrollbar drag");
+        }
+        
+        // Handle scrollbar dragging
+        if (_narrationState.IsScrollbarDragging)
+        {
+            int deltaY = mouseY - _narrationState.ScrollbarDragStartY;
+            int trackHeight = 27; // NARRATIVE_HEIGHT
+            int totalLines = _scrollBuffer.TotalLines;
+            int visibleLines = 27;
+            int maxScrollOffset = Math.Max(0, totalLines - visibleLines);
+            
+            // Calculate thumb size for proper scaling
+            float visibleRatio = (float)visibleLines / totalLines;
+            int thumbHeight = Math.Max(2, (int)(trackHeight * visibleRatio));
+            int maxThumbY = trackHeight - thumbHeight;
+            
+            // Convert mouse delta to scroll offset delta
+            float scrollRatio = maxThumbY > 0 ? (float)deltaY / maxThumbY : 0f;
+            int newOffset = _narrationState.ScrollbarDragStartOffset + (int)(maxScrollOffset * scrollRatio);
+            
+            // Clamp and update scroll offset
+            newOffset = Math.Clamp(newOffset, 0, maxScrollOffset);
+            if (newOffset != _scrollBuffer.ScrollOffset)
+            {
+                _scrollBuffer.SetScrollOffset(newOffset);
+                _narrationState.ScrollOffset = newOffset;
+            }
+            return;
+        }
+        
+        // Update scrollbar thumb hover state
+        bool isOverThumb = _ui.IsMouseOverScrollbarThumb(mouseX, mouseY, _narrationState.ScrollbarThumb);
+        if (isOverThumb != _narrationState.IsScrollbarThumbHovered)
+        {
+            _narrationState.IsScrollbarThumbHovered = isOverThumb;
         }
         
         // Update hovered keyword region
@@ -335,6 +384,26 @@ public class Phase6ForestController
             {
                 Console.WriteLine("Phase6ForestController: Popup closed (clicked outside)");
             }
+            return;
+        }
+        
+        // Check if clicked on scrollbar thumb (start drag)
+        if (_ui.IsMouseOverScrollbarThumb(mouseX, mouseY, _narrationState.ScrollbarThumb))
+        {
+            _narrationState.IsScrollbarDragging = true;
+            _narrationState.ScrollbarDragStartY = mouseY;
+            _narrationState.ScrollbarDragStartOffset = _narrationState.ScrollOffset;
+            Console.WriteLine($"Phase6ForestController: Started scrollbar drag at Y={mouseY}");
+            return;
+        }
+        
+        // Check if clicked on scrollbar track (jump scroll)
+        if (_ui.IsMouseOverScrollbarTrack(mouseX, mouseY, _narrationState.ScrollbarThumb))
+        {
+            int newOffset = _ui.CalculateScrollOffsetFromMouseY(mouseY, _scrollBuffer);
+            _scrollBuffer.SetScrollOffset(newOffset);
+            _narrationState.ScrollOffset = newOffset;
+            Console.WriteLine($"Phase6ForestController: Jump scrolled to offset {newOffset}");
             return;
         }
         
