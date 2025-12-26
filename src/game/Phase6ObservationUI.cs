@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
+using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game;
 
@@ -28,6 +29,10 @@ public class Phase6ObservationUI
     private static readonly Vector4 NarrativeColor = new(0.7f, 0.7f, 0.7f, 1.0f); // Gray70
     private static readonly Vector4 KeywordNormalColor = new(0.5f, 0.9f, 1.0f, 1.0f); // Light cyan
     private static readonly Vector4 KeywordHoverColor = new(1.0f, 1.0f, 1.0f, 1.0f); // White
+    private static readonly Vector4 ActionNormalColor = new(1.0f, 1.0f, 1.0f, 1.0f); // White
+    private static readonly Vector4 ActionHoverColor = new(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
+    private static readonly Vector4 ActionSkillColor = new(0.5f, 1.0f, 0.5f, 1.0f); // Light green
+    private static readonly Vector4 ReasoningColor = new(0.8f, 0.8f, 0.9f, 1.0f); // Light purple-gray
     private static readonly Vector4 StatusBarColor = new(0.5f, 0.5f, 0.5f, 1.0f); // Gray
     private static readonly Vector4 BackgroundColor = new(0.0f, 0.0f, 0.0f, 1.0f); // Black
     private static readonly Vector4 ErrorColor = new(1.0f, 0.3f, 0.3f, 1.0f); // Red
@@ -43,6 +48,7 @@ public class Phase6ObservationUI
     
     private readonly TerminalHUD _terminal;
     private List<KeywordRegion> _keywordRegions = new();
+    private List<ActionRegion> _actionRegions = new();
     
     public Phase6ObservationUI(TerminalHUD terminal)
     {
@@ -105,9 +111,11 @@ public class Phase6ObservationUI
     public void RenderObservationBlocks(
         NarrationScrollBuffer scrollBuffer,
         int scrollOffset,
-        KeywordRegion? hoveredKeyword = null)
+        KeywordRegion? hoveredKeyword = null,
+        ActionRegion? hoveredAction = null)
     {
         _keywordRegions.Clear();
+        _actionRegions.Clear();
         
         // Clear narrative area
         for (int y = NARRATIVE_START_Y; y < TERMINAL_HEIGHT - STATUS_BAR_HEIGHT; y++)
@@ -142,6 +150,15 @@ public class Phase6ObservationUI
                         2,
                         currentY,
                         hoveredKeyword);
+                    break;
+                    
+                case LineType.Action:
+                    // Render actions list
+                    if (renderedLine.Actions != null && renderedLine.Actions.Count > 0)
+                    {
+                        currentY = RenderActionsBlock(renderedLine.Actions, currentY, hoveredAction);
+                        continue; // RenderActionsBlock handles Y advancement
+                    }
                     break;
                     
                 case LineType.Empty:
@@ -238,6 +255,71 @@ public class Phase6ObservationUI
         foreach (var region in _keywordRegions)
         {
             if (mouseY == region.Y && mouseX >= region.StartX && mouseX <= region.EndX)
+            {
+                return region;
+            }
+        }
+        return null;
+    }
+    
+    /// <summary>
+    /// Render a list of actions with hover highlighting.
+    /// Returns the new Y position after rendering all actions.
+    /// </summary>
+    private int RenderActionsBlock(List<ParsedNarrativeAction> actions, int startY, ActionRegion? hoveredAction)
+    {
+        int currentY = startY;
+        int maxY = TERMINAL_HEIGHT - STATUS_BAR_HEIGHT;
+        
+        for (int i = 0; i < actions.Count && currentY < maxY; i++)
+        {
+            var action = actions[i];
+            
+            // Check if this specific action region is hovered
+            var actionRegion = new ActionRegion(i, currentY, currentY, 2, TERMINAL_WIDTH - 2);
+            bool isHovered = hoveredAction != null &&
+                           hoveredAction.StartY == currentY &&
+                           hoveredAction.ActionIndex == i;
+            
+            // Format: "> [SkillName] action text"
+            string prefix = "> ";
+            string skillBracket = $"[{action.ActionSkill?.DisplayName ?? action.ActionSkillId}] ";
+            string actionText = action.DisplayText;  // Without "try to" prefix
+            
+            // Calculate colors
+            Vector4 prefixColor = NarrativeColor;
+            Vector4 skillColor = ActionSkillColor;
+            Vector4 textColor = isHovered ? ActionHoverColor : ActionNormalColor;
+            
+            // Render the action line
+            int startX = 2;
+            _terminal.Text(startX, currentY, prefix, prefixColor, BackgroundColor);
+            startX += prefix.Length;
+            
+            _terminal.Text(startX, currentY, skillBracket, skillColor, BackgroundColor);
+            startX += skillBracket.Length;
+            
+            int actionTextStartX = startX;
+            _terminal.Text(startX, currentY, actionText, textColor, BackgroundColor);
+            
+            // Track action region for click detection
+            _actionRegions.Add(actionRegion);
+            
+            currentY++;
+        }
+        
+        return currentY;
+    }
+    
+    /// <summary>
+    /// Get the action region under the mouse cursor, or null if none.
+    /// </summary>
+    public ActionRegion? GetHoveredAction(int mouseX, int mouseY)
+    {
+        foreach (var region in _actionRegions)
+        {
+            if (mouseY >= region.StartY && mouseY <= region.EndY &&
+                mouseX >= region.StartX && mouseX <= region.EndX)
             {
                 return region;
             }

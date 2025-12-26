@@ -118,7 +118,8 @@ public class NarrationScrollBuffer
                     Text: $"[{block.SkillName.ToUpper()}]",
                     Type: LineType.Header,
                     BlockType: block.Type,
-                    Keywords: null
+                    Keywords: null,
+                    Actions: null
                 ));
                 
                 // Empty line after header
@@ -126,7 +127,8 @@ public class NarrationScrollBuffer
                     Text: "",
                     Type: LineType.Empty,
                     BlockType: block.Type,
-                    Keywords: null
+                    Keywords: null,
+                    Actions: null
                 ));
             }
 
@@ -138,7 +140,30 @@ public class NarrationScrollBuffer
                     Text: line,
                     Type: LineType.Content,
                     BlockType: block.Type,
-                    Keywords: block.Keywords // Associate keywords with this line
+                    Keywords: block.Keywords, // Associate keywords with this line
+                    Actions: null
+                ));
+            }
+
+            // Add action lines if this is a Thinking block
+            if (block.Type == NarrationBlockType.Thinking && block.Actions != null && block.Actions.Count > 0)
+            {
+                // Add empty line before actions
+                _renderedLines.Add(new RenderedLine(
+                    Text: "",
+                    Type: LineType.Empty,
+                    BlockType: block.Type,
+                    Keywords: null,
+                    Actions: null
+                ));
+                
+                // Add action lines placeholder - actual rendering happens in UI
+                _renderedLines.Add(new RenderedLine(
+                    Text: "[ACTIONS]",  // Placeholder for action rendering
+                    Type: LineType.Action,
+                    BlockType: block.Type,
+                    Keywords: null,
+                    Actions: block.Actions
                 ));
             }
 
@@ -147,7 +172,8 @@ public class NarrationScrollBuffer
                 Text: "",
                 Type: LineType.Empty,
                 BlockType: block.Type,
-                Keywords: null
+                Keywords: null,
+                Actions: null
             ));
         }
     }
@@ -232,7 +258,8 @@ public record RenderedLine(
     string Text,
     LineType Type,
     NarrationBlockType BlockType,
-    List<string>? Keywords
+    List<string>? Keywords,
+    List<ParsedNarrativeAction>? Actions  // Actions for rendering (only for Action lines)
 );
 
 /// <summary>
@@ -242,5 +269,6 @@ public enum LineType
 {
     Header,   // Skill name header
     Content,  // Narration text
+    Action,   // Action line (for Thinking blocks)
     Empty     // Spacing
 }

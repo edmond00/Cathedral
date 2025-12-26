@@ -14,6 +14,9 @@ namespace Cathedral.Game;
 /// </summary>
 public class Phase6ForestController
 {
+    // UI constants
+    private const int NARRATIVE_HEIGHT = 26; // Terminal height (30) - header (2) - status bar (1) - margin (1)
+    
     // State
     private readonly Phase6NarrationState _narrationState = new();
     private readonly NarrationScrollBuffer _scrollBuffer;
@@ -24,6 +27,7 @@ public class Phase6ForestController
     private readonly Avatar _avatar;
     private NarrationNode _currentNode;
     private readonly ObservationPhaseController _observationController;
+    private readonly ThinkingExecutor _thinkingExecutor;
     private readonly GlyphSphereCore _core;
     private readonly TerminalInputHandler _terminalInputHandler;
     
@@ -37,7 +41,8 @@ public class Phase6ForestController
         GlyphSphereCore core,
         LlamaServerManager llamaServer,
         SkillSlotManager slotManager,
-        TerminalInputHandler terminalInputHandler)
+        TerminalInputHandler terminalInputHandler,
+        ThinkingExecutor thinkingExecutor)
     {
         if (terminal == null)
             throw new ArgumentNullException(nameof(terminal));
@@ -51,6 +56,8 @@ public class Phase6ForestController
             throw new ArgumentNullException(nameof(slotManager));
         if (terminalInputHandler == null)
             throw new ArgumentNullException(nameof(terminalInputHandler));
+        if (thinkingExecutor == null)
+            throw new ArgumentNullException(nameof(thinkingExecutor));
         
         _ui = new Phase6ObservationUI(terminal);
         _scrollBuffer = new NarrationScrollBuffer(maxWidth: 96); // Terminal width - 4 for margins
@@ -65,8 +72,9 @@ public class Phase6ForestController
         // Get random entry node
         _currentNode = NodeRegistry.GetRandomEntryNode();
         
-        // Initialize observation controller
+        // Initialize controllers
         _observationController = new ObservationPhaseController(llamaServer, slotManager);
+        _thinkingExecutor = thinkingExecutor;
         
         Console.WriteLine($"Phase6ForestController: Initialized with node {_currentNode.NodeId}");
         Console.WriteLine($"Phase6ForestController: Avatar has {_avatar.Skills.Count} skills");
@@ -130,6 +138,81 @@ public class Phase6ForestController
     }
     
     /// <summary>
+    /// Execute thinking phase with selected skill and keyword (async).
+    /// </summary>
+    private async Task ExecuteThinkingPhaseAsync(Skill thinkingSkill, string keyword)
+    {
+        try
+        {
+            Console.WriteLine($"Phase6ForestController: Executing thinking with {thinkingSkill.DisplayName} on keyword '{keyword}'");
+            
+            // Get possible outcomes for this keyword
+            var possibleOutcomes = _currentNode.GetOutcomesForKeyword(keyword);
+            
+            // Always add FeelGoodOutcome as a fallback option
+            var feelGoodOutcome = new FeelGoodOutcome();
+            if (!possibleOutcomes.Any(o => o is FeelGoodOutcome))
+            {
+                possibleOutcomes.Add(feelGoodOutcome);
+            }
+            
+            // Get action skills
+            var actionSkills = _avatar.GetActionSkills();
+            
+            Console.WriteLine($"Phase6ForestController: Found {possibleOutcomes.Count} outcomes, {actionSkills.Count} action skills");
+            
+            // Call ThinkingExecutor to generate reasoning + actions
+            var response = await _thinkingExecutor.GenerateThinkingAsync(
+                thinkingSkill,
+                keyword,
+                _currentNode,
+                possibleOutcomes,
+                actionSkills,
+                _avatar,
+                CancellationToken.None);
+            
+            if (response == null || response.Actions.Count == 0)
+            {
+                // Display error - no fallback as per user request
+                throw new Exception("Thinking LLM returned no actions");
+            }
+            
+            Console.WriteLine($"Phase6ForestController: Generated {response.Actions.Count} actions");
+            
+            // Create thinking block with reasoning + actions
+            var thinkingBlock = new NarrationBlock(
+                Type: NarrationBlockType.Thinking,
+                SkillName: thinkingSkill.DisplayName,
+                Text: response.ReasoningText,
+                Keywords: null,
+                Actions: response.Actions
+            );
+            
+            // Add to scroll buffer
+            _scrollBuffer.AddBlock(thinkingBlock);
+            _narrationState.AddBlock(thinkingBlock);
+            
+            // Auto-scroll to bottom to show new thinking block
+            _scrollBuffer.ScrollToBottom(NARRATIVE_HEIGHT);
+            
+            // Update state
+            _narrationState.IsLoadingThinking = false;
+            _narrationState.ThinkingAttemptsRemaining--;
+            _narrationState.ErrorMessage = null;
+            
+            Console.WriteLine($"Phase6ForestController: Thinking phase complete ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Phase6ForestController: Error during thinking phase: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            
+            _narrationState.IsLoadingThinking = false;
+            _narrationState.ErrorMessage = $"Thinking failed: {ex.Message}";
+        }
+    }
+    
+    /// <summary>
     /// Update loop - called at 10 Hz by game controller.
     /// </summary>
     public void Update()
@@ -149,10 +232,13 @@ public class Phase6ForestController
         }
         
         // Show loading indicator if generating
-        if (_narrationState.IsLoadingObservations)
+        if (_narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking)
         {
             _ui.ShowLoadingIndicator(_narrationState.LoadingMessage);
-            _ui.RenderStatusBar("Generating observations...");
+            string loadingStatus = _narrationState.IsLoadingObservations 
+                ? "Generating observations..." 
+                : "Generating thinking and actions...";
+            _ui.RenderStatusBar(loadingStatus);
             return;
         }
         
@@ -160,7 +246,8 @@ public class Phase6ForestController
         _ui.RenderObservationBlocks(
             _scrollBuffer,
             _narrationState.ScrollOffset,
-            _narrationState.HoveredKeyword
+            _narrationState.HoveredKeyword,
+            _narrationState.HoveredAction
         );
         
         // Render status bar
@@ -200,6 +287,15 @@ public class Phase6ForestController
             _narrationState.HoveredKeyword = newHoveredKeyword;
             // UI will re-render on next Update() call
         }
+        
+        // Update hovered action region
+        ActionRegion? newHoveredAction = _ui.GetHoveredAction(mouseX, mouseY);
+        
+        if (newHoveredAction != _narrationState.HoveredAction)
+        {
+            _narrationState.HoveredAction = newHoveredAction;
+            // UI will re-render on next Update() call
+        }
     }
     
     /// <summary>
@@ -221,12 +317,34 @@ public class Phase6ForestController
             if (selectedSkill != null)
             {
                 Console.WriteLine($"Phase6ForestController: Selected skill: {selectedSkill.DisplayName}");
-                // TODO: Process skill selection
+                
+                // Get the keyword that was clicked (stored before popup appeared)
+                if (_narrationState.HoveredKeyword != null)
+                {
+                    string keyword = _narrationState.HoveredKeyword.Keyword;
+                    
+                    // Start thinking phase
+                    _narrationState.IsLoadingThinking = true;
+                    _narrationState.LoadingMessage = "Thinking deeply...";
+                    
+                    // Fire-and-forget async task
+                    _ = ExecuteThinkingPhaseAsync(selectedSkill, keyword);
+                }
             }
             else
             {
                 Console.WriteLine("Phase6ForestController: Popup closed (clicked outside)");
             }
+            return;
+        }
+        
+        // Check if clicked on an action
+        ActionRegion? clickedAction = _ui.GetHoveredAction(mouseX, mouseY);
+        if (clickedAction != null)
+        {
+            // TODO: Execute action phase
+            Console.WriteLine($"Phase6ForestController: Clicked action index {clickedAction.ActionIndex} at Y={clickedAction.StartY}");
+            // Action execution will be implemented later
             return;
         }
         
@@ -250,7 +368,6 @@ public class Phase6ForestController
     
     /// <summary>
     /// Handle mouse wheel scroll event.
-    /// TODO: Wire this up in GlyphSphereCore when mouse wheel events are added.
     /// </summary>
     public void OnMouseWheel(float delta)
     {

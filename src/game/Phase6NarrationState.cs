@@ -30,6 +30,11 @@ public class Phase6NarrationState
     public bool IsLoadingObservations { get; set; } = false;
 
     /// <summary>
+    /// Is the system currently generating thinking/actions via LLM?
+    /// </summary>
+    public bool IsLoadingThinking { get; set; } = false;
+
+    /// <summary>
     /// Current loading message to display.
     /// </summary>
     public string LoadingMessage { get; set; } = "Loading...";
@@ -38,6 +43,16 @@ public class Phase6NarrationState
     /// Currently hovered keyword region (null if none).
     /// </summary>
     public KeywordRegion? HoveredKeyword { get; set; } = null;
+
+    /// <summary>
+    /// Currently hovered action region (null if none).
+    /// </summary>
+    public ActionRegion? HoveredAction { get; set; } = null;
+
+    /// <summary>
+    /// Clickable action regions for current view.
+    /// </summary>
+    public List<ActionRegion> ActionRegions { get; set; } = new();
 
     /// <summary>
     /// Thinking attempts remaining (starts at 3, decrements on keyword click).
@@ -93,3 +108,8 @@ public class Phase6NarrationState
 /// Represents a clickable keyword region in the terminal.
 /// </summary>
 public record KeywordRegion(string Keyword, int Y, int StartX, int EndX);
+
+/// <summary>
+/// Represents a clickable action region in the terminal.
+/// </summary>
+public record ActionRegion(int ActionIndex, int StartY, int EndY, int StartX, int EndX);

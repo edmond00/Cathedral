@@ -28,6 +28,7 @@ public class LocationTravelGameController : IDisposable
     private Phase6ForestController? _phase6Controller = null;
     private bool _isInPhase6Mode = false;
     private SkillSlotManager? _skillSlotManager = null;
+    private ThinkingExecutor? _thinkingExecutor = null;
     
     // Game state
     private GameMode _currentMode;
@@ -136,7 +137,12 @@ public class LocationTravelGameController : IDisposable
         if (executor != null)
         {
             _skillSlotManager = new SkillSlotManager(executor.GetLlamaServerManager());
-            Console.WriteLine("LocationTravelGameController: SkillSlotManager initialized for Phase 6");
+            var thinkingPromptConstructor = new ThinkingPromptConstructor();
+            _thinkingExecutor = new ThinkingExecutor(
+                executor.GetLlamaServerManager(), 
+                thinkingPromptConstructor, 
+                _skillSlotManager);
+            Console.WriteLine("LocationTravelGameController: SkillSlotManager and ThinkingExecutor initialized for Phase 6");
         }
         
         // Also initialize Critic and ActionScorer
@@ -240,6 +246,21 @@ public class LocationTravelGameController : IDisposable
             return;
         
         _terminalUI.UpdateHover(x, y, _currentActions);
+    }
+    
+    /// <summary>
+    /// Called when mouse wheel is scrolled.
+    /// </summary>
+    public void OnMouseWheel(float delta)
+    {
+        // Phase 6 mode handles scrolling
+        if (_isInPhase6Mode && _phase6Controller != null)
+        {
+            _phase6Controller.OnMouseWheel(delta);
+            return;
+        }
+        
+        // Other modes don't have scroll functionality yet
     }
     
     /// <summary>
@@ -1164,6 +1185,13 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
             
+            // Ensure ThinkingExecutor is initialized
+            if (_thinkingExecutor is null)
+            {
+                Console.WriteLine("LocationTravelGameController: Cannot enter Phase 6 mode - ThinkingExecutor not initialized");
+                return;
+            }
+            
             // Create Phase 6 controller
             _phase6Controller = new Phase6ForestController(
                 _core.Terminal,
@@ -1171,7 +1199,8 @@ public class LocationTravelGameController : IDisposable
                 _core,
                 _llmActionExecutor.GetLlamaServerManager(),
                 _skillSlotManager,
-                inputHandler
+                inputHandler,
+                _thinkingExecutor
             );
             
             // Mark as active

@@ -196,11 +196,19 @@ public class ThinkingExecutor
                 
                 if (outcome != null)
                 {
+                    // Remove "try to " prefix from action description for DisplayText
+                    string displayText = actionDesc;
+                    if (displayText.StartsWith("try to ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        displayText = displayText.Substring(7); // Remove "try to " (7 characters)
+                    }
+                    
                     actions.Add(new ParsedNarrativeAction
                     {
                         ActionSkillId = actionSkill,
                         PreselectedOutcome = outcome,
-                        ActionText = actionDesc
+                        ActionText = actionDesc,
+                        DisplayText = displayText
                     });
                 }
                 else

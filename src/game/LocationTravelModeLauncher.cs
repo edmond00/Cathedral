@@ -224,6 +224,12 @@ public static class LocationTravelModeLauncher
                 gameController?.Update();
             };
             
+            // Wire up mouse wheel for scrolling
+            core.MouseWheelScrolled += (delta) =>
+            {
+                gameController?.OnMouseWheel(delta);
+            };
+            
             Console.WriteLine("\n=== Location Travel Mode Ready ===");
             Console.WriteLine("Controls:");
             Console.WriteLine("  - Click on locations to travel");

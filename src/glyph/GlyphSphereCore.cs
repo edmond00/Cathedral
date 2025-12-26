@@ -95,6 +95,7 @@ namespace Cathedral.Glyph
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexClicked;
         public event Action? CoreLoaded;
         public event Action<float>? UpdateRequested;
+        public event Action<float>? MouseWheelScrolled;
         
         // Terminal HUD
         private Cathedral.Terminal.TerminalHUD? _terminal;
@@ -810,6 +811,14 @@ namespace Cathedral.Glyph
             {
                 _terminal.HandleMouseUp(e.Button);
             }
+        }
+
+        protected override void OnMouseWheel(MouseWheelEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            
+            // Fire event for scroll handling
+            MouseWheelScrolled?.Invoke(e.OffsetY);
         }
 
         // Mouse ray casting and vertex finding methods remain the same
