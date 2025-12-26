@@ -300,7 +300,8 @@ public class Phase6ForestController
             int trackHeight = 27; // NARRATIVE_HEIGHT
             int totalLines = _scrollBuffer.TotalLines;
             int visibleLines = 27;
-            int maxScrollOffset = Math.Max(0, totalLines - visibleLines);
+            // Add 5-line margin to ensure last lines are visible
+            int maxScrollOffset = Math.Max(0, totalLines - visibleLines + 5);
             
             // Calculate thumb size for proper scaling
             float visibleRatio = (float)visibleLines / totalLines;
@@ -315,7 +316,7 @@ public class Phase6ForestController
             newOffset = Math.Clamp(newOffset, 0, maxScrollOffset);
             if (newOffset != _scrollBuffer.ScrollOffset)
             {
-                _scrollBuffer.SetScrollOffset(newOffset);
+                _scrollBuffer.SetScrollOffset(newOffset, 27);
                 _narrationState.ScrollOffset = newOffset;
             }
             return;
@@ -401,7 +402,7 @@ public class Phase6ForestController
         if (_ui.IsMouseOverScrollbarTrack(mouseX, mouseY, _narrationState.ScrollbarThumb))
         {
             int newOffset = _ui.CalculateScrollOffsetFromMouseY(mouseY, _scrollBuffer);
-            _scrollBuffer.SetScrollOffset(newOffset);
+            _scrollBuffer.SetScrollOffset(newOffset, 27);
             _narrationState.ScrollOffset = newOffset;
             Console.WriteLine($"Phase6ForestController: Jump scrolled to offset {newOffset}");
             return;
@@ -448,7 +449,7 @@ public class Phase6ForestController
         else if (delta < 0)
         {
             // Scroll down
-            _scrollBuffer.ScrollDown(3);
+            _scrollBuffer.ScrollDown(3, 27);
         }
         
         _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;

@@ -66,9 +66,10 @@ public class NarrationScrollBuffer
     /// <summary>
     /// Scroll down by specified number of lines.
     /// </summary>
-    public void ScrollDown(int lines = 1)
+    public void ScrollDown(int lines = 1, int viewportHeight = 27)
     {
-        int maxScroll = Math.Max(0, _renderedLines.Count - 1);
+        // Add 5-line margin to ensure last lines are visible
+        int maxScroll = Math.Max(0, _renderedLines.Count - viewportHeight + 5);
         _scrollOffset = Math.Min(maxScroll, _scrollOffset + lines);
     }
 
@@ -78,16 +79,18 @@ public class NarrationScrollBuffer
     public void ScrollToBottom(int viewportHeight = 27)
     {
         // Position scroll so the last line is at the bottom of viewport
-        int maxScroll = Math.Max(0, _renderedLines.Count - viewportHeight);
+        // Add 5-line margin to ensure last lines are visible
+        int maxScroll = Math.Max(0, _renderedLines.Count - viewportHeight + 5);
         _scrollOffset = maxScroll;
     }
 
     /// <summary>
     /// Set the scroll offset directly (for scrollbar dragging).
     /// </summary>
-    public void SetScrollOffset(int offset)
+    public void SetScrollOffset(int offset, int viewportHeight = 27)
     {
-        int maxScroll = Math.Max(0, _renderedLines.Count - 1);
+        // Add 5-line margin to ensure last lines are visible
+        int maxScroll = Math.Max(0, _renderedLines.Count - viewportHeight + 5);
         _scrollOffset = Math.Clamp(offset, 0, maxScroll);
     }
 
