@@ -17,12 +17,17 @@ public class Phase6ObservationUI
     private const int TERMINAL_WIDTH = 100;
     private const int TERMINAL_HEIGHT = 30;
     
+    // Margin constants
+    private const int LEFT_MARGIN = 4;
+    private const int RIGHT_MARGIN = 4;
+    private const int CONTENT_WIDTH = TERMINAL_WIDTH - LEFT_MARGIN - RIGHT_MARGIN;
+    
     // Layout constants
     private const int HEADER_HEIGHT = 2;
     private const int STATUS_BAR_HEIGHT = 1;
     private const int NARRATIVE_START_Y = HEADER_HEIGHT;
     private const int NARRATIVE_HEIGHT = TERMINAL_HEIGHT - HEADER_HEIGHT - STATUS_BAR_HEIGHT;
-    private const int SCROLLBAR_X = TERMINAL_WIDTH - 1; // Right edge
+    private const int SCROLLBAR_X = TERMINAL_WIDTH - RIGHT_MARGIN; // Inside right margin
     private const int SCROLLBAR_TRACK_START_Y = NARRATIVE_START_Y;
     private const int SCROLLBAR_TRACK_HEIGHT = NARRATIVE_HEIGHT;
     
@@ -88,11 +93,11 @@ public class Phase6ObservationUI
     {
         // Line 0: Location name
         string title = $"Forest Exploration - {locationName}";
-        _terminal.Text(2, 0, title, HeaderColor, BackgroundColor);
+        _terminal.Text(LEFT_MARGIN, 0, title, HeaderColor, BackgroundColor);
         
         // Thinking attempts indicator (right side)
         string attempts = $"Thinking: ";
-        int attemptsX = TERMINAL_WIDTH - 20;
+        int attemptsX = TERMINAL_WIDTH - RIGHT_MARGIN - 20;
         _terminal.Text(attemptsX, 0, attempts, StatusBarColor, BackgroundColor);
         
         // Draw filled boxes for remaining attempts
@@ -145,7 +150,7 @@ public class Phase6ObservationUI
             {
                 case LineType.Header:
                     // Render skill name header in yellow
-                    _terminal.Text(2, currentY, renderedLine.Text, SkillHeaderColor, BackgroundColor);
+                    _terminal.Text(LEFT_MARGIN, currentY, renderedLine.Text, SkillHeaderColor, BackgroundColor);
                     break;
                     
                 case LineType.Content:
@@ -153,7 +158,7 @@ public class Phase6ObservationUI
                     RenderLineWithKeywords(
                         renderedLine.Text,
                         renderedLine.Keywords,
-                        2,
+                        LEFT_MARGIN,
                         currentY,
                         hoveredKeyword);
                     break;
@@ -282,7 +287,7 @@ public class Phase6ObservationUI
             var action = actions[i];
             
             // Check if this specific action region is hovered
-            var actionRegion = new ActionRegion(i, currentY, currentY, 2, TERMINAL_WIDTH - 2);
+            var actionRegion = new ActionRegion(i, currentY, currentY, LEFT_MARGIN, TERMINAL_WIDTH - RIGHT_MARGIN);
             bool isHovered = hoveredAction != null &&
                            hoveredAction.StartY == currentY &&
                            hoveredAction.ActionIndex == i;
@@ -298,7 +303,7 @@ public class Phase6ObservationUI
             Vector4 textColor = isHovered ? ActionHoverColor : ActionNormalColor;
             
             // Render the action line
-            int startX = 2;
+            int startX = LEFT_MARGIN;
             _terminal.Text(startX, currentY, prefix, prefixColor, BackgroundColor);
             startX += prefix.Length;
             
@@ -435,6 +440,10 @@ public class Phase6ObservationUI
     public void RenderStatusBar(string message = "")
     {
         int statusY = TERMINAL_HEIGHT - 1;
+        int separatorY = statusY - 1;
+        
+        // Draw separator line above status bar
+        DrawHorizontalLine(separatorY);
         
         if (string.IsNullOrEmpty(message))
         {
@@ -442,12 +451,13 @@ public class Phase6ObservationUI
         }
         
         // Truncate if too long
-        if (message.Length > TERMINAL_WIDTH - 4)
+        int maxMessageWidth = CONTENT_WIDTH - 2;
+        if (message.Length > maxMessageWidth)
         {
-            message = message.Substring(0, TERMINAL_WIDTH - 7) + "...";
+            message = message.Substring(0, maxMessageWidth - 3) + "...";
         }
         
-        _terminal.Text(2, statusY, message, StatusBarColor, BackgroundColor);
+        _terminal.Text(LEFT_MARGIN, statusY, message, StatusBarColor, BackgroundColor);
     }
     
     /// <summary>
@@ -515,7 +525,7 @@ public class Phase6ObservationUI
         _terminal.Text(titleX, titleY, title, ErrorColor, BackgroundColor);
         
         // Wrap error message
-        var wrappedLines = WrapText(errorMessage, TERMINAL_WIDTH - 8);
+        var wrappedLines = WrapText(errorMessage, CONTENT_WIDTH - 4);
         int startY = titleY + 2;
         
         for (int i = 0; i < wrappedLines.Count && startY + i < TERMINAL_HEIGHT - STATUS_BAR_HEIGHT; i++)

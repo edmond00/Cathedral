@@ -60,7 +60,8 @@ public class Phase6ForestController
             throw new ArgumentNullException(nameof(thinkingExecutor));
         
         _ui = new Phase6ObservationUI(terminal);
-        _scrollBuffer = new NarrationScrollBuffer(maxWidth: 96); // Terminal width - 4 for margins
+        // Content width: 100 (terminal) - 4 (left margin) - 4 (right margin) - 1 (scrollbar) = 91
+        _scrollBuffer = new NarrationScrollBuffer(maxWidth: 91);
         _skillPopup = new TerminalThinkingSkillPopup(popup);
         _core = core;
         _terminalInputHandler = terminalInputHandler;
