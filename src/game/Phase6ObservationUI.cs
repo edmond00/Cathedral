@@ -25,11 +25,12 @@ public class Phase6ObservationUI
     // Layout constants
     private const int HEADER_HEIGHT = 2;
     private const int STATUS_BAR_HEIGHT = 1;
+    private const int SEPARATOR_HEIGHT = 1;
     private const int NARRATIVE_START_Y = HEADER_HEIGHT;
     private const int NARRATIVE_HEIGHT = TERMINAL_HEIGHT - HEADER_HEIGHT - STATUS_BAR_HEIGHT;
     private const int SCROLLBAR_X = TERMINAL_WIDTH - RIGHT_MARGIN; // Inside right margin
     private const int SCROLLBAR_TRACK_START_Y = NARRATIVE_START_Y;
-    private const int SCROLLBAR_TRACK_HEIGHT = NARRATIVE_HEIGHT;
+    private const int SCROLLBAR_TRACK_HEIGHT = NARRATIVE_HEIGHT - SEPARATOR_HEIGHT; // Don't overlap bottom separator
     
     // Colors
     private static readonly Vector4 HeaderColor = new(0.0f, 0.8f, 1.0f, 1.0f); // Cyan
@@ -372,7 +373,8 @@ public class Phase6ObservationUI
         int thumbHeight = Math.Max(2, (int)(trackHeight * visibleRatio));
         
         // Calculate thumb position based on scroll offset
-        int maxScrollOffset = totalLines - visibleLines;
+        // Add 5-line margin to match NarrationScrollBuffer's maxScroll calculation
+        int maxScrollOffset = Math.Max(0, totalLines - visibleLines + 5);
         float scrollRatio = maxScrollOffset > 0 ? (float)scrollOffset / maxScrollOffset : 0f;
         int maxThumbY = trackHeight - thumbHeight;
         int thumbY = trackStartY + (int)(maxThumbY * scrollRatio);
@@ -427,7 +429,8 @@ public class Phase6ObservationUI
         int relativeY = Math.Clamp(mouseY - trackStartY, 0, trackHeight - 1);
         
         // Calculate scroll offset
-        int maxScrollOffset = Math.Max(0, totalLines - visibleLines);
+        // Add 5-line margin to match NarrationScrollBuffer's maxScroll calculation
+        int maxScrollOffset = Math.Max(0, totalLines - visibleLines + 5);
         float scrollRatio = (float)relativeY / (trackHeight - 1);
         int newOffset = (int)(maxScrollOffset * scrollRatio);
         
