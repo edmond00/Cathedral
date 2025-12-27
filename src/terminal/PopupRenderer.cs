@@ -308,8 +308,26 @@ namespace Cathedral.Terminal
 
         private void CalculatePopupLayout(Vector2i windowSize, out Vector2 cellSize, out Vector2 topLeft)
         {
-            // Fixed cell size based on _cellPixelSize parameter
-            cellSize = new Vector2(_cellPixelSize, _cellPixelSize);
+            // Calculate cell size dynamically based on window size to match main terminal
+            // This ensures popup scales correctly when window is resized
+            // Main terminal uses 100x30 grid, so we calculate the same cell size
+            float mainTerminalAspect = 100.0f / 30.0f;
+            float windowAspect = (float)windowSize.X / windowSize.Y;
+            
+            Vector2 terminalSize;
+            if (windowAspect > mainTerminalAspect)
+            {
+                // Window is wider - fit to height
+                terminalSize = new Vector2(windowSize.Y * mainTerminalAspect, windowSize.Y);
+            }
+            else
+            {
+                // Window is taller - fit to width
+                terminalSize = new Vector2(windowSize.X, windowSize.X / mainTerminalAspect);
+            }
+            
+            // Calculate cell size to match main terminal (100x30)
+            cellSize = new Vector2(terminalSize.X / 100.0f, terminalSize.Y / 30.0f);
             
             float left, top;
             

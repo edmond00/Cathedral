@@ -58,16 +58,24 @@ public class NarrationScrollBuffer
     /// <summary>
     /// Scroll up by specified number of lines.
     /// </summary>
-    public void ScrollUp(int lines = 1)
+    public void ScrollUp(int lines = 1, int viewportHeight = 26)
     {
+        // Don't allow scrolling if content fits in viewport
+        if (_renderedLines.Count <= viewportHeight)
+            return;
+        
         _scrollOffset = Math.Max(0, _scrollOffset - lines);
     }
 
     /// <summary>
     /// Scroll down by specified number of lines.
     /// </summary>
-    public void ScrollDown(int lines = 1, int viewportHeight = 27)
+    public void ScrollDown(int lines = 1, int viewportHeight = 26)
     {
+        // Don't allow scrolling if content fits in viewport
+        if (_renderedLines.Count <= viewportHeight)
+            return;
+        
         // Add 5-line margin to ensure last lines are visible
         int maxScroll = Math.Max(0, _renderedLines.Count - viewportHeight + 5);
         _scrollOffset = Math.Min(maxScroll, _scrollOffset + lines);
@@ -76,8 +84,15 @@ public class NarrationScrollBuffer
     /// <summary>
     /// Scroll to the bottom of the buffer.
     /// </summary>
-    public void ScrollToBottom(int viewportHeight = 27)
+    public void ScrollToBottom(int viewportHeight = 26)
     {
+        // Don't allow scrolling if content fits in viewport
+        if (_renderedLines.Count <= viewportHeight)
+        {
+            _scrollOffset = 0;
+            return;
+        }
+        
         // Position scroll so the last line is at the bottom of viewport
         // Add 5-line margin to ensure last lines are visible
         int maxScroll = Math.Max(0, _renderedLines.Count - viewportHeight + 5);
@@ -87,8 +102,15 @@ public class NarrationScrollBuffer
     /// <summary>
     /// Set the scroll offset directly (for scrollbar dragging).
     /// </summary>
-    public void SetScrollOffset(int offset, int viewportHeight = 27)
+    public void SetScrollOffset(int offset, int viewportHeight = 26)
     {
+        // Don't allow scrolling if content fits in viewport
+        if (_renderedLines.Count <= viewportHeight)
+        {
+            _scrollOffset = 0;
+            return;
+        }
+        
         // Add 5-line margin to ensure last lines are visible
         int maxScroll = Math.Max(0, _renderedLines.Count - viewportHeight + 5);
         _scrollOffset = Math.Clamp(offset, 0, maxScroll);

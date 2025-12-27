@@ -195,6 +195,7 @@ public class Phase6ForestController
             
             // Auto-scroll to bottom to show new thinking block
             _scrollBuffer.ScrollToBottom(NARRATIVE_HEIGHT);
+            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset; // Sync scroll position
             
             // Update state
             _narrationState.IsLoadingThinking = false;
@@ -317,7 +318,7 @@ public class Phase6ForestController
             newOffset = Math.Clamp(newOffset, 0, maxScrollOffset);
             if (newOffset != _scrollBuffer.ScrollOffset)
             {
-                _scrollBuffer.SetScrollOffset(newOffset, 27);
+                _scrollBuffer.SetScrollOffset(newOffset, NARRATIVE_HEIGHT);
                 _narrationState.ScrollOffset = newOffset;
             }
             return;
@@ -403,7 +404,7 @@ public class Phase6ForestController
         if (_ui.IsMouseOverScrollbarTrack(mouseX, mouseY, _narrationState.ScrollbarThumb))
         {
             int newOffset = _ui.CalculateScrollOffsetFromMouseY(mouseY, _scrollBuffer);
-            _scrollBuffer.SetScrollOffset(newOffset, 27);
+            _scrollBuffer.SetScrollOffset(newOffset, NARRATIVE_HEIGHT);
             _narrationState.ScrollOffset = newOffset;
             Console.WriteLine($"Phase6ForestController: Jump scrolled to offset {newOffset}");
             return;
@@ -442,15 +443,17 @@ public class Phase6ForestController
     /// </summary>
     public void OnMouseWheel(float delta)
     {
+        const int VIEWPORT_HEIGHT = 26; // NARRATIVE_HEIGHT - SEPARATOR_HEIGHT
+        
         if (delta > 0)
         {
             // Scroll up
-            _scrollBuffer.ScrollUp(3);
+            _scrollBuffer.ScrollUp(3, VIEWPORT_HEIGHT);
         }
         else if (delta < 0)
         {
             // Scroll down
-            _scrollBuffer.ScrollDown(3, 27);
+            _scrollBuffer.ScrollDown(3, VIEWPORT_HEIGHT);
         }
         
         _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;

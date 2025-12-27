@@ -139,12 +139,14 @@ public class Phase6ObservationUI
         }
         
         // Get visible lines based on scroll offset
-        var visibleLines = scrollBuffer.GetVisibleLines(scrollOffset, NARRATIVE_HEIGHT);
+        // Subtract 1 from NARRATIVE_HEIGHT to account for the bottom separator line
+        int visibleContentHeight = NARRATIVE_HEIGHT - SEPARATOR_HEIGHT;
+        var visibleLines = scrollBuffer.GetVisibleLines(scrollOffset, visibleContentHeight);
         
         int currentY = NARRATIVE_START_Y;
         foreach (var renderedLine in visibleLines)
         {
-            if (currentY >= TERMINAL_HEIGHT - STATUS_BAR_HEIGHT)
+            if (currentY >= TERMINAL_HEIGHT - STATUS_BAR_HEIGHT - SEPARATOR_HEIGHT)
                 break;
             
             switch (renderedLine.Type)
@@ -275,52 +277,130 @@ public class Phase6ObservationUI
     }
     
     /// <summary>
-    /// Render a list of actions with hover highlighting.
+    /// Render a list of actions with hover highlighting and word wrapping.
     /// Returns the new Y position after rendering all actions.
     /// </summary>
     private int RenderActionsBlock(List<ParsedNarrativeAction> actions, int startY, ActionRegion? hoveredAction)
     {
         int currentY = startY;
-        int maxY = TERMINAL_HEIGHT - STATUS_BAR_HEIGHT;
+        int maxY = TERMINAL_HEIGHT - STATUS_BAR_HEIGHT - SEPARATOR_HEIGHT;
         
         for (int i = 0; i < actions.Count && currentY < maxY; i++)
         {
             var action = actions[i];
             
-            // Check if this specific action region is hovered
-            var actionRegion = new ActionRegion(i, currentY, currentY, LEFT_MARGIN, TERMINAL_WIDTH - RIGHT_MARGIN);
-            bool isHovered = hoveredAction != null &&
-                           hoveredAction.StartY == currentY &&
-                           hoveredAction.ActionIndex == i;
-            
             // Format: "> [SkillName] action text"
             string prefix = "> ";
             string skillBracket = $"[{action.ActionSkill?.DisplayName ?? action.ActionSkillId}] ";
-            string actionText = action.DisplayText;  // Without "try to" prefix
+            string actionText = action.DisplayText;
+            
+            // Calculate available width for text
+            int firstLinePrefix = LEFT_MARGIN + prefix.Length + skillBracket.Length;
+            int firstLineWidth = TERMINAL_WIDTH - RIGHT_MARGIN - firstLinePrefix - 1; // -1 for scrollbar
+            int continuationIndent = LEFT_MARGIN + 4; // Indent continuation lines by 4 spaces
+            int continuationWidth = TERMINAL_WIDTH - RIGHT_MARGIN - continuationIndent - 1;
+            
+            // Wrap action text
+            var wrappedLines = WrapActionText(actionText, firstLineWidth, continuationWidth);
+            
+            // Check if this action is hovered (check if mouse is in any of the wrapped lines)
+            int actionStartY = currentY;
+            int actionEndY = currentY + wrappedLines.Count - 1;
+            bool isHovered = hoveredAction != null &&
+                           hoveredAction.ActionIndex == i &&
+                           hoveredAction.StartY >= actionStartY &&
+                           hoveredAction.StartY <= actionEndY;
             
             // Calculate colors
             Vector4 prefixColor = NarrativeColor;
             Vector4 skillColor = ActionSkillColor;
             Vector4 textColor = isHovered ? ActionHoverColor : ActionNormalColor;
             
-            // Render the action line
-            int startX = LEFT_MARGIN;
-            _terminal.Text(startX, currentY, prefix, prefixColor, BackgroundColor);
-            startX += prefix.Length;
+            // Render first line with prefix and skill
+            if (currentY < maxY)
+            {
+                int startX = LEFT_MARGIN;
+                _terminal.Text(startX, currentY, prefix, prefixColor, BackgroundColor);
+                startX += prefix.Length;
+                
+                _terminal.Text(startX, currentY, skillBracket, skillColor, BackgroundColor);
+                startX += skillBracket.Length;
+                
+                _terminal.Text(startX, currentY, wrappedLines[0], textColor, BackgroundColor);
+                currentY++;
+            }
             
-            _terminal.Text(startX, currentY, skillBracket, skillColor, BackgroundColor);
-            startX += skillBracket.Length;
+            // Render continuation lines with indentation
+            for (int lineIdx = 1; lineIdx < wrappedLines.Count && currentY < maxY; lineIdx++)
+            {
+                _terminal.Text(continuationIndent, currentY, wrappedLines[lineIdx], textColor, BackgroundColor);
+                currentY++;
+            }
             
-            int actionTextStartX = startX;
-            _terminal.Text(startX, currentY, actionText, textColor, BackgroundColor);
-            
-            // Track action region for click detection
+            // Track action region spanning all lines
+            var actionRegion = new ActionRegion(i, actionStartY, actionEndY, LEFT_MARGIN, TERMINAL_WIDTH - RIGHT_MARGIN);
             _actionRegions.Add(actionRegion);
-            
-            currentY++;
         }
         
         return currentY;
+    }
+    
+    /// <summary>
+    /// Wrap action text with different widths for first line and continuation lines.
+    /// </summary>
+    private List<string> WrapActionText(string text, int firstLineWidth, int continuationWidth)
+    {
+        var lines = new List<string>();
+        
+        if (string.IsNullOrEmpty(text))
+        {
+            lines.Add("");
+            return lines;
+        }
+        
+        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var currentLine = new System.Text.StringBuilder();
+        int currentMaxWidth = firstLineWidth;
+        
+        foreach (var word in words)
+        {
+            var testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
+            
+            if (testLine.Length <= currentMaxWidth)
+            {
+                if (currentLine.Length > 0)
+                    currentLine.Append(' ');
+                currentLine.Append(word);
+            }
+            else
+            {
+                // Line would be too long, start new line
+                if (currentLine.Length > 0)
+                {
+                    lines.Add(currentLine.ToString());
+                    currentLine.Clear();
+                    currentMaxWidth = continuationWidth;
+                }
+                
+                // If single word is too long, force it on its own line
+                if (word.Length > currentMaxWidth)
+                {
+                    lines.Add(word.Substring(0, currentMaxWidth));
+                    currentLine.Append(word.Substring(currentMaxWidth));
+                }
+                else
+                {
+                    currentLine.Append(word);
+                }
+            }
+        }
+        
+        if (currentLine.Length > 0)
+        {
+            lines.Add(currentLine.ToString());
+        }
+        
+        return lines;
     }
     
     /// <summary>
@@ -360,7 +440,7 @@ public class Phase6ObservationUI
         
         // Calculate thumb size and position
         int totalLines = scrollBuffer.TotalLines;
-        int visibleLines = NARRATIVE_HEIGHT;
+        int visibleLines = NARRATIVE_HEIGHT - SEPARATOR_HEIGHT; // Account for separator line
         
         // If content fits in viewport, no thumb needed
         if (totalLines <= visibleLines)
@@ -423,7 +503,7 @@ public class Phase6ObservationUI
         int trackStartY = SCROLLBAR_TRACK_START_Y;
         int trackHeight = SCROLLBAR_TRACK_HEIGHT;
         int totalLines = scrollBuffer.TotalLines;
-        int visibleLines = NARRATIVE_HEIGHT;
+        int visibleLines = NARRATIVE_HEIGHT - SEPARATOR_HEIGHT; // Account for separator line
         
         // Clamp mouse Y to track bounds
         int relativeY = Math.Clamp(mouseY - trackStartY, 0, trackHeight - 1);
