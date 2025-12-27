@@ -15,7 +15,7 @@ namespace Cathedral.Game;
 public class Phase6ForestController
 {
     // UI constants
-    private const int NARRATIVE_HEIGHT = 26; // Terminal height (30) - header (2) - status bar (1) - margin (1)
+    private const int NARRATIVE_HEIGHT = 26; // Visible content lines: Y=2 to Y=27 (26 lines)
     
     // State
     private readonly Phase6NarrationState _narrationState = new();
@@ -299,9 +299,12 @@ public class Phase6ForestController
         if (_narrationState.IsScrollbarDragging)
         {
             int deltaY = mouseY - _narrationState.ScrollbarDragStartY;
-            int trackHeight = 27; // NARRATIVE_HEIGHT
+            
+            // Use correct track height (26) which accounts for separator line
+            int trackHeight = NARRATIVE_HEIGHT - 1; // Track is 26 cells (Y=2 to Y=27)
             int totalLines = _scrollBuffer.TotalLines;
-            int visibleLines = 27;
+            int visibleLines = NARRATIVE_HEIGHT; // 26 lines visible
+            
             // Add 5-line margin to ensure last lines are visible
             int maxScrollOffset = Math.Max(0, totalLines - visibleLines + 5);
             

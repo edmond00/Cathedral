@@ -191,14 +191,31 @@ public class NarrationScrollBuffer
                     Actions: null
                 ));
                 
-                // Add action lines placeholder - actual rendering happens in UI
-                _renderedLines.Add(new RenderedLine(
-                    Text: "[ACTIONS]",  // Placeholder for action rendering
-                    Type: LineType.Action,
-                    BlockType: block.Type,
-                    Keywords: null,
-                    Actions: block.Actions
-                ));
+                // Pre-wrap each action to match actual rendered lines
+                foreach (var action in block.Actions)
+                {
+                    // Calculate wrapped lines for this action
+                    // Format: "> [SkillName] action text"
+                    string prefix = "> ";
+                    string skillBracket = $"[{action.ActionSkill?.DisplayName ?? action.ActionSkillId}] ";
+                    int firstLinePrefix = prefix.Length + skillBracket.Length;
+                    int firstLineWidth = _maxWidth - firstLinePrefix;
+                    int continuationWidth = _maxWidth - 4; // 4-space indent
+                    
+                    var wrappedActionLines = WrapActionText(action.DisplayText, firstLineWidth, continuationWidth);
+                    
+                    // Add a RenderedLine for each wrapped line of this action
+                    for (int i = 0; i < wrappedActionLines.Count; i++)
+                    {
+                        _renderedLines.Add(new RenderedLine(
+                            Text: wrappedActionLines[i],
+                            Type: LineType.Action,
+                            BlockType: block.Type,
+                            Keywords: null,
+                            Actions: i == 0 ? new List<ParsedNarrativeAction> { action } : null // Only first line has action reference
+                        ));
+                    }
+                }
             }
 
             // Empty line after block
@@ -276,6 +293,65 @@ public class NarrationScrollBuffer
             }
         }
 
+        return lines;
+    }
+    
+    /// <summary>
+    /// Wrap action text with different widths for first line and continuation lines.
+    /// Matches the wrapping logic in Phase6ObservationUI.
+    /// </summary>
+    private List<string> WrapActionText(string text, int firstLineWidth, int continuationWidth)
+    {
+        var lines = new List<string>();
+        
+        if (string.IsNullOrEmpty(text))
+        {
+            lines.Add("");
+            return lines;
+        }
+        
+        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var currentLine = new StringBuilder();
+        int currentMaxWidth = firstLineWidth;
+        
+        foreach (var word in words)
+        {
+            var testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
+            
+            if (testLine.Length <= currentMaxWidth)
+            {
+                if (currentLine.Length > 0)
+                    currentLine.Append(' ');
+                currentLine.Append(word);
+            }
+            else
+            {
+                // Line would be too long, start new line
+                if (currentLine.Length > 0)
+                {
+                    lines.Add(currentLine.ToString());
+                    currentLine.Clear();
+                    currentMaxWidth = continuationWidth;
+                }
+                
+                // If single word is too long, force it on its own line
+                if (word.Length > currentMaxWidth)
+                {
+                    lines.Add(word.Substring(0, currentMaxWidth));
+                    currentLine.Append(word.Substring(currentMaxWidth));
+                }
+                else
+                {
+                    currentLine.Append(word);
+                }
+            }
+        }
+        
+        if (currentLine.Length > 0)
+        {
+            lines.Add(currentLine.ToString());
+        }
+        
         return lines;
     }
 

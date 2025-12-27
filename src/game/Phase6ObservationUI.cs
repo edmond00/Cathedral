@@ -144,6 +144,10 @@ public class Phase6ObservationUI
         var visibleLines = scrollBuffer.GetVisibleLines(scrollOffset, visibleContentHeight);
         
         int currentY = NARRATIVE_START_Y;
+        int currentActionIndex = -1;
+        ParsedNarrativeAction? currentAction = null;
+        int actionLineCount = 0;
+        
         foreach (var renderedLine in visibleLines)
         {
             if (currentY >= TERMINAL_HEIGHT - STATUS_BAR_HEIGHT - SEPARATOR_HEIGHT)
@@ -167,11 +171,20 @@ public class Phase6ObservationUI
                     break;
                     
                 case LineType.Action:
-                    // Render actions list
+                    // Actions are now pre-wrapped in scroll buffer
+                    // Each line is a separate RenderedLine
                     if (renderedLine.Actions != null && renderedLine.Actions.Count > 0)
                     {
-                        currentY = RenderActionsBlock(renderedLine.Actions, currentY, hoveredAction);
-                        continue; // RenderActionsBlock handles Y advancement
+                        // First line of a new action - has action reference
+                        currentAction = renderedLine.Actions[0];
+                        currentActionIndex++;
+                        actionLineCount = 0;
+                    }
+                    
+                    if (currentAction != null)
+                    {
+                        RenderActionLine(renderedLine.Text, currentAction, currentActionIndex, currentY, actionLineCount, hoveredAction);
+                        actionLineCount++;
                     }
                     break;
                     
@@ -277,7 +290,65 @@ public class Phase6ObservationUI
     }
     
     /// <summary>
+    /// Render a single action line (actions are pre-wrapped in scroll buffer).
+    /// </summary>
+    private void RenderActionLine(string text, ParsedNarrativeAction action, int actionIndex, int y, int lineIndex, ActionRegion? hoveredAction)
+    {
+        // Check if this action is hovered
+        bool isHovered = hoveredAction != null && hoveredAction.ActionIndex == actionIndex;
+        
+        // Calculate colors
+        Vector4 prefixColor = NarrativeColor;
+        Vector4 skillColor = ActionSkillColor;
+        Vector4 textColor = isHovered ? ActionHoverColor : ActionNormalColor;
+        
+        int startX = LEFT_MARGIN;
+        
+        if (lineIndex == 0)
+        {
+            // First line: render with prefix and skill
+            string prefix = "> ";
+            string skillBracket = $"[{action.ActionSkill?.DisplayName ?? action.ActionSkillId}] ";
+            
+            _terminal.Text(startX, y, prefix, prefixColor, BackgroundColor);
+            startX += prefix.Length;
+            
+            _terminal.Text(startX, y, skillBracket, skillColor, BackgroundColor);
+            startX += skillBracket.Length;
+            
+            _terminal.Text(startX, y, text, textColor, BackgroundColor);
+            
+            // Track action region (will be updated as we encounter more lines)
+            var actionRegion = new ActionRegion(actionIndex, y, y, LEFT_MARGIN, TERMINAL_WIDTH - RIGHT_MARGIN);
+            _actionRegions.Add(actionRegion);
+        }
+        else
+        {
+            // Continuation line: indent by 4 spaces
+            int continuationIndent = LEFT_MARGIN + 4;
+            _terminal.Text(continuationIndent, y, text, textColor, BackgroundColor);
+            
+            // Update the action region to extend to this line
+            if (_actionRegions.Count > 0)
+            {
+                var lastRegion = _actionRegions[_actionRegions.Count - 1];
+                if (lastRegion.ActionIndex == actionIndex)
+                {
+                    _actionRegions[_actionRegions.Count - 1] = new ActionRegion(
+                        actionIndex, 
+                        lastRegion.StartY, 
+                        y,  // Extend to current line
+                        LEFT_MARGIN, 
+                        TERMINAL_WIDTH - RIGHT_MARGIN
+                    );
+                }
+            }
+        }
+    }
+    
+    /// <summary>
     /// Render a list of actions with hover highlighting and word wrapping.
+    /// NOTE: This method is kept for compatibility but actions are now pre-wrapped in scroll buffer.
     /// Returns the new Y position after rendering all actions.
     /// </summary>
     private int RenderActionsBlock(List<ParsedNarrativeAction> actions, int startY, ActionRegion? hoveredAction)
