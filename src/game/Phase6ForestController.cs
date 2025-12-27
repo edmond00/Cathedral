@@ -14,9 +14,6 @@ namespace Cathedral.Game;
 /// </summary>
 public class Phase6ForestController
 {
-    // UI constants
-    private const int NARRATIVE_HEIGHT = 26; // Visible content lines: Y=2 to Y=27 (26 lines)
-    
     // State
     private readonly Phase6NarrationState _narrationState = new();
     private readonly NarrationScrollBuffer _scrollBuffer;
@@ -194,7 +191,7 @@ public class Phase6ForestController
             _narrationState.AddBlock(thinkingBlock);
             
             // Auto-scroll to bottom to show new thinking block
-            _scrollBuffer.ScrollToBottom(NARRATIVE_HEIGHT);
+            _scrollBuffer.ScrollToBottom();
             _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset; // Sync scroll position
             
             // Update state
@@ -300,13 +297,11 @@ public class Phase6ForestController
         {
             int deltaY = mouseY - _narrationState.ScrollbarDragStartY;
             
-            // Use correct track height (26) which accounts for separator line
-            int trackHeight = NARRATIVE_HEIGHT - 1; // Track is 26 cells (Y=2 to Y=27)
+            int trackHeight = Phase6Layout.SCROLLBAR_TRACK_HEIGHT;
             int totalLines = _scrollBuffer.TotalLines;
-            int visibleLines = NARRATIVE_HEIGHT; // 26 lines visible
+            int visibleLines = Phase6Layout.NARRATIVE_HEIGHT;
             
-            // Add 5-line margin to ensure last lines are visible
-            int maxScrollOffset = Math.Max(0, totalLines - visibleLines + 5);
+            int maxScrollOffset = Phase6Layout.CalculateMaxScrollOffset(totalLines);
             
             // Calculate thumb size for proper scaling
             float visibleRatio = (float)visibleLines / totalLines;
@@ -321,7 +316,7 @@ public class Phase6ForestController
             newOffset = Math.Clamp(newOffset, 0, maxScrollOffset);
             if (newOffset != _scrollBuffer.ScrollOffset)
             {
-                _scrollBuffer.SetScrollOffset(newOffset, NARRATIVE_HEIGHT);
+                _scrollBuffer.SetScrollOffset(newOffset);
                 _narrationState.ScrollOffset = newOffset;
             }
             return;
@@ -407,7 +402,7 @@ public class Phase6ForestController
         if (_ui.IsMouseOverScrollbarTrack(mouseX, mouseY, _narrationState.ScrollbarThumb))
         {
             int newOffset = _ui.CalculateScrollOffsetFromMouseY(mouseY, _scrollBuffer);
-            _scrollBuffer.SetScrollOffset(newOffset, NARRATIVE_HEIGHT);
+            _scrollBuffer.SetScrollOffset(newOffset);
             _narrationState.ScrollOffset = newOffset;
             Console.WriteLine($"Phase6ForestController: Jump scrolled to offset {newOffset}");
             return;
@@ -446,17 +441,15 @@ public class Phase6ForestController
     /// </summary>
     public void OnMouseWheel(float delta)
     {
-        const int VIEWPORT_HEIGHT = 26; // NARRATIVE_HEIGHT - SEPARATOR_HEIGHT
-        
         if (delta > 0)
         {
             // Scroll up
-            _scrollBuffer.ScrollUp(3, VIEWPORT_HEIGHT);
+            _scrollBuffer.ScrollUp(3);
         }
         else if (delta < 0)
         {
             // Scroll down
-            _scrollBuffer.ScrollDown(3, VIEWPORT_HEIGHT);
+            _scrollBuffer.ScrollDown(3);
         }
         
         _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;

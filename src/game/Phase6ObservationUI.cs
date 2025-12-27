@@ -13,24 +13,8 @@ namespace Cathedral.Game;
 /// </summary>
 public class Phase6ObservationUI
 {
-    // Terminal dimensions
-    private const int TERMINAL_WIDTH = 100;
-    private const int TERMINAL_HEIGHT = 30;
-    
-    // Margin constants
-    private const int LEFT_MARGIN = 4;
-    private const int RIGHT_MARGIN = 4;
-    private const int CONTENT_WIDTH = TERMINAL_WIDTH - LEFT_MARGIN - RIGHT_MARGIN;
-    
-    // Layout constants
-    private const int HEADER_HEIGHT = 2;
-    private const int STATUS_BAR_HEIGHT = 1;
-    private const int SEPARATOR_HEIGHT = 1;
-    private const int NARRATIVE_START_Y = HEADER_HEIGHT;
-    private const int NARRATIVE_HEIGHT = TERMINAL_HEIGHT - HEADER_HEIGHT - STATUS_BAR_HEIGHT;
-    private const int SCROLLBAR_X = TERMINAL_WIDTH - RIGHT_MARGIN; // Inside right margin
-    private const int SCROLLBAR_TRACK_START_Y = NARRATIVE_START_Y;
-    private const int SCROLLBAR_TRACK_HEIGHT = NARRATIVE_HEIGHT - SEPARATOR_HEIGHT; // Don't overlap bottom separator
+    // Use centralized layout constants
+    private const int SCROLLBAR_X = Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN; // Inside right margin
     
     // Colors
     private static readonly Vector4 HeaderColor = new(0.0f, 0.8f, 1.0f, 1.0f); // Cyan
@@ -66,9 +50,9 @@ public class Phase6ObservationUI
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
         
-        if (_terminal.Width != TERMINAL_WIDTH || _terminal.Height != TERMINAL_HEIGHT)
+        if (_terminal.Width != Phase6Layout.TERMINAL_WIDTH || _terminal.Height != Phase6Layout.TERMINAL_HEIGHT)
         {
-            throw new ArgumentException($"Terminal must be {TERMINAL_WIDTH}x{TERMINAL_HEIGHT}, but got {_terminal.Width}x{_terminal.Height}");
+            throw new ArgumentException($"Terminal must be {Phase6Layout.TERMINAL_WIDTH}x{Phase6Layout.TERMINAL_HEIGHT}, but got {_terminal.Width}x{_terminal.Height}");
         }
     }
     
@@ -77,9 +61,9 @@ public class Phase6ObservationUI
     /// </summary>
     public void Clear()
     {
-        for (int y = 0; y < TERMINAL_HEIGHT; y++)
+        for (int y = 0; y < Phase6Layout.TERMINAL_HEIGHT; y++)
         {
-            for (int x = 0; x < TERMINAL_WIDTH; x++)
+            for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
             {
                 _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
             }
@@ -94,11 +78,11 @@ public class Phase6ObservationUI
     {
         // Line 0: Location name
         string title = $"Forest Exploration - {locationName}";
-        _terminal.Text(LEFT_MARGIN, 0, title, HeaderColor, BackgroundColor);
+        _terminal.Text(Phase6Layout.LEFT_MARGIN, 0, title, HeaderColor, BackgroundColor);
         
         // Thinking attempts indicator (right side)
         string attempts = $"Thinking: ";
-        int attemptsX = TERMINAL_WIDTH - RIGHT_MARGIN - 20;
+        int attemptsX = Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN - 20;
         _terminal.Text(attemptsX, 0, attempts, StatusBarColor, BackgroundColor);
         
         // Draw filled boxes for remaining attempts
@@ -130,9 +114,9 @@ public class Phase6ObservationUI
         _actionRegions.Clear();
         
         // Clear narrative area
-        for (int y = NARRATIVE_START_Y; y < TERMINAL_HEIGHT - STATUS_BAR_HEIGHT; y++)
+        for (int y = Phase6Layout.CONTENT_START_Y; y < Phase6Layout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < TERMINAL_WIDTH; x++)
+            for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
             {
                 _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
             }
@@ -140,24 +124,24 @@ public class Phase6ObservationUI
         
         // Get visible lines based on scroll offset
         // Subtract 1 from NARRATIVE_HEIGHT to account for the bottom separator line
-        int visibleContentHeight = NARRATIVE_HEIGHT - SEPARATOR_HEIGHT;
+        int visibleContentHeight = Phase6Layout.NARRATIVE_HEIGHT - Phase6Layout.SEPARATOR_HEIGHT;
         var visibleLines = scrollBuffer.GetVisibleLines(scrollOffset, visibleContentHeight);
         
-        int currentY = NARRATIVE_START_Y;
+        int currentY = Phase6Layout.CONTENT_START_Y;
         int currentActionIndex = -1;
         ParsedNarrativeAction? currentAction = null;
         int actionLineCount = 0;
         
         foreach (var renderedLine in visibleLines)
         {
-            if (currentY >= TERMINAL_HEIGHT - STATUS_BAR_HEIGHT - SEPARATOR_HEIGHT)
+            if (currentY >= Phase6Layout.CONTENT_END_Y + 1)
                 break;
             
             switch (renderedLine.Type)
             {
                 case LineType.Header:
                     // Render skill name header in yellow
-                    _terminal.Text(LEFT_MARGIN, currentY, renderedLine.Text, SkillHeaderColor, BackgroundColor);
+                    _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, SkillHeaderColor, BackgroundColor);
                     break;
                     
                 case LineType.Content:
@@ -165,7 +149,7 @@ public class Phase6ObservationUI
                     RenderLineWithKeywords(
                         renderedLine.Text,
                         renderedLine.Keywords,
-                        LEFT_MARGIN,
+                        Phase6Layout.LEFT_MARGIN,
                         currentY,
                         hoveredKeyword);
                     break;
@@ -302,7 +286,7 @@ public class Phase6ObservationUI
         Vector4 skillColor = ActionSkillColor;
         Vector4 textColor = isHovered ? ActionHoverColor : ActionNormalColor;
         
-        int startX = LEFT_MARGIN;
+        int startX = Phase6Layout.LEFT_MARGIN;
         
         if (lineIndex == 0)
         {
@@ -319,13 +303,13 @@ public class Phase6ObservationUI
             _terminal.Text(startX, y, text, textColor, BackgroundColor);
             
             // Track action region (will be updated as we encounter more lines)
-            var actionRegion = new ActionRegion(actionIndex, y, y, LEFT_MARGIN, TERMINAL_WIDTH - RIGHT_MARGIN);
+            var actionRegion = new ActionRegion(actionIndex, y, y, Phase6Layout.LEFT_MARGIN, Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN);
             _actionRegions.Add(actionRegion);
         }
         else
         {
             // Continuation line: indent by 4 spaces
-            int continuationIndent = LEFT_MARGIN + 4;
+            int continuationIndent = Phase6Layout.LEFT_MARGIN + 4;
             _terminal.Text(continuationIndent, y, text, textColor, BackgroundColor);
             
             // Update the action region to extend to this line
@@ -338,8 +322,8 @@ public class Phase6ObservationUI
                         actionIndex, 
                         lastRegion.StartY, 
                         y,  // Extend to current line
-                        LEFT_MARGIN, 
-                        TERMINAL_WIDTH - RIGHT_MARGIN
+                        Phase6Layout.LEFT_MARGIN,
+                        Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN
                     );
                 }
             }
@@ -347,132 +331,8 @@ public class Phase6ObservationUI
     }
     
     /// <summary>
-    /// Render a list of actions with hover highlighting and word wrapping.
-    /// NOTE: This method is kept for compatibility but actions are now pre-wrapped in scroll buffer.
-    /// Returns the new Y position after rendering all actions.
-    /// </summary>
-    private int RenderActionsBlock(List<ParsedNarrativeAction> actions, int startY, ActionRegion? hoveredAction)
-    {
-        int currentY = startY;
-        int maxY = TERMINAL_HEIGHT - STATUS_BAR_HEIGHT - SEPARATOR_HEIGHT;
-        
-        for (int i = 0; i < actions.Count && currentY < maxY; i++)
-        {
-            var action = actions[i];
-            
-            // Format: "> [SkillName] action text"
-            string prefix = "> ";
-            string skillBracket = $"[{action.ActionSkill?.DisplayName ?? action.ActionSkillId}] ";
-            string actionText = action.DisplayText;
-            
-            // Calculate available width for text
-            int firstLinePrefix = LEFT_MARGIN + prefix.Length + skillBracket.Length;
-            int firstLineWidth = TERMINAL_WIDTH - RIGHT_MARGIN - firstLinePrefix - 1; // -1 for scrollbar
-            int continuationIndent = LEFT_MARGIN + 4; // Indent continuation lines by 4 spaces
-            int continuationWidth = TERMINAL_WIDTH - RIGHT_MARGIN - continuationIndent - 1;
-            
-            // Wrap action text
-            var wrappedLines = WrapActionText(actionText, firstLineWidth, continuationWidth);
-            
-            // Check if this action is hovered (check if mouse is in any of the wrapped lines)
-            int actionStartY = currentY;
-            int actionEndY = currentY + wrappedLines.Count - 1;
-            bool isHovered = hoveredAction != null &&
-                           hoveredAction.ActionIndex == i &&
-                           hoveredAction.StartY >= actionStartY &&
-                           hoveredAction.StartY <= actionEndY;
-            
-            // Calculate colors
-            Vector4 prefixColor = NarrativeColor;
-            Vector4 skillColor = ActionSkillColor;
-            Vector4 textColor = isHovered ? ActionHoverColor : ActionNormalColor;
-            
-            // Render first line with prefix and skill
-            if (currentY < maxY)
-            {
-                int startX = LEFT_MARGIN;
-                _terminal.Text(startX, currentY, prefix, prefixColor, BackgroundColor);
-                startX += prefix.Length;
-                
-                _terminal.Text(startX, currentY, skillBracket, skillColor, BackgroundColor);
-                startX += skillBracket.Length;
-                
-                _terminal.Text(startX, currentY, wrappedLines[0], textColor, BackgroundColor);
-                currentY++;
-            }
-            
-            // Render continuation lines with indentation
-            for (int lineIdx = 1; lineIdx < wrappedLines.Count && currentY < maxY; lineIdx++)
-            {
-                _terminal.Text(continuationIndent, currentY, wrappedLines[lineIdx], textColor, BackgroundColor);
-                currentY++;
-            }
-            
-            // Track action region spanning all lines
-            var actionRegion = new ActionRegion(i, actionStartY, actionEndY, LEFT_MARGIN, TERMINAL_WIDTH - RIGHT_MARGIN);
-            _actionRegions.Add(actionRegion);
-        }
-        
-        return currentY;
-    }
-    
-    /// <summary>
-    /// Wrap action text with different widths for first line and continuation lines.
-    /// </summary>
-    private List<string> WrapActionText(string text, int firstLineWidth, int continuationWidth)
-    {
-        var lines = new List<string>();
-        
-        if (string.IsNullOrEmpty(text))
-        {
-            lines.Add("");
-            return lines;
-        }
-        
-        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var currentLine = new System.Text.StringBuilder();
-        int currentMaxWidth = firstLineWidth;
-        
-        foreach (var word in words)
-        {
-            var testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
-            
-            if (testLine.Length <= currentMaxWidth)
-            {
-                if (currentLine.Length > 0)
-                    currentLine.Append(' ');
-                currentLine.Append(word);
-            }
-            else
-            {
-                // Line would be too long, start new line
-                if (currentLine.Length > 0)
-                {
-                    lines.Add(currentLine.ToString());
-                    currentLine.Clear();
-                    currentMaxWidth = continuationWidth;
-                }
-                
-                // If single word is too long, force it on its own line
-                if (word.Length > currentMaxWidth)
-                {
-                    lines.Add(word.Substring(0, currentMaxWidth));
-                    currentLine.Append(word.Substring(currentMaxWidth));
-                }
-                else
-                {
-                    currentLine.Append(word);
-                }
-            }
-        }
-        
-        if (currentLine.Length > 0)
-        {
-            lines.Add(currentLine.ToString());
-        }
-        
-        return lines;
-    }
+    // Note: RenderActionsBlock() and WrapActionText() removed - actions are now pre-wrapped 
+    // in NarrationScrollBuffer and rendered via RenderActionLine() for each wrapped line.
     
     /// <summary>
     /// Get the action region under the mouse cursor, or null if none.
@@ -499,8 +359,8 @@ public class Phase6ObservationUI
         int scrollOffset,
         bool isThumbHovered)
     {
-        int trackStartY = SCROLLBAR_TRACK_START_Y;
-        int trackHeight = SCROLLBAR_TRACK_HEIGHT;
+        int trackStartY = Phase6Layout.CONTENT_START_Y;
+        int trackHeight = Phase6Layout.SCROLLBAR_TRACK_HEIGHT;
         int scrollbarX = SCROLLBAR_X;
         
         // Draw track
@@ -511,7 +371,7 @@ public class Phase6ObservationUI
         
         // Calculate thumb size and position
         int totalLines = scrollBuffer.TotalLines;
-        int visibleLines = NARRATIVE_HEIGHT - SEPARATOR_HEIGHT; // Account for separator line
+        int visibleLines = Phase6Layout.NARRATIVE_HEIGHT;
         
         // If content fits in viewport, no thumb needed
         if (totalLines <= visibleLines)
@@ -524,8 +384,7 @@ public class Phase6ObservationUI
         int thumbHeight = Math.Max(2, (int)(trackHeight * visibleRatio));
         
         // Calculate thumb position based on scroll offset
-        // Add 5-line margin to match NarrationScrollBuffer's maxScroll calculation
-        int maxScrollOffset = Math.Max(0, totalLines - visibleLines + 5);
+        int maxScrollOffset = Phase6Layout.CalculateMaxScrollOffset(totalLines);
         float scrollRatio = maxScrollOffset > 0 ? (float)scrollOffset / maxScrollOffset : 0f;
         int maxThumbY = trackHeight - thumbHeight;
         int thumbY = trackStartY + (int)(maxThumbY * scrollRatio);
@@ -557,8 +416,8 @@ public class Phase6ObservationUI
     public bool IsMouseOverScrollbarTrack(int mouseX, int mouseY, (int StartY, int Height) thumb)
     {
         if (mouseX != SCROLLBAR_X) return false;
-        int trackStartY = SCROLLBAR_TRACK_START_Y;
-        int trackEndY = trackStartY + SCROLLBAR_TRACK_HEIGHT;
+        int trackStartY = Phase6Layout.CONTENT_START_Y;
+        int trackEndY = trackStartY + Phase6Layout.SCROLLBAR_TRACK_HEIGHT;
         
         bool inTrack = mouseY >= trackStartY && mouseY < trackEndY;
         bool onThumb = thumb.Height > 0 && mouseY >= thumb.StartY && mouseY < thumb.StartY + thumb.Height;
@@ -571,10 +430,10 @@ public class Phase6ObservationUI
     /// </summary>
     public int CalculateScrollOffsetFromMouseY(int mouseY, NarrationScrollBuffer scrollBuffer)
     {
-        int trackStartY = SCROLLBAR_TRACK_START_Y;
-        int trackHeight = SCROLLBAR_TRACK_HEIGHT;
+        int trackStartY = Phase6Layout.CONTENT_START_Y;
+        int trackHeight = Phase6Layout.SCROLLBAR_TRACK_HEIGHT;
         int totalLines = scrollBuffer.TotalLines;
-        int visibleLines = NARRATIVE_HEIGHT - SEPARATOR_HEIGHT; // Account for separator line
+        int visibleLines = Phase6Layout.NARRATIVE_HEIGHT - Phase6Layout.SEPARATOR_HEIGHT; // Account for separator line
         
         // Clamp mouse Y to track bounds
         int relativeY = Math.Clamp(mouseY - trackStartY, 0, trackHeight - 1);
@@ -593,8 +452,8 @@ public class Phase6ObservationUI
     /// </summary>
     public void RenderStatusBar(string message = "")
     {
-        int statusY = TERMINAL_HEIGHT - 1;
-        int separatorY = statusY - 1;
+        int statusY = Phase6Layout.STATUS_BAR_Y;
+        int separatorY = Phase6Layout.SEPARATOR_Y;
         
         // Draw separator line above status bar
         DrawHorizontalLine(separatorY);
@@ -605,13 +464,13 @@ public class Phase6ObservationUI
         }
         
         // Truncate if too long
-        int maxMessageWidth = CONTENT_WIDTH - 2;
+        int maxMessageWidth = Phase6Layout.CONTENT_WIDTH - 2;
         if (message.Length > maxMessageWidth)
         {
             message = message.Substring(0, maxMessageWidth - 3) + "...";
         }
         
-        _terminal.Text(LEFT_MARGIN, statusY, message, StatusBarColor, BackgroundColor);
+        _terminal.Text(Phase6Layout.LEFT_MARGIN, statusY, message, StatusBarColor, BackgroundColor);
     }
     
     /// <summary>
@@ -629,9 +488,9 @@ public class Phase6ObservationUI
         string spinner = LoadingFrames[_loadingFrameIndex];
         
         // Clear narrative area
-        for (int y = NARRATIVE_START_Y; y < TERMINAL_HEIGHT - STATUS_BAR_HEIGHT; y++)
+        for (int y = Phase6Layout.CONTENT_START_Y; y < Phase6Layout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < TERMINAL_WIDTH; x++)
+            for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
             {
                 _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
             }
@@ -639,21 +498,21 @@ public class Phase6ObservationUI
         
         // Show spinner and message centered
         string loadingText = $"{spinner}  {message}  {spinner}";
-        int centerY = NARRATIVE_START_Y + NARRATIVE_HEIGHT / 2;
-        int centerX = (TERMINAL_WIDTH - loadingText.Length) / 2;
+        int centerY = Phase6Layout.CONTENT_START_Y + Phase6Layout.NARRATIVE_HEIGHT / 2;
+        int centerX = (Phase6Layout.TERMINAL_WIDTH - loadingText.Length) / 2;
         _terminal.Text(centerX, centerY, loadingText, LoadingColor, BackgroundColor);
         
         // Add animated dots
         string dots = new string('.', (_loadingFrameIndex % 4));
         string hint = $"Please wait{dots}";
         int hintY = centerY + 2;
-        int hintX = (TERMINAL_WIDTH - hint.Length) / 2;
+        int hintX = (Phase6Layout.TERMINAL_WIDTH - hint.Length) / 2;
         _terminal.Text(hintX, hintY, hint, StatusBarColor, BackgroundColor);
         
         // Progress bar
         int barWidth = 30;
         int barY = centerY - 2;
-        int barX = (TERMINAL_WIDTH - barWidth) / 2;
+        int barX = (Phase6Layout.TERMINAL_WIDTH - barWidth) / 2;
         string progressBar = GenerateProgressBar(barWidth, _loadingFrameIndex);
         _terminal.Text(barX, barY, progressBar, LoadingColor, BackgroundColor);
     }
@@ -664,9 +523,9 @@ public class Phase6ObservationUI
     public void ShowError(string errorMessage)
     {
         // Clear narrative area
-        for (int y = NARRATIVE_START_Y; y < TERMINAL_HEIGHT - STATUS_BAR_HEIGHT; y++)
+        for (int y = Phase6Layout.CONTENT_START_Y; y < Phase6Layout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < TERMINAL_WIDTH; x++)
+            for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
             {
                 _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
             }
@@ -674,25 +533,25 @@ public class Phase6ObservationUI
         
         // Show error message centered
         string title = "ERROR";
-        int titleY = NARRATIVE_START_Y + NARRATIVE_HEIGHT / 2 - 2;
-        int titleX = (TERMINAL_WIDTH - title.Length) / 2;
+        int titleY = Phase6Layout.CONTENT_START_Y + Phase6Layout.NARRATIVE_HEIGHT / 2 - 2;
+        int titleX = (Phase6Layout.TERMINAL_WIDTH - title.Length) / 2;
         _terminal.Text(titleX, titleY, title, ErrorColor, BackgroundColor);
         
         // Wrap error message
-        var wrappedLines = WrapText(errorMessage, CONTENT_WIDTH - 4);
+        var wrappedLines = WrapText(errorMessage, Phase6Layout.CONTENT_WIDTH - 4);
         int startY = titleY + 2;
         
-        for (int i = 0; i < wrappedLines.Count && startY + i < TERMINAL_HEIGHT - STATUS_BAR_HEIGHT; i++)
+        for (int i = 0; i < wrappedLines.Count && startY + i < Phase6Layout.SEPARATOR_Y + 1; i++)
         {
             string line = wrappedLines[i];
-            int x = (TERMINAL_WIDTH - line.Length) / 2;
+            int x = (Phase6Layout.TERMINAL_WIDTH - line.Length) / 2;
             _terminal.Text(x, startY + i, line, ErrorColor, BackgroundColor);
         }
         
         // Show instruction
         string instruction = "(Press ESC to return)";
-        int instructionY = TERMINAL_HEIGHT - STATUS_BAR_HEIGHT - 2;
-        int instructionX = (TERMINAL_WIDTH - instruction.Length) / 2;
+        int instructionY = Phase6Layout.SEPARATOR_Y - 1;
+        int instructionX = (Phase6Layout.TERMINAL_WIDTH - instruction.Length) / 2;
         _terminal.Text(instructionX, instructionY, instruction, StatusBarColor, BackgroundColor);
     }
     
@@ -701,10 +560,10 @@ public class Phase6ObservationUI
     /// </summary>
     private void DrawHorizontalLine(int y)
     {
-        if (y < 0 || y >= TERMINAL_HEIGHT)
+        if (y < 0 || y >= Phase6Layout.TERMINAL_HEIGHT)
             return;
         
-        for (int x = 0; x < TERMINAL_WIDTH; x++)
+        for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
         {
             _terminal.SetCell(x, y, '─', StatusBarColor, BackgroundColor);
         }
