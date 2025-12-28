@@ -60,9 +60,42 @@ public class ActionExecutionController
                 "The skill required for this action is unavailable.");
         }
 
-        Console.WriteLine($"\n🎯 Evaluating action difficulty with Critic...");
+        // Step 1: Use Critic to verify action plausibility/coherency
+        Console.WriteLine($"\n🔍 Evaluating action plausibility with Critic...");
         
-        // Use Critic to evaluate difficulty (returns 0.0=easy to 1.0=hard)
+        // Ask multiple questions about the action to ensure it makes sense
+        var plausibilityQuestions = new[]
+        {
+            $"Given the context, does the action '{action.ActionText}' make logical sense?",
+            $"Is '{action.ActionText}' a reasonable thing to attempt in this situation?",
+            $"Would '{action.ActionText}' be physically or logically possible given the circumstances?"
+        };
+        
+        double plausibilitySum = 0.0;
+        foreach (var question in plausibilityQuestions)
+        {
+            double score = await _difficultyEvaluator.EvaluateCoherence(question);
+            plausibilitySum += score;
+            Console.WriteLine($"   Q: {question}");
+            Console.WriteLine($"   A: {score:F3} ({(score > 0.7 ? "plausible" : score > 0.4 ? "uncertain" : "implausible")})");
+        }
+        
+        double avgPlausibility = plausibilitySum / plausibilityQuestions.Length;
+        Console.WriteLine($"   Average plausibility: {avgPlausibility:F3}");
+        
+        // If action is deemed implausible, fail immediately without skill check
+        if (avgPlausibility < 0.3)
+        {
+            Console.WriteLine($"   ❌ Action rejected as implausible\n");
+            return CreateFailureResult(action, thinkingSkillUsed,
+                "That action doesn't make sense in this situation.");
+        }
+        
+        Console.WriteLine($"   ✓ Action approved as plausible\n");
+
+        // Step 2: Use Critic to evaluate difficulty (returns 0.0=easy to 1.0=hard)
+        Console.WriteLine($"🎯 Evaluating action difficulty with Critic...");
+        
         var difficultyQuestion = $"Is the action '{action.ActionText}' difficult to perform?";
         double difficultyScore = await _difficultyEvaluator.EvaluateCoherence(difficultyQuestion);
         

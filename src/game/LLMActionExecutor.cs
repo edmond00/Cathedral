@@ -38,12 +38,20 @@ public class LLMActionExecutor : IDisposable
     /// <summary>
     /// Initializes the LLM slots. Must be called before using the executor.
     /// </summary>
-    public async Task InitializeAsync()
+    /// <param name="skipDirectorNarrator">If true, skips creating Director and Narrator slots (for Phase 6 which doesn't use them)</param>
+    public async Task InitializeAsync(bool skipDirectorNarrator = false)
     {
         if (_isInitialized) return;
 
         try
         {
+            if (skipDirectorNarrator)
+            {
+                Console.WriteLine("LLMActionExecutor: Skipping Director and Narrator slots (not needed for Phase 6)");
+                _isInitialized = true;
+                return;
+            }
+            
             Console.WriteLine("LLMActionExecutor: Initializing Director and Narrator slots...");
             
             // Create dedicated slots for Director and Narrator with their actual system prompts

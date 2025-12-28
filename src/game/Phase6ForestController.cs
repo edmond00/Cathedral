@@ -25,6 +25,7 @@ public class Phase6ForestController
     private NarrationNode _currentNode;
     private readonly ObservationPhaseController _observationController;
     private readonly ThinkingExecutor _thinkingExecutor;
+    private readonly ActionExecutionController _actionExecutor;
     private readonly GlyphSphereCore _core;
     private readonly TerminalInputHandler _terminalInputHandler;
     
@@ -39,7 +40,8 @@ public class Phase6ForestController
         LlamaServerManager llamaServer,
         SkillSlotManager slotManager,
         TerminalInputHandler terminalInputHandler,
-        ThinkingExecutor thinkingExecutor)
+        ThinkingExecutor thinkingExecutor,
+        ActionExecutionController actionExecutor)
     {
         if (terminal == null)
             throw new ArgumentNullException(nameof(terminal));
@@ -55,6 +57,8 @@ public class Phase6ForestController
             throw new ArgumentNullException(nameof(terminalInputHandler));
         if (thinkingExecutor == null)
             throw new ArgumentNullException(nameof(thinkingExecutor));
+        if (actionExecutor == null)
+            throw new ArgumentNullException(nameof(actionExecutor));
         
         _ui = new Phase6ObservationUI(terminal);
         // Content width: 100 (terminal) - 4 (left margin) - 4 (right margin) - 1 (scrollbar) = 91
@@ -73,6 +77,7 @@ public class Phase6ForestController
         // Initialize controllers
         _observationController = new ObservationPhaseController(llamaServer, slotManager);
         _thinkingExecutor = thinkingExecutor;
+        _actionExecutor = actionExecutor;
         
         Console.WriteLine($"Phase6ForestController: Initialized with node {_currentNode.NodeId}");
         Console.WriteLine($"Phase6ForestController: Avatar has {_avatar.Skills.Count} skills");
@@ -212,6 +217,95 @@ public class Phase6ForestController
     }
     
     /// <summary>
+    /// Execute action phase: skill check, outcome determination, and narration (async).
+    /// </summary>
+    private async Task ExecuteActionPhaseAsync(ParsedNarrativeAction action)
+    {
+        try
+        {
+            Console.WriteLine($"Phase6ForestController: Starting action execution for '{action.ActionText}'");
+            
+            // Set loading state with progress messages
+            _narrationState.IsLoadingAction = true;
+            _narrationState.LoadingMessage = "Evaluating action...";
+            
+            // Execute action via ActionExecutionController
+            var result = await _actionExecutor.ExecuteActionAsync(
+                action,
+                _currentNode,
+                action.ThinkingSkill,
+                CancellationToken.None
+            );
+            
+            Console.WriteLine($"Phase6ForestController: Action {(result.Succeeded ? "SUCCEEDED" : "FAILED")}");
+            
+            // Add action block with success/failure indicator
+            var actionBlock = new NarrationBlock(
+                Type: NarrationBlockType.Action,
+                SkillName: result.ActionSkill?.DisplayName ?? "Unknown Skill",
+                Text: $"{action.ActionText} [{(result.Succeeded ? "SUCCESS" : "FAILURE")}]",
+                Keywords: null,
+                Actions: null
+            );
+            _scrollBuffer.AddBlock(actionBlock);
+            _narrationState.AddBlock(actionBlock);
+            
+            // Add outcome narration block
+            var outcomeBlock = new NarrationBlock(
+                Type: NarrationBlockType.Outcome,
+                SkillName: action.ThinkingSkill.DisplayName,
+                Text: result.Narration,
+                Keywords: null,
+                Actions: null
+            );
+            _scrollBuffer.AddBlock(outcomeBlock);
+            _narrationState.AddBlock(outcomeBlock);
+            
+            // Auto-scroll to bottom to show outcome
+            _scrollBuffer.ScrollToBottom();
+            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            
+            // Handle outcome based on type
+            if (result.ActualOutcome is NarrationNode nextNode)
+            {
+                Console.WriteLine($"Phase6ForestController: Transitioning to node {nextNode.NodeId}");
+                
+                // Transition to new node
+                _currentNode = nextNode;
+                
+                // Clear state and restart observation phase
+                _narrationState.Clear();
+                _scrollBuffer.Clear();
+                _narrationState.ThinkingAttemptsRemaining = 3;
+                
+                // Start new observation phase
+                StartObservationPhase();
+            }
+            else
+            {
+                Console.WriteLine("Phase6ForestController: Non-transition outcome, showing continue button");
+                
+                // Show continue button for non-transition outcomes
+                _narrationState.ShowContinueButton = true;
+            }
+            
+            // Update state
+            _narrationState.IsLoadingAction = false;
+            _narrationState.ErrorMessage = null;
+            
+            Console.WriteLine("Phase6ForestController: Action phase complete");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Phase6ForestController: Error during action execution: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            
+            _narrationState.IsLoadingAction = false;
+            _narrationState.ErrorMessage = $"Action execution failed: {ex.Message}";
+        }
+    }
+    
+    /// <summary>
     /// Update loop - called at 10 Hz by game controller.
     /// </summary>
     public void Update()
@@ -231,13 +325,43 @@ public class Phase6ForestController
         }
         
         // Show loading indicator if generating
-        if (_narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking)
+        if (_narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking || _narrationState.IsLoadingAction)
         {
             _ui.ShowLoadingIndicator(_narrationState.LoadingMessage);
             string loadingStatus = _narrationState.IsLoadingObservations 
                 ? "Generating observations..." 
-                : "Generating thinking and actions...";
+                : _narrationState.IsLoadingThinking
+                    ? "Generating thinking and actions..."
+                    : "Executing action...";
             _ui.RenderStatusBar(loadingStatus);
+            return;
+        }
+        
+        // Show continue button if flagged
+        if (_narrationState.ShowContinueButton)
+        {
+            // Render narration blocks (non-interactive)
+            _ui.RenderObservationBlocks(
+                _scrollBuffer,
+                _narrationState.ScrollOffset,
+                null, // No keyword hover
+                null  // No action hover
+            );
+            
+            // Render continue button
+            var buttonRegion = _ui.RenderContinueButton(_narrationState.IsContinueButtonHovered);
+            
+            // Track button region for click detection (reuse ActionRegion for simplicity)
+            _narrationState.ActionRegions.Clear();
+            _narrationState.ActionRegions.Add(new ActionRegion(
+                0, 
+                buttonRegion.Y, 
+                buttonRegion.Y, 
+                buttonRegion.X, 
+                buttonRegion.X + buttonRegion.Width
+            ));
+            
+            _ui.RenderStatusBar("Click Continue to return to world view");
             return;
         }
         
@@ -329,6 +453,23 @@ public class Phase6ForestController
             _narrationState.IsScrollbarThumbHovered = isOverThumb;
         }
         
+        // If continue button is shown, check if mouse is over it
+        if (_narrationState.ShowContinueButton && _narrationState.ActionRegions.Count > 0)
+        {
+            var buttonRegion = _narrationState.ActionRegions[0];
+            bool isOverButton = mouseY == buttonRegion.StartY && 
+                                mouseX >= buttonRegion.StartX && 
+                                mouseX <= buttonRegion.EndX;
+            
+            if (isOverButton != _narrationState.IsContinueButtonHovered)
+            {
+                _narrationState.IsContinueButtonHovered = isOverButton;
+            }
+            
+            // Don't process keyword/action hover when continue button is shown
+            return;
+        }
+        
         // Update hovered keyword region
         KeywordRegion? newHoveredKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
         
@@ -353,6 +494,20 @@ public class Phase6ForestController
     /// </summary>
     public void OnMouseClick(int mouseX, int mouseY)
     {
+        // If continue button is shown, check if clicked
+        if (_narrationState.ShowContinueButton && _narrationState.ActionRegions.Count > 0)
+        {
+            var buttonRegion = _narrationState.ActionRegions[0];
+            if (mouseY == buttonRegion.StartY && mouseX >= buttonRegion.StartX && mouseX <= buttonRegion.EndX)
+            {
+                Console.WriteLine("Phase6ForestController: Continue button clicked, exiting to world view");
+                // Signal exit by setting a flag that the game controller can check
+                _narrationState.RequestedExit = true;
+                // The calling controller should check HasRequestedExit() and exit mode
+            }
+            return;
+        }
+        
         // If popup is visible, handle popup click with screen coordinates
         if (_skillPopup.IsVisible)
         {
@@ -412,9 +567,28 @@ public class Phase6ForestController
         ActionRegion? clickedAction = _ui.GetHoveredAction(mouseX, mouseY);
         if (clickedAction != null)
         {
-            // TODO: Execute action phase
-            Console.WriteLine($"Phase6ForestController: Clicked action index {clickedAction.ActionIndex} at Y={clickedAction.StartY}");
-            // Action execution will be implemented later
+            // Collect all actions from all thinking blocks (globally indexed)
+            var allActions = new List<ParsedNarrativeAction>();
+            foreach (var block in _narrationState.Blocks)
+            {
+                if (block.Type == NarrationBlockType.Thinking && block.Actions != null)
+                {
+                    allActions.AddRange(block.Actions);
+                }
+            }
+            
+            if (clickedAction.ActionIndex < allActions.Count)
+            {
+                var action = allActions[clickedAction.ActionIndex];
+                Console.WriteLine($"Phase6ForestController: Executing action '{action.ActionText}' with skill '{action.ActionSkillId}'");
+                
+                // Fire-and-forget async task
+                _ = ExecuteActionPhaseAsync(action);
+            }
+            else
+            {
+                Console.WriteLine($"Phase6ForestController: Failed to find action at index {clickedAction.ActionIndex}");
+            }
             return;
         }
         
@@ -488,4 +662,9 @@ public class Phase6ForestController
     /// Get the current narration state.
     /// </summary>
     public Phase6NarrationState GetState() => _narrationState;
+    
+    /// <summary>
+    /// Check if player has requested to exit Phase 6 (clicked Continue button).
+    /// </summary>
+    public bool HasRequestedExit() => _narrationState.RequestedExit;
 }

@@ -84,7 +84,7 @@ public class ThinkingExecutor
         }
 
         // Parse JSON response
-        return ParseThinkingResponse(jsonResponse, possibleOutcomes);
+        return ParseThinkingResponse(jsonResponse, possibleOutcomes, thinkingSkill, keyword);
     }
 
     /// <summary>
@@ -172,7 +172,7 @@ public class ThinkingExecutor
     /// Parses the LLM JSON response into a ThinkingResponse.
     /// Returns null if parsing fails.
     /// </summary>
-    private ThinkingResponse? ParseThinkingResponse(string jsonResponse, List<OutcomeBase> possibleOutcomes)
+    private ThinkingResponse? ParseThinkingResponse(string jsonResponse, List<OutcomeBase> possibleOutcomes, Skill thinkingSkill, string keyword)
     {
         try
         {
@@ -208,7 +208,9 @@ public class ThinkingExecutor
                         ActionSkillId = actionSkill,
                         PreselectedOutcome = outcome,
                         ActionText = actionDesc,
-                        DisplayText = displayText
+                        DisplayText = displayText,
+                        ThinkingSkill = thinkingSkill,  // Set the thinking skill that generated this action
+                        Keyword = keyword
                     });
                 }
                 else

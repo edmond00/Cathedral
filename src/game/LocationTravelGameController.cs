@@ -112,6 +112,14 @@ public class LocationTravelGameController : IDisposable
         if (_isInPhase6Mode && _phase6Controller != null)
         {
             _phase6Controller.Update();
+            
+            // Check if player requested exit (clicked Continue button)
+            if (_phase6Controller.HasRequestedExit())
+            {
+                Console.WriteLine("LocationTravelGameController: Phase 6 exit requested");
+                ExitPhase6Mode();
+            }
+            
             return;
         }
         
@@ -393,7 +401,6 @@ public class LocationTravelGameController : IDisposable
         // [9] Check outcome and handle failure/success
         if (!result.Success)
         {
-            // FAILURE - Generate dramatic failure narrative via Narrator
             Console.WriteLine("LocationTravelGameController: Action FAILED - generating failure narrative");
             
             if (_llmActionExecutor != null && _terminalUI != null)
@@ -411,7 +418,7 @@ public class LocationTravelGameController : IDisposable
                 WasSuccessful = false
             };
             
-            // Request failure narrative from Narrator
+            // Request failure narrative
             string? failureNarrative = null;
             if (_llmActionExecutor != null)
             {
@@ -1010,8 +1017,8 @@ public class LocationTravelGameController : IDisposable
         
         if (_llmActionExecutor != null)
         {
-            // [1] Generate 12 actions via Director (with raw JSON for parsing)
-            Console.WriteLine("RegenerateActionsAsync: Requesting 12 actions from Director LLM...");
+            // [1] Generate 12 actions (with raw JSON for parsing)
+            Console.WriteLine("RegenerateActionsAsync: Requesting 12 actions from LLM...");
             var (llmActions, rawJson) = await _llmActionExecutor.GenerateActionsWithRawJsonAsync(
                 _currentLocationState, 
                 _currentBlueprint, 
@@ -1192,6 +1199,32 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
             
+            if (_criticEvaluator == null || _actionScorer == null)
+            {
+                Console.WriteLine("LocationTravelGameController: Cannot enter Phase 6 mode - Critic/ActionScorer not initialized");
+                return;
+            }
+            
+            // Create Action Execution Controller dependencies
+            var difficultyEvaluator = new ActionDifficultyEvaluator(_criticEvaluator);
+            var outcomeApplicator = new OutcomeApplicator();
+            var outcomeNarrator = new OutcomeNarrator(
+                _llmActionExecutor.GetLlamaServerManager(),
+                _skillSlotManager
+            );
+            
+            // Create a temporary Avatar for Phase 6 (will be initialized in Phase6ForestController)
+            var avatar = new Avatar();
+            avatar.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+            
+            var actionExecutor = new ActionExecutionController(
+                _actionScorer,
+                difficultyEvaluator,
+                outcomeNarrator,
+                outcomeApplicator,
+                avatar
+            );
+            
             // Create Phase 6 controller
             _phase6Controller = new Phase6ForestController(
                 _core.Terminal,
@@ -1200,7 +1233,8 @@ public class LocationTravelGameController : IDisposable
                 _llmActionExecutor.GetLlamaServerManager(),
                 _skillSlotManager,
                 inputHandler,
-                _thinkingExecutor
+                _thinkingExecutor,
+                actionExecutor
             );
             
             // Mark as active

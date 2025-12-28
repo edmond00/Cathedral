@@ -163,11 +163,20 @@ public class NarrationScrollBuffer
 
             // Wrap and add narration content
             var wrappedLines = WrapText(block.Text, _maxWidth);
+            
+            // Determine line type based on block type
+            LineType lineType = block.Type switch
+            {
+                NarrationBlockType.Action => LineType.Action,
+                NarrationBlockType.Outcome => LineType.Outcome,
+                _ => LineType.Content
+            };
+            
             foreach (var line in wrappedLines)
             {
                 _renderedLines.Add(new RenderedLine(
                     Text: line,
-                    Type: LineType.Content,
+                    Type: lineType,
                     BlockType: block.Type,
                     Keywords: block.Keywords, // Associate keywords with this line
                     Actions: null
@@ -375,5 +384,6 @@ public enum LineType
     Header,   // Skill name header
     Content,  // Narration text
     Action,   // Action line (for Thinking blocks)
+    Outcome,  // Outcome narration (for Action/Outcome blocks)
     Empty     // Spacing
 }

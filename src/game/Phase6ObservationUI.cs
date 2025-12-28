@@ -33,6 +33,10 @@ public class Phase6ObservationUI
     private static readonly Vector4 BackgroundColor = new(0.0f, 0.0f, 0.0f, 1.0f); // Black
     private static readonly Vector4 ErrorColor = new(1.0f, 0.3f, 0.3f, 1.0f); // Red
     private static readonly Vector4 LoadingColor = new(0.8f, 0.8f, 0.0f, 1.0f); // Yellow
+    private static readonly Vector4 SuccessColor = new(0.4f, 1.0f, 0.4f, 1.0f); // Bright green
+    private static readonly Vector4 FailureColor = new(1.0f, 0.4f, 0.4f, 1.0f); // Bright red
+    private static readonly Vector4 ContinueButtonColor = new(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
+    private static readonly Vector4 ContinueButtonHoverColor = new(1.0f, 0.8f, 0.0f, 1.0f); // Orange-yellow
     
     // Loading animation
     private static readonly string[] LoadingFrames = new[]
@@ -142,6 +146,9 @@ public class Phase6ObservationUI
                 case LineType.Header:
                     // Render skill name header in yellow
                     _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, SkillHeaderColor, BackgroundColor);
+                    
+                    // Note: Do NOT reset action counter here - we want globally unique action indices
+                    // so that actions from different thinking blocks don't have the same index
                     break;
                     
                 case LineType.Content:
@@ -155,21 +162,64 @@ public class Phase6ObservationUI
                     break;
                     
                 case LineType.Action:
-                    // Actions are now pre-wrapped in scroll buffer
-                    // Each line is a separate RenderedLine
+                    // Check if this is an action line from Thinking block OR an action result
                     if (renderedLine.Actions != null && renderedLine.Actions.Count > 0)
                     {
-                        // First line of a new action - has action reference
+                        // This is a thinking block action (clickable)
                         currentAction = renderedLine.Actions[0];
                         currentActionIndex++;
                         actionLineCount = 0;
-                    }
-                    
-                    if (currentAction != null)
-                    {
                         RenderActionLine(renderedLine.Text, currentAction, currentActionIndex, currentY, actionLineCount, hoveredAction);
                         actionLineCount++;
                     }
+                    else if (currentAction != null)
+                    {
+                        // Continuation line of current action
+                        RenderActionLine(renderedLine.Text, currentAction, currentActionIndex, currentY, actionLineCount, hoveredAction);
+                        actionLineCount++;
+                    }
+                    else
+                    {
+                        // Action result block (from Action block type) - detect SUCCESS/FAILURE
+                        Vector4 actionColor = NarrativeColor;
+                        if (renderedLine.Text.Contains("[SUCCESS]"))
+                        {
+                            actionColor = SuccessColor;
+                        }
+                        else if (renderedLine.Text.Contains("[FAILURE]"))
+                        {
+                            actionColor = FailureColor;
+                        }
+                        _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, actionColor, BackgroundColor);
+                    }
+                    break;
+                    
+                case LineType.Outcome:
+                    // Outcome narration - check if previous line in buffer contains SUCCESS/FAILURE
+                    Vector4 outcomeColor = NarrativeColor;
+                    
+                    // Look back in the visible lines to find the action result
+                    int lookbackIndex = visibleLines.IndexOf(renderedLine) - 1;
+                    while (lookbackIndex >= 0)
+                    {
+                        var prevLine = visibleLines[lookbackIndex];
+                        if (prevLine.Type == LineType.Action && prevLine.BlockType == NarrationBlockType.Action)
+                        {
+                            // Found the action result line
+                            if (prevLine.Text.Contains("[SUCCESS]"))
+                            {
+                                outcomeColor = SuccessColor;
+                            }
+                            else if (prevLine.Text.Contains("[FAILURE]"))
+                            {
+                                outcomeColor = FailureColor;
+                            }
+                            break;
+                        }
+                        lookbackIndex--;
+                    }
+                    
+                    _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, outcomeColor, BackgroundColor);
                     break;
                     
                 case LineType.Empty:
@@ -654,5 +704,33 @@ public class Phase6ObservationUI
         }
         
         return lines;
+    }
+    
+    /// <summary>
+    /// Render the "Continue" button at the bottom of the screen.
+    /// Returns the button region for click detection.
+    /// </summary>
+    public (int X, int Y, int Width) RenderContinueButton(bool isHovered = false)
+    {
+        string buttonText = "[ Continue ]";
+        int buttonWidth = buttonText.Length;
+        int buttonX = (Phase6Layout.TERMINAL_WIDTH - buttonWidth) / 2;
+        int buttonY = Phase6Layout.SEPARATOR_Y - 2; // Place near bottom, above separator
+        
+        Vector4 buttonColor = isHovered ? ContinueButtonHoverColor : ContinueButtonColor;
+        
+        _terminal.Text(buttonX, buttonY, buttonText, buttonColor, BackgroundColor);
+        
+        return (buttonX, buttonY, buttonWidth);
+    }
+    
+    /// <summary>
+    /// Check if mouse is over the continue button.
+    /// </summary>
+    public bool IsMouseOverContinueButton(int mouseX, int mouseY, (int X, int Y, int Width) buttonRegion)
+    {
+        return mouseY == buttonRegion.Y && 
+               mouseX >= buttonRegion.X && 
+               mouseX < buttonRegion.X + buttonRegion.Width;
     }
 }

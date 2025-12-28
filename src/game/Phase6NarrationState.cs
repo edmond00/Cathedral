@@ -35,6 +35,11 @@ public class Phase6NarrationState
     public bool IsLoadingThinking { get; set; } = false;
 
     /// <summary>
+    /// Is the system currently executing an action (skill check + outcome)?
+    /// </summary>
+    public bool IsLoadingAction { get; set; } = false;
+
+    /// <summary>
     /// Current loading message to display.
     /// </summary>
     public string LoadingMessage { get; set; } = "Loading...";
@@ -85,6 +90,21 @@ public class Phase6NarrationState
     public int ThinkingAttemptsRemaining { get; set; } = 3;
 
     /// <summary>
+    /// Should the "Continue" button be shown (for non-transition outcomes)?
+    /// </summary>
+    public bool ShowContinueButton { get; set; } = false;
+
+    /// <summary>
+    /// Is the continue button currently hovered?
+    /// </summary>
+    public bool IsContinueButtonHovered { get; set; } = false;
+
+    /// <summary>
+    /// Has the player requested to exit Phase 6 (via continue button)?
+    /// </summary>
+    public bool RequestedExit { get; set; } = false;
+
+    /// <summary>
     /// Error message if something went wrong (null if no error).
     /// </summary>
     public string? ErrorMessage { get; set; } = null;
@@ -106,9 +126,13 @@ public class Phase6NarrationState
         ScrollOffset = 0;
         KeywordRegions.Clear();
         IsLoadingObservations = false;
+        IsLoadingThinking = false;
+        IsLoadingAction = false;
         LoadingMessage = "Loading...";
         HoveredKeyword = null;
         ThinkingAttemptsRemaining = 3;
+        ShowContinueButton = false;
+        IsContinueButtonHovered = false;
         ErrorMessage = null;
     }
 

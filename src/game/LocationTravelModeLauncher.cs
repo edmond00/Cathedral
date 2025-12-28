@@ -139,7 +139,8 @@ public static class LocationTravelModeLauncher
                     {
                         try
                         {
-                            await llmExecutor.InitializeAsync();
+                            // Phase 6 doesn't use Director/Narrator, only LlamaServerManager
+                            await llmExecutor.InitializeAsync(skipDirectorNarrator: true);
                             gameController.SetLLMActionExecutor(llmExecutor);
                             Console.WriteLine("✓ LLM action executor ready");
                         }
@@ -169,7 +170,8 @@ public static class LocationTravelModeLauncher
                         {
                             var simpleExecutor = new SimpleActionExecutor();
                             var executor = new LLMActionExecutor(llamaServer, simpleExecutor);
-                            await executor.InitializeAsync();
+                            // Phase 6 doesn't use Director/Narrator, only LlamaServerManager
+                            await executor.InitializeAsync(skipDirectorNarrator: true);
                             gameController.SetLLMActionExecutor(executor);
                             Console.WriteLine("✓ LLM action executor ready (delayed initialization)");
                         }
