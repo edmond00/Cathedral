@@ -84,7 +84,7 @@ public class NarrativeSystemDemo
         Console.WriteLine("Initial Humors:");
         foreach (var humor in avatar.Humors.Take(5))
         {
-            Console.WriteLine($"  - {humor.Key}: {humor.Value}");
+            Console.WriteLine($"  - {humor.Name}: {humor.Value}");
         }
         Console.WriteLine();
         

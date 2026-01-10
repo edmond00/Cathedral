@@ -19,6 +19,12 @@ public abstract class Skill
     /// This is cached in the LLM slot and defines the skill's narrative voice.
     /// </summary>
     public virtual string? PersonaPrompt => null;
+    
+    /// <summary>
+    /// Short persona description for user prompts (e.g., "write like [PersonaTone]").
+    /// Used as a quick reminder of the skill's personality in individual LLM calls.
+    /// </summary>
+    public virtual string? PersonaTone => null;
 }
 
 /// <summary>

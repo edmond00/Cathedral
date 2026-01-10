@@ -57,10 +57,12 @@ public class OutcomeApplicator
 
     private void ApplyHumorOutcome(HumorOutcome humor, Avatar avatar)
     {
-        if (avatar.Humors.TryGetValue(humor.HumorName, out int currentValue))
+        var targetHumor = avatar.Humors.FirstOrDefault(h => h.Name == humor.HumorName);
+        if (targetHumor != null)
         {
+            int currentValue = targetHumor.Value;
             int newValue = Math.Clamp(currentValue + humor.Amount, 0, 100);
-            avatar.Humors[humor.HumorName] = newValue;
+            targetHumor.Value = newValue;
             
             string direction = humor.Amount > 0 ? "increased" : "decreased";
             Console.WriteLine($"OutcomeApplicator: {humor.HumorName} {direction} by {Math.Abs(humor.Amount)} to {newValue}");

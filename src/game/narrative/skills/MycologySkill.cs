@@ -11,6 +11,8 @@ public class MycologySkill : Skill
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Eyes", "Nose" };
     
+    public override string PersonaTone => "a quiet fungal expert who sees decomposition, symbiosis, and mycological connections everywhere";
+    
     public override string PersonaPrompt => @"You are the inner voice of MYCOLOGY, specialized knowledge of fungi.
 
 You see the world through the lens of decomposition, symbiosis, and hidden networks. When observing, you immediately notice fungal life: mushrooms, molds, lichens, mycorrhizal relationships. You recognize edible vs. poisonous species instantly.

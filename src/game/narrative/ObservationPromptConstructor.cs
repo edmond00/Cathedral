@@ -16,6 +16,7 @@ public class ObservationPromptConstructor
     public string BuildObservationPrompt(
         NarrationNode node,
         Avatar avatar,
+        Skill observationSkill,
         bool promptKeywordUsage = true)
     {
         var prompt = $@"You are observing this scene:
@@ -30,14 +31,16 @@ Notable elements you should describe in your narration (include 3-5 of these):
 {string.Join(", ", node.Keywords)}";
         }
 
-        prompt += @"
+        prompt += $@"
 
 Generate a brief narration (50-300 characters) from your perspective that describes what you observe. Include specific details about the notable elements.
 
+Write like {observationSkill.PersonaTone}.
+
 Respond in JSON format:
-{
+{{
   ""narration_text"": ""your observation narration""
-}";
+}}";
 
         return prompt;
     }
@@ -49,7 +52,8 @@ Respond in JSON format:
     /// </summary>
     public string BuildObservationPromptWithIntros(
         NarrationNode node,
-        Avatar avatar)
+        Avatar avatar,
+        Skill observationSkill)
     {
         // Get a few intro examples
         // Generate intro examples dynamically from the first 3 keywords
@@ -72,6 +76,8 @@ IMPORTANT: Your narration MUST:
 1. Start with one of the exact phrases above
 2. Include at least 3 of these keywords naturally: {string.Join(", ", node.Keywords)}
 3. Be 50-300 characters total
+
+Write like {observationSkill.PersonaTone}.
 
 Respond in JSON format:
 {{

@@ -390,7 +390,10 @@ public class LlamaServerManager : IDisposable
                 ["top_logprobs"] = Math.Max(constrainedTokens.Length, 5), // Get at least top 5
                 ["stream"] = false,
                 ["cache_prompt"] = true,
-                ["slot_id"] = slotId
+                ["slot_id"] = slotId,
+                ["top_k"] = 3,           // Limit to top 3 most likely tokens
+                ["temperature"] = 0.3,   // Low temperature for more deterministic output
+                ["top_p"] = 0.9          // Nucleus sampling threshold
             };
             
             if (!string.IsNullOrWhiteSpace(gbnfGrammar))
@@ -616,7 +619,10 @@ public class LlamaServerManager : IDisposable
                 ["max_tokens"] = 2048,
                 ["stream"] = true,
                 ["cache_prompt"] = true,
-                ["slot_id"] = slotId
+                ["slot_id"] = slotId,
+                ["top_k"] = 3,           // Limit to top 3 most likely tokens
+                ["temperature"] = 0.3,   // Low temperature for more deterministic output
+                ["top_p"] = 0.9          // Nucleus sampling threshold
             };
             
             // Add GBNF grammar if provided
@@ -1135,7 +1141,10 @@ public class LlamaServerManager : IDisposable
     
     private async Task StartServerProcessAsync(string serverPath, string modelPath, int contextSize)
     {
-        var logFilePath = Path.Combine(Environment.CurrentDirectory, "llama-server.log");
+        // Save llama server logs in the session log directory
+        var logFilePath = _sessionLogDir != null 
+            ? Path.Combine(_sessionLogDir, "llama-server.log")
+            : Path.Combine(Environment.CurrentDirectory, "llama-server.log");
         
         var startInfo = new ProcessStartInfo
         {

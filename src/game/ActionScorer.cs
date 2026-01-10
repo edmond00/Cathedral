@@ -213,7 +213,7 @@ Is this action specific and concrete (rather than abstract or overly general)?";
             ? skill.BodyParts[0].ToLower() 
             : "hands";
         
-        return avatar.BodyParts.TryGetValue(bodyPartName, out int value) ? value : 5;
+        return avatar.BodyPartLevels.TryGetValue(bodyPartName, out int value) ? value : 5;
     }
     
     /// <summary>

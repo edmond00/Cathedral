@@ -58,7 +58,7 @@ public class ObservationExecutor
         // First attempt: Natural narration (prompted but not constrained)
         try
         {
-            var response = await GenerateObservationNaturalAsync(slotId, node, avatar);
+            var response = await GenerateObservationNaturalAsync(slotId, node, avatar, observationSkill);
             
             // Extract keywords from response text to check quality
             var segments = new KeywordRenderer().ParseNarrationWithKeywords(
@@ -67,7 +67,7 @@ public class ObservationExecutor
             );
             int keywordCount = segments.Count(s => s.IsKeyword);
             
-            if (keywordCount >= 3)
+            if (keywordCount >= 1)
             {
                 return response; // Success!
             }
@@ -80,15 +80,16 @@ public class ObservationExecutor
         }
         
         // Fallback: Use keyword intro examples to force inclusion
-        return await GenerateObservationWithFallbackAsync(slotId, node, avatar);
+        return await GenerateObservationWithFallbackAsync(slotId, node, avatar, observationSkill);
     }
     
     private async Task<ObservationResponse> GenerateObservationNaturalAsync(
         int slotId,
         NarrationNode node,
-        Avatar avatar)
+        Avatar avatar,
+        Skill observationSkill)
     {
-        var prompt = _promptConstructor.BuildObservationPrompt(node, avatar, promptKeywordUsage: true);
+        var prompt = _promptConstructor.BuildObservationPrompt(node, avatar, observationSkill, promptKeywordUsage: true);
         var schema = CreateObservationSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         
@@ -100,9 +101,10 @@ public class ObservationExecutor
     private async Task<ObservationResponse> GenerateObservationWithFallbackAsync(
         int slotId,
         NarrationNode node,
-        Avatar avatar)
+        Avatar avatar,
+        Skill observationSkill)
     {
-        var prompt = _promptConstructor.BuildObservationPromptWithIntros(node, avatar);
+        var prompt = _promptConstructor.BuildObservationPromptWithIntros(node, avatar, observationSkill);
         var schema = CreateObservationSchemaWithIntros(node);
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         
@@ -202,7 +204,7 @@ public class ObservationExecutor
     private CompositeField CreateObservationSchema()
     {
         return new CompositeField("ObservationResponse",
-            new StringField("narration_text", MinLength: 50, MaxLength: 300)
+            new StringField("narration_text", MinLength: 50, MaxLength: 600, Hint: "A short description of what the avatar observes in the environment")
         );
     }
     
@@ -227,7 +229,7 @@ public class ObservationExecutor
                 "narration_text",
                 Template: firstIntro + " <generated>",  // Fixed intro + placeholder for LLM generation
                 MinGenLength: 50,      // LLM must generate at least 50 more chars after intro
-                MaxGenLength: 250      // Up to 250 more chars
+                MaxGenLength: 550      // Up to 250 more chars
             )
         );
     }

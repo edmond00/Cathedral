@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Cathedral.Game.Narrative.Skills;
 
 namespace Cathedral.Game.Narrative;
@@ -23,17 +24,31 @@ public class SkillRegistry
     
     private void RegisterAllSkills()
     {
-        // Observation skills
-        RegisterSkill(new ObservationSkill());
-        RegisterSkill(new MycologySkill()); // Multi-function
+        // Use reflection to automatically discover and register all skill types
+        var skillType = typeof(Skill);
+        var assembly = Assembly.GetExecutingAssembly();
         
-        // Thinking skills
-        RegisterSkill(new AlgebraicAnalysisSkill());
-        // TODO: Add more thinking skills (Visual Analysis, Logic, Intuition, etc.)
+        var skillTypes = assembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && skillType.IsAssignableFrom(t))
+            .ToList();
         
-        // Action skills
-        RegisterSkill(new BruteForceSkill());
-        // TODO: Add more action skills (Finesse, Athletics, Stealth, etc.)
+        foreach (var type in skillTypes)
+        {
+            try
+            {
+                // Create instance using parameterless constructor
+                if (Activator.CreateInstance(type) is Skill skill)
+                {
+                    RegisterSkill(skill);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SkillRegistry: Failed to register skill type {type.Name}: {ex.Message}");
+            }
+        }
+        
+        Console.WriteLine($"SkillRegistry: Registered {_skillsById.Count} skills automatically via reflection");
     }
     
     private void RegisterSkill(Skill skill)

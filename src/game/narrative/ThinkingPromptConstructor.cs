@@ -18,7 +18,8 @@ public class ThinkingPromptConstructor
         NarrationNode node,
         List<OutcomeBase> possibleOutcomes,
         List<Skill> actionSkills,
-        Avatar avatar)
+        Avatar avatar,
+        Skill thinkingSkill)
     {
         // Convert outcomes to natural language strings
         var outcomeStrings = possibleOutcomes
@@ -28,30 +29,30 @@ public class ThinkingPromptConstructor
         // Get action skill IDs
         var actionSkillIds = actionSkills.Select(s => s.SkillId).ToList();
         
-        var prompt = $@"You are analyzing the keyword ""{keyword}"" in this context:
+        var prompt = $@"Your attention is drawn to: ""{keyword}""
 
+Current situation:
 {node.GenerateNeutralDescription(avatar.CurrentLocationId)}
 
-Available action skills you can use:
+Skills you can apply:
 {string.Join("\n", actionSkills.Select(s => $"- {s.SkillId}: {s.DisplayName}"))}
 
-Possible outcomes if actions succeed:
+What could happen:
 {string.Join("\n", outcomeStrings.Select(o => $"- {o}"))}
 
-Task:
-Generate actions using the available action skills.
+Think about what ""{keyword}"" suggests to you. What possibilities does it open?
 
-First, write a short internal reasoning text (persona-style),
-explaining how this skill interprets the situation and finds links
-between the context and the available action skills.
+First, express your internal thoughts about this element—why it catches your interest,
+what connections you see, how it relates to your capabilities.
 
-Then generate 2–5 concrete actions.
+Then propose 2–5 specific things you could try.
 
-Rules:
-- Tone and reasoning must strongly reflect the skill persona.
-- Coherence matters, but persona perspective matters more.
-- Each action starts with 'try to'.
-- Actions should feel like natural conclusions of the reasoning.
+Guidelines:
+- Think and speak as {thinkingSkill.PersonaTone}.
+- Your perspective and instincts drive everything.
+- Connect ""{keyword}"" naturally to what you can do.
+- Each action begins with 'try to'.
+- Let your reasoning flow into your proposed actions.
 
 Output fields:
 - reasoning_text

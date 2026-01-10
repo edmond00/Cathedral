@@ -57,7 +57,8 @@ public class ThinkingExecutor
             node,
             possibleOutcomes,
             actionSkills,
-            avatar);
+            avatar,
+            thinkingSkill);
 
         // Build JSON schema
         var schema = BuildThinkingJsonSchema(
@@ -152,7 +153,7 @@ public class ThinkingExecutor
     private CompositeField BuildThinkingJsonSchema(List<string> validActionSkills, List<string> validOutcomes)
     {
         return new CompositeField("ThinkingResponse",
-            new StringField("reasoning_text", MinLength: 100, MaxLength: 400),
+            new StringField("reasoning_text", MinLength: 50, MaxLength: 800, Hint: "A short reasoning process the avatar used to decide on actions"),
             new ArrayField("actions",
                 ElementType: new CompositeField("Action",
                     new ChoiceField<string>("action_skill", validActionSkills.ToArray()),
@@ -160,7 +161,8 @@ public class ThinkingExecutor
                     new TemplateStringField("action_description", 
                         Template: "try to <generated>",
                         MinGenLength: 10,
-                        MaxGenLength: 140)
+                        MaxGenLength: 400,
+                        Hint: "Describe in few words the action the avatar will take to achieve the outcome")
                 ),
                 MinLength: 2,
                 MaxLength: 5

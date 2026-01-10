@@ -107,7 +107,7 @@ public class ActionExecutionController
         
         // Adjust for skill level (body part value from 1-10)
         string bodyPartName = actionSkill.BodyParts.Length > 0 ? actionSkill.BodyParts[0].ToLower() : "hands";
-        int bodyPartValue = _avatar.BodyParts.TryGetValue(bodyPartName, out int bpValue) ? bpValue : 5;
+        int bodyPartValue = _avatar.BodyPartLevels.TryGetValue(bodyPartName, out int bpValue) ? bpValue : 5;
         
         // Body part adds up to 10% success chance
         successProbability += (bodyPartValue - 5) * 0.02;

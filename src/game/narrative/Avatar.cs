@@ -10,51 +10,77 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public class Avatar
 {
-    public Dictionary<string, int> BodyParts { get; init; }      // 17 body parts, level 1-10 (for skill checks)
-    public Dictionary<string, int> BodyPartLevels { get; init; }  // Alias for BodyParts
+    private List<BodyPart> _bodyParts;                            // 17 body parts, level 1-10 (for skill checks)
+    private List<BodyHumor> _humors;                              // 10 humors, 0-100 range
+    
+    public List<BodyPart> BodyParts => _bodyParts;
+    public Dictionary<string, int> BodyPartLevels =>              // Backward compatibility: name -> level
+        _bodyParts.ToDictionary(bp => bp.Name, bp => bp.Level);
+    
     public List<Skill> Skills { get; set; }                       // Current skills (for execution)
     public List<Skill> LearnedSkills { get; set; }                // Alias for Skills
-    public Dictionary<string, int> Humors { get; set; }           // 10 humors, 0-100 range
+    
+    public List<BodyHumor> Humors => _humors;
+    public Dictionary<string, int> HumorValues =>                 // Backward compatibility: name -> value
+        _humors.ToDictionary(h => h.Name, h => h.Value);
+    
     public List<string> Inventory { get; set; }                   // Items
     public List<string> Companions { get; set; }                  // Animal companions
     public int CurrentLocationId { get; set; }                    // Current location ID (used as RNG seed)
     
     public Avatar()
     {
-        BodyParts = InitializeBodyParts();
-        BodyPartLevels = BodyParts;  // Same reference
+        _bodyParts = InitializeBodyParts();
         Skills = new List<Skill>();
         LearnedSkills = Skills;      // Same reference
-        Humors = InitializeHumors();
+        _humors = InitializeHumors();
         Inventory = new List<string>();
         Companions = new List<string>();
     }
     
-    private Dictionary<string, int> InitializeBodyParts()
+    private List<BodyPart> InitializeBodyParts()
     {
-        // 17 body parts from design doc
-        var bodyParts = new[]
-        {
-            "Lower Limbs", "Upper Limbs", "Thorax", "Viscera", "Heart",
-            "Fingers", "Feet", "Backbone", "Ears", "Eyes",
-            "Tongue", "Nose", "Cerebrum", "Cerebellum", "Anamnesis",
-            "Hippocampus", "Pineal Gland"
-        };
-        
         var random = new Random();
-        return bodyParts.ToDictionary(bp => bp, bp => random.Next(1, 11)); // Random 1-10
+        
+        // Create 17 body parts from design doc with random levels 1-10
+        return new List<BodyPart>
+        {
+            new LowerLimbs(random.Next(1, 11)),
+            new UpperLimbs(random.Next(1, 11)),
+            new Thorax(random.Next(1, 11)),
+            new Viscera(random.Next(1, 11)),
+            new Heart(random.Next(1, 11)),
+            new Fingers(random.Next(1, 11)),
+            new Feet(random.Next(1, 11)),
+            new Backbone(random.Next(1, 11)),
+            new Ears(random.Next(1, 11)),
+            new Eyes(random.Next(1, 11)),
+            new Tongue(random.Next(1, 11)),
+            new Nose(random.Next(1, 11)),
+            new Cerebrum(random.Next(1, 11)),
+            new Cerebellum(random.Next(1, 11)),
+            new Anamnesis(random.Next(1, 11)),
+            new Hippocampus(random.Next(1, 11)),
+            new PinealGland(random.Next(1, 11))
+        };
     }
     
-    private Dictionary<string, int> InitializeHumors()
+    private List<BodyHumor> InitializeHumors()
     {
         // 10 humors from design doc, start at 50 (neutral)
-        var humors = new[]
+        return new List<BodyHumor>
         {
-            "Black Bile", "Yellow Bile", "Appetitus", "Melancholia", "Ether",
-            "Phlegm", "Blood", "Voluptas", "Laetitia", "Euphoria"
+            new BlackBile(),
+            new YellowBile(),
+            new Appetitus(),
+            new Melancholia(),
+            new Ether(),
+            new Phlegm(),
+            new Blood(),
+            new Voluptas(),
+            new Laetitia(),
+            new Euphoria()
         };
-        
-        return humors.ToDictionary(h => h, h => 50); // Start at midpoint
     }
     
     /// <summary>

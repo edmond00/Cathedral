@@ -52,7 +52,7 @@ public class OutcomeNarrator
 
         // Build JSON schema for narration
         var schema = new CompositeField("OutcomeNarration",
-            new StringField("narration", MinLength: 100, MaxLength: 400)
+            new StringField("narration", MinLength: 50, MaxLength: 800, Hint: "A short narration text describing the outcome of the action")
         );
 
         string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
@@ -120,7 +120,7 @@ The action {successStatus}.
 Narrate what happened from your perspective as {thinkingSkill.DisplayName}. 
 - If success: Describe how {actionSkill.DisplayName} accomplished it
 - If failure: Reflect on why it didn't work
-- Stay in character with your persona
+- Use the tone of {thinkingSkill.PersonaTone}
 - Keep it 100-400 characters
 
 Respond in JSON format:
