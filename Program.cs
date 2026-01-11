@@ -122,6 +122,20 @@ if (args.Length >= 2 && args[0] == "validate-gbnf")
 }
 
 Console.WriteLine("=== Cathedral Application ===\n");
+
+// Validate narrative structure at startup
+try
+{
+    Cathedral.Game.Narrative.NarrativeValidator.ValidateNarrativeStructure();
+    Console.WriteLine();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ NARRATIVE STRUCTURE VALIDATION FAILED: {ex.Message}");
+    Console.WriteLine("Please fix the issues before continuing.");
+    return;
+}
+
 Console.WriteLine("Choose an option:");
 Console.WriteLine("1. Launch Narrative RPG System (Phase 6 - Chain-of-Thought)");
 Console.WriteLine("2. Run LLM integration tests (JSON constraints)");

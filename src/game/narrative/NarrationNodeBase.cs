@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Cathedral.Game.Narrative;
 
@@ -29,31 +30,67 @@ public abstract class NarrationNode : ConcreteOutcome
     /// <summary>
     /// Node IDs that can be reached from this node via transitions.
     /// </summary>
-    public abstract List<string> PossibleTransitions { get; }
-    
-    /// <summary>
-    /// Keywords that make this node discoverable as a transition from other nodes.
-    /// These are the keywords that describe this location itself.
-    /// </summary>
     public abstract List<string> NodeKeywords { get; }
     
     /// <summary>
-    /// All keywords available at this node: node's own keywords plus keywords from immediate outcomes.
+    /// Gets all items available at this node by discovering Item inner classes via reflection.
+    /// Items are automatically discovered - they do not need to be manually listed.
+    /// </summary>
+    public List<Item> GetAvailableItems()
+    {
+        var items = new List<Item>();
+        var nodeType = GetType();
+        
+        // Find all nested types that inherit from Item
+        var itemTypes = nodeType.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic)
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(Item).IsAssignableFrom(t));
+        
+        foreach (var itemType in itemTypes)
+        {
+            try
+            {
+                // Create an instance of the item
+                var item = (Item?)Activator.CreateInstance(itemType);
+                if (item != null)
+                {
+                    items.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Failed to instantiate item type {itemType.Name}: {ex.Message}");
+            }
+        }
+        
+        return items;
+    }
+    
+    /// <summary>
+    /// All keywords available at this node: node's own keywords plus keywords from items and child nodes.
     /// This is used to determine what the player can interact with at this location.
     /// </summary>
-    public override List<string> Keywords
+    public override List<string> OutcomeKeywords
     {
         get
         {
             var allKeywords = new HashSet<string>(NodeKeywords, StringComparer.OrdinalIgnoreCase);
             
-            // Add keywords from immediate concrete outcomes (items, etc.)
-            // BUT NOT from child NarrationNodes (to avoid circular references)
+            // Add keywords from items discovered via reflection
+            var items = GetAvailableItems();
+            foreach (var item in items)
+            {
+                foreach (var keyword in item.OutcomeKeywords)
+                {
+                    allKeywords.Add(keyword);
+                }
+            }
+            
+            // Add keywords from child NarrationNodes
             foreach (var outcome in PossibleOutcomes)
             {
-                if (outcome is ConcreteOutcome concreteOutcome && outcome is not NarrationNode)
+                if (outcome is NarrationNode childNode)
                 {
-                    foreach (var keyword in concreteOutcome.Keywords)
+                    foreach (var keyword in childNode.NodeKeywords)
                     {
                         allKeywords.Add(keyword);
                     }
@@ -78,13 +115,23 @@ public abstract class NarrationNode : ConcreteOutcome
     
     /// <summary>
     /// Gets all outcomes that have a specific keyword.
+    /// Includes both child nodes and items discovered via reflection.
     /// </summary>
     public List<OutcomeBase> GetOutcomesForKeyword(string keyword)
     {
         var normalizedKeyword = keyword.ToLowerInvariant();
-        return PossibleOutcomes
-            .Where(outcome => outcome is ConcreteOutcome co && co.Keywords.Any(k => k.ToLowerInvariant() == normalizedKeyword))
-            .ToList();
+        var outcomes = new List<OutcomeBase>();
+        
+        // Check child nodes
+        outcomes.AddRange(PossibleOutcomes
+            .Where(outcome => outcome is ConcreteOutcome co && co.OutcomeKeywords.Any(k => k.ToLowerInvariant() == normalizedKeyword)));
+        
+        // Check items from reflection
+        var items = GetAvailableItems();
+        outcomes.AddRange(items
+            .Where(item => item.OutcomeKeywords.Any(k => k.ToLowerInvariant() == normalizedKeyword)));
+        
+        return outcomes;
     }
     
     public override string ToNaturalLanguageString()

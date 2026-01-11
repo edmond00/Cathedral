@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Cathedral.Game.Narrative.Items;
 
 namespace Cathedral.Game.Narrative.Nodes;
 
@@ -13,16 +12,13 @@ public class StreamNode : NarrationNode
     public override bool IsEntryNode => false;
     
     // Keywords that describe this node itself (for being discovered as a transition)
-    public override List<string> NodeKeywords => new() { "stream", "brook", "creek" };
+    public override List<string> NodeKeywords => new() { "brook", "creek", "flowing", "water", "babbling", "rushing", "rippling", "cool", "wet", "gurgling" };
     
     public override List<OutcomeBase> PossibleOutcomes => new()
     {
-        new Trout(),              // Keywords: fish, water, scales
-        new ClearingNode(),       // Keywords: clearing, open, trees (collected from Clearing's outcomes)
-        new FeelGoodOutcome()     // Always available
+        new ClearingNode(),
+        new CaughtTroutNode()
     };
-    
-    public override List<string> PossibleTransitions => new() { "clearing", "pond" };
     
     private static readonly string[] Moods = { "narrow", "winding", "clear", "rushing", "gentle", "bubbling", "swift", "cold" };
     

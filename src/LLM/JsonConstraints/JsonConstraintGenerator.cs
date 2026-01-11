@@ -280,10 +280,14 @@ public static class JsonConstraintGenerator
         
         if (!processedRules.Any(r => r.StartsWith(stringRuleName)))
         {
-            // In GBNF character classes, parentheses don't need escaping, and hyphen should be at end
+            // Require first character to be alphanumeric or space, then allow punctuation
             var charPattern = field.MinLength == field.MaxLength 
-                ? $"[a-zA-Z0-9 .,:()-]{{{field.MinLength}}}"
-                : $"[a-zA-Z0-9 .,:()-]{{{field.MinLength},{field.MaxLength}}}";
+                ? (field.MinLength == 1 
+                    ? $"[a-zA-Z0-9 ]" 
+                    : $"[a-zA-Z0-9 ] [a-zA-Z0-9 .,():-]{{{field.MinLength - 1}}}")
+                : (field.MinLength == 1
+                    ? $"[a-zA-Z0-9 ] [a-zA-Z0-9 .,():-]{{0,{field.MaxLength - 1}}}"
+                    : $"[a-zA-Z0-9 ] [a-zA-Z0-9 .,():-]{{{field.MinLength - 1},{field.MaxLength - 1}}}");
             processedRules.Add(stringRuleName + " ::= \"\\\"\" " + charPattern + " \"\\\"\"");
         }
         

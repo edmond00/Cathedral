@@ -82,6 +82,18 @@ public class LocationTravelGameController : IDisposable
         _core = core ?? throw new ArgumentNullException(nameof(core));
         _interface = microworldInterface ?? throw new ArgumentNullException(nameof(microworldInterface));
         
+        // Validate narrative world coherence at startup
+        try
+        {
+            Cathedral.Game.Narrative.NarrativeWorldValidator.ValidateWorldCoherence();
+            Cathedral.Game.Narrative.NarrativeWorldValidator.PrintWorldStructure();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FATAL ERROR: Narrative world validation failed: {ex.Message}");
+            throw;
+        }
+        
         // Initialize action executors
         _simpleActionExecutor = new SimpleActionExecutor();
         _llmActionExecutor = null; // Will be set via SetLLMActionExecutor()

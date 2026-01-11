@@ -30,5 +30,5 @@ public abstract class ConcreteOutcome : OutcomeBase
     /// These are simple words like "leaf", "water", "path" that can naturally
     /// appear in observation narration and link to this specific outcome.
     /// </summary>
-    public abstract List<string> Keywords { get; }
+    public abstract List<string> OutcomeKeywords { get; }
 }

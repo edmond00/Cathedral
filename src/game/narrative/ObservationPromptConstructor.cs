@@ -23,12 +23,12 @@ public class ObservationPromptConstructor
 
 {node.GenerateNeutralDescription(avatar.CurrentLocationId)}";
 
-        if (promptKeywordUsage && node.Keywords.Count > 0)
+        if (promptKeywordUsage && node.OutcomeKeywords.Count > 0)
         {
             prompt += $@"
 
 Notable elements you should describe in your narration (include 3-5 of these):
-{string.Join(", ", node.Keywords)}";
+{string.Join(", ", node.OutcomeKeywords)}";
         }
 
         prompt += $@"
@@ -57,7 +57,7 @@ Respond in JSON format:
     {
         // Get a few intro examples
         // Generate intro examples dynamically from the first 3 keywords
-        var keywords = node.Keywords.Take(3).ToList();
+        var keywords = node.OutcomeKeywords.Take(3).ToList();
         var introExamples = keywords.Select(k => $"You notice {k}").ToList();
         
         var examplesText = string.Join("\n", introExamples.Select(intro => 
@@ -74,7 +74,7 @@ Your narration MUST begin with one of these keyword introductions:
 
 IMPORTANT: Your narration MUST:
 1. Start with one of the exact phrases above
-2. Include at least 3 of these keywords naturally: {string.Join(", ", node.Keywords)}
+2. Include at least 3 of these keywords naturally: {string.Join(", ", node.OutcomeKeywords)}
 3. Be 50-300 characters total
 
 Write like {observationSkill.PersonaTone}.

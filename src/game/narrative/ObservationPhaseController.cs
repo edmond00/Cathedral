@@ -65,7 +65,7 @@ public class ObservationPhaseController
                 // Extract keywords from narration text
                 var segments = _keywordRenderer.ParseNarrationWithKeywords(
                     observation.NarrationText,
-                    currentNode.Keywords
+                    currentNode.OutcomeKeywords
                 );
                 
                 var foundKeywords = segments

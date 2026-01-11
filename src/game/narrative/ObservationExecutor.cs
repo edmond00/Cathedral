@@ -63,7 +63,7 @@ public class ObservationExecutor
             // Extract keywords from response text to check quality
             var segments = new KeywordRenderer().ParseNarrationWithKeywords(
                 response.NarrationText,
-                node.Keywords
+                node.OutcomeKeywords
             );
             int keywordCount = segments.Count(s => s.IsKeyword);
             
@@ -95,7 +95,7 @@ public class ObservationExecutor
         
         var response = await RequestFromLLMAsync(slotId, prompt, gbnf);
         
-        return ParseObservationResponse(response ?? "", node.Keywords);
+        return ParseObservationResponse(response ?? "", node.OutcomeKeywords);
     }
     
     private async Task<ObservationResponse> GenerateObservationWithFallbackAsync(
@@ -110,7 +110,7 @@ public class ObservationExecutor
         
         var response = await RequestFromLLMAsync(slotId, prompt, gbnf);
         
-        return ParseObservationResponse(response ?? "", node.Keywords);
+        return ParseObservationResponse(response ?? "", node.OutcomeKeywords);
     }
     
     /// <summary>
@@ -212,7 +212,7 @@ public class ObservationExecutor
     {
         // For fallback: Use TemplateStringField to FORCE starting with a keyword intro
         // This guarantees at least one keyword will be in the output
-        var keywords = node.Keywords.Take(3).ToList();
+        var keywords = node.OutcomeKeywords.Take(3).ToList();
         
         if (keywords.Count == 0)
         {

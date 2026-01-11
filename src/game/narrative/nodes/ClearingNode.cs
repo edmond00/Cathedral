@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Cathedral.Game.Narrative.Items;
 
 namespace Cathedral.Game.Narrative.Nodes;
 
@@ -13,16 +12,14 @@ public class ClearingNode : NarrationNode
     public override bool IsEntryNode => true;
     
     // Keywords that describe this node itself (for being discovered as a transition)
-    public override List<string> NodeKeywords => new() { "clearing", "meadow", "glade" };
+    public override List<string> NodeKeywords => new() { "meadow", "glade", "open", "grassy", "sunlit", "bright", "flowers", "birdsong", "quiet", "space" };
     
     public override List<OutcomeBase> PossibleOutcomes => new()
     {
-        new Mushroom(),           // Keywords: mushroom, fungus, cap
-        new StreamNode(),         // Keywords: water, flow, stream
-        new FeelGoodOutcome()     // Always available
+        new StreamNode(),
+        new BerryBushNode(),
+        new MushroomPatchNode()
     };
-    
-    public override List<string> PossibleTransitions => new() { "stream", "hollow" };
     
     private static readonly string[] Moods = { "peaceful", "quiet", "bright", "shadowy", "misty", "sun-dappled", "verdant", "ancient" };
     

@@ -68,8 +68,8 @@ public class NarrativeSystemDemo
         // Display entry node
         Console.WriteLine($"Entry Node: {entryNode.DisplayName}");
         Console.WriteLine($"Description: {entryNode.GenerateNeutralDescription(avatar.CurrentLocationId)}");
-        Console.WriteLine($"\nKeywords ({entryNode.Keywords.Count}):");
-        foreach (var keyword in entryNode.Keywords)
+        Console.WriteLine($"\nKeywords ({entryNode.OutcomeKeywords.Count}):");
+        foreach (var keyword in entryNode.OutcomeKeywords)
         {
             var outcomes = entryNode.GetOutcomesForKeyword(keyword);
             Console.WriteLine($"  - {keyword} ({outcomes.Count} possible outcomes)");
@@ -204,7 +204,7 @@ public class NarrativeSystemDemo
         // If no extracted keywords have outcomes, use any keyword from the node
         if (selectedKeyword == null)
         {
-            var allNodeKeywords = node.Keywords;
+            var allNodeKeywords = node.OutcomeKeywords;
             if (allNodeKeywords.Count > 0)
             {
                 selectedKeyword = allNodeKeywords[0];
