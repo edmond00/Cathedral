@@ -47,6 +47,9 @@ namespace Cathedral.Terminal
 
         // Default terminal glyph set (ASCII printable characters)
         private const string DEFAULT_GLYPH_SET = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+        
+        // Padding in pixels between glyphs to prevent texture bleeding with linear filtering
+        private const int GLYPH_PADDING = 2;
 
         public GlyphAtlas(int cellSize = 64, int fontPixelSize = 48)
         {
@@ -142,12 +145,13 @@ namespace Cathedral.Terminal
             // Clear old glyph mapping
             _glyphMap.Clear();
 
-            // Calculate atlas dimensions
+            // Calculate atlas dimensions (add padding between cells)
             int glyphCount = cleanGlyphSet.Length;
             int cols = (int)Math.Ceiling(Math.Sqrt(glyphCount));
             int rows = (int)Math.Ceiling((float)glyphCount / cols);
-            int atlasWidth = cols * _cellSize;
-            int atlasHeight = rows * _cellSize;
+            int cellWithPadding = _cellSize + GLYPH_PADDING;
+            int atlasWidth = cols * cellWithPadding;
+            int atlasHeight = rows * cellWithPadding;
 
             // Create atlas image
             using var atlasImage = new Image<Rgba32>(atlasWidth, atlasHeight, Color.Transparent);
@@ -158,19 +162,20 @@ namespace Cathedral.Terminal
                 char glyph = cleanGlyphSet[i];
                 int col = i % cols;
                 int row = i / cols;
-                int x = col * _cellSize;
-                int y = row * _cellSize;
+                int x = col * cellWithPadding + GLYPH_PADDING / 2;
+                int y = row * cellWithPadding + GLYPH_PADDING / 2;
 
                 // Render glyph to atlas
                 RenderGlyphToAtlas(atlasImage, glyph, x, y);
 
-                // Store glyph info
+                // Store glyph info with UV inset to avoid sampling padding
+                float uvInset = 0.5f; // Half pixel inset in texture space
                 var glyphInfo = new GlyphInfo(
                     glyph,
-                    (float)x / atlasWidth,
-                    (float)y / atlasHeight,
-                    (float)_cellSize / atlasWidth,
-                    (float)_cellSize / atlasHeight
+                    (float)(x + uvInset) / atlasWidth,
+                    (float)(y + uvInset) / atlasHeight,
+                    (float)(_cellSize - uvInset * 2) / atlasWidth,
+                    (float)(_cellSize - uvInset * 2) / atlasHeight
                 );
                 
                 _glyphMap[glyph] = glyphInfo;
