@@ -47,12 +47,14 @@ public class Phase6ObservationUI
     private DateTime _lastFrameUpdate = DateTime.Now;
     
     private readonly TerminalHUD _terminal;
+    private readonly KeywordRenderer _keywordRenderer;
     private List<KeywordRegion> _keywordRegions = new();
     private List<ActionRegion> _actionRegions = new();
     
     public Phase6ObservationUI(TerminalHUD terminal)
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
+        _keywordRenderer = new KeywordRenderer();
         
         if (_terminal.Width != Phase6Layout.TERMINAL_WIDTH || _terminal.Height != Phase6Layout.TERMINAL_HEIGHT)
         {
@@ -251,60 +253,38 @@ public class Phase6ObservationUI
             return;
         }
         
-        // Find all keyword occurrences in this line (case-insensitive)
-        var keywordOccurrences = new List<(int start, int length, string keyword)>();
+        // Use KeywordRenderer to properly parse keywords with morphological variations and word boundaries
+        var segments = _keywordRenderer.ParseNarrationWithKeywords(text, keywords);
         
-        foreach (var keyword in keywords)
-        {
-            int index = 0;
-            while ((index = text.IndexOf(keyword, index, StringComparison.OrdinalIgnoreCase)) != -1)
-            {
-                keywordOccurrences.Add((index, keyword.Length, keyword));
-                index += keyword.Length;
-            }
-        }
-        
-        // Sort by position
-        keywordOccurrences = keywordOccurrences.OrderBy(k => k.start).ToList();
-        
-        // Render text with keywords highlighted
-        int currentPos = 0;
         int currentX = startX;
         
-        foreach (var (start, length, keyword) in keywordOccurrences)
+        foreach (var segment in segments)
         {
-            // Render text before keyword
-            if (start > currentPos)
+            if (segment.IsKeyword)
             {
-                string beforeText = text.Substring(currentPos, start - currentPos);
-                _terminal.Text(currentX, y, beforeText, NarrativeColor, BackgroundColor);
-                currentX += beforeText.Length;
+                // Track keyword region for click detection
+                var keywordRegion = new KeywordRegion(
+                    segment.KeywordValue!, 
+                    y, 
+                    currentX, 
+                    currentX + segment.Text.Length - 1);
+                _keywordRegions.Add(keywordRegion);
+                
+                // Check if this specific region is hovered
+                bool isHovered = hoveredKeyword != null &&
+                               hoveredKeyword.Y == y &&
+                               hoveredKeyword.StartX == currentX &&
+                               hoveredKeyword.EndX == currentX + segment.Text.Length - 1;
+                Vector4 keywordColor = isHovered ? KeywordHoverColor : KeywordNormalColor;
+                _terminal.Text(currentX, y, segment.Text, keywordColor, BackgroundColor);
+            }
+            else
+            {
+                // Render normal text
+                _terminal.Text(currentX, y, segment.Text, NarrativeColor, BackgroundColor);
             }
             
-            // Render keyword with highlighting
-            string keywordText = text.Substring(start, length);
-            
-            // Track keyword region for click detection
-            var keywordRegion = new KeywordRegion(keyword, y, currentX, currentX + keywordText.Length - 1);
-            _keywordRegions.Add(keywordRegion);
-            
-            // Check if this specific region is hovered (not just any instance of the keyword)
-            bool isHovered = hoveredKeyword != null &&
-                           hoveredKeyword.Y == y &&
-                           hoveredKeyword.StartX == currentX &&
-                           hoveredKeyword.EndX == currentX + keywordText.Length - 1;
-            Vector4 keywordColor = isHovered ? KeywordHoverColor : KeywordNormalColor;
-            _terminal.Text(currentX, y, keywordText, keywordColor, BackgroundColor);
-            
-            currentX += keywordText.Length;
-            currentPos = start + length;
-        }
-        
-        // Render remaining text
-        if (currentPos < text.Length)
-        {
-            string remainingText = text.Substring(currentPos);
-            _terminal.Text(currentX, y, remainingText, NarrativeColor, BackgroundColor);
+            currentX += segment.Text.Length;
         }
     }
     

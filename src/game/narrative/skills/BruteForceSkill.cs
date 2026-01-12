@@ -8,7 +8,7 @@ public class BruteForceSkill : Skill
 {
     public override string SkillId => "brute_force";
     public override string DisplayName => "Brute Force";
-    public override SkillFunction[] Functions => new[] { SkillFunction.Action };
+    public override SkillFunction[] Functions => new[] { SkillFunction.Action, SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Upper Limbs", "Lower Limbs" };
     
     public override string PersonaTone => "a blunt, impatient force who believes every problem yields to overwhelming strength";

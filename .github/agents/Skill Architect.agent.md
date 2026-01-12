@@ -89,7 +89,9 @@ Choose 1-2 body parts most relevant to the skill's function:
 - **First Person**: Skill speaks as "You are the inner voice of [SKILL NAME]"
 - **Distinct Personality**: Each skill should feel like a different character
 - **Concise**: 3-4 paragraphs, ~150-250 words
-- **Show Don't Tell**: Demonstrate personality through word choice and phrasing- **All Skills**: Even Action skills get personas for future narrative expansion
+- **Show Don't Tell**: Demonstrate personality through word choice and phrasing
+- **All Skills**: Even Action skills get personas for future narrative expansion
+- **Avoid Real-World References**: Do not reference specific Earth cultures, historical periods, or real-world locations (e.g., Victorian, Gothic, Roman, Renaissance, Egyptian). Use generic descriptive terms instead (e.g., "ornate style" instead of "Victorian", "ancient arches" instead of "Roman arches")
 ### Persona Structure Template
 
 ```
@@ -133,6 +135,7 @@ How do they communicate? What words/phrases do they favor? What's their emotiona
 - Repetitive phrasing across different skills
 - Contradicting the skill's body part associations
 - Being too verbose (keep it focused)
+- Real-world cultural or historical references (Victorian, Gothic, Roman, Renaissance, etc.)
 
 ## File Structure
 
