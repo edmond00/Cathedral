@@ -50,6 +50,9 @@ namespace Cathedral.Glyph.Microworld
         
         // Debug counter for timing
         private int _debugFrameCount = 0;
+        
+        // Flag to disable world interactions (used when UI is in focus)
+        private bool _worldInteractionsEnabled = true;
 
         // Events for location travel mode
         public event Action<AvatarArrivalInfo>? AvatarArrivedAtLocation;
@@ -463,6 +466,10 @@ namespace Cathedral.Glyph.Microworld
 
         public void HandleVertexHovered(int vertexIndex)
         {
+            // Ignore hover when interactions are disabled
+            if (!_worldInteractionsEnabled)
+                return;
+                
             if (_avatarVertex == -1 || vertexIndex == _avatarVertex) return;
 
             // Don't show hover paths while avatar is moving
@@ -548,6 +555,13 @@ namespace Cathedral.Glyph.Microworld
         public void HandleVertexClicked(int vertexIndex)
         {
             Console.WriteLine($"HandleVertexClicked: vertex {vertexIndex}, avatar at {_avatarVertex}");
+            
+            // Ignore clicks when interactions are disabled
+            if (!_worldInteractionsEnabled)
+            {
+                Console.WriteLine("World interactions are disabled");
+                return;
+            }
             
             if (_avatarVertex == -1)
             {
@@ -767,6 +781,21 @@ namespace Cathedral.Glyph.Microworld
 
 
 
+        /// <summary>
+        /// Enables or disables world map interactions (pathfinding, avatar movement, hover paths)
+        /// </summary>
+        public void SetWorldInteractionsEnabled(bool enabled)
+        {
+            _worldInteractionsEnabled = enabled;
+            
+            // Clear any active hover paths when disabling
+            if (!enabled)
+            {
+                ClearHoveredPath();
+                _hoveredVertex = -1;
+            }
+        }
+        
         /// <summary>
         /// Gets the current avatar vertex index
         /// </summary>

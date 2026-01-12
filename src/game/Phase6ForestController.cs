@@ -388,6 +388,61 @@ public class Phase6ForestController
     }
     
     /// <summary>
+    /// Handle raw mouse move event with screen pixel coordinates.
+    /// Used when popup is visible to bypass terminal cell coordinate system.
+    /// </summary>
+    public void OnRawMouseMove(Vector2 screenPosition)
+    {
+        // If popup is visible, use raw screen coordinates for accurate hit detection
+        if (_skillPopup.IsVisible)
+        {
+            // Get cell size for hit detection
+            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.Size);
+            int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
+            
+            _skillPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.Size, cellPixelSize);
+        }
+    }
+    
+    /// <summary>
+    /// Handle raw mouse click event with screen pixel coordinates.
+    /// Used when popup is visible to bypass terminal cell coordinate system.
+    /// </summary>
+    public void OnRawMouseClick(Vector2 screenPosition)
+    {
+        // If popup is visible, handle popup click with screen coordinates
+        if (_skillPopup.IsVisible)
+        {
+            // Get cell size for hit detection
+            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.Size);
+            int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
+            
+            var selectedSkill = _skillPopup.HandleClick(screenPosition.X, screenPosition.Y, _core.Size, cellPixelSize);
+            if (selectedSkill != null)
+            {
+                Console.WriteLine($"Phase6ForestController: Selected skill: {selectedSkill.DisplayName}");
+                
+                // Get the keyword that was clicked (stored before popup appeared)
+                if (_narrationState.HoveredKeyword != null)
+                {
+                    string keyword = _narrationState.HoveredKeyword.Keyword;
+                    
+                    // Start thinking phase
+                    _narrationState.IsLoadingThinking = true;
+                    _narrationState.LoadingMessage = "Thinking deeply...";
+                    
+                    // Fire-and-forget async task
+                    _ = ExecuteThinkingPhaseAsync(selectedSkill, keyword);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Phase6ForestController: Popup closed (clicked outside)");
+            }
+        }
+    }
+    
+    /// <summary>
     /// Handle mouse move event.
     /// </summary>
     public void OnMouseMove(int mouseX, int mouseY)
@@ -395,17 +450,9 @@ public class Phase6ForestController
         _lastMouseX = mouseX;
         _lastMouseY = mouseY;
         
-        // If popup is visible, update popup hover with screen coordinates
+        // If popup is visible, raw mouse events are handled separately
         if (_skillPopup.IsVisible)
         {
-            // Convert terminal cell coordinates to screen pixel coordinates
-            Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.Size);
-            
-            // Get cell size for hit detection
-            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.Size);
-            int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
-            
-            _skillPopup.UpdateHover(screenPos.X, screenPos.Y, _core.Size, cellPixelSize);
             return;
         }
         
@@ -511,14 +558,14 @@ public class Phase6ForestController
         // If popup is visible, handle popup click with screen coordinates
         if (_skillPopup.IsVisible)
         {
-            // Convert terminal cell coordinates to screen pixel coordinates
-            Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.Size);
+            // Get corrected screen mouse position (includes border height offset)
+            Vector2 correctedScreenPos = _terminalInputHandler.GetCorrectedMousePosition();
             
             // Get cell size for hit detection
             var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.Size);
             int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
             
-            var selectedSkill = _skillPopup.HandleClick(screenPos.X, screenPos.Y, _core.Size, cellPixelSize);
+            var selectedSkill = _skillPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.Size, cellPixelSize);
             if (selectedSkill != null)
             {
                 Console.WriteLine($"Phase6ForestController: Selected skill: {selectedSkill.DisplayName}");

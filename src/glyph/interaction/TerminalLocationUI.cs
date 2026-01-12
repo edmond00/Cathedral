@@ -25,24 +25,14 @@ namespace Cathedral.Glyph.Interaction
     /// </summary>
     public class TerminalLocationUI
     {
-        // Terminal dimensions
-        private const int TERMINAL_WIDTH = 100;
-        private const int TERMINAL_HEIGHT = 30;
-        
-        // Layout constants
-        private const int HEADER_HEIGHT = 3;
-        private const int STATUS_BAR_HEIGHT = 1;
-        private const int ACTION_MENU_START_Y = 18;
-        private const int NARRATIVE_START_Y = HEADER_HEIGHT + 1;
-        private const int NARRATIVE_HEIGHT = ACTION_MENU_START_Y - NARRATIVE_START_Y - 1;
-        
-        // Colors
-        private static readonly Vector4 HeaderColor = new Vector4(0.0f, 0.8f, 1.0f, 1.0f); // Cyan
-        private static readonly Vector4 NarrativeColor = new Vector4(0.9f, 0.9f, 0.9f, 1.0f); // Light gray
-        private static readonly Vector4 ActionNormalColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f); // White
-        private static readonly Vector4 ActionHoverColor = new Vector4(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
-        private static readonly Vector4 StatusBarColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f); // Gray
-        private static readonly Vector4 BackgroundColor = new Vector4(0.0f, 0.0f, 0.0f, 1.0f); // Black
+        // Use centralized configuration
+        private const int TERMINAL_WIDTH = Config.LocationUI.TerminalWidth;
+        private const int TERMINAL_HEIGHT = Config.LocationUI.TerminalHeight;
+        private const int HEADER_HEIGHT = Config.LocationUI.HeaderHeight;
+        private const int STATUS_BAR_HEIGHT = Config.LocationUI.StatusBarHeight;
+        private const int ACTION_MENU_START_Y = Config.LocationUI.ActionMenuStartY;
+        private const int NARRATIVE_START_Y = Config.LocationUI.NarrativeStartY;
+        private const int NARRATIVE_HEIGHT = Config.LocationUI.NarrativeHeight;
         
         private readonly TerminalHUD _terminal;
         private List<ActionRegion> _actionRegions = new();
@@ -74,7 +64,7 @@ namespace Cathedral.Glyph.Interaction
             {
                 for (int x = 0; x < TERMINAL_WIDTH; x++)
                 {
-                    _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
+                    _terminal.SetCell(x, y, ' ', Config.LocationUI.NarrativeColor, Config.LocationUI.BackgroundColor);
                 }
             }
             _actionRegions.Clear();
@@ -89,16 +79,13 @@ namespace Cathedral.Glyph.Interaction
             // Line 0: Location name (centered, bold)
             string title = $"=== {locationName} ===";
             int titleX = (TERMINAL_WIDTH - title.Length) / 2;
-            _terminal.Text(titleX, 0, title, HeaderColor, BackgroundColor);
-            
-            // Line 1: Sublocation and turn info
-            string sublocInfo = $"{sublocation}";
-            string turnInfo = $"Turn {turnCount}";
-            _terminal.Text(2, 1, sublocInfo, NarrativeColor, BackgroundColor);
-            _terminal.Text(TERMINAL_WIDTH - turnInfo.Length - 2, 1, turnInfo, NarrativeColor, BackgroundColor);
-            
-            // Line 2: Time and weather (if provided)
-            if (!string.IsNullOrEmpty(timeOfDay) || !string.IsNullOrEmpty(weather))
+        _terminal.Text(titleX, 0, title, Config.LocationUI.HeaderColor, Config.LocationUI.BackgroundColor);
+        
+        // Line 1: Sublocation and turn info
+        string sublocInfo = $"{sublocation}";
+        string turnInfo = $"Turn {turnCount}";
+        _terminal.Text(2, 1, sublocInfo, Config.LocationUI.NarrativeColor, Config.LocationUI.BackgroundColor);
+        _terminal.Text(TERMINAL_WIDTH - turnInfo.Length - 2, 1, turnInfo, Config.LocationUI.NarrativeColor, Config.LocationUI.BackgroundColor);
             {
                 string envInfo = "";
                 if (!string.IsNullOrEmpty(timeOfDay)) envInfo += timeOfDay;
@@ -107,7 +94,7 @@ namespace Cathedral.Glyph.Interaction
                     if (envInfo.Length > 0) envInfo += " | ";
                     envInfo += weather;
                 }
-                _terminal.Text(2, 2, envInfo, NarrativeColor, BackgroundColor);
+                _terminal.Text(2, 2, envInfo, Config.LocationUI.NarrativeColor, Config.LocationUI.BackgroundColor);
             }
             
             // Separator line
@@ -134,7 +121,7 @@ namespace Cathedral.Glyph.Interaction
             {
                 if (y >= maxY) break; // Don't overflow into action menu
                 
-                _terminal.Text(2, y, line, NarrativeColor, BackgroundColor);
+                _terminal.Text(2, y, line, Config.LocationUI.NarrativeColor, Config.LocationUI.BackgroundColor);
                 y++;
             }
         }
@@ -152,7 +139,7 @@ namespace Cathedral.Glyph.Interaction
             {
                 for (int x = 0; x < TERMINAL_WIDTH; x++)
                 {
-                    _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
+                    _terminal.SetCell(x, y, ' ', Config.LocationUI.NarrativeColor, Config.LocationUI.BackgroundColor);
                 }
             }
         }
@@ -166,7 +153,7 @@ namespace Cathedral.Glyph.Interaction
             
             if (actions == null || actions.Count == 0)
             {
-                _terminal.Text(2, ACTION_MENU_START_Y, "No actions available.", StatusBarColor, BackgroundColor);
+                _terminal.Text(2, ACTION_MENU_START_Y, "No actions available.", Config.LocationUI.StatusBarColor, Config.LocationUI.BackgroundColor);
                 return;
             }
             
@@ -181,7 +168,7 @@ namespace Cathedral.Glyph.Interaction
                 ActionInfo actionInfo = actions[i];
                 string displayText = actionInfo.GetFormattedDisplayText();
                 bool isHovered = hoveredIndex.HasValue && hoveredIndex.Value == i;
-                Vector4 color = isHovered ? ActionHoverColor : ActionNormalColor;
+                Vector4 color = isHovered ? Config.LocationUI.ActionHoverColor : Config.LocationUI.ActionNormalColor;
                 
                 // No number prefix, just the formatted text
                 int maxActionWidth = TERMINAL_WIDTH - 4; // Just margins
@@ -194,7 +181,7 @@ namespace Cathedral.Glyph.Interaction
                 // Render all lines
                 for (int lineIdx = 0; lineIdx < actionLines.Count && y < maxY; lineIdx++)
                 {
-                    _terminal.Text(2, y, actionLines[lineIdx], color, BackgroundColor);
+                    _terminal.Text(2, y, actionLines[lineIdx], color, Config.LocationUI.BackgroundColor);
                     y++;
                 }
                 
@@ -228,7 +215,7 @@ namespace Cathedral.Glyph.Interaction
                 message = message.Substring(0, TERMINAL_WIDTH - 7) + "...";
             }
             
-            _terminal.Text(2, statusY, message, StatusBarColor, BackgroundColor);
+            _terminal.Text(2, statusY, message, Config.LocationUI.StatusBarColor, Config.LocationUI.BackgroundColor);
         }
         
         /// <summary>
@@ -350,7 +337,7 @@ namespace Cathedral.Glyph.Interaction
             
             for (int x = 0; x < TERMINAL_WIDTH; x++)
             {
-                _terminal.SetCell(x, y, '─', StatusBarColor, BackgroundColor);
+                _terminal.SetCell(x, y, '─', Config.LocationUI.StatusBarColor, Config.LocationUI.BackgroundColor);
             }
         }
         
@@ -388,7 +375,7 @@ namespace Cathedral.Glyph.Interaction
             {
                 for (int xPos = 0; xPos < TERMINAL_WIDTH; xPos++)
                 {
-                    _terminal.SetCell(xPos, yPos, ' ', NarrativeColor, BackgroundColor);
+                    _terminal.SetCell(xPos, yPos, ' ', Config.LocationUI.NarrativeColor, Config.LocationUI.BackgroundColor);
                 }
             }
             
@@ -396,7 +383,7 @@ namespace Cathedral.Glyph.Interaction
             string loadingText = $"{spinner}  {message}  {spinner}";
             int loadingY = NARRATIVE_START_Y + NARRATIVE_HEIGHT / 2;
             int loadingX = (TERMINAL_WIDTH - loadingText.Length) / 2;
-            _terminal.Text(loadingX, loadingY, loadingText, loadingColor, BackgroundColor);
+            _terminal.Text(loadingX, loadingY, loadingText, loadingColor, Config.LocationUI.BackgroundColor);
             
             // Add animated dots below
             string dots = new string('.', (_loadingFrameIndex % 4));
@@ -404,14 +391,14 @@ namespace Cathedral.Glyph.Interaction
             string hint = $"{space}Please wait{dots}";
             int hintY = loadingY + 2;
             int hintX = (TERMINAL_WIDTH - hint.Length) / 2;
-            _terminal.Text(hintX, hintY, hint, StatusBarColor, BackgroundColor);
+            _terminal.Text(hintX, hintY, hint, Config.LocationUI.StatusBarColor, Config.LocationUI.BackgroundColor);
             
             // Add progress indicator (alternating bars)
             int barWidth = 30;
             int barY = loadingY - 2;
             int barX = (TERMINAL_WIDTH - barWidth) / 2;
             string progressBar = GenerateProgressBar(barWidth, _loadingFrameIndex);
-            _terminal.Text(barX, barY, progressBar, spinnerColor, BackgroundColor);
+            _terminal.Text(barX, barY, progressBar, spinnerColor, Config.LocationUI.BackgroundColor);
         }
         
         /// <summary>
@@ -452,7 +439,7 @@ namespace Cathedral.Glyph.Interaction
             {
                 for (int x = 0; x < TERMINAL_WIDTH; x++)
                 {
-                    _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
+                    _terminal.SetCell(x, y, ' ', Config.LocationUI.NarrativeColor, Config.LocationUI.BackgroundColor);
                 }
             }
             
@@ -467,7 +454,7 @@ namespace Cathedral.Glyph.Interaction
                 {
                     string line = wrappedLines[i];
                     int x = (TERMINAL_WIDTH - line.Length) / 2;
-                    _terminal.Text(x, y, line, color, BackgroundColor);
+                    _terminal.Text(x, y, line, color, Config.LocationUI.BackgroundColor);
                 }
             }
             
@@ -475,7 +462,7 @@ namespace Cathedral.Glyph.Interaction
             string instruction = success ? "(Click anywhere to continue)" : "(Click anywhere to exit)";
             int instructionY = ACTION_MENU_START_Y - 2;
             int instructionX = (TERMINAL_WIDTH - instruction.Length) / 2;
-            _terminal.Text(instructionX, instructionY, instruction, StatusBarColor, BackgroundColor);
+            _terminal.Text(instructionX, instructionY, instruction, Config.LocationUI.StatusBarColor, Config.LocationUI.BackgroundColor);
         }
         
         /// <summary>

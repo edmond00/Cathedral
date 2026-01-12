@@ -54,6 +54,7 @@ namespace Cathedral.Glyph
         // Mouse interaction
         int hoveredVertexIndex = -1;
         int lastHoveredVertexIndex = -2;
+        private bool _worldInteractionsEnabled = true;
         
         // Debug visualization
         Vector3 debugCameraPos = Vector3.Zero;
@@ -96,6 +97,18 @@ namespace Cathedral.Glyph
         public event Action? CoreLoaded;
         public event Action<float>? UpdateRequested;
         public event Action<float>? MouseWheelScrolled;
+        
+        /// <summary>
+        /// Enables or disables 3D world vertex interactions (hover highlighting, vertex detection)
+        /// </summary>
+        public void SetWorldInteractionsEnabled(bool enabled)
+        {
+            _worldInteractionsEnabled = enabled;
+            if (!enabled)
+            {
+                hoveredVertexIndex = -1; // Clear hover state
+            }
+        }
         
         // Terminal HUD
         private Cathedral.Terminal.TerminalHUD? _terminal;
@@ -272,7 +285,11 @@ namespace Cathedral.Glyph
             // Initialize terminal HUD (100x30 for Location Travel Mode UI)
             try 
             {
-                _terminal = new Cathedral.Terminal.TerminalHUD(100, 30, 16, 14);
+                _terminal = new Cathedral.Terminal.TerminalHUD(
+                    Config.Terminal.MainWidth, 
+                    Config.Terminal.MainHeight, 
+                    Config.Terminal.MainCellSize, 
+                    Config.Terminal.MainFontSize);
                 // Event handlers removed - terminal events will be handled by game modes
                 
                 // Set border height function for proper mouse position correction
@@ -284,7 +301,11 @@ namespace Cathedral.Glyph
                 Console.WriteLine("Terminal: HUD integrated with GlyphSphereCore (100x30 for Location Travel Mode)");
                 
                 // Initialize popup terminal (30x30, shares atlas with main terminal)
-                _popupTerminal = new Cathedral.Terminal.PopupTerminalHUD(40, 40, 16, _terminal.Atlas);
+                _popupTerminal = new Cathedral.Terminal.PopupTerminalHUD(
+                    Config.Terminal.PopupWidth, 
+                    Config.Terminal.PopupHeight, 
+                    Config.Terminal.PopupCellSize, 
+                    _terminal.Atlas);
                 Console.WriteLine("Popup Terminal: HUD integrated with GlyphSphereCore (30x30 mouse-following)");
             }
             catch (Exception ex)
@@ -741,11 +762,12 @@ namespace Cathedral.Glyph
             debugRayDirection = rayDir;
             debugMousePos = mouse;
 
-            // Find hovered vertex (only if mouse is not over terminal)
-            if (_terminal == null || !_terminal.IsPositionInTerminal(mouse, Size))
+            // Find hovered vertex (only if mouse is not over terminal and interactions are enabled)
+            if (_worldInteractionsEnabled && (_terminal == null || !_terminal.IsPositionInTerminal(mouse, Size)))
             {
                 int newHover = FindVertexByMagentaRayIntersection(mouse);
                 
+                // Only use expensive screen-space search as fallback and limit frequency
                 if (newHover == -1)
                 {
                     newHover = FindClosestVertexInScreenSpace(mouse);
@@ -758,6 +780,12 @@ namespace Cathedral.Glyph
                     // Fire event for interface (including -1 for "no hover")
                     VertexHovered?.Invoke(newHover, mouse);
                 }
+            }
+            else if (!_worldInteractionsEnabled && hoveredVertexIndex != -1)
+            {
+                // Clear hover state when interactions are disabled
+                hoveredVertexIndex = -1;
+                VertexHovered?.Invoke(-1, mouse);
             }
         }
 

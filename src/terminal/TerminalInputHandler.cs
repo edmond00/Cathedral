@@ -19,6 +19,7 @@ namespace Cathedral.Terminal
         private Vector2i? _lastHoveredCell;
         private bool _leftMouseDown;
         private bool _rightMouseDown;
+        private Vector2 _lastRawMousePosition;
         
         // Events
         public event Action<int, int>? CellClicked;
@@ -49,6 +50,11 @@ namespace Cathedral.Terminal
         /// </summary>
         public bool IsRightMouseDown => _rightMouseDown;
 
+        /// <summary>
+        /// The last raw screen mouse position (in screen pixel coordinates)
+        /// </summary>
+        public Vector2 LastRawMousePosition => _lastRawMousePosition;
+
         #endregion
 
         #region Border Height
@@ -69,6 +75,16 @@ namespace Cathedral.Terminal
             return _getBorderHeight?.Invoke() ?? 0f;
         }
         
+        /// <summary>
+        /// Gets the last raw mouse position with border height correction applied.
+        /// This is the actual corrected screen position used for coordinate conversion.
+        /// </summary>
+        public Vector2 GetCorrectedMousePosition()
+        {
+            float borderHeight = GetWindowBorderHeight();
+            return new Vector2(_lastRawMousePosition.X, _lastRawMousePosition.Y + borderHeight);
+        }
+        
         #endregion
 
         #region Mouse Input
@@ -78,6 +94,8 @@ namespace Cathedral.Terminal
         /// </summary>
         public void HandleMouseMove(Vector2 mousePosition, Vector2i windowSize)
         {
+            _lastRawMousePosition = mousePosition;
+            
             var cellPos = ScreenToCell(mousePosition, windowSize);
             
             if (cellPos != _hoveredCell)
@@ -101,6 +119,8 @@ namespace Cathedral.Terminal
         /// </summary>
         public bool HandleMouseDown(Vector2 mousePosition, Vector2i windowSize, MouseButton button)
         {
+            _lastRawMousePosition = mousePosition;
+            
             var cellPos = ScreenToCell(mousePosition, windowSize);
             
             if (!cellPos.HasValue)

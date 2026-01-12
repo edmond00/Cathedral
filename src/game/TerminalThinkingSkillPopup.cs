@@ -21,13 +21,9 @@ public class TerminalThinkingSkillPopup
     private Vector2 _fixedPosition;
     private int _scrollOffset = 0;
     
-    // Colors
-    private static readonly Vector4 BorderColor = new(0.5f, 0.9f, 1.0f, 1.0f); // Light cyan
-    private static readonly Vector4 TitleColor = new(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
-    private static readonly Vector4 SkillNormalColor = new(0.9f, 0.9f, 0.9f, 1.0f); // Light gray
-    private static readonly Vector4 SkillHoverColor = new(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
-    private static readonly Vector4 BackgroundColor = new(0.0f, 0.0f, 0.0f, 0.9f); // Semi-transparent black
-    private static readonly Vector4 TransparentColor = new(0.0f, 0.0f, 0.0f, 0.0f);
+    // Colors from centralized config
+    private static readonly Vector4 BorderColor = Config.Colors.LightCyan;
+    private static readonly Vector4 TitleColor = Config.Colors.Yellow;
     
     public TerminalThinkingSkillPopup(PopupTerminalHUD popup)
     {
@@ -105,10 +101,11 @@ public class TerminalThinkingSkillPopup
             return null;
         
         // Convert screen position to popup-local cell coordinates
+        // Note: Cells are positioned by their centers, so we add half a cell size before dividing
         float relativeX = screenX - left;
         float relativeY = screenY - top;
-        int cellX = (int)(relativeX / cellPixelSize);
-        int cellY = (int)(relativeY / cellPixelSize);
+        int cellX = (int)Math.Floor((relativeX + cellPixelSize * 0.5f) / cellPixelSize);
+        int cellY = (int)Math.Floor((relativeY + cellPixelSize * 0.5f) / cellPixelSize);
         
         // Check if we're in the skill list area (row 1 to MAX_VISIBLE_SKILLS+1, within popup width)
         if (cellY < 1 || cellY > MAX_VISIBLE_SKILLS || cellX < 0 || cellX >= POPUP_WIDTH)
@@ -165,15 +162,15 @@ public class TerminalThinkingSkillPopup
         int popupHeight = visibleSkillCount + 3; // Title + border + skills + close hint
         
         // Draw background
-        _popup.Fill(0, 0, POPUP_WIDTH, popupHeight, ' ', SkillNormalColor, BackgroundColor);
+        _popup.Fill(0, 0, POPUP_WIDTH, popupHeight, ' ', Config.ThinkingSkillPopup.SkillNormalColor, Config.ThinkingSkillPopup.BackgroundColor);
         
         // Draw border
-        _popup.DrawBox(0, 0, POPUP_WIDTH, popupHeight, BorderColor, BackgroundColor);
+        _popup.DrawBox(0, 0, POPUP_WIDTH, popupHeight, BorderColor, Config.ThinkingSkillPopup.BackgroundColor);
         
         // Draw title
         string title = "Select Thinking Skill";
         int titleX = (POPUP_WIDTH - title.Length) / 2;
-        _popup.DrawText(titleX, 0, title, TitleColor, BackgroundColor);
+        _popup.DrawText(titleX, 0, title, TitleColor, Config.ThinkingSkillPopup.BackgroundColor);
         
         // Draw skills
         int startIndex = _scrollOffset;
@@ -185,8 +182,8 @@ public class TerminalThinkingSkillPopup
             var skill = _thinkingSkills[i];
             
             bool isHovered = _hoveredSkillIndex == i;
-            Vector4 textColor = isHovered ? SkillHoverColor : SkillNormalColor;
-            Vector4 bgColor = isHovered ? new Vector4(0.2f, 0.2f, 0.0f, 0.9f) : BackgroundColor;
+            Vector4 textColor = isHovered ? Config.ThinkingSkillPopup.SkillHoverColor : Config.ThinkingSkillPopup.SkillNormalColor;
+            Vector4 bgColor = isHovered ? new Vector4(0.2f, 0.2f, 0.0f, 0.9f) : Config.ThinkingSkillPopup.BackgroundColor;
             
             // Draw skill name with arrow prefix
             string prefix = isHovered ? "> " : "  ";
@@ -210,7 +207,7 @@ public class TerminalThinkingSkillPopup
         string closeHint = "[ESC or Click to close]";
         int hintX = (POPUP_WIDTH - closeHint.Length) / 2;
         _popup.DrawText(hintX, popupHeight - 1, closeHint, 
-            new Vector4(0.5f, 0.5f, 0.5f, 1.0f), BackgroundColor);
+            new Vector4(0.5f, 0.5f, 0.5f, 1.0f), Config.ThinkingSkillPopup.BackgroundColor);
     }
     
     /// <summary>

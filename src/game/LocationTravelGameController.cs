@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using OpenTK.Mathematics;
 using Cathedral.Glyph;
 using Cathedral.Glyph.Microworld;
 using Cathedral.Glyph.Microworld.LocationSystem;
@@ -123,6 +124,14 @@ public class LocationTravelGameController : IDisposable
         // Update Phase 6 controller if active
         if (_isInPhase6Mode && _phase6Controller != null)
         {
+            // If popup is visible, handle all mouse updates here for consistent frame-rate timing
+            // This ensures uniform refresh rate across the entire popup (both inside and outside terminal bounds)
+            if (_phase6Controller.IsPopupVisible && _core.Terminal != null)
+            {
+                Vector2 rawMouse = _core.Terminal.InputHandler.GetCorrectedMousePosition();
+                _phase6Controller.OnRawMouseMove(rawMouse);
+            }
+            
             _phase6Controller.Update();
             
             // Check if player requested exit (clicked Continue button)
@@ -208,6 +217,7 @@ public class LocationTravelGameController : IDisposable
             // Wire up terminal events for action selection
             _core.Terminal.CellClicked += OnTerminalCellClicked;
             _core.Terminal.CellHovered += OnTerminalCellHovered;
+            _core.Terminal.MouseLeft += OnTerminalMouseLeft;
             
             Console.WriteLine("LocationTravelGameController: Terminal UI initialized");
         }
@@ -226,6 +236,14 @@ public class LocationTravelGameController : IDisposable
         // Phase 6 mode handles clicks differently
         if (_isInPhase6Mode && _phase6Controller != null)
         {
+            // If popup is visible, use raw mouse coordinates
+            if (_phase6Controller.IsPopupVisible)
+            {
+                Vector2 rawMouse = _core.Terminal.InputHandler.GetCorrectedMousePosition();
+                _phase6Controller.OnRawMouseClick(rawMouse);
+                return;
+            }
+            
             _phase6Controller.OnMouseClick(x, y);
             return;
         }
@@ -258,7 +276,12 @@ public class LocationTravelGameController : IDisposable
         // Phase 6 mode handles hover differently
         if (_isInPhase6Mode && _phase6Controller != null)
         {
-            _phase6Controller.OnMouseMove(x, y);
+            // When popup is visible, mouse updates are handled in Update() loop for consistent timing
+            // Only handle non-popup interactions here
+            if (!_phase6Controller.IsPopupVisible)
+            {
+                _phase6Controller.OnMouseMove(x, y);
+            }
             return;
         }
         
@@ -266,6 +289,14 @@ public class LocationTravelGameController : IDisposable
             return;
         
         _terminalUI.UpdateHover(x, y, _currentActions);
+    }
+    
+    /// <summary>
+    /// Handles mouse leaving the terminal area.
+    /// </summary>
+    private void OnTerminalMouseLeft()
+    {
+        // No action needed - Update() loop handles popup mouse tracking
     }
     
     /// <summary>
@@ -569,6 +600,13 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnVertexClicked(int vertexIndex, char glyph, OpenTK.Mathematics.Vector4 color, float noise)
     {
+        // Ignore clicks when Phase 6 narration is active
+        if (_isInPhase6Mode)
+        {
+            Console.WriteLine("LocationTravelGameController: Ignoring world map click during Phase 6 narration");
+            return;
+        }
+        
         // Only process clicks in WorldView mode
         if (_currentMode != GameMode.WorldView)
         {
@@ -1253,6 +1291,10 @@ public class LocationTravelGameController : IDisposable
             _isInPhase6Mode = true;
             _currentLocationVertex = vertexIndex;
             
+            // Disable world map interactions while narration UI is active
+            _interface.SetWorldInteractionsEnabled(false);
+            _core.SetWorldInteractionsEnabled(false);
+            
             // Set mode to LocationInteraction
             SetMode(GameMode.LocationInteraction);
             
@@ -1281,6 +1323,10 @@ public class LocationTravelGameController : IDisposable
             return;
         
         Console.WriteLine("LocationTravelGameController: Exiting Phase 6 mode");
+        
+        // Re-enable world map and 3D interactions
+        _interface.SetWorldInteractionsEnabled(true);
+        _core.SetWorldInteractionsEnabled(true);
         
         _isInPhase6Mode = false;
         _phase6Controller = null;

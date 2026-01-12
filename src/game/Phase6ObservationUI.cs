@@ -16,28 +16,6 @@ public class Phase6ObservationUI
     // Use centralized layout constants
     private const int SCROLLBAR_X = Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN; // Inside right margin
     
-    // Colors
-    private static readonly Vector4 HeaderColor = new(0.0f, 0.8f, 1.0f, 1.0f); // Cyan
-    private static readonly Vector4 SkillHeaderColor = new(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
-    private static readonly Vector4 NarrativeColor = new(0.7f, 0.7f, 0.7f, 1.0f); // Gray70
-    private static readonly Vector4 KeywordNormalColor = new(0.5f, 0.9f, 1.0f, 1.0f); // Light cyan
-    private static readonly Vector4 KeywordHoverColor = new(1.0f, 1.0f, 1.0f, 1.0f); // White
-    private static readonly Vector4 ActionNormalColor = new(1.0f, 1.0f, 1.0f, 1.0f); // White
-    private static readonly Vector4 ActionHoverColor = new(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
-    private static readonly Vector4 ActionSkillColor = new(0.5f, 1.0f, 0.5f, 1.0f); // Light green
-    private static readonly Vector4 ReasoningColor = new(0.8f, 0.8f, 0.9f, 1.0f); // Light purple-gray
-    private static readonly Vector4 ScrollbarTrackColor = new(0.3f, 0.3f, 0.3f, 1.0f); // Dark gray
-    private static readonly Vector4 ScrollbarThumbColor = new(0.6f, 0.6f, 0.6f, 1.0f); // Medium gray
-    private static readonly Vector4 ScrollbarThumbHoverColor = new(0.8f, 0.8f, 0.8f, 1.0f); // Light gray
-    private static readonly Vector4 StatusBarColor = new(0.5f, 0.5f, 0.5f, 1.0f); // Gray
-    private static readonly Vector4 BackgroundColor = new(0.0f, 0.0f, 0.0f, 1.0f); // Black
-    private static readonly Vector4 ErrorColor = new(1.0f, 0.3f, 0.3f, 1.0f); // Red
-    private static readonly Vector4 LoadingColor = new(0.8f, 0.8f, 0.0f, 1.0f); // Yellow
-    private static readonly Vector4 SuccessColor = new(0.4f, 1.0f, 0.4f, 1.0f); // Bright green
-    private static readonly Vector4 FailureColor = new(1.0f, 0.4f, 0.4f, 1.0f); // Bright red
-    private static readonly Vector4 ContinueButtonColor = new(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
-    private static readonly Vector4 ContinueButtonHoverColor = new(1.0f, 0.8f, 0.0f, 1.0f); // Orange-yellow
-    
     // Loading animation
     private static readonly string[] LoadingFrames = new[]
     {
@@ -71,7 +49,7 @@ public class Phase6ObservationUI
         {
             for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
             {
-                _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
+                _terminal.SetCell(x, y, ' ', Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
             }
         }
         _keywordRegions.Clear();
@@ -84,12 +62,12 @@ public class Phase6ObservationUI
     {
         // Line 0: Location name
         string title = $"Forest Exploration - {locationName}";
-        _terminal.Text(Phase6Layout.LEFT_MARGIN, 0, title, HeaderColor, BackgroundColor);
+        _terminal.Text(Phase6Layout.LEFT_MARGIN, 0, title, Config.Phase6UI.HeaderColor, Config.Phase6UI.BackgroundColor);
         
         // Thinking attempts indicator (right side)
         string attempts = $"Thinking: ";
         int attemptsX = Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN - 20;
-        _terminal.Text(attemptsX, 0, attempts, StatusBarColor, BackgroundColor);
+        _terminal.Text(attemptsX, 0, attempts, Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
         
         // Draw filled boxes for remaining attempts
         int boxX = attemptsX + attempts.Length;
@@ -99,7 +77,7 @@ public class Phase6ObservationUI
             Vector4 boxColor = i < thinkingAttemptsRemaining 
                 ? new Vector4(0.8f, 0.4f, 0.4f, 1.0f) // Red-ish for available
                 : new Vector4(0.3f, 0.3f, 0.3f, 1.0f); // Dark gray for used
-            _terminal.Text(boxX, 0, box, boxColor, BackgroundColor);
+            _terminal.Text(boxX, 0, box, boxColor, Config.Phase6UI.BackgroundColor);
             boxX += 5;
         }
         
@@ -124,7 +102,7 @@ public class Phase6ObservationUI
         {
             for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
             {
-                _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
+                _terminal.SetCell(x, y, ' ', Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
             }
         }
         
@@ -147,7 +125,7 @@ public class Phase6ObservationUI
             {
                 case LineType.Header:
                     // Render skill name header in yellow
-                    _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, SkillHeaderColor, BackgroundColor);
+                    _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, Config.Phase6UI.SkillHeaderColor, Config.Phase6UI.BackgroundColor);
                     
                     // Note: Do NOT reset action counter here - we want globally unique action indices
                     // so that actions from different thinking blocks don't have the same index
@@ -183,22 +161,22 @@ public class Phase6ObservationUI
                     else
                     {
                         // Action result block (from Action block type) - detect SUCCESS/FAILURE
-                        Vector4 actionColor = NarrativeColor;
+                        Vector4 actionColor = Config.Phase6UI.NarrativeColor;
                         if (renderedLine.Text.Contains("[SUCCESS]"))
                         {
-                            actionColor = SuccessColor;
+                            actionColor = Config.Phase6UI.SuccessColor;
                         }
                         else if (renderedLine.Text.Contains("[FAILURE]"))
                         {
-                            actionColor = FailureColor;
+                            actionColor = Config.Phase6UI.FailureColor;
                         }
-                        _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, actionColor, BackgroundColor);
+                        _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, actionColor, Config.Phase6UI.BackgroundColor);
                     }
                     break;
                     
                 case LineType.Outcome:
                     // Outcome narration - check if previous line in buffer contains SUCCESS/FAILURE
-                    Vector4 outcomeColor = NarrativeColor;
+                    Vector4 outcomeColor = Config.Phase6UI.NarrativeColor;
                     
                     // Look back in the visible lines to find the action result
                     int lookbackIndex = visibleLines.IndexOf(renderedLine) - 1;
@@ -210,18 +188,18 @@ public class Phase6ObservationUI
                             // Found the action result line
                             if (prevLine.Text.Contains("[SUCCESS]"))
                             {
-                                outcomeColor = SuccessColor;
+                                outcomeColor = Config.Phase6UI.SuccessColor;
                             }
                             else if (prevLine.Text.Contains("[FAILURE]"))
                             {
-                                outcomeColor = FailureColor;
+                                outcomeColor = Config.Phase6UI.FailureColor;
                             }
                             break;
                         }
                         lookbackIndex--;
                     }
                     
-                    _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, outcomeColor, BackgroundColor);
+                    _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, outcomeColor, Config.Phase6UI.BackgroundColor);
                     break;
                     
                 case LineType.Empty:
@@ -249,7 +227,7 @@ public class Phase6ObservationUI
         if (keywords == null || keywords.Count == 0)
         {
             // No keywords, just render normal text
-            _terminal.Text(startX, y, text, NarrativeColor, BackgroundColor);
+            _terminal.Text(startX, y, text, Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
             return;
         }
         
@@ -275,13 +253,13 @@ public class Phase6ObservationUI
                                hoveredKeyword.Y == y &&
                                hoveredKeyword.StartX == currentX &&
                                hoveredKeyword.EndX == currentX + segment.Text.Length - 1;
-                Vector4 keywordColor = isHovered ? KeywordHoverColor : KeywordNormalColor;
-                _terminal.Text(currentX, y, segment.Text, keywordColor, BackgroundColor);
+                Vector4 keywordColor = isHovered ? Config.Phase6UI.KeywordHoverColor : Config.Phase6UI.KeywordNormalColor;
+                _terminal.Text(currentX, y, segment.Text, keywordColor, Config.Phase6UI.BackgroundColor);
             }
             else
             {
                 // Render normal text
-                _terminal.Text(currentX, y, segment.Text, NarrativeColor, BackgroundColor);
+                _terminal.Text(currentX, y, segment.Text, Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
             }
             
             currentX += segment.Text.Length;
@@ -312,9 +290,9 @@ public class Phase6ObservationUI
         bool isHovered = hoveredAction != null && hoveredAction.ActionIndex == actionIndex;
         
         // Calculate colors
-        Vector4 prefixColor = NarrativeColor;
-        Vector4 skillColor = ActionSkillColor;
-        Vector4 textColor = isHovered ? ActionHoverColor : ActionNormalColor;
+        Vector4 prefixColor = Config.Phase6UI.NarrativeColor;
+        Vector4 skillColor = Config.Phase6UI.ActionSkillColor;
+        Vector4 textColor = isHovered ? Config.Phase6UI.ActionHoverColor : Config.Phase6UI.ActionNormalColor;
         
         int startX = Phase6Layout.LEFT_MARGIN;
         
@@ -324,13 +302,13 @@ public class Phase6ObservationUI
             string prefix = "> ";
             string skillBracket = $"[{action.ActionSkill?.DisplayName ?? action.ActionSkillId}] ";
             
-            _terminal.Text(startX, y, prefix, prefixColor, BackgroundColor);
+            _terminal.Text(startX, y, prefix, prefixColor, Config.Phase6UI.BackgroundColor);
             startX += prefix.Length;
             
-            _terminal.Text(startX, y, skillBracket, skillColor, BackgroundColor);
+            _terminal.Text(startX, y, skillBracket, skillColor, Config.Phase6UI.BackgroundColor);
             startX += skillBracket.Length;
             
-            _terminal.Text(startX, y, text, textColor, BackgroundColor);
+            _terminal.Text(startX, y, text, textColor, Config.Phase6UI.BackgroundColor);
             
             // Track action region (will be updated as we encounter more lines)
             var actionRegion = new ActionRegion(actionIndex, y, y, Phase6Layout.LEFT_MARGIN, Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN);
@@ -340,7 +318,7 @@ public class Phase6ObservationUI
         {
             // Continuation line: indent by 4 spaces
             int continuationIndent = Phase6Layout.LEFT_MARGIN + 4;
-            _terminal.Text(continuationIndent, y, text, textColor, BackgroundColor);
+            _terminal.Text(continuationIndent, y, text, textColor, Config.Phase6UI.BackgroundColor);
             
             // Update the action region to extend to this line
             if (_actionRegions.Count > 0)
@@ -396,7 +374,7 @@ public class Phase6ObservationUI
         // Draw track
         for (int y = trackStartY; y < trackStartY + trackHeight; y++)
         {
-            _terminal.SetCell(scrollbarX, y, '│', ScrollbarTrackColor, BackgroundColor);
+            _terminal.SetCell(scrollbarX, y, '│', Config.Phase6UI.ScrollbarTrackColor, Config.Phase6UI.BackgroundColor);
         }
         
         // Calculate thumb size and position
@@ -420,10 +398,10 @@ public class Phase6ObservationUI
         int thumbY = trackStartY + (int)(maxThumbY * scrollRatio);
         
         // Render thumb
-        Vector4 thumbColor = isThumbHovered ? ScrollbarThumbHoverColor : ScrollbarThumbColor;
+        Vector4 thumbColor = isThumbHovered ? Config.Phase6UI.ScrollbarThumbHoverColor : Config.Phase6UI.ScrollbarThumbColor;
         for (int y = thumbY; y < thumbY + thumbHeight; y++)
         {
-            _terminal.SetCell(scrollbarX, y, '█', thumbColor, BackgroundColor);
+            _terminal.SetCell(scrollbarX, y, '█', thumbColor, Config.Phase6UI.BackgroundColor);
         }
         
         return (thumbY, thumbHeight);
@@ -500,7 +478,7 @@ public class Phase6ObservationUI
             message = message.Substring(0, maxMessageWidth - 3) + "...";
         }
         
-        _terminal.Text(Phase6Layout.LEFT_MARGIN, statusY, message, StatusBarColor, BackgroundColor);
+        _terminal.Text(Phase6Layout.LEFT_MARGIN, statusY, message, Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
     }
     
     /// <summary>
@@ -522,7 +500,7 @@ public class Phase6ObservationUI
         {
             for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
             {
-                _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
+                _terminal.SetCell(x, y, ' ', Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
             }
         }
         
@@ -530,21 +508,21 @@ public class Phase6ObservationUI
         string loadingText = $"{spinner}  {message}  {spinner}";
         int centerY = Phase6Layout.CONTENT_START_Y + Phase6Layout.NARRATIVE_HEIGHT / 2;
         int centerX = (Phase6Layout.TERMINAL_WIDTH - loadingText.Length) / 2;
-        _terminal.Text(centerX, centerY, loadingText, LoadingColor, BackgroundColor);
+        _terminal.Text(centerX, centerY, loadingText, Config.Phase6UI.LoadingColor, Config.Phase6UI.BackgroundColor);
         
         // Add animated dots
         string dots = new string('.', (_loadingFrameIndex % 4));
         string hint = $"Please wait{dots}";
         int hintY = centerY + 2;
         int hintX = (Phase6Layout.TERMINAL_WIDTH - hint.Length) / 2;
-        _terminal.Text(hintX, hintY, hint, StatusBarColor, BackgroundColor);
+        _terminal.Text(hintX, hintY, hint, Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
         
         // Progress bar
         int barWidth = 30;
         int barY = centerY - 2;
         int barX = (Phase6Layout.TERMINAL_WIDTH - barWidth) / 2;
         string progressBar = GenerateProgressBar(barWidth, _loadingFrameIndex);
-        _terminal.Text(barX, barY, progressBar, LoadingColor, BackgroundColor);
+        _terminal.Text(barX, barY, progressBar, Config.Phase6UI.LoadingColor, Config.Phase6UI.BackgroundColor);
     }
     
     /// <summary>
@@ -557,7 +535,7 @@ public class Phase6ObservationUI
         {
             for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
             {
-                _terminal.SetCell(x, y, ' ', NarrativeColor, BackgroundColor);
+                _terminal.SetCell(x, y, ' ', Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
             }
         }
         
@@ -565,7 +543,7 @@ public class Phase6ObservationUI
         string title = "ERROR";
         int titleY = Phase6Layout.CONTENT_START_Y + Phase6Layout.NARRATIVE_HEIGHT / 2 - 2;
         int titleX = (Phase6Layout.TERMINAL_WIDTH - title.Length) / 2;
-        _terminal.Text(titleX, titleY, title, ErrorColor, BackgroundColor);
+        _terminal.Text(titleX, titleY, title, Config.Phase6UI.ErrorColor, Config.Phase6UI.BackgroundColor);
         
         // Wrap error message
         var wrappedLines = WrapText(errorMessage, Phase6Layout.CONTENT_WIDTH - 4);
@@ -575,14 +553,14 @@ public class Phase6ObservationUI
         {
             string line = wrappedLines[i];
             int x = (Phase6Layout.TERMINAL_WIDTH - line.Length) / 2;
-            _terminal.Text(x, startY + i, line, ErrorColor, BackgroundColor);
+            _terminal.Text(x, startY + i, line, Config.Phase6UI.ErrorColor, Config.Phase6UI.BackgroundColor);
         }
         
         // Show instruction
         string instruction = "(Press ESC to return)";
         int instructionY = Phase6Layout.SEPARATOR_Y - 1;
         int instructionX = (Phase6Layout.TERMINAL_WIDTH - instruction.Length) / 2;
-        _terminal.Text(instructionX, instructionY, instruction, StatusBarColor, BackgroundColor);
+        _terminal.Text(instructionX, instructionY, instruction, Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
     }
     
     /// <summary>
@@ -595,7 +573,7 @@ public class Phase6ObservationUI
         
         for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
         {
-            _terminal.SetCell(x, y, '─', StatusBarColor, BackgroundColor);
+            _terminal.SetCell(x, y, '─', Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
         }
     }
     
@@ -697,9 +675,9 @@ public class Phase6ObservationUI
         int buttonX = (Phase6Layout.TERMINAL_WIDTH - buttonWidth) / 2;
         int buttonY = Phase6Layout.SEPARATOR_Y - 2; // Place near bottom, above separator
         
-        Vector4 buttonColor = isHovered ? ContinueButtonHoverColor : ContinueButtonColor;
+        Vector4 buttonColor = isHovered ? Config.Phase6UI.ContinueButtonHoverColor : Config.Phase6UI.ContinueButtonColor;
         
-        _terminal.Text(buttonX, buttonY, buttonText, buttonColor, BackgroundColor);
+        _terminal.Text(buttonX, buttonY, buttonText, buttonColor, Config.Phase6UI.BackgroundColor);
         
         return (buttonX, buttonY, buttonWidth);
     }
