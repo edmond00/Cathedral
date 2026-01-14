@@ -90,7 +90,7 @@ public class ObservationExecutor
         Skill observationSkill)
     {
         var prompt = _promptConstructor.BuildObservationPrompt(node, avatar, observationSkill, promptKeywordUsage: true);
-        var schema = CreateObservationSchema();
+        var schema = LLMSchemaConfig.CreateObservationSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         
         var response = await RequestFromLLMAsync(slotId, prompt, gbnf);
@@ -105,7 +105,7 @@ public class ObservationExecutor
         Skill observationSkill)
     {
         var prompt = _promptConstructor.BuildObservationPromptWithIntros(node, avatar, observationSkill);
-        var schema = CreateObservationSchemaWithIntros(node);
+        var schema = LLMSchemaConfig.CreateObservationSchemaWithIntros(node.OutcomeKeywords);
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         
         var response = await RequestFromLLMAsync(slotId, prompt, gbnf);
@@ -201,38 +201,7 @@ public class ObservationExecutor
         return await _slotManager.GetOrCreateSlotForSkillAsync(skill);
     }
     
-    private CompositeField CreateObservationSchema()
-    {
-        return new CompositeField("ObservationResponse",
-            new StringField("narration_text", MinLength: 50, MaxLength: 600, Hint: "A short description of what the avatar observes in the environment")
-        );
-    }
-    
-    private CompositeField CreateObservationSchemaWithIntros(NarrationNode node)
-    {
-        // For fallback: Use TemplateStringField to FORCE starting with a keyword intro
-        // This guarantees at least one keyword will be in the output
-        var keywords = node.OutcomeKeywords.Take(3).ToList();
-        
-        if (keywords.Count == 0)
-        {
-            // Fallback to simple schema if no keywords
-            return CreateObservationSchema();
-        }
-        
-        // Build template with first keyword intro: "You notice {keyword}"
-        // The <generated> placeholder tells the LLM where to continue generating
-        var firstIntro = $"You notice {keywords.First()}";
-        
-        return new CompositeField("ObservationResponse",
-            new TemplateStringField(
-                "narration_text",
-                Template: firstIntro + " <generated>",  // Fixed intro + placeholder for LLM generation
-                MinGenLength: 50,      // LLM must generate at least 50 more chars after intro
-                MaxGenLength: 550      // Up to 250 more chars
-            )
-        );
-    }
+
     
     private ObservationResponse ParseObservationResponse(string jsonResponse, List<string> availableKeywords)
     {

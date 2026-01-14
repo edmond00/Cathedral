@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Cathedral.Glyph.Microworld.LocationSystem;
 using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
+using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game;
 
@@ -527,36 +528,20 @@ Generate the JSON outcome for this action.";
             }
         }
 
-        // State changes can be empty or specify a category/state change
-        var stateChangeOptions = new List<CompositeField>
-        {
-            new CompositeField("no_change", 
-                new ConstantStringField("category", "none"),
-                new ConstantStringField("new_state", "none"))
-        };
-
-        // Add possible state changes for each category
+        // Prepare state categories data for schema
+        var stateCategories = new Dictionary<string, (string[] PossibleStates, string CurrentState)>();
         foreach (var (categoryId, category) in blueprint.StateCategories)
         {
             var possibleStates = category.PossibleStates.Keys.ToArray();
-            if (possibleStates.Length > 0)
-            {
-                stateChangeOptions.Add(new CompositeField($"change_{categoryId}",
-                    new ConstantStringField("category", categoryId),
-                    new ChoiceField<string>("new_state", possibleStates)));
-            }
+            var currentState = currentStates.ContainsKey(categoryId) ? currentStates[categoryId] : "";
+            stateCategories[categoryId] = (possibleStates, currentState);
         }
 
-        // Build the outcome structure
-        // Note: new_sublocation can be null or a string value
-        // Use ChoiceField to allow "none" as the value (we'll handle null parsing)
-        return new CompositeField("ActionOutcome",
-            new BooleanField("success"),
-            new StringField("narrative", 20, 300),
-            new VariantField("state_changes", stateChangeOptions.ToArray()),
-            new ChoiceField<string>("new_sublocation", accessibleSublocations.Concat(new[] { "none" }).ToArray()),
-            new ArrayField("items_gained", new ChoiceField<string>("item", availableItems.Distinct().ToArray()), 0, 3),
-            new BooleanField("ends_interaction")
+        // Use centralized schema configuration
+        return LLMSchemaConfig.CreateActionOutcomeSchema(
+            stateCategories,
+            accessibleSublocations.ToArray(),
+            availableItems.ToArray()
         );
     }
 

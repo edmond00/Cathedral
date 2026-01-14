@@ -61,7 +61,7 @@ public class ThinkingExecutor
             thinkingSkill);
 
         // Build JSON schema
-        var schema = BuildThinkingJsonSchema(
+        var schema = LLMSchemaConfig.CreateThinkingSchema(
             actionSkills.Select(s => s.SkillId).ToList(),
             possibleOutcomes.Select(o => o.ToNaturalLanguageString()).ToList());
 
@@ -146,29 +146,7 @@ public class ThinkingExecutor
         return result;
     }
 
-    /// <summary>
-    /// Builds the JSON schema for thinking responses.
-    /// Includes constraints for valid action skills and outcomes.
-    /// </summary>
-    private CompositeField BuildThinkingJsonSchema(List<string> validActionSkills, List<string> validOutcomes)
-    {
-        return new CompositeField("ThinkingResponse",
-            new StringField("reasoning_text", MinLength: 50, MaxLength: 800, Hint: "A short reasoning process the avatar used to decide on actions"),
-            new ArrayField("actions",
-                ElementType: new CompositeField("Action",
-                    new ChoiceField<string>("action_skill", validActionSkills.ToArray()),
-                    new ChoiceField<string>("outcome", validOutcomes.ToArray()),
-                    new TemplateStringField("action_description", 
-                        Template: "try to <generated>",
-                        MinGenLength: 10,
-                        MaxGenLength: 400,
-                        Hint: "Describe in few words the action the avatar will take to achieve the outcome")
-                ),
-                MinLength: 2,
-                MaxLength: 5
-            )
-        );
-    }
+
 
     /// <summary>
     /// Parses the LLM JSON response into a ThinkingResponse.

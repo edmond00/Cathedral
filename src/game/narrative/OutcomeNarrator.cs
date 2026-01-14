@@ -51,9 +51,7 @@ public class OutcomeNarrator
             avatar);
 
         // Build JSON schema for narration
-        var schema = new CompositeField("OutcomeNarration",
-            new StringField("narration", MinLength: 50, MaxLength: 800, Hint: "A short narration text describing the outcome of the action")
-        );
+        var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
 
         string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
 

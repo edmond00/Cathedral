@@ -128,7 +128,6 @@ public class Phase6ObservationUI
         var visibleLines = scrollBuffer.GetVisibleLines(scrollOffset, visibleContentHeight);
         
         int currentY = Phase6Layout.CONTENT_START_Y;
-        int currentActionIndex = -1;
         ParsedNarrativeAction? currentAction = null;
         int actionLineCount = 0;
         
@@ -172,15 +171,15 @@ public class Phase6ObservationUI
                     {
                         // This is a thinking block action (clickable)
                         currentAction = renderedLine.Actions[0];
-                        currentActionIndex++;
                         actionLineCount = 0;
-                        RenderActionLine(renderedLine.Text, currentAction, currentActionIndex, currentY, actionLineCount, hoveredAction);
+                        // Use GlobalActionIndex stored in renderedLine
+                        RenderActionLine(renderedLine.Text, currentAction, renderedLine.GlobalActionIndex, currentY, actionLineCount, hoveredAction);
                         actionLineCount++;
                     }
                     else if (currentAction != null)
                     {
-                        // Continuation line of current action
-                        RenderActionLine(renderedLine.Text, currentAction, currentActionIndex, currentY, actionLineCount, hoveredAction);
+                        // Continuation line of current action - use same GlobalActionIndex
+                        RenderActionLine(renderedLine.Text, currentAction, renderedLine.GlobalActionIndex, currentY, actionLineCount, hoveredAction);
                         actionLineCount++;
                     }
                     else

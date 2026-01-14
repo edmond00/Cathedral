@@ -223,6 +223,9 @@ public class NarrationScrollBuffer
         
         // First, add all history lines (from previous narration nodes)
         _renderedLines.AddRange(_historyLines);
+        
+        // Track global action index across all thinking blocks
+        int globalActionIndex = 0;
 
         foreach (var block in _blocks)
         {
@@ -294,6 +297,10 @@ public class NarrationScrollBuffer
                     
                     var wrappedActionLines = WrapActionText(action.DisplayText, firstLineWidth, continuationWidth);
                     
+                    // Store the global action index for this action
+                    int thisActionIndex = globalActionIndex;
+                    globalActionIndex++;
+                    
                     // Add a RenderedLine for each wrapped line of this action
                     for (int i = 0; i < wrappedActionLines.Count; i++)
                     {
@@ -302,7 +309,9 @@ public class NarrationScrollBuffer
                             Type: LineType.Action,
                             BlockType: block.Type,
                             Keywords: null,
-                            Actions: i == 0 ? new List<ParsedNarrativeAction> { action } : null // Only first line has action reference
+                            Actions: i == 0 ? new List<ParsedNarrativeAction> { action } : null, // Only first line has action reference
+                            IsHistory: false,
+                            GlobalActionIndex: thisActionIndex  // Store global index for all wrapped lines of this action
                         ));
                     }
                 }
@@ -460,7 +469,8 @@ public record RenderedLine(
     NarrationBlockType BlockType,
     List<string>? Keywords,
     List<ParsedNarrativeAction>? Actions,  // Actions for rendering (only for Action lines)
-    bool IsHistory = false  // True if this line is part of history (from previous narration nodes)
+    bool IsHistory = false,  // True if this line is part of history (from previous narration nodes)
+    int GlobalActionIndex = -1  // Global action index (0-based) across all thinking blocks, -1 if not an action line
 );
 
 /// <summary>
