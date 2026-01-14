@@ -1,9 +1,9 @@
 namespace Cathedral.Game;
 
 /// <summary>
-/// Centralized layout constants for Phase 6 UI to prevent duplication and ensure consistency.
+/// Centralized layout constants for Narrative UI to prevent duplication and ensure consistency.
 /// </summary>
-public static class Phase6Layout
+public static class NarrativeLayout
 {
     // Terminal dimensions
     public const int TERMINAL_WIDTH = 100;

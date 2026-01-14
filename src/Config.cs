@@ -81,9 +81,9 @@ public static class Config
     
     #endregion
     
-    #region Phase 6 Observation UI
+    #region Narrative UI
     
-    public static class Phase6UI
+    public static class NarrativeUI
     {
         // Colors
         public static readonly Vector4 HeaderColor = new(0.0f, 0.8f, 1.0f, 1.0f); // Cyan

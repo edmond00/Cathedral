@@ -257,7 +257,7 @@ public static class LocationTravelModeLauncher
                     if (gameController is LocationTravelGameController ltgc)
                     {
                         // First try to close popup
-                        if (ltgc.ClosePhase6Popup())
+                        if (ltgc.CloseNarrativePopup())
                         {
                             Console.WriteLine("ESC pressed - closed thinking skill popup");
                             return; // Don't exit location, just close popup
@@ -265,7 +265,7 @@ public static class LocationTravelModeLauncher
                         
                         // No popup open, exit Phase 6 mode
                         Console.WriteLine("ESC pressed - exiting location");
-                        ltgc.ExitPhase6Mode();
+                        ltgc.ExitNarrativeMode();
                     }
                     
                     gameController.EndLocationInteraction();

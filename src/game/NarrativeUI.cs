@@ -8,13 +8,13 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game;
 
 /// <summary>
-/// Renders Phase 6 Chain-of-Thought observation UI with scrollable narration,
+/// Renders Chain-of-Thought observation UI with scrollable narration,
 /// highlighted keywords, and hover interactions.
 /// </summary>
-public class Phase6ObservationUI
+public class NarrativeUI
 {
     // Use centralized layout constants
-    private const int SCROLLBAR_X = Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN; // Inside right margin
+    private const int SCROLLBAR_X = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN; // Inside right margin
     
     // Loading animation
     private static readonly string[] LoadingFrames = new[]
@@ -29,14 +29,14 @@ public class Phase6ObservationUI
     private List<KeywordRegion> _keywordRegions = new();
     private List<ActionRegion> _actionRegions = new();
     
-    public Phase6ObservationUI(TerminalHUD terminal)
+    public NarrativeUI(TerminalHUD terminal)
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
         _keywordRenderer = new KeywordRenderer();
         
-        if (_terminal.Width != Phase6Layout.TERMINAL_WIDTH || _terminal.Height != Phase6Layout.TERMINAL_HEIGHT)
+        if (_terminal.Width != NarrativeLayout.TERMINAL_WIDTH || _terminal.Height != NarrativeLayout.TERMINAL_HEIGHT)
         {
-            throw new ArgumentException($"Terminal must be {Phase6Layout.TERMINAL_WIDTH}x{Phase6Layout.TERMINAL_HEIGHT}, but got {_terminal.Width}x{_terminal.Height}");
+            throw new ArgumentException($"Terminal must be {NarrativeLayout.TERMINAL_WIDTH}x{NarrativeLayout.TERMINAL_HEIGHT}, but got {_terminal.Width}x{_terminal.Height}");
         }
     }
     
@@ -55,11 +55,11 @@ public class Phase6ObservationUI
     /// </summary>
     public void Clear()
     {
-        for (int y = 0; y < Phase6Layout.TERMINAL_HEIGHT; y++)
+        for (int y = 0; y < NarrativeLayout.TERMINAL_HEIGHT; y++)
         {
-            for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
+            for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
             {
-                _terminal.SetCell(x, y, ' ', Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
+                _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
         }
         _keywordRegions.Clear();
@@ -72,13 +72,13 @@ public class Phase6ObservationUI
     {
         // Line 0: Location name
         string title = $"Forest Exploration - {locationName}";
-        _terminal.Text(Phase6Layout.LEFT_MARGIN, 0, title, Config.Phase6UI.HeaderColor, Config.Phase6UI.BackgroundColor);
+        _terminal.Text(NarrativeLayout.LEFT_MARGIN, 0, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
         
         // Thinking attempts indicator (right side)
         int maxAttempts = GetMaxThinkingAttempts();
         string attempts = $"Thinking: [";
-        int attemptsX = Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN - 20;
-        _terminal.Text(attemptsX, 0, attempts, Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
+        int attemptsX = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN - 20;
+        _terminal.Text(attemptsX, 0, attempts, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         
         // Draw individual attempt markers
         int markerX = attemptsX + attempts.Length;
@@ -88,12 +88,12 @@ public class Phase6ObservationUI
             Vector4 markerColor = isRemaining
                 ? new Vector4(0.8f, 0.4f, 0.4f, 1.0f) // Red-ish for available
                 : new Vector4(0.3f, 0.3f, 0.3f, 1.0f); // Dark gray for used
-            _terminal.Text(markerX, 0, "█", markerColor, Config.Phase6UI.BackgroundColor);
+            _terminal.Text(markerX, 0, "█", markerColor, Config.NarrativeUI.BackgroundColor);
             markerX++;
         }
         
         // Closing bracket
-        _terminal.Text(markerX, 0, "]", Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
+        _terminal.Text(markerX, 0, "]", Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         
         // Separator line
         DrawHorizontalLine(1);
@@ -114,26 +114,26 @@ public class Phase6ObservationUI
         _actionRegions.Clear();
         
         // Clear narrative area
-        for (int y = Phase6Layout.CONTENT_START_Y; y < Phase6Layout.SEPARATOR_Y + 1; y++)
+        for (int y = NarrativeLayout.CONTENT_START_Y; y < NarrativeLayout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
+            for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
             {
-                _terminal.SetCell(x, y, ' ', Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
+                _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
         }
         
         // Get visible lines based on scroll offset
         // Subtract 1 from NARRATIVE_HEIGHT to account for the bottom separator line
-        int visibleContentHeight = Phase6Layout.NARRATIVE_HEIGHT - Phase6Layout.SEPARATOR_HEIGHT;
+        int visibleContentHeight = NarrativeLayout.NARRATIVE_HEIGHT - NarrativeLayout.SEPARATOR_HEIGHT;
         var visibleLines = scrollBuffer.GetVisibleLines(scrollOffset, visibleContentHeight);
         
-        int currentY = Phase6Layout.CONTENT_START_Y;
+        int currentY = NarrativeLayout.CONTENT_START_Y;
         ParsedNarrativeAction? currentAction = null;
         int actionLineCount = 0;
         
         foreach (var renderedLine in visibleLines)
         {
-            if (currentY >= Phase6Layout.CONTENT_END_Y + 1)
+            if (currentY >= NarrativeLayout.CONTENT_END_Y + 1)
                 break;
             
             // Check if this is a history line (from previous narration nodes)
@@ -148,7 +148,7 @@ public class Phase6ObservationUI
             {
                 case LineType.Header:
                     // Render skill name header in yellow
-                    _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, Config.Phase6UI.SkillHeaderColor, Config.Phase6UI.BackgroundColor);
+                    _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, renderedLine.Text, Config.NarrativeUI.SkillHeaderColor, Config.NarrativeUI.BackgroundColor);
                     
                     // Note: Do NOT reset action counter here - we want globally unique action indices
                     // so that actions from different thinking blocks don't have the same index
@@ -159,7 +159,7 @@ public class Phase6ObservationUI
                     RenderLineWithKeywords(
                         renderedLine.Text,
                         renderedLine.Keywords,
-                        Phase6Layout.LEFT_MARGIN,
+                        NarrativeLayout.LEFT_MARGIN,
                         currentY,
                         thinkingAttemptsRemaining,
                         hoveredKeyword);
@@ -185,22 +185,22 @@ public class Phase6ObservationUI
                     else
                     {
                         // Action result block (from Action block type) - detect SUCCESS/FAILURE
-                        Vector4 actionColor = Config.Phase6UI.NarrativeColor;
+                        Vector4 actionColor = Config.NarrativeUI.NarrativeColor;
                         if (renderedLine.Text.Contains("[SUCCESS]"))
                         {
-                            actionColor = Config.Phase6UI.SuccessColor;
+                            actionColor = Config.NarrativeUI.SuccessColor;
                         }
                         else if (renderedLine.Text.Contains("[FAILURE]"))
                         {
-                            actionColor = Config.Phase6UI.FailureColor;
+                            actionColor = Config.NarrativeUI.FailureColor;
                         }
-                        _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, actionColor, Config.Phase6UI.BackgroundColor);
+                        _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, renderedLine.Text, actionColor, Config.NarrativeUI.BackgroundColor);
                     }
                     break;
                     
                 case LineType.Outcome:
                     // Outcome narration - check if previous line in buffer contains SUCCESS/FAILURE
-                    Vector4 outcomeColor = Config.Phase6UI.NarrativeColor;
+                    Vector4 outcomeColor = Config.NarrativeUI.NarrativeColor;
                     
                     // Look back in the visible lines to find the action result
                     int lookbackIndex = visibleLines.IndexOf(renderedLine) - 1;
@@ -212,18 +212,18 @@ public class Phase6ObservationUI
                             // Found the action result line
                             if (prevLine.Text.Contains("[SUCCESS]"))
                             {
-                                outcomeColor = Config.Phase6UI.SuccessColor;
+                                outcomeColor = Config.NarrativeUI.SuccessColor;
                             }
                             else if (prevLine.Text.Contains("[FAILURE]"))
                             {
-                                outcomeColor = Config.Phase6UI.FailureColor;
+                                outcomeColor = Config.NarrativeUI.FailureColor;
                             }
                             break;
                         }
                         lookbackIndex--;
                     }
                     
-                    _terminal.Text(Phase6Layout.LEFT_MARGIN, currentY, renderedLine.Text, outcomeColor, Config.Phase6UI.BackgroundColor);
+                    _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, renderedLine.Text, outcomeColor, Config.NarrativeUI.BackgroundColor);
                     break;
                     
                 case LineType.Empty:
@@ -242,13 +242,13 @@ public class Phase6ObservationUI
     /// </summary>
     private void RenderHistoryLine(RenderedLine line, int y)
     {
-        Vector4 historyColor = Config.Phase6UI.HistoryColor;
+        Vector4 historyColor = Config.NarrativeUI.HistoryColor;
         
         switch (line.Type)
         {
             case LineType.Separator:
                 // Render separator in slightly brighter color
-                _terminal.Text(Phase6Layout.LEFT_MARGIN, y, line.Text, Config.Phase6UI.SeparatorColor, Config.Phase6UI.BackgroundColor);
+                _terminal.Text(NarrativeLayout.LEFT_MARGIN, y, line.Text, Config.NarrativeUI.SeparatorColor, Config.NarrativeUI.BackgroundColor);
                 break;
                 
             case LineType.Empty:
@@ -257,7 +257,7 @@ public class Phase6ObservationUI
                 
             default:
                 // Render all other history lines in dark gray
-                _terminal.Text(Phase6Layout.LEFT_MARGIN, y, line.Text, historyColor, Config.Phase6UI.BackgroundColor);
+                _terminal.Text(NarrativeLayout.LEFT_MARGIN, y, line.Text, historyColor, Config.NarrativeUI.BackgroundColor);
                 break;
         }
     }
@@ -279,7 +279,7 @@ public class Phase6ObservationUI
         if (keywords == null || keywords.Count == 0)
         {
             // No keywords, just render normal text
-            _terminal.Text(startX, y, text, Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
+            _terminal.Text(startX, y, text, Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             return;
         }
         
@@ -308,19 +308,19 @@ public class Phase6ObservationUI
                                    hoveredKeyword.Y == y &&
                                    hoveredKeyword.StartX == currentX &&
                                    hoveredKeyword.EndX == currentX + segment.Text.Length - 1;
-                    Vector4 keywordColor = isHovered ? Config.Phase6UI.KeywordHoverColor : Config.Phase6UI.KeywordNormalColor;
-                    _terminal.Text(currentX, y, segment.Text, keywordColor, Config.Phase6UI.BackgroundColor);
+                    Vector4 keywordColor = isHovered ? Config.NarrativeUI.KeywordHoverColor : Config.NarrativeUI.KeywordNormalColor;
+                    _terminal.Text(currentX, y, segment.Text, keywordColor, Config.NarrativeUI.BackgroundColor);
                 }
                 else
                 {
                     // No attempts remaining - render as normal text
-                    _terminal.Text(currentX, y, segment.Text, Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
+                    _terminal.Text(currentX, y, segment.Text, Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
                 }
             }
             else
             {
                 // Render normal text
-                _terminal.Text(currentX, y, segment.Text, Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
+                _terminal.Text(currentX, y, segment.Text, Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
             
             currentX += segment.Text.Length;
@@ -351,11 +351,11 @@ public class Phase6ObservationUI
         bool isHovered = hoveredAction != null && hoveredAction.ActionIndex == actionIndex;
         
         // Calculate colors
-        Vector4 prefixColor = Config.Phase6UI.NarrativeColor;
-        Vector4 skillColor = Config.Phase6UI.ActionSkillColor;
-        Vector4 textColor = isHovered ? Config.Phase6UI.ActionHoverColor : Config.Phase6UI.ActionNormalColor;
+        Vector4 prefixColor = Config.NarrativeUI.NarrativeColor;
+        Vector4 skillColor = Config.NarrativeUI.ActionSkillColor;
+        Vector4 textColor = isHovered ? Config.NarrativeUI.ActionHoverColor : Config.NarrativeUI.ActionNormalColor;
         
-        int startX = Phase6Layout.LEFT_MARGIN;
+        int startX = NarrativeLayout.LEFT_MARGIN;
         
         if (lineIndex == 0)
         {
@@ -363,23 +363,23 @@ public class Phase6ObservationUI
             string prefix = "> ";
             string skillBracket = $"[{action.ActionSkill?.DisplayName ?? action.ActionSkillId}] ";
             
-            _terminal.Text(startX, y, prefix, prefixColor, Config.Phase6UI.BackgroundColor);
+            _terminal.Text(startX, y, prefix, prefixColor, Config.NarrativeUI.BackgroundColor);
             startX += prefix.Length;
             
-            _terminal.Text(startX, y, skillBracket, skillColor, Config.Phase6UI.BackgroundColor);
+            _terminal.Text(startX, y, skillBracket, skillColor, Config.NarrativeUI.BackgroundColor);
             startX += skillBracket.Length;
             
-            _terminal.Text(startX, y, text, textColor, Config.Phase6UI.BackgroundColor);
+            _terminal.Text(startX, y, text, textColor, Config.NarrativeUI.BackgroundColor);
             
             // Track action region (will be updated as we encounter more lines)
-            var actionRegion = new ActionRegion(actionIndex, y, y, Phase6Layout.LEFT_MARGIN, Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN);
+            var actionRegion = new ActionRegion(actionIndex, y, y, NarrativeLayout.LEFT_MARGIN, NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN);
             _actionRegions.Add(actionRegion);
         }
         else
         {
             // Continuation line: indent by 4 spaces
-            int continuationIndent = Phase6Layout.LEFT_MARGIN + 4;
-            _terminal.Text(continuationIndent, y, text, textColor, Config.Phase6UI.BackgroundColor);
+            int continuationIndent = NarrativeLayout.LEFT_MARGIN + 4;
+            _terminal.Text(continuationIndent, y, text, textColor, Config.NarrativeUI.BackgroundColor);
             
             // Update the action region to extend to this line
             if (_actionRegions.Count > 0)
@@ -391,8 +391,8 @@ public class Phase6ObservationUI
                         actionIndex, 
                         lastRegion.StartY, 
                         y,  // Extend to current line
-                        Phase6Layout.LEFT_MARGIN,
-                        Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN
+                        NarrativeLayout.LEFT_MARGIN,
+                        NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN
                     );
                 }
             }
@@ -428,19 +428,19 @@ public class Phase6ObservationUI
         int scrollOffset,
         bool isThumbHovered)
     {
-        int trackStartY = Phase6Layout.CONTENT_START_Y;
-        int trackHeight = Phase6Layout.SCROLLBAR_TRACK_HEIGHT;
+        int trackStartY = NarrativeLayout.CONTENT_START_Y;
+        int trackHeight = NarrativeLayout.SCROLLBAR_TRACK_HEIGHT;
         int scrollbarX = SCROLLBAR_X;
         
         // Draw track
         for (int y = trackStartY; y < trackStartY + trackHeight; y++)
         {
-            _terminal.SetCell(scrollbarX, y, '│', Config.Phase6UI.ScrollbarTrackColor, Config.Phase6UI.BackgroundColor);
+            _terminal.SetCell(scrollbarX, y, '│', Config.NarrativeUI.ScrollbarTrackColor, Config.NarrativeUI.BackgroundColor);
         }
         
         // Calculate thumb size and position
         int totalLines = scrollBuffer.TotalLines;
-        int visibleLines = Phase6Layout.NARRATIVE_HEIGHT;
+        int visibleLines = NarrativeLayout.NARRATIVE_HEIGHT;
         
         // If content fits in viewport, no thumb needed
         if (totalLines <= visibleLines)
@@ -453,16 +453,16 @@ public class Phase6ObservationUI
         int thumbHeight = Math.Max(2, (int)(trackHeight * visibleRatio));
         
         // Calculate thumb position based on scroll offset
-        int maxScrollOffset = Phase6Layout.CalculateMaxScrollOffset(totalLines);
+        int maxScrollOffset = NarrativeLayout.CalculateMaxScrollOffset(totalLines);
         float scrollRatio = maxScrollOffset > 0 ? (float)scrollOffset / maxScrollOffset : 0f;
         int maxThumbY = trackHeight - thumbHeight;
         int thumbY = trackStartY + (int)(maxThumbY * scrollRatio);
         
         // Render thumb
-        Vector4 thumbColor = isThumbHovered ? Config.Phase6UI.ScrollbarThumbHoverColor : Config.Phase6UI.ScrollbarThumbColor;
+        Vector4 thumbColor = isThumbHovered ? Config.NarrativeUI.ScrollbarThumbHoverColor : Config.NarrativeUI.ScrollbarThumbColor;
         for (int y = thumbY; y < thumbY + thumbHeight; y++)
         {
-            _terminal.SetCell(scrollbarX, y, '█', thumbColor, Config.Phase6UI.BackgroundColor);
+            _terminal.SetCell(scrollbarX, y, '█', thumbColor, Config.NarrativeUI.BackgroundColor);
         }
         
         return (thumbY, thumbHeight);
@@ -485,8 +485,8 @@ public class Phase6ObservationUI
     public bool IsMouseOverScrollbarTrack(int mouseX, int mouseY, (int StartY, int Height) thumb)
     {
         if (mouseX != SCROLLBAR_X) return false;
-        int trackStartY = Phase6Layout.CONTENT_START_Y;
-        int trackEndY = trackStartY + Phase6Layout.SCROLLBAR_TRACK_HEIGHT;
+        int trackStartY = NarrativeLayout.CONTENT_START_Y;
+        int trackEndY = trackStartY + NarrativeLayout.SCROLLBAR_TRACK_HEIGHT;
         
         bool inTrack = mouseY >= trackStartY && mouseY < trackEndY;
         bool onThumb = thumb.Height > 0 && mouseY >= thumb.StartY && mouseY < thumb.StartY + thumb.Height;
@@ -499,10 +499,10 @@ public class Phase6ObservationUI
     /// </summary>
     public int CalculateScrollOffsetFromMouseY(int mouseY, NarrationScrollBuffer scrollBuffer)
     {
-        int trackStartY = Phase6Layout.CONTENT_START_Y;
-        int trackHeight = Phase6Layout.SCROLLBAR_TRACK_HEIGHT;
+        int trackStartY = NarrativeLayout.CONTENT_START_Y;
+        int trackHeight = NarrativeLayout.SCROLLBAR_TRACK_HEIGHT;
         int totalLines = scrollBuffer.TotalLines;
-        int visibleLines = Phase6Layout.NARRATIVE_HEIGHT - Phase6Layout.SEPARATOR_HEIGHT; // Account for separator line
+        int visibleLines = NarrativeLayout.NARRATIVE_HEIGHT - NarrativeLayout.SEPARATOR_HEIGHT; // Account for separator line
         
         // Clamp mouse Y to track bounds
         int relativeY = Math.Clamp(mouseY - trackStartY, 0, trackHeight - 1);
@@ -521,8 +521,8 @@ public class Phase6ObservationUI
     /// </summary>
     public void RenderStatusBar(string message = "")
     {
-        int statusY = Phase6Layout.STATUS_BAR_Y;
-        int separatorY = Phase6Layout.SEPARATOR_Y;
+        int statusY = NarrativeLayout.STATUS_BAR_Y;
+        int separatorY = NarrativeLayout.SEPARATOR_Y;
         
         // Draw separator line above status bar
         DrawHorizontalLine(separatorY);
@@ -533,13 +533,13 @@ public class Phase6ObservationUI
         }
         
         // Truncate if too long
-        int maxMessageWidth = Phase6Layout.CONTENT_WIDTH - 2;
+        int maxMessageWidth = NarrativeLayout.CONTENT_WIDTH - 2;
         if (message.Length > maxMessageWidth)
         {
             message = message.Substring(0, maxMessageWidth - 3) + "...";
         }
         
-        _terminal.Text(Phase6Layout.LEFT_MARGIN, statusY, message, Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
+        _terminal.Text(NarrativeLayout.LEFT_MARGIN, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
     }
     
     /// <summary>
@@ -557,34 +557,34 @@ public class Phase6ObservationUI
         string spinner = LoadingFrames[_loadingFrameIndex];
         
         // Clear narrative area
-        for (int y = Phase6Layout.CONTENT_START_Y; y < Phase6Layout.SEPARATOR_Y + 1; y++)
+        for (int y = NarrativeLayout.CONTENT_START_Y; y < NarrativeLayout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
+            for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
             {
-                _terminal.SetCell(x, y, ' ', Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
+                _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
         }
         
         // Show spinner and message centered
         string loadingText = $"{spinner}  {message}  {spinner}";
-        int centerY = Phase6Layout.CONTENT_START_Y + Phase6Layout.NARRATIVE_HEIGHT / 2;
-        int centerX = (Phase6Layout.TERMINAL_WIDTH - loadingText.Length) / 2;
-        _terminal.Text(centerX, centerY, loadingText, Config.Phase6UI.LoadingColor, Config.Phase6UI.BackgroundColor);
+        int centerY = NarrativeLayout.CONTENT_START_Y + NarrativeLayout.NARRATIVE_HEIGHT / 2;
+        int centerX = (NarrativeLayout.TERMINAL_WIDTH - loadingText.Length) / 2;
+        _terminal.Text(centerX, centerY, loadingText, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
         
         // Add animated dots
         string dots = new string('.', (_loadingFrameIndex % 4));
         string spaces = new string(' ', (_loadingFrameIndex % 4));
         string hint = $"{spaces}Please wait{dots}";
         int hintY = centerY + 2;
-        int hintX = (Phase6Layout.TERMINAL_WIDTH - hint.Length) / 2;
-        _terminal.Text(hintX, hintY, hint, Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
+        int hintX = (NarrativeLayout.TERMINAL_WIDTH - hint.Length) / 2;
+        _terminal.Text(hintX, hintY, hint, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         
         // Progress bar
         int barWidth = 30;
         int barY = centerY - 2;
-        int barX = (Phase6Layout.TERMINAL_WIDTH - barWidth) / 2;
+        int barX = (NarrativeLayout.TERMINAL_WIDTH - barWidth) / 2;
         string progressBar = GenerateProgressBar(barWidth, _loadingFrameIndex);
-        _terminal.Text(barX, barY, progressBar, Config.Phase6UI.LoadingColor, Config.Phase6UI.BackgroundColor);
+        _terminal.Text(barX, barY, progressBar, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
     }
     
     /// <summary>
@@ -593,36 +593,36 @@ public class Phase6ObservationUI
     public void ShowError(string errorMessage)
     {
         // Clear narrative area
-        for (int y = Phase6Layout.CONTENT_START_Y; y < Phase6Layout.SEPARATOR_Y + 1; y++)
+        for (int y = NarrativeLayout.CONTENT_START_Y; y < NarrativeLayout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
+            for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
             {
-                _terminal.SetCell(x, y, ' ', Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
+                _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
         }
         
         // Show error message centered
         string title = "ERROR";
-        int titleY = Phase6Layout.CONTENT_START_Y + Phase6Layout.NARRATIVE_HEIGHT / 2 - 2;
-        int titleX = (Phase6Layout.TERMINAL_WIDTH - title.Length) / 2;
-        _terminal.Text(titleX, titleY, title, Config.Phase6UI.ErrorColor, Config.Phase6UI.BackgroundColor);
+        int titleY = NarrativeLayout.CONTENT_START_Y + NarrativeLayout.NARRATIVE_HEIGHT / 2 - 2;
+        int titleX = (NarrativeLayout.TERMINAL_WIDTH - title.Length) / 2;
+        _terminal.Text(titleX, titleY, title, Config.NarrativeUI.ErrorColor, Config.NarrativeUI.BackgroundColor);
         
         // Wrap error message
-        var wrappedLines = WrapText(errorMessage, Phase6Layout.CONTENT_WIDTH - 4);
+        var wrappedLines = WrapText(errorMessage, NarrativeLayout.CONTENT_WIDTH - 4);
         int startY = titleY + 2;
         
-        for (int i = 0; i < wrappedLines.Count && startY + i < Phase6Layout.SEPARATOR_Y + 1; i++)
+        for (int i = 0; i < wrappedLines.Count && startY + i < NarrativeLayout.SEPARATOR_Y + 1; i++)
         {
             string line = wrappedLines[i];
-            int x = (Phase6Layout.TERMINAL_WIDTH - line.Length) / 2;
-            _terminal.Text(x, startY + i, line, Config.Phase6UI.ErrorColor, Config.Phase6UI.BackgroundColor);
+            int x = (NarrativeLayout.TERMINAL_WIDTH - line.Length) / 2;
+            _terminal.Text(x, startY + i, line, Config.NarrativeUI.ErrorColor, Config.NarrativeUI.BackgroundColor);
         }
         
         // Show instruction
         string instruction = "(Press ESC to return)";
-        int instructionY = Phase6Layout.SEPARATOR_Y - 1;
-        int instructionX = (Phase6Layout.TERMINAL_WIDTH - instruction.Length) / 2;
-        _terminal.Text(instructionX, instructionY, instruction, Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
+        int instructionY = NarrativeLayout.SEPARATOR_Y - 1;
+        int instructionX = (NarrativeLayout.TERMINAL_WIDTH - instruction.Length) / 2;
+        _terminal.Text(instructionX, instructionY, instruction, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
     }
     
     /// <summary>
@@ -630,12 +630,12 @@ public class Phase6ObservationUI
     /// </summary>
     private void DrawHorizontalLine(int y)
     {
-        if (y < 0 || y >= Phase6Layout.TERMINAL_HEIGHT)
+        if (y < 0 || y >= NarrativeLayout.TERMINAL_HEIGHT)
             return;
         
-        for (int x = 0; x < Phase6Layout.TERMINAL_WIDTH; x++)
+        for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
         {
-            _terminal.SetCell(x, y, '─', Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
+            _terminal.SetCell(x, y, '─', Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         }
     }
     
@@ -734,12 +734,12 @@ public class Phase6ObservationUI
     {
         string buttonText = "[ Continue ]";
         int buttonWidth = buttonText.Length;
-        int buttonX = (Phase6Layout.TERMINAL_WIDTH - buttonWidth) / 2;
-        int buttonY = Phase6Layout.SEPARATOR_Y - 2; // Place near bottom, above separator
+        int buttonX = (NarrativeLayout.TERMINAL_WIDTH - buttonWidth) / 2;
+        int buttonY = NarrativeLayout.SEPARATOR_Y - 2; // Place near bottom, above separator
         
-        Vector4 buttonColor = isHovered ? Config.Phase6UI.ContinueButtonHoverColor : Config.Phase6UI.ContinueButtonColor;
+        Vector4 buttonColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverColor : Config.NarrativeUI.ContinueButtonColor;
         
-        _terminal.Text(buttonX, buttonY, buttonText, buttonColor, Config.Phase6UI.BackgroundColor);
+        _terminal.Text(buttonX, buttonY, buttonText, buttonColor, Config.NarrativeUI.BackgroundColor);
         
         return (buttonX, buttonY, buttonWidth);
     }

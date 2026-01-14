@@ -25,9 +25,9 @@ public class LocationTravelGameController : IDisposable
     private readonly MicroworldInterface _interface;
     private TerminalLocationUI? _terminalUI;
     
-    // Phase 6 Chain-of-Thought system
-    private Phase6ForestController? _phase6Controller = null;
-    private bool _isInPhase6Mode = false;
+    // Chain-of-Thought narrative system
+    private NarrativeController? _narrativeController = null;
+    private bool _isInNarrativeMode = false;
     private SkillSlotManager? _skillSlotManager = null;
     private ThinkingExecutor? _thinkingExecutor = null;
     
@@ -122,23 +122,23 @@ public class LocationTravelGameController : IDisposable
     public void Update()
     {
         // Update Phase 6 controller if active
-        if (_isInPhase6Mode && _phase6Controller != null)
+        if (_isInNarrativeMode && _narrativeController != null)
         {
             // If popup is visible, handle all mouse updates here for consistent frame-rate timing
             // This ensures uniform refresh rate across the entire popup (both inside and outside terminal bounds)
-            if (_phase6Controller.IsPopupVisible && _core.Terminal != null)
+            if (_narrativeController.IsPopupVisible && _core.Terminal != null)
             {
                 Vector2 rawMouse = _core.Terminal.InputHandler.GetCorrectedMousePosition();
-                _phase6Controller.OnRawMouseMove(rawMouse);
+                _narrativeController.OnRawMouseMove(rawMouse);
             }
             
-            _phase6Controller.Update();
+            _narrativeController.Update();
             
             // Check if player requested exit (clicked Continue button)
-            if (_phase6Controller.HasRequestedExit())
+            if (_narrativeController.HasRequestedExit())
             {
                 Console.WriteLine("LocationTravelGameController: Phase 6 exit requested");
-                ExitPhase6Mode();
+                ExitNarrativeMode();
             }
             
             return;
@@ -234,17 +234,17 @@ public class LocationTravelGameController : IDisposable
     private void OnTerminalCellClicked(int x, int y)
     {
         // Phase 6 mode handles clicks differently
-        if (_isInPhase6Mode && _phase6Controller != null)
+        if (_isInNarrativeMode && _narrativeController != null)
         {
             // If popup is visible, use raw mouse coordinates
-            if (_phase6Controller.IsPopupVisible)
+            if (_narrativeController.IsPopupVisible)
             {
                 Vector2 rawMouse = _core.Terminal.InputHandler.GetCorrectedMousePosition();
-                _phase6Controller.OnRawMouseClick(rawMouse);
+                _narrativeController.OnRawMouseClick(rawMouse);
                 return;
             }
             
-            _phase6Controller.OnMouseClick(x, y);
+            _narrativeController.OnMouseClick(x, y);
             return;
         }
         
@@ -274,13 +274,13 @@ public class LocationTravelGameController : IDisposable
     private void OnTerminalCellHovered(int x, int y)
     {
         // Phase 6 mode handles hover differently
-        if (_isInPhase6Mode && _phase6Controller != null)
+        if (_isInNarrativeMode && _narrativeController != null)
         {
             // When popup is visible, mouse updates are handled in Update() loop for consistent timing
             // Only handle non-popup interactions here
-            if (!_phase6Controller.IsPopupVisible)
+            if (!_narrativeController.IsPopupVisible)
             {
-                _phase6Controller.OnMouseMove(x, y);
+                _narrativeController.OnMouseMove(x, y);
             }
             return;
         }
@@ -305,9 +305,9 @@ public class LocationTravelGameController : IDisposable
     public void OnMouseWheel(float delta)
     {
         // Phase 6 mode handles scrolling
-        if (_isInPhase6Mode && _phase6Controller != null)
+        if (_isInNarrativeMode && _narrativeController != null)
         {
-            _phase6Controller.OnMouseWheel(delta);
+            _narrativeController.OnMouseWheel(delta);
             return;
         }
         
@@ -574,7 +574,7 @@ public class LocationTravelGameController : IDisposable
         var oldMode = _currentMode;
         _currentMode = newMode;
         
-        Console.WriteLine($"LocationTravelGameController: Mode changed: {oldMode} → {newMode}");
+        Console.WriteLine($"LocationTravelGameController: Mode changed: {oldMode} ↁE{newMode}");
         
         // Handle mode-specific setup
         switch (newMode)
@@ -601,7 +601,7 @@ public class LocationTravelGameController : IDisposable
     private void OnVertexClicked(int vertexIndex, char glyph, OpenTK.Mathematics.Vector4 color, float noise)
     {
         // Ignore clicks when Phase 6 narration is active
-        if (_isInPhase6Mode)
+        if (_isInNarrativeMode)
         {
             Console.WriteLine("LocationTravelGameController: Ignoring world map click during Phase 6 narration");
             return;
@@ -747,7 +747,7 @@ public class LocationTravelGameController : IDisposable
             _core.Terminal != null)
         {
             Console.WriteLine("LocationTravelGameController: Starting Phase 6 forest interaction");
-            StartPhase6ForestInteraction(vertexIndex);
+            StartNarrativeInteraction(vertexIndex);
             return;
         }
         
@@ -874,7 +874,7 @@ public class LocationTravelGameController : IDisposable
         _waitingForClickToExit = false;
         
         // If Phase 6 is active, don't start the old location UI system
-        if (_isInPhase6Mode)
+        if (_isInNarrativeMode)
         {
             Console.WriteLine("LocationTravelGameController: Phase 6 active, skipping old location UI");
             
@@ -922,7 +922,7 @@ public class LocationTravelGameController : IDisposable
     private async Task RenderLocationUIAsync()
     {
         // Don't render old location UI if Phase 6 is active
-        if (_isInPhase6Mode)
+        if (_isInNarrativeMode)
         {
             Console.WriteLine("RenderLocationUIAsync: Phase 6 active, skipping old location UI rendering");
             return;
@@ -1224,11 +1224,11 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// Starts Phase 6 Chain-of-Thought forest interaction.
     /// </summary>
-    private void StartPhase6ForestInteraction(int vertexIndex)
+    private void StartNarrativeInteraction(int vertexIndex)
     {
         if (_core.Terminal == null || _core.PopupTerminal == null || _llmActionExecutor == null || _skillSlotManager == null)
         {
-            Console.Error.WriteLine("Phase6ForestController: Cannot start - missing dependencies");
+            Console.Error.WriteLine("NarrativeController: Cannot start - missing dependencies");
             return;
         }
         
@@ -1263,7 +1263,7 @@ public class LocationTravelGameController : IDisposable
                 _skillSlotManager
             );
             
-            // Create a temporary Avatar for Phase 6 (will be initialized in Phase6ForestController)
+            // Create a temporary Avatar for Phase 6 (will be initialized in NarrativeController)
             var avatar = new Avatar();
             avatar.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
             
@@ -1276,7 +1276,7 @@ public class LocationTravelGameController : IDisposable
             );
             
             // Create Phase 6 controller
-            _phase6Controller = new Phase6ForestController(
+            _narrativeController = new NarrativeController(
                 _core.Terminal,
                 _core.PopupTerminal,
                 _core,
@@ -1288,7 +1288,7 @@ public class LocationTravelGameController : IDisposable
             );
             
             // Mark as active
-            _isInPhase6Mode = true;
+            _isInNarrativeMode = true;
             _currentLocationVertex = vertexIndex;
             
             // Disable world map interactions while narration UI is active
@@ -1299,7 +1299,7 @@ public class LocationTravelGameController : IDisposable
             SetMode(GameMode.LocationInteraction);
             
             // Start observation phase (async)
-            _phase6Controller.StartObservationPhase();
+            _narrativeController.StartObservationPhase();
             
             Console.WriteLine("LocationTravelGameController: Phase 6 forest interaction started");
         }
@@ -1309,17 +1309,17 @@ public class LocationTravelGameController : IDisposable
             Console.Error.WriteLine(ex.StackTrace);
             
             // Fallback to normal interaction
-            _isInPhase6Mode = false;
-            _phase6Controller = null;
+            _isInNarrativeMode = false;
+            _narrativeController = null;
         }
     }
     
     /// <summary>
     /// Exits Phase 6 mode and returns to world view.
     /// </summary>
-    public void ExitPhase6Mode()
+    public void ExitNarrativeMode()
     {
-        if (!_isInPhase6Mode)
+        if (!_isInNarrativeMode)
             return;
         
         Console.WriteLine("LocationTravelGameController: Exiting Phase 6 mode");
@@ -1328,8 +1328,8 @@ public class LocationTravelGameController : IDisposable
         _interface.SetWorldInteractionsEnabled(true);
         _core.SetWorldInteractionsEnabled(true);
         
-        _isInPhase6Mode = false;
-        _phase6Controller = null;
+        _isInNarrativeMode = false;
+        _narrativeController = null;
         _currentLocationVertex = -1;
         
         SetMode(GameMode.WorldView);
@@ -1339,11 +1339,11 @@ public class LocationTravelGameController : IDisposable
     /// Closes the Phase 6 thinking skill popup if it's open.
     /// Returns true if popup was closed, false otherwise.
     /// </summary>
-    public bool ClosePhase6Popup()
+    public bool CloseNarrativePopup()
     {
-        if (_isInPhase6Mode && _phase6Controller != null)
+        if (_isInNarrativeMode && _narrativeController != null)
         {
-            return _phase6Controller.ClosePopup();
+            return _narrativeController.ClosePopup();
         }
         return false;
     }

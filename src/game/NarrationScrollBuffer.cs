@@ -68,7 +68,7 @@ public class NarrationScrollBuffer
     public void ScrollUp(int lines = 1)
     {
         // Don't allow scrolling if content fits in viewport
-        if (_renderedLines.Count <= Phase6Layout.NARRATIVE_HEIGHT)
+        if (_renderedLines.Count <= NarrativeLayout.NARRATIVE_HEIGHT)
             return;
         
         _scrollOffset = Math.Max(0, _scrollOffset - lines);
@@ -80,10 +80,10 @@ public class NarrationScrollBuffer
     public void ScrollDown(int lines = 1)
     {
         // Don't allow scrolling if content fits in viewport
-        if (_renderedLines.Count <= Phase6Layout.NARRATIVE_HEIGHT)
+        if (_renderedLines.Count <= NarrativeLayout.NARRATIVE_HEIGHT)
             return;
         
-        int maxScroll = Phase6Layout.CalculateMaxScrollOffset(_renderedLines.Count);
+        int maxScroll = NarrativeLayout.CalculateMaxScrollOffset(_renderedLines.Count);
         _scrollOffset = Math.Min(maxScroll, _scrollOffset + lines);
     }
 
@@ -93,13 +93,13 @@ public class NarrationScrollBuffer
     public void ScrollToBottom()
     {
         // Don't allow scrolling if content fits in viewport
-        if (_renderedLines.Count <= Phase6Layout.NARRATIVE_HEIGHT)
+        if (_renderedLines.Count <= NarrativeLayout.NARRATIVE_HEIGHT)
         {
             _scrollOffset = 0;
             return;
         }
         
-        _scrollOffset = Phase6Layout.CalculateMaxScrollOffset(_renderedLines.Count);
+        _scrollOffset = NarrativeLayout.CalculateMaxScrollOffset(_renderedLines.Count);
     }
 
     /// <summary>
@@ -108,13 +108,13 @@ public class NarrationScrollBuffer
     public void SetScrollOffset(int offset)
     {
         // Don't allow scrolling if content fits in viewport
-        if (_renderedLines.Count <= Phase6Layout.NARRATIVE_HEIGHT)
+        if (_renderedLines.Count <= NarrativeLayout.NARRATIVE_HEIGHT)
         {
             _scrollOffset = 0;
             return;
         }
         
-        int maxScroll = Phase6Layout.CalculateMaxScrollOffset(_renderedLines.Count);
+        int maxScroll = NarrativeLayout.CalculateMaxScrollOffset(_renderedLines.Count);
         _scrollOffset = Math.Clamp(offset, 0, maxScroll);
     }
 

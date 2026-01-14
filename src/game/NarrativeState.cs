@@ -4,10 +4,10 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game;
 
 /// <summary>
-/// Manages the state for Phase 6 Chain-of-Thought narration system.
+/// Manages the state for Chain-of-Thought narration system.
 /// Tracks narration blocks, scroll position, keyword regions, and loading state.
 /// </summary>
-public class Phase6NarrationState
+public class NarrativeState
 {
     /// <summary>
     /// All narration blocks in order (Observation, Thinking, Action, Outcome).

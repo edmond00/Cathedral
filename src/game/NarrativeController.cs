@@ -9,15 +9,15 @@ using OpenTK.Mathematics;
 namespace Cathedral.Game;
 
 /// <summary>
-/// Controls the Phase 6 Chain-of-Thought narration system for forest locations.
+/// Controls the Chain-of-Thought narration system for all locations.
 /// Manages observation phase lifecycle and UI rendering.
 /// </summary>
-public class Phase6ForestController
+public class NarrativeController
 {
     // State
-    private readonly Phase6NarrationState _narrationState = new();
+    private readonly NarrativeState _narrationState = new();
     private readonly NarrationScrollBuffer _scrollBuffer;
-    private readonly Phase6ObservationUI _ui;
+    private readonly NarrativeUI _ui;
     private readonly TerminalThinkingSkillPopup _skillPopup;
     
     // Dependencies
@@ -33,7 +33,7 @@ public class Phase6ForestController
     private int _lastMouseX = 0;
     private int _lastMouseY = 0;
     
-    public Phase6ForestController(
+    public NarrativeController(
         TerminalHUD terminal,
         PopupTerminalHUD popup,
         GlyphSphereCore core,
@@ -60,7 +60,7 @@ public class Phase6ForestController
         if (actionExecutor == null)
             throw new ArgumentNullException(nameof(actionExecutor));
         
-        _ui = new Phase6ObservationUI(terminal);
+        _ui = new NarrativeUI(terminal);
         // Content width: 100 (terminal) - 4 (left margin) - 4 (right margin) - 1 (scrollbar) = 91
         _scrollBuffer = new NarrationScrollBuffer(maxWidth: 91);
         _skillPopup = new TerminalThinkingSkillPopup(popup);
@@ -79,8 +79,8 @@ public class Phase6ForestController
         _thinkingExecutor = thinkingExecutor;
         _actionExecutor = actionExecutor;
         
-        Console.WriteLine($"Phase6ForestController: Initialized with node {_currentNode.NodeId}");
-        Console.WriteLine($"Phase6ForestController: Avatar has {_avatar.Skills.Count} skills");
+        Console.WriteLine($"NarrativeController: Initialized with node {_currentNode.NodeId}");
+        Console.WriteLine($"NarrativeController: Avatar has {_avatar.Skills.Count} skills");
     }
     
     /// <summary>
@@ -97,7 +97,7 @@ public class Phase6ForestController
         // Fire-and-forget async task
         _ = GenerateObservationsAsync();
         
-        Console.WriteLine("Phase6ForestController: Started observation phase");
+        Console.WriteLine("NarrativeController: Started observation phase");
     }
     
     /// <summary>
@@ -111,7 +111,7 @@ public class Phase6ForestController
         _narrationState.IsLoadingObservations = true;
         _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
         
-        Console.WriteLine($"Phase6ForestController: Started observation phase (with history preserved)");
+        Console.WriteLine($"NarrativeController: Started observation phase (with history preserved)");
         Console.WriteLine($"  History lines: {_scrollBuffer.HistoryLineCount}");
         Console.WriteLine($"  Total lines: {_scrollBuffer.TotalLines}");
         Console.WriteLine($"  Scroll offset: {_scrollBuffer.ScrollOffset}");
@@ -127,7 +127,7 @@ public class Phase6ForestController
     {
         try
         {
-            Console.WriteLine("Phase6ForestController: Calling ObservationPhaseController...");
+            Console.WriteLine("NarrativeController: Calling ObservationPhaseController...");
             
             // Generate 2-3 observations
             var blocks = await _observationController.ExecuteObservationPhaseAsync(
@@ -136,7 +136,7 @@ public class Phase6ForestController
                 skillCount: 3
             );
             
-            Console.WriteLine($"Phase6ForestController: Generated {blocks.Count} observation blocks");
+            Console.WriteLine($"NarrativeController: Generated {blocks.Count} observation blocks");
             
             // Add blocks to scroll buffer
             foreach (var block in blocks)
@@ -149,11 +149,11 @@ public class Phase6ForestController
             _narrationState.IsLoadingObservations = false;
             _narrationState.ErrorMessage = null;
             
-            Console.WriteLine("Phase6ForestController: Observation phase complete");
+            Console.WriteLine("NarrativeController: Observation phase complete");
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Phase6ForestController: Error generating observations: {ex.Message}");
+            Console.Error.WriteLine($"NarrativeController: Error generating observations: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
             
             _narrationState.IsLoadingObservations = false;
@@ -168,7 +168,7 @@ public class Phase6ForestController
     {
         try
         {
-            Console.WriteLine($"Phase6ForestController: Executing thinking with {thinkingSkill.DisplayName} on keyword '{keyword}'");
+            Console.WriteLine($"NarrativeController: Executing thinking with {thinkingSkill.DisplayName} on keyword '{keyword}'");
             
             // Get possible outcomes for this keyword
             var possibleOutcomes = _currentNode.GetOutcomesForKeyword(keyword);
@@ -183,7 +183,7 @@ public class Phase6ForestController
             // Get action skills
             var actionSkills = _avatar.GetActionSkills();
             
-            Console.WriteLine($"Phase6ForestController: Found {possibleOutcomes.Count} outcomes, {actionSkills.Count} action skills");
+            Console.WriteLine($"NarrativeController: Found {possibleOutcomes.Count} outcomes, {actionSkills.Count} action skills");
             
             // Call ThinkingExecutor to generate reasoning + actions
             var response = await _thinkingExecutor.GenerateThinkingAsync(
@@ -201,7 +201,7 @@ public class Phase6ForestController
                 throw new Exception("Thinking LLM returned no actions");
             }
             
-            Console.WriteLine($"Phase6ForestController: Generated {response.Actions.Count} actions");
+            Console.WriteLine($"NarrativeController: Generated {response.Actions.Count} actions");
             
             // Create thinking block with reasoning + actions
             var thinkingBlock = new NarrationBlock(
@@ -225,11 +225,11 @@ public class Phase6ForestController
             _narrationState.ThinkingAttemptsRemaining--;
             _narrationState.ErrorMessage = null;
             
-            Console.WriteLine($"Phase6ForestController: Thinking phase complete ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)");
+            Console.WriteLine($"NarrativeController: Thinking phase complete ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)");
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Phase6ForestController: Error during thinking phase: {ex.Message}");
+            Console.Error.WriteLine($"NarrativeController: Error during thinking phase: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
             
             _narrationState.IsLoadingThinking = false;
@@ -244,7 +244,7 @@ public class Phase6ForestController
     {
         try
         {
-            Console.WriteLine($"Phase6ForestController: Starting action execution for '{action.ActionText}'");
+            Console.WriteLine($"NarrativeController: Starting action execution for '{action.ActionText}'");
             
             // Set loading state with progress messages
             _narrationState.IsLoadingAction = true;
@@ -258,7 +258,7 @@ public class Phase6ForestController
                 CancellationToken.None
             );
             
-            Console.WriteLine($"Phase6ForestController: Action {(result.Succeeded ? "SUCCEEDED" : "FAILED")}");
+            Console.WriteLine($"NarrativeController: Action {(result.Succeeded ? "SUCCEEDED" : "FAILED")}");
             
             // Add outcome narration block (using action skill name since it narrates from action skill's perspective)
             var outcomeBlock = new NarrationBlock(
@@ -278,7 +278,7 @@ public class Phase6ForestController
             // Handle outcome based on type - always show continue button first
             if (result.ActualOutcome is NarrationNode nextNode)
             {
-                Console.WriteLine($"Phase6ForestController: Transition outcome to node {nextNode.NodeId}, showing continue button");
+                Console.WriteLine($"NarrativeController: Transition outcome to node {nextNode.NodeId}, showing continue button");
                 
                 // Store pending transition - will execute when continue is clicked
                 _narrationState.PendingTransitionNode = nextNode;
@@ -286,7 +286,7 @@ public class Phase6ForestController
             }
             else
             {
-                Console.WriteLine("Phase6ForestController: Non-transition outcome, showing continue button");
+                Console.WriteLine("NarrativeController: Non-transition outcome, showing continue button");
                 
                 // No transition pending, continue button will exit or restart
                 _narrationState.PendingTransitionNode = null;
@@ -297,11 +297,11 @@ public class Phase6ForestController
             _narrationState.IsLoadingAction = false;
             _narrationState.ErrorMessage = null;
             
-            Console.WriteLine("Phase6ForestController: Action phase complete");
+            Console.WriteLine("NarrativeController: Action phase complete");
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Phase6ForestController: Error during action execution: {ex.Message}");
+            Console.Error.WriteLine($"NarrativeController: Error during action execution: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
             
             _narrationState.IsLoadingAction = false;
@@ -433,7 +433,7 @@ public class Phase6ForestController
             var selectedSkill = _skillPopup.HandleClick(screenPosition.X, screenPosition.Y, _core.Size, cellPixelSize);
             if (selectedSkill != null)
             {
-                Console.WriteLine($"Phase6ForestController: Selected skill: {selectedSkill.DisplayName}");
+                Console.WriteLine($"NarrativeController: Selected skill: {selectedSkill.DisplayName}");
                 
                 // Get the keyword that was clicked (stored before popup appeared)
                 if (_narrationState.HoveredKeyword != null)
@@ -450,7 +450,7 @@ public class Phase6ForestController
             }
             else
             {
-                Console.WriteLine("Phase6ForestController: Popup closed (clicked outside)");
+                Console.WriteLine("NarrativeController: Popup closed (clicked outside)");
             }
         }
     }
@@ -473,7 +473,7 @@ public class Phase6ForestController
         if (_narrationState.IsScrollbarDragging && !_terminalInputHandler.IsLeftMouseDown)
         {
             _narrationState.IsScrollbarDragging = false;
-            Console.WriteLine("Phase6ForestController: Stopped scrollbar drag");
+            Console.WriteLine("NarrativeController: Stopped scrollbar drag");
         }
         
         // Handle scrollbar dragging
@@ -481,11 +481,11 @@ public class Phase6ForestController
         {
             int deltaY = mouseY - _narrationState.ScrollbarDragStartY;
             
-            int trackHeight = Phase6Layout.SCROLLBAR_TRACK_HEIGHT;
+            int trackHeight = NarrativeLayout.SCROLLBAR_TRACK_HEIGHT;
             int totalLines = _scrollBuffer.TotalLines;
-            int visibleLines = Phase6Layout.NARRATIVE_HEIGHT;
+            int visibleLines = NarrativeLayout.NARRATIVE_HEIGHT;
             
-            int maxScrollOffset = Phase6Layout.CalculateMaxScrollOffset(totalLines);
+            int maxScrollOffset = NarrativeLayout.CalculateMaxScrollOffset(totalLines);
             
             // Calculate thumb size for proper scaling
             float visibleRatio = (float)visibleLines / totalLines;
@@ -563,7 +563,7 @@ public class Phase6ForestController
                 // Check if there's a pending transition to a new node
                 if (_narrationState.PendingTransitionNode != null)
                 {
-                    Console.WriteLine($"Phase6ForestController: Continue button clicked, transitioning to {_narrationState.PendingTransitionNode.NodeId}");
+                    Console.WriteLine($"NarrativeController: Continue button clicked, transitioning to {_narrationState.PendingTransitionNode.NodeId}");
                     
                     // Perform the transition
                     _currentNode = _narrationState.PendingTransitionNode;
@@ -578,7 +578,7 @@ public class Phase6ForestController
                 }
                 else
                 {
-                    Console.WriteLine("Phase6ForestController: Continue button clicked, exiting to world view");
+                    Console.WriteLine("NarrativeController: Continue button clicked, exiting to world view");
                     // Signal exit by setting a flag that the game controller can check
                     _narrationState.RequestedExit = true;
                     // The calling controller should check HasRequestedExit() and exit mode
@@ -600,7 +600,7 @@ public class Phase6ForestController
             var selectedSkill = _skillPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.Size, cellPixelSize);
             if (selectedSkill != null)
             {
-                Console.WriteLine($"Phase6ForestController: Selected skill: {selectedSkill.DisplayName}");
+                Console.WriteLine($"NarrativeController: Selected skill: {selectedSkill.DisplayName}");
                 
                 // Get the keyword that was clicked (stored before popup appeared)
                 if (_narrationState.HoveredKeyword != null)
@@ -617,7 +617,7 @@ public class Phase6ForestController
             }
             else
             {
-                Console.WriteLine("Phase6ForestController: Popup closed (clicked outside)");
+                Console.WriteLine("NarrativeController: Popup closed (clicked outside)");
             }
             return;
         }
@@ -628,7 +628,7 @@ public class Phase6ForestController
             _narrationState.IsScrollbarDragging = true;
             _narrationState.ScrollbarDragStartY = mouseY;
             _narrationState.ScrollbarDragStartOffset = _narrationState.ScrollOffset;
-            Console.WriteLine($"Phase6ForestController: Started scrollbar drag at Y={mouseY}");
+            Console.WriteLine($"NarrativeController: Started scrollbar drag at Y={mouseY}");
             return;
         }
         
@@ -638,7 +638,7 @@ public class Phase6ForestController
             int newOffset = _ui.CalculateScrollOffsetFromMouseY(mouseY, _scrollBuffer);
             _scrollBuffer.SetScrollOffset(newOffset);
             _narrationState.ScrollOffset = newOffset;
-            Console.WriteLine($"Phase6ForestController: Jump scrolled to offset {newOffset}");
+            Console.WriteLine($"NarrativeController: Jump scrolled to offset {newOffset}");
             return;
         }
         
@@ -659,14 +659,14 @@ public class Phase6ForestController
             if (clickedAction.ActionIndex < allActions.Count)
             {
                 var action = allActions[clickedAction.ActionIndex];
-                Console.WriteLine($"Phase6ForestController: Executing action '{action.ActionText}' with skill '{action.ActionSkillId}'");
+                Console.WriteLine($"NarrativeController: Executing action '{action.ActionText}' with skill '{action.ActionSkillId}'");
                 
                 // Fire-and-forget async task
                 _ = ExecuteActionPhaseAsync(action);
             }
             else
             {
-                Console.WriteLine($"Phase6ForestController: Failed to find action at index {clickedAction.ActionIndex}");
+                Console.WriteLine($"NarrativeController: Failed to find action at index {clickedAction.ActionIndex}");
             }
             return;
         }
@@ -676,7 +676,7 @@ public class Phase6ForestController
         
         if (clickedKeyword != null && _narrationState.ThinkingAttemptsRemaining > 0)
         {
-            Console.WriteLine($"Phase6ForestController: Clicked keyword: {clickedKeyword}");
+            Console.WriteLine($"NarrativeController: Clicked keyword: {clickedKeyword}");
             
             // Show thinking skill selection popup
             var thinkingSkills = _avatar.GetThinkingSkills();
@@ -685,7 +685,7 @@ public class Phase6ForestController
             Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.Size);
             
             _skillPopup.Show(screenPos, thinkingSkills);
-            Console.WriteLine($"Phase6ForestController: Showing {thinkingSkills.Count} thinking skills at screen position ({screenPos.X}, {screenPos.Y})");
+            Console.WriteLine($"NarrativeController: Showing {thinkingSkills.Count} thinking skills at screen position ({screenPos.X}, {screenPos.Y})");
         }
     }
     
@@ -740,7 +740,7 @@ public class Phase6ForestController
     /// <summary>
     /// Get the current narration state.
     /// </summary>
-    public Phase6NarrationState GetState() => _narrationState;
+    public NarrativeState GetState() => _narrationState;
     
     /// <summary>
     /// Check if player has requested to exit Phase 6 (clicked Continue button).
