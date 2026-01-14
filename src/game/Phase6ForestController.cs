@@ -344,6 +344,7 @@ public class Phase6ForestController
             _ui.RenderObservationBlocks(
                 _scrollBuffer,
                 _narrationState.ScrollOffset,
+                _narrationState.ThinkingAttemptsRemaining,
                 null, // No keyword hover
                 null  // No action hover
             );
@@ -369,6 +370,7 @@ public class Phase6ForestController
         _ui.RenderObservationBlocks(
             _scrollBuffer,
             _narrationState.ScrollOffset,
+            _narrationState.ThinkingAttemptsRemaining,
             _narrationState.HoveredKeyword,
             _narrationState.HoveredAction
         );

@@ -41,6 +41,16 @@ public class Phase6ObservationUI
     }
     
     /// <summary>
+    /// Get maximum thinking attempts from avatar.
+    /// TODO: This should be retrieved from the avatar instance once that characteristic is implemented.
+    /// </summary>
+    private int GetMaxThinkingAttempts()
+    {
+        // Placeholder implementation
+        return 3;
+    }
+    
+    /// <summary>
     /// Clear the entire terminal.
     /// </summary>
     public void Clear()
@@ -65,21 +75,25 @@ public class Phase6ObservationUI
         _terminal.Text(Phase6Layout.LEFT_MARGIN, 0, title, Config.Phase6UI.HeaderColor, Config.Phase6UI.BackgroundColor);
         
         // Thinking attempts indicator (right side)
-        string attempts = $"Thinking: ";
+        int maxAttempts = GetMaxThinkingAttempts();
+        string attempts = $"Thinking: [";
         int attemptsX = Phase6Layout.TERMINAL_WIDTH - Phase6Layout.RIGHT_MARGIN - 20;
         _terminal.Text(attemptsX, 0, attempts, Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
         
-        // Draw filled boxes for remaining attempts
-        int boxX = attemptsX + attempts.Length;
-        for (int i = 0; i < 3; i++)
+        // Draw individual attempt markers
+        int markerX = attemptsX + attempts.Length;
+        for (int i = 0; i < maxAttempts; i++)
         {
-            string box = i < thinkingAttemptsRemaining ? "[██]" : "[  ]";
-            Vector4 boxColor = i < thinkingAttemptsRemaining 
+            bool isRemaining = i < thinkingAttemptsRemaining;
+            Vector4 markerColor = isRemaining
                 ? new Vector4(0.8f, 0.4f, 0.4f, 1.0f) // Red-ish for available
                 : new Vector4(0.3f, 0.3f, 0.3f, 1.0f); // Dark gray for used
-            _terminal.Text(boxX, 0, box, boxColor, Config.Phase6UI.BackgroundColor);
-            boxX += 5;
+            _terminal.Text(markerX, 0, "█", markerColor, Config.Phase6UI.BackgroundColor);
+            markerX++;
         }
+        
+        // Closing bracket
+        _terminal.Text(markerX, 0, "]", Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
         
         // Separator line
         DrawHorizontalLine(1);
@@ -91,6 +105,7 @@ public class Phase6ObservationUI
     public void RenderObservationBlocks(
         NarrationScrollBuffer scrollBuffer,
         int scrollOffset,
+        int thinkingAttemptsRemaining,
         KeywordRegion? hoveredKeyword = null,
         ActionRegion? hoveredAction = null)
     {
@@ -138,6 +153,7 @@ public class Phase6ObservationUI
                         renderedLine.Keywords,
                         Phase6Layout.LEFT_MARGIN,
                         currentY,
+                        thinkingAttemptsRemaining,
                         hoveredKeyword);
                     break;
                     
@@ -219,6 +235,7 @@ public class Phase6ObservationUI
         List<string>? keywords,
         int startX,
         int y,
+        int thinkingAttemptsRemaining,
         KeywordRegion? hoveredKeyword)
     {
         if (string.IsNullOrEmpty(text))
@@ -240,21 +257,30 @@ public class Phase6ObservationUI
         {
             if (segment.IsKeyword)
             {
-                // Track keyword region for click detection
-                var keywordRegion = new KeywordRegion(
-                    segment.KeywordValue!, 
-                    y, 
-                    currentX, 
-                    currentX + segment.Text.Length - 1);
-                _keywordRegions.Add(keywordRegion);
-                
-                // Check if this specific region is hovered
-                bool isHovered = hoveredKeyword != null &&
-                               hoveredKeyword.Y == y &&
-                               hoveredKeyword.StartX == currentX &&
-                               hoveredKeyword.EndX == currentX + segment.Text.Length - 1;
-                Vector4 keywordColor = isHovered ? Config.Phase6UI.KeywordHoverColor : Config.Phase6UI.KeywordNormalColor;
-                _terminal.Text(currentX, y, segment.Text, keywordColor, Config.Phase6UI.BackgroundColor);
+                // Only highlight keywords if thinking attempts remain
+                if (thinkingAttemptsRemaining > 0)
+                {
+                    // Track keyword region for click detection
+                    var keywordRegion = new KeywordRegion(
+                        segment.KeywordValue!, 
+                        y, 
+                        currentX, 
+                        currentX + segment.Text.Length - 1);
+                    _keywordRegions.Add(keywordRegion);
+                    
+                    // Check if this specific region is hovered
+                    bool isHovered = hoveredKeyword != null &&
+                                   hoveredKeyword.Y == y &&
+                                   hoveredKeyword.StartX == currentX &&
+                                   hoveredKeyword.EndX == currentX + segment.Text.Length - 1;
+                    Vector4 keywordColor = isHovered ? Config.Phase6UI.KeywordHoverColor : Config.Phase6UI.KeywordNormalColor;
+                    _terminal.Text(currentX, y, segment.Text, keywordColor, Config.Phase6UI.BackgroundColor);
+                }
+                else
+                {
+                    // No attempts remaining - render as normal text
+                    _terminal.Text(currentX, y, segment.Text, Config.Phase6UI.NarrativeColor, Config.Phase6UI.BackgroundColor);
+                }
             }
             else
             {
@@ -512,7 +538,8 @@ public class Phase6ObservationUI
         
         // Add animated dots
         string dots = new string('.', (_loadingFrameIndex % 4));
-        string hint = $"Please wait{dots}";
+        string spaces = new string(' ', (_loadingFrameIndex % 4));
+        string hint = $"{spaces}Please wait{dots}";
         int hintY = centerY + 2;
         int hintX = (Phase6Layout.TERMINAL_WIDTH - hint.Length) / 2;
         _terminal.Text(hintX, hintY, hint, Config.Phase6UI.StatusBarColor, Config.Phase6UI.BackgroundColor);
