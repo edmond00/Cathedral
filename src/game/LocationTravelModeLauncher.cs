@@ -139,8 +139,8 @@ public static class LocationTravelModeLauncher
                     {
                         try
                         {
-                            // Phase 6 doesn't use Director/Narrator, only LlamaServerManager
-                            await llmExecutor.InitializeAsync(skipDirectorNarrator: true);
+                            // Initialize (Mode 6 doesn't create Director/Narrator slots)
+                            await llmExecutor.InitializeAsync();
                             gameController.SetLLMActionExecutor(llmExecutor);
                             Console.WriteLine("✓ LLM action executor ready");
                         }
@@ -170,8 +170,8 @@ public static class LocationTravelModeLauncher
                         {
                             var simpleExecutor = new SimpleActionExecutor();
                             var executor = new LLMActionExecutor(llamaServer, simpleExecutor);
-                            // Phase 6 doesn't use Director/Narrator, only LlamaServerManager
-                            await executor.InitializeAsync(skipDirectorNarrator: true);
+                            // Initialize (Mode 6 doesn't create Director/Narrator slots)
+                            await executor.InitializeAsync();
                             gameController.SetLLMActionExecutor(executor);
                             Console.WriteLine("✓ LLM action executor ready (delayed initialization)");
                         }
@@ -285,7 +285,7 @@ public static class LocationTravelModeLauncher
         
         // Cleanup
         Console.WriteLine("Shutting down...");
-        llmExecutor?.Dispose(); // Log LLM statistics
+        // llmExecutor no longer needs Dispose() - simplified to just provide LlamaServerManager access
         gameController?.Dispose();
         llamaServer?.Dispose();
         Console.WriteLine("Cleanup complete");

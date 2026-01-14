@@ -461,22 +461,10 @@ public class LocationTravelGameController : IDisposable
                 WasSuccessful = false
             };
             
-            // Request failure narrative
-            string? failureNarrative = null;
-            if (_llmActionExecutor != null)
-            {
-                failureNarrative = await _llmActionExecutor.GenerateFailureNarrativeAsync(
-                    _currentLocationState,
-                    _currentBlueprint,
-                    failedAction,
-                    result.NarrativeOutcome);
-            }
-            
             _isLoadingLLMContent = false;
             
-            // Update result with enhanced narrative
-            result = ActionResult.CreateFailure(
-                failureNarrative ?? result.NarrativeOutcome);
+            // Use the narrative outcome as-is (Mode 6 handles narration through NarrativeController)
+            result = ActionResult.CreateFailure(result.NarrativeOutcome);
             
             // Apply the failed action to state
             var playerAction = new PlayerAction
@@ -887,12 +875,7 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
-        // Reset LLM conversation histories to avoid pattern repetition from previous locations
-        if (_llmActionExecutor != null)
-        {
-            Console.WriteLine("LocationTravelGameController: Resetting LLM instances for new location");
-            _llmActionExecutor.ResetForNewLocation();
-        }
+        // Mode 6 doesn't need to reset conversation histories (uses NarrativeController architecture)
         
         // Show terminal for interaction
         if (_core.Terminal != null)
@@ -947,25 +930,24 @@ public class LocationTravelGameController : IDisposable
             _terminalUI.ShowLoadingIndicator(_loadingMessage);
         }
         
-        // Generate actions using LLM if available - Use RegenerateActionsAsync to get Critic evaluation
+        // Mode 6 uses NarrativeController for action generation, not the old Director system
         var lastAction = _currentLocationState.GetLastAction();
-        if (_llmActionExecutor != null)
+        
+        // For now, set empty actions - NarrativeController will handle this
+        if (_currentActions == null || _currentActions.Count == 0)
         {
-            Console.WriteLine("RenderLocationUIAsync: Requesting actions from LLM with Critic evaluation...");
-            await RegenerateActionsAsync();
-            
-            // Check if actions were successfully generated
+            _currentActions = new List<ActionInfo>();
+            _currentParsedActions = new List<ParsedAction>();
+        }
+        
+        if (false) // Dead code - kept for reference only
+        {
             if (_currentActions == null || _currentActions.Count == 0)
             {
-                Console.Error.WriteLine("RenderLocationUIAsync: Failed to generate actions from LLM");
+                Console.Error.WriteLine("RenderLocationUIAsync: No actions available");
                 _isLoadingLLMContent = false;
                 _terminalUI?.ShowResultMessage(
-                    "ERROR: Failed to generate actions.\n\n" +
-                    "The LLM did not return valid actions. This could be due to:\n" +
-                    "- LLM server not responding\n" +
-                    "- Invalid response format\n" +
-                    "- Timeout\n\n" +
-                    "Check logs/llm_communication_*.log for details.\n\n" +
+                    "ERROR: No actions available.\n\n" +
                     "Click anywhere to return to world view...",
                     false
                 );
@@ -998,11 +980,10 @@ public class LocationTravelGameController : IDisposable
             _terminalUI.ShowLoadingIndicator(_loadingMessage);
         }
         
-        // Generate narrative using LLM if available
-        if (_llmActionExecutor != null)
+        // Mode 6 uses NarrativeController for narrative generation, not the old Narrator system
+        if (false) // Dead code - narrative handled by NarrativeController
         {
-            Console.WriteLine("RenderLocationUIAsync: Requesting narrative from LLM...");
-            var llmNarrative = await _llmActionExecutor.GenerateNarrativeAsync(_currentLocationState, blueprint, lastAction, _currentActions);
+            var llmNarrative = "";
             if (string.IsNullOrWhiteSpace(llmNarrative))
             {
                 Console.Error.WriteLine("RenderLocationUIAsync: Failed to generate narrative from LLM");
@@ -1058,97 +1039,6 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// Regenerates actions based on current state.
     /// </summary>
-    private async Task RegenerateActionsAsync()
-    {
-        if (_currentLocationState == null || _currentBlueprint == null)
-            return;
-
-        var lastAction = _currentLocationState.GetLastAction();
-        
-        if (_llmActionExecutor != null)
-        {
-            // [1] Generate 12 actions (with raw JSON for parsing)
-            Console.WriteLine("RegenerateActionsAsync: Requesting 12 actions from LLM...");
-            var (llmActions, rawJson) = await _llmActionExecutor.GenerateActionsWithRawJsonAsync(
-                _currentLocationState, 
-                _currentBlueprint, 
-                lastAction,
-                numberOfActions: 12);
-            
-            if (llmActions == null || llmActions.Count == 0 || string.IsNullOrEmpty(rawJson))
-            {
-                Console.Error.WriteLine("RegenerateActionsAsync: Failed to regenerate actions from LLM");
-                _terminalUI?.ShowResultMessage(
-                    "ERROR: Failed to generate new actions.\n\n" +
-                    "The LLM did not return valid actions after your last action.\n" +
-                    "Check logs/llm_communication_*.log for details.\n\n" +
-                    "Click anywhere to return to world view...",
-                    false
-                );
-                _waitingForClickToExit = true;
-                return;
-            }
-            
-            // [2] Parse into ParsedAction objects with full consequence data
-            var parsedActions = ActionParser.ParseDirectorResponse(rawJson);
-            
-            if (parsedActions == null || parsedActions.Count == 0)
-            {
-                Console.Error.WriteLine("RegenerateActionsAsync: Failed to parse actions from JSON");
-                _currentParsedActions = llmActions.Select((action, index) => new ParsedAction
-                {
-                    ActionText = action.ActionText,
-                    Skill = action.RelatedSkill,
-                    OriginalIndex = index
-                }).ToList();
-                _currentActions = llmActions.Take(6).ToList();
-                return;
-            }
-            
-            // [3] Score via Critic (if available and we have enough actions)
-            if (_actionScorer != null && _criticEvaluator != null && parsedActions.Count > 6)
-            {
-                try
-                {
-                    Console.WriteLine($"RegenerateActionsAsync: Scoring {parsedActions.Count} actions with Critic First Pass...");
-                    var scoredActions = await _actionScorer.ScoreActionsAsync(
-                        parsedActions, 
-                        lastAction,
-                        _currentLocationState.CurrentSublocation,
-                        _currentBlueprint);
-                    
-                    // [4] Select top 6
-                    var topActions = scoredActions.Take(6).ToList();
-                    _currentParsedActions = topActions.Select(s => s.Action).ToList();
-                    _currentActions = _currentParsedActions.Select(a => new ActionInfo(a.ActionText, a.Skill)).ToList();
-                    
-                    Console.WriteLine($"RegenerateActionsAsync: Selected top 6 actions based on Critic scores");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"RegenerateActionsAsync: Critic scoring failed - {ex.Message}");
-                    Console.WriteLine("Falling back to using all generated actions");
-                    _currentParsedActions = parsedActions.Take(6).ToList();
-                    _currentActions = llmActions.Take(6).ToList();
-                }
-            }
-            else
-            {
-                // No Critic or not enough actions - use first 6 actions
-                var reason = _actionScorer == null ? "Critic not available" : "Not enough actions for scoring";
-                Console.WriteLine($"RegenerateActionsAsync: {reason}, using first 6 actions");
-                _currentParsedActions = parsedActions.Take(6).ToList();
-                _currentActions = llmActions.Take(6).ToList();
-            }
-        }
-        else
-        {
-            Console.Error.WriteLine("RegenerateActionsAsync: LLM executor not available");
-            _currentActions = new List<ActionInfo> { new ActionInfo("ERROR: LLM not available") };
-            _currentParsedActions = new List<ParsedAction>();
-        }
-    }
-    
     /// <summary>
     /// Gets debug information about current state.
     /// </summary>
