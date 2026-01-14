@@ -9,16 +9,23 @@ namespace Cathedral.Game;
 /// <summary>
 /// Manages scrollable narration blocks with viewport rendering.
 /// Stores full narration history and renders only visible portion.
+/// Supports keeping previous narration nodes as grayed-out history.
 /// </summary>
 public class NarrationScrollBuffer
 {
     private readonly List<NarrationBlock> _blocks = new();
     private readonly List<RenderedLine> _renderedLines = new();
+    private readonly List<RenderedLine> _historyLines = new(); // Previous narration node lines (grayed out)
     private int _scrollOffset = 0;
     private readonly int _maxWidth;
 
     public int ScrollOffset => _scrollOffset;
     public int TotalLines => _renderedLines.Count;
+    
+    /// <summary>
+    /// Number of lines that are history (from previous narration nodes).
+    /// </summary>
+    public int HistoryLineCount => _historyLines.Count;
 
     public NarrationScrollBuffer(int maxWidth)
     {
@@ -122,21 +129,100 @@ public class NarrationScrollBuffer
     public bool CanScrollDown(int visibleLines) => _scrollOffset + visibleLines < _renderedLines.Count;
 
     /// <summary>
-    /// Clear all blocks and rendered lines.
+    /// Clear all blocks and rendered lines (including history).
     /// </summary>
     public void Clear()
     {
         _blocks.Clear();
         _renderedLines.Clear();
+        _historyLines.Clear();
         _scrollOffset = 0;
+    }
+    
+    /// <summary>
+    /// Convert current narration content to history (grayed out, non-interactive).
+    /// This preserves the text for player reference while starting a new narration node.
+    /// Adds a visual separator line at the end.
+    /// </summary>
+    public void ConvertToHistory()
+    {
+        Console.WriteLine($"ConvertToHistory: Starting with {_renderedLines.Count} rendered lines, {_historyLines.Count} existing history lines");
+        
+        if (_renderedLines.Count == 0)
+        {
+            Console.WriteLine("ConvertToHistory: No lines to convert, returning");
+            return;
+        }
+        
+        int convertedCount = 0;
+        
+        // Only convert lines that are NOT already history
+        // (_renderedLines contains both history lines at the start and current content after)
+        foreach (var line in _renderedLines)
+        {
+            // Skip lines that are already in history
+            if (line.IsHistory)
+                continue;
+                
+            // Create new line with IsHistory=true, and clear interactive elements
+            var historyLine = new RenderedLine(
+                Text: line.Text,
+                Type: line.Type,
+                BlockType: line.BlockType,
+                Keywords: null,  // Remove keywords to disable interactivity
+                Actions: null,   // Remove actions to disable interactivity
+                IsHistory: true
+            );
+            _historyLines.Add(historyLine);
+            convertedCount++;
+        }
+        
+        Console.WriteLine($"ConvertToHistory: Converted {convertedCount} non-history lines");
+        
+        // Add separator line
+        string separatorText = new string('─', Math.Min(_maxWidth, 40)); // 40 dashes or max width
+        _historyLines.Add(new RenderedLine(
+            Text: separatorText,
+            Type: LineType.Separator,
+            BlockType: NarrationBlockType.Observation, // Doesn't matter for separator
+            Keywords: null,
+            Actions: null,
+            IsHistory: true
+        ));
+        
+        // Add empty line after separator for spacing
+        _historyLines.Add(new RenderedLine(
+            Text: "",
+            Type: LineType.Empty,
+            BlockType: NarrationBlockType.Observation,
+            Keywords: null,
+            Actions: null,
+            IsHistory: true
+        ));
+        
+        // Clear current blocks (they're now in history)
+        _blocks.Clear();
+        _renderedLines.Clear();
+        
+        // Regenerate (will include history lines at the top)
+        RegenerateRenderedLines();
+        
+        // Scroll to end of history so new content is visible
+        _scrollOffset = _historyLines.Count;
+        
+        Console.WriteLine($"ConvertToHistory: Complete - {_historyLines.Count} history lines, {_renderedLines.Count} total lines, scroll offset: {_scrollOffset}");
     }
 
     /// <summary>
     /// Regenerate all rendered lines from blocks with word wrapping.
+    /// History lines are prepended at the top.
     /// </summary>
     private void RegenerateRenderedLines()
     {
         _renderedLines.Clear();
+        
+        // First, add all history lines (from previous narration nodes)
+        _renderedLines.AddRange(_historyLines);
 
         foreach (var block in _blocks)
         {
@@ -373,7 +459,8 @@ public record RenderedLine(
     LineType Type,
     NarrationBlockType BlockType,
     List<string>? Keywords,
-    List<ParsedNarrativeAction>? Actions  // Actions for rendering (only for Action lines)
+    List<ParsedNarrativeAction>? Actions,  // Actions for rendering (only for Action lines)
+    bool IsHistory = false  // True if this line is part of history (from previous narration nodes)
 );
 
 /// <summary>
@@ -381,9 +468,10 @@ public record RenderedLine(
 /// </summary>
 public enum LineType
 {
-    Header,   // Skill name header
-    Content,  // Narration text
-    Action,   // Action line (for Thinking blocks)
-    Outcome,  // Outcome narration (for Action/Outcome blocks)
-    Empty     // Spacing
+    Header,     // Skill name header
+    Content,    // Narration text
+    Action,     // Action line (for Thinking blocks)
+    Outcome,    // Outcome narration (for Action/Outcome blocks)
+    Empty,      // Spacing
+    Separator   // Transition separator between narration nodes
 }

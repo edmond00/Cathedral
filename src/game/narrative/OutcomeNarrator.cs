@@ -37,8 +37,8 @@ public class OutcomeNarrator
         Avatar avatar,
         CancellationToken cancellationToken = default)
     {
-        // Ensure narrator slot is initialized and get slot ID
-        int slotId = await GetOrCreateNarratorSlotAsync(thinkingSkill);
+        // Ensure narrator slot is initialized with action skill's persona
+        int slotId = await GetOrCreateNarratorSlotAsync(actionSkill);
 
         // Build prompt
         string prompt = BuildNarrationPrompt(
@@ -81,13 +81,13 @@ public class OutcomeNarrator
     }
 
     /// <summary>
-    /// Ensures the narrator slot is initialized with the thinking skill's persona.
+    /// Ensures the narrator slot is initialized with the action skill's persona.
     /// Returns the slot ID for this skill.
     /// </summary>
-    private async Task<int> GetOrCreateNarratorSlotAsync(Skill thinkingSkill)
+    private async Task<int> GetOrCreateNarratorSlotAsync(Skill actionSkill)
     {
-        // Use SkillSlotManager to reuse the same slot as thinking phase
-        return await _slotManager.GetOrCreateSlotForSkillAsync(thinkingSkill);
+        // Use SkillSlotManager to get slot for the action skill
+        return await _slotManager.GetOrCreateSlotForSkillAsync(actionSkill);
     }
 
     /// <summary>
@@ -106,21 +106,21 @@ public class OutcomeNarrator
         string successStatus = succeeded ? "succeeded" : "failed";
         string difficultyDesc = difficulty < 0.3 ? "easy" : difficulty < 0.7 ? "moderate" : "hard";
 
-        return $@"You ({thinkingSkill.DisplayName}) suggested the following action:
-""{action.ActionText}""
+        return $@"You are {actionSkill.DisplayName}, narrating the outcome of an action you performed.
 
-The action used the {actionSkill.DisplayName} skill (difficulty: {difficultyDesc}).
+The action was: ""{action.ActionText}""
 
-The action {successStatus}.
+Difficulty: {difficultyDesc}
+Result: {successStatus}
 
 {(succeeded 
     ? $"Outcome: {outcomeDescription}" 
     : "The attempt did not achieve the desired result.")}
 
-Narrate what happened from your perspective as {thinkingSkill.DisplayName}. 
-- If success: Describe how {actionSkill.DisplayName} accomplished it
-- If failure: Reflect on why it didn't work
-- Use the tone of {thinkingSkill.PersonaTone}
+Narrate what happened from your perspective as {actionSkill.DisplayName}. 
+- If success: Describe how you accomplished it and what you achieved
+- If failure: Reflect on what went wrong and how it felt
+- Use the tone of {actionSkill.PersonaTone}
 - Keep it 100-400 characters
 
 Respond in JSON format:

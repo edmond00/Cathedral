@@ -101,6 +101,7 @@ public class Phase6ObservationUI
     
     /// <summary>
     /// Render observation blocks with keywords highlighted.
+    /// History lines (from previous narration nodes) are rendered in dark gray.
     /// </summary>
     public void RenderObservationBlocks(
         NarrationScrollBuffer scrollBuffer,
@@ -135,6 +136,14 @@ public class Phase6ObservationUI
         {
             if (currentY >= Phase6Layout.CONTENT_END_Y + 1)
                 break;
+            
+            // Check if this is a history line (from previous narration nodes)
+            if (renderedLine.IsHistory)
+            {
+                RenderHistoryLine(renderedLine, currentY);
+                currentY++;
+                continue;
+            }
             
             switch (renderedLine.Type)
             {
@@ -219,11 +228,38 @@ public class Phase6ObservationUI
                     break;
                     
                 case LineType.Empty:
+                case LineType.Separator:
                     // Just skip (already cleared)
                     break;
             }
             
             currentY++;
+        }
+    }
+    
+    /// <summary>
+    /// Render a history line (from previous narration nodes) in dark gray.
+    /// No interactivity (keywords/actions are not clickable).
+    /// </summary>
+    private void RenderHistoryLine(RenderedLine line, int y)
+    {
+        Vector4 historyColor = Config.Phase6UI.HistoryColor;
+        
+        switch (line.Type)
+        {
+            case LineType.Separator:
+                // Render separator in slightly brighter color
+                _terminal.Text(Phase6Layout.LEFT_MARGIN, y, line.Text, Config.Phase6UI.SeparatorColor, Config.Phase6UI.BackgroundColor);
+                break;
+                
+            case LineType.Empty:
+                // Nothing to render
+                break;
+                
+            default:
+                // Render all other history lines in dark gray
+                _terminal.Text(Phase6Layout.LEFT_MARGIN, y, line.Text, historyColor, Config.Phase6UI.BackgroundColor);
+                break;
         }
     }
     

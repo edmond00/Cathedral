@@ -85,18 +85,39 @@ public class Phase6ForestController
     
     /// <summary>
     /// Start the observation phase (generates observations asynchronously).
+    /// This clears all history - use for initial start only.
     /// </summary>
     public void StartObservationPhase()
     {
         _narrationState.Clear();
         _scrollBuffer.Clear();
         _narrationState.IsLoadingObservations = true;
-        _narrationState.LoadingMessage = "Generating observations...";
+        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
         
         // Fire-and-forget async task
         _ = GenerateObservationsAsync();
         
         Console.WriteLine("Phase6ForestController: Started observation phase");
+    }
+    
+    /// <summary>
+    /// Start the observation phase while preserving scroll buffer history.
+    /// Used when transitioning to a new node after a successful action.
+    /// </summary>
+    private void StartObservationPhaseWithHistory()
+    {
+        // Note: ResetForNewNode() should already be called before this
+        // Just set loading state and start generation
+        _narrationState.IsLoadingObservations = true;
+        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+        
+        Console.WriteLine($"Phase6ForestController: Started observation phase (with history preserved)");
+        Console.WriteLine($"  History lines: {_scrollBuffer.HistoryLineCount}");
+        Console.WriteLine($"  Total lines: {_scrollBuffer.TotalLines}");
+        Console.WriteLine($"  Scroll offset: {_scrollBuffer.ScrollOffset}");
+        
+        // Fire-and-forget async task
+        _ = GenerateObservationsAsync();
     }
     
     /// <summary>
@@ -227,7 +248,7 @@ public class Phase6ForestController
             
             // Set loading state with progress messages
             _narrationState.IsLoadingAction = true;
-            _narrationState.LoadingMessage = "Evaluating action...";
+            _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingAction;
             
             // Execute action via ActionExecutionController
             var result = await _actionExecutor.ExecuteActionAsync(
@@ -239,22 +260,11 @@ public class Phase6ForestController
             
             Console.WriteLine($"Phase6ForestController: Action {(result.Succeeded ? "SUCCEEDED" : "FAILED")}");
             
-            // Add action block with success/failure indicator
-            var actionBlock = new NarrationBlock(
-                Type: NarrationBlockType.Action,
-                SkillName: result.ActionSkill?.DisplayName ?? "Unknown Skill",
-                Text: $"{action.ActionText} [{(result.Succeeded ? "SUCCESS" : "FAILURE")}]",
-                Keywords: null,
-                Actions: null
-            );
-            _scrollBuffer.AddBlock(actionBlock);
-            _narrationState.AddBlock(actionBlock);
-            
-            // Add outcome narration block
+            // Add outcome narration block (using action skill name since it narrates from action skill's perspective)
             var outcomeBlock = new NarrationBlock(
                 Type: NarrationBlockType.Outcome,
-                SkillName: action.ThinkingSkill.DisplayName,
-                Text: result.Narration,
+                SkillName: result.ActionSkill?.DisplayName ?? "Unknown Skill",
+                Text: $"[{(result.Succeeded ? "SUCCESS" : "FAILURE")}] {result.Narration}",
                 Keywords: null,
                 Actions: null
             );
@@ -265,27 +275,21 @@ public class Phase6ForestController
             _scrollBuffer.ScrollToBottom();
             _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
             
-            // Handle outcome based on type
+            // Handle outcome based on type - always show continue button first
             if (result.ActualOutcome is NarrationNode nextNode)
             {
-                Console.WriteLine($"Phase6ForestController: Transitioning to node {nextNode.NodeId}");
+                Console.WriteLine($"Phase6ForestController: Transition outcome to node {nextNode.NodeId}, showing continue button");
                 
-                // Transition to new node
-                _currentNode = nextNode;
-                
-                // Clear state and restart observation phase
-                _narrationState.Clear();
-                _scrollBuffer.Clear();
-                _narrationState.ThinkingAttemptsRemaining = 3;
-                
-                // Start new observation phase
-                StartObservationPhase();
+                // Store pending transition - will execute when continue is clicked
+                _narrationState.PendingTransitionNode = nextNode;
+                _narrationState.ShowContinueButton = true;
             }
             else
             {
                 Console.WriteLine("Phase6ForestController: Non-transition outcome, showing continue button");
                 
-                // Show continue button for non-transition outcomes
+                // No transition pending, continue button will exit or restart
+                _narrationState.PendingTransitionNode = null;
                 _narrationState.ShowContinueButton = true;
             }
             
@@ -347,6 +351,13 @@ public class Phase6ForestController
                 _narrationState.ThinkingAttemptsRemaining,
                 null, // No keyword hover
                 null  // No action hover
+            );
+            
+            // Render scrollbar (still visible when continue button shown)
+            _narrationState.ScrollbarThumb = _ui.RenderScrollbar(
+                _scrollBuffer,
+                _narrationState.ScrollOffset,
+                _narrationState.IsScrollbarThumbHovered
             );
             
             // Render continue button
@@ -431,7 +442,7 @@ public class Phase6ForestController
                     
                     // Start thinking phase
                     _narrationState.IsLoadingThinking = true;
-                    _narrationState.LoadingMessage = "Thinking deeply...";
+                    _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
                     
                     // Fire-and-forget async task
                     _ = ExecuteThinkingPhaseAsync(selectedSkill, keyword);
@@ -549,10 +560,29 @@ public class Phase6ForestController
             var buttonRegion = _narrationState.ActionRegions[0];
             if (mouseY == buttonRegion.StartY && mouseX >= buttonRegion.StartX && mouseX <= buttonRegion.EndX)
             {
-                Console.WriteLine("Phase6ForestController: Continue button clicked, exiting to world view");
-                // Signal exit by setting a flag that the game controller can check
-                _narrationState.RequestedExit = true;
-                // The calling controller should check HasRequestedExit() and exit mode
+                // Check if there's a pending transition to a new node
+                if (_narrationState.PendingTransitionNode != null)
+                {
+                    Console.WriteLine($"Phase6ForestController: Continue button clicked, transitioning to {_narrationState.PendingTransitionNode.NodeId}");
+                    
+                    // Perform the transition
+                    _currentNode = _narrationState.PendingTransitionNode;
+                    
+                    // Convert current narration to history (grayed out, non-interactive)
+                    _scrollBuffer.ConvertToHistory();
+                    _narrationState.ResetForNewNode();
+                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                    
+                    // Start new observation phase WITHOUT clearing history
+                    StartObservationPhaseWithHistory();
+                }
+                else
+                {
+                    Console.WriteLine("Phase6ForestController: Continue button clicked, exiting to world view");
+                    // Signal exit by setting a flag that the game controller can check
+                    _narrationState.RequestedExit = true;
+                    // The calling controller should check HasRequestedExit() and exit mode
+                }
             }
             return;
         }
@@ -579,7 +609,7 @@ public class Phase6ForestController
                     
                     // Start thinking phase
                     _narrationState.IsLoadingThinking = true;
-                    _narrationState.LoadingMessage = "Thinking deeply...";
+                    _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
                     
                     // Fire-and-forget async task
                     _ = ExecuteThinkingPhaseAsync(selectedSkill, keyword);

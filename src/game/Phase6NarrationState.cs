@@ -90,7 +90,7 @@ public class Phase6NarrationState
     public int ThinkingAttemptsRemaining { get; set; } = 3;
 
     /// <summary>
-    /// Should the "Continue" button be shown (for non-transition outcomes)?
+    /// Should the "Continue" button be shown?
     /// </summary>
     public bool ShowContinueButton { get; set; } = false;
 
@@ -98,6 +98,12 @@ public class Phase6NarrationState
     /// Is the continue button currently hovered?
     /// </summary>
     public bool IsContinueButtonHovered { get; set; } = false;
+    
+    /// <summary>
+    /// Pending narration node to transition to after continue button is clicked.
+    /// Null means no transition (stay in current node or exit).
+    /// </summary>
+    public NarrationNode? PendingTransitionNode { get; set; } = null;
 
     /// <summary>
     /// Has the player requested to exit Phase 6 (via continue button)?
@@ -128,12 +134,36 @@ public class Phase6NarrationState
         IsLoadingObservations = false;
         IsLoadingThinking = false;
         IsLoadingAction = false;
-        LoadingMessage = "Loading...";
+        LoadingMessage = Config.LoadingMessages.Default;
         HoveredKeyword = null;
         ThinkingAttemptsRemaining = 3;
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
+        PendingTransitionNode = null;
         ErrorMessage = null;
+    }
+    
+    /// <summary>
+    /// Reset state for a new narration node without clearing blocks.
+    /// Used when transitioning to preserve history.
+    /// </summary>
+    public void ResetForNewNode()
+    {
+        Blocks.Clear();  // Clear current node's blocks (history is in scroll buffer)
+        KeywordRegions.Clear();
+        IsLoadingObservations = false;
+        IsLoadingThinking = false;
+        IsLoadingAction = false;
+        LoadingMessage = Config.LoadingMessages.Default;
+        HoveredKeyword = null;
+        HoveredAction = null;
+        ActionRegions.Clear();
+        ThinkingAttemptsRemaining = 3;
+        ShowContinueButton = false;
+        IsContinueButtonHovered = false;
+        PendingTransitionNode = null;
+        ErrorMessage = null;
+        // Note: ScrollOffset is NOT reset - it's managed by the scroll buffer
     }
 
     /// <summary>

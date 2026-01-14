@@ -106,6 +106,8 @@ public static class Config
         public static readonly Vector4 FailureColor = new(1.0f, 0.4f, 0.4f, 1.0f); // Bright red
         public static readonly Vector4 ContinueButtonColor = new(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
         public static readonly Vector4 ContinueButtonHoverColor = new(1.0f, 0.8f, 0.0f, 1.0f); // Orange-yellow
+        public static readonly Vector4 HistoryColor = new(0.35f, 0.35f, 0.35f, 1.0f); // Dark gray for history text
+        public static readonly Vector4 SeparatorColor = new(0.4f, 0.4f, 0.4f, 1.0f); // Separator line color
     }
     
     #endregion
@@ -144,6 +146,29 @@ public static class Config
         public static readonly Vector4 SkillHoverColor = new(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
         public static readonly Vector4 BackgroundColor = new(0.0f, 0.0f, 0.0f, 0.9f); // Semi-transparent black
         public static readonly Vector4 TransparentColor = new(0.0f, 0.0f, 0.0f, 0.0f);
+    }
+    
+    #endregion
+    
+    #region Loading Messages
+    
+    public static class LoadingMessages
+    {
+        // General
+        public const string Default = "Loading...";
+        
+        // Phase 6 - Observation/Narration
+        public const string GeneratingObservations = "Observing surroundings...";
+        public const string ThinkingDeeply = "Thinking about what to do...";
+        public const string EvaluatingAction = "Taking action...";
+        
+        // Location Travel
+        public const string Thinking = "Thinking...";
+        public const string EvaluatingDifficulty = "Evaluating action difficulty...";
+        public const string DeterminingOutcome = "Determining outcome...";
+        public const string NarratingDemise = "Narrating your demise...";
+        public const string GeneratingActions = "Generating actions...";
+        public const string GeneratingNarrative = "Generating narrative...";
     }
     
     #endregion

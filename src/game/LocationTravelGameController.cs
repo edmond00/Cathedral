@@ -59,7 +59,7 @@ public class LocationTravelGameController : IDisposable
     private string _currentNarrative = "";
     private bool _waitingForClickToExit = false;
     private bool _isLoadingLLMContent = false;
-    private string _loadingMessage = "Thinking...";
+    private string _loadingMessage = Config.LoadingMessages.Thinking;
     
     // Events
     public event Action<GameMode, GameMode>? ModeChanged;
@@ -344,7 +344,7 @@ public class LocationTravelGameController : IDisposable
         if (_llmActionExecutor != null && _terminalUI != null)
         {
             _isLoadingLLMContent = true;
-            _loadingMessage = "Evaluating action difficulty...";
+            _loadingMessage = Config.LoadingMessages.EvaluatingDifficulty;
             _terminalUI.ShowLoadingIndicator(_loadingMessage);
         }
         
@@ -390,7 +390,7 @@ public class LocationTravelGameController : IDisposable
         // Update loading message
         if (_llmActionExecutor != null && _terminalUI != null)
         {
-            _loadingMessage = "Determining outcome...";
+            _loadingMessage = Config.LoadingMessages.DeterminingOutcome;
             _terminalUI.ShowLoadingIndicator(_loadingMessage);
         }
         
@@ -449,7 +449,7 @@ public class LocationTravelGameController : IDisposable
             if (_llmActionExecutor != null && _terminalUI != null)
             {
                 _isLoadingLLMContent = true;
-                _loadingMessage = "Narrating your demise...";
+                _loadingMessage = Config.LoadingMessages.NarratingDemise;
                 _terminalUI.ShowLoadingIndicator(_loadingMessage);
             }
             
@@ -943,7 +943,7 @@ public class LocationTravelGameController : IDisposable
         if (_llmActionExecutor != null)
         {
             _isLoadingLLMContent = true;
-            _loadingMessage = "Generating actions...";
+            _loadingMessage = Config.LoadingMessages.GeneratingActions;
             _terminalUI.ShowLoadingIndicator(_loadingMessage);
         }
         
@@ -994,7 +994,7 @@ public class LocationTravelGameController : IDisposable
         // Update loading message for narrative generation
         if (_llmActionExecutor != null)
         {
-            _loadingMessage = "Generating narrative...";
+            _loadingMessage = Config.LoadingMessages.GeneratingNarrative;
             _terminalUI.ShowLoadingIndicator(_loadingMessage);
         }
         
