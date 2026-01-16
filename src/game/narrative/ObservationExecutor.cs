@@ -46,6 +46,20 @@ public class ObservationExecutor
         NarrationNode node,
         Avatar avatar)
     {
+        // Use all node keywords by default
+        return await GenerateObservationAsync(observationSkill, node, avatar, node.OutcomeKeywords);
+    }
+    
+    /// <summary>
+    /// Generates an observation narration using an observation skill with specific keywords.
+    /// Used for focused observations that target a specific outcome's keywords.
+    /// </summary>
+    public async Task<ObservationResponse> GenerateObservationAsync(
+        Skill observationSkill,
+        NarrationNode node,
+        Avatar avatar,
+        List<string> targetKeywords)
+    {
         if (!observationSkill.Functions.Contains(SkillFunction.Observation))
             throw new ArgumentException($"Skill {observationSkill.DisplayName} is not an observation skill");
         
@@ -58,12 +72,12 @@ public class ObservationExecutor
         // First attempt: Natural narration (prompted but not constrained)
         try
         {
-            var response = await GenerateObservationNaturalAsync(slotId, node, avatar, observationSkill);
+            var response = await GenerateObservationNaturalAsync(slotId, node, avatar, observationSkill, targetKeywords);
             
             // Extract keywords from response text to check quality
             var segments = new KeywordRenderer().ParseNarrationWithKeywords(
                 response.NarrationText,
-                node.OutcomeKeywords
+                targetKeywords
             );
             int keywordCount = segments.Count(s => s.IsKeyword);
             
@@ -80,37 +94,39 @@ public class ObservationExecutor
         }
         
         // Fallback: Use keyword intro examples to force inclusion
-        return await GenerateObservationWithFallbackAsync(slotId, node, avatar, observationSkill);
+        return await GenerateObservationWithFallbackAsync(slotId, node, avatar, observationSkill, targetKeywords);
     }
     
     private async Task<ObservationResponse> GenerateObservationNaturalAsync(
         int slotId,
         NarrationNode node,
         Avatar avatar,
-        Skill observationSkill)
+        Skill observationSkill,
+        List<string> targetKeywords)
     {
-        var prompt = _promptConstructor.BuildObservationPrompt(node, avatar, observationSkill, promptKeywordUsage: true);
+        var prompt = _promptConstructor.BuildObservationPrompt(node, avatar, observationSkill, targetKeywords, promptKeywordUsage: true);
         var schema = LLMSchemaConfig.CreateObservationSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         
         var response = await RequestFromLLMAsync(slotId, prompt, gbnf);
         
-        return ParseObservationResponse(response ?? "", node.OutcomeKeywords);
+        return ParseObservationResponse(response ?? "", targetKeywords);
     }
     
     private async Task<ObservationResponse> GenerateObservationWithFallbackAsync(
         int slotId,
         NarrationNode node,
         Avatar avatar,
-        Skill observationSkill)
+        Skill observationSkill,
+        List<string> targetKeywords)
     {
-        var prompt = _promptConstructor.BuildObservationPromptWithIntros(node, avatar, observationSkill);
-        var schema = LLMSchemaConfig.CreateObservationSchemaWithIntros(node.OutcomeKeywords);
+        var prompt = _promptConstructor.BuildObservationPromptWithIntros(node, avatar, observationSkill, targetKeywords);
+        var schema = LLMSchemaConfig.CreateObservationSchemaWithIntros(targetKeywords);
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         
         var response = await RequestFromLLMAsync(slotId, prompt, gbnf);
         
-        return ParseObservationResponse(response ?? "", node.OutcomeKeywords);
+        return ParseObservationResponse(response ?? "", targetKeywords);
     }
     
     /// <summary>

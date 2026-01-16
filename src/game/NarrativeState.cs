@@ -100,6 +100,16 @@ public class NarrativeState
     public bool IsContinueButtonHovered { get; set; } = false;
     
     /// <summary>
+    /// Is the skill popup being shown for focus observation (right-click) rather than thinking (left-click)?
+    /// </summary>
+    public bool IsSelectingObservationSkill { get; set; } = false;
+    
+    /// <summary>
+    /// Is the system currently generating a focus observation via LLM?
+    /// </summary>
+    public bool IsLoadingFocusObservation { get; set; } = false;
+    
+    /// <summary>
     /// Pending narration node to transition to after continue button is clicked.
     /// Null means no transition (stay in current node or exit).
     /// </summary>
@@ -134,11 +144,13 @@ public class NarrativeState
         IsLoadingObservations = false;
         IsLoadingThinking = false;
         IsLoadingAction = false;
+        IsLoadingFocusObservation = false;
         LoadingMessage = Config.LoadingMessages.Default;
         HoveredKeyword = null;
         ThinkingAttemptsRemaining = 3;
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
+        IsSelectingObservationSkill = false;
         PendingTransitionNode = null;
         ErrorMessage = null;
     }
@@ -154,6 +166,7 @@ public class NarrativeState
         IsLoadingObservations = false;
         IsLoadingThinking = false;
         IsLoadingAction = false;
+        IsLoadingFocusObservation = false;
         LoadingMessage = Config.LoadingMessages.Default;
         HoveredKeyword = null;
         HoveredAction = null;
@@ -161,6 +174,7 @@ public class NarrativeState
         ThinkingAttemptsRemaining = 3;
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
+        IsSelectingObservationSkill = false;
         PendingTransitionNode = null;
         ErrorMessage = null;
         // Note: ScrollOffset is NOT reset - it's managed by the scroll buffer

@@ -8,6 +8,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -97,6 +98,12 @@ namespace Cathedral.Glyph
         public event Action? CoreLoaded;
         public event Action<float>? UpdateRequested;
         public event Action<float>? MouseWheelScrolled;
+        
+        /// <summary>
+        /// Fired before any mouse click handling. Subscribers can set Handled to true to consume the click.
+        /// Used for UI elements like popups that may extend outside normal terminal bounds.
+        /// </summary>
+        public event Func<OpenTK.Mathematics.Vector2, MouseButton, bool>? GlobalMouseClicked;
         
         /// <summary>
         /// Enables or disables 3D world vertex interactions (hover highlighting, vertex detection)
@@ -796,7 +803,20 @@ namespace Cathedral.Glyph
             
             var mouse = MousePosition;
             
-            // Handle terminal input first (HUD takes priority)
+            // Check global click handlers first (for UI popups that extend outside terminal bounds)
+            if (GlobalMouseClicked != null)
+            {
+                foreach (Func<OpenTK.Mathematics.Vector2, MouseButton, bool> handler in GlobalMouseClicked.GetInvocationList())
+                {
+                    if (handler(mouse, e.Button))
+                    {
+                        Console.WriteLine("Global handler consumed mouse click");
+                        return; // A global handler consumed the event
+                    }
+                }
+            }
+            
+            // Handle terminal input (HUD takes priority)
             if (_terminal != null && _terminal.HandleMouseDown(mouse, Size, e.Button))
             {
                 Console.WriteLine("Terminal handled mouse click");

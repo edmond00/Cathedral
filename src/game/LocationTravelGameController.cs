@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using Cathedral.Glyph;
 using Cathedral.Glyph.Microworld;
 using Cathedral.Glyph.Microworld.LocationSystem;
@@ -108,6 +109,9 @@ public class LocationTravelGameController : IDisposable
         
         // Wire up events from the microworld interface
         _interface.VertexClickEvent += OnVertexClicked;
+        
+        // Wire up global mouse click handler for popup interactions
+        _core.GlobalMouseClicked += OnGlobalMouseClicked;
         
         // Initialize terminal UI (if terminal is available)
         InitializeTerminalUI();
@@ -216,6 +220,7 @@ public class LocationTravelGameController : IDisposable
             
             // Wire up terminal events for action selection
             _core.Terminal.CellClicked += OnTerminalCellClicked;
+            _core.Terminal.CellRightClicked += OnTerminalCellRightClicked;
             _core.Terminal.CellHovered += OnTerminalCellHovered;
             _core.Terminal.MouseLeft += OnTerminalMouseLeft;
             
@@ -266,6 +271,41 @@ public class LocationTravelGameController : IDisposable
             Console.WriteLine($"LocationTravelGameController: Action {actionIndex.Value + 1} selected: {_currentActions[actionIndex.Value].ActionText}");
             ExecuteAction(actionIndex.Value);
         }
+    }
+    
+    /// <summary>
+    /// Handles terminal cell right-clicks for focus observation.
+    /// </summary>
+    private void OnTerminalCellRightClicked(int x, int y)
+    {
+        // Only handle in Phase 6 narrative mode
+        if (_isInNarrativeMode && _narrativeController != null)
+        {
+            _narrativeController.OnRightClick(x, y);
+        }
+    }
+    
+    /// <summary>
+    /// Global mouse click handler - intercepts clicks for popups that extend outside terminal bounds.
+    /// </summary>
+    private bool OnGlobalMouseClicked(Vector2 mousePosition, MouseButton button)
+    {
+        // Only intercept when in narrative mode with popup visible
+        if (_isInNarrativeMode && _narrativeController != null && _narrativeController.IsPopupVisible)
+        {
+            // Only handle left clicks for popup selection
+            if (button == MouseButton.Left)
+            {
+                // Apply the same border height correction as GetCorrectedMousePosition()
+                // to ensure consistent Y coordinates between hover and click detection
+                Vector2 correctedPosition = _core.Terminal?.InputHandler.GetCorrectedMousePosition() ?? mousePosition;
+                Console.WriteLine($"LocationTravelGameController: Global click intercepted for popup at corrected position {correctedPosition}");
+                _narrativeController.OnRawMouseClick(correctedPosition);
+                return true; // Consume the click
+            }
+        }
+        
+        return false; // Don't consume - let other handlers process
     }
     
     /// <summary>
@@ -1244,6 +1284,12 @@ public class LocationTravelGameController : IDisposable
         if (_interface != null)
         {
             _interface.VertexClickEvent -= OnVertexClicked;
+        }
+        
+        // Unsubscribe from global mouse click handler
+        if (_core != null)
+        {
+            _core.GlobalMouseClicked -= OnGlobalMouseClicked;
         }
         
         // Dispose Critic evaluator

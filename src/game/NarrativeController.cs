@@ -129,11 +129,11 @@ public class NarrativeController
         {
             Console.WriteLine("NarrativeController: Calling ObservationPhaseController...");
             
-            // Generate 2-3 observations
+            // Generate ONE overall observation (one keyword per outcome)
             var blocks = await _observationController.ExecuteObservationPhaseAsync(
                 _currentNode,
                 _avatar,
-                skillCount: 3
+                skillCount: 1
             );
             
             Console.WriteLine($"NarrativeController: Generated {blocks.Count} observation blocks");
@@ -310,6 +310,60 @@ public class NarrativeController
     }
     
     /// <summary>
+    /// Execute focus observation phase: generate a detailed observation for a specific outcome (async).
+    /// Triggered by right-clicking a keyword and selecting an observation skill.
+    /// </summary>
+    private async Task ExecuteFocusObservationAsync(Skill observationSkill, string keyword)
+    {
+        try
+        {
+            Console.WriteLine($"NarrativeController: Executing focus observation with {observationSkill.DisplayName} on keyword '{keyword}'");
+            
+            // Generate focus observation
+            var block = await _observationController.GenerateFocusObservationAsync(
+                keyword,
+                observationSkill,
+                _currentNode,
+                _avatar
+            );
+            
+            if (block != null)
+            {
+                // Add to scroll buffer
+                _scrollBuffer.AddBlock(block);
+                _narrationState.AddBlock(block);
+                
+                // Auto-scroll to bottom to show new observation
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                
+                Console.WriteLine($"NarrativeController: Focus observation complete");
+            }
+            else
+            {
+                Console.WriteLine("NarrativeController: Focus observation returned null");
+            }
+            
+            // Consume a thinking point (same pool as thinking)
+            _narrationState.ThinkingAttemptsRemaining--;
+            
+            // Update state
+            _narrationState.IsLoadingFocusObservation = false;
+            _narrationState.ErrorMessage = null;
+            
+            Console.WriteLine($"NarrativeController: Focus observation phase complete ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"NarrativeController: Error during focus observation: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            
+            _narrationState.IsLoadingFocusObservation = false;
+            _narrationState.ErrorMessage = $"Focus observation failed: {ex.Message}";
+        }
+    }
+    
+    /// <summary>
     /// Update loop - called at 10 Hz by game controller.
     /// </summary>
     public void Update()
@@ -329,14 +383,16 @@ public class NarrativeController
         }
         
         // Show loading indicator if generating
-        if (_narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking || _narrationState.IsLoadingAction)
+        if (_narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking || _narrationState.IsLoadingAction || _narrationState.IsLoadingFocusObservation)
         {
             _ui.ShowLoadingIndicator(_narrationState.LoadingMessage);
             string loadingStatus = _narrationState.IsLoadingObservations 
                 ? "Generating observations..." 
                 : _narrationState.IsLoadingThinking
                     ? "Generating thinking and actions..."
-                    : "Executing action...";
+                    : _narrationState.IsLoadingFocusObservation
+                        ? "Generating focus observation..."
+                        : "Executing action...";
             _ui.RenderStatusBar(loadingStatus);
             return;
         }
@@ -440,17 +496,32 @@ public class NarrativeController
                 {
                     string keyword = _narrationState.HoveredKeyword.Keyword;
                     
-                    // Start thinking phase
-                    _narrationState.IsLoadingThinking = true;
-                    _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-                    
-                    // Fire-and-forget async task
-                    _ = ExecuteThinkingPhaseAsync(selectedSkill, keyword);
+                    // Check if we're selecting an observation skill (right-click) or thinking skill (left-click)
+                    if (_narrationState.IsSelectingObservationSkill)
+                    {
+                        // Focus observation phase
+                        _narrationState.IsLoadingFocusObservation = true;
+                        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+                        _narrationState.IsSelectingObservationSkill = false;
+                        
+                        // Fire-and-forget async task
+                        _ = ExecuteFocusObservationAsync(selectedSkill, keyword);
+                    }
+                    else
+                    {
+                        // Thinking phase (left-click)
+                        _narrationState.IsLoadingThinking = true;
+                        _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
+                        
+                        // Fire-and-forget async task
+                        _ = ExecuteThinkingPhaseAsync(selectedSkill, keyword);
+                    }
                 }
             }
             else
             {
                 Console.WriteLine("NarrativeController: Popup closed (clicked outside)");
+                _narrationState.IsSelectingObservationSkill = false;
             }
         }
     }
@@ -607,17 +678,32 @@ public class NarrativeController
                 {
                     string keyword = _narrationState.HoveredKeyword.Keyword;
                     
-                    // Start thinking phase
-                    _narrationState.IsLoadingThinking = true;
-                    _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-                    
-                    // Fire-and-forget async task
-                    _ = ExecuteThinkingPhaseAsync(selectedSkill, keyword);
+                    // Check if we're selecting an observation skill (right-click) or thinking skill (left-click)
+                    if (_narrationState.IsSelectingObservationSkill)
+                    {
+                        // Focus observation phase
+                        _narrationState.IsLoadingFocusObservation = true;
+                        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+                        _narrationState.IsSelectingObservationSkill = false;
+                        
+                        // Fire-and-forget async task
+                        _ = ExecuteFocusObservationAsync(selectedSkill, keyword);
+                    }
+                    else
+                    {
+                        // Thinking phase (left-click)
+                        _narrationState.IsLoadingThinking = true;
+                        _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
+                        
+                        // Fire-and-forget async task
+                        _ = ExecuteThinkingPhaseAsync(selectedSkill, keyword);
+                    }
                 }
             }
             else
             {
                 Console.WriteLine("NarrativeController: Popup closed (clicked outside)");
+                _narrationState.IsSelectingObservationSkill = false;
             }
             return;
         }
@@ -678,14 +764,52 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Clicked keyword: {clickedKeyword}");
             
-            // Show thinking skill selection popup
+            // Show thinking skill selection popup (left-click = thinking)
+            _narrationState.IsSelectingObservationSkill = false;
             var thinkingSkills = _avatar.GetThinkingSkills();
             
             // Convert terminal cell coordinates to screen pixel coordinates
             Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.Size);
             
-            _skillPopup.Show(screenPos, thinkingSkills);
-            Console.WriteLine($"NarrativeController: Showing {thinkingSkills.Count} thinking skills at screen position ({screenPos.X}, {screenPos.Y})");
+            _skillPopup.Show(screenPos, thinkingSkills, "Select Thinking Skill");
+            Console.WriteLine($"NarrativeController: Showing {thinkingSkills.Count} thinking skills at screen position ({screenPos.X}, {screenPos.Y})");;
+        }
+    }
+    
+    /// <summary>
+    /// Handle right mouse click event - triggers focus observation on keywords.
+    /// </summary>
+    public void OnRightClick(int mouseX, int mouseY)
+    {
+        // Don't handle right-clicks if popup is visible or in loading state
+        if (_skillPopup.IsVisible)
+            return;
+        
+        if (_narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking || 
+            _narrationState.IsLoadingAction || _narrationState.IsLoadingFocusObservation)
+            return;
+        
+        // Don't handle if continue button is shown
+        if (_narrationState.ShowContinueButton)
+            return;
+        
+        // Check if right-clicked on a keyword
+        KeywordRegion? clickedKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
+        
+        if (clickedKeyword != null && _narrationState.ThinkingAttemptsRemaining > 0)
+        {
+            Console.WriteLine($"NarrativeController: Right-clicked keyword: {clickedKeyword.Keyword}");
+            
+            // Show observation skill selection popup (right-click = focus observation)
+            _narrationState.IsSelectingObservationSkill = true;
+            _narrationState.HoveredKeyword = clickedKeyword;  // Store for later use
+            var observationSkills = _avatar.GetObservationSkills();
+            
+            // Convert terminal cell coordinates to screen pixel coordinates
+            Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.Size);
+            
+            _skillPopup.Show(screenPos, observationSkills, "Select Observation Skill");
+            Console.WriteLine($"NarrativeController: Showing {observationSkills.Count} observation skills for focus observation at screen position ({screenPos.X}, {screenPos.Y})");
         }
     }
     

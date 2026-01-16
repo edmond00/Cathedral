@@ -138,4 +138,81 @@ public abstract class NarrationNode : ConcreteOutcome
     {
         return $"transition {NodeId}";
     }
+    
+    /// <summary>
+    /// Gets one representative keyword from each concrete outcome.
+    /// Used for "overall observation" to show one keyword per possible outcome.
+    /// </summary>
+    /// <param name="random">Random instance for consistent sampling</param>
+    /// <returns>List of (keyword, outcome) tuples, one per outcome</returns>
+    public List<(string Keyword, ConcreteOutcome Outcome)> GetRepresentativeKeywordsPerOutcome(Random random)
+    {
+        var result = new List<(string, ConcreteOutcome)>();
+        
+        // Get all concrete outcomes (child nodes + items)
+        var concreteOutcomes = new List<ConcreteOutcome>();
+        
+        // Add child nodes that are concrete outcomes
+        foreach (var outcome in PossibleOutcomes)
+        {
+            if (outcome is ConcreteOutcome co && co.OutcomeKeywords.Count > 0)
+            {
+                concreteOutcomes.Add(co);
+            }
+        }
+        
+        // Add items discovered via reflection
+        var items = GetAvailableItems();
+        foreach (var item in items)
+        {
+            if (item.OutcomeKeywords.Count > 0)
+            {
+                concreteOutcomes.Add(item);
+            }
+        }
+        
+        // Pick one random keyword from each outcome
+        foreach (var outcome in concreteOutcomes)
+        {
+            var keywords = outcome.OutcomeKeywords;
+            if (keywords.Count > 0)
+            {
+                var selectedKeyword = keywords[random.Next(keywords.Count)];
+                result.Add((selectedKeyword, outcome));
+            }
+        }
+        
+        return result;
+    }
+    
+    /// <summary>
+    /// Gets the concrete outcome that owns a specific keyword.
+    /// Returns null if keyword is not found or belongs to multiple outcomes.
+    /// </summary>
+    public ConcreteOutcome? GetOutcomeOwningKeyword(string keyword)
+    {
+        var normalizedKeyword = keyword.ToLowerInvariant();
+        
+        // Check child nodes
+        foreach (var outcome in PossibleOutcomes)
+        {
+            if (outcome is ConcreteOutcome co && 
+                co.OutcomeKeywords.Any(k => k.ToLowerInvariant() == normalizedKeyword))
+            {
+                return co;
+            }
+        }
+        
+        // Check items from reflection
+        var items = GetAvailableItems();
+        foreach (var item in items)
+        {
+            if (item.OutcomeKeywords.Any(k => k.ToLowerInvariant() == normalizedKeyword))
+            {
+                return item;
+            }
+        }
+        
+        return null;
+    }
 }

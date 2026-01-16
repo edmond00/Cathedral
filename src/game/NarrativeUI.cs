@@ -76,8 +76,8 @@ public class NarrativeUI
         
         // Thinking attempts indicator (right side)
         int maxAttempts = GetMaxThinkingAttempts();
-        string attempts = $"Thinking: [";
-        int attemptsX = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN - 20;
+        string attempts = $"Remaining noetic points : [";
+        int attemptsX = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN - 40;
         _terminal.Text(attemptsX, 0, attempts, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         
         // Draw individual attempt markers
@@ -88,7 +88,7 @@ public class NarrativeUI
             Vector4 markerColor = isRemaining
                 ? new Vector4(0.8f, 0.4f, 0.4f, 1.0f) // Red-ish for available
                 : new Vector4(0.3f, 0.3f, 0.3f, 1.0f); // Dark gray for used
-            _terminal.Text(markerX, 0, "█", markerColor, Config.NarrativeUI.BackgroundColor);
+            _terminal.Text(markerX, 0, "⬛", markerColor, Config.NarrativeUI.BackgroundColor);
             markerX++;
         }
         
@@ -574,7 +574,7 @@ public class NarrativeUI
         // Add animated dots
         string dots = new string('.', (_loadingFrameIndex % 4));
         string spaces = new string(' ', (_loadingFrameIndex % 4));
-        string hint = $"{spaces}Please wait{dots}";
+        string hint = $"{spaces}Please wait (narrative ui) {dots}";
         int hintY = centerY + 2;
         int hintX = (NarrativeLayout.TERMINAL_WIDTH - hint.Length) / 2;
         _terminal.Text(hintX, hintY, hint, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);

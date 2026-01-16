@@ -20,6 +20,7 @@ public class TerminalThinkingSkillPopup
     private int? _hoveredSkillIndex = null;
     private Vector2 _fixedPosition;
     private int _scrollOffset = 0;
+    private string _title = "Select Thinking Skill";
     
     // Colors from centralized config
     private static readonly Vector4 BorderColor = Config.Colors.LightCyan;
@@ -31,14 +32,18 @@ public class TerminalThinkingSkillPopup
     }
     
     /// <summary>
-    /// Show the popup at a fixed screen position with the list of thinking skills.
+    /// Show the popup at a fixed screen position with the list of skills.
     /// </summary>
-    public void Show(Vector2 screenPosition, List<Skill> thinkingSkills)
+    /// <param name="screenPosition">Screen position to show popup at</param>
+    /// <param name="skills">List of skills to display</param>
+    /// <param name="title">Optional custom title (defaults to "Select Thinking Skill")</param>
+    public void Show(Vector2 screenPosition, List<Skill> skills, string title = "Select Thinking Skill")
     {
-        _thinkingSkills = thinkingSkills ?? throw new ArgumentNullException(nameof(thinkingSkills));
+        _thinkingSkills = skills ?? throw new ArgumentNullException(nameof(skills));
         _fixedPosition = screenPosition;
         _hoveredSkillIndex = null;
         _scrollOffset = 0;
+        _title = title;
         
         // Set popup to fixed position and enable fixed mode
         _popup.SetMousePosition(_fixedPosition);
@@ -92,13 +97,20 @@ public class TerminalThinkingSkillPopup
         // Get popup screen bounds
         var bounds = _popup.GetScreenBounds(windowSize);
         if (bounds == null)
+        {
+            Console.WriteLine($"TerminalThinkingSkillPopup: GetScreenBounds returned null");
             return null;
+        }
         
         var (left, top, right, bottom) = bounds.Value;
+        Console.WriteLine($"TerminalThinkingSkillPopup: Click at ({screenX}, {screenY}), popup bounds: ({left}, {top}, {right}, {bottom})");
         
         // Check if position is inside popup bounds
         if (screenX < left || screenX > right || screenY < top || screenY > bottom)
+        {
+            Console.WriteLine($"TerminalThinkingSkillPopup: Click OUTSIDE popup bounds");
             return null;
+        }
         
         // Convert screen position to popup-local cell coordinates
         // Note: Cells are positioned by their centers, so we add half a cell size before dividing
@@ -168,9 +180,8 @@ public class TerminalThinkingSkillPopup
         _popup.DrawBox(0, 0, POPUP_WIDTH, popupHeight, BorderColor, Config.ThinkingSkillPopup.BackgroundColor);
         
         // Draw title
-        string title = "Select Thinking Skill";
-        int titleX = (POPUP_WIDTH - title.Length) / 2;
-        _popup.DrawText(titleX, 0, title, TitleColor, Config.ThinkingSkillPopup.BackgroundColor);
+        int titleX = (POPUP_WIDTH - _title.Length) / 2;
+        _popup.DrawText(titleX, 0, _title, TitleColor, Config.ThinkingSkillPopup.BackgroundColor);
         
         // Draw skills
         int startIndex = _scrollOffset;
