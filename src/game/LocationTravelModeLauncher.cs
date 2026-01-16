@@ -189,12 +189,6 @@ public static class LocationTravelModeLauncher
                 Console.WriteLine($"\n*** GAME MODE CHANGED: {oldMode} → {newMode} ***\n");
             };
             
-            gameController.LocationEntered += (locationState) =>
-            {
-                Console.WriteLine($"\n*** ENTERED LOCATION: {locationState} ***");
-                Console.WriteLine("Press ESC to leave location and return to world view\n");
-            };
-            
             gameController.LocationExited += (locationState) =>
             {
                 Console.WriteLine($"\n*** EXITED LOCATION: {locationState} ***");

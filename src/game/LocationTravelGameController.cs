@@ -44,27 +44,13 @@ public class LocationTravelGameController : IDisposable
     // Feature generators for different location types
     private readonly Dictionary<string, LocationFeatureGenerator> _generators = new();
     
-    // Action executors
-    private readonly SimpleActionExecutor _simpleActionExecutor;
+    // Action executors (used by NarrativeController)
     private LLMActionExecutor? _llmActionExecutor; // Optional - requires LLamaServerManager
-    private ActionOutcomeSimulator _actionOutcomeSimulator;
     private CriticEvaluator? _criticEvaluator;
     private ActionScorer? _actionScorer;
     
-    // Current blueprint for location interaction
-    private LocationBlueprint? _currentBlueprint;
-    
-    // UI state for interaction
-    private List<ActionInfo> _currentActions = new();
-    private List<ParsedAction> _currentParsedActions = new();
-    private string _currentNarrative = "";
-    private bool _waitingForClickToExit = false;
-    private bool _isLoadingLLMContent = false;
-    private string _loadingMessage = Config.LoadingMessages.Thinking;
-    
     // Events
     public event Action<GameMode, GameMode>? ModeChanged;
-    public event Action<LocationInstanceState>? LocationEntered;
     public event Action<LocationInstanceState>? LocationExited;
     public event Action? TravelStarted;
     public event Action? TravelCompleted;
@@ -96,10 +82,8 @@ public class LocationTravelGameController : IDisposable
             throw;
         }
         
-        // Initialize action executors
-        _simpleActionExecutor = new SimpleActionExecutor();
-        _llmActionExecutor = null; // Will be set via SetLLMActionExecutor()
-        _actionOutcomeSimulator = new ActionOutcomeSimulator();
+        // Initialize LLM action executor (will be set via SetLLMActionExecutor())
+        _llmActionExecutor = null;
         
         // Initialize with WorldView mode
         _currentMode = GameMode.WorldView;
@@ -121,7 +105,6 @@ public class LocationTravelGameController : IDisposable
     
     /// <summary>
     /// Updates the game controller (called every frame).
-    /// Used to animate loading indicators.
     /// </summary>
     public void Update()
     {
@@ -146,12 +129,6 @@ public class LocationTravelGameController : IDisposable
             }
             
             return;
-        }
-        
-        // Update loading animation if currently loading
-        if (_isLoadingLLMContent && _terminalUI != null)
-        {
-            _terminalUI.ShowLoadingIndicator(_loadingMessage);
         }
         
         // Update popup terminal with location info
@@ -238,7 +215,7 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellClicked(int x, int y)
     {
-        // Phase 6 mode handles clicks differently
+        // All location interactions now use Phase 6 narrative mode
         if (_isInNarrativeMode && _narrativeController != null)
         {
             // If popup is visible, use raw mouse coordinates
@@ -253,24 +230,7 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
-        if (_currentMode != GameMode.LocationInteraction || _terminalUI == null)
-            return;
-        
-        // If waiting for click to exit, any click returns to world view
-        if (_waitingForClickToExit)
-        {
-            Console.WriteLine("LocationTravelGameController: User clicked, returning to world view");
-            _waitingForClickToExit = false;
-            SetMode(GameMode.WorldView);
-            return;
-        }
-        
-        int? actionIndex = _terminalUI.GetHoveredAction(x, y);
-        if (actionIndex.HasValue && actionIndex.Value >= 0 && actionIndex.Value < _currentActions.Count)
-        {
-            Console.WriteLine($"LocationTravelGameController: Action {actionIndex.Value + 1} selected: {_currentActions[actionIndex.Value].ActionText}");
-            ExecuteAction(actionIndex.Value);
-        }
+        // Note: Legacy non-narrative mode click handling removed - all interactions use NarrativeController
     }
     
     /// <summary>
@@ -325,10 +285,7 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
-        if (_currentMode != GameMode.LocationInteraction || _terminalUI == null)
-            return;
-        
-        _terminalUI.UpdateHover(x, y, _currentActions);
+        // Note: Legacy hover handling removed - all interactions use NarrativeController
     }
     
     /// <summary>
@@ -352,234 +309,6 @@ public class LocationTravelGameController : IDisposable
         }
         
         // Other modes don't have scroll functionality yet
-    }
-    
-    /// <summary>
-    /// Executes a selected action.
-    /// </summary>
-    private void ExecuteAction(int actionIndex)
-    {
-        // Fire and forget the async execution
-        _ = ExecuteActionAsync(actionIndex);
-    }
-
-    /// <summary>
-    /// Executes a selected action (async version).
-    /// Now includes second Critic pass to evaluate difficulty and determine outcome.
-    /// </summary>
-    private async Task ExecuteActionAsync(int actionIndex)
-    {
-        if (_currentLocationState == null || _currentBlueprint == null || 
-            actionIndex < 0 || actionIndex >= _currentActions.Count)
-            return;
-        
-        string actionText = _currentActions[actionIndex].ActionText;
-        
-        Console.WriteLine($"\n{'=',-80}");
-        Console.WriteLine($"ACTION EXECUTION PIPELINE");
-        Console.WriteLine($"{'=',-80}");
-        Console.WriteLine($"Selected action: {actionText}");
-        
-        // Show loading indicator if using LLM
-        if (_llmActionExecutor != null && _terminalUI != null)
-        {
-            _isLoadingLLMContent = true;
-            _loadingMessage = Config.LoadingMessages.EvaluatingDifficulty;
-            _terminalUI.ShowLoadingIndicator(_loadingMessage);
-        }
-        
-        // Get the last action for context (if any)
-        var lastAction = _currentLocationState.GetLastAction();
-        
-        // [NEW] Second Critic Pass - Evaluate difficulty and failure consequences
-        ActionDifficultyResult? difficultyResult = null;
-        if (actionIndex < _currentParsedActions.Count && 
-            _currentParsedActions[actionIndex] != null &&
-            _criticEvaluator != null)
-        {
-            try
-            {
-                Console.WriteLine($"\n[SECOND CRITIC PASS] Evaluating selected action...");
-                var difficultyEvaluator = new ActionDifficultyEvaluator(_criticEvaluator);
-                difficultyResult = await difficultyEvaluator.EvaluateSelectedActionAsync(
-                    _currentParsedActions[actionIndex],
-                    _currentLocationState,
-                    _currentBlueprint);
-                
-                Console.WriteLine($"[SECOND CRITIC PASS] Complete - Difficulty: {difficultyResult.Difficulty}, Likely failure: {difficultyResult.MostPlausibleFailure}");
-                
-                // Log the difficulty evaluation
-                LLMLogger.LogCriticSecondPass(
-                    actionText,
-                    difficultyResult.Difficulty,
-                    difficultyResult.DifficultyScore,
-                    difficultyResult.MostPlausibleFailure,
-                    difficultyResult.FailureConsequencePlausibilities);
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"[SECOND CRITIC PASS] Failed: {ex.Message}");
-                LLMLogger.LogError($"Second Critic Pass failed: {ex.Message}");
-            }
-        }
-        else
-        {
-            Console.WriteLine($"\n[SECOND CRITIC PASS] Skipped - Critic not available or parsed action missing");
-        }
-        
-        // Update loading message
-        if (_llmActionExecutor != null && _terminalUI != null)
-        {
-            _loadingMessage = Config.LoadingMessages.DeterminingOutcome;
-            _terminalUI.ShowLoadingIndicator(_loadingMessage);
-        }
-        
-        // [7] Determine outcome - Now uses difficulty result from Critic
-        ActionResult result;
-        if (actionIndex < _currentParsedActions.Count && _currentParsedActions[actionIndex] != null)
-        {
-            Console.WriteLine($"\n[OUTCOME SIMULATION] Using programmatic outcome simulation");
-            
-            // Determine success/failure based on difficulty if available
-            bool actionSucceeds = true;
-            string? overrideFailureConsequence = null;
-            
-            if (difficultyResult != null)
-            {
-                var difficultyEvaluator = new ActionDifficultyEvaluator(_criticEvaluator!);
-                Console.WriteLine($"[OUTCOME SIMULATION] Difficulty score: {difficultyResult.DifficultyScore:F4} ({difficultyResult.Difficulty})");
-                Console.WriteLine($"[OUTCOME SIMULATION] Success probability: {(0.95 - (difficultyResult.DifficultyScore * 0.55)):F4} ({((0.95 - (difficultyResult.DifficultyScore * 0.55)) * 100):F1}%)");
-                
-                actionSucceeds = difficultyEvaluator.DetermineActionSuccess(
-                    difficultyResult.DifficultyScore, 
-                    actionText: actionText,
-                    logRoll: true);
-                overrideFailureConsequence = difficultyResult.MostPlausibleFailure;
-                
-                Console.WriteLine($"[OUTCOME SIMULATION] Final result: {(actionSucceeds ? "SUCCESS" : "FAILURE")}");
-                
-                if (!actionSucceeds && overrideFailureConsequence != null)
-                {
-                    Console.WriteLine($"[OUTCOME SIMULATION] Using Critic-determined failure consequence: {overrideFailureConsequence}");
-                }
-            }
-            
-            result = _actionOutcomeSimulator.SimulateOutcome(
-                _currentParsedActions[actionIndex],
-                _currentLocationState,
-                _currentBlueprint,
-                forceSuccess: difficultyResult != null ? actionSucceeds : (bool?)null,
-                overrideFailureConsequence: overrideFailureConsequence);
-        }
-        else
-        {
-            // Fallback if parsed actions not available
-            Console.WriteLine($"\n[OUTCOME SIMULATION] Parsed action not available, using simple executor");
-            result = _simpleActionExecutor.ExecuteAction(actionText, _currentLocationState, _currentBlueprint);
-        }
-        
-        // Clear loading flag
-        _isLoadingLLMContent = false;
-        
-        // [9] Check outcome and handle failure/success
-        if (!result.Success)
-        {
-            Console.WriteLine("LocationTravelGameController: Action FAILED - generating failure narrative");
-            
-            if (_llmActionExecutor != null && _terminalUI != null)
-            {
-                _isLoadingLLMContent = true;
-                _loadingMessage = Config.LoadingMessages.NarratingDemise;
-                _terminalUI.ShowLoadingIndicator(_loadingMessage);
-            }
-            
-            // Create temporary player action for narrative context
-            var failedAction = new PlayerAction
-            {
-                ActionText = actionText,
-                Outcome = result.NarrativeOutcome,
-                WasSuccessful = false
-            };
-            
-            _isLoadingLLMContent = false;
-            
-            // Use the narrative outcome as-is (Mode 6 handles narration through NarrativeController)
-            result = ActionResult.CreateFailure(result.NarrativeOutcome);
-            
-            // Apply the failed action to state
-            var playerAction = new PlayerAction
-            {
-                ActionText = actionText,
-                Outcome = result.NarrativeOutcome,
-                WasSuccessful = false
-            };
-            
-            _currentLocationState = _currentLocationState.ApplyActionResult(result, playerAction);
-            _locationStates[_currentLocationVertex] = _currentLocationState;
-            
-            HandleInteractionEnd(result);
-            return;
-        }
-        
-        // SUCCESS - Continue with new actions
-        Console.WriteLine("LocationTravelGameController: Action SUCCEEDED");
-        
-        // Create player action record
-        var successPlayerAction = new PlayerAction
-        {
-            ActionText = actionText,
-            Outcome = result.NarrativeOutcome,
-            WasSuccessful = true,
-            StateChanges = result.StateChanges,
-            NewSublocation = result.NewSublocation,
-            ItemGained = result.ItemsGained?.FirstOrDefault()
-        };
-        
-        // Apply the result to the location state
-        _currentLocationState = _currentLocationState.ApplyActionResult(result, successPlayerAction);
-        _locationStates[_currentLocationVertex] = _currentLocationState;
-        
-        // Check if this is a successful exit
-        if (result.EndsInteraction)
-        {
-            HandleInteractionEnd(result);
-            return;
-        }
-        
-        // Update narrative with result
-        _currentNarrative = result.NarrativeOutcome;
-        
-        // Re-render the UI with new state (this will regenerate actions)
-        await RenderLocationUIAsync();
-    }
-    
-    /// <summary>
-    /// Handles the end of a location interaction (success or failure).
-    /// </summary>
-    private void HandleInteractionEnd(ActionResult result)
-    {
-        if (_currentLocationState == null)
-            return;
-        
-        // Show final message
-        if (result.Success)
-        {
-            Console.WriteLine($"LocationTravelGameController: Location interaction ended successfully");
-            _terminalUI?.ShowResultMessage(result.NarrativeOutcome + "\n\nClick anywhere to return to world view...", true);
-        }
-        else
-        {
-            Console.WriteLine($"LocationTravelGameController: Location interaction FAILED");
-            _terminalUI?.ShowResultMessage($"FAILURE: {result.NarrativeOutcome}\n\nClick anywhere to return to world view...", false);
-        }
-        
-        // Fire exit event
-        LocationExited?.Invoke(_currentLocationState);
-        
-        // Set flag to wait for user click before exiting
-        _waitingForClickToExit = true;
-        
-        Console.WriteLine("LocationTravelGameController: Waiting for user click to return to world view...");
     }
 
     /// <summary>
@@ -723,98 +452,22 @@ public class LocationTravelGameController : IDisposable
 
     /// <summary>
     /// Starts location interaction mode.
+    /// Both named locations and biomes use the same Phase 6 narrative UI.
     /// </summary>
     private void StartLocationInteraction(int vertexIndex, Cathedral.Glyph.Microworld.LocationType locationType)
     {
-        // Get or create location state
-        if (!_locationStates.TryGetValue(vertexIndex, out var locationState))
-        {
-            // Generate a blueprint for this location
-            var locationId = $"location_{vertexIndex}";
-            
-            // For now, use forest generator for all locations
-            // TODO: Map location types to appropriate generators
-            var generator = _generators.GetValueOrDefault("forest") ?? _generators.Values.First();
-            _currentBlueprint = generator.GenerateBlueprint(locationId);
-            
-            // Create initial state
-            locationState = LocationInstanceState.FromBlueprint(locationId, _currentBlueprint);
-            _locationStates[vertexIndex] = locationState;
-            
-            Console.WriteLine($"LocationTravelGameController: Created new location state for {locationId}");
-        }
-        else
-        {
-            // Existing location - increment visit count
-            locationState = locationState.WithNewVisit();
-            _locationStates[vertexIndex] = locationState;
-            
-            // Regenerate blueprint for existing location
-            var generator = _generators.GetValueOrDefault("forest") ?? _generators.Values.First();
-            _currentBlueprint = generator.GenerateBlueprint(locationState.LocationId);
-            
-            Console.WriteLine($"LocationTravelGameController: Returning to existing location (visit #{locationState.VisitCount})");
-        }
-
-        _currentLocationState = locationState;
-        _currentLocationVertex = vertexIndex;
-        SetMode(GameMode.LocationInteraction);
-        LocationEntered?.Invoke(locationState);
+        Console.WriteLine($"LocationTravelGameController: Starting Phase 6 interaction for location '{locationType.Name}'");
+        StartNarrativeInteraction(vertexIndex);
     }
 
     /// <summary>
     /// Starts biome interaction mode (when there's no specific location).
-    /// Treats the biome itself as an interactive location.
+    /// Both biomes and named locations use the same Phase 6 narrative UI.
     /// </summary>
     private void StartBiomeInteraction(int vertexIndex, Cathedral.Glyph.Microworld.BiomeType biomeType)
     {
-        // Check if this is a forest biome and Phase 6 is available
-        if (biomeType.Name.Equals("Forest", StringComparison.OrdinalIgnoreCase) && 
-            _llmActionExecutor != null && 
-            _skillSlotManager != null &&
-            _core.Terminal != null)
-        {
-            Console.WriteLine("LocationTravelGameController: Starting Phase 6 forest interaction");
-            StartNarrativeInteraction(vertexIndex);
-            return;
-        }
-        
-        // Get or create location state for this biome
-        if (!_locationStates.TryGetValue(vertexIndex, out var locationState))
-        {
-            // Generate a blueprint for this biome as a location
-            var locationId = $"{biomeType.Name}_{vertexIndex}";
-            
-            // Use the biome name to select appropriate generator
-            // Default to forest generator if biome type not found
-            var generatorKey = _generators.ContainsKey(biomeType.Name) ? biomeType.Name : "forest";
-            var generator = _generators.GetValueOrDefault(generatorKey) ?? _generators.Values.First();
-            _currentBlueprint = generator.GenerateBlueprint(locationId);
-            
-            // Create initial state
-            locationState = LocationInstanceState.FromBlueprint(locationId, _currentBlueprint);
-            _locationStates[vertexIndex] = locationState;
-            
-            Console.WriteLine($"LocationTravelGameController: Created new biome interaction state for {biomeType.Name} at vertex {vertexIndex}");
-        }
-        else
-        {
-            // Existing location - increment visit count
-            locationState = locationState.WithNewVisit();
-            _locationStates[vertexIndex] = locationState;
-            
-            // Regenerate blueprint for existing biome
-            var generatorKey = _generators.ContainsKey(biomeType.Name) ? biomeType.Name : "forest";
-            var generator = _generators.GetValueOrDefault(generatorKey) ?? _generators.Values.First();
-            _currentBlueprint = generator.GenerateBlueprint(locationState.LocationId);
-            
-            Console.WriteLine($"LocationTravelGameController: Returning to existing biome (visit #{locationState.VisitCount})");
-        }
-
-        _currentLocationState = locationState;
-        _currentLocationVertex = vertexIndex;
-        SetMode(GameMode.LocationInteraction);
-        LocationEntered?.Invoke(locationState);
+        Console.WriteLine($"LocationTravelGameController: Starting Phase 6 interaction for biome '{biomeType.Name}'");
+        StartNarrativeInteraction(vertexIndex);
     }
 
     /// <summary>
@@ -898,9 +551,6 @@ public class LocationTravelGameController : IDisposable
     {
         Console.WriteLine("LocationTravelGameController: Entered LocationInteraction mode");
         
-        // Reset exit flag
-        _waitingForClickToExit = false;
-        
         // If Phase 6 is active, don't start the old location UI system
         if (_isInNarrativeMode)
         {
@@ -923,157 +573,7 @@ public class LocationTravelGameController : IDisposable
             _core.Terminal.Visible = true;
         }
         
-        // Render initial location UI
-        if (_terminalUI != null && _currentLocationState != null)
-        {
-            RenderLocationUI();
-        }
-    }
-    
-    /// <summary>
-    /// Renders the location UI with current state.
-    /// </summary>
-    private void RenderLocationUI()
-    {
-        // Fire and forget the async rendering
-        _ = RenderLocationUIAsync();
-    }
-
-    /// <summary>
-    /// Renders the location UI with current state (async version).
-    /// </summary>
-    private async Task RenderLocationUIAsync()
-    {
-        // Don't render old location UI if Phase 6 is active
-        if (_isInNarrativeMode)
-        {
-            Console.WriteLine("RenderLocationUIAsync: Phase 6 active, skipping old location UI rendering");
-            return;
-        }
-        
-        if (_terminalUI == null || _currentLocationState == null)
-            return;
-        
-        // Get location blueprint
-        var blueprint = GetCurrentLocationBlueprint();
-        if (blueprint == null)
-        {
-            Console.WriteLine("RenderLocationUI: Cannot render UI - no blueprint available");
-            return;
-        }
-        
-        // Show loading indicator if using LLM
-        if (_llmActionExecutor != null)
-        {
-            _isLoadingLLMContent = true;
-            _loadingMessage = Config.LoadingMessages.GeneratingActions;
-            _terminalUI.ShowLoadingIndicator(_loadingMessage);
-        }
-        
-        // Mode 6 uses NarrativeController for action generation, not the old Director system
-        var lastAction = _currentLocationState.GetLastAction();
-        
-        // For now, set empty actions - NarrativeController will handle this
-        if (_currentActions == null || _currentActions.Count == 0)
-        {
-            _currentActions = new List<ActionInfo>();
-            _currentParsedActions = new List<ParsedAction>();
-        }
-        
-        if (false) // Dead code - kept for reference only
-        {
-            if (_currentActions == null || _currentActions.Count == 0)
-            {
-                Console.Error.WriteLine("RenderLocationUIAsync: No actions available");
-                _isLoadingLLMContent = false;
-                _terminalUI?.ShowResultMessage(
-                    "ERROR: No actions available.\n\n" +
-                    "Click anywhere to return to world view...",
-                    false
-                );
-                _waitingForClickToExit = true;
-                return;
-            }
-        }
-        else
-        {
-            Console.Error.WriteLine("RenderLocationUIAsync: LLM executor not available yet");
-            _isLoadingLLMContent = false;
-            _terminalUI?.ShowResultMessage(
-                "PLEASE WAIT: LLM system is still initializing...\n\n" +
-                "The LLM server is starting up. This can take 30-60 seconds.\n" +
-                "Please wait a moment and try clicking on the location again.\n\n" +
-                "If this message persists after a minute, check that:\n" +
-                "- The LLM server started successfully\n" +
-                "- Check logs/llm_communication_*.log for errors\n\n" +
-                "Click anywhere to return to world view...",
-                false
-            );
-            _waitingForClickToExit = true;
-            return;
-        }
-        
-        // Update loading message for narrative generation
-        if (_llmActionExecutor != null)
-        {
-            _loadingMessage = Config.LoadingMessages.GeneratingNarrative;
-            _terminalUI.ShowLoadingIndicator(_loadingMessage);
-        }
-        
-        // Mode 6 uses NarrativeController for narrative generation, not the old Narrator system
-        if (false) // Dead code - narrative handled by NarrativeController
-        {
-            var llmNarrative = "";
-            if (string.IsNullOrWhiteSpace(llmNarrative))
-            {
-                Console.Error.WriteLine("RenderLocationUIAsync: Failed to generate narrative from LLM");
-                _isLoadingLLMContent = false;
-                _terminalUI?.ShowResultMessage(
-                    "ERROR: Failed to generate narrative.\n\n" +
-                    "The LLM did not return a valid narrative description. This could be due to:\n" +
-                    "- LLM server not responding\n" +
-                    "- Invalid response format\n" +
-                    "- Timeout\n\n" +
-                    "Check logs/llm_communication_*.log for details.\n\n" +
-                    "Click anywhere to return to world view...",
-                    false
-                );
-                _waitingForClickToExit = true;
-                return;
-            }
-            _currentNarrative = llmNarrative;
-        }
-        else
-        {
-            // This shouldn't happen since we checked earlier, but handle it anyway
-            Console.Error.WriteLine("RenderLocationUIAsync: LLM executor not available for narrative");
-            _currentNarrative = "ERROR: LLM not available";
-        }
-        
-        // Clear loading flag
-        _isLoadingLLMContent = false;
-        
-        // Get current state info
-        string locationName = blueprint.LocationType; // Using type as name for now
-        string sublocation = _currentLocationState.CurrentSublocation;
-        int turnCount = _currentLocationState.CurrentTurnCount;
-        
-        // Get environmental states
-        string timeOfDay = _currentLocationState.CurrentStates.GetValueOrDefault("time_of_day", "midday");
-        string weather = _currentLocationState.CurrentStates.GetValueOrDefault("weather", "clear");
-        
-        // Render complete UI
-        _terminalUI.RenderComplete(
-            locationName: locationName,
-            sublocation: sublocation,
-            turnCount: turnCount,
-            narrative: _currentNarrative,
-            actions: _currentActions,
-            timeOfDay: timeOfDay,
-            weather: weather
-        );
-        
-        Console.WriteLine($"LocationTravelGameController: Terminal UI rendered for {locationName} ({sublocation})");
+        // Note: RenderLocationUI was removed - Phase 6 narrative mode handles all rendering via NarrativeController
     }
 
     /// <summary>
