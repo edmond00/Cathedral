@@ -16,13 +16,23 @@ public class NarrativeUI
     // Use centralized layout constants
     private const int SCROLLBAR_X = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN; // Inside right margin
     
-    // Loading animation
+    // Loading animation (spinner)
     private static readonly string[] LoadingFrames = new[]
     {
         "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"
     };
     private int _loadingFrameIndex = 0;
     private DateTime _lastFrameUpdate = DateTime.Now;
+    
+    // Dice roll animation
+    private static readonly char[] DiceFaces = new[] { '⚀', '⚁', '⚂', '⚃', '⚄', '⚅' };
+    private static readonly char[] DiceRollingFrames = new[] { '⚀', '⚁', '⚂', '⚃', '⚄', '⚅', '⬖', '⬗', '⬘', '⬙' };
+    private static readonly char[] DifficultyGlyphs = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩' };
+    private int[] _rollingDiceFrames = Array.Empty<int>(); // Current frame index for each die
+    private Random _diceRandom = new Random();
+    
+    // Dice roll button tracking
+    private (int X, int Y, int Width) _diceRollButtonRegion;
     
     private readonly TerminalHUD _terminal;
     private readonly KeywordRenderer _keywordRenderer;
@@ -574,7 +584,7 @@ public class NarrativeUI
         // Add animated dots
         string dots = new string('.', (_loadingFrameIndex % 4));
         string spaces = new string(' ', (_loadingFrameIndex % 4));
-        string hint = $"{spaces}Please wait (narrative ui) {dots}";
+        string hint = $"{spaces}Please wait {dots}";
         int hintY = centerY + 2;
         int hintX = (NarrativeLayout.TERMINAL_WIDTH - hint.Length) / 2;
         _terminal.Text(hintX, hintY, hint, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
@@ -587,6 +597,206 @@ public class NarrativeUI
         _terminal.Text(barX, barY, progressBar, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
     }
     
+    /// <summary>
+    /// Show dice roll loading indicator with animated rolling dice.
+    /// </summary>
+    /// <param name="numberOfDice">Number of dice to roll</param>
+    /// <param name="difficulty">Difficulty level (1-10), number of 6s needed to succeed</param>
+    /// <param name="isRolling">True while still loading/rolling, false when complete</param>
+    /// <param name="finalDiceValues">Final dice values (1-6) when isRolling is false</param>
+    /// <param name="isContinueButtonHovered">Whether the continue button is hovered</param>
+    /// <returns>True if continue button was rendered (for click detection)</returns>
+    public bool ShowDiceRollIndicator(
+        int numberOfDice, 
+        int difficulty, 
+        bool isRolling, 
+        int[]? finalDiceValues = null,
+        bool isContinueButtonHovered = false)
+    {
+        // Update animation frame every 80ms for smooth rolling
+        if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds > 80)
+        {
+            _loadingFrameIndex = (_loadingFrameIndex + 1) % DiceRollingFrames.Length;
+            _lastFrameUpdate = DateTime.Now;
+            
+            // Update rolling dice frames with random values
+            if (isRolling)
+            {
+                if (_rollingDiceFrames.Length != numberOfDice)
+                {
+                    _rollingDiceFrames = new int[numberOfDice];
+                }
+                for (int i = 0; i < _rollingDiceFrames.Length; i++)
+                {
+                    _rollingDiceFrames[i] = _diceRandom.Next(DiceRollingFrames.Length);
+                }
+            }
+        }
+        
+        // Initialize rolling frames if needed
+        if (_rollingDiceFrames.Length != numberOfDice)
+        {
+            _rollingDiceFrames = new int[numberOfDice];
+            for (int i = 0; i < _rollingDiceFrames.Length; i++)
+            {
+                _rollingDiceFrames[i] = _diceRandom.Next(DiceRollingFrames.Length);
+            }
+        }
+        
+        // Clear narrative area
+        for (int y = NarrativeLayout.CONTENT_START_Y; y < NarrativeLayout.SEPARATOR_Y + 1; y++)
+        {
+            for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
+            {
+                _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
+            }
+        }
+        
+        int centerY = NarrativeLayout.CONTENT_START_Y + NarrativeLayout.NARRATIVE_HEIGHT / 2;
+        
+        // Calculate results if we have final values
+        int numberOfSixes = 0;
+        bool isSuccess = false;
+        if (!isRolling && finalDiceValues != null)
+        {
+            numberOfSixes = finalDiceValues.Count(v => v == 6);
+            isSuccess = numberOfSixes >= difficulty;
+        }
+        
+        // --- Title ---
+        string title = isRolling ? "Rolling Dice..." : (isSuccess ? "SUCCESS!" : "FAILURE!");
+        Vector4 titleColor = isRolling 
+            ? Config.NarrativeUI.LoadingColor 
+            : (isSuccess ? Config.NarrativeUI.SuccessColor : Config.NarrativeUI.FailureColor);
+        int titleX = (NarrativeLayout.TERMINAL_WIDTH - title.Length) / 2;
+        int titleY = centerY - 5;
+        _terminal.Text(titleX, titleY, title, titleColor, Config.NarrativeUI.BackgroundColor);
+        
+        // --- Difficulty indicator ---
+        int difficultyClamp = Math.Clamp(difficulty, 1, 10);
+        char difficultyGlyph = DifficultyGlyphs[difficultyClamp - 1];
+        
+        // Green to red gradient based on difficulty (1=green, 10=red)
+        float difficultyRatio = (difficultyClamp - 1) / 9.0f;
+        Vector4 difficultyColor = new Vector4(
+            0.3f + 0.7f * difficultyRatio,   // Red increases
+            0.8f - 0.6f * difficultyRatio,   // Green decreases
+            0.3f,                             // Blue stays low
+            1.0f
+        );
+        
+        string difficultyLabel = $"Difficulty: {difficultyGlyph} ({difficultyClamp} sixes needed)";
+        int diffLabelX = (NarrativeLayout.TERMINAL_WIDTH - difficultyLabel.Length) / 2;
+        int diffLabelY = centerY - 3;
+        
+        // Render "Difficulty: " in normal color
+        _terminal.Text(diffLabelX, diffLabelY, "Difficulty: ", Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+        // Render the glyph in gradient color
+        _terminal.Text(diffLabelX + 12, diffLabelY, difficultyGlyph.ToString(), difficultyColor, Config.NarrativeUI.BackgroundColor);
+        // Render the rest
+        string suffixText = $" ({difficultyClamp} {(difficultyClamp == 1 ? "six" : "sixes")} needed)";
+        _terminal.Text(diffLabelX + 13, diffLabelY, suffixText, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+        
+        // --- Dice display ---
+        // Calculate dice layout (max 10 per row)
+        int dicePerRow = Math.Min(numberOfDice, 10);
+        int rows = (numberOfDice + dicePerRow - 1) / dicePerRow;
+        int diceSpacing = 3; // Spacing between dice
+        int totalRowWidth = dicePerRow * diceSpacing;
+        int startX = (NarrativeLayout.TERMINAL_WIDTH - totalRowWidth) / 2;
+        int startY = centerY;
+        
+        for (int i = 0; i < numberOfDice; i++)
+        {
+            int row = i / dicePerRow;
+            int col = i % dicePerRow;
+            int diceX = startX + col * diceSpacing;
+            int diceY = startY + row;
+            
+            char diceChar;
+            Vector4 diceColor;
+            
+            if (isRolling)
+            {
+                // Show random rolling animation
+                diceChar = DiceRollingFrames[_rollingDiceFrames[i]];
+                diceColor = Config.NarrativeUI.LoadingColor;
+            }
+            else if (finalDiceValues != null && i < finalDiceValues.Length)
+            {
+                // Show final value
+                int value = Math.Clamp(finalDiceValues[i], 1, 6);
+                diceChar = DiceFaces[value - 1];
+                
+                // Highlight 6s (⚅) with golden/success color
+                if (value == 6)
+                {
+                    diceColor = new Vector4(1.0f, 0.85f, 0.2f, 1.0f); // Gold
+                }
+                else
+                {
+                    diceColor = Config.NarrativeUI.NarrativeColor;
+                }
+            }
+            else
+            {
+                // Fallback
+                diceChar = DiceFaces[0];
+                diceColor = Config.NarrativeUI.NarrativeColor;
+            }
+            
+            _terminal.SetCell(diceX, diceY, diceChar, diceColor, Config.NarrativeUI.BackgroundColor);
+        }
+        
+        // --- Results summary (when not rolling) ---
+        if (!isRolling && finalDiceValues != null)
+        {
+            int summaryY = startY + rows + 2;
+            string summary = $"Rolled {numberOfSixes} {(numberOfSixes == 1 ? "six" : "sixes")} out of {numberOfDice} dice";
+            int summaryX = (NarrativeLayout.TERMINAL_WIDTH - summary.Length) / 2;
+            Vector4 summaryColor = isSuccess ? Config.NarrativeUI.SuccessColor : Config.NarrativeUI.FailureColor;
+            _terminal.Text(summaryX, summaryY, summary, summaryColor, Config.NarrativeUI.BackgroundColor);
+            
+            // Show continue button
+            string buttonText = "[ Continue ]";
+            int buttonWidth = buttonText.Length;
+            int buttonX = (NarrativeLayout.TERMINAL_WIDTH - buttonWidth) / 2;
+            int buttonY = summaryY + 3;
+            
+            Vector4 buttonColor = isContinueButtonHovered 
+                ? Config.NarrativeUI.ContinueButtonHoverColor 
+                : Config.NarrativeUI.ContinueButtonColor;
+            
+            _terminal.Text(buttonX, buttonY, buttonText, buttonColor, Config.NarrativeUI.BackgroundColor);
+            
+            // Store button region for click detection
+            _diceRollButtonRegion = (buttonX, buttonY, buttonWidth);
+            
+            return true; // Continue button rendered
+        }
+        else
+        {
+            // Show waiting message while rolling
+            string spinner = LoadingFrames[_loadingFrameIndex % LoadingFrames.Length];
+            string waitMsg = $"{spinner}  Please wait...  {spinner}";
+            int waitX = (NarrativeLayout.TERMINAL_WIDTH - waitMsg.Length) / 2;
+            int waitY = startY + rows + 2;
+            _terminal.Text(waitX, waitY, waitMsg, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+        }
+        
+        return false; // No continue button
+    }
+    
+    /// <summary>
+    /// Check if mouse is over the dice roll continue button.
+    /// </summary>
+    public bool IsMouseOverDiceRollButton(int mouseX, int mouseY)
+    {
+        return mouseY == _diceRollButtonRegion.Y &&
+               mouseX >= _diceRollButtonRegion.X &&
+               mouseX < _diceRollButtonRegion.X + _diceRollButtonRegion.Width;
+    }
+
     /// <summary>
     /// Show error message.
     /// </summary>

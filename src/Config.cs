@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using OpenTK.Mathematics;
 
 namespace Cathedral;
@@ -169,6 +170,54 @@ public static class Config
         public const string NarratingDemise = "Narrating your demise...";
         public const string GeneratingActions = "Generating actions...";
         public const string GeneratingNarrative = "Generating narrative...";
+    }
+    
+    #endregion
+    
+    #region Glyph Size Factors
+    
+    /// <summary>
+    /// Per-glyph font size multipliers for special characters that need different sizing.
+    /// Glyphs not in this dictionary use 1.0 (normal size).
+    /// </summary>
+    public static class GlyphSizeFactors
+    {
+        public static readonly Dictionary<char, float> Factors = new()
+        {
+            // Dice faces - make them 30% larger
+            { '⚀', 2f },
+            { '⚁', 2f },
+            { '⚂', 2f },
+            { '⚃', 2f },
+            { '⚄', 2f },
+            { '⚅', 2f },
+            
+            // Dice rolling animation glyphs
+            { '⬖', 1.7f },
+            { '⬗', 1.7f },
+            { '⬘', 1.7f },
+            { '⬙', 1.7f },
+            
+            // Difficulty indicators - slightly larger
+            { '①', 1.3f },
+            { '②', 1.3f },
+            { '③', 1.3f },
+            { '④', 1.3f },
+            { '⑤', 1.3f },
+            { '⑥', 1.3f },
+            { '⑦', 1.3f },
+            { '⑧', 1.3f },
+            { '⑨', 1.3f },
+            { '⑩', 1.3f },
+        };
+        
+        /// <summary>
+        /// Gets the size factor for a glyph. Returns 1.0 for normal-sized glyphs.
+        /// </summary>
+        public static float GetFactor(char c)
+        {
+            return Factors.TryGetValue(c, out float factor) ? factor : 1.0f;
+        }
     }
     
     #endregion

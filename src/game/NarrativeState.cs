@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game;
@@ -99,6 +101,43 @@ public class NarrativeState
     /// </summary>
     public bool IsContinueButtonHovered { get; set; } = false;
     
+    // --- Dice Roll State ---
+    
+    /// <summary>
+    /// Is the dice roll loading screen currently active?
+    /// </summary>
+    public bool IsDiceRollActive { get; set; } = false;
+    
+    /// <summary>
+    /// Number of dice being rolled.
+    /// </summary>
+    public int DiceRollNumberOfDice { get; set; } = 0;
+    
+    /// <summary>
+    /// Difficulty for the dice roll (number of 6s needed to succeed).
+    /// </summary>
+    public int DiceRollDifficulty { get; set; } = 1;
+    
+    /// <summary>
+    /// Is the dice roll still in progress (rolling animation)?
+    /// </summary>
+    public bool IsDiceRolling { get; set; } = true;
+    
+    /// <summary>
+    /// Final dice values after roll completes (null while rolling).
+    /// </summary>
+    public int[]? DiceRollFinalValues { get; set; } = null;
+    
+    /// <summary>
+    /// Whether the dice roll succeeded (enough 6s rolled).
+    /// </summary>
+    public bool DiceRollSucceeded { get; set; } = false;
+    
+    /// <summary>
+    /// Is the dice roll continue button currently hovered?
+    /// </summary>
+    public bool IsDiceRollButtonHovered { get; set; } = false;
+    
     /// <summary>
     /// Is the skill popup being shown for focus observation (right-click) rather than thinking (left-click)?
     /// </summary>
@@ -153,6 +192,7 @@ public class NarrativeState
         IsSelectingObservationSkill = false;
         PendingTransitionNode = null;
         ErrorMessage = null;
+        ClearDiceRoll();
     }
     
     /// <summary>
@@ -177,7 +217,50 @@ public class NarrativeState
         IsSelectingObservationSkill = false;
         PendingTransitionNode = null;
         ErrorMessage = null;
+        ClearDiceRoll();
         // Note: ScrollOffset is NOT reset - it's managed by the scroll buffer
+    }
+    
+    /// <summary>
+    /// Start a dice roll animation.
+    /// </summary>
+    /// <param name="numberOfDice">Number of dice to roll</param>
+    /// <param name="difficulty">Number of 6s needed to succeed (1-10)</param>
+    public void StartDiceRoll(int numberOfDice, int difficulty)
+    {
+        IsDiceRollActive = true;
+        DiceRollNumberOfDice = numberOfDice;
+        DiceRollDifficulty = Math.Clamp(difficulty, 1, 10);
+        IsDiceRolling = true;
+        DiceRollFinalValues = null;
+        DiceRollSucceeded = false;
+        IsDiceRollButtonHovered = false;
+    }
+    
+    /// <summary>
+    /// Complete a dice roll with final values.
+    /// </summary>
+    /// <param name="finalValues">Array of final dice values (1-6)</param>
+    public void CompleteDiceRoll(int[] finalValues)
+    {
+        IsDiceRolling = false;
+        DiceRollFinalValues = finalValues;
+        int numberOfSixes = finalValues.Count(v => v == 6);
+        DiceRollSucceeded = numberOfSixes >= DiceRollDifficulty;
+    }
+    
+    /// <summary>
+    /// Clear dice roll state.
+    /// </summary>
+    public void ClearDiceRoll()
+    {
+        IsDiceRollActive = false;
+        DiceRollNumberOfDice = 0;
+        DiceRollDifficulty = 1;
+        IsDiceRolling = true;
+        DiceRollFinalValues = null;
+        DiceRollSucceeded = false;
+        IsDiceRollButtonHovered = false;
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Cathedral.Game.Narrative;
 using Cathedral.LLM;
@@ -32,6 +33,12 @@ public class NarrativeController
     // Mouse tracking
     private int _lastMouseX = 0;
     private int _lastMouseY = 0;
+    
+    // Pending action result (stored while waiting for dice roll continue)
+    private ActionExecutionResult? _pendingActionResult = null;
+    
+    // Random for dice rolls
+    private readonly Random _diceRandom = new Random();
     
     public NarrativeController(
         TerminalHUD terminal,
@@ -239,6 +246,7 @@ public class NarrativeController
     
     /// <summary>
     /// Execute action phase: skill check, outcome determination, and narration (async).
+    /// Uses dice roll animation during loading.
     /// </summary>
     private async Task ExecuteActionPhaseAsync(ParsedNarrativeAction action)
     {
@@ -246,11 +254,20 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Starting action execution for '{action.ActionText}'");
             
-            // Set loading state with progress messages
+            // Calculate dice parameters for the roll animation
+            // Number of dice based on skill level (3-8 dice based on avatar's skill proficiency)
+            int numberOfDice = CalculateNumberOfDice(action);
+            
+            // Difficulty from action (start with moderate difficulty, will be updated after LLM evaluation)
+            // For now, use a placeholder until we get the real difficulty from ActionExecutionController
+            int difficulty = 2; // Will be overwritten after async call
+            
+            // Start dice roll animation
+            _narrationState.StartDiceRoll(numberOfDice, difficulty);
             _narrationState.IsLoadingAction = true;
             _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingAction;
             
-            // Execute action via ActionExecutionController
+            // Execute action via ActionExecutionController (this evaluates difficulty and success)
             var result = await _actionExecutor.ExecuteActionAsync(
                 action,
                 _currentNode,
@@ -260,44 +277,26 @@ public class NarrativeController
             
             Console.WriteLine($"NarrativeController: Action {(result.Succeeded ? "SUCCEEDED" : "FAILED")}");
             
-            // Add outcome narration block (using action skill name since it narrates from action skill's perspective)
-            var outcomeBlock = new NarrationBlock(
-                Type: NarrationBlockType.Outcome,
-                SkillName: result.ActionSkill?.DisplayName ?? "Unknown Skill",
-                Text: $"[{(result.Succeeded ? "SUCCESS" : "FAILURE")}] {result.Narration}",
-                Keywords: null,
-                Actions: null
-            );
-            _scrollBuffer.AddBlock(outcomeBlock);
-            _narrationState.AddBlock(outcomeBlock);
+            // Convert difficulty score (0.0-1.0) to dice difficulty (1-10)
+            // difficulty 0.0 = 1 six needed, difficulty 1.0 = up to numberOfDice sixes needed
+            int actualDifficulty = Math.Max(1, (int)Math.Ceiling(result.Difficulty * Math.Min(numberOfDice, 10)));
+            actualDifficulty = Math.Clamp(actualDifficulty, 1, 10);
             
-            // Auto-scroll to bottom to show outcome
-            _scrollBuffer.ScrollToBottom();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            // Update difficulty in state
+            _narrationState.DiceRollDifficulty = actualDifficulty;
             
-            // Handle outcome based on type - always show continue button first
-            if (result.ActualOutcome is NarrationNode nextNode)
-            {
-                Console.WriteLine($"NarrativeController: Transition outcome to node {nextNode.NodeId}, showing continue button");
-                
-                // Store pending transition - will execute when continue is clicked
-                _narrationState.PendingTransitionNode = nextNode;
-                _narrationState.ShowContinueButton = true;
-            }
-            else
-            {
-                Console.WriteLine("NarrativeController: Non-transition outcome, showing continue button");
-                
-                // No transition pending, continue button will exit or restart
-                _narrationState.PendingTransitionNode = null;
-                _narrationState.ShowContinueButton = true;
-            }
+            // Generate final dice values based on success/failure
+            // If succeeded, ensure enough 6s. If failed, ensure not enough 6s.
+            int[] finalDiceValues = GenerateDiceValuesForResult(numberOfDice, actualDifficulty, result.Succeeded);
             
-            // Update state
+            // Store the action result for later (when player clicks continue on dice screen)
+            _pendingActionResult = result;
+            
+            // Complete the dice roll (stops animation, shows final values and continue button)
+            _narrationState.CompleteDiceRoll(finalDiceValues);
             _narrationState.IsLoadingAction = false;
-            _narrationState.ErrorMessage = null;
             
-            Console.WriteLine("NarrativeController: Action phase complete");
+            Console.WriteLine($"NarrativeController: Dice roll complete - {finalDiceValues.Count(v => v == 6)} sixes rolled, difficulty {actualDifficulty}");
         }
         catch (Exception ex)
         {
@@ -305,8 +304,158 @@ public class NarrativeController
             Console.Error.WriteLine(ex.StackTrace);
             
             _narrationState.IsLoadingAction = false;
+            _narrationState.ClearDiceRoll();
             _narrationState.ErrorMessage = $"Action execution failed: {ex.Message}";
         }
+    }
+    
+    /// <summary>
+    /// Calculate number of dice to roll based on action skill proficiency.
+    /// </summary>
+    private int CalculateNumberOfDice(ParsedNarrativeAction action)
+    {
+        // Base: 4 dice
+        int baseDice = 4;
+        
+        // Try to get skill bonus from avatar
+        if (action.ActionSkill != null)
+        {
+            // Get body part level (affects dice count)
+            string bodyPartName = action.ActionSkill.BodyParts.Length > 0 
+                ? action.ActionSkill.BodyParts[0].ToLower() 
+                : "hands";
+            int bodyPartValue = _avatar.BodyPartLevels.TryGetValue(bodyPartName, out int bpValue) ? bpValue : 5;
+            
+            // Body part 1-10 adds 0-3 extra dice
+            int bonusDice = (bodyPartValue - 1) / 3; // 1-3 = 0, 4-6 = 1, 7-9 = 2, 10 = 3
+            baseDice += bonusDice;
+        }
+        
+        return Math.Clamp(baseDice, 3, 8);
+    }
+    
+    /// <summary>
+    /// Generate dice values that match the success/failure result.
+    /// </summary>
+    private int[] GenerateDiceValuesForResult(int numberOfDice, int difficulty, bool succeeded)
+    {
+        int[] values = new int[numberOfDice];
+        
+        if (succeeded)
+        {
+            // Ensure at least 'difficulty' sixes
+            int sixesNeeded = difficulty;
+            int sixesPlaced = 0;
+            
+            for (int i = 0; i < numberOfDice; i++)
+            {
+                if (sixesPlaced < sixesNeeded && i < numberOfDice - (sixesNeeded - sixesPlaced - 1))
+                {
+                    // Need to place a 6 (with some randomness)
+                    if (_diceRandom.Next(3) == 0 || i >= numberOfDice - (sixesNeeded - sixesPlaced))
+                    {
+                        values[i] = 6;
+                        sixesPlaced++;
+                        continue;
+                    }
+                }
+                values[i] = _diceRandom.Next(1, 7); // 1-6
+                if (values[i] == 6) sixesPlaced++;
+            }
+            
+            // Guarantee enough sixes if we still need some
+            while (sixesPlaced < sixesNeeded)
+            {
+                int idx = _diceRandom.Next(numberOfDice);
+                if (values[idx] != 6)
+                {
+                    values[idx] = 6;
+                    sixesPlaced++;
+                }
+            }
+        }
+        else
+        {
+            // Ensure fewer than 'difficulty' sixes
+            int maxSixes = difficulty - 1;
+            int sixesPlaced = 0;
+            
+            for (int i = 0; i < numberOfDice; i++)
+            {
+                values[i] = _diceRandom.Next(1, 7); // 1-6
+                if (values[i] == 6)
+                {
+                    sixesPlaced++;
+                    if (sixesPlaced > maxSixes)
+                    {
+                        // Too many sixes, reroll
+                        values[i] = _diceRandom.Next(1, 6); // 1-5
+                    }
+                }
+            }
+        }
+        
+        // Shuffle for natural appearance
+        for (int i = values.Length - 1; i > 0; i--)
+        {
+            int j = _diceRandom.Next(i + 1);
+            (values[i], values[j]) = (values[j], values[i]);
+        }
+        
+        return values;
+    }
+    
+    /// <summary>
+    /// Handle continue button click on dice roll screen.
+    /// Applies the pending action result and shows outcome.
+    /// </summary>
+    private void OnDiceRollContinue()
+    {
+        if (_pendingActionResult == null)
+        {
+            Console.WriteLine("NarrativeController: No pending action result for dice roll continue");
+            _narrationState.ClearDiceRoll();
+            return;
+        }
+        
+        var result = _pendingActionResult;
+        _pendingActionResult = null;
+        
+        Console.WriteLine($"NarrativeController: Dice roll continue - applying result");
+        
+        // Add outcome narration block
+        var outcomeBlock = new NarrationBlock(
+            Type: NarrationBlockType.Outcome,
+            SkillName: result.ActionSkill?.DisplayName ?? "Unknown Skill",
+            Text: $"[{(result.Succeeded ? "SUCCESS" : "FAILURE")}] {result.Narration}",
+            Keywords: null,
+            Actions: null
+        );
+        _scrollBuffer.AddBlock(outcomeBlock);
+        _narrationState.AddBlock(outcomeBlock);
+        
+        // Auto-scroll to bottom to show outcome
+        _scrollBuffer.ScrollToBottom();
+        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+        
+        // Clear dice roll state
+        _narrationState.ClearDiceRoll();
+        
+        // Handle outcome based on type - show continue button for next step
+        if (result.ActualOutcome is NarrationNode nextNode)
+        {
+            Console.WriteLine($"NarrativeController: Transition outcome to node {nextNode.NodeId}, showing continue button");
+            _narrationState.PendingTransitionNode = nextNode;
+            _narrationState.ShowContinueButton = true;
+        }
+        else
+        {
+            Console.WriteLine("NarrativeController: Non-transition outcome, showing continue button");
+            _narrationState.PendingTransitionNode = null;
+            _narrationState.ShowContinueButton = true;
+        }
+        
+        Console.WriteLine("NarrativeController: Action phase complete");
     }
     
     /// <summary>
@@ -382,17 +531,33 @@ public class NarrativeController
             return;
         }
         
-        // Show loading indicator if generating
-        if (_narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking || _narrationState.IsLoadingAction || _narrationState.IsLoadingFocusObservation)
+        // Show dice roll screen if active (for action execution)
+        if (_narrationState.IsDiceRollActive)
+        {
+            bool hasContinueButton = _ui.ShowDiceRollIndicator(
+                _narrationState.DiceRollNumberOfDice,
+                _narrationState.DiceRollDifficulty,
+                _narrationState.IsDiceRolling,
+                _narrationState.DiceRollFinalValues,
+                _narrationState.IsDiceRollButtonHovered
+            );
+            
+            string diceStatus = _narrationState.IsDiceRolling 
+                ? "Rolling dice..." 
+                : (_narrationState.DiceRollSucceeded ? "Success! Click Continue to see the outcome" : "Failed! Click Continue to see the outcome");
+            _ui.RenderStatusBar(diceStatus);
+            return;
+        }
+        
+        // Show loading indicator if generating (for non-action loading)
+        if (_narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking || _narrationState.IsLoadingFocusObservation)
         {
             _ui.ShowLoadingIndicator(_narrationState.LoadingMessage);
             string loadingStatus = _narrationState.IsLoadingObservations 
                 ? "Generating observations..." 
                 : _narrationState.IsLoadingThinking
                     ? "Generating thinking and actions..."
-                    : _narrationState.IsLoadingFocusObservation
-                        ? "Generating focus observation..."
-                        : "Executing action...";
+                    : "Generating focus observation...";
             _ui.RenderStatusBar(loadingStatus);
             return;
         }
@@ -540,6 +705,18 @@ public class NarrativeController
             return;
         }
         
+        // Handle dice roll screen hover
+        if (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling)
+        {
+            // Check if hovering over continue button on dice roll screen
+            bool isOverButton = _ui.IsMouseOverDiceRollButton(mouseX, mouseY);
+            if (isOverButton != _narrationState.IsDiceRollButtonHovered)
+            {
+                _narrationState.IsDiceRollButtonHovered = isOverButton;
+            }
+            return;
+        }
+        
         // Stop dragging if mouse button was released
         if (_narrationState.IsScrollbarDragging && !_terminalInputHandler.IsLeftMouseDown)
         {
@@ -625,6 +802,18 @@ public class NarrativeController
     /// </summary>
     public void OnMouseClick(int mouseX, int mouseY)
     {
+        // Handle dice roll screen click
+        if (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling)
+        {
+            // Check if clicked on continue button
+            if (_ui.IsMouseOverDiceRollButton(mouseX, mouseY))
+            {
+                Console.WriteLine("NarrativeController: Dice roll continue button clicked");
+                OnDiceRollContinue();
+            }
+            return;
+        }
+        
         // If continue button is shown, check if clicked
         if (_narrationState.ShowContinueButton && _narrationState.ActionRegions.Count > 0)
         {

@@ -193,9 +193,20 @@ namespace Cathedral.Terminal
             if (_font == null)
                 return;
 
+            // Get glyph-specific size factor from config
+            float sizeFactor = Cathedral.Config.GlyphSizeFactors.GetFactor(glyph);
+            
+            // Create font with adjusted size if needed
+            Font fontToUse = _font;
+            if (sizeFactor != 1.0f)
+            {
+                int adjustedSize = (int)(_fontPixelSize * sizeFactor);
+                fontToUse = _font.Family.CreateFont(adjustedSize, FontStyle.Regular);
+            }
+
             atlas.Mutate(ctx =>
             {
-                var textOptions = new RichTextOptions(_font)
+                var textOptions = new RichTextOptions(fontToUse)
                 {
                     Origin = new PointF(x + _cellSize / 2f, y + _cellSize / 2f),
                     HorizontalAlignment = HorizontalAlignment.Center,
