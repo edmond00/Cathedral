@@ -22,7 +22,7 @@ public static class LLMSchemaConfig
         return new CompositeField("ObservationResponse",
             new StringField("narration_text", 
                 MinLength: 50, 
-                MaxLength: 600, 
+                MaxLength: 1000, 
                 Hint: "A short description of what the avatar observes in the environment")
         );
     }
@@ -70,7 +70,7 @@ public static class LLMSchemaConfig
         return new CompositeField("ThinkingResponse",
             new StringField("reasoning_text", 
                 MinLength: 50, 
-                MaxLength: 800, 
+                MaxLength: 1000, 
                 Hint: "A short reasoning process the avatar used to decide on actions"),
             new ArrayField("actions",
                 ElementType: new CompositeField("Action",
@@ -80,7 +80,7 @@ public static class LLMSchemaConfig
                         Template: "try to <generated>",
                         MinGenLength: 10,
                         MaxGenLength: 400,
-                        Hint: "Describe in few words the action the avatar will take to achieve the outcome")
+                        Hint: "Describe in few words the action the avatar will try to take to achieve the outcome")
                 ),
                 MinLength: 2,
                 MaxLength: 5
@@ -101,7 +101,7 @@ public static class LLMSchemaConfig
         return new CompositeField("OutcomeNarration",
             new StringField("narration", 
                 MinLength: 50, 
-                MaxLength: 800, 
+                MaxLength: 1000, 
                 Hint: "A short narration text describing the outcome of the action")
         );
     }

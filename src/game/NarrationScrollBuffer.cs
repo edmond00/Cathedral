@@ -34,10 +34,19 @@ public class NarrationScrollBuffer
 
     /// <summary>
     /// Add a narration block and re-render all lines.
+    /// Applies truncation cleanup to the block's text if it appears incomplete.
     /// </summary>
     public void AddBlock(NarrationBlock block)
     {
-        _blocks.Add(block);
+        // Clean potentially truncated text before storing
+        string cleanedText = TextTruncationUtils.CleanTruncatedText(block.Text);
+        
+        // Create a new block with cleaned text if it was modified
+        var blockToAdd = cleanedText != block.Text 
+            ? block with { Text = cleanedText }
+            : block;
+        
+        _blocks.Add(blockToAdd);
         RegenerateRenderedLines();
         
         // Don't auto-scroll - let user see from the top
