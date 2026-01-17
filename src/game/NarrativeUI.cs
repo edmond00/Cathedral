@@ -26,9 +26,13 @@ public class NarrativeUI
     
     // Dice roll animation
     private static readonly char[] DiceFaces = new[] { '⚀', '⚁', '⚂', '⚃', '⚄', '⚅' };
+    private static readonly char[] DiceSideViews = new[] { '⬖', '⬗', '⬘', '⬙' };
     private static readonly char[] DiceRollingFrames = new[] { '⚀', '⚁', '⚂', '⚃', '⚄', '⚅', '⬖', '⬗', '⬘', '⬙' };
     private static readonly char[] DifficultyGlyphs = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩' };
     private int[] _rollingDiceFrames = Array.Empty<int>(); // Current frame index for each die
+    private bool[] _diceShowingFaces = Array.Empty<bool>(); // Track if each die is showing face (true) or side view (false)
+    private int[] _diceFrameCounters = Array.Empty<int>(); // Current frame count for each die
+    private int[] _diceWaitTimes = Array.Empty<int>(); // How many frames each die should wait before changing (1-5)
     private Random _diceRandom = new Random();
     
     // Dice roll button tracking
@@ -619,16 +623,60 @@ public class NarrativeUI
             _loadingFrameIndex = (_loadingFrameIndex + 1) % DiceRollingFrames.Length;
             _lastFrameUpdate = DateTime.Now;
             
-            // Update rolling dice frames with random values
+            // Update rolling dice frames with alternating pattern and random timing
             if (isRolling)
             {
                 if (_rollingDiceFrames.Length != numberOfDice)
                 {
                     _rollingDiceFrames = new int[numberOfDice];
+                    _diceShowingFaces = new bool[numberOfDice];
+                    _diceFrameCounters = new int[numberOfDice];
+                    _diceWaitTimes = new int[numberOfDice];
+                    
+                    // Initialize each die with random starting state and timing
+                    for (int i = 0; i < numberOfDice; i++)
+                    {
+                        _diceShowingFaces[i] = _diceRandom.Next(2) == 0; // Random true/false
+                        _diceFrameCounters[i] = 0;
+                        _diceWaitTimes[i] = _diceRandom.Next(1, 4); // Random wait time 1-5 frames
+                        
+                        if (_diceShowingFaces[i])
+                        {
+                            _rollingDiceFrames[i] = _diceRandom.Next(DiceFaces.Length);
+                        }
+                        else
+                        {
+                            _rollingDiceFrames[i] = _diceRandom.Next(DiceSideViews.Length);
+                        }
+                    }
                 }
+                
+                // Update each die based on its individual timing
                 for (int i = 0; i < _rollingDiceFrames.Length; i++)
                 {
-                    _rollingDiceFrames[i] = _diceRandom.Next(DiceRollingFrames.Length);
+                    _diceFrameCounters[i]++;
+                    
+                    // Only change glyph when counter reaches the wait time
+                    if (_diceFrameCounters[i] >= _diceWaitTimes[i])
+                    {
+                        // Reset counter and pick new random wait time
+                        _diceFrameCounters[i] = 0;
+                        _diceWaitTimes[i] = _diceRandom.Next(1, 6); // New random wait time 1-5 frames
+                        
+                        // Toggle state (face -> side view, side view -> face)
+                        _diceShowingFaces[i] = !_diceShowingFaces[i];
+                        
+                        if (_diceShowingFaces[i])
+                        {
+                            // Show a random face
+                            _rollingDiceFrames[i] = _diceRandom.Next(DiceFaces.Length);
+                        }
+                        else
+                        {
+                            // Show a random side view
+                            _rollingDiceFrames[i] = _diceRandom.Next(DiceSideViews.Length);
+                        }
+                    }
                 }
             }
         }
@@ -637,9 +685,25 @@ public class NarrativeUI
         if (_rollingDiceFrames.Length != numberOfDice)
         {
             _rollingDiceFrames = new int[numberOfDice];
-            for (int i = 0; i < _rollingDiceFrames.Length; i++)
+            _diceShowingFaces = new bool[numberOfDice];
+            _diceFrameCounters = new int[numberOfDice];
+            _diceWaitTimes = new int[numberOfDice];
+            
+            // Initialize each die with random starting state and timing
+            for (int i = 0; i < numberOfDice; i++)
             {
-                _rollingDiceFrames[i] = _diceRandom.Next(DiceRollingFrames.Length);
+                _diceShowingFaces[i] = _diceRandom.Next(2) == 0; // Random true/false
+                _diceFrameCounters[i] = 0;
+                _diceWaitTimes[i] = _diceRandom.Next(1, 6); // Random wait time 1-5 frames
+                
+                if (_diceShowingFaces[i])
+                {
+                    _rollingDiceFrames[i] = _diceRandom.Next(DiceFaces.Length);
+                }
+                else
+                {
+                    _rollingDiceFrames[i] = _diceRandom.Next(DiceSideViews.Length);
+                }
             }
         }
         
@@ -669,7 +733,7 @@ public class NarrativeUI
             ? Config.NarrativeUI.LoadingColor 
             : (isSuccess ? Config.NarrativeUI.SuccessColor : Config.NarrativeUI.FailureColor);
         int titleX = (NarrativeLayout.TERMINAL_WIDTH - title.Length) / 2;
-        int titleY = centerY - 5;
+        int titleY = centerY - 10;
         _terminal.Text(titleX, titleY, title, titleColor, Config.NarrativeUI.BackgroundColor);
         
         // --- Difficulty indicator ---
@@ -687,7 +751,7 @@ public class NarrativeUI
         
         string difficultyLabel = $"Difficulty: {difficultyGlyph} ({difficultyClamp} sixes needed)";
         int diffLabelX = (NarrativeLayout.TERMINAL_WIDTH - difficultyLabel.Length) / 2;
-        int diffLabelY = centerY - 3;
+        int diffLabelY = centerY - 8;
         
         // Render "Difficulty: " in normal color
         _terminal.Text(diffLabelX, diffLabelY, "Difficulty: ", Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
@@ -699,18 +763,18 @@ public class NarrativeUI
         
         // --- Dice display ---
         // Calculate dice layout (max 10 per row)
-        int dicePerRow = Math.Min(numberOfDice, 10);
-        int rows = (numberOfDice + dicePerRow - 1) / dicePerRow;
-        int diceSpacing = 3; // Spacing between dice
+        int dicePerRow = Math.Min(numberOfDice, 20);
+        int rows = ((numberOfDice + dicePerRow - 1) / dicePerRow) * 2;
+        int diceSpacing = 2; // Spacing between dice
         int totalRowWidth = dicePerRow * diceSpacing;
         int startX = (NarrativeLayout.TERMINAL_WIDTH - totalRowWidth) / 2;
-        int startY = centerY;
+        int startY = centerY -5;
         
         for (int i = 0; i < numberOfDice; i++)
         {
-            int row = i / dicePerRow;
+            int row = (i / dicePerRow)*2;
             int col = i % dicePerRow;
-            int diceX = startX + col * diceSpacing;
+            int diceX = startX + col * diceSpacing + (row%2);
             int diceY = startY + row;
             
             char diceChar;
@@ -718,8 +782,15 @@ public class NarrativeUI
             
             if (isRolling)
             {
-                // Show random rolling animation
-                diceChar = DiceRollingFrames[_rollingDiceFrames[i]];
+                // Show alternating animation (face or side view based on current state)
+                if (_diceShowingFaces[i])
+                {
+                    diceChar = DiceFaces[_rollingDiceFrames[i]];
+                }
+                else
+                {
+                    diceChar = DiceSideViews[_rollingDiceFrames[i]];
+                }
                 diceColor = Config.NarrativeUI.LoadingColor;
             }
             else if (finalDiceValues != null && i < finalDiceValues.Length)
