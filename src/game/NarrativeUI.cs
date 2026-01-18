@@ -231,13 +231,29 @@ public class NarrativeUI
                     {
                         // Render skill name and level indicators separately
                         string skillName = headerText.Substring(0, lastSpaceIndex);
-                        string levelIndicators = headerText.Substring(lastSpaceIndex);
+                        string remainingPart = headerText.Substring(lastSpaceIndex);
+                        
+                        // Separate level indicators from closing bracket
+                        string levelIndicators = remainingPart;
+                        string closingBracket = "";
+                        
+                        if (remainingPart.EndsWith(']'))
+                        {
+                            levelIndicators = remainingPart.Substring(0, remainingPart.Length - 1);
+                            closingBracket = "]";
+                        }
                         
                         Vector4 skillHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.SkillHeaderColor;
                         Vector4 skillLevelColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.LoadingColor;
                         
                         _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, skillName, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
                         _terminal.Text(NarrativeLayout.LEFT_MARGIN + skillName.Length, currentY, levelIndicators, skillLevelColor, Config.NarrativeUI.BackgroundColor);
+                        
+                        // Render closing bracket in dark yellow (same as skill name)
+                        if (!string.IsNullOrEmpty(closingBracket))
+                        {
+                            _terminal.Text(NarrativeLayout.LEFT_MARGIN + skillName.Length + levelIndicators.Length, currentY, closingBracket, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                        }
                     }
                     else
                     {
