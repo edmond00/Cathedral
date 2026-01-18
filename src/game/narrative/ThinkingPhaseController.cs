@@ -149,6 +149,7 @@ public class ThinkingPhaseController
             actions.Add(new ParsedNarrativeAction
             {
                 ActionSkillId = actionSkill.SkillId,
+                ActionSkill = actionSkill, // Set the actual skill instance with proper level
                 PreselectedOutcome = outcome,
                 ActionText = actionText
             });

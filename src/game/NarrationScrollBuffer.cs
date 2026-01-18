@@ -239,10 +239,14 @@ public class NarrationScrollBuffer
         foreach (var block in _blocks)
         {
             // Add skill name header (if present)
-            if (!string.IsNullOrEmpty(block.SkillName))
+            if (block.Skill != null)
             {
+                // Generate skill level indicators using dice glyphs
+                string levelIndicators = new string(Config.Symbols.SkillLevelIndicator, block.Skill.Level);
+                string headerText = $"[{block.Skill.DisplayName.ToUpper()} {levelIndicators}]";
+                
                 _renderedLines.Add(new RenderedLine(
-                    Text: $"[{block.SkillName.ToUpper()}]",
+                    Text: headerText,
                     Type: LineType.Header,
                     BlockType: block.Type,
                     Keywords: null,
@@ -297,10 +301,14 @@ public class NarrationScrollBuffer
                 foreach (var action in block.Actions)
                 {
                     // Calculate wrapped lines for this action
-                    // Format: "> [SkillName] action text"
+                    // Format: "> [SkillName ◼◼◼] action text" - need to account for level indicators
                     string prefix = "> ";
-                    string skillBracket = $"[{action.ActionSkill?.DisplayName ?? action.ActionSkillId}] ";
-                    int firstLinePrefix = prefix.Length + skillBracket.Length;
+                    string skillName = action.ActionSkill?.DisplayName ?? action.ActionSkillId;
+                    int skillLevel = action.ActionSkill?.Level ?? 1;
+                    string levelIndicators = new string(Config.Symbols.SkillLevelIndicator, skillLevel);
+                    string fullSkillBracket = $"[{skillName} {levelIndicators}] ";
+                    
+                    int firstLinePrefix = prefix.Length + fullSkillBracket.Length;
                     int firstLineWidth = _maxWidth - firstLinePrefix;
                     int continuationWidth = _maxWidth - 4; // 4-space indent
                     

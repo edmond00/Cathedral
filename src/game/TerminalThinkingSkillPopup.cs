@@ -23,8 +23,8 @@ public class TerminalThinkingSkillPopup
     private string _title = "Select Thinking Skill";
     
     // Colors from centralized config
-    private static readonly Vector4 BorderColor = Config.Colors.LightCyan;
-    private static readonly Vector4 TitleColor = Config.Colors.Yellow;
+    private static readonly Vector4 BorderColor = Config.Colors.MediumGray60;
+    private static readonly Vector4 TitleColor = Config.Colors.DarkYellowGrey;
     
     public TerminalThinkingSkillPopup(PopupTerminalHUD popup)
     {
@@ -194,7 +194,7 @@ public class TerminalThinkingSkillPopup
             
             bool isHovered = _hoveredSkillIndex == i;
             Vector4 textColor = isHovered ? Config.ThinkingSkillPopup.SkillHoverColor : Config.ThinkingSkillPopup.SkillNormalColor;
-            Vector4 bgColor = isHovered ? new Vector4(0.2f, 0.2f, 0.0f, 0.9f) : Config.ThinkingSkillPopup.BackgroundColor;
+            Vector4 bgColor = isHovered ? Config.ThinkingSkillPopup.SkillHoverBackgroundColor : Config.ThinkingSkillPopup.BackgroundColor;
             
             // Draw skill name with arrow prefix
             string prefix = isHovered ? "> " : "  ";
@@ -218,7 +218,7 @@ public class TerminalThinkingSkillPopup
         string closeHint = "[ESC or Click to close]";
         int hintX = (POPUP_WIDTH - closeHint.Length) / 2;
         _popup.DrawText(hintX, popupHeight - 1, closeHint, 
-            new Vector4(0.5f, 0.5f, 0.5f, 1.0f), Config.ThinkingSkillPopup.BackgroundColor);
+            Config.NarrativeUI.HintTextColor, Config.ThinkingSkillPopup.BackgroundColor);
     }
     
     /// <summary>

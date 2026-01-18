@@ -40,7 +40,7 @@ public class NarrationState
 /// </summary>
 public record NarrationBlock(
     NarrationBlockType Type,                   // Observation, Thinking, Action, Outcome
-    string SkillName,                          // Which skill generated this block
+    Skill Skill,                               // Which skill generated this block
     string Text,                               // The narration text
     List<string>? Keywords,                    // Highlighted keywords (if observation)
     List<ParsedNarrativeAction>? Actions       // Clickable actions (if thinking)

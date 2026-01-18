@@ -281,11 +281,66 @@ public class NarrativeState
 }
 
 /// <summary>
+/// Interface for all clickable regions in the terminal.
+/// </summary>
+public interface IClickableRegion
+{
+    /// <summary>
+    /// Starting Y coordinate of the clickable region.
+    /// </summary>
+    int StartY { get; }
+    
+    /// <summary>
+    /// Ending Y coordinate of the clickable region (inclusive).
+    /// </summary>
+    int EndY { get; }
+    
+    /// <summary>
+    /// Starting X coordinate of the clickable region.
+    /// </summary>
+    int StartX { get; }
+    
+    /// <summary>
+    /// Ending X coordinate of the clickable region (inclusive).
+    /// </summary>
+    int EndX { get; }
+}
+
+/// <summary>
+/// Extension methods for IClickableRegion interface.
+/// </summary>
+public static class ClickableRegionExtensions
+{
+    /// <summary>
+    /// Check if the given coordinates are within this clickable region.
+    /// </summary>
+    /// <param name="region">The clickable region</param>
+    /// <param name="x">X coordinate to check</param>
+    /// <param name="y">Y coordinate to check</param>
+    /// <returns>True if the coordinates are within the region</returns>
+    public static bool Contains(this IClickableRegion region, int x, int y)
+    {
+        return x >= region.StartX && x <= region.EndX && y >= region.StartY && y <= region.EndY;
+    }
+}
+
+/// <summary>
 /// Represents a clickable keyword region in the terminal.
 /// </summary>
-public record KeywordRegion(string Keyword, int Y, int StartX, int EndX);
+public record KeywordRegion(string Keyword, int Y, int StartX, int EndX) : IClickableRegion
+{
+    /// <summary>
+    /// Starting Y coordinate (same as Y for single-line regions).
+    /// </summary>
+    public int StartY => Y;
+    
+    /// <summary>
+    /// Ending Y coordinate (same as Y for single-line regions).
+    /// </summary>
+    public int EndY => Y;
+}
 
 /// <summary>
 /// Represents a clickable action region in the terminal.
 /// </summary>
-public record ActionRegion(int ActionIndex, int StartY, int EndY, int StartX, int EndX);
+public record ActionRegion(int ActionIndex, int StartY, int EndY, int StartX, int EndX) : IClickableRegion;

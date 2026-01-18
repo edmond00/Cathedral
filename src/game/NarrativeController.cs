@@ -213,7 +213,7 @@ public class NarrativeController
             // Create thinking block with reasoning + actions
             var thinkingBlock = new NarrationBlock(
                 Type: NarrationBlockType.Thinking,
-                SkillName: thinkingSkill.DisplayName,
+                Skill: thinkingSkill,
                 Text: response.ReasoningText,
                 Keywords: null,
                 Actions: response.Actions
@@ -426,7 +426,7 @@ public class NarrativeController
         // Add outcome narration block
         var outcomeBlock = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
-            SkillName: result.ActionSkill?.DisplayName ?? "Unknown Skill",
+            Skill: result.ActionSkill ?? throw new InvalidOperationException("Action skill cannot be null"),
             Text: $"[{(result.Succeeded ? "SUCCESS" : "FAILURE")}] {result.Narration}",
             Keywords: null,
             Actions: null
@@ -765,9 +765,7 @@ public class NarrativeController
         if (_narrationState.ShowContinueButton && _narrationState.ActionRegions.Count > 0)
         {
             var buttonRegion = _narrationState.ActionRegions[0];
-            bool isOverButton = mouseY == buttonRegion.StartY && 
-                                mouseX >= buttonRegion.StartX && 
-                                mouseX <= buttonRegion.EndX;
+            bool isOverButton = buttonRegion.Contains(mouseX, mouseY);
             
             if (isOverButton != _narrationState.IsContinueButtonHovered)
             {
@@ -818,7 +816,7 @@ public class NarrativeController
         if (_narrationState.ShowContinueButton && _narrationState.ActionRegions.Count > 0)
         {
             var buttonRegion = _narrationState.ActionRegions[0];
-            if (mouseY == buttonRegion.StartY && mouseX >= buttonRegion.StartX && mouseX <= buttonRegion.EndX)
+            if (buttonRegion.Contains(mouseX, mouseY))
             {
                 // Check if there's a pending transition to a new node
                 if (_narrationState.PendingTransitionNode != null)

@@ -85,7 +85,7 @@ public class ThinkingExecutor
         }
 
         // Parse JSON response
-        return ParseThinkingResponse(jsonResponse, possibleOutcomes, thinkingSkill, keyword);
+        return ParseThinkingResponse(jsonResponse, possibleOutcomes, actionSkills, thinkingSkill, keyword);
     }
 
     /// <summary>
@@ -152,7 +152,7 @@ public class ThinkingExecutor
     /// Parses the LLM JSON response into a ThinkingResponse.
     /// Returns null if parsing fails.
     /// </summary>
-    private ThinkingResponse? ParseThinkingResponse(string jsonResponse, List<OutcomeBase> possibleOutcomes, Skill thinkingSkill, string keyword)
+    private ThinkingResponse? ParseThinkingResponse(string jsonResponse, List<OutcomeBase> possibleOutcomes, List<Skill> actionSkills, Skill thinkingSkill, string keyword)
     {
         try
         {
@@ -183,9 +183,13 @@ public class ThinkingExecutor
                         displayText = displayText.Substring(7); // Remove "try to " (7 characters)
                     }
                     
+                    // Resolve the actual skill instance from actionSkills list
+                    var resolvedActionSkill = actionSkills.FirstOrDefault(s => s.SkillId == actionSkill);
+                    
                     actions.Add(new ParsedNarrativeAction
                     {
                         ActionSkillId = actionSkill,
+                        ActionSkill = resolvedActionSkill, // Set the resolved skill instance with proper level
                         PreselectedOutcome = outcome,
                         ActionText = actionDesc,
                         DisplayText = displayText,

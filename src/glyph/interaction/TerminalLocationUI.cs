@@ -10,13 +10,13 @@ namespace Cathedral.Glyph.Interaction
     /// <summary>
     /// Helper structure for tracking clickable regions of actions in the terminal
     /// </summary>
-    public record ActionRegion(
+    public record LocationActionRegion(
         int ActionIndex,
         int StartY,
         int EndY,
         int StartX,
         int EndX
-    );
+    ) : IClickableRegion;
 
     /// <summary>
     /// Manages the terminal UI for location interactions.
@@ -35,7 +35,7 @@ namespace Cathedral.Glyph.Interaction
         private const int NARRATIVE_HEIGHT = Config.LocationUI.NarrativeHeight;
         
         private readonly TerminalHUD _terminal;
-        private List<ActionRegion> _actionRegions = new();
+        private List<LocationActionRegion> _actionRegions = new();
         private int? _hoveredActionIndex = null;
         
         public TerminalLocationUI(TerminalHUD terminal)
@@ -186,7 +186,7 @@ namespace Cathedral.Glyph.Interaction
                 }
                 
                 // Track clickable region
-                _actionRegions.Add(new ActionRegion(i, startY, y - 1, 2, TERMINAL_WIDTH - 2));
+                _actionRegions.Add(new LocationActionRegion(i, startY, y - 1, 2, TERMINAL_WIDTH - 2));
                 
                 // Add spacing between actions (if room)
                 if (i < actions.Count - 1 && y < maxY)
@@ -226,8 +226,7 @@ namespace Cathedral.Glyph.Interaction
         {
             foreach (var region in _actionRegions)
             {
-                if (mouseY >= region.StartY && mouseY <= region.EndY &&
-                    mouseX >= region.StartX && mouseX <= region.EndX)
+                if (region.Contains(mouseX, mouseY))
                 {
                     return region.ActionIndex;
                 }
@@ -346,7 +345,7 @@ namespace Cathedral.Glyph.Interaction
         /// </summary>
         public void ShowResultMessage(string message, bool success)
         {
-            Vector4 color = success ? new Vector4(0.0f, 1.0f, 0.0f, 1.0f) : new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+            Vector4 color = success ? Config.LocationUI.SuccessColor : Config.LocationUI.FailureColor;
             
             // Clear narrative area
             for (int y = NARRATIVE_START_Y; y < ACTION_MENU_START_Y - 1; y++)

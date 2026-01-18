@@ -221,7 +221,7 @@ public class LocationTravelGameController : IDisposable
             // If popup is visible, use raw mouse coordinates
             if (_narrativeController.IsPopupVisible)
             {
-                Vector2 rawMouse = _core.Terminal.InputHandler.GetCorrectedMousePosition();
+                Vector2 rawMouse = _core.Terminal?.InputHandler.GetCorrectedMousePosition() ?? OpenTK.Mathematics.Vector2.Zero;
                 _narrativeController.OnRawMouseClick(rawMouse);
                 return;
             }

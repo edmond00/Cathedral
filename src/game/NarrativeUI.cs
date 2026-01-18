@@ -17,18 +17,10 @@ public class NarrativeUI
     private const int SCROLLBAR_X = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN; // Inside right margin
     
     // Loading animation (spinner)
-    private static readonly string[] LoadingFrames = new[]
-    {
-        "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"
-    };
     private int _loadingFrameIndex = 0;
     private DateTime _lastFrameUpdate = DateTime.Now;
     
     // Dice roll animation
-    private static readonly char[] DiceFaces = new[] { '⚀', '⚁', '⚂', '⚃', '⚄', '⚅' };
-    private static readonly char[] DiceSideViews = new[] { '⬖', '⬗', '⬘', '⬙' };
-    private static readonly char[] DiceRollingFrames = new[] { '⚀', '⚁', '⚂', '⚃', '⚄', '⚅', '⬖', '⬗', '⬘', '⬙' };
-    private static readonly char[] DifficultyGlyphs = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩' };
     private int[] _rollingDiceFrames = Array.Empty<int>(); // Current frame index for each die
     private bool[] _diceShowingFaces = Array.Empty<bool>(); // Track if each die is showing face (true) or side view (false)
     private int[] _diceFrameCounters = Array.Empty<int>(); // Current frame count for each die
@@ -100,9 +92,10 @@ public class NarrativeUI
         {
             bool isRemaining = i < thinkingAttemptsRemaining;
             Vector4 markerColor = isRemaining
-                ? new Vector4(0.8f, 0.4f, 0.4f, 1.0f) // Red-ish for available
-                : new Vector4(0.3f, 0.3f, 0.3f, 1.0f); // Dark gray for used
-            _terminal.Text(markerX, 0, "⬛", markerColor, Config.NarrativeUI.BackgroundColor);
+                ? Config.NarrativeUI.LoadingColor // Bright yellow for available
+                : Config.NarrativeUI.HistoryColor; // Dark gray for used
+            // _terminal.Text(markerX, 0, "█", markerColor, Config.NarrativeUI.BackgroundColor);
+            _terminal.Text(markerX, 0, Config.Symbols.NoeticPointMarker.ToString(), markerColor, Config.NarrativeUI.BackgroundColor);
             markerX++;
         }
         
@@ -161,8 +154,59 @@ public class NarrativeUI
             switch (renderedLine.Type)
             {
                 case LineType.Header:
-                    // Render skill name header in yellow
-                    _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, renderedLine.Text, Config.NarrativeUI.SkillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                    // Parse skill header to separate name from level indicators
+                    string headerText = renderedLine.Text;
+                    
+                    // Find the last space followed by black squares (level indicators) and optional closing bracket
+                    int lastSpaceIndex = -1;
+                    for (int i = headerText.Length - 1; i >= 0; i--)
+                    {
+                        if (headerText[i] == ' ')
+                        {
+                            // Check if everything after this space is level indicators followed by optional closing bracket
+                            bool allLevelIndicators = true;
+                            bool foundLevelIndicators = false;
+                            
+                            for (int j = i + 1; j < headerText.Length; j++)
+                            {
+                                if (headerText[j] == Config.Symbols.SkillLevelIndicator)
+                                {
+                                    foundLevelIndicators = true;
+                                }
+                                else if (headerText[j] == ']' && j == headerText.Length - 1)
+                                {
+                                    // Closing bracket at the end is allowed
+                                    continue;
+                                }
+                                else
+                                {
+                                    allLevelIndicators = false;
+                                    break;
+                                }
+                            }
+                            
+                            if (allLevelIndicators && foundLevelIndicators)
+                            {
+                                lastSpaceIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (lastSpaceIndex > 0)
+                    {
+                        // Render skill name and level indicators separately
+                        string skillName = headerText.Substring(0, lastSpaceIndex);
+                        string levelIndicators = headerText.Substring(lastSpaceIndex);
+                        
+                        _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, skillName, Config.NarrativeUI.SkillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(NarrativeLayout.LEFT_MARGIN + skillName.Length, currentY, levelIndicators, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
+                    }
+                    else
+                    {
+                        // Fallback: render entire header in skill header color
+                        _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, headerText, Config.NarrativeUI.SkillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                    }
                     
                     // Note: Do NOT reset action counter here - we want globally unique action indices
                     // so that actions from different thinking blocks don't have the same index
@@ -322,8 +366,10 @@ public class NarrativeUI
                                    hoveredKeyword.Y == y &&
                                    hoveredKeyword.StartX == currentX &&
                                    hoveredKeyword.EndX == currentX + segment.Text.Length - 1;
+                    
                     Vector4 keywordColor = isHovered ? Config.NarrativeUI.KeywordHoverColor : Config.NarrativeUI.KeywordNormalColor;
-                    _terminal.Text(currentX, y, segment.Text, keywordColor, Config.NarrativeUI.BackgroundColor);
+                    Vector4 backgroundColor = isHovered ? Config.NarrativeUI.KeywordHoverBackgroundColor : Config.NarrativeUI.BackgroundColor;
+                    _terminal.Text(currentX, y, segment.Text, keywordColor, backgroundColor);
                 }
                 else
                 {
@@ -348,7 +394,7 @@ public class NarrativeUI
     {
         foreach (var region in _keywordRegions)
         {
-            if (mouseY == region.Y && mouseX >= region.StartX && mouseX <= region.EndX)
+            if (region.Contains(mouseX, mouseY))
             {
                 return region;
             }
@@ -364,26 +410,52 @@ public class NarrativeUI
         // Check if this action is hovered
         bool isHovered = hoveredAction != null && hoveredAction.ActionIndex == actionIndex;
         
-        // Calculate colors
+        // Calculate colors - when hovered, skill parts also get hover styling
         Vector4 prefixColor = Config.NarrativeUI.NarrativeColor;
-        Vector4 skillColor = Config.NarrativeUI.ActionSkillColor;
         Vector4 textColor = isHovered ? Config.NarrativeUI.ActionHoverColor : Config.NarrativeUI.ActionNormalColor;
+        Vector4 backgroundColor = isHovered ? Config.NarrativeUI.ActionHoverBackgroundColor : Config.NarrativeUI.BackgroundColor;
+        
+        // Skill bracket colors - use hover colors when action is hovered
+        Vector4 skillBracketColor = isHovered ? Config.NarrativeUI.ActionHoverColor : Config.Colors.DarkYellowGrey;
+        Vector4 skillLevelColor = isHovered ? Config.NarrativeUI.ActionHoverColor : Config.NarrativeUI.LoadingColor;
+        Vector4 skillBracketBackground = backgroundColor; // Use action background for skill parts too
         
         int startX = NarrativeLayout.LEFT_MARGIN;
         
         if (lineIndex == 0)
         {
-            // First line: render with prefix and skill
+            // First line: render with prefix and skill (including level)
             string prefix = "> ";
-            string skillBracket = $"[{action.ActionSkill?.DisplayName ?? action.ActionSkillId}] ";
+            
+            // Build skill bracket with level indicators
+            string skillName = action.ActionSkill?.DisplayName ?? action.ActionSkillId;
+            int skillLevel = action.ActionSkill?.Level ?? 1;
+            string levelIndicators = new string(Config.Symbols.SkillLevelIndicator, skillLevel);
             
             _terminal.Text(startX, y, prefix, prefixColor, Config.NarrativeUI.BackgroundColor);
             startX += prefix.Length;
             
-            _terminal.Text(startX, y, skillBracket, skillColor, Config.NarrativeUI.BackgroundColor);
-            startX += skillBracket.Length;
+            // Render skill bracket parts with hover-aware colors and backgrounds
+            _terminal.Text(startX, y, "[", skillBracketColor, skillBracketBackground);
+            startX += 1;
             
-            _terminal.Text(startX, y, text, textColor, Config.NarrativeUI.BackgroundColor);
+            _terminal.Text(startX, y, skillName, skillBracketColor, skillBracketBackground);
+            startX += skillName.Length;
+            
+            _terminal.Text(startX, y, " ", skillBracketColor, skillBracketBackground);
+            startX += 1;
+            
+            _terminal.Text(startX, y, levelIndicators, skillLevelColor, skillBracketBackground);
+            startX += levelIndicators.Length;
+            
+            _terminal.Text(startX, y, "] ", skillBracketColor, skillBracketBackground);
+            startX += 2;
+            
+            // Calculate available width for action text (respect right margin for scrollbar)
+            int maxTextWidth = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN - startX;
+            string truncatedText = text.Length > maxTextWidth ? text.Substring(0, maxTextWidth) : text;
+            
+            _terminal.Text(startX, y, truncatedText, textColor, backgroundColor);
             
             // Track action region (will be updated as we encounter more lines)
             var actionRegion = new ActionRegion(actionIndex, y, y, NarrativeLayout.LEFT_MARGIN, NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN);
@@ -393,7 +465,12 @@ public class NarrativeUI
         {
             // Continuation line: indent by 4 spaces
             int continuationIndent = NarrativeLayout.LEFT_MARGIN + 4;
-            _terminal.Text(continuationIndent, y, text, textColor, Config.NarrativeUI.BackgroundColor);
+            
+            // Calculate available width for continuation text (respect right margin)
+            int maxTextWidth = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN - continuationIndent;
+            string truncatedText = text.Length > maxTextWidth ? text.Substring(0, maxTextWidth) : text;
+            
+            _terminal.Text(continuationIndent, y, truncatedText, textColor, backgroundColor);
             
             // Update the action region to extend to this line
             if (_actionRegions.Count > 0)
@@ -424,8 +501,7 @@ public class NarrativeUI
     {
         foreach (var region in _actionRegions)
         {
-            if (mouseY >= region.StartY && mouseY <= region.EndY &&
-                mouseX >= region.StartX && mouseX <= region.EndX)
+            if (region.Contains(mouseX, mouseY))
             {
                 return region;
             }
@@ -564,11 +640,11 @@ public class NarrativeUI
         // Update animation frame every 100ms
         if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds > 100)
         {
-            _loadingFrameIndex = (_loadingFrameIndex + 1) % LoadingFrames.Length;
+            _loadingFrameIndex = (_loadingFrameIndex + 1) % Config.Symbols.LoadingSpinner.Length;
             _lastFrameUpdate = DateTime.Now;
         }
         
-        string spinner = LoadingFrames[_loadingFrameIndex];
+        string spinner = Config.Symbols.LoadingSpinner[_loadingFrameIndex];
         
         // Clear narrative area
         for (int y = NarrativeLayout.CONTENT_START_Y; y < NarrativeLayout.SEPARATOR_Y + 1; y++)
@@ -583,7 +659,7 @@ public class NarrativeUI
         string loadingText = $"{spinner}  {message}  {spinner}";
         int centerY = NarrativeLayout.CONTENT_START_Y + NarrativeLayout.NARRATIVE_HEIGHT / 2;
         int centerX = (NarrativeLayout.TERMINAL_WIDTH - loadingText.Length) / 2;
-        _terminal.Text(centerX, centerY, loadingText, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
+        _terminal.Text(centerX, centerY, loadingText, Config.Colors.DarkYellowGrey, Config.NarrativeUI.BackgroundColor);
         
         // Add animated dots
         string dots = new string('.', (_loadingFrameIndex % 4));
@@ -620,7 +696,7 @@ public class NarrativeUI
         // Update animation frame every 80ms for smooth rolling
         if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds > 80)
         {
-            _loadingFrameIndex = (_loadingFrameIndex + 1) % DiceRollingFrames.Length;
+            _loadingFrameIndex = (_loadingFrameIndex + 1) % Config.Symbols.DiceRollingFrames.Length;
             _lastFrameUpdate = DateTime.Now;
             
             // Update rolling dice frames with alternating pattern and random timing
@@ -642,11 +718,11 @@ public class NarrativeUI
                         
                         if (_diceShowingFaces[i])
                         {
-                            _rollingDiceFrames[i] = _diceRandom.Next(DiceFaces.Length);
+                            _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceFaces.Length);
                         }
                         else
                         {
-                            _rollingDiceFrames[i] = _diceRandom.Next(DiceSideViews.Length);
+                            _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
                         }
                     }
                 }
@@ -669,12 +745,12 @@ public class NarrativeUI
                         if (_diceShowingFaces[i])
                         {
                             // Show a random face
-                            _rollingDiceFrames[i] = _diceRandom.Next(DiceFaces.Length);
+                            _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceFaces.Length);
                         }
                         else
                         {
                             // Show a random side view
-                            _rollingDiceFrames[i] = _diceRandom.Next(DiceSideViews.Length);
+                            _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
                         }
                     }
                 }
@@ -698,11 +774,11 @@ public class NarrativeUI
                 
                 if (_diceShowingFaces[i])
                 {
-                    _rollingDiceFrames[i] = _diceRandom.Next(DiceFaces.Length);
+                    _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceFaces.Length);
                 }
                 else
                 {
-                    _rollingDiceFrames[i] = _diceRandom.Next(DiceSideViews.Length);
+                    _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
                 }
             }
         }
@@ -738,14 +814,19 @@ public class NarrativeUI
         
         // --- Difficulty indicator ---
         int difficultyClamp = Math.Clamp(difficulty, 1, 10);
-        char difficultyGlyph = DifficultyGlyphs[difficultyClamp - 1];
+        char difficultyGlyph = Config.Symbols.DifficultyGlyphs[difficultyClamp - 1];
         
-        // Green to red gradient based on difficulty (1=green, 10=red)
+        // Dark yellow to white gradient based on difficulty (1=white/easy, 10=dark yellow/hard)
         float difficultyRatio = (difficultyClamp - 1) / 9.0f;
+        
+        // Interpolate from white (easy) to dark yellow (hard)
+        Vector4 easyColor = Config.Colors.White;           // 1 = white (easiest)
+        Vector4 hardColor = Config.Colors.DarkYellow;      // 10 = dark yellow (hardest)
+        
         Vector4 difficultyColor = new Vector4(
-            0.3f + 0.7f * difficultyRatio,   // Red increases
-            0.8f - 0.6f * difficultyRatio,   // Green decreases
-            0.3f,                             // Blue stays low
+            easyColor.X + (hardColor.X - easyColor.X) * difficultyRatio,
+            easyColor.Y + (hardColor.Y - easyColor.Y) * difficultyRatio,
+            easyColor.Z + (hardColor.Z - easyColor.Z) * difficultyRatio,
             1.0f
         );
         
@@ -785,11 +866,11 @@ public class NarrativeUI
                 // Show alternating animation (face or side view based on current state)
                 if (_diceShowingFaces[i])
                 {
-                    diceChar = DiceFaces[_rollingDiceFrames[i]];
+                    diceChar = Config.Symbols.DiceFaces[_rollingDiceFrames[i]];
                 }
                 else
                 {
-                    diceChar = DiceSideViews[_rollingDiceFrames[i]];
+                    diceChar = Config.Symbols.DiceSideViews[_rollingDiceFrames[i]];
                 }
                 diceColor = Config.NarrativeUI.LoadingColor;
             }
@@ -797,12 +878,12 @@ public class NarrativeUI
             {
                 // Show final value
                 int value = Math.Clamp(finalDiceValues[i], 1, 6);
-                diceChar = DiceFaces[value - 1];
+                diceChar = Config.Symbols.DiceFaces[value - 1];
                 
                 // Highlight 6s (⚅) with golden/success color
                 if (value == 6)
                 {
-                    diceColor = new Vector4(1.0f, 0.85f, 0.2f, 1.0f); // Gold
+                    diceColor = Config.NarrativeUI.DiceGoldColor;
                 }
                 else
                 {
@@ -812,7 +893,7 @@ public class NarrativeUI
             else
             {
                 // Fallback
-                diceChar = DiceFaces[0];
+                diceChar = Config.Symbols.DiceFaces[0];
                 diceColor = Config.NarrativeUI.NarrativeColor;
             }
             
@@ -837,8 +918,11 @@ public class NarrativeUI
             Vector4 buttonColor = isContinueButtonHovered 
                 ? Config.NarrativeUI.ContinueButtonHoverColor 
                 : Config.NarrativeUI.ContinueButtonColor;
+            Vector4 buttonBackgroundColor = isContinueButtonHovered 
+                ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor 
+                : Config.NarrativeUI.ContinueButtonBackgroundColor;
             
-            _terminal.Text(buttonX, buttonY, buttonText, buttonColor, Config.NarrativeUI.BackgroundColor);
+            _terminal.Text(buttonX, buttonY, buttonText, buttonColor, buttonBackgroundColor);
             
             // Store button region for click detection
             _diceRollButtonRegion = (buttonX, buttonY, buttonWidth);
@@ -848,11 +932,11 @@ public class NarrativeUI
         else
         {
             // Show waiting message while rolling
-            string spinner = LoadingFrames[_loadingFrameIndex % LoadingFrames.Length];
+            string spinner = Config.Symbols.LoadingSpinner[_loadingFrameIndex % Config.Symbols.LoadingSpinner.Length];
             string waitMsg = $"{spinner}  Please wait...  {spinner}";
             int waitX = (NarrativeLayout.TERMINAL_WIDTH - waitMsg.Length) / 2;
             int waitY = startY + rows + 2;
-            _terminal.Text(waitX, waitY, waitMsg, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+            _terminal.Text(waitX, waitY, waitMsg, Config.Colors.DarkYellowGrey, Config.NarrativeUI.BackgroundColor);
         }
         
         return false; // No continue button
@@ -916,7 +1000,7 @@ public class NarrativeUI
         
         for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
         {
-            _terminal.SetCell(x, y, '─', Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+            _terminal.SetCell(x, y, Config.Symbols.HorizontalLine, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         }
     }
     
@@ -1019,8 +1103,9 @@ public class NarrativeUI
         int buttonY = NarrativeLayout.SEPARATOR_Y - 2; // Place near bottom, above separator
         
         Vector4 buttonColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverColor : Config.NarrativeUI.ContinueButtonColor;
+        Vector4 buttonBackgroundColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;
         
-        _terminal.Text(buttonX, buttonY, buttonText, buttonColor, Config.NarrativeUI.BackgroundColor);
+        _terminal.Text(buttonX, buttonY, buttonText, buttonColor, buttonBackgroundColor);
         
         return (buttonX, buttonY, buttonWidth);
     }

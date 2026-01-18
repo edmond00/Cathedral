@@ -92,7 +92,7 @@ public class ObservationPhaseController
             
             var block = new NarrationBlock(
                 Type: NarrationBlockType.Observation,
-                SkillName: skill.DisplayName,
+                Skill: skill,
                 Text: observation.NarrationText,
                 Keywords: foundKeywords,
                 Actions: null
@@ -109,7 +109,7 @@ public class ObservationPhaseController
             // Add a fallback observation
             narrationBlocks.Add(new NarrationBlock(
                 Type: NarrationBlockType.Observation,
-                SkillName: skill.DisplayName,
+                Skill: skill,
                 Text: "You observe the environment carefully, taking in the details.",
                 Keywords: new List<string>(),
                 Actions: null
@@ -185,7 +185,7 @@ public class ObservationPhaseController
             
             var block = new NarrationBlock(
                 Type: NarrationBlockType.Observation,
-                SkillName: observationSkill.DisplayName,
+                Skill: observationSkill,
                 Text: observation.NarrationText,
                 Keywords: foundKeywords,
                 Actions: null
@@ -202,7 +202,7 @@ public class ObservationPhaseController
             // Return fallback observation
             return new NarrationBlock(
                 Type: NarrationBlockType.Observation,
-                SkillName: observationSkill.DisplayName,
+                Skill: observationSkill,
                 Text: $"You focus your attention on the {clickedKeyword}, examining it more closely.",
                 Keywords: new List<string> { clickedKeyword },
                 Actions: null
@@ -230,7 +230,7 @@ public class ObservationPhaseController
             keywordsEnabled
         );
         
-        return $"[{block.SkillName}]\n{formattedText}\n";
+        return $"[{block.Skill.DisplayName}]\n{formattedText}\n";
     }
     
     /// <summary>
