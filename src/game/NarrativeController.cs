@@ -565,13 +565,14 @@ public class NarrativeController
         // Show continue button if flagged
         if (_narrationState.ShowContinueButton)
         {
-            // Render narration blocks (non-interactive)
+            // Render narration blocks (non-interactive, dimmed)
             _ui.RenderObservationBlocks(
                 _scrollBuffer,
                 _narrationState.ScrollOffset,
                 _narrationState.ThinkingAttemptsRemaining,
                 null, // No keyword hover
-                null  // No action hover
+                null, // No action hover
+                true  // Dim content when continue button is shown
             );
             
             // Render scrollbar (still visible when continue button shown)
@@ -754,7 +755,7 @@ public class NarrativeController
             return;
         }
         
-        // Update scrollbar thumb hover state
+        // Update scrollbar thumb hover state (must be done before continue button check)
         bool isOverThumb = _ui.IsMouseOverScrollbarThumb(mouseX, mouseY, _narrationState.ScrollbarThumb);
         if (isOverThumb != _narrationState.IsScrollbarThumbHovered)
         {
@@ -772,7 +773,8 @@ public class NarrativeController
                 _narrationState.IsContinueButtonHovered = isOverButton;
             }
             
-            // Don't process keyword/action hover when continue button is shown
+            // Don't process keyword/action hover when continue button is shown, 
+            // but scrollbar interactions are still allowed (processed above)
             return;
         }
         
@@ -812,6 +814,26 @@ public class NarrativeController
             return;
         }
         
+        // Check if clicked on scrollbar thumb (start drag) - must be done before continue button check
+        if (_ui.IsMouseOverScrollbarThumb(mouseX, mouseY, _narrationState.ScrollbarThumb))
+        {
+            _narrationState.IsScrollbarDragging = true;
+            _narrationState.ScrollbarDragStartY = mouseY;
+            _narrationState.ScrollbarDragStartOffset = _narrationState.ScrollOffset;
+            Console.WriteLine($"NarrativeController: Started scrollbar drag at Y={mouseY}");
+            return;
+        }
+        
+        // Check if clicked on scrollbar track (jump scroll) - must be done before continue button check
+        if (_ui.IsMouseOverScrollbarTrack(mouseX, mouseY, _narrationState.ScrollbarThumb))
+        {
+            int newOffset = _ui.CalculateScrollOffsetFromMouseY(mouseY, _scrollBuffer);
+            _scrollBuffer.SetScrollOffset(newOffset);
+            _narrationState.ScrollOffset = newOffset;
+            Console.WriteLine($"NarrativeController: Jump scrolled to offset {newOffset}");
+            return;
+        }
+        
         // If continue button is shown, check if clicked
         if (_narrationState.ShowContinueButton && _narrationState.ActionRegions.Count > 0)
         {
@@ -842,6 +864,8 @@ public class NarrativeController
                     // The calling controller should check HasRequestedExit() and exit mode
                 }
             }
+            // When continue button is shown, don't process other clicks (keywords/actions)
+            // but scrollbar clicks are allowed (processed above)
             return;
         }
         
@@ -892,26 +916,6 @@ public class NarrativeController
                 Console.WriteLine("NarrativeController: Popup closed (clicked outside)");
                 _narrationState.IsSelectingObservationSkill = false;
             }
-            return;
-        }
-        
-        // Check if clicked on scrollbar thumb (start drag)
-        if (_ui.IsMouseOverScrollbarThumb(mouseX, mouseY, _narrationState.ScrollbarThumb))
-        {
-            _narrationState.IsScrollbarDragging = true;
-            _narrationState.ScrollbarDragStartY = mouseY;
-            _narrationState.ScrollbarDragStartOffset = _narrationState.ScrollOffset;
-            Console.WriteLine($"NarrativeController: Started scrollbar drag at Y={mouseY}");
-            return;
-        }
-        
-        // Check if clicked on scrollbar track (jump scroll)
-        if (_ui.IsMouseOverScrollbarTrack(mouseX, mouseY, _narrationState.ScrollbarThumb))
-        {
-            int newOffset = _ui.CalculateScrollOffsetFromMouseY(mouseY, _scrollBuffer);
-            _scrollBuffer.SetScrollOffset(newOffset);
-            _narrationState.ScrollOffset = newOffset;
-            Console.WriteLine($"NarrativeController: Jump scrolled to offset {newOffset}");
             return;
         }
         

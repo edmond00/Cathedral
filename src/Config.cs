@@ -168,6 +168,7 @@ public static class Config
         public static readonly Vector4 SeparatorColor = Colors.DarkGray35; // Dark grey for separator lines
         public static readonly Vector4 DiceGoldColor = Colors.GoldYellow; // Gold yellow for dice sixes
         public static readonly Vector4 HintTextColor = Colors.MediumGray50; // Medium grey for hint text
+        public static readonly Vector4 DimmedContentColor = Colors.DarkGray35; // Dark grey for content when continue button is shown
     }
     
     #endregion

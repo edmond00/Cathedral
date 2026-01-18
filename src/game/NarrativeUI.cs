@@ -115,7 +115,8 @@ public class NarrativeUI
         int scrollOffset,
         int thinkingAttemptsRemaining,
         KeywordRegion? hoveredKeyword = null,
-        ActionRegion? hoveredAction = null)
+        ActionRegion? hoveredAction = null,
+        bool dimContent = false)
     {
         _keywordRegions.Clear();
         _actionRegions.Clear();
@@ -134,6 +135,35 @@ public class NarrativeUI
         int visibleContentHeight = NarrativeLayout.NARRATIVE_HEIGHT - NarrativeLayout.SEPARATOR_HEIGHT;
         var visibleLines = scrollBuffer.GetVisibleLines(scrollOffset, visibleContentHeight);
         
+        // When dimming content, find the last outcome block to keep it highlighted
+        int lastOutcomeBlockStart = -1;
+        if (dimContent)
+        {
+            // Find the start of the last outcome block (working backwards)
+            for (int i = visibleLines.Count - 1; i >= 0; i--)
+            {
+                var line = visibleLines[i];
+                if (!line.IsHistory && line.BlockType == NarrationBlockType.Outcome)
+                {
+                    // Found an outcome line, now find the start of this block
+                    lastOutcomeBlockStart = i;
+                    // Go backwards to find the beginning of this block
+                    for (int j = i - 1; j >= 0; j--)
+                    {
+                        var prevLine = visibleLines[j];
+                        if (prevLine.IsHistory || prevLine.BlockType != NarrationBlockType.Outcome || 
+                            (prevLine.Type == LineType.Empty && j > 0 && visibleLines[j-1].BlockType != NarrationBlockType.Outcome))
+                        {
+                            lastOutcomeBlockStart = j + 1;
+                            break;
+                        }
+                        lastOutcomeBlockStart = j;
+                    }
+                    break;
+                }
+            }
+        }
+        
         int currentY = NarrativeLayout.CONTENT_START_Y;
         ParsedNarrativeAction? currentAction = null;
         int actionLineCount = 0;
@@ -150,6 +180,10 @@ public class NarrativeUI
                 currentY++;
                 continue;
             }
+            
+            // Determine if this specific line should be dimmed
+            int lineIndex = visibleLines.IndexOf(renderedLine);
+            bool shouldDimThisLine = dimContent && (lastOutcomeBlockStart == -1 || lineIndex < lastOutcomeBlockStart);
             
             switch (renderedLine.Type)
             {
@@ -199,13 +233,17 @@ public class NarrativeUI
                         string skillName = headerText.Substring(0, lastSpaceIndex);
                         string levelIndicators = headerText.Substring(lastSpaceIndex);
                         
-                        _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, skillName, Config.NarrativeUI.SkillHeaderColor, Config.NarrativeUI.BackgroundColor);
-                        _terminal.Text(NarrativeLayout.LEFT_MARGIN + skillName.Length, currentY, levelIndicators, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
+                        Vector4 skillHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.SkillHeaderColor;
+                        Vector4 skillLevelColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.LoadingColor;
+                        
+                        _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, skillName, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(NarrativeLayout.LEFT_MARGIN + skillName.Length, currentY, levelIndicators, skillLevelColor, Config.NarrativeUI.BackgroundColor);
                     }
                     else
                     {
                         // Fallback: render entire header in skill header color
-                        _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, headerText, Config.NarrativeUI.SkillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                        Vector4 skillHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.SkillHeaderColor;
+                        _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, headerText, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
                     }
                     
                     // Note: Do NOT reset action counter here - we want globally unique action indices
@@ -220,7 +258,8 @@ public class NarrativeUI
                         NarrativeLayout.LEFT_MARGIN,
                         currentY,
                         thinkingAttemptsRemaining,
-                        hoveredKeyword);
+                        hoveredKeyword,
+                        shouldDimThisLine);
                     break;
                     
                 case LineType.Action:
@@ -231,13 +270,13 @@ public class NarrativeUI
                         currentAction = renderedLine.Actions[0];
                         actionLineCount = 0;
                         // Use GlobalActionIndex stored in renderedLine
-                        RenderActionLine(renderedLine.Text, currentAction, renderedLine.GlobalActionIndex, currentY, actionLineCount, hoveredAction);
+                        RenderActionLine(renderedLine.Text, currentAction, renderedLine.GlobalActionIndex, currentY, actionLineCount, hoveredAction, shouldDimThisLine);
                         actionLineCount++;
                     }
                     else if (currentAction != null)
                     {
                         // Continuation line of current action - use same GlobalActionIndex
-                        RenderActionLine(renderedLine.Text, currentAction, renderedLine.GlobalActionIndex, currentY, actionLineCount, hoveredAction);
+                        RenderActionLine(renderedLine.Text, currentAction, renderedLine.GlobalActionIndex, currentY, actionLineCount, hoveredAction, shouldDimThisLine);
                         actionLineCount++;
                     }
                     else
@@ -252,6 +291,13 @@ public class NarrativeUI
                         {
                             actionColor = Config.NarrativeUI.FailureColor;
                         }
+                        
+                        // Apply dimming if needed
+                        if (shouldDimThisLine)
+                        {
+                            actionColor = Config.NarrativeUI.DimmedContentColor;
+                        }
+                        
                         _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, renderedLine.Text, actionColor, Config.NarrativeUI.BackgroundColor);
                     }
                     break;
@@ -279,6 +325,12 @@ public class NarrativeUI
                             break;
                         }
                         lookbackIndex--;
+                    }
+                    
+                    // Apply dimming if needed
+                    if (shouldDimThisLine)
+                    {
+                        outcomeColor = Config.NarrativeUI.DimmedContentColor;
                     }
                     
                     _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, renderedLine.Text, outcomeColor, Config.NarrativeUI.BackgroundColor);
@@ -329,7 +381,8 @@ public class NarrativeUI
         int startX,
         int y,
         int thinkingAttemptsRemaining,
-        KeywordRegion? hoveredKeyword)
+        KeywordRegion? hoveredKeyword,
+        bool dimContent = false)
     {
         if (string.IsNullOrEmpty(text))
             return;
@@ -337,7 +390,8 @@ public class NarrativeUI
         if (keywords == null || keywords.Count == 0)
         {
             // No keywords, just render normal text
-            _terminal.Text(startX, y, text, Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
+            Vector4 textColor = dimContent ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.NarrativeColor;
+            _terminal.Text(startX, y, text, textColor, Config.NarrativeUI.BackgroundColor);
             return;
         }
         
@@ -350,8 +404,8 @@ public class NarrativeUI
         {
             if (segment.IsKeyword)
             {
-                // Only highlight keywords if thinking attempts remain
-                if (thinkingAttemptsRemaining > 0)
+                // Only highlight keywords if thinking attempts remain and content is not dimmed
+                if (thinkingAttemptsRemaining > 0 && !dimContent)
                 {
                     // Track keyword region for click detection
                     var keywordRegion = new KeywordRegion(
@@ -373,14 +427,16 @@ public class NarrativeUI
                 }
                 else
                 {
-                    // No attempts remaining - render as normal text
-                    _terminal.Text(currentX, y, segment.Text, Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
+                    // No attempts remaining or content is dimmed - render as dimmed text
+                    Vector4 textColor = dimContent ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.NarrativeColor;
+                    _terminal.Text(currentX, y, segment.Text, textColor, Config.NarrativeUI.BackgroundColor);
                 }
             }
             else
             {
                 // Render normal text
-                _terminal.Text(currentX, y, segment.Text, Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
+                Vector4 textColor = dimContent ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.NarrativeColor;
+                _terminal.Text(currentX, y, segment.Text, textColor, Config.NarrativeUI.BackgroundColor);
             }
             
             currentX += segment.Text.Length;
@@ -405,19 +461,23 @@ public class NarrativeUI
     /// <summary>
     /// Render a single action line (actions are pre-wrapped in scroll buffer).
     /// </summary>
-    private void RenderActionLine(string text, ParsedNarrativeAction action, int actionIndex, int y, int lineIndex, ActionRegion? hoveredAction)
+    private void RenderActionLine(string text, ParsedNarrativeAction action, int actionIndex, int y, int lineIndex, ActionRegion? hoveredAction, bool dimContent = false)
     {
         // Check if this action is hovered
         bool isHovered = hoveredAction != null && hoveredAction.ActionIndex == actionIndex;
         
-        // Calculate colors - when hovered, skill parts also get hover styling
-        Vector4 prefixColor = Config.NarrativeUI.NarrativeColor;
-        Vector4 textColor = isHovered ? Config.NarrativeUI.ActionHoverColor : Config.NarrativeUI.ActionNormalColor;
-        Vector4 backgroundColor = isHovered ? Config.NarrativeUI.ActionHoverBackgroundColor : Config.NarrativeUI.BackgroundColor;
+        // Calculate colors - when dimmed, use dark grey regardless of hover state
+        Vector4 prefixColor = dimContent ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.NarrativeColor;
+        Vector4 textColor = dimContent ? Config.NarrativeUI.DimmedContentColor : 
+            (isHovered ? Config.NarrativeUI.ActionHoverColor : Config.NarrativeUI.ActionNormalColor);
+        Vector4 backgroundColor = dimContent ? Config.NarrativeUI.BackgroundColor :
+            (isHovered ? Config.NarrativeUI.ActionHoverBackgroundColor : Config.NarrativeUI.BackgroundColor);
         
-        // Skill bracket colors - use hover colors when action is hovered
-        Vector4 skillBracketColor = isHovered ? Config.NarrativeUI.ActionHoverColor : Config.Colors.DarkYellowGrey;
-        Vector4 skillLevelColor = isHovered ? Config.NarrativeUI.ActionHoverColor : Config.NarrativeUI.LoadingColor;
+        // Skill bracket colors - when dimmed, use dark grey; otherwise use hover-aware colors
+        Vector4 skillBracketColor = dimContent ? Config.NarrativeUI.DimmedContentColor :
+            (isHovered ? Config.NarrativeUI.ActionHoverColor : Config.Colors.DarkYellowGrey);
+        Vector4 skillLevelColor = dimContent ? Config.NarrativeUI.DimmedContentColor :
+            (isHovered ? Config.NarrativeUI.ActionHoverColor : Config.NarrativeUI.LoadingColor);
         Vector4 skillBracketBackground = backgroundColor; // Use action background for skill parts too
         
         int startX = NarrativeLayout.LEFT_MARGIN;
