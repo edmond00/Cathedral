@@ -43,7 +43,7 @@ public class NarrationScrollBuffer
         
         // Create a new block with cleaned text if it was modified
         var blockToAdd = cleanedText != block.Text 
-            ? block with { Text = cleanedText }
+            ? new NarrationBlock(block.Type, block.Skill, cleanedText, block.Keywords, block.Actions, block.ChainOrigin)
             : block;
         
         _blocks.Add(blockToAdd);
@@ -180,7 +180,9 @@ public class NarrationScrollBuffer
                 BlockType: line.BlockType,
                 Keywords: null,  // Remove keywords to disable interactivity
                 Actions: null,   // Remove actions to disable interactivity
-                IsHistory: true
+                IsHistory: true,
+                GlobalActionIndex: -1,
+                SourceBlock: null  // Clear source block for history
             );
             _historyLines.Add(historyLine);
             convertedCount++;
@@ -196,7 +198,9 @@ public class NarrationScrollBuffer
             BlockType: NarrationBlockType.Observation, // Doesn't matter for separator
             Keywords: null,
             Actions: null,
-            IsHistory: true
+            IsHistory: true,
+            GlobalActionIndex: -1,
+            SourceBlock: null
         ));
         
         // Add empty line after separator for spacing
@@ -206,7 +210,9 @@ public class NarrationScrollBuffer
             BlockType: NarrationBlockType.Observation,
             Keywords: null,
             Actions: null,
-            IsHistory: true
+            IsHistory: true,
+            GlobalActionIndex: -1,
+            SourceBlock: null
         ));
         
         // Clear current blocks (they're now in history)
@@ -250,7 +256,10 @@ public class NarrationScrollBuffer
                     Type: LineType.Header,
                     BlockType: block.Type,
                     Keywords: null,
-                    Actions: null
+                    Actions: null,
+                    IsHistory: false,
+                    GlobalActionIndex: -1,
+                    SourceBlock: block
                 ));
                 
                 // Empty line after header
@@ -259,7 +268,10 @@ public class NarrationScrollBuffer
                     Type: LineType.Empty,
                     BlockType: block.Type,
                     Keywords: null,
-                    Actions: null
+                    Actions: null,
+                    IsHistory: false,
+                    GlobalActionIndex: -1,
+                    SourceBlock: block
                 ));
             }
 
@@ -281,7 +293,10 @@ public class NarrationScrollBuffer
                     Type: lineType,
                     BlockType: block.Type,
                     Keywords: block.Keywords, // Associate keywords with this line
-                    Actions: null
+                    Actions: null,
+                    IsHistory: false,
+                    GlobalActionIndex: -1,
+                    SourceBlock: block
                 ));
             }
 
@@ -294,7 +309,10 @@ public class NarrationScrollBuffer
                     Type: LineType.Empty,
                     BlockType: block.Type,
                     Keywords: null,
-                    Actions: null
+                    Actions: null,
+                    IsHistory: false,
+                    GlobalActionIndex: -1,
+                    SourceBlock: block
                 ));
                 
                 // Pre-wrap each action to match actual rendered lines
@@ -328,7 +346,8 @@ public class NarrationScrollBuffer
                             Keywords: null,
                             Actions: i == 0 ? new List<ParsedNarrativeAction> { action } : null, // Only first line has action reference
                             IsHistory: false,
-                            GlobalActionIndex: thisActionIndex  // Store global index for all wrapped lines of this action
+                            GlobalActionIndex: thisActionIndex,  // Store global index for all wrapped lines of this action
+                            SourceBlock: block
                         ));
                     }
                 }
@@ -340,7 +359,10 @@ public class NarrationScrollBuffer
                 Type: LineType.Empty,
                 BlockType: block.Type,
                 Keywords: null,
-                Actions: null
+                Actions: null,
+                IsHistory: false,
+                GlobalActionIndex: -1,
+                SourceBlock: block
             ));
         }
     }
@@ -487,7 +509,8 @@ public record RenderedLine(
     List<string>? Keywords,
     List<ParsedNarrativeAction>? Actions,  // Actions for rendering (only for Action lines)
     bool IsHistory = false,  // True if this line is part of history (from previous narration nodes)
-    int GlobalActionIndex = -1  // Global action index (0-based) across all thinking blocks, -1 if not an action line
+    int GlobalActionIndex = -1,  // Global action index (0-based) across all thinking blocks, -1 if not an action line
+    NarrationBlock? SourceBlock = null  // The narration block this line comes from (for skill chain tracking)
 );
 
 /// <summary>

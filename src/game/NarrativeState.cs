@@ -327,7 +327,7 @@ public static class ClickableRegionExtensions
 /// <summary>
 /// Represents a clickable keyword region in the terminal.
 /// </summary>
-public record KeywordRegion(string Keyword, int Y, int StartX, int EndX) : IClickableRegion
+public record KeywordRegion(string Keyword, int Y, int StartX, int EndX, NarrationBlock? SourceBlock = null) : IClickableRegion
 {
     /// <summary>
     /// Starting Y coordinate (same as Y for single-line regions).
@@ -343,4 +343,4 @@ public record KeywordRegion(string Keyword, int Y, int StartX, int EndX) : IClic
 /// <summary>
 /// Represents a clickable action region in the terminal.
 /// </summary>
-public record ActionRegion(int ActionIndex, int StartY, int EndY, int StartX, int EndX) : IClickableRegion;
+public record ActionRegion(int ActionIndex, int StartY, int EndY, int StartX, int EndX, ParsedNarrativeAction? Action = null) : IClickableRegion;

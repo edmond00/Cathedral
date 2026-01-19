@@ -173,6 +173,9 @@ public class NarrativeController
     /// </summary>
     private async Task ExecuteThinkingPhaseAsync(Skill thinkingSkill, string keyword)
     {
+        // Get the source observation block from the hovered keyword (for skill chain tracking)
+        var sourceObservationBlock = _narrationState.HoveredKeyword?.SourceBlock;
+        
         try
         {
             Console.WriteLine($"NarrativeController: Executing thinking with {thinkingSkill.DisplayName} on keyword '{keyword}'");
@@ -211,13 +214,21 @@ public class NarrativeController
             Console.WriteLine($"NarrativeController: Generated {response.Actions.Count} actions");
             
             // Create thinking block with reasoning + actions
+            // ChainOrigin points to the observation block that contained the clicked keyword
             var thinkingBlock = new NarrationBlock(
                 Type: NarrationBlockType.Thinking,
                 Skill: thinkingSkill,
                 Text: response.ReasoningText,
                 Keywords: null,
-                Actions: response.Actions
+                Actions: response.Actions,
+                ChainOrigin: sourceObservationBlock
             );
+            
+            // Set ChainOrigin for each action to point to this thinking block
+            foreach (var action in response.Actions)
+            {
+                action.ChainOrigin = thinkingBlock;
+            }
             
             // Add to scroll buffer
             _scrollBuffer.AddBlock(thinkingBlock);
@@ -615,11 +626,23 @@ public class NarrativeController
             _narrationState.IsScrollbarThumbHovered
         );
         
-        // Render status bar
-        string statusMessage = _narrationState.ThinkingAttemptsRemaining > 0
-            ? $"Hover keywords to highlight • Click keywords to think ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)"
-            : "No thinking attempts remaining • Explore keywords to continue";
-        _ui.RenderStatusBar(statusMessage);
+        // Render status bar - show skill chain dice count when hovering over an action
+        string statusMessage;
+        if (_narrationState.HoveredAction?.Action != null)
+        {
+            // Calculate total skill level from the skill chain
+            int totalDice = _narrationState.HoveredAction.Action.GetTotalSkillLevel();
+            statusMessage = $"Click to attempt this action with {totalDice}{Config.Symbols.SkillLevelIndicator} in the skill check";
+        }
+        else if (_narrationState.ThinkingAttemptsRemaining > 0)
+        {
+            statusMessage = $"Hover keywords to highlight • Click keywords to think ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)";
+        }
+        else
+        {
+            statusMessage = "No thinking attempts remaining • Explore keywords to continue";
+        }
+        _ui.RenderStatusBar(statusMessage, _narrationState.HoveredAction?.Action);
     }
     
     /// <summary>

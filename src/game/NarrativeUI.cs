@@ -244,7 +244,23 @@ public class NarrativeUI
                         }
                         
                         Vector4 skillHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.SkillHeaderColor;
-                        Vector4 skillLevelColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.LoadingColor;
+                        
+                        // Determine skill level indicator color based on whether this specific block is in the hovered action's chain
+                        Vector4 skillLevelColor;
+                        if (shouldDimThisLine)
+                        {
+                            skillLevelColor = Config.NarrativeUI.DimmedContentColor;
+                        }
+                        else if (hoveredAction?.Action != null && renderedLine.SourceBlock != null)
+                        {
+                            // Check if this specific block is in the hovered action's chain (not just matching skill)
+                            bool isInChain = hoveredAction.Action.IsElementInChain(renderedLine.SourceBlock);
+                            skillLevelColor = isInChain ? Config.NarrativeUI.LoadingColor : Config.NarrativeUI.SkillHeaderColor;
+                        }
+                        else
+                        {
+                            skillLevelColor = Config.NarrativeUI.LoadingColor;
+                        }
                         
                         _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, skillName, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
                         _terminal.Text(NarrativeLayout.LEFT_MARGIN + skillName.Length, currentY, levelIndicators, skillLevelColor, Config.NarrativeUI.BackgroundColor);
@@ -275,7 +291,8 @@ public class NarrativeUI
                         currentY,
                         thinkingAttemptsRemaining,
                         hoveredKeyword,
-                        shouldDimThisLine);
+                        shouldDimThisLine,
+                        renderedLine.SourceBlock);
                     break;
                     
                 case LineType.Action:
@@ -398,7 +415,8 @@ public class NarrativeUI
         int y,
         int thinkingAttemptsRemaining,
         KeywordRegion? hoveredKeyword,
-        bool dimContent = false)
+        bool dimContent = false,
+        NarrationBlock? sourceBlock = null)
     {
         if (string.IsNullOrEmpty(text))
             return;
@@ -423,12 +441,13 @@ public class NarrativeUI
                 // Only highlight keywords if thinking attempts remain and content is not dimmed
                 if (thinkingAttemptsRemaining > 0 && !dimContent)
                 {
-                    // Track keyword region for click detection
+                    // Track keyword region for click detection, including source block for skill chain
                     var keywordRegion = new KeywordRegion(
                         segment.KeywordValue!, 
                         y, 
                         currentX, 
-                        currentX + segment.Text.Length - 1);
+                        currentX + segment.Text.Length - 1,
+                        sourceBlock);
                     _keywordRegions.Add(keywordRegion);
                     
                     // Check if this specific region is hovered
@@ -492,8 +511,30 @@ public class NarrativeUI
         // Skill bracket colors - when dimmed, use dark grey; otherwise use hover-aware colors
         Vector4 skillBracketColor = dimContent ? Config.NarrativeUI.DimmedContentColor :
             (isHovered ? Config.NarrativeUI.ActionHoverColor : Config.Colors.DarkYellowGrey);
-        Vector4 skillLevelColor = dimContent ? Config.NarrativeUI.DimmedContentColor :
-            (isHovered ? Config.NarrativeUI.ActionHoverColor : Config.NarrativeUI.LoadingColor);
+        
+        // Skill level color - when an action is hovered, only highlight skill levels in the chain
+        Vector4 skillLevelColor;
+        if (dimContent)
+        {
+            skillLevelColor = Config.NarrativeUI.DimmedContentColor;
+        }
+        else if (isHovered)
+        {
+            // This action is hovered - its skill is always in its own chain, so highlight it
+            skillLevelColor = Config.NarrativeUI.LoadingColor;
+        }
+        else if (hoveredAction?.Action != null)
+        {
+            // Another action is hovered - check if this specific action element is in that chain
+            // (different actions are never in each other's chains)
+            bool isInChain = hoveredAction.Action.IsElementInChain(action);
+            skillLevelColor = isInChain ? Config.NarrativeUI.LoadingColor : Config.NarrativeUI.SkillHeaderColor;
+        }
+        else
+        {
+            skillLevelColor = Config.NarrativeUI.LoadingColor;
+        }
+        
         Vector4 skillBracketBackground = backgroundColor; // Use action background for skill parts too
         
         int startX = NarrativeLayout.LEFT_MARGIN;
@@ -534,7 +575,8 @@ public class NarrativeUI
             _terminal.Text(startX, y, truncatedText, textColor, backgroundColor);
             
             // Track action region (will be updated as we encounter more lines)
-            var actionRegion = new ActionRegion(actionIndex, y, y, NarrativeLayout.LEFT_MARGIN, NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN);
+            // Include the action reference for skill chain access
+            var actionRegion = new ActionRegion(actionIndex, y, y, NarrativeLayout.LEFT_MARGIN, NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN, action);
             _actionRegions.Add(actionRegion);
         }
         else
@@ -559,7 +601,8 @@ public class NarrativeUI
                         lastRegion.StartY, 
                         y,  // Extend to current line
                         NarrativeLayout.LEFT_MARGIN,
-                        NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN
+                        NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN,
+                        lastRegion.Action  // Keep the action reference
                     );
                 }
             }
@@ -684,8 +727,9 @@ public class NarrativeUI
     
     /// <summary>
     /// Render the status bar at the bottom.
+    /// When hovering over an action, the dice count portion is highlighted in yellow.
     /// </summary>
-    public void RenderStatusBar(string message = "")
+    public void RenderStatusBar(string message = "", ParsedNarrativeAction? hoveredAction = null)
     {
         int statusY = NarrativeLayout.STATUS_BAR_Y;
         int separatorY = NarrativeLayout.SEPARATOR_Y;
@@ -705,7 +749,39 @@ public class NarrativeUI
             message = message.Substring(0, maxMessageWidth - 3) + "...";
         }
         
-        _terminal.Text(NarrativeLayout.LEFT_MARGIN, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+        // If hovering over an action, render with highlighted dice count
+        if (hoveredAction != null)
+        {
+            int totalDice = hoveredAction.GetTotalSkillLevel();
+            string diceText = $"{totalDice}{Config.Symbols.SkillLevelIndicator}";
+            
+            // Find where the dice text appears in the message
+            int diceIndex = message.IndexOf(diceText);
+            if (diceIndex >= 0)
+            {
+                // Render before dice text in dark gray
+                string beforeDice = message.Substring(0, diceIndex);
+                _terminal.Text(NarrativeLayout.LEFT_MARGIN, statusY, beforeDice, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+                
+                // Render dice text in yellow (highlighted)
+                int diceX = NarrativeLayout.LEFT_MARGIN + beforeDice.Length;
+                _terminal.Text(diceX, statusY, diceText, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
+                
+                // Render after dice text in dark gray
+                string afterDice = message.Substring(diceIndex + diceText.Length);
+                int afterX = diceX + diceText.Length;
+                _terminal.Text(afterX, statusY, afterDice, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+            }
+            else
+            {
+                // Fallback: render entire message in status bar color
+                _terminal.Text(NarrativeLayout.LEFT_MARGIN, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+            }
+        }
+        else
+        {
+            _terminal.Text(NarrativeLayout.LEFT_MARGIN, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+        }
     }
     
     /// <summary>
