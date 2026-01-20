@@ -702,7 +702,8 @@ public class LocationTravelGameController : IDisposable
                 difficultyEvaluator,
                 outcomeNarrator,
                 outcomeApplicator,
-                avatar
+                avatar,
+                _criticEvaluator
             );
             
             // Create Phase 6 controller

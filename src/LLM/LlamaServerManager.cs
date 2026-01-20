@@ -43,6 +43,11 @@ public class LlamaServerManager : IDisposable
     /// </summary>
     public int ContextSize => _contextSize;
     
+    /// <summary>
+    /// Gets the session log directory path (e.g., logs/llm_session_2026-01-20_09-42-30)
+    /// </summary>
+    public string? SessionLogDir => _sessionLogDir;
+    
     // Helper methods for logging
     
     /// <summary>

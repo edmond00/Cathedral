@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Cathedral.LLM;
 
@@ -7,6 +10,7 @@ namespace Cathedral.Game;
 
 /// <summary>
 /// LLM-based critic that evaluates coherence and quality using token probabilities.
+/// Supports binary tree evaluation where each node is a yes/no question.
 /// Returns probability ratios rather than generating text.
 /// Stateless - conversation is reset after each evaluation.
 /// </summary>
@@ -27,6 +31,246 @@ response ::= ""yes"" | ""no""";
     public CriticEvaluator(LlamaServerManager llamaServer)
     {
         _llamaServer = llamaServer ?? throw new ArgumentNullException(nameof(llamaServer));
+    }
+    
+    /// <summary>
+    /// Evaluates a binary tree of yes/no questions.
+    /// Traverses the tree, evaluating each node until reaching a terminal state
+    /// (no branch to follow after success or failure).
+    /// </summary>
+    /// <param name="rootNode">The root node of the decision tree</param>
+    /// <returns>Complete evaluation result including trace of all nodes</returns>
+    public async Task<CriticTreeResult> EvaluateTreeAsync(CriticNode rootNode)
+    {
+        if (rootNode == null)
+            throw new ArgumentNullException(nameof(rootNode));
+        
+        var result = new CriticTreeResult();
+        var currentNode = rootNode;
+        
+        Console.WriteLine($"\n🌳 Critic Tree Evaluation Starting...");
+        
+        while (currentNode != null)
+        {
+            Console.WriteLine($"  📍 Evaluating node: {currentNode.Name}");
+            
+            // Evaluate the current node
+            var nodeResult = await EvaluateNodeAsync(currentNode);
+            result.Trace.Add(nodeResult);
+            
+            Console.WriteLine($"     {nodeResult}");
+            
+            // Determine next node based on success/failure
+            if (nodeResult.Success)
+            {
+                // Follow success branch if it exists
+                currentNode = currentNode.SuccessBranch;
+                if (currentNode != null)
+                    Console.WriteLine($"     → Following success branch to: {currentNode.Name}");
+            }
+            else
+            {
+                // Follow failure branch if it exists
+                currentNode = currentNode.FailureBranch;
+                if (currentNode != null)
+                    Console.WriteLine($"     → Following failure branch to: {currentNode.Name}");
+            }
+        }
+        
+        Console.WriteLine($"\n🌳 Tree Evaluation Complete: {(result.OverallSuccess ? "SUCCESS ✓" : "FAILURE ✗")}");
+        if (!result.OverallSuccess)
+        {
+            Console.WriteLine($"   Failures: {result.FailureCount}");
+            foreach (var error in result.AllErrorMessages)
+            {
+                Console.WriteLine($"   - {error}");
+            }
+        }
+        Console.WriteLine($"   Total duration: {result.TotalDurationMs:F0}ms");
+        
+        // Save trace to file in critic slot folder
+        try
+        {
+            SaveTreeTraceToFile(result, rootNode.Name);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"CriticEvaluator: Failed to save trace: {ex.Message}");
+        }
+        
+        return result;
+    }
+    
+    /// <summary>
+    /// Saves the tree trace to a file in the critic's slot folder.
+    /// </summary>
+    private void SaveTreeTraceToFile(CriticTreeResult result, string treeName)
+    {
+        var sessionLogDir = _llamaServer.SessionLogDir;
+        if (sessionLogDir == null || _criticSlotId < 0)
+            return;
+        
+        var slotDir = Path.Combine(sessionLogDir, $"slot_{_criticSlotId}");
+        if (!Directory.Exists(slotDir))
+            Directory.CreateDirectory(slotDir);
+        
+        var timestamp = DateTime.Now.ToString("HH-mm-ss-fff");
+        var traceFileName = $"tree_trace_{timestamp}_{treeName}.txt";
+        var traceFilePath = Path.Combine(slotDir, traceFileName);
+        
+        var sb = new StringBuilder();
+        var status = result.OverallSuccess ? "✓ SUCCESS" : "✗ FAILURE";
+        sb.AppendLine($"Critic Tree Evaluation - {status}");
+        sb.AppendLine($"Tree: {treeName}");
+        sb.AppendLine($"Timestamp: {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}");
+        sb.AppendLine(new string('=', 80));
+        sb.AppendLine();
+        
+        sb.AppendLine($"TRACE ({result.Trace.Count} nodes evaluated):");
+        sb.AppendLine();
+        
+        for (int i = 0; i < result.Trace.Count; i++)
+        {
+            var node = result.Trace[i];
+            var nodeStatus = node.Success ? "✓" : "✗";
+            var answer = node.YesIsSuccess ? "yes=success" : "no=success";
+            
+            sb.AppendLine($"[{i + 1}] {nodeStatus} {node.NodeName}");
+            sb.AppendLine($"    Question: {node.Question}");
+            sb.AppendLine($"    Score: {node.Score:F4} (threshold: {node.Threshold:F2}, {answer})");
+            sb.AppendLine($"    Probabilities: yes={node.ProbabilityYes:F4}, no={node.ProbabilityNo:F4}");
+            sb.AppendLine($"    Duration: {node.DurationMs:F0}ms");
+            
+            if (!node.Success && !string.IsNullOrEmpty(node.ErrorMessage))
+            {
+                sb.AppendLine($"    Error: {node.ErrorMessage}");
+            }
+            sb.AppendLine();
+        }
+        
+        sb.AppendLine(new string('=', 80));
+        sb.AppendLine($"SUMMARY:");
+        sb.AppendLine($"  Total Nodes: {result.Trace.Count}");
+        sb.AppendLine($"  Failures: {result.FailureCount}");
+        sb.AppendLine($"  Final Result: {(result.FinalSuccess ? "Success" : "Failure")}");
+        sb.AppendLine($"  Overall Success: {result.OverallSuccess}");
+        sb.AppendLine($"  Total Duration: {result.TotalDurationMs:F0}ms");
+        
+        if (!result.OverallSuccess)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"  Failed Nodes: {string.Join(", ", result.FailedNodeNames)}");
+            foreach (var error in result.AllErrorMessages)
+            {
+                sb.AppendLine($"  - {error}");
+            }
+        }
+        
+        File.WriteAllText(traceFilePath, sb.ToString());
+        Console.WriteLine($"   Trace saved to: {traceFilePath}");
+    }
+    
+    /// <summary>
+    /// Evaluates a single CriticNode and returns the result.
+    /// </summary>
+    private async Task<CriticNodeResult> EvaluateNodeAsync(CriticNode node)
+    {
+        var sw = Stopwatch.StartNew();
+        
+        var nodeResult = new CriticNodeResult
+        {
+            NodeName = node.Name,
+            Question = node.Question,
+            Threshold = node.Threshold,
+            YesIsSuccess = node.YesIsSuccess
+        };
+        
+        try
+        {
+            // Get probabilities for yes/no
+            var (pYes, pNo, score) = await GetYesNoProbabilitiesAsync(node.Question);
+            
+            nodeResult.ProbabilityYes = pYes;
+            nodeResult.ProbabilityNo = pNo;
+            nodeResult.Score = score;
+            
+            // Determine success based on YesIsSuccess flag and threshold
+            if (node.YesIsSuccess)
+            {
+                // "yes" is success - score must meet threshold
+                nodeResult.Success = score >= node.Threshold;
+            }
+            else
+            {
+                // "no" is success - inverted score (1 - score) must meet threshold
+                nodeResult.Success = (1.0 - score) >= node.Threshold;
+            }
+            
+            // Set error message if failed
+            if (!nodeResult.Success)
+            {
+                nodeResult.ErrorMessage = !string.IsNullOrEmpty(node.ErrorMessage) 
+                    ? node.ErrorMessage 
+                    : $"Node '{node.Name}' check failed";
+            }
+        }
+        catch (Exception ex)
+        {
+            nodeResult.Success = false;
+            nodeResult.Score = 0.5;
+            nodeResult.ErrorMessage = $"Evaluation error: {ex.Message}";
+        }
+        
+        sw.Stop();
+        nodeResult.DurationMs = sw.Elapsed.TotalMilliseconds;
+        
+        return nodeResult;
+    }
+    
+    /// <summary>
+    /// Gets the yes/no probabilities for a question.
+    /// Returns (pYes, pNo, score) where score = pYes / (pYes + pNo).
+    /// Resets the LLM instance after each call to maintain statelessness.
+    /// </summary>
+    private async Task<(double pYes, double pNo, double score)> GetYesNoProbabilitiesAsync(string question)
+    {
+        if (!_isInitialized || !_llamaServer.IsServerReady || _criticSlotId < 0)
+        {
+            Console.Error.WriteLine("CriticEvaluator: Not initialized or server not ready");
+            return (0.5, 0.5, 0.5);
+        }
+        
+        try
+        {
+            var probabilities = await _llamaServer.GetNextTokenProbabilitiesAsync(
+                _criticSlotId,
+                question,
+                constrainedTokens: new[] { "yes", "no" },
+                gbnfGrammar: YesNoGrammar
+            );
+            
+            double pYes = probabilities.GetValueOrDefault("yes", 0.0);
+            double pNo = probabilities.GetValueOrDefault("no", 0.0);
+            
+            double total = pYes + pNo;
+            double score = total > 0 ? pYes / total : 0.5;
+            
+            _totalEvaluations++;
+            
+            return (pYes, pNo, score);
+        }
+        finally
+        {
+            // CRITICAL: Reset conversation after each question to keep it stateless
+            try
+            {
+                _llamaServer.ResetInstance(_criticSlotId);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"CriticEvaluator: Error resetting instance: {ex.Message}");
+            }
+        }
     }
     
     /// <summary>

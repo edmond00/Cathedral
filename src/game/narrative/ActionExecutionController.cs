@@ -9,7 +9,7 @@ namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// Orchestrates action execution: skill checks, outcome determination, and narration.
-/// Integrates with existing ActionScorer and ActionDifficultyEvaluator.
+/// Uses tree-based Critic evaluation for action plausibility checks.
 /// </summary>
 public class ActionExecutionController
 {
@@ -18,19 +18,22 @@ public class ActionExecutionController
     private readonly OutcomeNarrator _outcomeNarrator;
     private readonly OutcomeApplicator _outcomeApplicator;
     private readonly Avatar _avatar;
+    private readonly CriticEvaluator _criticEvaluator;
 
     public ActionExecutionController(
         ActionScorer actionScorer,
         ActionDifficultyEvaluator difficultyEvaluator,
         OutcomeNarrator outcomeNarrator,
         OutcomeApplicator outcomeApplicator,
-        Avatar avatar)
+        Avatar avatar,
+        CriticEvaluator criticEvaluator)
     {
         _actionScorer = actionScorer;
         _difficultyEvaluator = difficultyEvaluator;
         _outcomeNarrator = outcomeNarrator;
         _outcomeApplicator = outcomeApplicator;
         _avatar = avatar;
+        _criticEvaluator = criticEvaluator;
     }
 
     /// <summary>
@@ -60,44 +63,34 @@ public class ActionExecutionController
                 "The skill required for this action is unavailable.");
         }
 
-        // Step 1: Use Critic to verify action plausibility/coherency
-        Console.WriteLine($"\n🔍 Evaluating action plausibility with Critic...");
+        // Step 1: Use Critic tree evaluation to verify action plausibility/coherency
+        Console.WriteLine($"\n🔍 Evaluating action plausibility with Critic Tree...");
         
-        // Ask multiple questions about the action to ensure it makes sense
-        var plausibilityQuestions = new[]
+        // Build a tree of plausibility checks - all must pass for action to be valid
+        var plausibilityTree = BuildPlausibilityTree(action.ActionText);
+        var plausibilityResult = await _criticEvaluator.EvaluateTreeAsync(plausibilityTree);
+        
+        // If any plausibility check failed, reject the action
+        if (!plausibilityResult.OverallSuccess)
         {
-            $"Given the context, does the action '{action.ActionText}' make logical sense?",
-            $"Is '{action.ActionText}' a reasonable thing to attempt in this situation?",
-            $"Would '{action.ActionText}' be physically or logically possible given the circumstances?"
-        };
-        
-        double plausibilitySum = 0.0;
-        foreach (var question in plausibilityQuestions)
-        {
-            double score = await _difficultyEvaluator.EvaluateCoherence(question);
-            plausibilitySum += score;
-            Console.WriteLine($"   Q: {question}");
-            Console.WriteLine($"   A: {score:F3} ({(score > 0.7 ? "plausible" : score > 0.4 ? "uncertain" : "implausible")})");
-        }
-        
-        double avgPlausibility = plausibilitySum / plausibilityQuestions.Length;
-        Console.WriteLine($"   Average plausibility: {avgPlausibility:F3}");
-        
-        // If action is deemed implausible, fail immediately without skill check
-        if (avgPlausibility < 0.3)
-        {
-            Console.WriteLine($"   ❌ Action rejected as implausible\n");
+            Console.WriteLine($"   ❌ Action rejected: {plausibilityResult.FinalErrorMessage}\n");
             return CreateFailureResult(action, thinkingSkillUsed,
-                "That action doesn't make sense in this situation.");
+                plausibilityResult.FinalErrorMessage.Length > 0 
+                    ? plausibilityResult.FinalErrorMessage 
+                    : "That action doesn't make sense in this situation.");
         }
         
-        Console.WriteLine($"   ✓ Action approved as plausible\n");
+        Console.WriteLine($"   ✓ Action approved as plausible ({plausibilityResult.Trace.Count} checks passed)\n");
 
-        // Step 2: Use Critic to evaluate difficulty (returns 0.0=easy to 1.0=hard)
-        Console.WriteLine($"🎯 Evaluating action difficulty with Critic...");
+        // Step 2: Use Critic tree to evaluate difficulty
+        Console.WriteLine($"🎯 Evaluating action difficulty with Critic Tree...");
         
-        var difficultyQuestion = $"Is the action '{action.ActionText}' difficult to perform?";
-        double difficultyScore = await _difficultyEvaluator.EvaluateCoherence(difficultyQuestion);
+        var difficultyTree = BuildDifficultyTree(action.ActionText);
+        var difficultyResult = await _criticEvaluator.EvaluateTreeAsync(difficultyTree);
+        
+        // Calculate difficulty score from tree result
+        // If "difficult" checks pass, action is harder
+        double difficultyScore = CalculateDifficultyFromTree(difficultyResult);
         
         Console.WriteLine($"   Difficulty score: {difficultyScore:F3} ({(difficultyScore < 0.3 ? "easy" : difficultyScore < 0.7 ? "moderate" : "hard")})");
         
@@ -158,10 +151,102 @@ public class ActionExecutionController
             Narration = narration
         };
     }
+    
+    /// <summary>
+    /// Builds a tree of plausibility checks for an action.
+    /// All checks must pass for the action to be considered valid.
+    /// </summary>
+    private CriticNode BuildPlausibilityTree(string actionText)
+    {
+        // Chain of plausibility checks - all must pass
+        var logicalSense = new CriticNode(
+            name: "LogicalSense",
+            question: $"Given the context, does the action '{actionText}' make logical sense?",
+            threshold: 0.5,
+            errorMessage: "The action doesn't make logical sense in this context"
+        );
+        
+        var reasonable = new CriticNode(
+            name: "Reasonable",
+            question: $"Is '{actionText}' a reasonable thing to attempt in this situation?",
+            threshold: 0.5,
+            errorMessage: "The action is not reasonable to attempt"
+        );
+        
+        var possible = new CriticNode(
+            name: "Possible",
+            question: $"Would '{actionText}' be physically or logically possible given the circumstances?",
+            threshold: 0.5,
+            errorMessage: "The action is not possible in these circumstances"
+        );
+        
+        // Chain them together
+        logicalSense.SuccessBranch = reasonable;
+        reasonable.SuccessBranch = possible;
+        
+        return logicalSense;
+    }
+    
+    /// <summary>
+    /// Builds a tree to evaluate action difficulty.
+    /// </summary>
+    private CriticNode BuildDifficultyTree(string actionText)
+    {
+        // Difficulty checks - we want to know if it's difficult
+        var isDifficult = new CriticNode(
+            name: "IsDifficult",
+            question: $"Is the action '{actionText}' difficult to perform?",
+            threshold: 0.5,
+            errorMessage: ""
+        );
+        
+        var requiresExpertise = new CriticNode(
+            name: "RequiresExpertise",
+            question: $"Does '{actionText}' require special expertise or training?",
+            threshold: 0.5,
+            errorMessage: ""
+        );
+        
+        var hasRisks = new CriticNode(
+            name: "HasRisks",
+            question: $"Does attempting '{actionText}' carry significant risks?",
+            threshold: 0.5,
+            errorMessage: ""
+        );
+        
+        // For difficulty, we evaluate all regardless of pass/fail
+        // Use success branches to continue evaluation
+        isDifficult.SuccessBranch = requiresExpertise;
+        isDifficult.FailureBranch = requiresExpertise; // Continue even if "not difficult"
+        requiresExpertise.SuccessBranch = hasRisks;
+        requiresExpertise.FailureBranch = hasRisks;
+        
+        return isDifficult;
+    }
+    
+    /// <summary>
+    /// Calculates a difficulty score from the difficulty tree result.
+    /// Higher score = more difficult (0.0 to 1.0).
+    /// </summary>
+    private double CalculateDifficultyFromTree(CriticTreeResult result)
+    {
+        if (result.Trace.Count == 0)
+            return 0.5;
+        
+        // Average the scores of all difficulty-related checks
+        // Higher scores mean "yes it's difficult"
+        double totalScore = 0;
+        foreach (var node in result.Trace)
+        {
+            totalScore += node.Score;
+        }
+        
+        return totalScore / result.Trace.Count;
+    }
 
     /// <summary>
     /// Determines what outcome occurs when an action fails.
-    /// Uses CriticEvaluator to score predefined generic failures for coherence.
+    /// Uses tree-based Critic evaluation to score failure outcomes.
     /// </summary>
     private async Task<OutcomeBase> DetermineFailureOutcomeAsync(ParsedNarrativeAction action, NarrationNode currentNode)
     {
@@ -175,18 +260,34 @@ public class ActionExecutionController
             (new HumorOutcome("Ether", 1, "momentary confusion"), "momentary confusion")
         };
         
-        // Use CriticEvaluator to score each failure for coherence with action/context
-        var failureScores = new Dictionary<HumorOutcome, double>();
+        // Build a tree to find the most coherent failure outcome
+        var context = currentNode.GenerateNeutralDescription(_avatar.CurrentLocationId);
+        HumorOutcome? bestOutcome = null;
+        double bestScore = 0;
         
         foreach (var (outcome, description) in genericFailures)
         {
-            var question = $"In the context '{currentNode.GenerateNeutralDescription(_avatar.CurrentLocationId)}', if the action '{action.ActionText}' fails, is '{description}' a coherent emotional consequence?";
-            var coherenceScore = await _difficultyEvaluator.EvaluateCoherence(question);
-            failureScores[outcome] = coherenceScore;
+            var coherenceNode = new CriticNode(
+                name: $"FailureCoherence_{outcome.HumorName}",
+                question: $"In the context '{context}', if the action '{action.ActionText}' fails, is '{description}' a coherent emotional consequence?",
+                threshold: 0.5,
+                errorMessage: ""
+            );
+            
+            var result = await _criticEvaluator.EvaluateTreeAsync(coherenceNode);
+            
+            if (result.Trace.Count > 0)
+            {
+                var score = result.Trace[0].Score;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestOutcome = outcome;
+                }
+            }
         }
         
-        // Return failure with highest coherence score
-        return failureScores.OrderByDescending(kvp => kvp.Value).First().Key;
+        return bestOutcome ?? genericFailures[0].outcome;
     }
 
     /// <summary>

@@ -8,17 +8,13 @@ using Cathedral.Glyph.Microworld.LocationSystem;
 namespace Cathedral.Game;
 
 /// <summary>
-/// Scores and filters actions using the Critic evaluator.
-/// Evaluates action-skill coherence, action-consequence plausibility, and context coherence.
+/// Scores and filters actions using the Critic evaluator with tree-based evaluation.
+/// Uses binary decision trees for action-skill coherence, action-consequence plausibility, 
+/// context coherence, location coherence, and action specificity.
 /// </summary>
 public class ActionScorer
 {
     private readonly CriticEvaluator _critic;
-    
-    // Scoring weights
-    private const double SkillWeight = 0.4;
-    private const double ConsequenceWeight = 0.4;
-    private const double ContextWeight = 0.2;
     
     public ActionScorer(CriticEvaluator critic)
     {
@@ -26,9 +22,8 @@ public class ActionScorer
     }
     
     /// <summary>
-    /// Scores all actions using the Critic evaluator with enhanced filtering questions.
-    /// First pass evaluation includes: skill coherence, consequence plausibility, context coherence,
-    /// location coherence, and action specificity.
+    /// Scores all actions using the Critic evaluator with tree-based evaluation.
+    /// Each action is evaluated against a decision tree of checks.
     /// Returns actions sorted by total score (highest first).
     /// </summary>
     public async Task<List<ScoredAction>> ScoreActionsAsync(
@@ -39,8 +34,7 @@ public class ActionScorer
     {
         var scoredActions = new List<ScoredAction>();
         
-        Console.WriteLine($"\n🔍 Critic First Pass: Evaluating {actions.Count} actions...");
-        Console.WriteLine($"   Checking: skill coherence, consequence plausibility, context, location fit, specificity");
+        Console.WriteLine($"\n🔍 Critic Tree Evaluation: Evaluating {actions.Count} actions...");
         
         for (int i = 0; i < actions.Count; i++)
         {
@@ -49,74 +43,44 @@ public class ActionScorer
             
             Console.WriteLine($"\n  [{i + 1}/{actions.Count}] Evaluating: {TruncateText(action.ActionText, 50)}");
             
-            // 1. Evaluate action-skill coherence
-            Console.WriteLine($"    • Checking skill coherence with '{action.Skill}'...");
-            var skillScore = await _critic.EvaluateActionSkillCoherence(
-                action.ActionText, action.Skill);
-            Console.WriteLine($"      → Score: {skillScore:F3}");
+            // Build the evaluation tree for this action
+            var evaluationTree = BuildActionEvaluationTree(
+                action, 
+                previousAction, 
+                currentSublocation, 
+                blueprint);
             
-            // 2. Evaluate action-consequence plausibility
-            Console.WriteLine($"    • Checking consequence plausibility ('{action.SuccessConsequence}')...");
-            var consequenceScore = await _critic.EvaluateActionConsequencePlausibility(
-                action.ActionText, action.SuccessConsequence);
-            Console.WriteLine($"      → Score: {consequenceScore:F3}");
-            
-            // 3. Evaluate context coherence with previous action
-            var contextScore = 1.0; // Default for first turn
-            if (previousAction != null)
-            {
-                Console.WriteLine($"    • Checking context coherence with previous action...");
-                contextScore = await EvaluateContextCoherence(action, previousAction);
-                Console.WriteLine($"      → Score: {contextScore:F3}");
-            }
-            
-            // 4. Evaluate location coherence (NEW)
-            var locationScore = 1.0; // Default if no location info
-            if (!string.IsNullOrEmpty(currentSublocation) && blueprint != null)
-            {
-                Console.WriteLine($"    • Checking location coherence...");
-                locationScore = await EvaluateLocationCoherence(action, currentSublocation, blueprint);
-                Console.WriteLine($"      → Score: {locationScore:F3}");
-            }
-            
-            // 5. Evaluate action specificity (NEW)
-            Console.WriteLine($"    • Checking action specificity...");
-            var specificityScore = await EvaluateActionSpecificity(action);
-            Console.WriteLine($"      → Score: {specificityScore:F3}");
+            // Evaluate the tree
+            var treeResult = await _critic.EvaluateTreeAsync(evaluationTree);
             
             sw.Stop();
             
-            // Calculate composite score with updated weights
-            // Adjusted weights to account for 5 criteria
-            var totalScore = (skillScore * 0.25) + 
-                           (consequenceScore * 0.25) + 
-                           (contextScore * 0.20) +
-                           (locationScore * 0.15) +
-                           (specificityScore * 0.15);
-            
-            scoredActions.Add(new ScoredAction
+            // Calculate scores from tree result
+            var scoredAction = new ScoredAction
             {
                 Action = action,
-                SkillScore = skillScore,
-                ConsequenceScore = consequenceScore,
-                ContextScore = contextScore,
-                LocationScore = locationScore,
-                SpecificityScore = specificityScore,
-                TotalScore = totalScore,
+                TreeResult = treeResult,
+                TotalScore = CalculateScoreFromTreeResult(treeResult),
                 EvaluationDurationMs = sw.Elapsed.TotalMilliseconds
-            });
+            };
             
-            Console.WriteLine($"    ✓ Total Score: {totalScore:F3} (duration: {sw.Elapsed.TotalMilliseconds:F0}ms)");
+            // Extract individual scores from trace for backward compatibility
+            ExtractIndividualScores(scoredAction, treeResult);
+            
+            scoredActions.Add(scoredAction);
+            
+            Console.WriteLine($"    ✓ Total Score: {scoredAction.TotalScore:F3} (failures: {treeResult.FailureCount}, duration: {sw.Elapsed.TotalMilliseconds:F0}ms)");
         }
         
         // Sort by total score descending (best actions first)
         var sorted = scoredActions.OrderByDescending(a => a.TotalScore).ToList();
         
-        Console.WriteLine($"\n✓ Critic First Pass Complete");
+        Console.WriteLine($"\n✓ Critic Evaluation Complete");
         Console.WriteLine($"  Top 3 actions:");
         for (int i = 0; i < Math.Min(3, sorted.Count); i++)
         {
-            Console.WriteLine($"    {i + 1}. {TruncateText(sorted[i].Action.ActionText, 50)} (score: {sorted[i].TotalScore:F3})");
+            var sa = sorted[i];
+            Console.WriteLine($"    {i + 1}. {TruncateText(sa.Action.ActionText, 50)} (score: {sa.TotalScore:F3}, failures: {sa.TreeResult?.FailureCount ?? 0})");
         }
         Console.WriteLine();
         
@@ -124,61 +88,117 @@ public class ActionScorer
     }
     
     /// <summary>
-    /// Evaluates whether an action makes sense given the previous action.
-    /// Uses the Critic to assess narrative/contextual coherence.
+    /// Builds a binary evaluation tree for an action.
+    /// The tree structure is a linear chain where all checks must pass.
     /// </summary>
-    private async Task<double> EvaluateContextCoherence(
-        ParsedAction currentAction,
-        PlayerAction previousAction)
-    {
-        // Build a question that captures the context
-        var question = $@"Previous action: {previousAction.ActionText}
-Previous outcome: {(previousAction.WasSuccessful ? "Success" : "Failure")} - {previousAction.Outcome}
-
-Current action being considered: {currentAction.ActionText}
-
-Does this new action make logical sense as a follow-up to the previous action and its outcome?";
-
-        // Use narrative quality evaluation as a proxy for context coherence
-        return await _critic.EvaluateNarrativeQuality(question, "logical and coherent sequence");
-    }
-    
-    /// <summary>
-    /// Evaluates whether an action makes sense in the current location/sublocation.
-    /// Checks if the action is coherent with the surroundings and environmental conditions.
-    /// </summary>
-    private async Task<double> EvaluateLocationCoherence(
+    private CriticNode BuildActionEvaluationTree(
         ParsedAction action,
-        string currentSublocation,
-        LocationBlueprint blueprint)
+        PlayerAction? previousAction,
+        string? currentSublocation,
+        LocationBlueprint? blueprint)
     {
-        // Get sublocation description
-        if (!blueprint.Sublocations.TryGetValue(currentSublocation, out var sublocationData))
+        // Start with skill coherence check
+        var root = CriticQuestions.SkillCoherence(action.ActionText, action.Skill, 0.5);
+        var current = root;
+        
+        // Chain: consequence plausibility
+        var consequenceNode = CriticQuestions.ConsequencePlausibility(
+            action.ActionText, 
+            action.SuccessConsequence, 
+            0.5);
+        current.SuccessBranch = consequenceNode;
+        current = consequenceNode;
+        
+        // Chain: context coherence (if previous action exists)
+        if (previousAction != null)
         {
-            return 0.5; // Neutral if sublocation not found
+            var contextNode = CriticQuestions.ContextCoherence(
+                action.ActionText,
+                previousAction.ActionText,
+                previousAction.WasSuccessful ? "Success" : "Failure",
+                0.5);
+            current.SuccessBranch = contextNode;
+            current = contextNode;
         }
         
-        var question = $@"Location: {blueprint.LocationType}
-Sublocation: {sublocationData.Name} - {sublocationData.Description}
-
-Action being considered: {action.ActionText}
-
-Does this action make sense in this specific location and its surroundings?";
+        // Chain: location coherence (if location info exists)
+        if (!string.IsNullOrEmpty(currentSublocation) && blueprint != null)
+        {
+            if (blueprint.Sublocations.TryGetValue(currentSublocation, out var sublocationData))
+            {
+                var locationNode = new CriticNode(
+                    name: "LocationCoherence",
+                    question: $"Location: {blueprint.LocationType}\nSublocation: {sublocationData.Name} - {sublocationData.Description}\n\nDoes the action '{action.ActionText}' make sense in this specific location?",
+                    threshold: 0.5,
+                    errorMessage: "Action does not fit the current location"
+                );
+                current.SuccessBranch = locationNode;
+                current = locationNode;
+            }
+        }
         
-        return await _critic.EvaluateYesNoQuestion(question);
+        // Chain: action specificity
+        var specificityNode = CriticQuestions.ActionSpecificity(action.ActionText, 0.5);
+        current.SuccessBranch = specificityNode;
+        
+        return root;
     }
     
     /// <summary>
-    /// Evaluates whether an action is specific and concrete (not abstract or too general).
-    /// Higher scores for precise, concrete actions; lower scores for vague, abstract ones.
+    /// Calculates a score from the tree result.
+    /// Score is based on: number of passed checks / total checks evaluated,
+    /// weighted by the individual node scores.
     /// </summary>
-    private async Task<double> EvaluateActionSpecificity(ParsedAction action)
+    private double CalculateScoreFromTreeResult(CriticTreeResult treeResult)
     {
-        var question = $@"Action: {action.ActionText}
-
-Is this action specific and concrete (rather than abstract or overly general)?";
+        if (treeResult.Trace.Count == 0)
+            return 0.0;
         
-        return await _critic.EvaluateYesNoQuestion(question);
+        // Calculate weighted average of all scores
+        // Successful nodes contribute their full score, failed nodes contribute 0
+        double totalScore = 0;
+        foreach (var nodeResult in treeResult.Trace)
+        {
+            if (nodeResult.Success)
+            {
+                totalScore += nodeResult.Score;
+            }
+            else
+            {
+                // Failed node - add partial score based on how close it was
+                totalScore += nodeResult.Score * 0.5; // Penalized but not zero
+            }
+        }
+        
+        return totalScore / treeResult.Trace.Count;
+    }
+    
+    /// <summary>
+    /// Extracts individual scores from tree result for backward compatibility.
+    /// </summary>
+    private void ExtractIndividualScores(ScoredAction scoredAction, CriticTreeResult treeResult)
+    {
+        foreach (var nodeResult in treeResult.Trace)
+        {
+            switch (nodeResult.NodeName)
+            {
+                case "SkillCoherence":
+                    scoredAction.SkillScore = nodeResult.Score;
+                    break;
+                case "ConsequencePlausibility":
+                    scoredAction.ConsequenceScore = nodeResult.Score;
+                    break;
+                case "ContextCoherence":
+                    scoredAction.ContextScore = nodeResult.Score;
+                    break;
+                case "LocationCoherence":
+                    scoredAction.LocationScore = nodeResult.Score;
+                    break;
+                case "ActionSpecificity":
+                    scoredAction.SpecificityScore = nodeResult.Score;
+                    break;
+            }
+        }
     }
     
     /// <summary>
