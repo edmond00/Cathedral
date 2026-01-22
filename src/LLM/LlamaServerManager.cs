@@ -162,6 +162,13 @@ public class LlamaServerManager : IDisposable
             {
                 _isServerReady = true;
                 Console.WriteLine("Llama server is already running.");
+                
+                // Still create a session log directory for this run
+                var sessionTimestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+                _sessionLogDir = Path.Combine("logs", $"llm_session_{sessionTimestamp}");
+                Directory.CreateDirectory(_sessionLogDir);
+                Console.WriteLine($"LLM logs will be saved to: {_sessionLogDir}");
+                
                 ServerReady?.Invoke(this, new ServerStatusEventArgs(true, "Server already running"));
                 onServerReady?.Invoke(true);
                 

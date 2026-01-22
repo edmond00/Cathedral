@@ -257,7 +257,9 @@ public class NarrativeController
     
     /// <summary>
     /// Execute action phase: skill check, outcome determination, and narration (async).
-    /// Uses dice roll animation during loading.
+    /// Uses phased approach with different UI states:
+    /// - Phase 1 (Evaluation): Normal loading screen during plausibility + difficulty checks
+    /// - Phase 2 (Dice Roll): Dice rolling animation during failure evaluation + narration
     /// </summary>
     private async Task ExecuteActionPhaseAsync(ParsedNarrativeAction action)
     {
@@ -265,39 +267,90 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Starting action execution for '{action.ActionText}'");
             
-            // Calculate dice parameters for the roll animation
-            // Number of dice based on skill level (3-8 dice based on avatar's skill proficiency)
-            int numberOfDice = CalculateNumberOfDice(action);
-            
-            // Difficulty from action (start with moderate difficulty, will be updated after LLM evaluation)
-            // For now, use a placeholder until we get the real difficulty from ActionExecutionController
-            int difficulty = 2; // Will be overwritten after async call
-            
-            // Start dice roll animation
-            _narrationState.StartDiceRoll(numberOfDice, difficulty);
+            // === PHASE 1: EVALUATION (normal loading screen) ===
             _narrationState.IsLoadingAction = true;
             _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingAction;
             
-            // Execute action via ActionExecutionController (this evaluates difficulty and success)
-            var result = await _actionExecutor.ExecuteActionAsync(
+            // Evaluate plausibility and difficulty
+            var evalResult = await _actionExecutor.EvaluateActionAsync(
                 action,
                 _currentNode,
                 action.ThinkingSkill,
                 CancellationToken.None
             );
             
-            Console.WriteLine($"NarrativeController: Action {(result.Succeeded ? "SUCCEEDED" : "FAILED")}");
+            // Handle plausibility failure
+            if (!evalResult.IsPlausible)
+            {
+                Console.WriteLine($"NarrativeController: Action failed plausibility check");
+                
+                // Generate plausibility failure narration
+                var plausibilityResult = await _actionExecutor.GeneratePlausibilityFailureNarrationAsync(
+                    evalResult, CancellationToken.None);
+                
+                _narrationState.IsLoadingAction = false;
+                
+                // Add outcome narration block
+                var plausibilityBlock = new NarrationBlock(
+                    Type: NarrationBlockType.Outcome,
+                    Skill: plausibilityResult.ActionSkill ?? throw new InvalidOperationException("Action skill cannot be null"),
+                    Text: $"[IMPOSSIBLE] {plausibilityResult.Narration}",
+                    Keywords: null,
+                    Actions: null
+                );
+                _scrollBuffer.AddBlock(plausibilityBlock);
+                _narrationState.AddBlock(plausibilityBlock);
+                
+                // Auto-scroll to bottom to show outcome
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                
+                // If player still has noetic points, let them try again (no graying, no continue button)
+                if (_narrationState.ThinkingAttemptsRemaining > 0)
+                {
+                    Console.WriteLine($"NarrativeController: Plausibility failure with {_narrationState.ThinkingAttemptsRemaining} noetic points remaining - player can retry");
+                    // Don't show continue button, don't grey out - player can interact normally
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("NarrativeController: Plausibility failure with no noetic points - showing continue button");
+                    // No more noetic points - show continue button and grey out like a normal failure
+                    _narrationState.ShowContinueButton = true;
+                    return;
+                }
+            }
+            
+            // === PHASE 2: DICE ROLL (dice rolling animation) ===
+            Console.WriteLine($"NarrativeController: Action passed plausibility, starting dice roll phase");
+            
+            // Calculate dice parameters for the roll animation
+            int numberOfDice = CalculateNumberOfDice(action);
             
             // Convert difficulty score (0.0-1.0) to dice difficulty (1-10)
-            // difficulty 0.0 = 1 six needed, difficulty 1.0 = up to numberOfDice sixes needed
-            int actualDifficulty = Math.Max(1, (int)Math.Ceiling(result.Difficulty * Math.Min(numberOfDice, 10)));
+            int actualDifficulty = Math.Max(1, (int)Math.Ceiling(evalResult.DifficultyScore * Math.Min(numberOfDice, 10)));
             actualDifficulty = Math.Clamp(actualDifficulty, 1, 10);
             
-            // Update difficulty in state
-            _narrationState.DiceRollDifficulty = actualDifficulty;
+            // Start dice roll animation
+            _narrationState.StartDiceRoll(numberOfDice, actualDifficulty);
+            _narrationState.LoadingMessage = "Rolling dice...";
+            
+            // Roll for success
+            double roll = _diceRandom.NextDouble();
+            bool succeeded = roll < evalResult.SuccessProbability;
+            
+            Console.WriteLine($"NarrativeController: Roll {roll:F3} vs probability {evalResult.SuccessProbability:F3} → {(succeeded ? "SUCCESS" : "FAILURE")}");
+            
+            // Execute dice roll phase (failure outcome evaluation + narration generation)
+            var result = await _actionExecutor.ExecuteDiceRollAsync(
+                evalResult,
+                succeeded,
+                CancellationToken.None
+            );
+            
+            Console.WriteLine($"NarrativeController: Action {(result.Succeeded ? "SUCCEEDED" : "FAILED")}");
             
             // Generate final dice values based on success/failure
-            // If succeeded, ensure enough 6s. If failed, ensure not enough 6s.
             int[] finalDiceValues = GenerateDiceValuesForResult(numberOfDice, actualDifficulty, result.Succeeded);
             
             // Store the action result for later (when player clicks continue on dice screen)
@@ -560,15 +613,20 @@ public class NarrativeController
             return;
         }
         
-        // Show loading indicator if generating (for non-action loading)
-        if (_narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking || _narrationState.IsLoadingFocusObservation)
+        // Show loading indicator if generating (for non-action loading, or action evaluation phase before dice roll)
+        bool isLoadingNonDice = _narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking || 
+                                _narrationState.IsLoadingFocusObservation || 
+                                (_narrationState.IsLoadingAction && !_narrationState.IsDiceRollActive);
+        if (isLoadingNonDice)
         {
             _ui.ShowLoadingIndicator(_narrationState.LoadingMessage);
             string loadingStatus = _narrationState.IsLoadingObservations 
                 ? "Generating observations..." 
                 : _narrationState.IsLoadingThinking
                     ? "Generating thinking and actions..."
-                    : "Generating focus observation...";
+                    : _narrationState.IsLoadingAction
+                        ? "Evaluating action..."
+                        : "Generating focus observation...";
             _ui.RenderStatusBar(loadingStatus);
             return;
         }

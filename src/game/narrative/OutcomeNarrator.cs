@@ -35,7 +35,8 @@ public class OutcomeNarrator
         bool succeeded,
         double difficulty,
         Avatar avatar,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? failureHint = null)
     {
         // Ensure narrator slot is initialized with action skill's persona
         int slotId = await GetOrCreateNarratorSlotAsync(actionSkill);
@@ -48,7 +49,8 @@ public class OutcomeNarrator
             outcome,
             succeeded,
             difficulty,
-            avatar);
+            avatar,
+            failureHint);
 
         // Build JSON schema for narration
         var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
@@ -77,6 +79,58 @@ public class OutcomeNarrator
             return GenerateFallbackNarration(action, succeeded, outcome);
         }
     }
+    
+    /// <summary>
+    /// Generates narration explaining why an action failed plausibility checks.
+    /// </summary>
+    public async Task<string> NarratePlausibilityFailureAsync(
+        ParsedNarrativeAction action,
+        Skill thinkingSkill,
+        string plausibilityError,
+        Avatar avatar,
+        CancellationToken cancellationToken = default)
+    {
+        // Use the thinking skill's slot for plausibility failure narration
+        int slotId = await GetOrCreateNarratorSlotAsync(thinkingSkill);
+
+        string prompt = $@"You are {thinkingSkill.DisplayName}, explaining why an action cannot be performed.
+
+The attempted action was: ""{action.ActionText}""
+
+The reason it's not possible: {plausibilityError}
+
+As {thinkingSkill.DisplayName}, explain in your unique voice why this action cannot be done right now.
+- Be concise but characterful
+- Stay in character with {thinkingSkill.PersonaTone} tone
+- Suggest what might be needed or what's wrong with the attempt
+- Keep it 50-200 characters
+
+Respond in JSON format:
+{{
+  ""narration"": ""your explanation""
+}}";
+
+        var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
+        string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
+
+        string? jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf, cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(jsonResponse))
+        {
+            return plausibilityError; // Fallback to the raw error message
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(jsonResponse);
+            string narration = doc.RootElement.GetProperty("narration").GetString() ?? "";
+            return !string.IsNullOrWhiteSpace(narration) ? narration : plausibilityError;
+        }
+        catch (JsonException)
+        {
+            return plausibilityError;
+        }
+    }
 
     /// <summary>
     /// Ensures the narrator slot is initialized with the action skill's persona.
@@ -98,11 +152,18 @@ public class OutcomeNarrator
         OutcomeBase outcome,
         bool succeeded,
         double difficulty,
-        Avatar avatar)
+        Avatar avatar,
+        string? failureHint = null)
     {
         string outcomeDescription = outcome.ToNaturalLanguageString();
         string successStatus = succeeded ? "succeeded" : "failed";
         string difficultyDesc = difficulty < 0.3 ? "easy" : difficulty < 0.7 ? "moderate" : "hard";
+
+        string failureGuidance = "";
+        if (!succeeded && !string.IsNullOrEmpty(failureHint))
+        {
+            failureGuidance = $"\nWhat happened in the failure: {failureHint}";
+        }
 
         return $@"You are {actionSkill.DisplayName}, narrating the outcome of an action you performed.
 
@@ -113,11 +174,11 @@ Result: {successStatus}
 
 {(succeeded 
     ? $"Outcome: {outcomeDescription}" 
-    : "The attempt did not achieve the desired result.")}
+    : $"The attempt did not achieve the desired result.{failureGuidance}")}
 
 Narrate what happened from your perspective as {actionSkill.DisplayName}. 
 - If success: Describe how you accomplished it and what you achieved
-- If failure: Reflect on what went wrong and how it felt
+- If failure: Describe specifically what went wrong based on the failure guidance
 - Use the tone of {actionSkill.PersonaTone}
 - Keep it 100-400 characters
 
