@@ -95,7 +95,8 @@ public class ObservationPhaseController
                 Skill: skill,
                 Text: observation.NarrationText,
                 Keywords: foundKeywords,
-                Actions: null
+                Actions: null,
+                SourceObservationType: ObservationType.Overall
             );
             
             narrationBlocks.Add(block);
@@ -112,7 +113,8 @@ public class ObservationPhaseController
                 Skill: skill,
                 Text: "You observe the environment carefully, taking in the details.",
                 Keywords: new List<string>(),
-                Actions: null
+                Actions: null,
+                SourceObservationType: ObservationType.Overall
             ));
         }
         
@@ -150,16 +152,30 @@ public class ObservationPhaseController
         // Get keywords specific to this outcome
         // For NarrationNodes, use NodeKeywords (not the aggregated OutcomeKeywords which includes children)
         // For Items, use OutcomeKeywords directly
-        List<string> focusKeywords;
+        List<string> allKeywords;
         if (outcome is NarrationNode node)
         {
-            focusKeywords = node.NodeKeywords;
-            Console.WriteLine($"ObservationPhaseController: Focus observation targeting {focusKeywords.Count} NodeKeywords from NarrationNode '{outcome.DisplayName}': {string.Join(", ", focusKeywords)}");
+            allKeywords = node.NodeKeywords;
         }
         else
         {
-            focusKeywords = outcome.OutcomeKeywords;
-            Console.WriteLine($"ObservationPhaseController: Focus observation targeting {focusKeywords.Count} OutcomeKeywords from outcome '{outcome.DisplayName}': {string.Join(", ", focusKeywords)}");
+            allKeywords = outcome.OutcomeKeywords;
+        }
+        
+        // Limit keywords if there are too many
+        List<string> focusKeywords;
+        if (allKeywords.Count > Config.Narrative.TargetKeywordCount)
+        {
+            focusKeywords = allKeywords
+                .OrderBy(_ => _random.Next())
+                .Take(Config.Narrative.TargetKeywordCount)
+                .ToList();
+            Console.WriteLine($"ObservationPhaseController: Focus observation sampling {focusKeywords.Count} of {allKeywords.Count} available keywords from '{outcome.DisplayName}': {string.Join(", ", focusKeywords)}");
+        }
+        else
+        {
+            focusKeywords = allKeywords;
+            Console.WriteLine($"ObservationPhaseController: Focus observation using all {focusKeywords.Count} keywords from '{outcome.DisplayName}': {string.Join(", ", focusKeywords)}");
         }
         
         try
@@ -188,7 +204,8 @@ public class ObservationPhaseController
                 Skill: observationSkill,
                 Text: observation.NarrationText,
                 Keywords: foundKeywords,
-                Actions: null
+                Actions: null,
+                SourceObservationType: ObservationType.Focus
             );
             
             Console.WriteLine($"ObservationPhaseController: Generated focus observation with {foundKeywords.Count} keywords");
@@ -205,7 +222,8 @@ public class ObservationPhaseController
                 Skill: observationSkill,
                 Text: $"You focus your attention on the {clickedKeyword}, examining it more closely.",
                 Keywords: new List<string> { clickedKeyword },
-                Actions: null
+                Actions: null,
+                SourceObservationType: ObservationType.Focus
             );
         }
     }

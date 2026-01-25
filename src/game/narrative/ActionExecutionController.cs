@@ -145,9 +145,18 @@ public class ActionExecutionController
         
         // Calculate difficulty score (0.0 to 1.0) from average YES probabilities
         double difficultyScore = CriticTrees.CalculateDifficultyFromResult(difficultyResult);
+        
+        // Apply circuitous outcome penalty if applicable
+        if (action.IsCircuitous)
+        {
+            Console.WriteLine($"   ⚡ Circuitous action detected - applying +{Config.Narrative.CircuitousDifficultyPenalty:F2} difficulty penalty");
+            difficultyScore += Config.Narrative.CircuitousDifficultyPenalty;
+            difficultyScore = Math.Clamp(difficultyScore, 0.0, 1.0);
+        }
+        
         int difficultyLevel = CriticTrees.DifficultyToScale(difficultyScore);
         
-        Console.WriteLine($"   Difficulty: {difficultyScore:F3} (level {difficultyLevel}/10)");
+        Console.WriteLine($"   Difficulty: {difficultyScore:F3} (level {difficultyLevel}/10){(action.IsCircuitous ? " [circuitous]" : "")}");
         Console.WriteLine($"   Category: {(difficultyLevel <= 3 ? "Easy" : difficultyLevel <= 6 ? "Moderate" : "Hard")}");
         
         // Convert difficulty score to success probability
@@ -317,7 +326,7 @@ public class ActionExecutionController
         
         string narration = await _outcomeNarrator.NarratePlausibilityFailureAsync(
             action,
-            thinkingSkill,
+            actionSkill,
             plausibilityError,
             _avatar,
             cancellationToken);

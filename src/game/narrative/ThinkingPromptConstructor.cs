@@ -12,22 +12,47 @@ public class ThinkingPromptConstructor
     /// <summary>
     /// Builds a thinking request for the LLM.
     /// Includes keyword context, possible outcomes, available action skills, and avatar state.
+    /// Separates straightforward outcomes from circuitous outcomes in the prompt.
     /// </summary>
     public string BuildThinkingPrompt(
         string keyword,
         NarrationNode node,
-        List<OutcomeBase> possibleOutcomes,
+        List<OutcomeWithMetadata> outcomesWithMetadata,
         List<Skill> actionSkills,
         Avatar avatar,
         Skill thinkingSkill)
     {
-        // Convert outcomes to natural language strings
-        var outcomeStrings = possibleOutcomes
-            .Select(o => o.ToNaturalLanguageString())
+        // Separate straightforward and circuitous outcomes
+        var straightforwardOutcomes = outcomesWithMetadata
+            .Where(o => !o.IsCircuitous)
+            .Select(o => o.Outcome.ToNaturalLanguageString())
+            .ToList();
+            
+        var circuitousOutcomes = outcomesWithMetadata
+            .Where(o => o.IsCircuitous)
+            .Select(o => o.Outcome.ToNaturalLanguageString())
             .ToList();
         
         // Get action skill IDs
         var actionSkillIds = actionSkills.Select(s => s.SkillId).ToList();
+        
+        // Build outcomes section with separation
+        var outcomesSection = new System.Text.StringBuilder();
+        outcomesSection.AppendLine("What could happen:");
+        foreach (var outcome in straightforwardOutcomes)
+        {
+            outcomesSection.AppendLine($"- {outcome}");
+        }
+        
+        if (circuitousOutcomes.Count > 0)
+        {
+            outcomesSection.AppendLine();
+            outcomesSection.AppendLine("Other possibilities (harder to achieve):");
+            foreach (var outcome in circuitousOutcomes)
+            {
+                outcomesSection.AppendLine($"- {outcome}");
+            }
+        }
         
         var prompt = $@"Your attention is drawn to: ""{keyword}""
 
@@ -37,8 +62,7 @@ Current situation:
 Skills you can apply:
 {string.Join("\n", actionSkills.Select(s => $"- {s.SkillId}: {s.DisplayName}"))}
 
-What could happen:
-{string.Join("\n", outcomeStrings.Select(o => $"- {o}"))}
+{outcomesSection.ToString().TrimEnd()}
 
 Think about what ""{keyword}"" suggests to you. What possibilities does it open?
 
@@ -60,5 +84,23 @@ Output fields:
 ";
 
         return prompt;
+    }
+    
+    /// <summary>
+    /// Legacy overload that accepts plain outcomes (treats all as straightforward).
+    /// </summary>
+    public string BuildThinkingPrompt(
+        string keyword,
+        NarrationNode node,
+        List<OutcomeBase> possibleOutcomes,
+        List<Skill> actionSkills,
+        Avatar avatar,
+        Skill thinkingSkill)
+    {
+        var outcomesWithMetadata = possibleOutcomes
+            .Select(o => OutcomeWithMetadata.Straightforward(o))
+            .ToList();
+            
+        return BuildThinkingPrompt(keyword, node, outcomesWithMetadata, actionSkills, avatar, thinkingSkill);
     }
 }

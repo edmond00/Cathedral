@@ -238,6 +238,41 @@ public static class Config
     
     #endregion
     
+    #region Narrative Configuration
+    
+    public static class Narrative
+    {
+        /// <summary>
+        /// Target number of keywords to include in observations.
+        /// For overall observations: if more outcomes than this, sample this many outcomes.
+        /// If fewer outcomes, sample multiple keywords per outcome until reaching this target.
+        /// For focus observations: if more keywords than this, sample this many keywords.
+        /// </summary>
+        public const int TargetKeywordCount = 10;
+        
+        /// <summary>
+        /// Whether to include circuitous outcomes in the thinking phase.
+        /// Circuitous outcomes are "outcomes of outcomes" - they require going through an intermediate node.
+        /// </summary>
+        public const bool EnableCircuitousOutcomes = true;
+        
+        /// <summary>
+        /// Maximum number of circuitous outcomes to include in the thinking phase.
+        /// If more circuitous outcomes are available, a random sample of this size will be used.
+        /// This ensures straightforward outcomes remain the most common options.
+        /// </summary>
+        public const int MaxCircuitousOutcomes = 3;
+        
+        /// <summary>
+        /// Difficulty score penalty (0.0-1.0) added to circuitous outcomes.
+        /// Each 0.1 roughly corresponds to +1 difficulty level.
+        /// Default: 0.1 = +1 difficulty level for circuitous actions.
+        /// </summary>
+        public const double CircuitousDifficultyPenalty = 0.1;
+    }
+    
+    #endregion
+    
     #region Glyph Size Factors
     
     /// <summary>

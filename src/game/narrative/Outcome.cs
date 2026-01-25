@@ -32,3 +32,45 @@ public abstract class ConcreteOutcome : OutcomeBase
     /// </summary>
     public abstract List<string> OutcomeKeywords { get; }
 }
+
+/// <summary>
+/// Wrapper that adds metadata to an outcome for the thinking phase.
+/// Tracks whether the outcome is circuitous (requires going through an intermediate node).
+/// </summary>
+public class OutcomeWithMetadata
+{
+    /// <summary>
+    /// The actual outcome.
+    /// </summary>
+    public OutcomeBase Outcome { get; }
+    
+    /// <summary>
+    /// Whether this is a circuitous outcome (requires going through an intermediate node).
+    /// </summary>
+    public bool IsCircuitous { get; }
+    
+    /// <summary>
+    /// For circuitous outcomes, the intermediate node that must be traversed.
+    /// Null for straightforward outcomes.
+    /// </summary>
+    public NarrationNode? IntermediateNode { get; }
+    
+    public OutcomeWithMetadata(OutcomeBase outcome, bool isCircuitous = false, NarrationNode? intermediateNode = null)
+    {
+        Outcome = outcome;
+        IsCircuitous = isCircuitous;
+        IntermediateNode = intermediateNode;
+    }
+    
+    /// <summary>
+    /// Creates a straightforward (non-circuitous) outcome wrapper.
+    /// </summary>
+    public static OutcomeWithMetadata Straightforward(OutcomeBase outcome) 
+        => new(outcome, isCircuitous: false, intermediateNode: null);
+    
+    /// <summary>
+    /// Creates a circuitous outcome wrapper with an intermediate node.
+    /// </summary>
+    public static OutcomeWithMetadata Circuitous(OutcomeBase outcome, NarrationNode intermediateNode)
+        => new(outcome, isCircuitous: true, intermediateNode: intermediateNode);
+}

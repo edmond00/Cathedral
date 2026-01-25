@@ -116,6 +116,7 @@ public abstract class NarrationNode : ConcreteOutcome
     /// <summary>
     /// Gets all outcomes that have a specific keyword.
     /// Includes both child nodes and items discovered via reflection.
+    /// These are "straightforward" outcomes - directly linked to the keyword.
     /// </summary>
     public List<OutcomeBase> GetOutcomesForKeyword(string keyword)
     {
@@ -134,34 +135,118 @@ public abstract class NarrationNode : ConcreteOutcome
         return outcomes;
     }
     
+    /// <summary>
+    /// Gets circuitous outcomes for a keyword based on the observation type.
+    /// - For OVERALL observations: Returns OTHER child NarrationNodes as circuitous outcomes.
+    ///   e.g., at Clearing clicking any keyword → Stream/BerryBush/MushroomPatch are circuitous.
+    /// - For FOCUS observations: Returns "outcomes of outcomes" - the grandchildren outcomes.
+    ///   e.g., focusing on "stream" keyword → CaughtTrout (outcome of Stream) is circuitous.
+    /// 
+    /// Circuitous outcomes require "going through" an intermediate node and have a difficulty penalty.
+    /// Only goes 1 level deep to prevent infinite recursion with circular node references.
+    /// </summary>
+    /// <param name="keyword">The keyword that was clicked</param>
+    /// <param name="observationType">Whether this is from an overall or focus observation</param>
+    /// <returns>List of tuples containing the outcome and the intermediate node to traverse</returns>
+    public List<(OutcomeBase Outcome, NarrationNode IntermediateNode)> GetCircuitousOutcomesForKeyword(
+        string keyword, 
+        ObservationType observationType)
+    {
+        var results = new List<(OutcomeBase, NarrationNode)>();
+        var visitedNodeIds = new HashSet<string> { NodeId }; // Prevent circular references
+        
+        if (observationType == ObservationType.Overall)
+        {
+            // For overall observations: child NarrationNodes themselves are circuitous outcomes
+            // (they can be reached from ANY keyword in the overall observation)
+            // The intermediate node is THIS node (current node) since we're exploring from here
+            foreach (var outcome in PossibleOutcomes)
+            {
+                if (outcome is NarrationNode childNode && !visitedNodeIds.Contains(childNode.NodeId))
+                {
+                    // The child node itself is the circuitous outcome
+                    // We use "this" as intermediate because we're at the current node exploring outward
+                    results.Add((childNode, this));
+                }
+            }
+        }
+        else // Focus observation
+        {
+            // For focus observations: get "outcomes of outcomes" for the specific keyword's outcomes
+            var normalizedKeyword = keyword.ToLowerInvariant();
+            
+            // Find the child node that owns this keyword
+            foreach (var outcome in PossibleOutcomes)
+            {
+                if (outcome is NarrationNode childNode && 
+                    !visitedNodeIds.Contains(childNode.NodeId) &&
+                    childNode.NodeKeywords.Any(k => k.ToLowerInvariant() == normalizedKeyword))
+                {
+                    visitedNodeIds.Add(childNode.NodeId);
+                    
+                    // Get all outcomes from this child node (the "outcomes of outcomes")
+                    foreach (var grandchildOutcome in childNode.PossibleOutcomes)
+                    {
+                        // Skip transitions back to visited nodes
+                        if (grandchildOutcome is NarrationNode grandchildNode && visitedNodeIds.Contains(grandchildNode.NodeId))
+                            continue;
+                            
+                        results.Add((grandchildOutcome, childNode));
+                    }
+                    
+                    // Also include items from the child node
+                    foreach (var item in childNode.GetAvailableItems())
+                    {
+                        results.Add((item, childNode));
+                    }
+                }
+            }
+        }
+        
+        return results;
+    }
+    
     public override string ToNaturalLanguageString()
     {
         return $"transition {NodeId}";
     }
     
     /// <summary>
-    /// Gets one representative keyword from each concrete outcome.
-    /// Used for "overall observation" to show one keyword per possible outcome.
+    /// Gets representative keywords for overall observation.
+    /// If outcomes >= targetCount, samples one keyword from targetCount random outcomes.
+    /// If outcomes < targetCount, samples multiple keywords per outcome to reach target.
     /// </summary>
     /// <param name="random">Random instance for consistent sampling</param>
-    /// <returns>List of (keyword, outcome) tuples, one per outcome</returns>
-    public List<(string Keyword, ConcreteOutcome Outcome)> GetRepresentativeKeywordsPerOutcome(Random random)
+    /// <param name="targetKeywordCount">Target number of keywords to return</param>
+    /// <returns>List of (keyword, outcome) tuples</returns>
+    public List<(string Keyword, ConcreteOutcome Outcome)> GetRepresentativeKeywordsPerOutcome(Random random, int targetKeywordCount = Cathedral.Config.Narrative.TargetKeywordCount)
     {
         var result = new List<(string, ConcreteOutcome)>();
         
-        // Get all concrete outcomes (child nodes + items)
+        // Get all immediate concrete outcomes (direct child nodes + items at this node)
         var concreteOutcomes = new List<ConcreteOutcome>();
         
         // Add child nodes that are concrete outcomes
+        // NOTE: We only add the node itself, not its recursive keywords
+        // The child node's OutcomeKeywords will be used only when actually transitioning to that node
         foreach (var outcome in PossibleOutcomes)
         {
-            if (outcome is ConcreteOutcome co && co.OutcomeKeywords.Count > 0)
+            if (outcome is ConcreteOutcome co)
             {
-                concreteOutcomes.Add(co);
+                // For child NarrationNodes, check if they have NodeKeywords
+                // For other ConcreteOutcomes (like Items), check if they have OutcomeKeywords
+                if (outcome is NarrationNode node && node.NodeKeywords.Count > 0)
+                {
+                    concreteOutcomes.Add(co);
+                }
+                else if (!(outcome is NarrationNode) && co.OutcomeKeywords.Count > 0)
+                {
+                    concreteOutcomes.Add(co);
+                }
             }
         }
         
-        // Add items discovered via reflection
+        // Add items discovered via reflection at THIS node only
         var items = GetAvailableItems();
         foreach (var item in items)
         {
@@ -171,14 +256,55 @@ public abstract class NarrationNode : ConcreteOutcome
             }
         }
         
-        // Pick one random keyword from each outcome
-        foreach (var outcome in concreteOutcomes)
+        // Apply new sampling logic based on target keyword count
+        if (concreteOutcomes.Count == 0)
         {
-            var keywords = outcome.OutcomeKeywords;
-            if (keywords.Count > 0)
+            return result;
+        }
+        
+        if (concreteOutcomes.Count >= targetKeywordCount)
+        {
+            // More outcomes than target: sample targetKeywordCount outcomes, one keyword each
+            var shuffledOutcomes = concreteOutcomes.OrderBy(_ => random.Next()).Take(targetKeywordCount);
+            foreach (var outcome in shuffledOutcomes)
             {
-                var selectedKeyword = keywords[random.Next(keywords.Count)];
-                result.Add((selectedKeyword, outcome));
+                // For child NarrationNodes, use NodeKeywords (not full OutcomeKeywords which include grandchildren)
+                // For Items, use OutcomeKeywords as usual
+                List<string> keywordsToUse = outcome is NarrationNode node ? node.NodeKeywords : outcome.OutcomeKeywords;
+                
+                if (keywordsToUse.Count > 0)
+                {
+                    var selectedKeyword = keywordsToUse[random.Next(keywordsToUse.Count)];
+                    result.Add((selectedKeyword, outcome));
+                }
+            }
+        }
+        else
+        {
+            // Fewer outcomes than target: sample multiple keywords per outcome until target reached
+            var keywordsPerOutcome = targetKeywordCount / concreteOutcomes.Count;
+            var extraKeywords = targetKeywordCount % concreteOutcomes.Count;
+            
+            for (int i = 0; i < concreteOutcomes.Count; i++)
+            {
+                var outcome = concreteOutcomes[i];
+                
+                // For child NarrationNodes, use NodeKeywords (not full OutcomeKeywords which include grandchildren)
+                // For Items, use OutcomeKeywords as usual
+                List<string> keywordsToUse = outcome is NarrationNode node ? node.NodeKeywords : outcome.OutcomeKeywords;
+                
+                if (keywordsToUse.Count == 0) continue;
+                
+                // Calculate how many keywords to take from this outcome
+                var keywordsToTake = keywordsPerOutcome + (i < extraKeywords ? 1 : 0);
+                keywordsToTake = Math.Min(keywordsToTake, keywordsToUse.Count);
+                
+                // Sample keywords without replacement from this outcome
+                var shuffledKeywords = keywordsToUse.OrderBy(_ => random.Next()).Take(keywordsToTake);
+                foreach (var keyword in shuffledKeywords)
+                {
+                    result.Add((keyword, outcome));
+                }
             }
         }
         

@@ -105,7 +105,7 @@ This section documents key design decisions clarified during initial planning:
 - **Observation Rendering**: Draw each observation block immediately as generated. Only highlight/enable keywords after ALL observation blocks complete. Scroll starts at top.
 
 ### Technical Details
-- **Outcome Narration**: Thinking skill that generated the action narrates the outcome from its persona POV (not neutral Narrator).
+- **Outcome Narration**: Action skill that executes the action narrates the outcome from its persona POV (not neutral Narrator or thinking skill).
 - **Slot Persistence**: Skill slots persist across narration nodes. Only system prompts are cached, not conversation history.
 - **Failure Evaluation**: Reuse existing CriticEvaluator code, adapt to new system. Same yes/no probability pattern, Slot 50.
 
@@ -517,24 +517,24 @@ async Task<Outcome> DetermineFailureOutcome(ParsedAction action, NarrationContex
     return failureScores.OrderByDescending(kvp => kvp.Value).First().Key;
 }
 
-// Outcome narration from thinking skill's POV
+// Outcome narration from action skill's POV
 async Task<string> GenerateOutcomeNarration(
-    Skill thinkingSkill, 
+    Skill actionSkill, 
     ParsedAction action, 
     Outcome outcome, 
     NarrationContext context)
 {
-    int slotId = skillToSlotMapping[thinkingSkill.SkillId];
+    int slotId = skillToSlotMapping[actionSkill.SkillId];
     
     var narratorRequest = BuildOutcomeNarrationRequest(
         action: action,
         outcome: outcome,
         context: context,
-        thinkingSkillPersona: thinkingSkill.DisplayName
+        actionSkillPersona: actionSkill.DisplayName
     );
     
     var response = await llamaServer.ContinueRequestAsync(
-        slotId,  // Use thinking skill's slot (with its cached persona prompt)
+        slotId,  // Use action skill's slot (with its cached persona prompt)
         narratorRequest,
         gbnfGrammar: SimpleStringSchema(minLength: 50, maxLength: 200)
     );

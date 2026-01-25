@@ -180,27 +180,69 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Executing thinking with {thinkingSkill.DisplayName} on keyword '{keyword}'");
             
-            // Get possible outcomes for this keyword
-            var possibleOutcomes = _currentNode.GetOutcomesForKeyword(keyword);
+            // Determine observation type from source block
+            var observationType = (sourceObservationBlock as NarrationBlock)?.SourceObservationType ?? ObservationType.Overall;
+            Console.WriteLine($"NarrativeController: Observation type is {observationType}");
+            
+            // Build outcomes with metadata (straightforward + circuitous)
+            var outcomesWithMetadata = new List<OutcomeWithMetadata>();
+            
+            // Get straightforward outcomes for this keyword
+            var straightforwardOutcomes = _currentNode.GetOutcomesForKeyword(keyword);
+            foreach (var outcome in straightforwardOutcomes)
+            {
+                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(outcome));
+            }
+            
+            Console.WriteLine($"NarrativeController: Found {straightforwardOutcomes.Count} straightforward outcomes");
+            
+            // Get circuitous outcomes if enabled
+            if (Config.Narrative.EnableCircuitousOutcomes)
+            {
+                var circuitousOutcomes = _currentNode.GetCircuitousOutcomesForKeyword(keyword, observationType);
+                
+                // Filter duplicates first
+                var filteredCircuitous = circuitousOutcomes
+                    .Where(c => !outcomesWithMetadata.Any(o => 
+                        o.Outcome.ToNaturalLanguageString().Equals(c.Outcome.ToNaturalLanguageString(), StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+                
+                // Sample if more than max allowed
+                if (filteredCircuitous.Count > Config.Narrative.MaxCircuitousOutcomes)
+                {
+                    var rng = new Random();
+                    filteredCircuitous = filteredCircuitous
+                        .OrderBy(_ => rng.Next())
+                        .Take(Config.Narrative.MaxCircuitousOutcomes)
+                        .ToList();
+                    Console.WriteLine($"NarrativeController: Sampled {Config.Narrative.MaxCircuitousOutcomes} from {circuitousOutcomes.Count} circuitous outcomes");
+                }
+                
+                foreach (var circuitous in filteredCircuitous)
+                {
+                    outcomesWithMetadata.Add(OutcomeWithMetadata.Circuitous(circuitous.Outcome, circuitous.IntermediateNode));
+                }
+                Console.WriteLine($"NarrativeController: Added {filteredCircuitous.Count} circuitous outcomes");
+            }
             
             // Always add FeelGoodOutcome as a fallback option
             var feelGoodOutcome = new FeelGoodOutcome();
-            if (!possibleOutcomes.Any(o => o is FeelGoodOutcome))
+            if (!outcomesWithMetadata.Any(o => o.Outcome is FeelGoodOutcome))
             {
-                possibleOutcomes.Add(feelGoodOutcome);
+                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(feelGoodOutcome));
             }
             
             // Get action skills
             var actionSkills = _avatar.GetActionSkills();
             
-            Console.WriteLine($"NarrativeController: Found {possibleOutcomes.Count} outcomes, {actionSkills.Count} action skills");
+            Console.WriteLine($"NarrativeController: Total {outcomesWithMetadata.Count} outcomes ({outcomesWithMetadata.Count(o => o.IsCircuitous)} circuitous), {actionSkills.Count} action skills");
             
             // Call ThinkingExecutor to generate reasoning + actions
             var response = await _thinkingExecutor.GenerateThinkingAsync(
                 thinkingSkill,
                 keyword,
                 _currentNode,
-                possibleOutcomes,
+                outcomesWithMetadata,
                 actionSkills,
                 _avatar,
                 CancellationToken.None);
@@ -211,7 +253,7 @@ public class NarrativeController
                 throw new Exception("Thinking LLM returned no actions");
             }
             
-            Console.WriteLine($"NarrativeController: Generated {response.Actions.Count} actions");
+            Console.WriteLine($"NarrativeController: Generated {response.Actions.Count} actions ({response.Actions.Count(a => a.IsCircuitous)} circuitous)");
             
             // Create thinking block with reasoning + actions
             // ChainOrigin points to the observation block that contained the clicked keyword

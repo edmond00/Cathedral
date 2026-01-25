@@ -46,16 +46,19 @@ public class ThinkingExecutor
         Skill thinkingSkill,
         string keyword,
         NarrationNode node,
-        List<OutcomeBase> possibleOutcomes,
+        List<OutcomeWithMetadata> outcomesWithMetadata,
         List<Skill> actionSkills,
         Avatar avatar,
         CancellationToken cancellationToken = default)
     {
-        // Build the user prompt
+        // Extract outcomes for schema (schema just needs the natural language strings)
+        var possibleOutcomes = outcomesWithMetadata.Select(o => o.Outcome).ToList();
+        
+        // Build the user prompt with metadata (separates straightforward vs circuitous)
         string userPrompt = _promptConstructor.BuildThinkingPrompt(
             keyword,
             node,
-            possibleOutcomes,
+            outcomesWithMetadata,  // Pass metadata so prompt shows separation
             actionSkills,
             avatar,
             thinkingSkill);
@@ -84,8 +87,30 @@ public class ThinkingExecutor
             return null;
         }
 
-        // Parse JSON response
-        return ParseThinkingResponse(jsonResponse, possibleOutcomes, actionSkills, thinkingSkill, keyword);
+        // Parse JSON response (pass metadata for circuitous marking)
+        return ParseThinkingResponse(jsonResponse, outcomesWithMetadata, actionSkills, thinkingSkill, keyword);
+    }
+    
+    /// <summary>
+    /// Generates CoT reasoning and actions for the given keyword.
+    /// Legacy overload that accepts plain outcomes (treats all as straightforward).
+    /// </summary>
+    public async Task<ThinkingResponse?> GenerateThinkingAsync(
+        Skill thinkingSkill,
+        string keyword,
+        NarrationNode node,
+        List<OutcomeBase> possibleOutcomes,
+        List<Skill> actionSkills,
+        Avatar avatar,
+        CancellationToken cancellationToken = default)
+    {
+        // Wrap all outcomes as straightforward
+        var outcomesWithMetadata = possibleOutcomes
+            .Select(o => OutcomeWithMetadata.Straightforward(o))
+            .ToList();
+            
+        return await GenerateThinkingAsync(
+            thinkingSkill, keyword, node, outcomesWithMetadata, actionSkills, avatar, cancellationToken);
     }
 
     /// <summary>
@@ -152,7 +177,12 @@ public class ThinkingExecutor
     /// Parses the LLM JSON response into a ThinkingResponse.
     /// Returns null if parsing fails.
     /// </summary>
-    private ThinkingResponse? ParseThinkingResponse(string jsonResponse, List<OutcomeBase> possibleOutcomes, List<Skill> actionSkills, Skill thinkingSkill, string keyword)
+    private ThinkingResponse? ParseThinkingResponse(
+        string jsonResponse, 
+        List<OutcomeWithMetadata> outcomesWithMetadata, 
+        List<Skill> actionSkills, 
+        Skill thinkingSkill, 
+        string keyword)
     {
         try
         {
@@ -170,11 +200,11 @@ public class ThinkingExecutor
                 string outcomeStr = actionElement.GetProperty("outcome").GetString() ?? "";
                 string actionDesc = actionElement.GetProperty("action_description").GetString() ?? "";
 
-                // Parse outcome by matching natural language string
-                var outcome = possibleOutcomes.FirstOrDefault(o => 
-                    o.ToNaturalLanguageString().Equals(outcomeStr, StringComparison.OrdinalIgnoreCase));
+                // Find outcome with metadata by matching natural language string
+                var outcomeWithMeta = outcomesWithMetadata.FirstOrDefault(o => 
+                    o.Outcome.ToNaturalLanguageString().Equals(outcomeStr, StringComparison.OrdinalIgnoreCase));
                 
-                if (outcome != null)
+                if (outcomeWithMeta != null)
                 {
                     // Remove "try to " prefix from action description for DisplayText
                     string displayText = actionDesc;
@@ -190,11 +220,13 @@ public class ThinkingExecutor
                     {
                         ActionSkillId = actionSkill,
                         ActionSkill = resolvedActionSkill, // Set the resolved skill instance with proper level
-                        PreselectedOutcome = outcome,
+                        PreselectedOutcome = outcomeWithMeta.Outcome,
                         ActionText = actionDesc,
                         DisplayText = displayText,
                         ThinkingSkill = thinkingSkill,  // Set the thinking skill that generated this action
-                        Keyword = keyword
+                        Keyword = keyword,
+                        IsCircuitous = outcomeWithMeta.IsCircuitous,
+                        IntermediateNode = outcomeWithMeta.IntermediateNode
                     });
                 }
                 else

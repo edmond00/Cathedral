@@ -10,8 +10,8 @@ using Cathedral.LLM.JsonConstraints;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Generates narration for action outcomes from the thinking skill's perspective.
-/// Uses LLM slot 51 for outcome narration.
+/// Generates narration for action outcomes from the action skill's perspective.
+/// Uses the action skill's LLM slot for outcome narration.
 /// </summary>
 public class OutcomeNarrator
 {
@@ -25,7 +25,7 @@ public class OutcomeNarrator
     }
 
     /// <summary>
-    /// Generates narration for an action outcome from the thinking skill's perspective.
+    /// Generates narration for an action outcome from the action skill's perspective.
     /// </summary>
     public async Task<string> NarrateOutcomeAsync(
         ParsedNarrativeAction action,
@@ -85,23 +85,23 @@ public class OutcomeNarrator
     /// </summary>
     public async Task<string> NarratePlausibilityFailureAsync(
         ParsedNarrativeAction action,
-        Skill thinkingSkill,
+        Skill actionSkill,
         string plausibilityError,
         Avatar avatar,
         CancellationToken cancellationToken = default)
     {
-        // Use the thinking skill's slot for plausibility failure narration
-        int slotId = await GetOrCreateNarratorSlotAsync(thinkingSkill);
+        // Use the action skill's slot for plausibility failure narration
+        int slotId = await GetOrCreateNarratorSlotAsync(actionSkill);
 
-        string prompt = $@"You are {thinkingSkill.DisplayName}, explaining why an action cannot be performed.
+        string prompt = $@"You are {actionSkill.DisplayName}, explaining why an action cannot be performed.
 
 The attempted action was: ""{action.ActionText}""
 
 The reason it's not possible: {plausibilityError}
 
-As {thinkingSkill.DisplayName}, explain in your unique voice why this action cannot be done right now.
+As {actionSkill.DisplayName}, explain in your unique voice why this action cannot be done right now.
 - Be concise but characterful
-- Stay in character with {thinkingSkill.PersonaTone} tone
+- Stay in character with {actionSkill.PersonaTone} tone
 - Suggest what might be needed or what's wrong with the attempt
 - Keep it 50-200 characters
 
