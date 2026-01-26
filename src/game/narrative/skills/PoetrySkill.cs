@@ -8,6 +8,7 @@ public class PoetrySkill : Skill
 {
     public override string SkillId => "poetry";
     public override string DisplayName => "Poetry";
+    public override string ShortDescription => "metaphor, lyrical expression";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking, SkillFunction.Observation };
     public override string[] BodyParts => new[] { "Tongue", "Hippocampus" };
     

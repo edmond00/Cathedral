@@ -8,6 +8,7 @@ public class OpenMindednessSkill : Skill
 {
     public override string SkillId => "open_mindedness";
     public override string DisplayName => "Open-Mindedness";
+    public override string ShortDescription => "flexibility, alternative views";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Hippocampus", "Heart" };
     

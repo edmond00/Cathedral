@@ -8,6 +8,7 @@ public class RhetoricSkill : Skill
 {
     public override string SkillId => "rhetoric";
     public override string DisplayName => "Rhetoric";
+    public override string ShortDescription => "persuasion, argumentation";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Tongue", "Cerebrum" };
     

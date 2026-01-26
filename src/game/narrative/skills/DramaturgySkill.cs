@@ -8,6 +8,7 @@ public class DramaturgySkill : Skill
 {
     public override string SkillId => "dramaturgy";
     public override string DisplayName => "Dramaturgy";
+    public override string ShortDescription => "theater, social performance";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Eyes", "Heart" };
     

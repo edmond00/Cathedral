@@ -8,6 +8,7 @@ public class ArchitectureSkill : Skill
 {
     public override string SkillId => "architecture";
     public override string DisplayName => "Architecture";
+    public override string ShortDescription => "structural design, spatial logic";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Eyes", "Cerebrum" };
     

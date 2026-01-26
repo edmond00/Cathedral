@@ -42,9 +42,18 @@ public class ThinkingExecutor
     /// Generates CoT reasoning and actions for the given keyword.
     /// Returns the parsed thinking response or null if generation failed.
     /// </summary>
+    /// <param name="thinkingSkill">The thinking skill to use</param>
+    /// <param name="keyword">The keyword that was clicked</param>
+    /// <param name="keywordSourceOutcome">The outcome/element that the keyword relates to (e.g., "berry bush"), or null</param>
+    /// <param name="node">The current narration node</param>
+    /// <param name="outcomesWithMetadata">Possible outcomes with circuitous metadata</param>
+    /// <param name="actionSkills">Available action skills</param>
+    /// <param name="avatar">The player avatar</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
         Skill thinkingSkill,
         string keyword,
+        string? keywordSourceOutcome,
         NarrationNode node,
         List<OutcomeWithMetadata> outcomesWithMetadata,
         List<Skill> actionSkills,
@@ -57,6 +66,7 @@ public class ThinkingExecutor
         // Build the user prompt with metadata (separates straightforward vs circuitous)
         string userPrompt = _promptConstructor.BuildThinkingPrompt(
             keyword,
+            keywordSourceOutcome,
             node,
             outcomesWithMetadata,  // Pass metadata so prompt shows separation
             actionSkills,
@@ -94,6 +104,7 @@ public class ThinkingExecutor
     /// <summary>
     /// Generates CoT reasoning and actions for the given keyword.
     /// Legacy overload that accepts plain outcomes (treats all as straightforward).
+    /// Does not include outcome context for the keyword.
     /// </summary>
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
         Skill thinkingSkill,
@@ -110,7 +121,30 @@ public class ThinkingExecutor
             .ToList();
             
         return await GenerateThinkingAsync(
-            thinkingSkill, keyword, node, outcomesWithMetadata, actionSkills, avatar, cancellationToken);
+            thinkingSkill, keyword, null, node, outcomesWithMetadata, actionSkills, avatar, cancellationToken);
+    }
+    
+    /// <summary>
+    /// Generates CoT reasoning and actions for the given keyword with outcome context.
+    /// Overload that accepts plain outcomes (treats all as straightforward) but includes keyword source.
+    /// </summary>
+    public async Task<ThinkingResponse?> GenerateThinkingAsync(
+        Skill thinkingSkill,
+        string keyword,
+        string? keywordSourceOutcome,
+        NarrationNode node,
+        List<OutcomeBase> possibleOutcomes,
+        List<Skill> actionSkills,
+        Avatar avatar,
+        CancellationToken cancellationToken = default)
+    {
+        // Wrap all outcomes as straightforward
+        var outcomesWithMetadata = possibleOutcomes
+            .Select(o => OutcomeWithMetadata.Straightforward(o))
+            .ToList();
+            
+        return await GenerateThinkingAsync(
+            thinkingSkill, keyword, keywordSourceOutcome, node, outcomesWithMetadata, actionSkills, avatar, cancellationToken);
     }
 
     /// <summary>

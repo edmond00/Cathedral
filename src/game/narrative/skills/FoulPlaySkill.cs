@@ -8,6 +8,7 @@ public class FoulPlaySkill : Skill
 {
     public override string SkillId => "foul_play";
     public override string DisplayName => "Foul Play";
+    public override string ShortDescription => "dirty tricks, deception";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking, SkillFunction.Action };
     public override string[] BodyParts => new[] { "Cerebrum", "Heart" };
     

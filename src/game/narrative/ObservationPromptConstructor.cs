@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Cathedral.Game.Narrative;
 
@@ -11,7 +13,7 @@ public class ObservationPromptConstructor
 {
     /// <summary>
     /// Builds an observation request for the LLM.
-    /// Includes neutral description, available keywords, and avatar state.
+    /// Includes neutral description, available keywords grouped by outcome, and avatar state.
     /// </summary>
     public string BuildObservationPrompt(
         NarrationNode node,
@@ -26,10 +28,16 @@ public class ObservationPromptConstructor
 
         if (promptKeywordUsage && targetKeywords.Count > 0)
         {
+            // Get keywords grouped by their source outcome
+            var keywordsByOutcome = node.GetKeywordsByOutcome();
+            
+            // Filter to only include keywords that are in our target list
+            var filteredKeywordsByOutcome = FilterKeywordsByTarget(keywordsByOutcome, targetKeywords);
+            
             prompt += $@"
 
-Notable elements you should describe in your narration (include 3-5 of these):
-{string.Join(", ", targetKeywords)}";
+Notable elements you should describe in your narration using specific keywords (include 3-5 of these):
+{FormatKeywordsByOutcome(filteredKeywordsByOutcome)}";
         }
 
         prompt += $@"
@@ -87,5 +95,51 @@ Respond in JSON format:
 }}";
 
         return prompt;
+    }
+    
+    /// <summary>
+    /// Formats keywords grouped by outcome for display in the prompt.
+    /// Example output:
+    ///   stream keywords: gurgling, cool, flowing
+    ///   berry bush keywords: ripe, bush, branches
+    /// </summary>
+    private string FormatKeywordsByOutcome(Dictionary<string, List<string>> keywordsByOutcome)
+    {
+        var sb = new StringBuilder();
+        
+        foreach (var kvp in keywordsByOutcome)
+        {
+            if (kvp.Value.Count > 0)
+            {
+                sb.AppendLine($"{kvp.Key} keywords: {string.Join(", ", kvp.Value)}");
+            }
+        }
+        
+        return sb.ToString().TrimEnd();
+    }
+    
+    /// <summary>
+    /// Filters the keywords by outcome to only include keywords that are in the target list.
+    /// </summary>
+    private Dictionary<string, List<string>> FilterKeywordsByTarget(
+        Dictionary<string, List<string>> keywordsByOutcome, 
+        List<string> targetKeywords)
+    {
+        var targetSet = new HashSet<string>(targetKeywords, StringComparer.OrdinalIgnoreCase);
+        var result = new Dictionary<string, List<string>>();
+        
+        foreach (var kvp in keywordsByOutcome)
+        {
+            var filteredKeywords = kvp.Value
+                .Where(k => targetSet.Contains(k))
+                .ToList();
+            
+            if (filteredKeywords.Count > 0)
+            {
+                result[kvp.Key] = filteredKeywords;
+            }
+        }
+        
+        return result;
     }
 }

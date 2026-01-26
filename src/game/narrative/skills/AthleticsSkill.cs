@@ -8,6 +8,7 @@ public class AthleticsSkill : Skill
 {
     public override string SkillId => "athletics";
     public override string DisplayName => "Athletics";
+    public override string ShortDescription => "running, climbing, exertion";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
     public override string[] BodyParts => new[] { "Lower Limbs", "Thorax" };
     

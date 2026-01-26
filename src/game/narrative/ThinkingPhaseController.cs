@@ -76,11 +76,16 @@ public class ThinkingPhaseController
 
         // Get action skills
         var actionSkills = _avatar.GetActionSkills();
+        
+        // Get the outcome that owns this keyword for context
+        var keywordSourceOutcome = node.GetOutcomeOwningKeyword(keyword);
+        string? keywordSourceOutcomeName = keywordSourceOutcome?.DisplayName;
 
         // Try to generate from LLM
         var response = await _thinkingExecutor.GenerateThinkingAsync(
             selectedThinkingSkill,
             keyword,
+            keywordSourceOutcomeName,
             node,
             possibleOutcomes,
             actionSkills,

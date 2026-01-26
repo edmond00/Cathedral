@@ -8,6 +8,7 @@ public class SneakArtSkill : Skill
 {
     public override string SkillId => "sneak_art";
     public override string DisplayName => "Sneak Art";
+    public override string ShortDescription => "stealth, silent movement";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
     public override string[] BodyParts => new[] { "Feet", "Ears" };
     

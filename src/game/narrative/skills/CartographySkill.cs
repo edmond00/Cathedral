@@ -8,6 +8,7 @@ public class CartographySkill : Skill
 {
     public override string SkillId => "cartography";
     public override string DisplayName => "Cartography";
+    public override string ShortDescription => "maps, spatial memory";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Eyes", "Cerebrum" };
     

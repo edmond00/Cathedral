@@ -8,6 +8,7 @@ public class PatienceSkill : Skill
 {
     public override string SkillId => "patience";
     public override string DisplayName => "Patience";
+    public override string ShortDescription => "waiting, endurance";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
     public override string[] BodyParts => new[] { "Pineal Gland", "Backbone" };
     

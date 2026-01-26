@@ -8,6 +8,7 @@ public class PugilitasSkill : Skill
 {
     public override string SkillId => "pugilitas";
     public override string DisplayName => "Pugilitas";
+    public override string ShortDescription => "boxing, hand-to-hand combat";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
     public override string[] BodyParts => new[] { "Upper Limbs", "Thorax" };
     

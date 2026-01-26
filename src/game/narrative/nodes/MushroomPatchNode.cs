@@ -8,7 +8,8 @@ namespace Cathedral.Game.Narrative.Nodes;
 /// </summary>
 public class MushroomPatchNode : NarrationNode
 {
-    public override string NodeId => "mushroom_patch";
+    public override string NodeId => "mushroom patch";
+    public override string TransitionDescription => "investigate the mushroom patch";
     public override bool IsEntryNode => false;
     
     public override List<string> NodeKeywords => new() { "fungus", "cap", "pale", "white", "stem", "gills", "ground", "damp", "earthy", "round" };

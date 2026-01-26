@@ -237,10 +237,15 @@ public class NarrativeController
             
             Console.WriteLine($"NarrativeController: Total {outcomesWithMetadata.Count} outcomes ({outcomesWithMetadata.Count(o => o.IsCircuitous)} circuitous), {actionSkills.Count} action skills");
             
+            // Get the outcome that owns this keyword for context
+            var keywordSourceOutcome = _currentNode.GetOutcomeOwningKeyword(keyword);
+            string? keywordSourceOutcomeName = keywordSourceOutcome?.DisplayName;
+            
             // Call ThinkingExecutor to generate reasoning + actions
             var response = await _thinkingExecutor.GenerateThinkingAsync(
                 thinkingSkill,
                 keyword,
+                keywordSourceOutcomeName,
                 _currentNode,
                 outcomesWithMetadata,
                 actionSkills,
@@ -347,16 +352,20 @@ public class NarrativeController
                 _scrollBuffer.ScrollToBottom();
                 _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
                 
+                Console.WriteLine($"NarrativeController: Plausibility failure - consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
+                
                 // If player still has noetic points, let them try again (no graying, no continue button)
                 if (_narrationState.ThinkingAttemptsRemaining > 0)
                 {
-                    Console.WriteLine($"NarrativeController: Plausibility failure with {_narrationState.ThinkingAttemptsRemaining} noetic points remaining - player can retry");
+                    Console.WriteLine($"NarrativeController: Player can retry with {_narrationState.ThinkingAttemptsRemaining} noetic points remaining");
+                    // Decrement noetic points for attempting an impossible action
+                    _narrationState.ThinkingAttemptsRemaining--;
                     // Don't show continue button, don't grey out - player can interact normally
                     return;
                 }
                 else
                 {
-                    Console.WriteLine("NarrativeController: Plausibility failure with no noetic points - showing continue button");
+                    Console.WriteLine("NarrativeController: No noetic points remaining - showing continue button");
                     // No more noetic points - show continue button and grey out like a normal failure
                     _narrationState.ShowContinueButton = true;
                     return;

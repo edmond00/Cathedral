@@ -18,6 +18,12 @@ public abstract class NarrationNode : ConcreteOutcome
     public abstract string NodeId { get; }
     
     /// <summary>
+    /// Natural language description for transitioning to this node (e.g., "approach the stream").
+    /// Used in LLM prompts to describe possible outcomes.
+    /// </summary>
+    public abstract string TransitionDescription { get; }
+    
+    /// <summary>
     /// All possible outcomes available from this node.
     /// </summary>
     public abstract List<OutcomeBase> PossibleOutcomes { get; }
@@ -99,6 +105,43 @@ public abstract class NarrationNode : ConcreteOutcome
             
             return allKeywords.ToList();
         }
+    }
+    
+    /// <summary>
+    /// Gets keywords grouped by their source outcome.
+    /// Returns a dictionary mapping outcome display names to their associated keywords.
+    /// Used to provide context to LLM about which keywords relate to which outcomes.
+    /// </summary>
+    public Dictionary<string, List<string>> GetKeywordsByOutcome()
+    {
+        var result = new Dictionary<string, List<string>>();
+        
+        // Node's own keywords (grouped under current node name)
+        if (NodeKeywords.Count > 0)
+        {
+            result[NodeId] = new List<string>(NodeKeywords);
+        }
+        
+        // Keywords from items discovered via reflection
+        var items = GetAvailableItems();
+        foreach (var item in items)
+        {
+            if (item.OutcomeKeywords.Count > 0)
+            {
+                result[item.DisplayName] = new List<string>(item.OutcomeKeywords);
+            }
+        }
+        
+        // Keywords from child NarrationNodes
+        foreach (var outcome in PossibleOutcomes)
+        {
+            if (outcome is NarrationNode childNode && childNode.NodeKeywords.Count > 0)
+            {
+                result[childNode.DisplayName] = new List<string>(childNode.NodeKeywords);
+            }
+        }
+        
+        return result;
     }
     
     /// <summary>
@@ -208,7 +251,7 @@ public abstract class NarrationNode : ConcreteOutcome
     
     public override string ToNaturalLanguageString()
     {
-        return $"transition {NodeId}";
+        return TransitionDescription;
     }
     
     /// <summary>

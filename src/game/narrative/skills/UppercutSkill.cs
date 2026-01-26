@@ -8,6 +8,7 @@ public class UppercutSkill : Skill
 {
     public override string SkillId => "uppercut";
     public override string DisplayName => "Uppercut";
+    public override string ShortDescription => "explosive upward strike";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
     public override string[] BodyParts => new[] { "Upper Limbs", "Cerebellum" };
     

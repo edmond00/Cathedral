@@ -8,6 +8,7 @@ public class ThermodynamicsSkill : Skill
 {
     public override string SkillId => "thermodynamics";
     public override string DisplayName => "Thermodynamics";
+    public override string ShortDescription => "energy, entropy, physics";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Cerebrum", "Anamnesis" };
     

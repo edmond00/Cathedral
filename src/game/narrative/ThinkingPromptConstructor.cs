@@ -14,8 +14,16 @@ public class ThinkingPromptConstructor
     /// Includes keyword context, possible outcomes, available action skills, and avatar state.
     /// Separates straightforward outcomes from circuitous outcomes in the prompt.
     /// </summary>
+    /// <param name="keyword">The keyword that was clicked</param>
+    /// <param name="keywordSourceOutcome">The outcome/element that the keyword relates to (e.g., "berry bush")</param>
+    /// <param name="node">The current narration node</param>
+    /// <param name="outcomesWithMetadata">Possible outcomes with circuitous metadata</param>
+    /// <param name="actionSkills">Available action skills</param>
+    /// <param name="avatar">The player avatar</param>
+    /// <param name="thinkingSkill">The thinking skill being used</param>
     public string BuildThinkingPrompt(
         string keyword,
+        string? keywordSourceOutcome,
         NarrationNode node,
         List<OutcomeWithMetadata> outcomesWithMetadata,
         List<Skill> actionSkills,
@@ -54,17 +62,27 @@ public class ThinkingPromptConstructor
             }
         }
         
-        var prompt = $@"Your attention is drawn to: ""{keyword}""
+        // Build the attention line with optional outcome context
+        string attentionLine = string.IsNullOrEmpty(keywordSourceOutcome)
+            ? $@"Your attention is drawn to: ""{keyword}"""
+            : $@"Your attention is drawn to the ""{keyword}"" aspect of ""{keywordSourceOutcome}""";
+        
+        // Build the think line with optional outcome context
+        string thinkLine = string.IsNullOrEmpty(keywordSourceOutcome)
+            ? $@"Think about what ""{keyword}"" suggests to you. What possibilities does it open?"
+            : $@"Think about what ""{keyword}"" suggests to you in the context of observing ""{keywordSourceOutcome}"". What possibilities does it open?";
+        
+        var prompt = $@"{attentionLine}
 
 Current situation:
 {node.GenerateNeutralDescription(avatar.CurrentLocationId)}
 
 Skills you can apply:
-{string.Join("\n", actionSkills.Select(s => $"- {s.SkillId}: {s.DisplayName}"))}
+{string.Join("\n", actionSkills.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
 
 {outcomesSection.ToString().TrimEnd()}
 
-Think about what ""{keyword}"" suggests to you. What possibilities does it open?
+{thinkLine}
 
 First, express your internal thoughts about this element—why it catches your interest,
 what connections you see, how it relates to your capabilities.
@@ -88,6 +106,7 @@ Output fields:
     
     /// <summary>
     /// Legacy overload that accepts plain outcomes (treats all as straightforward).
+    /// Does not include outcome context for the keyword.
     /// </summary>
     public string BuildThinkingPrompt(
         string keyword,
@@ -101,6 +120,6 @@ Output fields:
             .Select(o => OutcomeWithMetadata.Straightforward(o))
             .ToList();
             
-        return BuildThinkingPrompt(keyword, node, outcomesWithMetadata, actionSkills, avatar, thinkingSkill);
+        return BuildThinkingPrompt(keyword, null, node, outcomesWithMetadata, actionSkills, avatar, thinkingSkill);
     }
 }

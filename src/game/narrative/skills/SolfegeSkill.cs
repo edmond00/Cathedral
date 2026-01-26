@@ -8,6 +8,7 @@ public class SolfegeSkill : Skill
 {
     public override string SkillId => "solfege";
     public override string DisplayName => "Solfege";
+    public override string ShortDescription => "pitch, rhythm, harmony";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Ears", "Cerebellum" };
     

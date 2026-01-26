@@ -9,6 +9,7 @@ namespace Cathedral.Game.Narrative.Nodes;
 public class ClearingNode : NarrationNode
 {
     public override string NodeId => "clearing";
+    public override string TransitionDescription => "enter the clearing";
     public override bool IsEntryNode => true;
     
     // Keywords that describe this node itself (for being discovered as a transition)

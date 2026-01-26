@@ -8,6 +8,7 @@ public class ScrutinySkill : Skill
 {
     public override string SkillId => "scrutiny";
     public override string DisplayName => "Scrutiny";
+    public override string ShortDescription => "intense examination, detail";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation };
     public override string[] BodyParts => new[] { "Eyes", "Ears" };
     

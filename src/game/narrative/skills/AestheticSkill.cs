@@ -8,6 +8,7 @@ public class AestheticSkill : Skill
 {
     public override string SkillId => "aesthetic";
     public override string DisplayName => "Aesthetic";
+    public override string ShortDescription => "beauty, visual harmony";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation };
     public override string[] BodyParts => new[] { "Eyes", "Pineal Gland" };
     

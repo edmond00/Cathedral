@@ -8,6 +8,7 @@ public class AlgebraicAnalysisSkill : Skill
 {
     public override string SkillId => "algebraic_analysis";
     public override string DisplayName => "Algebraic Analysis";
+    public override string ShortDescription => "patterns, abstract reasoning";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Cerebrum", "Anamnesis" };
     

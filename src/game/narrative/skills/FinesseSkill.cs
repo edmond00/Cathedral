@@ -8,6 +8,7 @@ public class FinesseSkill : Skill
 {
     public override string SkillId => "finesse";
     public override string DisplayName => "Finesse";
+    public override string ShortDescription => "precision, delicate touch";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
     public override string[] BodyParts => new[] { "Fingers", "Cerebellum" };
     

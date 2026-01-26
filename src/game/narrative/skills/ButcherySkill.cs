@@ -8,6 +8,7 @@ public class ButcherySkill : Skill
 {
     public override string SkillId => "butchery";
     public override string DisplayName => "Butchery";
+    public override string ShortDescription => "anatomy, efficient cutting";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action, SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Fingers", "Viscera" };
     

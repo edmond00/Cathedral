@@ -8,6 +8,7 @@ public class MycologySkill : Skill
 {
     public override string SkillId => "mycology";
     public override string DisplayName => "Mycology";
+    public override string ShortDescription => "fungi, decomposition";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
     public override string[] BodyParts => new[] { "Eyes", "Nose" };
     
