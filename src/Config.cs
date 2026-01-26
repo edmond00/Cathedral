@@ -42,6 +42,11 @@ public static class Config
         public const float CameraMinDistance = 30.0f; // Minimum camera distance
         public const float CameraMaxDistance = 200f; // Maximum camera distance
         
+        // Camera zoom distances for different game phases
+        public const float CameraZoomWorldView = 85.0f; // Destination selection phase (starting value)
+        public const float CameraZoomTraveling = 100.0f; // Travel animation phase
+        public const float CameraZoomNarration = 65.0f; // Location interaction/narration phase
+        
         // Default glyph settings
         public const char DefaultGlyph = '.';
         public const int GlyphPixelSize = 65; // Raster size
@@ -61,6 +66,13 @@ public static class Config
         
         // Update timing for interface animations
         public const float UpdateInterval = 0.1f; // Update every 100ms (10 Hz)
+        
+        // Pathfinding noise
+        public const int PathfindingNoiseSeed = 42; // Fixed seed for consistent paths
+        public const float PathfindingNoiseStrength = 0.25f; // 0-1, adds up to 15% variation to edge costs
+        
+        // Rendering
+        public const float NarrationWorldDarkeningFactor = 0.3f; // 0-1, multiplier for world brightness during narration (0.3 = 70% darker)
     }
     
     #endregion

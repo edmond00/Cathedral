@@ -534,6 +534,10 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterWorldView()
     {
         Console.WriteLine("LocationTravelGameController: Entered WorldView mode");
+        // Set camera zoom for destination selection
+        _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomWorldView);
+        // Disable narration mode (world is interactive and in focus)
+        _core.SetNarrationMode(false);
         // Hide or minimize terminal
         if (_core.Terminal != null)
         {
@@ -544,12 +548,20 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterTraveling()
     {
         Console.WriteLine("LocationTravelGameController: Entered Traveling mode");
+        // Set camera zoom for travel animation
+        _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomTraveling);
+        // Disable narration mode (world is visible during travel)
+        _core.SetNarrationMode(false);
         // Could show travel info in terminal
     }
 
     private void OnEnterLocationInteraction()
     {
         Console.WriteLine("LocationTravelGameController: Entered LocationInteraction mode");
+        // Set camera zoom for location interaction/narration
+        _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomNarration);
+        // Enable narration mode (world is background, terminal UI is focus)
+        _core.SetNarrationMode(true);
         
         // If Phase 6 is active, don't start the old location UI system
         if (_isInNarrativeMode)

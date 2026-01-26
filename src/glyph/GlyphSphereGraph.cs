@@ -79,15 +79,26 @@ namespace Cathedral.Glyph
             _adjacencyList[v1].Add(v2);
             _adjacencyList[v2].Add(v1);
 
-            // Calculate and cache edge cost (Euclidean distance)
+            // Calculate base edge cost (Euclidean distance)
             var otkPos1 = _core.GetVertexPosition(v1);
             var otkPos2 = _core.GetVertexPosition(v2);
             var pos1 = new Vector3(otkPos1.X, otkPos1.Y, otkPos1.Z);
             var pos2 = new Vector3(otkPos2.X, otkPos2.Y, otkPos2.Z);
-            float distance = Vector3.Distance(pos1, pos2);
+            float baseDistance = Vector3.Distance(pos1, pos2);
+            
+            // Add noise to make paths more natural
+            // Average the noise of both vertices and apply strength multiplier
+            float noise1 = _core.GetVertexNoise(v1);
+            float noise2 = _core.GetVertexNoise(v2);
+            float avgNoise = (noise1 + noise2) * 0.5f; // 0-1 range
+            
+            // Apply noise as a multiplier: 1.0 + (avgNoise * strength)
+            // This adds 0-15% variation by default (configurable)
+            float noiseFactor = 1.0f + (avgNoise * Config.GlyphSphere.PathfindingNoiseStrength);
+            float noisedDistance = baseDistance * noiseFactor;
             
             // Store cost for both directions (undirected graph)
-            _edgeCosts[edge] = distance;
+            _edgeCosts[edge] = noisedDistance;
         }
 
         /// <summary>

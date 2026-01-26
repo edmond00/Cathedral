@@ -37,6 +37,7 @@ namespace Cathedral.Glyph
         int uiVao;
         int uiInstanceVbo;
         int worldProgram; // Grayscale shader for world elements
+        int darkWorldProgram; // Dark grayscale shader for world during narration
         
         // Background sphere (opaque backdrop)
         int backgroundProgram;
@@ -64,6 +65,7 @@ namespace Cathedral.Glyph
         int hoveredVertexIndex = -1;
         int lastHoveredVertexIndex = -2;
         private bool _worldInteractionsEnabled = true;
+        private bool _isNarrationMode = false; // Track if in narration/location interaction mode
         
         // Debug visualization
         Vector3 debugCameraPos = Vector3.Zero;
@@ -110,6 +112,15 @@ namespace Cathedral.Glyph
             }
         }
         
+        /// <summary>
+        /// Sets whether the game is in narration/location interaction mode.
+        /// When true, uses dark grayscale shader for world to emphasize terminal UI.
+        /// </summary>
+        public void SetNarrationMode(bool isNarration)
+        {
+            _isNarrationMode = isNarration;
+        }
+        
         // Terminal HUD
         private Cathedral.Terminal.TerminalHUD? _terminal;
         
@@ -139,6 +150,7 @@ namespace Cathedral.Glyph
         // Public interface for vertex manipulation
         public int VertexCount => vertices.Count;
         public Vector3 GetVertexPosition(int index) => vertices[index].Position;
+        public float GetVertexNoise(int index) => (index >= 0 && index < vertices.Count) ? vertices[index].Noise : 0f;
         
         // Public access to camera for external control
         /// <summary>
@@ -240,6 +252,7 @@ namespace Cathedral.Glyph
             
             // Build world and UI shaders
             worldProgram = CreateProgram(vertexShaderSrc, worldFragmentShaderSrc); // grayscale for world
+            darkWorldProgram = CreateProgram(vertexShaderSrc, darkWorldFragmentShaderSrc); // dark grayscale for narration
             uiProgram = CreateProgram(vertexShaderSrc, uiFragmentShaderSrc); // yellowscale for UI
 
             // Build background sphere shader
@@ -771,15 +784,15 @@ namespace Cathedral.Glyph
 
         private void RenderGlyphSphere(Matrix4 view, Matrix4 proj)
         {
-            // Select shader program based on debug mode
+            // Select shader program based on debug mode and narration state
             int currentWorldProgram = debugShaderMode switch
             {
-                0 => worldProgram,      // grayscale for world
+                0 => _isNarrationMode ? darkWorldProgram : worldProgram, // Use dark grayscale during narration
                 1 => debugProgram1,     // vertex colors only
                 2 => debugProgram2,     // texture only
                 3 => debugProgram3,     // wireframe
                 4 => debugProgram4,     // grayscale
-                _ => worldProgram
+                _ => _isNarrationMode ? darkWorldProgram : worldProgram
             };
             
             int currentUIProgram = debugShaderMode switch
@@ -808,6 +821,16 @@ namespace Cathedral.Glyph
                     GL.ActiveTexture(TextureUnit.Texture0);
                     GL.BindTexture(TextureTarget.Texture2D, glyphTexture);
                     GL.Uniform1(texLoc, 0);
+                }
+                
+                // Set darkening factor uniform if using dark world shader
+                if (currentWorldProgram == darkWorldProgram)
+                {
+                    int darkeningLoc = GL.GetUniformLocation(currentWorldProgram, "uDarkeningFactor");
+                    if (darkeningLoc >= 0)
+                    {
+                        GL.Uniform1(darkeningLoc, Cathedral.Config.GlyphSphere.NarrationWorldDarkeningFactor);
+                    }
                 }
 
                 GL.BindVertexArray(vao);
@@ -1113,22 +1136,28 @@ namespace Cathedral.Glyph
 
             BuildIcosphere(subdivisions, radius);
 
-            // Initialize all vertices with default green dots
+            // Initialize random with fixed seed for consistent pathfinding noise
+            var random = new Random(Config.GlyphSphere.PathfindingNoiseSeed);
+
+            // Initialize all vertices with default green dots and pathfinding noise
             for (int i = 0; i < vertices.Count; i++)
             {
+                // Generate noise value between 0 and 1 for this vertex
+                float noiseValue = (float)random.NextDouble();
+                
                 vertices[i] = new Vertex 
                 { 
                     Position = vertices[i].Position,
                     GlyphIndex = 0,
                     GlyphChar = Config.GlyphSphere.DefaultGlyph,
-                    Noise = 0,
+                    Noise = noiseValue,
                     Color = new Vector4(0.0f, 1.0f, 0.0f, 1.0f), // Green color
                     Size = 1.0f // Default size
                 };
             }
 
             instanceCount = vertices.Count;
-            Console.WriteLine($"Generated {vertices.Count} vertices with default green dots");
+            Console.WriteLine($"Generated {vertices.Count} vertices with pathfinding noise (seed: {Config.GlyphSphere.PathfindingNoiseSeed})");
         }
 
         private void BuildIcosphere(int subdivisions, float radius)
@@ -2076,6 +2105,28 @@ void main() {
         // Boost brightness by using texLuminance as alpha to make thin glyphs appear brighter
         float brightness = min(1.0, yellowValue * (1.0 + texLuminance * 0.5));
         FragColor = vec4(brightness, brightness, 0.0, 1.0);
+    } else {
+        discard;
+    }
+}";
+
+        private readonly string darkWorldFragmentShaderSrc = @"
+#version 330 core
+in vec2 vUv;
+in vec4 vColor;
+out vec4 FragColor;
+uniform sampler2D uAtlas;
+uniform float uDarkeningFactor;
+void main() {
+    vec4 texSample = texture(uAtlas, vUv);
+    float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
+    
+    if (texLuminance > 0.1) {
+        // Compute luminosity of the original vertex color
+        float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
+        // Use the luminosity as a grayscale value, but darker (multiply by darkening factor)
+        float darkenedLuminance = colorLuminance * uDarkeningFactor;
+        FragColor = vec4(darkenedLuminance, darkenedLuminance, darkenedLuminance, 1.0);
     } else {
         discard;
     }
