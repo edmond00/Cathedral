@@ -32,6 +32,12 @@ namespace Cathedral.Glyph
         int glyphTexture;
         int indexCount;
         
+        // UI rendering (separate pass)
+        int uiProgram; // Yellowscale shader for UI elements
+        int uiVao;
+        int uiInstanceVbo;
+        int worldProgram; // Grayscale shader for world elements
+        
         // Background sphere (opaque backdrop)
         int backgroundProgram;
         int backgroundVao, backgroundVbo, backgroundEbo;
@@ -48,6 +54,8 @@ namespace Cathedral.Glyph
         List<uint> indices = new List<uint>();
         GlyphInfo[] glyphInfos = null!;
         int instanceCount = 0;
+        int worldInstanceCount = 0;
+        int uiInstanceCount = 0;
 
         // Camera system
         private Camera _camera;
@@ -70,22 +78,7 @@ namespace Cathedral.Glyph
         int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe, 4=grayscale
         int debugProgram1, debugProgram2, debugProgram3, debugProgram4;
 
-        // Shared constants to avoid hardcoded duplicates
-        const float QUAD_SIZE = 0.3f; // Size of each glyph quad on the sphere
-        const float VERTEX_SHADER_SIZE_MULTIPLIER = 2.0f; // Multiplier used in vertex shader
-        const float SPHERE_RADIUS = 25.0f; // Main sphere radius
-        const int SPHERE_SUBDIVISIONS = 5; // Icosphere subdivision level (affects vertex density)
-        const float CAMERA_DEFAULT_DISTANCE = 80.0f; // Default camera distance
-        const float CAMERA_MIN_DISTANCE = 30.0f; // Minimum camera distance
-        const float CAMERA_MAX_DISTANCE = 200f; // Maximum camera distance
-        
-        // Default glyph settings
-        const char DEFAULT_GLYPH = '.';
-        const int GLYPH_PIXEL_SIZE = 65; // raster size
-        const int GLYPH_CELL = 50; // cell in atlas
-
-        // Update timing for interface animations
-        const float UPDATE_INTERVAL = 0.1f; // Update every 0.5 seconds (2 Hz)
+        // Update timing state
         private float updateTimer = 0.0f;
 
         // Pathfinding
@@ -154,9 +147,9 @@ namespace Cathedral.Glyph
         /// </summary>
         public Camera Camera => _camera;
         
-        private string currentGlyphSet = DEFAULT_GLYPH.ToString();
+        private string currentGlyphSet = Config.GlyphSphere.DefaultGlyph.ToString();
         
-        public void SetVertexGlyph(int index, char glyph, Vector4 color, float size = 1.0f)
+        public void SetVertexGlyph(int index, char glyph, Vector4 color, float size = 1.0f, bool isUIElement = false)
         {
             if (index >= 0 && index < vertices.Count)
             {
@@ -177,7 +170,8 @@ namespace Cathedral.Glyph
                     GlyphChar = glyph,
                     Noise = vertices[index].Noise,
                     Color = color,
-                    Size = size
+                    Size = size,
+                    IsUIElement = isUIElement
                 };
             }
         }
@@ -217,7 +211,7 @@ namespace Cathedral.Glyph
             }
             
             // Build new atlas
-            glyphInfos = BuildGlyphAtlas(glyphSet, GLYPH_CELL, GLYPH_PIXEL_SIZE, out Image<Rgba32> atlasImage);
+            glyphInfos = BuildGlyphAtlas(glyphSet, Config.GlyphSphere.GlyphCellSize, Config.GlyphSphere.GlyphPixelSize, out Image<Rgba32> atlasImage);
             glyphTexture = LoadTexture(atlasImage);
             atlasImage.Dispose();
             
@@ -243,6 +237,10 @@ namespace Cathedral.Glyph
             debugProgram2 = CreateProgram(vertexShaderSrc, debugFragmentSrc2); // texture only
             debugProgram3 = CreateProgram(vertexShaderSrc, debugFragmentSrc3); // wireframe
             debugProgram4 = CreateProgram(vertexShaderSrc, debugFragmentSrc4); // grayscale
+            
+            // Build world and UI shaders
+            worldProgram = CreateProgram(vertexShaderSrc, worldFragmentShaderSrc); // grayscale for world
+            uiProgram = CreateProgram(vertexShaderSrc, uiFragmentShaderSrc); // yellowscale for UI
 
             // Build background sphere shader
             backgroundProgram = CreateProgram(backgroundVertexShaderSrc, backgroundFragmentShaderSrc);
@@ -254,23 +252,24 @@ namespace Cathedral.Glyph
             GL.UseProgram(program);
             
             // Build sphere with default glyphs (green dots)
-            BuildSphere(SPHERE_SUBDIVISIONS, 0, SPHERE_RADIUS);
+            BuildSphere(Config.GlyphSphere.SphereSubdivisions, 0, Config.GlyphSphere.SphereRadius);
             
             // Create background sphere (90% radius, opaque)
-            BuildBackgroundSphere(SPHERE_SUBDIVISIONS, 0, SPHERE_RADIUS * 0.98f);
+            BuildBackgroundSphere(Config.GlyphSphere.SphereSubdivisions, 0, Config.GlyphSphere.SphereRadius * 0.98f);
 
             // Build glyph atlas with default glyph
-            string defaultGlyphSet = DEFAULT_GLYPH.ToString();
+            string defaultGlyphSet = Config.GlyphSphere.DefaultGlyph.ToString();
             Console.WriteLine($"Generated GlyphSet: \"{defaultGlyphSet}\" ({defaultGlyphSet.Length} characters)");
-            glyphInfos = BuildGlyphAtlas(defaultGlyphSet, GLYPH_CELL, GLYPH_PIXEL_SIZE, out Image<Rgba32> atlasImage);
+            glyphInfos = BuildGlyphAtlas(defaultGlyphSet, Config.GlyphSphere.GlyphCellSize, Config.GlyphSphere.GlyphPixelSize, out Image<Rgba32> atlasImage);
             
             glyphTexture = LoadTexture(atlasImage);
             atlasImage.Dispose();
 
             // Create VBO/VAO for quad + instance data approach
             SetupInstancedRendering();
+            SetupUIInstancedRendering();
 
-            // Fill instance buffer now
+            // Fill instance buffers now
             UpdateInstanceBuffer();
 
             // Set texture uniform
@@ -584,6 +583,67 @@ namespace Cathedral.Glyph
 
             GL.BindVertexArray(0);
         }
+        
+        private void SetupUIInstancedRendering()
+        {
+            uiVao = GL.GenVertexArray();
+            GL.BindVertexArray(uiVao);
+
+            // Reuse the same quad VBO and EBO
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+            
+            // attrib 0: local pos.xy (vec2)
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
+
+            // attrib 1: local uv (vec2)
+            GL.EnableVertexAttribArray(1);
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 2 * sizeof(float));
+
+            // Bind the same EBO
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+
+            // Create separate instance buffer for UI elements
+            uiInstanceVbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, uiInstanceVbo);
+            int maxInstances = vertices.Count; // Worst case: all vertices are UI
+            GL.BufferData(BufferTarget.ArrayBuffer, maxInstances * 18 * sizeof(float), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+            int attribIndex = 2;
+            int stride = 18 * sizeof(float);
+
+            // instancePos vec3
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 3, VertexAttribPointerType.Float, false, stride, 0);
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            // right vec3
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 3, VertexAttribPointerType.Float, false, stride, 3 * sizeof(float));
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            // up vec3
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 3, VertexAttribPointerType.Float, false, stride, 6 * sizeof(float));
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            // size float
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 1, VertexAttribPointerType.Float, false, stride, 9 * sizeof(float));
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            // uvRect vec4
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 4, VertexAttribPointerType.Float, false, stride, 10 * sizeof(float));
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            // color vec4
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 4, VertexAttribPointerType.Float, false, stride, 14 * sizeof(float));
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            GL.BindVertexArray(0);
+        }
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
@@ -594,7 +654,7 @@ namespace Cathedral.Glyph
 
             // Update timing for interface animations
             updateTimer += (float)args.Time;
-            if (updateTimer >= UPDATE_INTERVAL)
+            if (updateTimer >= Config.GlyphSphere.UpdateInterval)
             {
                 UpdateRequested?.Invoke(updateTimer);
                 updateTimer = 0.0f;
@@ -712,36 +772,71 @@ namespace Cathedral.Glyph
         private void RenderGlyphSphere(Matrix4 view, Matrix4 proj)
         {
             // Select shader program based on debug mode
-            int currentProgram = debugShaderMode switch
+            int currentWorldProgram = debugShaderMode switch
             {
-                0 => program,           // normal rendering
+                0 => worldProgram,      // grayscale for world
                 1 => debugProgram1,     // vertex colors only
                 2 => debugProgram2,     // texture only
                 3 => debugProgram3,     // wireframe
                 4 => debugProgram4,     // grayscale
-                _ => program
+                _ => worldProgram
             };
             
-            GL.UseProgram(currentProgram);
-            
-            int viewLoc = GL.GetUniformLocation(currentProgram, "uView");
-            int projLoc = GL.GetUniformLocation(currentProgram, "uProj");
-            GL.UniformMatrix4(viewLoc, false, ref view);
-            GL.UniformMatrix4(projLoc, false, ref proj);
-            
-            // Set texture uniform for current program
-            int texLoc = GL.GetUniformLocation(currentProgram, "uAtlas");
-            if (texLoc >= 0)
+            int currentUIProgram = debugShaderMode switch
             {
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, glyphTexture);
-                GL.Uniform1(texLoc, 0);
-            }
+                0 => uiProgram,         // yellowscale for UI
+                1 => debugProgram1,     // vertex colors only
+                2 => debugProgram2,     // texture only
+                3 => debugProgram3,     // wireframe
+                4 => debugProgram4,     // grayscale
+                _ => uiProgram
+            };
+            
+            // First pass: Render world glyphs with grayscale shader
+            if (worldInstanceCount > 0)
+            {
+                GL.UseProgram(currentWorldProgram);
+                
+                int viewLoc = GL.GetUniformLocation(currentWorldProgram, "uView");
+                int projLoc = GL.GetUniformLocation(currentWorldProgram, "uProj");
+                GL.UniformMatrix4(viewLoc, false, ref view);
+                GL.UniformMatrix4(projLoc, false, ref proj);
+                
+                int texLoc = GL.GetUniformLocation(currentWorldProgram, "uAtlas");
+                if (texLoc >= 0)
+                {
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.BindTexture(TextureTarget.Texture2D, glyphTexture);
+                    GL.Uniform1(texLoc, 0);
+                }
 
-            // Draw instanced quads
-            GL.BindVertexArray(vao);
-            GL.DrawElementsInstanced(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero, instanceCount);
-            GL.BindVertexArray(0);
+                GL.BindVertexArray(vao);
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero, worldInstanceCount);
+                GL.BindVertexArray(0);
+            }
+            
+            // Second pass: Render UI glyphs with yellowscale shader
+            if (uiInstanceCount > 0)
+            {
+                GL.UseProgram(currentUIProgram);
+                
+                int viewLoc = GL.GetUniformLocation(currentUIProgram, "uView");
+                int projLoc = GL.GetUniformLocation(currentUIProgram, "uProj");
+                GL.UniformMatrix4(viewLoc, false, ref view);
+                GL.UniformMatrix4(projLoc, false, ref proj);
+                
+                int texLoc = GL.GetUniformLocation(currentUIProgram, "uAtlas");
+                if (texLoc >= 0)
+                {
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.BindTexture(TextureTarget.Texture2D, glyphTexture);
+                    GL.Uniform1(texLoc, 0);
+                }
+
+                GL.BindVertexArray(uiVao);
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero, uiInstanceCount);
+                GL.BindVertexArray(0);
+            }
         }
 
         protected override void OnMouseMove(MouseMoveEventArgs e)
@@ -880,7 +975,7 @@ namespace Cathedral.Glyph
             Vector3 rayDirection = Vector3.Normalize(mouseProjection - cameraPos);
             
             Vector3 sphereCenter = Vector3.Zero;
-            float sphereRadius = SPHERE_RADIUS;
+            float sphereRadius = Config.GlyphSphere.SphereRadius;
             
             Vector3 oc = rayOrigin - sphereCenter;
             float a = Vector3.Dot(rayDirection, rayDirection);
@@ -906,7 +1001,7 @@ namespace Cathedral.Glyph
                 Vector3 vertexPos = vertices[i].Position;
                 float dist = Vector3.Distance(intersectionPoint, vertexPos);
                 
-                float maxDist = QUAD_SIZE * VERTEX_SHADER_SIZE_MULTIPLIER;
+                float maxDist = Config.GlyphSphere.QuadSize * Config.GlyphSphere.VertexShaderSizeMultiplier;
                 if (dist <= maxDist && dist < closestDist)
                 {
                     closestDist = dist;
@@ -1025,7 +1120,7 @@ namespace Cathedral.Glyph
                 { 
                     Position = vertices[i].Position,
                     GlyphIndex = 0,
-                    GlyphChar = DEFAULT_GLYPH,
+                    GlyphChar = Config.GlyphSphere.DefaultGlyph,
                     Noise = 0,
                     Color = new Vector4(0.0f, 1.0f, 0.0f, 1.0f), // Green color
                     Size = 1.0f // Default size
@@ -1123,7 +1218,7 @@ namespace Cathedral.Glyph
 
             foreach (var pos in currentVertices)
             {
-                vertices.Add(new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = DEFAULT_GLYPH, Noise = 0, Color = Vector4.One, Size = 1.0f });
+                vertices.Add(new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = Config.GlyphSphere.DefaultGlyph, Noise = 0, Color = Vector4.One, Size = 1.0f });
             }
 
             indices.AddRange(currentIndices);
@@ -1235,43 +1330,80 @@ namespace Cathedral.Glyph
 
         private void UpdateInstanceBuffer()
         {
-            instanceCount = vertices.Count;
-            float[] data = new float[instanceCount * 18];
-            for (int i = 0; i < instanceCount; i++)
+            // Separate world and UI vertices
+            var worldVertices = new List<(Vertex v, int index)>();
+            var uiVertices = new List<(Vertex v, int index)>();
+            
+            for (int i = 0; i < vertices.Count; i++)
             {
-                var v = vertices[i];
-
-                var normal = Vector3.Normalize(v.Position);
-                Vector3 pole = Vector3.UnitY;
-                var poleProj = pole - normal * Vector3.Dot(pole, normal);
-                if (poleProj.LengthSquared < 1e-6f)
-                    poleProj = Vector3.Cross(normal, Vector3.UnitX);
-                poleProj = Vector3.Normalize(poleProj);
-                var right = Vector3.Normalize(Vector3.Cross(poleProj, normal));
-                var up = poleProj;
-                float size = QUAD_SIZE * v.Size;
-
-                var gi = glyphInfos[v.GlyphIndex];
-                var uvx = gi.UvX; var uvy = gi.UvY; var uvw = gi.UvW; var uvh = gi.UvH;
-
-                Vector4 col = v.Color;
-                if (i == hoveredVertexIndex)
+                if (vertices[i].IsUIElement)
+                    uiVertices.Add((vertices[i], i));
+                else
+                    worldVertices.Add((vertices[i], i));
+            }
+            
+            worldInstanceCount = worldVertices.Count;
+            uiInstanceCount = uiVertices.Count;
+            
+            // Fill world buffer
+            if (worldInstanceCount > 0)
+            {
+                float[] worldData = new float[worldInstanceCount * 18];
+                for (int i = 0; i < worldInstanceCount; i++)
                 {
-                    col = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+                    var (v, vertexIndex) = worldVertices[i];
+                    FillInstanceData(worldData, i, v, vertexIndex);
                 }
+                
+                GL.BindBuffer(BufferTarget.ArrayBuffer, instanceVbo);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, worldData.Length * sizeof(float), worldData);
+            }
+            
+            // Fill UI buffer
+            if (uiInstanceCount > 0)
+            {
+                float[] uiData = new float[uiInstanceCount * 18];
+                for (int i = 0; i < uiInstanceCount; i++)
+                {
+                    var (v, vertexIndex) = uiVertices[i];
+                    FillInstanceData(uiData, i, v, vertexIndex);
+                }
+                
+                GL.BindBuffer(BufferTarget.ArrayBuffer, uiInstanceVbo);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, uiData.Length * sizeof(float), uiData);
+            }
+            
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        }
+        
+        private void FillInstanceData(float[] data, int instanceIdx, Vertex v, int vertexIndex)
+        {
+            var normal = Vector3.Normalize(v.Position);
+            Vector3 pole = Vector3.UnitY;
+            var poleProj = pole - normal * Vector3.Dot(pole, normal);
+            if (poleProj.LengthSquared < 1e-6f)
+                poleProj = Vector3.Cross(normal, Vector3.UnitX);
+            poleProj = Vector3.Normalize(poleProj);
+            var right = Vector3.Normalize(Vector3.Cross(poleProj, normal));
+            var up = poleProj;
+            float size = Config.GlyphSphere.QuadSize * v.Size;
 
-                int baseIdx = i * 18;
-                data[baseIdx + 0] = v.Position.X; data[baseIdx + 1] = v.Position.Y; data[baseIdx + 2] = v.Position.Z;
-                data[baseIdx + 3] = right.X; data[baseIdx + 4] = right.Y; data[baseIdx + 5] = right.Z;
-                data[baseIdx + 6] = up.X; data[baseIdx + 7] = up.Y; data[baseIdx + 8] = up.Z;
-                data[baseIdx + 9] = size;
-                data[baseIdx + 10] = uvx; data[baseIdx + 11] = uvy; data[baseIdx + 12] = uvw; data[baseIdx + 13] = uvh;
-                data[baseIdx + 14] = col.X; data[baseIdx + 15] = col.Y; data[baseIdx + 16] = col.Z; data[baseIdx + 17] = col.W;
+            var gi = glyphInfos[v.GlyphIndex];
+            var uvx = gi.UvX; var uvy = gi.UvY; var uvw = gi.UvW; var uvh = gi.UvH;
+
+            Vector4 col = v.Color;
+            if (vertexIndex == hoveredVertexIndex)
+            {
+                col = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
             }
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, instanceVbo);
-            GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, data.Length * sizeof(float), data);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            int baseIdx = instanceIdx * 18;
+            data[baseIdx + 0] = v.Position.X; data[baseIdx + 1] = v.Position.Y; data[baseIdx + 2] = v.Position.Z;
+            data[baseIdx + 3] = right.X; data[baseIdx + 4] = right.Y; data[baseIdx + 5] = right.Z;
+            data[baseIdx + 6] = up.X; data[baseIdx + 7] = up.Y; data[baseIdx + 8] = up.Z;
+            data[baseIdx + 9] = size;
+            data[baseIdx + 10] = uvx; data[baseIdx + 11] = uvy; data[baseIdx + 12] = uvw; data[baseIdx + 13] = uvh;
+            data[baseIdx + 14] = col.X; data[baseIdx + 15] = col.Y; data[baseIdx + 16] = col.Z; data[baseIdx + 17] = col.W;
         }
 
         private GlyphInfo[] BuildGlyphAtlas(string glyphs, int cellSize, int fontPxSize, out Image<Rgba32> atlas)
@@ -1429,7 +1561,7 @@ namespace Cathedral.Glyph
                 Vector3 oc = debugRayOrigin;
                 float a = Vector3.Dot(debugRayDirection, debugRayDirection);
                 float b = 2.0f * Vector3.Dot(oc, debugRayDirection);
-                float c = Vector3.Dot(oc, oc) - SPHERE_RADIUS * SPHERE_RADIUS;
+                float c = Vector3.Dot(oc, oc) - Config.GlyphSphere.SphereRadius * Config.GlyphSphere.SphereRadius;
                 
                 float discriminant = b * b - 4 * a * c;
                 if (discriminant >= 0)
@@ -1662,7 +1794,7 @@ namespace Cathedral.Glyph
             
             // Calculate ray-sphere intersection
             Vector3 sphereCenter = Vector3.Zero;
-            float sphereRadius = SPHERE_RADIUS;
+            float sphereRadius = Config.GlyphSphere.SphereRadius;
             
             // Ray-sphere intersection math
             Vector3 oc = rayOrigin - sphereCenter;
@@ -1729,7 +1861,7 @@ namespace Cathedral.Glyph
             
             // Calculate ray-sphere intersection
             Vector3 sphereCenter = Vector3.Zero;
-            float sphereRadius = SPHERE_RADIUS;
+            float sphereRadius = Config.GlyphSphere.SphereRadius;
             
             // Ray-sphere intersection math
             Vector3 oc = rayOrigin - sphereCenter;
@@ -1796,6 +1928,7 @@ namespace Cathedral.Glyph
             public float Noise;
             public Vector4 Color;
             public float Size; // Size factor from BiomeType/LocationType
+            public bool IsUIElement; // True for UI elements (avatar, waypoints, etc.)
         }
 
         private struct GlyphInfo
@@ -1824,7 +1957,7 @@ out vec4 vColor;
 
 void main()
 {{
-    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * {VERTEX_SHADER_SIZE_MULTIPLIER};
+    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * {Config.GlyphSphere.VertexShaderSizeMultiplier};
     gl_Position = uProj * uView * vec4(worldPos, 1.0);
     vUv = vec2(iUvRect.x + aLocalUV.x * iUvRect.z, iUvRect.y + aLocalUV.y * iUvRect.w);
     vColor = iColor;
@@ -1899,6 +2032,50 @@ void main() {
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
         // Use the luminosity as a grayscale value
         FragColor = vec4(colorLuminance, colorLuminance, colorLuminance, 1.0);
+    } else {
+        discard;
+    }
+}";
+
+        private readonly string worldFragmentShaderSrc = @"
+#version 330 core
+in vec2 vUv;
+in vec4 vColor;
+out vec4 FragColor;
+uniform sampler2D uAtlas;
+void main() {
+    vec4 texSample = texture(uAtlas, vUv);
+    float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
+    
+    if (texLuminance > 0.1) {
+        // Compute luminosity of the original vertex color
+        float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
+        // Use the luminosity as a grayscale value
+        FragColor = vec4(colorLuminance, colorLuminance, colorLuminance, 1.0);
+    } else {
+        discard;
+    }
+}";
+
+        private readonly string uiFragmentShaderSrc = @"
+#version 330 core
+in vec2 vUv;
+in vec4 vColor;
+out vec4 FragColor;
+uniform sampler2D uAtlas;
+void main() {
+    vec4 texSample = texture(uAtlas, vUv);
+    float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
+    
+    if (texLuminance > 0.1) {
+        // Compute luminosity of the original vertex color
+        float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
+        // Map luminosity to yellow scale: dark yellow (0.4, 0.4, 0.0) to bright yellow (1.0, 1.0, 0.0)
+        float darkYellow = 0.4;
+        float yellowValue = mix(darkYellow, 1.0, colorLuminance);
+        // Boost brightness by using texLuminance as alpha to make thin glyphs appear brighter
+        float brightness = min(1.0, yellowValue * (1.0 + texLuminance * 0.5));
+        FragColor = vec4(brightness, brightness, 0.0, 1.0);
     } else {
         discard;
     }

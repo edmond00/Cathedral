@@ -27,6 +27,44 @@ public static class Config
     
     #endregion
     
+    #region GlyphSphere Configuration
+    
+    public static class GlyphSphere
+    {
+        // Sphere geometry
+        public const float QuadSize = 0.3f; // Size of each glyph quad on the sphere
+        public const float VertexShaderSizeMultiplier = 2.0f; // Multiplier used in vertex shader
+        public const float SphereRadius = 50.0f; // Main sphere radius
+        public const int SphereSubdivisions = 6; // Icosphere subdivision level (affects vertex density)
+        
+        // Camera settings
+        public const float CameraDefaultDistance = 80.0f; // Default camera distance
+        public const float CameraMinDistance = 30.0f; // Minimum camera distance
+        public const float CameraMaxDistance = 200f; // Maximum camera distance
+        
+        // Default glyph settings
+        public const char DefaultGlyph = '.';
+        public const int GlyphPixelSize = 65; // Raster size
+        public const int GlyphCellSize = 50; // Cell in atlas
+        
+        // Avatar and pathfinding characters
+        public const char AvatarChar = '☻'; // Smiling face for avatar
+        public const char PathWaypointChar = '.'; // Dot for waypoints
+        public const char PathDestinationChar = '+'; // Plus for destination
+        
+        // Avatar and pathfinding colors (RGB 0-255)
+        public static readonly System.Numerics.Vector3 AvatarColor = new(255, 255, 255); // Yellow
+        public static readonly System.Numerics.Vector3 PathWaypointPreviewColor = new(255, 255, 255); // Light blue
+        public static readonly System.Numerics.Vector3 PathDestinationPreviewColor = new(255, 255, 255); // Light red
+        public static readonly System.Numerics.Vector3 PathWaypointActiveColor = new(255, 255, 255); // Gold
+        public static readonly System.Numerics.Vector3 PathDestinationActiveColor = new(255, 255, 255); // Bright yellow
+        
+        // Update timing for interface animations
+        public const float UpdateInterval = 0.1f; // Update every 100ms (10 Hz)
+    }
+    
+    #endregion
+    
     #region Base Colors
     
     public static class Colors
@@ -211,6 +249,16 @@ public static class Config
         public static readonly Vector4 SkillHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
         public static readonly Vector4 BackgroundColor = new(0.0f, 0.0f, 0.0f, 0.9f); // Semi-transparent black
         public static readonly Vector4 TransparentColor = new(0.0f, 0.0f, 0.0f, 0.0f);
+    }
+    
+    #endregion
+    
+    #region Exploration Popup
+    
+    public static class ExplorationPopup
+    {
+        public static readonly Vector4 LocationNameTextColor = Colors.Black; // White text for location names
+        public static readonly Vector4 LocationNameBackgroundColor = Colors.BrightYellow; // Black background
     }
     
     #endregion

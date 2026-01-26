@@ -44,9 +44,6 @@ namespace Cathedral.Glyph.Microworld
         private Cathedral.Pathfinding.Path? _pendingMovementPath;
         
         private const float MOVE_SPEED = 5.0f; // Moves per second (debugging to understand timing)
-        private const char AVATAR_CHAR = '☻';
-        private const char PATH_WAYPOINT_CHAR = '.';
-        private const char PATH_DESTINATION_CHAR = '+';
         
         // Debug counter for timing
         private int _debugFrameCount = 0;
@@ -191,7 +188,7 @@ namespace Cathedral.Glyph.Microworld
             // Avatar takes priority over biome data
             if (vertexIndex == _avatarVertex)
             {
-                return AVATAR_CHAR;
+                return Config.GlyphSphere.AvatarChar;
             }
 
             if (vertexData.TryGetValue(vertexIndex, out var data))
@@ -206,7 +203,7 @@ namespace Cathedral.Glyph.Microworld
             // Avatar takes priority over biome data
             if (vertexIndex == _avatarVertex)
             {
-                return new System.Numerics.Vector3(255, 255, 0); // Yellow for avatar
+                return Config.GlyphSphere.AvatarColor;
             }
 
             if (vertexData.TryGetValue(vertexIndex, out var data))
@@ -436,8 +433,7 @@ namespace Cathedral.Glyph.Microworld
 
             // Set avatar character and color
             _avatarVertex = vertexIndex;
-            var avatarColor = new System.Numerics.Vector3(255, 255, 0); // Yellow for avatar
-            SetVertexGlyph(vertexIndex, AVATAR_CHAR, avatarColor);
+            SetVertexGlyph(vertexIndex, Config.GlyphSphere.AvatarChar, Config.GlyphSphere.AvatarColor, true); // Mark as UI element
             
             if (centerCamera)
             {
@@ -629,16 +625,14 @@ namespace Cathedral.Glyph.Microworld
                 for (int i = 1; i < path.Length - 1; i++) // Skip start (avatar) and end (destination)
                 {
                     int nodeId = path.GetNode(i);
-                    var waypointColor = new System.Numerics.Vector3(128, 128, 255); // Light blue for waypoints
-                    SetVertexGlyph(nodeId, PATH_WAYPOINT_CHAR, waypointColor);
+                    SetVertexGlyph(nodeId, Config.GlyphSphere.PathWaypointChar, Config.GlyphSphere.PathWaypointPreviewColor, true); // Mark as UI element
                 }
 
                 // Mark destination
                 if (path.Length > 1)
                 {
                     int destNode = path.GetNode(path.Length - 1);
-                    var destColor = new System.Numerics.Vector3(255, 128, 128); // Light red for destination
-                    SetVertexGlyph(destNode, PATH_DESTINATION_CHAR, destColor);
+                    SetVertexGlyph(destNode, Config.GlyphSphere.PathDestinationChar, Config.GlyphSphere.PathDestinationPreviewColor, true); // Mark as UI element
                 }
             }
         }
@@ -680,22 +674,18 @@ namespace Cathedral.Glyph.Microworld
         {
             if (_currentPath == null || _currentPath.Length <= 1) return;
             
-            // Highlight path with yellow/gold color
-            var pathColor = new System.Numerics.Vector3(255, 215, 0); // Gold
-            var destColor = new System.Numerics.Vector3(255, 255, 128); // Bright yellow for destination
-            
             // Draw waypoints (skip avatar position)
             for (int i = 1; i < _currentPath.Length - 1; i++)
             {
                 int nodeId = _currentPath.GetNode(i);
-                SetVertexGlyph(nodeId, PATH_WAYPOINT_CHAR, pathColor);
+                SetVertexGlyph(nodeId, Config.GlyphSphere.PathWaypointChar, Config.GlyphSphere.PathWaypointActiveColor, true); // Mark as UI element
             }
             
             // Highlight destination
             if (_currentPath.Length > 1)
             {
                 int destNode = _currentPath.GetNode(_currentPath.Length - 1);
-                SetVertexGlyph(destNode, PATH_DESTINATION_CHAR, destColor);
+                SetVertexGlyph(destNode, Config.GlyphSphere.PathDestinationChar, Config.GlyphSphere.PathDestinationActiveColor, true); // Mark as UI element
             }
         }
         

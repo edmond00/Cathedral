@@ -646,8 +646,8 @@ public class LocationTravelGameController : IDisposable
             // Only cells with text will have black background, others remain transparent
             int centerY = _core.PopupTerminal.Height / 2;
             _core.PopupTerminal.DrawCenteredText(centerY, locationName, 
-                Cathedral.Terminal.Utils.Colors.White, 
-                Cathedral.Terminal.Utils.Colors.Black);
+                Config.ExplorationPopup.LocationNameTextColor, 
+                Config.ExplorationPopup.LocationNameBackgroundColor);
         }
     }
     

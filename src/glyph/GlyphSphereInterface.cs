@@ -40,18 +40,24 @@ namespace Cathedral.Glyph
 
         public void SetVertexGlyph(int index, char glyph, Vector4 color)
         {
-            core.SetVertexGlyph(index, glyph, color);
+            core.SetVertexGlyph(index, glyph, color, 1.0f, false);
         }
 
         public void SetVertexGlyph(int index, char glyph, System.Numerics.Vector3 color)
         {
             var vec4Color = new Vector4(color.X / 255.0f, color.Y / 255.0f, color.Z / 255.0f, 1.0f);
-            core.SetVertexGlyph(index, glyph, vec4Color);
+            core.SetVertexGlyph(index, glyph, vec4Color, 1.0f, false);
         }
         
         public void SetVertexGlyph(int index, char glyph, Vector4 color, float size)
         {
-            core.SetVertexGlyph(index, glyph, color, size);
+            core.SetVertexGlyph(index, glyph, color, size, false);
+        }
+        
+        public void SetVertexGlyph(int index, char glyph, System.Numerics.Vector3 color, bool isUIElement)
+        {
+            var vec4Color = new Vector4(color.X / 255.0f, color.Y / 255.0f, color.Z / 255.0f, 1.0f);
+            core.SetVertexGlyph(index, glyph, vec4Color, 1.0f, isUIElement);
         }
         
         public void SetVertexBiome(int index, string biomeName, Vector4? colorOverride = null)
