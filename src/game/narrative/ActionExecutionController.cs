@@ -107,7 +107,7 @@ public class ActionExecutionController
         }
 
         // Get context description for trees
-        var contextDescription = currentNode.GenerateNeutralDescription(_avatar.CurrentLocationId);
+        var contextDescription = currentNode.ContextDescription;
 
         // === STEP 1: PLAUSIBILITY TREE ===
         Console.WriteLine($"\n🔍 [PLAUSIBILITY CHECK] Evaluating if action is possible...");
@@ -140,7 +140,7 @@ public class ActionExecutionController
         // === STEP 2: DIFFICULTY TREE ===
         Console.WriteLine($"🎯 [DIFFICULTY CHECK] Evaluating action difficulty...");
         
-        var difficultyTree = CriticTrees.BuildDifficultyTree(action.ActionText);
+        var difficultyTree = CriticTrees.BuildDifficultyTree(action.ActionText, contextDescription);
         var difficultyResult = await _criticEvaluator.EvaluateTreeAsync(difficultyTree);
         
         // Calculate difficulty score (0.0 to 1.0) from average YES probabilities
@@ -218,6 +218,7 @@ public class ActionExecutionController
         var thinkingSkillUsed = evalResult.ThinkingSkill;
         double difficultyScore = evalResult.DifficultyScore;
         int difficultyLevel = evalResult.DifficultyLevel;
+        var currentNode = evalResult.CurrentNode;
 
         Console.WriteLine($"   Roll result: {(succeeded ? "✓ SUCCESS" : "✗ FAILURE")}\n");
 
@@ -234,7 +235,8 @@ public class ActionExecutionController
             // === STEP 3: FAILURE OUTCOME TREE ===
             Console.WriteLine($"💥 [FAILURE OUTCOME] Determining consequence of failure...");
             
-            var failureTree = CriticTrees.BuildFailureOutcomeTree(action.ActionText);
+            var contextDescription = currentNode.ContextDescription;
+            var failureTree = CriticTrees.BuildFailureOutcomeTree(action.ActionText, contextDescription);
             var failureResult = await _criticEvaluator.EvaluateTreeAsync(failureTree);
             
             failureOutcomeType = CriticTrees.GetFailureOutcomeFromResult(failureResult);

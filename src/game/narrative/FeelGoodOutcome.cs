@@ -40,7 +40,7 @@ public class FeelGoodOutcome : OutcomeBase
         // Evaluate each humor using the Critic
         foreach (var humor in Humor.Registry.All)
         {
-            var question = $"Context: {context}\nAction: {actionText}\n\n{humor.CriticQuestion}";
+            var question = $"In the following context : {context}\nThe {Config.Narrative.PlayerName} succeeded at the following action : \"{actionText}\",\n{humor.CriticQuestion}";
             var score = await difficultyEvaluator.EvaluateCoherence(question);
             humorScores[humor] = score;
         }

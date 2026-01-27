@@ -43,8 +43,8 @@ public static class Config
         public const float CameraMaxDistance = 200f; // Maximum camera distance
         
         // Camera zoom distances for different game phases
-        public const float CameraZoomWorldView = 85.0f; // Destination selection phase (starting value)
-        public const float CameraZoomTraveling = 100.0f; // Travel animation phase
+        public const float CameraZoomWorldView = 100.0f; // Destination selection phase (starting value)
+        public const float CameraZoomTraveling = 85.0f; // Travel animation phase
         public const float CameraZoomNarration = 65.0f; // Location interaction/narration phase
         
         // Default glyph settings
@@ -302,6 +302,12 @@ public static class Config
     
     public static class Narrative
     {
+        /// <summary>
+        /// The name used to refer to the player in prompts and UI text.
+        /// Default: "player" (can be changed to "avatar", "protagonist", etc.)
+        /// </summary>
+        public const string PlayerName = "player";
+        
         /// <summary>
         /// Target number of keywords to include in observations.
         /// For overall observations: if more outcomes than this, sample this many outcomes.

@@ -9,6 +9,7 @@ namespace Cathedral.Game.Narrative.Nodes;
 public class BerryBushNode : NarrationNode
 {
     public override string NodeId => "berry bush";
+    public override string ContextDescription => "examining a berry bush";
     public override string TransitionDescription => "examine the berry bush";
     public override bool IsEntryNode => false;
     

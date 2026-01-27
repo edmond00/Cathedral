@@ -9,6 +9,7 @@ namespace Cathedral.Game.Narrative.Nodes;
 public class StreamNode : NarrationNode
 {
     public override string NodeId => "stream";
+    public override string ContextDescription => "examining a stream";
     public override string TransitionDescription => "approach the stream";
     public override bool IsEntryNode => false;
     

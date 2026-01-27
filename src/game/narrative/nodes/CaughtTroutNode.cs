@@ -9,6 +9,7 @@ namespace Cathedral.Game.Narrative.Nodes;
 public class CaughtTroutNode : NarrationNode
 {
     public override string NodeId => "caught trout";
+    public override string ContextDescription => "handling a caught trout";
     public override string TransitionDescription => "catch a trout";
     public override bool IsEntryNode => false;
     

@@ -19,7 +19,7 @@ public static class CriticTrees
         // Node 5: Not Contradictory (innermost)
         var notContradictory = new CriticNode(
             name: "NotContradictory",
-            question: $"Action: '{actionText}'\nContext: {contextDescription}\n\nIs this action consistent with what just happened and doesn't contradict recent events?",
+            question: $"In the following context : {contextDescription}\nThe {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nIs this action consistent with what just happened and doesn't contradict recent events?",
             yesIsSuccess: true,
             threshold: 0.5,
             errorMessage: "This contradicts what just occurred"
@@ -28,7 +28,7 @@ public static class CriticTrees
         // Node 4: Has Required Elements
         var hasRequiredElements = new CriticNode(
             name: "HasRequiredElements",
-            question: $"Action: '{actionText}'\nContext: {contextDescription}\n\nAre the objects, people, or elements needed for this action available or present?",
+            question: $"In the following context : {contextDescription}\nThe {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nAre the objects, people, or elements needed for this action available or present?",
             yesIsSuccess: true,
             threshold: 0.5,
             errorMessage: "You don't have what's needed to do this"
@@ -38,7 +38,7 @@ public static class CriticTrees
         // Node 3: Context Appropriate
         var contextAppropriate = new CriticNode(
             name: "ContextAppropriate",
-            question: $"Action: '{actionText}'\nContext: {contextDescription}\n\nDoes this action make sense given the current location and situation?",
+            question: $"In the following context : {contextDescription}\nThe {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nDoes this action make sense given the current location and situation?",
             yesIsSuccess: true,
             threshold: 0.5,
             errorMessage: "This action doesn't fit the current situation"
@@ -48,7 +48,7 @@ public static class CriticTrees
         // Node 2: Reasonable Timeframe
         var reasonableTimeframe = new CriticNode(
             name: "ReasonableTimeframe",
-            question: $"Action: '{actionText}'\n\nCan this action be completed in less than one hour?",
+            question: $"In the following context : {contextDescription}\nThe {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nIs this action short enough to be completed in less than one hour?",
             yesIsSuccess: true,
             threshold: 0.5,
             errorMessage: "This action would take too long to complete"
@@ -58,7 +58,7 @@ public static class CriticTrees
         // Node 1: Physically Possible (root)
         var physicallyPossible = new CriticNode(
             name: "PhysicallyPossible",
-            question: $"Action: '{actionText}'\n\nIs this action physically possible for a human to attempt?",
+            question: $"In the following context : {contextDescription}\nThe {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nIs this action physically possible for a human to attempt?",
             yesIsSuccess: true,
             threshold: 0.5,
             errorMessage: "This action is physically impossible"
@@ -77,42 +77,44 @@ public static class CriticTrees
     /// YES = hard, NO = easy for all questions.
     /// Returns the tree root; use CalculateDifficultyFromResult to get the difficulty score.
     /// </summary>
-    public static CriticNode BuildDifficultyTree(string actionText)
+    public static CriticNode BuildDifficultyTree(string actionText, string contextDescription)
     {
         // All questions have threshold=0 so they always "pass" to the next one
         // YES = hard (high score), NO = easy (low score)
         
+        var contextPrefix = $"In the following context : {contextDescription}\n";
+        
         var questions = new (string name, string question)[]
         {
             ("RequiresStrength", 
-             $"Action: '{actionText}'\n\nDoes this action require physical strength beyond average?"),
+             $"{contextPrefix}The {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nDoes this action require physical strength beyond average?"),
             
             ("RequiresTraining", 
-             $"Action: '{actionText}'\n\nDoes this action require specialized training or expertise?"),
+             $"{contextPrefix}The {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nDoes this action require specialized training or expertise?"),
             
             ("RequiresTools", 
-             $"Action: '{actionText}'\n\nDoes this action require tools, equipment, or materials?"),
+             $"{contextPrefix}The {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nDoes this action require tools, equipment, or materials?"),
             
             ("RequiresTime", 
-             $"Action: '{actionText}'\n\nDoes this action take significant time or sustained effort?"),
+             $"{contextPrefix}The {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nDoes this action take significant time or sustained effort?"),
             
             ("RequiresPrecision", 
-             $"Action: '{actionText}'\n\nDoes this action require precise coordination or dexterity?"),
+             $"{contextPrefix}The {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nDoes this action require precise coordination or dexterity?"),
             
             ("RequiresFocus", 
-             $"Action: '{actionText}'\n\nDoes this action require mental focus or concentration?"),
+             $"{contextPrefix}The {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nDoes this action require mental focus or concentration?"),
             
             ("HasRisks", 
-             $"Action: '{actionText}'\n\nDoes this action carry risk of injury or negative consequences?"),
+             $"{contextPrefix}The {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nDoes this action carry risk of injury or negative consequences?"),
             
             ("EnvironmentFactor", 
-             $"Action: '{actionText}'\n\nWould environmental conditions typically make this action harder?"),
+             $"{contextPrefix}The {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nWould environmental conditions typically make this action harder?"),
             
             ("HardToUndo", 
-             $"Action: '{actionText}'\n\nIs this action difficult to undo or correct if done wrong?"),
+             $"{contextPrefix}The {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nIs this action difficult to undo or correct if done wrong?"),
             
             ("ExpertChallenge", 
-             $"Action: '{actionText}'\n\nWould even a trained professional find this challenging?")
+             $"{contextPrefix}The {Config.Narrative.PlayerName} is considering the following action : \"{actionText}\",\nWould even a trained professional find this challenging?")
         };
         
         // Build the chain - all nodes lead to the next via SuccessBranch AND FailureBranch
@@ -329,58 +331,59 @@ public static class CriticTrees
     /// Builds the failure outcome tree - binary branching to determine consequence type.
     /// The tree navigates based on YES/NO answers to find the most appropriate failure outcome.
     /// </summary>
-    public static CriticNode BuildFailureOutcomeTree(string actionText)
+    public static CriticNode BuildFailureOutcomeTree(string actionText, string contextDescription)
     {
+        var contextPrefix = $"In the following context : {contextDescription}\n";
         // === LEAF NODES (Outcomes) ===
         // These are terminal nodes that will be identified by their names
         
         // Physical injury leaves
-        var limbInjuryNode = CreateOutcomeLeaf("Outcome_LimbInjury", actionText, 
+        var limbInjuryNode = CreateOutcomeLeaf("Outcome_LimbInjury", actionText, contextPrefix,
             "Would failing specifically risk injury to arms, hands, legs, or feet?");
         
-        var headInjuryNode = CreateOutcomeLeaf("Outcome_HeadTrauma", actionText,
+        var headInjuryNode = CreateOutcomeLeaf("Outcome_HeadTrauma", actionText, contextPrefix,
             "Would failing specifically risk injury to the head or face?");
         
-        var torsoInjuryNode = CreateOutcomeLeaf("Outcome_TorsoInjury", actionText,
+        var torsoInjuryNode = CreateOutcomeLeaf("Outcome_TorsoInjury", actionText, contextPrefix,
             "Would failing risk injury to the torso, ribs, or back?");
         // TorsoInjury is default for "specific body part but not limb or head"
         
-        var generalSevereNode = CreateOutcomeLeaf("Outcome_GeneralSevereInjury", actionText,
+        var generalSevereNode = CreateOutcomeLeaf("Outcome_GeneralSevereInjury", actionText, contextPrefix,
             "Could the injury affect multiple body parts or the whole body?");
         
-        var minorInjuryNode = CreateOutcomeLeaf("Outcome_MinorInjury", actionText,
+        var minorInjuryNode = CreateOutcomeLeaf("Outcome_MinorInjury", actionText, contextPrefix,
             "Would it cause minor pain like a bruise, scrape, or muscle strain?");
         
-        var exhaustionNode = CreateOutcomeLeaf("Outcome_PhysicalExhaustion", actionText,
+        var exhaustionNode = CreateOutcomeLeaf("Outcome_PhysicalExhaustion", actionText, contextPrefix,
             "Would failure mainly cause fatigue or exhaustion rather than injury?");
         
         // Mental/emotional leaves
-        var humiliationNode = CreateOutcomeLeaf("Outcome_SocialHumiliation", actionText,
+        var humiliationNode = CreateOutcomeLeaf("Outcome_SocialHumiliation", actionText, contextPrefix,
             "Could the public failure damage reputation or important relationships?");
         
-        var embarrassmentNode = CreateOutcomeLeaf("Outcome_PublicEmbarrassment", actionText,
+        var embarrassmentNode = CreateOutcomeLeaf("Outcome_PublicEmbarrassment", actionText, contextPrefix,
             "Would the embarrassment be temporary without lasting social damage?");
         
-        var frustrationNode = CreateOutcomeLeaf("Outcome_Frustration", actionText,
+        var frustrationNode = CreateOutcomeLeaf("Outcome_Frustration", actionText, contextPrefix,
             "Would you blame yourself and feel frustrated about the failure?");
         
-        var disappointmentNode = CreateOutcomeLeaf("Outcome_MildDisappointment", actionText,
+        var disappointmentNode = CreateOutcomeLeaf("Outcome_MildDisappointment", actionText, contextPrefix,
             "Would the emotional impact be mild and pass quickly?");
         
         // Material leaves
-        var significantLossNode = CreateOutcomeLeaf("Outcome_SignificantMaterialLoss", actionText,
+        var significantLossNode = CreateOutcomeLeaf("Outcome_SignificantMaterialLoss", actionText, contextPrefix,
             "Are valuable or irreplaceable items at risk of being destroyed?");
         
-        var minorDamageNode = CreateOutcomeLeaf("Outcome_MinorMaterialDamage", actionText,
+        var minorDamageNode = CreateOutcomeLeaf("Outcome_MinorMaterialDamage", actionText, contextPrefix,
             "Would only minor or easily replaceable items be affected?");
         
-        var wastedEffortNode = CreateOutcomeLeaf("Outcome_WastedEffort", actionText,
+        var wastedEffortNode = CreateOutcomeLeaf("Outcome_WastedEffort", actionText, contextPrefix,
             "Would the main consequence be having to start over or redo work?");
         
-        var minorSetbackNode = CreateOutcomeLeaf("Outcome_MinorSetback", actionText,
+        var minorSetbackNode = CreateOutcomeLeaf("Outcome_MinorSetback", actionText, contextPrefix,
             "Is this just a small delay with no real consequence?");
         
-        var neutralFailureNode = CreateOutcomeLeaf("Outcome_NeutralFailure", actionText,
+        var neutralFailureNode = CreateOutcomeLeaf("Outcome_NeutralFailure", actionText, contextPrefix,
             "Would the action simply not work, with no particular negative effect?");
         
         // === BRANCH NODES ===
@@ -388,7 +391,7 @@ public static class CriticTrees
         // Head injury check
         var headCheck = new CriticNode(
             name: "HeadInjuryCheck",
-            question: $"Action: '{actionText}'\n\nIf this action fails and causes injury, is the head or face at risk?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nIf this action fails and causes injury, is the head or face at risk?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -398,7 +401,7 @@ public static class CriticTrees
         // Limb injury check
         var limbCheck = new CriticNode(
             name: "LimbInjuryCheck",
-            question: $"Action: '{actionText}'\n\nIf this action fails and causes injury, are the arms, hands, legs, or feet at risk?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nIf this action fails and causes injury, are the arms, hands, legs, or feet at risk?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -408,7 +411,7 @@ public static class CriticTrees
         // Specific body part check
         var specificBodyPart = new CriticNode(
             name: "SpecificBodyPartCheck",
-            question: $"Action: '{actionText}'\n\nIf this action fails and causes serious injury, is a specific body part particularly at risk?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nIf this action fails and causes serious injury, is a specific body part particularly at risk?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -418,7 +421,7 @@ public static class CriticTrees
         // Minor pain check
         var minorPainCheck = new CriticNode(
             name: "MinorPainCheck",
-            question: $"Action: '{actionText}'\n\nIf this action fails, would it cause minor pain, strain, or discomfort rather than serious injury?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nIf this action fails, would it cause minor pain, strain, or discomfort rather than serious injury?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -428,7 +431,7 @@ public static class CriticTrees
         // Severe injury check
         var severeInjuryCheck = new CriticNode(
             name: "SevereInjuryCheck",
-            question: $"Action: '{actionText}'\n\nCould failing this action cause serious injury such as broken bones, deep cuts, or significant pain?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nCould failing this action cause serious injury such as broken bones, deep cuts, or significant pain?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -438,7 +441,7 @@ public static class CriticTrees
         // Reputation damage check
         var reputationCheck = new CriticNode(
             name: "ReputationDamageCheck",
-            question: $"Action: '{actionText}'\n\nIf others witness this failure, could it damage your reputation or relationships?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nIf others witness this failure, could it damage your reputation or relationships?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -448,7 +451,7 @@ public static class CriticTrees
         // Self-blame check
         var selfBlameCheck = new CriticNode(
             name: "SelfBlameCheck",
-            question: $"Action: '{actionText}'\n\nIf this fails privately, would you blame yourself and feel frustrated?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nIf this fails privately, would you blame yourself and feel frustrated?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -458,7 +461,7 @@ public static class CriticTrees
         // Public failure check
         var publicFailureCheck = new CriticNode(
             name: "PublicFailureCheck",
-            question: $"Action: '{actionText}'\n\nWould others witness or know about this failure?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nWould others witness or know about this failure?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -468,7 +471,7 @@ public static class CriticTrees
         // High value check
         var highValueCheck = new CriticNode(
             name: "HighValueCheck",
-            question: $"Action: '{actionText}'\n\nAre valuable or important items at risk of being lost or destroyed?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nAre valuable or important items at risk of being lost or destroyed?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -478,7 +481,7 @@ public static class CriticTrees
         // Wasted effort check
         var wastedEffortCheck = new CriticNode(
             name: "WastedEffortCheck",
-            question: $"Action: '{actionText}'\n\nWould failure mainly mean wasted time or effort?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nWould failure mainly mean wasted time or effort?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -488,7 +491,7 @@ public static class CriticTrees
         // Material consequence check
         var materialCheck = new CriticNode(
             name: "MaterialConsequenceCheck",
-            question: $"Action: '{actionText}'\n\nCould failing cause loss or damage to objects or resources?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nCould failing cause loss or damage to objects or resources?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -498,7 +501,7 @@ public static class CriticTrees
         // Mental consequence check
         var mentalCheck = new CriticNode(
             name: "MentalConsequenceCheck",
-            question: $"Action: '{actionText}'\n\nCould failing cause emotional or psychological distress?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nCould failing cause emotional or psychological distress?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -508,7 +511,7 @@ public static class CriticTrees
         // Physical consequence check
         var physicalCheck = new CriticNode(
             name: "PhysicalConsequenceCheck",
-            question: $"Action: '{actionText}'\n\nCould failing this action cause physical harm or bodily discomfort?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nCould failing this action cause physical harm or bodily discomfort?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -518,7 +521,7 @@ public static class CriticTrees
         // ROOT: Has any consequences?
         var root = new CriticNode(
             name: "HasConsequences",
-            question: $"Action: '{actionText}'\n\nDoes failing this action have any negative consequences beyond simply not succeeding?",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\nDoes failing this action have any negative consequences beyond simply not succeeding?",
             yesIsSuccess: true,
             threshold: 0.5
         );
@@ -531,11 +534,11 @@ public static class CriticTrees
     /// <summary>
     /// Creates a leaf node for an outcome (terminal node).
     /// </summary>
-    private static CriticNode CreateOutcomeLeaf(string outcomeName, string actionText, string confirmQuestion)
+    private static CriticNode CreateOutcomeLeaf(string outcomeName, string actionText, string contextPrefix, string confirmQuestion)
     {
         return new CriticNode(
             name: outcomeName,
-            question: $"Action: '{actionText}'\n\n{confirmQuestion}",
+            question: $"{contextPrefix}The {Config.Narrative.PlayerName} failed at the following action : \"{actionText}\",\n{confirmQuestion}",
             yesIsSuccess: true,
             threshold: 0.5,
             errorMessage: ""

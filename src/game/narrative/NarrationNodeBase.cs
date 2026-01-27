@@ -18,6 +18,12 @@ public abstract class NarrationNode : ConcreteOutcome
     public abstract string NodeId { get; }
     
     /// <summary>
+    /// Short context description used in critic prompts (e.g., "exploring a clearing", "examining a stream").
+    /// This provides context to the LLM about what the player is currently doing at this node.
+    /// </summary>
+    public abstract string ContextDescription { get; }
+    
+    /// <summary>
     /// Natural language description for transitioning to this node (e.g., "approach the stream").
     /// Used in LLM prompts to describe possible outcomes.
     /// </summary>
