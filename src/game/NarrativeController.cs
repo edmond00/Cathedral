@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Nodes;
 using Cathedral.LLM;
 using Cathedral.Terminal;
 using Cathedral.Glyph;
@@ -48,7 +50,9 @@ public class NarrativeController
         SkillSlotManager slotManager,
         TerminalInputHandler terminalInputHandler,
         ThinkingExecutor thinkingExecutor,
-        ActionExecutionController actionExecutor)
+        ActionExecutionController actionExecutor,
+        NarrationGraphFactory? graphFactory = null,
+        int locationId = 0)
     {
         if (terminal == null)
             throw new ArgumentNullException(nameof(terminal));
@@ -78,8 +82,18 @@ public class NarrativeController
         _avatar = new Avatar();
         _avatar.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
         
-        // Get random entry node
-        _currentNode = NodeRegistry.GetRandomEntryNode();
+        // Generate graph for this location using factory
+        if (graphFactory != null)
+        {
+            _currentNode = graphFactory.GenerateGraph(locationId);
+            Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}'");
+        }
+        else
+        {
+            // Fallback: create a simple clearing node if no factory provided
+            _currentNode = new ClearingNode();
+            Console.WriteLine($"NarrativeController: No factory provided, using default ClearingNode");
+        }
         
         // Initialize controllers
         _observationController = new ObservationPhaseController(llamaServer, slotManager);
@@ -1193,4 +1207,66 @@ public class NarrativeController
     /// Check if player has requested to exit Phase 6 (clicked Continue button).
     /// </summary>
     public bool HasRequestedExit() => _narrationState.RequestedExit;
+    
+    /// <summary>
+    /// Prints the current narration graph structure to console for debugging.
+    /// Shows all nodes, their connections, items, and keywords.
+    /// </summary>
+    public void PrintGraphStructure()
+    {
+        Console.WriteLine("\n=== Current Narration Graph Structure ===");
+        Console.WriteLine($"Current Node: {_currentNode.NodeId}");
+        Console.WriteLine();
+        
+        // Breadth-first traversal to avoid infinite loops from circular references
+        var visited = new HashSet<string>();
+        var queue = new Queue<NarrationNode>();
+        queue.Enqueue(_currentNode);
+        visited.Add(_currentNode.NodeId);
+        
+        int nodeCount = 0;
+        while (queue.Count > 0)
+        {
+            var node = queue.Dequeue();
+            nodeCount++;
+            
+            Console.WriteLine($"[{nodeCount}] Node: {node.NodeId}");
+            Console.WriteLine($"    Display: {node.DisplayName}");
+            Console.WriteLine($"    Context: {node.ContextDescription}");
+            Console.WriteLine($"    Entry Node: {node.IsEntryNode}");
+            Console.WriteLine($"    Keywords: {string.Join(", ", node.NodeKeywords)}");
+            
+            // Show items
+            var items = node.GetAvailableItems();
+            if (items.Count > 0)
+            {
+                Console.WriteLine($"    Items ({items.Count}):");
+                foreach (var item in items)
+                {
+                    Console.WriteLine($"      - {item.DisplayName}: {string.Join(", ", item.OutcomeKeywords)}");
+                }
+            }
+            
+            // Show connections
+            var childNodes = node.PossibleOutcomes.OfType<NarrationNode>().ToList();
+            if (childNodes.Count > 0)
+            {
+                Console.WriteLine($"    Transitions ({childNodes.Count}):");
+                foreach (var child in childNodes)
+                {
+                    Console.WriteLine($"      -> {child.NodeId}");
+                    
+                    if (!visited.Contains(child.NodeId))
+                    {
+                        visited.Add(child.NodeId);
+                        queue.Enqueue(child);
+                    }
+                }
+            }
+            
+            Console.WriteLine();
+        }
+        
+        Console.WriteLine($"=== Total: {nodeCount} nodes, {visited.Count} unique ===\n");
+    }
 }

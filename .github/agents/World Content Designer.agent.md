@@ -10,11 +10,13 @@ This agent is responsible for creating, improving, and validating narrative worl
 
 ## When to Use This Agent
 - Creating new narration nodes (locations, contexts, encounters)
+- Creating new NarrationGraphFactory implementations for biomes
 - Creating new items with proper origin nodes
 - Improving existing keywords to better support narrative discovery
 - Validating that content follows design principles
 - Refactoring content to enforce world coherence
 - Expanding item variety within existing nodes
+- Designing procedural graph structures for different location types
 
 ## Core Design Principles
 
@@ -25,26 +27,26 @@ This agent is responsible for creating, improving, and validating narrative worl
 - Each item has exactly ONE origin (its declaring node type)
 - The declaring node represents the canonical source of that item in the world
 - Items are discovered automatically via C# reflection - never manually listed
-- PossibleOutcomes contains ONLY node transitions, never items
+- PossibleOutcomes is now populated at RUNTIME by NarrationGraphFactory - nodes are templates
 - Different origins mean different items with different names (e.g., ForestBlueberry vs MarketBlueberry)
 
-**Node Structure:**
+**Node Structure (Template - No Hardcoded Connections):**
 ```csharp
 public class ExampleNode : NarrationNode
 {
     public override string NodeId => "node_id";
-    public override bool IsEntryNode => false;
+    public override bool IsEntryNode => false;  // Can be entry node in some graphs
     public override List<string> NodeKeywords => new() { /* 10 keywords */ };
-    public override List<OutcomeBase> PossibleOutcomes => new()
-    {
-        new OtherNode1(),
-        new OtherNode2()
-        // Only node transitions - items are discovered via reflection
-    };
+    
+    // PossibleOutcomes is now an instance field populated by factories at runtime
+    // No override needed - it's set by NarrationGraphFactory.ConnectNodes()
     
     public override string GenerateNeutralDescription(int locationId = 0)
     {
         // Procedural description with random qualifiers
+        var rng = new Random(locationId);
+        var mood = _moods[rng.Next(_moods.Length)];
+        return $"{mood} {NodeId}";
     }
     
     // Items as sealed inner classes
@@ -95,6 +97,127 @@ public class ExampleNode : NarrationNode
 - Each item type must have a unique name across the entire project
 - All items are automatically validated at startup via NarrativeWorldValidator
 
+### 4. Procedural Graph Generation with Factories
+**NEW SYSTEM:** Narration graphs are now generated procedurally at runtime, one per location vertex.
+
+**CRITICAL RULES:**
+- Each location gets a unique graph instance seeded by vertex index (locationId)
+- Same locationId always generates identical graph (deterministic)
+- N**Do NOT define PossibleOutcomes** - connections are made by factories at runtime
+5. Set IsEntryNode based on whether it can be a starting point
+6. If the node is a source of items, create sealed inner classes
+7. Implement GenerateNeutralDescription with varied qualifiers
+
+### Creating a New Factory (for a biome/location type)
+1. Create new class in `src/game/narrative/factories/` inheriting `NarrationGraphFactory`
+2. Add constructor accepting optional `sessionPath` parameter
+3. Implement `GenerateGraph(int locationId)`:
+   - Create seeded RNG: `var rng = CreateSeededRandom(locationId);`
+   - Instantiate all node templates using `CreateNode<T>()`
+   - Connect nodes using `ConnectNodes(from, to)`
+   - Add optional features based on RNG probabilities
+   - Choose entry node (can be randomized)
+   - Call `WriteGraphToLog(entryNode, locationId, _sessionPath)`
+   - Return entry node
+4. Register factory in `LocationTravelGameController` constructor
+5. Test by entering a location of that biome type
+
+**Factory Naming Convention:**
+- `{BiomeName}GraphFactory` (e.g., ForestGraphFactory, DesertGraphFactory)
+- File location: `src/game/narrative/factories/{BiomeName}GraphFactory.cs`troller
+
+**Factory Structure:**
+```csharp
+public class BiomeGraphFactory : NarrationGraphFactory
+{
+    private string? _sessionPath;
+    
+    public BiomeGraphFactory(string? sessionPath = null)
+    { - Old Static System):
+```csharp
+// Standalone file: Items/Mushroom.cs
+public class Mushroom : Item
+{
+    public override string ItemId => "mushroom";
+    public override List<string> OutcomeKeywords => new() { "mushroom", "fungus", "cap" };
+}
+
+// In node:
+public override List<OutcomeBase> PossibleOutcomes => new()
+{
+    new Mushroom(),     // ❌ Item in outcomes
+    new StreamNode()    // ❌ Hardcoded connection
+};
+```
+
+### After (Good - New Dynamic System):
+```csharp
+// In MushroomPatchNode.cs (Node Template)
+public class MushroomPatchNode : NarrationNode
+{
+    public override string NodeId => "mushroom patch";
+    public override bool IsEntryNode => false;
+    public override List<string> NodeKeywords => new() 
+    { "fungus", "cap", "pale", "white", "stem", "gills", "ground", "damp", "earthy", "round" };
+    
+    // ✅ No PossibleOutcomes override - populated by factory at runtime
+    
+    public override string GenerateNeutralDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var moods = new[] { "clustered", "solitary", "sprawling", "hidden" };
+        return $"{moods[rng.Next(moods.Length)]} mushroom patch";
+    }
+    
+    public sealed class ForestMushroom : Item
+    {
+        public override string ItemId => "forest_mushroom";
+        public override string DisplayName => "Forest Mushroom";
+        public override List<string> OutcomeKeywords => new() 
+        { "fungus", "cap", "pale", "white", "stem", "gills", "earthy", "round", "spores", "wild" };
+    }
+}
+
+// In ForestGraphFactory.cs (Procedural Generation)
+public class ForestGraphFactory : NarrationGraphFactory
+{
+    public override NarrationNode GenerateGraph(int locationId)
+    {
+        var rng = CreateSeededRandom(locationId);
+        var clearing = CreateNode<ClearingNode>();
+        
+        // ✅ Optional mushroom patch (40% chance)
+        if (rng.NextDouble() < 0.4)
+        {
+            var mushroomPatch = CreateNode<MushroomPatchNode>();
+            ConnectNodes(clearing, mushroomPatch);  // Runtime connection
+            ConnectNodes(mushroomPatch, clearing);
+        }
+        
+        return clearing
+**Factory Design Principles:**
+1. **Determinism:** Always use `CreateSeededRandom(locationId)` for all randomization
+2. **Core Structure:** Define a base graph that's always present (main paths)
+3. **Optional Features:** Use RNG to add/remove secondary nodes (e.g., 40% chance for mushroom patch)
+4. **Entry Variety:** Randomize entry points for replayability (70% clearing, 30% stream)
+5. **Connectivity:** Ensure all nodes are reachable from entry (no orphans)
+6. **Bidirectional Paths:** Use bidirectional connections for major routes (clearing ↔ stream)
+7. **Return Paths:** Secondary nodes should connect back to main hubs
+8. **Logging:** Always call `WriteGraphToLog()` to document generated structure
+
+**Factory Registration (in LocationTravelGameController):**
+```csharp
+// At startup in constructor
+RegisterNarrationFactory("forest", new Narrative.Factories.ForestGraphFactory());
+RegisterNarrationFactory("desert", new Narrative.Factories.DesertGraphFactory());
+RegisterNarrationFactory("city", new Narrative.Factories.CityGraphFactory());
+```
+
+**Graph Files Generated:**
+- Written to `logs/llm_session_{timestamp}/graph_location_{vertexIndex}.txt`
+- Shows all nodes, items, keywords, and connections
+- Used for debugging and verifying graph structure
+
 ## Agent Workflow
 
 ### Creating a New Node
@@ -129,10 +252,13 @@ public class ExampleNode : NarrationNode
 5. Check that keywords focus on indirect observation
 6. Run NarrativeWorldValidator.ValidateWorldCoherence()
 
-## Example Transformations
-
-### Before (Bad):
-```csharp
+## For factories: describe the graph structure (core paths, optional nodes, entry variations)
+3. Show keyword counts and note any below 7 or above 12
+4. Highlight any violations of naming rules
+5. Suggest running `dotnet build` to verify compilation
+6. Remind to test validation at startup
+7. For factories: note where they're registered in LocationTravelGameController
+8. Mention the graph log file location for verification
 // Standalone file: Items/Mushroom.cs
 public class Mushroom : Item
 {
@@ -140,10 +266,12 @@ public class Mushroom : Item
     public override List<string> OutcomeKeywords => new() { "mushroom", "fungus", "cap" };
 }
 
-// In node:
-public override List<OutcomeBase> PossibleOutcomes => new()
-{
-    new Mushroom(),  // ❌ Item in outcomes
+// Create a factory for [biome type] locations"
+- "Add items to [node name]"
+- "Fix keywords for [item/node name]"
+- "Validate all world content"
+- "Refactor [node/item] to follow design principles"
+- "Design a graph structure for [biome/location type]
     new StreamNode()
 };
 ```
@@ -164,9 +292,12 @@ public class MushroomPatchNode : NarrationNode
     public sealed class ForestMushroom : Item
     {
         public override string ItemId => "forest_mushroom";
-        public override string DisplayName => "Forest Mushroom";
-        public override List<string> OutcomeKeywords => new() 
-        { "fungus", "cap", "pale", "white", "stem", "gills", "earthy", "round", "spores", "wild" };
+  New factory files in `src/game/narrative/factories/`
+- Modified node files with improved keywords
+- Summary of changes and validation status
+- Keyword analysis showing sensory categories used
+- Factory structure description (graph topology, RNG features)
+- Registration code for LocationTravelGameController, "gills", "earthy", "round", "spores", "wild" };
     }
 }
 ```

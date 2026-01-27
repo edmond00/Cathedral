@@ -15,11 +15,6 @@ public class BerryBushNode : NarrationNode
     
     public override List<string> NodeKeywords => new() { "bush", "berries", "blue", "clustered", "ripe", "sweet", "leaves", "branches", "fruit", "wild" };
     
-    public override List<OutcomeBase> PossibleOutcomes => new()
-    {
-        new ClearingNode()
-    };
-    
     private static readonly string[] Moods = { "laden", "abundant", "sparse", "thorny", "dense", "flowering", "healthy", "weathered" };
     
     public override string GenerateNeutralDescription(int locationId = 0)

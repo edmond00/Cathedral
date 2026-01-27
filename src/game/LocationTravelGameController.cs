@@ -44,6 +44,9 @@ public class LocationTravelGameController : IDisposable
     // Feature generators for different location types
     private readonly Dictionary<string, LocationFeatureGenerator> _generators = new();
     
+    // Narration graph factories for different biomes
+    private readonly Dictionary<string, NarrationGraphFactory> _narrationFactories = new();
+    
     // Action executors (used by NarrativeController)
     private LLMActionExecutor? _llmActionExecutor; // Optional - requires LLamaServerManager
     private CriticEvaluator? _criticEvaluator;
@@ -90,6 +93,10 @@ public class LocationTravelGameController : IDisposable
         
         // Register location generators
         RegisterGenerator("forest", new ForestFeatureGenerator());
+        
+        // Register narration graph factories for biomes
+        // Note: Factories need session path which will be updated via SetLLMActionExecutor
+        RegisterNarrationFactory("forest", new Narrative.Factories.ForestGraphFactory());
         
         // Wire up events from the microworld interface
         _interface.VertexClickEvent += OnVertexClicked;
@@ -587,7 +594,32 @@ public class LocationTravelGameController : IDisposable
         
         // Note: RenderLocationUI was removed - Phase 6 narrative mode handles all rendering via NarrativeController
     }
-
+    
+    /// <summary>
+    /// Prints the current narration graph structure to console (debug command).
+    /// Only works when in narrative mode.
+    /// </summary>
+    public void PrintNarrativeGraph()
+    {
+        if (_isInNarrativeMode && _narrativeController != null)
+        {
+            _narrativeController.PrintGraphStructure();
+        }
+        else
+        {
+            Console.WriteLine("No active narrative graph (not in narrative mode)");
+        }
+    }
+    
+    /// <summary>
+    /// Registers a narration graph factory for a specific biome.
+    /// </summary>
+    public void RegisterNarrationFactory(string biomeName, NarrationGraphFactory factory)
+    {
+        _narrationFactories[biomeName.ToLowerInvariant()] = factory;
+        Console.WriteLine($"LocationTravelGameController: Registered narration factory for biome '{biomeName}'");
+    }
+    
     /// <summary>
     /// Regenerates actions based on current state.
     /// </summary>
@@ -718,7 +750,28 @@ public class LocationTravelGameController : IDisposable
                 _criticEvaluator
             );
             
-            // Create Phase 6 controller
+            // Get the appropriate narration factory for this biome
+            var biomeInfo = _interface.GetDetailedBiomeInfoAt(vertexIndex);
+            var biomeName = biomeInfo.biome.Name.ToLowerInvariant();
+            
+            if (!_narrationFactories.TryGetValue(biomeName, out var graphFactory))
+            {
+                Console.WriteLine($"LocationTravelGameController: No narration factory for biome '{biomeName}', using default forest factory");
+                // Create factory with session path from LLM server
+                var sessionPath = _llmActionExecutor.GetLlamaServerManager().SessionLogDir;
+                graphFactory = new Narrative.Factories.ForestGraphFactory(sessionPath);
+            }
+            else
+            {
+                // Update factory with current session path
+                if (graphFactory is Narrative.Factories.ForestGraphFactory forestFactory)
+                {
+                    var sessionPath = _llmActionExecutor.GetLlamaServerManager().SessionLogDir;
+                    graphFactory = new Narrative.Factories.ForestGraphFactory(sessionPath);
+                }
+            }
+            
+            // Create Phase 6 controller with graph factory and vertex as location ID
             _narrativeController = new NarrativeController(
                 _core.Terminal,
                 _core.PopupTerminal,
@@ -727,7 +780,9 @@ public class LocationTravelGameController : IDisposable
                 _skillSlotManager,
                 inputHandler,
                 _thinkingExecutor,
-                actionExecutor
+                actionExecutor,
+                graphFactory,
+                vertexIndex  // Use vertex index as location ID seed
             );
             
             // Mark as active

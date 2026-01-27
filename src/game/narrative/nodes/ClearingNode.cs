@@ -16,13 +16,6 @@ public class ClearingNode : NarrationNode
     // Keywords that describe this node itself (for being discovered as a transition)
     public override List<string> NodeKeywords => new() { "meadow", "glade", "open", "grassy", "sunlit", "bright", "flowers", "birdsong", "quiet", "space" };
     
-    public override List<OutcomeBase> PossibleOutcomes => new()
-    {
-        new StreamNode(),
-        new BerryBushNode(),
-        new MushroomPatchNode()
-    };
-    
     private static readonly string[] Moods = { "peaceful", "quiet", "bright", "shadowy", "misty", "sun-dappled", "verdant", "ancient" };
     
     public override string GenerateNeutralDescription(int locationId = 0)

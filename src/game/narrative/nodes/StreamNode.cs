@@ -16,12 +16,6 @@ public class StreamNode : NarrationNode
     // Keywords that describe this node itself (for being discovered as a transition)
     public override List<string> NodeKeywords => new() { "brook", "creek", "flowing", "water", "babbling", "rushing", "rippling", "cool", "wet", "gurgling" };
     
-    public override List<OutcomeBase> PossibleOutcomes => new()
-    {
-        new ClearingNode(),
-        new CaughtTroutNode()
-    };
-    
     private static readonly string[] Moods = { "narrow", "winding", "clear", "rushing", "gentle", "bubbling", "swift", "cold" };
     
     public override string GenerateNeutralDescription(int locationId = 0)

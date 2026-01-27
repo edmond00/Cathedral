@@ -15,11 +15,6 @@ public class MushroomPatchNode : NarrationNode
     
     public override List<string> NodeKeywords => new() { "fungus", "cap", "pale", "white", "stem", "gills", "ground", "damp", "earthy", "round" };
     
-    public override List<OutcomeBase> PossibleOutcomes => new()
-    {
-        new ClearingNode()
-    };
-    
     private static readonly string[] Moods = { "clustered", "solitary", "sprawling", "hidden", "fresh", "old", "colorful", "shadowy" };
     
     public override string GenerateNeutralDescription(int locationId = 0)

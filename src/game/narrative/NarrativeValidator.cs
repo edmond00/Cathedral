@@ -12,6 +12,8 @@ public static class NarrativeValidator
 {
     /// <summary>
     /// Validates all narration nodes and items in the assembly.
+    /// Since PossibleOutcomes are now populated at runtime by factories,
+    /// this only validates node templates and item structure.
     /// Throws exceptions if validation fails.
     /// </summary>
     public static void ValidateNarrativeStructure()
@@ -32,6 +34,7 @@ public static class NarrativeValidator
             .ToList();
         
         Console.WriteLine($"Found {itemTypes.Count} item types and {nodeTypes.Count} node types");
+        Console.WriteLine($"Note: PossibleOutcomes validation skipped (populated at runtime by factories)");
         
         // Validation 1: Every Item type must be declared inside a NarrationNode
         var itemsOutsideNodes = itemTypes.Where(t => t.DeclaringType == null || !typeof(NarrationNode).IsAssignableFrom(t.DeclaringType)).ToList();
@@ -82,11 +85,12 @@ public static class NarrativeValidator
     }
     
     /// <summary>
-    /// Prints a summary of all nodes and their items for debugging.
+    /// Prints a summary of all node templates and their items for debugging.
+    /// Note: PossibleOutcomes are populated at runtime, so transitions are not shown here.
     /// </summary>
     public static void PrintNarrativeStructure()
     {
-        Console.WriteLine("\n=== Narrative Structure ===\n");
+        Console.WriteLine("\n=== Narrative Node Templates ===\n");
         
         var assembly = Assembly.GetExecutingAssembly();
         var nodeTypes = assembly.GetTypes()
@@ -95,15 +99,18 @@ public static class NarrativeValidator
         
         foreach (var nodeType in nodeTypes)
         {
+            // Instantiate temporary node with empty PossibleOutcomes for reflection
             var node = (NarrationNode?)Activator.CreateInstance(nodeType);
             if (node == null) continue;
             
             Console.WriteLine($"Node: {node.NodeId} ({nodeType.Name})");
+            Console.WriteLine($"  Is Entry Node: {node.IsEntryNode}");
+            Console.WriteLine($"  Keywords: {string.Join(", ", node.NodeKeywords)}");
             
             var items = node.GetAvailableItems();
             if (items.Any())
             {
-                Console.WriteLine($"  Items:");
+                Console.WriteLine($"  Items ({items.Count}):");
                 foreach (var item in items)
                 {
                     Console.WriteLine($"    - {item.DisplayName} ({item.ItemId})");
@@ -114,16 +121,7 @@ public static class NarrativeValidator
                 Console.WriteLine($"  No items");
             }
             
-            var transitions = node.PossibleOutcomes.OfType<NarrationNode>().ToList();
-            if (transitions.Any())
-            {
-                Console.WriteLine($"  Transitions:");
-                foreach (var transition in transitions)
-                {
-                    Console.WriteLine($"    - {transition.NodeId}");
-                }
-            }
-            
+            Console.WriteLine($"  Note: Transitions populated at runtime by factories");
             Console.WriteLine();
         }
     }

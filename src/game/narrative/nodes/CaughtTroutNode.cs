@@ -15,11 +15,6 @@ public class CaughtTroutNode : NarrationNode
     
     public override List<string> NodeKeywords => new() { "fish", "scales", "spotted", "silver", "fins", "sleek", "fresh", "dead", "catch", "body" };
     
-    public override List<OutcomeBase> PossibleOutcomes => new()
-    {
-        new StreamNode()
-    };
-    
     private static readonly string[] Moods = { "fresh", "large", "small", "silvery", "spotted", "beautiful", "prized", "glistening" };
     
     public override string GenerateNeutralDescription(int locationId = 0)

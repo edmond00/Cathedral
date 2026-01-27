@@ -273,6 +273,21 @@ public static class LocationTravelModeLauncher
                     Console.WriteLine("\n" + gameController.GetDebugInfo());
                 }
             }
+            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.G)
+            {
+                // Dump narration graph structure (only works in narrative mode)
+                if (gameController?.CurrentMode == GameMode.LocationInteraction)
+                {
+                    if (gameController is LocationTravelGameController ltgc)
+                    {
+                        ltgc.PrintNarrativeGraph();
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("G key: Graph visualization only available in narrative mode (enter a location first)");
+                }
+            }
         };
 
         core.Run();

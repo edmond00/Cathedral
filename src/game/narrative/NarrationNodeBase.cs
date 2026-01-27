@@ -31,8 +31,9 @@ public abstract class NarrationNode : ConcreteOutcome
     
     /// <summary>
     /// All possible outcomes available from this node.
+    /// Populated at runtime by NarrationGraphFactory.
     /// </summary>
-    public abstract List<OutcomeBase> PossibleOutcomes { get; }
+    public List<OutcomeBase> PossibleOutcomes { get; set; } = new();
     
     /// <summary>
     /// Can this node be used as an entry point when entering the location?
