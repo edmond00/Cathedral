@@ -1,0 +1,120 @@
+OPEN WOODLAND
+- Grass clearing
+- Isolated oak
+- Hawthorn cluster
+- Wildflower patch
+- Low shrub belt
+
+BRIGHTWOOD
+- Beech stand
+- Fern glade
+- Young maple group
+- Mossy stone outcrop
+- Seasonal flower groundcover
+
+GREENWOOD
+- Mixed hardwood grove
+- Hazel undergrowth
+- Fungal ring
+- Leaf-litter hollow
+- Ivy-clad trunks
+
+HIGHWOOD
+- Tall trunk stand
+- Sparse understory floor
+- Fallen giant trunk
+- Lichen-covered bark
+- Exposed root plates
+
+MIXED UNDERWOOD
+- Dense sapling patch
+- Bramble run
+- Tall fern stand
+- Shrub island
+- Animal track
+
+LOWWOOD
+- Moist leafbed
+- Alder grove
+- Fungal log
+- Reeded depression
+- Seasonal puddle
+
+DEEP CANOPY
+- Closed crown stretch
+- Root-and-stone carpet
+- Shade plant patch
+- Trunk cluster
+- Light shafts
+
+SHADOWWOOD
+- Bare soil patch
+- Darkened tree trunks
+- Lichen crusts
+- Hidden branch tangle
+- Low moss beds
+
+OLDGROWTH
+- Ancient tree giant
+- Standing dead snag
+- Decaying log mass
+- Layered canopy pocket
+- Deep humus basin
+
+DENSE THICKETLAND
+- Interlocked shrub wall
+- Young tree cluster
+- Vine-draped growth
+- Hidden light pocket
+- Thorn belt
+
+WILDWOOD
+- Mixed-age tangle
+- Uprooted trees
+- Regrowth thicket
+- Uneven ground cover
+- Competing growth layers
+
+ROOTED FOREST
+- Exposed root web
+- Shallow-rooted stand
+- Root arch
+- Displaced ground plants
+- Erosion channel
+
+DEEPWOOD
+- Uniform trunk corridor
+- Sparse understory floor
+- Cold moss ground
+- Deep leaf litter
+- Isolated plant cluster
+
+MIREWOOD
+- Flooded tree stand
+- Shallow pool
+- Sedge patch
+- Spongy moss mat
+- Rotting log island
+
+BLACKWOOD
+- Dense trunk wall
+- Collapsed deadwood heap
+- Bare forest floor
+- Permanent damp bark
+- Lightless stand
+
+
+TRANSVERSAL FOREST FEATURES
+(running through multiple forest areas)
+
+- Forest stream
+- Dry creek bed
+- Animal track
+- Root path
+- Fallen log line
+- Drainage hollow
+- Canopy gap line
+- Boulder chain
+- Worn ground path
+- Leaf-cleared path
+- Packed earth trail

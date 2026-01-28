@@ -252,63 +252,55 @@ RegisterNarrationFactory("city", new Narrative.Factories.CityGraphFactory());
 5. Check that keywords focus on indirect observation
 6. Run NarrativeWorldValidator.ValidateWorldCoherence()
 
-## For factories: describe the graph structure (core paths, optional nodes, entry variations)
+## Systematic Content Creation Approach
+
+When creating large amounts of content (multiple nodes, items, or factories), use a systematic workflow to maintain quality and consistency:
+
+### Batch Creation Strategy
+1. **Planning Phase**: List all nodes/items/factories to create before implementation
+2. **Template Phase**: Start with one complete example following all rules
+3. **Batch Implementation**: Create similar content in groups (all nodes, then all items)
+4. **Validation Pass**: Check all rules after each group, not just at the end
+
+### Consistency Checklist (Per Node/Item)
+Use this checklist for every piece of content:
+- [ ] Unique identifier with proper naming convention
+- [ ] Exactly ~10 keywords (7-12 acceptable range)
+- [ ] No self-referential keywords (item name not in its keywords)
+- [ ] Keywords focus on sensory/observational details
+- [ ] Origin prefix in item names (ForestX, StreamY)
+- [ ] Items are sealed inner classes within nodes
+- [ ] GenerateNeutralDescription has procedural variety
+- [ ] Factory connections use bidirectional paths where appropriate
+
+### Tracking Progress for Bulk Work
+When creating multiple pieces of content:
+1. Number each piece in your plan (Node 1/5, Item 3/8)
+2. Mark completion status as you go
+3. Keep a running list of validation issues to fix at the end
+4. Test compilation after each batch, not after everything
+5. Document graph structure for factories before coding
+
+### Factory Development Workflow
+1. **Design Phase**: Sketch graph topology on paper/text (core paths, optional nodes, RNG features)
+2. **Core Implementation**: Create base graph structure that always exists
+3. **Feature Layering**: Add optional nodes with probability checks
+4. **Entry Variation**: Implement randomized entry points
+5. **Connectivity Check**: Verify all nodes reachable from all possible entries
+6. **Logging Test**: Run location and verify graph log output
+
+This systematic approach prevents errors from accumulating and makes large content creation more manageable.
+
+## Reporting and Verification
+When creating or modifying content:
+1. List all nodes and their items
+2. For factories: describe the graph structure (core paths, optional nodes, entry variations)
 3. Show keyword counts and note any below 7 or above 12
 4. Highlight any violations of naming rules
 5. Suggest running `dotnet build` to verify compilation
 6. Remind to test validation at startup
 7. For factories: note where they're registered in LocationTravelGameController
 8. Mention the graph log file location for verification
-// Standalone file: Items/Mushroom.cs
-public class Mushroom : Item
-{
-    public override string ItemId => "mushroom";
-    public override List<string> OutcomeKeywords => new() { "mushroom", "fungus", "cap" };
-}
-
-// Create a factory for [biome type] locations"
-- "Add items to [node name]"
-- "Fix keywords for [item/node name]"
-- "Validate all world content"
-- "Refactor [node/item] to follow design principles"
-- "Design a graph structure for [biome/location type]
-    new StreamNode()
-};
-```
-
-### After (Good):
-```csharp
-// In MushroomPatchNode.cs
-public class MushroomPatchNode : NarrationNode
-{
-    public override List<string> NodeKeywords => new() 
-    { "fungus", "cap", "pale", "white", "stem", "gills", "ground", "damp", "earthy", "round" };
-    
-    public override List<OutcomeBase> PossibleOutcomes => new()
-    {
-        new ClearingNode()  // ✅ Only node transitions
-    };
-    
-    public sealed class ForestMushroom : Item
-    {
-        public override string ItemId => "forest_mushroom";
-  New factory files in `src/game/narrative/factories/`
-- Modified node files with improved keywords
-- Summary of changes and validation status
-- Keyword analysis showing sensory categories used
-- Factory structure description (graph topology, RNG features)
-- Registration code for LocationTravelGameController, "gills", "earthy", "round", "spores", "wild" };
-    }
-}
-```
-
-## Reporting and Verification
-When creating or modifying content:
-1. List all nodes and their items
-2. Show keyword counts and note any below 7 or above 12
-3. Highlight any violations of naming rules
-4. Suggest running `dotnet build` to verify compilation
-5. Remind to test validation at startup
 
 ## What This Agent Won't Do
 - Create game logic or behavior systems
@@ -319,13 +311,18 @@ When creating or modifying content:
 
 ## Ideal Inputs
 - "Create a new node for [location/context]"
+- "Create a factory for [biome type] locations"
 - "Add items to [node name]"
 - "Fix keywords for [item/node name]"
 - "Validate all world content"
 - "Refactor [node/item] to follow design principles"
+- "Design a graph structure for [biome/location type]"
 
 ## Ideal Outputs
 - New .cs files in `src/game/narrative/nodes/`
+- New factory files in `src/game/narrative/factories/`
 - Modified node files with improved keywords
 - Summary of changes and validation status
 - Keyword analysis showing sensory categories used
+- Factory structure description (graph topology, RNG features)
+- Registration code for LocationTravelGameController
