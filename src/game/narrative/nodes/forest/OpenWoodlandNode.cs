@@ -1,0 +1,27 @@
+using System;
+using System.Collections.Generic;
+
+namespace Cathedral.Game.Narrative.Nodes.Forest;
+
+/// <summary>
+/// Open Woodland - Level 1. An airy forest zone with scattered trees and grassy clearings.
+/// </summary>
+public class OpenWoodlandNode : NarrationNode
+{
+    public override string NodeId => "open_woodland";
+    public override string ContextDescription => "exploring the open woodland";
+    public override string TransitionDescription => "move into the open woodland";
+    public override bool IsEntryNode => true;
+    
+    public override List<string> NodeKeywords => new() { "airy", "scattered", "grassy", "sunlit", "sparse", "meadow", "open", "bright", "wildflowers", "gentle" };
+    
+    private static readonly string[] Moods = { "peaceful", "sunny", "breezy", "bright", "quiet", "serene", "windswept", "tranquil" };
+    
+    public override string GenerateNeutralDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        
+        return $"{mood} open woodland";
+    }
+}

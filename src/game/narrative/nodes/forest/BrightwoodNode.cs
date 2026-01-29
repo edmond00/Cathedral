@@ -1,0 +1,27 @@
+using System;
+using System.Collections.Generic;
+
+namespace Cathedral.Game.Narrative.Nodes.Forest;
+
+/// <summary>
+/// Brightwood - Level 2. Light-filled woodland with beech trees and ferns.
+/// </summary>
+public class BrightwoodNode : NarrationNode
+{
+    public override string NodeId => "brightwood";
+    public override string ContextDescription => "wandering through brightwood";
+    public override string TransitionDescription => "enter the brightwood";
+    public override bool IsEntryNode => true;
+    
+    public override List<string> NodeKeywords => new() { "luminous", "beech", "ferns", "golden", "dappled", "smooth", "light", "green", "fresh", "young" };
+    
+    private static readonly string[] Moods = { "radiant", "gleaming", "shimmering", "bright", "fresh", "vibrant", "golden", "cheerful" };
+    
+    public override string GenerateNeutralDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        
+        return $"{mood} brightwood";
+    }
+}

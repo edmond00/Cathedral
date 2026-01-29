@@ -1,6 +1,6 @@
 ---
 description: 'Creates, improves, and validates narrative world content (nodes and items) following Cathedral game design principles.'
-tools: []
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'agent', 'todo']
 ---
 
 # World Content Designer Agent
