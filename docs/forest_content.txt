@@ -1,102 +1,104 @@
-OPEN WOODLAND
+# FORESST AREAS
+
+1. OPEN WOODLAND
 - Grass clearing
 - Isolated oak
 - Hawthorn cluster
 - Wildflower patch
 - Low shrub belt
 
-BRIGHTWOOD
+2. BRIGHTWOOD
 - Beech stand
 - Fern glade
 - Young maple group
 - Mossy stone outcrop
 - Seasonal flower groundcover
 
-GREENWOOD
+3. GREENWOOD
 - Mixed hardwood grove
 - Hazel undergrowth
 - Fungal ring
 - Leaf-litter hollow
 - Ivy-clad trunks
 
-HIGHWOOD
+4. HIGHWOOD
 - Tall trunk stand
 - Sparse understory floor
 - Fallen giant trunk
 - Lichen-covered bark
 - Exposed root plates
 
-MIXED UNDERWOOD
+5. MIXED UNDERWOOD
 - Dense sapling patch
 - Bramble run
 - Tall fern stand
 - Shrub island
 - Animal track
 
-LOWWOOD
+6. LOWWOOD
 - Moist leafbed
 - Alder grove
 - Fungal log
 - Reeded depression
 - Seasonal puddle
 
-DEEP CANOPY
+7. DEEP CANOPY
 - Closed crown stretch
 - Root-and-stone carpet
 - Shade plant patch
 - Trunk cluster
 - Light shafts
 
-SHADOWWOOD
+8. SHADOWWOOD
 - Bare soil patch
 - Darkened tree trunks
 - Lichen crusts
 - Hidden branch tangle
 - Low moss beds
 
-OLDGROWTH
+9. OLDGROWTH
 - Ancient tree giant
 - Standing dead snag
 - Decaying log mass
 - Layered canopy pocket
 - Deep humus basin
 
-DENSE THICKETLAND
+10. DENSE THICKETLAND
 - Interlocked shrub wall
 - Young tree cluster
 - Vine-draped growth
 - Hidden light pocket
 - Thorn belt
 
-WILDWOOD
+11. WILDWOOD
 - Mixed-age tangle
 - Uprooted trees
 - Regrowth thicket
 - Uneven ground cover
 - Competing growth layers
 
-ROOTED FOREST
+12. ROOTED FOREST
 - Exposed root web
 - Shallow-rooted stand
 - Root arch
 - Displaced ground plants
 - Erosion channel
 
-DEEPWOOD
+13. DEEPWOOD
 - Uniform trunk corridor
 - Sparse understory floor
 - Cold moss ground
 - Deep leaf litter
 - Isolated plant cluster
 
-MIREWOOD
+14. MIREWOOD
 - Flooded tree stand
 - Shallow pool
 - Sedge patch
 - Spongy moss mat
 - Rotting log island
 
-BLACKWOOD
+15. BLACKWOOD
 - Dense trunk wall
 - Collapsed deadwood heap
 - Bare forest floor
@@ -104,7 +106,7 @@ BLACKWOOD
 - Lightless stand
 
 
-TRANSVERSAL FOREST FEATURES
+# TRANSVERSAL FOREST FEATURES
 (running through multiple forest areas)
 
 - Forest stream
