@@ -24,4 +24,20 @@ public class WildwoodNode : NarrationNode
         
         return $"{mood} wildwood";
     }
+    
+    public sealed class UntamedSeeds : Item
+    {
+        public override string ItemId => "wildwood_untamed_seeds";
+        public override string DisplayName => "Untamed Seeds";
+        public override string Description => "Wild seeds scattered across the untamed forest";
+        public override List<string> OutcomeKeywords => new() { "seeds", "wild", "scattered", "small", "brown", "untamed", "chaotic", "pods", "dispersed", "natural" };
+    }
+    
+    public sealed class WildGrowth : Item
+    {
+        public override string ItemId => "wildwood_wild_growth";
+        public override string DisplayName => "Wild Growth";
+        public override string Description => "Uncultivated plant matter from the wildwood";
+        public override List<string> OutcomeKeywords => new() { "growth", "wild", "uncultivated", "tangled", "green", "overgrown", "natural", "plant", "untamed", "dense" };
+    }
 }

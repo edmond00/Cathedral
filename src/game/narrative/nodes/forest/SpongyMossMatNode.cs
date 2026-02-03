@@ -26,11 +26,19 @@ public class SpongyMossMatNode : NarrationNode
         return $"{mood} spongy moss mat";
     }
     
-    public sealed class WetMoss : Item
+    public sealed class SphagnumMoss : Item
     {
         public override string ItemId => "wet_sphagnum_moss";
         public override string DisplayName => "Wet Sphagnum Moss";
         public override string Description => "Waterlogged moss from the mat";
         public override List<string> OutcomeKeywords => new() { "wet", "spongy", "green", "moss", "waterlogged", "soft", "absorbent", "saturated", "sphagnum", "living" };
+    }
+    
+    public sealed class MossMatWater : Item
+    {
+        public override string ItemId => "spongy_moss_mat_bog_water";
+        public override string DisplayName => "Bog Water";
+        public override string Description => "Brown peaty water squeezed from moss";
+        public override List<string> OutcomeKeywords => new() { "brown", "peaty", "acidic", "stained", "water", "tannin", "amber", "preserved", "organic", "dark" };
     }
 }

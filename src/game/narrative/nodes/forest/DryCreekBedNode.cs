@@ -32,4 +32,12 @@ public class DryCreekBedNode : NarrationNode
         public override string Description => "A water-polished stone from the ancient creek bed";
         public override List<string> OutcomeKeywords => new() { "polished", "smooth", "round", "grey", "weathered", "worn", "cold", "heavy", "stone", "hard" };
     }
+    
+    public sealed class DriedAlgae : Item
+    {
+        public override string ItemId => "dry_creek_bed_dried_algae";
+        public override string DisplayName => "Dried Algae";
+        public override string Description => "Brittle algae left from when water flowed here";
+        public override List<string> OutcomeKeywords => new() { "algae", "dried", "brittle", "green", "crusty", "flaky", "old", "desiccated", "crumbling", "remnant" };
+    }
 }

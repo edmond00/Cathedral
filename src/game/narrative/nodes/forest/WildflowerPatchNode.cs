@@ -32,4 +32,20 @@ public class WildflowerPatchNode : NarrationNode
         public override string Description => "A handful of picked wildflowers";
         public override List<string> OutcomeKeywords => new() { "colorful", "fragrant", "fresh", "delicate", "mixed", "petals", "stems", "vibrant", "flowers", "bouquet" };
     }
+    
+    public sealed class FlowerPetal : Item
+    {
+        public override string ItemId => "wildflower_patch_petal";
+        public override string DisplayName => "Flower Petal";
+        public override string Description => "A single delicate wildflower petal";
+        public override List<string> OutcomeKeywords => new() { "delicate", "soft", "purple", "petal", "silky", "thin", "colorful", "fragile", "bright", "single" };
+    }
+    
+    public sealed class ButterflyWing : Item
+    {
+        public override string ItemId => "wildflower_patch_butterfly_wing";
+        public override string DisplayName => "Butterfly Wing";
+        public override string Description => "A shed butterfly wing dusted with colorful scales";
+        public override List<string> OutcomeKeywords => new() { "iridescent", "scales", "colorful", "delicate", "wing", "membrane", "pattern", "fragile", "dust", "translucent" };
+    }
 }

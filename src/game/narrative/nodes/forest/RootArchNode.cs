@@ -33,4 +33,12 @@ public class RootArchNode : NarrationNode
         public override string Description => "A curved piece from the root arch";
         public override List<string> OutcomeKeywords => new() { "curved", "hard", "woody", "root", "arched", "brown", "thick", "sculptural", "weathered", "strong" };
     }
+    
+    public sealed class BarkRubbing : Item
+    {
+        public override string ItemId => "root_arch_bark_rubbing";
+        public override string DisplayName => "Bark Fragment";
+        public override string Description => "A piece of bark worn smooth by passage";
+        public override List<string> OutcomeKeywords => new() { "smooth", "worn", "polished", "bark", "fragment", "rubbed", "glossy", "brown", "handled", "textured" };
+    }
 }

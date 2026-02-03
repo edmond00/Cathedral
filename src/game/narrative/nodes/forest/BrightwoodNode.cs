@@ -24,4 +24,12 @@ public class BrightwoodNode : NarrationNode
         
         return $"{mood} brightwood";
     }
+    
+    public sealed class BeechLeaves : Item
+    {
+        public override string ItemId => "brightwood_beech_leaves";
+        public override string DisplayName => "Beech Leaves";
+        public override string Description => "Golden-green leaves from brightwood beech trees";
+        public override List<string> OutcomeKeywords => new() { "beech", "leaves", "golden", "smooth", "fresh", "green", "light", "delicate", "veined", "bright" };
+    }
 }

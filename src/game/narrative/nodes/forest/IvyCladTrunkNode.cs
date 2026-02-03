@@ -33,4 +33,12 @@ public class IvyCladTrunkNode : NarrationNode
         public override string Description => "A glossy, lobed ivy leaf";
         public override List<string> OutcomeKeywords => new() { "glossy", "lobed", "green", "waxy", "shaped", "leaf", "dark", "veined", "evergreen", "thick" };
     }
+    
+    public sealed class AerialRoot : Item
+    {
+        public override string ItemId => "ivy_trunk_aerial_root";
+        public override string DisplayName => "Aerial Root";
+        public override string Description => "Clinging ivy roots attached to bark";
+        public override List<string> OutcomeKeywords => new() { "clinging", "rootlets", "adhesive", "brown", "hairlike", "gripping", "attached", "tiny", "fibrous", "climbing" };
+    }
 }

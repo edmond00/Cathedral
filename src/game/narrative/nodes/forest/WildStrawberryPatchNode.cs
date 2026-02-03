@@ -32,4 +32,20 @@ public class WildStrawberryPatchNode : NarrationNode
         public override string Description => "Tiny, intensely sweet wild strawberries";
         public override List<string> OutcomeKeywords => new() { "red", "tiny", "sweet", "seeds", "fragrant", "berries", "fruit", "intense", "delicate", "wild" };
     }
+    
+    public sealed class StrawberryRunner : Item
+    {
+        public override string ItemId => "wild_strawberry_runner";
+        public override string DisplayName => "Strawberry Runner";
+        public override string Description => "A thin stem sending out new plants";
+        public override List<string> OutcomeKeywords => new() { "thin", "runner", "stem", "spreading", "rooting", "propagating", "green", "connecting", "tendril", "network" };
+    }
+    
+    public sealed class StrawberryLeaf : Item
+    {
+        public override string ItemId => "wild_strawberry_leaf";
+        public override string DisplayName => "Strawberry Leaf";
+        public override string Description => "Triple-leaflet leaves with serrated edges";
+        public override List<string> OutcomeKeywords => new() { "triple", "serrated", "green", "leaflet", "toothed", "compound", "edges", "three", "veined", "textured" };
+    }
 }

@@ -32,4 +32,12 @@ public class OwlPelletSiteNode : NarrationNode
         public override string Description => "Small rodent bones from dissected owl pellets";
         public override List<string> OutcomeKeywords => new() { "white", "small", "fragile", "skull", "vertebrae", "bones", "delicate", "cleaned", "skeletal", "rodent" };
     }
+    
+    public sealed class MatPellet : Item
+    {
+        public override string ItemId => "owl_pellet_mat_pellet";
+        public override string DisplayName => "Matted Pellet";
+        public override string Description => "A compressed pellet of fur and bone";
+        public override List<string> OutcomeKeywords => new() { "grey", "compressed", "cylindrical", "matted", "fur", "hard", "regurgitated", "dry", "compact", "dense" };
+    }
 }

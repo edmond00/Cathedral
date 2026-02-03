@@ -32,4 +32,12 @@ public class FernGladeNode : NarrationNode
         public override string Description => "A fresh fern frond with delicate leaflets";
         public override List<string> OutcomeKeywords => new() { "green", "feathery", "delicate", "divided", "fresh", "soft", "leaflets", "frond", "curved", "tender" };
     }
+    
+    public sealed class GladeFernSpore : Item
+    {
+        public override string ItemId => "fern_glade_spore_patch";
+        public override string DisplayName => "Spore Patch";
+        public override string Description => "Undersides of mature fronds covered in brown spores";
+        public override List<string> OutcomeKeywords => new() { "brown", "dots", "reproductive", "underside", "dusty", "capsules", "pattern", "microscopic", "fertile", "coating" };
+    }
 }

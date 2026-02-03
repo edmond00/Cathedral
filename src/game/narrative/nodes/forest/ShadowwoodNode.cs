@@ -24,4 +24,12 @@ public class ShadowwoodNode : NarrationNode
         
         return $"{mood} shadowwood";
     }
+    
+    public sealed class DarkBark : Item
+    {
+        public override string ItemId => "shadowwood_dark_bark";
+        public override string DisplayName => "Dark Bark";
+        public override string Description => "Nearly black bark from shadowwood trees";
+        public override List<string> OutcomeKeywords => new() { "bark", "dark", "black", "rough", "shadowy", "charred", "thick", "gnarled", "ancient", "hardened" };
+    }
 }

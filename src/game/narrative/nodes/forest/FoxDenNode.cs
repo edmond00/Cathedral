@@ -32,4 +32,20 @@ public class FoxDenNode : NarrationNode
         public override string Description => "A tuft of reddish fox fur caught on roots";
         public override List<string> OutcomeKeywords => new() { "red", "soft", "fluffy", "fur", "tuft", "reddish", "guard", "hairs", "russet", "warm" };
     }
+    
+    public sealed class BoneShard : Item
+    {
+        public override string ItemId => "fox_den_bone_shard";
+        public override string DisplayName => "Bone Shard";
+        public override string Description => "A gnawed bone fragment from a fox meal";
+        public override List<string> OutcomeKeywords => new() { "white", "gnawed", "teeth", "marks", "hollow", "fragment", "prey", "remains", "picked", "clean" };
+    }
+    
+    public sealed class FeatherRemains : Item
+    {
+        public override string ItemId => "fox_den_feather_remains";
+        public override string DisplayName => "Scattered Feathers";
+        public override string Description => "Bird feathers scattered near the den entrance from a kill";
+        public override List<string> OutcomeKeywords => new() { "scattered", "prey", "bird", "feathers", "torn", "plucked", "brown", "white", "kill", "disheveled" };
+    }
 }

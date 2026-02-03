@@ -33,4 +33,12 @@ public class LowShrubBeltNode : NarrationNode
         public override string Description => "A flexible twig from the shrub belt";
         public override List<string> OutcomeKeywords => new() { "flexible", "thin", "brown", "woody", "straight", "twig", "branch", "stripped", "smooth", "green" };
     }
+    
+    public sealed class BerryCluster : Item
+    {
+        public override string ItemId => "low_shrub_berry_cluster";
+        public override string DisplayName => "Wild Berry Cluster";
+        public override string Description => "Small red berries hanging from a shrub";
+        public override List<string> OutcomeKeywords => new() { "red", "small", "cluster", "hanging", "ripe", "bright", "berries", "glossy", "tart", "bunch" };
+    }
 }

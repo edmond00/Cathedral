@@ -24,4 +24,20 @@ public class CricketChorusNode : NarrationNode
         
         return $"{mood} cricket chorus";
     }
+    
+    public sealed class CricketLegs : Item
+    {
+        public override string ItemId => "cricket_chorus_cricket_legs";
+        public override string DisplayName => "Cricket Legs";
+        public override string Description => "Jointed legs from dead crickets";
+        public override List<string> OutcomeKeywords => new() { "legs", "jointed", "spindly", "brown", "thin", "segments", "insect", "dried", "delicate", "appendages" };
+    }
+    
+    public sealed class CricketChirp : Item
+    {
+        public override string ItemId => "cricket_chorus_cricket_chirp_sample";
+        public override string DisplayName => "Cricket Chirp Sample";
+        public override string Description => "A living cricket captured for its song";
+        public override List<string> OutcomeKeywords => new() { "cricket", "chirping", "singing", "sound", "rhythmic", "musical", "nocturnal", "calling", "insect", "alive" };
+    }
 }

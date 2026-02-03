@@ -32,4 +32,12 @@ public class WildHerbsNode : NarrationNode
         public override string Description => "A bundle of aromatic forest herbs";
         public override List<string> OutcomeKeywords => new() { "aromatic", "green", "fresh", "bundled", "fragrant", "tied", "herbs", "medicinal", "leaves", "pungent" };
     }
+    
+    public sealed class HerbRoot : Item
+    {
+        public override string ItemId => "wild_herbs_herb_root";
+        public override string DisplayName => "Herb Root";
+        public override string Description => "A pungent root from a medicinal herb";
+        public override List<string> OutcomeKeywords => new() { "pungent", "medicinal", "root", "fibrous", "aromatic", "white", "potent", "healing", "bitter", "thick" };
+    }
 }

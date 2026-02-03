@@ -33,4 +33,12 @@ public class YoungMapleGroupNode : NarrationNode
         public override string Description => "A winged maple seed, ready to spin";
         public override List<string> OutcomeKeywords => new() { "winged", "spinning", "helicopter", "seed", "brown", "paired", "samara", "propeller", "flying", "light" };
     }
+    
+    public sealed class MapleLeaf : Item
+    {
+        public override string ItemId => "young_maple_palmate_leaf";
+        public override string DisplayName => "Palmate Maple Leaf";
+        public override string Description => "A fresh young maple leaf with pointed lobes";
+        public override List<string> OutcomeKeywords => new() { "palmate", "green", "lobed", "pointed", "veined", "fresh", "young", "bright", "five", "fingered" };
+    }
 }

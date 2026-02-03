@@ -32,4 +32,12 @@ public class HawthornClusterNode : NarrationNode
         public override string Description => "A red hawthorn berry, slightly mealy";
         public override List<string> OutcomeKeywords => new() { "red", "berry", "small", "round", "mealy", "fruit", "tart", "scarlet", "seed", "edible" };
     }
+    
+    public sealed class HawthornThorn : Item
+    {
+        public override string ItemId => "hawthorn_cluster_thorn";
+        public override string DisplayName => "Hawthorn Thorn";
+        public override string Description => "A long, sharp thorn from a hawthorn branch";
+        public override List<string> OutcomeKeywords => new() { "long", "sharp", "pointed", "woody", "spine", "needle", "dangerous", "hard", "straight", "defensive" };
+    }
 }

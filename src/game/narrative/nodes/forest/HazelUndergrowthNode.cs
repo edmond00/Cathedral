@@ -32,4 +32,12 @@ public class HazelUndergrowthNode : NarrationNode
         public override string Description => "A ripe hazelnut in its leafy husk";
         public override List<string> OutcomeKeywords => new() { "round", "brown", "hard", "shell", "husk", "leafy", "nut", "edible", "woody", "small" };
     }
+    
+    public sealed class HazelCatkin : Item
+    {
+        public override string ItemId => "hazel_undergrowth_catkin";
+        public override string DisplayName => "Hazel Catkin";
+        public override string Description => "A yellow male catkin hanging from a branch";
+        public override List<string> OutcomeKeywords => new() { "yellow", "hanging", "pollen", "dangling", "lamb", "tail", "spring", "cylindrical", "fuzzy", "elongated" };
+    }
 }

@@ -24,4 +24,20 @@ public class OldgrowthNode : NarrationNode
         
         return $"{mood} oldgrowth";
     }
+    
+    public sealed class AncientWood : Item
+    {
+        public override string ItemId => "oldgrowth_ancient_wood";
+        public override string DisplayName => "Ancient Wood";
+        public override string Description => "Weathered wood from ancient oldgrowth trees";
+        public override List<string> OutcomeKeywords => new() { "wood", "ancient", "weathered", "gray", "solid", "old", "hard", "timeless", "dense", "preserved" };
+    }
+    
+    public sealed class OldgrowthResin : Item
+    {
+        public override string ItemId => "oldgrowth_oldgrowth_resin";
+        public override string DisplayName => "Oldgrowth Resin";
+        public override string Description => "Hardened resin oozing from ancient trees";
+        public override List<string> OutcomeKeywords => new() { "resin", "hardened", "amber", "ancient", "sticky", "tree", "golden", "preserved", "crystalline", "sap" };
+    }
 }

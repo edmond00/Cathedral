@@ -33,4 +33,12 @@ public class ShadePlantPatchNode : NarrationNode
         public override string Description => "A wide, dark green leaf from a shade plant";
         public override List<string> OutcomeKeywords => new() { "broad", "dark", "green", "wide", "flat", "leaf", "smooth", "large", "shade", "adapted" };
     }
+    
+    public sealed class ShadeFern : Item
+    {
+        public override string ItemId => "shade_plant_fern";
+        public override string DisplayName => "Shade Fern";
+        public override string Description => "A delicate shade-adapted fern frond";
+        public override List<string> OutcomeKeywords => new() { "delicate", "feathery", "dark", "green", "frond", "small", "low", "shade", "fern", "adapted" };
+    }
 }

@@ -33,4 +33,12 @@ public class BeechStandNode : NarrationNode
         public override string Description => "A triangular beechnut in its spiny husk";
         public override List<string> OutcomeKeywords => new() { "triangular", "brown", "husk", "spiny", "shell", "nut", "edible", "small", "mast", "kernel" };
     }
+    
+    public sealed class BeechLeaf : Item
+    {
+        public override string ItemId => "beech_stand_copper_leaf";
+        public override string DisplayName => "Copper Beech Leaf";
+        public override string Description => "A copper-colored beech leaf with delicate veins";
+        public override List<string> OutcomeKeywords => new() { "copper", "oval", "veined", "thin", "papery", "wavy", "edges", "glossy", "bronze", "autumn" };
+    }
 }

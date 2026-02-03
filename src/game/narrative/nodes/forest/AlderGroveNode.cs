@@ -32,4 +32,12 @@ public class AlderGroveNode : NarrationNode
         public override string Description => "A small woody cone from an alder tree";
         public override List<string> OutcomeKeywords => new() { "small", "woody", "brown", "cone", "dry", "scaly", "seed", "hard", "oval", "rough" };
     }
+    
+    public sealed class AlderCatkin : Item
+    {
+        public override string ItemId => "alder_grove_catkin";
+        public override string DisplayName => "Alder Catkin";
+        public override string Description => "A dangling catkin from an alder branch";
+        public override List<string> OutcomeKeywords => new() { "dangling", "yellow", "pollen", "fuzzy", "elongated", "hanging", "spring", "flower", "soft", "cylindrical" };
+    }
 }

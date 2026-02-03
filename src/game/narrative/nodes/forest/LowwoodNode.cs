@@ -24,4 +24,20 @@ public class LowwoodNode : NarrationNode
         
         return $"{mood} lowwood";
     }
+    
+    public sealed class WetMoss : Item
+    {
+        public override string ItemId => "lowwood_wet_moss";
+        public override string DisplayName => "Wet Moss";
+        public override string Description => "Damp moss gathered from lowwood ground";
+        public override List<string> OutcomeKeywords => new() { "moss", "wet", "damp", "green", "soft", "spongy", "cool", "moist", "dense", "ground" };
+    }
+    
+    public sealed class PuddleWater : Item
+    {
+        public override string ItemId => "lowwood_puddle_water";
+        public override string DisplayName => "Puddle Water";
+        public override string Description => "Water collected from lowwood puddles";
+        public override List<string> OutcomeKeywords => new() { "water", "puddle", "stagnant", "dark", "murky", "still", "accumulated", "collected", "low", "pooled" };
+    }
 }

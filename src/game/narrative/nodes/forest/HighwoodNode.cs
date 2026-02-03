@@ -24,4 +24,20 @@ public class HighwoodNode : NarrationNode
         
         return $"{mood} highwood";
     }
+    
+    public sealed class TreeLichen : Item
+    {
+        public override string ItemId => "highwood_tree_lichen";
+        public override string DisplayName => "Tree Lichen";
+        public override string Description => "Pale lichen scraped from highwood bark";
+        public override List<string> OutcomeKeywords => new() { "lichen", "pale", "bark", "crusty", "gray", "textured", "growth", "dry", "ancient", "crumbling" };
+    }
+    
+    public sealed class BarkShavings : Item
+    {
+        public override string ItemId => "highwood_bark_shavings";
+        public override string DisplayName => "Bark Shavings";
+        public override string Description => "Thin strips of bark peeled from tall trunks";
+        public override List<string> OutcomeKeywords => new() { "bark", "shavings", "strips", "thin", "brown", "fibrous", "peeled", "curled", "dry", "woody" };
+    }
 }

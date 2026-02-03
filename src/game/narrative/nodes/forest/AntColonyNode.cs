@@ -24,4 +24,20 @@ public class AntColonyNode : NarrationNode
         
         return $"{mood} ant colony";
     }
+    
+    public sealed class AntEggs : Item
+    {
+        public override string ItemId => "ant_colony_ant_eggs";
+        public override string DisplayName => "Ant Eggs";
+        public override string Description => "Tiny pale eggs from the ant colony";
+        public override List<string> OutcomeKeywords => new() { "eggs", "tiny", "pale", "white", "larvae", "cluster", "small", "oval", "delicate", "brood" };
+    }
+    
+    public sealed class ForamicAcid : Item
+    {
+        public override string ItemId => "ant_colony_foramic_acid";
+        public override string DisplayName => "Foramic Acid";
+        public override string Description => "Pungent defensive secretion from worker ants";
+        public override List<string> OutcomeKeywords => new() { "acid", "pungent", "sharp", "chemical", "defensive", "bitter", "stinging", "irritating", "secretion", "ant" };
+    }
 }

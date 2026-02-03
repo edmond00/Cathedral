@@ -32,4 +32,12 @@ public class AnimalTrackNode : NarrationNode
         public override string Description => "Fresh droppings indicating recent animal passage";
         public override List<string> OutcomeKeywords => new() { "fresh", "pungent", "dark", "pellets", "scattered", "recent", "organic", "earthy", "wildlife", "sign" };
     }
+    
+    public sealed class TuftOfFur : Item
+    {
+        public override string ItemId => "animal_track_tuft_of_fur";
+        public override string DisplayName => "Tuft of Fur";
+        public override string Description => "Animal fur snagged on nearby brush";
+        public override List<string> OutcomeKeywords => new() { "fur", "tuft", "soft", "brown", "snagged", "coarse", "animal", "fibers", "caught", "wildlife" };
+    }
 }

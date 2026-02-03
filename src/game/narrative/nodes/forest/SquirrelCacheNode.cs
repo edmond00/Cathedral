@@ -32,4 +32,12 @@ public class SquirrelCacheNode : NarrationNode
         public override string Description => "A handful of nuts from a squirrel's stash";
         public override List<string> OutcomeKeywords => new() { "various", "hard", "shells", "stored", "acorns", "hazelnuts", "nuts", "collection", "hoarded", "mixed" };
     }
+    
+    public sealed class SquirrelFur : Item
+    {
+        public override string ItemId => "squirrel_cache_fur";
+        public override string DisplayName => "Squirrel Fur Tuft";
+        public override string Description => "A tuft of grey squirrel fur left at the cache";
+        public override List<string> OutcomeKeywords => new() { "grey", "soft", "fluffy", "fur", "bushy", "tail", "hairs", "guard", "warm", "mammal" };
+    }
 }

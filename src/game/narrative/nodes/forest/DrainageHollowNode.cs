@@ -32,4 +32,12 @@ public class DrainageHollowNode : NarrationNode
         public override string Description => "Sticky clay accumulated in the drainage channel";
         public override List<string> OutcomeKeywords => new() { "sticky", "grey", "smooth", "wet", "malleable", "thick", "heavy", "clay", "cold", "mineral" };
     }
+    
+    public sealed class StagnantWater : Item
+    {
+        public override string ItemId => "drainage_hollow_stagnant_water";
+        public override string DisplayName => "Stagnant Water";
+        public override string Description => "Still water pooled in the hollow";
+        public override List<string> OutcomeKeywords => new() { "water", "stagnant", "still", "murky", "pooled", "brackish", "dark", "motionless", "cloudy", "stale" };
+    }
 }

@@ -24,4 +24,20 @@ public class SpiderWebNode : NarrationNode
         
         return $"{mood} spider web";
     }
+    
+    public sealed class SpiderSilk : Item
+    {
+        public override string ItemId => "spider_web_spider_silk";
+        public override string DisplayName => "Spider Silk";
+        public override string Description => "Strong sticky threads from the web";
+        public override List<string> OutcomeKeywords => new() { "silk", "threads", "sticky", "strong", "white", "delicate", "gossamer", "fine", "protein", "web" };
+    }
+    
+    public sealed class TrappedInsects : Item
+    {
+        public override string ItemId => "spider_web_trapped_insects";
+        public override string DisplayName => "Trapped Insects";
+        public override string Description => "Small insects caught in the sticky web";
+        public override List<string> OutcomeKeywords => new() { "insects", "trapped", "caught", "prey", "wrapped", "immobilized", "small", "ensnared", "victim", "struggling" };
+    }
 }

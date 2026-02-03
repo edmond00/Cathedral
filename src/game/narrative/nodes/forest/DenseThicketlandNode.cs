@@ -24,4 +24,20 @@ public class DenseThicketlandNode : NarrationNode
         
         return $"{mood} dense thicketland";
     }
+    
+    public sealed class ThornedBranch : Item
+    {
+        public override string ItemId => "dense_thicketland_thorned_branch";
+        public override string DisplayName => "Thorned Branch";
+        public override string Description => "Spiky branch broken from the dense thicket";
+        public override List<string> OutcomeKeywords => new() { "branch", "thorned", "spiky", "sharp", "twisted", "bramble", "woody", "barbed", "tangled", "dangerous" };
+    }
+    
+    public sealed class ThicketBerries : Item
+    {
+        public override string ItemId => "dense_thicketland_thicket_berries";
+        public override string DisplayName => "Thicket Berries";
+        public override string Description => "Small dark berries hidden in the thicket";
+        public override List<string> OutcomeKeywords => new() { "berries", "dark", "small", "hidden", "purple", "tart", "wild", "fruit", "clustered", "bramble" };
+    }
 }

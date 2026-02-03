@@ -33,4 +33,12 @@ public class TrunkClusterNode : NarrationNode
         public override string Description => "A pale strip of inner bark from tight-growing trunks";
         public override List<string> OutcomeKeywords => new() { "pale", "fibrous", "strip", "inner", "soft", "bark", "stringy", "flexible", "cambium", "thin" };
     }
+    
+    public sealed class BarkShaving : Item
+    {
+        public override string ItemId => "trunk_cluster_bark_shaving";
+        public override string DisplayName => "Bark Shaving";
+        public override string Description => "Thin bark shavings rubbed off by close trunks";
+        public override List<string> OutcomeKeywords => new() { "thin", "curled", "brown", "shavings", "papery", "rubbed", "bark", "fragments", "peeling", "friction" };
+    }
 }

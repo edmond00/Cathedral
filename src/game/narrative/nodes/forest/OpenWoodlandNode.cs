@@ -24,4 +24,12 @@ public class OpenWoodlandNode : NarrationNode
         
         return $"{mood} open woodland";
     }
+    
+    public sealed class WildGrass : Item
+    {
+        public override string ItemId => "open_woodland_wild_grass";
+        public override string DisplayName => "Wild Grass";
+        public override string Description => "Long blades of wild grass from the open clearing";
+        public override List<string> OutcomeKeywords => new() { "grass", "blades", "meadow", "green", "fresh", "tall", "wild", "stems", "soft", "swaying" };
+    }
 }

@@ -24,4 +24,12 @@ public class BlackwoodNode : NarrationNode
         
         return $"{mood} blackwood";
     }
+    
+    public sealed class CharredTwigs : Item
+    {
+        public override string ItemId => "blackwood_charred_twigs";
+        public override string DisplayName => "Charred Twigs";
+        public override string Description => "Blackened twigs from the scorched blackwood";
+        public override List<string> OutcomeKeywords => new() { "twigs", "charred", "blackened", "burnt", "brittle", "scorched", "ashen", "fragile", "dark", "crumbling" };
+    }
 }

@@ -32,4 +32,12 @@ public class FallenGiantTrunkNode : NarrationNode
         public override string Description => "A fat white larva from beneath the bark";
         public override List<string> OutcomeKeywords => new() { "white", "fat", "segmented", "wriggling", "soft", "grub", "larva", "insect", "curved", "protein" };
     }
+    
+    public sealed class SoftRot : Item
+    {
+        public override string ItemId => "fallen_trunk_soft_rot";
+        public override string DisplayName => "Soft Rot Wood";
+        public override string Description => "Punky, decomposing wood from the trunk interior";
+        public override List<string> OutcomeKeywords => new() { "soft", "crumbling", "punky", "decomposed", "spongy", "brown", "decay", "fragile", "rotting", "moist" };
+    }
 }

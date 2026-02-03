@@ -24,4 +24,12 @@ public class LeafClearedPathNode : NarrationNode
         
         return $"{mood} leaf-cleared path";
     }
+    
+    public sealed class SweptLeaves : Item
+    {
+        public override string ItemId => "leaf_cleared_path_swept_leaves";
+        public override string DisplayName => "Swept Leaves";
+        public override string Description => "Leaves gathered from the edges of the cleared path";
+        public override List<string> OutcomeKeywords => new() { "leaves", "swept", "edges", "gathered", "dry", "piled", "crisp", "brown", "accumulated", "cleared" };
+    }
 }

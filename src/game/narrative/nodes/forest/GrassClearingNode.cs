@@ -33,4 +33,12 @@ public class GrassClearingNode : NarrationNode
         public override string Description => "Small seeds from wild grasses";
         public override List<string> OutcomeKeywords => new() { "small", "brown", "dry", "seeds", "grain", "chaff", "tiny", "scattered", "harvest", "wild" };
     }
+    
+    public sealed class GrassFlower : Item
+    {
+        public override string ItemId => "grass_clearing_flower_head";
+        public override string DisplayName => "Grass Flower Head";
+        public override string Description => "A delicate grass flower panicle";
+        public override List<string> OutcomeKeywords => new() { "delicate", "panicle", "feathery", "wind", "pollinated", "golden", "swaying", "stem", "nodding", "spray" };
+    }
 }

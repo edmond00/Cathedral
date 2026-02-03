@@ -33,4 +33,12 @@ public class ReededDepressionNode : NarrationNode
         public override string Description => "A tall, hollow reed stem";
         public override List<string> OutcomeKeywords => new() { "tall", "hollow", "green", "stem", "tubular", "flexible", "reed", "smooth", "straight", "fibrous" };
     }
+    
+    public sealed class CattailFluff : Item
+    {
+        public override string ItemId => "reeded_depression_cattail_fluff";
+        public override string DisplayName => "Cattail Fluff";
+        public override string Description => "Soft brown seed fluff from a cattail head";
+        public override List<string> OutcomeKeywords => new() { "soft", "brown", "fluffy", "seeds", "cottony", "dispersing", "downy", "light", "airborne", "insulating" };
+    }
 }

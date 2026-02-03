@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cathedral.Game.Narrative.Nodes;
 using Cathedral.Game.Narrative.Nodes.Forest;
 
 namespace Cathedral.Game.Narrative.Factories;
@@ -98,8 +97,6 @@ public class ForestGraphFactory : NarrationGraphFactory
     
     private readonly List<Type> _forageNodes = new()
     {
-        typeof(BerryBushNode),
-        typeof(MushroomPatchNode),
         typeof(WildStrawberryPatchNode),
         typeof(PineConeClusterNode),
         typeof(WildHerbsNode),

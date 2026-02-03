@@ -33,4 +33,12 @@ public class LeafLitterHollowNode : NarrationNode
         public override string Description => "Rich, partially decomposed leaf matter";
         public override List<string> OutcomeKeywords => new() { "dark", "crumbly", "rich", "organic", "decomposed", "humus", "fertile", "moist", "earthy", "mold" };
     }
+    
+    public sealed class Millipede : Item
+    {
+        public override string ItemId => "leaf_litter_millipede";
+        public override string DisplayName => "Millipede";
+        public override string Description => "A long millipede coiling defensively";
+        public override List<string> OutcomeKeywords => new() { "segmented", "coiling", "black", "legs", "many", "defensive", "curled", "arthropod", "cylindrical", "slow" };
+    }
 }

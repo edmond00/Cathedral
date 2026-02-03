@@ -32,4 +32,20 @@ public class MushroomLogNode : NarrationNode
         public override string Description => "A tough, bracket-like shelf mushroom";
         public override List<string> OutcomeKeywords => new() { "tough", "bracket", "brown", "woody", "shelf", "leathery", "fungus", "hard", "perennial", "ridged" };
     }
+    
+    public sealed class DecayedLogWood : Item
+    {
+        public override string ItemId => "mushroom_log_rotten_wood";
+        public override string DisplayName => "Rotten Wood";
+        public override string Description => "Soft, decaying wood riddled with fungal threads";
+        public override List<string> OutcomeKeywords => new() { "soft", "crumbling", "decay", "fungal", "brown", "mycelium", "decomposing", "spongy", "riddled", "moist" };
+    }
+    
+    public sealed class BeetleHole : Item
+    {
+        public override string ItemId => "mushroom_log_beetle_hole";
+        public override string DisplayName => "Beetle Gallery";
+        public override string Description => "Network of beetle tunnels carved through the decaying wood";
+        public override List<string> OutcomeKeywords => new() { "tunnels", "carved", "insect", "galleries", "channels", "holes", "boring", "passages", "larvae", "excavated" };
+    }
 }

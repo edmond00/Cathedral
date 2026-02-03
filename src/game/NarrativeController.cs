@@ -83,17 +83,11 @@ public class NarrativeController
         _avatar.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
         
         // Generate graph for this location using factory
-        if (graphFactory != null)
-        {
-            _currentNode = graphFactory.GenerateGraph(locationId);
-            Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}'");
-        }
-        else
-        {
-            // Fallback: create a simple clearing node if no factory provided
-            _currentNode = new ClearingNode();
-            Console.WriteLine($"NarrativeController: No factory provided, using default ClearingNode");
-        }
+        if (graphFactory == null)
+            throw new ArgumentNullException(nameof(graphFactory), "NarrationGraphFactory is required - no fallback provided");
+        
+        _currentNode = graphFactory.GenerateGraph(locationId);
+        Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}'");
         
         // Initialize controllers
         _observationController = new ObservationPhaseController(llamaServer, slotManager);

@@ -33,4 +33,12 @@ public class DeepHumusBasinNode : NarrationNode
         public override string Description => "Black, crumbly humus from centuries of decay";
         public override List<string> OutcomeKeywords => new() { "black", "crumbly", "rich", "organic", "humus", "fertile", "ancient", "decomposed", "pure", "soil" };
     }
+    
+    public sealed class AncientSeed : Item
+    {
+        public override string ItemId => "deep_humus_ancient_seed";
+        public override string DisplayName => "Ancient Seed";
+        public override string Description => "A long-buried seed preserved in the humus";
+        public override List<string> OutcomeKeywords => new() { "preserved", "buried", "dormant", "hard", "shell", "potential", "waiting", "dark", "small", "intact" };
+    }
 }

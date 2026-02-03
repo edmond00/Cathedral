@@ -32,4 +32,12 @@ public class BrambleRunNode : NarrationNode
         public override string Description => "A cluster of ripe blackberries";
         public override List<string> OutcomeKeywords => new() { "black", "ripe", "juicy", "sweet", "purple", "cluster", "berry", "tart", "drupes", "staining" };
     }
+    
+    public sealed class BrambleThorn : Item
+    {
+        public override string ItemId => "bramble_run_thorn";
+        public override string DisplayName => "Bramble Thorn";
+        public override string Description => "A sharp curved thorn from a bramble cane";
+        public override List<string> OutcomeKeywords => new() { "sharp", "curved", "pointed", "hooked", "dangerous", "needle", "spine", "piercing", "rigid", "defensive" };
+    }
 }

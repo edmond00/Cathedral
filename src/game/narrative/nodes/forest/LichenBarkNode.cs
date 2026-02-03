@@ -33,4 +33,12 @@ public class LichenBarkNode : NarrationNode
         public override string Description => "A piece of lichen-covered bark";
         public override List<string> OutcomeKeywords => new() { "crusty", "grey-green", "rough", "dry", "scaly", "lichen", "symbiotic", "textured", "bark", "flaky" };
     }
+    
+    public sealed class LichenDust : Item
+    {
+        public override string ItemId => "lichen_bark_soredia";
+        public override string DisplayName => "Lichen Soredia";
+        public override string Description => "Fine reproductive dust from lichen bodies";
+        public override List<string> OutcomeKeywords => new() { "fine", "powdery", "green", "dust", "reproductive", "granular", "tiny", "spores", "dispersal", "microscopic" };
+    }
 }

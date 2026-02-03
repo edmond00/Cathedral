@@ -24,4 +24,12 @@ public class DeepwoodNode : NarrationNode
         
         return $"{mood} deepwood";
     }
+    
+    public sealed class DarkLoam : Item
+    {
+        public override string ItemId => "deepwood_dark_loam";
+        public override string DisplayName => "Dark Loam";
+        public override string Description => "Rich black soil from the deepwood floor";
+        public override List<string> OutcomeKeywords => new() { "loam", "soil", "dark", "rich", "black", "earth", "fertile", "moist", "deep", "organic" };
+    }
 }

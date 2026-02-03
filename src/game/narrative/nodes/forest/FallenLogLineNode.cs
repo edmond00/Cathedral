@@ -32,4 +32,12 @@ public class FallenLogLineNode : NarrationNode
         public override string Description => "Soft, decomposing wood from the fallen logs";
         public override List<string> OutcomeKeywords => new() { "soft", "crumbly", "dark", "moist", "decayed", "fibrous", "spongy", "musty", "wood", "decomposed" };
     }
+    
+    public sealed class BeetleLarvae : Item
+    {
+        public override string ItemId => "fallen_log_line_beetle_larvae";
+        public override string DisplayName => "Beetle Larvae";
+        public override string Description => "Pale larvae boring through the rotting wood";
+        public override List<string> OutcomeKeywords => new() { "larvae", "beetle", "pale", "grubs", "boring", "wriggling", "soft", "small", "white", "insects" };
+    }
 }

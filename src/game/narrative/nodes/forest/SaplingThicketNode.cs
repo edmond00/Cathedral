@@ -33,4 +33,12 @@ public class SaplingThicketNode : NarrationNode
         public override string Description => "A straight young shoot from the thicket";
         public override List<string> OutcomeKeywords => new() { "straight", "flexible", "green", "young", "smooth", "shoot", "slender", "thin", "bark", "vigorous" };
     }
+    
+    public sealed class SaplingBud : Item
+    {
+        public override string ItemId => "sapling_thicket_bud";
+        public override string DisplayName => "Sapling Bud";
+        public override string Description => "A swollen leaf bud ready to burst";
+        public override List<string> OutcomeKeywords => new() { "swollen", "tight", "green", "bud", "emerging", "potential", "spring", "promise", "unopened", "ready" };
+    }
 }

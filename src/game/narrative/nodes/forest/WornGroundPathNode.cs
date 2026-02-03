@@ -24,4 +24,12 @@ public class WornGroundPathNode : NarrationNode
         
         return $"{mood} worn ground path";
     }
+    
+    public sealed class PathDust : Item
+    {
+        public override string ItemId => "worn_ground_path_path_dust";
+        public override string DisplayName => "Path Dust";
+        public override string Description => "Fine dust from the heavily traveled path";
+        public override List<string> OutcomeKeywords => new() { "dust", "fine", "powder", "gray", "dry", "trampled", "path", "particles", "soft", "powdery" };
+    }
 }

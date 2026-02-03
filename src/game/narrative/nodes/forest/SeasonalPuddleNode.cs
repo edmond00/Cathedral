@@ -33,4 +33,12 @@ public class SeasonalPuddleNode : NarrationNode
         public override string Description => "Wet, sticky mud from the puddle edge";
         public override List<string> OutcomeKeywords => new() { "wet", "sticky", "brown", "mud", "clay", "squelching", "soft", "dark", "moist", "earthy" };
     }
+    
+    public sealed class TadpoleWater : Item
+    {
+        public override string ItemId => "seasonal_puddle_tadpole_water";
+        public override string DisplayName => "Tadpole Water";
+        public override string Description => "Water sample teeming with tiny tadpoles";
+        public override List<string> OutcomeKeywords => new() { "wriggling", "alive", "swimming", "tiny", "black", "water", "larvae", "moving", "life", "temporary" };
+    }
 }

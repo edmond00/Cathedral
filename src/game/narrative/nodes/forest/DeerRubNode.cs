@@ -32,4 +32,12 @@ public class DeerRubNode : NarrationNode
         public override string Description => "Bark strips torn off by deer antlers";
         public override List<string> OutcomeKeywords => new() { "torn", "fresh", "fibrous", "pale", "bark", "strips", "damaged", "scraped", "shredded", "wood" };
     }
+    
+    public sealed class DeerScent : Item
+    {
+        public override string ItemId => "deer_rub_scent_marker";
+        public override string DisplayName => "Scent Marker";
+        public override string Description => "A patch of bark marked with deer gland secretions";
+        public override List<string> OutcomeKeywords => new() { "musky", "territorial", "pungent", "scent", "marker", "chemical", "claim", "strong", "aromatic", "signal" };
+    }
 }

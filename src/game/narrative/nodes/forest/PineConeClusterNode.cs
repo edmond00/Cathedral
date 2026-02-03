@@ -32,4 +32,12 @@ public class PineConeClusterNode : NarrationNode
         public override string Description => "A woody pine cone with open scales";
         public override List<string> OutcomeKeywords => new() { "woody", "brown", "scaly", "seeds", "resinous", "cone", "dry", "hard", "scales", "aromatic" };
     }
+    
+    public sealed class PineNeedle : Item
+    {
+        public override string ItemId => "pine_cone_cluster_needles";
+        public override string DisplayName => "Pine Needles";
+        public override string Description => "A bundle of fallen pine needles";
+        public override List<string> OutcomeKeywords => new() { "long", "thin", "green", "needles", "bundle", "sharp", "pointed", "evergreen", "resinous", "aromatic" };
+    }
 }

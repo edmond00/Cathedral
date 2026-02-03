@@ -24,4 +24,20 @@ public class MixedUnderwoodNode : NarrationNode
         
         return $"{mood} mixed underwood";
     }
+    
+    public sealed class TangledVines : Item
+    {
+        public override string ItemId => "mixed_underwood_tangled_vines";
+        public override string DisplayName => "Tangled Vines";
+        public override string Description => "Twisted vines from the dense underwood";
+        public override List<string> OutcomeKeywords => new() { "vines", "tangled", "twisted", "green", "thorny", "climbing", "thick", "woody", "curling", "dense" };
+    }
+    
+    public sealed class UnderbrushStems : Item
+    {
+        public override string ItemId => "mixed_underwood_underbrush_stems";
+        public override string DisplayName => "Underbrush Stems";
+        public override string Description => "Flexible stems from varied undergrowth";
+        public override List<string> OutcomeKeywords => new() { "stems", "flexible", "green", "thin", "branches", "shoots", "undergrowth", "plant", "bendable", "slender" };
+    }
 }

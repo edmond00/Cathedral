@@ -24,4 +24,12 @@ public class PackedEarthTrailNode : NarrationNode
         
         return $"{mood} packed earth trail";
     }
+    
+    public sealed class HardClay : Item
+    {
+        public override string ItemId => "packed_earth_trail_hard_clay";
+        public override string DisplayName => "Hard Clay";
+        public override string Description => "Compacted clay from the trail surface";
+        public override List<string> OutcomeKeywords => new() { "clay", "hard", "compacted", "brown", "solid", "earthen", "dense", "smooth", "firm", "packed" };
+    }
 }

@@ -24,4 +24,20 @@ public class BeetleSwarmNode : NarrationNode
         
         return $"{mood} beetle swarm";
     }
+    
+    public sealed class BeetleCarapace : Item
+    {
+        public override string ItemId => "beetle_swarm_beetle_carapace";
+        public override string DisplayName => "Beetle Carapace";
+        public override string Description => "Hard black shell from a dead beetle";
+        public override List<string> OutcomeKeywords => new() { "carapace", "shell", "hard", "black", "shiny", "chitinous", "exoskeleton", "glossy", "armor", "beetle" };
+    }
+    
+    public sealed class BeetleFrass : Item
+    {
+        public override string ItemId => "beetle_swarm_beetle_frass";
+        public override string DisplayName => "Beetle Frass";
+        public override string Description => "Wood powder from beetle boring activity";
+        public override List<string> OutcomeKeywords => new() { "frass", "powder", "sawdust", "boring", "fine", "wood", "particles", "debris", "waste", "brown" };
+    }
 }

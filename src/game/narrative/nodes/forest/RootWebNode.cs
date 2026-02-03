@@ -26,11 +26,19 @@ public class RootWebNode : NarrationNode
         return $"{mood} root web";
     }
     
-    public sealed class RootFiber : Item
+    public sealed class WebRootFiber : Item
     {
         public override string ItemId => "root_fiber";
         public override string DisplayName => "Root Fibers";
         public override string Description => "Thin, tough fibers from surface roots";
         public override List<string> OutcomeKeywords => new() { "thin", "fibrous", "tough", "string", "root", "brown", "strong", "flexible", "wiry", "threadlike" };
+    }
+    
+    public sealed class RootBark : Item
+    {
+        public override string ItemId => "root_web_root_bark";
+        public override string DisplayName => "Root Bark";
+        public override string Description => "Papery bark peeling from exposed roots";
+        public override List<string> OutcomeKeywords => new() { "papery", "peeling", "bark", "thin", "strips", "curling", "brown", "dry", "flaking", "exposed" };
     }
 }

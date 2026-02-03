@@ -32,4 +32,20 @@ public class FungalRingNode : NarrationNode
         public override string Description => "A white mushroom from the mysterious circle";
         public override List<string> OutcomeKeywords => new() { "white", "cap", "gills", "stem", "pale", "delicate", "mushroom", "fungus", "spores", "small" };
     }
+    
+    public sealed class MyceliumThread : Item
+    {
+        public override string ItemId => "fungal_ring_mycelium";
+        public override string DisplayName => "Mycelium Thread";
+        public override string Description => "White fungal threads just beneath the soil";
+        public override List<string> OutcomeKeywords => new() { "white", "threads", "network", "underground", "filaments", "spreading", "web", "root", "branching", "hidden" };
+    }
+    
+    public sealed class SporeCloud : Item
+    {
+        public override string ItemId => "fungal_ring_spore_cloud";
+        public override string DisplayName => "Spore Cloud Sample";
+        public override string Description => "A faint puff of microscopic spores released from disturbed caps";
+        public override List<string> OutcomeKeywords => new() { "dusty", "floating", "microscopic", "powder", "white", "airborne", "dispersing", "cloud", "reproductive", "fine" };
+    }
 }

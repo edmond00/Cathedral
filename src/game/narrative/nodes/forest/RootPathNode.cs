@@ -32,4 +32,12 @@ public class RootPathNode : NarrationNode
         public override string Description => "A piece of rough bark from the exposed roots";
         public override List<string> OutcomeKeywords => new() { "rough", "textured", "brown", "fibrous", "woody", "dry", "flaky", "thick", "bark", "cork-like" };
     }
+    
+    public sealed class RootSap : Item
+    {
+        public override string ItemId => "root_path_root_sap";
+        public override string DisplayName => "Root Sap";
+        public override string Description => "Sticky sap oozing from damaged roots";
+        public override List<string> OutcomeKeywords => new() { "sap", "sticky", "amber", "resinous", "oozing", "thick", "sweet", "viscous", "golden", "tree" };
+    }
 }

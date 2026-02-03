@@ -33,4 +33,12 @@ public class HiddenBranchTangleNode : NarrationNode
         public override string Description => "A twisted twig from the dark tangle";
         public override List<string> OutcomeKeywords => new() { "twisted", "dark", "bent", "twig", "gnarled", "crooked", "thin", "brittle", "branch", "curved" };
     }
+    
+    public sealed class CobwebVeil : Item
+    {
+        public override string ItemId => "hidden_tangle_cobweb";
+        public override string DisplayName => "Cobweb Veil";
+        public override string Description => "Thick spider webs draped across the branches";
+        public override List<string> OutcomeKeywords => new() { "silky", "sticky", "draped", "white", "web", "threads", "spider", "gauzy", "delicate", "catching" };
+    }
 }

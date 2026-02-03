@@ -33,4 +33,20 @@ public class UprootedTreeNode : NarrationNode
         public override string Description => "Fresh soil clinging to uprooted roots";
         public override List<string> OutcomeKeywords => new() { "fresh", "dark", "moist", "soil", "roots", "clinging", "rich", "earthy", "exposed", "crumbly" };
     }
+    
+    public sealed class TornRoot : Item
+    {
+        public override string ItemId => "uprooted_tree_torn_root";
+        public override string DisplayName => "Torn Root";
+        public override string Description => "A thick root torn from the earth";
+        public override List<string> OutcomeKeywords => new() { "torn", "thick", "exposed", "root", "broken", "raw", "wood", "fibrous", "split", "damaged" };
+    }
+    
+    public sealed class CraterMud : Item
+    {
+        public override string ItemId => "uprooted_tree_crater_mud";
+        public override string DisplayName => "Crater Mud";
+        public override string Description => "Wet clay-rich mud from the deep crater left by the uprooting";
+        public override List<string> OutcomeKeywords => new() { "wet", "clay", "dark", "sticky", "crater", "deep", "mud", "subsoil", "moist", "heavy" };
+    }
 }

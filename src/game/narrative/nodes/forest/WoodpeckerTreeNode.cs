@@ -32,4 +32,12 @@ public class WoodpeckerTreeNode : NarrationNode
         public override string Description => "Fresh wood chips from woodpecker excavation";
         public override List<string> OutcomeKeywords => new() { "fresh", "pale", "splinters", "fragments", "wood", "carved", "sharp", "fibrous", "chips", "excavated" };
     }
+    
+    public sealed class BarkFragment : Item
+    {
+        public override string ItemId => "woodpecker_tree_bark_fragment";
+        public override string DisplayName => "Pecked Bark Fragment";
+        public override string Description => "Bark pieces loosened by woodpecker drilling";
+        public override List<string> OutcomeKeywords => new() { "loosened", "bark", "fragments", "holes", "pecked", "drilled", "brown", "damaged", "flaking", "removed" };
+    }
 }

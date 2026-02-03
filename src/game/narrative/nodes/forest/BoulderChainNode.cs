@@ -32,4 +32,12 @@ public class BoulderChainNode : NarrationNode
         public override string Description => "Crusty lichen growing on ancient stone";
         public override List<string> OutcomeKeywords => new() { "crusty", "grey-green", "rough", "dry", "scaly", "ancient", "symbiotic", "hardy", "lichen", "encrusted" };
     }
+    
+    public sealed class StoneDust : Item
+    {
+        public override string ItemId => "boulder_chain_stone_dust";
+        public override string DisplayName => "Stone Dust";
+        public override string Description => "Fine mineral dust weathered from the boulders";
+        public override List<string> OutcomeKeywords => new() { "dust", "stone", "fine", "gray", "mineral", "powdery", "weathered", "gritty", "particles", "eroded" };
+    }
 }
