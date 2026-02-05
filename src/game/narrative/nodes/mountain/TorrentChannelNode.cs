@@ -1,0 +1,43 @@
+using System;
+using System.Collections.Generic;
+
+namespace Cathedral.Game.Narrative.Nodes.Mountain;
+
+public class TorrentChannelNode : PyramidalFeatureNode
+{
+    public override int MinAltitude => 5;
+    public override int MaxAltitude => 9;
+    public override bool IsBottomNode => true;
+    public override Type PairedNodeType => typeof(TorrentSourceNode);
+    
+    public override string NodeId => "torrent_channel";
+    public override string ContextDescription => "in the mountain torrent channel";
+    public override string TransitionDescription => "descend to the torrent channel";
+    public override bool IsEntryNode => false;
+    
+    public override List<string> NodeKeywords => new() { "torrent", "channel", "water", "rushing", "carved", "narrow", "deep", "flowing", "erosion", "carved" };
+    
+    private static readonly string[] Moods = { "rushing", "carved", "narrow", "powerful" };
+    
+    public override string GenerateNeutralDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        return $"{Moods[rng.Next(Moods.Length)]} torrent channel";
+    }
+    
+    public sealed class TorrentGravel : Item
+    {
+        public override string ItemId => "torrent_channel_torrent_gravel";
+        public override string DisplayName => "Torrent Gravel";
+        public override string Description => "Water-rounded pebbles collectible from the channel";
+        public override List<string> OutcomeKeywords => new() { "gravel", "pebbles", "rounded", "water-worn", "smooth", "mixed", "colorful", "small", "tumbled", "collectible" };
+    }
+    
+    public sealed class SmoothChannel : Item
+    {
+        public override string ItemId => "torrent_channel_smooth_channel";
+        public override string DisplayName => "Smooth Channel";
+        public override string Description => "Water-carved stone passage";
+        public override List<string> OutcomeKeywords => new() { "smooth", "channel", "carved", "polished", "water", "erosion", "worn", "flowing", "grooved", "sculpted" };
+    }
+}

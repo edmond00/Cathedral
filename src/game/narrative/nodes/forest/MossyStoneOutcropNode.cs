@@ -25,9 +25,9 @@ public class MossyStoneOutcropNode : NarrationNode
         return $"{mood} mossy stone outcrop";
     }
     
-    public sealed class ThickMoss : Item
+    public sealed class OutcropMoss : Item
     {
-        public override string ItemId => "thick_moss";
+        public override string ItemId => "outcrop_moss";
         public override string DisplayName => "Thick Moss";
         public override string Description => "A cushion of deep green moss from the stones";
         public override List<string> OutcomeKeywords => new() { "green", "soft", "thick", "damp", "velvet", "spongy", "fresh", "living", "moss", "cushiony" };

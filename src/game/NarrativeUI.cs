@@ -74,10 +74,12 @@ public class NarrativeUI
     /// <summary>
     /// Render the header with location name and thinking attempts.
     /// </summary>
-    public void RenderHeader(string locationName, int thinkingAttemptsRemaining)
+    public void RenderHeader(string locationName, int thinkingAttemptsRemaining, string biomeType = "forest")
     {
-        // Line 0: Location name
-        string title = $"Forest Exploration - {locationName}";
+        // Line 0: Location name with biome type
+        string biomeTitle = char.ToUpper(biomeType[0]) + biomeType.Substring(1);
+        string formattedLocationName = locationName.Replace("_", " ");
+        string title = $"{biomeTitle} - {formattedLocationName}";
         _terminal.Text(NarrativeLayout.LEFT_MARGIN, 0, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
         
         // Thinking attempts indicator (right side)

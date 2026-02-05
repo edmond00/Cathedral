@@ -39,9 +39,14 @@ public abstract class NarrationGraphFactory
     
     /// <summary>
     /// Connects two nodes by adding 'to' to 'from.PossibleOutcomes'.
+    /// Prevents self-loops (a node connecting to itself).
     /// </summary>
     protected void ConnectNodes(NarrationNode from, NarrationNode to)
     {
+        // Prevent self-loops
+        if (from == to)
+            return;
+            
         if (!from.PossibleOutcomes.Contains(to))
         {
             from.PossibleOutcomes.Add(to);

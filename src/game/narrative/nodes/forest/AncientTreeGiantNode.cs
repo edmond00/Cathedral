@@ -42,7 +42,7 @@ public class AncientTreeGiantNode : NarrationNode
         public override List<string> OutcomeKeywords => new() { "dark", "hollow", "cavity", "deep", "shelter", "echoing", "cavernous", "rot", "entrance", "hidden" };
     }
     
-    public sealed class LichenPatch : Item
+    public sealed class TreeLichen : Item
     {
         public override string ItemId => "ancient_tree_lichen";
         public override string DisplayName => "Ancient Lichen Patch";

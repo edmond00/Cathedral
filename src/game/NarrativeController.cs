@@ -22,6 +22,7 @@ public class NarrativeController
     private readonly NarrationScrollBuffer _scrollBuffer;
     private readonly NarrativeUI _ui;
     private readonly TerminalThinkingSkillPopup _skillPopup;
+    private readonly string _biomeType;
     
     // Dependencies
     private readonly Avatar _avatar;
@@ -52,7 +53,8 @@ public class NarrativeController
         ThinkingExecutor thinkingExecutor,
         ActionExecutionController actionExecutor,
         NarrationGraphFactory? graphFactory = null,
-        int locationId = 0)
+        int locationId = 0,
+        string biomeType = "forest")
     {
         if (terminal == null)
             throw new ArgumentNullException(nameof(terminal));
@@ -77,6 +79,7 @@ public class NarrativeController
         _skillPopup = new TerminalThinkingSkillPopup(popup);
         _core = core;
         _terminalInputHandler = terminalInputHandler;
+        _biomeType = biomeType;
         
         // Initialize avatar with random skills
         _avatar = new Avatar();
@@ -644,7 +647,7 @@ public class NarrativeController
         _ui.Clear();
         
         // Render header
-        _ui.RenderHeader(_currentNode.DisplayName, _narrationState.ThinkingAttemptsRemaining);
+        _ui.RenderHeader(_currentNode.DisplayName, _narrationState.ThinkingAttemptsRemaining, _biomeType);
         
         // Show error if present
         if (_narrationState.ErrorMessage != null)

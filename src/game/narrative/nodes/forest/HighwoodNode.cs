@@ -25,10 +25,10 @@ public class HighwoodNode : NarrationNode
         return $"{mood} highwood";
     }
     
-    public sealed class TreeLichen : Item
+    public sealed class HighwoodLichen : Item
     {
-        public override string ItemId => "highwood_tree_lichen";
-        public override string DisplayName => "Tree Lichen";
+        public override string ItemId => "highwood_lichen";
+        public override string DisplayName => "Highwood Lichen";
         public override string Description => "Pale lichen scraped from highwood bark";
         public override List<string> OutcomeKeywords => new() { "lichen", "pale", "bark", "crusty", "gray", "textured", "growth", "dry", "ancient", "crumbling" };
     }

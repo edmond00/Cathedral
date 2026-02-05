@@ -97,6 +97,8 @@ public class LocationTravelGameController : IDisposable
         // Register narration graph factories for biomes
         // Note: Factories need session path which will be updated via SetLLMActionExecutor
         RegisterNarrationFactory("forest", new Narrative.Factories.ForestGraphFactory());
+        RegisterNarrationFactory("mountain", new Narrative.Factories.MountainGraphFactory());
+        RegisterNarrationFactory("peak", new Narrative.Factories.PeakGraphFactory());
         
         // Wire up events from the microworld interface
         _interface.VertexClickEvent += OnVertexClicked;
@@ -782,7 +784,8 @@ public class LocationTravelGameController : IDisposable
                 _thinkingExecutor,
                 actionExecutor,
                 graphFactory,
-                vertexIndex  // Use vertex index as location ID seed
+                vertexIndex,  // Use vertex index as location ID seed
+                biomeName     // Pass biome type for UI display
             );
             
             // Mark as active

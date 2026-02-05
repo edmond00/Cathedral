@@ -25,7 +25,7 @@ public class EarthwormMoundNode : NarrationNode
         return $"{mood} earthworm mound";
     }
     
-    public sealed class RichSoil : Item
+    public sealed class MoundSoil : Item
     {
         public override string ItemId => "earthworm_rich_soil";
         public override string DisplayName => "Rich Soil";
