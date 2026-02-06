@@ -1445,10 +1445,13 @@ namespace Cathedral.Glyph
             atlas = new Image<Rgba32>(atlasW, atlasH, Color.Transparent);
 
             Font font;
+            Font? fallbackFont = null;
+            var coll = new FontCollection();
+            
+            // Load main font
             try
             {
-                var coll = new FontCollection();
-                string fontPath = "assets/fonts/FreeMono.ttf";
+                string fontPath = Config.Terminal.FontPath;
                 if (System.IO.File.Exists(fontPath))
                 {
                     var fam = coll.Add(fontPath);
@@ -1463,19 +1466,87 @@ namespace Cathedral.Glyph
             {
                 font = SystemFonts.CreateFont("Consolas", fontPxSize, FontStyle.Regular);
             }
+            
+            // Load fallback font
+            try
+            {
+                string fallbackFontPath = Config.Terminal.FallbackFontPath;
+                if (System.IO.File.Exists(fallbackFontPath))
+                {
+                    var fallbackFam = coll.Add(fallbackFontPath);
+                    fallbackFont = fallbackFam.CreateFont(fontPxSize, FontStyle.Regular);
+                }
+            }
+            catch
+            {
+                // Fallback font is optional, continue without it
+            }
 
             var infos = new GlyphInfo[glyphs.Length];
             for (int i = 0; i < glyphs.Length; i++)
             {
                 int cx = i % cols;
                 int cy = i / cols;
-                var glyph = glyphs[i].ToString();
+                char glyphChar = glyphs[i];
+                var glyph = glyphChar.ToString();
                 int x = cx * cellSize;
                 int y = cy * cellSize;
+                
+                // Determine which font to use for this glyph by testing if it renders
+                Font fontToUse = font;
+                if (fallbackFont != null)
+                {
+                    try
+                    {
+                        // Test if main font renders this glyph
+                        bool mainFontSupports = false;
+                        using (var testImage = new Image<Rgba32>(16, 16, Color.Transparent))
+                        {
+                            testImage.Mutate(ctx =>
+                            {
+                                var testOptions = new RichTextOptions(font)
+                                {
+                                    Origin = new PointF(8, 8),
+                                    HorizontalAlignment = HorizontalAlignment.Center,
+                                    VerticalAlignment = VerticalAlignment.Center,
+                                    FallbackFontFamilies = Array.Empty<FontFamily>()
+                                };
+                                ctx.DrawText(testOptions, glyph, Color.White);
+                            });
+                            
+                            // Check if any pixels were drawn
+                            testImage.ProcessPixelRows(accessor =>
+                            {
+                                for (int ty = 0; ty < accessor.Height && !mainFontSupports; ty++)
+                                {
+                                    var row = accessor.GetRowSpan(ty);
+                                    for (int tx = 0; tx < row.Length; tx++)
+                                    {
+                                        if (row[tx].A > 0)
+                                        {
+                                            mainFontSupports = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                        
+                        // If main font doesn't support it, try fallback
+                        if (!mainFontSupports)
+                        {
+                            fontToUse = fallbackFont;
+                        }
+                    }
+                    catch
+                    {
+                        // If testing fails, just use main font
+                    }
+                }
 
                 atlas.Mutate(ctx =>
                 {
-                    var textOptions = new RichTextOptions(font)
+                    var textOptions = new RichTextOptions(fontToUse)
                     {
                         Origin = new PointF(x + cellSize / 2f, y + cellSize / 2f),
                         HorizontalAlignment = HorizontalAlignment.Center,

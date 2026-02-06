@@ -13,6 +13,10 @@ public static class Config
     
     public static class Terminal
     {
+        // Font configuration
+        public const string FontPath = "assets/fonts/FreeMono.ttf";
+        public const string FallbackFontPath = "assets/fonts/DejaVuSansMono.ttf";
+        
         // Main terminal dimensions
         public const int MainWidth = 100;
         public const int MainHeight = 30;

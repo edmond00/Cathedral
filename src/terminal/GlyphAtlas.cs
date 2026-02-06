@@ -43,6 +43,7 @@ namespace Cathedral.Terminal
         private string _currentGlyphSet;
         private int _textureId;
         private Font? _font;
+        private Font? _fallbackFont;
         private bool _disposed;
 
         // Default terminal glyph set (ASCII printable characters)
@@ -77,16 +78,18 @@ namespace Cathedral.Terminal
 
         private void LoadFont()
         {
+            var fontCollection = new FontCollection();
+            
+            // Load main font
             try
             {
-                var fontCollection = new FontCollection();
-                string fontPath = "assets/fonts/FreeMono.ttf";
+                string fontPath = Config.Terminal.FontPath;
                 
                 if (File.Exists(fontPath))
                 {
                     var fontFamily = fontCollection.Add(fontPath);
                     _font = fontFamily.CreateFont(_fontPixelSize, FontStyle.Regular);
-                    Console.WriteLine($"Terminal: Loaded font from {fontPath}");
+                    Console.WriteLine($"Terminal: Loaded main font from {fontPath}");
                 }
                 else
                 {
@@ -95,7 +98,7 @@ namespace Cathedral.Terminal
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Terminal: Failed to load custom font, falling back to system font: {ex.Message}");
+                Console.WriteLine($"Terminal: Failed to load main font, falling back to system font: {ex.Message}");
                 try
                 {
                     _font = SystemFonts.CreateFont("Consolas", _fontPixelSize, FontStyle.Regular);
@@ -104,6 +107,27 @@ namespace Cathedral.Terminal
                 {
                     _font = SystemFonts.CreateFont("Courier New", _fontPixelSize, FontStyle.Regular);
                 }
+            }
+            
+            // Load fallback font
+            try
+            {
+                string fallbackFontPath = Config.Terminal.FallbackFontPath;
+                
+                if (File.Exists(fallbackFontPath))
+                {
+                    var fallbackFontFamily = fontCollection.Add(fallbackFontPath);
+                    _fallbackFont = fallbackFontFamily.CreateFont(_fontPixelSize, FontStyle.Regular);
+                    Console.WriteLine($"Terminal: Loaded fallback font from {fallbackFontPath}");
+                }
+                else
+                {
+                    Console.WriteLine($"Terminal: Fallback font not found at {fallbackFontPath}, will use main font only");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Terminal: Failed to load fallback font: {ex.Message}");
             }
         }
 
@@ -188,20 +212,84 @@ namespace Cathedral.Terminal
             Console.WriteLine($"Terminal: Atlas built successfully - {cols}x{rows} grid, {atlasWidth}x{atlasHeight} pixels");
         }
 
+        /// <summary>
+        /// Checks if a font properly supports a glyph by rendering it and checking if any pixels were drawn.
+        /// This avoids the font's default fallback behavior which would render a replacement character.
+        /// </summary>
+        private bool FontSupportsGlyph(Font font, char glyph)
+        {
+            if (font == null)
+                return false;
+                
+            try
+            {
+                // Create a small test image
+                using var testImage = new Image<Rgba32>(32, 32, Color.Transparent);
+                
+                testImage.Mutate(ctx =>
+                {
+                    var textOptions = new RichTextOptions(font)
+                    {
+                        Origin = new PointF(16, 16),
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        FallbackFontFamilies = Array.Empty<FontFamily>() // Disable fallback
+                    };
+                    
+                    ctx.DrawText(textOptions, glyph.ToString(), Color.White);
+                });
+                
+                // Check if any pixels were actually drawn
+                bool hasContent = false;
+                testImage.ProcessPixelRows(accessor =>
+                {
+                    for (int y = 0; y < accessor.Height && !hasContent; y++)
+                    {
+                        var row = accessor.GetRowSpan(y);
+                        for (int x = 0; x < row.Length; x++)
+                        {
+                            if (row[x].A > 0) // Check if pixel has any alpha (is visible)
+                            {
+                                hasContent = true;
+                                break;
+                            }
+                        }
+                    }
+                });
+                
+                return hasContent;
+            }
+            catch
+            {
+                // If we can't render, assume the font doesn't support the glyph
+                return false;
+            }
+        }
+
         private void RenderGlyphToAtlas(Image<Rgba32> atlas, char glyph, int x, int y)
         {
             if (_font == null)
                 return;
 
+            // Determine which font to use for this glyph
+            Font? baseFont = _font;
+            bool usedFallback = false;
+            
+            if (!FontSupportsGlyph(_font, glyph) && _fallbackFont != null && FontSupportsGlyph(_fallbackFont, glyph))
+            {
+                baseFont = _fallbackFont;
+                usedFallback = true;
+            }
+
             // Get glyph-specific size factor from config
             float sizeFactor = Cathedral.Config.GlyphSizeFactors.GetFactor(glyph);
             
             // Create font with adjusted size if needed
-            Font fontToUse = _font;
+            Font fontToUse = baseFont;
             if (sizeFactor != 1.0f)
             {
                 int adjustedSize = (int)(_fontPixelSize * sizeFactor);
-                fontToUse = _font.Family.CreateFont(adjustedSize, FontStyle.Regular);
+                fontToUse = baseFont.Family.CreateFont(adjustedSize, FontStyle.Regular);
             }
 
             atlas.Mutate(ctx =>
