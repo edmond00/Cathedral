@@ -21,7 +21,9 @@ namespace Cathedral.Terminal
         /// <param name="height">Height in characters</param>
         /// <param name="cellSize">Cell size in pixels (should match main terminal)</param>
         /// <param name="atlas">Shared glyph atlas from main terminal</param>
-        public PopupTerminalHUD(int width, int height, int cellSize, GlyphAtlas atlas)
+        /// <param name="mainTerminalWidth">Main terminal width in characters (for cell size sync)</param>
+        /// <param name="mainTerminalHeight">Main terminal height in characters (for cell size sync)</param>
+        public PopupTerminalHUD(int width, int height, int cellSize, GlyphAtlas atlas, int mainTerminalWidth, int mainTerminalHeight)
         {
             if (width <= 0 || height <= 0)
                 throw new ArgumentException("Popup terminal dimensions must be positive");
@@ -30,7 +32,7 @@ namespace Cathedral.Terminal
 
             // Initialize components
             _view = new TerminalView(width, height);
-            _renderer = new PopupRenderer(_view, atlas, cellSize);
+            _renderer = new PopupRenderer(_view, atlas, cellSize, mainTerminalWidth, mainTerminalHeight);
             
             // Initialize with transparent cells
             Clear();

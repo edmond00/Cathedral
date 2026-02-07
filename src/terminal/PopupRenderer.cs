@@ -41,14 +41,18 @@ namespace Cathedral.Terminal
         // Popup-specific parameters
         private Vector2 _mousePosition;
         private readonly int _cellPixelSize;
+        private readonly int _mainTerminalWidth;
+        private readonly int _mainTerminalHeight;
         private (int minX, int minY, int maxX, int maxY)? _visualBounds;
         private bool _disposed;
 
-        public PopupRenderer(TerminalView view, GlyphAtlas atlas, int cellPixelSize)
+        public PopupRenderer(TerminalView view, GlyphAtlas atlas, int cellPixelSize, int mainTerminalWidth, int mainTerminalHeight)
         {
             _view = view ?? throw new ArgumentNullException(nameof(view));
             _atlas = atlas ?? throw new ArgumentNullException(nameof(atlas));
             _cellPixelSize = cellPixelSize;
+            _mainTerminalWidth = mainTerminalWidth;
+            _mainTerminalHeight = mainTerminalHeight;
             
             _instances = new TerminalInstance[_view.Width * _view.Height];
             _instanceBufferDirty = true;
@@ -310,8 +314,8 @@ namespace Cathedral.Terminal
         {
             // Calculate cell size dynamically based on window size to match main terminal
             // This ensures popup scales correctly when window is resized
-            // Main terminal uses 100x30 grid, so we calculate the same cell size
-            float mainTerminalAspect = 100.0f / 30.0f;
+            // Use actual main terminal dimensions from config (passed in constructor)
+            float mainTerminalAspect = (float)_mainTerminalWidth / _mainTerminalHeight;
             float windowAspect = (float)windowSize.X / windowSize.Y;
             
             Vector2 terminalSize;
@@ -326,8 +330,8 @@ namespace Cathedral.Terminal
                 terminalSize = new Vector2(windowSize.X, windowSize.X / mainTerminalAspect);
             }
             
-            // Calculate cell size to match main terminal (100x30)
-            cellSize = new Vector2(terminalSize.X / 100.0f, terminalSize.Y / 30.0f);
+            // Calculate cell size to match main terminal dimensions
+            cellSize = new Vector2(terminalSize.X / _mainTerminalWidth, terminalSize.Y / _mainTerminalHeight);
             
             float left, top;
             

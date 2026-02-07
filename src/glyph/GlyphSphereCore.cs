@@ -324,7 +324,9 @@ namespace Cathedral.Glyph
                     Config.Terminal.PopupWidth, 
                     Config.Terminal.PopupHeight, 
                     Config.Terminal.PopupCellSize, 
-                    _terminal.Atlas);
+                    _terminal.Atlas,
+                    Config.Terminal.MainWidth,
+                    Config.Terminal.MainHeight);
                 Console.WriteLine("Popup Terminal: HUD integrated with GlyphSphereCore (30x30 mouse-following)");
             }
             catch (Exception ex)
