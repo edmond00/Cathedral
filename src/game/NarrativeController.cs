@@ -79,7 +79,9 @@ public class NarrativeController
             terminal.Width, 
             terminal.Height, 
             Config.NarrativeUI.TopPadding, 
-            Config.NarrativeUI.BottomPadding);
+            Config.NarrativeUI.BottomPadding,
+            Config.NarrativeUI.LeftPadding,
+            Config.NarrativeUI.RightPadding);
         int contentWidth = layout.CONTENT_WIDTH - 1; // -1 for scrollbar
         _scrollBuffer = new NarrationScrollBuffer(maxWidth: contentWidth, layout: layout);
         _skillPopup = new TerminalThinkingSkillPopup(popup);
@@ -883,7 +885,9 @@ public class NarrativeController
                 _core.Terminal.Width, 
                 _core.Terminal.Height, 
                 Config.NarrativeUI.TopPadding, 
-                Config.NarrativeUI.BottomPadding);
+                Config.NarrativeUI.BottomPadding,
+                Config.NarrativeUI.LeftPadding,
+                Config.NarrativeUI.RightPadding);
             int trackHeight = layout.SCROLLBAR_TRACK_HEIGHT;
             int totalLines = _scrollBuffer.TotalLines;
             int visibleLines = layout.NARRATIVE_HEIGHT;

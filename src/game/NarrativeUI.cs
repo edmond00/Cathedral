@@ -44,10 +44,12 @@ public class NarrativeUI
             _terminal.Width, 
             _terminal.Height, 
             Config.NarrativeUI.TopPadding, 
-            Config.NarrativeUI.BottomPadding);
-        SCROLLBAR_X = _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN;
+            Config.NarrativeUI.BottomPadding,
+            Config.NarrativeUI.LeftPadding,
+            Config.NarrativeUI.RightPadding);
+        SCROLLBAR_X = _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING - _layout.RIGHT_MARGIN;
         
-        Console.WriteLine($"NarrativeUI: Initialized with {_terminal.Width}x{_terminal.Height} terminal (padding: top={_layout.TOP_PADDING}, bottom={_layout.BOTTOM_PADDING})");
+        Console.WriteLine($"NarrativeUI: Initialized with {_terminal.Width}x{_terminal.Height} terminal (padding: T={_layout.TOP_PADDING} B={_layout.BOTTOM_PADDING} L={_layout.LEFT_PADDING} R={_layout.RIGHT_PADDING})");
     }
     
     /// <summary>
@@ -67,28 +69,96 @@ public class NarrativeUI
     {
         for (int y = 0; y < _layout.TERMINAL_HEIGHT; y++)
         {
-            // Use configurable appearance for padding areas
-            char cellChar;
-            Vector4 textColor;
-            Vector4 bgColor;
-            
-            if (y < _layout.TOP_PADDING || y >= _layout.TERMINAL_HEIGHT - _layout.BOTTOM_PADDING)
-            {
-                // Padding zones - use configured appearance
-                cellChar = Config.NarrativeUI.PaddingChar;
-                textColor = Config.NarrativeUI.PaddingTextColor;
-                bgColor = Config.NarrativeUI.PaddingBackgroundColor;
-            }
-            else
-            {
-                // Content zones - use normal appearance
-                cellChar = ' ';
-                textColor = Config.NarrativeUI.NarrativeColor;
-                bgColor = Config.NarrativeUI.BackgroundColor;
-            }
-            
             for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
             {
+                // Determine which padding zone this cell belongs to (priority: top/bottom > left/right for corners)
+                bool isTopPadding = y < _layout.TOP_PADDING;
+                bool isBottomPadding = y >= _layout.TERMINAL_HEIGHT - _layout.BOTTOM_PADDING;
+                bool isLeftPadding = x < _layout.LEFT_PADDING;
+                bool isRightPadding = x >= _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING;
+                
+                // Detect edge cells (last line of top/left padding, first line of bottom/right padding)
+                bool isTopEdge = y == _layout.TOP_PADDING - 1;
+                bool isBottomEdge = y == _layout.TERMINAL_HEIGHT - _layout.BOTTOM_PADDING;
+                bool isLeftEdge = x == _layout.LEFT_PADDING - 1;
+                bool isRightEdge = x == _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING;
+                
+                char cellChar;
+                Vector4 textColor;
+                Vector4 bgColor;
+                
+                if (isTopPadding)
+                {
+                    // Top padding zone - use edge config for last line
+                    if (isTopEdge)
+                    {
+                        cellChar = Config.NarrativeUI.TopPaddingEdgeChar;
+                        textColor = Config.NarrativeUI.TopPaddingEdgeTextColor;
+                        bgColor = Config.NarrativeUI.TopPaddingEdgeBackgroundColor;
+                    }
+                    else
+                    {
+                        cellChar = Config.NarrativeUI.TopPaddingChar;
+                        textColor = Config.NarrativeUI.TopPaddingTextColor;
+                        bgColor = Config.NarrativeUI.TopPaddingBackgroundColor;
+                    }
+                }
+                else if (isBottomPadding)
+                {
+                    // Bottom padding zone - use edge config for first line
+                    if (isBottomEdge)
+                    {
+                        cellChar = Config.NarrativeUI.BottomPaddingEdgeChar;
+                        textColor = Config.NarrativeUI.BottomPaddingEdgeTextColor;
+                        bgColor = Config.NarrativeUI.BottomPaddingEdgeBackgroundColor;
+                    }
+                    else
+                    {
+                        cellChar = Config.NarrativeUI.BottomPaddingChar;
+                        textColor = Config.NarrativeUI.BottomPaddingTextColor;
+                        bgColor = Config.NarrativeUI.BottomPaddingBackgroundColor;
+                    }
+                }
+                else if (isLeftPadding)
+                {
+                    // Left padding zone - use edge config for last column
+                    if (isLeftEdge)
+                    {
+                        cellChar = Config.NarrativeUI.LeftPaddingEdgeChar;
+                        textColor = Config.NarrativeUI.LeftPaddingEdgeTextColor;
+                        bgColor = Config.NarrativeUI.LeftPaddingEdgeBackgroundColor;
+                    }
+                    else
+                    {
+                        cellChar = Config.NarrativeUI.LeftPaddingChar;
+                        textColor = Config.NarrativeUI.LeftPaddingTextColor;
+                        bgColor = Config.NarrativeUI.LeftPaddingBackgroundColor;
+                    }
+                }
+                else if (isRightPadding)
+                {
+                    // Right padding zone - use edge config for first column
+                    if (isRightEdge)
+                    {
+                        cellChar = Config.NarrativeUI.RightPaddingEdgeChar;
+                        textColor = Config.NarrativeUI.RightPaddingEdgeTextColor;
+                        bgColor = Config.NarrativeUI.RightPaddingEdgeBackgroundColor;
+                    }
+                    else
+                    {
+                        cellChar = Config.NarrativeUI.RightPaddingChar;
+                        textColor = Config.NarrativeUI.RightPaddingTextColor;
+                        bgColor = Config.NarrativeUI.RightPaddingBackgroundColor;
+                    }
+                }
+                else
+                {
+                    // Content zone - use normal appearance
+                    cellChar = ' ';
+                    textColor = Config.NarrativeUI.NarrativeColor;
+                    bgColor = Config.NarrativeUI.BackgroundColor;
+                }
+                
                 _terminal.SetCell(x, y, cellChar, textColor, bgColor);
             }
         }
@@ -107,12 +177,12 @@ public class NarrativeUI
         string biomeTitle = char.ToUpper(biomeType[0]) + biomeType.Substring(1);
         string formattedLocationName = locationName.Replace("_", " ");
         string title = $"{biomeTitle} - {formattedLocationName}";
-        _terminal.Text(_layout.LEFT_MARGIN, headerY, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
+        _terminal.Text(_layout.CONTENT_START_X, headerY, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
         
         // Thinking attempts indicator (right side)
         int maxAttempts = GetMaxThinkingAttempts();
         string attempts = $"Remaining noetic points : [";
-        int attemptsX = _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN - 40;
+        int attemptsX = _layout.CONTENT_END_X - 40;
         _terminal.Text(attemptsX, headerY, attempts, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         
         // Draw individual attempt markers
@@ -149,10 +219,10 @@ public class NarrativeUI
         _keywordRegions.Clear();
         _actionRegions.Clear();
         
-        // Clear narrative area
+        // Clear narrative area (preserve padding zones)
         for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
+            for (int x = _layout.LEFT_PADDING; x < _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING; x++)
             {
                 _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
@@ -290,20 +360,20 @@ public class NarrativeUI
                             skillLevelColor = Config.NarrativeUI.LoadingColor;
                         }
                         
-                        _terminal.Text(_layout.LEFT_MARGIN, currentY, skillName, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
-                        _terminal.Text(_layout.LEFT_MARGIN + skillName.Length, currentY, levelIndicators, skillLevelColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(_layout.CONTENT_START_X, currentY, skillName, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(_layout.CONTENT_START_X + skillName.Length, currentY, levelIndicators, skillLevelColor, Config.NarrativeUI.BackgroundColor);
                         
                         // Render closing bracket in dark yellow (same as skill name)
                         if (!string.IsNullOrEmpty(closingBracket))
                         {
-                            _terminal.Text(_layout.LEFT_MARGIN + skillName.Length + levelIndicators.Length, currentY, closingBracket, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                            _terminal.Text(_layout.CONTENT_START_X + skillName.Length + levelIndicators.Length, currentY, closingBracket, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
                         }
                     }
                     else
                     {
                         // Fallback: render entire header in skill header color
                         Vector4 skillHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.SkillHeaderColor;
-                        _terminal.Text(_layout.LEFT_MARGIN, currentY, headerText, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(_layout.CONTENT_START_X, currentY, headerText, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
                     }
                     
                     // Note: Do NOT reset action counter here - we want globally unique action indices
@@ -315,7 +385,7 @@ public class NarrativeUI
                     RenderLineWithKeywords(
                         renderedLine.Text,
                         renderedLine.Keywords,
-                        _layout.LEFT_MARGIN,
+                        _layout.CONTENT_START_X,
                         currentY,
                         thinkingAttemptsRemaining,
                         hoveredKeyword,
@@ -359,7 +429,7 @@ public class NarrativeUI
                             actionColor = Config.NarrativeUI.DimmedContentColor;
                         }
                         
-                        _terminal.Text(_layout.LEFT_MARGIN, currentY, renderedLine.Text, actionColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text, actionColor, Config.NarrativeUI.BackgroundColor);
                     }
                     break;
                     
@@ -394,7 +464,7 @@ public class NarrativeUI
                         outcomeColor = Config.NarrativeUI.DimmedContentColor;
                     }
                     
-                    _terminal.Text(_layout.LEFT_MARGIN, currentY, renderedLine.Text, outcomeColor, Config.NarrativeUI.BackgroundColor);
+                    _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text, outcomeColor, Config.NarrativeUI.BackgroundColor);
                     break;
                     
                 case LineType.Empty:
@@ -419,7 +489,7 @@ public class NarrativeUI
         {
             case LineType.Separator:
                 // Render separator in slightly brighter color
-                _terminal.Text(_layout.LEFT_MARGIN, y, line.Text, Config.NarrativeUI.SeparatorColor, Config.NarrativeUI.BackgroundColor);
+                _terminal.Text(_layout.CONTENT_START_X, y, line.Text, Config.NarrativeUI.SeparatorColor, Config.NarrativeUI.BackgroundColor);
                 break;
                 
             case LineType.Empty:
@@ -428,7 +498,7 @@ public class NarrativeUI
                 
             default:
                 // Render all other history lines in dark gray
-                _terminal.Text(_layout.LEFT_MARGIN, y, line.Text, historyColor, Config.NarrativeUI.BackgroundColor);
+                _terminal.Text(_layout.CONTENT_START_X, y, line.Text, historyColor, Config.NarrativeUI.BackgroundColor);
                 break;
         }
     }
@@ -565,7 +635,7 @@ public class NarrativeUI
         
         Vector4 skillBracketBackground = backgroundColor; // Use action background for skill parts too
         
-        int startX = _layout.LEFT_MARGIN;
+        int startX = _layout.CONTENT_START_X;
         
         if (lineIndex == 0)
         {
@@ -597,23 +667,23 @@ public class NarrativeUI
             startX += 2;
             
             // Calculate available width for action text (respect right margin for scrollbar)
-            int maxTextWidth = _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN - startX;
+            int maxTextWidth = _layout.CONTENT_END_X - startX;
             string truncatedText = text.Length > maxTextWidth ? text.Substring(0, maxTextWidth) : text;
             
             _terminal.Text(startX, y, truncatedText, textColor, backgroundColor);
             
             // Track action region (will be updated as we encounter more lines)
             // Include the action reference for skill chain access
-            var actionRegion = new ActionRegion(actionIndex, y, y, _layout.LEFT_MARGIN, _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN, action);
+            var actionRegion = new ActionRegion(actionIndex, y, y, _layout.CONTENT_START_X, _layout.CONTENT_END_X, action);
             _actionRegions.Add(actionRegion);
         }
         else
         {
             // Continuation line: indent by 4 spaces
-            int continuationIndent = _layout.LEFT_MARGIN + 4;
+            int continuationIndent = _layout.CONTENT_START_X + 4;
             
             // Calculate available width for continuation text (respect right margin)
-            int maxTextWidth = _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN - continuationIndent;
+            int maxTextWidth = _layout.CONTENT_END_X - continuationIndent;
             string truncatedText = text.Length > maxTextWidth ? text.Substring(0, maxTextWidth) : text;
             
             _terminal.Text(continuationIndent, y, truncatedText, textColor, backgroundColor);
@@ -628,8 +698,8 @@ public class NarrativeUI
                         actionIndex, 
                         lastRegion.StartY, 
                         y,  // Extend to current line
-                        _layout.LEFT_MARGIN,
-                        _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN,
+                        _layout.CONTENT_START_X,
+                        _layout.CONTENT_END_X,
                         lastRegion.Action  // Keep the action reference
                     );
                 }
@@ -789,10 +859,10 @@ public class NarrativeUI
             {
                 // Render before dice text in dark gray
                 string beforeDice = message.Substring(0, diceIndex);
-                _terminal.Text(_layout.LEFT_MARGIN, statusY, beforeDice, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+                _terminal.Text(_layout.CONTENT_START_X, statusY, beforeDice, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
                 
                 // Render dice text in yellow (highlighted)
-                int diceX = _layout.LEFT_MARGIN + beforeDice.Length;
+                int diceX = _layout.CONTENT_START_X + beforeDice.Length;
                 _terminal.Text(diceX, statusY, diceText, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
                 
                 // Render after dice text in dark gray
@@ -803,12 +873,12 @@ public class NarrativeUI
             else
             {
                 // Fallback: render entire message in status bar color
-                _terminal.Text(_layout.LEFT_MARGIN, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+                _terminal.Text(_layout.CONTENT_START_X, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
             }
         }
         else
         {
-            _terminal.Text(_layout.LEFT_MARGIN, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+            _terminal.Text(_layout.CONTENT_START_X, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         }
     }
     
@@ -826,10 +896,10 @@ public class NarrativeUI
         
         string spinner = Config.Symbols.LoadingSpinner[_loadingFrameIndex];
         
-        // Clear narrative area
+        // Clear narrative area (preserve padding zones)
         for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
+            for (int x = _layout.LEFT_PADDING; x < _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING; x++)
             {
                 _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
@@ -963,10 +1033,10 @@ public class NarrativeUI
             }
         }
         
-        // Clear narrative area
+        // Clear narrative area (preserve padding zones)
         for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
+            for (int x = _layout.LEFT_PADDING; x < _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING; x++)
             {
                 _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
@@ -1137,10 +1207,10 @@ public class NarrativeUI
     /// </summary>
     public void ShowError(string errorMessage)
     {
-        // Clear narrative area
+        // Clear narrative area (preserve padding zones)
         for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
+            for (int x = _layout.LEFT_PADDING; x < _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING; x++)
             {
                 _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
@@ -1178,7 +1248,8 @@ public class NarrativeUI
         if (y < 0 || y >= _layout.TERMINAL_HEIGHT)
             return;
         
-        for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
+        // Draw line only in content area (preserve padding zones)
+        for (int x = _layout.LEFT_PADDING; x < _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING; x++)
         {
             _terminal.SetCell(x, y, Config.Symbols.HorizontalLine, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         }

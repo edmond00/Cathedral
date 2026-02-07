@@ -41,16 +41,24 @@ public class NarrativeLayout
     // Padding
     public int TOP_PADDING { get; }
     public int BOTTOM_PADDING { get; }
+    public int LEFT_PADDING { get; }
+    public int RIGHT_PADDING { get; }
+    
+    // Computed content positions (accounting for padding)
+    public int CONTENT_START_X => LEFT_PADDING + LEFT_MARGIN;
+    public int CONTENT_END_X => TERMINAL_WIDTH - RIGHT_PADDING - RIGHT_MARGIN;
     
     /// <summary>
     /// Creates a dynamic layout calculator based on terminal dimensions.
     /// </summary>
-    public NarrativeLayout(int terminalWidth, int terminalHeight, int topPadding = 0, int bottomPadding = 0)
+    public NarrativeLayout(int terminalWidth, int terminalHeight, int topPadding = 0, int bottomPadding = 0, int leftPadding = 0, int rightPadding = 0)
     {
         TERMINAL_WIDTH = terminalWidth;
         TERMINAL_HEIGHT = terminalHeight;
         TOP_PADDING = topPadding;
         BOTTOM_PADDING = bottomPadding;
+        LEFT_PADDING = leftPadding;
+        RIGHT_PADDING = rightPadding;
         
         // Calculate proportional layout values with padding
         HEADER_HEIGHT = 2;
@@ -66,9 +74,11 @@ public class NarrativeLayout
         CONTENT_END_Y = SEPARATOR_Y - 1;
         NARRATIVE_HEIGHT = CONTENT_END_Y - CONTENT_START_Y + 1;
         
+        // Margins are internal spacing (constant, not affected by padding)
         LEFT_MARGIN = 4;
         RIGHT_MARGIN = 4;
-        CONTENT_WIDTH = TERMINAL_WIDTH - LEFT_MARGIN - RIGHT_MARGIN;
+        // Content width is terminal width minus padding zones and internal margins
+        CONTENT_WIDTH = TERMINAL_WIDTH - LEFT_PADDING - RIGHT_PADDING - LEFT_MARGIN - RIGHT_MARGIN;
         
         SCROLLBAR_TRACK_HEIGHT = NARRATIVE_HEIGHT;
         SCROLLBAR_THUMB_MIN_HEIGHT = 3;
