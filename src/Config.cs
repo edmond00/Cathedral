@@ -19,7 +19,7 @@ public static class Config
         
         // Main terminal dimensions
         public const int MainWidth = 100;
-        public const int MainHeight = 80;
+        public const int MainHeight = 100;
         public const int MainCellSize = 20;
         public const int MainFontSize = 22;
         
@@ -194,8 +194,8 @@ public static class Config
     public static class NarrativeUI
     {
         // Layout padding - transparent lines/columns at edges for menu size control
-        public const int TopPadding = 5;    // Number of transparent lines above header
-        public const int BottomPadding = 5; // Number of transparent lines below status bar
+        public const int TopPadding = 10;    // Number of transparent lines above header
+        public const int BottomPadding = 10; // Number of transparent lines below status bar
         public const int LeftPadding = 1;    // Number of transparent columns on left side
         public const int RightPadding = 1;   // Number of transparent columns on right side
         
