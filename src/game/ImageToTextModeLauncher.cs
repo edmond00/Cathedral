@@ -84,12 +84,8 @@ namespace Cathedral.Game
                     var converter = new ImageToTextConverter();
                     converter.ConvertImageToTerminal(_imagePath, _terminal, _maxImageWidth, _maxImageHeight);
 
-                    // Save to logs folder
-                    string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-                    string filename = Path.GetFileNameWithoutExtension(_imagePath);
-                    _outputPath = Path.Combine("logs", $"ascii_art_{filename}_{timestamp}.txt");
-                    
-                    converter.ExportToTextFile(_terminal, _outputPath);
+                    // Export to layered files (ASCII art + layer map + CSV)
+                    converter.ExportToLayeredFiles(_terminal);
                     _conversionDone = true;
 
                     Console.WriteLine("\n✓ Conversion complete!");

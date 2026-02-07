@@ -381,6 +381,87 @@ public static class Config
     
     #endregion
     
+    #region Image-to-Text Conversion
+    
+    /// <summary>
+    /// Configuration for layered image-to-text conversion with engraving-style rendering.
+    /// Each layer represents a brightness range with its own glyph gradient and color.
+    /// </summary>
+    public static class ImageToText
+    {
+        /// <summary>
+        /// Defines a brightness layer for image conversion
+        /// </summary>
+        public class BrightnessLayer
+        {
+            public string Name { get; set; } = "";
+            public float MinBrightness { get; set; } // 0.0 to 1.0
+            public float MaxBrightness { get; set; } // 0.0 to 1.0
+            public string GlyphGradient { get; set; } = ""; // Characters from thinnest to boldest
+            public Vector4 Color { get; set; } // Color for this layer
+        }
+        
+        /// <summary>
+        /// Layered brightness configuration for engraving-style conversion.
+        /// Layers are processed from darkest to lightest.
+        /// Each layer uses a distinct glyph set for varied texture.
+        /// </summary>
+        public static readonly List<BrightnessLayer> Layers = new()
+        {
+            // Layer 0: Shadows (0-33% brightness) - Shade blocks for background
+            new BrightnessLayer
+            {
+                Name = "Shadows",
+                MinBrightness = 0.0f,
+                MaxBrightness = 0.05f,
+                GlyphGradient = "░░▒▒▓",
+                Color = new Vector4(0.1f, 0.1f, 0.1f, 1.0f) // Dark gray
+            },
+            
+            // Layer 1: Mid-tones (33-66% brightness) - Normal symbols
+            new BrightnessLayer
+            {
+                Name = "Mid-tones",
+                MinBrightness = 0.05f,
+                MaxBrightness = 0.3f,
+                GlyphGradient = ".:",
+                Color = new Vector4(0.6f, 0.6f, 0.6f, 1.0f) // Medium gray
+            },
+            
+            // Layer 2: Highlights (66-100% brightness) - Bold patterns
+            new BrightnessLayer
+            {
+                Name = "Highlights",
+                MinBrightness = 0.3f,
+                MaxBrightness = 0.7f,
+                GlyphGradient = "~=*#",
+                Color = new Vector4(0.8f, 0.8f, 0.4f, 1.0f) // Light gray
+            },
+            
+            // Layer 2: Highlights (66-100% brightness) - Bold patterns
+            new BrightnessLayer
+            {
+                Name = "Yellow",
+                MinBrightness = 0.7f,
+                MaxBrightness = 1.0f,
+                GlyphGradient = "-+@",
+                Color = new Vector4(1f, 1f, 0f, 1.0f) // Light gray
+            }
+        };
+        
+        /// <summary>
+        /// Folder name prefix for output files
+        /// </summary>
+        public static readonly string OutputFolderPrefix = "ascii_art_layers_";
+        
+        /// <summary>
+        /// Base output directory (relative to executable)
+        /// </summary>
+        public static readonly string OutputBaseDirectory = "logs";
+    }
+    
+    #endregion
+    
     #region Glyph Size Factors
     
     /// <summary>

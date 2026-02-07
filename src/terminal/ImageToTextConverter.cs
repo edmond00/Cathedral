@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -7,27 +8,19 @@ using OpenTK.Mathematics;
 namespace Cathedral.Terminal
 {
     /// <summary>
-    /// Converts images to ASCII-art-like text representation using brightness mapping.
+    /// Converts images to ASCII-art-like text representation using layered brightness mapping.
+    /// Each brightness layer has its own glyph gradient and color for engraving-style rendering.
     /// </summary>
     public class ImageToTextConverter
     {
-        // Character density gradient from darkest to brightest
-        // Easy to modify - replace this string to change the character mapping
-        private string _densityGradient = " .:-=+*#%@";
+        // Layer data for each cell (matches terminal dimensions)
+        private int[,]? _layerMap;
+        private int _lastWidth;
+        private int _lastHeight;
+        private string _lastImagePath = "";
         
         /// <summary>
-        /// Set custom character density gradient for conversion.
-        /// Characters should be ordered from darkest (space) to brightest.
-        /// </summary>
-        public void SetDensityGradient(string gradient)
-        {
-            if (string.IsNullOrEmpty(gradient))
-                throw new ArgumentException("Gradient cannot be empty");
-            _densityGradient = gradient;
-        }
-
-        /// <summary>
-        /// Convert an image to ASCII art and populate a terminal grid.
+        /// Convert an image to ASCII art and populate a terminal grid using layered rendering.
         /// Image will be centered in the terminal with black background in empty areas.
         /// </summary>
         /// <param name="imagePath">Path to the image file</param>
@@ -56,8 +49,9 @@ namespace Cathedral.Terminal
             int resizeWidth = maxWidth;
             int resizeHeight = maxHeight;
             
-            // Character cells are typically taller than wide (adjust for terminal font aspect)
-            float charAspect = 1.8f; // Typical character cell is ~1.8x taller than wide
+            // Treat each character cell as 1:1 (square) for conversion
+            float charAspect = 1.0f;
+            
             float adjustedImageAspect = imageAspect * charAspect;
             
             if (adjustedImageAspect > targetAspect)
@@ -78,33 +72,103 @@ namespace Cathedral.Terminal
             // Resize image to target dimensions
             image.Mutate(x => x.Resize(resizeWidth, resizeHeight, KnownResamplers.Lanczos3));
 
-            // Clear terminal (fills with black background)
+            // Initialize layer map
+            _layerMap = new int[terminal.Width, terminal.Height];
+            _lastWidth = terminal.Width;
+            _lastHeight = terminal.Height;
+            _lastImagePath = imagePath;
+            
+            // Clear terminal and layer map (fills with black background and layer -1)
             terminal.Clear();
+            for (int y = 0; y < terminal.Height; y++)
+                for (int x = 0; x < terminal.Width; x++)
+                    _layerMap[x, y] = -1;
 
             // Calculate centering offsets (center image within terminal)
             int offsetX = (terminal.Width - resizeWidth) / 2;
             int offsetY = (terminal.Height - resizeHeight) / 2;
 
-            // Convert each pixel to a character
+            // Convert each pixel to a character using layer system
             for (int y = 0; y < resizeHeight; y++)
             {
                 for (int x = 0; x < resizeWidth; x++)
                 {
                     var pixel = image[x, y];
-                    char character = PixelToCharacter(pixel);
-                    var color = PixelToColor(pixel);
+                    float brightness = CalculateBrightness(pixel);
                     
-                    terminal.SetCell(offsetX + x, offsetY + y, character, color, Config.Colors.Black);
+                    // Find appropriate layer for this brightness
+                    int layerIndex = FindLayerForBrightness(brightness);
+                    
+                    if (layerIndex >= 0)
+                    {
+                        var layer = Config.ImageToText.Layers[layerIndex];
+                        char character = BrightnessToCharacter(brightness, layer);
+                        
+                        int cellX = offsetX + x;
+                        int cellY = offsetY + y;
+                        
+                        terminal.SetCell(cellX, cellY, character, layer.Color, Config.Colors.Black);
+                        _layerMap[cellX, cellY] = layerIndex;
+                    }
                 }
             }
 
-            Console.WriteLine($"Image converted to {resizeWidth}x{resizeHeight} ASCII art (centered in {terminal.Width}x{terminal.Height} terminal)");
+            Console.WriteLine($"Image converted to {resizeWidth}x{resizeHeight} ASCII art using {Config.ImageToText.Layers.Count} layers");
+            Console.WriteLine($"Centered in {terminal.Width}x{terminal.Height} terminal");
         }
 
         /// <summary>
-        /// Export the current terminal state to a plain text file.
+        /// Export the current terminal state to multiple files in a timestamped folder:
+        /// - ASCII art text file
+        /// - Layer map file (showing layer index for each character)
+        /// - Layer colors CSV (mapping layers to their colors)
+        /// </summary>
+        public void ExportToLayeredFiles(TerminalHUD terminal)
+        {
+            if (_layerMap == null)
+            {
+                Console.WriteLine("Warning: No layer data available. Call ConvertImageToTerminal first.");
+                return;
+            }
+
+            // Create timestamped folder
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+            string imageName = Path.GetFileNameWithoutExtension(_lastImagePath);
+            string folderName = $"{Config.ImageToText.OutputFolderPrefix}{imageName}_{timestamp}";
+            string folderPath = Path.Combine(Config.ImageToText.OutputBaseDirectory, folderName);
+            
+            Directory.CreateDirectory(folderPath);
+            
+            // Export ASCII art
+            string asciiPath = Path.Combine(folderPath, "ascii_art.txt");
+            ExportAsciiArt(terminal, asciiPath);
+            
+            // Export layer map
+            string layerMapPath = Path.Combine(folderPath, "layer_map.txt");
+            ExportLayerMap(layerMapPath);
+            
+            // Export layer colors CSV
+            string colorsPath = Path.Combine(folderPath, "layer_colors.csv");
+            ExportLayerColors(colorsPath);
+            
+            Console.WriteLine($"\n✓ Exported layered files to: {folderPath}");
+            Console.WriteLine($"  - ascii_art.txt: Visual ASCII art");
+            Console.WriteLine($"  - layer_map.txt: Layer indices for each character");
+            Console.WriteLine($"  - layer_colors.csv: Layer definitions with colors");
+        }
+
+        /// <summary>
+        /// Export ASCII art to text file (legacy single-file method)
         /// </summary>
         public void ExportToTextFile(TerminalHUD terminal, string outputPath)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+            ExportAsciiArt(terminal, outputPath);
+        }
+
+        #region Export Helpers
+
+        private void ExportAsciiArt(TerminalHUD terminal, string outputPath)
         {
             var lines = new string[terminal.Height];
             
@@ -123,46 +187,116 @@ namespace Cathedral.Terminal
             while (lastNonEmpty >= 0 && string.IsNullOrWhiteSpace(lines[lastNonEmpty]))
                 lastNonEmpty--;
 
-            // Trim leading whitespace from all lines
-            var trimmedLines = lines.Take(lastNonEmpty + 1).Select(line => line.TrimStart()).ToArray();
-
-            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+            var trimmedLines = lines.Take(lastNonEmpty + 1).ToArray();
             File.WriteAllLines(outputPath, trimmedLines);
+        }
+
+        private void ExportLayerMap(string outputPath)
+        {
+            if (_layerMap == null) return;
             
-            Console.WriteLine($"Saved ASCII art to: {outputPath}");
+            var lines = new string[_lastHeight];
+            
+            for (int y = 0; y < _lastHeight; y++)
+            {
+                var sb = new StringBuilder();
+                for (int x = 0; x < _lastWidth; x++)
+                {
+                    int layer = _layerMap[x, y];
+                    // Use space for empty cells, digit for layer 0-9, letter for 10+
+                    char layerChar = layer < 0 ? ' ' : 
+                                    layer < 10 ? (char)('0' + layer) :
+                                    (char)('A' + (layer - 10));
+                    sb.Append(layerChar);
+                }
+                lines[y] = sb.ToString().TrimEnd();
+            }
+
+            // Remove trailing empty lines
+            int lastNonEmpty = lines.Length - 1;
+            while (lastNonEmpty >= 0 && string.IsNullOrWhiteSpace(lines[lastNonEmpty]))
+                lastNonEmpty--;
+
+            var trimmedLines = lines.Take(lastNonEmpty + 1).ToArray();
+            File.WriteAllLines(outputPath, trimmedLines);
+        }
+
+        private void ExportLayerColors(string outputPath)
+        {
+            var lines = new List<string>
+            {
+                "Layer,Name,MinBrightness,MaxBrightness,GlyphGradient,ColorR,ColorG,ColorB,ColorA"
+            };
+
+            for (int i = 0; i < Config.ImageToText.Layers.Count; i++)
+            {
+                var layer = Config.ImageToText.Layers[i];
+                lines.Add($"{i}," +
+                         $"\"{layer.Name}\"," +
+                         $"{layer.MinBrightness:F3}," +
+                         $"{layer.MaxBrightness:F3}," +
+                         $"\"{layer.GlyphGradient}\"," +
+                         $"{layer.Color.X:F3}," +
+                         $"{layer.Color.Y:F3}," +
+                         $"{layer.Color.Z:F3}," +
+                         $"{layer.Color.W:F3}");
+            }
+
+            File.WriteAllLines(outputPath, lines);
+        }
+
+        #endregion
+
+        #region Layer System
+
+        /// <summary>
+        /// Calculate perceived brightness using human eye sensitivity weights
+        /// </summary>
+        private float CalculateBrightness(Rgba32 pixel)
+        {
+            return (0.299f * pixel.R + 0.587f * pixel.G + 0.114f * pixel.B) / 255f;
         }
 
         /// <summary>
-        /// Convert a pixel to a character based on brightness.
-        /// This method is designed to be easily customizable.
+        /// Find which layer a given brightness value belongs to
         /// </summary>
-        private char PixelToCharacter(Rgba32 pixel)
+        private int FindLayerForBrightness(float brightness)
         {
-            // Calculate perceived brightness (weighted by human eye sensitivity)
-            float brightness = (0.299f * pixel.R + 0.587f * pixel.G + 0.114f * pixel.B) / 255f;
+            for (int i = 0; i < Config.ImageToText.Layers.Count; i++)
+            {
+                var layer = Config.ImageToText.Layers[i];
+                if (brightness >= layer.MinBrightness && brightness <= layer.MaxBrightness)
+                {
+                    return i;
+                }
+            }
             
-            // Map brightness to character index
-            int index = (int)(brightness * (_densityGradient.Length - 1));
-            index = Math.Clamp(index, 0, _densityGradient.Length - 1);
-            
-            return _densityGradient[index];
+            // Fallback to closest layer if not found (handles edge cases)
+            return Config.ImageToText.Layers.Count - 1;
         }
 
         /// <summary>
-        /// Convert a pixel to a terminal color (approximated to available palette).
-        /// Can be enhanced later for color preservation.
+        /// Convert brightness to character within a layer's glyph gradient
         /// </summary>
-        private Vector4 PixelToColor(Rgba32 pixel)
+        private char BrightnessToCharacter(float brightness, Config.ImageToText.BrightnessLayer layer)
         {
-            // For now, use grayscale based on brightness
-            float brightness = (0.299f * pixel.R + 0.587f * pixel.G + 0.114f * pixel.B) / 255f;
+            if (string.IsNullOrEmpty(layer.GlyphGradient))
+                return ' ';
             
-            // Map to white/gray scale
-            if (brightness > 0.8f) return Config.Colors.White;
-            if (brightness > 0.6f) return Config.Colors.LightGray;
-            if (brightness > 0.4f) return Config.Colors.Gray;
-            if (brightness > 0.2f) return Config.Colors.DarkGray;
-            return Config.Colors.DarkGray;
+            // Normalize brightness within layer's range
+            float layerRange = layer.MaxBrightness - layer.MinBrightness;
+            if (layerRange <= 0) return layer.GlyphGradient[0];
+            
+            float normalizedInLayer = (brightness - layer.MinBrightness) / layerRange;
+            normalizedInLayer = Math.Clamp(normalizedInLayer, 0f, 1f);
+            
+            // Map to character index
+            int index = (int)(normalizedInLayer * (layer.GlyphGradient.Length - 1));
+            index = Math.Clamp(index, 0, layer.GlyphGradient.Length - 1);
+            
+            return layer.GlyphGradient[index];
         }
+
+        #endregion
     }
 }

@@ -108,6 +108,16 @@ namespace Cathedral.Terminal
             _inputHandler.SetBorderHeightFunction(getBorderHeight);
         }
 
+        /// <summary>
+        /// Gets the character aspect ratio (height/width) from the font metrics.
+        /// Used for aspect ratio correction when converting images to text.
+        /// Returns 0 if calculation fails.
+        /// </summary>
+        public float GetCharacterAspectRatio()
+        {
+            return _atlas.GetCharacterAspectRatio();
+        }
+
         #endregion
 
         #region Cell Operations

@@ -413,6 +413,50 @@ namespace Cathedral.Terminal
         }
 
         /// <summary>
+        /// Calculates the average character aspect ratio (height/width) for typical characters.
+        /// This is used for aspect ratio correction when converting images to text.
+        /// Returns 0 if calculation fails.
+        /// </summary>
+        public float GetCharacterAspectRatio()
+        {
+            if (_font == null)
+                return 0;
+
+            try
+            {
+                // Measure a representative set of characters
+                string testChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+                float totalAspect = 0;
+                int count = 0;
+
+                foreach (char c in testChars)
+                {
+                    // Measure the character bounds
+                    var bounds = TextMeasurer.MeasureSize(c.ToString(), new TextOptions(_font));
+                    
+                    if (bounds.Width > 0 && bounds.Height > 0)
+                    {
+                        totalAspect += bounds.Height / bounds.Width;
+                        count++;
+                    }
+                }
+
+                if (count > 0)
+                {
+                    float avgAspect = totalAspect / count;
+                    Console.WriteLine($"Terminal: Measured character aspect ratio: {avgAspect:F2} (height/width)");
+                    return avgAspect;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Terminal: Failed to calculate character aspect ratio: {ex.Message}");
+            }
+
+            return 0;
+        }
+
+        /// <summary>
         /// Gets detailed information about the atlas for debugging
         /// </summary>
         public string GetAtlasInfo()
