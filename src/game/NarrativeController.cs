@@ -74,8 +74,10 @@ public class NarrativeController
             throw new ArgumentNullException(nameof(actionExecutor));
         
         _ui = new NarrativeUI(terminal);
-        // Content width: 100 (terminal) - 4 (left margin) - 4 (right margin) - 1 (scrollbar) = 91
-        _scrollBuffer = new NarrationScrollBuffer(maxWidth: 91);
+        // Calculate content width dynamically: terminal width - margins - scrollbar
+        var layout = new NarrativeLayout(terminal.Width, terminal.Height);
+        int contentWidth = layout.CONTENT_WIDTH - 1; // -1 for scrollbar
+        _scrollBuffer = new NarrationScrollBuffer(maxWidth: contentWidth, layout: layout);
         _skillPopup = new TerminalThinkingSkillPopup(popup);
         _core = core;
         _terminalInputHandler = terminalInputHandler;
@@ -873,11 +875,12 @@ public class NarrativeController
         {
             int deltaY = mouseY - _narrationState.ScrollbarDragStartY;
             
-            int trackHeight = NarrativeLayout.SCROLLBAR_TRACK_HEIGHT;
+            var layout = new NarrativeLayout(_core.Terminal.Width, _core.Terminal.Height);
+            int trackHeight = layout.SCROLLBAR_TRACK_HEIGHT;
             int totalLines = _scrollBuffer.TotalLines;
-            int visibleLines = NarrativeLayout.NARRATIVE_HEIGHT;
+            int visibleLines = layout.NARRATIVE_HEIGHT;
             
-            int maxScrollOffset = NarrativeLayout.CalculateMaxScrollOffset(totalLines);
+            int maxScrollOffset = layout.CalculateMaxScrollOffset(totalLines);
             
             // Calculate thumb size for proper scaling
             float visibleRatio = (float)visibleLines / totalLines;

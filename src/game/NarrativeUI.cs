@@ -13,9 +13,6 @@ namespace Cathedral.Game;
 /// </summary>
 public class NarrativeUI
 {
-    // Use centralized layout constants
-    private const int SCROLLBAR_X = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN; // Inside right margin
-    
     // Loading animation (spinner)
     private int _loadingFrameIndex = 0;
     private DateTime _lastFrameUpdate = DateTime.Now;
@@ -32,6 +29,8 @@ public class NarrativeUI
     
     private readonly TerminalHUD _terminal;
     private readonly KeywordRenderer _keywordRenderer;
+    private readonly NarrativeLayout _layout;
+    private readonly int SCROLLBAR_X;
     private List<KeywordRegion> _keywordRegions = new();
     private List<ActionRegion> _actionRegions = new();
     
@@ -40,20 +39,21 @@ public class NarrativeUI
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
         _keywordRenderer = new KeywordRenderer();
         
-        if (_terminal.Width != NarrativeLayout.TERMINAL_WIDTH || _terminal.Height != NarrativeLayout.TERMINAL_HEIGHT)
-        {
-            throw new ArgumentException($"Terminal must be {NarrativeLayout.TERMINAL_WIDTH}x{NarrativeLayout.TERMINAL_HEIGHT}, but got {_terminal.Width}x{_terminal.Height}");
-        }
+        // Create dynamic layout based on actual terminal dimensions
+        _layout = new NarrativeLayout(_terminal.Width, _terminal.Height);
+        SCROLLBAR_X = _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN;
+        
+        Console.WriteLine($"NarrativeUI: Initialized with {_terminal.Width}x{_terminal.Height} terminal");
     }
     
     /// <summary>
-    /// Get maximum thinking attempts from avatar.
+    /// Get maximum thinking attempts.
     /// TODO: This should be retrieved from the avatar instance once that characteristic is implemented.
     /// </summary>
-    private int GetMaxThinkingAttempts()
+    public static int GetMaxThinkingAttempts()
     {
-        // Placeholder implementation
-        return 3;
+        // Placeholder implementation - will be replaced with avatar characteristic
+        return 13;
     }
     
     /// <summary>
@@ -61,9 +61,9 @@ public class NarrativeUI
     /// </summary>
     public void Clear()
     {
-        for (int y = 0; y < NarrativeLayout.TERMINAL_HEIGHT; y++)
+        for (int y = 0; y < _layout.TERMINAL_HEIGHT; y++)
         {
-            for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
+            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
             {
                 _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
@@ -80,12 +80,12 @@ public class NarrativeUI
         string biomeTitle = char.ToUpper(biomeType[0]) + biomeType.Substring(1);
         string formattedLocationName = locationName.Replace("_", " ");
         string title = $"{biomeTitle} - {formattedLocationName}";
-        _terminal.Text(NarrativeLayout.LEFT_MARGIN, 0, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
+        _terminal.Text(_layout.LEFT_MARGIN, 0, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
         
         // Thinking attempts indicator (right side)
         int maxAttempts = GetMaxThinkingAttempts();
         string attempts = $"Remaining noetic points : [";
-        int attemptsX = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN - 40;
+        int attemptsX = _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN - 40;
         _terminal.Text(attemptsX, 0, attempts, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         
         // Draw individual attempt markers
@@ -96,7 +96,7 @@ public class NarrativeUI
             Vector4 markerColor = isRemaining
                 ? Config.NarrativeUI.LoadingColor // Bright yellow for available
                 : Config.NarrativeUI.HistoryColor; // Dark gray for used
-            // _terminal.Text(markerX, 0, "█", markerColor, Config.NarrativeUI.BackgroundColor);
+            // _terminal.Text(markerX, 0, "▁E, markerColor, Config.NarrativeUI.BackgroundColor);
             _terminal.Text(markerX, 0, Config.Symbols.NoeticPointMarker.ToString(), markerColor, Config.NarrativeUI.BackgroundColor);
             markerX++;
         }
@@ -124,9 +124,9 @@ public class NarrativeUI
         _actionRegions.Clear();
         
         // Clear narrative area
-        for (int y = NarrativeLayout.CONTENT_START_Y; y < NarrativeLayout.SEPARATOR_Y + 1; y++)
+        for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
+            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
             {
                 _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
@@ -134,7 +134,7 @@ public class NarrativeUI
         
         // Get visible lines based on scroll offset
         // Subtract 1 from NARRATIVE_HEIGHT to account for the bottom separator line
-        int visibleContentHeight = NarrativeLayout.NARRATIVE_HEIGHT - NarrativeLayout.SEPARATOR_HEIGHT;
+        int visibleContentHeight = _layout.NARRATIVE_HEIGHT - _layout.SEPARATOR_HEIGHT;
         var visibleLines = scrollBuffer.GetVisibleLines(scrollOffset, visibleContentHeight);
         
         // When dimming content, find the last outcome block to keep it highlighted
@@ -166,13 +166,13 @@ public class NarrativeUI
             }
         }
         
-        int currentY = NarrativeLayout.CONTENT_START_Y;
+        int currentY = _layout.CONTENT_START_Y;
         ParsedNarrativeAction? currentAction = null;
         int actionLineCount = 0;
         
         foreach (var renderedLine in visibleLines)
         {
-            if (currentY >= NarrativeLayout.CONTENT_END_Y + 1)
+            if (currentY >= _layout.CONTENT_END_Y + 1)
                 break;
             
             // Check if this is a history line (from previous narration nodes)
@@ -264,20 +264,20 @@ public class NarrativeUI
                             skillLevelColor = Config.NarrativeUI.LoadingColor;
                         }
                         
-                        _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, skillName, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
-                        _terminal.Text(NarrativeLayout.LEFT_MARGIN + skillName.Length, currentY, levelIndicators, skillLevelColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(_layout.LEFT_MARGIN, currentY, skillName, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(_layout.LEFT_MARGIN + skillName.Length, currentY, levelIndicators, skillLevelColor, Config.NarrativeUI.BackgroundColor);
                         
                         // Render closing bracket in dark yellow (same as skill name)
                         if (!string.IsNullOrEmpty(closingBracket))
                         {
-                            _terminal.Text(NarrativeLayout.LEFT_MARGIN + skillName.Length + levelIndicators.Length, currentY, closingBracket, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                            _terminal.Text(_layout.LEFT_MARGIN + skillName.Length + levelIndicators.Length, currentY, closingBracket, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
                         }
                     }
                     else
                     {
                         // Fallback: render entire header in skill header color
                         Vector4 skillHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.SkillHeaderColor;
-                        _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, headerText, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(_layout.LEFT_MARGIN, currentY, headerText, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
                     }
                     
                     // Note: Do NOT reset action counter here - we want globally unique action indices
@@ -289,7 +289,7 @@ public class NarrativeUI
                     RenderLineWithKeywords(
                         renderedLine.Text,
                         renderedLine.Keywords,
-                        NarrativeLayout.LEFT_MARGIN,
+                        _layout.LEFT_MARGIN,
                         currentY,
                         thinkingAttemptsRemaining,
                         hoveredKeyword,
@@ -333,7 +333,7 @@ public class NarrativeUI
                             actionColor = Config.NarrativeUI.DimmedContentColor;
                         }
                         
-                        _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, renderedLine.Text, actionColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(_layout.LEFT_MARGIN, currentY, renderedLine.Text, actionColor, Config.NarrativeUI.BackgroundColor);
                     }
                     break;
                     
@@ -368,7 +368,7 @@ public class NarrativeUI
                         outcomeColor = Config.NarrativeUI.DimmedContentColor;
                     }
                     
-                    _terminal.Text(NarrativeLayout.LEFT_MARGIN, currentY, renderedLine.Text, outcomeColor, Config.NarrativeUI.BackgroundColor);
+                    _terminal.Text(_layout.LEFT_MARGIN, currentY, renderedLine.Text, outcomeColor, Config.NarrativeUI.BackgroundColor);
                     break;
                     
                 case LineType.Empty:
@@ -393,7 +393,7 @@ public class NarrativeUI
         {
             case LineType.Separator:
                 // Render separator in slightly brighter color
-                _terminal.Text(NarrativeLayout.LEFT_MARGIN, y, line.Text, Config.NarrativeUI.SeparatorColor, Config.NarrativeUI.BackgroundColor);
+                _terminal.Text(_layout.LEFT_MARGIN, y, line.Text, Config.NarrativeUI.SeparatorColor, Config.NarrativeUI.BackgroundColor);
                 break;
                 
             case LineType.Empty:
@@ -402,7 +402,7 @@ public class NarrativeUI
                 
             default:
                 // Render all other history lines in dark gray
-                _terminal.Text(NarrativeLayout.LEFT_MARGIN, y, line.Text, historyColor, Config.NarrativeUI.BackgroundColor);
+                _terminal.Text(_layout.LEFT_MARGIN, y, line.Text, historyColor, Config.NarrativeUI.BackgroundColor);
                 break;
         }
     }
@@ -539,7 +539,7 @@ public class NarrativeUI
         
         Vector4 skillBracketBackground = backgroundColor; // Use action background for skill parts too
         
-        int startX = NarrativeLayout.LEFT_MARGIN;
+        int startX = _layout.LEFT_MARGIN;
         
         if (lineIndex == 0)
         {
@@ -571,23 +571,23 @@ public class NarrativeUI
             startX += 2;
             
             // Calculate available width for action text (respect right margin for scrollbar)
-            int maxTextWidth = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN - startX;
+            int maxTextWidth = _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN - startX;
             string truncatedText = text.Length > maxTextWidth ? text.Substring(0, maxTextWidth) : text;
             
             _terminal.Text(startX, y, truncatedText, textColor, backgroundColor);
             
             // Track action region (will be updated as we encounter more lines)
             // Include the action reference for skill chain access
-            var actionRegion = new ActionRegion(actionIndex, y, y, NarrativeLayout.LEFT_MARGIN, NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN, action);
+            var actionRegion = new ActionRegion(actionIndex, y, y, _layout.LEFT_MARGIN, _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN, action);
             _actionRegions.Add(actionRegion);
         }
         else
         {
             // Continuation line: indent by 4 spaces
-            int continuationIndent = NarrativeLayout.LEFT_MARGIN + 4;
+            int continuationIndent = _layout.LEFT_MARGIN + 4;
             
             // Calculate available width for continuation text (respect right margin)
-            int maxTextWidth = NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN - continuationIndent;
+            int maxTextWidth = _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN - continuationIndent;
             string truncatedText = text.Length > maxTextWidth ? text.Substring(0, maxTextWidth) : text;
             
             _terminal.Text(continuationIndent, y, truncatedText, textColor, backgroundColor);
@@ -602,8 +602,8 @@ public class NarrativeUI
                         actionIndex, 
                         lastRegion.StartY, 
                         y,  // Extend to current line
-                        NarrativeLayout.LEFT_MARGIN,
-                        NarrativeLayout.TERMINAL_WIDTH - NarrativeLayout.RIGHT_MARGIN,
+                        _layout.LEFT_MARGIN,
+                        _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN,
                         lastRegion.Action  // Keep the action reference
                     );
                 }
@@ -639,19 +639,19 @@ public class NarrativeUI
         int scrollOffset,
         bool isThumbHovered)
     {
-        int trackStartY = NarrativeLayout.CONTENT_START_Y;
-        int trackHeight = NarrativeLayout.SCROLLBAR_TRACK_HEIGHT;
+        int trackStartY = _layout.CONTENT_START_Y;
+        int trackHeight = _layout.SCROLLBAR_TRACK_HEIGHT;
         int scrollbarX = SCROLLBAR_X;
         
         // Draw track
         for (int y = trackStartY; y < trackStartY + trackHeight; y++)
         {
-            _terminal.SetCell(scrollbarX, y, '│', Config.NarrativeUI.ScrollbarTrackColor, Config.NarrativeUI.BackgroundColor);
+            _terminal.SetCell(scrollbarX, y, '╏', Config.NarrativeUI.ScrollbarTrackColor, Config.NarrativeUI.BackgroundColor);
         }
         
         // Calculate thumb size and position
         int totalLines = scrollBuffer.TotalLines;
-        int visibleLines = NarrativeLayout.NARRATIVE_HEIGHT;
+        int visibleLines = _layout.NARRATIVE_HEIGHT;
         
         // If content fits in viewport, no thumb needed
         if (totalLines <= visibleLines)
@@ -664,7 +664,7 @@ public class NarrativeUI
         int thumbHeight = Math.Max(2, (int)(trackHeight * visibleRatio));
         
         // Calculate thumb position based on scroll offset
-        int maxScrollOffset = NarrativeLayout.CalculateMaxScrollOffset(totalLines);
+        int maxScrollOffset = _layout.CalculateMaxScrollOffset(totalLines);
         float scrollRatio = maxScrollOffset > 0 ? (float)scrollOffset / maxScrollOffset : 0f;
         int maxThumbY = trackHeight - thumbHeight;
         int thumbY = trackStartY + (int)(maxThumbY * scrollRatio);
@@ -696,8 +696,8 @@ public class NarrativeUI
     public bool IsMouseOverScrollbarTrack(int mouseX, int mouseY, (int StartY, int Height) thumb)
     {
         if (mouseX != SCROLLBAR_X) return false;
-        int trackStartY = NarrativeLayout.CONTENT_START_Y;
-        int trackEndY = trackStartY + NarrativeLayout.SCROLLBAR_TRACK_HEIGHT;
+        int trackStartY = _layout.CONTENT_START_Y;
+        int trackEndY = trackStartY + _layout.SCROLLBAR_TRACK_HEIGHT;
         
         bool inTrack = mouseY >= trackStartY && mouseY < trackEndY;
         bool onThumb = thumb.Height > 0 && mouseY >= thumb.StartY && mouseY < thumb.StartY + thumb.Height;
@@ -710,10 +710,10 @@ public class NarrativeUI
     /// </summary>
     public int CalculateScrollOffsetFromMouseY(int mouseY, NarrationScrollBuffer scrollBuffer)
     {
-        int trackStartY = NarrativeLayout.CONTENT_START_Y;
-        int trackHeight = NarrativeLayout.SCROLLBAR_TRACK_HEIGHT;
+        int trackStartY = _layout.CONTENT_START_Y;
+        int trackHeight = _layout.SCROLLBAR_TRACK_HEIGHT;
         int totalLines = scrollBuffer.TotalLines;
-        int visibleLines = NarrativeLayout.NARRATIVE_HEIGHT - NarrativeLayout.SEPARATOR_HEIGHT; // Account for separator line
+        int visibleLines = _layout.NARRATIVE_HEIGHT - _layout.SEPARATOR_HEIGHT; // Account for separator line
         
         // Clamp mouse Y to track bounds
         int relativeY = Math.Clamp(mouseY - trackStartY, 0, trackHeight - 1);
@@ -733,8 +733,8 @@ public class NarrativeUI
     /// </summary>
     public void RenderStatusBar(string message = "", ParsedNarrativeAction? hoveredAction = null)
     {
-        int statusY = NarrativeLayout.STATUS_BAR_Y;
-        int separatorY = NarrativeLayout.SEPARATOR_Y;
+        int statusY = _layout.STATUS_BAR_Y;
+        int separatorY = _layout.SEPARATOR_Y;
         
         // Draw separator line above status bar
         DrawHorizontalLine(separatorY);
@@ -745,7 +745,7 @@ public class NarrativeUI
         }
         
         // Truncate if too long
-        int maxMessageWidth = NarrativeLayout.CONTENT_WIDTH - 2;
+        int maxMessageWidth = _layout.CONTENT_WIDTH - 2;
         if (message.Length > maxMessageWidth)
         {
             message = message.Substring(0, maxMessageWidth - 3) + "...";
@@ -763,10 +763,10 @@ public class NarrativeUI
             {
                 // Render before dice text in dark gray
                 string beforeDice = message.Substring(0, diceIndex);
-                _terminal.Text(NarrativeLayout.LEFT_MARGIN, statusY, beforeDice, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+                _terminal.Text(_layout.LEFT_MARGIN, statusY, beforeDice, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
                 
                 // Render dice text in yellow (highlighted)
-                int diceX = NarrativeLayout.LEFT_MARGIN + beforeDice.Length;
+                int diceX = _layout.LEFT_MARGIN + beforeDice.Length;
                 _terminal.Text(diceX, statusY, diceText, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
                 
                 // Render after dice text in dark gray
@@ -777,12 +777,12 @@ public class NarrativeUI
             else
             {
                 // Fallback: render entire message in status bar color
-                _terminal.Text(NarrativeLayout.LEFT_MARGIN, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+                _terminal.Text(_layout.LEFT_MARGIN, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
             }
         }
         else
         {
-            _terminal.Text(NarrativeLayout.LEFT_MARGIN, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+            _terminal.Text(_layout.LEFT_MARGIN, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         }
     }
     
@@ -801,9 +801,9 @@ public class NarrativeUI
         string spinner = Config.Symbols.LoadingSpinner[_loadingFrameIndex];
         
         // Clear narrative area
-        for (int y = NarrativeLayout.CONTENT_START_Y; y < NarrativeLayout.SEPARATOR_Y + 1; y++)
+        for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
+            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
             {
                 _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
@@ -811,8 +811,8 @@ public class NarrativeUI
         
         // Show spinner and message centered
         string loadingText = $"{spinner}  {message}  {spinner}";
-        int centerY = NarrativeLayout.CONTENT_START_Y + NarrativeLayout.NARRATIVE_HEIGHT / 2;
-        int centerX = (NarrativeLayout.TERMINAL_WIDTH - loadingText.Length) / 2;
+        int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
+        int centerX = (_layout.TERMINAL_WIDTH - loadingText.Length) / 2;
         _terminal.Text(centerX, centerY, loadingText, Config.Colors.DarkYellowGrey, Config.NarrativeUI.BackgroundColor);
         
         // Add animated dots
@@ -820,13 +820,13 @@ public class NarrativeUI
         string spaces = new string(' ', (_loadingFrameIndex % 4));
         string hint = $"{spaces}Please wait {dots}";
         int hintY = centerY + 2;
-        int hintX = (NarrativeLayout.TERMINAL_WIDTH - hint.Length) / 2;
+        int hintX = (_layout.TERMINAL_WIDTH - hint.Length) / 2;
         _terminal.Text(hintX, hintY, hint, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         
         // Progress bar
         int barWidth = 30;
         int barY = centerY - 2;
-        int barX = (NarrativeLayout.TERMINAL_WIDTH - barWidth) / 2;
+        int barX = (_layout.TERMINAL_WIDTH - barWidth) / 2;
         string progressBar = GenerateProgressBar(barWidth, _loadingFrameIndex);
         _terminal.Text(barX, barY, progressBar, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
     }
@@ -938,15 +938,15 @@ public class NarrativeUI
         }
         
         // Clear narrative area
-        for (int y = NarrativeLayout.CONTENT_START_Y; y < NarrativeLayout.SEPARATOR_Y + 1; y++)
+        for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
+            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
             {
                 _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
         }
         
-        int centerY = NarrativeLayout.CONTENT_START_Y + NarrativeLayout.NARRATIVE_HEIGHT / 2;
+        int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
         
         // Calculate results if we have final values
         int numberOfSixes = 0;
@@ -962,7 +962,7 @@ public class NarrativeUI
         Vector4 titleColor = isRolling 
             ? Config.NarrativeUI.LoadingColor 
             : (isSuccess ? Config.NarrativeUI.SuccessColor : Config.NarrativeUI.FailureColor);
-        int titleX = (NarrativeLayout.TERMINAL_WIDTH - title.Length) / 2;
+        int titleX = (_layout.TERMINAL_WIDTH - title.Length) / 2;
         int titleY = centerY - 10;
         _terminal.Text(titleX, titleY, title, titleColor, Config.NarrativeUI.BackgroundColor);
         
@@ -985,7 +985,7 @@ public class NarrativeUI
         );
         
         string difficultyLabel = $"Difficulty: {difficultyGlyph} ({difficultyClamp} sixes needed)";
-        int diffLabelX = (NarrativeLayout.TERMINAL_WIDTH - difficultyLabel.Length) / 2;
+        int diffLabelX = (_layout.TERMINAL_WIDTH - difficultyLabel.Length) / 2;
         int diffLabelY = centerY - 8;
         
         // Render "Difficulty: " in normal color
@@ -1002,7 +1002,7 @@ public class NarrativeUI
         int rows = ((numberOfDice + dicePerRow - 1) / dicePerRow) * 2;
         int diceSpacing = 2; // Spacing between dice
         int totalRowWidth = dicePerRow * diceSpacing;
-        int startX = (NarrativeLayout.TERMINAL_WIDTH - totalRowWidth) / 2;
+        int startX = (_layout.TERMINAL_WIDTH - totalRowWidth) / 2;
         int startY = centerY -5;
         
         for (int i = 0; i < numberOfDice; i++)
@@ -1034,7 +1034,7 @@ public class NarrativeUI
                 int value = Math.Clamp(finalDiceValues[i], 1, 6);
                 diceChar = Config.Symbols.DiceFaces[value - 1];
                 
-                // Highlight 6s (⚅) with golden/success color
+                // Highlight 6s (⚁E with golden/success color
                 if (value == 6)
                 {
                     diceColor = Config.NarrativeUI.DiceGoldColor;
@@ -1059,14 +1059,14 @@ public class NarrativeUI
         {
             int summaryY = startY + rows + 2;
             string summary = $"Rolled {numberOfSixes} {(numberOfSixes == 1 ? "six" : "sixes")} out of {numberOfDice} dice";
-            int summaryX = (NarrativeLayout.TERMINAL_WIDTH - summary.Length) / 2;
+            int summaryX = (_layout.TERMINAL_WIDTH - summary.Length) / 2;
             Vector4 summaryColor = isSuccess ? Config.NarrativeUI.SuccessColor : Config.NarrativeUI.FailureColor;
             _terminal.Text(summaryX, summaryY, summary, summaryColor, Config.NarrativeUI.BackgroundColor);
             
             // Show continue button
             string buttonText = "[ Continue ]";
             int buttonWidth = buttonText.Length;
-            int buttonX = (NarrativeLayout.TERMINAL_WIDTH - buttonWidth) / 2;
+            int buttonX = (_layout.TERMINAL_WIDTH - buttonWidth) / 2;
             int buttonY = summaryY + 3;
             
             Vector4 buttonColor = isContinueButtonHovered 
@@ -1088,7 +1088,7 @@ public class NarrativeUI
             // Show waiting message while rolling
             string spinner = Config.Symbols.LoadingSpinner[_loadingFrameIndex % Config.Symbols.LoadingSpinner.Length];
             string waitMsg = $"{spinner}  Please wait...  {spinner}";
-            int waitX = (NarrativeLayout.TERMINAL_WIDTH - waitMsg.Length) / 2;
+            int waitX = (_layout.TERMINAL_WIDTH - waitMsg.Length) / 2;
             int waitY = startY + rows + 2;
             _terminal.Text(waitX, waitY, waitMsg, Config.Colors.DarkYellowGrey, Config.NarrativeUI.BackgroundColor);
         }
@@ -1112,9 +1112,9 @@ public class NarrativeUI
     public void ShowError(string errorMessage)
     {
         // Clear narrative area
-        for (int y = NarrativeLayout.CONTENT_START_Y; y < NarrativeLayout.SEPARATOR_Y + 1; y++)
+        for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
         {
-            for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
+            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
             {
                 _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
             }
@@ -1122,25 +1122,25 @@ public class NarrativeUI
         
         // Show error message centered
         string title = "ERROR";
-        int titleY = NarrativeLayout.CONTENT_START_Y + NarrativeLayout.NARRATIVE_HEIGHT / 2 - 2;
-        int titleX = (NarrativeLayout.TERMINAL_WIDTH - title.Length) / 2;
+        int titleY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2 - 2;
+        int titleX = (_layout.TERMINAL_WIDTH - title.Length) / 2;
         _terminal.Text(titleX, titleY, title, Config.NarrativeUI.ErrorColor, Config.NarrativeUI.BackgroundColor);
         
         // Wrap error message
-        var wrappedLines = WrapText(errorMessage, NarrativeLayout.CONTENT_WIDTH - 4);
+        var wrappedLines = WrapText(errorMessage, _layout.CONTENT_WIDTH - 4);
         int startY = titleY + 2;
         
-        for (int i = 0; i < wrappedLines.Count && startY + i < NarrativeLayout.SEPARATOR_Y + 1; i++)
+        for (int i = 0; i < wrappedLines.Count && startY + i < _layout.SEPARATOR_Y + 1; i++)
         {
             string line = wrappedLines[i];
-            int x = (NarrativeLayout.TERMINAL_WIDTH - line.Length) / 2;
+            int x = (_layout.TERMINAL_WIDTH - line.Length) / 2;
             _terminal.Text(x, startY + i, line, Config.NarrativeUI.ErrorColor, Config.NarrativeUI.BackgroundColor);
         }
         
         // Show instruction
         string instruction = "(Press ESC to return)";
-        int instructionY = NarrativeLayout.SEPARATOR_Y - 1;
-        int instructionX = (NarrativeLayout.TERMINAL_WIDTH - instruction.Length) / 2;
+        int instructionY = _layout.SEPARATOR_Y - 1;
+        int instructionX = (_layout.TERMINAL_WIDTH - instruction.Length) / 2;
         _terminal.Text(instructionX, instructionY, instruction, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
     }
     
@@ -1149,10 +1149,10 @@ public class NarrativeUI
     /// </summary>
     private void DrawHorizontalLine(int y)
     {
-        if (y < 0 || y >= NarrativeLayout.TERMINAL_HEIGHT)
+        if (y < 0 || y >= _layout.TERMINAL_HEIGHT)
             return;
         
-        for (int x = 0; x < NarrativeLayout.TERMINAL_WIDTH; x++)
+        for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
         {
             _terminal.SetCell(x, y, Config.Symbols.HorizontalLine, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         }
@@ -1166,17 +1166,11 @@ public class NarrativeUI
         var bar = new System.Text.StringBuilder();
         bar.Append('[');
         
+        string chars = " ░░▒▒▓█▓▒▒░░";
         for (int i = 0; i < width - 2; i++)
         {
-            int pos = (frame + i) % 8;
-            if (pos < 2)
-                bar.Append('█');
-            else if (pos < 4)
-                bar.Append('▓');
-            else if (pos < 6)
-                bar.Append('▒');
-            else
-                bar.Append('░');
+            int pos = (frame + i) % chars.Length;
+                bar.Append(chars[pos]);
         }
         
         bar.Append(']');
@@ -1253,8 +1247,8 @@ public class NarrativeUI
     {
         string buttonText = "[ Continue ]";
         int buttonWidth = buttonText.Length;
-        int buttonX = (NarrativeLayout.TERMINAL_WIDTH - buttonWidth) / 2;
-        int buttonY = NarrativeLayout.SEPARATOR_Y - 2; // Place near bottom, above separator
+        int buttonX = (_layout.TERMINAL_WIDTH - buttonWidth) / 2;
+        int buttonY = _layout.SEPARATOR_Y - 2; // Place near bottom, above separator
         
         Vector4 buttonColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverColor : Config.NarrativeUI.ContinueButtonColor;
         Vector4 buttonBackgroundColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;

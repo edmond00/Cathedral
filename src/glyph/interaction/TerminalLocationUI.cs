@@ -21,39 +21,48 @@ namespace Cathedral.Glyph.Interaction
     /// <summary>
     /// Manages the terminal UI for location interactions.
     /// Handles rendering location information, action menus, and mouse interaction.
-    /// Terminal size: 100x30 (larger than default to accommodate more text)
+    /// Layout adapts dynamically to terminal dimensions.
     /// </summary>
     public class TerminalLocationUI
     {
-        // Use centralized configuration
-        private const int TERMINAL_WIDTH = Config.LocationUI.TerminalWidth;
-        private const int TERMINAL_HEIGHT = Config.LocationUI.TerminalHeight;
-        private const int HEADER_HEIGHT = Config.LocationUI.HeaderHeight;
-        private const int STATUS_BAR_HEIGHT = Config.LocationUI.StatusBarHeight;
-        private const int ACTION_MENU_START_Y = Config.LocationUI.ActionMenuStartY;
-        private const int NARRATIVE_START_Y = Config.LocationUI.NarrativeStartY;
-        private const int NARRATIVE_HEIGHT = Config.LocationUI.NarrativeHeight;
-        
         private readonly TerminalHUD _terminal;
         private List<LocationActionRegion> _actionRegions = new();
         private int? _hoveredActionIndex = null;
+        
+        // Dynamic layout values calculated from terminal dimensions
+        private readonly int TERMINAL_WIDTH;
+        private readonly int TERMINAL_HEIGHT;
+        private readonly int HEADER_HEIGHT;
+        private readonly int STATUS_BAR_HEIGHT;
+        private readonly int ACTION_MENU_START_Y;
+        private readonly int NARRATIVE_START_Y;
+        private readonly int NARRATIVE_HEIGHT;
         
         public TerminalLocationUI(TerminalHUD terminal)
         {
             _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
             
-            if (_terminal.Width != TERMINAL_WIDTH || _terminal.Height != TERMINAL_HEIGHT)
-            {
-                throw new ArgumentException($"Terminal must be {TERMINAL_WIDTH}x{TERMINAL_HEIGHT}, but got {_terminal.Width}x{_terminal.Height}");
-            }
+            // Use actual terminal dimensions
+            TERMINAL_WIDTH = _terminal.Width;
+            TERMINAL_HEIGHT = _terminal.Height;
+            
+            // Calculate layout proportions dynamically
+            // Header takes ~10% of height (min 3 lines)
+            HEADER_HEIGHT = Math.Max(3, TERMINAL_HEIGHT / 10);
+            STATUS_BAR_HEIGHT = 1;
+            
+            // Action menu starts at ~60% down the screen
+            ACTION_MENU_START_Y = (int)(TERMINAL_HEIGHT * 0.6);
+            NARRATIVE_START_Y = HEADER_HEIGHT + 1;
+            NARRATIVE_HEIGHT = ACTION_MENU_START_Y - NARRATIVE_START_Y - 1;
             
             Console.WriteLine($"TerminalLocationUI: Initialized with {TERMINAL_WIDTH}x{TERMINAL_HEIGHT} terminal");
         }
         
         /// <summary>
-        /// Gets the dimensions expected for the terminal
+        /// Gets the default dimensions from Config (for reference, not enforced)
         /// </summary>
-        public static (int width, int height) GetRequiredDimensions() => (TERMINAL_WIDTH, TERMINAL_HEIGHT);
+        public static (int width, int height) GetDefaultDimensions() => (Config.LocationUI.TerminalWidth, Config.LocationUI.TerminalHeight);
         
         /// <summary>
         /// Clears the entire terminal

@@ -19,7 +19,7 @@ public static class Config
         
         // Main terminal dimensions
         public const int MainWidth = 100;
-        public const int MainHeight = 30;
+        public const int MainHeight = 80;
         public const int MainCellSize = 20;
         public const int MainFontSize = 22;
         

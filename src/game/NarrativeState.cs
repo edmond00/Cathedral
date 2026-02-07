@@ -87,9 +87,9 @@ public class NarrativeState
     public bool IsScrollbarThumbHovered { get; set; } = false;
 
     /// <summary>
-    /// Thinking attempts remaining (starts at 3, decrements on keyword click).
+    /// Thinking attempts remaining (starts at max, decrements on keyword click).
     /// </summary>
-    public int ThinkingAttemptsRemaining { get; set; } = 3;
+    public int ThinkingAttemptsRemaining { get; set; } = NarrativeUI.GetMaxThinkingAttempts();
 
     /// <summary>
     /// Should the "Continue" button be shown?
@@ -186,7 +186,7 @@ public class NarrativeState
         IsLoadingFocusObservation = false;
         LoadingMessage = Config.LoadingMessages.Default;
         HoveredKeyword = null;
-        ThinkingAttemptsRemaining = 3;
+        ThinkingAttemptsRemaining = NarrativeUI.GetMaxThinkingAttempts();
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
         IsSelectingObservationSkill = false;
@@ -211,7 +211,7 @@ public class NarrativeState
         HoveredKeyword = null;
         HoveredAction = null;
         ActionRegions.Clear();
-        ThinkingAttemptsRemaining = 3;
+        ThinkingAttemptsRemaining = NarrativeUI.GetMaxThinkingAttempts();
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
         IsSelectingObservationSkill = false;

@@ -1,46 +1,76 @@
 namespace Cathedral.Game;
 
 /// <summary>
-/// Centralized layout constants for Narrative UI to prevent duplication and ensure consistency.
+/// Dynamic layout calculator for Narrative UI that adapts to terminal dimensions.
+/// Calculates all layout values based on the provided terminal size.
 /// </summary>
-public static class NarrativeLayout
+public class NarrativeLayout
 {
     // Terminal dimensions
-    public const int TERMINAL_WIDTH = 100;
-    public const int TERMINAL_HEIGHT = 30;
+    public int TERMINAL_WIDTH { get; }
+    public int TERMINAL_HEIGHT { get; }
     
     // Header section
-    public const int HEADER_HEIGHT = 2;
+    public int HEADER_HEIGHT { get; }
     
     // Status bar section
-    public const int STATUS_BAR_HEIGHT = 1;
-    public const int STATUS_BAR_Y = TERMINAL_HEIGHT - STATUS_BAR_HEIGHT;
+    public int STATUS_BAR_HEIGHT { get; }
+    public int STATUS_BAR_Y { get; }
     
     // Separator section
-    public const int SEPARATOR_HEIGHT = 1;
-    public const int SEPARATOR_Y = STATUS_BAR_Y - SEPARATOR_HEIGHT;
+    public int SEPARATOR_HEIGHT { get; }
+    public int SEPARATOR_Y { get; }
     
     // Content area (scrollable narrative)
-    public const int CONTENT_START_Y = HEADER_HEIGHT;
-    public const int CONTENT_END_Y = SEPARATOR_Y - 1;
-    public const int NARRATIVE_HEIGHT = CONTENT_END_Y - CONTENT_START_Y + 1; // 26 lines
+    public int CONTENT_START_Y { get; }
+    public int CONTENT_END_Y { get; }
+    public int NARRATIVE_HEIGHT { get; }
     
     // Margins
-    public const int LEFT_MARGIN = 4;
-    public const int RIGHT_MARGIN = 4;
-    public const int CONTENT_WIDTH = TERMINAL_WIDTH - LEFT_MARGIN - RIGHT_MARGIN;
+    public int LEFT_MARGIN { get; }
+    public int RIGHT_MARGIN { get; }
+    public int CONTENT_WIDTH { get; }
     
     // Scrollbar
-    public const int SCROLLBAR_TRACK_HEIGHT = NARRATIVE_HEIGHT; // 26 cells for track (Y=2 to Y=27)
-    public const int SCROLLBAR_THUMB_MIN_HEIGHT = 3;
+    public int SCROLLBAR_TRACK_HEIGHT { get; }
+    public int SCROLLBAR_THUMB_MIN_HEIGHT { get; }
     
     // Scroll behavior
-    public const int SCROLL_BOTTOM_MARGIN = 5; // Extra lines for comfortable scrolling at bottom
+    public int SCROLL_BOTTOM_MARGIN { get; }
+    
+    /// <summary>
+    /// Creates a dynamic layout calculator based on terminal dimensions.
+    /// </summary>
+    public NarrativeLayout(int terminalWidth, int terminalHeight)
+    {
+        TERMINAL_WIDTH = terminalWidth;
+        TERMINAL_HEIGHT = terminalHeight;
+        
+        // Calculate proportional layout values
+        HEADER_HEIGHT = 2;
+        STATUS_BAR_HEIGHT = 1;
+        SEPARATOR_HEIGHT = 1;
+        
+        STATUS_BAR_Y = TERMINAL_HEIGHT - STATUS_BAR_HEIGHT;
+        SEPARATOR_Y = STATUS_BAR_Y - SEPARATOR_HEIGHT;
+        
+        CONTENT_START_Y = HEADER_HEIGHT;
+        CONTENT_END_Y = SEPARATOR_Y - 1;
+        NARRATIVE_HEIGHT = CONTENT_END_Y - CONTENT_START_Y + 1;
+        
+        LEFT_MARGIN = 4;
+        RIGHT_MARGIN = 4;
+        CONTENT_WIDTH = TERMINAL_WIDTH - LEFT_MARGIN - RIGHT_MARGIN;
+        
+        SCROLLBAR_TRACK_HEIGHT = NARRATIVE_HEIGHT;
+        SCROLLBAR_THUMB_MIN_HEIGHT = 3;
+        SCROLL_BOTTOM_MARGIN = 5;
+    }
     
     /// <summary>
     /// Calculate the maximum scroll offset for a given total line count.
     /// </summary>
-    public static int CalculateMaxScrollOffset(int totalLines)
+    public int CalculateMaxScrollOffset(int totalLines)
     {
         return Math.Max(0, totalLines - NARRATIVE_HEIGHT + SCROLL_BOTTOM_MARGIN);
     }
