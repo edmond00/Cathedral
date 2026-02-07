@@ -196,40 +196,40 @@ public static class Config
         // Layout padding - transparent lines/columns at edges for menu size control
         public const int TopPadding = 5;    // Number of transparent lines above header
         public const int BottomPadding = 5; // Number of transparent lines below status bar
-        public const int LeftPadding = 5;    // Number of transparent columns on left side
-        public const int RightPadding = 5;   // Number of transparent columns on right side
+        public const int LeftPadding = 1;    // Number of transparent columns on left side
+        public const int RightPadding = 1;   // Number of transparent columns on right side
         
         // Top padding appearance
-        public const char TopPaddingChar = '┉';
+        public const char TopPaddingChar = ' ';
         public static readonly Vector4 TopPaddingTextColor = Colors.DarkGray20;
         public static readonly Vector4 TopPaddingBackgroundColor = Colors.Transparent;
-        public const char TopPaddingEdgeChar = '─';  // Last line of top padding (frame)
-        public static readonly Vector4 TopPaddingEdgeTextColor = Colors.DarkGray35;
-        public static readonly Vector4 TopPaddingEdgeBackgroundColor = Colors.Transparent;
+        public const char TopPaddingEdgeChar = '▪';  // Last line of top padding (frame)
+        public static readonly Vector4 TopPaddingEdgeTextColor = Colors.DarkGray20;
+        public static readonly Vector4 TopPaddingEdgeBackgroundColor = Colors.Black;
         
         // Bottom padding appearance
-        public const char BottomPaddingChar = '┉';
+        public const char BottomPaddingChar = ' ';
         public static readonly Vector4 BottomPaddingTextColor = Colors.DarkGray20;
         public static readonly Vector4 BottomPaddingBackgroundColor = Colors.Transparent;
-        public const char BottomPaddingEdgeChar = '─';  // First line of bottom padding (frame)
-        public static readonly Vector4 BottomPaddingEdgeTextColor = Colors.DarkGray35;
-        public static readonly Vector4 BottomPaddingEdgeBackgroundColor = Colors.Transparent;
+        public const char BottomPaddingEdgeChar = '▪';  // First line of bottom padding (frame)
+        public static readonly Vector4 BottomPaddingEdgeTextColor = Colors.DarkGray20;
+        public static readonly Vector4 BottomPaddingEdgeBackgroundColor = Colors.Black;
         
         // Left padding appearance
-        public const char LeftPaddingChar = '┋';
+        public const char LeftPaddingChar = ' ';
         public static readonly Vector4 LeftPaddingTextColor = Colors.DarkGray20;
         public static readonly Vector4 LeftPaddingBackgroundColor = Colors.Transparent;
-        public const char LeftPaddingEdgeChar = '│';  // Last column of left padding (frame)
-        public static readonly Vector4 LeftPaddingEdgeTextColor = Colors.DarkGray35;
-        public static readonly Vector4 LeftPaddingEdgeBackgroundColor = Colors.Transparent;
+        public const char LeftPaddingEdgeChar = '▪';  // Last column of left padding (frame)
+        public static readonly Vector4 LeftPaddingEdgeTextColor = Colors.DarkGray20;
+        public static readonly Vector4 LeftPaddingEdgeBackgroundColor = Colors.Black;
         
         // Right padding appearance
-        public const char RightPaddingChar = '┋';
+        public const char RightPaddingChar = ' ';
         public static readonly Vector4 RightPaddingTextColor = Colors.DarkGray20;
         public static readonly Vector4 RightPaddingBackgroundColor = Colors.Transparent;
-        public const char RightPaddingEdgeChar = '│';  // First column of right padding (frame)
-        public static readonly Vector4 RightPaddingEdgeTextColor = Colors.DarkGray35;
-        public static readonly Vector4 RightPaddingEdgeBackgroundColor = Colors.Transparent;
+        public const char RightPaddingEdgeChar = '▪';  // First column of right padding (frame)
+        public static readonly Vector4 RightPaddingEdgeTextColor = Colors.DarkGray20;
+        public static readonly Vector4 RightPaddingEdgeBackgroundColor = Colors.Black;
         
         // Colors following black/white/yellow theme
         public static readonly Vector4 HeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for location title
