@@ -38,23 +38,31 @@ public class NarrativeLayout
     // Scroll behavior
     public int SCROLL_BOTTOM_MARGIN { get; }
     
+    // Padding
+    public int TOP_PADDING { get; }
+    public int BOTTOM_PADDING { get; }
+    
     /// <summary>
     /// Creates a dynamic layout calculator based on terminal dimensions.
     /// </summary>
-    public NarrativeLayout(int terminalWidth, int terminalHeight)
+    public NarrativeLayout(int terminalWidth, int terminalHeight, int topPadding = 0, int bottomPadding = 0)
     {
         TERMINAL_WIDTH = terminalWidth;
         TERMINAL_HEIGHT = terminalHeight;
+        TOP_PADDING = topPadding;
+        BOTTOM_PADDING = bottomPadding;
         
-        // Calculate proportional layout values
+        // Calculate proportional layout values with padding
         HEADER_HEIGHT = 2;
         STATUS_BAR_HEIGHT = 1;
         SEPARATOR_HEIGHT = 1;
         
-        STATUS_BAR_Y = TERMINAL_HEIGHT - STATUS_BAR_HEIGHT;
+        // Status bar pushed up by bottom padding
+        STATUS_BAR_Y = TERMINAL_HEIGHT - BOTTOM_PADDING - STATUS_BAR_HEIGHT;
         SEPARATOR_Y = STATUS_BAR_Y - SEPARATOR_HEIGHT;
         
-        CONTENT_START_Y = HEADER_HEIGHT;
+        // Content starts after top padding and header
+        CONTENT_START_Y = TOP_PADDING + HEADER_HEIGHT;
         CONTENT_END_Y = SEPARATOR_Y - 1;
         NARRATIVE_HEIGHT = CONTENT_END_Y - CONTENT_START_Y + 1;
         

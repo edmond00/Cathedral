@@ -75,7 +75,11 @@ public class NarrativeController
         
         _ui = new NarrativeUI(terminal);
         // Calculate content width dynamically: terminal width - margins - scrollbar
-        var layout = new NarrativeLayout(terminal.Width, terminal.Height);
+        var layout = new NarrativeLayout(
+            terminal.Width, 
+            terminal.Height, 
+            Config.NarrativeUI.TopPadding, 
+            Config.NarrativeUI.BottomPadding);
         int contentWidth = layout.CONTENT_WIDTH - 1; // -1 for scrollbar
         _scrollBuffer = new NarrationScrollBuffer(maxWidth: contentWidth, layout: layout);
         _skillPopup = new TerminalThinkingSkillPopup(popup);
@@ -875,7 +879,11 @@ public class NarrativeController
         {
             int deltaY = mouseY - _narrationState.ScrollbarDragStartY;
             
-            var layout = new NarrativeLayout(_core.Terminal.Width, _core.Terminal.Height);
+            var layout = new NarrativeLayout(
+                _core.Terminal.Width, 
+                _core.Terminal.Height, 
+                Config.NarrativeUI.TopPadding, 
+                Config.NarrativeUI.BottomPadding);
             int trackHeight = layout.SCROLLBAR_TRACK_HEIGHT;
             int totalLines = _scrollBuffer.TotalLines;
             int visibleLines = layout.NARRATIVE_HEIGHT;

@@ -39,11 +39,15 @@ public class NarrativeUI
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
         _keywordRenderer = new KeywordRenderer();
         
-        // Create dynamic layout based on actual terminal dimensions
-        _layout = new NarrativeLayout(_terminal.Width, _terminal.Height);
+        // Create dynamic layout based on actual terminal dimensions and config padding
+        _layout = new NarrativeLayout(
+            _terminal.Width, 
+            _terminal.Height, 
+            Config.NarrativeUI.TopPadding, 
+            Config.NarrativeUI.BottomPadding);
         SCROLLBAR_X = _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN;
         
-        Console.WriteLine($"NarrativeUI: Initialized with {_terminal.Width}x{_terminal.Height} terminal");
+        Console.WriteLine($"NarrativeUI: Initialized with {_terminal.Width}x{_terminal.Height} terminal (padding: top={_layout.TOP_PADDING}, bottom={_layout.BOTTOM_PADDING})");
     }
     
     /// <summary>
@@ -63,9 +67,29 @@ public class NarrativeUI
     {
         for (int y = 0; y < _layout.TERMINAL_HEIGHT; y++)
         {
+            // Use configurable appearance for padding areas
+            char cellChar;
+            Vector4 textColor;
+            Vector4 bgColor;
+            
+            if (y < _layout.TOP_PADDING || y >= _layout.TERMINAL_HEIGHT - _layout.BOTTOM_PADDING)
+            {
+                // Padding zones - use configured appearance
+                cellChar = Config.NarrativeUI.PaddingChar;
+                textColor = Config.NarrativeUI.PaddingTextColor;
+                bgColor = Config.NarrativeUI.PaddingBackgroundColor;
+            }
+            else
+            {
+                // Content zones - use normal appearance
+                cellChar = ' ';
+                textColor = Config.NarrativeUI.NarrativeColor;
+                bgColor = Config.NarrativeUI.BackgroundColor;
+            }
+            
             for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
             {
-                _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
+                _terminal.SetCell(x, y, cellChar, textColor, bgColor);
             }
         }
         _keywordRegions.Clear();
@@ -76,17 +100,20 @@ public class NarrativeUI
     /// </summary>
     public void RenderHeader(string locationName, int thinkingAttemptsRemaining, string biomeType = "forest")
     {
+        // Header starts after top padding
+        int headerY = _layout.TOP_PADDING;
+        
         // Line 0: Location name with biome type
         string biomeTitle = char.ToUpper(biomeType[0]) + biomeType.Substring(1);
         string formattedLocationName = locationName.Replace("_", " ");
         string title = $"{biomeTitle} - {formattedLocationName}";
-        _terminal.Text(_layout.LEFT_MARGIN, 0, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
+        _terminal.Text(_layout.LEFT_MARGIN, headerY, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
         
         // Thinking attempts indicator (right side)
         int maxAttempts = GetMaxThinkingAttempts();
         string attempts = $"Remaining noetic points : [";
         int attemptsX = _layout.TERMINAL_WIDTH - _layout.RIGHT_MARGIN - 40;
-        _terminal.Text(attemptsX, 0, attempts, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+        _terminal.Text(attemptsX, headerY, attempts, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         
         // Draw individual attempt markers
         int markerX = attemptsX + attempts.Length;
@@ -96,16 +123,15 @@ public class NarrativeUI
             Vector4 markerColor = isRemaining
                 ? Config.NarrativeUI.LoadingColor // Bright yellow for available
                 : Config.NarrativeUI.HistoryColor; // Dark gray for used
-            // _terminal.Text(markerX, 0, "▁E, markerColor, Config.NarrativeUI.BackgroundColor);
-            _terminal.Text(markerX, 0, Config.Symbols.NoeticPointMarker.ToString(), markerColor, Config.NarrativeUI.BackgroundColor);
+            _terminal.Text(markerX, headerY, Config.Symbols.NoeticPointMarker.ToString(), markerColor, Config.NarrativeUI.BackgroundColor);
             markerX++;
         }
         
         // Closing bracket
-        _terminal.Text(markerX, 0, "]", Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+        _terminal.Text(markerX, headerY, "]", Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         
-        // Separator line
-        DrawHorizontalLine(1);
+        // Separator line (after header)
+        DrawHorizontalLine(_layout.TOP_PADDING + 1);
     }
     
     /// <summary>

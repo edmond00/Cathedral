@@ -26,7 +26,7 @@ public static class Config
         // Popup terminal dimensions
         public const int PopupWidth = 40;
         public const int PopupHeight = 40;
-        public const int PopupCellSize = 16;
+        public const int PopupCellSize = MainCellSize;
     }
     
     #endregion
@@ -193,7 +193,14 @@ public static class Config
     
     public static class NarrativeUI
     {
-        // Colors following black/white/yellow theme
+        // Layout padding - transparent lines at top and bottom for menu size control
+        public const int TopPadding = 10;    // Number of transparent lines above header (adjust to control menu height)
+        public const int BottomPadding = 10; // Number of transparent lines below status bar (adjust to control menu height)
+                // Padding cell appearance (what to render in the padding zones)
+        public const char PaddingChar = '┉';                               // Character to fill padding cells
+        public static readonly Vector4 PaddingTextColor = Colors.DarkGray20;      // Text color for padding cells
+        public static readonly Vector4 PaddingBackgroundColor = Colors.Transparent; // Background color for padding cells
+                // Colors following black/white/yellow theme
         public static readonly Vector4 HeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for location title
         public static readonly Vector4 SkillHeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for skill headers
         public static readonly Vector4 NarrativeColor = Colors.MediumGray60; // Medium grey for base text (darker for better contrast)
