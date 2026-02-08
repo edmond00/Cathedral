@@ -1,23 +1,53 @@
 ﻿using Cathedral.LLM;
 using Cathedral.Game;
 
+// Check for draw mode (display previously saved layered ASCII art)
+if (args.Length >= 2 && args[0] == "--draw")
+{
+    string folderPath = args[1];
+    Cathedral.Game.ImageToTextModeLauncher.LaunchDrawMode(folderPath);
+    return;
+}
+
 // Check for image-to-text converter mode
 if (args.Length >= 2 && args[0] == "--img-to-txt")
 {
     string imagePath = args[1];
     int maxImageWidth = 0;   // 0 means use full terminal width
     int maxImageHeight = 0;  // 0 means use full terminal height
+    bool useNegative = false;
+    bool autoContrast = false;
+    float manualContrast = 1.0f; // 1.0 = no change, >1.0 = increase, <1.0 = decrease
     
-    // Parse optional width/height arguments to constrain image size within terminal
-    for (int i = 2; i < args.Length - 1; i++)
+    // Parse optional arguments
+    for (int i = 2; i < args.Length; i++)
     {
-        if (args[i] == "--width" && int.TryParse(args[i + 1], out int w))
+        if (args[i] == "--width" && i + 1 < args.Length && int.TryParse(args[i + 1], out int w))
+        {
             maxImageWidth = w;
-        else if (args[i] == "--height" && int.TryParse(args[i + 1], out int h))
+            i++; // Skip next arg
+        }
+        else if (args[i] == "--height" && i + 1 < args.Length && int.TryParse(args[i + 1], out int h))
+        {
             maxImageHeight = h;
+            i++; // Skip next arg
+        }
+        else if (args[i] == "--contrast" && i + 1 < args.Length && float.TryParse(args[i + 1], out float c))
+        {
+            manualContrast = c;
+            i++; // Skip next arg
+        }
+        else if (args[i] == "--negative")
+        {
+            useNegative = true;
+        }
+        else if (args[i] == "--auto-contrast")
+        {
+            autoContrast = true;
+        }
     }
     
-    Cathedral.Game.ImageToTextModeLauncher.Launch(imagePath, maxImageWidth, maxImageHeight);
+    Cathedral.Game.ImageToTextModeLauncher.Launch(imagePath, maxImageWidth, maxImageHeight, useNegative, autoContrast, manualContrast);
     return;
 }
 

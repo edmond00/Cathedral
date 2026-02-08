@@ -413,7 +413,7 @@ public static class Config
             {
                 Name = "Shadows",
                 MinBrightness = 0.0f,
-                MaxBrightness = 0.05f,
+                MaxBrightness = 0.25f,
                 GlyphGradient = "░░▒▒▓",
                 Color = new Vector4(0.1f, 0.1f, 0.1f, 1.0f) // Dark gray
             },
@@ -422,8 +422,8 @@ public static class Config
             new BrightnessLayer
             {
                 Name = "Mid-tones",
-                MinBrightness = 0.05f,
-                MaxBrightness = 0.3f,
+                MinBrightness = 0.25f,
+                MaxBrightness = 0.5f,
                 GlyphGradient = ".:",
                 Color = new Vector4(0.6f, 0.6f, 0.6f, 1.0f) // Medium gray
             },
@@ -432,8 +432,8 @@ public static class Config
             new BrightnessLayer
             {
                 Name = "Highlights",
-                MinBrightness = 0.3f,
-                MaxBrightness = 0.7f,
+                MinBrightness = 0.5f,
+                MaxBrightness = 0.75f,
                 GlyphGradient = "~=*#",
                 Color = new Vector4(0.8f, 0.8f, 0.4f, 1.0f) // Light gray
             },
@@ -442,7 +442,7 @@ public static class Config
             new BrightnessLayer
             {
                 Name = "Yellow",
-                MinBrightness = 0.7f,
+                MinBrightness = 0.75f,
                 MaxBrightness = 1.0f,
                 GlyphGradient = "-+@",
                 Color = new Vector4(1f, 1f, 0f, 1.0f) // Light gray

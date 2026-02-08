@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Text;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -27,7 +28,10 @@ namespace Cathedral.Terminal
         /// <param name="terminal">Terminal HUD to populate</param>
         /// <param name="maxWidth">Maximum width for image in characters (0 = use terminal width)</param>
         /// <param name="maxHeight">Maximum height for image in characters (0 = use terminal height)</param>
-        public void ConvertImageToTerminal(string imagePath, TerminalHUD terminal, int maxWidth = 0, int maxHeight = 0)
+        /// <param name="useNegative">If true, inverts the image (negative)</param>
+        /// <param name="autoContrast">If true, automatically adjusts contrast to spread brightness evenly</param>
+        /// <param name="manualContrast">Manual contrast multiplier (1.0 = no change, >1.0 = increase, <1.0 = decrease)</param>
+        public void ConvertImageToTerminal(string imagePath, TerminalHUD terminal, int maxWidth = 0, int maxHeight = 0, bool useNegative = false, bool autoContrast = false, float manualContrast = 1.0f)
         {
             if (!File.Exists(imagePath))
                 throw new FileNotFoundException($"Image file not found: {imagePath}");
@@ -41,6 +45,31 @@ namespace Cathedral.Terminal
             maxHeight = Math.Min(maxHeight, terminal.Height);
 
             using var image = Image.Load<Rgba32>(imagePath);
+            
+            // Apply image preprocessing
+            image.Mutate(ctx =>
+            {
+                // Apply manual contrast adjustment
+                if (manualContrast != 1.0f)
+                {
+                    ctx.Contrast(manualContrast);
+                    Console.WriteLine($"Applied manual contrast: {manualContrast:F2}x");
+                }
+                
+                // Apply auto-contrast (histogram equalization)
+                if (autoContrast)
+                {
+                    ctx.HistogramEqualization();
+                    Console.WriteLine("Applied auto-contrast");
+                }
+                
+                // Apply negative (invert colors)
+                if (useNegative)
+                {
+                    ctx.Invert();
+                    Console.WriteLine("Applied negative (inverted colors)");
+                }
+            });
             
             // Calculate aspect ratio preserving dimensions
             float imageAspect = (float)image.Width / image.Height;
@@ -225,24 +254,30 @@ namespace Cathedral.Terminal
         {
             var lines = new List<string>
             {
-                "Layer,Name,MinBrightness,MaxBrightness,GlyphGradient,ColorR,ColorG,ColorB,ColorA"
+                "Layer,Name,ColorR,ColorG,ColorB,ColorA"
             };
 
             for (int i = 0; i < Config.ImageToText.Layers.Count; i++)
             {
                 var layer = Config.ImageToText.Layers[i];
+                // Use invariant culture to ensure periods as decimal separators
                 lines.Add($"{i}," +
                          $"\"{layer.Name}\"," +
-                         $"{layer.MinBrightness:F3}," +
-                         $"{layer.MaxBrightness:F3}," +
-                         $"\"{layer.GlyphGradient}\"," +
-                         $"{layer.Color.X:F3}," +
-                         $"{layer.Color.Y:F3}," +
-                         $"{layer.Color.Z:F3}," +
-                         $"{layer.Color.W:F3}");
+                         $"{layer.Color.X.ToString("F3", CultureInfo.InvariantCulture)}," +
+                         $"{layer.Color.Y.ToString("F3", CultureInfo.InvariantCulture)}," +
+                         $"{layer.Color.Z.ToString("F3", CultureInfo.InvariantCulture)}," +
+                         $"{layer.Color.W.ToString("F3", CultureInfo.InvariantCulture)}");
             }
 
             File.WriteAllLines(outputPath, lines);
+        }
+
+        /// <summary>
+        /// Escape special characters in CSV field
+        /// </summary>
+        private string EscapeCsvField(string field)
+        {
+            return field.Replace("\"", "\"\""); // Escape quotes by doubling them
         }
 
         #endregion
