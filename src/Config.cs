@@ -17,6 +17,17 @@ public static class Config
         public const string FontPath = "assets/fonts/FreeMono.ttf";
         public const string FallbackFontPath = "assets/fonts/DejaVuSansMono.ttf";
         
+        /// <summary>
+        /// Characters that should use the fallback font instead of the main font.
+        /// Add any special characters here that don't render properly in FreeMono.
+        /// </summary>
+        public static readonly HashSet<char> FallbackGlyphs = new HashSet<char>
+        {
+            // Add characters here that need fallback font
+            // Example: '█', '▓', '▒', '░', etc.
+            '♞', '⚓'
+        };
+        
         // Main terminal dimensions
         public const int MainWidth = 100;
         public const int MainHeight = 100;

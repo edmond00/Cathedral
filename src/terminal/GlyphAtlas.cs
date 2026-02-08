@@ -212,60 +212,6 @@ namespace Cathedral.Terminal
             Console.WriteLine($"Terminal: Atlas built successfully - {cols}x{rows} grid, {atlasWidth}x{atlasHeight} pixels");
         }
 
-        /// <summary>
-        /// Checks if a font properly supports a glyph by rendering it and checking if any pixels were drawn.
-        /// This avoids the font's default fallback behavior which would render a replacement character.
-        /// </summary>
-        private bool FontSupportsGlyph(Font font, char glyph)
-        {
-            if (font == null)
-                return false;
-                
-            try
-            {
-                // Create a small test image
-                using var testImage = new Image<Rgba32>(32, 32, Color.Transparent);
-                
-                testImage.Mutate(ctx =>
-                {
-                    var textOptions = new RichTextOptions(font)
-                    {
-                        Origin = new PointF(16, 16),
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        FallbackFontFamilies = Array.Empty<FontFamily>() // Disable fallback
-                    };
-                    
-                    ctx.DrawText(textOptions, glyph.ToString(), Color.White);
-                });
-                
-                // Check if any pixels were actually drawn
-                bool hasContent = false;
-                testImage.ProcessPixelRows(accessor =>
-                {
-                    for (int y = 0; y < accessor.Height && !hasContent; y++)
-                    {
-                        var row = accessor.GetRowSpan(y);
-                        for (int x = 0; x < row.Length; x++)
-                        {
-                            if (row[x].A > 0) // Check if pixel has any alpha (is visible)
-                            {
-                                hasContent = true;
-                                break;
-                            }
-                        }
-                    }
-                });
-                
-                return hasContent;
-            }
-            catch
-            {
-                // If we can't render, assume the font doesn't support the glyph
-                return false;
-            }
-        }
-
         private void RenderGlyphToAtlas(Image<Rgba32> atlas, char glyph, int x, int y)
         {
             if (_font == null)
@@ -273,12 +219,11 @@ namespace Cathedral.Terminal
 
             // Determine which font to use for this glyph
             Font? baseFont = _font;
-            bool usedFallback = false;
             
-            if (!FontSupportsGlyph(_font, glyph) && _fallbackFont != null && FontSupportsGlyph(_fallbackFont, glyph))
+            // Use fallback font if this glyph is in the fallback list
+            if (Config.Terminal.FallbackGlyphs.Contains(glyph) && _fallbackFont != null)
             {
                 baseFont = _fallbackFont;
-                usedFallback = true;
             }
 
             // Get glyph-specific size factor from config

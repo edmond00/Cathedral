@@ -1494,56 +1494,13 @@ namespace Cathedral.Glyph
                 int x = cx * cellSize;
                 int y = cy * cellSize;
                 
-                // Determine which font to use for this glyph by testing if it renders
+                // Determine which font to use for this glyph
                 Font fontToUse = font;
-                if (fallbackFont != null)
+                
+                // Use fallback font if this glyph is in the fallback list
+                if (Config.Terminal.FallbackGlyphs.Contains(glyphChar) && fallbackFont != null)
                 {
-                    try
-                    {
-                        // Test if main font renders this glyph
-                        bool mainFontSupports = false;
-                        using (var testImage = new Image<Rgba32>(16, 16, Color.Transparent))
-                        {
-                            testImage.Mutate(ctx =>
-                            {
-                                var testOptions = new RichTextOptions(font)
-                                {
-                                    Origin = new PointF(8, 8),
-                                    HorizontalAlignment = HorizontalAlignment.Center,
-                                    VerticalAlignment = VerticalAlignment.Center,
-                                    FallbackFontFamilies = Array.Empty<FontFamily>()
-                                };
-                                ctx.DrawText(testOptions, glyph, Color.White);
-                            });
-                            
-                            // Check if any pixels were drawn
-                            testImage.ProcessPixelRows(accessor =>
-                            {
-                                for (int ty = 0; ty < accessor.Height && !mainFontSupports; ty++)
-                                {
-                                    var row = accessor.GetRowSpan(ty);
-                                    for (int tx = 0; tx < row.Length; tx++)
-                                    {
-                                        if (row[tx].A > 0)
-                                        {
-                                            mainFontSupports = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                        
-                        // If main font doesn't support it, try fallback
-                        if (!mainFontSupports)
-                        {
-                            fontToUse = fallbackFont;
-                        }
-                    }
-                    catch
-                    {
-                        // If testing fails, just use main font
-                    }
+                    fontToUse = fallbackFont;
                 }
 
                 atlas.Mutate(ctx =>
