@@ -1,0 +1,5 @@
+Layer,Name,ColorR,ColorG,ColorB,ColorA
+0,"Shadows",0.100,0.100,0.100,1.000
+1,"Mid-tones",0.600,0.600,0.600,1.000
+2,"Highlights",0.800,0.800,0.800,1.000
+3,"White",1.000,1.000,1.000,1.000
