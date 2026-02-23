@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
@@ -36,8 +37,30 @@ public class AvatarCreationRenderer
     private string? _hoveredOrganPartName;  // organ_part id from CSV (e.g. "left_ear")
     private string? _hoveredBodyPartId;     // body part id (e.g. "face")
     private string? _hoveredOrganName;      // organ name (e.g. "ears")
+    private string? _hoveredRawPartName;    // raw 7-value part name (e.g. "left_arm") for limb-side boxes
     private int _totalBudget;
     private bool _continueHovered;
+
+    // Blink state for hovered organ part
+    private readonly Stopwatch _blinkStopwatch = Stopwatch.StartNew();
+    private double _lastBlinkTime;
+    private bool _blinkOn = true;
+    private const double BlinkInterval = 0.35; // seconds per blink toggle
+
+    // Limb body parts that should use per-side (raw part) bounds
+    private static readonly HashSet<string> LimbBodyParts = new() { "upper_limbs", "lower_limbs" };
+
+    // Box drawing padding around body part bounds
+    private const int BoxPadding = 1;
+
+    // Mapping from organ part prefix + body part to raw part name
+    private static readonly Dictionary<(bool isLeft, string bodyPartId), string> LimbSideToRawPart = new()
+    {
+        { (true, "upper_limbs"), "left_arm" },
+        { (false, "upper_limbs"), "right_arm" },
+        { (true, "lower_limbs"), "left_leg" },
+        { (false, "lower_limbs"), "right_leg" },
+    };
 
     // Callback for when the player clicks Continue
     public Action? OnContinue { get; set; }
@@ -81,6 +104,23 @@ public class AvatarCreationRenderer
     }
 
     /// <summary>
+    /// Called every frame. Handles blink animation for hovered organ part.
+    /// </summary>
+    public void Update()
+    {
+        if (_hoveredOrganPartName == null) return;
+
+        double now = _blinkStopwatch.Elapsed.TotalSeconds;
+        if (now - _lastBlinkTime >= BlinkInterval)
+        {
+            _lastBlinkTime = now;
+            _blinkOn = !_blinkOn;
+            // Only re-render the body art area (not the whole screen) for performance
+            RenderBodyArt();
+        }
+    }
+
+    /// <summary>
     /// Handle mouse hover at terminal coordinates.
     /// </summary>
     public void OnMouseMove(int x, int y)
@@ -93,6 +133,7 @@ public class AvatarCreationRenderer
         // Check if hovering over art area
         int artX = x - ArtOffsetX;
         int artY = y - ArtOffsetY;
+        string? newRawPartName = null;
         if (artX >= 0 && artX < _artData.Width && artY >= 0 && artY < _artData.Height)
         {
             var info = _artData.GetOrganPartInfoAt(artX, artY);
@@ -106,6 +147,19 @@ public class AvatarCreationRenderer
             {
                 // Might be on a body-structure cell (not organ-specific)
                 newBodyPart = _artData.GetBodyPartIdAt(artX, artY);
+            }
+            // Capture raw part name for limb-side detection.
+            // Organ map has priority over body part map when they conflict.
+            newRawPartName = _artData.GetPartNameAt(artX, artY);
+
+            // If organ info provides a limb body part, infer raw part from organ part name
+            // (handles both missing raw part and conflicting body part map)
+            if (info != null && LimbBodyParts.Contains(newBodyPart ?? ""))
+            {
+                if (info.OrganPartName.StartsWith("left_"))
+                    newRawPartName = LimbSideToRawPart.GetValueOrDefault((true, newBodyPart!));
+                else if (info.OrganPartName.StartsWith("right_"))
+                    newRawPartName = LimbSideToRawPart.GetValueOrDefault((false, newBodyPart!));
             }
         }
 
@@ -121,12 +175,18 @@ public class AvatarCreationRenderer
                 {
                     newOrgan = op.Value.organName;
                     newBodyPart = op.Value.bodyPartId;
+                    // Determine limb side from organ part name for stats panel hover
+                    if (LimbBodyParts.Contains(op.Value.bodyPartId) && partId.StartsWith("left_"))
+                        newRawPartName = LimbSideToRawPart.GetValueOrDefault((true, op.Value.bodyPartId));
+                    else if (LimbBodyParts.Contains(op.Value.bodyPartId) && partId.StartsWith("right_"))
+                        newRawPartName = LimbSideToRawPart.GetValueOrDefault((false, op.Value.bodyPartId));
                 }
             }
         }
 
         bool changed = newOrganPart != _hoveredOrganPartName
                      || newBodyPart != _hoveredBodyPartId
+                     || newRawPartName != _hoveredRawPartName
                      || newContinueHovered != _continueHovered;
 
         if (changed)
@@ -134,7 +194,11 @@ public class AvatarCreationRenderer
             _hoveredOrganPartName = newOrganPart;
             _hoveredBodyPartId = newBodyPart;
             _hoveredOrganName = newOrgan;
+            _hoveredRawPartName = newRawPartName;
             _continueHovered = newContinueHovered;
+            // Reset blink state when hover target changes
+            _lastBlinkTime = _blinkStopwatch.Elapsed.TotalSeconds;
+            _blinkOn = true;
             Render(); // Re-render with new highlights
         }
     }
@@ -178,6 +242,43 @@ public class AvatarCreationRenderer
 
     private void RenderBodyArt()
     {
+        // Compute bounding box for hovered body part (if any)
+        // For limbs (upper_limbs, lower_limbs), use per-side raw part bounds
+        ArtBounds? hoveredBounds = null;
+        if (_hoveredBodyPartId != null)
+        {
+            if (LimbBodyParts.Contains(_hoveredBodyPartId) && _hoveredRawPartName != null)
+            {
+                // Use raw part bounds for the specific limb side
+                hoveredBounds = _artData.GetRawPartBounds(_hoveredRawPartName);
+            }
+            else
+            {
+                hoveredBounds = _artData.GetBodyPartBounds(_hoveredBodyPartId);
+            }
+        }
+
+        // Determine box rectangle in terminal coords (with padding)
+        int boxX1 = -1, boxY1 = -1, boxX2 = -1, boxY2 = -1;
+        if (hoveredBounds != null)
+        {
+            boxX1 = ArtOffsetX + hoveredBounds.MinX - BoxPadding;
+            boxY1 = ArtOffsetY + hoveredBounds.MinY - BoxPadding;
+            boxX2 = ArtOffsetX + hoveredBounds.MaxX + BoxPadding;
+            boxY2 = ArtOffsetY + hoveredBounds.MaxY + BoxPadding;
+            // Clamp to art area (leave room for separator)
+            boxX1 = Math.Max(0, boxX1);
+            boxY1 = Math.Max(0, boxY1);
+            boxX2 = Math.Min(PanelX - 2, boxX2);
+            boxY2 = Math.Min(_terminal.Height - 1, boxY2);
+        }
+
+        // Clear the art area first
+        for (int ty = 0; ty < _artData.Height && ty < _terminal.Height; ty++)
+            for (int tx = 0; tx < PanelX - 1 && tx < _terminal.Width; tx++)
+                _terminal.SetCell(tx, ty, ' ', Config.Colors.Black, Config.Colors.Black);
+
+        // Render all body cells
         for (int ay = 0; ay < _artData.Height; ay++)
         {
             for (int ax = 0; ax < _artData.Width; ax++)
@@ -192,39 +293,143 @@ public class AvatarCreationRenderer
                 Vector4 baseColor = _artData.GetLayerColorAt(ax, ay);
                 Vector4 bgColor = Config.Colors.Black;
 
-                // Check if this cell is part of the body
-                if (!_artData.IsBodyCell(ax, ay)) continue;
+                bool isBodyCell = _artData.IsBodyCell(ax, ay);
+                if (!isBodyCell) continue;
 
-                // Apply highlighting based on hover state
+                // Determine cell category for highlighting
                 var organInfo = _artData.GetOrganPartInfoAt(ax, ay);
                 string? cellBodyPartId = _artData.GetBodyPartIdAt(ax, ay);
+                string? cellRawPartName = _artData.GetPartNameAt(ax, ay);
+                
+                // For limbs, only highlight cells on the same side
+                bool isHoveredBodyPart;
+                if (cellBodyPartId != null && cellBodyPartId == _hoveredBodyPartId
+                    && LimbBodyParts.Contains(cellBodyPartId) && _hoveredRawPartName != null)
+                {
+                    isHoveredBodyPart = cellRawPartName == _hoveredRawPartName;
+                }
+                else
+                {
+                    isHoveredBodyPart = cellBodyPartId != null && cellBodyPartId == _hoveredBodyPartId;
+                }
+                bool isHoveredOrgan = organInfo != null && _hoveredOrganName != null && organInfo.OrganName == _hoveredOrganName;
+                bool isHoveredOrganPart = organInfo != null && organInfo.OrganPartName == _hoveredOrganPartName;
 
-                if (organInfo != null && organInfo.OrganPartName == _hoveredOrganPartName)
+                if (isHoveredOrganPart)
                 {
-                    // Hovered organ part: bright yellow
-                    baseColor = Config.Colors.BrightYellow;
-                    bgColor = new Vector4(0.15f, 0.15f, 0.0f, 1.0f);
+                    // Level 4: Hovered organ part — strongest luminosity boost + blinking
+                    if (_blinkOn)
+                    {
+                        baseColor = AdjustLuminosity(baseColor, 3.0f);
+                        bgColor = new Vector4(0.2f, 0.2f, 0.0f, 1.0f);
+                    }
+                    else
+                    {
+                        baseColor = AdjustLuminosity(baseColor, 2.0f);
+                        bgColor = new Vector4(0.08f, 0.08f, 0.0f, 1.0f);
+                    }
                 }
-                else if (organInfo != null && _hoveredOrganName != null && organInfo.OrganName == _hoveredOrganName)
+                else if (isHoveredOrgan)
                 {
-                    // Same organ, different part: medium yellow
-                    baseColor = Config.Colors.MediumYellow;
-                    bgColor = new Vector4(0.08f, 0.08f, 0.0f, 1.0f);
+                    // Level 3: Same organ, different part — strong luminosity boost
+                    baseColor = AdjustLuminosity(baseColor, 2.2f);
+                    bgColor = new Vector4(0.12f, 0.12f, 0.0f, 1.0f);
                 }
-                else if (cellBodyPartId != null && cellBodyPartId == _hoveredBodyPartId)
+                else if (isHoveredBodyPart && organInfo != null)
                 {
-                    // Same body part: subtle dark yellow tint
-                    baseColor = TintColor(baseColor, Config.Colors.DarkYellow, 0.3f);
+                    // Level 2b: Body part cell that IS an organ — medium luminosity boost
+                    baseColor = AdjustLuminosity(baseColor, 1.6f);
+                    bgColor = new Vector4(0.05f, 0.05f, 0.0f, 1.0f);
+                }
+                else if (isHoveredBodyPart)
+                {
+                    // Level 2a: Body part cell not belonging to a specific organ — slight boost
+                    baseColor = AdjustLuminosity(baseColor, 1.3f);
+                    bgColor = new Vector4(0.04f, 0.04f, 0.0f, 1.0f);
                 }
 
                 _terminal.SetCell(tx, ty, artChar, baseColor, bgColor);
             }
         }
 
+        // Draw body part bounding box if hovering
+        if (hoveredBounds != null && _hoveredBodyPartId != null)
+        {
+            Vector4 boxColor = Config.Colors.DarkYellowGrey;
+            Vector4 boxBg = Config.Colors.Black;
+
+            // Level 1: Fill cells inside box that are NOT body cells with a slight highlight
+            for (int ty = boxY1 + 1; ty < boxY2; ty++)
+            {
+                for (int tx = boxX1 + 1; tx < boxX2; tx++)
+                {
+                    int ax = tx - ArtOffsetX;
+                    int ay = ty - ArtOffsetY;
+                    bool isBody = ax >= 0 && ax < _artData.Width && ay >= 0 && ay < _artData.Height
+                                  && _artData.IsBodyCell(ax, ay);
+                    if (!isBody)
+                    {
+                        // Slight highlight: very dim yellow background, dot pattern
+                        _terminal.SetCell(tx, ty, '·', new Vector4(0.15f, 0.15f, 0.05f, 1.0f),
+                            new Vector4(0.03f, 0.03f, 0.0f, 1.0f));
+                    }
+                }
+            }
+
+            // Draw the box border
+            // Top edge
+            _terminal.SetCell(boxX1, boxY1, BoxChars.Single.TopLeft, boxColor, boxBg);
+            _terminal.SetCell(boxX2, boxY1, BoxChars.Single.TopRight, boxColor, boxBg);
+            for (int tx = boxX1 + 1; tx < boxX2; tx++)
+                _terminal.SetCell(tx, boxY1, BoxChars.Single.Horizontal, boxColor, boxBg);
+            // Bottom edge
+            _terminal.SetCell(boxX1, boxY2, BoxChars.Single.BottomLeft, boxColor, boxBg);
+            _terminal.SetCell(boxX2, boxY2, BoxChars.Single.BottomRight, boxColor, boxBg);
+            for (int tx = boxX1 + 1; tx < boxX2; tx++)
+                _terminal.SetCell(tx, boxY2, BoxChars.Single.Horizontal, boxColor, boxBg);
+            // Left edge
+            for (int ty = boxY1 + 1; ty < boxY2; ty++)
+                _terminal.SetCell(boxX1, ty, BoxChars.Single.Vertical, boxColor, boxBg);
+            // Right edge
+            for (int ty = boxY1 + 1; ty < boxY2; ty++)
+                _terminal.SetCell(boxX2, ty, BoxChars.Single.Vertical, boxColor, boxBg);
+        }
+
         // Draw separator line between art and panel
         int sepX = PanelX - 1;
         for (int y = 0; y < 100; y++)
             _terminal.SetCell(sepX, y, '│', Config.Colors.DarkGray35, Config.Colors.Black);
+
+        // Draw connector arrows (must be after body art so they aren't cleared by blink redraws)
+        RenderArrows();
+    }
+
+    private void RenderArrows()
+    {
+        if (_hoveredOrganPartName == null) return;
+        if (!_organPartNameToChar.TryGetValue(_hoveredOrganPartName, out char organChar)) return;
+
+        var cells = _artData.GetOrganPartCells(organChar);
+        if (cells.Count == 0) return;
+
+        // Find the rightmost cell of the organ part
+        var rightmost = cells.OrderByDescending(c => c.x).First();
+        int artEndX = ArtOffsetX + rightmost.x;
+        int artEndY = ArtOffsetY + rightmost.y;
+
+        // Find the stats row for this organ part
+        int statsRow = _rowToOrganPartId
+            .Where(kvp => kvp.Value == _hoveredOrganPartName)
+            .Select(kvp => kvp.Key)
+            .FirstOrDefault(-1);
+
+        if (statsRow >= 0 && artEndX < PanelX - 2)
+        {
+            ArrowRenderer.DrawConnector(_terminal,
+                artEndX + 1, artEndY,
+                PanelContentX - 1, statsRow,
+                Config.Colors.DarkYellowGrey, Config.Colors.Black);
+        }
     }
 
     private void RenderStatsPanel()
@@ -339,33 +544,6 @@ public class AvatarCreationRenderer
                 _terminal.Text(PanelContentX, row, "Left-click: +1", Config.Colors.DarkYellowGrey, Config.Colors.Black);
                 row++;
                 _terminal.Text(PanelContentX, row, "Right-click: -1", Config.Colors.DarkYellowGrey, Config.Colors.Black);
-            }
-        }
-
-        // Draw connector arrows from hovered organ part cells to stats panel
-        if (_hoveredOrganPartName != null && _organPartNameToChar.TryGetValue(_hoveredOrganPartName, out char organChar))
-        {
-            var cells = _artData.GetOrganPartCells(organChar);
-            if (cells.Count > 0)
-            {
-                // Find the rightmost cell of the organ part
-                var rightmost = cells.OrderByDescending(c => c.x).First();
-                int artEndX = ArtOffsetX + rightmost.x;
-                int artEndY = ArtOffsetY + rightmost.y;
-
-                // Find the stats row for this organ part
-                int statsRow = _rowToOrganPartId
-                    .Where(kvp => kvp.Value == _hoveredOrganPartName)
-                    .Select(kvp => kvp.Key)
-                    .FirstOrDefault(-1);
-
-                if (statsRow >= 0 && artEndX < PanelX - 2)
-                {
-                    ArrowRenderer.DrawConnector(_terminal,
-                        artEndX + 1, artEndY,
-                        PanelContentX - 1, statsRow,
-                        Config.Colors.DarkYellowGrey, Config.Colors.Black);
-                }
             }
         }
     }
@@ -499,12 +677,12 @@ public class AvatarCreationRenderer
             .Replace("Right ", "R.");
     }
 
-    private static Vector4 TintColor(Vector4 baseColor, Vector4 tintColor, float amount)
+    private static Vector4 AdjustLuminosity(Vector4 color, float multiplier)
     {
         return new Vector4(
-            baseColor.X + (tintColor.X - baseColor.X) * amount,
-            baseColor.Y + (tintColor.Y - baseColor.Y) * amount,
-            baseColor.Z + (tintColor.Z - baseColor.Z) * amount,
+            Math.Clamp(color.X * multiplier, 0f, 1f),
+            Math.Clamp(color.Y * multiplier, 0f, 1f),
+            Math.Clamp(color.Z * multiplier, 0f, 1f),
             1.0f
         );
     }

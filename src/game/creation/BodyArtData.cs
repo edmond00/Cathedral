@@ -60,6 +60,7 @@ public class BodyArtData
 
     // Cached spatial data
     private Dictionary<string, ArtBounds>? _bodyPartBoundsCache;
+    private Dictionary<string, ArtBounds>? _rawPartBoundsCache;
     private Dictionary<char, List<(int x, int y)>>? _organPartCellsCache;
 
     /// <summary>
@@ -234,6 +235,17 @@ public class BodyArtData
     }
 
     /// <summary>
+    /// Get the bounding box of all cells belonging to a raw part name (7-value system:
+    /// brain, face, torso, left_arm, right_arm, left_leg, right_leg).
+    /// Useful for drawing per-side boxes for limbs.
+    /// </summary>
+    public ArtBounds? GetRawPartBounds(string rawPartName)
+    {
+        EnsureRawBoundsCache();
+        return _rawPartBoundsCache!.TryGetValue(rawPartName, out var bounds) ? bounds : null;
+    }
+
+    /// <summary>
     /// Get all cell positions for a specific organ part id character.
     /// </summary>
     public List<(int x, int y)> GetOrganPartCells(char organPartIdChar)
@@ -290,6 +302,34 @@ public class BodyArtData
 
         foreach (var (id, (minX, minY, maxX, maxY)) in positions)
             _bodyPartBoundsCache[id] = new ArtBounds(minX, minY, maxX, maxY);
+    }
+
+    private void EnsureRawBoundsCache()
+    {
+        if (_rawPartBoundsCache != null) return;
+        _rawPartBoundsCache = new Dictionary<string, ArtBounds>();
+
+        var positions = new Dictionary<string, (int minX, int minY, int maxX, int maxY)>();
+
+        for (int y = 0; y < Height; y++)
+        {
+            for (int x = 0; x < Width; x++)
+            {
+                var rawName = GetPartNameAt(x, y);
+                if (rawName == null) continue;
+
+                if (!positions.ContainsKey(rawName))
+                    positions[rawName] = (x, y, x, y);
+                else
+                {
+                    var (mX, mY, mxX, mxY) = positions[rawName];
+                    positions[rawName] = (Math.Min(mX, x), Math.Min(mY, y), Math.Max(mxX, x), Math.Max(mxY, y));
+                }
+            }
+        }
+
+        foreach (var (name, (minX, minY, maxX, maxY)) in positions)
+            _rawPartBoundsCache[name] = new ArtBounds(minX, minY, maxX, maxY);
     }
 
     private void EnsureCellsCache()

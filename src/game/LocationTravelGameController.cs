@@ -131,6 +131,12 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public void Update()
     {
+        // Update avatar creation blink animation
+        if (_currentMode == GameMode.AvatarCreation && _avatarCreationRenderer != null)
+        {
+            _avatarCreationRenderer.Update();
+        }
+
         // Update Phase 6 controller if active
         if (_isInNarrativeMode && _narrativeController != null)
         {
