@@ -6,6 +6,12 @@ namespace Cathedral.Game;
 public enum GameMode
 {
     /// <summary>
+    /// Main menu shown at startup or when ESC is pressed in WorldView.
+    /// GlyphSphere is darkened, Terminal shows menu buttons.
+    /// </summary>
+    MainMenu,
+    
+    /// <summary>
     /// Player is viewing the 3D glyph sphere world, can click locations to travel.
     /// GlyphSphere is interactive, Terminal is hidden or minimal.
     /// </summary>

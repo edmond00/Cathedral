@@ -792,6 +792,27 @@ namespace Cathedral.Glyph.Microworld
         public int GetAvatarVertex() => _avatarVertex;
 
         /// <summary>
+        /// Resets the avatar to a new random starting position.
+        /// Used when starting a new game from the main menu.
+        /// </summary>
+        public void ResetAvatarPosition()
+        {
+            // Cancel any in-progress movement
+            _currentPath = null;
+            _hoveredPath = null;
+            _pendingHoverPath = null;
+            _pendingMovementPath = null;
+            _pathIndex = 0;
+            _moveTimer = 0.0f;
+            _hoveredVertex = -1;
+            _pendingHoverVertex = -1;
+            
+            // Re-initialize avatar at a new random position
+            InitializeAvatar();
+            Console.WriteLine($"MicroworldInterface: Avatar reset to vertex {_avatarVertex}");
+        }
+
+        /// <summary>
         /// Checks if the avatar is currently moving
         /// </summary>
         public bool IsAvatarMoving() => _currentPath != null;

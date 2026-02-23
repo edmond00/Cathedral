@@ -240,12 +240,21 @@ public static class LocationTravelModeLauncher
             Console.WriteLine(gameController.GetDebugInfo());
         };
         
-        // Handle ESC key to exit location
+        // Handle ESC key for menu and location exit
         core.KeyDown += (args) =>
         {
             if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Escape)
             {
-                if (gameController?.CurrentMode == GameMode.LocationInteraction)
+                if (gameController?.CurrentMode == GameMode.MainMenu)
+                {
+                    // ESC in main menu: return to world if game has started, otherwise do nothing
+                    if (gameController is LocationTravelGameController ltgc && ltgc.HasGameStarted)
+                    {
+                        Console.WriteLine("ESC pressed - closing main menu");
+                        gameController.SetMode(GameMode.WorldView);
+                    }
+                }
+                else if (gameController?.CurrentMode == GameMode.LocationInteraction)
                 {
                     // Check if in Phase 6 mode with popup open
                     if (gameController is LocationTravelGameController ltgc)
@@ -263,6 +272,12 @@ public static class LocationTravelModeLauncher
                     }
                     
                     gameController.EndLocationInteraction();
+                }
+                else if (gameController?.CurrentMode == GameMode.WorldView)
+                {
+                    // ESC in world view: open main menu
+                    Console.WriteLine("ESC pressed - opening main menu");
+                    gameController.SetMode(GameMode.MainMenu);
                 }
             }
             else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.D)

@@ -32,6 +32,10 @@ public class LocationTravelGameController : IDisposable
     private SkillSlotManager? _skillSlotManager = null;
     private ThinkingExecutor? _thinkingExecutor = null;
     
+    // Main menu
+    private MainMenuRenderer? _mainMenuRenderer;
+    private bool _hasGameStarted = false;
+    
     // Game state
     private GameMode _currentMode;
     private LocationInstanceState? _currentLocationState;
@@ -62,6 +66,7 @@ public class LocationTravelGameController : IDisposable
     public GameMode CurrentMode => _currentMode;
     public LocationInstanceState? CurrentLocationState => _currentLocationState;
     public bool IsAtLocation => _currentMode == GameMode.LocationInteraction && _currentLocationState != null;
+    public bool HasGameStarted => _hasGameStarted;
     
     /// <summary>
     /// Gets the terminal input handler for coordinate conversion (null if no terminal).
@@ -88,7 +93,7 @@ public class LocationTravelGameController : IDisposable
         // Initialize LLM action executor (will be set via SetLLMActionExecutor())
         _llmActionExecutor = null;
         
-        // Initialize with WorldView mode
+        // Initialize with WorldView as default (SetMode(MainMenu) will transition properly)
         _currentMode = GameMode.WorldView;
         
         // Register location generators
@@ -109,7 +114,10 @@ public class LocationTravelGameController : IDisposable
         // Initialize terminal UI (if terminal is available)
         InitializeTerminalUI();
         
-        Console.WriteLine("LocationTravelGameController: Initialized in WorldView mode");
+        // Show main menu on startup
+        SetMode(GameMode.MainMenu);
+        
+        Console.WriteLine("LocationTravelGameController: Initialized in MainMenu mode");
     }
     
     /// <summary>
@@ -224,6 +232,13 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellClicked(int x, int y)
     {
+        // Main menu handles its own clicks
+        if (_currentMode == GameMode.MainMenu && _mainMenuRenderer != null)
+        {
+            _mainMenuRenderer.OnMouseClick(x, y);
+            return;
+        }
+        
         // All location interactions now use Phase 6 narrative mode
         if (_isInNarrativeMode && _narrativeController != null)
         {
@@ -282,6 +297,13 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellHovered(int x, int y)
     {
+        // Main menu handles its own hover
+        if (_currentMode == GameMode.MainMenu && _mainMenuRenderer != null)
+        {
+            _mainMenuRenderer.OnMouseMove(x, y);
+            return;
+        }
+        
         // Phase 6 mode handles hover differently
         if (_isInNarrativeMode && _narrativeController != null)
         {
@@ -345,6 +367,10 @@ public class LocationTravelGameController : IDisposable
         // Handle mode-specific setup
         switch (newMode)
         {
+            case GameMode.MainMenu:
+                OnEnterMainMenu();
+                break;
+                
             case GameMode.WorldView:
                 OnEnterWorldView();
                 break;
@@ -540,6 +566,49 @@ public class LocationTravelGameController : IDisposable
     }
 
     // Mode entry handlers
+    
+    private void OnEnterMainMenu()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered MainMenu mode");
+        // Darken the sphere (visible but dim behind menu)
+        _core.SetNarrationMode(true);
+        // Disable world vertex interactions
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+        
+        if (_core.Terminal != null)
+        {
+            // Lazily create the menu renderer
+            if (_mainMenuRenderer == null)
+            {
+                _mainMenuRenderer = new MainMenuRenderer(_core.Terminal);
+            }
+            
+            // Configure buttons with callbacks
+            _mainMenuRenderer.HasGameStarted = _hasGameStarted;
+            _mainMenuRenderer.SetButtons(
+                onNew: () =>
+                {
+                    ResetGameState();
+                    SetMode(GameMode.WorldView);
+                },
+                onContinue: () =>
+                {
+                    if (!_hasGameStarted)
+                        ResetGameState(); // First time: treat as new game
+                    SetMode(GameMode.WorldView);
+                },
+                onExit: () =>
+                {
+                    _core.Close();
+                }
+            );
+            
+            // Render the menu
+            _mainMenuRenderer.Render();
+        }
+    }
+    
     private void OnEnterWorldView()
     {
         Console.WriteLine("LocationTravelGameController: Entered WorldView mode");
@@ -547,6 +616,9 @@ public class LocationTravelGameController : IDisposable
         _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomWorldView);
         // Disable narration mode (world is interactive and in focus)
         _core.SetNarrationMode(false);
+        // Re-enable world interactions
+        _core.SetWorldInteractionsEnabled(true);
+        _interface.SetWorldInteractionsEnabled(true);
         // Hide or minimize terminal
         if (_core.Terminal != null)
         {
@@ -813,6 +885,32 @@ public class LocationTravelGameController : IDisposable
             _isInNarrativeMode = false;
             _narrativeController = null;
         }
+    }
+    
+    /// <summary>
+    /// Resets game state for a new game. Clears location states, resets avatar position.
+    /// </summary>
+    public void ResetGameState()
+    {
+        Console.WriteLine("LocationTravelGameController: Resetting game state");
+        
+        // Exit narrative mode if active
+        if (_isInNarrativeMode)
+        {
+            ExitNarrativeMode();
+        }
+        
+        // Clear location state
+        _currentLocationState = null;
+        _currentLocationVertex = -1;
+        _destinationVertex = -1;
+        _locationStates.Clear();
+        
+        // Reset avatar to a new random starting position
+        _interface.ResetAvatarPosition();
+        
+        _hasGameStarted = true;
+        Console.WriteLine("LocationTravelGameController: Game state reset complete");
     }
     
     /// <summary>
