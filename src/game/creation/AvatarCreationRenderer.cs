@@ -355,7 +355,7 @@ public class AvatarCreationRenderer
         // Draw body part bounding box if hovering
         if (hoveredBounds != null && _hoveredBodyPartId != null)
         {
-            Vector4 boxColor = Config.Colors.DarkYellowGrey;
+            Vector4 boxColor = Config.Colors.MediumYellow;
             Vector4 boxBg = Config.Colors.Black;
 
             // Level 1: Fill cells inside box that are NOT body cells with a slight highlight
@@ -428,7 +428,7 @@ public class AvatarCreationRenderer
             ArrowRenderer.DrawConnector(_terminal,
                 artEndX, artEndY,
                 PanelContentX - 1, statsRow,
-                Config.Colors.DarkYellowGrey, Config.Colors.Black);
+                Config.Colors.MediumYellow, Config.Colors.Black);
         }
     }
 
