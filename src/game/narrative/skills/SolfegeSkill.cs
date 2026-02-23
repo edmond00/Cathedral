@@ -10,7 +10,7 @@ public class SolfegeSkill : Skill
     public override string DisplayName => "Solfege";
     public override string ShortDescription => "pitch, rhythm, harmony";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
-    public override string[] BodyParts => new[] { "Ears", "Cerebellum" };
+    public override string[] Organs => new[] { "ears", "cerebellum" };
     
     public override string PersonaTone => "a musical analyst who hears the mathematical structure beneath every sound";
     

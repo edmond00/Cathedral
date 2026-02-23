@@ -10,7 +10,7 @@ public class ThermodynamicsSkill : Skill
     public override string DisplayName => "Thermodynamics";
     public override string ShortDescription => "energy, entropy, physics";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking };
-    public override string[] BodyParts => new[] { "Cerebrum", "Anamnesis" };
+    public override string[] Organs => new[] { "cerebrum", "anamnesis" };
     
     public override string PersonaTone => "a precise physicist who sees all phenomena as energy transformations governed by immutable laws";
     

@@ -10,7 +10,7 @@ public class AestheticSkill : Skill
     public override string DisplayName => "Aesthetic";
     public override string ShortDescription => "beauty, visual harmony";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation };
-    public override string[] BodyParts => new[] { "Eyes", "Pineal Gland" };
+    public override string[] Organs => new[] { "eyes", "pineal_gland" };
     
     public override string PersonaTone => "a sensitive observer who experiences visual harmony and discord as visceral sensations";
     

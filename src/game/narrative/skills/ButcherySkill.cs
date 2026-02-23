@@ -10,7 +10,7 @@ public class ButcherySkill : Skill
     public override string DisplayName => "Butchery";
     public override string ShortDescription => "anatomy, efficient cutting";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action, SkillFunction.Thinking };
-    public override string[] BodyParts => new[] { "Fingers", "Viscera" };
+    public override string[] Organs => new[] { "hands", "viscera" };
     
     public override string PersonaTone => "a practical anatomist who sees bodies as structures to be efficiently disassembled";
     

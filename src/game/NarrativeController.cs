@@ -454,14 +454,12 @@ public class NarrativeController
         // Try to get skill bonus from avatar
         if (action.ActionSkill != null)
         {
-            // Get body part level (affects dice count)
-            string bodyPartName = action.ActionSkill.BodyParts.Length > 0 
-                ? action.ActionSkill.BodyParts[0].ToLower() 
-                : "hands";
-            int bodyPartValue = _avatar.BodyPartLevels.TryGetValue(bodyPartName, out int bpValue) ? bpValue : 5;
+            // Get organ score (affects dice count)
+            int organScore = _avatar.GetOrganScoreForSkill(action.ActionSkill);
+            if (organScore == 0) organScore = 5; // fallback
             
-            // Body part 1-10 adds 0-3 extra dice
-            int bonusDice = (bodyPartValue - 1) / 3; // 1-3 = 0, 4-6 = 1, 7-9 = 2, 10 = 3
+            // Organ score adds 0-3 extra dice
+            int bonusDice = (organScore - 1) / 3; // 1-3 = 0, 4-6 = 1, 7-9 = 2, 10 = 3
             baseDice += bonusDice;
         }
         

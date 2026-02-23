@@ -207,33 +207,28 @@ public class ActionScorer
     /// </summary>
     public bool RollSkillCheck(Narrative.Skill skill, int difficulty, Narrative.Avatar avatar)
     {
-        // Get relevant body part value
-        int bodyPartValue = GetBodyPartValueForSkill(skill, avatar);
+        // Get relevant organ score
+        int organScore = GetOrganScoreForSkill(skill, avatar);
         
         // Roll d20
         var random = new Random();
         int roll = random.Next(1, 21);
         
-        int total = roll + bodyPartValue;
+        int total = roll + organScore;
         bool success = total >= difficulty;
         
-        Console.WriteLine($"ActionScorer: Skill check - {skill.DisplayName} (BP:{bodyPartValue}) + d20({roll}) = {total} vs DC {difficulty} → {(success ? "SUCCESS" : "FAILURE")}");
+        Console.WriteLine($"ActionScorer: Skill check - {skill.DisplayName} (Organ:{organScore}) + d20({roll}) = {total} vs DC {difficulty} → {(success ? "SUCCESS" : "FAILURE")}");
         
         return success;
     }
     
     /// <summary>
-    /// Gets the body part value most relevant to a skill.
-    /// Maps skill function to appropriate body part.
+    /// Gets the organ score most relevant to a skill.
+    /// Uses the skill's primary organ.
     /// </summary>
-    private int GetBodyPartValueForSkill(Narrative.Skill skill, Narrative.Avatar avatar)
+    private int GetOrganScoreForSkill(Narrative.Skill skill, Narrative.Avatar avatar)
     {
-        // Use primary body part from skill's BodyParts array
-        string bodyPartName = skill.BodyParts.Length > 0 
-            ? skill.BodyParts[0].ToLower() 
-            : "hands";
-        
-        return avatar.BodyPartLevels.TryGetValue(bodyPartName, out int value) ? value : 5;
+        return avatar.GetOrganScoreForSkill(skill);
     }
     
     /// <summary>

@@ -10,7 +10,7 @@ public class OpenMindednessSkill : Skill
     public override string DisplayName => "Open-Mindedness";
     public override string ShortDescription => "flexibility, alternative views";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking };
-    public override string[] BodyParts => new[] { "Hippocampus", "Heart" };
+    public override string[] Organs => new[] { "hippocampus", "heart" };
     
     public override string PersonaTone => "a curious explorer of ideas who treats every belief as provisionally held";
     

@@ -10,7 +10,7 @@ public class ScrutinySkill : Skill
     public override string DisplayName => "Scrutiny";
     public override string ShortDescription => "intense examination, detail";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation };
-    public override string[] BodyParts => new[] { "Eyes", "Ears" };
+    public override string[] Organs => new[] { "eyes", "ears" };
     
     public override string PersonaTone => "an intense, relentless investigator who dissects every detail with clinical precision";
     

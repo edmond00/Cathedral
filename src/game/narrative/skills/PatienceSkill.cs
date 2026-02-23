@@ -10,7 +10,7 @@ public class PatienceSkill : Skill
     public override string DisplayName => "Patience";
     public override string ShortDescription => "waiting, endurance";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
-    public override string[] BodyParts => new[] { "Pineal Gland", "Backbone" };
+    public override string[] Organs => new[] { "pineal_gland", "backbone" };
     
     public override string PersonaTone => "a serene strategist who knows that time is an ally to those who can wait";
     

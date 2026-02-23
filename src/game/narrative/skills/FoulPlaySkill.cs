@@ -10,7 +10,7 @@ public class FoulPlaySkill : Skill
     public override string DisplayName => "Foul Play";
     public override string ShortDescription => "dirty tricks, deception";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking, SkillFunction.Action };
-    public override string[] BodyParts => new[] { "Cerebrum", "Heart" };
+    public override string[] Organs => new[] { "cerebrum", "heart" };
     
     public override string PersonaTone => "a cunning schemer who sees rules as obstacles and honor as a exploitable weakness";
     

@@ -10,7 +10,7 @@ public class CartographySkill : Skill
     public override string DisplayName => "Cartography";
     public override string ShortDescription => "maps, spatial memory";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
-    public override string[] BodyParts => new[] { "Eyes", "Cerebrum" };
+    public override string[] Organs => new[] { "eyes", "cerebrum" };
     
     public override string PersonaTone => "a systematic mapper who transforms experienced space into abstract navigable representation";
     

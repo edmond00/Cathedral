@@ -10,7 +10,7 @@ public class PoetrySkill : Skill
     public override string DisplayName => "Poetry";
     public override string ShortDescription => "metaphor, lyrical expression";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking, SkillFunction.Observation };
-    public override string[] BodyParts => new[] { "Tongue", "Hippocampus" };
+    public override string[] Organs => new[] { "tongue", "hippocampus" };
     
     public override string PersonaTone => "a lyrical soul who perceives and expresses experience through metaphor and rhythm";
     

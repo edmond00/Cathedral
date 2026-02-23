@@ -163,15 +163,15 @@ public class ActionExecutionController
         // Easy (0.0) = 95% success, Moderate (0.5) = 70% success, Hard (1.0) = 40% success
         double successProbability = 0.95 - (difficultyScore * 0.55);
         
-        // Adjust for skill level (body part value from 1-10)
-        string bodyPartName = actionSkill.BodyParts.Length > 0 ? actionSkill.BodyParts[0].ToLower() : "hands";
-        int bodyPartValue = _avatar.BodyPartLevels.TryGetValue(bodyPartName, out int bpValue) ? bpValue : 5;
+        // Adjust for organ score
+        string organId = actionSkill.Organs.Length > 0 ? actionSkill.Organs[0] : "hands";
+        int organScore = _avatar.GetOrganById(organId)?.Score ?? 5;
         
-        // Body part adds up to 10% success chance
-        successProbability += (bodyPartValue - 5) * 0.02;
+        // Organ score adds up to 10% success chance
+        successProbability += (organScore - 5) * 0.02;
         successProbability = Math.Clamp(successProbability, 0.1, 0.95);
         
-        Console.WriteLine($"   Success probability: {successProbability:F2} (body part '{bodyPartName}': {bodyPartValue})\n");
+        Console.WriteLine($"   Success probability: {successProbability:F2} (organ '{organId}': {organScore})\n");
         
         return new ActionEvaluationResult
         {

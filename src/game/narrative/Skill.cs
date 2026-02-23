@@ -12,7 +12,7 @@ public abstract class Skill
     public abstract string DisplayName { get; }       // "Observation", "Algebraic Analysis"
     public abstract string ShortDescription { get; }  // 2-4 word description for prompts
     public abstract SkillFunction[] Functions { get; } // Can have multiple functions (1-3)
-    public abstract string[] BodyParts { get; }       // Associated body parts (1-2)
+    public abstract string[] Organs { get; }          // Associated organ ids (1-2)
     public int Level { get; set; }                    // 1-10, used for skill checks (random initial)
     
     /// <summary>

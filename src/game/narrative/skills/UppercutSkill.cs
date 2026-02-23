@@ -10,7 +10,7 @@ public class UppercutSkill : Skill
     public override string DisplayName => "Uppercut";
     public override string ShortDescription => "explosive upward strike";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
-    public override string[] BodyParts => new[] { "Upper Limbs", "Cerebellum" };
+    public override string[] Organs => new[] { "arms", "cerebellum" };
     
     public override string PersonaTone => "a ferocious striker who finds beauty in perfectly timed explosive impacts";
     

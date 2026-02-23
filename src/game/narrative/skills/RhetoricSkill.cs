@@ -10,7 +10,7 @@ public class RhetoricSkill : Skill
     public override string DisplayName => "Rhetoric";
     public override string ShortDescription => "persuasion, argumentation";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking };
-    public override string[] BodyParts => new[] { "Tongue", "Cerebrum" };
+    public override string[] Organs => new[] { "tongue", "cerebrum" };
     
     public override string PersonaTone => "a silver-tongued strategist who builds arguments like siege engines";
     

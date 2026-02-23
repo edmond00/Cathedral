@@ -5,17 +5,16 @@ using System.Linq;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Represents the player's avatar with body parts, skills, and humors.
+/// Represents the player's avatar with body parts, organs, skills, humors, and derived stats.
 /// Tracks learned skills, current state, inventory, and companions.
 /// </summary>
 public class Avatar
 {
-    private List<BodyPart> _bodyParts;                            // 17 body parts, level 1-10 (for skill checks)
+    private List<BodyPart> _bodyParts;                            // 5 body part regions
     private List<BodyHumor> _humors;                              // 10 humors, 0-100 range
     
     public List<BodyPart> BodyParts => _bodyParts;
-    public Dictionary<string, int> BodyPartLevels =>              // Backward compatibility: name -> level
-        _bodyParts.ToDictionary(bp => bp.Name, bp => bp.Level);
+    public List<DerivedStat> DerivedStats { get; private set; }   // Derived stats computed from organ/body part scores
     
     public List<Skill> Skills { get; set; }                       // Current skills (for execution)
     public List<Skill> LearnedSkills { get; set; }                // Alias for Skills
@@ -34,6 +33,7 @@ public class Avatar
         Skills = new List<Skill>();
         LearnedSkills = Skills;      // Same reference
         _humors = InitializeHumors();
+        DerivedStats = InitializeDerivedStats();
         Inventory = new List<string>();
         Companions = new List<string>();
     }
@@ -42,27 +42,23 @@ public class Avatar
     {
         var random = new Random();
         
-        // Create 17 body parts from design doc with random levels 1-10
-        return new List<BodyPart>
+        // Create 5 body part regions, each containing organs with organ parts
+        var bodyParts = new List<BodyPart>
         {
-            new LowerLimbs(random.Next(1, 11)),
-            new UpperLimbs(random.Next(1, 11)),
-            new Thorax(random.Next(1, 11)),
-            new Viscera(random.Next(1, 11)),
-            new Heart(random.Next(1, 11)),
-            new Fingers(random.Next(1, 11)),
-            new Feet(random.Next(1, 11)),
-            new Backbone(random.Next(1, 11)),
-            new Ears(random.Next(1, 11)),
-            new Eyes(random.Next(1, 11)),
-            new Tongue(random.Next(1, 11)),
-            new Nose(random.Next(1, 11)),
-            new Cerebrum(random.Next(1, 11)),
-            new Cerebellum(random.Next(1, 11)),
-            new Anamnesis(random.Next(1, 11)),
-            new Hippocampus(random.Next(1, 11)),
-            new PinealGland(random.Next(1, 11))
+            new BrainBodyPart(),
+            new FaceBodyPart(),
+            new TorsoBodyPart(),
+            new UpperLimbsBodyPart(),
+            new LowerLimbsBodyPart()
         };
+        
+        // Randomize organ part scores (1-10) — player will allocate these later
+        foreach (var bp in bodyParts)
+            foreach (var organ in bp.Organs)
+                foreach (var part in organ.Parts)
+                    part.Score = random.Next(1, 11);
+        
+        return bodyParts;
     }
     
     private List<BodyHumor> InitializeHumors()
@@ -124,4 +120,46 @@ public class Avatar
     
     public Skill? GetSkillById(string skillId) =>
         LearnedSkills.FirstOrDefault(s => s.SkillId == skillId);
+    
+    // Body hierarchy queries
+    
+    /// <summary>
+    /// Find a body part by its id (e.g. "brain", "torso").
+    /// </summary>
+    public BodyPart? GetBodyPartById(string id) =>
+        _bodyParts.FirstOrDefault(bp => bp.Id == id);
+    
+    /// <summary>
+    /// Find an organ by its id (e.g. "eyes", "heart") across all body parts.
+    /// </summary>
+    public Organ? GetOrganById(string id) =>
+        _bodyParts.SelectMany(bp => bp.Organs).FirstOrDefault(o => o.Id == id);
+    
+    /// <summary>
+    /// Find an organ part by its id (e.g. "left_eye", "heart") across all organs.
+    /// </summary>
+    public OrganPart? GetOrganPartById(string id) =>
+        _bodyParts.SelectMany(bp => bp.Organs).SelectMany(o => o.Parts).FirstOrDefault(p => p.Id == id);
+    
+    /// <summary>
+    /// Get the organ score for a skill's primary organ. Used for skill checks.
+    /// </summary>
+    public int GetOrganScoreForSkill(Skill skill)
+    {
+        if (skill.Organs.Length == 0) return 0;
+        var organ = GetOrganById(skill.Organs[0]);
+        return organ?.Score ?? 0;
+    }
+    
+    private List<DerivedStat> InitializeDerivedStats()
+    {
+        return new List<DerivedStat>
+        {
+            new PerceptionStat(),
+            new EnduranceStat(),
+            new IntellectStat(),
+            new DexterityStat(),
+            new WillpowerStat()
+        };
+    }
 }

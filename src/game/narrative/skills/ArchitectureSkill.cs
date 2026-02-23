@@ -10,7 +10,7 @@ public class ArchitectureSkill : Skill
     public override string DisplayName => "Architecture";
     public override string ShortDescription => "structural design, spatial logic";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
-    public override string[] BodyParts => new[] { "Eyes", "Cerebrum" };
+    public override string[] Organs => new[] { "eyes", "cerebrum" };
     
     public override string PersonaTone => "a structural analyst who reads buildings as systems of load, material, and intent";
     

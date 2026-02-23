@@ -10,7 +10,7 @@ public class DramaturgySkill : Skill
     public override string DisplayName => "Dramaturgy";
     public override string ShortDescription => "theater, social performance";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
-    public override string[] BodyParts => new[] { "Eyes", "Heart" };
+    public override string[] Organs => new[] { "eyes", "heart" };
     
     public override string PersonaTone => "a theatrical analyst who perceives social reality as staged performance following dramatic structure";
     

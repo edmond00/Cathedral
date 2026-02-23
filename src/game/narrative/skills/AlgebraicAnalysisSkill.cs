@@ -10,7 +10,7 @@ public class AlgebraicAnalysisSkill : Skill
     public override string DisplayName => "Algebraic Analysis";
     public override string ShortDescription => "patterns, abstract reasoning";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking };
-    public override string[] BodyParts => new[] { "Cerebrum", "Anamnesis" };
+    public override string[] Organs => new[] { "cerebrum", "anamnesis" };
     
     public override string PersonaTone => "a cold, abstract thinker who reduces everything to variables, patterns, and mathematical transformations";
     

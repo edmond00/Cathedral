@@ -10,7 +10,7 @@ public class AthleticsSkill : Skill
     public override string DisplayName => "Athletics";
     public override string ShortDescription => "running, climbing, exertion";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
-    public override string[] BodyParts => new[] { "Lower Limbs", "Thorax" };
+    public override string[] Organs => new[] { "legs", "thorax" };
     
     public override string PersonaTone => "an exuberant competitor who sees the world as an obstacle course to conquer";
     

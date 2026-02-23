@@ -10,7 +10,7 @@ public class TopographiaSkill : Skill
     public override string DisplayName => "Topographia";
     public override string ShortDescription => "terrain, elevation, landscape";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation };
-    public override string[] BodyParts => new[] { "Eyes", "Feet" };
+    public override string[] Organs => new[] { "eyes", "feet" };
     
     public override string PersonaTone => "a terrain reader who perceives elevation, slope, and geographical advantage";
     

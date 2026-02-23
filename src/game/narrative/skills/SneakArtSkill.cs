@@ -10,7 +10,7 @@ public class SneakArtSkill : Skill
     public override string DisplayName => "Sneak Art";
     public override string ShortDescription => "stealth, silent movement";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
-    public override string[] BodyParts => new[] { "Feet", "Ears" };
+    public override string[] Organs => new[] { "feet", "ears" };
     
     public override string PersonaTone => "a cautious shadow who moves through spaces as if they were made of silence";
     

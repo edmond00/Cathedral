@@ -10,7 +10,7 @@ public class EmpathySkill : Skill
     public override string DisplayName => "Empathy";
     public override string ShortDescription => "emotional reading, compassion";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation };
-    public override string[] BodyParts => new[] { "Heart", "Ears" };
+    public override string[] Organs => new[] { "heart", "ears" };
     
     public override string PersonaTone => "a compassionate reader of hearts who feels the emotional currents between people";
     
