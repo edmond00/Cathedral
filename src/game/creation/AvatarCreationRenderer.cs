@@ -412,7 +412,7 @@ public class AvatarCreationRenderer
         var cells = _artData.GetOrganPartCells(organChar);
         if (cells.Count == 0) return;
 
-        // Find the rightmost cell of the organ part
+        // Find the rightmost cell of the organ part (arrow starts ON this cell)
         var rightmost = cells.OrderByDescending(c => c.x).First();
         int artEndX = ArtOffsetX + rightmost.x;
         int artEndY = ArtOffsetY + rightmost.y;
@@ -426,7 +426,7 @@ public class AvatarCreationRenderer
         if (statsRow >= 0 && artEndX < PanelX - 2)
         {
             ArrowRenderer.DrawConnector(_terminal,
-                artEndX + 1, artEndY,
+                artEndX, artEndY,
                 PanelContentX - 1, statsRow,
                 Config.Colors.DarkYellowGrey, Config.Colors.Black);
         }
