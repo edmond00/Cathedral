@@ -29,5 +29,11 @@ public enum GameMode
     /// Terminal is prominent with action choices, GlyphSphere is visible but not interactive.
     /// Player makes choices via mouse clicks on terminal text.
     /// </summary>
-    LocationInteraction
+    LocationInteraction,
+    
+    /// <summary>
+    /// Player is creating/configuring their avatar before starting the game.
+    /// Terminal shows body art with interactive organ-part score adjustment.
+    /// </summary>
+    AvatarCreation
 }

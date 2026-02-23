@@ -11,6 +11,7 @@ using Cathedral.Glyph.Microworld.LocationSystem.Generators;
 using Cathedral.Glyph.Interaction;
 using Cathedral.LLM;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Creation;
 using Cathedral.Terminal;
 
 namespace Cathedral.Game;
@@ -35,6 +36,11 @@ public class LocationTravelGameController : IDisposable
     // Main menu
     private MainMenuRenderer? _mainMenuRenderer;
     private bool _hasGameStarted = false;
+    
+    // Avatar creation
+    private AvatarCreationRenderer? _avatarCreationRenderer;
+    private BodyArtData? _bodyArtData;
+    private Avatar? _avatar;
     
     // Game state
     private GameMode _currentMode;
@@ -239,6 +245,13 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
+        // Avatar creation handles its own clicks
+        if (_currentMode == GameMode.AvatarCreation && _avatarCreationRenderer != null)
+        {
+            _avatarCreationRenderer.OnMouseClick(x, y);
+            return;
+        }
+        
         // All location interactions now use Phase 6 narrative mode
         if (_isInNarrativeMode && _narrativeController != null)
         {
@@ -262,6 +275,13 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellRightClicked(int x, int y)
     {
+        // Avatar creation handles right-clicks for score decrement
+        if (_currentMode == GameMode.AvatarCreation && _avatarCreationRenderer != null)
+        {
+            _avatarCreationRenderer.OnRightClick(x, y);
+            return;
+        }
+        
         // Only handle in Phase 6 narrative mode
         if (_isInNarrativeMode && _narrativeController != null)
         {
@@ -301,6 +321,13 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode == GameMode.MainMenu && _mainMenuRenderer != null)
         {
             _mainMenuRenderer.OnMouseMove(x, y);
+            return;
+        }
+        
+        // Avatar creation handles its own hover
+        if (_currentMode == GameMode.AvatarCreation && _avatarCreationRenderer != null)
+        {
+            _avatarCreationRenderer.OnMouseMove(x, y);
             return;
         }
         
@@ -381,6 +408,10 @@ public class LocationTravelGameController : IDisposable
                 
             case GameMode.LocationInteraction:
                 OnEnterLocationInteraction();
+                break;
+                
+            case GameMode.AvatarCreation:
+                OnEnterAvatarCreation();
                 break;
         }
         
@@ -590,7 +621,7 @@ public class LocationTravelGameController : IDisposable
                 onNew: () =>
                 {
                     ResetGameState();
-                    SetMode(GameMode.WorldView);
+                    SetMode(GameMode.AvatarCreation);
                 },
                 onContinue: () =>
                 {
@@ -606,6 +637,49 @@ public class LocationTravelGameController : IDisposable
             
             // Render the menu
             _mainMenuRenderer.Render();
+        }
+    }
+    
+    private void OnEnterAvatarCreation()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered AvatarCreation mode");
+        // Keep sphere darkened behind the creation screen
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+        
+        if (_core.Terminal != null)
+        {
+            // Load body art data if not already loaded
+            if (_bodyArtData == null)
+            {
+                string artFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, 
+                    "assets", "art", "body", "full_body");
+                // Fallback to project root path if bin path doesn't have assets
+                if (!System.IO.Directory.Exists(artFolder))
+                    artFolder = System.IO.Path.Combine(
+                        System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
+                        "..", "..", "..", "assets", "art", "body", "full_body");
+                if (!System.IO.Directory.Exists(artFolder))
+                    artFolder = System.IO.Path.Combine("assets", "art", "body", "full_body");
+                    
+                _bodyArtData = BodyArtData.Load(artFolder);
+            }
+            
+            // Get the avatar (already created by ResetGameState)
+            var avatar = _avatar!;
+            
+            // Create the renderer
+            _avatarCreationRenderer = new AvatarCreationRenderer(_core.Terminal, avatar, _bodyArtData);
+            _avatarCreationRenderer.OnContinue = () =>
+            {
+                Console.WriteLine("LocationTravelGameController: Avatar creation complete, entering WorldView");
+                _avatarCreationRenderer = null;
+                SetMode(GameMode.WorldView);
+            };
+            
+            // Render the creation screen
+            _avatarCreationRenderer.Render();
         }
     }
     
@@ -811,9 +885,13 @@ public class LocationTravelGameController : IDisposable
                 _skillSlotManager
             );
             
-            // Create a temporary Avatar for Phase 6 (will be initialized in NarrativeController)
-            var avatar = new Avatar();
-            avatar.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+            // Use the avatar from game state (created in ResetGameState, possibly configured in AvatarCreation)
+            if (_avatar == null)
+            {
+                _avatar = new Avatar();
+                _avatar.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+            }
+            var avatar = _avatar;
             
             var actionExecutor = new ActionExecutionController(
                 _actionScorer,
@@ -908,6 +986,10 @@ public class LocationTravelGameController : IDisposable
         
         // Reset avatar to a new random starting position
         _interface.ResetAvatarPosition();
+        
+        // Create a fresh avatar for the new game
+        _avatar = new Avatar();
+        _avatar.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
         
         _hasGameStarted = true;
         Console.WriteLine("LocationTravelGameController: Game state reset complete");
