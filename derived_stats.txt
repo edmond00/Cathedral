@@ -1,0 +1,55 @@
+brain
+
+face
+- beauty
+
+torso
+- health point
+
+upper_limbs
+
+lower_limbs
+
+----
+
+anamnesis
+
+cerebellum
+
+cerebrum
+
+hippocampus
+
+pineal_gland
+
+ears
+
+eyes
+
+nose
+
+tongue
+
+teeths
+
+backbone
+- max equipment weights
+
+heart
+
+thorax
+
+viscera
+
+stomach
+
+sex
+- gender
+
+hands
+
+feet
+
+arms
+
+legs
