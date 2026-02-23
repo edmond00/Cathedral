@@ -72,6 +72,8 @@ public class AvatarCreationRenderer
     private readonly List<(string bodyPartId, int startRow)> _bodyPartRows = new();
     // Organ part row positions for click detection
     private readonly Dictionary<int, string> _rowToOrganPartId = new();
+    // Arrow button X positions per row (decX, incX)
+    private readonly Dictionary<int, (int decX, int incX)> _rowToArrowX = new();
 
     public AvatarCreationRenderer(TerminalHUD terminal, Avatar avatar, BodyArtData artData)
     {
@@ -215,6 +217,18 @@ public class AvatarCreationRenderer
             return;
         }
 
+        // Check arrow buttons in stats panel
+        int arrowDelta = GetArrowClickDelta(x, y);
+        if (arrowDelta != 0)
+        {
+            if (_rowToOrganPartId.TryGetValue(y, out var arrowPartId))
+            {
+                AdjustOrganPartScore(arrowPartId, arrowDelta);
+                Render();
+                return;
+            }
+        }
+
         var partId = GetOrganPartAtPosition(x, y);
         if (partId != null)
         {
@@ -228,6 +242,18 @@ public class AvatarCreationRenderer
     /// </summary>
     public void OnRightClick(int x, int y)
     {
+        // Check arrow buttons in stats panel (right-click on arrows also works)
+        int arrowDelta = GetArrowClickDelta(x, y);
+        if (arrowDelta != 0)
+        {
+            if (_rowToOrganPartId.TryGetValue(y, out var arrowPartId))
+            {
+                AdjustOrganPartScore(arrowPartId, arrowDelta);
+                Render();
+                return;
+            }
+        }
+
         var partId = GetOrganPartAtPosition(x, y);
         if (partId != null)
         {
@@ -499,21 +525,28 @@ public class AvatarCreationRenderer
                     // Draw name
                     _terminal.Text(PanelContentX + 1, row, paddedName, nameColor, bg);
 
-                    // Draw score bar (10 chars wide)
+                    // Draw score bar (width = MaxScore)
                     int barX = PanelContentX + 1 + nameWidth + 1;
-                    for (int i = 0; i < 10; i++)
+                    int barWidth = part.MaxScore;
+                    for (int i = 0; i < barWidth; i++)
                     {
                         char barChar = i < part.Score ? '█' : '░';
                         Vector4 barColor = i < part.Score ? barFill : barEmpty;
                         _terminal.SetCell(barX + i, row, barChar, barColor, bg);
                     }
 
-                    // Draw numeric score
-                    string scoreText = $" {part.Score,2}";
-                    _terminal.Text(barX + 10, row, scoreText, scoreFg, bg);
+                    // Draw ◄ score ► layout
+                    Vector4 arrowColor = isHoveredPart ? Config.Colors.MediumYellow : Config.Colors.DarkGray35;
+                    _terminal.SetCell(barX + barWidth, row, ' ', Config.Colors.Black, bg);
+                    _terminal.SetCell(barX + barWidth + 1, row, '◄', arrowColor, bg);
+                    _terminal.SetCell(barX + barWidth + 2, row, (char)('0' + part.Score), scoreFg, bg);
+                    _terminal.SetCell(barX + barWidth + 3, row, '►', arrowColor, bg);
+
+                    // Store arrow positions for click detection
+                    _rowToArrowX[row] = (barX + barWidth + 1, barX + barWidth + 3);
 
                     // Fill remaining background
-                    for (int fx = barX + 10 + scoreText.Length; fx < PanelX + PanelWidth; fx++)
+                    for (int fx = barX + barWidth + 4; fx < PanelX + PanelWidth; fx++)
                         _terminal.SetCell(fx, row, ' ', Config.Colors.Black, bg);
                     for (int fx = PanelContentX; fx < PanelContentX + 1; fx++)
                         _terminal.SetCell(fx, row, ' ', Config.Colors.Black, bg);
@@ -580,6 +613,19 @@ public class AvatarCreationRenderer
     // Input helpers
     // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Returns -1 if clicking ◄, +1 if clicking ►, 0 if not on an arrow.
+    /// </summary>
+    private int GetArrowClickDelta(int x, int y)
+    {
+        if (_rowToArrowX.TryGetValue(y, out var arrows))
+        {
+            if (x == arrows.decX) return -1;
+            if (x == arrows.incX) return +1;
+        }
+        return 0;
+    }
+
     private string? GetOrganPartAtPosition(int x, int y)
     {
         // Check art area
@@ -626,6 +672,7 @@ public class AvatarCreationRenderer
     private void ComputePanelLayout()
     {
         _rowToOrganPartId.Clear();
+        _rowToArrowX.Clear();
         _bodyPartRows.Clear();
 
         int row = 6;

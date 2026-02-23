@@ -14,7 +14,7 @@ public abstract class OrganPart
     /// <summary>
     /// Maximum score this organ part can have. Override to customize per class.
     /// </summary>
-    public virtual int MaxScore => 10;
+    public virtual int MaxScore => 5;
     
     private int _score = 1;
     
