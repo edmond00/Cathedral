@@ -1,52 +1,82 @@
 brain
+- noetic points
 
 face
-- beauty
+- beauty factor
 
 torso
 - health point
+- life expectancy
 
 upper_limbs
+- (left/right) damage bonus
 
 lower_limbs
+- movement points
+
 
 ----
 
 anamnesis
+- residual memory size
+- recall ratio
 
 cerebellum
+- cinetic points
+- muscle memory size
 
 cerebrum
+- semantic memory size
+- learning speed
+- number of action suggestion
 
 hippocampus
+- sensory memory size
 
 pineal_gland
+- social memory
 
 ears
+- auditory observation entrypoint level
+- main auditory observation entrypoint chance
+- secondary auditory observation entrypoint chance
 
 eyes
+- visual observation entrypoint level
+- main visual observation entrypoint chance
+- secondary visual observation entrypoint chance
 
 nose
+- olfatic observation entrypoint level
+- main olfatic observation entrypoint chance
+- secondary olfatic observation entrypoint chance
 
 tongue
+- number of dialogue reply
 
 teeths
+- chewing force
 
 backbone
 - max equipment weights
 
 heart
+- max number of companions
 
 thorax
+- smoke imbuements size
 
 viscera
+- desease resistance
 
 stomach
+- food imbuements size
 
 sex
 - gender
 
 hands
+- max item combination
 
 feet
 
