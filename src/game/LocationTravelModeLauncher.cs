@@ -254,6 +254,12 @@ public static class LocationTravelModeLauncher
                         gameController.SetMode(GameMode.WorldView);
                     }
                 }
+                else if (gameController?.CurrentMode == GameMode.AvatarManagement)
+                {
+                    // ESC in management menu: return to main menu
+                    Console.WriteLine("ESC pressed - closing management menu");
+                    gameController.SetMode(GameMode.MainMenu);
+                }
                 else if (gameController?.CurrentMode == GameMode.LocationInteraction)
                 {
                     // Check if in Phase 6 mode with popup open

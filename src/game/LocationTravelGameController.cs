@@ -12,6 +12,7 @@ using Cathedral.Glyph.Interaction;
 using Cathedral.LLM;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Creation;
+using Cathedral.Game.Management;
 using Cathedral.Terminal;
 
 namespace Cathedral.Game;
@@ -41,6 +42,9 @@ public class LocationTravelGameController : IDisposable
     private AvatarCreationRenderer? _avatarCreationRenderer;
     private BodyArtData? _bodyArtData;
     private Avatar? _avatar;
+    
+    // Avatar management
+    private ManagementMenuRenderer? _managementMenuRenderer;
     
     // Game state
     private GameMode _currentMode;
@@ -135,6 +139,12 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode == GameMode.AvatarCreation && _avatarCreationRenderer != null)
         {
             _avatarCreationRenderer.Update();
+        }
+        
+        // Update management menu animation
+        if (_currentMode == GameMode.AvatarManagement && _managementMenuRenderer != null)
+        {
+            _managementMenuRenderer.Update();
         }
 
         // Update Phase 6 controller if active
@@ -258,6 +268,13 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
+        // Avatar management handles its own clicks
+        if (_currentMode == GameMode.AvatarManagement && _managementMenuRenderer != null)
+        {
+            _managementMenuRenderer.OnMouseClick(x, y);
+            return;
+        }
+        
         // All location interactions now use Phase 6 narrative mode
         if (_isInNarrativeMode && _narrativeController != null)
         {
@@ -285,6 +302,13 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode == GameMode.AvatarCreation && _avatarCreationRenderer != null)
         {
             _avatarCreationRenderer.OnRightClick(x, y);
+            return;
+        }
+        
+        // Avatar management handles right-clicks
+        if (_currentMode == GameMode.AvatarManagement && _managementMenuRenderer != null)
+        {
+            _managementMenuRenderer.OnRightClick(x, y);
             return;
         }
         
@@ -334,6 +358,13 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode == GameMode.AvatarCreation && _avatarCreationRenderer != null)
         {
             _avatarCreationRenderer.OnMouseMove(x, y);
+            return;
+        }
+        
+        // Avatar management handles its own hover
+        if (_currentMode == GameMode.AvatarManagement && _managementMenuRenderer != null)
+        {
+            _managementMenuRenderer.OnMouseMove(x, y);
             return;
         }
         
@@ -418,6 +449,10 @@ public class LocationTravelGameController : IDisposable
                 
             case GameMode.AvatarCreation:
                 OnEnterAvatarCreation();
+                break;
+                
+            case GameMode.AvatarManagement:
+                OnEnterAvatarManagement();
                 break;
         }
         
@@ -635,6 +670,10 @@ public class LocationTravelGameController : IDisposable
                         ResetGameState(); // First time: treat as new game
                     SetMode(GameMode.WorldView);
                 },
+                onProtagonist: () =>
+                {
+                    SetMode(GameMode.AvatarManagement);
+                },
                 onExit: () =>
                 {
                     _core.Close();
@@ -686,6 +725,44 @@ public class LocationTravelGameController : IDisposable
             
             // Render the creation screen
             _avatarCreationRenderer.Render();
+        }
+    }
+    
+    private void OnEnterAvatarManagement()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered AvatarManagement mode");
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+        
+        if (_core.Terminal != null)
+        {
+            // Load body art data if not already loaded (same as creation mode)
+            if (_bodyArtData == null)
+            {
+                string artFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, 
+                    "assets", "art", "body", "full_body");
+                if (!System.IO.Directory.Exists(artFolder))
+                    artFolder = System.IO.Path.Combine(
+                        System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
+                        "..", "..", "..", "assets", "art", "body", "full_body");
+                if (!System.IO.Directory.Exists(artFolder))
+                    artFolder = System.IO.Path.Combine("assets", "art", "body", "full_body");
+                    
+                _bodyArtData = BodyArtData.Load(artFolder);
+            }
+            
+            var avatar = _avatar!;
+            
+            _managementMenuRenderer = new ManagementMenuRenderer(_core.Terminal, avatar, _bodyArtData);
+            _managementMenuRenderer.OnBack = () =>
+            {
+                Console.WriteLine("LocationTravelGameController: Management menu closed, returning to main menu");
+                _managementMenuRenderer = null;
+                SetMode(GameMode.MainMenu);
+            };
+            
+            _managementMenuRenderer.Render();
         }
     }
     

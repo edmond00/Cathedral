@@ -35,11 +35,12 @@ public class MainMenuRenderer
     /// <summary>
     /// Configures the menu buttons. Call before Render().
     /// </summary>
-    public void SetButtons(Action onNew, Action onContinue, Action onExit)
+    public void SetButtons(Action onNew, Action onContinue, Action onProtagonist, Action onExit)
     {
         _buttons.Clear();
         _buttons.Add(new MenuButton("New", onNew, true));
         _buttons.Add(new MenuButton("Continue", onContinue, HasGameStarted));
+        _buttons.Add(new MenuButton("Protagonist", onProtagonist, HasGameStarted));
         _buttons.Add(new MenuButton("Exit", onExit, true));
     }
 
@@ -51,6 +52,17 @@ public class MainMenuRenderer
         if (_buttons.Count >= 2)
         {
             _buttons[1] = _buttons[1] with { Enabled = enabled };
+        }
+    }
+
+    /// <summary>
+    /// Updates the enabled state of the Protagonist button.
+    /// </summary>
+    public void SetProtagonistEnabled(bool enabled)
+    {
+        if (_buttons.Count >= 3)
+        {
+            _buttons[2] = _buttons[2] with { Enabled = enabled };
         }
     }
 

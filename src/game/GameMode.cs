@@ -35,5 +35,11 @@ public enum GameMode
     /// Player is creating/configuring their avatar before starting the game.
     /// Terminal shows body art with interactive organ-part score adjustment.
     /// </summary>
-    AvatarCreation
+    AvatarCreation,
+    
+    /// <summary>
+    /// Player is managing their protagonist/companions from the main menu.
+    /// Terminal shows tabbed interface: body/organs viewer, inventory, journal.
+    /// </summary>
+    AvatarManagement
 }
