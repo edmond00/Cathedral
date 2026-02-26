@@ -291,8 +291,8 @@ namespace Cathedral.Glyph
             int texLoc = GL.GetUniformLocation(program, "uAtlas");
             GL.Uniform1(texLoc, 0);
 
-            // Set initial projection
-            GL.Viewport(0, 0, Size.X, Size.Y);
+            // Set initial projection - use ClientSize (actual renderable area, not including title bar/borders)
+            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
             UpdateProjection();
 
             // For mouse click reading
@@ -311,8 +311,8 @@ namespace Cathedral.Glyph
                     Config.Terminal.MainFontSize);
                 // Event handlers removed - terminal events will be handled by game modes
                 
-                // Set border height function for proper mouse position correction
-                _terminal.SetBorderHeightFunction(() => GetWindowBorderHeight());
+                // No border height correction needed - MousePosition is already client-relative in OpenTK 4.x
+                // and we use ClientSize consistently for viewport/projection/mouse math
                 
                 // Terminal starts hidden - will be shown by game modes as needed
                 _terminal.Visible = false;
@@ -336,73 +336,18 @@ namespace Cathedral.Glyph
                 _popupTerminal = null;
             }
             
-            // Log window border information
-            LogWindowBorderInfo();
+            // Log window info
+            LogWindowInfo();
             
             // Fire loaded event for interface setup
             CoreLoaded?.Invoke();
         }
         
-        #region Window Border Information
+        #region Window Info
         
-        private void LogWindowBorderInfo()
+        private void LogWindowInfo()
         {
-            // Log border information for debugging
-            Console.WriteLine("=== Window Border Information ===");
-            Console.WriteLine($"Client Size (content area): {ClientSize}");
-            Console.WriteLine($"Window Size (including borders): {Size}");
-            Console.WriteLine($"Window Position: {Location}");
-            Console.WriteLine($"Window Border: {WindowBorder}");
-            
-            // Calculate border sizes
-            var borderWidth = Size.X - ClientSize.X;
-            var borderHeight = Size.Y - ClientSize.Y;
-            
-            Console.WriteLine($"Total border width (left + right): {borderWidth}px");
-            Console.WriteLine($"Total border height (top + bottom): {borderHeight}px");
-            
-            // On Windows, typical values:
-            // - Title bar height: ~30-32px (depends on DPI/scaling)
-            // - Side borders: ~8-16px total (depends on DPI/scaling)
-            Console.WriteLine($"Estimated title bar height: ~{borderHeight - 8}px (assuming 4px top/bottom borders)");
-            Console.WriteLine("Note: Border sizes depend on OS theme, DPI scaling, and window style");
-            Console.WriteLine("=====================================");
-        }
-        
-        /// <summary>
-        /// Gets window border information that can be used by terminal for positioning
-        /// </summary>
-        public (int titleBarHeight, int borderWidth, int borderHeight) GetWindowBorderInfo()
-        {
-            var totalBorderWidth = Size.X - ClientSize.X;
-            var totalBorderHeight = Size.Y - ClientSize.Y;
-            
-            // The empirically correct title bar height for mouse positioning is 38px
-            // but our naive calculation (total - 8px) gives 31px. This 7px difference
-            // likely comes from OS window decoration complexities that aren't captured
-            // by simple Size vs ClientSize measurements.
-            
-            // Use an empirically-corrected calculation:
-            // - Start with the naive estimation
-            // - Apply a correction factor based on observed difference
-            var naiveEstimate = totalBorderHeight - 8; // Original calculation
-            var empiricalCorrection = 7; // Observed difference (38 - 31)
-            var correctedTitleBarHeight = naiveEstimate + empiricalCorrection;
-            
-            // Ensure we don't exceed the total border height
-            var titleBarHeight = Math.Min(correctedTitleBarHeight, totalBorderHeight);
-            
-            return (titleBarHeight, totalBorderWidth, totalBorderHeight);
-        }
-        
-        /// <summary>
-        /// Gets the window border height (title bar) for mouse position correction.
-        /// This is the global function for consistent border height handling across the application.
-        /// </summary>
-        public float GetWindowBorderHeight()
-        {
-            var (titleBarHeight, _, _) = GetWindowBorderInfo();
-            return Math.Max(0, titleBarHeight); // Ensure non-negative
+            Console.WriteLine($"Window Info - Client: {ClientSize.X}x{ClientSize.Y}, Total: {Size.X}x{Size.Y}");
         }
         
         #endregion
@@ -446,13 +391,10 @@ namespace Cathedral.Glyph
             _terminal.Text(41, 11, "Hovered: None", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(41, 12, "Selected: None", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             
-            // Add window border information
-            var (titleBarHeight, borderWidth, borderHeight) = GetWindowBorderInfo();
+            // Add window information
             _terminal.Text(41, 14, "Window Info:", Cathedral.Terminal.Utils.Colors.Blue, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(41, 15, $"Client: {ClientSize.X}x{ClientSize.Y}", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(41, 16, $"Total: {Size.X}x{Size.Y}", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
-            _terminal.Text(41, 17, $"Title bar: ~{titleBarHeight}px", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
-            _terminal.Text(41, 18, $"Borders: {borderWidth}x{borderHeight}", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             
             // Draw progress bar demo
             _terminal.Text(3, 20, "System Status:", Cathedral.Terminal.Utils.Colors.Yellow, Cathedral.Terminal.Utils.Colors.Black);
@@ -687,7 +629,7 @@ namespace Cathedral.Glyph
 
             // Build view & proj
             var view = GetViewMatrix();
-            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y, 0.01f, 100f);
 
             // Render background sphere first (opaque backdrop)
             RenderBackgroundSphere(view, proj);
@@ -713,13 +655,13 @@ namespace Cathedral.Glyph
                 }
                 _terminal.SetDarkenFactor(popupActive ? 0.5f : 1.0f);
                 
-                _terminal.Render(Size);
+                _terminal.Render(ClientSize);
             }
             
             // Render popup terminal on top of everything
             if (_popupTerminal != null)
             {
-                _popupTerminal.Render(Size);
+                _popupTerminal.Render(ClientSize);
             }
 
             SwapBuffers();
@@ -879,7 +821,7 @@ namespace Cathedral.Glyph
             // Handle terminal input first (HUD takes priority)
             if (_terminal != null)
             {
-                _terminal.HandleMouseMove(mouse, Size);
+                _terminal.HandleMouseMove(mouse, ClientSize);
             }
             
             var (rayOrig, rayDir) = GetMouseRay(mouse);
@@ -890,7 +832,7 @@ namespace Cathedral.Glyph
             debugMousePos = mouse;
 
             // Find hovered vertex (only if mouse is not over terminal and interactions are enabled)
-            if (_worldInteractionsEnabled && (_terminal == null || !_terminal.IsPositionInTerminal(mouse, Size)))
+            if (_worldInteractionsEnabled && (_terminal == null || !_terminal.IsPositionInTerminal(mouse, ClientSize)))
             {
                 int newHover = FindVertexByMagentaRayIntersection(mouse);
                 
@@ -937,7 +879,7 @@ namespace Cathedral.Glyph
             }
             
             // Handle terminal input (HUD takes priority)
-            if (_terminal != null && _terminal.HandleMouseDown(mouse, Size, e.Button))
+            if (_terminal != null && _terminal.HandleMouseDown(mouse, ClientSize, e.Button))
             {
                 Console.WriteLine("Terminal handled mouse click");
                 return; // Terminal handled the event
@@ -1040,7 +982,7 @@ namespace Cathedral.Glyph
         private int FindClosestVertexInScreenSpace(OpenTK.Mathematics.Vector2 mousePos)
         {
             var view = GetViewMatrix();
-            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y, 0.01f, 100f);
             var viewProj = view * proj;
             
             float bestDist = float.MaxValue;
@@ -1057,8 +999,8 @@ namespace Cathedral.Glyph
                 
                 if (ndc.X < -1 || ndc.X > 1 || ndc.Y < -1 || ndc.Y > 1) continue;
                 
-                var screenX = (ndc.X + 1.0f) * 0.5f * Size.X;
-                var screenY = (1.0f - ndc.Y) * 0.5f * Size.Y;
+                var screenX = (ndc.X + 1.0f) * 0.5f * ClientSize.X;
+                var screenY = (1.0f - ndc.Y) * 0.5f * ClientSize.Y;
                 
                 float dx = screenX - mousePos.X;
                 float dy = screenY - mousePos.Y;
@@ -1098,15 +1040,15 @@ namespace Cathedral.Glyph
         private (Vector3 rayOrigin, Vector3 rayDirection) GetMouseRay(OpenTK.Mathematics.Vector2 mousePos)
         {
             // Use the Camera class method for mouse ray calculation
-            var (rayOrigin, rayDirection) = _camera.GetMouseRay(new OpenTK.Mathematics.Vector2(mousePos.X, mousePos.Y), Size.X, Size.Y);
+            var (rayOrigin, rayDirection) = _camera.GetMouseRay(new OpenTK.Mathematics.Vector2(mousePos.X, mousePos.Y), ClientSize.X, ClientSize.Y);
             return (rayOrigin, rayDirection);
         }
 
         // Legacy method for compatibility - TODO: Remove when all callers updated
         private (Vector3 rayOrigin, Vector3 rayDirection) GetMouseRay_Legacy(OpenTK.Mathematics.Vector2 mousePos)
         {
-            float x = (2.0f * mousePos.X) / Size.X - 1.0f;
-            float y = 1.0f - (2.0f * mousePos.Y) / Size.Y;
+            float x = (2.0f * mousePos.X) / ClientSize.X - 1.0f;
+            float y = 1.0f - (2.0f * mousePos.Y) / ClientSize.Y;
             
             Vector3 camDir = _camera.GetCameraDirection();
             Vector3 rayOrigin = _camera.GetCameraPosition();
@@ -1116,7 +1058,7 @@ namespace Cathedral.Glyph
             Vector3 cameraUp = Vector3.Cross(right, camDir);
             
             float fovY = MathHelper.DegreesToRadians(60f);
-            float aspect = (float)Size.X / Size.Y;
+            float aspect = (float)ClientSize.X / ClientSize.Y;
             
             float tanHalfFov = MathF.Tan(fovY / 2.0f);
             Vector3 rayDirection = Vector3.Normalize(
@@ -1575,7 +1517,7 @@ namespace Cathedral.Glyph
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
-            GL.Viewport(0, 0, Size.X, Size.Y);
+            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
             UpdateProjection();
             
             // Force terminal to recalculate its layout immediately
@@ -1584,9 +1526,8 @@ namespace Cathedral.Glyph
                 _terminal.ForceRefresh();
             }
             
-            // Log border info on resize (useful for debugging terminal positioning)
-            var (titleBarHeight, borderWidth, borderHeight) = GetWindowBorderInfo();
-            Console.WriteLine($"Window resized - Client: {ClientSize}, Total: {Size}, Title bar: ~{titleBarHeight}px");
+            // Log window info on resize
+            Console.WriteLine($"Window resized - Client: {ClientSize}, Total: {Size}");
         }
 
         private void UpdateProjection()
@@ -1695,11 +1636,9 @@ namespace Cathedral.Glyph
 
         private Vector3 GetMouseProjectionOnScreen(OpenTK.Mathematics.Vector2 mousePos)
         {
-            float pixelOffsetY = GetWindowBorderHeight();
-            float correctedMouseY = mousePos.Y + pixelOffsetY;
-            
-            float x = (2.0f * mousePos.X) / Size.X - 1.0f;
-            float y = 1.0f - (2.0f * correctedMouseY) / Size.Y;
+            // MousePosition is already client-relative in OpenTK 4.x, no offset needed
+            float x = (2.0f * mousePos.X) / ClientSize.X - 1.0f;
+            float y = 1.0f - (2.0f * mousePos.Y) / ClientSize.Y;
             
             Vector3 camDir = _camera.GetCameraDirection();
             Vector3 cameraPos = _camera.GetCameraPosition();
@@ -1709,7 +1648,7 @@ namespace Cathedral.Glyph
             Vector3 cameraUp = Vector3.Cross(right, camDir);
             
             float fovY = MathHelper.DegreesToRadians(60f);
-            float aspect = (float)Size.X / Size.Y;
+            float aspect = (float)ClientSize.X / ClientSize.Y;
             float nearDist = 1.0f;
             
             float tanHalfFov = MathF.Tan(fovY / 2.0f);
@@ -1739,7 +1678,7 @@ namespace Cathedral.Glyph
             
             // Screen parameters
             float fovY = MathHelper.DegreesToRadians(60f);
-            float aspect = (float)Size.X / Size.Y;
+            float aspect = (float)ClientSize.X / ClientSize.Y;
             float nearDist = 1.0f; // Distance from camera where we draw the screen
             
             float tanHalfFov = MathF.Tan(fovY / 2.0f);

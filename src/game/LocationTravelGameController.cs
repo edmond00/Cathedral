@@ -330,10 +330,9 @@ public class LocationTravelGameController : IDisposable
             // Only handle left clicks for popup selection
             if (button == MouseButton.Left)
             {
-                // Apply the same border height correction as GetCorrectedMousePosition()
-                // to ensure consistent Y coordinates between hover and click detection
+                // Get mouse position for popup hit detection
                 Vector2 correctedPosition = _core.Terminal?.InputHandler.GetCorrectedMousePosition() ?? mousePosition;
-                Console.WriteLine($"LocationTravelGameController: Global click intercepted for popup at corrected position {correctedPosition}");
+                Console.WriteLine($"LocationTravelGameController: Global click intercepted for popup at position {correctedPosition}");
                 _narrativeController.OnRawMouseClick(correctedPosition);
                 return true; // Consume the click
             }

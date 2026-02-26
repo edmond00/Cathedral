@@ -45,9 +45,9 @@ public class Avatar
         // Create 5 body part regions, each containing organs with organ parts
         var bodyParts = new List<BodyPart>
         {
-            new BrainBodyPart(),
-            new FaceBodyPart(),
-            new TorsoBodyPart(),
+            new EncephalonBodyPart(),
+            new VisageBodyPart(),
+            new TrunkBodyPart(),
             new UpperLimbsBodyPart(),
             new LowerLimbsBodyPart()
         };
@@ -124,7 +124,7 @@ public class Avatar
     // Body hierarchy queries
     
     /// <summary>
-    /// Find a body part by its id (e.g. "brain", "torso").
+    /// Find a body part by its id (e.g. "encephalon", "trunk").
     /// </summary>
     public BodyPart? GetBodyPartById(string id) =>
         _bodyParts.FirstOrDefault(bp => bp.Id == id);

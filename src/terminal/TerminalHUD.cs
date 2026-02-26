@@ -101,14 +101,6 @@ namespace Cathedral.Terminal
         #region Configuration
 
         /// <summary>
-        /// Sets the border height function for mouse position correction
-        /// </summary>
-        public void SetBorderHeightFunction(Func<float> getBorderHeight)
-        {
-            _inputHandler.SetBorderHeightFunction(getBorderHeight);
-        }
-
-        /// <summary>
         /// Gets the character aspect ratio (height/width) from the font metrics.
         /// Used for aspect ratio correction when converting images to text.
         /// Returns 0 if calculation fails.

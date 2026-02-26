@@ -781,10 +781,10 @@ public class NarrativeController
         if (_skillPopup.IsVisible)
         {
             // Get cell size for hit detection
-            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.Size);
+            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
             int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
             
-            _skillPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.Size, cellPixelSize);
+            _skillPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
         }
     }
     
@@ -798,10 +798,10 @@ public class NarrativeController
         if (_skillPopup.IsVisible)
         {
             // Get cell size for hit detection
-            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.Size);
+            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
             int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
             
-            var selectedSkill = _skillPopup.HandleClick(screenPosition.X, screenPosition.Y, _core.Size, cellPixelSize);
+            var selectedSkill = _skillPopup.HandleClick(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
             if (selectedSkill != null)
             {
                 Console.WriteLine($"NarrativeController: Selected skill: {selectedSkill.DisplayName}");
@@ -1028,14 +1028,14 @@ public class NarrativeController
         // If popup is visible, handle popup click with screen coordinates
         if (_skillPopup.IsVisible)
         {
-            // Get corrected screen mouse position (includes border height offset)
+            // Get screen mouse position
             Vector2 correctedScreenPos = _terminalInputHandler.GetCorrectedMousePosition();
             
             // Get cell size for hit detection
-            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.Size);
+            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
             int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
             
-            var selectedSkill = _skillPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.Size, cellPixelSize);
+            var selectedSkill = _skillPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.ClientSize, cellPixelSize);
             if (selectedSkill != null)
             {
                 Console.WriteLine($"NarrativeController: Selected skill: {selectedSkill.DisplayName}");
@@ -1116,7 +1116,7 @@ public class NarrativeController
             var thinkingSkills = _avatar.GetThinkingSkills();
             
             // Convert terminal cell coordinates to screen pixel coordinates
-            Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.Size);
+            Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
             
             _skillPopup.Show(screenPos, thinkingSkills, "Select Thinking Skill");
             Console.WriteLine($"NarrativeController: Showing {thinkingSkills.Count} thinking skills at screen position ({screenPos.X}, {screenPos.Y})");;
@@ -1153,7 +1153,7 @@ public class NarrativeController
             var observationSkills = _avatar.GetObservationSkills();
             
             // Convert terminal cell coordinates to screen pixel coordinates
-            Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.Size);
+            Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
             
             _skillPopup.Show(screenPos, observationSkills, "Select Observation Skill");
             Console.WriteLine($"NarrativeController: Showing {observationSkills.Count} observation skills for focus observation at screen position ({screenPos.X}, {screenPos.Y})");

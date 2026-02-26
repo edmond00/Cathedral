@@ -3,13 +3,13 @@ using System.Collections.Generic;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Ears organ (face). Multi-part organ: left ear, right ear.
+/// Ears organ (visage). Multi-part organ: left ear, right ear.
 /// </summary>
 public class EarsOrgan : Organ
 {
     public override string Id => "ears";
     public override string DisplayName => "Ears";
-    public override string BodyPartId => "face";
+    public override string BodyPartId => "visage";
     
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;

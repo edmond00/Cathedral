@@ -3,17 +3,17 @@ using System.Collections.Generic;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Torso body part region. Contains: backbone, heart, thorax, viscera, stomach, sex.
+/// Trunk body part region. Contains: backbone, heart, thorax, viscera, stomach, sex.
 /// </summary>
-public class TorsoBodyPart : BodyPart
+public class TrunkBodyPart : BodyPart
 {
-    public override string Id => "torso";
-    public override string DisplayName => "Torso";
+    public override string Id => "trunk";
+    public override string DisplayName => "Trunk";
     
     private readonly List<Organ> _organs;
     public override List<Organ> Organs => _organs;
     
-    public TorsoBodyPart()
+    public TrunkBodyPart()
     {
         _organs = new List<Organ>
         {

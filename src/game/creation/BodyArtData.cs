@@ -49,9 +49,9 @@ public class BodyArtData
     // Mapping from 7 part-index names to 5 BodyPart.Id values
     private static readonly Dictionary<string, string> PartNameToBodyPartId = new()
     {
-        { "brain", "brain" },
-        { "face", "face" },
-        { "torso", "torso" },
+        { "encephalon", "encephalon" },
+        { "visage", "visage" },
+        { "trunk", "trunk" },
         { "left_arm", "upper_limbs" },
         { "right_arm", "upper_limbs" },
         { "left_leg", "lower_limbs" },
@@ -236,7 +236,7 @@ public class BodyArtData
 
     /// <summary>
     /// Get the bounding box of all cells belonging to a raw part name (7-value system:
-    /// brain, face, torso, left_arm, right_arm, left_leg, right_leg).
+    /// encephalon, visage, trunk, left_arm, right_arm, left_leg, right_leg).
     /// Useful for drawing per-side boxes for limbs.
     /// </summary>
     public ArtBounds? GetRawPartBounds(string rawPartName)

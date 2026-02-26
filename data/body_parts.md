@@ -42,7 +42,7 @@ The instrument of speech and persuasion. Governs speaking, persuasion, bargainin
 ### Nose
 Manages olfactory senses and scent-based skills. Essential for cooking, tracking, smelling, foraging, and sniffing. The organ of scent discrimination and chemical detection.
 
-## Brain Regions
+## Encephalon Regions
 
 ### Cerebrum
 The seat of higher reasoning and analytical thought. Governs mathematics, logic, rhetoric, analysis, and planning. The engine of rational thought and strategic thinking.

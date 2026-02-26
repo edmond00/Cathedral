@@ -6,7 +6,7 @@ namespace Cathedral.Game.Narrative;
 /// <summary>
 /// Base class for body parts (major body regions).
 /// A body part contains multiple organs. Its score is the sum of its organ scores.
-/// Body parts: brain, face, torso, upper_limbs, lower_limbs
+/// Body parts: encephalon, visage, trunk, upper_limbs, lower_limbs
 /// </summary>
 public abstract class BodyPart
 {

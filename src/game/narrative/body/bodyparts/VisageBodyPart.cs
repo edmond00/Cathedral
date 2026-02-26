@@ -3,17 +3,17 @@ using System.Collections.Generic;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Face body part region. Contains: ears, eyes, nose, tongue, teeths.
+/// Visage body part region. Contains: ears, eyes, nose, tongue, teeths.
 /// </summary>
-public class FaceBodyPart : BodyPart
+public class VisageBodyPart : BodyPart
 {
-    public override string Id => "face";
-    public override string DisplayName => "Face";
+    public override string Id => "visage";
+    public override string DisplayName => "Visage";
     
     private readonly List<Organ> _organs;
     public override List<Organ> Organs => _organs;
     
-    public FaceBodyPart()
+    public VisageBodyPart()
     {
         _organs = new List<Organ>
         {

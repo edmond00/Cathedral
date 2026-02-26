@@ -12,7 +12,6 @@ namespace Cathedral.Terminal
     {
         private readonly TerminalView _view;
         private readonly TerminalRenderer _renderer;
-        private Func<float>? _getBorderHeight;
         
         // Mouse state tracking
         private Vector2i? _hoveredCell;
@@ -57,32 +56,15 @@ namespace Cathedral.Terminal
 
         #endregion
 
-        #region Border Height
+        #region Mouse Position
         
         /// <summary>
-        /// Sets the border height function delegate
-        /// </summary>
-        public void SetBorderHeightFunction(Func<float> getBorderHeight)
-        {
-            _getBorderHeight = getBorderHeight;
-        }
-        
-        /// <summary>
-        /// Gets the window border height for mouse position correction
-        /// </summary>
-        private float GetWindowBorderHeight()
-        {
-            return _getBorderHeight?.Invoke() ?? 0f;
-        }
-        
-        /// <summary>
-        /// Gets the last raw mouse position with border height correction applied.
-        /// This is the actual corrected screen position used for coordinate conversion.
+        /// Gets the last raw mouse position (already client-relative in OpenTK 4.x).
+        /// No border height correction needed when using ClientSize consistently.
         /// </summary>
         public Vector2 GetCorrectedMousePosition()
         {
-            float borderHeight = GetWindowBorderHeight();
-            return new Vector2(_lastRawMousePosition.X, _lastRawMousePosition.Y + borderHeight);
+            return _lastRawMousePosition;
         }
         
         #endregion
@@ -172,15 +154,11 @@ namespace Cathedral.Terminal
         /// <returns>Cell coordinates (0-based), or null if outside terminal area</returns>
         public Vector2i? ScreenToCell(Vector2 screenPos, Vector2i windowSize)
         {
-            // Apply border height correction to mouse position
-            float borderHeight = GetWindowBorderHeight();
-            Vector2 correctedScreenPos = new Vector2(screenPos.X, screenPos.Y + borderHeight);
-            
             // Get terminal layout information
             var (terminalSize, cellSize, offset) = _renderer.GetLayoutInfo(windowSize);
             
             // Convert screen position to terminal-local coordinates
-            Vector2 localPos = correctedScreenPos - offset;
+            Vector2 localPos = screenPos - offset;
             
             // Check if position is within terminal bounds
             if (localPos.X < 0 || localPos.X >= terminalSize.X ||

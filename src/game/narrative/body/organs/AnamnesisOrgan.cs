@@ -3,13 +3,13 @@ using System.Collections.Generic;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Anamnesis organ (brain). Single-part organ.
+/// Anamnesis organ (encephalon). Single-part organ.
 /// </summary>
 public class AnamnesisOrgan : Organ
 {
     public override string Id => "anamnesis";
     public override string DisplayName => "Anamnesis";
-    public override string BodyPartId => "brain";
+    public override string BodyPartId => "encephalon";
     
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;

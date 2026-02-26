@@ -210,13 +210,13 @@ public static class CriticTrees
         NarratorHint = "The character has hit their head or face, possibly dazed or disoriented"
     };
     
-    public static readonly FailureOutcomeType TorsoInjury = new()
+    public static readonly FailureOutcomeType TrunkInjury = new()
     {
-        Name = "TorsoInjury",
+        Name = "TrunkInjury",
         HumorAffected = "Yellow Bile",
         HumorAmount = 3,
-        Description = "Injury to torso, ribs, or back",
-        NarratorHint = "The character has injured their torso, ribs, or back"
+        Description = "Injury to trunk, ribs, or back",
+        NarratorHint = "The character has injured their trunk, ribs, or back"
     };
     
     public static readonly FailureOutcomeType GeneralSevereInjury = new()
@@ -344,9 +344,9 @@ public static class CriticTrees
         var headInjuryNode = CreateOutcomeLeaf("Outcome_HeadTrauma", actionText, contextPrefix,
             "Would failing specifically risk injury to the head or face?");
         
-        var torsoInjuryNode = CreateOutcomeLeaf("Outcome_TorsoInjury", actionText, contextPrefix,
-            "Would failing risk injury to the torso, ribs, or back?");
-        // TorsoInjury is default for "specific body part but not limb or head"
+        var trunkInjuryNode = CreateOutcomeLeaf("Outcome_TrunkInjury", actionText, contextPrefix,
+            "Would failing risk injury to the trunk, ribs, or back?");
+        // TrunkInjury is default for "specific body part but not limb or head"
         
         var generalSevereNode = CreateOutcomeLeaf("Outcome_GeneralSevereInjury", actionText, contextPrefix,
             "Could the injury affect multiple body parts or the whole body?");
@@ -396,7 +396,7 @@ public static class CriticTrees
             threshold: 0.5
         );
         headCheck.SuccessBranch = headInjuryNode;
-        headCheck.FailureBranch = torsoInjuryNode; // Default to torso if not head
+        headCheck.FailureBranch = trunkInjuryNode; // Default to trunk if not head
         
         // Limb injury check
         var limbCheck = new CriticNode(
@@ -561,7 +561,7 @@ public static class CriticTrees
         {
             "Outcome_LimbInjury" => LimbInjury,
             "Outcome_HeadTrauma" => HeadTrauma,
-            "Outcome_TorsoInjury" => TorsoInjury,
+            "Outcome_TrunkInjury" => TrunkInjury,
             "Outcome_GeneralSevereInjury" => GeneralSevereInjury,
             "Outcome_MinorInjury" => MinorInjury,
             "Outcome_PhysicalExhaustion" => PhysicalExhaustion,

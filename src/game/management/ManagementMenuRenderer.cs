@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
-using Cathedral.Terminal.Utils;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Creation;
 
@@ -20,19 +19,14 @@ public enum ManagementTab
 
 /// <summary>
 /// Renders and manages the protagonist/companion management menu.
-/// Features a tabbed interface with character selection and view tabs.
+/// Features a full-height left panel for navigation, body art in the center, and stats on the right.
 ///
-/// Layout (right panel, cols 62-99):
-///   Row 1:  Character selector (Protagonist / companions)
-///   Row 2:  Separator
-///   Row 3:  View tabs [Body] [Inventory] [Journal]
-///   Row 4:  Separator
-///   Row 5:  Tab title
-///   Row 7+: Tab content (organ stats for Body, placeholders for others)
-///   Row 92: Separator
-///   Row 96: [ BACK ] button
-///
-/// Left side (cols 0-60): Body art display when Body tab is active.
+/// Layout:
+///   Cols  0-15 : Left panel (full height, subtle background)
+///   Col  16    : Vertical separator
+///   Cols 17-56 : Body art (40 wide, shifted right by 17)
+///   Col  61    : Vertical separator
+///   Cols 62-99 : Right panel (title + organ stats + footer)
 /// </summary>
 public class ManagementMenuRenderer
 {
@@ -60,18 +54,40 @@ public class ManagementMenuRenderer
     private int _hoveredCharIndex = -1;
     private bool _backHovered;
 
-    // ── Tab button positions (computed on render) ────────────────
-    private readonly List<(int x, int width, ManagementTab tab)> _tabButtons = new();
-    private readonly List<(int x, int width, int charIndex)> _charButtons = new();
+    // ── Left panel layout (full height, no boxes) ────────────────
+    private const int PanelLeft = 0;
+    private const int PanelLeftW = 16;        // cols 0-15
+    private const int SepCol = 16;            // vertical separator column
+    private const int ContentX = 2;           // text content starts at col 2
+    private const int ContentW = 13;          // usable text width inside panel
 
-    // ── Layout constants ─────────────────────────────────────────
-    private const int CharTabRow = 1;
-    private const int ViewTabRow = 3;
-    private const int TabTitleRow = 5;
-    private const int ContentStartRow = 7;
-    private const int BackButtonY = 96;
-    private const int BackButtonX = 72;
-    private const int BackButtonW = 18;
+    // Subtle panel background
+    private static readonly Vector4 PanelBg = new(0.04f, 0.04f, 0.04f, 1.0f);
+
+    // Menu section (top of panel)
+    private const int MenuTitleRow = 2;
+    private const int MenuDividerRow = 3;
+    private const int MenuFirstItemRow = 5;
+    // Items at rows 5, 6, 7 (one per tab)
+
+    // Party section (bottom of panel, always visible)
+    private const int PartyTitleRow = 86;
+    private const int PartyDividerRow = 87;
+    private const int PartyFirstItemRow = 89;
+    // Items start at row 89
+
+    // Back button (very bottom)
+    private const int BackRow = 96;
+
+    // ── Right panel layout ───────────────────────────────────────
+    private const int RightTitleRow = 1;
+    private const int RightSepRow = 3;
+    private const int ContentStartRow = 4;
+    private const int FooterSepRow = 92;
+
+    // ── Hit-test regions (computed on render) ────────────────────
+    private readonly List<(int row, int tabIndex)> _tabHitRows = new();
+    private readonly List<(int row, int charIndex)> _charHitRows = new();
 
     /// <summary>Callback for when the player clicks Back.</summary>
     public Action? OnBack { get; set; }
@@ -83,6 +99,7 @@ public class ManagementMenuRenderer
 
         _bodyViewer = new BodyArtViewer(terminal, avatar, artData)
         {
+            ArtOffsetX = 17,  // Shift art right to make room for left panel
             StatsStartRow = ContentStartRow,
             ShowScoreEditControls = false,
             ShowClickHints = false
@@ -103,27 +120,25 @@ public class ManagementMenuRenderer
         _terminal.Fill(' ', Config.Colors.Black, Config.Colors.Black);
         _terminal.Visible = true;
 
-        // Left side: body art (only on Body tab)
+        // Body art (only on Body tab)
         if (_activeTab == ManagementTab.Body)
         {
             _bodyViewer.RenderBodyArt();
         }
         else
         {
-            // Draw separator even on non-body tabs for consistency
+            // Draw separator even on non-body tabs
             int sepX = BodyArtViewer.PanelX - 1;
             for (int y = 0; y < 100; y++)
                 _terminal.SetCell(sepX, y, '│', Config.Colors.DarkGray35, Config.Colors.Black);
         }
 
-        // Right panel
-        RenderCharacterTabs();
-        RenderSeparator(2);
-        RenderViewTabs();
-        RenderSeparator(4);
-        RenderTabTitle();
+        // Left panel (rendered AFTER art so it overlays cleanly)
+        RenderLeftPanel();
 
-        // Tab content
+        // Right panel
+        RenderPanelHeader();
+
         switch (_activeTab)
         {
             case ManagementTab.Body:
@@ -145,7 +160,11 @@ public class ManagementMenuRenderer
     public void Update()
     {
         if (_activeTab == ManagementTab.Body && _bodyViewer.UpdateBlink())
+        {
             _bodyViewer.RenderBodyArt();
+            // Re-render left panel on top after art redraw
+            RenderLeftPanel();
+        }
     }
 
     /// <summary>Handle mouse hover at terminal coordinates.</summary>
@@ -153,13 +172,13 @@ public class ManagementMenuRenderer
     {
         bool changed = false;
 
-        // Check character tabs
-        int newCharHover = GetCharacterTabAt(x, y);
-        if (newCharHover != _hoveredCharIndex) { _hoveredCharIndex = newCharHover; changed = true; }
-
-        // Check view tabs
-        int newTabHover = GetViewTabAt(x, y);
+        // Check view tab rows in sidebar
+        int newTabHover = GetTabAtPosition(x, y);
         if (newTabHover != _hoveredTabIndex) { _hoveredTabIndex = newTabHover; changed = true; }
+
+        // Check character rows in sidebar
+        int newCharHover = GetCharacterAtPosition(x, y);
+        if (newCharHover != _hoveredCharIndex) { _hoveredCharIndex = newCharHover; changed = true; }
 
         // Check back button
         bool newBackHovered = IsOnBackButton(x, y);
@@ -186,8 +205,28 @@ public class ManagementMenuRenderer
             return;
         }
 
+        // View tab click
+        int tabIdx = GetTabAtPosition(x, y);
+        if (tabIdx >= 0 && tabIdx < AllTabs.Length)
+        {
+            var tabDef = AllTabs[tabIdx];
+            if (tabDef.Enabled)
+            {
+                _activeTab = tabDef.Tab;
+
+                if (!IsCharacterVisibleForTab(_selectedCharacterIndex, _activeTab))
+                    _selectedCharacterIndex = 0;
+
+                if (_activeTab != ManagementTab.Body)
+                    _bodyViewer.ClearHover();
+
+                Render();
+                return;
+            }
+        }
+
         // Character tab click
-        int charIdx = GetCharacterTabAt(x, y);
+        int charIdx = GetCharacterAtPosition(x, y);
         if (charIdx >= 0 && charIdx < _characters.Count)
         {
             if (IsCharacterVisibleForTab(charIdx, _activeTab))
@@ -197,30 +236,6 @@ public class ManagementMenuRenderer
                 return;
             }
         }
-
-        // View tab click
-        int tabIdx = GetViewTabAt(x, y);
-        if (tabIdx >= 0 && tabIdx < AllTabs.Length)
-        {
-            var tabDef = AllTabs[tabIdx];
-            if (tabDef.Enabled)
-            {
-                _activeTab = tabDef.Tab;
-
-                // If switching to a tab that doesn't support the current character, reset to protagonist
-                if (!IsCharacterVisibleForTab(_selectedCharacterIndex, _activeTab))
-                    _selectedCharacterIndex = 0;
-
-                // Clear body viewer hover when leaving body tab
-                if (_activeTab != ManagementTab.Body)
-                    _bodyViewer.ClearHover();
-
-                Render();
-                return;
-            }
-        }
-
-        // Body tab: no score modification (read-only), but clicks on art still work for hover feedback
     }
 
     /// <summary>Handle right click (no special behavior in management mode).</summary>
@@ -230,98 +245,170 @@ public class ManagementMenuRenderer
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // Character tabs
+    // Left panel: full-height vertical pane
     // ═══════════════════════════════════════════════════════════════
 
-    private void RenderCharacterTabs()
+    /// <summary>
+    /// Renders the entire left panel: background fill, separator line,
+    /// menu section at top, party section near bottom, back button at bottom.
+    /// </summary>
+    private void RenderLeftPanel()
     {
-        _charButtons.Clear();
-        int cx = BodyArtViewer.PanelContentX;
+        _tabHitRows.Clear();
+        _charHitRows.Clear();
 
-        // Filter characters visible for the current tab
-        for (int i = 0; i < _characters.Count; i++)
-        {
-            if (!IsCharacterVisibleForTab(i, _activeTab)) continue;
+        // ─── Background fill ─────────────────────────────────────
+        for (int y = 0; y < 100; y++)
+            for (int x = PanelLeft; x < PanelLeft + PanelLeftW; x++)
+                _terminal.SetCell(x, y, ' ', Config.Colors.Black, PanelBg);
 
-            var ch = _characters[i];
-            bool isSelected = i == _selectedCharacterIndex;
-            bool isHovered = i == _hoveredCharIndex;
+        // ─── Vertical separator line ─────────────────────────────
+        for (int y = 0; y < 100; y++)
+            _terminal.SetCell(SepCol, y, '│', Config.Colors.DarkGray35, Config.Colors.Black);
 
-            string label = isSelected ? $"◆ {ch.Name}" : $"  {ch.Name}";
+        // ─── Menu section (top) ──────────────────────────────────
+        RenderMenuSection();
 
-            Vector4 textColor, bgColor;
-            if (isSelected)
-            {
-                textColor = Config.Colors.BrightYellow;
-                bgColor = Config.Colors.Black;
-            }
-            else if (isHovered)
-            {
-                textColor = Config.Colors.MediumYellow;
-                bgColor = new Vector4(0.06f, 0.06f, 0.0f, 1.0f);
-            }
-            else
-            {
-                textColor = Config.Colors.MediumGray60;
-                bgColor = Config.Colors.Black;
-            }
+        // ─── Party section (bottom, always visible) ──────────────
+        RenderPartySection();
 
-            _terminal.Text(cx, CharTabRow, label, textColor, bgColor);
-            _charButtons.Add((cx, label.Length, i));
-            cx += label.Length + 2;
-        }
+        // ─── Back button (very bottom) ───────────────────────────
+        RenderBackButton();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // View tabs
-    // ═══════════════════════════════════════════════════════════════
-
-    private void RenderViewTabs()
+    private void RenderMenuSection()
     {
-        _tabButtons.Clear();
-        int cx = BodyArtViewer.PanelContentX;
+        // Section title
+        string title = "M E N U";
+        int titleX = ContentX + (ContentW - title.Length) / 2;
+        _terminal.Text(titleX, MenuTitleRow, title, Config.Colors.DarkYellowGrey, PanelBg);
 
+        // Thin divider
+        for (int tx = ContentX; tx < ContentX + ContentW; tx++)
+            _terminal.SetCell(tx, MenuDividerRow, '─', Config.Colors.DarkGray35, PanelBg);
+
+        // Tab items
         for (int i = 0; i < AllTabs.Length; i++)
         {
+            int row = MenuFirstItemRow + i;
             var tab = AllTabs[i];
             bool isActive = tab.Tab == _activeTab;
             bool isHovered = i == _hoveredTabIndex;
 
-            string label = $"[{tab.Label}]";
-
-            Vector4 textColor, bgColor;
+            Vector4 textColor;
+            Vector4 bgColor;
             if (!tab.Enabled)
             {
                 textColor = Config.Colors.DarkGray35;
-                bgColor = Config.Colors.Black;
+                bgColor = PanelBg;
             }
             else if (isActive)
             {
                 textColor = Config.Colors.BrightYellow;
-                bgColor = new Vector4(0.1f, 0.1f, 0.0f, 1.0f);
+                bgColor = new Vector4(0.10f, 0.09f, 0.02f, 1.0f);
             }
             else if (isHovered)
             {
                 textColor = Config.Colors.MediumYellow;
-                bgColor = new Vector4(0.05f, 0.05f, 0.0f, 1.0f);
+                bgColor = new Vector4(0.07f, 0.06f, 0.01f, 1.0f);
             }
             else
             {
                 textColor = Config.Colors.MediumGray60;
-                bgColor = Config.Colors.Black;
+                bgColor = PanelBg;
             }
 
-            _terminal.Text(cx, ViewTabRow, label, textColor, bgColor);
-            _tabButtons.Add((cx, label.Length, tab.Tab));
-            cx += label.Length + 1;
+            // Fill row background across inner panel
+            for (int tx = PanelLeft; tx < PanelLeft + PanelLeftW; tx++)
+                _terminal.SetCell(tx, row, ' ', textColor, bgColor);
+
+            string marker = isActive ? "▸ " : "  ";
+            string label = marker + tab.Label;
+            _terminal.Text(ContentX, row, label, textColor, bgColor);
+
+            _tabHitRows.Add((row, i));
         }
     }
 
+    private void RenderPartySection()
+    {
+        // Filter visible characters for current tab
+        var visibleChars = new List<int>();
+        for (int i = 0; i < _characters.Count; i++)
+        {
+            if (IsCharacterVisibleForTab(i, _activeTab))
+                visibleChars.Add(i);
+        }
+
+        // Section title
+        string title = "P A R T Y";
+        int titleX = ContentX + (ContentW - title.Length) / 2;
+        _terminal.Text(titleX, PartyTitleRow, title, Config.Colors.DarkYellowGrey, PanelBg);
+
+        // Thin divider
+        for (int tx = ContentX; tx < ContentX + ContentW; tx++)
+            _terminal.SetCell(tx, PartyDividerRow, '─', Config.Colors.DarkGray35, PanelBg);
+
+        // Character items
+        for (int vi = 0; vi < visibleChars.Count; vi++)
+        {
+            int charIdx = visibleChars[vi];
+            int row = PartyFirstItemRow + vi;
+            var ch = _characters[charIdx];
+            bool isSelected = charIdx == _selectedCharacterIndex;
+            bool isHovered = charIdx == _hoveredCharIndex;
+
+            Vector4 textColor;
+            Vector4 bgColor;
+            if (isSelected)
+            {
+                textColor = Config.Colors.BrightYellow;
+                bgColor = new Vector4(0.10f, 0.09f, 0.02f, 1.0f);
+            }
+            else if (isHovered)
+            {
+                textColor = Config.Colors.MediumYellow;
+                bgColor = new Vector4(0.07f, 0.06f, 0.01f, 1.0f);
+            }
+            else
+            {
+                textColor = Config.Colors.MediumGray60;
+                bgColor = PanelBg;
+            }
+
+            // Fill row background
+            for (int tx = PanelLeft; tx < PanelLeft + PanelLeftW; tx++)
+                _terminal.SetCell(tx, row, ' ', textColor, bgColor);
+
+            string marker = isSelected ? "◆ " : "  ";
+            string label = marker + ch.Name;
+            if (label.Length > ContentW)
+                label = label[..ContentW];
+            _terminal.Text(ContentX, row, label, textColor, bgColor);
+
+            _charHitRows.Add((row, charIdx));
+        }
+    }
+
+    private void RenderBackButton()
+    {
+        Vector4 textColor = _backHovered ? Config.Colors.BrightYellow : Config.Colors.MediumGray60;
+        Vector4 bgColor = _backHovered ? new Vector4(0.10f, 0.09f, 0.02f, 1.0f) : PanelBg;
+
+        // Fill row
+        for (int tx = PanelLeft; tx < PanelLeft + PanelLeftW; tx++)
+            _terminal.SetCell(tx, BackRow, ' ', textColor, bgColor);
+
+        string label = "← BACK";
+        int labelX = ContentX + (ContentW - label.Length) / 2;
+        _terminal.Text(labelX, BackRow, label, textColor, bgColor);
+    }
+
     // ═══════════════════════════════════════════════════════════════
-    // Tab content
+    // Right panel
     // ═══════════════════════════════════════════════════════════════
 
-    private void RenderTabTitle()
+    private void RenderPanelHeader()
     {
         string title = _activeTab switch
         {
@@ -331,7 +418,8 @@ public class ManagementMenuRenderer
             _                       => ""
         };
 
-        _terminal.Text(BodyArtViewer.PanelContentX, TabTitleRow, title, Config.Colors.DarkYellowGrey, Config.Colors.Black);
+        _terminal.Text(BodyArtViewer.PanelContentX, RightTitleRow, title, Config.Colors.BrightYellow, Config.Colors.Black);
+        _terminal.Text(BodyArtViewer.PanelContentX, RightSepRow, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
     }
 
     private void RenderInventoryPlaceholder()
@@ -357,76 +445,48 @@ public class ManagementMenuRenderer
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // Footer
+    // Footer (right panel)
     // ═══════════════════════════════════════════════════════════════
 
     private void RenderFooter()
     {
-        _terminal.Text(BodyArtViewer.PanelContentX, 92, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
+        _terminal.Text(BodyArtViewer.PanelContentX, FooterSepRow, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
 
         if (_activeTab == ManagementTab.Body)
         {
             int totalScore = _bodyViewer.GetTotalScore();
             string pointsText = $"Total Points: {totalScore}";
-            _terminal.Text(BodyArtViewer.PanelContentX, 94, pointsText, Config.Colors.LightGray75, Config.Colors.Black);
+            _terminal.Text(BodyArtViewer.PanelContentX, FooterSepRow + 2, pointsText, Config.Colors.LightGray75, Config.Colors.Black);
         }
-
-        // Back button
-        Vector4 btnText, btnBg;
-        if (_backHovered)
-        {
-            btnText = Config.Colors.BrightYellow;
-            btnBg = Config.Colors.DarkYellow;
-        }
-        else
-        {
-            btnText = Config.Colors.White;
-            btnBg = Config.Colors.Black;
-        }
-
-        _terminal.FillRect(BackButtonX, BackButtonY, BackButtonW, 1, ' ', btnText, btnBg);
-        string btnLabel = "[ BACK ]";
-        int lblX = BackButtonX + (BackButtonW - btnLabel.Length) / 2;
-        _terminal.Text(lblX, BackButtonY, btnLabel, btnText, btnBg);
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // Separator helper
-    // ═══════════════════════════════════════════════════════════════
-
-    private void RenderSeparator(int row)
-    {
-        _terminal.Text(BodyArtViewer.PanelContentX, row, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
     }
 
     // ═══════════════════════════════════════════════════════════════
     // Hit testing
     // ═══════════════════════════════════════════════════════════════
 
-    private int GetCharacterTabAt(int x, int y)
+    private int GetTabAtPosition(int x, int y)
     {
-        if (y != CharTabRow) return -1;
-        foreach (var (bx, bw, idx) in _charButtons)
+        if (x < PanelLeft || x >= PanelLeft + PanelLeftW) return -1;
+        foreach (var (row, idx) in _tabHitRows)
         {
-            if (x >= bx && x < bx + bw) return idx;
+            if (y == row) return idx;
         }
         return -1;
     }
 
-    private int GetViewTabAt(int x, int y)
+    private int GetCharacterAtPosition(int x, int y)
     {
-        if (y != ViewTabRow) return -1;
-        for (int i = 0; i < _tabButtons.Count; i++)
+        if (x < PanelLeft || x >= PanelLeft + PanelLeftW) return -1;
+        foreach (var (row, idx) in _charHitRows)
         {
-            var (bx, bw, _) = _tabButtons[i];
-            if (x >= bx && x < bx + bw) return i;
+            if (y == row) return idx;
         }
         return -1;
     }
 
     private bool IsOnBackButton(int x, int y)
     {
-        return y == BackButtonY && x >= BackButtonX && x < BackButtonX + BackButtonW;
+        return y == BackRow && x >= PanelLeft && x < PanelLeft + PanelLeftW;
     }
 
     /// <summary>
@@ -438,7 +498,6 @@ public class ManagementMenuRenderer
         if (characterIndex < 0 || characterIndex >= _characters.Count) return false;
         var ch = _characters[characterIndex];
 
-        // Find the tab definition
         foreach (var tabDef in AllTabs)
         {
             if (tabDef.Tab == tab)

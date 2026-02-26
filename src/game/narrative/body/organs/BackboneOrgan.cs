@@ -3,13 +3,13 @@ using System.Collections.Generic;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Backbone organ (torso). Single-part organ.
+/// Backbone organ (trunk). Single-part organ.
 /// </summary>
 public class BackboneOrgan : Organ
 {
     public override string Id => "backbone";
     public override string DisplayName => "Backbone";
-    public override string BodyPartId => "torso";
+    public override string BodyPartId => "trunk";
     
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;

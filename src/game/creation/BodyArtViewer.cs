@@ -24,14 +24,18 @@ public class BodyArtViewer
     private readonly BodyArtData _artData;
 
     // ── Layout constants ─────────────────────────────────────────
-    public const int ArtOffsetX = 0;
-    public const int ArtOffsetY = 0;
     public const int PanelX = 62;
     public const int PanelWidth = 38;
     public const int PanelContentX = 64;
     public const int PanelContentW = 34;
 
     // ── Configuration ────────────────────────────────────────────
+    /// <summary>Horizontal offset for the body art (default 0, increase to shift art right).</summary>
+    public int ArtOffsetX { get; set; } = 0;
+
+    /// <summary>Vertical offset for the body art (default 0).</summary>
+    public int ArtOffsetY { get; set; } = 0;
+
     /// <summary>Row where organ-stat rows begin.</summary>
     public int StatsStartRow { get; set; } = 6;
 

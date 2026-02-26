@@ -3,13 +3,13 @@ using System.Collections.Generic;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Sex organ (torso). Single-part organ.
+/// Sex organ (trunk). Single-part organ.
 /// </summary>
 public class SexOrgan : Organ
 {
     public override string Id => "sex";
     public override string DisplayName => "Sex";
-    public override string BodyPartId => "torso";
+    public override string BodyPartId => "trunk";
     
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;

@@ -3,17 +3,17 @@ using System.Collections.Generic;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Brain body part region. Contains: anamnesis, cerebellum, cerebrum, hippocampus, pineal_gland.
+/// Encephalon body part region. Contains: anamnesis, cerebellum, cerebrum, hippocampus, pineal_gland.
 /// </summary>
-public class BrainBodyPart : BodyPart
+public class EncephalonBodyPart : BodyPart
 {
-    public override string Id => "brain";
-    public override string DisplayName => "Brain";
+    public override string Id => "encephalon";
+    public override string DisplayName => "Encephalon";
     
     private readonly List<Organ> _organs;
     public override List<Organ> Organs => _organs;
     
-    public BrainBodyPart()
+    public EncephalonBodyPart()
     {
         _organs = new List<Organ>
         {
