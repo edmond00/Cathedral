@@ -87,6 +87,9 @@ namespace Cathedral.Glyph
         private GlyphSphereGraph? _graph;
         private PathfindingService? _pathfindingService;
 
+        // Decorative sky and cloud layers
+        private SkyCloudRenderer? _skyCloudRenderer;
+
         // Events for interface interaction
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexHovered;
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexClicked;
@@ -334,6 +337,18 @@ namespace Cathedral.Glyph
                 Console.WriteLine($"Terminal: Failed to initialize HUD - {ex.Message}");
                 _terminal = null;
                 _popupTerminal = null;
+            }
+            
+            // Initialize decorative sky and cloud spheres
+            try
+            {
+                _skyCloudRenderer = new SkyCloudRenderer();
+                _skyCloudRenderer.Initialize();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SkyCloudRenderer: Failed to initialize - {ex.Message}");
+                _skyCloudRenderer = null;
             }
             
             // Log window info
@@ -623,19 +638,28 @@ namespace Cathedral.Glyph
             // Update instances for dynamic color changes (hover highlighting)
             UpdateInstanceBuffer();
 
+            // Update decorative sky/cloud animation
+            _skyCloudRenderer?.Update((float)args.Time);
+
             // Clear
             GL.ClearColor(0f, 0f, 0f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            // Build view & proj
+            // Build view & proj (far clip extended for sky sphere)
             var view = GetViewMatrix();
-            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y, 0.01f, 100f);
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y, Config.GlyphSphere.NearClipPlane, Config.GlyphSphere.FarClipPlane);
 
-            // Render background sphere first (opaque backdrop)
+            // Render sky stars first (behind everything)
+            _skyCloudRenderer?.RenderSky(view, proj);
+
+            // Render background sphere (opaque backdrop, hides stars behind world)
             RenderBackgroundSphere(view, proj);
 
             // Render main sphere
             RenderGlyphSphere(view, proj);
+
+            // Render cloud layer over the world (semi-transparent)
+            _skyCloudRenderer?.RenderClouds(view, proj);
 
             // Render debug markers if enabled
             if (debugShowMarkers)
@@ -982,7 +1006,7 @@ namespace Cathedral.Glyph
         private int FindClosestVertexInScreenSpace(OpenTK.Mathematics.Vector2 mousePos)
         {
             var view = GetViewMatrix();
-            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y, 0.01f, 100f);
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y, Config.GlyphSphere.NearClipPlane, Config.GlyphSphere.FarClipPlane);
             var viewProj = view * proj;
             
             float bestDist = float.MaxValue;
@@ -2244,6 +2268,7 @@ void main() { FragColor = vec4(vColor, 1.0); }";
 
         protected override void OnUnload()
         {
+            _skyCloudRenderer?.Dispose();
             _pathfindingService?.Dispose();
             _terminal?.Dispose();
             base.OnUnload();

@@ -88,6 +88,41 @@ public static class Config
         
         // Rendering
         public const float NarrationWorldDarkeningFactor = 0.3f; // 0-1, multiplier for world brightness during narration (0.3 = 70% darker)
+        
+        // Clip planes
+        public const float NearClipPlane = 0.01f;
+        public const float FarClipPlane = 800.0f; // Must be > SkyCloud.SkySphereRadius + CameraMaxDistance
+    }
+    
+    #endregion
+    
+    #region SkyCloud Configuration
+    
+    /// <summary>
+    /// Configuration for decorative cloud and star sky spheres.
+    /// Purely visual - no gameplay interaction.
+    /// </summary>
+    public static class SkyCloud
+    {
+        // Cloud sphere (slightly larger than world)
+        public const float CloudSphereRadius = 52.0f;
+        public const int CloudSubdivisions = 6;           // Icosphere detail level (6 = ~40k verts, use CloudQuadSize for coverage)
+        public const float CloudRotationSpeed = 0.3f;     // Degrees per second
+        public const float CloudGlyphMinSize = 0.4f;
+        public const float CloudGlyphMaxSize = 0.4f;
+        public const float CloudQuadSize = 1.2f;          // Base quad size for cloud glyphs (world uses 0.3). Larger = bigger cloud coverage per glyph
+        public const float CloudNoiseScale = 2.5f;        // Perlin noise frequency (higher = more varied patches)
+        public const float CloudNoiseThreshold = 0.55f;   // Only show clouds where noise > threshold (higher = more gaps/blue sky)
+        public const float CloudBaseOpacity = 0.75f;      // Max alpha for densest cloud glyphs (0.5 = half transparent)
+        public const string CloudChars = "⁙";          // Characters used for cloud glyphs (ordered by density)
+        
+        // Sky sphere (much larger, camera is inside it)
+        public const string SkyChars = ".*oO";              // Characters for stars/planets/moons (. dim star, * bright star, o planet, O moon)
+        public const float SkySphereRadius = 400.0f;
+        public const int SkySubdivisions = 6;             // More vertices = more stars
+        public const float SkyStarMinSize = 1.2f;
+        public const float SkyStarMaxSize = 6.0f;
+        public const float StarDensity = 0.25f;           // 25% of vertices become stars
     }
     
     #endregion

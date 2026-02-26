@@ -20,7 +20,8 @@ namespace Cathedral.Engine
         // Camera limits and speeds
         private const float ROTATION_SPEED = 60f;
         private const float ZOOM_SPEED = 15.0f;
-        private const float MIN_DISTANCE = 0.1f;
+        private static readonly float MIN_DISTANCE = Cathedral.Config.SkyCloud.CloudSphereRadius + 1f; // Stay above clouds
+        private static readonly float MAX_DISTANCE = Cathedral.Config.SkyCloud.SkySphereRadius - 1f;  // Stay inside sky sphere
         private const float MAX_DEBUG_DISTANCE = 300.0f;
         private const float MIN_DEBUG_DISTANCE = 50.0f;
         private const float MIN_PITCH = -85f;
@@ -207,7 +208,7 @@ namespace Cathedral.Engine
                 else
                 {
                     float oldDistance = _distance;
-                    _distance = MathF.Max(MIN_DISTANCE, _distance - ZOOM_SPEED * (float)args.Time);
+                    _distance = Math.Clamp(_distance - ZOOM_SPEED * (float)args.Time, MIN_DISTANCE, MAX_DISTANCE);
                     if (_distance != oldDistance)
                     {
                         Console.WriteLine($"Camera distance: {_distance:F2}");
@@ -230,7 +231,7 @@ namespace Cathedral.Engine
                 else
                 {
                     float oldDistance = _distance;
-                    _distance += ZOOM_SPEED * (float)args.Time;
+                    _distance = Math.Clamp(_distance + ZOOM_SPEED * (float)args.Time, MIN_DISTANCE, MAX_DISTANCE);
                     if (_distance != oldDistance)
                     {
                         Console.WriteLine($"Camera distance: {_distance:F2}");
@@ -324,7 +325,7 @@ namespace Cathedral.Engine
             Vector3 camDir = -desiredCameraPos.Normalized();
             
             // Update camera parameters
-            _distance = originalDistance;
+            _distance = Math.Clamp(originalDistance, MIN_DISTANCE, MAX_DISTANCE);
             _yaw = MathHelper.RadiansToDegrees(MathF.Atan2(camDir.Z, camDir.X));
             _pitch = MathHelper.RadiansToDegrees(MathF.Asin(camDir.Y));
             
@@ -385,7 +386,7 @@ namespace Cathedral.Engine
         {
             _yaw = yaw;
             _pitch = Math.Clamp(pitch, MIN_PITCH, MAX_PITCH);
-            _distance = MathF.Max(MIN_DISTANCE, distance);
+            _distance = Math.Clamp(distance, MIN_DISTANCE, MAX_DISTANCE);
             
             CameraTransformed?.Invoke(_yaw, _pitch, _distance);
         }
@@ -395,7 +396,7 @@ namespace Cathedral.Engine
         /// </summary>
         public void SetDistance(float distance)
         {
-            _distance = MathF.Max(MIN_DISTANCE, distance);
+            _distance = Math.Clamp(distance, MIN_DISTANCE, MAX_DISTANCE);
             CameraTransformed?.Invoke(_yaw, _pitch, _distance);
         }
         
