@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -52,7 +52,7 @@ public class ActionExecutionController
     private readonly ActionDifficultyEvaluator _difficultyEvaluator;
     private readonly OutcomeNarrator _outcomeNarrator;
     private readonly OutcomeApplicator _outcomeApplicator;
-    private readonly Avatar _avatar;
+    private readonly Protagonist _protagonist;
     private readonly CriticEvaluator _criticEvaluator;
 
     public ActionExecutionController(
@@ -60,14 +60,14 @@ public class ActionExecutionController
         ActionDifficultyEvaluator difficultyEvaluator,
         OutcomeNarrator outcomeNarrator,
         OutcomeApplicator outcomeApplicator,
-        Avatar avatar,
+        Protagonist protagonist,
         CriticEvaluator criticEvaluator)
     {
         _actionScorer = actionScorer;
         _difficultyEvaluator = difficultyEvaluator;
         _outcomeNarrator = outcomeNarrator;
         _outcomeApplicator = outcomeApplicator;
-        _avatar = avatar;
+        _protagonist = protagonist;
         _criticEvaluator = criticEvaluator;
     }
 
@@ -84,17 +84,17 @@ public class ActionExecutionController
     {
         // Debug: Show what we're searching for and what we have
         Console.WriteLine($"DEBUG: Looking for action skill ID: '{action.ActionSkillId}'");
-        Console.WriteLine($"DEBUG: Avatar has {_avatar.Skills.Count} skills:");
-        foreach (var skill in _avatar.Skills)
+        Console.WriteLine($"DEBUG: Protagonist has {_protagonist.Skills.Count} skills:");
+        foreach (var skill in _protagonist.Skills)
         {
             Console.WriteLine($"  - {skill.SkillId} ({skill.DisplayName})");
         }
         
         // Resolve action skill
-        var actionSkill = _avatar.Skills.FirstOrDefault(s => s.SkillId == action.ActionSkillId);
+        var actionSkill = _protagonist.Skills.FirstOrDefault(s => s.SkillId == action.ActionSkillId);
         if (actionSkill == null)
         {
-            Console.WriteLine($"DEBUG: Skill '{action.ActionSkillId}' NOT FOUND in avatar's skills!");
+            Console.WriteLine($"DEBUG: Skill '{action.ActionSkillId}' NOT FOUND in protagonist's skills!");
             return new ActionEvaluationResult
             {
                 IsPlausible = false,
@@ -165,7 +165,7 @@ public class ActionExecutionController
         
         // Adjust for organ score
         string organId = actionSkill.Organs.Length > 0 ? actionSkill.Organs[0] : "hands";
-        int organScore = _avatar.GetOrganById(organId)?.Score ?? 5;
+        int organScore = _protagonist.GetOrganById(organId)?.Score ?? 5;
         
         // Organ score adds up to 10% success chance
         successProbability += (organScore - 5) * 0.02;
@@ -253,7 +253,7 @@ public class ActionExecutionController
         }
 
         // Apply outcome to game state
-        await _outcomeApplicator.ApplyOutcomeAsync(actualOutcome, _avatar);
+        await _outcomeApplicator.ApplyOutcomeAsync(actualOutcome, _protagonist);
 
         // Generate narration from thinking skill's perspective
         // Include failure hint if applicable
@@ -264,7 +264,7 @@ public class ActionExecutionController
             actualOutcome,
             succeeded,
             difficultyScore,
-            _avatar,
+            _protagonist,
             cancellationToken,
             failureOutcomeType?.NarratorHint);
 
@@ -330,7 +330,7 @@ public class ActionExecutionController
             action,
             actionSkill,
             plausibilityError,
-            _avatar,
+            _protagonist,
             cancellationToken);
         
         return new ActionExecutionResult

@@ -1,7 +1,7 @@
-namespace Cathedral.Game.Narrative.Skills;
+﻿namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
-/// Scrutiny - The avatar's penetrating examination of their environment.
+/// Scrutiny - The protagonist's penetrating examination of their environment.
 /// Intense, relentless, uncompromising. Nothing escapes notice under this unwavering gaze.
 /// </summary>
 public class ScrutinySkill : Skill
@@ -14,7 +14,7 @@ public class ScrutinySkill : Skill
     
     public override string PersonaTone => "an intense, relentless investigator who dissects every detail with clinical precision";
     
-    public override string PersonaPrompt => @"You are the inner voice of SCRUTINY, the avatar's penetrating examination of the world.
+    public override string PersonaPrompt => @"You are the inner voice of SCRUTINY, the protagonist's penetrating examination of the world.
 
 You are intense, relentless, and uncompromising. Your gaze dissects everything it touches. You don't just notice—you investigate, probe, examine. Every surface is studied. Every shadow is interrogated. Every sound is analyzed for its source and meaning.
 

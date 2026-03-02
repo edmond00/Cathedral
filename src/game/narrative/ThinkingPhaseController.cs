@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -14,17 +14,17 @@ public class ThinkingPhaseController
 {
     private readonly ThinkingExecutor _thinkingExecutor;
     private readonly ThinkingSkillPopup _skillPopup;
-    private readonly Avatar _avatar;
+    private readonly Protagonist _protagonist;
 
     public ThinkingPhaseController(
         ThinkingExecutor thinkingExecutor,
-        Avatar avatar)
+        Protagonist protagonist)
     {
         _thinkingExecutor = thinkingExecutor;
-        _avatar = avatar;
+        _protagonist = protagonist;
         
-        // Initialize popup with avatar's thinking skills
-        var thinkingSkills = avatar.GetThinkingSkills();
+        // Initialize popup with protagonist's thinking skills
+        var thinkingSkills = protagonist.GetThinkingSkills();
         _skillPopup = new ThinkingSkillPopup(thinkingSkills);
     }
 
@@ -75,7 +75,7 @@ public class ThinkingPhaseController
         }
 
         // Get action skills
-        var actionSkills = _avatar.GetActionSkills();
+        var actionSkills = _protagonist.GetActionSkills();
         
         // Get the outcome that owns this keyword for context
         var keywordSourceOutcome = node.GetOutcomeOwningKeyword(keyword);
@@ -89,7 +89,7 @@ public class ThinkingPhaseController
             node,
             possibleOutcomes,
             actionSkills,
-            _avatar,
+            _protagonist,
             cancellationToken);
 
         if (response != null && response.Actions.Count > 0)

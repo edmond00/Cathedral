@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
@@ -31,15 +31,12 @@ public enum ManagementTab
 public class ManagementMenuRenderer
 {
     private readonly TerminalHUD _terminal;
-    private readonly Avatar _avatar;
+    private readonly Protagonist _protagonist;
     private readonly BodyArtViewer _bodyViewer;
 
     // ── Tab state ────────────────────────────────────────────────
     private ManagementTab _activeTab = ManagementTab.Body;
-    private int _selectedCharacterIndex = 0; // 0 = protagonist
-
-    // ── Character definitions ────────────────────────────────────
-    private readonly List<CharacterEntry> _characters = new();
+    private int _selectedCharacterIndex = 0; // 0 = protagonist, 1+ = companions
 
     // ── Tab definitions ──────────────────────────────────────────
     private static readonly TabDefinition[] AllTabs = new[]
@@ -92,12 +89,12 @@ public class ManagementMenuRenderer
     /// <summary>Callback for when the player clicks Back.</summary>
     public Action? OnBack { get; set; }
 
-    public ManagementMenuRenderer(TerminalHUD terminal, Avatar avatar, BodyArtData artData)
+    public ManagementMenuRenderer(TerminalHUD terminal, Protagonist protagonist, BodyArtData artData)
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
-        _avatar = avatar ?? throw new ArgumentNullException(nameof(avatar));
+        _protagonist = protagonist ?? throw new ArgumentNullException(nameof(protagonist));
 
-        _bodyViewer = new BodyArtViewer(terminal, avatar, artData)
+        _bodyViewer = new BodyArtViewer(terminal, protagonist, artData)
         {
             ArtOffsetX = 17,  // Shift art right to make room for left panel
             StatsStartRow = ContentStartRow,
@@ -105,10 +102,23 @@ public class ManagementMenuRenderer
             ShowClickHints = false
         };
         _bodyViewer.ComputeLayout();
-
-        // Initialize characters (only protagonist for now)
-        _characters.Add(new CharacterEntry("Protagonist", IsProtagonist: true));
     }
+
+    // ── Party helpers ────────────────────────────────────────────
+
+    /// <summary>Total party size: protagonist + companions.</summary>
+    private int PartyCount => 1 + _protagonist.CompanionParty.Count;
+
+    /// <summary>Display name for a slot index (0 = protagonist, 1+ = companions).</summary>
+    private string GetCharacterName(int index) =>
+        index == 0 ? _protagonist.DisplayName : _protagonist.CompanionParty[index - 1].Name;
+
+    /// <summary>Whether slot index belongs to the protagonist.</summary>
+    private bool IsProtagonistSlot(int index) => index == 0;
+
+    /// <summary>Get the <see cref="PartyMember"/> for a slot index.</summary>
+    private PartyMember GetPartyMember(int index) =>
+        index == 0 ? _protagonist : (PartyMember)_protagonist.CompanionParty[index - 1];
 
     // ═══════════════════════════════════════════════════════════════
     // Public API
@@ -227,11 +237,14 @@ public class ManagementMenuRenderer
 
         // Character tab click
         int charIdx = GetCharacterAtPosition(x, y);
-        if (charIdx >= 0 && charIdx < _characters.Count)
+        if (charIdx >= 0 && charIdx < PartyCount)
         {
             if (IsCharacterVisibleForTab(charIdx, _activeTab))
             {
                 _selectedCharacterIndex = charIdx;
+                // Swap the body art subject when switching party member on Body tab
+                if (_activeTab == ManagementTab.Body)
+                    _bodyViewer.SwapSubject(GetPartyMember(charIdx));
                 Render();
                 return;
             }
@@ -332,14 +345,6 @@ public class ManagementMenuRenderer
 
     private void RenderPartySection()
     {
-        // Filter visible characters for current tab
-        var visibleChars = new List<int>();
-        for (int i = 0; i < _characters.Count; i++)
-        {
-            if (IsCharacterVisibleForTab(i, _activeTab))
-                visibleChars.Add(i);
-        }
-
         // Section title
         string title = "P A R T Y";
         int titleX = ContentX + (ContentW - title.Length) / 2;
@@ -349,12 +354,17 @@ public class ManagementMenuRenderer
         for (int tx = ContentX; tx < ContentX + ContentW; tx++)
             _terminal.SetCell(tx, PartyDividerRow, '─', Config.Colors.DarkGray35, PanelBg);
 
+        // Build the visible character list for this tab
+        var visibleIndices = new List<int>();
+        for (int i = 0; i < PartyCount; i++)
+            if (IsCharacterVisibleForTab(i, _activeTab))
+                visibleIndices.Add(i);
+
         // Character items
-        for (int vi = 0; vi < visibleChars.Count; vi++)
+        for (int vi = 0; vi < visibleIndices.Count; vi++)
         {
-            int charIdx = visibleChars[vi];
+            int charIdx = visibleIndices[vi];
             int row = PartyFirstItemRow + vi;
-            var ch = _characters[charIdx];
             bool isSelected = charIdx == _selectedCharacterIndex;
             bool isHovered = charIdx == _hoveredCharIndex;
 
@@ -381,7 +391,7 @@ public class ManagementMenuRenderer
                 _terminal.SetCell(tx, row, ' ', textColor, bgColor);
 
             string marker = isSelected ? "◆ " : "  ";
-            string label = marker + ch.Name;
+            string label = marker + GetCharacterName(charIdx);
             if (label.Length > ContentW)
                 label = label[..ContentW];
             _terminal.Text(ContentX, row, label, textColor, bgColor);
@@ -490,20 +500,15 @@ public class ManagementMenuRenderer
     }
 
     /// <summary>
-    /// Determines whether a character is visible for the given tab.
-    /// Journal tab is protagonist-only; other tabs show all characters.
+    /// Returns true when a character slot is visible for the given tab.
+    /// Journal is protagonist-only; all other tabs show the full party.
     /// </summary>
     private bool IsCharacterVisibleForTab(int characterIndex, ManagementTab tab)
     {
-        if (characterIndex < 0 || characterIndex >= _characters.Count) return false;
-        var ch = _characters[characterIndex];
-
+        if (characterIndex < 0 || characterIndex >= PartyCount) return false;
         foreach (var tabDef in AllTabs)
-        {
             if (tabDef.Tab == tab)
-                return tabDef.AllCharacters || ch.IsProtagonist;
-        }
-
+                return tabDef.AllCharacters || IsProtagonistSlot(characterIndex);
         return false;
     }
 
@@ -511,11 +516,8 @@ public class ManagementMenuRenderer
     // Data types
     // ═══════════════════════════════════════════════════════════════
 
-    private record struct CharacterEntry(string Name, bool IsProtagonist);
-
     private record struct TabDefinition(string Label, ManagementTab Tab, bool AllCharacters)
     {
-        /// <summary>Whether this tab is currently implemented (false = placeholder, still clickable).</summary>
-        public bool Enabled => true; // All tabs are selectable; content may be placeholder
+        public bool Enabled => true;
     }
 }

@@ -1,4 +1,4 @@
-// GlyphSphereCore.cs - Core rendering engine for the glyph sphere
+﻿// GlyphSphereCore.cs - Core rendering engine for the glyph sphere
 // Contains OpenGL functionality, shaders, mesh generation, camera controls, and mouse collision detection
 using System;
 using System.Collections.Generic;
@@ -73,8 +73,8 @@ namespace Cathedral.Glyph
         Vector3 debugRayDirection = Vector3.Zero;
         Vector3 debugIntersectionPoint = Vector3.Zero;
         OpenTK.Mathematics.Vector2 debugMousePos = OpenTK.Mathematics.Vector2.Zero;
-        bool debugShowMarkers = false; // Toggle with 'M' key - enabled by default for avatar debugging
-        int debugAvatarVertex = -1; // Track avatar vertex for debug ray
+        bool debugShowMarkers = false; // Toggle with 'M' key - enabled by default for protagonist debugging
+        int debugProtagonistVertex = -1; // Track protagonist vertex for debug ray
         
         // Debug shader modes
         int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe, 4=grayscale
@@ -395,7 +395,7 @@ namespace Cathedral.Glyph
             _terminal.Text(3, 12, "• Click: Select vertex", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(3, 13, "• M: Toggle debug markers", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(3, 14, "• D: Cycle debug shaders", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
-            _terminal.Text(3, 15, "• Space: Avatar movement", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(3, 15, "• Space: Protagonist movement", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(3, 16, "• ESC: Exit application", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             
             // Draw status panel
@@ -719,17 +719,17 @@ namespace Cathedral.Glyph
                 Console.WriteLine($"Debug markers: {(debugShowMarkers ? "ON" : "OFF")}");
             }
 
-            // Center camera on avatar (SPACE key)
+            // Center camera on protagonist (SPACE key)
             if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Space))
             {
-                if (debugAvatarVertex >= 0)
+                if (debugProtagonistVertex >= 0)
                 {
-                    CenterCameraOnGlyph(debugAvatarVertex);
-                    Console.WriteLine($"🎯 Camera re-centered on avatar at vertex {debugAvatarVertex} (Press SPACE anytime to re-focus)");
+                    CenterCameraOnGlyph(debugProtagonistVertex);
+                    Console.WriteLine($"🎯 Camera re-centered on protagonist at vertex {debugProtagonistVertex} (Press SPACE anytime to re-focus)");
                 }
                 else
                 {
-                    Console.WriteLine("❌ No avatar found - cannot center camera. Avatar must be placed first.");
+                    Console.WriteLine("❌ No protagonist found - cannot center camera. Protagonist must be placed first.");
                 }
             }
         }
@@ -1615,10 +1615,10 @@ namespace Cathedral.Glyph
             
             AddScreenCanvasGrid();
             
-            // Add camera-to-avatar debug ray every frame
-            if (debugAvatarVertex >= 0)
+            // Add camera-to-protagonist debug ray every frame
+            if (debugProtagonistVertex >= 0)
             {
-                AddDebugCameraToAvatarRay(debugAvatarVertex);
+                AddDebugCameraToProtagonistRay(debugProtagonistVertex);
             }
             
             if (debugMousePos != OpenTK.Mathematics.Vector2.Zero)
@@ -1950,7 +1950,7 @@ namespace Cathedral.Glyph
             public float Noise;
             public Vector4 Color;
             public float Size; // Size factor from BiomeType/LocationType
-            public bool IsUIElement; // True for UI elements (avatar, waypoints, etc.)
+            public bool IsUIElement; // True for UI elements (protagonist, waypoints, etc.)
         }
 
         private struct GlyphInfo
@@ -2211,17 +2211,17 @@ void main() { FragColor = vec4(vColor, 1.0); }";
         {
             if (vertexIndex >= 0 && vertexIndex < vertices.Count)
             {
-                Vector3 avatarPosition = GetVertexPosition(vertexIndex);
+                Vector3 protagonistPosition = GetVertexPosition(vertexIndex);
                 
                 // Use the camera's focus method to center on the glyph position
-                _camera.FocusOnPosition(avatarPosition, true);
+                _camera.FocusOnPosition(protagonistPosition, true);
                 
-                // STEP 1: Position camera at avatar position (this we know works)
-                // Calculate the direction from sphere center to avatar
-                Vector3 fromCenterToAvatar = avatarPosition.Normalized();
+                // STEP 1: Position camera at protagonist position (this we know works)
+                // Calculate the direction from sphere center to protagonist
+                Vector3 fromCenterToProtagonist = protagonistPosition.Normalized();
                 
                 // STEP 2: Move camera back along the same line to create "drone above" effect
-                // The camera should be on the line from center through avatar, but at original distance
+                // The camera should be on the line from center through protagonist, but at original distance
                 // Camera positioning handled by Camera class
                 
                 // STEP 3: Calculate camera angles to look toward sphere center from drone position
@@ -2230,26 +2230,26 @@ void main() { FragColor = vec4(vColor, 1.0); }";
                 
                 // Camera parameters updated by Camera class
                 
-                // Store avatar vertex for continuous debug ray rendering
-                debugAvatarVertex = vertexIndex;
+                // Store protagonist vertex for continuous debug ray rendering
+                debugProtagonistVertex = vertexIndex;
                 
                 // Verify the calculation
                 Vector3 calculatedCameraPos = _camera.GetCameraPosition();
                 
-                Console.WriteLine($"� Camera positioned like drone above avatar");
-                Console.WriteLine($"  Avatar position: {avatarPosition}");
+                Console.WriteLine($"� Camera positioned like drone above protagonist");
+                Console.WriteLine($"  Protagonist position: {protagonistPosition}");
                 Console.WriteLine($"  Camera position: {calculatedCameraPos}");
                 Console.WriteLine($"  Calculated camera pos: {calculatedCameraPos}");
-                Console.WriteLine($"  Camera focused on target: {Vector3.Distance(avatarPosition, Vector3.Zero) > 0}");
+                Console.WriteLine($"  Camera focused on target: {Vector3.Distance(protagonistPosition, Vector3.Zero) > 0}");
                 Console.WriteLine($"  Camera distance: {_camera.Distance:F2}");
                 Console.WriteLine($"  Camera angles: yaw={_camera.Yaw:F1}°, pitch={_camera.Pitch:F1}°");
             }
         }
 
         /// <summary>
-        /// Adds a debug ray from camera position to avatar glyph for visual debugging
+        /// Adds a debug ray from camera position to protagonist glyph for visual debugging
         /// </summary>
-        private void AddDebugCameraToAvatarRay(int avatarVertexIndex)
+        private void AddDebugCameraToProtagonistRay(int avatarVertexIndex)
         {
             if (avatarVertexIndex >= 0 && avatarVertexIndex < vertices.Count)
             {
@@ -2257,12 +2257,12 @@ void main() { FragColor = vec4(vColor, 1.0); }";
                 Vector3 cameraPos = _camera.GetCameraPosition();
                 Vector3 avatarPos = GetVertexPosition(avatarVertexIndex);
                 
-                // Camera-to-avatar debug ray: cyan camera marker, yellow avatar marker
+                // Camera-to-protagonist debug ray: cyan camera marker, yellow protagonist marker
                 debugVertices.Add(cameraPos);
                 debugColors.Add(new Vector3(0.0f, 1.0f, 1.0f)); // Cyan for camera position
                 
                 debugVertices.Add(avatarPos);
-                debugColors.Add(new Vector3(1.0f, 1.0f, 0.0f)); // Yellow for avatar position (target)
+                debugColors.Add(new Vector3(1.0f, 1.0f, 0.0f)); // Yellow for protagonist position (target)
             }
         }
 

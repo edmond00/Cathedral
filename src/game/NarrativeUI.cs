@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK.Mathematics;
@@ -54,11 +54,11 @@ public class NarrativeUI
     
     /// <summary>
     /// Get maximum thinking attempts.
-    /// TODO: This should be retrieved from the avatar instance once that characteristic is implemented.
+    /// TODO: This should be retrieved from the protagonist instance once that characteristic is implemented.
     /// </summary>
     public static int GetMaxThinkingAttempts()
     {
-        // Placeholder implementation - will be replaced with avatar characteristic
+        // Placeholder implementation - will be replaced with protagonist characteristic
         return 13;
     }
     

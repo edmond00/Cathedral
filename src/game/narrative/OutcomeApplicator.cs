@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,14 +11,14 @@ namespace Cathedral.Game.Narrative;
 public class OutcomeApplicator
 {
     /// <summary>
-    /// Applies an outcome to the avatar and game state.
+    /// Applies an outcome to the protagonist and game state.
     /// </summary>
-    public async Task ApplyOutcomeAsync(OutcomeBase outcome, Avatar avatar)
+    public async Task ApplyOutcomeAsync(OutcomeBase outcome, Protagonist protagonist)
     {
         switch (outcome)
         {
             case Item item:
-                ApplyItemOutcome(item, avatar);
+                ApplyItemOutcome(item, protagonist);
                 break;
 
             case NarrationNode node:
@@ -27,11 +27,11 @@ public class OutcomeApplicator
                 break;
 
             case FeelGoodOutcome feelGood:
-                await ApplyFeelGoodOutcomeAsync(feelGood, avatar);
+                await ApplyFeelGoodOutcomeAsync(feelGood, protagonist);
                 break;
 
             case HumorOutcome humor:
-                ApplyHumorOutcome(humor, avatar);
+                ApplyHumorOutcome(humor, protagonist);
                 break;
 
             default:
@@ -40,14 +40,14 @@ public class OutcomeApplicator
         }
     }
 
-    private void ApplyItemOutcome(Item item, Avatar avatar)
+    private void ApplyItemOutcome(Item item, Protagonist protagonist)
     {
         // Add item to inventory
-        avatar.Inventory.Add(item.ItemId);
+        protagonist.Inventory.Add(item.ItemId);
         Console.WriteLine($"OutcomeApplicator: Acquired {item.DisplayName}");
     }
 
-    private Task ApplyFeelGoodOutcomeAsync(FeelGoodOutcome feelGood, Avatar avatar)
+    private Task ApplyFeelGoodOutcomeAsync(FeelGoodOutcome feelGood, Protagonist protagonist)
     {
         // FeelGoodOutcome determines which humor to increase at runtime
         // Note: This requires context about the action, so it should be determined before applying
@@ -55,9 +55,9 @@ public class OutcomeApplicator
         return Task.CompletedTask;
     }
 
-    private void ApplyHumorOutcome(HumorOutcome humor, Avatar avatar)
+    private void ApplyHumorOutcome(HumorOutcome humor, Protagonist protagonist)
     {
-        var targetHumor = avatar.Humors.FirstOrDefault(h => h.Name == humor.HumorName);
+        var targetHumor = protagonist.Humors.FirstOrDefault(h => h.Name == humor.HumorName);
         if (targetHumor != null)
         {
             int currentValue = targetHumor.Value;

@@ -1,4 +1,4 @@
-namespace Cathedral.Game.Narrative.Skills;
+﻿namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
 /// Brute Force - Direct physical power and simple solutions.
@@ -14,7 +14,7 @@ public class BruteForceSkill : Skill
     
     public override string PersonaTone => "a blunt, impatient force who believes every problem yields to overwhelming strength";
     
-    public override string PersonaPrompt => @"You are the inner voice of BRUTE FORCE, the avatar's capacity for overwhelming physical power.
+    public override string PersonaPrompt => @"You are the inner voice of BRUTE FORCE, the protagonist's capacity for overwhelming physical power.
 
 You see the world as a collection of obstacles to be overcome through sheer strength. Doors aren't locked—they're waiting to be broken. Walls aren't barriers—they're targets. Every problem has a simple solution: apply enough force until it yields. You have no patience for subtlety, complexity, or finesse. Why pick a lock when you can tear the door off its hinges?
 

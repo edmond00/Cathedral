@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -198,7 +198,7 @@ public static class LocationTravelModeLauncher
             gameController.TravelStarted += () =>
             {
                 Console.WriteLine("\n*** TRAVEL STARTED ***");
-                Console.WriteLine("Avatar is moving to destination...\n");
+                Console.WriteLine("Protagonist is moving to destination...\n");
             };
             
             gameController.TravelCompleted += () =>
@@ -207,11 +207,11 @@ public static class LocationTravelModeLauncher
             };
             
             // Wire up arrival notification from microworld interface
-            microworldInterface.AvatarArrivedAtLocation += (arrivalInfo) =>
+            microworldInterface.ProtagonistArrivedAtLocation += (arrivalInfo) =>
             {
-                Console.WriteLine($"MicroworldInterface: Avatar arrived at vertex {arrivalInfo.VertexIndex}, location: {arrivalInfo.Location?.Name ?? "none"}");
+                Console.WriteLine($"MicroworldInterface: Protagonist arrived at vertex {arrivalInfo.VertexIndex}, location: {arrivalInfo.Location?.Name ?? "none"}");
                 Console.WriteLine($"  Biome: {arrivalInfo.Biome.Name}, Neighbors: {arrivalInfo.NeighboringVertices.Count}");
-                gameController?.OnAvatarArrived(arrivalInfo.VertexIndex);
+                gameController?.OnProtagonistArrived(arrivalInfo.VertexIndex);
             };
             
             // Wire up update loop for loading animations
@@ -229,7 +229,7 @@ public static class LocationTravelModeLauncher
             Console.WriteLine("\n=== Location Travel Mode Ready ===");
             Console.WriteLine("Controls:");
             Console.WriteLine("  - Click on locations to travel");
-            Console.WriteLine("  - Click on avatar to interact with current location");
+            Console.WriteLine("  - Click on protagonist to interact with current location");
             Console.WriteLine("  - ESC to leave location interaction");
             Console.WriteLine("  - Arrow keys to rotate camera");
             Console.WriteLine("  - W/S to zoom in/out");
@@ -254,7 +254,7 @@ public static class LocationTravelModeLauncher
                         gameController.SetMode(GameMode.WorldView);
                     }
                 }
-                else if (gameController?.CurrentMode == GameMode.AvatarManagement)
+                else if (gameController?.CurrentMode == GameMode.ProtagonistManagement)
                 {
                     // ESC in management menu: return to main menu
                     Console.WriteLine("ESC pressed - closing management menu");

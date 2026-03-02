@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -176,7 +176,7 @@ public class ActionDifficultyEvaluator
     /// Calculates difficulty for a narrative action based on action text and skill.
     /// Returns difficulty as a number from 1-20 (D&D style).
     /// </summary>
-    public int CalculateDifficulty(string actionText, Narrative.Skill skill, Narrative.Avatar avatar)
+    public int CalculateDifficulty(string actionText, Narrative.Skill skill, Narrative.Protagonist protagonist)
     {
         // Simple heuristic-based difficulty calculation
         // In future, could use Critic LLM to evaluate

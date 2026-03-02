@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,18 +13,18 @@ public class ObservationPromptConstructor
 {
     /// <summary>
     /// Builds an observation request for the LLM.
-    /// Includes neutral description, available keywords grouped by outcome, and avatar state.
+    /// Includes neutral description, available keywords grouped by outcome, and protagonist state.
     /// </summary>
     public string BuildObservationPrompt(
         NarrationNode node,
-        Avatar avatar,
+        Protagonist protagonist,
         Skill observationSkill,
         List<string> targetKeywords,
         bool promptKeywordUsage = true)
     {
         var prompt = $@"You are observing this scene:
 
-{node.GenerateNeutralDescription(avatar.CurrentLocationId)}";
+{node.GenerateNeutralDescription(protagonist.CurrentLocationId)}";
 
         if (promptKeywordUsage && targetKeywords.Count > 0)
         {
@@ -61,7 +61,7 @@ Respond in JSON format:
     /// </summary>
     public string BuildObservationPromptWithIntros(
         NarrationNode node,
-        Avatar avatar,
+        Protagonist protagonist,
         Skill observationSkill,
         List<string> targetKeywords)
     {
@@ -75,7 +75,7 @@ Respond in JSON format:
 
         var prompt = $@"You are observing this scene:
 
-{node.GenerateNeutralDescription(avatar.CurrentLocationId)}
+{node.GenerateNeutralDescription(protagonist.CurrentLocationId)}
 
 Your narration MUST begin with one of these keyword introductions:
 {string.Join("\n", introExamples.Select(intro => $"- Start with: \"{intro}\""))}

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,13 +32,13 @@ public class ObservationPhaseController
     /// </summary>
     public async Task<List<NarrationBlock>> ExecuteObservationPhaseAsync(
         NarrationNode currentNode,
-        Avatar avatar,
+        Protagonist protagonist,
         int skillCount = 1)  // Default to 1 skill now
     {
         Console.WriteLine($"ObservationPhaseController: Starting overall observation phase for {currentNode.NodeId}");
         
         // Select ONE observation skill randomly
-        var observationSkills = avatar.GetObservationSkills()
+        var observationSkills = protagonist.GetObservationSkills()
             .OrderBy(_ => _random.Next())
             .Take(1)
             .ToList();
@@ -74,7 +74,7 @@ public class ObservationPhaseController
             var observation = await _observationExecutor.GenerateObservationAsync(
                 skill,
                 currentNode,
-                avatar,
+                protagonist,
                 targetKeywords
             );
             
@@ -130,13 +130,13 @@ public class ObservationPhaseController
     /// <param name="clickedKeyword">The keyword that was right-clicked</param>
     /// <param name="observationSkill">The observation skill selected by the player</param>
     /// <param name="currentNode">The current narration node</param>
-    /// <param name="avatar">The player avatar</param>
+    /// <param name="protagonist">The player protagonist</param>
     /// <returns>A narration block for the focus observation, or null on failure</returns>
     public async Task<NarrationBlock?> GenerateFocusObservationAsync(
         string clickedKeyword,
         Skill observationSkill,
         NarrationNode currentNode,
-        Avatar avatar)
+        Protagonist protagonist)
     {
         Console.WriteLine($"ObservationPhaseController: Starting focus observation for keyword '{clickedKeyword}'");
         
@@ -183,7 +183,7 @@ public class ObservationPhaseController
             var observation = await _observationExecutor.GenerateObservationAsync(
                 observationSkill,
                 currentNode,
-                avatar,
+                protagonist,
                 focusKeywords
             );
             

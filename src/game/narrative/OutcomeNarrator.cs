@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -34,7 +34,7 @@ public class OutcomeNarrator
         OutcomeBase outcome,
         bool succeeded,
         double difficulty,
-        Avatar avatar,
+        Protagonist protagonist,
         CancellationToken cancellationToken = default,
         string? failureHint = null)
     {
@@ -49,7 +49,7 @@ public class OutcomeNarrator
             outcome,
             succeeded,
             difficulty,
-            avatar,
+            protagonist,
             failureHint);
 
         // Build JSON schema for narration
@@ -87,7 +87,7 @@ public class OutcomeNarrator
         ParsedNarrativeAction action,
         Skill actionSkill,
         string plausibilityError,
-        Avatar avatar,
+        Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
         // Use the action skill's slot for plausibility failure narration
@@ -152,7 +152,7 @@ Respond in JSON format:
         OutcomeBase outcome,
         bool succeeded,
         double difficulty,
-        Avatar avatar,
+        Protagonist protagonist,
         string? failureHint = null)
     {
         string outcomeDescription = outcome.ToNaturalLanguageString();

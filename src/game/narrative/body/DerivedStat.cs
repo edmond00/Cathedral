@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 
 namespace Cathedral.Game.Narrative;
 
@@ -22,18 +22,18 @@ public abstract class DerivedStat
     public virtual string? RelatedBodyPartId => null;
     
     /// <summary>
-    /// Get the source score from the avatar's organs or body parts.
+    /// Get the source score from a party member's organs or body parts.
     /// </summary>
-    public int GetSourceScore(Avatar avatar)
+    public int GetSourceScore(PartyMember protagonist)
     {
         if (RelatedOrganId != null)
         {
-            var organ = avatar.GetOrganById(RelatedOrganId);
+            var organ = protagonist.GetOrganById(RelatedOrganId);
             return organ?.Score ?? 0;
         }
         if (RelatedBodyPartId != null)
         {
-            var bodyPart = avatar.GetBodyPartById(RelatedBodyPartId);
+            var bodyPart = protagonist.GetBodyPartById(RelatedBodyPartId);
             return bodyPart?.Score ?? 0;
         }
         return 0;
@@ -46,7 +46,7 @@ public abstract class DerivedStat
     public abstract int CalculateValue(int sourceScore);
     
     /// <summary>
-    /// Get the final computed value of this derived stat for the given avatar.
+    /// Get the final computed value of this derived stat for the given protagonist.
     /// </summary>
-    public int GetValue(Avatar avatar) => CalculateValue(GetSourceScore(avatar));
+    public int GetValue(Protagonist protagonist) => CalculateValue(GetSourceScore(protagonist));
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -14,13 +14,14 @@ namespace Cathedral.Game.Creation;
 /// and an organ-stats panel on the right. Handles hover highlighting,
 /// blink animation, connector arrows, and bounding boxes.
 ///
-/// Used by both AvatarCreationRenderer (interactive, with score editing)
+/// Used by both ProtagonistCreationRenderer (interactive, with score editing)
 /// and ManagementMenuRenderer (read-only viewer).
+/// Accepts any <see cref="PartyMember"/> so it works for both protagonist and companions.
 /// </summary>
 public class BodyArtViewer
 {
     private readonly TerminalHUD _terminal;
-    private readonly Avatar _avatar;
+    private PartyMember _protagonist;  // named _protagonist for minimal diff; holds the currently-displayed member
     private readonly BodyArtData _artData;
 
     // ── Layout constants ─────────────────────────────────────────
@@ -53,8 +54,8 @@ public class BodyArtViewer
     private string? _hoveredOrganPartName;
     private string? _hoveredBodyPartId;
     private string? _hoveredOrganName;
-    private string? _hoveredRawPartName;
-
+    private string? _hoveredRawPartName;    /// <summary>-1 when hovering the ◄ button, +1 when hovering the ► button, 0 otherwise.</summary>
+    private int _hoveredArrowDelta = 0;
     // ── Blink state ──────────────────────────────────────────────
     private readonly Stopwatch _blinkStopwatch = Stopwatch.StartNew();
     private double _lastBlinkTime;
@@ -81,10 +82,10 @@ public class BodyArtViewer
     /// <summary>Exposes row→organPartId mapping for callers that need hit-testing.</summary>
     public IReadOnlyDictionary<int, string> RowToOrganPartId => _rowToOrganPartId;
 
-    public BodyArtViewer(TerminalHUD terminal, Avatar avatar, BodyArtData artData)
+    public BodyArtViewer(TerminalHUD terminal, PartyMember protagonist, BodyArtData artData)
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
-        _avatar = avatar ?? throw new ArgumentNullException(nameof(avatar));
+        _protagonist = protagonist ?? throw new ArgumentNullException(nameof(protagonist));
         _artData = artData ?? throw new ArgumentNullException(nameof(artData));
 
         _organPartNameToChar = new Dictionary<string, char>();
@@ -94,7 +95,7 @@ public class BodyArtViewer
 
     /// <summary>
     /// Re-computes the row layout for the stats panel.
-    /// Must be called after changing StatsStartRow or avatar body parts.
+    /// Must be called after changing StatsStartRow or the subject's body parts.
     /// </summary>
     public void ComputeLayout()
     {
@@ -103,7 +104,7 @@ public class BodyArtViewer
         _bodyPartRows.Clear();
 
         int row = StatsStartRow;
-        foreach (var bp in _avatar.BodyParts)
+        foreach (var bp in _protagonist.BodyParts)
         {
             _bodyPartRows.Add((bp.Id, row));
             row++; // header row
@@ -116,6 +117,17 @@ public class BodyArtViewer
                 }
             row++; // gap between body parts
         }
+    }
+
+    /// <summary>
+    /// Swap the party member whose body is currently displayed.
+    /// Clears hover state and recomputes layout automatically.
+    /// </summary>
+    public void SwapSubject(PartyMember newSubject)
+    {
+        _protagonist = newSubject ?? throw new ArgumentNullException(nameof(newSubject));
+        ClearHover();
+        ComputeLayout();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -203,12 +215,22 @@ public class BodyArtViewer
                      || newBodyPart != _hoveredBodyPartId
                      || newRawPartName != _hoveredRawPartName;
 
+        // Detect arrow hover (only meaningful when ShowScoreEditControls is true)
+        int newArrowDelta = 0;
+        if (ShowScoreEditControls && _rowToArrowX.TryGetValue(y, out var ax))
+        {
+            if (x == ax.decX) newArrowDelta = -1;
+            else if (x == ax.incX) newArrowDelta = +1;
+        }
+        changed = changed || newArrowDelta != _hoveredArrowDelta;
+
         if (changed)
         {
             _hoveredOrganPartName = newOrganPart;
             _hoveredBodyPartId = newBodyPart;
             _hoveredOrganName = newOrgan;
             _hoveredRawPartName = newRawPartName;
+            _hoveredArrowDelta = newArrowDelta;
             ResetBlink();
         }
 
@@ -222,6 +244,7 @@ public class BodyArtViewer
         _hoveredBodyPartId = null;
         _hoveredOrganName = null;
         _hoveredRawPartName = null;
+        _hoveredArrowDelta = 0;
     }
 
     /// <summary>Resets the blink timer (called when hover target changes).</summary>
@@ -421,7 +444,7 @@ public class BodyArtViewer
     public int RenderOrganStats()
     {
         int row = StatsStartRow;
-        foreach (var bp in _avatar.BodyParts)
+        foreach (var bp in _protagonist.BodyParts)
         {
             bool isHoveredBP = bp.Id == _hoveredBodyPartId;
             Vector4 headerColor = isHoveredBP ? Config.Colors.BrightYellow : Config.Colors.LightGray75;
@@ -485,11 +508,19 @@ public class BodyArtViewer
                     if (ShowScoreEditControls)
                     {
                         // Editable: ◄ score ► arrows
-                        Vector4 arrowColor = isHoveredPart ? Config.Colors.MediumYellow : Config.Colors.DarkGray35;
+                        // Each arrow is highlighted individually when directly hovered
+                        bool isDecHovered = isHoveredPart && _hoveredArrowDelta == -1;
+                        bool isIncHovered = isHoveredPart && _hoveredArrowDelta == +1;
+                        Vector4 decColor = isDecHovered ? Config.Colors.BrightYellow
+                                         : isHoveredPart ? Config.Colors.MediumYellow
+                                         : Config.Colors.DarkGray35;
+                        Vector4 incColor = isIncHovered ? Config.Colors.BrightYellow
+                                         : isHoveredPart ? Config.Colors.MediumYellow
+                                         : Config.Colors.DarkGray35;
                         _terminal.SetCell(barX + barWidth, row, ' ', Config.Colors.Black, bg);
-                        _terminal.SetCell(barX + barWidth + 1, row, '◄', arrowColor, bg);
+                        _terminal.SetCell(barX + barWidth + 1, row, '◄', decColor, bg);
                         _terminal.SetCell(barX + barWidth + 2, row, (char)('0' + part.Score), scoreFg, bg);
-                        _terminal.SetCell(barX + barWidth + 3, row, '►', arrowColor, bg);
+                        _terminal.SetCell(barX + barWidth + 3, row, '►', incColor, bg);
                         _rowToArrowX[row] = (barX + barWidth + 1, barX + barWidth + 3);
 
                         for (int fx = barX + barWidth + 4; fx < PanelX + PanelWidth; fx++)
@@ -598,11 +629,11 @@ public class BodyArtViewer
     }
 
     /// <summary>
-    /// Adjusts the score of an organ part on the avatar.
+    /// Adjusts the score of an organ part on the protagonist.
     /// </summary>
     public void AdjustOrganPartScore(string organPartName, int delta)
     {
-        var organPart = _avatar.BodyParts
+        var organPart = _protagonist.BodyParts
             .SelectMany(bp => bp.Organs)
             .SelectMany(o => o.Parts)
             .FirstOrDefault(p => p.Id == organPartName);
@@ -618,7 +649,7 @@ public class BodyArtViewer
     /// <summary>Total score across all organ parts.</summary>
     public int GetTotalScore()
     {
-        return _avatar.BodyParts
+        return _protagonist.BodyParts
             .SelectMany(bp => bp.Organs)
             .SelectMany(o => o.Parts)
             .Sum(p => p.Score);
@@ -628,7 +659,7 @@ public class BodyArtViewer
     public (string bodyPartId, string bodyPartDisplayName, string organName, string organDisplayName, string partId, string partDisplayName)?
         FindOrganPartByName(string organPartName)
     {
-        foreach (var bp in _avatar.BodyParts)
+        foreach (var bp in _protagonist.BodyParts)
             foreach (var organ in bp.Organs)
                 foreach (var part in organ.Parts)
                     if (part.Id == organPartName)

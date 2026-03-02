@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Cathedral.Game.Narrative;
@@ -11,7 +11,7 @@ public class ThinkingPromptConstructor
 {
     /// <summary>
     /// Builds a thinking request for the LLM.
-    /// Includes keyword context, possible outcomes, available action skills, and avatar state.
+    /// Includes keyword context, possible outcomes, available action skills, and protagonist state.
     /// Separates straightforward outcomes from circuitous outcomes in the prompt.
     /// </summary>
     /// <param name="keyword">The keyword that was clicked</param>
@@ -19,7 +19,7 @@ public class ThinkingPromptConstructor
     /// <param name="node">The current narration node</param>
     /// <param name="outcomesWithMetadata">Possible outcomes with circuitous metadata</param>
     /// <param name="actionSkills">Available action skills</param>
-    /// <param name="avatar">The player avatar</param>
+    /// <param name="protagonist">The player protagonist</param>
     /// <param name="thinkingSkill">The thinking skill being used</param>
     public string BuildThinkingPrompt(
         string keyword,
@@ -27,7 +27,7 @@ public class ThinkingPromptConstructor
         NarrationNode node,
         List<OutcomeWithMetadata> outcomesWithMetadata,
         List<Skill> actionSkills,
-        Avatar avatar,
+        Protagonist protagonist,
         Skill thinkingSkill)
     {
         // Separate straightforward and circuitous outcomes
@@ -75,7 +75,7 @@ public class ThinkingPromptConstructor
         var prompt = $@"{attentionLine}
 
 Current situation:
-{node.GenerateNeutralDescription(avatar.CurrentLocationId)}
+{node.GenerateNeutralDescription(protagonist.CurrentLocationId)}
 
 Skills you can apply:
 {string.Join("\n", actionSkills.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
@@ -113,13 +113,13 @@ Output fields:
         NarrationNode node,
         List<OutcomeBase> possibleOutcomes,
         List<Skill> actionSkills,
-        Avatar avatar,
+        Protagonist protagonist,
         Skill thinkingSkill)
     {
         var outcomesWithMetadata = possibleOutcomes
             .Select(o => OutcomeWithMetadata.Straightforward(o))
             .ToList();
             
-        return BuildThinkingPrompt(keyword, null, node, outcomesWithMetadata, actionSkills, avatar, thinkingSkill);
+        return BuildThinkingPrompt(keyword, null, node, outcomesWithMetadata, actionSkills, protagonist, thinkingSkill);
     }
 }

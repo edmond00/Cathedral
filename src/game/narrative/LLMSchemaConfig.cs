@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Cathedral.LLM.JsonConstraints;
 using Cathedral.Glyph.Microworld.LocationSystem;
@@ -23,7 +23,7 @@ public static class LLMSchemaConfig
             new StringField("narration_text", 
                 MinLength: 50, 
                 MaxLength: 1000, 
-                Hint: "A short description of what the avatar observes in the environment")
+                Hint: "A short description of what the protagonist observes in the environment")
         );
     }
     
@@ -63,7 +63,7 @@ public static class LLMSchemaConfig
     /// Schema for thinking/planning responses.
     /// Includes reasoning text and a list of actions with skills, outcomes, and descriptions.
     /// </summary>
-    /// <param name="validActionSkills">List of action skill names the avatar can use</param>
+    /// <param name="validActionSkills">List of action skill names the protagonist can use</param>
     /// <param name="validOutcomes">List of valid outcome keywords for the current situation</param>
     public static CompositeField CreateThinkingSchema(List<string> validActionSkills, List<string> validOutcomes)
     {
@@ -71,7 +71,7 @@ public static class LLMSchemaConfig
             new StringField("reasoning_text", 
                 MinLength: 50, 
                 MaxLength: 1000, 
-                Hint: "A short reasoning process the avatar used to decide on actions"),
+                Hint: "A short reasoning process the protagonist used to decide on actions"),
             new ArrayField("actions",
                 ElementType: new CompositeField("Action",
                     new ChoiceField<string>("action_skill", validActionSkills.ToArray()),
@@ -80,7 +80,7 @@ public static class LLMSchemaConfig
                         Template: "try to <generated>",
                         MinGenLength: 10,
                         MaxGenLength: 400,
-                        Hint: "Describe in few words the action the avatar will try to take to achieve the outcome")
+                        Hint: "Describe in few words the action the protagonist will try to take to achieve the outcome")
                 ),
                 MinLength: 2,
                 MaxLength: 5
@@ -115,7 +115,7 @@ public static class LLMSchemaConfig
     /// Includes success status, narrative, state changes, sublocation changes, items gained, and interaction end flag.
     /// </summary>
     /// <param name="stateCategories">Available state categories and their possible states</param>
-    /// <param name="accessibleSublocations">Sublocations the avatar can move to</param>
+    /// <param name="accessibleSublocations">Sublocations the protagonist can move to</param>
     /// <param name="availableItems">Items that can be gained from the action</param>
     public static CompositeField CreateActionOutcomeSchema(
         Dictionary<string, (string[] PossibleStates, string CurrentState)> stateCategories,

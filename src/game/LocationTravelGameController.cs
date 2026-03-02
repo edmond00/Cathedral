@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,12 +38,12 @@ public class LocationTravelGameController : IDisposable
     private MainMenuRenderer? _mainMenuRenderer;
     private bool _hasGameStarted = false;
     
-    // Avatar creation
-    private AvatarCreationRenderer? _avatarCreationRenderer;
+    // Protagonist creation
+    private ProtagonistCreationRenderer? _protagonistCreationRenderer;
     private BodyArtData? _bodyArtData;
-    private Avatar? _avatar;
+    private Protagonist? _protagonist;
     
-    // Avatar management
+    // Protagonist management
     private ManagementMenuRenderer? _managementMenuRenderer;
     
     // Game state
@@ -135,14 +135,14 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public void Update()
     {
-        // Update avatar creation blink animation
-        if (_currentMode == GameMode.AvatarCreation && _avatarCreationRenderer != null)
+        // Update protagonist creation blink animation
+        if (_currentMode == GameMode.ProtagonistCreation && _protagonistCreationRenderer != null)
         {
-            _avatarCreationRenderer.Update();
+            _protagonistCreationRenderer.Update();
         }
         
         // Update management menu animation
-        if (_currentMode == GameMode.AvatarManagement && _managementMenuRenderer != null)
+        if (_currentMode == GameMode.ProtagonistManagement && _managementMenuRenderer != null)
         {
             _managementMenuRenderer.Update();
         }
@@ -261,15 +261,15 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
-        // Avatar creation handles its own clicks
-        if (_currentMode == GameMode.AvatarCreation && _avatarCreationRenderer != null)
+        // Protagonist creation handles its own clicks
+        if (_currentMode == GameMode.ProtagonistCreation && _protagonistCreationRenderer != null)
         {
-            _avatarCreationRenderer.OnMouseClick(x, y);
+            _protagonistCreationRenderer.OnMouseClick(x, y);
             return;
         }
         
-        // Avatar management handles its own clicks
-        if (_currentMode == GameMode.AvatarManagement && _managementMenuRenderer != null)
+        // Protagonist management handles its own clicks
+        if (_currentMode == GameMode.ProtagonistManagement && _managementMenuRenderer != null)
         {
             _managementMenuRenderer.OnMouseClick(x, y);
             return;
@@ -298,15 +298,15 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellRightClicked(int x, int y)
     {
-        // Avatar creation handles right-clicks for score decrement
-        if (_currentMode == GameMode.AvatarCreation && _avatarCreationRenderer != null)
+        // Protagonist creation handles right-clicks for score decrement
+        if (_currentMode == GameMode.ProtagonistCreation && _protagonistCreationRenderer != null)
         {
-            _avatarCreationRenderer.OnRightClick(x, y);
+            _protagonistCreationRenderer.OnRightClick(x, y);
             return;
         }
         
-        // Avatar management handles right-clicks
-        if (_currentMode == GameMode.AvatarManagement && _managementMenuRenderer != null)
+        // Protagonist management handles right-clicks
+        if (_currentMode == GameMode.ProtagonistManagement && _managementMenuRenderer != null)
         {
             _managementMenuRenderer.OnRightClick(x, y);
             return;
@@ -353,15 +353,15 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
-        // Avatar creation handles its own hover
-        if (_currentMode == GameMode.AvatarCreation && _avatarCreationRenderer != null)
+        // Protagonist creation handles its own hover
+        if (_currentMode == GameMode.ProtagonistCreation && _protagonistCreationRenderer != null)
         {
-            _avatarCreationRenderer.OnMouseMove(x, y);
+            _protagonistCreationRenderer.OnMouseMove(x, y);
             return;
         }
         
-        // Avatar management handles its own hover
-        if (_currentMode == GameMode.AvatarManagement && _managementMenuRenderer != null)
+        // Protagonist management handles its own hover
+        if (_currentMode == GameMode.ProtagonistManagement && _managementMenuRenderer != null)
         {
             _managementMenuRenderer.OnMouseMove(x, y);
             return;
@@ -446,12 +446,12 @@ public class LocationTravelGameController : IDisposable
                 OnEnterLocationInteraction();
                 break;
                 
-            case GameMode.AvatarCreation:
-                OnEnterAvatarCreation();
+            case GameMode.ProtagonistCreation:
+                OnEnterProtagonistCreation();
                 break;
                 
-            case GameMode.AvatarManagement:
-                OnEnterAvatarManagement();
+            case GameMode.ProtagonistManagement:
+                OnEnterProtagonistManagement();
                 break;
         }
         
@@ -484,11 +484,11 @@ public class LocationTravelGameController : IDisposable
         // In the future, we should check if it actually has a location
         Console.WriteLine($"LocationTravelGameController: Vertex {vertexIndex} clicked");
         
-        // Check if the avatar is at a location (not just any vertex)
-        var avatarVertex = _interface.GetAvatarVertex();
-        if (avatarVertex == vertexIndex)
+        // Check if the protagonist is at a location (not just any vertex)
+        var protagonistVertex = _interface.GetAvatarVertex();
+        if (protagonistVertex == vertexIndex)
         {
-            Console.WriteLine("LocationTravelGameController: Clicked on avatar's current position");
+            Console.WriteLine("LocationTravelGameController: Clicked on protagonist's current position");
             
             // Enter interaction mode - use location if available, otherwise use biome
             var locationInfo = _interface.GetDetailedBiomeInfoAt(vertexIndex);
@@ -528,15 +528,15 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// Called when avatar arrives at a vertex.
+    /// Called when protagonist arrives at a vertex.
     /// This should be called by MicroworldInterface when movement completes.
     /// </summary>
-    public void OnAvatarArrived(int vertexIndex)
+    public void OnProtagonistArrived(int vertexIndex)
     {
         if (_currentMode != GameMode.Traveling)
             return;
 
-        Console.WriteLine($"LocationTravelGameController: Avatar arrived at vertex {vertexIndex}");
+        Console.WriteLine($"LocationTravelGameController: Protagonist arrived at vertex {vertexIndex}");
         
         TravelCompleted?.Invoke();
         
@@ -661,7 +661,7 @@ public class LocationTravelGameController : IDisposable
                 onNew: () =>
                 {
                     ResetGameState();
-                    SetMode(GameMode.AvatarCreation);
+                    SetMode(GameMode.ProtagonistCreation);
                 },
                 onContinue: () =>
                 {
@@ -671,7 +671,7 @@ public class LocationTravelGameController : IDisposable
                 },
                 onProtagonist: () =>
                 {
-                    SetMode(GameMode.AvatarManagement);
+                    SetMode(GameMode.ProtagonistManagement);
                 },
                 onExit: () =>
                 {
@@ -684,9 +684,9 @@ public class LocationTravelGameController : IDisposable
         }
     }
     
-    private void OnEnterAvatarCreation()
+    private void OnEnterProtagonistCreation()
     {
-        Console.WriteLine("LocationTravelGameController: Entered AvatarCreation mode");
+        Console.WriteLine("LocationTravelGameController: Entered ProtagonistCreation mode");
         // Keep sphere darkened behind the creation screen
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
@@ -710,26 +710,26 @@ public class LocationTravelGameController : IDisposable
                 _bodyArtData = BodyArtData.Load(artFolder);
             }
             
-            // Get the avatar (already created by ResetGameState)
-            var avatar = _avatar!;
+            // Get the protagonist (already created by ResetGameState)
+            var protagonist = _protagonist!;
             
             // Create the renderer
-            _avatarCreationRenderer = new AvatarCreationRenderer(_core.Terminal, avatar, _bodyArtData);
-            _avatarCreationRenderer.OnContinue = () =>
+            _protagonistCreationRenderer = new ProtagonistCreationRenderer(_core.Terminal, protagonist, _bodyArtData);
+            _protagonistCreationRenderer.OnContinue = () =>
             {
-                Console.WriteLine("LocationTravelGameController: Avatar creation complete, entering WorldView");
-                _avatarCreationRenderer = null;
+                Console.WriteLine("LocationTravelGameController: Protagonist creation complete, entering WorldView");
+                _protagonistCreationRenderer = null;
                 SetMode(GameMode.WorldView);
             };
             
             // Render the creation screen
-            _avatarCreationRenderer.Render();
+            _protagonistCreationRenderer.Render();
         }
     }
     
-    private void OnEnterAvatarManagement()
+    private void OnEnterProtagonistManagement()
     {
-        Console.WriteLine("LocationTravelGameController: Entered AvatarManagement mode");
+        Console.WriteLine("LocationTravelGameController: Entered ProtagonistManagement mode");
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
@@ -751,9 +751,9 @@ public class LocationTravelGameController : IDisposable
                 _bodyArtData = BodyArtData.Load(artFolder);
             }
             
-            var avatar = _avatar!;
+            var protagonist = _protagonist!;
             
-            _managementMenuRenderer = new ManagementMenuRenderer(_core.Terminal, avatar, _bodyArtData);
+            _managementMenuRenderer = new ManagementMenuRenderer(_core.Terminal, protagonist, _bodyArtData);
             _managementMenuRenderer.OnBack = () =>
             {
                 Console.WriteLine("LocationTravelGameController: Management menu closed, returning to main menu");
@@ -967,20 +967,22 @@ public class LocationTravelGameController : IDisposable
                 _skillSlotManager
             );
             
-            // Use the avatar from game state (created in ResetGameState, possibly configured in AvatarCreation)
-            if (_avatar == null)
+            // Use the protagonist from game state (created in ResetGameState, possibly configured in ProtagonistCreation)
+            if (_protagonist == null)
             {
-                _avatar = new Avatar();
-                _avatar.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+                _protagonist = new Protagonist();
+                _protagonist.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+                _protagonist.CompanionParty.AddRange(
+                    Companion.GenerateRandom(SkillRegistry.Instance, count: 3));
             }
-            var avatar = _avatar;
+            var protagonist = _protagonist;
             
             var actionExecutor = new ActionExecutionController(
                 _actionScorer,
                 difficultyEvaluator,
                 outcomeNarrator,
                 outcomeApplicator,
-                avatar,
+                protagonist,
                 _criticEvaluator
             );
             
@@ -1048,7 +1050,7 @@ public class LocationTravelGameController : IDisposable
     }
     
     /// <summary>
-    /// Resets game state for a new game. Clears location states, resets avatar position.
+    /// Resets game state for a new game. Clears location states, resets protagonist position.
     /// </summary>
     public void ResetGameState()
     {
@@ -1066,12 +1068,14 @@ public class LocationTravelGameController : IDisposable
         _destinationVertex = -1;
         _locationStates.Clear();
         
-        // Reset avatar to a new random starting position
-        _interface.ResetAvatarPosition();
+        // Reset protagonist to a new random starting position
+        _interface.ResetProtagonistPosition();
         
-        // Create a fresh avatar for the new game
-        _avatar = new Avatar();
-        _avatar.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+        // Create a fresh protagonist for the new game
+        _protagonist = new Protagonist();
+        _protagonist.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+        _protagonist.CompanionParty.AddRange(
+            Companion.GenerateRandom(SkillRegistry.Instance, count: 3));
         
         _hasGameStarted = true;
         Console.WriteLine("LocationTravelGameController: Game state reset complete");

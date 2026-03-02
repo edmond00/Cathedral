@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -25,7 +25,7 @@ public class NarrativeController
     private readonly string _biomeType;
     
     // Dependencies
-    private readonly Avatar _avatar;
+    private readonly Protagonist _protagonist;
     private NarrationNode _currentNode;
     private readonly ObservationPhaseController _observationController;
     private readonly ThinkingExecutor _thinkingExecutor;
@@ -89,9 +89,9 @@ public class NarrativeController
         _terminalInputHandler = terminalInputHandler;
         _biomeType = biomeType;
         
-        // Initialize avatar with random skills
-        _avatar = new Avatar();
-        _avatar.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+        // Initialize protagonist with random skills
+        _protagonist = new Protagonist();
+        _protagonist.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
         
         // Generate graph for this location using factory
         if (graphFactory == null)
@@ -106,7 +106,7 @@ public class NarrativeController
         _actionExecutor = actionExecutor;
         
         Console.WriteLine($"NarrativeController: Initialized with node {_currentNode.NodeId}");
-        Console.WriteLine($"NarrativeController: Avatar has {_avatar.Skills.Count} skills");
+        Console.WriteLine($"NarrativeController: Protagonist has {_protagonist.Skills.Count} skills");
     }
     
     /// <summary>
@@ -158,7 +158,7 @@ public class NarrativeController
             // Generate ONE overall observation (one keyword per outcome)
             var blocks = await _observationController.ExecuteObservationPhaseAsync(
                 _currentNode,
-                _avatar,
+                _protagonist,
                 skillCount: 1
             );
             
@@ -252,7 +252,7 @@ public class NarrativeController
             }
             
             // Get action skills
-            var actionSkills = _avatar.GetActionSkills();
+            var actionSkills = _protagonist.GetActionSkills();
             
             Console.WriteLine($"NarrativeController: Total {outcomesWithMetadata.Count} outcomes ({outcomesWithMetadata.Count(o => o.IsCircuitous)} circuitous), {actionSkills.Count} action skills");
             
@@ -268,7 +268,7 @@ public class NarrativeController
                 _currentNode,
                 outcomesWithMetadata,
                 actionSkills,
-                _avatar,
+                _protagonist,
                 CancellationToken.None);
             
             if (response == null || response.Actions.Count == 0)
@@ -451,11 +451,11 @@ public class NarrativeController
         // Base: 4 dice
         int baseDice = 4;
         
-        // Try to get skill bonus from avatar
+        // Try to get skill bonus from protagonist
         if (action.ActionSkill != null)
         {
             // Get organ score (affects dice count)
-            int organScore = _avatar.GetOrganScoreForSkill(action.ActionSkill);
+            int organScore = _protagonist.GetOrganScoreForSkill(action.ActionSkill);
             if (organScore == 0) organScore = 5; // fallback
             
             // Organ score adds 0-3 extra dice
@@ -605,7 +605,7 @@ public class NarrativeController
                 keyword,
                 observationSkill,
                 _currentNode,
-                _avatar
+                _protagonist
             );
             
             if (block != null)
@@ -1113,7 +1113,7 @@ public class NarrativeController
             
             // Show thinking skill selection popup (left-click = thinking)
             _narrationState.IsSelectingObservationSkill = false;
-            var thinkingSkills = _avatar.GetThinkingSkills();
+            var thinkingSkills = _protagonist.GetThinkingSkills();
             
             // Convert terminal cell coordinates to screen pixel coordinates
             Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
@@ -1150,7 +1150,7 @@ public class NarrativeController
             // Show observation skill selection popup (right-click = focus observation)
             _narrationState.IsSelectingObservationSkill = true;
             _narrationState.HoveredKeyword = clickedKeyword;  // Store for later use
-            var observationSkills = _avatar.GetObservationSkills();
+            var observationSkills = _protagonist.GetObservationSkills();
             
             // Convert terminal cell coordinates to screen pixel coordinates
             Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -205,10 +205,10 @@ public class ActionScorer
     /// Performs a skill check with d20 roll against difficulty.
     /// Used by the narrative system for action execution.
     /// </summary>
-    public bool RollSkillCheck(Narrative.Skill skill, int difficulty, Narrative.Avatar avatar)
+    public bool RollSkillCheck(Narrative.Skill skill, int difficulty, Narrative.Protagonist protagonist)
     {
         // Get relevant organ score
-        int organScore = GetOrganScoreForSkill(skill, avatar);
+        int organScore = GetOrganScoreForSkill(skill, protagonist);
         
         // Roll d20
         var random = new Random();
@@ -226,9 +226,9 @@ public class ActionScorer
     /// Gets the organ score most relevant to a skill.
     /// Uses the skill's primary organ.
     /// </summary>
-    private int GetOrganScoreForSkill(Narrative.Skill skill, Narrative.Avatar avatar)
+    private int GetOrganScoreForSkill(Narrative.Skill skill, Narrative.Protagonist protagonist)
     {
-        return avatar.GetOrganScoreForSkill(skill);
+        return protagonist.GetOrganScoreForSkill(skill);
     }
     
     /// <summary>

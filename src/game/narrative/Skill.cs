@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// Abstract base class for all skills.
-/// Skills define the avatar's capabilities and narrative perspectives.
+/// Skills define the protagonist's capabilities and narrative perspectives.
 /// </summary>
 public abstract class Skill
 {

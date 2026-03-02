@@ -1,4 +1,4 @@
-// MicroworldInterface.cs - Concrete implementation for microworld biome generation
+﻿// MicroworldInterface.cs - Concrete implementation for microworld biome generation
 // Implements the specific biome and location logic for the microworld system
 using System;
 using System.Collections.Generic;
@@ -27,9 +27,9 @@ namespace Cathedral.Glyph.Microworld
         // Random generator for water animation
         private readonly Random animationRandom = new Random();
 
-        // Avatar system
-        private int _avatarVertex = -1;
-        private VertexWorldData? _originalAvatarData;
+        // Protagonist system
+        private int _protagonistVertex = -1;
+        private VertexWorldData? _originalProtagonistData;
         private Cathedral.Pathfinding.Path? _currentPath;
         private Cathedral.Pathfinding.Path? _hoveredPath;
         private int _hoveredVertex = -1;
@@ -52,12 +52,12 @@ namespace Cathedral.Glyph.Microworld
         private bool _worldInteractionsEnabled = true;
 
         // Events for location travel mode
-        public event Action<AvatarArrivalInfo>? AvatarArrivedAtLocation;
+        public event Action<ProtagonistArrivalInfo>? ProtagonistArrivedAtLocation;
 
         /// <summary>
-        /// Detailed information about avatar arrival at a vertex
+        /// Detailed information about protagonist arrival at a vertex
         /// </summary>
-        public record AvatarArrivalInfo(
+        public record ProtagonistArrivalInfo(
             int VertexIndex,
             LocationType? Location,
             BiomeType Biome,
@@ -69,7 +69,7 @@ namespace Cathedral.Glyph.Microworld
 
         public MicroworldInterface(GlyphSphereCore glyphSphereCore) : base(glyphSphereCore)
         {
-            // Subscribe to our own events to handle avatar interactions
+            // Subscribe to our own events to handle protagonist interactions
             VertexHoverEvent += (vertexIndex, glyph, color) => 
             {
                 if (vertexIndex >= 0)
@@ -167,8 +167,8 @@ namespace Cathedral.Glyph.Microworld
             PrintNoiseStatistics(noiseValues, "Microworld Noise Distribution Statistics");
             PrintGlyphStatistics(glyphCounts, VertexCount, "Microworld Biome-Based Glyph Distribution");
             
-            // Initialize avatar at a random suitable location
-            InitializeAvatar();
+            // Initialize protagonist at a random suitable location
+            InitializeProtagonist();
         }
 
         public override (string primaryType, string secondaryType, float noiseValue) GetWorldInfoAt(int vertexIndex)
@@ -185,10 +185,10 @@ namespace Cathedral.Glyph.Microworld
 
         protected override char GetGlyphAt(int vertexIndex)
         {
-            // Avatar takes priority over biome data
-            if (vertexIndex == _avatarVertex)
+            // Protagonist takes priority over biome data
+            if (vertexIndex == _protagonistVertex)
             {
-                return Config.GlyphSphere.AvatarChar;
+                return Config.GlyphSphere.ProtagonistChar;
             }
 
             if (vertexData.TryGetValue(vertexIndex, out var data))
@@ -200,10 +200,10 @@ namespace Cathedral.Glyph.Microworld
 
         protected override System.Numerics.Vector3 GetColorAt(int vertexIndex)
         {
-            // Avatar takes priority over biome data
-            if (vertexIndex == _avatarVertex)
+            // Protagonist takes priority over biome data
+            if (vertexIndex == _protagonistVertex)
             {
-                return Config.GlyphSphere.AvatarColor;
+                return Config.GlyphSphere.ProtagonistColor;
             }
 
             if (vertexData.TryGetValue(vertexIndex, out var data))
@@ -332,7 +332,7 @@ namespace Cathedral.Glyph.Microworld
             // Process pending movement from background thread
             ProcessPendingMovement();
             
-            // Update avatar movement
+            // Update protagonist movement
             UpdateMovement(deltaTime);
             
             // Animate water vertices (sea and ocean biomes)
@@ -340,8 +340,8 @@ namespace Cathedral.Glyph.Microworld
             {
                 if (vertexData.TryGetValue(vertexIndex, out var data))
                 {
-                    // Skip water animation if this vertex has the avatar
-                    if (vertexIndex == _avatarVertex) continue;
+                    // Skip water animation if this vertex has the protagonist
+                    if (vertexIndex == _protagonistVertex) continue;
                     
                     // Skip water animation if this vertex is part of the hover path
                     if (IsVertexInHoverPath(vertexIndex)) continue;
@@ -380,8 +380,8 @@ namespace Cathedral.Glyph.Microworld
             }
         }
 
-        // Avatar Management Methods
-        private void InitializeAvatar()
+        // Protagonist Management Methods
+        private void InitializeProtagonist()
         {
             // Find a suitable starting location (preferably plain or field biome)
             var suitableVertices = new List<int>();
@@ -410,44 +410,44 @@ namespace Cathedral.Glyph.Microworld
 
             if (suitableVertices.Count > 0)
             {
-                _avatarVertex = suitableVertices[animationRandom.Next(suitableVertices.Count)];
-                PlaceAvatar(_avatarVertex, centerCamera: true); // Center camera only during initialization
+                _protagonistVertex = suitableVertices[animationRandom.Next(suitableVertices.Count)];
+                PlaceProtagonist(_protagonistVertex, centerCamera: true); // Center camera only during initialization
                 
-                Console.WriteLine($"Avatar initialized at vertex {_avatarVertex} ({vertexData[_avatarVertex].Biome.Name})");
+                Console.WriteLine($"Protagonist initialized at vertex {_protagonistVertex} ({vertexData[_protagonistVertex].Biome.Name})");
             }
         }
 
-        private void PlaceAvatar(int vertexIndex, bool centerCamera = false)
+        private void PlaceProtagonist(int vertexIndex, bool centerCamera = false)
         {
             // Store the original data if we're moving to a new vertex
-            if (_avatarVertex != -1 && _avatarVertex != vertexIndex && _originalAvatarData.HasValue)
+            if (_protagonistVertex != -1 && _protagonistVertex != vertexIndex && _originalProtagonistData.HasValue)
             {
-                RestoreVertexData(_avatarVertex, _originalAvatarData.Value);
+                RestoreVertexData(_protagonistVertex, _originalProtagonistData.Value);
             }
 
             // Store the new vertex data
             if (vertexData.TryGetValue(vertexIndex, out var data))
             {
-                _originalAvatarData = data;
+                _originalProtagonistData = data;
             }
 
-            // Set avatar character and color
-            _avatarVertex = vertexIndex;
-            SetVertexGlyph(vertexIndex, Config.GlyphSphere.AvatarChar, Config.GlyphSphere.AvatarColor, true); // Mark as UI element
+            // Set protagonist character and color
+            _protagonistVertex = vertexIndex;
+            SetVertexGlyph(vertexIndex, Config.GlyphSphere.ProtagonistChar, Config.GlyphSphere.ProtagonistColor, true); // Mark as UI element
             
             if (centerCamera)
             {
-                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Avatar placed at vertex {vertexIndex}");
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Protagonist placed at vertex {vertexIndex}");
             }
             else
             {
-                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Avatar moved at vertex {vertexIndex}");
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Protagonist moved at vertex {vertexIndex}");
             }
             
-            // Only center camera if explicitly requested - do this AFTER avatar is fully set
+            // Only center camera if explicitly requested - do this AFTER protagonist is fully set
             if (centerCamera)
             {
-                Console.WriteLine($"Centering camera on avatar at vertex {vertexIndex}...");
+                Console.WriteLine($"Centering camera on protagonist at vertex {vertexIndex}...");
                 core.CenterCameraOnGlyph(vertexIndex);
             }
         }
@@ -466,9 +466,9 @@ namespace Cathedral.Glyph.Microworld
             if (!_worldInteractionsEnabled)
                 return;
                 
-            if (_avatarVertex == -1 || vertexIndex == _avatarVertex) return;
+            if (_protagonistVertex == -1 || vertexIndex == _protagonistVertex) return;
 
-            // Don't show hover paths while avatar is moving
+            // Don't show hover paths while protagonist is moving
             if (IsAvatarMoving())
             {
                 return;
@@ -492,7 +492,7 @@ namespace Cathedral.Glyph.Microworld
                 {
                     try
                     {
-                        var path = await pathfindingService.FindPathAsync(graph, _avatarVertex, vertexIndex);
+                        var path = await pathfindingService.FindPathAsync(graph, _protagonistVertex, vertexIndex);
                         
                         // Schedule path update on the main thread if still hovering the same vertex
                         if (_hoveredVertex == vertexIndex)
@@ -550,7 +550,7 @@ namespace Cathedral.Glyph.Microworld
 
         public void HandleVertexClicked(int vertexIndex)
         {
-            Console.WriteLine($"HandleVertexClicked: vertex {vertexIndex}, avatar at {_avatarVertex}");
+            Console.WriteLine($"HandleVertexClicked: vertex {vertexIndex}, protagonist at {_protagonistVertex}");
             
             // Ignore clicks when interactions are disabled
             if (!_worldInteractionsEnabled)
@@ -559,24 +559,24 @@ namespace Cathedral.Glyph.Microworld
                 return;
             }
             
-            if (_avatarVertex == -1)
+            if (_protagonistVertex == -1)
             {
-                Console.WriteLine("Cannot handle click: avatar not initialized");
+                Console.WriteLine("Cannot handle click: protagonist not initialized");
                 return;
             }
             
-            // Allow clicking on avatar vertex - let GameController handle it
+            // Allow clicking on protagonist vertex - let GameController handle it
             // (GameController can enter location interaction mode)
-            if (vertexIndex == _avatarVertex)
+            if (vertexIndex == _protagonistVertex)
             {
-                Console.WriteLine("HandleVertexClicked: Clicked on avatar vertex (allowing passthrough to GameController)");
+                Console.WriteLine("HandleVertexClicked: Clicked on protagonist vertex (allowing passthrough to GameController)");
                 return; // Don't block - let event propagate to GameController
             }
 
-            // Don't allow new movement while avatar is already moving
+            // Don't allow new movement while protagonist is already moving
             if (IsAvatarMoving())
             {
-                Console.WriteLine("Cannot handle click: avatar is already moving");
+                Console.WriteLine("Cannot handle click: protagonist is already moving");
                 return;
             }
 
@@ -593,7 +593,7 @@ namespace Cathedral.Glyph.Microworld
                 {
                     try
                     {
-                        var path = await pathfindingService.FindPathAsync(graph, _avatarVertex, vertexIndex);
+                        var path = await pathfindingService.FindPathAsync(graph, _protagonistVertex, vertexIndex);
                         
                         if (path != null && path.Length > 1)
                         {
@@ -622,7 +622,7 @@ namespace Cathedral.Glyph.Microworld
             if (path != null && path.Length > 1)
             {
                 // Show path visualization
-                for (int i = 1; i < path.Length - 1; i++) // Skip start (avatar) and end (destination)
+                for (int i = 1; i < path.Length - 1; i++) // Skip start (protagonist) and end (destination)
                 {
                     int nodeId = path.GetNode(i);
                     SetVertexGlyph(nodeId, Config.GlyphSphere.PathWaypointChar, Config.GlyphSphere.PathWaypointPreviewColor, true); // Mark as UI element
@@ -642,10 +642,10 @@ namespace Cathedral.Glyph.Microworld
             if (_hoveredPath != null && _hoveredPath.Length > 1)
             {
                 // Restore original glyphs for path visualization
-                for (int i = 1; i < _hoveredPath.Length; i++) // Skip start (avatar)
+                for (int i = 1; i < _hoveredPath.Length; i++) // Skip start (protagonist)
                 {
                     int nodeId = _hoveredPath.GetNode(i);
-                    if (nodeId != _avatarVertex && vertexData.TryGetValue(nodeId, out var data))
+                    if (nodeId != _protagonistVertex && vertexData.TryGetValue(nodeId, out var data))
                     {
                         // Determine size based on location first, then biome
                         float size = data.Location?.Size ?? data.Biome.Size;
@@ -661,7 +661,7 @@ namespace Cathedral.Glyph.Microworld
         {
             Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] StartMovement: Beginning {path.Length}-step path");
             _currentPath = path;
-            _pathIndex = 0; // Start at avatar position
+            _pathIndex = 0; // Start at protagonist position
             _moveTimer = 0.0f;
             ClearHoveredPath(); // Clear any hover visualization
             _hoveredVertex = -1; // Clear hover state
@@ -674,7 +674,7 @@ namespace Cathedral.Glyph.Microworld
         {
             if (_currentPath == null || _currentPath.Length <= 1) return;
             
-            // Draw waypoints (skip avatar position)
+            // Draw waypoints (skip protagonist position)
             for (int i = 1; i < _currentPath.Length - 1; i++)
             {
                 int nodeId = _currentPath.GetNode(i);
@@ -694,10 +694,10 @@ namespace Cathedral.Glyph.Microworld
             if (_currentPath == null || _currentPath.Length <= 1) return;
             
             // Restore original glyphs for the path
-            for (int i = 1; i < _currentPath.Length; i++) // Skip avatar position
+            for (int i = 1; i < _currentPath.Length; i++) // Skip protagonist position
             {
                 int nodeId = _currentPath.GetNode(i);
-                if (nodeId != _avatarVertex && vertexData.TryGetValue(nodeId, out var data))
+                if (nodeId != _protagonistVertex && vertexData.TryGetValue(nodeId, out var data))
                 {
                     float size = data.Location?.Size ?? data.Biome.Size;
                     var vec4Color = new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, 1.0f);
@@ -731,7 +731,7 @@ namespace Cathedral.Glyph.Microworld
                     // Restore the previous vertex to its original appearance (no longer on path ahead)
                     if (_pathIndex > 0 && vertexData.TryGetValue(_currentPath.GetNode(_pathIndex - 1), out var prevData))
                     {
-                        if (_currentPath.GetNode(_pathIndex - 1) != _avatarVertex)
+                        if (_currentPath.GetNode(_pathIndex - 1) != _protagonistVertex)
                         {
                             float size = prevData.Location?.Size ?? prevData.Biome.Size;
                             var vec4Color = new Vector4(prevData.Color.X / 255.0f, prevData.Color.Y / 255.0f, prevData.Color.Z / 255.0f, 1.0f);
@@ -739,22 +739,22 @@ namespace Cathedral.Glyph.Microworld
                         }
                     }
                     
-                    PlaceAvatar(nextVertex, centerCamera: true); // Focus camera on avatar with each step
+                    PlaceProtagonist(nextVertex, centerCamera: true); // Focus camera on protagonist with each step
                     
                     if (_pathIndex >= _currentPath.Length - 1)
                     {
                         // Movement complete - clear travel path visualization
                         ClearTravelPath();
                         _currentPath = null;
-                        Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Avatar arrived at vertex {_avatarVertex}");
+                        Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] Protagonist arrived at vertex {_protagonistVertex}");
                         
                         // Fire arrival event with detailed location info
-                        if (vertexData.TryGetValue(_avatarVertex, out var data))
+                        if (vertexData.TryGetValue(_protagonistVertex, out var data))
                         {
-                            var neighbors = GetNeighboringVertices(_avatarVertex);
-                            var position = GetVertexPosition(_avatarVertex);
-                            var arrivalInfo = new AvatarArrivalInfo(
-                                _avatarVertex,
+                            var neighbors = GetNeighboringVertices(_protagonistVertex);
+                            var position = GetVertexPosition(_protagonistVertex);
+                            var arrivalInfo = new ProtagonistArrivalInfo(
+                                _protagonistVertex,
                                 data.Location,
                                 data.Biome,
                                 data.NoiseValue,
@@ -762,7 +762,7 @@ namespace Cathedral.Glyph.Microworld
                                 position,
                                 neighbors
                             );
-                            AvatarArrivedAtLocation?.Invoke(arrivalInfo);
+                            ProtagonistArrivedAtLocation?.Invoke(arrivalInfo);
                         }
                     }
                 }
@@ -772,7 +772,7 @@ namespace Cathedral.Glyph.Microworld
 
 
         /// <summary>
-        /// Enables or disables world map interactions (pathfinding, avatar movement, hover paths)
+        /// Enables or disables world map interactions (pathfinding, protagonist movement, hover paths)
         /// </summary>
         public void SetWorldInteractionsEnabled(bool enabled)
         {
@@ -787,15 +787,15 @@ namespace Cathedral.Glyph.Microworld
         }
         
         /// <summary>
-        /// Gets the current avatar vertex index
+        /// Gets the current protagonist vertex index
         /// </summary>
-        public int GetAvatarVertex() => _avatarVertex;
+        public int GetAvatarVertex() => _protagonistVertex;
 
         /// <summary>
-        /// Resets the avatar to a new random starting position.
+        /// Resets the protagonist to a new random starting position.
         /// Used when starting a new game from the main menu.
         /// </summary>
-        public void ResetAvatarPosition()
+        public void ResetProtagonistPosition()
         {
             // Cancel any in-progress movement
             _currentPath = null;
@@ -807,22 +807,22 @@ namespace Cathedral.Glyph.Microworld
             _hoveredVertex = -1;
             _pendingHoverVertex = -1;
             
-            // Re-initialize avatar at a new random position
-            InitializeAvatar();
-            Console.WriteLine($"MicroworldInterface: Avatar reset to vertex {_avatarVertex}");
+            // Re-initialize protagonist at a new random position
+            InitializeProtagonist();
+            Console.WriteLine($"MicroworldInterface: Protagonist reset to vertex {_protagonistVertex}");
         }
 
         /// <summary>
-        /// Checks if the avatar is currently moving
+        /// Checks if the protagonist is currently moving
         /// </summary>
         public bool IsAvatarMoving() => _currentPath != null;
 
         /// <summary>
-        /// Gets location and biome info for the current avatar position
+        /// Gets location and biome info for the current protagonist position
         /// </summary>
         public (LocationType? location, BiomeType biome) GetCurrentLocationInfo()
         {
-            if (_avatarVertex >= 0 && vertexData.TryGetValue(_avatarVertex, out var data))
+            if (_protagonistVertex >= 0 && vertexData.TryGetValue(_protagonistVertex, out var data))
             {
                 return (data.Location, data.Biome);
             }
@@ -830,12 +830,12 @@ namespace Cathedral.Glyph.Microworld
         }
 
         /// <summary>
-        /// Checks if the avatar is currently at a location (not just any vertex)
+        /// Checks if the protagonist is currently at a location (not just any vertex)
         /// </summary>
         public bool IsAtLocation()
         {
-            return _avatarVertex >= 0 && 
-                   vertexData.TryGetValue(_avatarVertex, out var data) && 
+            return _protagonistVertex >= 0 && 
+                   vertexData.TryGetValue(_protagonistVertex, out var data) && 
                    data.Location.HasValue;
         }
 

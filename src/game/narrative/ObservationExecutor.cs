@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -44,10 +44,10 @@ public class ObservationExecutor
     public async Task<ObservationResponse> GenerateObservationAsync(
         Skill observationSkill,
         NarrationNode node,
-        Avatar avatar)
+        Protagonist protagonist)
     {
         // Use all node keywords by default
-        return await GenerateObservationAsync(observationSkill, node, avatar, node.OutcomeKeywords);
+        return await GenerateObservationAsync(observationSkill, node, protagonist, node.OutcomeKeywords);
     }
     
     /// <summary>
@@ -57,7 +57,7 @@ public class ObservationExecutor
     public async Task<ObservationResponse> GenerateObservationAsync(
         Skill observationSkill,
         NarrationNode node,
-        Avatar avatar,
+        Protagonist protagonist,
         List<string> targetKeywords)
     {
         if (!observationSkill.Functions.Contains(SkillFunction.Observation))
@@ -72,7 +72,7 @@ public class ObservationExecutor
         // First attempt: Natural narration (prompted but not constrained)
         try
         {
-            var response = await GenerateObservationNaturalAsync(slotId, node, avatar, observationSkill, targetKeywords);
+            var response = await GenerateObservationNaturalAsync(slotId, node, protagonist, observationSkill, targetKeywords);
             
             // Extract keywords from response text to check quality
             var segments = new KeywordRenderer().ParseNarrationWithKeywords(
@@ -94,17 +94,17 @@ public class ObservationExecutor
         }
         
         // Fallback: Use keyword intro examples to force inclusion
-        return await GenerateObservationWithFallbackAsync(slotId, node, avatar, observationSkill, targetKeywords);
+        return await GenerateObservationWithFallbackAsync(slotId, node, protagonist, observationSkill, targetKeywords);
     }
     
     private async Task<ObservationResponse> GenerateObservationNaturalAsync(
         int slotId,
         NarrationNode node,
-        Avatar avatar,
+        Protagonist protagonist,
         Skill observationSkill,
         List<string> targetKeywords)
     {
-        var prompt = _promptConstructor.BuildObservationPrompt(node, avatar, observationSkill, targetKeywords, promptKeywordUsage: true);
+        var prompt = _promptConstructor.BuildObservationPrompt(node, protagonist, observationSkill, targetKeywords, promptKeywordUsage: true);
         var schema = LLMSchemaConfig.CreateObservationSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         
@@ -116,11 +116,11 @@ public class ObservationExecutor
     private async Task<ObservationResponse> GenerateObservationWithFallbackAsync(
         int slotId,
         NarrationNode node,
-        Avatar avatar,
+        Protagonist protagonist,
         Skill observationSkill,
         List<string> targetKeywords)
     {
-        var prompt = _promptConstructor.BuildObservationPromptWithIntros(node, avatar, observationSkill, targetKeywords);
+        var prompt = _promptConstructor.BuildObservationPromptWithIntros(node, protagonist, observationSkill, targetKeywords);
         var schema = LLMSchemaConfig.CreateObservationSchemaWithIntros(targetKeywords);
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         

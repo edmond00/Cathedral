@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using OpenTK.Mathematics;
 
 namespace Cathedral;
@@ -67,13 +67,13 @@ public static class Config
         public const int GlyphPixelSize = 65; // Raster size
         public const int GlyphCellSize = 50; // Cell in atlas
         
-        // Avatar and pathfinding characters
-        public const char AvatarChar = '☻'; // Smiling face for avatar
+        // Protagonist and pathfinding characters
+        public const char ProtagonistChar = '☻'; // Smiling face for protagonist
         public const char PathWaypointChar = '.'; // Dot for waypoints
         public const char PathDestinationChar = '+'; // Plus for destination
         
-        // Avatar and pathfinding colors (RGB 0-255)
-        public static readonly System.Numerics.Vector3 AvatarColor = new(255, 255, 255); // Yellow
+        // Protagonist and pathfinding colors (RGB 0-255)
+        public static readonly System.Numerics.Vector3 ProtagonistColor = new(255, 255, 255); // Yellow
         public static readonly System.Numerics.Vector3 PathWaypointPreviewColor = new(255, 255, 255); // Light blue
         public static readonly System.Numerics.Vector3 PathDestinationPreviewColor = new(255, 255, 255); // Light red
         public static readonly System.Numerics.Vector3 PathWaypointActiveColor = new(255, 255, 255); // Gold
@@ -392,7 +392,7 @@ public static class Config
     {
         /// <summary>
         /// The name used to refer to the player in prompts and UI text.
-        /// Default: "player" (can be changed to "avatar", "protagonist", etc.)
+        /// Default: "player" (can be changed to "protagonist", "protagonist", etc.)
         /// </summary>
         public const string PlayerName = "player";
         

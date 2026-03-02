@@ -1,4 +1,4 @@
-namespace Cathedral.Game;
+﻿namespace Cathedral.Game;
 
 /// <summary>
 /// Defines the different game modes in the Location Travel Mode system.
@@ -18,28 +18,28 @@ public enum GameMode
     WorldView,
     
     /// <summary>
-    /// Avatar is actively moving from one location to another.
+    /// Protagonist is actively moving from one location to another.
     /// GlyphSphere shows path animation, Terminal may show travel info.
     /// Input is limited during this state.
     /// </summary>
     Traveling,
     
     /// <summary>
-    /// Avatar has arrived at a location and is interacting via Terminal HUD.
+    /// Protagonist has arrived at a location and is interacting via Terminal HUD.
     /// Terminal is prominent with action choices, GlyphSphere is visible but not interactive.
     /// Player makes choices via mouse clicks on terminal text.
     /// </summary>
     LocationInteraction,
     
     /// <summary>
-    /// Player is creating/configuring their avatar before starting the game.
+    /// Player is creating/configuring their protagonist before starting the game.
     /// Terminal shows body art with interactive organ-part score adjustment.
     /// </summary>
-    AvatarCreation,
+    ProtagonistCreation,
     
     /// <summary>
     /// Player is managing their protagonist/companions from the main menu.
     /// Terminal shows tabbed interface: body/organs viewer, inventory, journal.
     /// </summary>
-    AvatarManagement
+    ProtagonistManagement
 }

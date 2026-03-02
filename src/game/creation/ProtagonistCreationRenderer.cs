@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Game.Narrative;
@@ -6,14 +6,14 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game.Creation;
 
 /// <summary>
-/// Renders the avatar creation screen: body art on the left with interactive
+/// Renders the protagonist creation screen: body art on the left with interactive
 /// organ-part highlighting, stats panel on the right with score bars.
 /// Left-click art cells to +1 organ part score, right-click to -1.
 ///
 /// Delegates body art rendering and hover logic to BodyArtViewer,
 /// adding score editing controls and the continue button on top.
 /// </summary>
-public class AvatarCreationRenderer
+public class ProtagonistCreationRenderer
 {
     private readonly TerminalHUD _terminal;
     private readonly BodyArtViewer _viewer;
@@ -29,11 +29,11 @@ public class AvatarCreationRenderer
     /// <summary>Callback for when the player clicks Continue.</summary>
     public Action? OnContinue { get; set; }
 
-    public AvatarCreationRenderer(TerminalHUD terminal, Avatar avatar, BodyArtData artData)
+    public ProtagonistCreationRenderer(TerminalHUD terminal, Protagonist protagonist, BodyArtData artData)
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
 
-        _viewer = new BodyArtViewer(terminal, avatar, artData)
+        _viewer = new BodyArtViewer(terminal, protagonist, artData)
         {
             StatsStartRow = 6,
             ShowScoreEditControls = true,

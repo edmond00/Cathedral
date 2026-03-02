@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -48,7 +48,7 @@ public class ThinkingExecutor
     /// <param name="node">The current narration node</param>
     /// <param name="outcomesWithMetadata">Possible outcomes with circuitous metadata</param>
     /// <param name="actionSkills">Available action skills</param>
-    /// <param name="avatar">The player avatar</param>
+    /// <param name="protagonist">The player protagonist</param>
     /// <param name="cancellationToken">Cancellation token</param>
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
         Skill thinkingSkill,
@@ -57,7 +57,7 @@ public class ThinkingExecutor
         NarrationNode node,
         List<OutcomeWithMetadata> outcomesWithMetadata,
         List<Skill> actionSkills,
-        Avatar avatar,
+        Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
         // Extract outcomes for schema (schema just needs the natural language strings)
@@ -70,7 +70,7 @@ public class ThinkingExecutor
             node,
             outcomesWithMetadata,  // Pass metadata so prompt shows separation
             actionSkills,
-            avatar,
+            protagonist,
             thinkingSkill);
 
         // Build JSON schema
@@ -112,7 +112,7 @@ public class ThinkingExecutor
         NarrationNode node,
         List<OutcomeBase> possibleOutcomes,
         List<Skill> actionSkills,
-        Avatar avatar,
+        Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
         // Wrap all outcomes as straightforward
@@ -121,7 +121,7 @@ public class ThinkingExecutor
             .ToList();
             
         return await GenerateThinkingAsync(
-            thinkingSkill, keyword, null, node, outcomesWithMetadata, actionSkills, avatar, cancellationToken);
+            thinkingSkill, keyword, null, node, outcomesWithMetadata, actionSkills, protagonist, cancellationToken);
     }
     
     /// <summary>
@@ -135,7 +135,7 @@ public class ThinkingExecutor
         NarrationNode node,
         List<OutcomeBase> possibleOutcomes,
         List<Skill> actionSkills,
-        Avatar avatar,
+        Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
         // Wrap all outcomes as straightforward
@@ -144,7 +144,7 @@ public class ThinkingExecutor
             .ToList();
             
         return await GenerateThinkingAsync(
-            thinkingSkill, keyword, keywordSourceOutcome, node, outcomesWithMetadata, actionSkills, avatar, cancellationToken);
+            thinkingSkill, keyword, keywordSourceOutcome, node, outcomesWithMetadata, actionSkills, protagonist, cancellationToken);
     }
 
     /// <summary>
