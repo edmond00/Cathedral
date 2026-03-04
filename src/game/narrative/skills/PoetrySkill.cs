@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class PoetrySkill : Skill
     public override string ShortDescription => "metaphor, lyrical expression";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking, SkillFunction.Observation };
     public override string[] Organs => new[] { "tongue", "hippocampus" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Sensory;
     
     public override string PersonaTone => "a lyrical soul who perceives and expresses experience through metaphor and rhythm";
     

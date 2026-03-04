@@ -718,6 +718,11 @@ public class LocationTravelGameController : IDisposable
             _protagonistCreationRenderer.OnContinue = () =>
             {
                 Console.WriteLine("LocationTravelGameController: Protagonist creation complete, entering WorldView");
+                // Re-initialize memory with the organ scores the player set during creation.
+                // ResetGameState called InitializeMemory earlier with initial random scores;
+                // now we rebuild modules to reflect the final configured values.
+                protagonist.InitializeMemory();
+                protagonist.AssignSkillsToMemoryRandom();
                 _protagonistCreationRenderer = null;
                 SetMode(GameMode.WorldView);
             };
@@ -753,7 +758,8 @@ public class LocationTravelGameController : IDisposable
             
             var protagonist = _protagonist!;
             
-            _managementMenuRenderer = new ManagementMenuRenderer(_core.Terminal, protagonist, _bodyArtData);
+            _managementMenuRenderer = new ManagementMenuRenderer(
+                _core.Terminal, protagonist, _bodyArtData, _core.PopupTerminal);
             _managementMenuRenderer.OnBack = () =>
             {
                 Console.WriteLine("LocationTravelGameController: Management menu closed, returning to main menu");
@@ -972,6 +978,8 @@ public class LocationTravelGameController : IDisposable
             {
                 _protagonist = new Protagonist();
                 _protagonist.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+                _protagonist.InitializeMemory();
+                _protagonist.AssignSkillsToMemoryRandom();
                 _protagonist.CompanionParty.AddRange(
                     Companion.GenerateRandom(SkillRegistry.Instance, count: 3));
             }
@@ -1074,6 +1082,8 @@ public class LocationTravelGameController : IDisposable
         // Create a fresh protagonist for the new game
         _protagonist = new Protagonist();
         _protagonist.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+        _protagonist.InitializeMemory();
+        _protagonist.AssignSkillsToMemoryRandom();
         _protagonist.CompanionParty.AddRange(
             Companion.GenerateRandom(SkillRegistry.Instance, count: 3));
         

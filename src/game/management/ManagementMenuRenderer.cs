@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Creation;
 
 namespace Cathedral.Game.Management;
@@ -14,7 +15,8 @@ public enum ManagementTab
 {
     Body,
     Inventory,
-    Journal
+    Journal,
+    Memory
 }
 
 /// <summary>
@@ -33,6 +35,7 @@ public class ManagementMenuRenderer
     private readonly TerminalHUD _terminal;
     private readonly Protagonist _protagonist;
     private readonly BodyArtViewer _bodyViewer;
+    private readonly MemoryPanelRenderer _memoryPanel;
 
     // ── Tab state ────────────────────────────────────────────────
     private ManagementTab _activeTab = ManagementTab.Body;
@@ -44,6 +47,7 @@ public class ManagementMenuRenderer
         new TabDefinition("Body",      ManagementTab.Body,      AllCharacters: true),
         new TabDefinition("Inventory", ManagementTab.Inventory,  AllCharacters: true),
         new TabDefinition("Journal",   ManagementTab.Journal,    AllCharacters: false), // protagonist only
+        new TabDefinition("Memory",    ManagementTab.Memory,    AllCharacters: true),
     };
 
     // ── Hover state ──────────────────────────────────────────────
@@ -89,7 +93,8 @@ public class ManagementMenuRenderer
     /// <summary>Callback for when the player clicks Back.</summary>
     public Action? OnBack { get; set; }
 
-    public ManagementMenuRenderer(TerminalHUD terminal, Protagonist protagonist, BodyArtData artData)
+    public ManagementMenuRenderer(TerminalHUD terminal, Protagonist protagonist, BodyArtData artData,
+                                   PopupTerminalHUD? popup = null)
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
         _protagonist = protagonist ?? throw new ArgumentNullException(nameof(protagonist));
@@ -102,6 +107,8 @@ public class ManagementMenuRenderer
             ShowClickHints = false
         };
         _bodyViewer.ComputeLayout();
+
+        _memoryPanel = new MemoryPanelRenderer(terminal, popup);
     }
 
     // ── Party helpers ────────────────────────────────────────────
@@ -135,9 +142,9 @@ public class ManagementMenuRenderer
         {
             _bodyViewer.RenderBodyArt();
         }
-        else
+        else if (_activeTab != ManagementTab.Memory)
         {
-            // Draw separator even on non-body tabs
+            // Draw separator on non-body, non-memory tabs
             int sepX = BodyArtViewer.PanelX - 1;
             for (int y = 0; y < 100; y++)
                 _terminal.SetCell(sepX, y, '│', Config.Colors.DarkGray35, Config.Colors.Black);
@@ -147,7 +154,8 @@ public class ManagementMenuRenderer
         RenderLeftPanel();
 
         // Right panel
-        RenderPanelHeader();
+        if (_activeTab != ManagementTab.Memory)
+            RenderPanelHeader();
 
         switch (_activeTab)
         {
@@ -161,9 +169,13 @@ public class ManagementMenuRenderer
             case ManagementTab.Journal:
                 RenderJournalPlaceholder();
                 break;
+            case ManagementTab.Memory:
+                _memoryPanel.Render(GetPartyMember(_selectedCharacterIndex));
+                break;
         }
 
-        RenderFooter();
+        if (_activeTab != ManagementTab.Memory)
+            RenderFooter();
     }
 
     /// <summary>Called every frame for animations.</summary>
@@ -194,10 +206,15 @@ public class ManagementMenuRenderer
         bool newBackHovered = IsOnBackButton(x, y);
         if (newBackHovered != _backHovered) { _backHovered = newBackHovered; changed = true; }
 
-        // Delegate to body viewer on Body tab
+        // Delegate to body viewer on Body tab, memory panel on Memory tab
         if (_activeTab == ManagementTab.Body)
         {
             if (_bodyViewer.ProcessHover(x, y))
+                changed = true;
+        }
+        else if (_activeTab == ManagementTab.Memory)
+        {
+            if (_memoryPanel.ProcessHover(x, y))
                 changed = true;
         }
 
@@ -229,6 +246,8 @@ public class ManagementMenuRenderer
 
                 if (_activeTab != ManagementTab.Body)
                     _bodyViewer.ClearHover();
+                if (_activeTab != ManagementTab.Memory)
+                    _memoryPanel.ClearHover();
 
                 Render();
                 return;
@@ -245,6 +264,7 @@ public class ManagementMenuRenderer
                 // Swap the body art subject when switching party member on Body tab
                 if (_activeTab == ManagementTab.Body)
                     _bodyViewer.SwapSubject(GetPartyMember(charIdx));
+                // Memory panel re-renders automatically via Render() with GetPartyMember(_selectedCharacterIndex)
                 Render();
                 return;
             }
@@ -425,6 +445,7 @@ public class ManagementMenuRenderer
             ManagementTab.Body      => "B O D Y  /  O R G A N S",
             ManagementTab.Inventory => "I N V E N T O R Y",
             ManagementTab.Journal   => "J O U R N A L",
+            ManagementTab.Memory    => "",  // memory panel renders its own full-width title
             _                       => ""
         };
 

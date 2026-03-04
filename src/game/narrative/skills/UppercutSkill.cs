@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class UppercutSkill : Skill
     public override string ShortDescription => "explosive upward strike";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
     public override string[] Organs => new[] { "arms", "cerebellum" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Procedural;
     
     public override string PersonaTone => "a ferocious striker who finds beauty in perfectly timed explosive impacts";
     

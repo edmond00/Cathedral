@@ -1,4 +1,5 @@
 ﻿using System;
+using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative;
 
@@ -14,6 +15,13 @@ public abstract class Skill
     public abstract SkillFunction[] Functions { get; } // Can have multiple functions (1-3)
     public abstract string[] Organs { get; }          // Associated organ ids (1-2)
     public int Level { get; set; }                    // 1-10, used for skill checks (random initial)
+
+    /// <summary>
+    /// Which long-term memory module this skill prefers.
+    /// Working and Residual modules accept any skill regardless of this value.
+    /// Override in subclasses that have a clear cerebellum/cerebrum/hippocampus association.
+    /// </summary>
+    public virtual SkillMemoryType MemoryType => SkillMemoryType.Semantic;
     
     /// <summary>
     /// Persona prompt for LLM (only for Observation and Thinking skills).

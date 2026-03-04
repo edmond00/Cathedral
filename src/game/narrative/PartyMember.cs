@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative;
 
@@ -22,6 +23,9 @@ public abstract class PartyMember
     public List<BodyPart> BodyParts => _bodyParts;
     public List<BodyHumor> Humors => _humors;
     public List<DerivedStat> DerivedStats { get; private set; }
+
+    // ── Memory ────────────────────────────────────────────────────
+    public List<MemoryModule> MemoryModules { get; private set; }
 
     /// <summary>Backward-compat dict: humor name → value.</summary>
     public Dictionary<string, int> HumorValues =>
@@ -48,6 +52,7 @@ public abstract class PartyMember
         Skills = new List<Skill>();
         LearnedSkills = Skills; // same reference
         Inventory = new List<string>();
+        MemoryModules = new List<MemoryModule>(); // populated after skills are assigned via InitializeMemory()
     }
 
     // ── Body initialisation ──────────────────────────────────────
@@ -87,9 +92,13 @@ public abstract class PartyMember
     {
         new PerceptionStat(),
         new EnduranceStat(),
-        new IntellectStat(),
+        new EncephalonStat(),    // replaces IntellectStat; drives Working Memory slot count
         new DexterityStat(),
-        new WillpowerStat()
+        new WillpowerStat(),
+        new CerebellumStat(),   // drives Procedural Memory slot count
+        new CerebrumStat(),     // drives Semantic Memory slot count
+        new HippocampusStat(),  // drives Sensory Memory slot count
+        new AnamnesisStat()     // drives Residual Memory slot count
     };
 
     // ── Skill initialisation ─────────────────────────────────────
@@ -109,6 +118,68 @@ public abstract class PartyMember
         foreach (var skill in Skills)
             skill.Level = rng.Next(1, 11);
     }
+
+    // ── Memory initialisation ─────────────────────────────────────
+    /// <summary>
+    /// Build the five MemoryModules from the party member's brain-organ derived stats.
+    /// Call this after <see cref="InitializeSkills"/> so organ scores are already randomised.
+    /// </summary>
+    public void InitializeMemory()
+    {
+        int WorkingCap   = Math.Clamp(GetMemoryStat("encephalon_capacity"), 1, 10);
+        int ProceduralCap= Math.Clamp(GetMemoryStat("cerebellum_capacity"), 1, 10);
+        int SemanticCap  = Math.Clamp(GetMemoryStat("cerebrum_capacity"),   1, 10);
+        int SensoryCap   = Math.Clamp(GetMemoryStat("hippocampus_capacity"),1, 10);
+        int ResidualCap  = Math.Clamp(GetMemoryStat("anamnesis_capacity"),  1, 10);
+
+        MemoryModules = new List<MemoryModule>
+        {
+            new MemoryModule(MemoryModuleType.Working,    WorkingCap),
+            new MemoryModule(MemoryModuleType.Procedural, ProceduralCap),
+            new MemoryModule(MemoryModuleType.Semantic,   SemanticCap),
+            new MemoryModule(MemoryModuleType.Sensory,    SensoryCap),
+            new MemoryModule(MemoryModuleType.Residual,   ResidualCap),
+        };
+    }
+
+    private int GetMemoryStat(string name)
+    {
+        var stat = DerivedStats.FirstOrDefault(s => s.Name == name);
+        if (stat == null) return 1;
+        return stat.CalculateValue(stat.GetSourceScore(this));
+    }
+
+    /// <summary>
+    /// Randomly distribute skills across compatible memory modules for testing.
+    /// Each skill is placed in the first module that accepts it and still has space.
+    /// Preference order: typed long-term module first, then Working, then skip.
+    /// </summary>
+    public void AssignSkillsToMemoryRandom()
+    {
+        if (MemoryModules.Count == 0) InitializeMemory();
+
+        var rng = new Random();
+        // Shuffle skills before assigning to get a varied distribution
+        var shuffled = Skills.OrderBy(_ => rng.Next()).ToList();
+
+        foreach (var skill in shuffled)
+        {
+            // Try the matching long-term module first, then Working as fallback
+            var candidates = MemoryModules
+                .Where(m => m.Type != MemoryModuleType.Residual)
+                .OrderBy(m => m.Type == MemoryModuleType.Working ? 1 : 0) // prefer typed module
+                .ToList();
+
+            foreach (var module in candidates)
+            {
+                if (module.TryAdd(skill)) break;
+            }
+        }
+    }
+
+    /// <summary>Get a memory module by type.</summary>
+    public MemoryModule? GetMemoryModule(MemoryModuleType type) =>
+        MemoryModules.FirstOrDefault(m => m.Type == type);
 
     // ── Skill queries ────────────────────────────────────────────
     public List<Skill> GetObservationSkills() =>

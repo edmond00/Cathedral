@@ -89,9 +89,11 @@ public class NarrativeController
         _terminalInputHandler = terminalInputHandler;
         _biomeType = biomeType;
         
-        // Initialize protagonist with random skills
+        // Initialize protagonist with random skills and memory
         _protagonist = new Protagonist();
         _protagonist.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+        _protagonist.InitializeMemory();
+        _protagonist.AssignSkillsToMemoryRandom();
         
         // Generate graph for this location using factory
         if (graphFactory == null)

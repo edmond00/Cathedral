@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class OpenMindednessSkill : Skill
     public override string ShortDescription => "flexibility, alternative views";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking };
     public override string[] Organs => new[] { "hippocampus", "heart" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Sensory;
     
     public override string PersonaTone => "a curious explorer of ideas who treats every belief as provisionally held";
     

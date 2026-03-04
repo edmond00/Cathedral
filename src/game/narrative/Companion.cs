@@ -66,6 +66,8 @@ public class Companion : PartyMember
             var (name, desc) = _pool[indices[k]];
             var c = new Companion(name, desc);
             c.InitializeSkills(registry, skillCount: 30);
+            c.InitializeMemory();
+            c.AssignSkillsToMemoryRandom();
             companions.Add(c);
         }
         return companions;
