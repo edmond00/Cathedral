@@ -14,8 +14,8 @@ public class EncephalonStat : DerivedStat
     public override string? RelatedBodyPartId => "encephalon";
 
     /// <summary>
-    /// Divide the aggregate encephalon score (sum of 5 organ scores, range 5-50) by 5
-    /// to produce a Working Memory capacity of 1-10.
+    /// Average the aggregate encephalon score (÷5) then double it
+    /// to produce a Working Memory capacity of 2-20.
     /// </summary>
-    public override int CalculateValue(int sourceScore) => Math.Max(1, sourceScore / 5);
+    public override int CalculateValue(int sourceScore) => Math.Max(1, sourceScore / 5 * 2);
 }

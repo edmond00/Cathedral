@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class AestheticSkill : Skill
     public override string ShortDescription => "beauty, visual harmony";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation };
     public override string[] Organs => new[] { "eyes", "pineal_gland" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Sensory;
     
     public override string PersonaTone => "a sensitive observer who experiences visual harmony and discord as visceral sensations";
     

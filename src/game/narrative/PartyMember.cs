@@ -126,11 +126,11 @@ public abstract class PartyMember
     /// </summary>
     public void InitializeMemory()
     {
-        int WorkingCap   = Math.Clamp(GetMemoryStat("encephalon_capacity"), 1, 10);
-        int ProceduralCap= Math.Clamp(GetMemoryStat("cerebellum_capacity"), 1, 10);
-        int SemanticCap  = Math.Clamp(GetMemoryStat("cerebrum_capacity"),   1, 10);
-        int SensoryCap   = Math.Clamp(GetMemoryStat("hippocampus_capacity"),1, 10);
-        int ResidualCap  = Math.Clamp(GetMemoryStat("anamnesis_capacity"),  1, 10);
+        int WorkingCap   = Math.Clamp(GetMemoryStat("encephalon_capacity"), 1, 20);
+        int ProceduralCap= Math.Clamp(GetMemoryStat("cerebellum_capacity"), 1, 20);
+        int SemanticCap  = Math.Clamp(GetMemoryStat("cerebrum_capacity"),   1, 20);
+        int SensoryCap   = Math.Clamp(GetMemoryStat("hippocampus_capacity"),1, 20);
+        int ResidualCap  = Math.Clamp(GetMemoryStat("anamnesis_capacity"),  1, 20);
 
         MemoryModules = new List<MemoryModule>
         {

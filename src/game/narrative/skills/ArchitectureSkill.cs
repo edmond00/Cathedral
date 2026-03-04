@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class ArchitectureSkill : Skill
     public override string ShortDescription => "structural design, spatial logic";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
     public override string[] Organs => new[] { "eyes", "cerebrum" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Semantic;
     
     public override string PersonaTone => "a structural analyst who reads buildings as systems of load, material, and intent";
     

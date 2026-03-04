@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class SneakArtSkill : Skill
     public override string ShortDescription => "stealth, silent movement";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
     public override string[] Organs => new[] { "feet", "ears" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Procedural;
     
     public override string PersonaTone => "a cautious shadow who moves through spaces as if they were made of silence";
     

@@ -10,6 +10,6 @@ public class CerebellumStat : DerivedStat
     public override string DisplayName => "Cerebellum";
     public override string? RelatedOrganId => "cerebellum";
 
-    /// <summary>Slot count = raw score directly.</summary>
-    public override int CalculateValue(int sourceScore) => sourceScore;
+    /// <summary>Slot count = organ score × 2 (range 2-20).</summary>
+    public override int CalculateValue(int sourceScore) => sourceScore * 2;
 }

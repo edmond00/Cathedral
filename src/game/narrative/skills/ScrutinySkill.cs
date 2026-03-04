@@ -1,4 +1,6 @@
-﻿namespace Cathedral.Game.Narrative.Skills;
+﻿using Cathedral.Game.Narrative.Memory;
+
+namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
 /// Scrutiny - The protagonist's penetrating examination of their environment.
@@ -11,6 +13,7 @@ public class ScrutinySkill : Skill
     public override string ShortDescription => "intense examination, detail";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation };
     public override string[] Organs => new[] { "eyes", "ears" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Sensory;
     
     public override string PersonaTone => "an intense, relentless investigator who dissects every detail with clinical precision";
     

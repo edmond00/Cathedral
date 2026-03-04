@@ -1,4 +1,6 @@
-﻿namespace Cathedral.Game.Narrative.Skills;
+﻿using Cathedral.Game.Narrative.Memory;
+
+namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
 /// Brute Force - Direct physical power and simple solutions.
@@ -11,6 +13,7 @@ public class BruteForceSkill : Skill
     public override string ShortDescription => "overwhelming physical power";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action, SkillFunction.Thinking };
     public override string[] Organs => new[] { "arms", "legs" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Procedural;
     
     public override string PersonaTone => "a blunt, impatient force who believes every problem yields to overwhelming strength";
     

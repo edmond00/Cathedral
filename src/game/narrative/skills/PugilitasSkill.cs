@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class PugilitasSkill : Skill
     public override string ShortDescription => "boxing, hand-to-hand combat";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
     public override string[] Organs => new[] { "arms", "thorax" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Procedural;
     
     public override string PersonaTone => "a disciplined fighter who treats combat as an ancient, honorable science";
     

@@ -42,36 +42,56 @@ public class MemorySlot
     /// Reserved for future use — blocked slots are rendered differently in the UI.
     /// </summary>
     public bool IsBlocked { get; set; }
+
+    /// <summary>
+    /// True when this slot exists in the maximum pool but is not yet unlocked
+    /// (organ score too low to reach this index). Rendered as greyed-out in the UI.
+    /// </summary>
+    public bool IsUnusable { get; set; }
 }
 
 /// <summary>
 /// One of the five memory modules belonging to a party member.
-/// Each module has a fixed capacity determined by the governing derived stat.
+/// Each module has an <see cref="ActiveCapacity"/> (organ score × 2) usable slots
+/// and a <see cref="MaxCapacity"/> total pool shown greyed-out in the UI.
 /// </summary>
 public class MemoryModule
 {
     public MemoryModuleType Type { get; }
 
-    /// <summary>Maximum number of skill slots in this module.</summary>
-    public int Capacity => Slots.Count;
+    /// <summary>Number of unlocked, usable slots (determined by the governing organ stat).</summary>
+    public int ActiveCapacity { get; }
 
-    /// <summary>All slots in this module, always exactly <see cref="Capacity"/> entries.</summary>
+    /// <summary>Total slot pool size (usable + unusable). Equal to MaxCapacity constant.</summary>
+    public int MaxCapacity { get; }
+
+    /// <summary>Backward-compat alias for <see cref="ActiveCapacity"/>.</summary>
+    public int Capacity => ActiveCapacity;
+
+    /// <summary>All slots in this module (<see cref="MaxCapacity"/> entries total).
+    /// Slots at index &gt;= <see cref="ActiveCapacity"/> have <see cref="MemorySlot.IsUnusable"/> = true.</summary>
     public List<MemorySlot> Slots { get; }
 
-    /// <summary>Skills currently held in this module.</summary>
-    public IEnumerable<Skill> FilledSkills => Slots.Where(s => s.IsFilled).Select(s => s.Skill!);
+    /// <summary>Skills currently held in usable, non-blocked slots.</summary>
+    public IEnumerable<Skill> FilledSkills =>
+        Slots.Where(s => !s.IsUnusable && s.IsFilled).Select(s => s.Skill!);
 
-    /// <summary>Number of occupied (non-blocked) slots.</summary>
-    public int FilledCount => Slots.Count(s => s.IsFilled);
+    /// <summary>Number of occupied (usable, non-blocked) slots.</summary>
+    public int FilledCount => Slots.Count(s => !s.IsUnusable && s.IsFilled);
 
     /// <summary>Whether this module uses FIFO ordering (Residual module).</summary>
     public bool IsResidualQueue => Type == MemoryModuleType.Residual;
 
-    public MemoryModule(MemoryModuleType type, int capacity)
+    public MemoryModule(MemoryModuleType type, int activeCapacity, int maxCapacity = 20)
     {
-        if (capacity < 0) throw new ArgumentOutOfRangeException(nameof(capacity));
-        Type = type;
-        Slots = Enumerable.Range(0, capacity).Select(_ => new MemorySlot()).ToList();
+        if (activeCapacity < 0) throw new ArgumentOutOfRangeException(nameof(activeCapacity));
+        if (maxCapacity < activeCapacity) maxCapacity = activeCapacity;
+        Type           = type;
+        ActiveCapacity = activeCapacity;
+        MaxCapacity    = maxCapacity;
+        Slots = Enumerable.Range(0, maxCapacity)
+            .Select(i => new MemorySlot { IsUnusable = i >= activeCapacity })
+            .ToList();
     }
 
     /// <summary>
@@ -98,8 +118,9 @@ public class MemoryModule
     /// </summary>
     public bool TryAdd(Skill skill)
     {
+        if (skill == null) return false;
         if (!AcceptsSkill(skill)) return false;
-        var free = Slots.FirstOrDefault(s => !s.IsFilled && !s.IsBlocked);
+        var free = Slots.FirstOrDefault(s => !s.IsUnusable && !s.IsFilled && !s.IsBlocked);
         if (free == null) return false;
         free.Skill = skill;
         return true;
@@ -108,19 +129,42 @@ public class MemoryModule
     /// <summary>Removes <paramref name="skill"/> from this module. Returns true if found.</summary>
     public bool Remove(Skill skill)
     {
-        var slot = Slots.FirstOrDefault(s => s.Skill == skill);
+        var slot = Slots.FirstOrDefault(s => !s.IsUnusable && s.Skill == skill);
         if (slot == null) return false;
         slot.Skill = null;
         return true;
     }
 
-    /// <summary>Remove and return the skill in the oldest slot (index 0) for the FIFO queue.</summary>
+    /// <summary>Remove and return the skill in the oldest usable slot (index 0) for the FIFO queue.</summary>
     public Skill? DequeueOldest()
     {
-        var slot = Slots.FirstOrDefault(s => s.IsFilled);
+        var slot = Slots.FirstOrDefault(s => !s.IsUnusable && s.IsFilled);
         if (slot == null) return null;
         var skill = slot.Skill;
         slot.Skill = null;
         return skill;
+    }
+
+    /// <summary>
+    /// FIFO push-front: inserts <paramref name="skill"/> at the first active slot,
+    /// shifting existing skills one position toward the last slot.
+    /// If all active slots are filled, the last skill is silently dropped.
+    /// Returns the dropped skill, or null if there was a free slot.
+    /// </summary>
+    public Skill? Prepend(Skill skill)
+    {
+        var active = Slots.Where(s => !s.IsUnusable && !s.IsBlocked).ToList();
+        if (active.Count == 0) return null;
+
+        Skill? dropped = null;
+        if (active.All(s => s.IsFilled))
+            dropped = active[^1].Skill;
+
+        // Shift right: each slot receives the skill from the slot before it
+        for (int i = active.Count - 1; i > 0; i--)
+            active[i].Skill = active[i - 1].Skill;
+        active[0].Skill = skill;
+
+        return dropped;
     }
 }

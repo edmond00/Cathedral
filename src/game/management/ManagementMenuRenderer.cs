@@ -269,6 +269,13 @@ public class ManagementMenuRenderer
                 return;
             }
         }
+
+        // Memory panel interactive clicks (slot selection + buttons)
+        if (_activeTab == ManagementTab.Memory)
+        {
+            if (_memoryPanel.ProcessClick(x, y))
+                Render();
+        }
     }
 
     /// <summary>Handle right click (no special behavior in management mode).</summary>

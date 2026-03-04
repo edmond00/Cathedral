@@ -17,11 +17,11 @@ public abstract class Skill
     public int Level { get; set; }                    // 1-10, used for skill checks (random initial)
 
     /// <summary>
-    /// Which long-term memory module this skill prefers.
+    /// Which long-term memory module this skill belongs to.
     /// Working and Residual modules accept any skill regardless of this value.
-    /// Override in subclasses that have a clear cerebellum/cerebrum/hippocampus association.
+    /// Every subclass must declare its memory type explicitly.
     /// </summary>
-    public virtual SkillMemoryType MemoryType => SkillMemoryType.Semantic;
+    public abstract SkillMemoryType MemoryType { get; }
     
     /// <summary>
     /// Persona prompt for LLM (only for Observation and Thinking skills).

@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class PatienceSkill : Skill
     public override string ShortDescription => "waiting, endurance";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
     public override string[] Organs => new[] { "pineal_gland", "backbone" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Procedural;
     
     public override string PersonaTone => "a serene strategist who knows that time is an ally to those who can wait";
     

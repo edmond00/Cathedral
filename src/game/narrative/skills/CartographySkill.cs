@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class CartographySkill : Skill
     public override string ShortDescription => "maps, spatial memory";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
     public override string[] Organs => new[] { "eyes", "cerebrum" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Sensory;
     
     public override string PersonaTone => "a systematic mapper who transforms experienced space into abstract navigable representation";
     

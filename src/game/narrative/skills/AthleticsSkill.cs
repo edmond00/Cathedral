@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class AthleticsSkill : Skill
     public override string ShortDescription => "running, climbing, exertion";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action };
     public override string[] Organs => new[] { "legs", "thorax" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Procedural;
     
     public override string PersonaTone => "an exuberant competitor who sees the world as an obstacle course to conquer";
     

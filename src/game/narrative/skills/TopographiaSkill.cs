@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class TopographiaSkill : Skill
     public override string ShortDescription => "terrain, elevation, landscape";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation };
     public override string[] Organs => new[] { "eyes", "feet" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Sensory;
     
     public override string PersonaTone => "a terrain reader who perceives elevation, slope, and geographical advantage";
     

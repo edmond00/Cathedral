@@ -46,9 +46,13 @@ public class MemoryPanelRenderer
     private static readonly Vector4 HeaderBg    = new(0.11f, 0.11f, 0.11f, 1.0f);
     private static readonly Vector4 FilledBg    = new(0.09f, 0.09f, 0.09f, 1.0f);
     private static readonly Vector4 FilledBgHov = new(0.15f, 0.15f, 0.10f, 1.0f);
+    private static readonly Vector4 SelectedBg  = new(0.20f, 0.18f, 0.06f, 1.0f);
     private static readonly Vector4 EmptyBg     = new(0.06f, 0.06f, 0.06f, 1f);
+    private static readonly Vector4 UnusableBg  = new(0.04f, 0.04f, 0.04f, 1f); // same as AreaBg — slots blend in
+    private static readonly Vector4 UnusableFg  = new(0.10f, 0.10f, 0.10f, 1f); // barely visible border
     private static readonly Vector4 DetailBg    = new(0.08f, 0.08f, 0.08f, 1f);
     private static readonly Vector4 DetailTitle = new(0.12f, 0.12f, 0.08f, 1f);
+    private static readonly Vector4 BtnHovBg    = new(0.16f, 0.16f, 0.10f, 1f);
 
     // ── Unified slot colors (same for every module) ─────────────
     private static readonly Vector4 TitleColor  = Config.Colors.White;
@@ -65,8 +69,12 @@ public class MemoryPanelRenderer
 
     private record struct SlotHit(MemoryModuleType Module, int SlotIndex,
                                   int X0, int Y0, int X1, int Y1);
-    private readonly List<SlotHit> _slotHits = new();
-    private (MemoryModuleType mod, int slot)? _hoveredSlot = null;
+    private record struct ButtonHit(string Id, int X0, int Y0, int X1, int Y1, bool Enabled);
+    private readonly List<SlotHit>   _slotHits   = new();
+    private readonly List<ButtonHit> _buttonHits = new();
+    private (MemoryModuleType mod, int slot)? _hoveredSlot   = null;
+    private (MemoryModuleType mod, int slot)? _selectedSlot  = null;
+    private string?                           _hoveredButton = null;
 
     // ── Constructor ──────────────────────────────────────────────
     /// <param name="popup">Ignored — detail is shown inline. Kept for API compat.</param>
@@ -84,6 +92,7 @@ public class MemoryPanelRenderer
     {
         _member = member;
         _slotHits.Clear();
+        _buttonHits.Clear();
 
         // Background (memory area cols 17-99, no right separator)
         for (int y = 0; y < 100; y++)
@@ -125,6 +134,13 @@ public class MemoryPanelRenderer
         if (col0 != null || col1 != null || col2 != null)
         {
             row = RenderThreeColumns(row, col0, col1, col2);
+
+            // Extend the vertical dividers through the 2-row gap below the tri-panel
+            for (int y = row; y < row + 2; y++)
+            {
+                _terminal.SetCell(Div1X, y, '│', SepColor, AreaBg);
+                _terminal.SetCell(Div2X, y, '│', SepColor, AreaBg);
+            }
             row += 2;
         }
 
@@ -132,7 +148,15 @@ public class MemoryPanelRenderer
         var residual = member.MemoryModules.FirstOrDefault(
             m => m.Type == MemoryModuleType.Residual);
         if (residual != null)
+        {
+            // Record where the separator will be drawn (RenderModuleFull draws it at startRow)
+            int residualSepRow = row;
             row = RenderModuleFull(residual, row);
+            // Overwrite the two divider positions on the separator with ┴ junctions
+            _terminal.SetCell(Div1X, residualSepRow, '┴', SepColor, AreaBg);
+            _terminal.SetCell(Div2X, residualSepRow, '┴', SepColor, AreaBg);
+        }
+
 
         RenderDetailPanel();
     }
@@ -140,25 +164,35 @@ public class MemoryPanelRenderer
     /// <summary>Handle mouse hover — returns true if the hover state changed (triggers re-render).</summary>
     public bool ProcessHover(int x, int y)
     {
+        bool changed = false;
+
+        // Slot hover
         (MemoryModuleType, int)? newSlot = null;
         foreach (var hit in _slotHits)
         {
             if (x >= hit.X0 && x <= hit.X1 && y >= hit.Y0 && y <= hit.Y1)
-            {
-                newSlot = (hit.Module, hit.SlotIndex);
-                break;
-            }
+            { newSlot = (hit.Module, hit.SlotIndex); break; }
         }
+        if (newSlot != _hoveredSlot) { _hoveredSlot = newSlot; changed = true; }
 
-        if (newSlot == _hoveredSlot) return false;
-        _hoveredSlot = newSlot;
-        return true;
+        // Button hover
+        string? newBtn = null;
+        foreach (var btn in _buttonHits)
+        {
+            if (x >= btn.X0 && x <= btn.X1 && y >= btn.Y0 && y <= btn.Y1)
+            { newBtn = btn.Id; break; }
+        }
+        if (newBtn != _hoveredButton) { _hoveredButton = newBtn; changed = true; }
+
+        return changed;
     }
 
-    /// <summary>Clear hover state.</summary>
+    /// <summary>Clear all hover and selection state (called when leaving the Memory tab).</summary>
     public void ClearHover()
     {
-        _hoveredSlot = null;
+        _hoveredSlot   = null;
+        _hoveredButton = null;
+        _selectedSlot  = null;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -195,20 +229,23 @@ public class MemoryPanelRenderer
             Config.Colors.DarkYellowGrey, HeaderBg);
         startRow++;
 
-        // Slot grid
+        // Slot grid — iterate ALL slots (active + unusable)
         int row       = startRow;
         int slotIndex = 0;
-        while (slotIndex < module.Capacity)
+        while (slotIndex < module.Slots.Count)
         {
-            int inRow = Math.Min(SlotsPerRow, module.Capacity - slotIndex);
+            int inRow = Math.Min(SlotsPerRow, module.Slots.Count - slotIndex);
             for (int col = 0; col < inRow; col++)
             {
                 int sx = StartX + col * SlotWidth;
                 bool isHovered = _hoveredSlot.HasValue
                     && _hoveredSlot.Value.mod  == module.Type
                     && _hoveredSlot.Value.slot == slotIndex + col;
+                bool isSelected = _selectedSlot.HasValue
+                    && _selectedSlot.Value.mod  == module.Type
+                    && _selectedSlot.Value.slot == slotIndex + col;
                 RenderSlot(module.Slots[slotIndex + col], module.Type,
-                           slotIndex + col, sx, row, isHovered);
+                           slotIndex + col, sx, row, isHovered, isSelected);
             }
             slotIndex += SlotsPerRow;
             row       += SlotHeight;
@@ -217,10 +254,19 @@ public class MemoryPanelRenderer
     }
 
     private void RenderSlot(MemorySlot slot, MemoryModuleType moduleType, int slotIndex,
-                             int x, int y, bool isHovered, int slotW = SlotWidth)
+                             int x, int y, bool isHovered, bool isSelected, int slotW = SlotWidth)
     {
         _slotHits.Add(new SlotHit(moduleType, slotIndex,
             x, y, x + slotW - 1, y + SlotHeight - 1));
+
+        // Unusable slot (beyond active capacity) — barely visible, greyed out
+        if (slot.IsUnusable)
+        {
+            _terminal.DrawBox(x, y, slotW, SlotHeight, BoxStyle.Single, UnusableFg, UnusableBg);
+            int mid = x + 1 + (slotW - 2) / 2;
+            _terminal.SetCell(mid, y + 1, '•', UnusableFg, UnusableBg);
+            return;
+        }
 
         if (slot.IsBlocked)
         {
@@ -240,10 +286,10 @@ public class MemoryPanelRenderer
             return;
         }
 
-        // Filled slot
-        Vector4 border  = isHovered ? Config.Colors.BrightYellow : SlotBorder;
-        Vector4 textCol = isHovered ? Config.Colors.BrightYellow : SlotText;
-        Vector4 slotBg  = isHovered ? FilledBgHov : FilledBg;
+        // Filled slot — selected takes visual priority over hovered
+        Vector4 border  = (isSelected || isHovered) ? Config.Colors.BrightYellow : SlotBorder;
+        Vector4 textCol = (isSelected || isHovered) ? Config.Colors.BrightYellow : SlotText;
+        Vector4 slotBg  = isSelected ? SelectedBg : (isHovered ? FilledBgHov : FilledBg);
 
         _terminal.DrawBox(x, y, slotW, SlotHeight, BoxStyle.Single, border, slotBg);
         for (int ix = x + 1; ix < x + slotW - 1; ix++)
@@ -280,7 +326,7 @@ public class MemoryPanelRenderer
         // Calculate each column's height so we can draw dividers full-height
         static int ColHeight(MemoryModule? m) =>
             m == null ? 1
-            : 1 + (int)Math.Ceiling(m.Capacity / (double)ColSlotsPerRow) * SlotHeight;
+            : 1 + (int)Math.Ceiling(m.Slots.Count / (double)ColSlotsPerRow) * SlotHeight;
         int maxH = Math.Max(ColHeight(m0), Math.Max(ColHeight(m1), ColHeight(m2)));
         int endRow = startRow + maxH;
 
@@ -322,20 +368,23 @@ public class MemoryPanelRenderer
         _terminal.Text(colEndX - badge.Length, startRow, badge,
             Config.Colors.DarkYellowGrey, HeaderBg);
 
-        // Slot grid
+        // Slot grid — iterate ALL slots (active + unusable)
         int row       = startRow + 1;
         int slotIndex = 0;
-        while (slotIndex < module.Capacity)
+        while (slotIndex < module.Slots.Count)
         {
-            int inRow = Math.Min(ColSlotsPerRow, module.Capacity - slotIndex);
+            int inRow = Math.Min(ColSlotsPerRow, module.Slots.Count - slotIndex);
             for (int col = 0; col < inRow; col++)
             {
                 int sx = colX + col * ColSlotW;
                 bool isHovered = _hoveredSlot.HasValue
                     && _hoveredSlot.Value.mod  == module.Type
                     && _hoveredSlot.Value.slot == slotIndex + col;
+                bool isSelected = _selectedSlot.HasValue
+                    && _selectedSlot.Value.mod  == module.Type
+                    && _selectedSlot.Value.slot == slotIndex + col;
                 RenderSlot(module.Slots[slotIndex + col], module.Type,
-                           slotIndex + col, sx, row, isHovered, ColSlotW);
+                           slotIndex + col, sx, row, isHovered, isSelected, ColSlotW);
             }
             slotIndex += ColSlotsPerRow;
             row       += SlotHeight;
@@ -348,23 +397,22 @@ public class MemoryPanelRenderer
 
     /// <summary>
     /// Renders skill details at the bottom of the memory area.
-    /// Shows a hint when nothing is hovered; shows full skill info when hovering a filled slot.
-    /// This replaces the fragile floating popup with a stable inline panel.
     /// </summary>
     private void RenderDetailPanel()
     {
         const int panelH = 14;
 
-        // ── Separator above detail panel ─────────────────────────
+        // Separator above detail panel
         for (int x = StartX; x <= EndX; x++)
             _terminal.SetCell(x, DetailPanelRow - 1, '─', Config.Colors.DarkGray35, AreaBg);
 
-        // Determine hovered skill
+        // Determine selected skill and its source module type
         Skill? skill = null;
-
-        if (_hoveredSlot.HasValue && _member != null)
+        MemoryModuleType selectedModType = MemoryModuleType.Working;
+        if (_selectedSlot.HasValue && _member != null)
         {
-            var (modType, slotIdx) = _hoveredSlot.Value;
+            var (modType, slotIdx) = _selectedSlot.Value;
+            selectedModType = modType;
             var mod = _member.MemoryModules.FirstOrDefault(m => m.Type == modType);
             if (mod != null && slotIdx < mod.Slots.Count && mod.Slots[slotIdx].IsFilled)
                 skill = mod.Slots[slotIdx].Skill;
@@ -376,7 +424,7 @@ public class MemoryPanelRenderer
                 for (int x = StartX; x <= EndX; x++)
                     _terminal.SetCell(x, y, ' ', Config.Colors.Black, AreaBg);
             _terminal.Text(StartX + 2, DetailPanelRow + 1,
-                "Hover a filled memory slot to inspect the skill.",
+                "Click a filled memory slot to inspect and manage it.",
                 SubtitleCol, AreaBg);
             return;
         }
@@ -388,41 +436,33 @@ public class MemoryPanelRenderer
 
         int row = DetailPanelRow;
 
-        // Title row (skill name + level) — uniform bright highlight, no per-module accent
+        // Title row
         for (int x = StartX; x <= EndX; x++)
             _terminal.SetCell(x, row, ' ', TitleColor, DetailTitle);
         _terminal.Text(StartX + 2, row, skill.DisplayName, Config.Colors.BrightYellow, DetailTitle);
         string lvlStr = $"Level {skill.Level}";
-        _terminal.Text(EndX - lvlStr.Length, row, lvlStr,
-            Config.Colors.GoldYellow, DetailTitle);
+        _terminal.Text(EndX - lvlStr.Length, row, lvlStr, Config.Colors.GoldYellow, DetailTitle);
         row++;
 
-        // ── Separator ─────────────────────────────────────────────
+        // Separator
         for (int x = StartX; x <= EndX; x++)
             _terminal.SetCell(x, row, '─', Config.Colors.DarkGray35, DetailBg);
         row++;
 
-        // ── Two-column layout: meta (left) | description (right) ──
-        const int leftW  = 30;
+        // Two-column layout
+        const int leftW  = 46;
         const int rightX = StartX + leftW + 2;
         const int rightW = AreaWidth - leftW - 3;
 
+        // Meta lines (left column, rows 2-5)
         var metaLines = new (string label, string value, Vector4 valCol)[]
         {
-            ("Memory type",
-             skill.MemoryType.ToString(),
-             SlotText),
-            ("Functions",
-             string.Join(", ", skill.Functions),
-             Config.Colors.LightGray75),
-            ("Primary organ",
-             skill.Organs.Length > 0 ? skill.Organs[0] : "—",
-             Config.Colors.LightGray75),
-            ("Organ score",
-             _member != null ? _member.GetOrganScoreForSkill(skill).ToString() : "—",
+            ("Memory type",   skill.MemoryType.ToString(),                              SlotText),
+            ("Functions",     string.Join(", ", skill.Functions),                       Config.Colors.LightGray75),
+            ("Primary organ", skill.Organs.Length > 0 ? skill.Organs[0] : "—",         Config.Colors.LightGray75),
+            ("Organ score",   _member != null ? _member.GetOrganScoreForSkill(skill).ToString() : "—",
              Config.Colors.LightGray75),
         };
-
         int metaRow = row;
         foreach (var (lbl, val, vc) in metaLines)
         {
@@ -431,33 +471,189 @@ public class MemoryPanelRenderer
             metaRow++;
         }
 
-        // Vertical divider between columns
+        // Vertical divider
         for (int y = row; y < DetailPanelRow + panelH - 1; y++)
             _terminal.SetCell(StartX + leftW, y, '│', Config.Colors.DarkGray35, DetailBg);
 
-        // Description with proper word-wrap
+        // Right column: description word-wrap
         string desc  = skill.ShortDescription ?? "(no description)";
         var    words = desc.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        string line  = "";
-        int    descRow = row;
+        string dline = "";
+        int descRow  = row;
         foreach (var word in words)
         {
-            if (line.Length + word.Length + (line.Length > 0 ? 1 : 0) > rightW)
+            if (dline.Length + word.Length + (dline.Length > 0 ? 1 : 0) > rightW)
             {
                 if (descRow < DetailPanelRow + panelH - 1)
-                    _terminal.Text(rightX, descRow++, line, Config.Colors.LightGray75, DetailBg);
-                line = word;
+                    _terminal.Text(rightX, descRow++, dline, Config.Colors.LightGray75, DetailBg);
+                dline = word;
             }
             else
-                line = line.Length == 0 ? word : line + " " + word;
+                dline = dline.Length == 0 ? word : dline + " " + word;
         }
-        if (line.Length > 0 && descRow < DetailPanelRow + panelH - 1)
-            _terminal.Text(rightX, descRow, line, Config.Colors.LightGray75, DetailBg);
+        if (dline.Length > 0 && descRow < DetailPanelRow + panelH - 1)
+            _terminal.Text(rightX, descRow, dline, Config.Colors.LightGray75, DetailBg);
+
+        // Action button (left column, row after meta + 1 gap)
+        int btnRow = row + metaLines.Length + 1;
+        if (btnRow < DetailPanelRow + panelH - 2)
+        {
+            if (selectedModType == MemoryModuleType.Working)
+            {
+                // CONSOLIDATE: move skill to its typed long-term module
+                var targetModType = skill.MemoryType switch
+                {
+                    SkillMemoryType.Procedural => MemoryModuleType.Procedural,
+                    SkillMemoryType.Sensory    => MemoryModuleType.Sensory,
+                    _                          => MemoryModuleType.Semantic
+                };
+                var targetMod    = _member!.MemoryModules.FirstOrDefault(m => m.Type == targetModType);
+                bool hasFreeSlot = targetMod != null
+                    && targetMod.Slots.Any(s => !s.IsUnusable && !s.IsBlocked && !s.IsFilled);
+                string? reason = hasFreeSlot ? null
+                    : $"no free slot in {GetModuleLabel(targetModType).ToLower()}";
+                RenderButton("consolidate", "CONSOLIDATE", StartX + 2, btnRow, hasFreeSlot, reason);
+            }
+            else if (selectedModType == MemoryModuleType.Procedural
+                  || selectedModType == MemoryModuleType.Semantic
+                  || selectedModType == MemoryModuleType.Sensory)
+            {
+                // ARCHIVE: move skill to front of residual FIFO queue
+                var srcMod     = _member!.MemoryModules.FirstOrDefault(m => m.Type == selectedModType);
+                bool canArchive = (srcMod?.FilledCount ?? 0) > 1;
+                string? reason = canArchive ? null : "at least 1 skill must remain";
+                RenderButton("archive", "ARCHIVE", StartX + 2, btnRow, canArchive, reason);
+            }
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // Helpers
+    // Click handling & actions
     // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Handle a left click. Returns true when state changed and a re-render is needed.
+    /// May mutate MemoryModules (consolidate / archive actions).
+    /// </summary>
+    public bool ProcessClick(int x, int y)
+    {
+        // Clicks inside the detail panel area never deselect the current slot
+        // (so the user can read/click buttons freely without losing selection).
+        bool inDetailPanel = y >= DetailPanelRow - 1;
+
+        // Buttons take priority
+        foreach (var btn in _buttonHits)
+        {
+            if (x >= btn.X0 && x <= btn.X1 && y >= btn.Y0 && y <= btn.Y1)
+            {
+                if (!btn.Enabled) return false;
+                switch (btn.Id)
+                {
+                    case "consolidate": ExecuteConsolidate(); break;
+                    case "archive":     ExecuteArchive();     break;
+                }
+                return true;
+            }
+        }
+
+        // Slot clicks
+        foreach (var hit in _slotHits)
+        {
+            if (x >= hit.X0 && x <= hit.X1 && y >= hit.Y0 && y <= hit.Y1)
+            {
+                var mod = _member?.MemoryModules.FirstOrDefault(m => m.Type == hit.Module);
+                bool isFilled = mod != null
+                    && hit.SlotIndex < mod.Slots.Count
+                    && mod.Slots[hit.SlotIndex].IsFilled
+                    && !mod.Slots[hit.SlotIndex].IsUnusable;
+
+                if (isFilled)
+                {
+                    var key = (hit.Module, hit.SlotIndex);
+                    _selectedSlot = (_selectedSlot == key) ? null : key;
+                }
+                else if (_selectedSlot.HasValue)
+                    _selectedSlot = null;
+                else
+                    return false;
+
+                return true;
+            }
+        }
+
+        // Click outside slots and buttons
+        if (!inDetailPanel && _selectedSlot.HasValue)
+        {
+            _selectedSlot = null;
+            return true;
+        }
+        return false;
+    }
+
+    private void ExecuteConsolidate()
+    {
+        if (!_selectedSlot.HasValue || _member == null) return;
+        var (modType, slotIdx) = _selectedSlot.Value;
+        if (modType != MemoryModuleType.Working) return;
+
+        var working = _member.MemoryModules.FirstOrDefault(m => m.Type == MemoryModuleType.Working);
+        if (working == null || slotIdx >= working.Slots.Count) return;
+        var srcSlot = working.Slots[slotIdx];
+        if (!srcSlot.IsFilled) return;
+        var skill = srcSlot.Skill!;
+
+        var targetType = skill.MemoryType switch
+        {
+            SkillMemoryType.Procedural => MemoryModuleType.Procedural,
+            SkillMemoryType.Sensory    => MemoryModuleType.Sensory,
+            _                          => MemoryModuleType.Semantic
+        };
+        var target = _member.MemoryModules.FirstOrDefault(m => m.Type == targetType);
+        if (target == null || !target.TryAdd(skill)) return;
+
+        srcSlot.Skill = null;
+        _selectedSlot = null;
+    }
+
+    private void ExecuteArchive()
+    {
+        if (!_selectedSlot.HasValue || _member == null) return;
+        var (modType, slotIdx) = _selectedSlot.Value;
+
+        var source = _member.MemoryModules.FirstOrDefault(m => m.Type == modType);
+        if (source == null || slotIdx >= source.Slots.Count) return;
+        var srcSlot = source.Slots[slotIdx];
+        if (!srcSlot.IsFilled) return;
+        var skill = srcSlot.Skill!;
+
+        var residual = _member.MemoryModules.FirstOrDefault(m => m.Type == MemoryModuleType.Residual);
+        if (residual == null) return;
+
+        srcSlot.Skill = null;
+        residual.Prepend(skill);
+        _selectedSlot = null;
+    }
+
+    /// <summary>Draws a labeled action button and registers its hit area.</summary>
+    private void RenderButton(string id, string label, int x, int y, bool enabled, string? disabledReason)
+    {
+        string text   = $"[ {label} ]";
+        bool   hov    = _hoveredButton == id && enabled;
+        Vector4 fg    = enabled ? (hov ? Config.Colors.BrightYellow : Config.Colors.LightGray85)
+                                : SubtitleCol;
+        Vector4 bg    = hov ? BtnHovBg : DetailBg;
+
+        for (int ix = x; ix < x + text.Length; ix++)
+            _terminal.SetCell(ix, y, ' ', fg, bg);
+        _terminal.Text(x, y, text, fg, bg);
+
+        _buttonHits.Add(new ButtonHit(id, x, y, x + text.Length - 1, y, enabled));
+
+        // Disabled reason on the next row
+        if (!enabled && disabledReason != null && y + 1 < DetailPanelRow + 14 - 1)
+            _terminal.Text(x + 2, y + 1, $"↳ {disabledReason}", EmptyText, DetailBg);
+    }
+
 
     private static Vector4 AccentBg(Vector4 _) => FilledBg;      // legacy shim
     private static Vector4 AccentBgHover(Vector4 _) => FilledBgHov; // legacy shim

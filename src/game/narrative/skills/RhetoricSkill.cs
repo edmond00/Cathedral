@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class RhetoricSkill : Skill
     public override string ShortDescription => "persuasion, argumentation";
     public override SkillFunction[] Functions => new[] { SkillFunction.Thinking };
     public override string[] Organs => new[] { "tongue", "cerebrum" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Semantic;
     
     public override string PersonaTone => "a silver-tongued strategist who builds arguments like siege engines";
     

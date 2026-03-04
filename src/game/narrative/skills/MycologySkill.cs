@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class MycologySkill : Skill
     public override string ShortDescription => "fungi, decomposition";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation, SkillFunction.Thinking };
     public override string[] Organs => new[] { "eyes", "nose" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Sensory;
     
     public override string PersonaTone => "a quiet fungal expert who sees decomposition, symbiosis, and mycological connections everywhere";
     

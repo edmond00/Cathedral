@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class ButcherySkill : Skill
     public override string ShortDescription => "anatomy, efficient cutting";
     public override SkillFunction[] Functions => new[] { SkillFunction.Action, SkillFunction.Thinking };
     public override string[] Organs => new[] { "hands", "viscera" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Procedural;
     
     public override string PersonaTone => "a practical anatomist who sees bodies as structures to be efficiently disassembled";
     

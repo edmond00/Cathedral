@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative.Memory;
+
 namespace Cathedral.Game.Narrative.Skills;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class EmpathySkill : Skill
     public override string ShortDescription => "emotional reading, compassion";
     public override SkillFunction[] Functions => new[] { SkillFunction.Observation };
     public override string[] Organs => new[] { "heart", "ears" };
+    public override SkillMemoryType MemoryType => SkillMemoryType.Sensory;
     
     public override string PersonaTone => "a compassionate reader of hearts who feels the emotional currents between people";
     
