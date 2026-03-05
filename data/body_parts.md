@@ -19,7 +19,7 @@ Represents physical stability, posture, and core strength. Governs composure, eq
 
 ## Vital Organs
 
-### Thorax
+### Pulmones
 The seat of vocal projection and breath control. Powers singing, shouting, chanting, bellowing, and reciting. The lungs' capacity for sustained vocalization and expression.
 
 ### Viscera
@@ -27,6 +27,12 @@ Represents physical endurance and internal fortitude. Governs stamina, endurance
 
 ### Heart
 The emotional center and source of passion. Controls charm, empathy, courage, passion, and resolve. Drives emotional strength and interpersonal connection.
+
+### Spleen
+Guardian of the blood's purity and seat of melancholic humour. Governs resistance to poisons, venom, and malign substances. The filter of corrupted essences within the vital fluids.
+
+### Hepar
+The great vessel of choler and heat, seat of blood production in the old philosophy. Governs tolerance of spirits, ferments, and corrosive humours. The forge of vital heat and bodily warmth.
 
 ## Sensory Organs
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Trunk body part region. Contains: backbone, heart, thorax, viscera, stomach, sex.
+/// Trunk body part region. Contains: backbone, heart, pulmones, viscera, paunch, genitories, spleen, hepar.
 /// </summary>
 public class TrunkBodyPart : BodyPart
 {
@@ -19,10 +19,12 @@ public class TrunkBodyPart : BodyPart
         {
             new BackboneOrgan(),
             new HeartOrgan(),
-            new ThoraxOrgan(),
+            new PulmonesOrgan(),
             new VisceraOrgan(),
-            new StomachOrgan(),
-            new SexOrgan()
+            new PaunchOrgan(),
+            new GenitoriesOrgan(),
+            new SpleenOrgan(),
+            new HeparOrgan()
         };
     }
 }

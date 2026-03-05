@@ -63,17 +63,23 @@ backbone
 heart
 - max number of companions
 
-thorax
+pulmones
 - smoke imbuements size
 
 viscera
 - desease resistance
 
-stomach
+paunch
 - food imbuements size
 
-sex
+genitories
 - gender
+
+spleen
+- poison resistance
+
+hepar
+- alcohol resistance
 
 hands
 - max item combination

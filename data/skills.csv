@@ -2,22 +2,22 @@ body_part,skill,secondary_body_part
 Lower Limbs,Running,Feet
 Lower Limbs,Jumping,Upper Limbs
 Lower Limbs,Sprinting,Backbone
-Lower Limbs,Striding,Thorax
+Lower Limbs,Striding,Pulmones
 Lower Limbs,Dodging,Eyes
 
 Upper Limbs,Pushing,Backbone
 Upper Limbs,Lifting,Lower Limbs
-Upper Limbs,Striking,Thorax
+Upper Limbs,Striking,Pulmones
 Upper Limbs,Pulling,Fingers
 Upper Limbs,Wrestling,Viscera
 
-Thorax,Singing,Heart
-Thorax,Chanting,Tongue
-Thorax,Bellowing,Viscera
-Thorax,Reciting,Cerebrum
+Pulmones,Singing,Heart
+Pulmones,Chanting,Tongue
+Pulmones,Bellowing,Viscera
+Pulmones,Reciting,Cerebrum
 
 Viscera,Fortitude,Backbone
-Viscera,Endurance,Thorax
+Viscera,Endurance,Pulmones
 Viscera,Digestion,Tongue
 Viscera,Stamina,Heart
 Viscera,Resisting,Backbone
@@ -25,7 +25,7 @@ Viscera,Resisting,Backbone
 Heart,Charm,Tongue
 Heart,Empathy,Eyes
 Heart,Courage,Backbone
-Heart,Passion,Thorax
+Heart,Passion,Pulmones
 Heart,Resolve,Cerebellum
 
 Fingers,Picking,Cerebellum
@@ -40,7 +40,7 @@ Feet,Skulking,Nose
 Feet,Gliding,Cerebellum
 
 Backbone,Composure,Tongue
-Backbone,Posture,Thorax
+Backbone,Posture,Pulmones
 Backbone,Stance,Upper Limbs
 Backbone,Alignment,Cerebrum
 
@@ -60,7 +60,7 @@ Tongue,Speaking,Hippocampus
 Tongue,Persuasion,Cerebrum
 Tongue,Bargaining,Eyes
 Tongue,Deception,Heart
-Tongue,Threatening,Thorax
+Tongue,Threatening,Pulmones
 
 Nose,Cooking,Tongue
 Nose,Tracking,Eyes
@@ -97,7 +97,7 @@ Pineal Gland,Reflecting,Eyes
 Pineal Gland,Pondering,Tongue
 
 Lower Limbs,Kicking,Upper Limbs
-Lower Limbs,Swimming,Thorax
+Lower Limbs,Swimming,Pulmones
 Lower Limbs,Rope Work,Upper Limbs
 
 Upper Limbs,Grappling,Viscera
@@ -121,8 +121,8 @@ Backbone,Counterfeinting,Eyes
 
 Viscera,Survivalism,Cerebrum
 
-Thorax,Shouting,Viscera
-Thorax,Preaching,Heart
+Pulmones,Shouting,Viscera
+Pulmones,Preaching,Heart
 
 Heart,Seducing,Tongue
 Heart,Begging,Eyes
@@ -138,7 +138,7 @@ Tongue,Gossiping,Ears
 Tongue,Storytelling,Hippocampus
 Tongue,Deceiving,Eyes
 Tongue,Lying,Cerebrum
-Tongue,Intimidating,Thorax
+Tongue,Intimidating,Pulmones
 Tongue,Teaching,Cerebrum
 Tongue,Leading,Heart
 Tongue,Etiquette,Backbone
@@ -165,7 +165,7 @@ Cerebrum,Mechanics,Eyes
 Cerebrum,Chemistry,Nose
 Cerebrum,Alchemy,Pineal Gland
 
-Cerebellum,Performing,Thorax
+Cerebellum,Performing,Pulmones
 
 Anamnesis,Navigation,Eyes
 Anamnesis,Medicine,Cerebrum
