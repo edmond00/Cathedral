@@ -1,0 +1,30 @@
+                              
+ ╔══════════╗     ╔═════════╗ 
+ ║aaaaaaaaaa║     ║bbbbbbbbb║ 
+ ║a╔══════╗a║     ║b╔═════╗b║ 
+ ║a║╔════╗║a║     ║b║╔═══╗║b║ 
+ ║a║║aaaa║║a║     ║b║║Bbb║║b║ 
+ ║a║║a╔╗a║║a║     ║b║╚═╗b║║b║ 
+ ║a║║A║║a║║a║     ║b╚══╝b║║b║ 
+ ║a║╚═╝║a║║a║     ║bbbbbb║║b║ 
+ ║a╚═══╝a║║a║     ╚══════╝║b║ 
+ ║aaaaaaa║║a║ ╔═══════════╝b║ 
+ ╚═══════╝║a║ ║bbbbbbbbbbbbb║ 
+          ║a║ ║b╔═══════════╝ 
+          ║a╚═╝b║             
+          ║aaaab╚══╗          
+          ╚══╗dcccc║          
+             ║d╔═╗c║          
+ ╔═══════════╝d║ ║c║          
+ ║ddddddddddddd║ ║c║╔═══════╗ 
+ ║d╔═══════════╝ ║c║║ccccccc║ 
+ ║d║╔══════╗     ║c║║c╔═══╗c║ 
+ ║d║║dddddd║     ║c║║c║╔═╗║c║ 
+ ║d║║d╔══╗d║     ║c║║c║║C║║c║ 
+ ║d║║d╚═╗║d║     ║c║║c╚╝c║║c║ 
+ ║d║║ddD║║d║     ║c║║cccc║║c║ 
+ ║d║╚═══╝║d║     ║c║╚════╝║c║ 
+ ║d╚═════╝d║     ║c╚══════╝c║ 
+ ║ddddddddd║     ║cccccccccc║ 
+ ╚═════════╝     ╚══════════╝ 
+                              

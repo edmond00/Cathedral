@@ -276,7 +276,7 @@ public static class CriticTrees
     public static readonly FailureOutcomeType MildDisappointment = new()
     {
         Name = "MildDisappointment",
-        HumorAffected = "Melancholia",
+        HumorAffected = "Black Bile",
         HumorAmount = 1,
         Description = "Mild disappointment",
         NarratorHint = "The character feels mildly disappointed but not deeply affected"
@@ -321,7 +321,7 @@ public static class CriticTrees
     public static readonly FailureOutcomeType NeutralFailure = new()
     {
         Name = "NeutralFailure",
-        HumorAffected = "Melancholia",
+        HumorAffected = "Black Bile",
         HumorAmount = 1,
         Description = "Action simply doesn't work, no lasting effect",
         NarratorHint = "The action simply didn't work, with no particular consequence"

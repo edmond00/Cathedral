@@ -722,6 +722,7 @@ public class LocationTravelGameController : IDisposable
                 // ResetGameState called InitializeMemory earlier with initial random scores;
                 // now we rebuild modules to reflect the final configured values.
                 protagonist.InitializeMemory();
+                protagonist.ReinitializeHumorQueues();
                 protagonist.AssignSkillsToMemoryRandom();
                 _protagonistCreationRenderer = null;
                 SetMode(GameMode.WorldView);

@@ -16,20 +16,23 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public abstract class PartyMember
 {
+    private static readonly Random _sharedRng = new Random();
+
     // ── Body ─────────────────────────────────────────────────────
     private List<BodyPart> _bodyParts;
-    private List<BodyHumor> _humors;
 
     public List<BodyPart> BodyParts => _bodyParts;
-    public List<BodyHumor> Humors => _humors;
     public List<DerivedStat> DerivedStats { get; private set; }
+
+    // ── Humor queues ──────────────────────────────────────────────
+    /// <summary>
+    /// The four FIFO humor queues (Hepar, Paunch, Pulmones, Spleen), each holding
+    /// 49 humor instances filled at creation time via organ-score-based secretion.
+    /// </summary>
+    public HumorQueueSet HumorQueues { get; private set; }
 
     // ── Memory ────────────────────────────────────────────────────
     public List<MemoryModule> MemoryModules { get; private set; }
-
-    /// <summary>Backward-compat dict: humor name → value.</summary>
-    public Dictionary<string, int> HumorValues =>
-        _humors.ToDictionary(h => h.Name, h => h.Value);
 
     // ── Skills ───────────────────────────────────────────────────
     public List<Skill> Skills { get; set; }
@@ -47,7 +50,7 @@ public abstract class PartyMember
     protected PartyMember()
     {
         _bodyParts = InitializeBodyParts();
-        _humors = InitializeHumors();
+        HumorQueues = InitializeHumorQueues();
         DerivedStats = InitializeDerivedStats();
         Skills = new List<Skill>();
         LearnedSkills = Skills; // same reference
@@ -74,31 +77,42 @@ public abstract class PartyMember
         return parts;
     }
 
-    private static List<BodyHumor> InitializeHumors() => new()
+    private HumorQueueSet InitializeHumorQueues()
     {
-        new BlackBile(),
-        new YellowBile(),
-        new Appetitus(),
-        new Melancholia(),
-        new Ether(),
-        new Phlegm(),
-        new Blood(),
-        new Voluptas(),
-        new Laetitia(),
-        new Euphoria()
-    };
+        var queues = new HumorQueueSet();
+        queues.Initialize(this, _sharedRng);
+        return queues;
+    }
+
+    /// <summary>
+    /// Re-fills all four humor queues using the current organ scores.
+    /// Call this after the player has finished setting scores in the creation screen.
+    /// </summary>
+    public void ReinitializeHumorQueues()
+    {
+        HumorQueues.Initialize(this, _sharedRng);
+    }
 
     private static List<DerivedStat> InitializeDerivedStats() => new()
     {
         new PerceptionStat(),
         new EnduranceStat(),
-        new EncephalonStat(),    // replaces IntellectStat; drives Working Memory slot count
+        new EncephalonStat(),    // drives Working Memory slot count
         new DexterityStat(),
         new WillpowerStat(),
         new CerebellumStat(),   // drives Procedural Memory slot count
         new CerebrumStat(),     // drives Semantic Memory slot count
         new HippocampusStat(),  // drives Sensory Memory slot count
-        new AnamnesisStat()     // drives Residual Memory slot count
+        new AnamnesisStat(),    // drives Residual Memory slot count
+        // Secretion percentage stats (displayed in Humors tab)
+        new HeparBloodSecretionStat(),       new HeparPhlegmSecretionStat(),
+        new HeparYellowBileSecretionStat(),  new HeparBlackBileSecretionStat(),
+        new PaunchBloodSecretionStat(),      new PaunchPhlegmSecretionStat(),
+        new PaunchYellowBileSecretionStat(), new PaunchBlackBileSecretionStat(),
+        new PulmonesBloodSecretionStat(),    new PulmonesPhlegmSecretionStat(),
+        new PulmonesYellowBileSecretionStat(),new PulmonesBlackBileSecretionStat(),
+        new SpleenBloodSecretionStat(),      new SpleenPhlegmSecretionStat(),
+        new SpleenYellowBileSecretionStat(), new SpleenBlackBileSecretionStat(),
     };
 
     // ── Skill initialisation ─────────────────────────────────────

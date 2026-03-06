@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Cathedral.Game.Narrative;
@@ -57,19 +55,9 @@ public class OutcomeApplicator
 
     private void ApplyHumorOutcome(HumorOutcome humor, Protagonist protagonist)
     {
-        var targetHumor = protagonist.Humors.FirstOrDefault(h => h.Name == humor.HumorName);
-        if (targetHumor != null)
-        {
-            int currentValue = targetHumor.Value;
-            int newValue = Math.Clamp(currentValue + humor.Amount, 0, 100);
-            targetHumor.Value = newValue;
-            
-            string direction = humor.Amount > 0 ? "increased" : "decreased";
-            Console.WriteLine($"OutcomeApplicator: {humor.HumorName} {direction} by {Math.Abs(humor.Amount)} to {newValue}");
-        }
-        else
-        {
-            Console.WriteLine($"OutcomeApplicator: Unknown humor '{humor.HumorName}'");
-        }
+        // TODO: Route HumorOutcome into the appropriate HumorQueue via protagonist.HumorQueues
+        // For now, log the intent and skip — queue-routing will be implemented in a future phase.
+        string direction = humor.Amount > 0 ? "produce" : "consume";
+        Console.WriteLine($"OutcomeApplicator: {direction} {Math.Abs(humor.Amount)}x '{humor.HumorName}' (queue routing not yet implemented)");
     }
 }

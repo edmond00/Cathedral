@@ -16,7 +16,8 @@ public enum ManagementTab
     Body,
     Inventory,
     Journal,
-    Memory
+    Memory,
+    Humors
 }
 
 /// <summary>
@@ -36,6 +37,7 @@ public class ManagementMenuRenderer
     private readonly Protagonist _protagonist;
     private readonly BodyArtViewer _bodyViewer;
     private readonly MemoryPanelRenderer _memoryPanel;
+    private readonly HumorMenuRenderer _humorMenu;
 
     // ── Tab state ────────────────────────────────────────────────
     private ManagementTab _activeTab = ManagementTab.Body;
@@ -48,6 +50,7 @@ public class ManagementMenuRenderer
         new TabDefinition("Inventory", ManagementTab.Inventory,  AllCharacters: true),
         new TabDefinition("Journal",   ManagementTab.Journal,    AllCharacters: false), // protagonist only
         new TabDefinition("Memory",    ManagementTab.Memory,    AllCharacters: true),
+        new TabDefinition("Humors",    ManagementTab.Humors,    AllCharacters: true),
     };
 
     // ── Hover state ──────────────────────────────────────────────
@@ -109,6 +112,13 @@ public class ManagementMenuRenderer
         _bodyViewer.ComputeLayout();
 
         _memoryPanel = new MemoryPanelRenderer(terminal, popup);
+
+        var humorArtData = HumorArtData.Load("assets/art/humors");
+        var heparMap     = HumorQueuePositionMap.Load("assets/art/humors/hepar.txt",    "hepar");
+        var paunchMap    = HumorQueuePositionMap.Load("assets/art/humors/paunch.txt",   "paunch");
+        var pulmonesMap  = HumorQueuePositionMap.Load("assets/art/humors/pulmones.txt", "pulmones");
+        var spleenMap    = HumorQueuePositionMap.Load("assets/art/humors/spleen.txt",   "spleen");
+        _humorMenu = new HumorMenuRenderer(terminal, humorArtData, heparMap, paunchMap, pulmonesMap, spleenMap);
     }
 
     // ── Party helpers ────────────────────────────────────────────
@@ -142,9 +152,9 @@ public class ManagementMenuRenderer
         {
             _bodyViewer.RenderBodyArt();
         }
-        else if (_activeTab != ManagementTab.Memory)
+        else if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
         {
-            // Draw separator on non-body, non-memory tabs
+            // Draw separator on non-body, non-memory, non-humors tabs
             int sepX = BodyArtViewer.PanelX - 1;
             for (int y = 0; y < 100; y++)
                 _terminal.SetCell(sepX, y, '│', Config.Colors.DarkGray35, Config.Colors.Black);
@@ -154,7 +164,7 @@ public class ManagementMenuRenderer
         RenderLeftPanel();
 
         // Right panel
-        if (_activeTab != ManagementTab.Memory)
+        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
             RenderPanelHeader();
 
         switch (_activeTab)
@@ -172,9 +182,12 @@ public class ManagementMenuRenderer
             case ManagementTab.Memory:
                 _memoryPanel.Render(GetPartyMember(_selectedCharacterIndex));
                 break;
+            case ManagementTab.Humors:
+                _humorMenu.Render(GetPartyMember(_selectedCharacterIndex));
+                break;
         }
 
-        if (_activeTab != ManagementTab.Memory)
+        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
             RenderFooter();
     }
 
@@ -206,7 +219,7 @@ public class ManagementMenuRenderer
         bool newBackHovered = IsOnBackButton(x, y);
         if (newBackHovered != _backHovered) { _backHovered = newBackHovered; changed = true; }
 
-        // Delegate to body viewer on Body tab, memory panel on Memory tab
+        // Delegate to body viewer on Body tab, memory panel on Memory tab, humor menu on Humors tab
         if (_activeTab == ManagementTab.Body)
         {
             if (_bodyViewer.ProcessHover(x, y))
@@ -215,6 +228,11 @@ public class ManagementMenuRenderer
         else if (_activeTab == ManagementTab.Memory)
         {
             if (_memoryPanel.ProcessHover(x, y))
+                changed = true;
+        }
+        else if (_activeTab == ManagementTab.Humors)
+        {
+            if (_humorMenu.ProcessHover(x, y))
                 changed = true;
         }
 
@@ -248,6 +266,8 @@ public class ManagementMenuRenderer
                     _bodyViewer.ClearHover();
                 if (_activeTab != ManagementTab.Memory)
                     _memoryPanel.ClearHover();
+                if (_activeTab != ManagementTab.Humors)
+                    _humorMenu.ClearHover();
 
                 Render();
                 return;
@@ -453,6 +473,7 @@ public class ManagementMenuRenderer
             ManagementTab.Inventory => "I N V E N T O R Y",
             ManagementTab.Journal   => "J O U R N A L",
             ManagementTab.Memory    => "",  // memory panel renders its own full-width title
+            ManagementTab.Humors    => "",  // humor menu renders its own full-width title
             _                       => ""
         };
 
