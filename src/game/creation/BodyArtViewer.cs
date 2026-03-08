@@ -263,7 +263,8 @@ public class BodyArtViewer
     /// including hover-based highlighting, bounding boxes, separator line,
     /// and connector arrows to the stats panel.
     /// </summary>
-    public void RenderBodyArt()
+    /// <param name="brightness">Multiplier applied to base art colours (1.0 = normal, 0.5 = dimmed).</param>
+    public void RenderBodyArt(float brightness = 1.0f)
     {
         // Compute bounding box for hovered body part
         ArtBounds? hoveredBounds = null;
@@ -306,6 +307,8 @@ public class BodyArtViewer
                 if (artChar == ' ' || artChar == '\0') continue;
 
                 Vector4 baseColor = _artData.GetLayerColorAt(ax, ay);
+                if (brightness != 1.0f)
+                    baseColor = new Vector4(baseColor.X * brightness, baseColor.Y * brightness, baseColor.Z * brightness, baseColor.W);
                 Vector4 bgColor = Config.Colors.Black;
 
                 if (!_artData.IsBodyCell(ax, ay)) continue;

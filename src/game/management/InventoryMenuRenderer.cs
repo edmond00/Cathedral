@@ -192,7 +192,7 @@ public sealed class InventoryMenuRenderer
         _contentHits.Clear();
 
         _bodyViewer.ClearHover();
-        _bodyViewer.RenderBodyArt();
+        _bodyViewer.RenderBodyArt(brightness: 0.5f);
 
         for (int y = 0; y < 100; y++)
             _terminal.SetCell(RightPanelX - 1, y, '│', SepColor, BgColor);
@@ -479,21 +479,24 @@ public sealed class InventoryMenuRenderer
         if (target != null && target != _dragItem && target.TryAdd(_dragItem))
         {
             RemoveDragItemFromSource();
-            // Select the container so its info panel shows after drop.
-            if (hit.HasValue && hit.Value.ItemIdx >= 0)
+            // Update selection to show the target container — but only when
+            // the drop came from the body art, not the right panel (which
+            // should keep its current view).
+            if (!onRightPanel)
             {
-                _selectedAnchor  = hit.Value.Anchor;
-                _selectedItemIdx = hit.Value.ItemIdx;
+                if (hit.HasValue && hit.Value.ItemIdx >= 0)
+                {
+                    _selectedAnchor  = hit.Value.Anchor;
+                    _selectedItemIdx = hit.Value.ItemIdx;
+                }
+                else if (_dragHoverAnchor.HasValue)
+                {
+                    _selectedAnchor  = _dragHoverAnchor;
+                    var anchorItems = _member.EquippedItems[_dragHoverAnchor.Value];
+                    _selectedItemIdx = anchorItems.IndexOf(target);
+                }
                 _selectedContentPath.Clear();
             }
-            else if (_dragHoverAnchor.HasValue)
-            {
-                _selectedAnchor  = _dragHoverAnchor;
-                var anchorItems = _member.EquippedItems[_dragHoverAnchor.Value];
-                _selectedItemIdx = anchorItems.IndexOf(target);
-                _selectedContentPath.Clear();
-            }
-            // When dropping via right panel, keep current selection as-is.
             ResetDragState();
             return true;
         }
@@ -529,6 +532,10 @@ public sealed class InventoryMenuRenderer
             {
                 RemoveDragItemFromSource();
                 _member.EquippedItems[target].Add(_dragItem);
+                // Select the target anchor so the right panel shows it after the drop.
+                _selectedAnchor  = target;
+                _selectedItemIdx = _member.EquippedItems[target].Count - 1;
+                _selectedContentPath.Clear();
             }
         }
         ResetDragState();
