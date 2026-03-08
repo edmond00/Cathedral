@@ -24,6 +24,7 @@ namespace Cathedral.Terminal
         public event Action<int, int>? CellClicked;
         public event Action<int, int>? CellRightClicked;
         public event Action<int, int>? CellHovered;
+        public event Action<int, int>? CellMouseReleased;
         public event Action? MouseLeft;
 
         public TerminalInputHandler(TerminalView view, TerminalRenderer renderer)
@@ -134,6 +135,8 @@ namespace Cathedral.Terminal
             {
                 case MouseButton.Left:
                     _leftMouseDown = false;
+                    if (_hoveredCell.HasValue)
+                        CellMouseReleased?.Invoke(_hoveredCell.Value.X, _hoveredCell.Value.Y);
                     break;
                     
                 case MouseButton.Right:

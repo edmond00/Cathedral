@@ -40,9 +40,11 @@ public class OutcomeApplicator
 
     private void ApplyItemOutcome(Item item, Protagonist protagonist)
     {
-        // Add item to inventory
-        protagonist.Inventory.Add(item.ItemId);
-        Console.WriteLine($"OutcomeApplicator: Acquired {item.DisplayName}");
+        bool placed = protagonist.TryAcquireItem(item);
+        if (!placed)
+            Console.WriteLine($"OutcomeApplicator: Could not place '{item.DisplayName}' anywhere — inventory full.");
+        else
+            Console.WriteLine($"OutcomeApplicator: Acquired {item.DisplayName}");
     }
 
     private Task ApplyFeelGoodOutcomeAsync(FeelGoodOutcome feelGood, Protagonist protagonist)

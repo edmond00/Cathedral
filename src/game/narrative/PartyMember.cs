@@ -40,7 +40,16 @@ public abstract class PartyMember
     public List<Skill> LearnedSkills { get; set; }
 
     // ── Inventory ────────────────────────────────────────────────
-    public List<string> Inventory { get; set; }
+    /// <summary>
+    /// Items that could not be placed in any anchor slot or container.
+    /// These overflow items are awaiting a free spot.
+    /// </summary>
+    public List<Item> Inventory { get; set; }
+
+    /// <summary>
+    /// Equipment slots: each anchor holds a list of items (up to <see cref="EquipmentAnchorExtensions.Capacity"/> slots worth).
+    /// </summary>
+    public Dictionary<EquipmentAnchor, List<Item>> EquippedItems { get; private set; }
 
     // ── Display name (subclasses define this differently) ────────
     /// <summary>Human-readable name shown in the party panel.</summary>
@@ -54,8 +63,76 @@ public abstract class PartyMember
         DerivedStats = InitializeDerivedStats();
         Skills = new List<Skill>();
         LearnedSkills = Skills; // same reference
-        Inventory = new List<string>();
+        Inventory = new List<Item>();
         MemoryModules = new List<MemoryModule>(); // populated after skills are assigned via InitializeMemory()
+
+        // Initialise all 13 anchor slots to empty lists
+        EquippedItems = new Dictionary<EquipmentAnchor, List<Item>>();
+        foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
+            EquippedItems[anchor] = new List<Item>();
+    }
+
+    // ── Equipment helpers ─────────────────────────────────────────
+
+    /// <summary>Sum of SlotCount for all items in this anchor.</summary>
+    public int UsedSlots(EquipmentAnchor anchor) =>
+        EquippedItems[anchor].Sum(i => i.SlotCount);
+
+    /// <summary>Remaining slot capacity in this anchor.</summary>
+    public int AvailableSlots(EquipmentAnchor anchor) =>
+        anchor.Capacity() - UsedSlots(anchor);
+
+    /// <summary>
+    /// Append an item to an anchor's list. Used for initialisation / debug setup —
+    /// does not enforce capacity.
+    /// </summary>
+    public void Equip(EquipmentAnchor anchor, Item item) => EquippedItems[anchor].Add(item);
+
+    /// <summary>
+    /// Try to place an acquired item into the best available slot:
+    ///   1. Preferred anchor (if the item declares one and it is free).
+    ///   2. Any free anchor that CanAccept the item.
+    ///   3. Any equipped ContainerItem that CanContain + has space.
+    ///   4. Falls back to <see cref="Inventory"/> overflow list.
+    /// Returns true when placement succeeds (includes overflow).
+    /// </summary>
+    public bool TryAcquireItem(Item item)
+    {
+        // 1. Preferred anchor
+        if (item.PreferredAnchor.HasValue)
+        {
+            var preferred = item.PreferredAnchor.Value;
+            if (preferred.CanAccept(item) && AvailableSlots(preferred) >= item.SlotCount)
+            {
+                EquippedItems[preferred].Add(item);
+                return true;
+            }
+        }
+
+        // 2. Any free compatible anchor with capacity
+        foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
+        {
+            if (anchor.CanAccept(item) && AvailableSlots(anchor) >= item.SlotCount)
+            {
+                EquippedItems[anchor].Add(item);
+                return true;
+            }
+        }
+
+        // 3. Any equipped container that can take the item
+        foreach (var kvp in EquippedItems)
+        {
+            foreach (var equipped in kvp.Value)
+            {
+                if (equipped is ContainerItem container && container.TryAdd(item))
+                    return true;
+            }
+        }
+
+        // 4. Overflow
+        Console.WriteLine($"PartyMember: No free anchor/container for '{item.DisplayName}' — placed in overflow inventory.");
+        Inventory.Add(item);
+        return true; // acquisition itself always succeeds; caller is informed via log
     }
 
     // ── Body initialisation ──────────────────────────────────────

@@ -38,6 +38,7 @@ public class ManagementMenuRenderer
     private readonly BodyArtViewer _bodyViewer;
     private readonly MemoryPanelRenderer _memoryPanel;
     private readonly HumorMenuRenderer _humorMenu;
+    private readonly InventoryMenuRenderer _inventoryMenu;
 
     // ── Tab state ────────────────────────────────────────────────
     private ManagementTab _activeTab = ManagementTab.Body;
@@ -113,6 +114,9 @@ public class ManagementMenuRenderer
 
         _memoryPanel = new MemoryPanelRenderer(terminal, popup);
 
+        var gearData = GearAnchorData.Load("assets/art/body/full_body");
+        _inventoryMenu = new InventoryMenuRenderer(terminal, _bodyViewer, gearData, popup);
+
         var humorArtData = HumorArtData.Load("assets/art/humors");
         var heparMap     = HumorQueuePositionMap.Load("assets/art/humors/hepar.txt",    "hepar");
         var paunchMap    = HumorQueuePositionMap.Load("assets/art/humors/paunch.txt",   "paunch");
@@ -160,9 +164,6 @@ public class ManagementMenuRenderer
                 _terminal.SetCell(sepX, y, '│', Config.Colors.DarkGray35, Config.Colors.Black);
         }
 
-        // Left panel (rendered AFTER art so it overlays cleanly)
-        RenderLeftPanel();
-
         // Right panel
         if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
             RenderPanelHeader();
@@ -174,7 +175,7 @@ public class ManagementMenuRenderer
                 _bodyViewer.RenderHoveredDetail(lastRow);
                 break;
             case ManagementTab.Inventory:
-                RenderInventoryPlaceholder();
+                _inventoryMenu.Render(GetPartyMember(_selectedCharacterIndex));
                 break;
             case ManagementTab.Journal:
                 RenderJournalPlaceholder();
@@ -186,6 +187,9 @@ public class ManagementMenuRenderer
                 _humorMenu.Render(GetPartyMember(_selectedCharacterIndex));
                 break;
         }
+
+        // Left panel (rendered AFTER all tab content so it overlays cleanly)
+        RenderLeftPanel();
 
         if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
             RenderFooter();
@@ -200,6 +204,9 @@ public class ManagementMenuRenderer
             // Re-render left panel on top after art redraw
             RenderLeftPanel();
         }
+
+        if (_activeTab == ManagementTab.Inventory && _inventoryMenu.Update())
+            Render();
     }
 
     /// <summary>Handle mouse hover at terminal coordinates.</summary>
@@ -235,6 +242,11 @@ public class ManagementMenuRenderer
             if (_humorMenu.ProcessHover(x, y))
                 changed = true;
         }
+        else if (_activeTab == ManagementTab.Inventory)
+        {
+            if (_inventoryMenu.ProcessHover(x, y))
+                changed = true;
+        }
 
         if (changed)
             Render();
@@ -268,6 +280,8 @@ public class ManagementMenuRenderer
                     _memoryPanel.ClearHover();
                 if (_activeTab != ManagementTab.Humors)
                     _humorMenu.ClearHover();
+                if (_activeTab != ManagementTab.Inventory)
+                    _inventoryMenu.ClearHover();
 
                 Render();
                 return;
@@ -296,12 +310,29 @@ public class ManagementMenuRenderer
             if (_memoryPanel.ProcessClick(x, y))
                 Render();
         }
+
+        // Inventory tab clicks
+        if (_activeTab == ManagementTab.Inventory)
+        {
+            if (_inventoryMenu.ProcessClick(x, y))
+                Render();
+        }
     }
 
     /// <summary>Handle right click (no special behavior in management mode).</summary>
     public void OnRightClick(int x, int y)
     {
         // Read-only mode — no score modification
+    }
+
+    /// <summary>Handle mouse-up (completes drag operations in the Inventory tab).</summary>
+    public void OnMouseUp(int x, int y)
+    {
+        if (_activeTab == ManagementTab.Inventory)
+        {
+            if (_inventoryMenu.ProcessMouseUp(x, y))
+                Render();
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════

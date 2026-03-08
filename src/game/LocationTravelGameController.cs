@@ -145,6 +145,7 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode == GameMode.ProtagonistManagement && _managementMenuRenderer != null)
         {
             _managementMenuRenderer.Update();
+            return; // Management mode owns the popup (e.g. inventory drag); skip UpdatePopupTerminal
         }
 
         // Update Phase 6 controller if active
@@ -239,6 +240,7 @@ public class LocationTravelGameController : IDisposable
             _core.Terminal.CellRightClicked += OnTerminalCellRightClicked;
             _core.Terminal.CellHovered += OnTerminalCellHovered;
             _core.Terminal.MouseLeft += OnTerminalMouseLeft;
+            _core.Terminal.CellMouseReleased += OnTerminalCellMouseReleased;
             
             Console.WriteLine("LocationTravelGameController: Terminal UI initialized");
         }
@@ -316,6 +318,17 @@ public class LocationTravelGameController : IDisposable
         if (_isInNarrativeMode && _narrativeController != null)
         {
             _narrativeController.OnRightClick(x, y);
+        }
+    }
+
+    /// <summary>
+    /// Handles mouse-up events for drag-and-drop in management inventory.
+    /// </summary>
+    private void OnTerminalCellMouseReleased(int x, int y)
+    {
+        if (_currentMode == GameMode.ProtagonistManagement && _managementMenuRenderer != null)
+        {
+            _managementMenuRenderer.OnMouseUp(x, y);
         }
     }
     

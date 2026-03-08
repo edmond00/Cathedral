@@ -24,6 +24,7 @@ namespace Cathedral.Terminal
         public event Action<int, int>? CellClicked;
         public event Action<int, int>? CellRightClicked;
         public event Action<int, int>? CellHovered;
+        public event Action<int, int>? CellMouseReleased;
         public event Action? MouseLeft;
 
         public TerminalHUD(int width, int height, int cellSize = 32, int fontPixelSize = 24)
@@ -41,6 +42,7 @@ namespace Cathedral.Terminal
             _inputHandler.CellClicked += OnCellClicked;
             _inputHandler.CellRightClicked += OnCellRightClicked;
             _inputHandler.CellHovered += OnCellHovered;
+            _inputHandler.CellMouseReleased += OnCellMouseReleased;
             _inputHandler.MouseLeft += OnMouseLeft;
             
             Console.WriteLine($"Terminal: HUD initialized - {width}x{height} grid");
@@ -424,6 +426,11 @@ namespace Cathedral.Terminal
         private void OnCellHovered(int x, int y)
         {
             CellHovered?.Invoke(x, y);
+        }
+
+        private void OnCellMouseReleased(int x, int y)
+        {
+            CellMouseReleased?.Invoke(x, y);
         }
 
         private void OnMouseLeft()
