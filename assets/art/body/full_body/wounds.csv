@@ -15,10 +15,6 @@ c,broken arm,left arm,high
 d,broken arm,right arm,high
 e,knee fracture,left leg,high
 f,knee fracture,right leg,high
-e,broken hand,left hand,low
-f,broken hand,right hand,low
-e,broken foot,left foot,low
-f,broken foot,right foot,low
 g,broken ribs,lungs,high
 h,foot amputee,left foot,high
 i,foot amputee,right foot,high
@@ -36,3 +32,7 @@ t,wrist fracture,left hand,low
 u,wrist fracture,right hand,low
 v,ankle fracture,left foot,low
 w,ankle fracture,right foot,low
+x,broken hand,left hand,low
+y,broken hand,right hand,low
+z,broken foot,left foot,low
+A,broken foot,right foot,low
