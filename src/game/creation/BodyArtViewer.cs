@@ -558,6 +558,9 @@ public class BodyArtViewer
 
     /// <summary>
     /// Renders the hovered organ detail section below the stats.
+    /// Split into three sections: organ-part stats, organ stats, body-part stats.
+    /// Any <see cref="DerivedStat"/> with a matching relation key is automatically shown
+    /// using <see cref="DerivedStat.ShortDisplayName"/> and <see cref="DerivedStat.FormatValue"/>.
     /// </summary>
     public void RenderHoveredDetail(int minRow)
     {
@@ -577,45 +580,91 @@ public class BodyArtViewer
             _terminal.Text(PanelContentX, row, $"Region: {opInfo.Value.bodyPartDisplayName}", Config.Colors.MediumGray60, Config.Colors.Black);
             row += 2;
 
-            string organId   = opInfo.Value.organName;
-            string bodyPartId = opInfo.Value.bodyPartId;
+            string organPartId      = opInfo.Value.partId;
+            string organId          = opInfo.Value.organName;
+            string organDisplayName = opInfo.Value.organDisplayName;
+            string bodyPartId       = opInfo.Value.bodyPartId;
+            string bodyPartDisplay  = opInfo.Value.bodyPartDisplayName;
+            bool singlePartOrgan    = organPartId == organId;
 
-            // ── Secretion stats — humoral organs only ─────────────────
-            if (HumoralOrganIds.Contains(organId))
+            // ── Section 1+2 merged (single-part organs) or split (multi-part) ─
+            if (singlePartOrgan)
             {
-                var secretionStats = _protagonist.DerivedStats
-                    .Where(s => s.RelatedOrganId == organId)
+                // Organ part and organ are the same — collect stats from both relations
+                var combined = _protagonist.DerivedStats
+                    .Where(s => s.RelatedOrganPartId == organPartId || s.RelatedOrganId == organId)
+                    .Distinct()
                     .ToList();
-                if (secretionStats.Count > 0)
+                if (combined.Count > 0)
                 {
-                    _terminal.Text(PanelContentX, row, "Secretion", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+                    bool isSecretion = HumoralOrganIds.Contains(organId);
+                    string header = isSecretion ? $"{organDisplayName} Secretion" : organDisplayName;
+                    _terminal.Text(PanelContentX, row, header, Config.Colors.DarkYellowGrey, Config.Colors.Black);
                     row++;
-                    foreach (var stat in secretionStats)
+                    foreach (var stat in combined)
                     {
                         int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
-                        string label = stat.DisplayName;
-                        int spaceIdx = label.IndexOf(' ');
-                        if (spaceIdx >= 0) label = label[(spaceIdx + 1)..];
-                        _terminal.Text(PanelContentX, row, $"  {label,-16}{val,3}%", Config.Colors.LightGray75, Config.Colors.Black);
+                        string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
+                        _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
+                        row++;
+                    }
+                    row++;
+                }
+            }
+            else
+            {
+                // Section 1: Organ Part stats
+                var organPartStats = _protagonist.DerivedStats
+                    .Where(s => s.RelatedOrganPartId == organPartId)
+                    .ToList();
+                if (organPartStats.Count > 0)
+                {
+                    _terminal.Text(PanelContentX, row, opInfo.Value.partDisplayName, Config.Colors.DarkYellowGrey, Config.Colors.Black);
+                    row++;
+                    foreach (var stat in organPartStats)
+                    {
+                        int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
+                        string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
+                        _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
+                        row++;
+                    }
+                    row++;
+                }
+
+                // Section 2: Organ stats
+                var organStats = _protagonist.DerivedStats
+                    .Where(s => s.RelatedOrganId == organId)
+                    .ToList();
+                if (organStats.Count > 0)
+                {
+                    bool isSecretion = HumoralOrganIds.Contains(organId);
+                    string header = isSecretion ? $"{organDisplayName} Secretion" : organDisplayName;
+                    _terminal.Text(PanelContentX, row, header, Config.Colors.DarkYellowGrey, Config.Colors.Black);
+                    row++;
+                    foreach (var stat in organStats)
+                    {
+                        int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
+                        string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
+                        _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
                         row++;
                     }
                     row++;
                 }
             }
 
-            // ── General derived stats — non-humoral organ-linked + body-part-linked ──
-            var generalStats = _protagonist.DerivedStats
-                .Where(s => (s.RelatedOrganId == organId   && !HumoralOrganIds.Contains(organId))
-                         || (s.RelatedBodyPartId == bodyPartId && s.RelatedBodyPartId != null))
+            // ── Section 3: Body Part stats ───────────────────────────────
+            var bodyPartStats = _protagonist.DerivedStats
+                .Where(s => s.RelatedBodyPartId == bodyPartId)
                 .ToList();
-            if (generalStats.Count > 0)
+            if (bodyPartStats.Count > 0)
             {
-                _terminal.Text(PanelContentX, row, "Stats", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+                _terminal.Text(PanelContentX, row, bodyPartDisplay, Config.Colors.DarkYellowGrey, Config.Colors.Black);
                 row++;
-                foreach (var stat in generalStats)
+                foreach (var stat in bodyPartStats)
                 {
                     int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
-                    _terminal.Text(PanelContentX, row, $"  {stat.DisplayName,-16}{val,4}", Config.Colors.LightGray75, Config.Colors.Black);
+                    string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
+                    _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
                     row++;
                 }
                 row++;

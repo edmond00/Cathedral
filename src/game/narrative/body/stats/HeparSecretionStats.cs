@@ -13,7 +13,7 @@ namespace Cathedral.Game.Narrative;
 //   Black    % = max(0, 50 - score * 5)
 //   Phlegm   % = 100 - other three         (always 13 %)
 
-public class HeparBloodSecretionStat : DerivedStat
+public class HeparBloodSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "hepar_blood_pct";
     public override string DisplayName => "Hepar Blood %";
@@ -22,7 +22,7 @@ public class HeparBloodSecretionStat : DerivedStat
         Math.Max(0, sourceScore * 8 - 3);
 }
 
-public class HeparPhlegmSecretionStat : DerivedStat
+public class HeparPhlegmSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "hepar_phlegm_pct";
     public override string DisplayName => "Hepar Phlegm %";
@@ -36,7 +36,7 @@ public class HeparPhlegmSecretionStat : DerivedStat
     }
 }
 
-public class HeparYellowBileSecretionStat : DerivedStat
+public class HeparYellowBileSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "hepar_yellow_bile_pct";
     public override string DisplayName => "Hepar Yellow Bile %";
@@ -45,7 +45,7 @@ public class HeparYellowBileSecretionStat : DerivedStat
         Math.Max(0, 40 - sourceScore * 3);
 }
 
-public class HeparBlackBileSecretionStat : DerivedStat
+public class HeparBlackBileSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "hepar_black_bile_pct";
     public override string DisplayName => "Hepar Black Bile %";

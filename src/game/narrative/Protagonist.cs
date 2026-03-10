@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Cathedral.Game.Narrative.Nodes.Debug;
+// using Cathedral.Game.Narrative.Nodes.Debug;
 
 namespace Cathedral.Game.Narrative;
 
@@ -40,28 +40,28 @@ public class Protagonist : PartyMember
     /// </summary>
     private void InitializeTestEquipment()
     {
-        // --- Build a flask and fill it with spring water ---
-        var flask = new DebugInventoryNode.GlassFlask();
-        flask.TryAdd(new DebugInventoryNode.SpringWater());
+        // // --- Build a flask and fill it with spring water ---
+        // var flask = new DebugInventoryNode.GlassFlask();
+        // flask.TryAdd(new DebugInventoryNode.SpringWater());
 
-        // --- Build a pouch with red wine bottle inside, then put pouch in the backpack ---
-        var pouch = new DebugInventoryNode.LeatherPouch();
-        var wineBottle = new DebugInventoryNode.GlassFlask();
-        wineBottle.TryAdd(new DebugInventoryNode.RedWine());
-        pouch.TryAdd(wineBottle);
+        // // --- Build a pouch with red wine bottle inside, then put pouch in the backpack ---
+        // var pouch = new DebugInventoryNode.LeatherPouch();
+        // var wineBottle = new DebugInventoryNode.GlassFlask();
+        // wineBottle.TryAdd(new DebugInventoryNode.RedWine());
+        // pouch.TryAdd(wineBottle);
 
-        var backpack = new DebugInventoryNode.TestBackpack();
-        backpack.TryAdd(pouch);
+        // var backpack = new DebugInventoryNode.TestBackpack();
+        // backpack.TryAdd(pouch);
 
-        // --- Equip items directly at their preferred anchors ---
-        Equip(EquipmentAnchor.Headgear,  new DebugInventoryNode.LeatherCap());
-        Equip(EquipmentAnchor.Outerwear, new DebugInventoryNode.WoolenCloak());
-        Equip(EquipmentAnchor.Bodywear,  new DebugInventoryNode.LinenShirt());
-        // Footwear holds both socks (Small=3) and boots (Small=3) → uses full 6-slot capacity
-        Equip(EquipmentAnchor.Footwear,  new DebugInventoryNode.WoolSocks());
-        Equip(EquipmentAnchor.Footwear,  new DebugInventoryNode.LeatherBoots());
-        Equip(EquipmentAnchor.RightHold, new DebugInventoryNode.IronDagger());
-        Equip(EquipmentAnchor.LeftHold,  flask);
-        Equip(EquipmentAnchor.BeltGear,  backpack);
+        // // --- Equip items directly at their preferred anchors ---
+        // Equip(EquipmentAnchor.Headgear,  new DebugInventoryNode.LeatherCap());
+        // Equip(EquipmentAnchor.Outerwear, new DebugInventoryNode.WoolenCloak());
+        // Equip(EquipmentAnchor.Bodywear,  new DebugInventoryNode.LinenShirt());
+        // // Footwear holds both socks (Small=3) and boots (Small=3) → uses full 6-slot capacity
+        // Equip(EquipmentAnchor.Footwear,  new DebugInventoryNode.WoolSocks());
+        // Equip(EquipmentAnchor.Footwear,  new DebugInventoryNode.LeatherBoots());
+        // Equip(EquipmentAnchor.RightHold, new DebugInventoryNode.IronDagger());
+        // Equip(EquipmentAnchor.LeftHold,  flask);
+        // Equip(EquipmentAnchor.BeltGear,  backpack);
     }
 }

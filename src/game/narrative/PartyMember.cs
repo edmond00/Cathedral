@@ -172,15 +172,12 @@ public abstract class PartyMember
 
     private static List<DerivedStat> InitializeDerivedStats() => new()
     {
-        new PerceptionStat(),
-        new EnduranceStat(),
-        new EncephalonStat(),    // drives Working Memory slot count
-        new DexterityStat(),
-        new WillpowerStat(),
-        new CerebellumStat(),   // drives Procedural Memory slot count
-        new CerebrumStat(),     // drives Semantic Memory slot count
-        new HippocampusStat(),  // drives Sensory Memory slot count
-        new AnamnesisStat(),    // drives Residual Memory slot count
+        // Memory capacity stats (drive memory module slot counts)
+        new WorkingMemoryCapacityStat(),    // drives Working Memory slot count
+        new ProceduralMemoryCapacityStat(), // drives Procedural Memory slot count
+        new SemanticMemoryCapacityStat(),   // drives Semantic Memory slot count
+        new SensoryMemoryCapacityStat(),    // drives Sensory Memory slot count
+        new ResidualMemoryCapacityStat(),   // drives Residual Memory slot count
         // Secretion percentage stats (displayed in Humors tab)
         new HeparBloodSecretionStat(),       new HeparPhlegmSecretionStat(),
         new HeparYellowBileSecretionStat(),  new HeparBlackBileSecretionStat(),
@@ -217,11 +214,11 @@ public abstract class PartyMember
     /// </summary>
     public void InitializeMemory()
     {
-        int WorkingCap   = Math.Clamp(GetMemoryStat("encephalon_capacity"), 1, 20);
-        int ProceduralCap= Math.Clamp(GetMemoryStat("cerebellum_capacity"), 1, 20);
-        int SemanticCap  = Math.Clamp(GetMemoryStat("cerebrum_capacity"),   1, 20);
-        int SensoryCap   = Math.Clamp(GetMemoryStat("hippocampus_capacity"),1, 20);
-        int ResidualCap  = Math.Clamp(GetMemoryStat("anamnesis_capacity"),  1, 20);
+        int WorkingCap   = Math.Clamp(GetMemoryStat("working_memory_capacity"),    1, 20);
+        int ProceduralCap= Math.Clamp(GetMemoryStat("procedural_memory_capacity"), 1, 20);
+        int SemanticCap  = Math.Clamp(GetMemoryStat("semantic_memory_capacity"),   1, 20);
+        int SensoryCap   = Math.Clamp(GetMemoryStat("sensory_memory_capacity"),    1, 20);
+        int ResidualCap  = Math.Clamp(GetMemoryStat("residual_memory_capacity"),   1, 20);
 
         MemoryModules = new List<MemoryModule>
         {

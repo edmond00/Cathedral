@@ -5,7 +5,7 @@ namespace Cathedral.Game.Narrative;
 // Paunch (stomach) secretion-percentage derived stats
 // ─────────────────────────────────────────────────────────────────────────────
 
-public class PaunchBloodSecretionStat : DerivedStat
+public class PaunchBloodSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "paunch_blood_pct";
     public override string DisplayName => "Paunch Blood %";
@@ -14,7 +14,7 @@ public class PaunchBloodSecretionStat : DerivedStat
         Math.Max(0, sourceScore * 8 - 3);
 }
 
-public class PaunchPhlegmSecretionStat : DerivedStat
+public class PaunchPhlegmSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "paunch_phlegm_pct";
     public override string DisplayName => "Paunch Phlegm %";
@@ -28,7 +28,7 @@ public class PaunchPhlegmSecretionStat : DerivedStat
     }
 }
 
-public class PaunchYellowBileSecretionStat : DerivedStat
+public class PaunchYellowBileSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "paunch_yellow_bile_pct";
     public override string DisplayName => "Paunch Yellow Bile %";
@@ -37,7 +37,7 @@ public class PaunchYellowBileSecretionStat : DerivedStat
         Math.Max(0, 40 - sourceScore * 3);
 }
 
-public class PaunchBlackBileSecretionStat : DerivedStat
+public class PaunchBlackBileSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "paunch_black_bile_pct";
     public override string DisplayName => "Paunch Black Bile %";

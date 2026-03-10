@@ -8,7 +8,7 @@ namespace Cathedral.Game.Narrative;
 // it is produced only via specific narrative event triggers (HumorQueueSet.ProduceHumor).
 // No Melancholia secretion stat is defined here.
 
-public class SpleenBloodSecretionStat : DerivedStat
+public class SpleenBloodSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "spleen_blood_pct";
     public override string DisplayName => "Spleen Blood %";
@@ -17,7 +17,7 @@ public class SpleenBloodSecretionStat : DerivedStat
         Math.Max(0, sourceScore * 8 - 3);
 }
 
-public class SpleenPhlegmSecretionStat : DerivedStat
+public class SpleenPhlegmSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "spleen_phlegm_pct";
     public override string DisplayName => "Spleen Phlegm %";
@@ -31,7 +31,7 @@ public class SpleenPhlegmSecretionStat : DerivedStat
     }
 }
 
-public class SpleenYellowBileSecretionStat : DerivedStat
+public class SpleenYellowBileSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "spleen_yellow_bile_pct";
     public override string DisplayName => "Spleen Yellow Bile %";
@@ -40,7 +40,7 @@ public class SpleenYellowBileSecretionStat : DerivedStat
         Math.Max(0, 40 - sourceScore * 3);
 }
 
-public class SpleenBlackBileSecretionStat : DerivedStat
+public class SpleenBlackBileSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "spleen_black_bile_pct";
     public override string DisplayName => "Spleen Black Bile %";

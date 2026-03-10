@@ -5,7 +5,7 @@ namespace Cathedral.Game.Narrative;
 // Pulmones (lungs) secretion-percentage derived stats
 // ─────────────────────────────────────────────────────────────────────────────
 
-public class PulmonesBloodSecretionStat : DerivedStat
+public class PulmonesBloodSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "pulmones_blood_pct";
     public override string DisplayName => "Pulmones Blood %";
@@ -14,7 +14,7 @@ public class PulmonesBloodSecretionStat : DerivedStat
         Math.Max(0, sourceScore * 8 - 3);
 }
 
-public class PulmonesPhlegmSecretionStat : DerivedStat
+public class PulmonesPhlegmSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "pulmones_phlegm_pct";
     public override string DisplayName => "Pulmones Phlegm %";
@@ -28,7 +28,7 @@ public class PulmonesPhlegmSecretionStat : DerivedStat
     }
 }
 
-public class PulmonesYellowBileSecretionStat : DerivedStat
+public class PulmonesYellowBileSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "pulmones_yellow_bile_pct";
     public override string DisplayName => "Pulmones Yellow Bile %";
@@ -37,7 +37,7 @@ public class PulmonesYellowBileSecretionStat : DerivedStat
         Math.Max(0, 40 - sourceScore * 3);
 }
 
-public class PulmonesBlackBileSecretionStat : DerivedStat
+public class PulmonesBlackBileSecretionStat : HumoralSecretionStat
 {
     public override string Name        => "pulmones_black_bile_pct";
     public override string DisplayName => "Pulmones Black Bile %";
