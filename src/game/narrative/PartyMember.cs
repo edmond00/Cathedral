@@ -51,6 +51,10 @@ public abstract class PartyMember
     /// </summary>
     public Dictionary<EquipmentAnchor, List<Item>> EquippedItems { get; private set; }
 
+    // ── Wounds ───────────────────────────────────────────────────
+    /// <summary>Active wounds currently affecting this party member.</summary>
+    public List<Wound> Wounds { get; private set; } = new();
+
     // ── Display name (subclasses define this differently) ────────
     /// <summary>Human-readable name shown in the party panel.</summary>
     public abstract string DisplayName { get; }
@@ -65,6 +69,7 @@ public abstract class PartyMember
         LearnedSkills = Skills; // same reference
         Inventory = new List<Item>();
         MemoryModules = new List<MemoryModule>(); // populated after skills are assigned via InitializeMemory()
+        Wounds = InitializeDebugWounds();
 
         // Initialise all 13 anchor slots to empty lists
         EquippedItems = new Dictionary<EquipmentAnchor, List<Item>>();
@@ -234,7 +239,7 @@ public abstract class PartyMember
     {
         var stat = DerivedStats.FirstOrDefault(s => s.Name == name);
         if (stat == null) return 1;
-        return stat.CalculateValue(stat.GetSourceScore(this));
+        return stat.GetValue(this);
     }
 
     /// <summary>
@@ -292,5 +297,54 @@ public abstract class PartyMember
     {
         if (skill.Organs.Length == 0) return 0;
         return GetOrganById(skill.Organs[0])?.Score ?? 0;
+    }
+
+    // ── Wound helpers ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Return all wounds that affect the given organ part (directly or via its organ/body part).
+    /// </summary>
+    public List<Wound> GetWoundsForOrganPart(string organPartId, string organId, string bodyPartId) =>
+        Wounds.Where(w => w.AffectsOrganPart(organPartId, organId, bodyPartId)).ToList();
+
+    /// <summary>
+    /// Return all wounds that affect any organ part belonging to the given body part.
+    /// </summary>
+    public List<Wound> GetWoundsForBodyPart(string bodyPartId) =>
+        Wounds.Where(w => w.AffectsBodyPart(bodyPartId)
+                       || _bodyParts.FirstOrDefault(bp => bp.Id == bodyPartId)?.Organs
+                              .Any(o => w.AffectsOrgan(o.Id, bodyPartId)) == true
+                       || _bodyParts.FirstOrDefault(bp => bp.Id == bodyPartId)?.Organs
+                              .SelectMany(o => o.Parts).Any(p => w.AffectsOrganPart(p.Id, p.Id, bodyPartId)) == true)
+        .Distinct().ToList();
+
+    /// <summary>
+    /// Effective score of an organ part after applying wounds.
+    /// High-handicap wounds disable the part (returns int.MinValue to signal disabled).
+    /// Low-handicap wounds apply −1 each.
+    /// </summary>
+    public int GetEffectiveScore(OrganPart part, Organ organ, BodyPart bp)
+    {
+        var wounds = GetWoundsForOrganPart(part.Id, organ.Id, bp.Id);
+        if (wounds.Any(w => w.Handicap == WoundHandicap.High))
+            return int.MinValue; // disabled
+        int penalty = wounds.Count(w => w.Handicap == WoundHandicap.Low);
+        return part.Score - penalty;
+    }
+
+    /// <summary>
+    /// Returns true if any wound fully disables the given organ part (or its parent organ/body part).
+    /// </summary>
+    public bool IsOrganPartDisabled(string organPartId, string organId, string bodyPartId) =>
+        Wounds.Any(w => w.AffectsOrganPart(organPartId, organId, bodyPartId)
+                     && w.Handicap == WoundHandicap.High);
+
+    // ── Debug wound initialisation ────────────────────────────────
+    private static List<Wound> InitializeDebugWounds()
+    {
+        var all = WoundRegistry.All.Values.ToList();
+        var rng = new Random();
+        int count = rng.Next(2, 6);
+        return all.OrderBy(_ => rng.Next()).Take(count).ToList();
     }
 }

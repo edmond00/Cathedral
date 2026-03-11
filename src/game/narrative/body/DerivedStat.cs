@@ -43,37 +43,116 @@ public abstract class DerivedStat
     public virtual string FormatValue(int value) => value.ToString();
 
     /// <summary>
-    /// Get the source score from a party member's data.
-    /// Checks organ part → organ → body part in order of specificity.
+    /// Convert a negative source score (due to low-handicap wounds) into the stat value.
+    /// Default: clamps to 0. Override for stats that can meaningfully go negative.
     /// </summary>
-    public int GetSourceScore(PartyMember protagonist)
+    public virtual int CalculateValueNegative(int sourceScore) => 0;
+
+    /// <summary>
+    /// Stat value when the source organ/body part is fully disabled by a high-handicap wound.
+    /// Default: 0.
+    /// </summary>
+    public virtual int CalculateValueDisabled() => 0;
+
+    /// <summary>
+    /// Get the raw (unmodified by wounds) source score.
+    /// </summary>
+    public int GetSourceScore(PartyMember member)
     {
         if (RelatedOrganPartId != null)
         {
-            var part = protagonist.GetOrganPartById(RelatedOrganPartId);
+            var part = member.GetOrganPartById(RelatedOrganPartId);
             return part?.Score ?? 0;
         }
         if (RelatedOrganId != null)
         {
-            var organ = protagonist.GetOrganById(RelatedOrganId);
+            var organ = member.GetOrganById(RelatedOrganId);
             return organ?.Score ?? 0;
         }
         if (RelatedBodyPartId != null)
         {
-            var bodyPart = protagonist.GetBodyPartById(RelatedBodyPartId);
+            var bodyPart = member.GetBodyPartById(RelatedBodyPartId);
             return bodyPart?.Score ?? 0;
         }
         return 0;
     }
 
     /// <summary>
-    /// Convert the source score into the derived stat value.
+    /// Get effective score, taking wounds into account.
+    /// Returns int.MinValue if the source is disabled by a high-handicap wound.
+    /// </summary>
+    public int GetEffectiveScore(PartyMember member)
+    {
+        // Determine the organ part / organ / body part this stat relates to
+        string? organPartId = RelatedOrganPartId;
+        string? organId     = RelatedOrganId;
+        string? bodyPartId  = RelatedBodyPartId;
+
+        // Resolve all three IDs from whichever relation key is set
+        if (organPartId != null)
+        {
+            foreach (var bp in member.BodyParts)
+                foreach (var organ in bp.Organs)
+                    foreach (var part in organ.Parts)
+                        if (part.Id == organPartId)
+                        {
+                            organId    ??= organ.Id;
+                            bodyPartId ??= bp.Id;
+                        }
+        }
+        else if (organId != null)
+        {
+            foreach (var bp in member.BodyParts)
+                foreach (var organ in bp.Organs)
+                    if (organ.Id == organId)
+                        bodyPartId ??= bp.Id;
+        }
+
+        // Check for disabling wounds
+        bool disabled = member.Wounds.Any(w =>
+            (organPartId != null && w.AffectsOrganPart(organPartId, organId ?? "", bodyPartId ?? "")
+                                 && w.Handicap == WoundHandicap.High)
+         || (organId    != null && organPartId == null
+                                 && w.AffectsOrgan(organId, bodyPartId ?? "")
+                                 && w.Handicap == WoundHandicap.High)
+         || (bodyPartId != null && organId == null && organPartId == null
+                                 && w.AffectsBodyPart(bodyPartId)
+                                 && w.Handicap == WoundHandicap.High));
+
+        if (disabled) return int.MinValue;
+
+        int rawScore = GetSourceScore(member);
+
+        // Penalty from low-handicap wounds
+        int penalty = member.Wounds.Count(w =>
+            (organPartId != null && w.AffectsOrganPart(organPartId, organId ?? "", bodyPartId ?? "")
+                                 && w.Handicap == WoundHandicap.Low)
+         || (organId    != null && organPartId == null
+                                 && w.AffectsOrgan(organId, bodyPartId ?? "")
+                                 && w.Handicap == WoundHandicap.Low)
+         || (bodyPartId != null && organId == null && organPartId == null
+                                 && w.AffectsBodyPart(bodyPartId)
+                                 && w.Handicap == WoundHandicap.Low));
+
+        return rawScore - penalty;
+    }
+
+    /// <summary>
+    /// Convert the source score into the derived stat value (score >= 0 path).
     /// Each subclass implements its own formula.
     /// </summary>
     public abstract int CalculateValue(int sourceScore);
 
     /// <summary>
-    /// Get the final computed value of this derived stat for the given party member.
+    /// Get the final computed value of this derived stat for the given party member,
+    /// taking wounds into account.
     /// </summary>
-    public int GetValue(PartyMember member) => CalculateValue(GetSourceScore(member));
+    public int GetValue(PartyMember member)
+    {
+        int effective = GetEffectiveScore(member);
+        if (effective == int.MinValue) return CalculateValueDisabled();
+        if (effective < 0)             return CalculateValueNegative(effective);
+        return CalculateValue(effective);
+    }
 }
+

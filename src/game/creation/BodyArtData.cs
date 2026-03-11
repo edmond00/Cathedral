@@ -45,6 +45,7 @@ public class BodyArtData
     public Dictionary<int, Vector4> LayerColors { get; private set; } = null!;
     public Dictionary<char, OrganPartInfo> OrganPartInfos { get; private set; } = null!;
     public Dictionary<int, string> PartIndexToName { get; private set; } = null!;
+    public Dictionary<char, List<(int x, int y)>> WoundPositions { get; private set; } = new();
 
     // Mapping from 7 part-index names to 5 BodyPart.Id values
     private static readonly Dictionary<string, string> PartNameToBodyPartId = new()
@@ -176,6 +177,10 @@ public class BodyArtData
         }
 
         Console.WriteLine($"BodyArtData: Loaded {data.Width}x{data.Height} art, {data.LayerColors.Count} layers, {data.OrganPartInfos.Count} organ parts");
+
+        // Load wound glyph positions from wounds.txt (optional — silently skip if absent)
+        data.WoundPositions = Cathedral.Game.Narrative.WoundRegistry.LoadWoundPositions(folderPath);
+
         return data;
     }
 
