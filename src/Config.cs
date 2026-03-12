@@ -317,10 +317,6 @@ public static class Config
     
     public static class LocationUI
     {
-        // Terminal dimensions
-        public const int TerminalWidth = 100;
-        public const int TerminalHeight = 30;
-        
         // Layout constants
         public const int HeaderHeight = 3;
         public const int StatusBarHeight = 1;

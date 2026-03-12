@@ -19,7 +19,7 @@ GameMode.WorldView → GameMode.Traveling → GameMode.NarrativeCOT
 - **NarrativeCOT**: Observation → Thinking → Action phases with LLM-generated content
 
 ### Terminal System (Core UI)
-- **TerminalHUD**: Main 100x30 character display with OpenGL instanced rendering
+- **TerminalHUD**: Main 100x100 character display with OpenGL instanced rendering
 - **PopupTerminalHUD**: 40x40 mouse-following overlay for menus
 - All UI uses **Vector4 colors** from `Config.Colors` - never OpenTK.Color4
 - Text rendering via **glyph atlas system**, not immediate mode

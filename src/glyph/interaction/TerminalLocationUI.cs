@@ -60,11 +60,6 @@ namespace Cathedral.Glyph.Interaction
         }
         
         /// <summary>
-        /// Gets the default dimensions from Config (for reference, not enforced)
-        /// </summary>
-        public static (int width, int height) GetDefaultDimensions() => (Config.LocationUI.TerminalWidth, Config.LocationUI.TerminalHeight);
-        
-        /// <summary>
         /// Clears the entire terminal
         /// </summary>
         public void Clear()
