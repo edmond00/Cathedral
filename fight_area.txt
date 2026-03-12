@@ -20,3 +20,4 @@ An exit should aways be put around the bottom center of the area.
 You need to be sure the area was no deadend, it should ne possible to go from each movable tiles (not hard obstacle) to the exit tile.
 The A* functions can be used to check it if needed.
 A space of round 3*10 dimensions on both the top center and top bottom should be reserved to put the player party member and ennemies, so it should not contains obstacle.
+Do not integrate the area generators yet. Just add a new option for testing them in the Program, where you can with args chosse a mode and its settings, then the generator is called once and its map is displayed at the center of the terminal renderer.

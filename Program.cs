@@ -1,6 +1,27 @@
 ﻿using Cathedral.LLM;
 using Cathedral.Game;
 
+// Check for fight area generator test mode
+if (args.Length >= 1 && args[0] == "--fight-area")
+{
+    string mode = "random";
+    var modeArgs = new System.Collections.Generic.Dictionary<string, string>();
+    for (int i = 1; i < args.Length; i++)
+    {
+        if (args[i] == "--mode" && i + 1 < args.Length)
+        {
+            mode = args[++i];
+        }
+        else if (args[i].StartsWith("--") && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        {
+            string key = args[i][2..]; // strip "--"
+            modeArgs[key] = args[++i];
+        }
+    }
+    Cathedral.Fight.FightAreaTestLauncher.Launch(mode, modeArgs);
+    return;
+}
+
 // Check for draw mode (display previously saved layered ASCII art)
 if (args.Length >= 2 && args[0] == "--draw")
 {
