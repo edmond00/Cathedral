@@ -514,6 +514,7 @@ public class BodyArtViewer
         {
             bool isHoveredBP = _hoveredWoundId == null && bp.Id == _hoveredBodyPartId;
             bool bpHasWounds = _protagonist.Wounds.Any(w =>
+                w.AffectsBodyPart(bp.Id) ||
                 bp.Organs.Any(o => o.Parts.Any(p => w.AffectsOrganPart(p.Id, o.Id, bp.Id))));
             Vector4 headerColor, headerBg, headerScoreColor;
             if (isHoveredBP)

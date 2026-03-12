@@ -37,6 +37,9 @@ public static class WoundRegistry
         Add(new FootAmputeeLeftWound());      Add(new FootAmputeeRightWound());
         Add(new AnkleFractureLeftWound());    Add(new AnkleFractureRightWound());
         Add(new BrokenFootLeftWound());       Add(new BrokenFootRightWound());
+        Add(new ContusionLeftLegWound());     Add(new ContusionRightLegWound());
+        Add(new ContusionLeftArmWound());     Add(new ContusionRightArmWound());
+        Add(new ScarWound());
         return dict;
     }
 

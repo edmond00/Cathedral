@@ -201,6 +201,8 @@ public class ManagementMenuRenderer
         if (_activeTab == ManagementTab.Body && _bodyViewer.UpdateBlink())
         {
             _bodyViewer.RenderBodyArt();
+            int lastRow = _bodyViewer.RenderOrganStats();
+            _bodyViewer.RenderHoveredDetail(lastRow);
             // Re-render left panel on top after art redraw
             RenderLeftPanel();
         }

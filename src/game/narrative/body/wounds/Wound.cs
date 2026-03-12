@@ -46,13 +46,14 @@ public abstract class Wound
     /// </summary>
     public abstract string TargetId { get; }
 
-    /// <summary>Returns true if the given organ part is directly or transitively affected by this wound.</summary>
+    /// <summary>Returns true if the given organ part is directly or transitively affected by this wound.
+    /// Note: BodyPart-targeted wounds do NOT cascade down to organs/organ-parts.</summary>
     public bool AffectsOrganPart(string organPartId, string organId, string bodyPartId) =>
         TargetKind switch
         {
             WoundTargetKind.OrganPart => TargetId == organPartId,
             WoundTargetKind.Organ     => TargetId == organId,
-            WoundTargetKind.BodyPart  => TargetId == bodyPartId,
+            WoundTargetKind.BodyPart  => false,   // body-part wounds don't cascade to organs
             _                         => false
         };
 

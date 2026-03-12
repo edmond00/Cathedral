@@ -36,3 +36,8 @@ x,broken hand,left hand,low
 y,broken hand,right hand,low
 z,broken foot,left foot,low
 A,broken foot,right foot,low
+B,scar,visage,low
+C,contusion,left leg,low
+D,contusion,right leg,low
+E,contusion,left arm,low
+F,contusion,right arm,low

@@ -520,6 +520,8 @@ public static class Config
     {
         public static readonly Dictionary<char, float> Factors = new()
         {
+            { '∅', 1.5f },
+
             // Dice faces - make them 30% larger
             { '⚀', 2f },
             { '⚁', 2f },

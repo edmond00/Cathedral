@@ -92,6 +92,15 @@ public sealed class DisfiguredWound : Wound
     public override string TargetId => "visage";
 }
 
+public sealed class ScarWound : Wound
+{
+    public override char WoundId => 'B';
+    public override string WoundName => "Scar";
+    public override WoundHandicap Handicap => WoundHandicap.Low;
+    public override WoundTargetKind TargetKind => WoundTargetKind.BodyPart;
+    public override string TargetId => "visage";
+}
+
 // ─── Encephalon ───────────────────────────────────────────────────────────
 
 public sealed class SkullFractureWound : Wound
@@ -193,6 +202,24 @@ public sealed class ShoulderDislocationRightWound : Wound
 {
     public override char WoundId => 'o';
     public override string WoundName => "Shoulder Dislocation";
+    public override WoundHandicap Handicap => WoundHandicap.Low;
+    public override WoundTargetKind TargetKind => WoundTargetKind.OrganPart;
+    public override string TargetId => "right_arm";
+}
+
+public sealed class ContusionLeftArmWound : Wound
+{
+    public override char WoundId => 'E';
+    public override string WoundName => "Contusion";
+    public override WoundHandicap Handicap => WoundHandicap.Low;
+    public override WoundTargetKind TargetKind => WoundTargetKind.OrganPart;
+    public override string TargetId => "left_arm";
+}
+
+public sealed class ContusionRightArmWound : Wound
+{
+    public override char WoundId => 'F';
+    public override string WoundName => "Contusion";
     public override WoundHandicap Handicap => WoundHandicap.Low;
     public override WoundTargetKind TargetKind => WoundTargetKind.OrganPart;
     public override string TargetId => "right_arm";
@@ -342,4 +369,22 @@ public sealed class BrokenFootRightWound : Wound
     public override WoundHandicap Handicap => WoundHandicap.Low;
     public override WoundTargetKind TargetKind => WoundTargetKind.OrganPart;
     public override string TargetId => "right_foot";
+}
+
+public sealed class ContusionLeftLegWound : Wound
+{
+    public override char WoundId => 'C';
+    public override string WoundName => "Contusion";
+    public override WoundHandicap Handicap => WoundHandicap.Low;
+    public override WoundTargetKind TargetKind => WoundTargetKind.OrganPart;
+    public override string TargetId => "left_leg";
+}
+
+public sealed class ContusionRightLegWound : Wound
+{
+    public override char WoundId => 'D';
+    public override string WoundName => "Contusion";
+    public override WoundHandicap Handicap => WoundHandicap.Low;
+    public override WoundTargetKind TargetKind => WoundTargetKind.OrganPart;
+    public override string TargetId => "right_leg";
 }
