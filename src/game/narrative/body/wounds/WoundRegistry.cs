@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Cathedral.Game.Narrative;
@@ -12,6 +13,10 @@ public static class WoundRegistry
 {
     /// <summary>Every defined wound type, keyed by their single-char id.</summary>
     public static readonly Dictionary<char, Wound> All = BuildRegistry();
+
+    /// <summary>All wildcard (Low handicap) wound templates.</summary>
+    public static readonly IReadOnlyList<WildcardWound> WildcardTemplates =
+        All.Values.OfType<WildcardWound>().ToList();
 
     private static Dictionary<char, Wound> BuildRegistry()
     {
@@ -37,8 +42,10 @@ public static class WoundRegistry
         Add(new FootAmputeeLeftWound());      Add(new FootAmputeeRightWound());
         Add(new AnkleFractureLeftWound());    Add(new AnkleFractureRightWound());
         Add(new BrokenFootLeftWound());       Add(new BrokenFootRightWound());
-        Add(new ContusionLeftLegWound());     Add(new ContusionRightLegWound());
-        Add(new ContusionLeftArmWound());     Add(new ContusionRightArmWound());
+        // Wildcard wounds (Low handicap: -1 HP only)
+        Add(new ContusionWound());
+        Add(new CutWound());
+        Add(new PunctureWound());
         Add(new ScarWound());
         return dict;
     }

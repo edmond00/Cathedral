@@ -154,10 +154,12 @@ public class ManagementMenuRenderer
         // Body art (only on Body tab)
         if (_activeTab == ManagementTab.Body)
         {
+            _bodyViewer.ShowWounds = true;
             _bodyViewer.RenderBodyArt();
         }
         else if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
         {
+            _bodyViewer.ShowWounds = false;
             // Draw separator on non-body, non-memory, non-humors tabs
             int sepX = BodyArtViewer.PanelX - 1;
             for (int y = 0; y < 100; y++)
@@ -200,6 +202,7 @@ public class ManagementMenuRenderer
     {
         if (_activeTab == ManagementTab.Body && _bodyViewer.UpdateBlink())
         {
+            _bodyViewer.ShowWounds = true;
             _bodyViewer.RenderBodyArt();
             int lastRow = _bodyViewer.RenderOrganStats();
             _bodyViewer.RenderHoveredDetail(lastRow);

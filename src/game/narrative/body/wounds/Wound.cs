@@ -5,8 +5,10 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public enum WoundHandicap
 {
-    /// <summary>Applies −1 to the organ/body part score (negative values are possible).</summary>
+    /// <summary>No organ/stat penalty — only costs 1 HP. Used for generic wounds (contusion, cut, puncture).</summary>
     Low,
+    /// <summary>Applies −1 to the organ/body part score (negative values are possible).</summary>
+    Medium,
     /// <summary>Completely disables the organ/body part (score treated as 0, stat uses disabled formula).</summary>
     High
 }
@@ -16,9 +18,12 @@ public enum WoundHandicap
 /// </summary>
 public enum WoundTargetKind
 {
+    /// <summary>Targets a specific organ part, organ, or body part.</summary>
     OrganPart,
     Organ,
-    BodyPart
+    BodyPart,
+    /// <summary>Generic / wildcard wound — no fixed target, no organ penalty, -1 HP only.</summary>
+    Wildcard
 }
 
 /// <summary>
@@ -43,17 +48,29 @@ public abstract class Wound
     /// <summary>
     /// ID of the affected target. Matches organ part id, organ id, or body part id
     /// as used in the body hierarchy (e.g. "left_eye", "eyes", "visage").
+    /// Empty string for Wildcard wounds.
     /// </summary>
     public abstract string TargetId { get; }
 
+    /// <summary>
+    /// Art X coordinate for wildcard wounds placed on the body ASCII art.
+    /// Null for wounds whose positions come from wounds.txt.
+    /// </summary>
+    public int? ArtX { get; set; }
+
+    /// <summary>Art Y coordinate for wildcard wounds placed on the body ASCII art.</summary>
+    public int? ArtY { get; set; }
+
     /// <summary>Returns true if the given organ part is directly or transitively affected by this wound.
-    /// Note: BodyPart-targeted wounds do NOT cascade down to organs/organ-parts.</summary>
+    /// Note: BodyPart-targeted wounds do NOT cascade down to organs/organ-parts.
+    /// Wildcard (Low handicap) wounds never affect organs.</summary>
     public bool AffectsOrganPart(string organPartId, string organId, string bodyPartId) =>
         TargetKind switch
         {
             WoundTargetKind.OrganPart => TargetId == organPartId,
             WoundTargetKind.Organ     => TargetId == organId,
             WoundTargetKind.BodyPart  => false,   // body-part wounds don't cascade to organs
+            WoundTargetKind.Wildcard  => false,   // low wounds have no organ effect
             _                         => false
         };
 
@@ -72,7 +89,10 @@ public abstract class Wound
 
     /// <summary>Short description shown in the hover detail panel.</summary>
     public virtual string Description =>
-        Handicap == WoundHandicap.High
-            ? $"{WoundName} — disables {TargetId.Replace('_', ' ')}"
-            : $"{WoundName} — −1 to {TargetId.Replace('_', ' ')}";
+        Handicap switch
+        {
+            WoundHandicap.High    => $"{WoundName} — disables {TargetId.Replace('_', ' ')}",
+            WoundHandicap.Medium  => $"{WoundName} — −1 to {TargetId.Replace('_', ' ')}",
+            _                     => $"{WoundName} — −1 HP"
+        };
 }

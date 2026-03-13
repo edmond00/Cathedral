@@ -40,6 +40,9 @@ public class BodyArtViewer
     /// <summary>Row where organ-stat rows begin.</summary>
     public int StatsStartRow { get; set; } = 6;
 
+    /// <summary>When true, wound glyphs and HP bar are rendered (body submenu only).</summary>
+    public bool ShowWounds { get; set; } = false;
+
     /// <summary>When true, ◄/► arrows are rendered next to each score for editing.</summary>
     public bool ShowScoreEditControls { get; set; } = false;
 
@@ -57,6 +60,7 @@ public class BodyArtViewer
     private string? _hoveredRawPartName;    /// <summary>-1 when hovering the ◄ button, +1 when hovering the ► button, 0 otherwise.</summary>
     private int _hoveredArrowDelta = 0;
     private char? _hoveredWoundId;          // set when mouse is precisely on a wound ∅ glyph
+    private Wound? _hoveredWoundInstance;  // specific wound instance being hovered (used for wildcard position)
     // ── Blink state ──────────────────────────────────────────────
     private readonly Stopwatch _blinkStopwatch = Stopwatch.StartNew();
     private double _lastBlinkTime;
@@ -225,24 +229,25 @@ public class BodyArtViewer
         }
         changed = changed || newArrowDelta != _hoveredArrowDelta;
 
-        // Check if hovering precisely on a wound glyph
+        // Check if hovering precisely on a wound glyph (only when ShowWounds is active)
         char? newWoundId = null;
-        if (artX >= 0 && artX < _artData.Width && artY >= 0 && artY < _artData.Height)
+        Wound? newWoundInstance = null;
+        if (ShowWounds && artX >= 0 && artX < _artData.Width && artY >= 0 && artY < _artData.Height)
         {
             foreach (var wound in _protagonist.Wounds)
             {
-                if (_artData.WoundPositions.TryGetValue(wound.WoundId, out var positions))
-                {
-                    if (positions.Any(p => p.x == artX && p.y == artY))
-                    {
-                        newWoundId = wound.WoundId;
-                        break;
-                    }
-                }
+                bool hit;
+                if (wound.ArtX != null)
+                    hit = wound.ArtX.Value == artX && wound.ArtY!.Value == artY;
+                else if (_artData.WoundPositions.TryGetValue(wound.WoundId, out var positions))
+                    hit = positions.Any(p => p.x == artX && p.y == artY);
+                else
+                    hit = false;
+                if (hit) { newWoundId = wound.WoundId; newWoundInstance = wound; break; }
             }
         }
 
-        changed = changed || newWoundId != _hoveredWoundId;
+        changed = changed || newWoundId != _hoveredWoundId || newWoundInstance != _hoveredWoundInstance;
 
         if (changed)
         {
@@ -252,6 +257,7 @@ public class BodyArtViewer
             _hoveredRawPartName = newRawPartName;
             _hoveredArrowDelta = newArrowDelta;
             _hoveredWoundId = newWoundId;
+            _hoveredWoundInstance = newWoundInstance;
             ResetBlink();
         }
 
@@ -267,6 +273,7 @@ public class BodyArtViewer
         _hoveredRawPartName = null;
         _hoveredArrowDelta = 0;
         _hoveredWoundId = null;
+        _hoveredWoundInstance = null;
     }
 
     /// <summary>Resets the blink timer (called when hover target changes).</summary>
@@ -428,19 +435,56 @@ public class BodyArtViewer
                 _terminal.SetCell(boxX2, ty, BoxChars.Single.Vertical, boxColor, boxBg);
         }
 
-        // Overlay wound glyphs (∅) on the body art, blinking orange/dark-grey
-        foreach (var wound in _protagonist.Wounds)
+        // Overlay wound glyphs (∅) on the body art, blinking orange/dark-grey (body submenu only)
+        if (ShowWounds)
         {
-            if (!_artData.WoundPositions.TryGetValue(wound.WoundId, out var positions)) continue;
-            Vector4 woundColor = _blinkOn ? Config.Colors.Orange : Config.Colors.DarkGray35;
-            foreach (var (wx, wy) in positions)
+            // Assign free art positions to any wildcard wounds that haven't been placed yet
+            var occupiedByWounds = new HashSet<(int, int)>(
+                _artData.WoundPositions.Values.SelectMany(v => v).Select(p => (p.x, p.y)));
+            // Also count already-placed wildcard instances
+            foreach (var w in _protagonist.Wounds)
+                if (w.ArtX != null) occupiedByWounds.Add((w.ArtX.Value, w.ArtY!.Value));
+            // Collect all free body cells once, then pick randomly for each unplaced wildcard
+            var freeCells = new List<(int x, int y)>();
+            for (int fy2 = 0; fy2 < _artData.Height; fy2++)
+                for (int fx2 = 0; fx2 < _artData.Width; fx2++)
+                    if (_artData.IsBodyCell(fx2, fy2) && !occupiedByWounds.Contains((fx2, fy2)))
+                        freeCells.Add((fx2, fy2));
+            var rng = new Random();
+            foreach (var wound in _protagonist.Wounds.Where(w => w.ArtX == null && w.TargetKind == Cathedral.Game.Narrative.WoundTargetKind.Wildcard))
             {
-                int tx = ArtOffsetX + wx;
-                int ty = ArtOffsetY + wy;
-                if (tx >= 0 && tx < PanelX - 1 && ty >= 0 && ty < _terminal.Height)
-                    _terminal.SetCell(tx, ty, '∅', woundColor, Config.Colors.Black);
+                if (freeCells.Count == 0) break;
+                int idx = rng.Next(freeCells.Count);
+                var chosen = freeCells[idx];
+                freeCells.RemoveAt(idx);
+                wound.ArtX = chosen.x;
+                wound.ArtY = chosen.y;
+                occupiedByWounds.Add(chosen);
+            }
+
+            Vector4 woundColor = _blinkOn ? Config.Colors.Orange : Config.Colors.DarkGray35;
+            foreach (var wound in _protagonist.Wounds)
+            {
+                IEnumerable<(int x, int y)> positions;
+                if (wound.ArtX != null)
+                    positions = new[] { (wound.ArtX.Value, wound.ArtY!.Value) };
+                else if (_artData.WoundPositions.TryGetValue(wound.WoundId, out var wpos))
+                    positions = wpos;
+                else
+                    continue;
+                foreach (var (wx, wy) in positions)
+                {
+                    int tx = ArtOffsetX + wx;
+                    int ty = ArtOffsetY + wy;
+                    if (tx >= 0 && tx < PanelX - 1 && ty >= 0 && ty < _terminal.Height)
+                        _terminal.SetCell(tx, ty, '∅', woundColor, Config.Colors.Black);
+                }
             }
         }
+
+        // HP bar overlaid in the black space at the top of the art area
+        if (ShowWounds)
+            RenderHpBar();
 
         // Separator line between art and panel
         int sepX = PanelX - 1;
@@ -451,26 +495,59 @@ public class BodyArtViewer
         RenderArrows();
     }
 
+    /// <summary>
+    /// Renders an HP bar in the black empty space at the top of the body art panel.
+    /// One █ per HP point: DarkYellowGrey for remaining, DarkGray35 for lost.
+    /// </summary>
+    private void RenderHpBar()
+    {
+        int maxHp = _protagonist.MaxHp;
+        int curHp = _protagonist.CurrentHp;
+        if (maxHp <= 0) return;
+
+        int barX  = ArtOffsetX + 2;
+        int labelRow = ArtOffsetY + 1;
+        int barRow   = ArtOffsetY + 2;
+
+        // Label and numeric value
+        string label = $"HP  {curHp}/{maxHp}";
+        _terminal.Text(barX, labelRow, label, Config.Colors.DarkYellowGrey, Config.Colors.Black);
+
+        // Individual cells — one per max HP
+        for (int i = 0; i < maxHp; i++)
+        {
+            Vector4 c = i < curHp ? Config.Colors.DarkYellowGrey : Config.Colors.DarkGray35;
+            _terminal.SetCell(barX + i, barRow, '█', c, Config.Colors.Black);
+        }
+    }
+
     private void RenderArrows()
     {
         // Orange arrow when hovering a wound glyph
         if (_hoveredWoundId != null)
         {
-            if (_artData.WoundPositions.TryGetValue(_hoveredWoundId.Value, out var wpositions) && wpositions.Count > 0)
+            int wx = -1, wy = -1;
+            if (_hoveredWoundInstance?.ArtX != null)
+            {
+                // Wildcard wound: use stored art position
+                wx = ArtOffsetX + _hoveredWoundInstance.ArtX.Value;
+                wy = ArtOffsetY + _hoveredWoundInstance.ArtY!.Value;
+            }
+            else if (_artData.WoundPositions.TryGetValue(_hoveredWoundId.Value, out var wpositions) && wpositions.Count > 0)
             {
                 // Pick the rightmost wound glyph position as arrow origin
                 var rightmost = wpositions.OrderByDescending(p => p.x).First();
-                int wx = ArtOffsetX + rightmost.x;
-                int wy = ArtOffsetY + rightmost.y;
-                // Arrow target: row 53 = "minRow+1=50, +2 header, +1 WOUND label" i.e. title line of wound detail
-                int targetRow = 54;
-                if (wx < PanelX - 2)
-                {
-                    ArrowRenderer.DrawConnector(_terminal,
-                        wx, wy,
-                        PanelContentX - 1, targetRow,
-                        Config.Colors.Orange, Config.Colors.Black);
-                }
+                wx = ArtOffsetX + rightmost.x;
+                wy = ArtOffsetY + rightmost.y;
+            }
+            // Arrow target: row 53 = "minRow+1=50, +2 header, +1 WOUND label" i.e. title line of wound detail
+            int targetRow = 54;
+            if (wx >= 0 && wx < PanelX - 2)
+            {
+                ArrowRenderer.DrawConnector(_terminal,
+                    wx, wy,
+                    PanelContentX - 1, targetRow,
+                    Config.Colors.Orange, Config.Colors.Black);
             }
             return;
         }
@@ -510,6 +587,7 @@ public class BodyArtViewer
     public int RenderOrganStats()
     {
         int row = StatsStartRow;
+
         foreach (var bp in _protagonist.BodyParts)
         {
             bool isHoveredBP = _hoveredWoundId == null && bp.Id == _hoveredBodyPartId;
@@ -552,7 +630,7 @@ public class BodyArtViewer
                     bool partIsDisabled = partWounds.Any(w => w.Handicap == Cathedral.Game.Narrative.WoundHandicap.High);
                     bool partIsWounded  = partWounds.Count > 0;
                     int  partEffScore   = partIsDisabled ? 0 :
-                        part.Score - partWounds.Count(w => w.Handicap == Cathedral.Game.Narrative.WoundHandicap.Low);
+                        part.Score - partWounds.Count(w => w.Handicap == Cathedral.Game.Narrative.WoundHandicap.Medium);
 
                     bool isHoveredPart  = _hoveredWoundId == null && part.Id  == _hoveredOrganPartName;
                     bool isHoveredOrgan = _hoveredWoundId == null && organ.Id == _hoveredOrganName;
@@ -712,12 +790,17 @@ public class BodyArtViewer
                 wRow += 2;
                 _terminal.Text(PanelContentX, wRow, hovered.WoundName, Config.Colors.Black, Config.Colors.Orange);
                 wRow += 2;
-                string sev = hovered.Handicap == Cathedral.Game.Narrative.WoundHandicap.High ? "Severe (disables)" : "Minor (-1 penalty)";
+                string sev = hovered.Handicap == Cathedral.Game.Narrative.WoundHandicap.High ? "Severe (disables)" :
+                             hovered.Handicap == Cathedral.Game.Narrative.WoundHandicap.Medium ? "Moderate (-1 penalty)" :
+                             "Minor (-1 HP only)";
                 _terminal.Text(PanelContentX, wRow, sev, hovered.Handicap == Cathedral.Game.Narrative.WoundHandicap.High
                     ? Config.Colors.Orange : Config.Colors.MediumGray60, Config.Colors.Black);
                 wRow++;
-                _terminal.Text(PanelContentX, wRow, $"Affects: {hovered.TargetId}", Config.Colors.MediumGray60, Config.Colors.Black);
-                wRow++;
+                if (!string.IsNullOrEmpty(hovered.TargetId))
+                {
+                    _terminal.Text(PanelContentX, wRow, $"Affects: {hovered.TargetId}", Config.Colors.MediumGray60, Config.Colors.Black);
+                    wRow++;
+                }
                 if (!string.IsNullOrEmpty(hovered.Description))
                 {
                     wRow++;

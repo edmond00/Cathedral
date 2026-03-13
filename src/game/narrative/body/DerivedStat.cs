@@ -123,16 +123,16 @@ public abstract class DerivedStat
 
         int rawScore = GetSourceScore(member);
 
-        // Penalty from low-handicap wounds
+        // Penalty from medium-handicap wounds (Low/wildcard wounds have no organ effect)
         int penalty = member.Wounds.Count(w =>
             (organPartId != null && w.AffectsOrganPart(organPartId, organId ?? "", bodyPartId ?? "")
-                                 && w.Handicap == WoundHandicap.Low)
+                                 && w.Handicap == WoundHandicap.Medium)
          || (organId    != null && organPartId == null
                                  && w.AffectsOrgan(organId, bodyPartId ?? "")
-                                 && w.Handicap == WoundHandicap.Low)
+                                 && w.Handicap == WoundHandicap.Medium)
          || (bodyPartId != null && organId == null && organPartId == null
                                  && w.AffectsBodyPart(bodyPartId)
-                                 && w.Handicap == WoundHandicap.Low));
+                                 && w.Handicap == WoundHandicap.Medium));
 
         return rawScore - penalty;
     }

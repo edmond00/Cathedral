@@ -321,14 +321,14 @@ public abstract class PartyMember
     /// <summary>
     /// Effective score of an organ part after applying wounds.
     /// High-handicap wounds disable the part (returns int.MinValue to signal disabled).
-    /// Low-handicap wounds apply −1 each.
+    /// Medium-handicap wounds apply −1 each. Low (wildcard) wounds have no organ effect.
     /// </summary>
     public int GetEffectiveScore(OrganPart part, Organ organ, BodyPart bp)
     {
         var wounds = GetWoundsForOrganPart(part.Id, organ.Id, bp.Id);
         if (wounds.Any(w => w.Handicap == WoundHandicap.High))
             return int.MinValue; // disabled
-        int penalty = wounds.Count(w => w.Handicap == WoundHandicap.Low);
+        int penalty = wounds.Count(w => w.Handicap == WoundHandicap.Medium);
         return part.Score - penalty;
     }
 
@@ -339,12 +339,33 @@ public abstract class PartyMember
         Wounds.Any(w => w.AffectsOrganPart(organPartId, organId, bodyPartId)
                      && w.Handicap == WoundHandicap.High);
 
+    /// <summary>Maximum HP = trunk body part score.</summary>
+    public int MaxHp =>
+        _bodyParts.FirstOrDefault(bp => bp.Id == "trunk")?.Score ?? 0;
+
+    /// <summary>Current HP = max HP minus total wound count (all severities cost 1 HP).</summary>
+    public int CurrentHp => Math.Max(0, MaxHp - Wounds.Count);
+
     // ── Debug wound initialisation ────────────────────────────────
     private static List<Wound> InitializeDebugWounds()
     {
-        var all = WoundRegistry.All.Values.ToList();
+        // Pick a mix of specific and wildcard wounds
+        var specific = WoundRegistry.All.Values
+            .Where(w => w.TargetKind != WoundTargetKind.Wildcard).ToList();
         var rng = new Random();
-        int count = rng.Next(2, 6);
-        return all.OrderBy(_ => rng.Next()).Take(count).ToList();
+        int count = rng.Next(2, 5);
+        var result = specific.OrderBy(_ => rng.Next()).Take(count).ToList<Wound>();
+        // Add 1-2 wildcard wounds with placeholder positions (will be assigned by viewer)
+        if (WoundRegistry.WildcardTemplates.Count > 0)
+        {
+            int wc = rng.Next(1, 3);
+            foreach (var template in WoundRegistry.WildcardTemplates.OrderBy(_ => rng.Next()).Take(wc))
+            {
+                // Clone by creating a new instance via Activator (all wildcards are parameterless)
+                var instance = (WildcardWound)System.Activator.CreateInstance(template.GetType())!;
+                result.Add(instance);
+            }
+        }
+        return result;
     }
 }
