@@ -31,7 +31,7 @@ namespace Cathedral.Terminal
         /// <param name="useNegative">If true, inverts the image (negative)</param>
         /// <param name="autoContrast">If true, automatically adjusts contrast to spread brightness evenly</param>
         /// <param name="manualContrast">Manual contrast multiplier (1.0 = no change, >1.0 = increase, <1.0 = decrease)</param>
-        public void ConvertImageToTerminal(string imagePath, TerminalHUD terminal, int maxWidth = 0, int maxHeight = 0, bool useNegative = false, bool autoContrast = false, float manualContrast = 1.0f)
+        public void ConvertImageToTerminal(string imagePath, TerminalHUD terminal, int maxWidth = 0, int maxHeight = 0, bool useNegative = false, bool autoContrast = false, float manualContrast = 1.0f, bool stretchToFit = false)
         {
             if (!File.Exists(imagePath))
                 throw new FileNotFoundException($"Image file not found: {imagePath}");
@@ -71,27 +71,26 @@ namespace Cathedral.Terminal
                 }
             });
             
-            // Calculate aspect ratio preserving dimensions
-            float imageAspect = (float)image.Width / image.Height;
-            float targetAspect = (float)maxWidth / maxHeight;
-            
             int resizeWidth = maxWidth;
             int resizeHeight = maxHeight;
-            
-            // Treat each character cell as 1:1 (square) for conversion
-            float charAspect = 1.0f;
-            
-            float adjustedImageAspect = imageAspect * charAspect;
-            
-            if (adjustedImageAspect > targetAspect)
+
+            if (!stretchToFit)
             {
-                // Image is wider - fit to width
-                resizeHeight = (int)(maxWidth / adjustedImageAspect);
-            }
-            else
-            {
-                // Image is taller - fit to height
-                resizeWidth = (int)(maxHeight * adjustedImageAspect);
+                // Preserve aspect ratio: fit image within maxWidth x maxHeight
+                float imageAspect = (float)image.Width / image.Height;
+                float targetAspect = (float)maxWidth / maxHeight;
+                float adjustedImageAspect = imageAspect; // character cells treated as 1:1
+
+                if (adjustedImageAspect > targetAspect)
+                {
+                    // Image is wider - fit to width
+                    resizeHeight = (int)(maxWidth / adjustedImageAspect);
+                }
+                else
+                {
+                    // Image is taller - fit to height
+                    resizeWidth = (int)(maxHeight * adjustedImageAspect);
+                }
             }
 
             // Ensure dimensions are at least 1

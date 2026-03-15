@@ -19,7 +19,7 @@ namespace Cathedral.Game
     /// </summary>
     public class ImageToTextModeLauncher
     {
-        public static void Launch(string imagePath, int maxImageWidth = 0, int maxImageHeight = 0, bool useNegative = false, bool autoContrast = false, float manualContrast = 1.0f)
+        public static void Launch(string imagePath, int maxImageWidth = 0, int maxImageHeight = 0, bool useNegative = false, bool autoContrast = false, float manualContrast = 1.0f, bool stretchToFit = false)
         {
             Console.WriteLine("=== Image to ASCII Art Converter ===\n");
             Console.WriteLine($"Converting: {imagePath}");
@@ -34,6 +34,8 @@ namespace Cathedral.Game
                 Console.WriteLine($"Auto-adjusting contrast");
             if (manualContrast != 1.0f)
                 Console.WriteLine($"Manual contrast adjustment: {manualContrast:F2}x");
+            if (stretchToFit)
+                Console.WriteLine($"Stretch to fit: enabled (aspect ratio ignored)");
             Console.WriteLine();
 
             var native = new NativeWindowSettings()
@@ -47,7 +49,7 @@ namespace Cathedral.Game
                 WindowBorder = WindowBorder.Resizable
             };
 
-            using var window = new ImageToTextWindow(GameWindowSettings.Default, native, imagePath, maxImageWidth, maxImageHeight, useNegative, autoContrast, manualContrast);
+            using var window = new ImageToTextWindow(GameWindowSettings.Default, native, imagePath, maxImageWidth, maxImageHeight, useNegative, autoContrast, manualContrast, stretchToFit);
             window.Run();
         }
 
@@ -297,11 +299,12 @@ namespace Cathedral.Game
             private readonly bool _useNegative;
             private readonly bool _autoContrast;
             private readonly float _manualContrast;
+            private readonly bool _stretchToFit;
             private bool _conversionDone = false;
             private string? _outputPath;
 
             public ImageToTextWindow(GameWindowSettings gameSettings, NativeWindowSettings nativeSettings, 
-                string imagePath, int maxImageWidth, int maxImageHeight, bool useNegative, bool autoContrast, float manualContrast) 
+                string imagePath, int maxImageWidth, int maxImageHeight, bool useNegative, bool autoContrast, float manualContrast, bool stretchToFit = false) 
                 : base(gameSettings, nativeSettings)
             {
                 _imagePath = imagePath;
@@ -310,6 +313,7 @@ namespace Cathedral.Game
                 _useNegative = useNegative;
                 _autoContrast = autoContrast;
                 _manualContrast = manualContrast;
+                _stretchToFit = stretchToFit;
             }
 
             protected override void OnLoad()
@@ -332,7 +336,7 @@ namespace Cathedral.Game
                 try
                 {
                     var converter = new ImageToTextConverter();
-                    converter.ConvertImageToTerminal(_imagePath, _terminal, _maxImageWidth, _maxImageHeight, _useNegative, _autoContrast, _manualContrast);
+                    converter.ConvertImageToTerminal(_imagePath, _terminal, _maxImageWidth, _maxImageHeight, _useNegative, _autoContrast, _manualContrast, _stretchToFit);
 
                     // Export to layered files (ASCII art + layer map + CSV)
                     converter.ExportToLayeredFiles(_terminal);

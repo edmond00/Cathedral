@@ -1,6 +1,27 @@
 ﻿using Cathedral.LLM;
 using Cathedral.Game;
 
+// Check for help option
+if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
+{
+    Console.WriteLine("Usage: Cathedral [options]");
+    Console.WriteLine();
+    Console.WriteLine("Options:");
+    Console.WriteLine("  (no args)                          Launch the narrative exploration game");
+    Console.WriteLine("  --fight-area [options]             Run the fight area generator test");
+    Console.WriteLine("    --mode <random|...>              Fight area generation mode (default: random)");
+    Console.WriteLine("  --draw <folder>                    Display previously saved layered ASCII art");
+    Console.WriteLine("  --img-to-txt <image> [options]    Convert an image to ASCII text art");
+    Console.WriteLine("    --width <w>                      Max output width (default: terminal width)");
+    Console.WriteLine("    --height <h>                     Max output height (default: terminal height)");
+    Console.WriteLine("    --contrast <c>                   Contrast multiplier (default: 1.0)");
+    Console.WriteLine("    --negative                       Invert brightness");
+    Console.WriteLine("    --auto-contrast                  Automatically stretch contrast");
+    Console.WriteLine("    --stretch                        Stretch/shrink to exact width/height (ignore aspect ratio)");
+    Console.WriteLine("  --help, -h                         Show this help message");
+    return;
+}
+
 // Check for fight area generator test mode
 if (args.Length >= 1 && args[0] == "--fight-area")
 {
@@ -39,6 +60,7 @@ if (args.Length >= 2 && args[0] == "--img-to-txt")
     bool useNegative = false;
     bool autoContrast = false;
     float manualContrast = 1.0f; // 1.0 = no change, >1.0 = increase, <1.0 = decrease
+    bool stretchToFit = false;
     
     // Parse optional arguments
     for (int i = 2; i < args.Length; i++)
@@ -66,9 +88,13 @@ if (args.Length >= 2 && args[0] == "--img-to-txt")
         {
             autoContrast = true;
         }
+        else if (args[i] == "--stretch")
+        {
+            stretchToFit = true;
+        }
     }
     
-    Cathedral.Game.ImageToTextModeLauncher.Launch(imagePath, maxImageWidth, maxImageHeight, useNegative, autoContrast, manualContrast);
+    Cathedral.Game.ImageToTextModeLauncher.Launch(imagePath, maxImageWidth, maxImageHeight, useNegative, autoContrast, manualContrast, stretchToFit);
     return;
 }
 

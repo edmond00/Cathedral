@@ -462,34 +462,34 @@ public static class Config
                 Color = new Vector4(0.1f, 0.1f, 0.1f, 1.0f) // Dark gray
             },
             
-            // Layer 1: Mid-tones (33-66% brightness) - Normal symbols
+            // Layer 1: Mid-tones - Normal symbols
             new BrightnessLayer
             {
                 Name = "Mid-tones",
                 MinBrightness = 0.25f,
                 MaxBrightness = 0.5f,
                 GlyphGradient = ".:",
-                Color = new Vector4(0.6f, 0.6f, 0.6f, 1.0f) // Medium gray
+                Color = new Vector4(0.3f, 0.3f, 0.3f, 1.0f)
             },
             
-            // Layer 2: Highlights (66-100% brightness) - Bold patterns
+            // Layer 2: Highlights - Bold patterns
             new BrightnessLayer
             {
                 Name = "Highlights",
                 MinBrightness = 0.5f,
                 MaxBrightness = 0.75f,
                 GlyphGradient = "~=*#",
-                Color = new Vector4(0.8f, 0.8f, 0.4f, 1.0f) // Light gray
+                Color = new Vector4(0.5f, 0.5f, 0.5f, 1.0f)
             },
             
-            // Layer 2: Highlights (66-100% brightness) - Bold patterns
+            // Layer 3: Bright - Brightest highlights
             new BrightnessLayer
             {
-                Name = "Yellow",
+                Name = "Bright",
                 MinBrightness = 0.75f,
                 MaxBrightness = 1.0f,
                 GlyphGradient = "-+@",
-                Color = new Vector4(1f, 1f, 0f, 1.0f) // Light gray
+                Color = new Vector4(0.7f, 0.7f, 0.7f, 1.0f)
             }
         };
         
