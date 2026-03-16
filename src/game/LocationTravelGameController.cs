@@ -711,14 +711,14 @@ public class LocationTravelGameController : IDisposable
             if (_bodyArtData == null)
             {
                 string artFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, 
-                    "assets", "art", "body", "full_body");
+                    "assets", "art", "body", "human");
                 // Fallback to project root path if bin path doesn't have assets
                 if (!System.IO.Directory.Exists(artFolder))
                     artFolder = System.IO.Path.Combine(
                         System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
-                        "..", "..", "..", "assets", "art", "body", "full_body");
+                        "..", "..", "..", "assets", "art", "body", "human");
                 if (!System.IO.Directory.Exists(artFolder))
-                    artFolder = System.IO.Path.Combine("assets", "art", "body", "full_body");
+                    artFolder = System.IO.Path.Combine("assets", "art", "body", "human");
                     
                 _bodyArtData = BodyArtData.Load(artFolder);
             }
@@ -759,13 +759,13 @@ public class LocationTravelGameController : IDisposable
             if (_bodyArtData == null)
             {
                 string artFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, 
-                    "assets", "art", "body", "full_body");
+                    "assets", "art", "body", "human");
                 if (!System.IO.Directory.Exists(artFolder))
                     artFolder = System.IO.Path.Combine(
                         System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".",
-                        "..", "..", "..", "assets", "art", "body", "full_body");
+                        "..", "..", "..", "assets", "art", "body", "human");
                 if (!System.IO.Directory.Exists(artFolder))
-                    artFolder = System.IO.Path.Combine("assets", "art", "body", "full_body");
+                    artFolder = System.IO.Path.Combine("assets", "art", "body", "human");
                     
                 _bodyArtData = BodyArtData.Load(artFolder);
             }

@@ -37,7 +37,7 @@ public class GearAnchorData
     /// <summary>
     /// Load anchor positions by scanning <c>gears.txt</c> inside <paramref name="artFolder"/>.
     /// </summary>
-    /// <param name="artFolder">Path to the folder containing gears.txt (e.g. "assets/art/body/full_body").</param>
+    /// <param name="artFolder">Path to the folder containing gears.txt (e.g. "assets/art/body/human").</param>
     public static GearAnchorData Load(string artFolder)
     {
         var data = new GearAnchorData();

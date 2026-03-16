@@ -26,7 +26,7 @@ public record ArtBounds(int MinX, int MinY, int MaxX, int MaxY)
 
 /// <summary>
 /// Loads and holds all data from a body art folder (ascii_art.txt, layer_map.txt,
-/// layer_colors.csv, organs.txt, organs.csv, parts.txt, parts.csv).
+/// layer_colors.csv, organs.txt, organs.csv, visual_zones.txt, visual_zones.csv).
 /// Provides spatial queries: which organ/body-part is at a given cell, bounding boxes, etc.
 /// </summary>
 public class BodyArtData
@@ -47,16 +47,16 @@ public class BodyArtData
     public Dictionary<int, string> PartIndexToName { get; private set; } = null!;
     public Dictionary<char, List<(int x, int y)>> WoundPositions { get; private set; } = new();
 
-    // Mapping from 7 part-index names to 5 BodyPart.Id values
+    // Mapping from 7 visual zone names (zone_*) to 5 BodyPart.Id values
     private static readonly Dictionary<string, string> PartNameToBodyPartId = new()
     {
-        { "encephalon", "encephalon" },
-        { "visage", "visage" },
-        { "trunk", "trunk" },
-        { "left_arm", "upper_limbs" },
-        { "right_arm", "upper_limbs" },
-        { "left_leg", "lower_limbs" },
-        { "right_leg", "lower_limbs" }
+        { "zone_encephalon", "encephalon" },
+        { "zone_visage", "visage" },
+        { "zone_trunk", "trunk" },
+        { "zone_left_arm", "upper_limbs" },
+        { "zone_right_arm", "upper_limbs" },
+        { "zone_left_leg", "lower_limbs" },
+        { "zone_right_leg", "lower_limbs" }
     };
 
     // Cached spatial data
@@ -76,8 +76,8 @@ public class BodyArtData
         string layerColorsPath = Path.Combine(folderPath, "layer_colors.csv");
         string organsMapPath = Path.Combine(folderPath, "organs.txt");
         string organsCsvPath = Path.Combine(folderPath, "organs.csv");
-        string partsMapPath = Path.Combine(folderPath, "parts.txt");
-        string partsCsvPath = Path.Combine(folderPath, "parts.csv");
+        string partsMapPath = Path.Combine(folderPath, "visual_zones.txt");
+        string partsCsvPath = Path.Combine(folderPath, "visual_zones.csv");
 
         // Load ASCII art grid
         var asciiLines = File.ReadAllLines(asciiPath);
@@ -240,8 +240,8 @@ public class BodyArtData
     }
 
     /// <summary>
-    /// Get the bounding box of all cells belonging to a raw part name (7-value system:
-    /// encephalon, visage, trunk, left_arm, right_arm, left_leg, right_leg).
+    /// Get the bounding box of all cells belonging to a visual zone name (zone_* prefix:
+    /// zone_encephalon, zone_visage, zone_trunk, zone_left_arm, zone_right_arm, zone_left_leg, zone_right_leg).
     /// Useful for drawing per-side boxes for limbs.
     /// </summary>
     public ArtBounds? GetRawPartBounds(string rawPartName)

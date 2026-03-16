@@ -71,10 +71,10 @@ public class BodyArtViewer
     internal static readonly HashSet<string> LimbBodyParts = new() { "upper_limbs", "lower_limbs" };
     internal static readonly Dictionary<(bool isLeft, string bodyPartId), string> LimbSideToRawPart = new()
     {
-        { (true,  "upper_limbs"), "left_arm" },
-        { (false, "upper_limbs"), "right_arm" },
-        { (true,  "lower_limbs"), "left_leg" },
-        { (false, "lower_limbs"), "right_leg" },
+        { (true,  "upper_limbs"), "zone_left_arm" },
+        { (false, "upper_limbs"), "zone_right_arm" },
+        { (true,  "lower_limbs"), "zone_left_leg" },
+        { (false, "lower_limbs"), "zone_right_leg" },
     };
     private const int BoxPadding = 1;
 

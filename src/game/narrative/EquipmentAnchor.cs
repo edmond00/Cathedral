@@ -5,7 +5,7 @@ namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// The 13 equipment anchor points on a party member's body.
-/// Matches the entries in assets/art/body/full_body/gears.csv.
+/// Matches the entries in assets/art/body/human/gears.csv.
 /// </summary>
 public enum EquipmentAnchor
 {

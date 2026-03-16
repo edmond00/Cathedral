@@ -114,7 +114,7 @@ public class ManagementMenuRenderer
 
         _memoryPanel = new MemoryPanelRenderer(terminal, popup);
 
-        var gearData = GearAnchorData.Load("assets/art/body/full_body");
+        var gearData = GearAnchorData.Load("assets/art/body/human");
         _inventoryMenu = new InventoryMenuRenderer(terminal, _bodyViewer, gearData, popup);
 
         var humorArtData = HumorArtData.Load("assets/art/humors");
