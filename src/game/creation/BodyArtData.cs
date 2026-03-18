@@ -47,17 +47,10 @@ public class BodyArtData
     public Dictionary<int, string> PartIndexToName { get; private set; } = null!;
     public Dictionary<char, List<(int x, int y)>> WoundPositions { get; private set; } = new();
 
-    // Mapping from 7 visual zone names (zone_*) to 5 BodyPart.Id values
-    private static readonly Dictionary<string, string> PartNameToBodyPartId = new()
-    {
-        { "zone_encephalon", "encephalon" },
-        { "zone_visage", "visage" },
-        { "zone_trunk", "trunk" },
-        { "zone_left_arm", "upper_limbs" },
-        { "zone_right_arm", "upper_limbs" },
-        { "zone_left_leg", "lower_limbs" },
-        { "zone_right_leg", "lower_limbs" }
-    };
+    // Mapping from visual zone names (zone_*) to canonical BodyPart.Id values.
+    // Populated on Load from the anatomy factory; not a static field so each anatomy
+    // can use a different zone layout.
+    private Dictionary<string, string> _zoneToBodyPartId = new();
 
     // Cached spatial data
     private Dictionary<string, ArtBounds>? _bodyPartBoundsCache;
@@ -67,9 +60,15 @@ public class BodyArtData
     /// <summary>
     /// Load all data from the given folder.
     /// </summary>
-    public static BodyArtData Load(string folderPath)
+    /// <param name="folderPath">Path to the body art folder.</param>
+    /// <param name="zoneToBodyPartId">
+    /// Optional zone-name → body-part-id mapping for this anatomy.
+    /// When null the human default mapping is used for backward compatibility.
+    /// </param>
+    public static BodyArtData Load(string folderPath, Dictionary<string, string>? zoneToBodyPartId = null)
     {
         var data = new BodyArtData();
+        data._zoneToBodyPartId = zoneToBodyPartId ?? Cathedral.Game.Narrative.HumanAnatomyFactory.Instance.GetZoneToBodyPartMapping();
 
         string asciiPath = Path.Combine(folderPath, "ascii_art.txt");
         string layerMapPath = Path.Combine(folderPath, "layer_map.txt");
@@ -216,7 +215,7 @@ public class BodyArtData
         int partIndex = PartsGrid[x, y];
         if (partIndex < 0) return null;
         if (!PartIndexToName.TryGetValue(partIndex, out var partName)) return null;
-        return PartNameToBodyPartId.TryGetValue(partName, out var bodyPartId) ? bodyPartId : null;
+        return _zoneToBodyPartId.TryGetValue(partName, out var bodyPartId) ? bodyPartId : null;
     }
 
     /// <summary>
@@ -257,6 +256,18 @@ public class BodyArtData
     {
         EnsureCellsCache();
         return _organPartCellsCache!.TryGetValue(organPartIdChar, out var cells) ? cells : new List<(int, int)>();
+    }
+
+    /// <summary>
+    /// Returns the visual-zone raw-part name that contains the first cell of
+    /// <paramref name="organPartIdChar"/>. Used to resolve the correct per-limb zone
+    /// for anatomies (e.g. beast) that are not in the static <c>LimbSideToRawPart</c> map.
+    /// </summary>
+    public string? GetRawPartNameForOrganPartChar(char organPartIdChar)
+    {
+        var cells = GetOrganPartCells(organPartIdChar);
+        if (cells.Count == 0) return null;
+        return GetPartNameAt(cells[0].x, cells[0].y);
     }
 
     /// <summary>

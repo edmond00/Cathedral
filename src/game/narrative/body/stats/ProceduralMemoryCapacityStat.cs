@@ -13,4 +13,5 @@ public class ProceduralMemoryCapacityStat : DerivedStat
     /// <summary>Slot count = organ score × 2 (range 2-20).</summary>
     public override int CalculateValue(int sourceScore) => sourceScore * 2;
     public override string FormatValue(int value) => $"{value} slots";
+    public override int MinimumValue() => 1;
 }

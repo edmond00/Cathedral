@@ -22,7 +22,8 @@ public class Companion : PartyMember
     // ── PartyMember abstract ─────────────────────────────────────
     public override string DisplayName => Name;
 
-    public Companion(string name, string description = "")
+    public Companion(string name, string description = "", Species? species = null)
+        : base(species ?? SpeciesRegistry.Human)
     {
         Name = name;
         Description = description;
@@ -64,7 +65,7 @@ public class Companion : PartyMember
         for (int k = 0; k < Math.Min(count, _pool.Length); k++)
         {
             var (name, desc) = _pool[indices[k]];
-            var c = new Companion(name, desc);
+            var c = new Companion(name, desc, SpeciesRegistry.Human);
             c.InitializeSkills(registry, skillCount: 30);
             c.InitializeMemory();
             c.AssignSkillsToMemoryRandom();

@@ -996,6 +996,11 @@ public class LocationTravelGameController : IDisposable
                 _protagonist.AssignSkillsToMemoryRandom();
                 _protagonist.CompanionParty.AddRange(
                     Companion.GenerateRandom(SkillRegistry.Instance, count: 3));
+                var wolf = new Companion("Greywind", "A grey wolf with amber eyes.", SpeciesRegistry.Wolf);
+                wolf.InitializeSkills(SkillRegistry.Instance, skillCount: 20);
+                wolf.InitializeMemory();
+                wolf.AssignSkillsToMemoryRandom();
+                _protagonist.CompanionParty.Add(wolf);
             }
             var protagonist = _protagonist;
             
@@ -1100,6 +1105,11 @@ public class LocationTravelGameController : IDisposable
         _protagonist.AssignSkillsToMemoryRandom();
         _protagonist.CompanionParty.AddRange(
             Companion.GenerateRandom(SkillRegistry.Instance, count: 3));
+        var wolf = new Companion("Greywind", "A grey wolf with amber eyes.", SpeciesRegistry.Wolf);
+        wolf.InitializeSkills(SkillRegistry.Instance, skillCount: 20);
+        wolf.InitializeMemory();
+        wolf.AssignSkillsToMemoryRandom();
+        _protagonist.CompanionParty.Add(wolf);
         
         _hasGameStarted = true;
         Console.WriteLine("LocationTravelGameController: Game state reset complete");

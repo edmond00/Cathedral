@@ -37,12 +37,12 @@ public sealed class InventoryMenuRenderer
     // ── Dependencies ──────────────────────────────────────────────
     private readonly TerminalHUD _terminal;
     private readonly BodyArtViewer _bodyViewer;
-    private readonly GearAnchorData _gearData;
+    private GearAnchorData _gearData;
     private readonly PopupTerminalHUD? _popup;
 
     // ── Layout ────────────────────────────────────────────────────
-    private const int ArtOffsetX    = 17;   // left edge of body art  (cols 17-56)
-    private const int ArtWidth      = 40;   // body art character width
+    private const int ArtOffsetX    = 14;   // left boundary of the middle art panel (matches ManagementMenuRenderer.SepCol+1)
+    private const int ArtWidth      = 52;   // clamp width: RightPanelX(66) - ArtOffsetX(14) = 52
     private const int ItemBoxW      = 12;   // fixed width for all item boxes
     private const int PlaceholderH  =  3;   // height of one placeholder (= 1 slot chunk)
 
@@ -179,6 +179,9 @@ public sealed class InventoryMenuRenderer
         _gearData   = gearData   ?? throw new ArgumentNullException(nameof(gearData));
         _popup      = popup;
     }
+
+    /// <summary>Replace the gear-anchor data (called when switching to a member with a different anatomy).</summary>
+    public void SwapGearData(GearAnchorData data) => _gearData = data ?? throw new ArgumentNullException(nameof(data));
 
     // ═══════════════════════════════════════════════════════════════
     // Public API
@@ -663,8 +666,10 @@ public sealed class InventoryMenuRenderer
         if (!_gearData.TryGetPosition(anchor, out int artRow, out int artCol))
             return;
 
-        int termX   = ComputeBoxX(artCol);
-        int headerY = artRow;
+        int artOffsetX = _bodyViewer.ArtOffsetX;
+        int artOffsetY = _bodyViewer.ArtOffsetY;
+        int termX   = Math.Clamp(artOffsetX + artCol - ItemBoxW / 2, artOffsetX, RightPanelX - ItemBoxW);
+        int headerY = artOffsetY + artRow;
         if (headerY < 0 || headerY > 98) return;
 
         // Highlight as drop target only when dragging over a *different* anchor.
@@ -809,7 +814,7 @@ public sealed class InventoryMenuRenderer
     private static int ComputeBoxX(int artCol)
     {
         int ideal = ArtOffsetX + artCol - ItemBoxW / 2;
-        return Math.Clamp(ideal, ArtOffsetX, ArtOffsetX + ArtWidth - ItemBoxW);
+        return Math.Clamp(ideal, ArtOffsetX, RightPanelX - ItemBoxW);
     }
 
     // ═══════════════════════════════════════════════════════════════

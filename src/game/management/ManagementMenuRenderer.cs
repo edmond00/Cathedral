@@ -25,11 +25,11 @@ public enum ManagementTab
 /// Features a full-height left panel for navigation, body art in the center, and stats on the right.
 ///
 /// Layout:
-///   Cols  0-15 : Left panel (full height, subtle background)
-///   Col  16    : Vertical separator
-///   Cols 17-56 : Body art (40 wide, shifted right by 17)
-///   Col  61    : Vertical separator
-///   Cols 62-99 : Right panel (title + organ stats + footer)
+///   Cols  0-12 : Left panel (full height, subtle background)
+///   Col  13    : Vertical separator
+///   Cols 14-64 : Body art (centered, max 49 wide for beast or 40 wide for human)
+///   Col  65    : Vertical separator
+///   Cols 66-99 : Right panel (title + organ stats + footer)
 /// </summary>
 public class ManagementMenuRenderer
 {
@@ -39,6 +39,14 @@ public class ManagementMenuRenderer
     private readonly MemoryPanelRenderer _memoryPanel;
     private readonly HumorMenuRenderer _humorMenu;
     private readonly InventoryMenuRenderer _inventoryMenu;
+
+    // ── Cached art data per anatomy type ─────────────────────────
+    private readonly BodyArtData _humanArtData;
+    private BodyArtData? _beastArtData;
+
+    // ── Cached gear data per anatomy type ────────────────────────
+    private readonly GearAnchorData _humanGearData;
+    private GearAnchorData? _beastGearData;
 
     // ── Tab state ────────────────────────────────────────────────
     private ManagementTab _activeTab = ManagementTab.Body;
@@ -61,9 +69,9 @@ public class ManagementMenuRenderer
 
     // ── Left panel layout (full height, no boxes) ────────────────
     private const int PanelLeft = 0;
-    private const int PanelLeftW = 16;        // cols 0-15
-    private const int SepCol = 16;            // vertical separator column
-    private const int ContentX = 2;           // text content starts at col 2
+    private const int PanelLeftW = 15;        // cols 0-14
+    private const int SepCol = 15;            // vertical separator column
+    private const int ContentX = 1;           // text content starts at col 2
     private const int ContentW = 13;          // usable text width inside panel
 
     // Subtle panel background
@@ -103,19 +111,24 @@ public class ManagementMenuRenderer
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
         _protagonist = protagonist ?? throw new ArgumentNullException(nameof(protagonist));
 
+        _humanArtData = artData;
+        _humanGearData = GearAnchorData.Load("assets/art/body/human");
+
         _bodyViewer = new BodyArtViewer(terminal, protagonist, artData)
         {
-            ArtOffsetX = 17,  // Shift art right to make room for left panel
+            ArtOffsetX = SepCol + 1,  // left boundary of the middle panel
             StatsStartRow = ContentStartRow,
             ShowScoreEditControls = false,
             ShowClickHints = false
         };
         _bodyViewer.ComputeLayout();
+        // Apply initial centering for the protagonist (human art, full height → no-op offsets)
+        _bodyViewer.ArtOffsetX = SepCol + 1;   // = 14 after layout updates
+        _bodyViewer.ArtOffsetY = 0;
 
         _memoryPanel = new MemoryPanelRenderer(terminal, popup);
 
-        var gearData = GearAnchorData.Load("assets/art/body/human");
-        _inventoryMenu = new InventoryMenuRenderer(terminal, _bodyViewer, gearData, popup);
+        _inventoryMenu = new InventoryMenuRenderer(terminal, _bodyViewer, _humanGearData, popup);
 
         var humorArtData = HumorArtData.Load("assets/art/humors");
         var heparMap     = HumorQueuePositionMap.Load("assets/art/humors/hepar.txt",    "hepar");
@@ -123,6 +136,43 @@ public class ManagementMenuRenderer
         var pulmonesMap  = HumorQueuePositionMap.Load("assets/art/humors/pulmones.txt", "pulmones");
         var spleenMap    = HumorQueuePositionMap.Load("assets/art/humors/spleen.txt",   "spleen");
         _humorMenu = new HumorMenuRenderer(terminal, humorArtData, heparMap, paunchMap, pulmonesMap, spleenMap);
+    }
+
+    // ── Art/gear data helpers ─────────────────────────────────────
+
+    private BodyArtData GetBodyArtDataFor(PartyMember member)
+    {
+        if (member.AnatomyType == AnatomyType.Human) return _humanArtData;
+        _beastArtData ??= BodyArtData.Load(
+            member.Species.ArtFolderPath,
+            AnatomyFactoryRegistry.GetFactory(AnatomyType.Beast).GetZoneToBodyPartMapping());
+        return _beastArtData;
+    }
+
+    private GearAnchorData GetGearDataFor(PartyMember member)
+    {
+        if (member.AnatomyType == AnatomyType.Human) return _humanGearData;
+        _beastGearData ??= GearAnchorData.Load(member.Species.ArtFolderPath);
+        return _beastGearData;
+    }
+
+    /// <summary>Apply art/gear data and auto-center the art for <paramref name="member"/>.</summary>
+    private void SwapMemberArt(PartyMember member)
+    {
+        var artData  = GetBodyArtDataFor(member);
+        var gearData = GetGearDataFor(member);
+        // Horizontal centering: middle panel is SepCol+1 … PanelX-2
+        int leftBoundary = SepCol + 1;
+        int available    = BodyArtViewer.PanelX - 2 - leftBoundary + 1;
+        int artOffsetX   = artData.Width <= available
+            ? leftBoundary + (available - artData.Width) / 2
+            : leftBoundary;
+        // Vertical centering
+        int artOffsetY = Math.Max(0, (_terminal.Height - artData.Height) / 2);
+        _bodyViewer.ArtOffsetX = artOffsetX;
+        _bodyViewer.ArtOffsetY = artOffsetY;
+        _bodyViewer.SwapSubjectWithArt(member, artData);
+        _inventoryMenu.SwapGearData(gearData);
     }
 
     // ── Party helpers ────────────────────────────────────────────
@@ -177,7 +227,9 @@ public class ManagementMenuRenderer
                 _bodyViewer.RenderHoveredDetail(lastRow);
                 break;
             case ManagementTab.Inventory:
-                _inventoryMenu.Render(GetPartyMember(_selectedCharacterIndex));
+                var invMember = GetPartyMember(_selectedCharacterIndex);
+                _inventoryMenu.SwapGearData(GetGearDataFor(invMember));
+                _inventoryMenu.Render(invMember);
                 break;
             case ManagementTab.Journal:
                 RenderJournalPlaceholder();
@@ -279,6 +331,10 @@ public class ManagementMenuRenderer
                 if (!IsCharacterVisibleForTab(_selectedCharacterIndex, _activeTab))
                     _selectedCharacterIndex = 0;
 
+                // Always re-sync art/gear to whoever is now selected (handles the case where
+                // _selectedCharacterIndex was reset to 0 above, or the tab just became visible).
+                SwapMemberArt(GetPartyMember(_selectedCharacterIndex));
+
                 if (_activeTab != ManagementTab.Body)
                     _bodyViewer.ClearHover();
                 if (_activeTab != ManagementTab.Memory)
@@ -300,9 +356,8 @@ public class ManagementMenuRenderer
             if (IsCharacterVisibleForTab(charIdx, _activeTab))
             {
                 _selectedCharacterIndex = charIdx;
-                // Swap the body art subject when switching party member on Body tab
-                if (_activeTab == ManagementTab.Body)
-                    _bodyViewer.SwapSubject(GetPartyMember(charIdx));
+                // Swap art, gear, and offsets whenever the active party member changes
+                SwapMemberArt(GetPartyMember(charIdx));
                 // Memory panel re-renders automatically via Render() with GetPartyMember(_selectedCharacterIndex)
                 Render();
                 return;

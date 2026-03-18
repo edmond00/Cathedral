@@ -144,6 +144,41 @@ public abstract class DerivedStat
     public abstract int CalculateValue(int sourceScore);
 
     /// <summary>
+    /// The lowest meaningful value for this stat regardless of wounds or anatomy.
+    /// Used as a safe fallback when <see cref="IsUsable"/> returns false and the caller
+    /// needs a numeric value to stay compatible with running code.
+    /// Default: 0. Override in stats where a minimum of 1 is required (e.g. memory slots).
+    /// </summary>
+    public virtual int MinimumValue() => 0;
+
+    /// <summary>
+    /// Returns false when this stat cannot be computed for the given party member because
+    /// (a) the related organ / organ part / body part is absent from their anatomy, or
+    /// (b) the related source is fully disabled by a High-handicap wound.
+    /// Callers can use <see cref="MinimumValue"/> as the fallback score, or invoke
+    /// anatomy-specific fallback logic.
+    /// </summary>
+    public bool IsUsable(PartyMember member)
+    {
+        // Check presence in anatomy
+        if (RelatedOrganPartId != null)
+        {
+            if (member.GetOrganPartById(RelatedOrganPartId) == null) return false;
+        }
+        else if (RelatedOrganId != null)
+        {
+            if (member.GetOrganById(RelatedOrganId) == null) return false;
+        }
+        else if (RelatedBodyPartId != null)
+        {
+            if (member.GetBodyPartById(RelatedBodyPartId) == null) return false;
+        }
+
+        // Check wound-disabled state
+        return GetEffectiveScore(member) != int.MinValue;
+    }
+
+    /// <summary>
     /// Get the final computed value of this derived stat for the given party member,
     /// taking wounds into account.
     /// </summary>

@@ -18,4 +18,5 @@ public class WorkingMemoryCapacityStat : DerivedStat
     /// </summary>
     public override int CalculateValue(int sourceScore) => Math.Max(1, sourceScore / 5 * 2);
     public override string FormatValue(int value) => $"{value} slots";
+    public override int MinimumValue() => 1;
 }

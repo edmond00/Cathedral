@@ -26,7 +26,7 @@ public class Protagonist : PartyMember
     public override string DisplayName => "Protagonist";
 
     // ── Constructor ──────────────────────────────────────────────
-    public Protagonist()
+    public Protagonist() : base(SpeciesRegistry.Human)
     {
         InitializeTestEquipment(); // TEMP TEST ITEMS — remove when real acquiring works
     }

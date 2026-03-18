@@ -22,13 +22,13 @@ public class BodyArtViewer
 {
     private readonly TerminalHUD _terminal;
     private PartyMember _protagonist;  // named _protagonist for minimal diff; holds the currently-displayed member
-    private readonly BodyArtData _artData;
+    private BodyArtData _artData;
 
     // ── Layout constants ─────────────────────────────────────────
-    public const int PanelX = 62;
-    public const int PanelWidth = 38;
-    public const int PanelContentX = 64;
-    public const int PanelContentW = 34;
+    public const int PanelX = 68;
+    public const int PanelWidth = 32;
+    public const int PanelContentX = 70;
+    public const int PanelContentW = 28;
 
     // ── Configuration ────────────────────────────────────────────
     /// <summary>Horizontal offset for the body art (default 0, increase to shift art right).</summary>
@@ -68,7 +68,7 @@ public class BodyArtViewer
     private const double BlinkInterval = 0.35;
 
     // ── Static constants ─────────────────────────────────────────
-    internal static readonly HashSet<string> LimbBodyParts = new() { "upper_limbs", "lower_limbs" };
+    internal static readonly HashSet<string> LimbBodyParts = new() { "upper_limbs", "lower_limbs", "limbs" };
     internal static readonly Dictionary<(bool isLeft, string bodyPartId), string> LimbSideToRawPart = new()
     {
         { (true,  "upper_limbs"), "zone_left_arm" },
@@ -135,6 +135,22 @@ public class BodyArtViewer
         ComputeLayout();
     }
 
+    /// <summary>
+    /// Swap both the displayed party member and the body art data (used when the new member
+    /// has a different anatomy type, e.g. switching from human to beast companion).
+    /// </summary>
+    public void SwapSubjectWithArt(PartyMember newSubject, BodyArtData newArtData)
+    {
+        _protagonist = newSubject  ?? throw new ArgumentNullException(nameof(newSubject));
+        _artData     = newArtData  ?? throw new ArgumentNullException(nameof(newArtData));
+        // Rebuild the organ-part name→char lookup for the new art data
+        _organPartNameToChar.Clear();
+        foreach (var (c, info) in _artData.OrganPartInfos)
+            _organPartNameToChar[info.OrganPartName] = c;
+        ClearHover();
+        ComputeLayout();
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // Blink animation
     // ═══════════════════════════════════════════════════════════════
@@ -190,10 +206,15 @@ public class BodyArtViewer
 
             if (info != null && LimbBodyParts.Contains(newBodyPart ?? ""))
             {
+                // Try the static side-lookup first (human anatomy: upper_limbs / lower_limbs).
+                // For beast ("limbs") the dict has no entry → keep the zone from GetPartNameAt.
+                string? sideRawPart = null;
                 if (info.OrganPartName.StartsWith("left_"))
-                    newRawPartName = LimbSideToRawPart.GetValueOrDefault((true, newBodyPart!));
+                    sideRawPart = LimbSideToRawPart.GetValueOrDefault((true, newBodyPart!));
                 else if (info.OrganPartName.StartsWith("right_"))
-                    newRawPartName = LimbSideToRawPart.GetValueOrDefault((false, newBodyPart!));
+                    sideRawPart = LimbSideToRawPart.GetValueOrDefault((false, newBodyPart!));
+                if (sideRawPart != null)
+                    newRawPartName = sideRawPart;
             }
         }
 
@@ -208,10 +229,25 @@ public class BodyArtViewer
                 {
                     newOrgan = op.Value.organName;
                     newBodyPart = op.Value.bodyPartId;
-                    if (LimbBodyParts.Contains(op.Value.bodyPartId) && partId.StartsWith("left_"))
-                        newRawPartName = LimbSideToRawPart.GetValueOrDefault((true, op.Value.bodyPartId));
-                    else if (LimbBodyParts.Contains(op.Value.bodyPartId) && partId.StartsWith("right_"))
-                        newRawPartName = LimbSideToRawPart.GetValueOrDefault((false, op.Value.bodyPartId));
+                    if (LimbBodyParts.Contains(op.Value.bodyPartId))
+                    {
+                        // Try static lookup (human anatomy)
+                        string? sideRawPart = null;
+                        if (partId.StartsWith("left_"))
+                            sideRawPart = LimbSideToRawPart.GetValueOrDefault((true, op.Value.bodyPartId));
+                        else if (partId.StartsWith("right_"))
+                            sideRawPart = LimbSideToRawPart.GetValueOrDefault((false, op.Value.bodyPartId));
+
+                        if (sideRawPart != null)
+                        {
+                            newRawPartName = sideRawPart;
+                        }
+                        else if (_organPartNameToChar.TryGetValue(partId, out char organChar))
+                        {
+                            // Fallback: derive zone from the art data (e.g. beast limbs)
+                            newRawPartName = _artData.GetRawPartNameForOrganPartChar(organChar);
+                        }
+                    }
                 }
             }
         }
@@ -319,8 +355,8 @@ public class BodyArtViewer
             boxY2 = Math.Min(_terminal.Height - 1, boxY2);
         }
 
-        // Clear the art area
-        for (int ty = 0; ty < _artData.Height && ty < _terminal.Height; ty++)
+        // Clear the full art area (full terminal height to avoid artifacts when art is shorter than 100)
+        for (int ty = 0; ty < _terminal.Height; ty++)
             for (int tx = 0; tx < PanelX - 1 && tx < _terminal.Width; tx++)
                 _terminal.SetCell(tx, ty, ' ', Config.Colors.Black, Config.Colors.Black);
 
@@ -331,6 +367,9 @@ public class BodyArtViewer
             {
                 int tx = ArtOffsetX + ax;
                 int ty = ArtOffsetY + ay;
+
+                // Clip: don't let art bleed into the right panel separator
+                if (tx >= PanelX - 1) continue;
 
                 char artChar = _artData.ArtGrid[ax, ay];
                 if (artChar == ' ' || artChar == '\0') continue;
@@ -781,7 +820,8 @@ public class BodyArtViewer
         // ── Exclusive wound detail when hovering precisely on a wound glyph ──
         if (_hoveredWoundId != null)
         {
-            if (Cathedral.Game.Narrative.WoundRegistry.All.TryGetValue(_hoveredWoundId.Value, out var hovered))
+            var hovered = _hoveredWoundInstance;
+            if (hovered != null)
             {
                 int wRow = Math.Max(minRow + 1, 50);
                 _terminal.Text(PanelContentX, wRow, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);

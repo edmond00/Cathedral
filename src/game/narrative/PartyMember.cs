@@ -55,21 +55,34 @@ public abstract class PartyMember
     /// <summary>Active wounds currently affecting this party member.</summary>
     public List<Wound> Wounds { get; private set; } = new();
 
+    // ── Species & anatomy ─────────────────────────────────────────
+    /// <summary>The species of this party member (determines anatomy type and art folder).</summary>
+    public Species Species { get; }
+
+    /// <summary>Shortcut to the anatomy type used by this member's species.</summary>
+    public AnatomyType AnatomyType => Species.AnatomyType;
+
     // ── Display name (subclasses define this differently) ────────
     /// <summary>Human-readable name shown in the party panel.</summary>
     public abstract string DisplayName { get; }
 
     // ── Constructor ──────────────────────────────────────────────
-    protected PartyMember()
+    protected PartyMember(Species species)
     {
-        _bodyParts = InitializeBodyParts();
+        Species = species ?? throw new ArgumentNullException(nameof(species));
+        var factory = AnatomyFactoryRegistry.GetFactory(species.AnatomyType);
+
+        _bodyParts = factory.CreateBodyParts();
+        ApplySpeciesMaxScores(species);
+        RandomizeOrganScores();
+
         HumorQueues = InitializeHumorQueues();
-        DerivedStats = InitializeDerivedStats();
+        DerivedStats = factory.CreateDerivedStats();
         Skills = new List<Skill>();
         LearnedSkills = Skills; // same reference
         Inventory = new List<Item>();
         MemoryModules = new List<MemoryModule>(); // populated after skills are assigned via InitializeMemory()
-        Wounds = InitializeDebugWounds();
+        Wounds = InitializeDebugWounds(factory);
 
         // Initialise all 13 anchor slots to empty lists
         EquippedItems = new Dictionary<EquipmentAnchor, List<Item>>();
@@ -141,22 +154,22 @@ public abstract class PartyMember
     }
 
     // ── Body initialisation ──────────────────────────────────────
-    private static List<BodyPart> InitializeBodyParts()
+    private void ApplySpeciesMaxScores(Species species)
+    {
+        foreach (var kv in species.OrganPartMaxScores)
+        {
+            var part = GetOrganPartById(kv.Key);
+            part?.SetSpeciesMaxScore(kv.Value);
+        }
+    }
+
+    private void RandomizeOrganScores()
     {
         var rng = new Random();
-        var parts = new List<BodyPart>
-        {
-            new EncephalonBodyPart(),
-            new VisageBodyPart(),
-            new TrunkBodyPart(),
-            new UpperLimbsBodyPart(),
-            new LowerLimbsBodyPart()
-        };
-        foreach (var bp in parts)
+        foreach (var bp in _bodyParts)
             foreach (var organ in bp.Organs)
                 foreach (var part in organ.Parts)
-                    part.Score = rng.Next(1, 11);
-        return parts;
+                    part.Score = rng.Next(1, part.MaxScore + 1);
     }
 
     private HumorQueueSet InitializeHumorQueues()
@@ -175,24 +188,7 @@ public abstract class PartyMember
         HumorQueues.Initialize(this, _sharedRng);
     }
 
-    private static List<DerivedStat> InitializeDerivedStats() => new()
-    {
-        // Memory capacity stats (drive memory module slot counts)
-        new WorkingMemoryCapacityStat(),    // drives Working Memory slot count
-        new ProceduralMemoryCapacityStat(), // drives Procedural Memory slot count
-        new SemanticMemoryCapacityStat(),   // drives Semantic Memory slot count
-        new SensoryMemoryCapacityStat(),    // drives Sensory Memory slot count
-        new ResidualMemoryCapacityStat(),   // drives Residual Memory slot count
-        // Secretion percentage stats (displayed in Humors tab)
-        new HeparBloodSecretionStat(),       new HeparPhlegmSecretionStat(),
-        new HeparYellowBileSecretionStat(),  new HeparBlackBileSecretionStat(),
-        new PaunchBloodSecretionStat(),      new PaunchPhlegmSecretionStat(),
-        new PaunchYellowBileSecretionStat(), new PaunchBlackBileSecretionStat(),
-        new PulmonesBloodSecretionStat(),    new PulmonesPhlegmSecretionStat(),
-        new PulmonesYellowBileSecretionStat(),new PulmonesBlackBileSecretionStat(),
-        new SpleenBloodSecretionStat(),      new SpleenPhlegmSecretionStat(),
-        new SpleenYellowBileSecretionStat(), new SpleenBlackBileSecretionStat(),
-    };
+
 
     // ── Skill initialisation ─────────────────────────────────────
     /// <summary>
@@ -347,21 +343,21 @@ public abstract class PartyMember
     public int CurrentHp => Math.Max(0, MaxHp - Wounds.Count);
 
     // ── Debug wound initialisation ────────────────────────────────
-    private static List<Wound> InitializeDebugWounds()
+    private static List<Wound> InitializeDebugWounds(IAnatomyFactory factory)
     {
-        // Pick a mix of specific and wildcard wounds
-        var specific = WoundRegistry.All.Values
+        var woundMap = factory.GetWoundClassMap();
+        var specific = woundMap.Values
             .Where(w => w.TargetKind != WoundTargetKind.Wildcard).ToList();
         var rng = new Random();
         int count = rng.Next(2, 5);
         var result = specific.OrderBy(_ => rng.Next()).Take(count).ToList<Wound>();
         // Add 1-2 wildcard wounds with placeholder positions (will be assigned by viewer)
-        if (WoundRegistry.WildcardTemplates.Count > 0)
+        var wildcards = woundMap.Values.OfType<WildcardWound>().ToList();
+        if (wildcards.Count > 0)
         {
             int wc = rng.Next(1, 3);
-            foreach (var template in WoundRegistry.WildcardTemplates.OrderBy(_ => rng.Next()).Take(wc))
+            foreach (var template in wildcards.OrderBy(_ => rng.Next()).Take(wc))
             {
-                // Clone by creating a new instance via Activator (all wildcards are parameterless)
                 var instance = (WildcardWound)System.Activator.CreateInstance(template.GetType())!;
                 result.Add(instance);
             }
