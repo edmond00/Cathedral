@@ -1,6 +1,4 @@
 id,name,where,handicap
-0,black eye,left eye,medium
-1,black eye,right eye,medium
 2,pierced eye,left eye,high
 3,pierced eye,right eye,high
 4,perforated eardrum,left ear,high
@@ -9,8 +7,12 @@ id,name,where,handicap
 7,concussions,encephalon,medium
 8,broken snout,snout,high
 9,broken fang,fangs,medium
+0,broken fang,fangs,medium
+1,broken fang,fangs,medium
+w,broken fang,fangs,medium
 a,torned out tongue,tongue,high
 b,broken backbone,backbone,high
+x,tail amputee,backbone,medium
 g,broken ribs,pulmones,high
 c,broken leg,left foreleg,high
 d,broken leg,right foreleg,high
