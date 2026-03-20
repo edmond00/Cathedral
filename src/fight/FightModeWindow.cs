@@ -318,8 +318,18 @@ internal class FightModeWindow : GameWindow
                                                     ax, ay, _state.Fighters, active);
                 if (path != null && path.Count > 0)
                 {
-                    int maxSteps = active.CurrentCineticPoints * Math.Max(1, active.MoveSpeed);
-                    newPath = path.Take(maxSteps).ToList();
+                    double budget = active.CurrentCineticPoints * (double)Math.Max(1, active.MoveSpeed);
+                    int px = active.X, py = active.Y;
+                    double acc = 0;
+                    int affordable = 0;
+                    foreach (var (nx, ny) in path)
+                    {
+                        double step = (nx != px && ny != py) ? 1.5 : 1.0;
+                        if (acc + step > budget + 1e-9) break;
+                        acc += step; affordable++; px = nx; py = ny;
+                    }
+                    if (affordable > 0)
+                        newPath = path.Take(affordable).ToList();
                 }
             }
         }
@@ -527,30 +537,37 @@ internal class FightModeWindow : GameWindow
     private HashSet<(int X, int Y)> ComputeReachableCells(Fighter fighter)
     {
         var result = new HashSet<(int, int)>();
-        int maxSteps = fighter.CurrentCineticPoints * Math.Max(1, fighter.MoveSpeed);
-        if (maxSteps <= 0) return result;
+        double budget = fighter.CurrentCineticPoints * (double)Math.Max(1, fighter.MoveSpeed);
+        if (budget <= 0) return result;
 
-        var queue   = new Queue<(int x, int y, int steps)>();
-        var visited = new HashSet<(int, int)>();
-        queue.Enqueue((fighter.X, fighter.Y, 0));
-        visited.Add((fighter.X, fighter.Y));
+        var dist = new Dictionary<(int, int), double>();
+        var pq   = new PriorityQueue<(int, int), double>();
+        var start = (fighter.X, fighter.Y);
+        dist[start] = 0;
+        pq.Enqueue(start, 0);
 
-        while (queue.Count > 0)
+        while (pq.Count > 0)
         {
-            var (cx, cy, steps) = queue.Dequeue();
-            if (steps > 0) result.Add((cx, cy));
-            if (steps >= maxSteps) continue;
+            pq.TryDequeue(out var cur, out var curCost);
+            var (cx, cy) = cur;
+            if (curCost > dist.GetValueOrDefault(cur, double.MaxValue)) continue;
+            if (cx != fighter.X || cy != fighter.Y) result.Add((cx, cy));
+
             foreach (var (nx, ny) in new[]
             {
-                (cx-1,cy),(cx+1,cy),(cx,cy-1),(cx,cy+1), // cardinal
-                (cx-1,cy-1),(cx+1,cy-1),(cx-1,cy+1),(cx+1,cy+1) // diagonal
+                (cx-1,cy),(cx+1,cy),(cx,cy-1),(cx,cy+1),
+                (cx-1,cy-1),(cx+1,cy-1),(cx-1,cy+1),(cx+1,cy+1)
             })
             {
-                if (!visited.Contains((nx, ny)) &&
-                    FightResolver.CanMoveTo(_state.Area, nx, ny, _state.Fighters, fighter))
+                if (!FightResolver.CanMoveTo(_state.Area, nx, ny, _state.Fighters, fighter)) continue;
+                double stepCost = (nx != cx && ny != cy) ? 1.5 : 1.0;
+                double newCost  = curCost + stepCost;
+                if (newCost > budget) continue;
+                var neighbor = (nx, ny);
+                if (newCost < dist.GetValueOrDefault(neighbor, double.MaxValue))
                 {
-                    visited.Add((nx, ny));
-                    queue.Enqueue((nx, ny, steps + 1));
+                    dist[neighbor] = newCost;
+                    pq.Enqueue(neighbor, newCost);
                 }
             }
         }
@@ -588,12 +605,22 @@ internal class FightModeWindow : GameWindow
         var path = FightResolver.BfsPath(_state.Area, fighter.X, fighter.Y, ax, ay, _state.Fighters, fighter);
         if (path == null || path.Count == 0) return;
 
-        int maxSteps = fighter.CurrentCineticPoints * Math.Max(1, fighter.MoveSpeed);
-        if (maxSteps <= 0) return;
+        double budget = fighter.CurrentCineticPoints * (double)Math.Max(1, fighter.MoveSpeed);
+        if (budget <= 0) return;
 
-        var trimmed = path.Take(maxSteps).ToList();
-        ExecuteAction(new Actions.MoveAction(fighter, trimmed));
-        // After MoveAction, phase is AnimatingMovement — clear highlights
+        // Trim to what fits in the cost budget
+        int px = fighter.X, py = fighter.Y;
+        double accCost = 0;
+        int affordable = 0;
+        foreach (var (nx, ny) in path)
+        {
+            double step = (nx != px && ny != py) ? 1.5 : 1.0;
+            if (accCost + step > budget + 1e-9) break;
+            accCost += step; affordable++; px = nx; py = ny;
+        }
+        if (affordable == 0) return;
+
+        ExecuteAction(new Actions.MoveAction(fighter, path.Take(affordable).ToList()));
         _highlightCells = null;
     }
 

@@ -21,7 +21,8 @@ public class MoveAction : IFightAction
     {
         if (_path.Count == 0) return;
 
-        int cost = FightResolver.MovementCineticCost(_path.Count, _mover);
+        int cost = FightResolver.MovementCineticCost(
+            FightResolver.PathCost(_mover.X, _mover.Y, _path), _mover);
         _mover.CurrentCineticPoints = Math.Max(0, _mover.CurrentCineticPoints - cost);
 
         var dest = _path[^1];
