@@ -36,14 +36,14 @@ public class ActionEvaluationResult
     public double DifficultyScore { get; set; }
     public int DifficultyLevel { get; set; }
     public double SuccessProbability { get; set; }
-    public Skill ActionSkill { get; set; } = null!;
-    public Skill ThinkingSkill { get; set; } = null!;
+    public ModusMentis ActionModusMentis { get; set; } = null!;
+    public ModusMentis ThinkingModusMentis { get; set; } = null!;
     public ParsedNarrativeAction Action { get; set; } = null!;
     public NarrationNode CurrentNode { get; set; } = null!;
 }
 
 /// <summary>
-/// Orchestrates action execution: skill checks, outcome determination, and narration.
+/// Orchestrates action execution: modusMentis checks, outcome determination, and narration.
 /// Uses tree-based Critic evaluation for plausibility, difficulty, and failure outcomes.
 /// </summary>
 public class ActionExecutionController
@@ -79,28 +79,28 @@ public class ActionExecutionController
     public async Task<ActionEvaluationResult> EvaluateActionAsync(
         ParsedNarrativeAction action,
         NarrationNode currentNode,
-        Skill thinkingSkillUsed,
+        ModusMentis thinkingModusMentisUsed,
         CancellationToken cancellationToken = default)
     {
         // Debug: Show what we're searching for and what we have
-        Console.WriteLine($"DEBUG: Looking for action skill ID: '{action.ActionSkillId}'");
-        Console.WriteLine($"DEBUG: Protagonist has {_protagonist.Skills.Count} skills:");
-        foreach (var skill in _protagonist.Skills)
+        Console.WriteLine($"DEBUG: Looking for action modusMentis ID: '{action.ActionModusMentisId}'");
+        Console.WriteLine($"DEBUG: Protagonist has {_protagonist.ModiMentis.Count} modiMentis:");
+        foreach (var modusMentis in _protagonist.ModiMentis)
         {
-            Console.WriteLine($"  - {skill.SkillId} ({skill.DisplayName})");
+            Console.WriteLine($"  - {modusMentis.ModusMentisId} ({modusMentis.DisplayName})");
         }
         
-        // Resolve action skill
-        var actionSkill = _protagonist.Skills.FirstOrDefault(s => s.SkillId == action.ActionSkillId);
-        if (actionSkill == null)
+        // Resolve action modusMentis
+        var actionModusMentis = _protagonist.ModiMentis.FirstOrDefault(s => s.ModusMentisId == action.ActionModusMentisId);
+        if (actionModusMentis == null)
         {
-            Console.WriteLine($"DEBUG: Skill '{action.ActionSkillId}' NOT FOUND in protagonist's skills!");
+            Console.WriteLine($"DEBUG: ModusMentis '{action.ActionModusMentisId}' NOT FOUND in protagonist's modiMentis!");
             return new ActionEvaluationResult
             {
                 IsPlausible = false,
-                PlausibilityError = "The skill required for this action is unavailable.",
-                ActionSkill = thinkingSkillUsed, // Fallback
-                ThinkingSkill = thinkingSkillUsed,
+                PlausibilityError = "The modusMentis required for this action is unavailable.",
+                ActionModusMentis = thinkingModusMentisUsed, // Fallback
+                ThinkingModusMentis = thinkingModusMentisUsed,
                 Action = action,
                 CurrentNode = currentNode
             };
@@ -128,8 +128,8 @@ public class ActionExecutionController
             {
                 IsPlausible = false,
                 PlausibilityError = errorMessage,
-                ActionSkill = actionSkill,
-                ThinkingSkill = thinkingSkillUsed,
+                ActionModusMentis = actionModusMentis,
+                ThinkingModusMentis = thinkingModusMentisUsed,
                 Action = action,
                 CurrentNode = currentNode
             };
@@ -164,7 +164,7 @@ public class ActionExecutionController
         double successProbability = 0.95 - (difficultyScore * 0.55);
         
         // Adjust for organ score
-        string organId = actionSkill.Organs.Length > 0 ? actionSkill.Organs[0] : "hands";
+        string organId = actionModusMentis.Organs.Length > 0 ? actionModusMentis.Organs[0] : "hands";
         int organScore = _protagonist.GetOrganById(organId)?.Score ?? 5;
         
         // Organ score adds up to 10% success chance
@@ -179,8 +179,8 @@ public class ActionExecutionController
             DifficultyScore = difficultyScore,
             DifficultyLevel = difficultyLevel,
             SuccessProbability = successProbability,
-            ActionSkill = actionSkill,
-            ThinkingSkill = thinkingSkillUsed,
+            ActionModusMentis = actionModusMentis,
+            ThinkingModusMentis = thinkingModusMentisUsed,
             Action = action,
             CurrentNode = currentNode
         };
@@ -196,8 +196,8 @@ public class ActionExecutionController
     {
         return await CreatePlausibilityFailureResultAsync(
             evalResult.Action,
-            evalResult.ActionSkill,
-            evalResult.ThinkingSkill,
+            evalResult.ActionModusMentis,
+            evalResult.ThinkingModusMentis,
             evalResult.PlausibilityError!,
             evalResult.CurrentNode,
             cancellationToken);
@@ -214,8 +214,8 @@ public class ActionExecutionController
         CancellationToken cancellationToken = default)
     {
         var action = evalResult.Action;
-        var actionSkill = evalResult.ActionSkill;
-        var thinkingSkillUsed = evalResult.ThinkingSkill;
+        var actionModusMentis = evalResult.ActionModusMentis;
+        var thinkingModusMentisUsed = evalResult.ThinkingModusMentis;
         double difficultyScore = evalResult.DifficultyScore;
         int difficultyLevel = evalResult.DifficultyLevel;
         var currentNode = evalResult.CurrentNode;
@@ -255,12 +255,12 @@ public class ActionExecutionController
         // Apply outcome to game state
         await _outcomeApplicator.ApplyOutcomeAsync(actualOutcome, _protagonist);
 
-        // Generate narration from thinking skill's perspective
+        // Generate narration from thinking modusMentis's perspective
         // Include failure hint if applicable
         string narration = await _outcomeNarrator.NarrateOutcomeAsync(
             action,
-            actionSkill,
-            thinkingSkillUsed,
+            actionModusMentis,
+            thinkingModusMentisUsed,
             actualOutcome,
             succeeded,
             difficultyScore,
@@ -271,8 +271,8 @@ public class ActionExecutionController
         return new ActionExecutionResult
         {
             Action = action,
-            ActionSkill = actionSkill,
-            ThinkingSkill = thinkingSkillUsed,
+            ActionModusMentis = actionModusMentis,
+            ThinkingModusMentis = thinkingModusMentisUsed,
             Difficulty = difficultyScore,
             DifficultyLevel = difficultyLevel,
             Succeeded = succeeded,
@@ -285,17 +285,17 @@ public class ActionExecutionController
 
     /// <summary>
     /// Legacy method for backwards compatibility.
-    /// Executes a player-selected action with skill check and outcome application.
+    /// Executes a player-selected action with modusMentis check and outcome application.
     /// Returns the execution result with narration and final outcome.
     /// </summary>
     public async Task<ActionExecutionResult> ExecuteActionAsync(
         ParsedNarrativeAction action,
         NarrationNode currentNode,
-        Skill thinkingSkillUsed,
+        ModusMentis thinkingModusMentisUsed,
         CancellationToken cancellationToken = default)
     {
         // Phase 1: Evaluate action
-        var evalResult = await EvaluateActionAsync(action, currentNode, thinkingSkillUsed, cancellationToken);
+        var evalResult = await EvaluateActionAsync(action, currentNode, thinkingModusMentisUsed, cancellationToken);
         
         if (!evalResult.IsPlausible)
         {
@@ -317,8 +317,8 @@ public class ActionExecutionController
     /// </summary>
     private async Task<ActionExecutionResult> CreatePlausibilityFailureResultAsync(
         ParsedNarrativeAction action,
-        Skill actionSkill,
-        Skill thinkingSkill,
+        ModusMentis actionModusMentis,
+        ModusMentis thinkingModusMentis,
         string plausibilityError,
         NarrationNode currentNode,
         CancellationToken cancellationToken)
@@ -328,7 +328,7 @@ public class ActionExecutionController
         
         string narration = await _outcomeNarrator.NarratePlausibilityFailureAsync(
             action,
-            actionSkill,
+            actionModusMentis,
             plausibilityError,
             _protagonist,
             cancellationToken);
@@ -336,8 +336,8 @@ public class ActionExecutionController
         return new ActionExecutionResult
         {
             Action = action,
-            ActionSkill = actionSkill,
-            ThinkingSkill = thinkingSkill,
+            ActionModusMentis = actionModusMentis,
+            ThinkingModusMentis = thinkingModusMentis,
             Difficulty = 0,
             DifficultyLevel = 0,
             Succeeded = false,
@@ -355,8 +355,8 @@ public class ActionExecutionController
 public class ActionExecutionResult
 {
     public ParsedNarrativeAction Action { get; set; } = null!;
-    public Skill? ActionSkill { get; set; }
-    public Skill ThinkingSkill { get; set; } = null!;
+    public ModusMentis? ActionModusMentis { get; set; }
+    public ModusMentis ThinkingModusMentis { get; set; } = null!;
     public double Difficulty { get; set; }
     public int DifficultyLevel { get; set; }
     public bool Succeeded { get; set; }

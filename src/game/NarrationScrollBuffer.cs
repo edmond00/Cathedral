@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -45,7 +45,7 @@ public class NarrationScrollBuffer
         
         // Create a new block with cleaned text if it was modified
         var blockToAdd = cleanedText != block.Text 
-            ? new NarrationBlock(block.Type, block.Skill, cleanedText, block.Keywords, block.Actions, block.ChainOrigin)
+            ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Keywords, block.Actions, block.ChainOrigin)
             : block;
         
         _blocks.Add(blockToAdd);
@@ -246,12 +246,12 @@ public class NarrationScrollBuffer
 
         foreach (var block in _blocks)
         {
-            // Add skill name header (if present)
-            if (block.Skill != null)
+            // Add modusMentis name header (if present)
+            if (block.ModusMentis != null)
             {
-                // Generate skill level indicators using dice glyphs
-                string levelIndicators = new string(Config.Symbols.SkillLevelIndicator, block.Skill.Level);
-                string headerText = $"[{block.Skill.DisplayName.ToUpper()} {levelIndicators}]";
+                // Generate modusMentis level indicators using dice glyphs
+                string levelIndicators = new string(Config.Symbols.ModusMentisLevelIndicator, block.ModusMentis.Level);
+                string headerText = $"[{block.ModusMentis.DisplayName.ToUpper()} {levelIndicators}]";
                 
                 _renderedLines.Add(new RenderedLine(
                     Text: headerText,
@@ -321,14 +321,14 @@ public class NarrationScrollBuffer
                 foreach (var action in block.Actions)
                 {
                     // Calculate wrapped lines for this action
-                    // Format: "> [SkillName ◼◼◼] action text" - need to account for level indicators
+                    // Format: "> [ModusMentisName ◼◼◼] action text" - need to account for level indicators
                     string prefix = "> ";
-                    string skillName = action.ActionSkill?.DisplayName ?? action.ActionSkillId;
-                    int skillLevel = action.ActionSkill?.Level ?? 1;
-                    string levelIndicators = new string(Config.Symbols.SkillLevelIndicator, skillLevel);
-                    string fullSkillBracket = $"[{skillName} {levelIndicators}] ";
+                    string modusMentisName = action.ActionModusMentis?.DisplayName ?? action.ActionModusMentisId;
+                    int modusMentisLevel = action.ActionModusMentis?.Level ?? 1;
+                    string levelIndicators = new string(Config.Symbols.ModusMentisLevelIndicator, modusMentisLevel);
+                    string fullModusMentisBracket = $"[{modusMentisName} {levelIndicators}] ";
                     
-                    int firstLinePrefix = prefix.Length + fullSkillBracket.Length;
+                    int firstLinePrefix = prefix.Length + fullModusMentisBracket.Length;
                     int firstLineWidth = _maxWidth - firstLinePrefix;
                     int continuationWidth = _maxWidth - 4; // 4-space indent
                     
@@ -512,7 +512,7 @@ public record RenderedLine(
     List<ParsedNarrativeAction>? Actions,  // Actions for rendering (only for Action lines)
     bool IsHistory = false,  // True if this line is part of history (from previous narration nodes)
     int GlobalActionIndex = -1,  // Global action index (0-based) across all thinking blocks, -1 if not an action line
-    NarrationBlock? SourceBlock = null  // The narration block this line comes from (for skill chain tracking)
+    NarrationBlock? SourceBlock = null  // The narration block this line comes from (for modusMentis chain tracking)
 );
 
 /// <summary>
@@ -520,7 +520,7 @@ public record RenderedLine(
 /// </summary>
 public enum LineType
 {
-    Header,     // Skill name header
+    Header,     // ModusMentis name header
     Content,    // Narration text
     Action,     // Action line (for Thinking blocks)
     Outcome,    // Outcome narration (for Action/Outcome blocks)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -67,11 +67,11 @@ public static class ActionParser
             if (actionElement.TryGetProperty("action_text", out var actionText))
                 action.ActionText = actionText.GetString() ?? "";
             
-            // Try both "related_skill" (current format) and "skill" (fallback)
-            if (actionElement.TryGetProperty("related_skill", out var relatedSkill))
-                action.Skill = relatedSkill.GetString() ?? "";
-            else if (actionElement.TryGetProperty("skill", out var skill))
-                action.Skill = skill.GetString() ?? "";
+            // Try both "related_modusMentis" (current format) and "modusMentis" (fallback)
+            if (actionElement.TryGetProperty("related_modusMentis", out var relatedModusMentis))
+                action.ModusMentis = relatedModusMentis.GetString() ?? "";
+            else if (actionElement.TryGetProperty("modusMentis", out var modusMentis))
+                action.ModusMentis = modusMentis.GetString() ?? "";
             
             if (actionElement.TryGetProperty("difficulty", out var difficulty))
                 action.Difficulty = difficulty.GetString() ?? "";

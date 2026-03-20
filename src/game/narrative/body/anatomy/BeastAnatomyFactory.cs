@@ -43,6 +43,12 @@ public sealed class BeastAnatomyFactory : IAnatomyFactory
         new PulmonesYellowBileSecretionStat(),new PulmonesBlackBileSecretionStat(),
         new SpleenBloodSecretionStat(),       new SpleenPhlegmSecretionStat(),
         new SpleenYellowBileSecretionStat(),  new SpleenBlackBileSecretionStat(),
+        // Combat stats
+        new CineticPointsStat(),
+        new NaturalDefenseStat(),
+        new MoveSpeedStat(),
+        new RunawayChanceStat(),
+        new InitiativeStat(),
     };
 
     public Dictionary<char, Wound> GetWoundClassMap()

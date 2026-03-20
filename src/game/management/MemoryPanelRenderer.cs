@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK.Mathematics;
@@ -15,7 +15,7 @@ namespace Cathedral.Game.Management;
 ///
 /// Rows 2        : title
 /// Rows 4+       : five memory modules (header + slot grid)
-/// Row ~76+      : inline detail panel for hovered skill
+/// Row ~76+      : inline detail panel for hovered modusMentis
 /// </summary>
 public class MemoryPanelRenderer
 {
@@ -295,9 +295,9 @@ public class MemoryPanelRenderer
         for (int ix = x + 1; ix < x + slotW - 1; ix++)
             _terminal.SetCell(ix, y + 1, ' ', textCol, slotBg);
 
-        string lvl      = $"L{slot.Skill!.Level}";
+        string lvl      = $"L{slot.ModusMentis!.Level}";
         int    maxNameW = slotW - 2 - lvl.Length - 1;
-        string name     = slot.Skill.DisplayName;
+        string name     = slot.ModusMentis.DisplayName;
         if (name.Length > maxNameW) name = name.Length > 0 ? name[..Math.Max(0, maxNameW)] : "";
 
         _terminal.Text(x + 1, y + 1, name, textCol, slotBg);
@@ -396,7 +396,7 @@ public class MemoryPanelRenderer
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Renders skill details at the bottom of the memory area.
+    /// Renders modusMentis details at the bottom of the memory area.
     /// </summary>
     private void RenderDetailPanel()
     {
@@ -406,8 +406,8 @@ public class MemoryPanelRenderer
         for (int x = StartX; x <= EndX; x++)
             _terminal.SetCell(x, DetailPanelRow - 1, '─', Config.Colors.DarkGray35, AreaBg);
 
-        // Determine selected skill and its source module type
-        Skill? skill = null;
+        // Determine selected modusMentis and its source module type
+        ModusMentis? modusMentis = null;
         MemoryModuleType selectedModType = MemoryModuleType.Working;
         if (_selectedSlot.HasValue && _member != null)
         {
@@ -415,10 +415,10 @@ public class MemoryPanelRenderer
             selectedModType = modType;
             var mod = _member.MemoryModules.FirstOrDefault(m => m.Type == modType);
             if (mod != null && slotIdx < mod.Slots.Count && mod.Slots[slotIdx].IsFilled)
-                skill = mod.Slots[slotIdx].Skill;
+                modusMentis = mod.Slots[slotIdx].ModusMentis;
         }
 
-        if (skill == null)
+        if (modusMentis == null)
         {
             for (int y = DetailPanelRow; y < DetailPanelRow + panelH; y++)
                 for (int x = StartX; x <= EndX; x++)
@@ -439,8 +439,8 @@ public class MemoryPanelRenderer
         // Title row
         for (int x = StartX; x <= EndX; x++)
             _terminal.SetCell(x, row, ' ', TitleColor, DetailTitle);
-        _terminal.Text(StartX + 2, row, skill.DisplayName, Config.Colors.BrightYellow, DetailTitle);
-        string lvlStr = $"Level {skill.Level}";
+        _terminal.Text(StartX + 2, row, modusMentis.DisplayName, Config.Colors.BrightYellow, DetailTitle);
+        string lvlStr = $"Level {modusMentis.Level}";
         _terminal.Text(EndX - lvlStr.Length, row, lvlStr, Config.Colors.GoldYellow, DetailTitle);
         row++;
 
@@ -457,10 +457,10 @@ public class MemoryPanelRenderer
         // Meta lines (left column, rows 2-5)
         var metaLines = new (string label, string value, Vector4 valCol)[]
         {
-            ("Memory type",   skill.MemoryType.ToString(),                              SlotText),
-            ("Functions",     string.Join(", ", skill.Functions),                       Config.Colors.LightGray75),
-            ("Primary organ", skill.Organs.Length > 0 ? skill.Organs[0] : "—",         Config.Colors.LightGray75),
-            ("Organ score",   _member != null ? _member.GetOrganScoreForSkill(skill).ToString() : "—",
+            ("Memory type",   modusMentis.MemoryType.ToString(),                              SlotText),
+            ("Functions",     string.Join(", ", modusMentis.Functions),                       Config.Colors.LightGray75),
+            ("Primary organ", modusMentis.Organs.Length > 0 ? modusMentis.Organs[0] : "—",         Config.Colors.LightGray75),
+            ("Organ score",   _member != null ? _member.GetOrganScoreForModusMentis(modusMentis).ToString() : "—",
              Config.Colors.LightGray75),
         };
         int metaRow = row;
@@ -476,7 +476,7 @@ public class MemoryPanelRenderer
             _terminal.SetCell(StartX + leftW, y, '│', Config.Colors.DarkGray35, DetailBg);
 
         // Right column: description word-wrap
-        string desc  = skill.ShortDescription ?? "(no description)";
+        string desc  = modusMentis.ShortDescription ?? "(no description)";
         var    words = desc.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         string dline = "";
         int descRow  = row;
@@ -500,11 +500,11 @@ public class MemoryPanelRenderer
         {
             if (selectedModType == MemoryModuleType.Working)
             {
-                // CONSOLIDATE: move skill to its typed long-term module
-                var targetModType = skill.MemoryType switch
+                // CONSOLIDATE: move modusMentis to its typed long-term module
+                var targetModType = modusMentis.MemoryType switch
                 {
-                    SkillMemoryType.Procedural => MemoryModuleType.Procedural,
-                    SkillMemoryType.Sensory    => MemoryModuleType.Sensory,
+                    ModusMentisMemoryType.Procedural => MemoryModuleType.Procedural,
+                    ModusMentisMemoryType.Sensory    => MemoryModuleType.Sensory,
                     _                          => MemoryModuleType.Semantic
                 };
                 var targetMod    = _member!.MemoryModules.FirstOrDefault(m => m.Type == targetModType);
@@ -518,10 +518,10 @@ public class MemoryPanelRenderer
                   || selectedModType == MemoryModuleType.Semantic
                   || selectedModType == MemoryModuleType.Sensory)
             {
-                // ARCHIVE: move skill to front of residual FIFO queue
+                // ARCHIVE: move modusMentis to front of residual FIFO queue
                 var srcMod     = _member!.MemoryModules.FirstOrDefault(m => m.Type == selectedModType);
                 bool canArchive = (srcMod?.FilledCount ?? 0) > 1;
-                string? reason = canArchive ? null : "at least 1 skill must remain";
+                string? reason = canArchive ? null : "at least 1 modusMentis must remain";
                 RenderButton("archive", "ARCHIVE", StartX + 2, btnRow, canArchive, reason);
             }
         }
@@ -600,18 +600,18 @@ public class MemoryPanelRenderer
         if (working == null || slotIdx >= working.Slots.Count) return;
         var srcSlot = working.Slots[slotIdx];
         if (!srcSlot.IsFilled) return;
-        var skill = srcSlot.Skill!;
+        var modusMentis = srcSlot.ModusMentis!;
 
-        var targetType = skill.MemoryType switch
+        var targetType = modusMentis.MemoryType switch
         {
-            SkillMemoryType.Procedural => MemoryModuleType.Procedural,
-            SkillMemoryType.Sensory    => MemoryModuleType.Sensory,
+            ModusMentisMemoryType.Procedural => MemoryModuleType.Procedural,
+            ModusMentisMemoryType.Sensory    => MemoryModuleType.Sensory,
             _                          => MemoryModuleType.Semantic
         };
         var target = _member.MemoryModules.FirstOrDefault(m => m.Type == targetType);
-        if (target == null || !target.TryAdd(skill)) return;
+        if (target == null || !target.TryAdd(modusMentis)) return;
 
-        srcSlot.Skill = null;
+        srcSlot.ModusMentis = null;
         _selectedSlot = null;
     }
 
@@ -624,13 +624,13 @@ public class MemoryPanelRenderer
         if (source == null || slotIdx >= source.Slots.Count) return;
         var srcSlot = source.Slots[slotIdx];
         if (!srcSlot.IsFilled) return;
-        var skill = srcSlot.Skill!;
+        var modusMentis = srcSlot.ModusMentis!;
 
         var residual = _member.MemoryModules.FirstOrDefault(m => m.Type == MemoryModuleType.Residual);
         if (residual == null) return;
 
-        srcSlot.Skill = null;
-        residual.Prepend(skill);
+        srcSlot.ModusMentis = null;
+        residual.Prepend(modusMentis);
         _selectedSlot = null;
     }
 
@@ -662,9 +662,9 @@ public class MemoryPanelRenderer
 
     private static string GetModuleSubtitle(MemoryModuleType type) => type switch
     {
-        MemoryModuleType.Working    => "any skill  ▶  short-term",
-        MemoryModuleType.Procedural => "motor · physical skills",
-        MemoryModuleType.Semantic   => "conceptual · factual skills",
+        MemoryModuleType.Working    => "any modus mentis  ▶  short-term",
+        MemoryModuleType.Procedural => "motor · physical modiMentis",
+        MemoryModuleType.Semantic   => "conceptual · factual modiMentis",
         MemoryModuleType.Sensory    => "perceptual · experiential",
         MemoryModuleType.Residual   => "forgetting queue  ▶ FIFO ▶",
         _                           => ""

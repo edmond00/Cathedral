@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Cathedral.Game;
@@ -16,7 +16,7 @@ public class ScoredAction
     public CriticTreeResult? TreeResult { get; set; }
     
     // Individual scores (extracted from tree for backward compatibility)
-    public double SkillScore { get; set; }
+    public double ModusMentisScore { get; set; }
     public double ConsequenceScore { get; set; }
     public double ContextScore { get; set; }
     public double LocationScore { get; set; }

@@ -268,7 +268,7 @@ public static class LocationTravelModeLauncher
                         // First try to close popup
                         if (ltgc.CloseNarrativePopup())
                         {
-                            Console.WriteLine("ESC pressed - closed thinking skill popup");
+                            Console.WriteLine("ESC pressed - closed thinking modusMentis popup");
                             return; // Don't exit location, just close popup
                         }
                         

@@ -6,7 +6,7 @@ using System.Text;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Constructs prompts for observation skills to generate environment perceptions.
+/// Constructs prompts for observation modiMentis to generate environment perceptions.
 /// Builds the user message that gets sent to the LLM with the cached persona prompt.
 /// </summary>
 public class ObservationPromptConstructor
@@ -18,7 +18,7 @@ public class ObservationPromptConstructor
     public string BuildObservationPrompt(
         NarrationNode node,
         Protagonist protagonist,
-        Skill observationSkill,
+        ModusMentis observationModusMentis,
         List<string> targetKeywords,
         bool promptKeywordUsage = true)
     {
@@ -44,7 +44,7 @@ Notable elements you should describe in your narration using specific keywords (
 
 Generate a brief narration (50-300 characters) from your perspective that describes what you observe. Include specific details about the notable elements.
 
-Write like {observationSkill.PersonaTone}.
+Write like {observationModusMentis.PersonaTone}.
 
 Respond in JSON format:
 {{
@@ -62,7 +62,7 @@ Respond in JSON format:
     public string BuildObservationPromptWithIntros(
         NarrationNode node,
         Protagonist protagonist,
-        Skill observationSkill,
+        ModusMentis observationModusMentis,
         List<string> targetKeywords)
     {
         // Get a few intro examples
@@ -87,7 +87,7 @@ IMPORTANT: Your narration MUST:
 2. Include at least 3 of these keywords naturally: {string.Join(", ", targetKeywords)}
 3. Be 50-300 characters total
 
-Write like {observationSkill.PersonaTone}.
+Write like {observationModusMentis.PersonaTone}.
 
 Respond in JSON format:
 {{

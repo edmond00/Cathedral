@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Applies outcomes to the game state: learns skills, adds items, transitions nodes, etc.
+/// Applies outcomes to the game state: learns modiMentis, adds items, transitions nodes, etc.
 /// </summary>
 public class OutcomeApplicator
 {

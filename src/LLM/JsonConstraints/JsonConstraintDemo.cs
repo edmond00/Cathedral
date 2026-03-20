@@ -1,4 +1,4 @@
-using Cathedral.LLM.JsonConstraints;
+﻿using Cathedral.LLM.JsonConstraints;
 using Cathedral.Glyph.Microworld.LocationSystem;
 
 namespace Cathedral.LLM.JsonConstraints;
@@ -54,7 +54,7 @@ public static class JsonConstraintDemo
                 new DigitField("intelligence", 2), // 2-digit intelligence (00-99)
                 new DigitField("constitution", 2)  // 2-digit constitution (00-99)
             }),
-            new ArrayField("skills", new StringField("skill", 3, 15), 0, 5),
+            new ArrayField("modiMentis", new StringField("modusMentis", 3, 15), 0, 5),
             new OptionalField("backstory", new StringField("backstory", 50, 500)),
             new DigitField("health", 3)  // 3-digit health (000-999)
         });

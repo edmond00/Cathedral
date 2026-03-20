@@ -10,27 +10,27 @@ using Cathedral.LLM.JsonConstraints;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Generates narration for action outcomes from the action skill's perspective.
-/// Uses the action skill's LLM slot for outcome narration.
+/// Generates narration for action outcomes from the action modusMentis's perspective.
+/// Uses the action modusMentis's LLM slot for outcome narration.
 /// </summary>
 public class OutcomeNarrator
 {
     private readonly LlamaServerManager _llmManager;
-    private readonly SkillSlotManager _slotManager;
+    private readonly ModusMentisSlotManager _slotManager;
 
-    public OutcomeNarrator(LlamaServerManager llmManager, SkillSlotManager slotManager)
+    public OutcomeNarrator(LlamaServerManager llmManager, ModusMentisSlotManager slotManager)
     {
         _llmManager = llmManager;
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
     }
 
     /// <summary>
-    /// Generates narration for an action outcome from the action skill's perspective.
+    /// Generates narration for an action outcome from the action modusMentis's perspective.
     /// </summary>
     public async Task<string> NarrateOutcomeAsync(
         ParsedNarrativeAction action,
-        Skill actionSkill,
-        Skill thinkingSkill,
+        ModusMentis actionModusMentis,
+        ModusMentis thinkingModusMentis,
         OutcomeBase outcome,
         bool succeeded,
         double difficulty,
@@ -38,14 +38,14 @@ public class OutcomeNarrator
         CancellationToken cancellationToken = default,
         string? failureHint = null)
     {
-        // Ensure narrator slot is initialized with action skill's persona
-        int slotId = await GetOrCreateNarratorSlotAsync(actionSkill);
+        // Ensure narrator slot is initialized with action modusMentis's persona
+        int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
 
         // Build prompt
         string prompt = BuildNarrationPrompt(
             action,
-            actionSkill,
-            thinkingSkill,
+            actionModusMentis,
+            thinkingModusMentis,
             outcome,
             succeeded,
             difficulty,
@@ -85,23 +85,23 @@ public class OutcomeNarrator
     /// </summary>
     public async Task<string> NarratePlausibilityFailureAsync(
         ParsedNarrativeAction action,
-        Skill actionSkill,
+        ModusMentis actionModusMentis,
         string plausibilityError,
         Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
-        // Use the action skill's slot for plausibility failure narration
-        int slotId = await GetOrCreateNarratorSlotAsync(actionSkill);
+        // Use the action modusMentis's slot for plausibility failure narration
+        int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
 
-        string prompt = $@"You are {actionSkill.DisplayName}, explaining why an action cannot be performed.
+        string prompt = $@"You are {actionModusMentis.DisplayName}, explaining why an action cannot be performed.
 
 The attempted action was: ""{action.ActionText}""
 
 The reason it's not possible: {plausibilityError}
 
-As {actionSkill.DisplayName}, explain in your unique voice why this action cannot be done right now.
+As {actionModusMentis.DisplayName}, explain in your unique voice why this action cannot be done right now.
 - Be concise but characterful
-- Stay in character with {actionSkill.PersonaTone} tone
+- Stay in character with {actionModusMentis.PersonaTone} tone
 - Suggest what might be needed or what's wrong with the attempt
 - Keep it 50-200 characters
 
@@ -133,13 +133,13 @@ Respond in JSON format:
     }
 
     /// <summary>
-    /// Ensures the narrator slot is initialized with the action skill's persona.
-    /// Returns the slot ID for this skill.
+    /// Ensures the narrator slot is initialized with the action modusMentis's persona.
+    /// Returns the slot ID for this modusMentis.
     /// </summary>
-    private async Task<int> GetOrCreateNarratorSlotAsync(Skill actionSkill)
+    private async Task<int> GetOrCreateNarratorSlotAsync(ModusMentis actionModusMentis)
     {
-        // Use SkillSlotManager to get slot for the action skill
-        return await _slotManager.GetOrCreateSlotForSkillAsync(actionSkill);
+        // Use ModusMentisSlotManager to get slot for the action modusMentis
+        return await _slotManager.GetOrCreateSlotForModusMentisAsync(actionModusMentis);
     }
 
     /// <summary>
@@ -147,8 +147,8 @@ Respond in JSON format:
     /// </summary>
     private string BuildNarrationPrompt(
         ParsedNarrativeAction action,
-        Skill actionSkill,
-        Skill thinkingSkill,
+        ModusMentis actionModusMentis,
+        ModusMentis thinkingModusMentis,
         OutcomeBase outcome,
         bool succeeded,
         double difficulty,
@@ -165,7 +165,7 @@ Respond in JSON format:
             failureGuidance = $"\nWhat happened in the failure: {failureHint}";
         }
 
-        return $@"You are {actionSkill.DisplayName}, narrating the outcome of an action you performed.
+        return $@"You are {actionModusMentis.DisplayName}, narrating the outcome of an action you performed.
 
 The action was: ""{action.ActionText}""
 
@@ -176,10 +176,10 @@ Result: {successStatus}
     ? $"Outcome: {outcomeDescription}" 
     : $"The attempt did not achieve the desired result.{failureGuidance}")}
 
-Narrate what happened from your perspective as {actionSkill.DisplayName}. 
+Narrate what happened from your perspective as {actionModusMentis.DisplayName}. 
 - If success: Describe how you accomplished it and what you achieved
 - If failure: Describe specifically what went wrong based on the failure guidance
-- Use the tone of {actionSkill.PersonaTone}
+- Use the tone of {actionModusMentis.PersonaTone}
 - Keep it 100-400 characters
 
 Respond in JSON format:

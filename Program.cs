@@ -8,6 +8,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine();
     Console.WriteLine("Options:");
     Console.WriteLine("  (no args)                          Launch the narrative exploration game");
+    Console.WriteLine("  --fight                            Run the fight loop (turn-based combat test)");
     Console.WriteLine("  --fight-area [options]             Run the fight area generator test");
     Console.WriteLine("    --mode <random|...>              Fight area generation mode (default: random)");
     Console.WriteLine("  --draw <folder>                    Display previously saved layered ASCII art");
@@ -19,6 +20,13 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("    --auto-contrast                  Automatically stretch contrast");
     Console.WriteLine("    --stretch                        Stretch/shrink to exact width/height (ignore aspect ratio)");
     Console.WriteLine("  --help, -h                         Show this help message");
+    return;
+}
+
+// Check for fight mode
+if (args.Length >= 1 && args[0] == "--fight")
+{
+    Cathedral.Fight.FightModeLauncher.Launch();
     return;
 }
 

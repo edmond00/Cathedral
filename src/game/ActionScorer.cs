@@ -9,7 +9,7 @@ namespace Cathedral.Game;
 
 /// <summary>
 /// Scores and filters actions using the Critic evaluator with tree-based evaluation.
-/// Uses binary decision trees for action-skill coherence, action-consequence plausibility, 
+/// Uses binary decision trees for action-modusMentis coherence, action-consequence plausibility, 
 /// context coherence, location coherence, and action specificity.
 /// </summary>
 public class ActionScorer
@@ -97,8 +97,8 @@ public class ActionScorer
         string? currentSublocation,
         LocationBlueprint? blueprint)
     {
-        // Start with skill coherence check
-        var root = CriticQuestions.SkillCoherence(action.ActionText, action.Skill, 0.5);
+        // Start with modusMentis coherence check
+        var root = CriticQuestions.ModusMentisCoherence(action.ActionText, action.ModusMentis, 0.5);
         var current = root;
         
         // Chain: consequence plausibility
@@ -182,8 +182,8 @@ public class ActionScorer
         {
             switch (nodeResult.NodeName)
             {
-                case "SkillCoherence":
-                    scoredAction.SkillScore = nodeResult.Score;
+                case "ModusMentisCoherence":
+                    scoredAction.ModusMentisScore = nodeResult.Score;
                     break;
                 case "ConsequencePlausibility":
                     scoredAction.ConsequenceScore = nodeResult.Score;
@@ -202,13 +202,13 @@ public class ActionScorer
     }
     
     /// <summary>
-    /// Performs a skill check with d20 roll against difficulty.
+    /// Performs a modusMentis check with d20 roll against difficulty.
     /// Used by the narrative system for action execution.
     /// </summary>
-    public bool RollSkillCheck(Narrative.Skill skill, int difficulty, Narrative.Protagonist protagonist)
+    public bool RollModusMentisCheck(Narrative.ModusMentis modusMentis, int difficulty, Narrative.Protagonist protagonist)
     {
         // Get relevant organ score
-        int organScore = GetOrganScoreForSkill(skill, protagonist);
+        int organScore = GetOrganScoreForModusMentis(modusMentis, protagonist);
         
         // Roll d20
         var random = new Random();
@@ -217,18 +217,18 @@ public class ActionScorer
         int total = roll + organScore;
         bool success = total >= difficulty;
         
-        Console.WriteLine($"ActionScorer: Skill check - {skill.DisplayName} (Organ:{organScore}) + d20({roll}) = {total} vs DC {difficulty} → {(success ? "SUCCESS" : "FAILURE")}");
+        Console.WriteLine($"ActionScorer: ModusMentis check - {modusMentis.DisplayName} (Organ:{organScore}) + d20({roll}) = {total} vs DC {difficulty} → {(success ? "SUCCESS" : "FAILURE")}");
         
         return success;
     }
     
     /// <summary>
-    /// Gets the organ score most relevant to a skill.
-    /// Uses the skill's primary organ.
+    /// Gets the organ score most relevant to a modusMentis.
+    /// Uses the modusMentis's primary organ.
     /// </summary>
-    private int GetOrganScoreForSkill(Narrative.Skill skill, Narrative.Protagonist protagonist)
+    private int GetOrganScoreForModusMentis(Narrative.ModusMentis modusMentis, Narrative.Protagonist protagonist)
     {
-        return protagonist.GetOrganScoreForSkill(skill);
+        return protagonist.GetOrganScoreForModusMentis(modusMentis);
     }
     
     /// <summary>

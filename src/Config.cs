@@ -209,8 +209,8 @@ public static class Config
     /// </summary>
     public static class Symbols
     {
-        // Skill level indicators
-        public const char SkillLevelIndicator = '⟐';
+        // ModusMentis level indicators
+        public const char ModusMentisLevelIndicator = '⟐';
         
         // Noetic points marker
         public const char NoeticPointMarker = '⬤';
@@ -281,7 +281,7 @@ public static class Config
         
         // Colors following black/white/yellow theme
         public static readonly Vector4 HeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for location title
-        public static readonly Vector4 SkillHeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for skill headers
+        public static readonly Vector4 ModusMentisHeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for modusMentis headers
         public static readonly Vector4 NarrativeColor = Colors.MediumGray60; // Medium grey for base text (darker for better contrast)
         public static readonly Vector4 KeywordNormalColor = Colors.White; // White for interactive elements
         public static readonly Vector4 KeywordHoverColor = Colors.BrightYellow; // Yellow text on hover
@@ -289,7 +289,7 @@ public static class Config
         public static readonly Vector4 ActionNormalColor = Colors.White; // White for interactive elements
         public static readonly Vector4 ActionHoverColor = Colors.BrightYellow; // Yellow text on hover
         public static readonly Vector4 ActionHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
-        public static readonly Vector4 ActionSkillColor = Colors.BrightYellow; // Yellow for skill brackets
+        public static readonly Vector4 ActionModusMentisColor = Colors.BrightYellow; // Yellow for modusMentis brackets
         public static readonly Vector4 ReasoningColor = Colors.MediumGray50; // Medium grey for reasoning text
         public static readonly Vector4 ScrollbarTrackColor = Colors.DarkGray20; // Dark grey for scrollbar track
         public static readonly Vector4 ScrollbarThumbColor = Colors.MediumGray50; // Medium grey for scrollbar thumb
@@ -338,13 +338,13 @@ public static class Config
     
     #endregion
     
-    #region Thinking Skill Popup
+    #region Thinking ModusMentis Popup
     
-    public static class ThinkingSkillPopup
+    public static class ThinkingModusMentisPopup
     {
-        public static readonly Vector4 SkillNormalColor = Colors.White; // White for interactive skills
-        public static readonly Vector4 SkillHoverColor = Colors.BrightYellow; // Yellow text on hover
-        public static readonly Vector4 SkillHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
+        public static readonly Vector4 ModusMentisNormalColor = Colors.White; // White for interactive modiMentis
+        public static readonly Vector4 ModusMentisHoverColor = Colors.BrightYellow; // Yellow text on hover
+        public static readonly Vector4 ModusMentisHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
         public static readonly Vector4 BackgroundColor = new(0.0f, 0.0f, 0.0f, 0.9f); // Semi-transparent black
         public static readonly Vector4 TransparentColor = new(0.0f, 0.0f, 0.0f, 0.0f);
     }

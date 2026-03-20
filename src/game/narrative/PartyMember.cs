@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative.Memory;
@@ -7,8 +7,8 @@ namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// Abstract base class for all party members (protagonist and companions).
-/// Holds the shared physical and skill state: body parts, organs, humors, derived stats,
-/// inventory, and the skill set used during narrative execution.
+/// Holds the shared physical and modusMentis state: body parts, organs, humors, derived stats,
+/// inventory, and the modusMentis set used during narrative execution.
 ///
 /// Subclasses add their own unique data:
 ///   - <see cref="Protagonist"/>: journal, companion list, current location
@@ -34,10 +34,10 @@ public abstract class PartyMember
     // ── Memory ────────────────────────────────────────────────────
     public List<MemoryModule> MemoryModules { get; private set; }
 
-    // ── Skills ───────────────────────────────────────────────────
-    public List<Skill> Skills { get; set; }
-    /// <summary>Alias for Skills — kept for call-site compatibility.</summary>
-    public List<Skill> LearnedSkills { get; set; }
+    // ── ModiMentis ───────────────────────────────────────────────────
+    public List<ModusMentis> ModiMentis { get; set; }
+    /// <summary>Alias for ModiMentis — kept for call-site compatibility.</summary>
+    public List<ModusMentis> LearnedModiMentis { get; set; }
 
     // ── Inventory ────────────────────────────────────────────────
     /// <summary>
@@ -78,10 +78,10 @@ public abstract class PartyMember
 
         HumorQueues = InitializeHumorQueues();
         DerivedStats = factory.CreateDerivedStats();
-        Skills = new List<Skill>();
-        LearnedSkills = Skills; // same reference
+        ModiMentis = new List<ModusMentis>();
+        LearnedModiMentis = ModiMentis; // same reference
         Inventory = new List<Item>();
-        MemoryModules = new List<MemoryModule>(); // populated after skills are assigned via InitializeMemory()
+        MemoryModules = new List<MemoryModule>(); // populated after modiMentis are assigned via InitializeMemory()
         Wounds = InitializeDebugWounds(factory);
 
         // Initialise all 13 anchor slots to empty lists
@@ -190,28 +190,28 @@ public abstract class PartyMember
 
 
 
-    // ── Skill initialisation ─────────────────────────────────────
+    // ── ModusMentis initialisation ─────────────────────────────────────
     /// <summary>
-    /// Populate skills with a random selection from the registry and randomise their levels.
+    /// Populate modiMentis with a random selection from the registry and randomise their levels.
     /// </summary>
-    public void InitializeSkills(SkillRegistry registry, int skillCount = 50)
+    public void InitializeModiMentis(ModusMentisRegistry registry, int modusMentisCount = 50)
     {
         var rng = new Random();
-        var obs = registry.GetObservationSkills().OrderBy(_ => rng.Next()).Take(10);
-        var think = registry.GetThinkingSkills().OrderBy(_ => rng.Next()).Take(20);
-        var act = registry.GetActionSkills().OrderBy(_ => rng.Next()).Take(20);
-        var selected = obs.Concat(think).Concat(act).Distinct().Take(skillCount).ToList();
+        var obs = registry.GetObservationModiMentis().OrderBy(_ => rng.Next()).Take(10);
+        var think = registry.GetThinkingModiMentis().OrderBy(_ => rng.Next()).Take(20);
+        var act = registry.GetActionModiMentis().OrderBy(_ => rng.Next()).Take(20);
+        var selected = obs.Concat(think).Concat(act).Distinct().Take(modusMentisCount).ToList();
 
-        Skills.Clear();
-        Skills.AddRange(selected);
-        foreach (var skill in Skills)
-            skill.Level = rng.Next(1, 11);
+        ModiMentis.Clear();
+        ModiMentis.AddRange(selected);
+        foreach (var modusMentis in ModiMentis)
+            modusMentis.Level = rng.Next(1, 11);
     }
 
     // ── Memory initialisation ─────────────────────────────────────
     /// <summary>
     /// Build the five MemoryModules from the party member's brain-organ derived stats.
-    /// Call this after <see cref="InitializeSkills"/> so organ scores are already randomised.
+    /// Call this after <see cref="InitializeModiMentis"/> so organ scores are already randomised.
     /// </summary>
     public void InitializeMemory()
     {
@@ -239,19 +239,19 @@ public abstract class PartyMember
     }
 
     /// <summary>
-    /// Randomly distribute skills across compatible memory modules for testing.
-    /// Each skill is placed in the first module that accepts it and still has space.
+    /// Randomly distribute modiMentis across compatible memory modules for testing.
+    /// Each modusMentis is placed in the first module that accepts it and still has space.
     /// Preference order: typed long-term module first, then Working, then skip.
     /// </summary>
-    public void AssignSkillsToMemoryRandom()
+    public void AssignModiMentisToMemoryRandom()
     {
         if (MemoryModules.Count == 0) InitializeMemory();
 
         var rng = new Random();
-        // Shuffle skills before assigning to get a varied distribution
-        var shuffled = Skills.OrderBy(_ => rng.Next()).ToList();
+        // Shuffle modiMentis before assigning to get a varied distribution
+        var shuffled = ModiMentis.OrderBy(_ => rng.Next()).ToList();
 
-        foreach (var skill in shuffled)
+        foreach (var modusMentis in shuffled)
         {
             // Try the matching long-term module first, then Working as fallback
             var candidates = MemoryModules
@@ -261,7 +261,7 @@ public abstract class PartyMember
 
             foreach (var module in candidates)
             {
-                if (module.TryAdd(skill)) break;
+                if (module.TryAdd(modusMentis)) break;
             }
         }
     }
@@ -270,15 +270,15 @@ public abstract class PartyMember
     public MemoryModule? GetMemoryModule(MemoryModuleType type) =>
         MemoryModules.FirstOrDefault(m => m.Type == type);
 
-    // ── Skill queries ────────────────────────────────────────────
-    public List<Skill> GetObservationSkills() =>
-        LearnedSkills.Where(s => s.Functions.Contains(SkillFunction.Observation)).ToList();
-    public List<Skill> GetThinkingSkills() =>
-        LearnedSkills.Where(s => s.Functions.Contains(SkillFunction.Thinking)).ToList();
-    public List<Skill> GetActionSkills() =>
-        LearnedSkills.Where(s => s.Functions.Contains(SkillFunction.Action)).ToList();
-    public Skill? GetSkillById(string skillId) =>
-        LearnedSkills.FirstOrDefault(s => s.SkillId == skillId);
+    // ── ModusMentis queries ────────────────────────────────────────────
+    public List<ModusMentis> GetObservationModiMentis() =>
+        LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Observation)).ToList();
+    public List<ModusMentis> GetThinkingModiMentis() =>
+        LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Thinking)).ToList();
+    public List<ModusMentis> GetActionModiMentis() =>
+        LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Action)).ToList();
+    public ModusMentis? GetModusMentisById(string modusMentisId) =>
+        LearnedModiMentis.FirstOrDefault(s => s.ModusMentisId == modusMentisId);
 
     // ── Body hierarchy queries ───────────────────────────────────
     public BodyPart? GetBodyPartById(string id) =>
@@ -288,11 +288,11 @@ public abstract class PartyMember
     public OrganPart? GetOrganPartById(string id) =>
         _bodyParts.SelectMany(bp => bp.Organs).SelectMany(o => o.Parts).FirstOrDefault(p => p.Id == id);
 
-    /// <summary>Returns the primary organ score for a skill (used for skill checks).</summary>
-    public int GetOrganScoreForSkill(Skill skill)
+    /// <summary>Returns the primary organ score for a modusMentis (used for modusMentis checks).</summary>
+    public int GetOrganScoreForModusMentis(ModusMentis modusMentis)
     {
-        if (skill.Organs.Length == 0) return 0;
-        return GetOrganById(skill.Organs[0])?.Score ?? 0;
+        if (modusMentis.Organs.Length == 0) return 0;
+        return GetOrganById(modusMentis.Organs[0])?.Score ?? 0;
     }
 
     // ── Wound helpers ─────────────────────────────────────────────

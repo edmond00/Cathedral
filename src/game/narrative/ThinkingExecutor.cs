@@ -10,19 +10,19 @@ using Cathedral.LLM.JsonConstraints;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Manages thinking skill LLM requests using slots 10-29.
+/// Manages thinking modusMentis LLM requests using slots 10-29.
 /// Handles instance creation, caching, and JSON-constrained action generation.
 /// </summary>
 public class ThinkingExecutor
 {
     private readonly LlamaServerManager _llmManager;
     private readonly ThinkingPromptConstructor _promptConstructor;
-    private readonly SkillSlotManager _slotManager;
+    private readonly ModusMentisSlotManager _slotManager;
 
     public ThinkingExecutor(
         LlamaServerManager llmManager,
         ThinkingPromptConstructor promptConstructor,
-        SkillSlotManager slotManager)
+        ModusMentisSlotManager slotManager)
     {
         _llmManager = llmManager;
         _promptConstructor = promptConstructor;
@@ -30,33 +30,33 @@ public class ThinkingExecutor
     }
 
     /// <summary>
-    /// Gets or creates a slot for the given thinking skill.
+    /// Gets or creates a slot for the given thinking modusMentis.
     /// Caches the persona prompt in the slot for reuse.
     /// </summary>
-    private async Task<int> GetOrCreateSlotForSkillAsync(Skill skill)
+    private async Task<int> GetOrCreateSlotForModusMentisAsync(ModusMentis modusMentis)
     {
-        return await _slotManager.GetOrCreateSlotForSkillAsync(skill);
+        return await _slotManager.GetOrCreateSlotForModusMentisAsync(modusMentis);
     }
 
     /// <summary>
     /// Generates CoT reasoning and actions for the given keyword.
     /// Returns the parsed thinking response or null if generation failed.
     /// </summary>
-    /// <param name="thinkingSkill">The thinking skill to use</param>
+    /// <param name="thinkingModusMentis">The thinking modusMentis to use</param>
     /// <param name="keyword">The keyword that was clicked</param>
     /// <param name="keywordSourceOutcome">The outcome/element that the keyword relates to (e.g., "berry bush"), or null</param>
     /// <param name="node">The current narration node</param>
     /// <param name="outcomesWithMetadata">Possible outcomes with circuitous metadata</param>
-    /// <param name="actionSkills">Available action skills</param>
+    /// <param name="actionModiMentis">Available action modiMentis</param>
     /// <param name="protagonist">The player protagonist</param>
     /// <param name="cancellationToken">Cancellation token</param>
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
-        Skill thinkingSkill,
+        ModusMentis thinkingModusMentis,
         string keyword,
         string? keywordSourceOutcome,
         NarrationNode node,
         List<OutcomeWithMetadata> outcomesWithMetadata,
-        List<Skill> actionSkills,
+        List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
@@ -69,20 +69,20 @@ public class ThinkingExecutor
             keywordSourceOutcome,
             node,
             outcomesWithMetadata,  // Pass metadata so prompt shows separation
-            actionSkills,
+            actionModiMentis,
             protagonist,
-            thinkingSkill);
+            thinkingModusMentis);
 
         // Build JSON schema
         var schema = LLMSchemaConfig.CreateThinkingSchema(
-            actionSkills.Select(s => s.SkillId).ToList(),
+            actionModiMentis.Select(s => s.ModusMentisId).ToList(),
             possibleOutcomes.Select(o => o.ToNaturalLanguageString()).ToList());
 
         // Generate GBNF constraint
         string gbnfGrammar = JsonConstraintGenerator.GenerateGBNF(schema);
 
         // Get or create slot
-        int slot = await GetOrCreateSlotForSkillAsync(thinkingSkill);
+        int slot = await GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
 
         // Request from LLM
         string? jsonResponse = await RequestFromLLMAsync(
@@ -98,7 +98,7 @@ public class ThinkingExecutor
         }
 
         // Parse JSON response (pass metadata for circuitous marking)
-        return ParseThinkingResponse(jsonResponse, outcomesWithMetadata, actionSkills, thinkingSkill, keyword);
+        return ParseThinkingResponse(jsonResponse, outcomesWithMetadata, actionModiMentis, thinkingModusMentis, keyword);
     }
     
     /// <summary>
@@ -107,11 +107,11 @@ public class ThinkingExecutor
     /// Does not include outcome context for the keyword.
     /// </summary>
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
-        Skill thinkingSkill,
+        ModusMentis thinkingModusMentis,
         string keyword,
         NarrationNode node,
         List<OutcomeBase> possibleOutcomes,
-        List<Skill> actionSkills,
+        List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
@@ -121,7 +121,7 @@ public class ThinkingExecutor
             .ToList();
             
         return await GenerateThinkingAsync(
-            thinkingSkill, keyword, null, node, outcomesWithMetadata, actionSkills, protagonist, cancellationToken);
+            thinkingModusMentis, keyword, null, node, outcomesWithMetadata, actionModiMentis, protagonist, cancellationToken);
     }
     
     /// <summary>
@@ -129,12 +129,12 @@ public class ThinkingExecutor
     /// Overload that accepts plain outcomes (treats all as straightforward) but includes keyword source.
     /// </summary>
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
-        Skill thinkingSkill,
+        ModusMentis thinkingModusMentis,
         string keyword,
         string? keywordSourceOutcome,
         NarrationNode node,
         List<OutcomeBase> possibleOutcomes,
-        List<Skill> actionSkills,
+        List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
@@ -144,7 +144,7 @@ public class ThinkingExecutor
             .ToList();
             
         return await GenerateThinkingAsync(
-            thinkingSkill, keyword, keywordSourceOutcome, node, outcomesWithMetadata, actionSkills, protagonist, cancellationToken);
+            thinkingModusMentis, keyword, keywordSourceOutcome, node, outcomesWithMetadata, actionModiMentis, protagonist, cancellationToken);
     }
 
     /// <summary>
@@ -214,8 +214,8 @@ public class ThinkingExecutor
     private ThinkingResponse? ParseThinkingResponse(
         string jsonResponse, 
         List<OutcomeWithMetadata> outcomesWithMetadata, 
-        List<Skill> actionSkills, 
-        Skill thinkingSkill, 
+        List<ModusMentis> actionModiMentis, 
+        ModusMentis thinkingModusMentis, 
         string keyword)
     {
         try
@@ -230,7 +230,7 @@ public class ThinkingExecutor
 
             foreach (var actionElement in actionsArray.EnumerateArray())
             {
-                string actionSkill = actionElement.GetProperty("action_skill").GetString() ?? "";
+                string actionModusMentis = actionElement.GetProperty("action_modusMentis").GetString() ?? "";
                 string outcomeStr = actionElement.GetProperty("outcome").GetString() ?? "";
                 string actionDesc = actionElement.GetProperty("action_description").GetString() ?? "";
 
@@ -247,17 +247,17 @@ public class ThinkingExecutor
                         displayText = displayText.Substring(7); // Remove "try to " (7 characters)
                     }
                     
-                    // Resolve the actual skill instance from actionSkills list
-                    var resolvedActionSkill = actionSkills.FirstOrDefault(s => s.SkillId == actionSkill);
+                    // Resolve the actual modusMentis instance from actionModiMentis list
+                    var resolvedActionModusMentis = actionModiMentis.FirstOrDefault(s => s.ModusMentisId == actionModusMentis);
                     
                     actions.Add(new ParsedNarrativeAction
                     {
-                        ActionSkillId = actionSkill,
-                        ActionSkill = resolvedActionSkill, // Set the resolved skill instance with proper level
+                        ActionModusMentisId = actionModusMentis,
+                        ActionModusMentis = resolvedActionModusMentis, // Set the resolved modusMentis instance with proper level
                         PreselectedOutcome = outcomeWithMeta.Outcome,
                         ActionText = actionDesc,
                         DisplayText = displayText,
-                        ThinkingSkill = thinkingSkill,  // Set the thinking skill that generated this action
+                        ThinkingModusMentis = thinkingModusMentis,  // Set the thinking modusMentis that generated this action
                         Keyword = keyword,
                         IsCircuitous = outcomeWithMeta.IsCircuitous,
                         IntermediateNode = outcomeWithMeta.IntermediateNode
@@ -289,7 +289,7 @@ public class ThinkingExecutor
 }
 
 /// <summary>
-/// Represents the response from a thinking skill LLM request.
+/// Represents the response from a thinking modusMentis LLM request.
 /// </summary>
 public class ThinkingResponse
 {

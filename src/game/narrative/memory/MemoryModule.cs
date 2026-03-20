@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
@@ -10,32 +10,32 @@ namespace Cathedral.Game.Narrative.Memory;
 /// </summary>
 public enum MemoryModuleType
 {
-    /// <summary>Short-term buffer for any skill. Sized by the Encephalon stat.</summary>
+    /// <summary>Short-term buffer for any modusMentis. Sized by the Encephalon stat.</summary>
     Working,
 
-    /// <summary>Long-term home for motor/physical skills (SkillMemoryType.Procedural). Sized by Cerebellum stat.</summary>
+    /// <summary>Long-term home for motor/physical modiMentis (ModusMentisMemoryType.Procedural). Sized by Cerebellum stat.</summary>
     Procedural,
 
-    /// <summary>Long-term home for conceptual skills (SkillMemoryType.Semantic). Sized by Cerebrum stat.</summary>
+    /// <summary>Long-term home for conceptual modiMentis (ModusMentisMemoryType.Semantic). Sized by Cerebrum stat.</summary>
     Semantic,
 
-    /// <summary>Long-term home for perceptual skills (SkillMemoryType.Sensory). Sized by Hippocampus stat.</summary>
+    /// <summary>Long-term home for perceptual modiMentis (ModusMentisMemoryType.Sensory). Sized by Hippocampus stat.</summary>
     Sensory,
 
-    /// <summary>FIFO queue for skills queued for forgetting. Sized by Anamnesis stat.</summary>
+    /// <summary>FIFO queue for modiMentis queued for forgetting. Sized by Anamnesis stat.</summary>
     Residual
 }
 
 /// <summary>
-/// A single memory slot. Holds at most one skill at a time.
+/// A single memory slot. Holds at most one modusMentis at a time.
 /// </summary>
 public class MemorySlot
 {
-    /// <summary>The skill occupying this slot, or null if empty.</summary>
-    public Skill? Skill { get; set; }
+    /// <summary>The modusMentis occupying this slot, or null if empty.</summary>
+    public ModusMentis? ModusMentis { get; set; }
 
-    /// <summary>True when a skill is present.</summary>
-    public bool IsFilled => Skill != null;
+    /// <summary>True when a modusMentis is present.</summary>
+    public bool IsFilled => ModusMentis != null;
 
     /// <summary>
     /// True when this slot is permanently unavailable due to brain damage or other conditions.
@@ -72,9 +72,9 @@ public class MemoryModule
     /// Slots at index &gt;= <see cref="ActiveCapacity"/> have <see cref="MemorySlot.IsUnusable"/> = true.</summary>
     public List<MemorySlot> Slots { get; }
 
-    /// <summary>Skills currently held in usable, non-blocked slots.</summary>
-    public IEnumerable<Skill> FilledSkills =>
-        Slots.Where(s => !s.IsUnusable && s.IsFilled).Select(s => s.Skill!);
+    /// <summary>ModiMentis currently held in usable, non-blocked slots.</summary>
+    public IEnumerable<ModusMentis> FilledModiMentis =>
+        Slots.Where(s => !s.IsUnusable && s.IsFilled).Select(s => s.ModusMentis!);
 
     /// <summary>Number of occupied (usable, non-blocked) slots.</summary>
     public int FilledCount => Slots.Count(s => !s.IsUnusable && s.IsFilled);
@@ -95,75 +95,75 @@ public class MemoryModule
     }
 
     /// <summary>
-    /// Returns true if <paramref name="skill"/> is compatible with this module.
-    /// Working and Residual accept any skill; typed modules match on SkillMemoryType.
+    /// Returns true if <paramref name="modusMentis"/> is compatible with this module.
+    /// Working and Residual accept any modusMentis; typed modules match on ModusMentisMemoryType.
     /// </summary>
-    public bool AcceptsSkill(Skill skill)
+    public bool AcceptsModusMentis(ModusMentis modusMentis)
     {
-        if (skill == null) return false;
+        if (modusMentis == null) return false;
         return Type switch
         {
             MemoryModuleType.Working  => true,
             MemoryModuleType.Residual => true,
-            MemoryModuleType.Procedural => skill.MemoryType == SkillMemoryType.Procedural,
-            MemoryModuleType.Semantic   => skill.MemoryType == SkillMemoryType.Semantic,
-            MemoryModuleType.Sensory    => skill.MemoryType == SkillMemoryType.Sensory,
+            MemoryModuleType.Procedural => modusMentis.MemoryType == ModusMentisMemoryType.Procedural,
+            MemoryModuleType.Semantic   => modusMentis.MemoryType == ModusMentisMemoryType.Semantic,
+            MemoryModuleType.Sensory    => modusMentis.MemoryType == ModusMentisMemoryType.Sensory,
             _ => false
         };
     }
 
     /// <summary>
-    /// Attempt to place <paramref name="skill"/> into the first available (empty, non-blocked) slot.
+    /// Attempt to place <paramref name="modusMentis"/> into the first available (empty, non-blocked) slot.
     /// Returns true on success, false if full or incompatible.
     /// </summary>
-    public bool TryAdd(Skill skill)
+    public bool TryAdd(ModusMentis modusMentis)
     {
-        if (skill == null) return false;
-        if (!AcceptsSkill(skill)) return false;
+        if (modusMentis == null) return false;
+        if (!AcceptsModusMentis(modusMentis)) return false;
         var free = Slots.FirstOrDefault(s => !s.IsUnusable && !s.IsFilled && !s.IsBlocked);
         if (free == null) return false;
-        free.Skill = skill;
+        free.ModusMentis = modusMentis;
         return true;
     }
 
-    /// <summary>Removes <paramref name="skill"/> from this module. Returns true if found.</summary>
-    public bool Remove(Skill skill)
+    /// <summary>Removes <paramref name="modusMentis"/> from this module. Returns true if found.</summary>
+    public bool Remove(ModusMentis modusMentis)
     {
-        var slot = Slots.FirstOrDefault(s => !s.IsUnusable && s.Skill == skill);
+        var slot = Slots.FirstOrDefault(s => !s.IsUnusable && s.ModusMentis == modusMentis);
         if (slot == null) return false;
-        slot.Skill = null;
+        slot.ModusMentis = null;
         return true;
     }
 
-    /// <summary>Remove and return the skill in the oldest usable slot (index 0) for the FIFO queue.</summary>
-    public Skill? DequeueOldest()
+    /// <summary>Remove and return the modusMentis in the oldest usable slot (index 0) for the FIFO queue.</summary>
+    public ModusMentis? DequeueOldest()
     {
         var slot = Slots.FirstOrDefault(s => !s.IsUnusable && s.IsFilled);
         if (slot == null) return null;
-        var skill = slot.Skill;
-        slot.Skill = null;
-        return skill;
+        var modusMentis = slot.ModusMentis;
+        slot.ModusMentis = null;
+        return modusMentis;
     }
 
     /// <summary>
-    /// FIFO push-front: inserts <paramref name="skill"/> at the first active slot,
-    /// shifting existing skills one position toward the last slot.
-    /// If all active slots are filled, the last skill is silently dropped.
-    /// Returns the dropped skill, or null if there was a free slot.
+    /// FIFO push-front: inserts <paramref name="modusMentis"/> at the first active slot,
+    /// shifting existing modiMentis one position toward the last slot.
+    /// If all active slots are filled, the last modusMentis is silently dropped.
+    /// Returns the dropped modusMentis, or null if there was a free slot.
     /// </summary>
-    public Skill? Prepend(Skill skill)
+    public ModusMentis? Prepend(ModusMentis modusMentis)
     {
         var active = Slots.Where(s => !s.IsUnusable && !s.IsBlocked).ToList();
         if (active.Count == 0) return null;
 
-        Skill? dropped = null;
+        ModusMentis? dropped = null;
         if (active.All(s => s.IsFilled))
-            dropped = active[^1].Skill;
+            dropped = active[^1].ModusMentis;
 
-        // Shift right: each slot receives the skill from the slot before it
+        // Shift right: each slot receives the modusMentis from the slot before it
         for (int i = active.Count - 1; i > 0; i--)
-            active[i].Skill = active[i - 1].Skill;
-        active[0].Skill = skill;
+            active[i].ModusMentis = active[i - 1].ModusMentis;
+        active[0].ModusMentis = modusMentis;
 
         return dropped;
     }

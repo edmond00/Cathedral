@@ -61,11 +61,11 @@ public static class LLMSchemaConfig
     
     /// <summary>
     /// Schema for thinking/planning responses.
-    /// Includes reasoning text and a list of actions with skills, outcomes, and descriptions.
+    /// Includes reasoning text and a list of actions with modiMentis, outcomes, and descriptions.
     /// </summary>
-    /// <param name="validActionSkills">List of action skill names the protagonist can use</param>
+    /// <param name="validActionModiMentis">List of action modusMentis names the protagonist can use</param>
     /// <param name="validOutcomes">List of valid outcome keywords for the current situation</param>
-    public static CompositeField CreateThinkingSchema(List<string> validActionSkills, List<string> validOutcomes)
+    public static CompositeField CreateThinkingSchema(List<string> validActionModiMentis, List<string> validOutcomes)
     {
         return new CompositeField("ThinkingResponse",
             new StringField("reasoning_text", 
@@ -74,7 +74,7 @@ public static class LLMSchemaConfig
                 Hint: "A short reasoning process the protagonist used to decide on actions"),
             new ArrayField("actions",
                 ElementType: new CompositeField("Action",
-                    new ChoiceField<string>("action_skill", validActionSkills.ToArray()),
+                    new ChoiceField<string>("action_modusMentis", validActionModiMentis.ToArray()),
                     new ChoiceField<string>("outcome", validOutcomes.ToArray()),
                     new TemplateStringField("action_description", 
                         Template: "try to <generated>",

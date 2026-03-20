@@ -286,7 +286,7 @@ public class NarrativeUI
             switch (renderedLine.Type)
             {
                 case LineType.Header:
-                    // Parse skill header to separate name from level indicators
+                    // Parse modusMentis header to separate name from level indicators
                     string headerText = renderedLine.Text;
                     
                     // Find the last space followed by black squares (level indicators) and optional closing bracket
@@ -301,7 +301,7 @@ public class NarrativeUI
                             
                             for (int j = i + 1; j < headerText.Length; j++)
                             {
-                                if (headerText[j] == Config.Symbols.SkillLevelIndicator)
+                                if (headerText[j] == Config.Symbols.ModusMentisLevelIndicator)
                                 {
                                     foundLevelIndicators = true;
                                 }
@@ -327,8 +327,8 @@ public class NarrativeUI
                     
                     if (lastSpaceIndex > 0)
                     {
-                        // Render skill name and level indicators separately
-                        string skillName = headerText.Substring(0, lastSpaceIndex);
+                        // Render modusMentis name and level indicators separately
+                        string modusMentisName = headerText.Substring(0, lastSpaceIndex);
                         string remainingPart = headerText.Substring(lastSpaceIndex);
                         
                         // Separate level indicators from closing bracket
@@ -341,39 +341,39 @@ public class NarrativeUI
                             closingBracket = "]";
                         }
                         
-                        Vector4 skillHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.SkillHeaderColor;
+                        Vector4 modusMentisHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.ModusMentisHeaderColor;
                         
-                        // Determine skill level indicator color based on whether this specific block is in the hovered action's chain
-                        Vector4 skillLevelColor;
+                        // Determine modusMentis level indicator color based on whether this specific block is in the hovered action's chain
+                        Vector4 modusMentisLevelColor;
                         if (shouldDimThisLine)
                         {
-                            skillLevelColor = Config.NarrativeUI.DimmedContentColor;
+                            modusMentisLevelColor = Config.NarrativeUI.DimmedContentColor;
                         }
                         else if (hoveredAction?.Action != null && renderedLine.SourceBlock != null)
                         {
-                            // Check if this specific block is in the hovered action's chain (not just matching skill)
+                            // Check if this specific block is in the hovered action's chain (not just matching modusMentis)
                             bool isInChain = hoveredAction.Action.IsElementInChain(renderedLine.SourceBlock);
-                            skillLevelColor = isInChain ? Config.NarrativeUI.LoadingColor : Config.NarrativeUI.SkillHeaderColor;
+                            modusMentisLevelColor = isInChain ? Config.NarrativeUI.LoadingColor : Config.NarrativeUI.ModusMentisHeaderColor;
                         }
                         else
                         {
-                            skillLevelColor = Config.NarrativeUI.LoadingColor;
+                            modusMentisLevelColor = Config.NarrativeUI.LoadingColor;
                         }
                         
-                        _terminal.Text(_layout.CONTENT_START_X, currentY, skillName, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
-                        _terminal.Text(_layout.CONTENT_START_X + skillName.Length, currentY, levelIndicators, skillLevelColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(_layout.CONTENT_START_X, currentY, modusMentisName, modusMentisHeaderColor, Config.NarrativeUI.BackgroundColor);
+                        _terminal.Text(_layout.CONTENT_START_X + modusMentisName.Length, currentY, levelIndicators, modusMentisLevelColor, Config.NarrativeUI.BackgroundColor);
                         
-                        // Render closing bracket in dark yellow (same as skill name)
+                        // Render closing bracket in dark yellow (same as modusMentis name)
                         if (!string.IsNullOrEmpty(closingBracket))
                         {
-                            _terminal.Text(_layout.CONTENT_START_X + skillName.Length + levelIndicators.Length, currentY, closingBracket, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                            _terminal.Text(_layout.CONTENT_START_X + modusMentisName.Length + levelIndicators.Length, currentY, closingBracket, modusMentisHeaderColor, Config.NarrativeUI.BackgroundColor);
                         }
                     }
                     else
                     {
-                        // Fallback: render entire header in skill header color
-                        Vector4 skillHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.SkillHeaderColor;
-                        _terminal.Text(_layout.CONTENT_START_X, currentY, headerText, skillHeaderColor, Config.NarrativeUI.BackgroundColor);
+                        // Fallback: render entire header in modusMentis header color
+                        Vector4 modusMentisHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.ModusMentisHeaderColor;
+                        _terminal.Text(_layout.CONTENT_START_X, currentY, headerText, modusMentisHeaderColor, Config.NarrativeUI.BackgroundColor);
                     }
                     
                     // Note: Do NOT reset action counter here - we want globally unique action indices
@@ -539,7 +539,7 @@ public class NarrativeUI
                 // Only highlight keywords if thinking attempts remain and content is not dimmed
                 if (thinkingAttemptsRemaining > 0 && !dimContent)
                 {
-                    // Track keyword region for click detection, including source block for skill chain
+                    // Track keyword region for click detection, including source block for modusMentis chain
                     var keywordRegion = new KeywordRegion(
                         segment.KeywordValue!, 
                         y, 
@@ -606,64 +606,64 @@ public class NarrativeUI
         Vector4 backgroundColor = dimContent ? Config.NarrativeUI.BackgroundColor :
             (isHovered ? Config.NarrativeUI.ActionHoverBackgroundColor : Config.NarrativeUI.BackgroundColor);
         
-        // Skill bracket colors - when dimmed, use dark grey; otherwise use hover-aware colors
-        Vector4 skillBracketColor = dimContent ? Config.NarrativeUI.DimmedContentColor :
+        // ModusMentis bracket colors - when dimmed, use dark grey; otherwise use hover-aware colors
+        Vector4 modusMentisBracketColor = dimContent ? Config.NarrativeUI.DimmedContentColor :
             (isHovered ? Config.NarrativeUI.ActionHoverColor : Config.Colors.DarkYellowGrey);
         
-        // Skill level color - when an action is hovered, only highlight skill levels in the chain
-        Vector4 skillLevelColor;
+        // ModusMentis level color - when an action is hovered, only highlight modusMentis levels in the chain
+        Vector4 modusMentisLevelColor;
         if (dimContent)
         {
-            skillLevelColor = Config.NarrativeUI.DimmedContentColor;
+            modusMentisLevelColor = Config.NarrativeUI.DimmedContentColor;
         }
         else if (isHovered)
         {
-            // This action is hovered - its skill is always in its own chain, so highlight it
-            skillLevelColor = Config.NarrativeUI.LoadingColor;
+            // This action is hovered - its modusMentis is always in its own chain, so highlight it
+            modusMentisLevelColor = Config.NarrativeUI.LoadingColor;
         }
         else if (hoveredAction?.Action != null)
         {
             // Another action is hovered - check if this specific action element is in that chain
             // (different actions are never in each other's chains)
             bool isInChain = hoveredAction.Action.IsElementInChain(action);
-            skillLevelColor = isInChain ? Config.NarrativeUI.LoadingColor : Config.NarrativeUI.SkillHeaderColor;
+            modusMentisLevelColor = isInChain ? Config.NarrativeUI.LoadingColor : Config.NarrativeUI.ModusMentisHeaderColor;
         }
         else
         {
-            skillLevelColor = Config.NarrativeUI.LoadingColor;
+            modusMentisLevelColor = Config.NarrativeUI.LoadingColor;
         }
         
-        Vector4 skillBracketBackground = backgroundColor; // Use action background for skill parts too
+        Vector4 modusMentisBracketBackground = backgroundColor; // Use action background for modusMentis parts too
         
         int startX = _layout.CONTENT_START_X;
         
         if (lineIndex == 0)
         {
-            // First line: render with prefix and skill (including level)
+            // First line: render with prefix and modusMentis (including level)
             string prefix = "> ";
             
-            // Build skill bracket with level indicators
-            string skillName = action.ActionSkill?.DisplayName ?? action.ActionSkillId;
-            int skillLevel = action.ActionSkill?.Level ?? 1;
-            string levelIndicators = new string(Config.Symbols.SkillLevelIndicator, skillLevel);
+            // Build modusMentis bracket with level indicators
+            string modusMentisName = action.ActionModusMentis?.DisplayName ?? action.ActionModusMentisId;
+            int modusMentisLevel = action.ActionModusMentis?.Level ?? 1;
+            string levelIndicators = new string(Config.Symbols.ModusMentisLevelIndicator, modusMentisLevel);
             
             _terminal.Text(startX, y, prefix, prefixColor, Config.NarrativeUI.BackgroundColor);
             startX += prefix.Length;
             
-            // Render skill bracket parts with hover-aware colors and backgrounds
-            _terminal.Text(startX, y, "[", skillBracketColor, skillBracketBackground);
+            // Render modusMentis bracket parts with hover-aware colors and backgrounds
+            _terminal.Text(startX, y, "[", modusMentisBracketColor, modusMentisBracketBackground);
             startX += 1;
             
-            _terminal.Text(startX, y, skillName, skillBracketColor, skillBracketBackground);
-            startX += skillName.Length;
+            _terminal.Text(startX, y, modusMentisName, modusMentisBracketColor, modusMentisBracketBackground);
+            startX += modusMentisName.Length;
             
-            _terminal.Text(startX, y, " ", skillBracketColor, skillBracketBackground);
+            _terminal.Text(startX, y, " ", modusMentisBracketColor, modusMentisBracketBackground);
             startX += 1;
             
-            _terminal.Text(startX, y, levelIndicators, skillLevelColor, skillBracketBackground);
+            _terminal.Text(startX, y, levelIndicators, modusMentisLevelColor, modusMentisBracketBackground);
             startX += levelIndicators.Length;
             
-            _terminal.Text(startX, y, "] ", skillBracketColor, skillBracketBackground);
+            _terminal.Text(startX, y, "] ", modusMentisBracketColor, modusMentisBracketBackground);
             startX += 2;
             
             // Calculate available width for action text (respect right margin for scrollbar)
@@ -673,7 +673,7 @@ public class NarrativeUI
             _terminal.Text(startX, y, truncatedText, textColor, backgroundColor);
             
             // Track action region (will be updated as we encounter more lines)
-            // Include the action reference for skill chain access
+            // Include the action reference for modusMentis chain access
             var actionRegion = new ActionRegion(actionIndex, y, y, _layout.CONTENT_START_X, _layout.CONTENT_END_X, action);
             _actionRegions.Add(actionRegion);
         }
@@ -850,8 +850,8 @@ public class NarrativeUI
         // If hovering over an action, render with highlighted dice count
         if (hoveredAction != null)
         {
-            int totalDice = hoveredAction.GetTotalSkillLevel();
-            string diceText = $"{totalDice}{Config.Symbols.SkillLevelIndicator}";
+            int totalDice = hoveredAction.GetTotalModusMentisLevel();
+            string diceText = $"{totalDice}{Config.Symbols.ModusMentisLevelIndicator}";
             
             // Find where the dice text appears in the message
             int diceIndex = message.IndexOf(diceText);

@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Orchestrates the thinking phase: skill popup, LLM reasoning generation, action parsing.
+/// Orchestrates the thinking phase: modusMentis popup, LLM reasoning generation, action parsing.
 /// Manages thinking attempts and generates fallback actions if LLM fails.
 /// </summary>
 public class ThinkingPhaseController
 {
     private readonly ThinkingExecutor _thinkingExecutor;
-    private readonly ThinkingSkillPopup _skillPopup;
+    private readonly ThinkingModusMentisPopup _modusMentisPopup;
     private readonly Protagonist _protagonist;
 
     public ThinkingPhaseController(
@@ -23,42 +23,42 @@ public class ThinkingPhaseController
         _thinkingExecutor = thinkingExecutor;
         _protagonist = protagonist;
         
-        // Initialize popup with protagonist's thinking skills
-        var thinkingSkills = protagonist.GetThinkingSkills();
-        _skillPopup = new ThinkingSkillPopup(thinkingSkills);
+        // Initialize popup with protagonist's thinking modiMentis
+        var thinkingModiMentis = protagonist.GetThinkingModiMentis();
+        _modusMentisPopup = new ThinkingModusMentisPopup(thinkingModiMentis);
     }
 
     /// <summary>
-    /// Shows the thinking skill popup at the mouse position.
+    /// Shows the thinking modusMentis popup at the mouse position.
     /// </summary>
-    public void ShowSkillPopup(int mouseX, int mouseY)
+    public void ShowModusMentisPopup(int mouseX, int mouseY)
     {
-        _skillPopup.Show(mouseX, mouseY);
+        _modusMentisPopup.Show(mouseX, mouseY);
     }
 
     /// <summary>
-    /// Handles input for the skill popup.
-    /// Returns the selected skill or null if cancelled/no input.
+    /// Handles input for the modusMentis popup.
+    /// Returns the selected modusMentis or null if cancelled/no input.
     /// </summary>
-    public Skill? HandlePopupInput(ConsoleKeyInfo keyInfo)
+    public ModusMentis? HandlePopupInput(ConsoleKeyInfo keyInfo)
     {
-        return _skillPopup.HandleInput(keyInfo);
+        return _modusMentisPopup.HandleInput(keyInfo);
     }
 
     /// <summary>
-    /// Renders the skill popup if visible.
+    /// Renders the modusMentis popup if visible.
     /// </summary>
     public void RenderPopup(Action<int, int, string, ConsoleColor> writeAt)
     {
-        _skillPopup.Render(writeAt);
+        _modusMentisPopup.Render(writeAt);
     }
 
     /// <summary>
-    /// Executes the thinking phase with the selected skill.
+    /// Executes the thinking phase with the selected modusMentis.
     /// Generates CoT reasoning and actions, or fallback if LLM fails.
     /// </summary>
     public async Task<ThinkingPhaseResult> ExecuteThinkingPhaseAsync(
-        Skill selectedThinkingSkill,
+        ModusMentis selectedThinkingModusMentis,
         string keyword,
         NarrationNode node,
         NarrationState state,
@@ -74,8 +74,8 @@ public class ThinkingPhaseController
             possibleOutcomes.Add(feelGoodOutcome);
         }
 
-        // Get action skills
-        var actionSkills = _protagonist.GetActionSkills();
+        // Get action modiMentis
+        var actionModiMentis = _protagonist.GetActionModiMentis();
         
         // Get the outcome that owns this keyword for context
         var keywordSourceOutcome = node.GetOutcomeOwningKeyword(keyword);
@@ -83,12 +83,12 @@ public class ThinkingPhaseController
 
         // Try to generate from LLM
         var response = await _thinkingExecutor.GenerateThinkingAsync(
-            selectedThinkingSkill,
+            selectedThinkingModusMentis,
             keyword,
             keywordSourceOutcomeName,
             node,
             possibleOutcomes,
-            actionSkills,
+            actionModiMentis,
             _protagonist,
             cancellationToken);
 
@@ -99,7 +99,7 @@ public class ThinkingPhaseController
                 Success = true,
                 ReasoningText = response.ReasoningText,
                 Actions = response.Actions,
-                ThinkingSkillUsed = selectedThinkingSkill
+                ThinkingModusMentisUsed = selectedThinkingModusMentis
             };
         }
 
@@ -107,25 +107,25 @@ public class ThinkingPhaseController
         var fallbackActions = GenerateFallbackActions(
             keyword,
             possibleOutcomes,
-            actionSkills);
+            actionModiMentis);
 
         return new ThinkingPhaseResult
         {
             Success = false,
-            ReasoningText = GenerateFallbackReasoning(selectedThinkingSkill, keyword),
+            ReasoningText = GenerateFallbackReasoning(selectedThinkingModusMentis, keyword),
             Actions = fallbackActions,
-            ThinkingSkillUsed = selectedThinkingSkill
+            ThinkingModusMentisUsed = selectedThinkingModusMentis
         };
     }
 
     /// <summary>
     /// Generates fallback actions when LLM fails.
-    /// Creates 2-3 simple actions matching outcomes with random action skills.
+    /// Creates 2-3 simple actions matching outcomes with random action modiMentis.
     /// </summary>
     private List<ParsedNarrativeAction> GenerateFallbackActions(
         string keyword,
         List<OutcomeBase> possibleOutcomes,
-        List<Skill> actionSkills)
+        List<ModusMentis> actionModiMentis)
     {
         var random = new Random();
         var actions = new List<ParsedNarrativeAction>();
@@ -139,7 +139,7 @@ public class ThinkingPhaseController
         for (int i = 0; i < actionCount; i++)
         {
             var outcome = shuffledOutcomes[i];
-            var actionSkill = actionSkills[random.Next(actionSkills.Count)];
+            var actionModusMentis = actionModiMentis[random.Next(actionModiMentis.Count)];
 
             // Generate simple action text based on outcome type
             string actionText = outcome switch
@@ -153,8 +153,8 @@ public class ThinkingPhaseController
 
             actions.Add(new ParsedNarrativeAction
             {
-                ActionSkillId = actionSkill.SkillId,
-                ActionSkill = actionSkill, // Set the actual skill instance with proper level
+                ActionModusMentisId = actionModusMentis.ModusMentisId,
+                ActionModusMentis = actionModusMentis, // Set the actual modusMentis instance with proper level
                 PreselectedOutcome = outcome,
                 ActionText = actionText
             });
@@ -166,12 +166,12 @@ public class ThinkingPhaseController
     /// <summary>
     /// Generates fallback reasoning when LLM fails.
     /// </summary>
-    private string GenerateFallbackReasoning(Skill thinkingSkill, string keyword)
+    private string GenerateFallbackReasoning(ModusMentis thinkingModusMentis, string keyword)
     {
-        return $"{thinkingSkill.DisplayName} considers the '{keyword}' carefully but struggles to formulate a coherent plan.";
+        return $"{thinkingModusMentis.DisplayName} considers the '{keyword}' carefully but struggles to formulate a coherent plan.";
     }
 
-    public bool IsPopupVisible => _skillPopup.IsVisible;
+    public bool IsPopupVisible => _modusMentisPopup.IsVisible;
 }
 
 /// <summary>
@@ -182,5 +182,5 @@ public class ThinkingPhaseResult
     public bool Success { get; set; }
     public string ReasoningText { get; set; } = "";
     public List<ParsedNarrativeAction> Actions { get; set; } = new();
-    public Skill? ThinkingSkillUsed { get; set; }
+    public ModusMentis? ThinkingModusMentisUsed { get; set; }
 }

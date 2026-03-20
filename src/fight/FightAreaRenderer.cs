@@ -77,7 +77,7 @@ namespace Cathedral.Fight
                 '⎆', textColor, new OpenTK.Mathematics.Vector4(0.16f, 0.11f, 0.0f, 1.0f));
         }
 
-        private static void RenderLegend(TerminalHUD terminal, int startRow)
+        public static void RenderLegend(TerminalHUD terminal, int startRow)
         {
             if (startRow >= terminal.Height) return;
 

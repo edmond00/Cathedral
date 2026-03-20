@@ -31,7 +31,7 @@ public class LocationTravelGameController : IDisposable
     // Chain-of-Thought narrative system
     private NarrativeController? _narrativeController = null;
     private bool _isInNarrativeMode = false;
-    private SkillSlotManager? _skillSlotManager = null;
+    private ModusMentisSlotManager? _modusMentisSlotManager = null;
     private ThinkingExecutor? _thinkingExecutor = null;
     
     // Main menu
@@ -183,16 +183,16 @@ public class LocationTravelGameController : IDisposable
     {
         _llmActionExecutor = executor;
         
-        // Initialize SkillSlotManager for Phase 6
+        // Initialize ModusMentisSlotManager for Phase 6
         if (executor != null)
         {
-            _skillSlotManager = new SkillSlotManager(executor.GetLlamaServerManager());
+            _modusMentisSlotManager = new ModusMentisSlotManager(executor.GetLlamaServerManager());
             var thinkingPromptConstructor = new ThinkingPromptConstructor();
             _thinkingExecutor = new ThinkingExecutor(
                 executor.GetLlamaServerManager(), 
                 thinkingPromptConstructor, 
-                _skillSlotManager);
-            Console.WriteLine("LocationTravelGameController: SkillSlotManager and ThinkingExecutor initialized for Phase 6");
+                _modusMentisSlotManager);
+            Console.WriteLine("LocationTravelGameController: ModusMentisSlotManager and ThinkingExecutor initialized for Phase 6");
         }
         
         // Also initialize Critic and ActionScorer
@@ -736,7 +736,7 @@ public class LocationTravelGameController : IDisposable
                 // now we rebuild modules to reflect the final configured values.
                 protagonist.InitializeMemory();
                 protagonist.ReinitializeHumorQueues();
-                protagonist.AssignSkillsToMemoryRandom();
+                protagonist.AssignModiMentisToMemoryRandom();
                 _protagonistCreationRenderer = null;
                 SetMode(GameMode.WorldView);
             };
@@ -950,7 +950,7 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void StartNarrativeInteraction(int vertexIndex)
     {
-        if (_core.Terminal == null || _core.PopupTerminal == null || _llmActionExecutor == null || _skillSlotManager == null)
+        if (_core.Terminal == null || _core.PopupTerminal == null || _llmActionExecutor == null || _modusMentisSlotManager == null)
         {
             Console.Error.WriteLine("NarrativeController: Cannot start - missing dependencies");
             return;
@@ -984,22 +984,22 @@ public class LocationTravelGameController : IDisposable
             var outcomeApplicator = new OutcomeApplicator();
             var outcomeNarrator = new OutcomeNarrator(
                 _llmActionExecutor.GetLlamaServerManager(),
-                _skillSlotManager
+                _modusMentisSlotManager
             );
             
             // Use the protagonist from game state (created in ResetGameState, possibly configured in ProtagonistCreation)
             if (_protagonist == null)
             {
                 _protagonist = new Protagonist();
-                _protagonist.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+                _protagonist.InitializeModiMentis(ModusMentisRegistry.Instance, modusMentisCount: 50);
                 _protagonist.InitializeMemory();
-                _protagonist.AssignSkillsToMemoryRandom();
+                _protagonist.AssignModiMentisToMemoryRandom();
                 _protagonist.CompanionParty.AddRange(
-                    Companion.GenerateRandom(SkillRegistry.Instance, count: 3));
+                    Companion.GenerateRandom(ModusMentisRegistry.Instance, count: 3));
                 var wolf = new Companion("Greywind", "A grey wolf with amber eyes.", SpeciesRegistry.Wolf);
-                wolf.InitializeSkills(SkillRegistry.Instance, skillCount: 20);
+                wolf.InitializeModiMentis(ModusMentisRegistry.Instance, modusMentisCount: 20);
                 wolf.InitializeMemory();
-                wolf.AssignSkillsToMemoryRandom();
+                wolf.AssignModiMentisToMemoryRandom();
                 _protagonist.CompanionParty.Add(wolf);
             }
             var protagonist = _protagonist;
@@ -1040,7 +1040,7 @@ public class LocationTravelGameController : IDisposable
                 _core.PopupTerminal,
                 _core,
                 _llmActionExecutor.GetLlamaServerManager(),
-                _skillSlotManager,
+                _modusMentisSlotManager,
                 inputHandler,
                 _thinkingExecutor,
                 actionExecutor,
@@ -1100,15 +1100,15 @@ public class LocationTravelGameController : IDisposable
         
         // Create a fresh protagonist for the new game
         _protagonist = new Protagonist();
-        _protagonist.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+        _protagonist.InitializeModiMentis(ModusMentisRegistry.Instance, modusMentisCount: 50);
         _protagonist.InitializeMemory();
-        _protagonist.AssignSkillsToMemoryRandom();
+        _protagonist.AssignModiMentisToMemoryRandom();
         _protagonist.CompanionParty.AddRange(
-            Companion.GenerateRandom(SkillRegistry.Instance, count: 3));
+            Companion.GenerateRandom(ModusMentisRegistry.Instance, count: 3));
         var wolf = new Companion("Greywind", "A grey wolf with amber eyes.", SpeciesRegistry.Wolf);
-        wolf.InitializeSkills(SkillRegistry.Instance, skillCount: 20);
+        wolf.InitializeModiMentis(ModusMentisRegistry.Instance, modusMentisCount: 20);
         wolf.InitializeMemory();
-        wolf.AssignSkillsToMemoryRandom();
+        wolf.AssignModiMentisToMemoryRandom();
         _protagonist.CompanionParty.Add(wolf);
         
         _hasGameStarted = true;
@@ -1137,7 +1137,7 @@ public class LocationTravelGameController : IDisposable
     }
     
     /// <summary>
-    /// Closes the Phase 6 thinking skill popup if it's open.
+    /// Closes the Phase 6 thinking modusMentis popup if it's open.
     /// Returns true if popup was closed, false otherwise.
     /// </summary>
     public bool CloseNarrativePopup()

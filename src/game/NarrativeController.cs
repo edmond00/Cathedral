@@ -21,7 +21,7 @@ public class NarrativeController
     private readonly NarrativeState _narrationState = new();
     private readonly NarrationScrollBuffer _scrollBuffer;
     private readonly NarrativeUI _ui;
-    private readonly TerminalThinkingSkillPopup _skillPopup;
+    private readonly TerminalThinkingModusMentisPopup _modusMentisPopup;
     private readonly string _biomeType;
     
     // Dependencies
@@ -48,7 +48,7 @@ public class NarrativeController
         PopupTerminalHUD popup,
         GlyphSphereCore core,
         LlamaServerManager llamaServer,
-        SkillSlotManager slotManager,
+        ModusMentisSlotManager slotManager,
         TerminalInputHandler terminalInputHandler,
         ThinkingExecutor thinkingExecutor,
         ActionExecutionController actionExecutor,
@@ -84,16 +84,16 @@ public class NarrativeController
             Config.NarrativeUI.RightPadding);
         int contentWidth = layout.CONTENT_WIDTH - 1; // -1 for scrollbar
         _scrollBuffer = new NarrationScrollBuffer(maxWidth: contentWidth, layout: layout);
-        _skillPopup = new TerminalThinkingSkillPopup(popup);
+        _modusMentisPopup = new TerminalThinkingModusMentisPopup(popup);
         _core = core;
         _terminalInputHandler = terminalInputHandler;
         _biomeType = biomeType;
         
-        // Initialize protagonist with random skills and memory
+        // Initialize protagonist with random modiMentis and memory
         _protagonist = new Protagonist();
-        _protagonist.InitializeSkills(SkillRegistry.Instance, skillCount: 50);
+        _protagonist.InitializeModiMentis(ModusMentisRegistry.Instance, modusMentisCount: 50);
         _protagonist.InitializeMemory();
-        _protagonist.AssignSkillsToMemoryRandom();
+        _protagonist.AssignModiMentisToMemoryRandom();
         
         // Generate graph for this location using factory
         if (graphFactory == null)
@@ -108,7 +108,7 @@ public class NarrativeController
         _actionExecutor = actionExecutor;
         
         Console.WriteLine($"NarrativeController: Initialized with node {_currentNode.NodeId}");
-        Console.WriteLine($"NarrativeController: Protagonist has {_protagonist.Skills.Count} skills");
+        Console.WriteLine($"NarrativeController: Protagonist has {_protagonist.ModiMentis.Count} modiMentis");
     }
     
     /// <summary>
@@ -149,7 +149,7 @@ public class NarrativeController
     }
     
     /// <summary>
-    /// Generate observations from selected skills (async).
+    /// Generate observations from selected modiMentis (async).
     /// </summary>
     private async Task GenerateObservationsAsync()
     {
@@ -161,7 +161,7 @@ public class NarrativeController
             var blocks = await _observationController.ExecuteObservationPhaseAsync(
                 _currentNode,
                 _protagonist,
-                skillCount: 1
+                modusMentisCount: 1
             );
             
             Console.WriteLine($"NarrativeController: Generated {blocks.Count} observation blocks");
@@ -190,16 +190,16 @@ public class NarrativeController
     }
     
     /// <summary>
-    /// Execute thinking phase with selected skill and keyword (async).
+    /// Execute thinking phase with selected modusMentis and keyword (async).
     /// </summary>
-    private async Task ExecuteThinkingPhaseAsync(Skill thinkingSkill, string keyword)
+    private async Task ExecuteThinkingPhaseAsync(ModusMentis thinkingModusMentis, string keyword)
     {
-        // Get the source observation block from the hovered keyword (for skill chain tracking)
+        // Get the source observation block from the hovered keyword (for modusMentis chain tracking)
         var sourceObservationBlock = _narrationState.HoveredKeyword?.SourceBlock;
         
         try
         {
-            Console.WriteLine($"NarrativeController: Executing thinking with {thinkingSkill.DisplayName} on keyword '{keyword}'");
+            Console.WriteLine($"NarrativeController: Executing thinking with {thinkingModusMentis.DisplayName} on keyword '{keyword}'");
             
             // Determine observation type from source block
             var observationType = (sourceObservationBlock as NarrationBlock)?.SourceObservationType ?? ObservationType.Overall;
@@ -253,10 +253,10 @@ public class NarrativeController
                 outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(feelGoodOutcome));
             }
             
-            // Get action skills
-            var actionSkills = _protagonist.GetActionSkills();
+            // Get action modiMentis
+            var actionModiMentis = _protagonist.GetActionModiMentis();
             
-            Console.WriteLine($"NarrativeController: Total {outcomesWithMetadata.Count} outcomes ({outcomesWithMetadata.Count(o => o.IsCircuitous)} circuitous), {actionSkills.Count} action skills");
+            Console.WriteLine($"NarrativeController: Total {outcomesWithMetadata.Count} outcomes ({outcomesWithMetadata.Count(o => o.IsCircuitous)} circuitous), {actionModiMentis.Count} action modiMentis");
             
             // Get the outcome that owns this keyword for context
             var keywordSourceOutcome = _currentNode.GetOutcomeOwningKeyword(keyword);
@@ -264,12 +264,12 @@ public class NarrativeController
             
             // Call ThinkingExecutor to generate reasoning + actions
             var response = await _thinkingExecutor.GenerateThinkingAsync(
-                thinkingSkill,
+                thinkingModusMentis,
                 keyword,
                 keywordSourceOutcomeName,
                 _currentNode,
                 outcomesWithMetadata,
-                actionSkills,
+                actionModiMentis,
                 _protagonist,
                 CancellationToken.None);
             
@@ -285,7 +285,7 @@ public class NarrativeController
             // ChainOrigin points to the observation block that contained the clicked keyword
             var thinkingBlock = new NarrationBlock(
                 Type: NarrationBlockType.Thinking,
-                Skill: thinkingSkill,
+                ModusMentis: thinkingModusMentis,
                 Text: response.ReasoningText,
                 Keywords: null,
                 Actions: response.Actions,
@@ -324,7 +324,7 @@ public class NarrativeController
     }
     
     /// <summary>
-    /// Execute action phase: skill check, outcome determination, and narration (async).
+    /// Execute action phase: modusMentis check, outcome determination, and narration (async).
     /// Uses phased approach with different UI states:
     /// - Phase 1 (Evaluation): Normal loading screen during plausibility + difficulty checks
     /// - Phase 2 (Dice Roll): Dice rolling animation during failure evaluation + narration
@@ -343,7 +343,7 @@ public class NarrativeController
             var evalResult = await _actionExecutor.EvaluateActionAsync(
                 action,
                 _currentNode,
-                action.ThinkingSkill,
+                action.ThinkingModusMentis,
                 CancellationToken.None
             );
             
@@ -361,7 +361,7 @@ public class NarrativeController
                 // Add outcome narration block
                 var plausibilityBlock = new NarrationBlock(
                     Type: NarrationBlockType.Outcome,
-                    Skill: plausibilityResult.ActionSkill ?? throw new InvalidOperationException("Action skill cannot be null"),
+                    ModusMentis: plausibilityResult.ActionModusMentis ?? throw new InvalidOperationException("Action modusMentis cannot be null"),
                     Text: $"[IMPOSSIBLE] {plausibilityResult.Narration}",
                     Keywords: null,
                     Actions: null
@@ -446,18 +446,18 @@ public class NarrativeController
     }
     
     /// <summary>
-    /// Calculate number of dice to roll based on action skill proficiency.
+    /// Calculate number of dice to roll based on action modusMentis proficiency.
     /// </summary>
     private int CalculateNumberOfDice(ParsedNarrativeAction action)
     {
         // Base: 4 dice
         int baseDice = 4;
         
-        // Try to get skill bonus from protagonist
-        if (action.ActionSkill != null)
+        // Try to get modusMentis bonus from protagonist
+        if (action.ActionModusMentis != null)
         {
             // Get organ score (affects dice count)
-            int organScore = _protagonist.GetOrganScoreForSkill(action.ActionSkill);
+            int organScore = _protagonist.GetOrganScoreForModusMentis(action.ActionModusMentis);
             if (organScore == 0) organScore = 5; // fallback
             
             // Organ score adds 0-3 extra dice
@@ -560,7 +560,7 @@ public class NarrativeController
         // Add outcome narration block
         var outcomeBlock = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
-            Skill: result.ActionSkill ?? throw new InvalidOperationException("Action skill cannot be null"),
+            ModusMentis: result.ActionModusMentis ?? throw new InvalidOperationException("Action modusMentis cannot be null"),
             Text: $"[{(result.Succeeded ? "SUCCESS" : "FAILURE")}] {result.Narration}",
             Keywords: null,
             Actions: null
@@ -594,18 +594,18 @@ public class NarrativeController
     
     /// <summary>
     /// Execute focus observation phase: generate a detailed observation for a specific outcome (async).
-    /// Triggered by right-clicking a keyword and selecting an observation skill.
+    /// Triggered by right-clicking a keyword and selecting an observation modusMentis.
     /// </summary>
-    private async Task ExecuteFocusObservationAsync(Skill observationSkill, string keyword)
+    private async Task ExecuteFocusObservationAsync(ModusMentis observationModusMentis, string keyword)
     {
         try
         {
-            Console.WriteLine($"NarrativeController: Executing focus observation with {observationSkill.DisplayName} on keyword '{keyword}'");
+            Console.WriteLine($"NarrativeController: Executing focus observation with {observationModusMentis.DisplayName} on keyword '{keyword}'");
             
             // Generate focus observation
             var block = await _observationController.GenerateFocusObservationAsync(
                 keyword,
-                observationSkill,
+                observationModusMentis,
                 _currentNode,
                 _protagonist
             );
@@ -754,13 +754,13 @@ public class NarrativeController
             _narrationState.IsScrollbarThumbHovered
         );
         
-        // Render status bar - show skill chain dice count when hovering over an action
+        // Render status bar - show modusMentis chain dice count when hovering over an action
         string statusMessage;
         if (_narrationState.HoveredAction?.Action != null)
         {
-            // Calculate total skill level from the skill chain
-            int totalDice = _narrationState.HoveredAction.Action.GetTotalSkillLevel();
-            statusMessage = $"Click to attempt this action with {totalDice}{Config.Symbols.SkillLevelIndicator} in the skill check";
+            // Calculate total modusMentis level from the modusMentis chain
+            int totalDice = _narrationState.HoveredAction.Action.GetTotalModusMentisLevel();
+            statusMessage = $"Click to attempt this action with {totalDice}{Config.Symbols.ModusMentisLevelIndicator} in the modusMentis check";
         }
         else if (_narrationState.ThinkingAttemptsRemaining > 0)
         {
@@ -780,13 +780,13 @@ public class NarrativeController
     public void OnRawMouseMove(Vector2 screenPosition)
     {
         // If popup is visible, use raw screen coordinates for accurate hit detection
-        if (_skillPopup.IsVisible)
+        if (_modusMentisPopup.IsVisible)
         {
             // Get cell size for hit detection
             var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
             int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
             
-            _skillPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+            _modusMentisPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
         }
     }
     
@@ -797,32 +797,32 @@ public class NarrativeController
     public void OnRawMouseClick(Vector2 screenPosition)
     {
         // If popup is visible, handle popup click with screen coordinates
-        if (_skillPopup.IsVisible)
+        if (_modusMentisPopup.IsVisible)
         {
             // Get cell size for hit detection
             var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
             int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
             
-            var selectedSkill = _skillPopup.HandleClick(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
-            if (selectedSkill != null)
+            var selectedModusMentis = _modusMentisPopup.HandleClick(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+            if (selectedModusMentis != null)
             {
-                Console.WriteLine($"NarrativeController: Selected skill: {selectedSkill.DisplayName}");
+                Console.WriteLine($"NarrativeController: Selected modusMentis: {selectedModusMentis.DisplayName}");
                 
                 // Get the keyword that was clicked (stored before popup appeared)
                 if (_narrationState.HoveredKeyword != null)
                 {
                     string keyword = _narrationState.HoveredKeyword.Keyword;
                     
-                    // Check if we're selecting an observation skill (right-click) or thinking skill (left-click)
-                    if (_narrationState.IsSelectingObservationSkill)
+                    // Check if we're selecting an observation modusMentis (right-click) or thinking modusMentis (left-click)
+                    if (_narrationState.IsSelectingObservationModusMentis)
                     {
                         // Focus observation phase
                         _narrationState.IsLoadingFocusObservation = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
-                        _narrationState.IsSelectingObservationSkill = false;
+                        _narrationState.IsSelectingObservationModusMentis = false;
                         
                         // Fire-and-forget async task
-                        _ = ExecuteFocusObservationAsync(selectedSkill, keyword);
+                        _ = ExecuteFocusObservationAsync(selectedModusMentis, keyword);
                     }
                     else
                     {
@@ -831,14 +831,14 @@ public class NarrativeController
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
                         
                         // Fire-and-forget async task
-                        _ = ExecuteThinkingPhaseAsync(selectedSkill, keyword);
+                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
                     }
                 }
             }
             else
             {
                 Console.WriteLine("NarrativeController: Popup closed (clicked outside)");
-                _narrationState.IsSelectingObservationSkill = false;
+                _narrationState.IsSelectingObservationModusMentis = false;
             }
         }
     }
@@ -852,7 +852,7 @@ public class NarrativeController
         _lastMouseY = mouseY;
         
         // If popup is visible, raw mouse events are handled separately
-        if (_skillPopup.IsVisible)
+        if (_modusMentisPopup.IsVisible)
         {
             return;
         }
@@ -1028,7 +1028,7 @@ public class NarrativeController
         }
         
         // If popup is visible, handle popup click with screen coordinates
-        if (_skillPopup.IsVisible)
+        if (_modusMentisPopup.IsVisible)
         {
             // Get screen mouse position
             Vector2 correctedScreenPos = _terminalInputHandler.GetCorrectedMousePosition();
@@ -1037,26 +1037,26 @@ public class NarrativeController
             var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
             int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
             
-            var selectedSkill = _skillPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.ClientSize, cellPixelSize);
-            if (selectedSkill != null)
+            var selectedModusMentis = _modusMentisPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.ClientSize, cellPixelSize);
+            if (selectedModusMentis != null)
             {
-                Console.WriteLine($"NarrativeController: Selected skill: {selectedSkill.DisplayName}");
+                Console.WriteLine($"NarrativeController: Selected modusMentis: {selectedModusMentis.DisplayName}");
                 
                 // Get the keyword that was clicked (stored before popup appeared)
                 if (_narrationState.HoveredKeyword != null)
                 {
                     string keyword = _narrationState.HoveredKeyword.Keyword;
                     
-                    // Check if we're selecting an observation skill (right-click) or thinking skill (left-click)
-                    if (_narrationState.IsSelectingObservationSkill)
+                    // Check if we're selecting an observation modusMentis (right-click) or thinking modusMentis (left-click)
+                    if (_narrationState.IsSelectingObservationModusMentis)
                     {
                         // Focus observation phase
                         _narrationState.IsLoadingFocusObservation = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
-                        _narrationState.IsSelectingObservationSkill = false;
+                        _narrationState.IsSelectingObservationModusMentis = false;
                         
                         // Fire-and-forget async task
-                        _ = ExecuteFocusObservationAsync(selectedSkill, keyword);
+                        _ = ExecuteFocusObservationAsync(selectedModusMentis, keyword);
                     }
                     else
                     {
@@ -1065,14 +1065,14 @@ public class NarrativeController
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
                         
                         // Fire-and-forget async task
-                        _ = ExecuteThinkingPhaseAsync(selectedSkill, keyword);
+                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
                     }
                 }
             }
             else
             {
                 Console.WriteLine("NarrativeController: Popup closed (clicked outside)");
-                _narrationState.IsSelectingObservationSkill = false;
+                _narrationState.IsSelectingObservationModusMentis = false;
             }
             return;
         }
@@ -1094,7 +1094,7 @@ public class NarrativeController
             if (clickedAction.ActionIndex < allActions.Count)
             {
                 var action = allActions[clickedAction.ActionIndex];
-                Console.WriteLine($"NarrativeController: Executing action '{action.ActionText}' with skill '{action.ActionSkillId}'");
+                Console.WriteLine($"NarrativeController: Executing action '{action.ActionText}' with modusMentis '{action.ActionModusMentisId}'");
                 
                 // Fire-and-forget async task
                 _ = ExecuteActionPhaseAsync(action);
@@ -1113,15 +1113,15 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Clicked keyword: {clickedKeyword}");
             
-            // Show thinking skill selection popup (left-click = thinking)
-            _narrationState.IsSelectingObservationSkill = false;
-            var thinkingSkills = _protagonist.GetThinkingSkills();
+            // Show thinking modusMentis selection popup (left-click = thinking)
+            _narrationState.IsSelectingObservationModusMentis = false;
+            var thinkingModiMentis = _protagonist.GetThinkingModiMentis();
             
             // Convert terminal cell coordinates to screen pixel coordinates
             Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
             
-            _skillPopup.Show(screenPos, thinkingSkills, "Select Thinking Skill");
-            Console.WriteLine($"NarrativeController: Showing {thinkingSkills.Count} thinking skills at screen position ({screenPos.X}, {screenPos.Y})");;
+            _modusMentisPopup.Show(screenPos, thinkingModiMentis, "Select Thinking ModusMentis");
+            Console.WriteLine($"NarrativeController: Showing {thinkingModiMentis.Count} thinking modiMentis at screen position ({screenPos.X}, {screenPos.Y})");;
         }
     }
     
@@ -1131,7 +1131,7 @@ public class NarrativeController
     public void OnRightClick(int mouseX, int mouseY)
     {
         // Don't handle right-clicks if popup is visible or in loading state
-        if (_skillPopup.IsVisible)
+        if (_modusMentisPopup.IsVisible)
             return;
         
         if (_narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking || 
@@ -1149,16 +1149,16 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Right-clicked keyword: {clickedKeyword.Keyword}");
             
-            // Show observation skill selection popup (right-click = focus observation)
-            _narrationState.IsSelectingObservationSkill = true;
+            // Show observation modusMentis selection popup (right-click = focus observation)
+            _narrationState.IsSelectingObservationModusMentis = true;
             _narrationState.HoveredKeyword = clickedKeyword;  // Store for later use
-            var observationSkills = _protagonist.GetObservationSkills();
+            var observationModiMentis = _protagonist.GetObservationModiMentis();
             
             // Convert terminal cell coordinates to screen pixel coordinates
             Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
             
-            _skillPopup.Show(screenPos, observationSkills, "Select Observation Skill");
-            Console.WriteLine($"NarrativeController: Showing {observationSkills.Count} observation skills for focus observation at screen position ({screenPos.X}, {screenPos.Y})");
+            _modusMentisPopup.Show(screenPos, observationModiMentis, "Select Observation ModusMentis");
+            Console.WriteLine($"NarrativeController: Showing {observationModiMentis.Count} observation modiMentis for focus observation at screen position ({screenPos.X}, {screenPos.Y})");
         }
     }
     
@@ -1192,19 +1192,19 @@ public class NarrativeController
     public bool HasError => _narrationState.ErrorMessage != null;
     
     /// <summary>
-    /// Check if the thinking skill popup is visible.
+    /// Check if the thinking modusMentis popup is visible.
     /// </summary>
-    public bool IsPopupVisible => _skillPopup.IsVisible;
+    public bool IsPopupVisible => _modusMentisPopup.IsVisible;
     
     /// <summary>
-    /// Close the thinking skill popup if it's open.
+    /// Close the thinking modusMentis popup if it's open.
     /// Returns true if popup was closed, false if it wasn't open.
     /// </summary>
     public bool ClosePopup()
     {
-        if (_skillPopup.IsVisible)
+        if (_modusMentisPopup.IsVisible)
         {
-            _skillPopup.Hide();
+            _modusMentisPopup.Hide();
             return true;
         }
         return false;

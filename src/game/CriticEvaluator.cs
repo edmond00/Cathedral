@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -299,13 +299,13 @@ response ::= ""yes"" | ""no""";
     }
     
     /// <summary>
-    /// Evaluates if an action is coherent with a skill.
+    /// Evaluates if an action is coherent with a modusMentis.
     /// Returns a probability ratio between 0.0 (not coherent) and 1.0 (fully coherent).
     /// </summary>
     /// <param name="action">The action text</param>
-    /// <param name="skill">The skill name</param>
+    /// <param name="modusMentis">The modusMentis name</param>
     /// <returns>Coherence score (0.0 to 1.0)</returns>
-    public async Task<double> EvaluateActionSkillCoherence(string action, string skill)
+    public async Task<double> EvaluateActionModusMentisCoherence(string action, string modusMentis)
     {
         if (!_isInitialized || !_llamaServer.IsServerReady || _criticSlotId < 0)
         {
@@ -313,7 +313,7 @@ response ::= ""yes"" | ""no""";
             return 0.5; // Neutral score as fallback
         }
         
-        var question = $"Is the action '{action}' coherent with and appropriate for the skill '{skill}'?";
+        var question = $"Is the action '{action}' coherent with and appropriate for the modusMentis '{modusMentis}'?";
         return await EvaluateYesNoQuestion(question);
     }
     
@@ -431,7 +431,7 @@ response ::= ""yes"" | ""no""";
         return @"You are a CRITIC evaluating game content for coherence and quality.
 
 Your role is simple:
-- Answer yes/no questions about game actions, skills, consequences, and narratives
+- Answer yes/no questions about game actions, modiMentis, consequences, and narratives
 - Evaluate coherence, plausibility, and appropriateness
 - Respond ONLY with 'yes' or 'no' - nothing else
 

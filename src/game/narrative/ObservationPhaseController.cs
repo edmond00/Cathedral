@@ -19,38 +19,38 @@ public class ObservationPhaseController
     // Stores the keyword-to-outcome mapping from the last overall observation
     private Dictionary<string, ConcreteOutcome> _keywordToOutcomeMap = new();
     
-    public ObservationPhaseController(LlamaServerManager llamaServer, SkillSlotManager slotManager)
+    public ObservationPhaseController(LlamaServerManager llamaServer, ModusMentisSlotManager slotManager)
     {
         _observationExecutor = new ObservationExecutor(llamaServer, slotManager);
         _keywordRenderer = new KeywordRenderer();
     }
     
     /// <summary>
-    /// Executes the observation phase: selects ONE observation skill and generates an "overall observation".
+    /// Executes the observation phase: selects ONE observation modusMentis and generates an "overall observation".
     /// The overall observation uses one representative keyword from each possible outcome.
     /// Returns a single narration block ready for display.
     /// </summary>
     public async Task<List<NarrationBlock>> ExecuteObservationPhaseAsync(
         NarrationNode currentNode,
         Protagonist protagonist,
-        int skillCount = 1)  // Default to 1 skill now
+        int modusMentisCount = 1)  // Default to 1 modusMentis now
     {
         Console.WriteLine($"ObservationPhaseController: Starting overall observation phase for {currentNode.NodeId}");
         
-        // Select ONE observation skill randomly
-        var observationSkills = protagonist.GetObservationSkills()
+        // Select ONE observation modusMentis randomly
+        var observationModiMentis = protagonist.GetObservationModiMentis()
             .OrderBy(_ => _random.Next())
             .Take(1)
             .ToList();
         
-        if (observationSkills.Count == 0)
+        if (observationModiMentis.Count == 0)
         {
-            Console.WriteLine("ObservationPhaseController: No observation skills available!");
+            Console.WriteLine("ObservationPhaseController: No observation modiMentis available!");
             return new List<NarrationBlock>();
         }
         
-        var skill = observationSkills[0];
-        Console.WriteLine($"ObservationPhaseController: Selected observation skill: {skill.DisplayName}");
+        var modusMentis = observationModiMentis[0];
+        Console.WriteLine($"ObservationPhaseController: Selected observation modusMentis: {modusMentis.DisplayName}");
         
         // Get representative keywords (one per outcome)
         var representativeKeywords = currentNode.GetRepresentativeKeywordsPerOutcome(_random);
@@ -69,10 +69,10 @@ public class ObservationPhaseController
         
         try
         {
-            Console.WriteLine($"ObservationPhaseController: Generating overall observation with {skill.DisplayName}...");
+            Console.WriteLine($"ObservationPhaseController: Generating overall observation with {modusMentis.DisplayName}...");
             
             var observation = await _observationExecutor.GenerateObservationAsync(
-                skill,
+                modusMentis,
                 currentNode,
                 protagonist,
                 targetKeywords
@@ -92,7 +92,7 @@ public class ObservationPhaseController
             
             var block = new NarrationBlock(
                 Type: NarrationBlockType.Observation,
-                Skill: skill,
+                ModusMentis: modusMentis,
                 Text: observation.NarrationText,
                 Keywords: foundKeywords,
                 Actions: null,
@@ -105,12 +105,12 @@ public class ObservationPhaseController
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"ObservationPhaseController: Failed to generate overall observation with {skill.DisplayName}: {ex.Message}");
+            Console.Error.WriteLine($"ObservationPhaseController: Failed to generate overall observation with {modusMentis.DisplayName}: {ex.Message}");
             
             // Add a fallback observation
             narrationBlocks.Add(new NarrationBlock(
                 Type: NarrationBlockType.Observation,
-                Skill: skill,
+                ModusMentis: modusMentis,
                 Text: "You observe the environment carefully, taking in the details.",
                 Keywords: new List<string>(),
                 Actions: null,
@@ -128,13 +128,13 @@ public class ObservationPhaseController
     /// Uses all keywords from the outcome that owns the clicked keyword.
     /// </summary>
     /// <param name="clickedKeyword">The keyword that was right-clicked</param>
-    /// <param name="observationSkill">The observation skill selected by the player</param>
+    /// <param name="observationModusMentis">The observation modusMentis selected by the player</param>
     /// <param name="currentNode">The current narration node</param>
     /// <param name="protagonist">The player protagonist</param>
     /// <returns>A narration block for the focus observation, or null on failure</returns>
     public async Task<NarrationBlock?> GenerateFocusObservationAsync(
         string clickedKeyword,
-        Skill observationSkill,
+        ModusMentis observationModusMentis,
         NarrationNode currentNode,
         Protagonist protagonist)
     {
@@ -181,7 +181,7 @@ public class ObservationPhaseController
         try
         {
             var observation = await _observationExecutor.GenerateObservationAsync(
-                observationSkill,
+                observationModusMentis,
                 currentNode,
                 protagonist,
                 focusKeywords
@@ -201,7 +201,7 @@ public class ObservationPhaseController
             
             var block = new NarrationBlock(
                 Type: NarrationBlockType.Observation,
-                Skill: observationSkill,
+                ModusMentis: observationModusMentis,
                 Text: observation.NarrationText,
                 Keywords: foundKeywords,
                 Actions: null,
@@ -219,7 +219,7 @@ public class ObservationPhaseController
             // Return fallback observation
             return new NarrationBlock(
                 Type: NarrationBlockType.Observation,
-                Skill: observationSkill,
+                ModusMentis: observationModusMentis,
                 Text: $"You focus your attention on the {clickedKeyword}, examining it more closely.",
                 Keywords: new List<string> { clickedKeyword },
                 Actions: null,
@@ -248,7 +248,7 @@ public class ObservationPhaseController
             keywordsEnabled
         );
         
-        return $"[{block.Skill.DisplayName}]\n{formattedText}\n";
+        return $"[{block.ModusMentis.DisplayName}]\n{formattedText}\n";
     }
     
     /// <summary>

@@ -20,17 +20,17 @@ public class ObservationResponse
 }
 
 /// <summary>
-/// Executes observation skill LLM requests to generate environment perceptions.
-/// Manages observation skill slots (0-9) with cached persona prompts.
+/// Executes observation modusMentis LLM requests to generate environment perceptions.
+/// Manages observation modusMentis slots (0-9) with cached persona prompts.
 /// Implements keyword fallback strategy.
 /// </summary>
 public class ObservationExecutor
 {
     private readonly LlamaServerManager _llamaServer;
     private readonly ObservationPromptConstructor _promptConstructor;
-    private readonly SkillSlotManager _slotManager;
+    private readonly ModusMentisSlotManager _slotManager;
     
-    public ObservationExecutor(LlamaServerManager llamaServer, SkillSlotManager slotManager)
+    public ObservationExecutor(LlamaServerManager llamaServer, ModusMentisSlotManager slotManager)
     {
         _llamaServer = llamaServer ?? throw new ArgumentNullException(nameof(llamaServer));
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
@@ -38,41 +38,41 @@ public class ObservationExecutor
     }
     
     /// <summary>
-    /// Generates an observation narration using an observation skill.
+    /// Generates an observation narration using an observation modusMentis.
     /// Implements two-tier keyword fallback strategy.
     /// </summary>
     public async Task<ObservationResponse> GenerateObservationAsync(
-        Skill observationSkill,
+        ModusMentis observationModusMentis,
         NarrationNode node,
         Protagonist protagonist)
     {
         // Use all node keywords by default
-        return await GenerateObservationAsync(observationSkill, node, protagonist, node.OutcomeKeywords);
+        return await GenerateObservationAsync(observationModusMentis, node, protagonist, node.OutcomeKeywords);
     }
     
     /// <summary>
-    /// Generates an observation narration using an observation skill with specific keywords.
+    /// Generates an observation narration using an observation modusMentis with specific keywords.
     /// Used for focused observations that target a specific outcome's keywords.
     /// </summary>
     public async Task<ObservationResponse> GenerateObservationAsync(
-        Skill observationSkill,
+        ModusMentis observationModusMentis,
         NarrationNode node,
         Protagonist protagonist,
         List<string> targetKeywords)
     {
-        if (!observationSkill.Functions.Contains(SkillFunction.Observation))
-            throw new ArgumentException($"Skill {observationSkill.DisplayName} is not an observation skill");
+        if (!observationModusMentis.Functions.Contains(ModusMentisFunction.Observation))
+            throw new ArgumentException($"ModusMentis {observationModusMentis.DisplayName} is not an observation modusMentis");
         
-        if (string.IsNullOrEmpty(observationSkill.PersonaPrompt))
-            throw new ArgumentException($"Observation skill {observationSkill.DisplayName} has no persona prompt");
+        if (string.IsNullOrEmpty(observationModusMentis.PersonaPrompt))
+            throw new ArgumentException($"Observation modusMentis {observationModusMentis.DisplayName} has no persona prompt");
         
-        // Get or create slot for this skill
-        int slotId = await GetOrCreateSlotForSkillAsync(observationSkill);
+        // Get or create slot for this modusMentis
+        int slotId = await GetOrCreateSlotForModusMentisAsync(observationModusMentis);
         
         // First attempt: Natural narration (prompted but not constrained)
         try
         {
-            var response = await GenerateObservationNaturalAsync(slotId, node, protagonist, observationSkill, targetKeywords);
+            var response = await GenerateObservationNaturalAsync(slotId, node, protagonist, observationModusMentis, targetKeywords);
             
             // Extract keywords from response text to check quality
             var segments = new KeywordRenderer().ParseNarrationWithKeywords(
@@ -94,17 +94,17 @@ public class ObservationExecutor
         }
         
         // Fallback: Use keyword intro examples to force inclusion
-        return await GenerateObservationWithFallbackAsync(slotId, node, protagonist, observationSkill, targetKeywords);
+        return await GenerateObservationWithFallbackAsync(slotId, node, protagonist, observationModusMentis, targetKeywords);
     }
     
     private async Task<ObservationResponse> GenerateObservationNaturalAsync(
         int slotId,
         NarrationNode node,
         Protagonist protagonist,
-        Skill observationSkill,
+        ModusMentis observationModusMentis,
         List<string> targetKeywords)
     {
-        var prompt = _promptConstructor.BuildObservationPrompt(node, protagonist, observationSkill, targetKeywords, promptKeywordUsage: true);
+        var prompt = _promptConstructor.BuildObservationPrompt(node, protagonist, observationModusMentis, targetKeywords, promptKeywordUsage: true);
         var schema = LLMSchemaConfig.CreateObservationSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         
@@ -117,10 +117,10 @@ public class ObservationExecutor
         int slotId,
         NarrationNode node,
         Protagonist protagonist,
-        Skill observationSkill,
+        ModusMentis observationModusMentis,
         List<string> targetKeywords)
     {
-        var prompt = _promptConstructor.BuildObservationPromptWithIntros(node, protagonist, observationSkill, targetKeywords);
+        var prompt = _promptConstructor.BuildObservationPromptWithIntros(node, protagonist, observationModusMentis, targetKeywords);
         var schema = LLMSchemaConfig.CreateObservationSchemaWithIntros(targetKeywords);
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         
@@ -212,9 +212,9 @@ public class ObservationExecutor
         }
     }
     
-    private async Task<int> GetOrCreateSlotForSkillAsync(Skill skill)
+    private async Task<int> GetOrCreateSlotForModusMentisAsync(ModusMentis modusMentis)
     {
-        return await _slotManager.GetOrCreateSlotForSkillAsync(skill);
+        return await _slotManager.GetOrCreateSlotForModusMentisAsync(modusMentis);
     }
     
 

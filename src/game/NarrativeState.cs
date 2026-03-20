@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
@@ -37,7 +37,7 @@ public class NarrativeState
     public bool IsLoadingThinking { get; set; } = false;
 
     /// <summary>
-    /// Is the system currently executing an action (skill check + outcome)?
+    /// Is the system currently executing an action (modusMentis check + outcome)?
     /// </summary>
     public bool IsLoadingAction { get; set; } = false;
 
@@ -139,9 +139,9 @@ public class NarrativeState
     public bool IsDiceRollButtonHovered { get; set; } = false;
     
     /// <summary>
-    /// Is the skill popup being shown for focus observation (right-click) rather than thinking (left-click)?
+    /// Is the modusMentis popup being shown for focus observation (right-click) rather than thinking (left-click)?
     /// </summary>
-    public bool IsSelectingObservationSkill { get; set; } = false;
+    public bool IsSelectingObservationModusMentis { get; set; } = false;
     
     /// <summary>
     /// Is the system currently generating a focus observation via LLM?
@@ -189,7 +189,7 @@ public class NarrativeState
         ThinkingAttemptsRemaining = NarrativeUI.GetMaxThinkingAttempts();
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
-        IsSelectingObservationSkill = false;
+        IsSelectingObservationModusMentis = false;
         PendingTransitionNode = null;
         ErrorMessage = null;
         ClearDiceRoll();
@@ -214,7 +214,7 @@ public class NarrativeState
         ThinkingAttemptsRemaining = NarrativeUI.GetMaxThinkingAttempts();
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
-        IsSelectingObservationSkill = false;
+        IsSelectingObservationModusMentis = false;
         PendingTransitionNode = null;
         ErrorMessage = null;
         ClearDiceRoll();

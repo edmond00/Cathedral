@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// Represents a dice-roll modification that can be applied when a humor's transmuting virtue
-/// is invoked during a skill check. This is a descriptor only; application is handled by
+/// is invoked during a modusMentis check. This is a descriptor only; application is handled by
 /// future gameplay systems.
 /// </summary>
 public abstract class TransmutingVirtue

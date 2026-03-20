@@ -1,4 +1,4 @@
-namespace Cathedral.LLM.JsonConstraints;
+﻿namespace Cathedral.LLM.JsonConstraints;
 
 /// <summary>
 /// Base record for all JSON field definitions in the constraint system
@@ -116,7 +116,7 @@ public record OptionalField(string Name, JsonField InnerField, string? Hint = nu
 
 /// <summary>
 /// Represents a fixed-length array where each position has a specific type (heterogeneous tuple)
-/// Used when each array element must have different constraints (e.g., different skills per action)
+/// Used when each array element must have different constraints (e.g., different modiMentis per action)
 /// </summary>
 public record TupleField(string Name, JsonField[] Elements, string? Hint = null) : JsonField(Name, Hint)
 {

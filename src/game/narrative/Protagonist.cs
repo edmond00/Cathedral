@@ -7,7 +7,7 @@ namespace Cathedral.Game.Narrative;
 /// The player-controlled protagonist.  Extends <see cref="PartyMember"/> with features
 /// that are exclusive to the protagonist: journal, companion party list, and location tracking.
 ///
-/// Shared state (body, organs, skills, inventory, …) lives in <see cref="PartyMember"/>.
+/// Shared state (body, organs, modiMentis, inventory, …) lives in <see cref="PartyMember"/>.
 /// </summary>
 public class Protagonist : PartyMember
 {

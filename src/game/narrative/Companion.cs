@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// A named companion that travels with the protagonist.
-/// Shares all physical and skill state from <see cref="PartyMember"/>,
+/// Shares all physical and modusMentis state from <see cref="PartyMember"/>,
 /// but adds an identity (Name, role description) that is unique to companions.
 ///
 /// The protagonist instance owns a <c>List&lt;Companion&gt;</c> that is
@@ -43,10 +43,10 @@ public class Companion : PartyMember
     };
 
     /// <summary>
-    /// Generate a list of random companions with initialised skills.
+    /// Generate a list of random companions with initialised modiMentis.
     /// Used for development / dummy data.
     /// </summary>
-    public static List<Companion> GenerateRandom(SkillRegistry registry, int count = 3)
+    public static List<Companion> GenerateRandom(ModusMentisRegistry registry, int count = 3)
     {
         var rng = new Random();
         var shuffled = (Companion[])
@@ -66,9 +66,9 @@ public class Companion : PartyMember
         {
             var (name, desc) = _pool[indices[k]];
             var c = new Companion(name, desc, SpeciesRegistry.Human);
-            c.InitializeSkills(registry, skillCount: 30);
+            c.InitializeModiMentis(registry, modusMentisCount: 30);
             c.InitializeMemory();
-            c.AssignSkillsToMemoryRandom();
+            c.AssignModiMentisToMemoryRandom();
             companions.Add(c);
         }
         return companions;

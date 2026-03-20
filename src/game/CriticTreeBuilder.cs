@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Cathedral.Game;
@@ -175,15 +175,15 @@ public class CriticTreeBuilder
 public static class CriticQuestions
 {
     /// <summary>
-    /// Creates a skill coherence check node.
+    /// Creates a modusMentis coherence check node.
     /// </summary>
-    public static CriticNode SkillCoherence(string action, string skill, double threshold = 0.5)
+    public static CriticNode ModusMentisCoherence(string action, string modusMentis, double threshold = 0.5)
     {
         return new CriticNode(
-            name: "SkillCoherence",
-            question: $"Is the action '{action}' coherent with and appropriate for the skill '{skill}'?",
+            name: "ModusMentisCoherence",
+            question: $"Is the action '{action}' coherent with and appropriate for the modusMentis '{modusMentis}'?",
             threshold: threshold,
-            errorMessage: $"Action is not coherent with skill '{skill}'"
+            errorMessage: $"Action is not coherent with modusMentis '{modusMentis}'"
         );
     }
     

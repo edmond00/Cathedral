@@ -4,31 +4,31 @@ using System.Linq;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Constructs prompts for thinking skills to generate Chain-of-Thought reasoning and actions.
+/// Constructs prompts for thinking modiMentis to generate Chain-of-Thought reasoning and actions.
 /// Builds the user message that gets sent to the LLM with the cached persona prompt.
 /// </summary>
 public class ThinkingPromptConstructor
 {
     /// <summary>
     /// Builds a thinking request for the LLM.
-    /// Includes keyword context, possible outcomes, available action skills, and protagonist state.
+    /// Includes keyword context, possible outcomes, available action modiMentis, and protagonist state.
     /// Separates straightforward outcomes from circuitous outcomes in the prompt.
     /// </summary>
     /// <param name="keyword">The keyword that was clicked</param>
     /// <param name="keywordSourceOutcome">The outcome/element that the keyword relates to (e.g., "berry bush")</param>
     /// <param name="node">The current narration node</param>
     /// <param name="outcomesWithMetadata">Possible outcomes with circuitous metadata</param>
-    /// <param name="actionSkills">Available action skills</param>
+    /// <param name="actionModiMentis">Available action modiMentis</param>
     /// <param name="protagonist">The player protagonist</param>
-    /// <param name="thinkingSkill">The thinking skill being used</param>
+    /// <param name="thinkingModusMentis">The thinking modusMentis being used</param>
     public string BuildThinkingPrompt(
         string keyword,
         string? keywordSourceOutcome,
         NarrationNode node,
         List<OutcomeWithMetadata> outcomesWithMetadata,
-        List<Skill> actionSkills,
+        List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
-        Skill thinkingSkill)
+        ModusMentis thinkingModusMentis)
     {
         // Separate straightforward and circuitous outcomes
         var straightforwardOutcomes = outcomesWithMetadata
@@ -41,8 +41,8 @@ public class ThinkingPromptConstructor
             .Select(o => o.Outcome.ToNaturalLanguageString())
             .ToList();
         
-        // Get action skill IDs
-        var actionSkillIds = actionSkills.Select(s => s.SkillId).ToList();
+        // Get action modusMentis IDs
+        var actionModusMentisIds = actionModiMentis.Select(s => s.ModusMentisId).ToList();
         
         // Build outcomes section with separation
         var outcomesSection = new System.Text.StringBuilder();
@@ -77,8 +77,8 @@ public class ThinkingPromptConstructor
 Current situation:
 {node.GenerateNeutralDescription(protagonist.CurrentLocationId)}
 
-Skills you can apply:
-{string.Join("\n", actionSkills.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
+ModiMentis you can apply:
+{string.Join("\n", actionModiMentis.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
 
 {outcomesSection.ToString().TrimEnd()}
 
@@ -90,7 +90,7 @@ what connections you see, how it relates to your capabilities.
 Then propose 2–5 specific things you could try.
 
 Guidelines:
-- Think and speak as {thinkingSkill.PersonaTone}.
+- Think and speak as {thinkingModusMentis.PersonaTone}.
 - Your perspective and instincts drive everything.
 - Connect ""{keyword}"" naturally to what you can do.
 - Each action begins with 'try to'.
@@ -98,7 +98,7 @@ Guidelines:
 
 Output fields:
 - reasoning_text
-- actions[] with: action_skill, outcome, action_description
+- actions[] with: action_modusMentis, outcome, action_description
 ";
 
         return prompt;
@@ -112,14 +112,14 @@ Output fields:
         string keyword,
         NarrationNode node,
         List<OutcomeBase> possibleOutcomes,
-        List<Skill> actionSkills,
+        List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
-        Skill thinkingSkill)
+        ModusMentis thinkingModusMentis)
     {
         var outcomesWithMetadata = possibleOutcomes
             .Select(o => OutcomeWithMetadata.Straightforward(o))
             .ToList();
             
-        return BuildThinkingPrompt(keyword, null, node, outcomesWithMetadata, actionSkills, protagonist, thinkingSkill);
+        return BuildThinkingPrompt(keyword, null, node, outcomesWithMetadata, actionModiMentis, protagonist, thinkingModusMentis);
     }
 }
