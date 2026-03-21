@@ -35,7 +35,7 @@ public static class FightModeLauncher
         protagonist.InitializeModiMentis(registry, 15);
 
         // Give the protagonist a weapon
-        var sword = new Content.IronSword();
+        var sword = new Cathedral.Game.Narrative.Nodes.Debug.DebugInventoryNode.IronSword();
         protagonist.TryAcquireItem(sword);
 
         // ── 3. Create enemies ──────────────────────────────────────

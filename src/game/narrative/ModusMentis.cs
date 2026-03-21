@@ -44,5 +44,6 @@ public enum ModusMentisFunction
 {
     Observation,   // Generates perceptions of environment
     Thinking,      // Generates reasoning and actions (CoT)
-    Action         // Used for modusMentis checks when executing actions
+    Action,        // Used for modusMentis checks when executing actions
+    Speaking       // Generates player dialogue replicas in conversation
 }

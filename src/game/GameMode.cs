@@ -41,5 +41,11 @@ public enum GameMode
     /// Player is managing their protagonist/companions from the main menu.
     /// Terminal shows tabbed interface: body/organs viewer, inventory, journal.
     /// </summary>
-    ProtagonistManagement
+    ProtagonistManagement,
+
+    /// <summary>
+    /// Standalone dialogue system demo (--dialogue CLI flag).
+    /// Runs a scripted NPC conversation for testing the dialogue subsystem.
+    /// </summary>
+    DialogueDemo
 }

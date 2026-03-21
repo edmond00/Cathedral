@@ -45,6 +45,9 @@ public sealed class HumanAnatomyFactory : IAnatomyFactory
         new MoveSpeedStat(),
         new RunawayChanceStat(),
         new InitiativeStat(),
+        // Dialogue stats
+        new VisageStat(),
+        new TongueStat(),
     };
 
     public Dictionary<char, Wound> GetWoundClassMap()

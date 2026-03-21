@@ -11,7 +11,7 @@ public class EmpathyModusMentis : ModusMentis
     public override string ModusMentisId => "empathy";
     public override string DisplayName => "Empathy";
     public override string ShortDescription => "emotional reading, compassion";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
     public override string[] Organs => new[] { "heart", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     

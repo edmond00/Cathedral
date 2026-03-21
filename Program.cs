@@ -19,6 +19,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("    --negative                       Invert brightness");
     Console.WriteLine("    --auto-contrast                  Automatically stretch contrast");
     Console.WriteLine("    --stretch                        Stretch/shrink to exact width/height (ignore aspect ratio)");
+    Console.WriteLine("  --dialogue                         Run the dialogue system demo (NPC conversation test)");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
 }
@@ -103,6 +104,13 @@ if (args.Length >= 2 && args[0] == "--img-to-txt")
     }
     
     Cathedral.Game.ImageToTextModeLauncher.Launch(imagePath, maxImageWidth, maxImageHeight, useNegative, autoContrast, manualContrast, stretchToFit);
+    return;
+}
+
+// Check for dialogue demo mode
+if (args.Length >= 1 && args[0] == "--dialogue")
+{
+    Cathedral.Game.Dialogue.Demo.DialogueDemoLauncher.Launch();
     return;
 }
 

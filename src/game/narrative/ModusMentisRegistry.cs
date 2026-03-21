@@ -87,4 +87,9 @@ public class ModusMentisRegistry
     {
         return GetModiMentisByFunction(ModusMentisFunction.Action);
     }
+
+    public List<ModusMentis> GetSpeakingModiMentis()
+    {
+        return GetModiMentisByFunction(ModusMentisFunction.Speaking);
+    }
 }

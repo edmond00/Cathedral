@@ -11,44 +11,18 @@ namespace Cathedral.Game;
 /// Renders Chain-of-Thought observation UI with scrollable narration,
 /// highlighted keywords, and hover interactions.
 /// </summary>
-public class NarrativeUI
+public class NarrativeUI : TerminalPanelUI
 {
-    // Loading animation (spinner)
-    private int _loadingFrameIndex = 0;
-    private DateTime _lastFrameUpdate = DateTime.Now;
+    // Dice roll animation — _loadingFrameIndex/_lastFrameUpdate live in TerminalPanelUI base
     
-    // Dice roll animation
-    private int[] _rollingDiceFrames = Array.Empty<int>(); // Current frame index for each die
-    private bool[] _diceShowingFaces = Array.Empty<bool>(); // Track if each die is showing face (true) or side view (false)
-    private int[] _diceFrameCounters = Array.Empty<int>(); // Current frame count for each die
-    private int[] _diceWaitTimes = Array.Empty<int>(); // How many frames each die should wait before changing (1-5)
-    private Random _diceRandom = new Random();
-    
-    // Dice roll button tracking
-    private (int X, int Y, int Width) _diceRollButtonRegion;
-    
-    private readonly TerminalHUD _terminal;
     private readonly KeywordRenderer _keywordRenderer;
-    private readonly NarrativeLayout _layout;
-    private readonly int SCROLLBAR_X;
+    private int SCROLLBAR_X => _scrollbarX;  // alias to base protected field
     private List<KeywordRegion> _keywordRegions = new();
     private List<ActionRegion> _actionRegions = new();
     
-    public NarrativeUI(TerminalHUD terminal)
+    public NarrativeUI(TerminalHUD terminal) : base(terminal)
     {
-        _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
         _keywordRenderer = new KeywordRenderer();
-        
-        // Create dynamic layout based on actual terminal dimensions and config padding
-        _layout = new NarrativeLayout(
-            _terminal.Width, 
-            _terminal.Height, 
-            Config.NarrativeUI.TopPadding, 
-            Config.NarrativeUI.BottomPadding,
-            Config.NarrativeUI.LeftPadding,
-            Config.NarrativeUI.RightPadding);
-        SCROLLBAR_X = _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING - _layout.RIGHT_MARGIN;
-        
         Console.WriteLine($"NarrativeUI: Initialized with {_terminal.Width}x{_terminal.Height} terminal (padding: T={_layout.TOP_PADDING} B={_layout.BOTTOM_PADDING} L={_layout.LEFT_PADDING} R={_layout.RIGHT_PADDING})");
     }
     
@@ -62,106 +36,10 @@ public class NarrativeUI
         return 13;
     }
     
-    /// <summary>
-    /// Clear the entire terminal.
-    /// </summary>
-    public void Clear()
+    /// <summary>Clear the entire terminal then reset keyword/action tracking regions.</summary>
+    public override void Clear()
     {
-        for (int y = 0; y < _layout.TERMINAL_HEIGHT; y++)
-        {
-            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
-            {
-                // Determine which padding zone this cell belongs to (priority: top/bottom > left/right for corners)
-                bool isTopPadding = y < _layout.TOP_PADDING;
-                bool isBottomPadding = y >= _layout.TERMINAL_HEIGHT - _layout.BOTTOM_PADDING;
-                bool isLeftPadding = x < _layout.LEFT_PADDING;
-                bool isRightPadding = x >= _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING;
-                
-                // Detect edge cells (last line of top/left padding, first line of bottom/right padding)
-                bool isTopEdge = y == _layout.TOP_PADDING - 1;
-                bool isBottomEdge = y == _layout.TERMINAL_HEIGHT - _layout.BOTTOM_PADDING;
-                bool isLeftEdge = x == _layout.LEFT_PADDING - 1;
-                bool isRightEdge = x == _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING;
-                
-                char cellChar;
-                Vector4 textColor;
-                Vector4 bgColor;
-                
-                if (isTopPadding)
-                {
-                    // Top padding zone - use edge config for last line
-                    if (isTopEdge)
-                    {
-                        cellChar = Config.NarrativeUI.TopPaddingEdgeChar;
-                        textColor = Config.NarrativeUI.TopPaddingEdgeTextColor;
-                        bgColor = Config.NarrativeUI.TopPaddingEdgeBackgroundColor;
-                    }
-                    else
-                    {
-                        cellChar = Config.NarrativeUI.TopPaddingChar;
-                        textColor = Config.NarrativeUI.TopPaddingTextColor;
-                        bgColor = Config.NarrativeUI.TopPaddingBackgroundColor;
-                    }
-                }
-                else if (isBottomPadding)
-                {
-                    // Bottom padding zone - use edge config for first line
-                    if (isBottomEdge)
-                    {
-                        cellChar = Config.NarrativeUI.BottomPaddingEdgeChar;
-                        textColor = Config.NarrativeUI.BottomPaddingEdgeTextColor;
-                        bgColor = Config.NarrativeUI.BottomPaddingEdgeBackgroundColor;
-                    }
-                    else
-                    {
-                        cellChar = Config.NarrativeUI.BottomPaddingChar;
-                        textColor = Config.NarrativeUI.BottomPaddingTextColor;
-                        bgColor = Config.NarrativeUI.BottomPaddingBackgroundColor;
-                    }
-                }
-                else if (isLeftPadding)
-                {
-                    // Left padding zone - use edge config for last column
-                    if (isLeftEdge)
-                    {
-                        cellChar = Config.NarrativeUI.LeftPaddingEdgeChar;
-                        textColor = Config.NarrativeUI.LeftPaddingEdgeTextColor;
-                        bgColor = Config.NarrativeUI.LeftPaddingEdgeBackgroundColor;
-                    }
-                    else
-                    {
-                        cellChar = Config.NarrativeUI.LeftPaddingChar;
-                        textColor = Config.NarrativeUI.LeftPaddingTextColor;
-                        bgColor = Config.NarrativeUI.LeftPaddingBackgroundColor;
-                    }
-                }
-                else if (isRightPadding)
-                {
-                    // Right padding zone - use edge config for first column
-                    if (isRightEdge)
-                    {
-                        cellChar = Config.NarrativeUI.RightPaddingEdgeChar;
-                        textColor = Config.NarrativeUI.RightPaddingEdgeTextColor;
-                        bgColor = Config.NarrativeUI.RightPaddingEdgeBackgroundColor;
-                    }
-                    else
-                    {
-                        cellChar = Config.NarrativeUI.RightPaddingChar;
-                        textColor = Config.NarrativeUI.RightPaddingTextColor;
-                        bgColor = Config.NarrativeUI.RightPaddingBackgroundColor;
-                    }
-                }
-                else
-                {
-                    // Content zone - use normal appearance
-                    cellChar = ' ';
-                    textColor = Config.NarrativeUI.NarrativeColor;
-                    bgColor = Config.NarrativeUI.BackgroundColor;
-                }
-                
-                _terminal.SetCell(x, y, cellChar, textColor, bgColor);
-            }
-        }
+        base.Clear();
         _keywordRegions.Clear();
     }
     
@@ -730,98 +608,30 @@ public class NarrativeUI
     /// Render the scrollbar on the right edge.
     /// Returns the thumb position (StartY, Height) for hit detection.
     /// </summary>
+    /// <summary>Render the proportional scrollbar for a <see cref="NarrationScrollBuffer"/>.</summary>
     public (int StartY, int Height) RenderScrollbar(
         NarrationScrollBuffer scrollBuffer,
         int scrollOffset,
         bool isThumbHovered)
-    {
-        int trackStartY = _layout.CONTENT_START_Y;
-        int trackHeight = _layout.SCROLLBAR_TRACK_HEIGHT;
-        int scrollbarX = SCROLLBAR_X;
-        
-        // Draw track
-        for (int y = trackStartY; y < trackStartY + trackHeight; y++)
-        {
-            _terminal.SetCell(scrollbarX, y, '╏', Config.NarrativeUI.ScrollbarTrackColor, Config.NarrativeUI.BackgroundColor);
-        }
-        
-        // Calculate thumb size and position
-        int totalLines = scrollBuffer.TotalLines;
-        int visibleLines = _layout.NARRATIVE_HEIGHT;
-        
-        // If content fits in viewport, no thumb needed
-        if (totalLines <= visibleLines)
-        {
-            return (0, 0);
-        }
-        
-        // Calculate thumb size (proportional to visible area)
-        float visibleRatio = (float)visibleLines / totalLines;
-        int thumbHeight = Math.Max(2, (int)(trackHeight * visibleRatio));
-        
-        // Calculate thumb position based on scroll offset
-        int maxScrollOffset = _layout.CalculateMaxScrollOffset(totalLines);
-        float scrollRatio = maxScrollOffset > 0 ? (float)scrollOffset / maxScrollOffset : 0f;
-        int maxThumbY = trackHeight - thumbHeight;
-        int thumbY = trackStartY + (int)(maxThumbY * scrollRatio);
-        
-        // Render thumb
-        Vector4 thumbColor = isThumbHovered ? Config.NarrativeUI.ScrollbarThumbHoverColor : Config.NarrativeUI.ScrollbarThumbColor;
-        for (int y = thumbY; y < thumbY + thumbHeight; y++)
-        {
-            _terminal.SetCell(scrollbarX, y, '█', thumbColor, Config.NarrativeUI.BackgroundColor);
-        }
-        
-        return (thumbY, thumbHeight);
-    }
+        => RenderScrollbar(scrollBuffer.TotalLines, scrollOffset, isThumbHovered);
     
     /// <summary>
     /// Check if mouse is over scrollbar thumb.
     /// </summary>
     public bool IsMouseOverScrollbarThumb(int mouseX, int mouseY, (int StartY, int Height) thumb)
-    {
-        if (thumb.Height == 0) return false; // No thumb rendered
-        return mouseX == SCROLLBAR_X &&
-               mouseY >= thumb.StartY &&
-               mouseY < thumb.StartY + thumb.Height;
-    }
+        => base.IsMouseOverScrollbarThumb(mouseX, mouseY, thumb);
     
     /// <summary>
     /// Check if mouse is over scrollbar track (but not thumb).
     /// </summary>
     public bool IsMouseOverScrollbarTrack(int mouseX, int mouseY, (int StartY, int Height) thumb)
-    {
-        if (mouseX != SCROLLBAR_X) return false;
-        int trackStartY = _layout.CONTENT_START_Y;
-        int trackEndY = trackStartY + _layout.SCROLLBAR_TRACK_HEIGHT;
-        
-        bool inTrack = mouseY >= trackStartY && mouseY < trackEndY;
-        bool onThumb = thumb.Height > 0 && mouseY >= thumb.StartY && mouseY < thumb.StartY + thumb.Height;
-        
-        return inTrack && !onThumb;
-    }
+        => base.IsMouseOverScrollbarTrack(mouseX, mouseY, thumb);
     
     /// <summary>
     /// Calculate scroll offset from mouse Y position on scrollbar.
     /// </summary>
     public int CalculateScrollOffsetFromMouseY(int mouseY, NarrationScrollBuffer scrollBuffer)
-    {
-        int trackStartY = _layout.CONTENT_START_Y;
-        int trackHeight = _layout.SCROLLBAR_TRACK_HEIGHT;
-        int totalLines = scrollBuffer.TotalLines;
-        int visibleLines = _layout.NARRATIVE_HEIGHT - _layout.SEPARATOR_HEIGHT; // Account for separator line
-        
-        // Clamp mouse Y to track bounds
-        int relativeY = Math.Clamp(mouseY - trackStartY, 0, trackHeight - 1);
-        
-        // Calculate scroll offset
-        // Add 5-line margin to match NarrationScrollBuffer's maxScroll calculation
-        int maxScrollOffset = Math.Max(0, totalLines - visibleLines + 5);
-        float scrollRatio = (float)relativeY / (trackHeight - 1);
-        int newOffset = (int)(maxScrollOffset * scrollRatio);
-        
-        return Math.Clamp(newOffset, 0, maxScrollOffset);
-    }
+        => CalculateScrollOffsetFromMouseY(mouseY, scrollBuffer.TotalLines);
     
     /// <summary>
     /// Render the status bar at the bottom.
@@ -882,459 +692,17 @@ public class NarrativeUI
         }
     }
     
-    /// <summary>
-    /// Show animated loading indicator.
-    /// </summary>
-    public void ShowLoadingIndicator(string message = "Generating observations...")
-    {
-        // Update animation frame every 100ms
-        if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds > 100)
-        {
-            _loadingFrameIndex = (_loadingFrameIndex + 1) % Config.Symbols.LoadingSpinner.Length;
-            _lastFrameUpdate = DateTime.Now;
-        }
-        
-        string spinner = Config.Symbols.LoadingSpinner[_loadingFrameIndex];
-        
-        // Clear narrative area (preserve padding zones)
-        for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
-        {
-            for (int x = _layout.LEFT_PADDING; x < _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING; x++)
-            {
-                _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
-            }
-        }
-        
-        // Show spinner and message centered
-        string loadingText = $"{spinner}  {message}  {spinner}";
-        int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
-        int centerX = (_layout.TERMINAL_WIDTH - loadingText.Length) / 2;
-        _terminal.Text(centerX, centerY, loadingText, Config.Colors.DarkYellowGrey, Config.NarrativeUI.BackgroundColor);
-        
-        // Add animated dots
-        string dots = new string('.', (_loadingFrameIndex % 4));
-        string spaces = new string(' ', (_loadingFrameIndex % 4));
-        string hint = $"{spaces}Please wait {dots}";
-        int hintY = centerY + 2;
-        int hintX = (_layout.TERMINAL_WIDTH - hint.Length) / 2;
-        _terminal.Text(hintX, hintY, hint, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        
-        // Progress bar
-        int barWidth = 30;
-        int barY = centerY - 2;
-        int barX = (_layout.TERMINAL_WIDTH - barWidth) / 2;
-        string progressBar = GenerateProgressBar(barWidth, _loadingFrameIndex);
-        _terminal.Text(barX, barY, progressBar, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
-    }
+    // ShowLoadingIndicator — inherited from TerminalPanelUI (public virtual)
+
     
     /// <summary>
     /// Show dice roll loading indicator with animated rolling dice.
     /// </summary>
-    /// <param name="numberOfDice">Number of dice to roll</param>
-    /// <param name="difficulty">Difficulty level (1-10), number of 6s needed to succeed</param>
-    /// <param name="isRolling">True while still loading/rolling, false when complete</param>
-    /// <param name="finalDiceValues">Final dice values (1-6) when isRolling is false</param>
-    /// <param name="isContinueButtonHovered">Whether the continue button is hovered</param>
-    /// <returns>True if continue button was rendered (for click detection)</returns>
-    public bool ShowDiceRollIndicator(
-        int numberOfDice, 
-        int difficulty, 
-        bool isRolling, 
-        int[]? finalDiceValues = null,
-        bool isContinueButtonHovered = false)
-    {
-        // Update animation frame every 80ms for smooth rolling
-        if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds > 80)
-        {
-            _loadingFrameIndex = (_loadingFrameIndex + 1) % Config.Symbols.DiceRollingFrames.Length;
-            _lastFrameUpdate = DateTime.Now;
-            
-            // Update rolling dice frames with alternating pattern and random timing
-            if (isRolling)
-            {
-                if (_rollingDiceFrames.Length != numberOfDice)
-                {
-                    _rollingDiceFrames = new int[numberOfDice];
-                    _diceShowingFaces = new bool[numberOfDice];
-                    _diceFrameCounters = new int[numberOfDice];
-                    _diceWaitTimes = new int[numberOfDice];
-                    
-                    // Initialize each die with random starting state and timing
-                    for (int i = 0; i < numberOfDice; i++)
-                    {
-                        _diceShowingFaces[i] = _diceRandom.Next(2) == 0; // Random true/false
-                        _diceFrameCounters[i] = 0;
-                        _diceWaitTimes[i] = _diceRandom.Next(1, 4); // Random wait time 1-5 frames
-                        
-                        if (_diceShowingFaces[i])
-                        {
-                            _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceFaces.Length);
-                        }
-                        else
-                        {
-                            _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
-                        }
-                    }
-                }
-                
-                // Update each die based on its individual timing
-                for (int i = 0; i < _rollingDiceFrames.Length; i++)
-                {
-                    _diceFrameCounters[i]++;
-                    
-                    // Only change glyph when counter reaches the wait time
-                    if (_diceFrameCounters[i] >= _diceWaitTimes[i])
-                    {
-                        // Reset counter and pick new random wait time
-                        _diceFrameCounters[i] = 0;
-                        _diceWaitTimes[i] = _diceRandom.Next(1, 6); // New random wait time 1-5 frames
-                        
-                        // Toggle state (face -> side view, side view -> face)
-                        _diceShowingFaces[i] = !_diceShowingFaces[i];
-                        
-                        if (_diceShowingFaces[i])
-                        {
-                            // Show a random face
-                            _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceFaces.Length);
-                        }
-                        else
-                        {
-                            // Show a random side view
-                            _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Initialize rolling frames if needed
-        if (_rollingDiceFrames.Length != numberOfDice)
-        {
-            _rollingDiceFrames = new int[numberOfDice];
-            _diceShowingFaces = new bool[numberOfDice];
-            _diceFrameCounters = new int[numberOfDice];
-            _diceWaitTimes = new int[numberOfDice];
-            
-            // Initialize each die with random starting state and timing
-            for (int i = 0; i < numberOfDice; i++)
-            {
-                _diceShowingFaces[i] = _diceRandom.Next(2) == 0; // Random true/false
-                _diceFrameCounters[i] = 0;
-                _diceWaitTimes[i] = _diceRandom.Next(1, 6); // Random wait time 1-5 frames
-                
-                if (_diceShowingFaces[i])
-                {
-                    _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceFaces.Length);
-                }
-                else
-                {
-                    _rollingDiceFrames[i] = _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
-                }
-            }
-        }
-        
-        // Clear narrative area (preserve padding zones)
-        for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
-        {
-            for (int x = _layout.LEFT_PADDING; x < _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING; x++)
-            {
-                _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
-            }
-        }
-        
-        int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
-        
-        // Calculate results if we have final values
-        int numberOfSixes = 0;
-        bool isSuccess = false;
-        if (!isRolling && finalDiceValues != null)
-        {
-            numberOfSixes = finalDiceValues.Count(v => v == 6);
-            isSuccess = numberOfSixes >= difficulty;
-        }
-        
-        // --- Title ---
-        string title = isRolling ? "Rolling Dice..." : (isSuccess ? "SUCCESS!" : "FAILURE!");
-        Vector4 titleColor = isRolling 
-            ? Config.NarrativeUI.LoadingColor 
-            : (isSuccess ? Config.NarrativeUI.SuccessColor : Config.NarrativeUI.FailureColor);
-        int titleX = (_layout.TERMINAL_WIDTH - title.Length) / 2;
-        int titleY = centerY - 10;
-        _terminal.Text(titleX, titleY, title, titleColor, Config.NarrativeUI.BackgroundColor);
-        
-        // --- Difficulty indicator ---
-        int difficultyClamp = Math.Clamp(difficulty, 1, 10);
-        char difficultyGlyph = Config.Symbols.DifficultyGlyphs[difficultyClamp - 1];
-        
-        // Dark yellow to white gradient based on difficulty (1=white/easy, 10=dark yellow/hard)
-        float difficultyRatio = (difficultyClamp - 1) / 9.0f;
-        
-        // Interpolate from white (easy) to dark yellow (hard)
-        Vector4 easyColor = Config.Colors.White;           // 1 = white (easiest)
-        Vector4 hardColor = Config.Colors.DarkYellow;      // 10 = dark yellow (hardest)
-        
-        Vector4 difficultyColor = new Vector4(
-            easyColor.X + (hardColor.X - easyColor.X) * difficultyRatio,
-            easyColor.Y + (hardColor.Y - easyColor.Y) * difficultyRatio,
-            easyColor.Z + (hardColor.Z - easyColor.Z) * difficultyRatio,
-            1.0f
-        );
-        
-        string difficultyLabel = $"Difficulty: {difficultyGlyph} ({difficultyClamp} sixes needed)";
-        int diffLabelX = (_layout.TERMINAL_WIDTH - difficultyLabel.Length) / 2;
-        int diffLabelY = centerY - 8;
-        
-        // Render "Difficulty: " in normal color
-        _terminal.Text(diffLabelX, diffLabelY, "Difficulty: ", Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        // Render the glyph in gradient color
-        _terminal.Text(diffLabelX + 12, diffLabelY, difficultyGlyph.ToString(), difficultyColor, Config.NarrativeUI.BackgroundColor);
-        // Render the rest
-        string suffixText = $" ({difficultyClamp} {(difficultyClamp == 1 ? "six" : "sixes")} needed)";
-        _terminal.Text(diffLabelX + 13, diffLabelY, suffixText, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        
-        // --- Dice display ---
-        // Calculate dice layout (max 10 per row)
-        int dicePerRow = Math.Min(numberOfDice, 20);
-        int rows = ((numberOfDice + dicePerRow - 1) / dicePerRow) * 2;
-        int diceSpacing = 2; // Spacing between dice
-        int totalRowWidth = dicePerRow * diceSpacing;
-        int startX = (_layout.TERMINAL_WIDTH - totalRowWidth) / 2;
-        int startY = centerY -5;
-        
-        for (int i = 0; i < numberOfDice; i++)
-        {
-            int row = (i / dicePerRow)*2;
-            int col = i % dicePerRow;
-            int diceX = startX + col * diceSpacing + (row%2);
-            int diceY = startY + row;
-            
-            char diceChar;
-            Vector4 diceColor;
-            
-            if (isRolling)
-            {
-                // Show alternating animation (face or side view based on current state)
-                if (_diceShowingFaces[i])
-                {
-                    diceChar = Config.Symbols.DiceFaces[_rollingDiceFrames[i]];
-                }
-                else
-                {
-                    diceChar = Config.Symbols.DiceSideViews[_rollingDiceFrames[i]];
-                }
-                diceColor = Config.NarrativeUI.LoadingColor;
-            }
-            else if (finalDiceValues != null && i < finalDiceValues.Length)
-            {
-                // Show final value
-                int value = Math.Clamp(finalDiceValues[i], 1, 6);
-                diceChar = Config.Symbols.DiceFaces[value - 1];
-                
-                // Highlight 6s (⚁E with golden/success color
-                if (value == 6)
-                {
-                    diceColor = Config.NarrativeUI.DiceGoldColor;
-                }
-                else
-                {
-                    diceColor = Config.NarrativeUI.NarrativeColor;
-                }
-            }
-            else
-            {
-                // Fallback
-                diceChar = Config.Symbols.DiceFaces[0];
-                diceColor = Config.NarrativeUI.NarrativeColor;
-            }
-            
-            _terminal.SetCell(diceX, diceY, diceChar, diceColor, Config.NarrativeUI.BackgroundColor);
-        }
-        
-        // --- Results summary (when not rolling) ---
-        if (!isRolling && finalDiceValues != null)
-        {
-            int summaryY = startY + rows + 2;
-            string summary = $"Rolled {numberOfSixes} {(numberOfSixes == 1 ? "six" : "sixes")} out of {numberOfDice} dice";
-            int summaryX = (_layout.TERMINAL_WIDTH - summary.Length) / 2;
-            Vector4 summaryColor = isSuccess ? Config.NarrativeUI.SuccessColor : Config.NarrativeUI.FailureColor;
-            _terminal.Text(summaryX, summaryY, summary, summaryColor, Config.NarrativeUI.BackgroundColor);
-            
-            // Show continue button
-            string buttonText = "[ Continue ]";
-            int buttonWidth = buttonText.Length;
-            int buttonX = (_layout.TERMINAL_WIDTH - buttonWidth) / 2;
-            int buttonY = summaryY + 3;
-            
-            Vector4 buttonColor = isContinueButtonHovered 
-                ? Config.NarrativeUI.ContinueButtonHoverColor 
-                : Config.NarrativeUI.ContinueButtonColor;
-            Vector4 buttonBackgroundColor = isContinueButtonHovered 
-                ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor 
-                : Config.NarrativeUI.ContinueButtonBackgroundColor;
-            
-            _terminal.Text(buttonX, buttonY, buttonText, buttonColor, buttonBackgroundColor);
-            
-            // Store button region for click detection
-            _diceRollButtonRegion = (buttonX, buttonY, buttonWidth);
-            
-            return true; // Continue button rendered
-        }
-        else
-        {
-            // Show waiting message while rolling
-            string spinner = Config.Symbols.LoadingSpinner[_loadingFrameIndex % Config.Symbols.LoadingSpinner.Length];
-            string waitMsg = $"{spinner}  Please wait...  {spinner}";
-            int waitX = (_layout.TERMINAL_WIDTH - waitMsg.Length) / 2;
-            int waitY = startY + rows + 2;
-            _terminal.Text(waitX, waitY, waitMsg, Config.Colors.DarkYellowGrey, Config.NarrativeUI.BackgroundColor);
-        }
-        
-        return false; // No continue button
-    }
-    
-    /// <summary>
-    /// Check if mouse is over the dice roll continue button.
-    /// </summary>
-    public bool IsMouseOverDiceRollButton(int mouseX, int mouseY)
-    {
-        return mouseY == _diceRollButtonRegion.Y &&
-               mouseX >= _diceRollButtonRegion.X &&
-               mouseX < _diceRollButtonRegion.X + _diceRollButtonRegion.Width;
-    }
 
-    /// <summary>
-    /// Show error message.
-    /// </summary>
-    public void ShowError(string errorMessage)
-    {
-        // Clear narrative area (preserve padding zones)
-        for (int y = _layout.CONTENT_START_Y; y < _layout.SEPARATOR_Y + 1; y++)
-        {
-            for (int x = _layout.LEFT_PADDING; x < _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING; x++)
-            {
-                _terminal.SetCell(x, y, ' ', Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
-            }
-        }
-        
-        // Show error message centered
-        string title = "ERROR";
-        int titleY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2 - 2;
-        int titleX = (_layout.TERMINAL_WIDTH - title.Length) / 2;
-        _terminal.Text(titleX, titleY, title, Config.NarrativeUI.ErrorColor, Config.NarrativeUI.BackgroundColor);
-        
-        // Wrap error message
-        var wrappedLines = WrapText(errorMessage, _layout.CONTENT_WIDTH - 4);
-        int startY = titleY + 2;
-        
-        for (int i = 0; i < wrappedLines.Count && startY + i < _layout.SEPARATOR_Y + 1; i++)
-        {
-            string line = wrappedLines[i];
-            int x = (_layout.TERMINAL_WIDTH - line.Length) / 2;
-            _terminal.Text(x, startY + i, line, Config.NarrativeUI.ErrorColor, Config.NarrativeUI.BackgroundColor);
-        }
-        
-        // Show instruction
-        string instruction = "(Press ESC to return)";
-        int instructionY = _layout.SEPARATOR_Y - 1;
-        int instructionX = (_layout.TERMINAL_WIDTH - instruction.Length) / 2;
-        _terminal.Text(instructionX, instructionY, instruction, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-    }
+    // ShowError — inherited from TerminalPanelUI (public virtual)
+
     
-    /// <summary>
-    /// Draw horizontal separator line.
-    /// </summary>
-    private void DrawHorizontalLine(int y)
-    {
-        if (y < 0 || y >= _layout.TERMINAL_HEIGHT)
-            return;
-        
-        // Draw line only in content area (preserve padding zones)
-        for (int x = _layout.LEFT_PADDING; x < _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING; x++)
-        {
-            _terminal.SetCell(x, y, Config.Symbols.HorizontalLine, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        }
-    }
-    
-    /// <summary>
-    /// Generate animated progress bar.
-    /// </summary>
-    private string GenerateProgressBar(int width, int frame)
-    {
-        var bar = new System.Text.StringBuilder();
-        bar.Append('[');
-        
-        string chars = " ░░▒▒▓█▓▒▒░░";
-        for (int i = 0; i < width - 2; i++)
-        {
-            int pos = (frame + i) % chars.Length;
-                bar.Append(chars[pos]);
-        }
-        
-        bar.Append(']');
-        return bar.ToString();
-    }
-    
-    /// <summary>
-    /// Wrap text to fit within maximum width.
-    /// </summary>
-    private List<string> WrapText(string text, int maxWidth)
-    {
-        var lines = new List<string>();
-        
-        if (string.IsNullOrEmpty(text))
-            return lines;
-        
-        var paragraphs = text.Split(new[] { '\n', '\r' }, StringSplitOptions.None);
-        
-        foreach (var paragraph in paragraphs)
-        {
-            if (string.IsNullOrWhiteSpace(paragraph))
-            {
-                lines.Add("");
-                continue;
-            }
-            
-            var words = paragraph.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var currentLine = new System.Text.StringBuilder();
-            
-            foreach (var word in words)
-            {
-                var testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
-                
-                if (testLine.Length <= maxWidth)
-                {
-                    if (currentLine.Length > 0)
-                        currentLine.Append(' ');
-                    currentLine.Append(word);
-                }
-                else
-                {
-                    if (currentLine.Length > 0)
-                    {
-                        lines.Add(currentLine.ToString());
-                        currentLine.Clear();
-                    }
-                    
-                    if (word.Length > maxWidth)
-                    {
-                        lines.Add(word.Substring(0, maxWidth));
-                        currentLine.Append(word.Substring(maxWidth));
-                    }
-                    else
-                    {
-                        currentLine.Append(word);
-                    }
-                }
-            }
-            
-            if (currentLine.Length > 0)
-            {
-                lines.Add(currentLine.ToString());
-            }
-        }
-        
-        return lines;
-    }
+    // DrawHorizontalLine, GenerateProgressBar, WrapText — inherited from TerminalPanelUI
     
     /// <summary>
     /// Render the "Continue" button at the bottom of the screen.
