@@ -1,4 +1,5 @@
-﻿using Cathedral.LLM;
+﻿using System.Linq;
+using Cathedral.LLM;
 using Cathedral.Game;
 
 // Check for help option
@@ -20,6 +21,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("    --auto-contrast                  Automatically stretch contrast");
     Console.WriteLine("    --stretch                        Stretch/shrink to exact width/height (ignore aspect ratio)");
     Console.WriteLine("  --dialogue                         Run the dialogue system demo (NPC conversation test)");
+    Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console)");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
 }
@@ -112,6 +114,17 @@ if (args.Length >= 1 && args[0] == "--dialogue")
 {
     Cathedral.Game.Dialogue.Demo.DialogueDemoLauncher.Launch();
     return;
+}
+
+// Check for --debug flag (can be combined with default launch)
+if (args.Any(a => a == "--debug"))
+{
+    Cathedral.Game.DebugMode.IsActive = true;
+    Console.ForegroundColor = ConsoleColor.Yellow;
+    Console.WriteLine("*** DEBUG MODE ACTIVE ***");
+    Console.WriteLine("LLM critic decisions and dice rolls will prompt for manual override via console.");
+    Console.ResetColor();
+    Console.WriteLine();
 }
 
 // Validate narrative structure at startup

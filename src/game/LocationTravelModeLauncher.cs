@@ -245,7 +245,23 @@ public static class LocationTravelModeLauncher
         {
             if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Escape)
             {
-                if (gameController?.CurrentMode == GameMode.MainMenu)
+                if (gameController?.CurrentMode == GameMode.Fighting)
+                {
+                    // ESC during fight: pass to fight adapter (cancels skill mode or does nothing)
+                    if (gameController is LocationTravelGameController ltgc)
+                    {
+                        ltgc.OnKeyDown(args.Key);
+                    }
+                }
+                else if (gameController?.CurrentMode == GameMode.Dialogue)
+                {
+                    // ESC during dialogue: request exit
+                    if (gameController is LocationTravelGameController ltgc)
+                    {
+                        ltgc.OnKeyDown(args.Key);
+                    }
+                }
+                else if (gameController?.CurrentMode == GameMode.MainMenu)
                 {
                     // ESC in main menu: return to world if game has started, otherwise do nothing
                     if (gameController is LocationTravelGameController ltgc && ltgc.HasGameStarted)
@@ -307,6 +323,15 @@ public static class LocationTravelModeLauncher
                 else
                 {
                     Console.WriteLine("G key: Graph visualization only available in narrative mode (enter a location first)");
+                }
+            }
+            else
+            {
+                // Forward other keys to fight/dialogue modes
+                if (gameController is LocationTravelGameController ltgc2 &&
+                    (ltgc2.CurrentMode == GameMode.Fighting || ltgc2.CurrentMode == GameMode.Dialogue))
+                {
+                    ltgc2.OnKeyDown(args.Key);
                 }
             }
         };

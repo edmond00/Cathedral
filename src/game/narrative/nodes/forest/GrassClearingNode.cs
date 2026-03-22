@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Forest;
 
@@ -10,6 +12,11 @@ namespace Cathedral.Game.Narrative.Nodes.Forest;
 public class GrassClearingNode : NarrationNode
 {
     public override string NodeId => "grass_clearing";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.25f),
+    };
     public override string ContextDescription => "standing in the grass clearing";
     public override string TransitionDescription => "step into the clearing";
     public override bool IsEntryNode => false;

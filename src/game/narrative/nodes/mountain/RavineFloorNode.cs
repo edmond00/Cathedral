@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Mountain;
 
@@ -11,6 +13,11 @@ public class RavineFloorNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(RavineRimNode);
     
     public override string NodeId => "ravine_floor";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new BearArchetype(), spawnChance: 0.25f),
+    };
     public override string ContextDescription => "on the narrow ravine floor";
     public override string TransitionDescription => "descend to the ravine floor";
     public override bool IsEntryNode => false;

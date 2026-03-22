@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Mountain;
 
@@ -11,6 +13,11 @@ public class UpperLedgeNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(LowerLedgeNode);
     
     public override string NodeId => "upper_ledge";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new HermitArchetype(), spawnChance: 0.20f),
+    };
     public override string ContextDescription => "standing on the upper stone ledge";
     public override string TransitionDescription => "climb to the upper ledge";
     public override bool IsEntryNode => false;

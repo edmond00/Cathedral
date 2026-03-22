@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Forest;
 
@@ -9,6 +11,11 @@ namespace Cathedral.Game.Narrative.Nodes.Forest;
 public class FungalRingNode : NarrationNode
 {
     public override string NodeId => "fungal_ring";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new DruidArchetype(), spawnChance: 0.20f),
+    };
     public override string ContextDescription => "observing the fungal ring";
     public override string TransitionDescription => "approach the ring";
     public override bool IsEntryNode => false;

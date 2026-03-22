@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Narrative;
 
@@ -45,6 +46,19 @@ public abstract class NarrationNode : ConcreteOutcome
     /// </summary>
     public abstract List<string> NodeKeywords { get; }
     
+    /// <summary>
+    /// NPC encounter slots for this node. Override in subclasses to define
+    /// which NPC types can appear here and with what probability.
+    /// Empty by default (no encounters).
+    /// </summary>
+    public virtual List<NpcEncounterSlot> PossibleEncounters => new();
+
+    /// <summary>
+    /// NPCs currently present at this node (populated at runtime by NpcSpawner).
+    /// Persistent NPCs survive across visits; transient ones are re-rolled each time.
+    /// </summary>
+    public List<NpcEntity> SpawnedNpcs { get; set; } = new();
+
     /// <summary>
     /// Gets all items available at this node by discovering Item inner classes via reflection.
     /// Items are automatically discovered - they do not need to be manually listed.
@@ -110,6 +124,15 @@ public abstract class NarrationNode : ConcreteOutcome
                 }
             }
             
+            // Add keywords from spawned NPCs
+            foreach (var npc in SpawnedNpcs)
+            {
+                foreach (var keyword in npc.NarrationKeywords)
+                {
+                    allKeywords.Add(keyword);
+                }
+            }
+            
             return allKeywords.ToList();
         }
     }
@@ -145,6 +168,15 @@ public abstract class NarrationNode : ConcreteOutcome
             if (outcome is NarrationNode childNode && childNode.NodeKeywords.Count > 0)
             {
                 result[childNode.DisplayName] = new List<string>(childNode.NodeKeywords);
+            }
+        }
+        
+        // Keywords from spawned NPCs
+        foreach (var npc in SpawnedNpcs)
+        {
+            if (npc.NarrationKeywords.Length > 0)
+            {
+                result[npc.DisplayName] = new List<string>(npc.NarrationKeywords);
             }
         }
         

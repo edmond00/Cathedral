@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Mountain;
 
@@ -11,6 +13,11 @@ public class CliffBaseNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(CliffTopNode);
     
     public override string NodeId => "cliff_base";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new SavageArchetype(), spawnChance: 0.15f),
+    };
     public override string ContextDescription => "standing at the cliff base";
     public override string TransitionDescription => "approach the cliff base";
     public override bool IsEntryNode => false;

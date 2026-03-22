@@ -113,7 +113,7 @@ public class ActionExecutionController
         Console.WriteLine($"\n🔍 [PLAUSIBILITY CHECK] Evaluating if action is possible...");
         
         var plausibilityTree = CriticTrees.BuildPlausibilityTree(action.ActionText, contextDescription);
-        var plausibilityResult = await _criticEvaluator.EvaluateTreeAsync(plausibilityTree);
+        var plausibilityResult = await _criticEvaluator.EvaluateTreeAsync(plausibilityTree, isPlausibilityTree: true);
         
         // If any plausibility check failed, return early
         if (!plausibilityResult.OverallSuccess)

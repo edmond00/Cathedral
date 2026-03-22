@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative.Nodes.Mountain;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Peak;
 
@@ -12,6 +14,11 @@ public class SummitDomeCrestNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(SummitDomeShoulderNode);
     
     public override string NodeId => "summit_dome_crest";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new SavageArchetype(), spawnChance: 0.20f),
+    };
     public override string ContextDescription => "standing atop the summit dome crest";
     public override string TransitionDescription => "ascend to the summit dome crest";
     public override bool IsEntryNode => false;

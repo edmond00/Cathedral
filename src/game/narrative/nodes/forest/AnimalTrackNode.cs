@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Forest;
 
@@ -9,6 +11,12 @@ namespace Cathedral.Game.Narrative.Nodes.Forest;
 public class AnimalTrackNode : NarrationNode
 {
     public override string NodeId => "animal_track";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.30f),
+        new NpcEncounterSlot(new BoarArchetype(), spawnChance: 0.20f),
+    };
     public override string ContextDescription => "following the animal track";
     public override string TransitionDescription => "follow the track";
     public override bool IsEntryNode => false;

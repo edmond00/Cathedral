@@ -11,8 +11,11 @@ using Cathedral.Glyph.Microworld.LocationSystem.Generators;
 using Cathedral.Glyph.Interaction;
 using Cathedral.LLM;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Npc;
 using Cathedral.Game.Creation;
 using Cathedral.Game.Management;
+using Cathedral.Game.Dialogue;
+using Cathedral.Fight;
 using Cathedral.Terminal;
 
 namespace Cathedral.Game;
@@ -33,6 +36,10 @@ public class LocationTravelGameController : IDisposable
     private bool _isInNarrativeMode = false;
     private ModusMentisSlotManager? _modusMentisSlotManager = null;
     private ThinkingExecutor? _thinkingExecutor = null;
+    
+    // Embedded fight/dialogue adapters
+    private FightModeAdapter? _fightAdapter = null;
+    private DialogueModeAdapter? _dialogueAdapter = null;
     
     // Main menu
     private MainMenuRenderer? _mainMenuRenderer;
@@ -151,6 +158,29 @@ public class LocationTravelGameController : IDisposable
         // Update Phase 6 controller if active
         if (_isInNarrativeMode && _narrativeController != null)
         {
+            // Check if fight/dialogue mode is active (sub-modes within narrative)
+            if (_currentMode == GameMode.Fighting && _fightAdapter != null)
+            {
+                _fightAdapter.Update(1.0 / 60.0); // Approximate delta for 60 FPS
+                
+                if (_fightAdapter.IsOver)
+                {
+                    OnFightCompleted();
+                }
+                return;
+            }
+            
+            if (_currentMode == GameMode.Dialogue && _dialogueAdapter != null)
+            {
+                _dialogueAdapter.Update();
+                
+                if (_dialogueAdapter.HasRequestedExit)
+                {
+                    OnDialogueCompleted();
+                }
+                return;
+            }
+            
             // If popup is visible, handle all mouse updates here for consistent frame-rate timing
             // This ensures uniform refresh rate across the entire popup (both inside and outside terminal bounds)
             if (_narrativeController.IsPopupVisible && _core.Terminal != null)
@@ -160,6 +190,22 @@ public class LocationTravelGameController : IDisposable
             }
             
             _narrativeController.Update();
+            
+            // Check if narrative controller wants to enter fight mode
+            if (_narrativeController.PendingFightOutcome != null)
+            {
+                StartFightMode(_narrativeController.PendingFightOutcome);
+                _narrativeController.ClearPendingFight();
+                return;
+            }
+            
+            // Check if narrative controller wants to enter dialogue mode
+            if (_narrativeController.PendingDialogueOutcome != null)
+            {
+                StartDialogueMode(_narrativeController.PendingDialogueOutcome);
+                _narrativeController.ClearPendingDialogue();
+                return;
+            }
             
             // Check if player requested exit (clicked Continue button)
             if (_narrativeController.HasRequestedExit())
@@ -280,6 +326,20 @@ public class LocationTravelGameController : IDisposable
         // All location interactions now use Phase 6 narrative mode
         if (_isInNarrativeMode && _narrativeController != null)
         {
+            // Route to fight adapter if in fight mode
+            if (_currentMode == GameMode.Fighting && _fightAdapter != null)
+            {
+                _fightAdapter.OnCellClicked(x, y);
+                return;
+            }
+            
+            // Route to dialogue adapter if in dialogue mode
+            if (_currentMode == GameMode.Dialogue && _dialogueAdapter != null)
+            {
+                _dialogueAdapter.OnMouseClick(x, y);
+                return;
+            }
+            
             // If popup is visible, use raw mouse coordinates
             if (_narrativeController.IsPopupVisible)
             {
@@ -383,6 +443,20 @@ public class LocationTravelGameController : IDisposable
         // Phase 6 mode handles hover differently
         if (_isInNarrativeMode && _narrativeController != null)
         {
+            // Route to fight adapter if in fight mode
+            if (_currentMode == GameMode.Fighting && _fightAdapter != null)
+            {
+                _fightAdapter.OnCellHovered(x, y);
+                return;
+            }
+            
+            // Route to dialogue adapter if in dialogue mode
+            if (_currentMode == GameMode.Dialogue && _dialogueAdapter != null)
+            {
+                _dialogueAdapter.OnMouseMove(x, y);
+                return;
+            }
+            
             // When popup is visible, mouse updates are handled in Update() loop for consistent timing
             // Only handle non-popup interactions here
             if (!_narrativeController.IsPopupVisible)
@@ -411,6 +485,18 @@ public class LocationTravelGameController : IDisposable
         // Phase 6 mode handles scrolling
         if (_isInNarrativeMode && _narrativeController != null)
         {
+            if (_currentMode == GameMode.Fighting && _fightAdapter != null)
+            {
+                _fightAdapter.OnMouseWheel(delta);
+                return;
+            }
+            
+            if (_currentMode == GameMode.Dialogue && _dialogueAdapter != null)
+            {
+                _dialogueAdapter.OnMouseWheel(delta);
+                return;
+            }
+            
             _narrativeController.OnMouseWheel(delta);
             return;
         }
@@ -465,6 +551,14 @@ public class LocationTravelGameController : IDisposable
                 
             case GameMode.ProtagonistManagement:
                 OnEnterProtagonistManagement();
+                break;
+                
+            case GameMode.Fighting:
+                OnEnterFighting();
+                break;
+                
+            case GameMode.Dialogue:
+                OnEnterDialogue();
                 break;
         }
         
@@ -1115,6 +1209,127 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine("LocationTravelGameController: Game state reset complete");
     }
     
+    // ── Fight/Dialogue mode entry methods ──────────────────────────────
+    
+    private void OnEnterFighting()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered Fighting mode");
+        // Keep narration mode visuals (darkened sphere, terminal visible)
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+        
+        if (_core.Terminal != null)
+            _core.Terminal.Visible = true;
+    }
+    
+    private void OnEnterDialogue()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered Dialogue mode");
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+        
+        if (_core.Terminal != null)
+            _core.Terminal.Visible = true;
+    }
+    
+    /// <summary>
+    /// Transitions from narrative mode into embedded fight mode.
+    /// </summary>
+    private void StartFightMode(FightOutcome fightOutcome)
+    {
+        if (_core.Terminal == null || _narrativeController == null)
+            return;
+        
+        Console.WriteLine($"LocationTravelGameController: Starting fight with {fightOutcome.Target.DisplayName}");
+        
+        _fightAdapter = new FightModeAdapter(
+            _core.Terminal,
+            _core.PopupTerminal,
+            fightOutcome.Target,
+            _narrativeController.Protagonist);
+        
+        SetMode(GameMode.Fighting);
+    }
+    
+    /// <summary>
+    /// Transitions from narrative mode into embedded dialogue mode.
+    /// </summary>
+    private void StartDialogueMode(DialogueOutcome dialogueOutcome)
+    {
+        if (_core.Terminal == null || _narrativeController == null ||
+            _llmActionExecutor == null || _modusMentisSlotManager == null)
+            return;
+        
+        Console.WriteLine($"LocationTravelGameController: Starting dialogue with {dialogueOutcome.Target.DisplayName}");
+        
+        _dialogueAdapter = new DialogueModeAdapter(
+            dialogueOutcome.Target,
+            _narrativeController.Protagonist,
+            _llmActionExecutor.GetLlamaServerManager(),
+            _modusMentisSlotManager,
+            _core.Terminal);
+        
+        _dialogueAdapter.Start();
+        SetMode(GameMode.Dialogue);
+    }
+    
+    /// <summary>
+    /// Called when fight adapter reports completion. Returns to narrative mode.
+    /// </summary>
+    private void OnFightCompleted()
+    {
+        if (_fightAdapter == null || _narrativeController == null)
+            return;
+        
+        var result = _fightAdapter.Result;
+        var npc = _fightAdapter.TargetNpc;
+        
+        Console.WriteLine($"LocationTravelGameController: Fight completed - {result}");
+        
+        _narrativeController.OnFightCompleted(result, npc);
+        _fightAdapter = null;
+        
+        if (result == FightAdapterResult.Death)
+        {
+            // Player died - exit to world view (force new protagonist)
+            Console.WriteLine("LocationTravelGameController: Player died, exiting to world view");
+            ExitNarrativeMode();
+            return;
+        }
+        
+        if (result == FightAdapterResult.Runaway)
+        {
+            // Player ran away - return to world view
+            Console.WriteLine("LocationTravelGameController: Player ran away, exiting to world view");
+            ExitNarrativeMode();
+            return;
+        }
+        
+        // Victory - return to narrative mode
+        SetMode(GameMode.LocationInteraction);
+    }
+    
+    /// <summary>
+    /// Called when dialogue adapter reports completion. Returns to narrative mode.
+    /// </summary>
+    private void OnDialogueCompleted()
+    {
+        if (_dialogueAdapter == null || _narrativeController == null)
+            return;
+        
+        var npc = _dialogueAdapter.TargetNpc;
+        
+        Console.WriteLine($"LocationTravelGameController: Dialogue completed with {npc.DisplayName}");
+        
+        _narrativeController.OnDialogueCompleted(npc);
+        _dialogueAdapter = null;
+        
+        // Return to narrative mode
+        SetMode(GameMode.LocationInteraction);
+    }
+    
     /// <summary>
     /// Exits Phase 6 mode and returns to world view.
     /// </summary>
@@ -1147,6 +1362,22 @@ public class LocationTravelGameController : IDisposable
             return _narrativeController.ClosePopup();
         }
         return false;
+    }
+    
+    /// <summary>
+    /// Routes keyboard input to the active sub-mode (fight or dialogue adapter).
+    /// Called from the launcher's KeyDown handler.
+    /// </summary>
+    public void OnKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys key)
+    {
+        if (_currentMode == GameMode.Fighting && _fightAdapter != null)
+        {
+            _fightAdapter.OnKeyPress(key);
+        }
+        else if (_currentMode == GameMode.Dialogue && _dialogueAdapter != null)
+        {
+            _dialogueAdapter.OnKeyPress(key);
+        }
     }
 
     public void Dispose()

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative.Nodes.Mountain;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Peak;
 
@@ -12,6 +14,11 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(FrozenRavineFloorNode);
     
     public override string NodeId => "frozen_ravine_lip";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.30f),
+    };
     public override string ContextDescription => "standing at the frozen ravine lip";
     public override string TransitionDescription => "approach the frozen ravine lip";
     public override bool IsEntryNode => false;

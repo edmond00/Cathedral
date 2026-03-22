@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative.Nodes.Mountain;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Peak;
 
@@ -12,6 +14,12 @@ public class WindScouredRidgeCrestNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(WindScouredRidgeFlankedNode);
     
     public override string NodeId => "wind_scoured_ridge_crest";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.25f),
+        new NpcEncounterSlot(new SavageArchetype(), spawnChance: 0.10f),
+    };
     public override string ContextDescription => "standing on the wind-scoured ridge crest";
     public override string TransitionDescription => "ascend to the wind-scoured ridge crest";
     public override bool IsEntryNode => false;

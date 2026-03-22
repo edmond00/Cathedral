@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Forest;
 
@@ -9,6 +11,11 @@ namespace Cathedral.Game.Narrative.Nodes.Forest;
 public class TreeHollowNode : NarrationNode
 {
     public override string NodeId => "tree_hollow";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new HermitArchetype(), spawnChance: 0.15f),
+    };
     public override string ContextDescription => "peering into the tree hollow";
     public override string TransitionDescription => "investigate the hollow";
     public override bool IsEntryNode => false;

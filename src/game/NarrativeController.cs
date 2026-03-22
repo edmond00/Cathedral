@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Nodes;
+using Cathedral.Game.Npc;
 using Cathedral.LLM;
 using Cathedral.Terminal;
 using Cathedral.Glyph;
@@ -39,6 +40,14 @@ public class NarrativeController
     
     // Pending action result (stored while waiting for dice roll continue)
     private ActionExecutionResult? _pendingActionResult = null;
+    
+    // NPC spawner for populating nodes with encounters
+    private readonly NpcSpawner _npcSpawner = new();
+    private readonly int _locationId;
+    
+    // Pending fight/dialogue transitions (set by OnDiceRollContinue, consumed by game controller)
+    private FightOutcome? _pendingFightOutcome = null;
+    private DialogueOutcome? _pendingDialogueOutcome = null;
     
     // Random for dice rolls
     private readonly Random _diceRandom = new Random();
@@ -88,6 +97,7 @@ public class NarrativeController
         _core = core;
         _terminalInputHandler = terminalInputHandler;
         _biomeType = biomeType;
+        _locationId = locationId;
         
         // Initialize protagonist with random modiMentis and memory
         _protagonist = new Protagonist();
@@ -119,6 +129,10 @@ public class NarrativeController
     {
         _narrationState.Clear();
         _scrollBuffer.Clear();
+        
+        // Populate NPCs for this node
+        _npcSpawner.PopulateNode(_currentNode, _locationId);
+        
         _narrationState.IsLoadingObservations = true;
         _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
         
@@ -135,6 +149,9 @@ public class NarrativeController
     private void StartObservationPhaseWithHistory()
     {
         // Note: ResetForNewNode() should already be called before this
+        // Populate NPCs for the new node
+        _npcSpawner.PopulateNode(_currentNode, _locationId);
+        
         // Just set loading state and start generation
         _narrationState.IsLoadingObservations = true;
         _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
@@ -312,6 +329,12 @@ public class NarrativeController
             _narrationState.ErrorMessage = null;
             
             Console.WriteLine($"NarrativeController: Thinking phase complete ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)");
+            
+            // In debug mode, print available actions and their outcomes to console
+            if (DebugMode.IsActive && response.Actions.Count > 0)
+            {
+                DebugMode.PrintAvailableActions(response.Actions);
+            }
         }
         catch (Exception ex)
         {
@@ -334,6 +357,15 @@ public class NarrativeController
         try
         {
             Console.WriteLine($"NarrativeController: Starting action execution for '{action.ActionText}'");
+            
+            // In debug mode, prompt overall strategy before executing
+            if (DebugMode.IsActive)
+            {
+                string outcomeSummary = action.PreselectedOutcome != null
+                    ? $"{action.PreselectedOutcome.GetType().Name} → {action.PreselectedOutcome.DisplayName}"
+                    : "unknown";
+                DebugMode.PromptActionStrategy(action.ActionText, outcomeSummary);
+            }
             
             // === PHASE 1: EVALUATION (normal loading screen) ===
             _narrationState.IsLoadingAction = true;
@@ -408,8 +440,18 @@ public class NarrativeController
             _narrationState.LoadingMessage = "Rolling dice...";
             
             // Roll for success
-            double roll = _diceRandom.NextDouble();
-            bool succeeded = roll < evalResult.SuccessProbability;
+            double roll;
+            bool succeeded;
+            if (DebugMode.IsActive)
+            {
+                succeeded = DebugMode.GetDiceRollOverride(action.ActionText, evalResult.SuccessProbability);
+                roll = succeeded ? 0.0 : 1.0; // Synthetic roll value for logging
+            }
+            else
+            {
+                roll = _diceRandom.NextDouble();
+                succeeded = roll < evalResult.SuccessProbability;
+            }
             
             Console.WriteLine($"NarrativeController: Roll {roll:F3} vs probability {evalResult.SuccessProbability:F3} → {(succeeded ? "SUCCESS" : "FAILURE")}");
             
@@ -576,7 +618,19 @@ public class NarrativeController
         _narrationState.ClearDiceRoll();
         
         // Handle outcome based on type - show continue button for next step
-        if (result.ActualOutcome is NarrationNode nextNode)
+        if (result.ActualOutcome is FightOutcome fightOutcome)
+        {
+            Console.WriteLine($"NarrativeController: Fight outcome with {fightOutcome.Target.DisplayName}, signaling fight mode");
+            _pendingFightOutcome = fightOutcome;
+            // Don't show continue button - the game controller will detect the pending fight and switch modes
+        }
+        else if (result.ActualOutcome is DialogueOutcome dialogueOutcome)
+        {
+            Console.WriteLine($"NarrativeController: Dialogue outcome with {dialogueOutcome.Target.DisplayName}, signaling dialogue mode");
+            _pendingDialogueOutcome = dialogueOutcome;
+            // Don't show continue button - the game controller will detect the pending dialogue and switch modes
+        }
+        else if (result.ActualOutcome is NarrationNode nextNode)
         {
             Console.WriteLine($"NarrativeController: Transition outcome to node {nextNode.NodeId}, showing continue button");
             _narrationState.PendingTransitionNode = nextNode;
@@ -1219,6 +1273,99 @@ public class NarrativeController
     /// Check if player has requested to exit Phase 6 (clicked Continue button).
     /// </summary>
     public bool HasRequestedExit() => _narrationState.RequestedExit;
+    
+    /// <summary>
+    /// Check if a fight outcome is pending (NarrativeController wants to enter fight mode).
+    /// </summary>
+    public FightOutcome? PendingFightOutcome => _pendingFightOutcome;
+    
+    /// <summary>
+    /// Check if a dialogue outcome is pending (NarrativeController wants to enter dialogue mode).
+    /// </summary>
+    public DialogueOutcome? PendingDialogueOutcome => _pendingDialogueOutcome;
+    
+    /// <summary>
+    /// The protagonist used by this narrative controller.
+    /// </summary>
+    public Protagonist Protagonist => _protagonist;
+    
+    /// <summary>
+    /// Clear the pending fight outcome after the game controller has handled it.
+    /// </summary>
+    public void ClearPendingFight() => _pendingFightOutcome = null;
+    
+    /// <summary>
+    /// Clear the pending dialogue outcome after the game controller has handled it.
+    /// </summary>
+    public void ClearPendingDialogue() => _pendingDialogueOutcome = null;
+    
+    /// <summary>
+    /// Called by the game controller when returning from fight mode.
+    /// Resumes narration, optionally removing the NPC if dead.
+    /// </summary>
+    public void OnFightCompleted(Fight.FightAdapterResult result, NpcEntity npc)
+    {
+        Console.WriteLine($"NarrativeController: Fight completed with result {result} vs {npc.DisplayName}");
+        
+        string outcomeText = result switch
+        {
+            Fight.FightAdapterResult.Victory => $"You defeated {npc.DisplayName}.",
+            Fight.FightAdapterResult.Runaway => $"You fled from {npc.DisplayName}.",
+            Fight.FightAdapterResult.Death => $"You were slain by {npc.DisplayName}.",
+            _ => "The fight ended."
+        };
+        
+        if (result == Fight.FightAdapterResult.Victory && !npc.IsAlive)
+        {
+            // Remove dead NPC from node
+            _npcSpawner.RemoveNpc(npc, _currentNode);
+            _currentNode.SpawnedNpcs.RemoveAll(n => n.NpcId == npc.NpcId);
+            _currentNode.PossibleOutcomes.RemoveAll(o =>
+                (o is FightOutcome fo && fo.Target.NpcId == npc.NpcId) ||
+                (o is DialogueOutcome dlo && dlo.Target.NpcId == npc.NpcId));
+        }
+        
+        // Add outcome to scroll buffer
+        var block = new NarrationBlock(
+            Type: NarrationBlockType.Outcome,
+            ModusMentis: _protagonist.ModiMentis.FirstOrDefault()!,
+            Text: outcomeText,
+            Keywords: null,
+            Actions: null
+        );
+        _scrollBuffer.AddBlock(block);
+        _narrationState.AddBlock(block);
+        _scrollBuffer.ScrollToBottom();
+        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+        
+        // For death/runaway, show continue button to exit
+        if (result == Fight.FightAdapterResult.Death || result == Fight.FightAdapterResult.Runaway)
+        {
+            _narrationState.PendingTransitionNode = null;
+            _narrationState.ShowContinueButton = true;
+        }
+    }
+    
+    /// <summary>
+    /// Called by the game controller when returning from dialogue mode.
+    /// Resumes narration.
+    /// </summary>
+    public void OnDialogueCompleted(NpcEntity npc)
+    {
+        Console.WriteLine($"NarrativeController: Dialogue completed with {npc.DisplayName}");
+        
+        var block = new NarrationBlock(
+            Type: NarrationBlockType.Outcome,
+            ModusMentis: _protagonist.ModiMentis.FirstOrDefault()!,
+            Text: $"You finished talking with {npc.DisplayName}.",
+            Keywords: null,
+            Actions: null
+        );
+        _scrollBuffer.AddBlock(block);
+        _narrationState.AddBlock(block);
+        _scrollBuffer.ScrollToBottom();
+        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+    }
     
     /// <summary>
     /// Prints the current narration graph structure to console for debugging.

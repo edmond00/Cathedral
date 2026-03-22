@@ -40,7 +40,7 @@ response ::= ""yes"" | ""no""";
     /// </summary>
     /// <param name="rootNode">The root node of the decision tree</param>
     /// <returns>Complete evaluation result including trace of all nodes</returns>
-    public async Task<CriticTreeResult> EvaluateTreeAsync(CriticNode rootNode)
+    public async Task<CriticTreeResult> EvaluateTreeAsync(CriticNode rootNode, bool isPlausibilityTree = false)
     {
         if (rootNode == null)
             throw new ArgumentNullException(nameof(rootNode));
@@ -55,7 +55,7 @@ response ::= ""yes"" | ""no""";
             Console.WriteLine($"  📍 Evaluating node: {currentNode.Name}");
             
             // Evaluate the current node
-            var nodeResult = await EvaluateNodeAsync(currentNode);
+            var nodeResult = await EvaluateNodeAsync(currentNode, isPlausibilityTree);
             result.Trace.Add(nodeResult);
             
             Console.WriteLine($"     {nodeResult}");
@@ -173,7 +173,7 @@ response ::= ""yes"" | ""no""";
     /// <summary>
     /// Evaluates a single CriticNode and returns the result.
     /// </summary>
-    private async Task<CriticNodeResult> EvaluateNodeAsync(CriticNode node)
+    private async Task<CriticNodeResult> EvaluateNodeAsync(CriticNode node, bool isPlausibilityNode = false)
     {
         var sw = Stopwatch.StartNew();
         
@@ -187,8 +187,16 @@ response ::= ""yes"" | ""no""";
         
         try
         {
-            // Get probabilities for yes/no
-            var (pYes, pNo, score) = await GetYesNoProbabilitiesAsync(node.Question);
+            // In debug mode, use strategy-aware override instead of calling the LLM
+            double pYes, pNo, score;
+            if (DebugMode.IsActive)
+            {
+                (pYes, pNo, score) = DebugMode.GetCriticOverride(node.Name, node.Question, isPlausibilityNode);
+            }
+            else
+            {
+                (pYes, pNo, score) = await GetYesNoProbabilitiesAsync(node.Question);
+            }
             
             nodeResult.ProbabilityYes = pYes;
             nodeResult.ProbabilityNo = pNo;
@@ -363,6 +371,13 @@ response ::= ""yes"" | ""no""";
     /// <returns>Score between 0.0 (no) and 1.0 (yes)</returns>
     public async Task<double> EvaluateYesNoQuestion(string question)
     {
+        // In debug mode, use strategy-aware override
+        if (DebugMode.IsActive)
+        {
+            var (_, _, score) = DebugMode.GetCriticOverride("YesNoQuestion", question, isPlausibilityNode: false);
+            return score;
+        }
+
         if (!_isInitialized || !_llamaServer.IsServerReady || _criticSlotId < 0)
         {
             Console.Error.WriteLine("CriticEvaluator: Not initialized or server not ready");

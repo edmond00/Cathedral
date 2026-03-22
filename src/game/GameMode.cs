@@ -47,5 +47,17 @@ public enum GameMode
     /// Standalone dialogue system demo (--dialogue CLI flag).
     /// Runs a scripted NPC conversation for testing the dialogue subsystem.
     /// </summary>
-    DialogueDemo
+    DialogueDemo,
+
+    /// <summary>
+    /// Protagonist is engaged in turn-based combat within the narrative.
+    /// Fight system runs on the main terminal; narrative resumes when fight ends.
+    /// </summary>
+    Fighting,
+
+    /// <summary>
+    /// Protagonist is in dialogue with an NPC within the narrative.
+    /// Dialogue system runs on the main terminal; narrative resumes when dialogue ends.
+    /// </summary>
+    Dialogue
 }

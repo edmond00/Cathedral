@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Forest;
 
@@ -9,6 +11,12 @@ namespace Cathedral.Game.Narrative.Nodes.Forest;
 public class OldgrowthNode : NarrationNode
 {
     public override string NodeId => "oldgrowth";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new BoarArchetype(), spawnChance: 0.25f),
+        new NpcEncounterSlot(new DruidArchetype(), spawnChance: 0.15f),
+    };
     public override string ContextDescription => "exploring the oldgrowth";
     public override string TransitionDescription => "enter the oldgrowth";
     public override bool IsEntryNode => false;
