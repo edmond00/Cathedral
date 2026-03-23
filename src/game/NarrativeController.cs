@@ -190,6 +190,10 @@ public class NarrativeController
                 _narrationState.AddBlock(block);
             }
             
+            // Scroll to show the new observation at the bottom of the view
+            _scrollBuffer.ScrollToBottom();
+            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            
             // Update state
             _narrationState.IsLoadingObservations = false;
             _narrationState.ErrorMessage = null;

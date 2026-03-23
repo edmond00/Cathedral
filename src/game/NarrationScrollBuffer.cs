@@ -78,8 +78,7 @@ public class NarrationScrollBuffer
     /// </summary>
     public void ScrollUp(int lines = 1)
     {
-        // Don't allow scrolling if content fits in viewport
-        if (_renderedLines.Count <= _layout.NARRATIVE_HEIGHT)
+        if (_scrollOffset <= 0)
             return;
         
         _scrollOffset = Math.Max(0, _scrollOffset - lines);
@@ -90,11 +89,10 @@ public class NarrationScrollBuffer
     /// </summary>
     public void ScrollDown(int lines = 1)
     {
-        // Don't allow scrolling if content fits in viewport
-        if (_renderedLines.Count <= _layout.NARRATIVE_HEIGHT)
+        int maxScroll = _layout.CalculateMaxScrollOffset(_renderedLines.Count);
+        if (_scrollOffset >= maxScroll)
             return;
         
-        int maxScroll = _layout.CalculateMaxScrollOffset(_renderedLines.Count);
         _scrollOffset = Math.Min(maxScroll, _scrollOffset + lines);
     }
 
@@ -103,14 +101,7 @@ public class NarrationScrollBuffer
     /// </summary>
     public void ScrollToBottom()
     {
-        // Don't allow scrolling if content fits in viewport
-        if (_renderedLines.Count <= _layout.NARRATIVE_HEIGHT)
-        {
-            _scrollOffset = 0;
-            return;
-        }
-        
-        _scrollOffset = _layout.CalculateMaxScrollOffset(_renderedLines.Count);
+        _scrollOffset = Math.Max(0, _layout.CalculateMaxScrollOffset(_renderedLines.Count));
     }
 
     /// <summary>
@@ -118,15 +109,8 @@ public class NarrationScrollBuffer
     /// </summary>
     public void SetScrollOffset(int offset)
     {
-        // Don't allow scrolling if content fits in viewport
-        if (_renderedLines.Count <= _layout.NARRATIVE_HEIGHT)
-        {
-            _scrollOffset = 0;
-            return;
-        }
-        
         int maxScroll = _layout.CalculateMaxScrollOffset(_renderedLines.Count);
-        _scrollOffset = Math.Clamp(offset, 0, maxScroll);
+        _scrollOffset = Math.Clamp(offset, 0, Math.Max(0, maxScroll));
     }
 
     /// <summary>
@@ -224,8 +208,8 @@ public class NarrationScrollBuffer
         // Regenerate (will include history lines at the top)
         RegenerateRenderedLines();
         
-        // Scroll to end of history so new content is visible
-        _scrollOffset = _historyLines.Count;
+        // Scroll so the last portion of history is visible and new content will appear at bottom
+        _scrollOffset = Math.Max(0, _historyLines.Count - _layout.NARRATIVE_HEIGHT);
         
         Console.WriteLine($"ConvertToHistory: Complete - {_historyLines.Count} history lines, {_renderedLines.Count} total lines, scroll offset: {_scrollOffset}");
     }

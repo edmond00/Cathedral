@@ -152,11 +152,13 @@ public abstract class TerminalPanelUI
                 Config.NarrativeUI.ScrollbarTrackColor, Config.NarrativeUI.BackgroundColor);
 
         int visibleLines = _layout.NARRATIVE_HEIGHT;
-        if (totalLines <= visibleLines) return (0, 0);
+        if (totalLines <= visibleLines && scrollOffset == 0) return (0, 0);
+        // Clamp totalLines so thumb ratio is valid when offset pushes content into view
+        int effectiveTotal = Math.Max(totalLines, scrollOffset + visibleLines);
 
-        float visibleRatio = (float)visibleLines / totalLines;
+        float visibleRatio = (float)visibleLines / effectiveTotal;
         int   thumbHeight  = Math.Max(2, (int)(trackHeight * visibleRatio));
-        int   maxScrollOff = _layout.CalculateMaxScrollOffset(totalLines);
+        int   maxScrollOff = _layout.CalculateMaxScrollOffset(effectiveTotal);
         float scrollRatio  = maxScrollOff > 0 ? (float)scrollOffset / maxScrollOff : 0f;
         int   thumbY       = trackStartY + (int)((trackHeight - thumbHeight) * scrollRatio);
 
