@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Mountain;
 
@@ -11,6 +13,11 @@ public class ButtressFootNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(ButtressHeadNode);
     
     public override string NodeId => "buttress_foot";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.50f),
+    };
     public override string ContextDescription => "at the rock buttress foot";
     public override string TransitionDescription => "descend to the buttress foot";
     public override bool IsEntryNode => false;

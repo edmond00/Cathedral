@@ -14,8 +14,8 @@ public class DeepwoodNode : NarrationNode
 
     public override List<NpcEncounterSlot> PossibleEncounters => new()
     {
-        new NpcEncounterSlot(new BearArchetype(), spawnChance: 0.20f),
-        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.30f),
+        new NpcEncounterSlot(new BearArchetype(), spawnChance: 0.35f),
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.50f),
     };
     public override string ContextDescription => "walking through deepwood";
     public override string TransitionDescription => "enter the deepwood";

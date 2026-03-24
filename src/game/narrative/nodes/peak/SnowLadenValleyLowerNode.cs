@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Narrative.Nodes.Mountain;
 
 namespace Cathedral.Game.Narrative.Nodes.Peak;
@@ -12,6 +14,11 @@ public class SnowLadenValleyLowerNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(SnowLadenValleyUpperNode);
     
     public override string NodeId => "snow_laden_valley_lower";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.50f),
+    };
     public override string ContextDescription => "standing in the lower snow-laden valley";
     public override string TransitionDescription => "descend to the lower snow-laden valley";
     public override bool IsEntryNode => false;

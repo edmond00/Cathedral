@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Narrative.Nodes.Mountain;
 
 namespace Cathedral.Game.Narrative.Nodes.Peak;
@@ -12,6 +14,11 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(GlacierTongueUpperNode);
     
     public override string NodeId => "glacier_tongue_lower";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.50f),
+    };
     public override string ContextDescription => "standing on the lower ice flow";
     public override string TransitionDescription => "descend to the lower ice flow";
     public override bool IsEntryNode => false;

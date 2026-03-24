@@ -16,7 +16,7 @@ public class CliffBaseNode : PyramidalFeatureNode
 
     public override List<NpcEncounterSlot> PossibleEncounters => new()
     {
-        new NpcEncounterSlot(new SavageArchetype(), spawnChance: 0.15f),
+        new NpcEncounterSlot(new SavageArchetype(), spawnChance: 0.50f),
     };
     public override string ContextDescription => "standing at the cliff base";
     public override string TransitionDescription => "approach the cliff base";

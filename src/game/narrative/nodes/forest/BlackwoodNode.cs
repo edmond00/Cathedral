@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Forest;
 
@@ -9,6 +11,12 @@ namespace Cathedral.Game.Narrative.Nodes.Forest;
 public class BlackwoodNode : NarrationNode
 {
     public override string NodeId => "blackwood";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.45f),
+        new NpcEncounterSlot(new BearArchetype(), spawnChance: 0.30f),
+    };
     public override string ContextDescription => "feeling through blackwood";
     public override string TransitionDescription => "enter the blackwood";
     public override bool IsEntryNode => false;

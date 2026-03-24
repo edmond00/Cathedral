@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Mountain;
 
@@ -11,6 +13,11 @@ public class LowerScreeNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(UpperScreeNode);
     
     public override string NodeId => "lower_scree";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new SavageArchetype(), spawnChance: 0.50f),
+    };
     public override string ContextDescription => "on the lower scree slope";
     public override string TransitionDescription => "descend to the lower scree";
     public override bool IsEntryNode => false;

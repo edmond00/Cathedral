@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Mountain;
 
@@ -11,6 +13,12 @@ public class GullyBottomNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(GullyLipNode);
     
     public override string NodeId => "gully_bottom";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.40f),
+        new NpcEncounterSlot(new BearArchetype(), spawnChance: 0.30f),
+    };
     public override string ContextDescription => "in the shaded gully bottom";
     public override string TransitionDescription => "descend to the gully bottom";
     public override bool IsEntryNode => false;

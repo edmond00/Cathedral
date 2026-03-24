@@ -16,7 +16,7 @@ public class RavineFloorNode : PyramidalFeatureNode
 
     public override List<NpcEncounterSlot> PossibleEncounters => new()
     {
-        new NpcEncounterSlot(new BearArchetype(), spawnChance: 0.25f),
+        new NpcEncounterSlot(new BearArchetype(), spawnChance: 0.50f),
     };
     public override string ContextDescription => "on the narrow ravine floor";
     public override string TransitionDescription => "descend to the ravine floor";

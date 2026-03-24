@@ -116,6 +116,16 @@ public abstract class NarrationGraphFactory
                         }
                     }
                     
+                    // List possible encounters
+                    if (node.PossibleEncounters.Count > 0)
+                    {
+                        writer.WriteLine($"  Encounters ({node.PossibleEncounters.Count}):");
+                        foreach (var slot in node.PossibleEncounters)
+                        {
+                            writer.WriteLine($"    ! {slot.Archetype.ArchetypeId} ({slot.SpawnChance:P0} spawn chance, max {slot.MaxCount})");
+                        }
+                    }
+                    
                     // List connected nodes
                     var childNodes = node.PossibleOutcomes.OfType<NarrationNode>().ToList();
                     if (childNodes.Count > 0)

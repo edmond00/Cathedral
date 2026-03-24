@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Mountain;
 
@@ -11,6 +13,11 @@ public class ValleyUpperFloorNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(ValleyLowerFloorNode);
     
     public override string NodeId => "valley_upper_floor";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.50f),
+    };
     public override string ContextDescription => "on the wide valley upper floor";
     public override string TransitionDescription => "enter the valley upper floor";
     public override bool IsEntryNode => false;

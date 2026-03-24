@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Forest;
 
@@ -9,6 +11,11 @@ namespace Cathedral.Game.Narrative.Nodes.Forest;
 public class BrambleRunNode : NarrationNode
 {
     public override string NodeId => "bramble_run";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new BoarArchetype(), spawnChance: 0.50f),
+    };
     public override string ContextDescription => "carefully navigating the brambles";
     public override string TransitionDescription => "push through the brambles";
     public override bool IsEntryNode => false;

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Mountain;
 
@@ -11,6 +13,11 @@ public class DebrisFieldNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(RockfallCrownNode);
     
     public override string NodeId => "debris_field";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new BearArchetype(), spawnChance: 0.50f),
+    };
     public override string ContextDescription => "in the debris field";
     public override string TransitionDescription => "descend to the debris field";
     public override bool IsEntryNode => false;

@@ -14,8 +14,8 @@ public class AnimalTrackNode : NarrationNode
 
     public override List<NpcEncounterSlot> PossibleEncounters => new()
     {
-        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.30f),
-        new NpcEncounterSlot(new BoarArchetype(), spawnChance: 0.20f),
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.50f),
+        new NpcEncounterSlot(new BoarArchetype(), spawnChance: 0.35f),
     };
     public override string ContextDescription => "following the animal track";
     public override string TransitionDescription => "follow the track";

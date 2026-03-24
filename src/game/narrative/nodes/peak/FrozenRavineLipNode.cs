@@ -17,7 +17,7 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
 
     public override List<NpcEncounterSlot> PossibleEncounters => new()
     {
-        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.30f),
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.50f),
     };
     public override string ContextDescription => "standing at the frozen ravine lip";
     public override string TransitionDescription => "approach the frozen ravine lip";

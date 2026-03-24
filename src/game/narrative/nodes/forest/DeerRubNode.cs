@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Forest;
 
@@ -9,6 +11,11 @@ namespace Cathedral.Game.Narrative.Nodes.Forest;
 public class DeerRubNode : NarrationNode
 {
     public override string NodeId => "deer_rub";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.50f),
+    };
     public override string ContextDescription => "examining the deer rub";
     public override string TransitionDescription => "investigate the marked tree";
     public override bool IsEntryNode => false;

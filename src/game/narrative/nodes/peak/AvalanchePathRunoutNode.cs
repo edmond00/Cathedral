@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Narrative.Nodes.Mountain;
 
 namespace Cathedral.Game.Narrative.Nodes.Peak;
@@ -12,6 +14,12 @@ public class AvalanchePathRunoutNode : PyramidalFeatureNode
     public override Type PairedNodeType => typeof(AvalanchePathReleaseNode);
     
     public override string NodeId => "avalanche_path_runout";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new WolfArchetype(), spawnChance: 0.35f),
+        new NpcEncounterSlot(new BearArchetype(), spawnChance: 0.25f),
+    };
     public override string ContextDescription => "standing in the avalanche runout zone";
     public override string TransitionDescription => "descend to the avalanche runout zone";
     public override bool IsEntryNode => false;

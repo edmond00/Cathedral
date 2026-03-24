@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Archetypes;
 
 namespace Cathedral.Game.Narrative.Nodes.Forest;
 
@@ -9,6 +11,11 @@ namespace Cathedral.Game.Narrative.Nodes.Forest;
 public class WildwoodNode : NarrationNode
 {
     public override string NodeId => "wildwood";
+
+    public override List<NpcEncounterSlot> PossibleEncounters => new()
+    {
+        new NpcEncounterSlot(new BoarArchetype(), spawnChance: 0.50f),
+    };
     public override string ContextDescription => "navigating the wildwood";
     public override string TransitionDescription => "enter the wildwood";
     public override bool IsEntryNode => false;
