@@ -113,6 +113,7 @@ public class NarrativeController
         _currentNode = graphFactory.GenerateGraph(locationId);
         Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}'");
         NarrationGraphDebugManager.Show(_currentNode, _locationId);
+        LlmMonitorDebugManager.Show();
         
         // Initialize controllers
         _observationController = new ObservationPhaseController(llamaServer, slotManager);

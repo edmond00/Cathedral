@@ -39,8 +39,12 @@ public static class NarrationGraphDebugManager
             {
                 if (!_appInitialized)
                 {
-                    Application.EnableVisualStyles();
-                    Application.SetCompatibleTextRenderingDefault(false);
+                    try
+                    {
+                        Application.EnableVisualStyles();
+                        Application.SetCompatibleTextRenderingDefault(false);
+                    }
+                    catch { /* Another debug window may have already initialized WinForms. */ }
                     _appInitialized = true;
                 }
 
