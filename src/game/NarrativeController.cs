@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Cathedral.Debug;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Nodes;
 using Cathedral.Game.Npc;
@@ -111,6 +112,7 @@ public class NarrativeController
         
         _currentNode = graphFactory.GenerateGraph(locationId);
         Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}'");
+        NarrationGraphDebugManager.Show(_currentNode, _locationId);
         
         // Initialize controllers
         _observationController = new ObservationPhaseController(llamaServer, slotManager);
@@ -1070,6 +1072,7 @@ public class NarrativeController
                     
                     // Perform the transition
                     _currentNode = _narrationState.PendingTransitionNode;
+                    NarrationGraphDebugManager.UpdateCurrentNode(_currentNode);
                     
                     // Convert current narration to history (grayed out, non-interactive)
                     _scrollBuffer.ConvertToHistory();

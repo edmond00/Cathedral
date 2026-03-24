@@ -2,7 +2,11 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- Allow BinaryFormatter for MSAGL's GViewer which uses it to deserialize its own embedded toolbar resources -->
+    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+    <!-- UseWindowsForms is intentionally omitted: it adds implicit global usings that conflict with
+         SixLabors.ImageSharp and SixLabors.Fonts. WinForms is referenced explicitly below instead. -->
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Cathedral</RootNamespace>
@@ -26,6 +30,14 @@
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
     <PackageReference Include="System.Net.Http.Json" Version="9.0.9" />
     <PackageReference Include="System.Text.Json" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Msagl" Version="1.1.6" />
+    <PackageReference Include="Microsoft.Msagl.Drawing" Version="1.1.6" />
+    <PackageReference Include="Microsoft.Msagl.GraphViewerGdi" Version="1.1.7" />
+  </ItemGroup>
+
+  <!-- WinForms reference without implicit global usings (avoids conflicts with SixLabors / OpenTK) -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
   </ItemGroup>
 
 </Project>

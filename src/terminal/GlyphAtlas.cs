@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using SixLabors.Fonts;
+using Font = SixLabors.Fonts.Font;   // keep explicit alias: System.Drawing.Font may still be present via transitive references
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
