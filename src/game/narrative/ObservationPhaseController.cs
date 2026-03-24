@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Cathedral.LLM;
 
@@ -8,235 +9,202 @@ namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// Orchestrates the observation phase of narration.
-/// Generates "overall observation" (one keyword per outcome) and "focus observation" (all keywords from one outcome).
+/// Generates one sentence per outcome using chained LLM calls on a single slot.
+/// Each NarrationBlock carries a LinkedOutcome so click handlers have direct outcome access.
 /// </summary>
 public class ObservationPhaseController
 {
     private readonly ObservationExecutor _observationExecutor;
     private readonly KeywordRenderer _keywordRenderer;
     private readonly Random _random = new();
-    
-    // Stores the keyword-to-outcome mapping from the last overall observation
-    private Dictionary<string, ConcreteOutcome> _keywordToOutcomeMap = new();
-    
+
     public ObservationPhaseController(LlamaServerManager llamaServer, ModusMentisSlotManager slotManager)
     {
         _observationExecutor = new ObservationExecutor(llamaServer, slotManager);
         _keywordRenderer = new KeywordRenderer();
     }
-    
+
     /// <summary>
-    /// Executes the observation phase: selects ONE observation modusMentis and generates an "overall observation".
-    /// The overall observation uses one representative keyword from each possible outcome.
-    /// Returns a single narration block ready for display.
+    /// Executes the overall observation phase: selects one observation modusMentis and generates
+    /// one sentence per sampled outcome (3–5 sentences total), each in a separate LLM call
+    /// on the same slot so context chains naturally. Each NarrationBlock has LinkedOutcome set.
     /// </summary>
     public async Task<List<NarrationBlock>> ExecuteObservationPhaseAsync(
         NarrationNode currentNode,
         Protagonist protagonist,
-        int modusMentisCount = 1)  // Default to 1 modusMentis now
+        CancellationToken ct = default)
     {
-        Console.WriteLine($"ObservationPhaseController: Starting overall observation phase for {currentNode.NodeId}");
-        
-        // Select ONE observation modusMentis randomly
-        var observationModiMentis = protagonist.GetObservationModiMentis()
+        Console.WriteLine($"ObservationPhaseController: Starting overall observation for {currentNode.NodeId}");
+
+        var modusMentis = protagonist.GetObservationModiMentis()
             .OrderBy(_ => _random.Next())
-            .Take(1)
-            .ToList();
-        
-        if (observationModiMentis.Count == 0)
+            .FirstOrDefault();
+
+        if (modusMentis == null)
         {
             Console.WriteLine("ObservationPhaseController: No observation modiMentis available!");
             return new List<NarrationBlock>();
         }
-        
-        var modusMentis = observationModiMentis[0];
-        Console.WriteLine($"ObservationPhaseController: Selected observation modusMentis: {modusMentis.DisplayName}");
-        
-        // Get representative keywords (one per outcome)
-        var representativeKeywords = currentNode.GetRepresentativeKeywordsPerOutcome(_random);
-        var targetKeywords = representativeKeywords.Select(r => r.Keyword).ToList();
-        
-        // Build keyword-to-outcome map for later focus observations
-        _keywordToOutcomeMap.Clear();
-        foreach (var (keyword, outcome) in representativeKeywords)
+
+        Console.WriteLine($"ObservationPhaseController: Selected {modusMentis.DisplayName}");
+
+        // Sample 3..5 outcomes to describe
+        var allOutcomes = currentNode.GetAllDirectConcreteOutcomes();
+        int targetCount = Math.Min(_random.Next(3, 6), allOutcomes.Count);
+        var sampledOutcomes = allOutcomes.OrderBy(_ => _random.Next()).Take(targetCount).ToList();
+
+        if (sampledOutcomes.Count == 0)
         {
-            _keywordToOutcomeMap[keyword.ToLowerInvariant()] = outcome;
+            Console.WriteLine("ObservationPhaseController: No concrete outcomes found at node.");
+            return new List<NarrationBlock>();
         }
-        
-        Console.WriteLine($"ObservationPhaseController: Using {targetKeywords.Count} representative keywords: {string.Join(", ", targetKeywords)}");
-        
-        var narrationBlocks = new List<NarrationBlock>();
-        
-        try
+
+        Console.WriteLine($"ObservationPhaseController: Generating {sampledOutcomes.Count} observation sentences");
+
+        // Acquire slot once; reset its history so each observation batch starts fresh
+        var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(modusMentis);
+        _observationExecutor.ResetSlot(slotId);
+
+        var sentenceParts = new List<string>();
+        var allKeywords = new List<string>();
+        var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        int locationId = protagonist.CurrentLocationId;
+
+        for (int i = 0; i < sampledOutcomes.Count; i++)
         {
-            Console.WriteLine($"ObservationPhaseController: Generating overall observation with {modusMentis.DisplayName}...");
-            
-            var observation = await _observationExecutor.GenerateObservationAsync(
-                modusMentis,
-                currentNode,
-                protagonist,
-                targetKeywords
-            );
-            
-            // Extract keywords from narration text
-            var segments = _keywordRenderer.ParseNarrationWithKeywords(
-                observation.NarrationText,
-                targetKeywords
-            );
-            
-            var foundKeywords = segments
-                .Where(s => s.IsKeyword)
-                .Select(s => s.KeywordValue!)
-                .Distinct()
-                .ToList();
-            
-            var block = new NarrationBlock(
-                Type: NarrationBlockType.Observation,
-                ModusMentis: modusMentis,
-                Text: observation.NarrationText,
-                Keywords: foundKeywords,
-                Actions: null,
-                SourceObservationType: ObservationType.Overall
-            );
-            
-            narrationBlocks.Add(block);
-            
-            Console.WriteLine($"ObservationPhaseController: Generated overall observation with {foundKeywords.Count} keywords");
+            var outcome = sampledOutcomes[i];
+            bool isFirst = i == 0;
+
+            try
+            {
+                var sentence = await _observationExecutor.GenerateSentenceAsync(
+                    slotId, currentNode, locationId, outcome, isFirst, modusMentis.PersonaTone, ct);
+
+                var outcomeKeywords = outcome is NarrationNode nn ? nn.NodeKeywords : outcome.OutcomeKeywords;
+                var keyword = _observationExecutor.ExtractKeywordFromSentence(sentence, outcomeKeywords);
+
+                sentenceParts.Add(sentence);
+                allKeywords.Add(keyword);
+                keywordOutcomeMap.TryAdd(keyword, outcome);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"ObservationPhaseController: Sentence {i} failed: {ex.Message}");
+            }
         }
-        catch (Exception ex)
+
+        if (sentenceParts.Count == 0)
         {
-            Console.Error.WriteLine($"ObservationPhaseController: Failed to generate overall observation with {modusMentis.DisplayName}: {ex.Message}");
-            
-            // Add a fallback observation
-            narrationBlocks.Add(new NarrationBlock(
-                Type: NarrationBlockType.Observation,
-                ModusMentis: modusMentis,
-                Text: "You observe the environment carefully, taking in the details.",
-                Keywords: new List<string>(),
-                Actions: null,
-                SourceObservationType: ObservationType.Overall
-            ));
+            Console.WriteLine("ObservationPhaseController: All sentences failed.");
+            return new List<NarrationBlock>();
         }
-        
-        Console.WriteLine($"ObservationPhaseController: Overall observation phase complete");
-        
-        return narrationBlocks;
+
+        var block = new NarrationBlock(
+            Type: NarrationBlockType.Observation,
+            ModusMentis: modusMentis,
+            Text: string.Join(" ", sentenceParts),
+            Keywords: allKeywords,
+            Actions: null,
+            SourceObservationType: ObservationType.Overall,
+            KeywordOutcomeMap: keywordOutcomeMap
+        );
+
+        Console.WriteLine($"ObservationPhaseController: Overall observation complete ({sentenceParts.Count} sentences, {allKeywords.Count} keywords)");
+        return new List<NarrationBlock> { block };
     }
-    
+
     /// <summary>
-    /// Generates a "focus observation" for a specific outcome triggered by right-clicking a keyword.
-    /// Uses all keywords from the outcome that owns the clicked keyword.
+    /// Generates a focus observation for a specific outcome (right-click on a keyword).
+    /// Produces up to 5 sentences: [0] the focus outcome, [1-2] circuitous outcomes inside it (if any),
+    /// [3-4] other outcomes at the current node.
+    /// Circuitous-sentence blocks have IsCircuitousSentence=true and FocusOriginNode set so that
+    /// right-clicking them again refocuses on the origin rather than drilling deeper.
     /// </summary>
-    /// <param name="clickedKeyword">The keyword that was right-clicked</param>
-    /// <param name="observationModusMentis">The observation modusMentis selected by the player</param>
-    /// <param name="currentNode">The current narration node</param>
-    /// <param name="protagonist">The player protagonist</param>
-    /// <returns>A narration block for the focus observation, or null on failure</returns>
-    public async Task<NarrationBlock?> GenerateFocusObservationAsync(
-        string clickedKeyword,
+    public async Task<List<NarrationBlock>> GenerateFocusObservationAsync(
+        ConcreteOutcome focusOutcome,
         ModusMentis observationModusMentis,
         NarrationNode currentNode,
-        Protagonist protagonist)
+        Protagonist protagonist,
+        CancellationToken ct = default)
     {
-        Console.WriteLine($"ObservationPhaseController: Starting focus observation for keyword '{clickedKeyword}'");
-        
-        // Find the outcome that owns this keyword
-        var outcome = currentNode.GetOutcomeOwningKeyword(clickedKeyword);
-        
-        if (outcome == null)
+        Console.WriteLine($"ObservationPhaseController: Starting focus observation on '{focusOutcome.DisplayName}'");
+
+        // Build ordered outcome list: focus → circuitous → other
+        var orderedOutcomes = new List<(ConcreteOutcome Outcome, bool IsCircuitous, NarrationNode? CircuitousOrigin)>();
+        orderedOutcomes.Add((focusOutcome, false, null));
+
+        NarrationNode? focusNode = focusOutcome as NarrationNode;
+        if (focusNode != null)
         {
-            Console.Error.WriteLine($"ObservationPhaseController: No outcome found for keyword '{clickedKeyword}'");
-            return null;
+            var circuitous = focusNode.GetCircuitousOutcomes().Take(2);
+            foreach (var (co, origin) in circuitous)
+                orderedOutcomes.Add((co, true, origin));
         }
-        
-        // Get keywords specific to this outcome
-        // For NarrationNodes, use NodeKeywords (not the aggregated OutcomeKeywords which includes children)
-        // For Items, use OutcomeKeywords directly
-        List<string> allKeywords;
-        if (outcome is NarrationNode node)
+
+        // Fill remaining slots (up to 5 total) with other outcomes from the current node
+        var otherOutcomes = currentNode.GetAllDirectConcreteOutcomes()
+            .Where(o => o != focusOutcome)
+            .OrderBy(_ => _random.Next());
+
+        foreach (var other in otherOutcomes)
         {
-            allKeywords = node.NodeKeywords;
+            if (orderedOutcomes.Count >= 5) break;
+            orderedOutcomes.Add((other, false, null));
         }
-        else
+
+        // Acquire slot and reset history for this focus batch
+        var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(observationModusMentis);
+        _observationExecutor.ResetSlot(slotId);
+
+        var sentenceParts = new List<string>();
+        var allKeywords = new List<string>();
+        var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        int locationId = protagonist.CurrentLocationId;
+
+        for (int i = 0; i < orderedOutcomes.Count; i++)
         {
-            allKeywords = outcome.OutcomeKeywords;
+            var (outcome, isCircuitous, circuitousOrigin) = orderedOutcomes[i];
+            bool isFirst = i == 0;
+
+            try
+            {
+                var sentence = await _observationExecutor.GenerateSentenceAsync(
+                    slotId, currentNode, locationId, outcome, isFirst, observationModusMentis.PersonaTone, ct);
+
+                var outcomeKeywords = outcome is NarrationNode nn ? nn.NodeKeywords : outcome.OutcomeKeywords;
+                var keyword = _observationExecutor.ExtractKeywordFromSentence(sentence, outcomeKeywords);
+
+                sentenceParts.Add(sentence);
+                allKeywords.Add(keyword);
+                // For circuitous sentences, map keyword → the circuitous origin (re-focus goes there)
+                keywordOutcomeMap.TryAdd(keyword, isCircuitous && circuitousOrigin != null ? circuitousOrigin : outcome);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"ObservationPhaseController: Focus sentence {i} failed: {ex.Message}");
+            }
         }
-        
-        // Limit keywords if there are too many
-        List<string> focusKeywords;
-        if (allKeywords.Count > Config.Narrative.TargetKeywordCount)
+
+        if (sentenceParts.Count == 0)
         {
-            focusKeywords = allKeywords
-                .OrderBy(_ => _random.Next())
-                .Take(Config.Narrative.TargetKeywordCount)
-                .ToList();
-            Console.WriteLine($"ObservationPhaseController: Focus observation sampling {focusKeywords.Count} of {allKeywords.Count} available keywords from '{outcome.DisplayName}': {string.Join(", ", focusKeywords)}");
+            Console.WriteLine("ObservationPhaseController: All focus sentences failed.");
+            return new List<NarrationBlock>();
         }
-        else
-        {
-            focusKeywords = allKeywords;
-            Console.WriteLine($"ObservationPhaseController: Focus observation using all {focusKeywords.Count} keywords from '{outcome.DisplayName}': {string.Join(", ", focusKeywords)}");
-        }
-        
-        try
-        {
-            var observation = await _observationExecutor.GenerateObservationAsync(
-                observationModusMentis,
-                currentNode,
-                protagonist,
-                focusKeywords
-            );
-            
-            // Extract keywords from narration text
-            var segments = _keywordRenderer.ParseNarrationWithKeywords(
-                observation.NarrationText,
-                focusKeywords
-            );
-            
-            var foundKeywords = segments
-                .Where(s => s.IsKeyword)
-                .Select(s => s.KeywordValue!)
-                .Distinct()
-                .ToList();
-            
-            var block = new NarrationBlock(
-                Type: NarrationBlockType.Observation,
-                ModusMentis: observationModusMentis,
-                Text: observation.NarrationText,
-                Keywords: foundKeywords,
-                Actions: null,
-                SourceObservationType: ObservationType.Focus
-            );
-            
-            Console.WriteLine($"ObservationPhaseController: Generated focus observation with {foundKeywords.Count} keywords");
-            
-            return block;
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"ObservationPhaseController: Failed to generate focus observation: {ex.Message}");
-            
-            // Return fallback observation
-            return new NarrationBlock(
-                Type: NarrationBlockType.Observation,
-                ModusMentis: observationModusMentis,
-                Text: $"You focus your attention on the {clickedKeyword}, examining it more closely.",
-                Keywords: new List<string> { clickedKeyword },
-                Actions: null,
-                SourceObservationType: ObservationType.Focus
-            );
-        }
+
+        var block = new NarrationBlock(
+            Type: NarrationBlockType.Observation,
+            ModusMentis: observationModusMentis,
+            Text: string.Join(" ", sentenceParts),
+            Keywords: allKeywords,
+            Actions: null,
+            SourceObservationType: ObservationType.Focus,
+            KeywordOutcomeMap: keywordOutcomeMap
+        );
+
+        Console.WriteLine($"ObservationPhaseController: Focus observation complete ({sentenceParts.Count} sentences, {allKeywords.Count} keywords)");
+        return new List<NarrationBlock> { block };
     }
-    
-    /// <summary>
-    /// Gets the outcome associated with a keyword from the current observation context.
-    /// </summary>
-    public ConcreteOutcome? GetOutcomeForKeyword(string keyword)
-    {
-        var normalizedKeyword = keyword.ToLowerInvariant();
-        return _keywordToOutcomeMap.TryGetValue(normalizedKeyword, out var outcome) ? outcome : null;
-    }
-    
+
     /// <summary>
     /// Formats narration blocks for terminal display with keyword highlighting.
     /// </summary>
@@ -247,10 +215,10 @@ public class ObservationPhaseController
             block.Keywords ?? new List<string>(),
             keywordsEnabled
         );
-        
+
         return $"[{block.ModusMentis.DisplayName}]\n{formattedText}\n";
     }
-    
+
     /// <summary>
     /// Gets all unique keywords from a list of narration blocks.
     /// </summary>

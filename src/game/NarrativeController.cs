@@ -174,11 +174,10 @@ public class NarrativeController
         {
             Console.WriteLine("NarrativeController: Calling ObservationPhaseController...");
             
-            // Generate ONE overall observation (one keyword per outcome)
+            // Generate ONE overall observation (one sentence per sampled outcome)
             var blocks = await _observationController.ExecuteObservationPhaseAsync(
                 _currentNode,
-                _protagonist,
-                modusMentisCount: 1
+                _protagonist
             );
             
             Console.WriteLine($"NarrativeController: Generated {blocks.Count} observation blocks");
@@ -217,72 +216,76 @@ public class NarrativeController
     {
         // Get the source observation block from the hovered keyword (for modusMentis chain tracking)
         var sourceObservationBlock = _narrationState.HoveredKeyword?.SourceBlock;
-        
+
         try
         {
             Console.WriteLine($"NarrativeController: Executing thinking with {thinkingModusMentis.DisplayName} on keyword '{keyword}'");
-            
-            // Determine observation type from source block
-            var observationType = (sourceObservationBlock as NarrationBlock)?.SourceObservationType ?? ObservationType.Overall;
-            Console.WriteLine($"NarrativeController: Observation type is {observationType}");
-            
-            // Build outcomes with metadata (straightforward + circuitous)
+
+            // Build outcomes with metadata using LinkedOutcome from the source block.
+            // The block already knows which outcome each sentence described, so we don't need keyword-based lookup.
             var outcomesWithMetadata = new List<OutcomeWithMetadata>();
-            
-            // Get straightforward outcomes for this keyword
-            var straightforwardOutcomes = _currentNode.GetOutcomesForKeyword(keyword);
-            foreach (var outcome in straightforwardOutcomes)
+
+            if (sourceObservationBlock?.IsCircuitousSentence == true && sourceObservationBlock.FocusOriginNode != null)
             {
-                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(outcome));
+                // Circuitous sentence clicked: the action options are the circuitous target
+                // (as a circuitous outcome) + the origin node + FeelGood
+                outcomesWithMetadata.Add(OutcomeWithMetadata.Circuitous(
+                    sourceObservationBlock.LinkedOutcome!,
+                    sourceObservationBlock.FocusOriginNode));
+                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(sourceObservationBlock.FocusOriginNode));
+                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(new FeelGoodOutcome()));
             }
-            
-            Console.WriteLine($"NarrativeController: Found {straightforwardOutcomes.Count} straightforward outcomes");
-            
-            // Get circuitous outcomes if enabled
-            if (Config.Narrative.EnableCircuitousOutcomes)
+            else
             {
-                var circuitousOutcomes = _currentNode.GetCircuitousOutcomesForKeyword(keyword, observationType);
-                
-                // Filter duplicates first
-                var filteredCircuitous = circuitousOutcomes
-                    .Where(c => !outcomesWithMetadata.Any(o => 
-                        o.Outcome.ToNaturalLanguageString().Equals(c.Outcome.ToNaturalLanguageString(), StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
-                
-                // Sample if more than max allowed
-                if (filteredCircuitous.Count > Config.Narrative.MaxCircuitousOutcomes)
+                // Normal sentence clicked: straightforward outcome + a few circuitous + FeelGood
+                var linkedOutcome = sourceObservationBlock?.LinkedOutcome;
+                if (linkedOutcome != null)
+                    outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(linkedOutcome));
+                else
                 {
-                    var rng = new Random();
-                    filteredCircuitous = filteredCircuitous
-                        .OrderBy(_ => rng.Next())
-                        .Take(Config.Narrative.MaxCircuitousOutcomes)
+                    // Fallback: use keyword-based lookup for blocks created before This refactor
+                    foreach (var o in _currentNode.GetOutcomesForKeyword(keyword))
+                        outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(o));
+                }
+
+                if (Config.Narrative.EnableCircuitousOutcomes)
+                {
+                    var observationType = sourceObservationBlock?.SourceObservationType ?? ObservationType.Overall;
+                    var circuitousOutcomes = _currentNode.GetCircuitousOutcomesForKeyword(keyword, observationType);
+                    var filteredCircuitous = circuitousOutcomes
+                        .Where(c => !outcomesWithMetadata.Any(o =>
+                            o.Outcome.ToNaturalLanguageString().Equals(
+                                c.Outcome.ToNaturalLanguageString(), StringComparison.OrdinalIgnoreCase)))
                         .ToList();
-                    Console.WriteLine($"NarrativeController: Sampled {Config.Narrative.MaxCircuitousOutcomes} from {circuitousOutcomes.Count} circuitous outcomes");
+
+                    if (filteredCircuitous.Count > Config.Narrative.MaxCircuitousOutcomes)
+                    {
+                        var rng = new Random();
+                        filteredCircuitous = filteredCircuitous
+                            .OrderBy(_ => rng.Next())
+                            .Take(Config.Narrative.MaxCircuitousOutcomes)
+                            .ToList();
+                    }
+
+                    foreach (var c in filteredCircuitous)
+                        outcomesWithMetadata.Add(OutcomeWithMetadata.Circuitous(c.Outcome, c.IntermediateNode));
+
+                    Console.WriteLine($"NarrativeController: Added {filteredCircuitous.Count} circuitous outcomes");
                 }
-                
-                foreach (var circuitous in filteredCircuitous)
-                {
-                    outcomesWithMetadata.Add(OutcomeWithMetadata.Circuitous(circuitous.Outcome, circuitous.IntermediateNode));
-                }
-                Console.WriteLine($"NarrativeController: Added {filteredCircuitous.Count} circuitous outcomes");
+
+                if (!outcomesWithMetadata.Any(o => o.Outcome is FeelGoodOutcome))
+                    outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(new FeelGoodOutcome()));
             }
-            
-            // Always add FeelGoodOutcome as a fallback option
-            var feelGoodOutcome = new FeelGoodOutcome();
-            if (!outcomesWithMetadata.Any(o => o.Outcome is FeelGoodOutcome))
-            {
-                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(feelGoodOutcome));
-            }
-            
+
             // Get action modiMentis
             var actionModiMentis = _protagonist.GetActionModiMentis();
-            
+
             Console.WriteLine($"NarrativeController: Total {outcomesWithMetadata.Count} outcomes ({outcomesWithMetadata.Count(o => o.IsCircuitous)} circuitous), {actionModiMentis.Count} action modiMentis");
-            
-            // Get the outcome that owns this keyword for context
-            var keywordSourceOutcome = _currentNode.GetOutcomeOwningKeyword(keyword);
-            string? keywordSourceOutcomeName = keywordSourceOutcome?.DisplayName;
-            
+
+            // Use LinkedOutcome display name for context if available, otherwise keyword-based lookup
+            var keywordSourceOutcomeName = sourceObservationBlock?.LinkedOutcome?.DisplayName
+                ?? _currentNode.GetOutcomeOwningKeyword(keyword)?.DisplayName;
+
             // Call ThinkingExecutor to generate reasoning + actions
             var response = await _thinkingExecutor.GenerateThinkingAsync(
                 thinkingModusMentis,
@@ -293,7 +296,7 @@ public class NarrativeController
                 actionModiMentis,
                 _protagonist,
                 CancellationToken.None);
-            
+
             if (response == null || response.Actions.Count == 0)
             {
                 // Display error - no fallback as per user request
@@ -654,51 +657,43 @@ public class NarrativeController
     /// Execute focus observation phase: generate a detailed observation for a specific outcome (async).
     /// Triggered by right-clicking a keyword and selecting an observation modusMentis.
     /// </summary>
-    private async Task ExecuteFocusObservationAsync(ModusMentis observationModusMentis, string keyword)
+    private async Task ExecuteFocusObservationAsync(ModusMentis observationModusMentis, ConcreteOutcome focusOutcome)
     {
         try
         {
-            Console.WriteLine($"NarrativeController: Executing focus observation with {observationModusMentis.DisplayName} on keyword '{keyword}'");
-            
-            // Generate focus observation
-            var block = await _observationController.GenerateFocusObservationAsync(
-                keyword,
+            Console.WriteLine($"NarrativeController: Executing focus observation with {observationModusMentis.DisplayName} on outcome '{focusOutcome.DisplayName}'");
+
+            var blocks = await _observationController.GenerateFocusObservationAsync(
+                focusOutcome,
                 observationModusMentis,
                 _currentNode,
                 _protagonist
             );
-            
-            if (block != null)
+
+            foreach (var block in blocks)
             {
-                // Add to scroll buffer
                 _scrollBuffer.AddBlock(block);
                 _narrationState.AddBlock(block);
-                
-                // Auto-scroll to bottom to show new observation
-                _scrollBuffer.ScrollToBottom();
-                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-                
-                Console.WriteLine($"NarrativeController: Focus observation complete");
             }
-            else
-            {
-                Console.WriteLine("NarrativeController: Focus observation returned null");
-            }
-            
+
+            // Auto-scroll to bottom to show new observation
+            _scrollBuffer.ScrollToBottom();
+            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
             // Consume a thinking point (same pool as thinking)
             _narrationState.ThinkingAttemptsRemaining--;
-            
+
             // Update state
             _narrationState.IsLoadingFocusObservation = false;
             _narrationState.ErrorMessage = null;
-            
+
             Console.WriteLine($"NarrativeController: Focus observation phase complete ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)");
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Error during focus observation: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
-            
+
             _narrationState.IsLoadingFocusObservation = false;
             _narrationState.ErrorMessage = $"Focus observation failed: {ex.Message}";
         }
@@ -870,7 +865,8 @@ public class NarrativeController
                 if (_narrationState.HoveredKeyword != null)
                 {
                     string keyword = _narrationState.HoveredKeyword.Keyword;
-                    
+                    var sourceBlock = _narrationState.HoveredKeyword.SourceBlock;
+
                     // Check if we're selecting an observation modusMentis (right-click) or thinking modusMentis (left-click)
                     if (_narrationState.IsSelectingObservationModusMentis)
                     {
@@ -878,16 +874,27 @@ public class NarrativeController
                         _narrationState.IsLoadingFocusObservation = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
                         _narrationState.IsSelectingObservationModusMentis = false;
-                        
-                        // Fire-and-forget async task
-                        _ = ExecuteFocusObservationAsync(selectedModusMentis, keyword);
+
+                        // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
+                        ConcreteOutcome? focusOutcome = null;
+                        if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
+                            focusOutcome = fko;
+                        else if (sourceBlock?.IsCircuitousSentence == true && sourceBlock.FocusOriginNode != null)
+                            focusOutcome = sourceBlock.FocusOriginNode;
+                        else
+                            focusOutcome = sourceBlock?.LinkedOutcome ?? _currentNode.GetOutcomeOwningKeyword(keyword);
+
+                        if (focusOutcome != null)
+                            _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
+                        else
+                            Console.WriteLine($"NarrativeController: Cannot focus - no outcome found for keyword '{keyword}'");
                     }
                     else
                     {
                         // Thinking phase (left-click)
                         _narrationState.IsLoadingThinking = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-                        
+
                         // Fire-and-forget async task
                         _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
                     }
@@ -900,7 +907,7 @@ public class NarrativeController
             }
         }
     }
-    
+
     /// <summary>
     /// Handle mouse move event.
     /// </summary>
@@ -1104,7 +1111,8 @@ public class NarrativeController
                 if (_narrationState.HoveredKeyword != null)
                 {
                     string keyword = _narrationState.HoveredKeyword.Keyword;
-                    
+                    var sourceBlock = _narrationState.HoveredKeyword.SourceBlock;
+
                     // Check if we're selecting an observation modusMentis (right-click) or thinking modusMentis (left-click)
                     if (_narrationState.IsSelectingObservationModusMentis)
                     {
@@ -1112,16 +1120,27 @@ public class NarrativeController
                         _narrationState.IsLoadingFocusObservation = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
                         _narrationState.IsSelectingObservationModusMentis = false;
-                        
-                        // Fire-and-forget async task
-                        _ = ExecuteFocusObservationAsync(selectedModusMentis, keyword);
+
+                        // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
+                        ConcreteOutcome? focusOutcome = null;
+                        if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
+                            focusOutcome = fko;
+                        else if (sourceBlock?.IsCircuitousSentence == true && sourceBlock.FocusOriginNode != null)
+                            focusOutcome = sourceBlock.FocusOriginNode;
+                        else
+                            focusOutcome = sourceBlock?.LinkedOutcome ?? _currentNode.GetOutcomeOwningKeyword(keyword);
+
+                        if (focusOutcome != null)
+                            _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
+                        else
+                            Console.WriteLine($"NarrativeController: Cannot focus - no outcome found for keyword '{keyword}'");
                     }
                     else
                     {
                         // Thinking phase (left-click)
                         _narrationState.IsLoadingThinking = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-                        
+
                         // Fire-and-forget async task
                         _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
                     }

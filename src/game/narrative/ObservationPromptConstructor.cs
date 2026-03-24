@@ -12,9 +12,49 @@ namespace Cathedral.Game.Narrative;
 public class ObservationPromptConstructor
 {
     /// <summary>
-    /// Builds an observation request for the LLM.
-    /// Includes neutral description, available keywords grouped by outcome, and protagonist state.
+    /// Builds the prompt for the FIRST sentence in a per-sentence observation batch.
+    /// Provides the full scene context, persona reminder, and outcome keywords as hints.
     /// </summary>
+    public string BuildFirstSentencePrompt(
+        NarrationNode node,
+        int locationId,
+        ConcreteOutcome outcome,
+        string personaTone)
+    {
+        var locationDescription = node.GenerateNeutralDescription(locationId);
+        var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
+        
+        return $@"You are observing: {locationDescription}
+
+Write one sentence (20-120 characters) from the perspective of {personaTone}.
+Focus specifically on: {outcome.DisplayName}
+Include one of these keywords naturally: {string.Join(", ", outcomeKeywords)}
+
+Respond in JSON format:
+{{
+  ""narration_text"": ""your single observation sentence""
+}}";
+    }
+
+    /// <summary>
+    /// Builds a continuation prompt for subsequent sentences in the same observation batch.
+    /// The slot already holds the prior sentences as conversation context.
+    /// </summary>
+    public string BuildContinuationSentencePrompt(ConcreteOutcome outcome)
+    {
+        var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
+
+        return $@"Write the next sentence in this observation.
+Focus on: {outcome.DisplayName}
+Include one of these keywords naturally: {string.Join(", ", outcomeKeywords)}
+
+Respond in JSON format:
+{{
+  ""narration_text"": ""your single observation sentence""
+}}";
+    }
+
+
     public string BuildObservationPrompt(
         NarrationNode node,
         Protagonist protagonist,

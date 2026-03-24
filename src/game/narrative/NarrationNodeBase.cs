@@ -292,9 +292,61 @@ public abstract class NarrationNode : ConcreteOutcome
     {
         return TransitionDescription;
     }
-    
+
     /// <summary>
-    /// Gets representative keywords for overall observation.
+    /// Returns the direct circuitous outcomes reachable through this node.
+    /// Used for focus observations: each result is (outcome inside this node, this node as intermediate).
+    /// Includes items and child NarrationNodes of this node, excluding backwards references.
+    /// </summary>
+    public List<(ConcreteOutcome Outcome, NarrationNode Intermediate)> GetCircuitousOutcomes()
+    {
+        var results = new List<(ConcreteOutcome, NarrationNode)>();
+        var visitedNodeIds = new HashSet<string> { NodeId };
+
+        // Child NarrationNodes of this node
+        foreach (var outcome in PossibleOutcomes)
+        {
+            if (outcome is NarrationNode childNode && !visitedNodeIds.Contains(childNode.NodeId))
+            {
+                results.Add((childNode, this));
+            }
+        }
+
+        // Items defined on this node
+        foreach (var item in GetAvailableItems())
+        {
+            results.Add((item, this));
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Gets all concrete outcomes directly available at this node (child nodes + items + spawned NPCs).
+    /// Used for sampling which outcomes to generate observation sentences for.
+    /// </summary>
+    public List<ConcreteOutcome> GetAllDirectConcreteOutcomes()
+    {
+        var outcomes = new List<ConcreteOutcome>();
+
+        foreach (var outcome in PossibleOutcomes)
+        {
+            if (outcome is NarrationNode childNode && childNode.NodeKeywords.Count > 0)
+                outcomes.Add(childNode);
+            else if (outcome is ConcreteOutcome co && !(outcome is NarrationNode) && co.OutcomeKeywords.Count > 0)
+                outcomes.Add(co);
+        }
+
+        foreach (var item in GetAvailableItems())
+        {
+            if (item.OutcomeKeywords.Count > 0)
+                outcomes.Add(item);
+        }
+
+        return outcomes;
+    }
+
+
     /// If outcomes >= targetCount, samples one keyword from targetCount random outcomes.
     /// If outcomes < targetCount, samples multiple keywords per outcome to reach target.
     /// </summary>

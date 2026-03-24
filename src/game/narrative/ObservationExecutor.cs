@@ -216,9 +216,71 @@ public class ObservationExecutor
     {
         return await _slotManager.GetOrCreateSlotForModusMentisAsync(modusMentis);
     }
-    
 
-    
+    /// <summary>
+    /// Public accessor for slot acquisition — used by ObservationPhaseController
+    /// when it manages the slot lifecycle directly (reset + sentence loop).
+    /// </summary>
+    public Task<int> GetOrCreateSlotForModusMentisPublicAsync(ModusMentis modusMentis)
+        => GetOrCreateSlotForModusMentisAsync(modusMentis);
+
+    /// <summary>
+    /// Resets a modusMentis slot conversation history before starting a new observation batch.
+    /// Preserves the cached persona prompt (system prompt).
+    /// </summary>
+    public void ResetSlot(int slotId)
+    {
+        _llamaServer.ResetInstance(slotId);
+        Console.WriteLine($"ObservationExecutor: Reset slot {slotId} for new observation batch");
+    }
+
+    /// <summary>
+    /// Generates one observation sentence focused on a specific outcome.
+    /// Uses a first-sentence prompt with full context, or a continuation prompt if not the first.
+    /// Returns the raw narration text string.
+    /// </summary>
+    public async Task<string> GenerateSentenceAsync(
+        int slotId,
+        NarrationNode node,
+        int locationId,
+        ConcreteOutcome outcome,
+        bool isFirstSentence,
+        string personaTone,
+        CancellationToken ct = default)
+    {
+        var prompt = isFirstSentence
+            ? _promptConstructor.BuildFirstSentencePrompt(node, locationId, outcome, personaTone)
+            : _promptConstructor.BuildContinuationSentencePrompt(outcome);
+
+        var schema = LLMSchemaConfig.CreateObservationSchema();
+        var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
+
+        var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
+        var parsed = ParseObservationResponse(jsonResponse ?? "", new List<string>());
+        return parsed.NarrationText;
+    }
+
+    /// <summary>
+    /// Extracts the single best keyword from a sentence, given a list of candidate keywords.
+    /// Returns the first candidate keyword found in the sentence (earliest position).
+    /// Falls back to the longest word in the sentence if no candidate keyword is found.
+    /// </summary>
+    public string ExtractKeywordFromSentence(string sentence, List<string> outcomeKeywords)
+    {
+        if (outcomeKeywords.Count > 0)
+        {
+            var segments = new KeywordRenderer().ParseNarrationWithKeywords(sentence, outcomeKeywords);
+            var firstFound = segments.FirstOrDefault(s => s.IsKeyword);
+            if (firstFound != null && !string.IsNullOrEmpty(firstFound.KeywordValue))
+                return firstFound.KeywordValue;
+        }
+
+        // Fallback: longest word in sentence
+        var words = sentence.Split(new[] { ' ', ',', '.', '!', '?', ';', ':', '"', '\'' }, StringSplitOptions.RemoveEmptyEntries);
+        return words.OrderByDescending(w => w.Length).FirstOrDefault() ?? sentence;
+    }
+
+
     private ObservationResponse ParseObservationResponse(string jsonResponse, List<string> availableKeywords)
     {
         try
