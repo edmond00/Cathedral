@@ -261,9 +261,7 @@ public class NarrationScrollBuffer
                 ));
             }
 
-            // Wrap and add narration content
-            var wrappedLines = WrapText(block.Text, _maxWidth);
-            
+            // Wrap and add narration content.
             // Determine line type based on block type
             LineType lineType = block.Type switch
             {
@@ -271,19 +269,49 @@ public class NarrationScrollBuffer
                 NarrationBlockType.Outcome => LineType.Outcome,
                 _ => LineType.Content
             };
-            
-            foreach (var line in wrappedLines)
+
+            // For observation blocks with per-sentence data, wrap each sentence separately
+            // so each wrapped line only carries the keyword assigned to that sentence —
+            // preventing cross-sentence keyword highlighting.
+            if (block.Sentences != null && block.Sentences.Count > 0)
             {
-                _renderedLines.Add(new RenderedLine(
-                    Text: line,
-                    Type: lineType,
-                    BlockType: block.Type,
-                    Keywords: block.Keywords, // Associate keywords with this line
-                    Actions: null,
-                    IsHistory: false,
-                    GlobalActionIndex: -1,
-                    SourceBlock: block
-                ));
+                foreach (var sentence in block.Sentences)
+                {
+                    var sentenceLines = WrapText(sentence.Text, _maxWidth);
+                    var singleKeyword = new List<string> { sentence.Keyword };
+
+                    foreach (var line in sentenceLines)
+                    {
+                        _renderedLines.Add(new RenderedLine(
+                            Text: line,
+                            Type: lineType,
+                            BlockType: block.Type,
+                            Keywords: singleKeyword,
+                            Actions: null,
+                            IsHistory: false,
+                            GlobalActionIndex: -1,
+                            SourceBlock: block
+                        ));
+                    }
+                }
+            }
+            else
+            {
+                var wrappedLines = WrapText(block.Text, _maxWidth);
+
+                foreach (var line in wrappedLines)
+                {
+                    _renderedLines.Add(new RenderedLine(
+                        Text: line,
+                        Type: lineType,
+                        BlockType: block.Type,
+                        Keywords: block.Keywords, // Associate keywords with this line
+                        Actions: null,
+                        IsHistory: false,
+                        GlobalActionIndex: -1,
+                        SourceBlock: block
+                    ));
+                }
             }
 
             // Add action lines if this is a Thinking block

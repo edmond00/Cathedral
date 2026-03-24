@@ -75,12 +75,14 @@ public static class LLMSchemaConfig
     /// <summary>
     /// Schema for a single action in the batched thinking pipeline.
     /// Used for each action call after the reasoning call.
+    /// The outcome is pre-sampled and hardcoded; the LLM only chooses the skill and writes the description.
+    /// Field order: outcome (hardcoded) → skill → action_description
     /// </summary>
-    public static CompositeField CreateSingleActionSchema(List<string> validActionModiMentis, List<string> validOutcomes)
+    public static CompositeField CreateSingleActionSchema(List<string> validSkills, string hardcodedOutcome)
     {
         return new CompositeField("Action",
-            new ChoiceField<string>("action_modusMentis", validActionModiMentis.ToArray()),
-            new ChoiceField<string>("outcome", validOutcomes.ToArray()),
+            new ChoiceField<string>("outcome", new[] { hardcodedOutcome }),
+            new ChoiceField<string>("skill", validSkills.ToArray()),
             new TemplateStringField("action_description",
                 Template: "try to <generated>",
                 MinGenLength: 10,

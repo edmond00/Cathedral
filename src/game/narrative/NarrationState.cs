@@ -111,6 +111,13 @@ public class NarrationState
 }
 
 /// <summary>
+/// A single observation sentence paired with its one assigned keyword.
+/// Stored on an observation NarrationBlock so the scroll buffer can assign each keyword
+/// only to the wrapped lines of its own sentence, preventing cross-sentence highlighting.
+/// </summary>
+public record NarrationSentence(string Text, string Keyword);
+
+/// <summary>
 /// Represents a single block of narration text in the UI.
 /// Can be observation, thinking (CoT), action result, or outcome.
 /// Inherits from ModusMentisChainElement to participate in modusMentis chain calculations.
@@ -122,6 +129,13 @@ public class NarrationBlock : ModusMentisChainElement
     public string Text { get; init; } = "";                    // The narration text
     public List<string>? Keywords { get; init; }               // Highlighted keywords (if observation, max 1 per sentence)
     public List<ParsedNarrativeAction>? Actions { get; init; } // Clickable actions (if thinking)
+
+    /// <summary>
+    /// Per-sentence breakdown for observation blocks. When set, each sentence's keyword is
+    /// highlighted only within that sentence's wrapped lines — not across the whole block text.
+    /// Parallel to <see cref="Keywords"/>: Sentences[i].Keyword == Keywords[i].
+    /// </summary>
+    public List<NarrationSentence>? Sentences { get; init; } = null;
     
     /// <summary>
     /// For observation blocks, indicates if this is an overall or focus observation.
@@ -175,7 +189,8 @@ public class NarrationBlock : ModusMentisChainElement
         ConcreteOutcome? LinkedOutcome = null,
         bool IsCircuitousSentence = false,
         NarrationNode? FocusOriginNode = null,
-        Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap = null)
+        Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap = null,
+        List<NarrationSentence>? Sentences = null)
     {
         this.Type = Type;
         this.ModusMentis = ModusMentis;
@@ -188,6 +203,7 @@ public class NarrationBlock : ModusMentisChainElement
         this.IsCircuitousSentence = IsCircuitousSentence;
         this.FocusOriginNode = FocusOriginNode;
         this.KeywordOutcomeMap = KeywordOutcomeMap;
+        this.Sentences = Sentences;
     }
 }
 

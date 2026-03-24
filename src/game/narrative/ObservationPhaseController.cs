@@ -68,6 +68,7 @@ public class ObservationPhaseController
         var sentenceParts = new List<string>();
         var allKeywords = new List<string>();
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var sentences = new List<NarrationSentence>();
         int locationId = protagonist.CurrentLocationId;
 
         for (int i = 0; i < sampledOutcomes.Count; i++)
@@ -86,6 +87,7 @@ public class ObservationPhaseController
                 sentenceParts.Add(sentence);
                 allKeywords.Add(keyword);
                 keywordOutcomeMap.TryAdd(keyword, outcome);
+                sentences.Add(new NarrationSentence(sentence, keyword));
             }
             catch (Exception ex)
             {
@@ -106,7 +108,8 @@ public class ObservationPhaseController
             Keywords: allKeywords,
             Actions: null,
             SourceObservationType: ObservationType.Overall,
-            KeywordOutcomeMap: keywordOutcomeMap
+            KeywordOutcomeMap: keywordOutcomeMap,
+            Sentences: sentences
         );
 
         Console.WriteLine($"ObservationPhaseController: Overall observation complete ({sentenceParts.Count} sentences, {allKeywords.Count} keywords)");
@@ -159,6 +162,7 @@ public class ObservationPhaseController
         var sentenceParts = new List<string>();
         var allKeywords = new List<string>();
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var sentences = new List<NarrationSentence>();
         int locationId = protagonist.CurrentLocationId;
 
         for (int i = 0; i < orderedOutcomes.Count; i++)
@@ -178,6 +182,7 @@ public class ObservationPhaseController
                 allKeywords.Add(keyword);
                 // For circuitous sentences, map keyword → the circuitous origin (re-focus goes there)
                 keywordOutcomeMap.TryAdd(keyword, isCircuitous && circuitousOrigin != null ? circuitousOrigin : outcome);
+                sentences.Add(new NarrationSentence(sentence, keyword));
             }
             catch (Exception ex)
             {
@@ -198,7 +203,8 @@ public class ObservationPhaseController
             Keywords: allKeywords,
             Actions: null,
             SourceObservationType: ObservationType.Focus,
-            KeywordOutcomeMap: keywordOutcomeMap
+            KeywordOutcomeMap: keywordOutcomeMap,
+            Sentences: sentences
         );
 
         Console.WriteLine($"ObservationPhaseController: Focus observation complete ({sentenceParts.Count} sentences, {allKeywords.Count} keywords)");

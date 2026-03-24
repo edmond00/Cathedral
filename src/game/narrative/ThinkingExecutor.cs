@@ -61,16 +61,20 @@ public class ThinkingExecutor
         Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
-        var outcomeStrings = outcomesWithMetadata.Select(o => o.Outcome.ToNaturalLanguageString()).ToList();
         var modusMentisIds = actionModiMentis.Select(s => s.ModusMentisId).ToList();
 
         // Get or create slot, then reset history so this thinking batch starts clean
         int slot = await GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
         _llmManager.ResetInstance(slot);
 
+        // Sample K outcomes before reasoning so the LLM can consider skill-outcome pairing
+        int totalActions = Math.Min(_random.Next(2, 4), outcomesWithMetadata.Count);
+        totalActions = Math.Max(totalActions, 2); // at least 2
+        var sampledOutcomes = SampleOutcomes(outcomesWithMetadata, totalActions);
+
         // ── Call 1: Reasoning ──────────────────────────────────────────────────────
         string reasoningPrompt = _promptConstructor.BuildReasoningPrompt(
-            keyword, keywordSourceOutcome, node, outcomesWithMetadata,
+            keyword, keywordSourceOutcome, node, sampledOutcomes,
             actionModiMentis, protagonist, thinkingModusMentis);
 
         string reasoningGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateReasoningSchema());
@@ -85,18 +89,20 @@ public class ThinkingExecutor
         string reasoningText = ParseReasoningResponse(reasoningJson);
         Console.WriteLine($"ThinkingExecutor: Reasoning complete ({reasoningText.Length} chars)");
 
-        // ── Calls 2..N: Actions ────────────────────────────────────────────────────
-        int totalActions = Math.Min(_random.Next(2, 4), outcomesWithMetadata.Count);
-        totalActions = Math.Max(totalActions, 2); // at least 2
-
-        string actionGbnf = JsonConstraintGenerator.GenerateGBNF(
-            LLMSchemaConfig.CreateSingleActionSchema(modusMentisIds, outcomeStrings));
-
+        // ── Calls 2..N: Actions (one per sampled outcome, outcome hardcoded in GBNF) ──────────────
         var actions = new List<ParsedNarrativeAction>();
 
         for (int i = 1; i <= totalActions; i++)
         {
-            string actionPrompt = _promptConstructor.BuildSingleActionPrompt(i, totalActions, thinkingModusMentis);
+            var hardcodedOutcome = sampledOutcomes[i - 1];
+            string hardcodedOutcomeStr = hardcodedOutcome.Outcome.ToNaturalLanguageString();
+
+            string actionGbnf = JsonConstraintGenerator.GenerateGBNF(
+                LLMSchemaConfig.CreateSingleActionSchema(modusMentisIds, hardcodedOutcomeStr));
+
+            string actionPrompt = _promptConstructor.BuildSingleActionPrompt(
+                i, totalActions, thinkingModusMentis, hardcodedOutcomeStr);
+
             string? actionJson = await RequestFromLLMAsync(slot, actionPrompt, actionGbnf, 200, cancellationToken);
 
             if (string.IsNullOrWhiteSpace(actionJson))
@@ -105,7 +111,7 @@ public class ThinkingExecutor
                 continue;
             }
 
-            var action = ParseSingleActionResponse(actionJson, outcomesWithMetadata, actionModiMentis, thinkingModusMentis, keyword);
+            var action = ParseSingleActionResponse(actionJson, hardcodedOutcome, actionModiMentis, thinkingModusMentis, keyword);
             if (action != null)
             {
                 actions.Add(action);
@@ -255,11 +261,11 @@ public class ThinkingExecutor
 
     /// <summary>
     /// Parses a single-action call response into a <see cref="ParsedNarrativeAction"/>.
-    /// Returns null if the action cannot be matched to a known outcome.
+    /// The outcome is pre-assigned (hardcoded in the GBNF) — only the skill and description are parsed.
     /// </summary>
     private ParsedNarrativeAction? ParseSingleActionResponse(
         string json,
-        List<OutcomeWithMetadata> outcomesWithMetadata,
+        OutcomeWithMetadata hardcodedOutcome,
         List<ModusMentis> actionModiMentis,
         ModusMentis thinkingModusMentis,
         string keyword)
@@ -269,36 +275,26 @@ public class ThinkingExecutor
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            string actionModusMentisId = root.GetProperty("action_modusMentis").GetString() ?? "";
-            string outcomeStr = root.GetProperty("outcome").GetString() ?? "";
+            string skillId = root.GetProperty("skill").GetString() ?? "";
             string actionDesc = root.GetProperty("action_description").GetString() ?? "";
-
-            var outcomeWithMeta = outcomesWithMetadata.FirstOrDefault(o =>
-                o.Outcome.ToNaturalLanguageString().Equals(outcomeStr, StringComparison.OrdinalIgnoreCase));
-
-            if (outcomeWithMeta == null)
-            {
-                Console.WriteLine($"ThinkingExecutor: Could not match outcome '{outcomeStr}'");
-                return null;
-            }
 
             string displayText = actionDesc.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
                 ? actionDesc.Substring(7)
                 : actionDesc;
 
-            var resolvedModusMentis = actionModiMentis.FirstOrDefault(s => s.ModusMentisId == actionModusMentisId);
+            var resolvedModusMentis = actionModiMentis.FirstOrDefault(s => s.ModusMentisId == skillId);
 
             return new ParsedNarrativeAction
             {
-                ActionModusMentisId = actionModusMentisId,
+                ActionModusMentisId = skillId,
                 ActionModusMentis = resolvedModusMentis,
-                PreselectedOutcome = outcomeWithMeta.Outcome,
+                PreselectedOutcome = hardcodedOutcome.Outcome,
                 ActionText = actionDesc,
                 DisplayText = displayText,
                 ThinkingModusMentis = thinkingModusMentis,
                 Keyword = keyword,
-                IsCircuitous = outcomeWithMeta.IsCircuitous,
-                IntermediateNode = outcomeWithMeta.IntermediateNode
+                IsCircuitous = hardcodedOutcome.IsCircuitous,
+                IntermediateNode = hardcodedOutcome.IntermediateNode
             };
         }
         catch (JsonException ex)
@@ -306,6 +302,15 @@ public class ThinkingExecutor
             Console.Error.WriteLine($"ThinkingExecutor: Failed to parse single action JSON: {ex.Message}");
             return null;
         }
+    }
+
+    /// <summary>
+    /// Randomly samples <paramref name="k"/> outcomes from the pool (without replacement).
+    /// Used to pre-assign outcomes to each action before the reasoning call.
+    /// </summary>
+    private List<OutcomeWithMetadata> SampleOutcomes(List<OutcomeWithMetadata> outcomes, int k)
+    {
+        return outcomes.OrderBy(_ => _random.Next()).Take(k).ToList();
     }
 
     /// <summary>

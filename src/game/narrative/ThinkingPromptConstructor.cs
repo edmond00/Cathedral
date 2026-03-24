@@ -154,7 +154,7 @@ Output fields:
 Current situation:
 {node.GenerateNeutralDescription(protagonist.CurrentLocationId)}
 
-ModiMentis you can apply:
+Skills you can apply:
 {string.Join("\n", actionModiMentis.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
 
 {outcomesSection.ToString().TrimEnd()}
@@ -163,6 +163,7 @@ ModiMentis you can apply:
 
 Express your internal thoughts about this element — why it catches your interest,
 what connections you see, how it relates to your capabilities.
+For each possible outcome, consider which skill would be most effective to achieve it.
 Speak as {thinkingModusMentis.PersonaTone}.
 
 Output field:
@@ -173,20 +174,22 @@ Output field:
     /// <summary>
     /// Builds a single-action prompt for the batched thinking pipeline.
     /// Called once per action after the reasoning call; the slot keeps prior context as CoT.
+    /// The outcome is pre-assigned — the LLM must choose the appropriate skill and write the description.
     /// </summary>
     public string BuildSingleActionPrompt(
         int actionIndex,
         int totalActions,
-        ModusMentis thinkingModusMentis)
+        ModusMentis thinkingModusMentis,
+        string hardcodedOutcome)
     {
         return $@"As {thinkingModusMentis.PersonaTone}, propose action {actionIndex} of {totalActions}.
 
-Choose a modusMentis, select an outcome from the list above, and describe what you will try to do.
-Do not repeat an outcome already proposed.
+Your outcome is fixed: ""{hardcodedOutcome}"".
+Choose the skill best suited to achieve this outcome, then describe what you will try to do.
 
 Output fields:
-- action_modusMentis
-- outcome
+- outcome (must be ""{hardcodedOutcome}"")
+- skill
 - action_description (must start with ""try to "")
 ";
     }
