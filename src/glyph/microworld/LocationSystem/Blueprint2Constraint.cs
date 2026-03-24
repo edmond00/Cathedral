@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.LLM.JsonConstraints;
@@ -13,19 +13,19 @@ public static class Blueprint2Constraint
 {
     /// <summary>
     /// Generates JSON field constraints for LLM action generation based on current game state
-    /// Each action gets a pre-determined success consequence and 5 skill candidates to choose from
+    /// Each action gets a pre-determined success consequence and 5 modusMentis candidates to choose from
     /// </summary>
     /// <param name="blueprint">The location blueprint defining structure and rules</param>
     /// <param name="currentSublocation">Player's current sublocation ID</param>
     /// <param name="currentStates">Current active states mapped by category ID</param>
-    /// <param name="skillCandidates">Array of 5-skill arrays, one set of candidates per action</param>
+    /// <param name="modusMentisCandidates">Array of 5-modusMentis arrays, one set of candidates per action</param>
     /// <param name="numberOfActions">Number of action choices to generate (default: 7)</param>
     /// <returns>Array field defining valid action choices structure</returns>
     public static JsonField GenerateActionConstraints(
         LocationBlueprint blueprint,
         string currentSublocation,
         Dictionary<string, string> currentStates,
-        string[][] skillCandidates,
+        string[][] modusMentisCandidates,
         int numberOfActions = 7)
     {
         if (blueprint == null)
@@ -34,12 +34,12 @@ public static class Blueprint2Constraint
             throw new ArgumentException("Current sublocation cannot be null or empty", nameof(currentSublocation));
         if (currentStates == null)
             throw new ArgumentNullException(nameof(currentStates));
-        if (skillCandidates == null || skillCandidates.Length == 0)
-            throw new ArgumentException("Skill candidates array cannot be null or empty", nameof(skillCandidates));
-        if (skillCandidates.Length != numberOfActions)
-            throw new ArgumentException($"Skill candidates array must have exactly {numberOfActions} elements", nameof(skillCandidates));
-        if (skillCandidates.Any(sc => sc == null || sc.Length != 5))
-            throw new ArgumentException("Each skill candidate set must contain exactly 5 skills", nameof(skillCandidates));
+        if (modusMentisCandidates == null || modusMentisCandidates.Length == 0)
+            throw new ArgumentException("ModusMentis candidates array cannot be null or empty", nameof(modusMentisCandidates));
+        if (modusMentisCandidates.Length != numberOfActions)
+            throw new ArgumentException($"ModusMentis candidates array must have exactly {numberOfActions} elements", nameof(modusMentisCandidates));
+        if (modusMentisCandidates.Any(sc => sc == null || sc.Length != 5))
+            throw new ArgumentException("Each modusMentis candidate set must contain exactly 5 modiMentis", nameof(modusMentisCandidates));
         if (!blueprint.Sublocations.ContainsKey(currentSublocation))
             throw new ArgumentException($"Sublocation '{currentSublocation}' not found in blueprint", nameof(currentSublocation));
         if (numberOfActions < 1 || numberOfActions > 20)
@@ -58,8 +58,8 @@ public static class Blueprint2Constraint
             var consequenceIndex = rng.Next(allSuccessConsequences.Count);
             var consequenceLabel = allSuccessConsequences[consequenceIndex];
             
-            // Format skill candidates as a readable string for hints
-            string skillCandidatesStr = string.Join(", ", skillCandidates[i]);
+            // Format modusMentis candidates as a readable string for hints
+            string modusMentisCandidatesStr = string.Join(", ", modusMentisCandidates[i]);
             
             actionFields[i] = new CompositeField($"action_{i + 1}",
                 // 1. Success consequence (constant string, not chosen by LLM)
@@ -69,20 +69,20 @@ public static class Blueprint2Constraint
                     RuleName = $"success_consequence_{i + 1}" // Unique GBNF rule per action
                 },
                 
-                // 2. Related skill (LLM chooses from candidates)
-                // CRITICAL: Keep JSON field name as "related_skill" but use unique GBNF rule name
-                new ChoiceField<string>("related_skill", skillCandidates[i], "choose the most appropriate skill that could achieve this consequence") 
+                // 2. Related modusMentis (LLM chooses from candidates)
+                // CRITICAL: Keep JSON field name as "related_modusMentis" but use unique GBNF rule name
+                new ChoiceField<string>("related_modusMentis", modusMentisCandidates[i], "choose the most appropriate modusMentis that could achieve this consequence") 
                 { 
-                    RuleName = $"related_skill_{i + 1}" // Unique GBNF rule per action
+                    RuleName = $"related_modusMentis_{i + 1}" // Unique GBNF rule per action
                 },
                 
-                // 3. Action text (LLM generates based on consequence and skill)
+                // 3. Action text (LLM generates based on consequence and modusMentis)
                 new TemplateStringField("action_text", "try to <generated>", 5, 100, 
-                    "Generate a concrete action (6-12 words) using the chosen skill that could lead to the consequence. Must be possible in the current location. Write in 2nd person.")
+                    "Generate a concrete action (6-12 words) using the chosen modusMentis that could lead to the consequence. Must be possible in the current location. Write in 2nd person.")
             );
         }
 
-        // Use TupleField to create a fixed-length array where each position has a specific skill
+        // Use TupleField to create a fixed-length array where each position has a specific modusMentis
         return new CompositeField("ActionChoices",
             new TupleField("actions", actionFields)
         );
@@ -555,9 +555,9 @@ public static class Blueprint2Constraint
     }
 
     /// <summary>
-    /// Returns available skills for action constraints as array
+    /// Returns available modiMentis for action constraints as array
     /// </summary>
-    public static string[] GetAvailableSkills()
+    public static string[] GetAvailableModiMentis()
     {
         return new[]
         {
@@ -575,11 +575,11 @@ public static class Blueprint2Constraint
     }
 
     /// <summary>
-    /// Returns available skills for action constraints as list (for easier manipulation)
+    /// Returns available modiMentis for action constraints as list (for easier manipulation)
     /// </summary>
-    public static List<string> GetAvailableSkillsList()
+    public static List<string> GetAvailableModiMentisList()
     {
-        return new List<string>(GetAvailableSkills());
+        return new List<string>(GetAvailableModiMentis());
     }
 }
 

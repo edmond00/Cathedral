@@ -1,0 +1,29 @@
+using System;
+using System.Collections.Generic;
+using Cathedral.Game.Narrative.Nodes.Mountain;
+
+namespace Cathedral.Game.Narrative.Nodes.Peak;
+
+public class HardSnowSlopeUpperNode : PyramidalFeatureNode
+{
+    public override int MinAltitude => 2;
+    public override int MaxAltitude => 6;
+    public override bool IsBottomNode => false;
+    public override Type PairedNodeType => typeof(HardSnowSlopeLowerNode);
+    
+    public override string NodeId => "hard_snow_slope_upper";
+    public override string ContextDescription => "standing on the upper hard snow slope";
+    public override string TransitionDescription => "climb to the upper hard snow slope";
+    public override bool IsEntryNode => false;
+    
+    public override List<string> NodeKeywords => new() { "snowfield", "upper", "hard", "packed", "white", "steep", "frozen", "exposed", "wind-hardened", "slope" };
+    
+    private static readonly string[] Moods = { "hard-packed", "gleaming", "steep", "wind-hardened" };
+    
+    public override string GenerateNeutralDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        return $"{Moods[rng.Next(Moods.Length)]} upper snowfield";
+    }
+    
+}

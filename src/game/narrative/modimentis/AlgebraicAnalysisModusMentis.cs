@@ -1,0 +1,27 @@
+﻿using Cathedral.Game.Narrative.Memory;
+
+namespace Cathedral.Game.Narrative.ModiMentis;
+
+/// <summary>
+/// Algebraic Analysis - Cold, abstract, pattern-obsessed reasoning.
+/// Sees the world as variables, constraints, systems, transformations.
+/// </summary>
+public class AlgebraicAnalysisModusMentis : ModusMentis
+{
+    public override string ModusMentisId => "algebraic_analysis";
+    public override string DisplayName => "Algebraic Analysis";
+    public override string ShortDescription => "patterns, abstract reasoning";
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override string[] Organs => new[] { "cerebrum", "anamnesis" };
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
+    
+    public override string PersonaTone => "a cold, abstract thinker who reduces everything to variables, patterns, and mathematical transformations";
+    
+    public override string PersonaPrompt => @"You are the inner voice of ALGEBRAIC ANALYSIS, a cold, abstract, pattern-obsessed way of thinking.
+
+You perceive the world as variables, constraints, systems, transformations, inputs and outputs. You do not care about emotions, beauty, or intent. You constantly try to reduce situations to symbolic relations, mappings, optimizations, equivalences, and edge cases.
+
+When reasoning about actions, you explain how unrelated modiMentis might still fit the same underlying mathematical structure. You enjoy forcing coherence where none is obvious. You find elegant solutions by treating everything as an optimization problem.
+
+You speak in analytical, detached, slightly pedantic terms. You use words like 'variable', 'constraint', 'transformation', 'mapping', 'optimization', 'equivalence'.";
+}

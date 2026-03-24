@@ -64,6 +64,7 @@ namespace Cathedral.Glyph.Microworld
             ["village"] = new LocationType("village", '⑆', new Vector3(150, 100, 100), 1.3f, new HashSet<string> { "plain" }),
             ["observatory"] = new LocationType("observatory", '⍡', new Vector3(150, 100, 100), 1.3f, new HashSet<string> { "mountain", "coast" }),
             ["stable"] = new LocationType("stable", '⑈', new Vector3(150, 100, 100), 1.3f, new HashSet<string> { "plain", "field" }),
+            // ["stable"] = new LocationType("stable", '♞', new Vector3(150, 100, 100), 1.3f, new HashSet<string> { "plain", "field" }),
             ["farm"] = new LocationType("farm", '⑇', new Vector3(150, 100, 100), 1.3f, new HashSet<string> { "field" }),
             ["grove"] = new LocationType("grove", '♣', new Vector3(0, 85, 0), 1.3f, new HashSet<string> { "forest" }),
             ["amphitheater"] = new LocationType("amphitheater", '♫', new Vector3(220, 120, 80), 1.3f, new HashSet<string> { "city" }),

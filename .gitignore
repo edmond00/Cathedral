@@ -424,6 +424,9 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # Custom additions for this project
+# Do not ignore Debug/ folders inside src/ (e.g. Nodes/Debug/)
+!src/**/[Dd]ebug/
+
 # AI Models (keeping models directory but ignoring large model files)
 models/*.gguf
 models/*.bin

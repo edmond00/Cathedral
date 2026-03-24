@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 
 namespace Cathedral.Game;
 
 /// <summary>
 /// Contains information about a player action choice.
-/// Holds both the action text and metadata like related skill.
+/// Holds both the action text and metadata like related modusMentis.
 /// </summary>
 public class ActionInfo
 {
@@ -14,9 +14,9 @@ public class ActionInfo
     public string ActionText { get; set; } = "";
     
     /// <summary>
-    /// The skill associated with this action (e.g., "stealth", "strength", "intelligence")
+    /// The modusMentis associated with this action (e.g., "stealth", "strength", "intelligence")
     /// </summary>
-    public string RelatedSkill { get; set; } = "";
+    public string RelatedModusMentis { get; set; } = "";
     
     /// <summary>
     /// Gets the display text for the action, with "try to " prefix removed if present
@@ -35,24 +35,24 @@ public class ActionInfo
     }
     
     /// <summary>
-    /// Gets the formatted display text with skill prefix
+    /// Gets the formatted display text with modusMentis prefix
     /// Example: "[stealth] infiltrate the castle at night"
     /// </summary>
     public string GetFormattedDisplayText()
     {
         string displayText = GetDisplayText();
         
-        if (!string.IsNullOrEmpty(RelatedSkill))
+        if (!string.IsNullOrEmpty(RelatedModusMentis))
         {
-            return $"[{RelatedSkill}] {displayText}";
+            return $"[{RelatedModusMentis}] {displayText}";
         }
         
         return displayText;
     }
     
-    public ActionInfo(string actionText, string relatedSkill = "")
+    public ActionInfo(string actionText, string relatedModusMentis = "")
     {
         ActionText = actionText;
-        RelatedSkill = relatedSkill;
+        RelatedModusMentis = relatedModusMentis;
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -139,6 +139,7 @@ public static class LocationTravelModeLauncher
                     {
                         try
                         {
+                            // Initialize (Mode 6 doesn't create Director/Narrator slots)
                             await llmExecutor.InitializeAsync();
                             gameController.SetLLMActionExecutor(llmExecutor);
                             Console.WriteLine("✓ LLM action executor ready");
@@ -169,6 +170,7 @@ public static class LocationTravelModeLauncher
                         {
                             var simpleExecutor = new SimpleActionExecutor();
                             var executor = new LLMActionExecutor(llamaServer, simpleExecutor);
+                            // Initialize (Mode 6 doesn't create Director/Narrator slots)
                             await executor.InitializeAsync();
                             gameController.SetLLMActionExecutor(executor);
                             Console.WriteLine("✓ LLM action executor ready (delayed initialization)");
@@ -187,12 +189,6 @@ public static class LocationTravelModeLauncher
                 Console.WriteLine($"\n*** GAME MODE CHANGED: {oldMode} → {newMode} ***\n");
             };
             
-            gameController.LocationEntered += (locationState) =>
-            {
-                Console.WriteLine($"\n*** ENTERED LOCATION: {locationState} ***");
-                Console.WriteLine("Press ESC to leave location and return to world view\n");
-            };
-            
             gameController.LocationExited += (locationState) =>
             {
                 Console.WriteLine($"\n*** EXITED LOCATION: {locationState} ***");
@@ -202,7 +198,7 @@ public static class LocationTravelModeLauncher
             gameController.TravelStarted += () =>
             {
                 Console.WriteLine("\n*** TRAVEL STARTED ***");
-                Console.WriteLine("Avatar is moving to destination...\n");
+                Console.WriteLine("Protagonist is moving to destination...\n");
             };
             
             gameController.TravelCompleted += () =>
@@ -211,11 +207,11 @@ public static class LocationTravelModeLauncher
             };
             
             // Wire up arrival notification from microworld interface
-            microworldInterface.AvatarArrivedAtLocation += (arrivalInfo) =>
+            microworldInterface.ProtagonistArrivedAtLocation += (arrivalInfo) =>
             {
-                Console.WriteLine($"MicroworldInterface: Avatar arrived at vertex {arrivalInfo.VertexIndex}, location: {arrivalInfo.Location?.Name ?? "none"}");
+                Console.WriteLine($"MicroworldInterface: Protagonist arrived at vertex {arrivalInfo.VertexIndex}, location: {arrivalInfo.Location?.Name ?? "none"}");
                 Console.WriteLine($"  Biome: {arrivalInfo.Biome.Name}, Neighbors: {arrivalInfo.NeighboringVertices.Count}");
-                gameController?.OnAvatarArrived(arrivalInfo.VertexIndex);
+                gameController?.OnProtagonistArrived(arrivalInfo.VertexIndex);
             };
             
             // Wire up update loop for loading animations
@@ -224,10 +220,16 @@ public static class LocationTravelModeLauncher
                 gameController?.Update();
             };
             
+            // Wire up mouse wheel for scrolling
+            core.MouseWheelScrolled += (delta) =>
+            {
+                gameController?.OnMouseWheel(delta);
+            };
+            
             Console.WriteLine("\n=== Location Travel Mode Ready ===");
             Console.WriteLine("Controls:");
             Console.WriteLine("  - Click on locations to travel");
-            Console.WriteLine("  - Click on avatar to interact with current location");
+            Console.WriteLine("  - Click on protagonist to interact with current location");
             Console.WriteLine("  - ESC to leave location interaction");
             Console.WriteLine("  - Arrow keys to rotate camera");
             Console.WriteLine("  - W/S to zoom in/out");
@@ -238,15 +240,66 @@ public static class LocationTravelModeLauncher
             Console.WriteLine(gameController.GetDebugInfo());
         };
         
-        // Handle ESC key to exit location
+        // Handle ESC key for menu and location exit
         core.KeyDown += (args) =>
         {
             if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Escape)
             {
-                if (gameController?.CurrentMode == GameMode.LocationInteraction)
+                if (gameController?.CurrentMode == GameMode.Fighting)
                 {
-                    Console.WriteLine("ESC pressed - exiting location");
+                    // ESC during fight: pass to fight adapter (cancels skill mode or does nothing)
+                    if (gameController is LocationTravelGameController ltgc)
+                    {
+                        ltgc.OnKeyDown(args.Key);
+                    }
+                }
+                else if (gameController?.CurrentMode == GameMode.Dialogue)
+                {
+                    // ESC during dialogue: request exit
+                    if (gameController is LocationTravelGameController ltgc)
+                    {
+                        ltgc.OnKeyDown(args.Key);
+                    }
+                }
+                else if (gameController?.CurrentMode == GameMode.MainMenu)
+                {
+                    // ESC in main menu: return to world if game has started, otherwise do nothing
+                    if (gameController is LocationTravelGameController ltgc && ltgc.HasGameStarted)
+                    {
+                        Console.WriteLine("ESC pressed - closing main menu");
+                        gameController.SetMode(GameMode.WorldView);
+                    }
+                }
+                else if (gameController?.CurrentMode == GameMode.ProtagonistManagement)
+                {
+                    // ESC in management menu: return to main menu
+                    Console.WriteLine("ESC pressed - closing management menu");
+                    gameController.SetMode(GameMode.MainMenu);
+                }
+                else if (gameController?.CurrentMode == GameMode.LocationInteraction)
+                {
+                    // Check if in Phase 6 mode with popup open
+                    if (gameController is LocationTravelGameController ltgc)
+                    {
+                        // First try to close popup
+                        if (ltgc.CloseNarrativePopup())
+                        {
+                            Console.WriteLine("ESC pressed - closed thinking modusMentis popup");
+                            return; // Don't exit location, just close popup
+                        }
+                        
+                        // No popup open, exit Phase 6 mode
+                        Console.WriteLine("ESC pressed - exiting location");
+                        ltgc.ExitNarrativeMode();
+                    }
+                    
                     gameController.EndLocationInteraction();
+                }
+                else if (gameController?.CurrentMode == GameMode.WorldView)
+                {
+                    // ESC in world view: open main menu
+                    Console.WriteLine("ESC pressed - opening main menu");
+                    gameController.SetMode(GameMode.MainMenu);
                 }
             }
             else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.D)
@@ -257,13 +310,37 @@ public static class LocationTravelModeLauncher
                     Console.WriteLine("\n" + gameController.GetDebugInfo());
                 }
             }
+            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.G)
+            {
+                // Dump narration graph structure (only works in narrative mode)
+                if (gameController?.CurrentMode == GameMode.LocationInteraction)
+                {
+                    if (gameController is LocationTravelGameController ltgc)
+                    {
+                        ltgc.PrintNarrativeGraph();
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("G key: Graph visualization only available in narrative mode (enter a location first)");
+                }
+            }
+            else
+            {
+                // Forward other keys to fight/dialogue modes
+                if (gameController is LocationTravelGameController ltgc2 &&
+                    (ltgc2.CurrentMode == GameMode.Fighting || ltgc2.CurrentMode == GameMode.Dialogue))
+                {
+                    ltgc2.OnKeyDown(args.Key);
+                }
+            }
         };
 
         core.Run();
         
         // Cleanup
         Console.WriteLine("Shutting down...");
-        llmExecutor?.Dispose(); // Log LLM statistics
+        // llmExecutor no longer needs Dispose() - simplified to just provide LlamaServerManager access
         gameController?.Dispose();
         llamaServer?.Dispose();
         Console.WriteLine("Cleanup complete");

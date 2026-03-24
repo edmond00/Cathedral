@@ -69,6 +69,7 @@ public class LlamaInstance
     public DateTime CreatedAt { get; }
     public DateTime LastUsed { get; internal set; }
     public int MaxContextTokens { get; set; } = 4096; // Default context size
+    public int RequestCount { get; internal set; } = 0; // Tracks number of requests made
     
     internal CancellationTokenSource? CurrentRequestCancellation { get; set; }
     

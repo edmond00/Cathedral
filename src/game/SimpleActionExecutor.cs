@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Cathedral.Glyph.Microworld.LocationSystem;
 
@@ -244,7 +244,7 @@ public class SimpleActionExecutor
             "You feel more confident as you continue.",
             "Your experience in this place grows.",
             "You're learning to navigate these challenges.",
-            "Your skills are being put to good use.",
+            "Your modiMentis are being put to good use.",
             "Progress feels tangible as you advance."
         };
         parts.Add(encouragements[_random.Next(encouragements.Length)]);

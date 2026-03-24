@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Cathedral.Game;
 
@@ -9,7 +9,7 @@ namespace Cathedral.Game;
 public class ParsedAction
 {
     public string ActionText { get; set; } = "";
-    public string Skill { get; set; } = "";
+    public string ModusMentis { get; set; } = "";
     public string Difficulty { get; set; } = "";
     public string Risk { get; set; } = "";
     

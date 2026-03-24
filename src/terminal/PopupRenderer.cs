@@ -41,14 +41,18 @@ namespace Cathedral.Terminal
         // Popup-specific parameters
         private Vector2 _mousePosition;
         private readonly int _cellPixelSize;
+        private readonly int _mainTerminalWidth;
+        private readonly int _mainTerminalHeight;
         private (int minX, int minY, int maxX, int maxY)? _visualBounds;
         private bool _disposed;
 
-        public PopupRenderer(TerminalView view, GlyphAtlas atlas, int cellPixelSize)
+        public PopupRenderer(TerminalView view, GlyphAtlas atlas, int cellPixelSize, int mainTerminalWidth, int mainTerminalHeight)
         {
             _view = view ?? throw new ArgumentNullException(nameof(view));
             _atlas = atlas ?? throw new ArgumentNullException(nameof(atlas));
             _cellPixelSize = cellPixelSize;
+            _mainTerminalWidth = mainTerminalWidth;
+            _mainTerminalHeight = mainTerminalHeight;
             
             _instances = new TerminalInstance[_view.Width * _view.Height];
             _instanceBufferDirty = true;
@@ -231,6 +235,10 @@ namespace Cathedral.Terminal
             int projLoc = GL.GetUniformLocation(_program, "uProjection");
             GL.UniformMatrix4(projLoc, false, ref projectionMatrix);
             
+            // Set darken factor (always 1.0 for popup - no darkening)
+            int darkenLoc = GL.GetUniformLocation(_program, "uDarkenFactor");
+            GL.Uniform1(darkenLoc, 1.0f);
+            
             // Bind atlas texture
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, _atlas.TextureId);
@@ -304,33 +312,54 @@ namespace Cathedral.Terminal
 
         private void CalculatePopupLayout(Vector2i windowSize, out Vector2 cellSize, out Vector2 topLeft)
         {
-            // Fixed cell size based on _cellPixelSize parameter
-            cellSize = new Vector2(_cellPixelSize, _cellPixelSize);
+            // Calculate cell size dynamically based on window size to match main terminal
+            // This ensures popup scales correctly when window is resized
+            // Use actual main terminal dimensions from config (passed in constructor)
+            float mainTerminalAspect = (float)_mainTerminalWidth / _mainTerminalHeight;
+            float windowAspect = (float)windowSize.X / windowSize.Y;
             
-            // Calculate popup dimensions
-            float popupWidth = _view.Width * cellSize.X;
-            float popupHeight = _view.Height * cellSize.Y;
+            Vector2 terminalSize;
+            if (windowAspect > mainTerminalAspect)
+            {
+                // Window is wider - fit to height
+                terminalSize = new Vector2(windowSize.Y * mainTerminalAspect, windowSize.Y);
+            }
+            else
+            {
+                // Window is taller - fit to width
+                terminalSize = new Vector2(windowSize.X, windowSize.X / mainTerminalAspect);
+            }
             
-            // Center the popup at mouse position (width/2, height/2) at mouse
-            float centerX = _mousePosition.X;
-            float centerY = _mousePosition.Y;
+            // Calculate cell size to match main terminal dimensions
+            cellSize = new Vector2(terminalSize.X / _mainTerminalWidth, terminalSize.Y / _mainTerminalHeight);
             
-            // Calculate top-left corner
-            float left = centerX - popupWidth / 2.0f;
-            float top = centerY - popupHeight / 2.0f;
+            float left, top;
             
-            // Screen edge clamping based on visual bounds (non-transparent cells)
+            // Center based on visual bounds (actual content) if available
             if (_visualBounds.HasValue)
             {
                 var bounds = _visualBounds.Value;
                 
-                // Calculate pixel positions of visual content
+                // Calculate visual content dimensions in pixels
+                float visualWidth = (bounds.maxX - bounds.minX + 1) * cellSize.X;
+                float visualHeight = (bounds.maxY - bounds.minY + 1) * cellSize.Y;
+                
+                // Center the visual content at mouse position
+                float visualCenterX = _mousePosition.X - visualWidth / 2.0f;
+                float visualCenterY = _mousePosition.Y - visualHeight / 2.0f;
+                
+                // Calculate top-left of the full popup grid
+                // (visual content starts at bounds.minX, bounds.minY within the grid)
+                left = visualCenterX - bounds.minX * cellSize.X;
+                top = visualCenterY - bounds.minY * cellSize.Y;
+                
+                // Screen edge clamping based on visual content position
                 float visualLeft = left + bounds.minX * cellSize.X;
                 float visualTop = top + bounds.minY * cellSize.Y;
                 float visualRight = left + (bounds.maxX + 1) * cellSize.X;
                 float visualBottom = top + (bounds.maxY + 1) * cellSize.Y;
                 
-                // Clamp based on visual content, not full popup size
+                // Clamp to keep visual content on screen
                 if (visualLeft < 0)
                     left -= visualLeft;
                 if (visualTop < 0)
@@ -339,6 +368,14 @@ namespace Cathedral.Terminal
                     left -= (visualRight - windowSize.X);
                 if (visualBottom > windowSize.Y)
                     top -= (visualBottom - windowSize.Y);
+            }
+            else
+            {
+                // Fallback: center entire popup grid at mouse position
+                float popupWidth = _view.Width * cellSize.X;
+                float popupHeight = _view.Height * cellSize.Y;
+                left = _mousePosition.X - popupWidth / 2.0f;
+                top = _mousePosition.Y - popupHeight / 2.0f;
             }
             
             topLeft = new Vector2(left, top);
@@ -364,6 +401,29 @@ namespace Cathedral.Terminal
         {
             _visualBounds = bounds;
             _instanceBufferDirty = true;
+        }
+        
+        /// <summary>
+        /// Gets the actual calculated screen bounds of the popup after clamping.
+        /// Returns (left, top, right, bottom) in screen pixel coordinates.
+        /// </summary>
+        public (float left, float top, float right, float bottom)? GetCalculatedScreenBounds(Vector2i windowSize)
+        {
+            if (_visualBounds == null)
+                return null;
+            
+            // Use same calculation as CalculatePopupLayout
+            CalculatePopupLayout(windowSize, out Vector2 cellSize, out Vector2 topLeft);
+            
+            var bounds = _visualBounds.Value;
+            
+            // Calculate pixel positions of visual content
+            float visualLeft = topLeft.X + bounds.minX * cellSize.X;
+            float visualTop = topLeft.Y + bounds.minY * cellSize.Y;
+            float visualRight = topLeft.X + (bounds.maxX + 1) * cellSize.X;
+            float visualBottom = topLeft.Y + (bounds.maxY + 1) * cellSize.Y;
+            
+            return (visualLeft, visualTop, visualRight, visualBottom);
         }
 
         /// <summary>

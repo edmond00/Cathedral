@@ -533,4 +533,92 @@ public static class LLMLogger
             Console.Error.WriteLine($"LLMLogger: Failed to log error: {ex.Message}");
         }
     }
+    
+    /// <summary>
+    /// Logs a Critic tree evaluation trace.
+    /// </summary>
+    public static void LogCriticTreeTrace(int slotId, CriticTreeResult treeResult, string? treeDescription = null)
+    {
+        if (!_isEnabled || _logFilePath == null) return;
+        
+        try
+        {
+            var sb = new StringBuilder();
+            var status = treeResult.OverallSuccess ? "✓ SUCCESS" : "✗ FAILURE";
+            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] CRITIC TREE EVALUATION (Slot {slotId}) - {status}");
+            sb.AppendLine($"{'-',-80}");
+            
+            if (!string.IsNullOrEmpty(treeDescription))
+            {
+                sb.AppendLine($"Tree: {treeDescription}");
+                sb.AppendLine();
+            }
+            
+            sb.AppendLine($"TRACE ({treeResult.Trace.Count} nodes evaluated):");
+            sb.AppendLine();
+            
+            for (int i = 0; i < treeResult.Trace.Count; i++)
+            {
+                var node = treeResult.Trace[i];
+                var nodeStatus = node.Success ? "✓" : "✗";
+                var answer = node.YesIsSuccess ? "yes=success" : "no=success";
+                
+                sb.AppendLine($"  [{i + 1}] {nodeStatus} {node.NodeName}");
+                sb.AppendLine($"      Question: {TruncateForLog(node.Question, 100)}");
+                sb.AppendLine($"      Score: {node.Score:F4} (threshold: {node.Threshold:F2}, {answer})");
+                sb.AppendLine($"      Probabilities: yes={node.ProbabilityYes:F4}, no={node.ProbabilityNo:F4}");
+                sb.AppendLine($"      Duration: {node.DurationMs:F0}ms");
+                
+                if (!node.Success && !string.IsNullOrEmpty(node.ErrorMessage))
+                {
+                    sb.AppendLine($"      Error: {node.ErrorMessage}");
+                }
+                sb.AppendLine();
+            }
+            
+            sb.AppendLine($"SUMMARY:");
+            sb.AppendLine($"  Total Nodes: {treeResult.Trace.Count}");
+            sb.AppendLine($"  Failures: {treeResult.FailureCount}");
+            sb.AppendLine($"  Final Result: {(treeResult.FinalSuccess ? "Success" : "Failure")}");
+            sb.AppendLine($"  Overall Success: {treeResult.OverallSuccess}");
+            sb.AppendLine($"  Total Duration: {treeResult.TotalDurationMs:F0}ms");
+            
+            if (!treeResult.OverallSuccess)
+            {
+                sb.AppendLine();
+                sb.AppendLine($"  Failed Nodes: {string.Join(", ", treeResult.FailedNodeNames)}");
+                foreach (var error in treeResult.AllErrorMessages)
+                {
+                    sb.AppendLine($"  - {error}");
+                }
+            }
+            
+            sb.AppendLine($"{'=',-80}\n");
+            
+            lock (_lockObject)
+            {
+                File.AppendAllText(_logFilePath, sb.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"LLMLogger: Failed to log critic tree trace: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Truncates text for logging purposes.
+    /// </summary>
+    private static string TruncateForLog(string text, int maxLength)
+    {
+        if (string.IsNullOrEmpty(text)) return "";
+        
+        // Replace newlines with spaces for single-line display
+        var singleLine = text.Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ");
+        
+        if (singleLine.Length <= maxLength)
+            return singleLine;
+        
+        return singleLine.Substring(0, maxLength - 3) + "...";
+    }
 }

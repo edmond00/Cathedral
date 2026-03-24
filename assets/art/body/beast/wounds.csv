@@ -1,0 +1,35 @@
+id,name,where,handicap
+2,pierced eye,left eye,high
+3,pierced eye,right eye,high
+4,perforated eardrum,left ear,high
+5,perforated eardrum,right ear,high
+6,skull fracture,encephalon,high
+7,concussions,encephalon,medium
+8,broken snout,snout,high
+9,broken fang,fangs,medium
+a,torned out tongue,tongue,high
+b,broken backbone,backbone,high
+x,tail amputee,backbone,medium
+g,broken ribs,pulmones,high
+c,broken leg,left foreleg,high
+d,broken leg,right foreleg,high
+e,broken leg,left hindleg,high
+f,broken leg,right hindleg,high
+h,broken claw,left foreclaws,medium
+i,broken claw,right foreclaws,medium
+j,broken claw,right hindclaws,medium
+k,broken claw,left hindclaws,medium
+l,torned off claw,left foreclaws,high
+m,torned off claw,right foreclaws,high
+n,torned off claw,right hindclaws,high
+o,torned off claw,left hindclaws,high
+p,evisceration,viscera,high
+q,pierced paunch,paunch,high
+r,torned off fang,fangs,high
+s,crippled leg,left foreleg,medium
+t,crippled leg,right foreleg,medium
+u,crippled leg,left hindleg,medium
+v,crippled leg,right hindleg,medium
+*,contusion,*,low
+*,cut,*,low
+*,puncture,*,low

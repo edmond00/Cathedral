@@ -24,6 +24,7 @@ namespace Cathedral.Terminal
         public event Action<int, int>? CellClicked;
         public event Action<int, int>? CellRightClicked;
         public event Action<int, int>? CellHovered;
+        public event Action<int, int>? CellMouseReleased;
         public event Action? MouseLeft;
 
         public TerminalHUD(int width, int height, int cellSize = 32, int fontPixelSize = 24)
@@ -41,6 +42,7 @@ namespace Cathedral.Terminal
             _inputHandler.CellClicked += OnCellClicked;
             _inputHandler.CellRightClicked += OnCellRightClicked;
             _inputHandler.CellHovered += OnCellHovered;
+            _inputHandler.CellMouseReleased += OnCellMouseReleased;
             _inputHandler.MouseLeft += OnMouseLeft;
             
             Console.WriteLine($"Terminal: HUD initialized - {width}x{height} grid");
@@ -90,17 +92,24 @@ namespace Cathedral.Terminal
         /// Currently hovered cell coordinates
         /// </summary>
         public Vector2i? HoveredCell => _inputHandler.HoveredCell;
+        
+        /// <summary>
+        /// Access to the input handler for coordinate conversion
+        /// </summary>
+        public TerminalInputHandler InputHandler => _inputHandler;
 
         #endregion
 
         #region Configuration
 
         /// <summary>
-        /// Sets the border height function for mouse position correction
+        /// Gets the character aspect ratio (height/width) from the font metrics.
+        /// Used for aspect ratio correction when converting images to text.
+        /// Returns 0 if calculation fails.
         /// </summary>
-        public void SetBorderHeightFunction(Func<float> getBorderHeight)
+        public float GetCharacterAspectRatio()
         {
-            _inputHandler.SetBorderHeightFunction(getBorderHeight);
+            return _atlas.GetCharacterAspectRatio();
         }
 
         #endregion
@@ -350,6 +359,15 @@ namespace Cathedral.Terminal
         {
             _renderer.ForceRefresh();
         }
+        
+        /// <summary>
+        /// Sets the darken factor for the terminal (0.0 = black, 1.0 = normal).
+        /// Used to dim the terminal when overlays are displayed.
+        /// </summary>
+        public void SetDarkenFactor(float factor)
+        {
+            _renderer.SetDarkenFactor(factor);
+        }
 
         #endregion
 
@@ -408,6 +426,11 @@ namespace Cathedral.Terminal
         private void OnCellHovered(int x, int y)
         {
             CellHovered?.Invoke(x, y);
+        }
+
+        private void OnCellMouseReleased(int x, int y)
+        {
+            CellMouseReleased?.Invoke(x, y);
         }
 
         private void OnMouseLeft()

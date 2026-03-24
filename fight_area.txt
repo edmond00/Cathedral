@@ -1,0 +1,23 @@
+I want to create a fighting area generator.
+This area will be displayed on font glyph based terminal renderer like the other menu.
+Each area will always be of size 60x60.
+Each glyph will have a font color and a char associated to it when rendering it.
+Also each glyph will be associated with a type of terrain :
+- exit, for runaway, always displayed with `⎆`
+- hard obstacle (wall, trees, rock) : need to be by passed, block range weapon view
+- soft obstacle (bush, sand, ...) : can move across but slower
+- treacherous terrain (slope, mud, ...) : can move across but risk of falling
+- dangerous terrain (fireplace, bambles, ...) : can move across but risk of wound
+- free space : can freely move accross
+The goal of the generator is to create areas that looks good/coherent.
+The generator will have multiple mode to be able to create area for various context (forest, street, building interior, mountain, ...).
+The mode should be abstract so they can be reusable for multiple context. For example, does not create "forest" mode but a "noisy" mode filling the area with noisely place obstacle that could be used for forest but also swamp, rocky area, ...
+You can also have a "geometric" mode filling an area with geometric shaped obstacle like square and circle, this shape could representating table/columns/furniture of any kind of interior. As the render is only based on font glyphs, an area will be abstract enough to have various interpretations.
+Also take into account the general structure of the area when making the mode (rooms/doors like structure, free space structure, corridor structurs, ...)
+Each mode will need to generate a new random area each time it is called.
+Each mode can have some specific properties that affect its procedural generation (like density, char mapping, ...).
+An exit should aways be put around the bottom center of the area.
+You need to be sure the area was no deadend, it should ne possible to go from each movable tiles (not hard obstacle) to the exit tile.
+The A* functions can be used to check it if needed.
+A space of round 3*10 dimensions on both the top center and top bottom should be reserved to put the player party member and ennemies, so it should not contains obstacle.
+Do not integrate the area generators yet. Just add a new option for testing them in the Program, where you can with args chosse a mode and its settings, then the generator is called once and its map is displayed at the center of the terminal renderer.

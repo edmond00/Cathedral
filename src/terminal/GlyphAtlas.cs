@@ -43,10 +43,14 @@ namespace Cathedral.Terminal
         private string _currentGlyphSet;
         private int _textureId;
         private Font? _font;
+        private Font? _fallbackFont;
         private bool _disposed;
 
         // Default terminal glyph set (ASCII printable characters)
         private const string DEFAULT_GLYPH_SET = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+        
+        // Padding in pixels between glyphs to prevent texture bleeding with linear filtering
+        private const int GLYPH_PADDING = 2;
 
         public GlyphAtlas(int cellSize = 64, int fontPixelSize = 48)
         {
@@ -74,16 +78,18 @@ namespace Cathedral.Terminal
 
         private void LoadFont()
         {
+            var fontCollection = new FontCollection();
+            
+            // Load main font
             try
             {
-                var fontCollection = new FontCollection();
-                string fontPath = "assets/fonts/FreeMono.ttf";
+                string fontPath = Config.Terminal.FontPath;
                 
                 if (File.Exists(fontPath))
                 {
                     var fontFamily = fontCollection.Add(fontPath);
                     _font = fontFamily.CreateFont(_fontPixelSize, FontStyle.Regular);
-                    Console.WriteLine($"Terminal: Loaded font from {fontPath}");
+                    Console.WriteLine($"Terminal: Loaded main font from {fontPath}");
                 }
                 else
                 {
@@ -92,7 +98,7 @@ namespace Cathedral.Terminal
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Terminal: Failed to load custom font, falling back to system font: {ex.Message}");
+                Console.WriteLine($"Terminal: Failed to load main font, falling back to system font: {ex.Message}");
                 try
                 {
                     _font = SystemFonts.CreateFont("Consolas", _fontPixelSize, FontStyle.Regular);
@@ -101,6 +107,27 @@ namespace Cathedral.Terminal
                 {
                     _font = SystemFonts.CreateFont("Courier New", _fontPixelSize, FontStyle.Regular);
                 }
+            }
+            
+            // Load fallback font
+            try
+            {
+                string fallbackFontPath = Config.Terminal.FallbackFontPath;
+                
+                if (File.Exists(fallbackFontPath))
+                {
+                    var fallbackFontFamily = fontCollection.Add(fallbackFontPath);
+                    _fallbackFont = fallbackFontFamily.CreateFont(_fontPixelSize, FontStyle.Regular);
+                    Console.WriteLine($"Terminal: Loaded fallback font from {fallbackFontPath}");
+                }
+                else
+                {
+                    Console.WriteLine($"Terminal: Fallback font not found at {fallbackFontPath}, will use main font only");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Terminal: Failed to load fallback font: {ex.Message}");
             }
         }
 
@@ -142,12 +169,13 @@ namespace Cathedral.Terminal
             // Clear old glyph mapping
             _glyphMap.Clear();
 
-            // Calculate atlas dimensions
+            // Calculate atlas dimensions (add padding between cells)
             int glyphCount = cleanGlyphSet.Length;
             int cols = (int)Math.Ceiling(Math.Sqrt(glyphCount));
             int rows = (int)Math.Ceiling((float)glyphCount / cols);
-            int atlasWidth = cols * _cellSize;
-            int atlasHeight = rows * _cellSize;
+            int cellWithPadding = _cellSize + GLYPH_PADDING;
+            int atlasWidth = cols * cellWithPadding;
+            int atlasHeight = rows * cellWithPadding;
 
             // Create atlas image
             using var atlasImage = new Image<Rgba32>(atlasWidth, atlasHeight, Color.Transparent);
@@ -158,19 +186,20 @@ namespace Cathedral.Terminal
                 char glyph = cleanGlyphSet[i];
                 int col = i % cols;
                 int row = i / cols;
-                int x = col * _cellSize;
-                int y = row * _cellSize;
+                int x = col * cellWithPadding + GLYPH_PADDING / 2;
+                int y = row * cellWithPadding + GLYPH_PADDING / 2;
 
                 // Render glyph to atlas
                 RenderGlyphToAtlas(atlasImage, glyph, x, y);
 
-                // Store glyph info
+                // Store glyph info with UV inset to avoid sampling padding
+                float uvInset = 0.5f; // Half pixel inset in texture space
                 var glyphInfo = new GlyphInfo(
                     glyph,
-                    (float)x / atlasWidth,
-                    (float)y / atlasHeight,
-                    (float)_cellSize / atlasWidth,
-                    (float)_cellSize / atlasHeight
+                    (float)(x + uvInset) / atlasWidth,
+                    (float)(y + uvInset) / atlasHeight,
+                    (float)(_cellSize - uvInset * 2) / atlasWidth,
+                    (float)(_cellSize - uvInset * 2) / atlasHeight
                 );
                 
                 _glyphMap[glyph] = glyphInfo;
@@ -188,9 +217,29 @@ namespace Cathedral.Terminal
             if (_font == null)
                 return;
 
+            // Determine which font to use for this glyph
+            Font? baseFont = _font;
+            
+            // Use fallback font if this glyph is in the fallback list
+            if (Config.Terminal.FallbackGlyphs.Contains(glyph) && _fallbackFont != null)
+            {
+                baseFont = _fallbackFont;
+            }
+
+            // Get glyph-specific size factor from config
+            float sizeFactor = Cathedral.Config.GlyphSizeFactors.GetFactor(glyph);
+            
+            // Create font with adjusted size if needed
+            Font fontToUse = baseFont;
+            if (sizeFactor != 1.0f)
+            {
+                int adjustedSize = (int)(_fontPixelSize * sizeFactor);
+                fontToUse = baseFont.Family.CreateFont(adjustedSize, FontStyle.Regular);
+            }
+
             atlas.Mutate(ctx =>
             {
-                var textOptions = new RichTextOptions(_font)
+                var textOptions = new RichTextOptions(fontToUse)
                 {
                     Origin = new PointF(x + _cellSize / 2f, y + _cellSize / 2f),
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -306,6 +355,50 @@ namespace Cathedral.Terminal
         public IEnumerable<char> GetAllGlyphs()
         {
             return _glyphMap.Keys;
+        }
+
+        /// <summary>
+        /// Calculates the average character aspect ratio (height/width) for typical characters.
+        /// This is used for aspect ratio correction when converting images to text.
+        /// Returns 0 if calculation fails.
+        /// </summary>
+        public float GetCharacterAspectRatio()
+        {
+            if (_font == null)
+                return 0;
+
+            try
+            {
+                // Measure a representative set of characters
+                string testChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+                float totalAspect = 0;
+                int count = 0;
+
+                foreach (char c in testChars)
+                {
+                    // Measure the character bounds
+                    var bounds = TextMeasurer.MeasureSize(c.ToString(), new TextOptions(_font));
+                    
+                    if (bounds.Width > 0 && bounds.Height > 0)
+                    {
+                        totalAspect += bounds.Height / bounds.Width;
+                        count++;
+                    }
+                }
+
+                if (count > 0)
+                {
+                    float avgAspect = totalAspect / count;
+                    Console.WriteLine($"Terminal: Measured character aspect ratio: {avgAspect:F2} (height/width)");
+                    return avgAspect;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Terminal: Failed to calculate character aspect ratio: {ex.Message}");
+            }
+
+            return 0;
         }
 
         /// <summary>

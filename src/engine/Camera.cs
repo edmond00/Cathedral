@@ -10,7 +10,7 @@ namespace Cathedral.Engine
         // Camera state
         private float _yaw = 0f;
         private float _pitch = 0f;
-        private float _distance = 80.0f; // Default distance
+        private float _distance = Cathedral.Config.GlyphSphere.CameraZoomWorldView; // Start with WorldView zoom (destination selection phase)
         
         // Debug camera system
         private bool _debugCameraMode = false;
@@ -20,7 +20,8 @@ namespace Cathedral.Engine
         // Camera limits and speeds
         private const float ROTATION_SPEED = 60f;
         private const float ZOOM_SPEED = 15.0f;
-        private const float MIN_DISTANCE = 0.1f;
+        private static readonly float MIN_DISTANCE = Cathedral.Config.SkyCloud.CloudSphereRadius + 1f; // Stay above clouds
+        private static readonly float MAX_DISTANCE = Cathedral.Config.SkyCloud.SkySphereRadius - 1f;  // Stay inside sky sphere
         private const float MAX_DEBUG_DISTANCE = 300.0f;
         private const float MIN_DEBUG_DISTANCE = 50.0f;
         private const float MIN_PITCH = -85f;
@@ -196,12 +197,22 @@ namespace Cathedral.Engine
             {
                 if (_debugCameraMode)
                 {
+                    float oldDistance = _debugCameraDistance;
                     _debugCameraDistance = MathF.Max(MIN_DEBUG_DISTANCE, 
                         _debugCameraDistance - ZOOM_SPEED * (float)args.Time);
+                    if (_debugCameraDistance != oldDistance)
+                    {
+                        Console.WriteLine($"Debug camera distance: {_debugCameraDistance:F2}");
+                    }
                 }
                 else
                 {
-                    _distance = MathF.Max(MIN_DISTANCE, _distance - ZOOM_SPEED * (float)args.Time);
+                    float oldDistance = _distance;
+                    _distance = Math.Clamp(_distance - ZOOM_SPEED * (float)args.Time, MIN_DISTANCE, MAX_DISTANCE);
+                    if (_distance != oldDistance)
+                    {
+                        Console.WriteLine($"Camera distance: {_distance:F2}");
+                    }
                 }
                 inputProcessed = true;
             }
@@ -209,12 +220,22 @@ namespace Cathedral.Engine
             {
                 if (_debugCameraMode)
                 {
+                    float oldDistance = _debugCameraDistance;
                     _debugCameraDistance = MathF.Min(MAX_DEBUG_DISTANCE, 
                         _debugCameraDistance + ZOOM_SPEED * (float)args.Time);
+                    if (_debugCameraDistance != oldDistance)
+                    {
+                        Console.WriteLine($"Debug camera distance: {_debugCameraDistance:F2}");
+                    }
                 }
                 else
                 {
-                    _distance += ZOOM_SPEED * (float)args.Time;
+                    float oldDistance = _distance;
+                    _distance = Math.Clamp(_distance + ZOOM_SPEED * (float)args.Time, MIN_DISTANCE, MAX_DISTANCE);
+                    if (_distance != oldDistance)
+                    {
+                        Console.WriteLine($"Camera distance: {_distance:F2}");
+                    }
                 }
                 inputProcessed = true;
             }
@@ -304,7 +325,7 @@ namespace Cathedral.Engine
             Vector3 camDir = -desiredCameraPos.Normalized();
             
             // Update camera parameters
-            _distance = originalDistance;
+            _distance = Math.Clamp(originalDistance, MIN_DISTANCE, MAX_DISTANCE);
             _yaw = MathHelper.RadiansToDegrees(MathF.Atan2(camDir.Z, camDir.X));
             _pitch = MathHelper.RadiansToDegrees(MathF.Asin(camDir.Y));
             
@@ -365,8 +386,17 @@ namespace Cathedral.Engine
         {
             _yaw = yaw;
             _pitch = Math.Clamp(pitch, MIN_PITCH, MAX_PITCH);
-            _distance = MathF.Max(MIN_DISTANCE, distance);
+            _distance = Math.Clamp(distance, MIN_DISTANCE, MAX_DISTANCE);
             
+            CameraTransformed?.Invoke(_yaw, _pitch, _distance);
+        }
+        
+        /// <summary>
+        /// Sets the camera distance (zoom level)
+        /// </summary>
+        public void SetDistance(float distance)
+        {
+            _distance = Math.Clamp(distance, MIN_DISTANCE, MAX_DISTANCE);
             CameraTransformed?.Invoke(_yaw, _pitch, _distance);
         }
         
@@ -393,7 +423,7 @@ namespace Cathedral.Engine
         {
             _yaw = 0f;
             _pitch = 0f;
-            _distance = 80.0f;
+            _distance = Cathedral.Config.GlyphSphere.CameraZoomWorldView;
             _debugCameraMode = false;
             _debugCameraAngle = 0;
             _debugCameraDistance = 120.0f;

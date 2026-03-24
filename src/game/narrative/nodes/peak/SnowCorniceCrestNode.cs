@@ -1,0 +1,29 @@
+using System;
+using System.Collections.Generic;
+using Cathedral.Game.Narrative.Nodes.Mountain;
+
+namespace Cathedral.Game.Narrative.Nodes.Peak;
+
+public class SnowCorniceCrestNode : PyramidalFeatureNode
+{
+    public override int MinAltitude => 0;
+    public override int MaxAltitude => 2;
+    public override bool IsBottomNode => false;
+    public override Type PairedNodeType => typeof(SnowCorniceFallLineNode);
+    
+    public override string NodeId => "snow_cornice_crest";
+    public override string ContextDescription => "standing on the snow cornice crest";
+    public override string TransitionDescription => "approach the snow cornice crest";
+    public override bool IsEntryNode => false;
+    
+    public override List<string> NodeKeywords => new() { "overhang", "cornice", "precarious", "snow", "dangerous", "wind-formed", "fragile", "curved", "white", "unstable" };
+    
+    private static readonly string[] Moods = { "precarious", "overhanging", "delicate", "dangerous" };
+    
+    public override string GenerateNeutralDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        return $"{Moods[rng.Next(Moods.Length)]} snow cornice crest";
+    }
+    
+}

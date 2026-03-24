@@ -12,18 +12,19 @@ namespace Cathedral.Terminal
     {
         private readonly TerminalView _view;
         private readonly TerminalRenderer _renderer;
-        private Func<float>? _getBorderHeight;
         
         // Mouse state tracking
         private Vector2i? _hoveredCell;
         private Vector2i? _lastHoveredCell;
         private bool _leftMouseDown;
         private bool _rightMouseDown;
+        private Vector2 _lastRawMousePosition;
         
         // Events
         public event Action<int, int>? CellClicked;
         public event Action<int, int>? CellRightClicked;
         public event Action<int, int>? CellHovered;
+        public event Action<int, int>? CellMouseReleased;
         public event Action? MouseLeft;
 
         public TerminalInputHandler(TerminalView view, TerminalRenderer renderer)
@@ -49,24 +50,22 @@ namespace Cathedral.Terminal
         /// </summary>
         public bool IsRightMouseDown => _rightMouseDown;
 
+        /// <summary>
+        /// The last raw screen mouse position (in screen pixel coordinates)
+        /// </summary>
+        public Vector2 LastRawMousePosition => _lastRawMousePosition;
+
         #endregion
 
-        #region Border Height
+        #region Mouse Position
         
         /// <summary>
-        /// Sets the border height function delegate
+        /// Gets the last raw mouse position (already client-relative in OpenTK 4.x).
+        /// No border height correction needed when using ClientSize consistently.
         /// </summary>
-        public void SetBorderHeightFunction(Func<float> getBorderHeight)
+        public Vector2 GetCorrectedMousePosition()
         {
-            _getBorderHeight = getBorderHeight;
-        }
-        
-        /// <summary>
-        /// Gets the window border height for mouse position correction
-        /// </summary>
-        private float GetWindowBorderHeight()
-        {
-            return _getBorderHeight?.Invoke() ?? 0f;
+            return _lastRawMousePosition;
         }
         
         #endregion
@@ -78,6 +77,8 @@ namespace Cathedral.Terminal
         /// </summary>
         public void HandleMouseMove(Vector2 mousePosition, Vector2i windowSize)
         {
+            _lastRawMousePosition = mousePosition;
+            
             var cellPos = ScreenToCell(mousePosition, windowSize);
             
             if (cellPos != _hoveredCell)
@@ -101,6 +102,8 @@ namespace Cathedral.Terminal
         /// </summary>
         public bool HandleMouseDown(Vector2 mousePosition, Vector2i windowSize, MouseButton button)
         {
+            _lastRawMousePosition = mousePosition;
+            
             var cellPos = ScreenToCell(mousePosition, windowSize);
             
             if (!cellPos.HasValue)
@@ -132,6 +135,8 @@ namespace Cathedral.Terminal
             {
                 case MouseButton.Left:
                     _leftMouseDown = false;
+                    if (_hoveredCell.HasValue)
+                        CellMouseReleased?.Invoke(_hoveredCell.Value.X, _hoveredCell.Value.Y);
                     break;
                     
                 case MouseButton.Right:
@@ -152,15 +157,11 @@ namespace Cathedral.Terminal
         /// <returns>Cell coordinates (0-based), or null if outside terminal area</returns>
         public Vector2i? ScreenToCell(Vector2 screenPos, Vector2i windowSize)
         {
-            // Apply border height correction to mouse position
-            float borderHeight = GetWindowBorderHeight();
-            Vector2 correctedScreenPos = new Vector2(screenPos.X, screenPos.Y + borderHeight);
-            
             // Get terminal layout information
             var (terminalSize, cellSize, offset) = _renderer.GetLayoutInfo(windowSize);
             
             // Convert screen position to terminal-local coordinates
-            Vector2 localPos = correctedScreenPos - offset;
+            Vector2 localPos = screenPos - offset;
             
             // Check if position is within terminal bounds
             if (localPos.X < 0 || localPos.X >= terminalSize.X ||

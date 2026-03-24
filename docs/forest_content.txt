@@ -1,0 +1,122 @@
+# FORESST AREAS
+
+1. OPEN WOODLAND
+- Grass clearing
+- Isolated oak
+- Hawthorn cluster
+- Wildflower patch
+- Low shrub belt
+
+2. BRIGHTWOOD
+- Beech stand
+- Fern glade
+- Young maple group
+- Mossy stone outcrop
+- Seasonal flower groundcover
+
+3. GREENWOOD
+- Mixed hardwood grove
+- Hazel undergrowth
+- Fungal ring
+- Leaf-litter hollow
+- Ivy-clad trunks
+
+4. HIGHWOOD
+- Tall trunk stand
+- Sparse understory floor
+- Fallen giant trunk
+- Lichen-covered bark
+- Exposed root plates
+
+5. MIXED UNDERWOOD
+- Dense sapling patch
+- Bramble run
+- Tall fern stand
+- Shrub island
+- Animal track
+
+6. LOWWOOD
+- Moist leafbed
+- Alder grove
+- Fungal log
+- Reeded depression
+- Seasonal puddle
+
+7. DEEP CANOPY
+- Closed crown stretch
+- Root-and-stone carpet
+- Shade plant patch
+- Trunk cluster
+- Light shafts
+
+8. SHADOWWOOD
+- Bare soil patch
+- Darkened tree trunks
+- Lichen crusts
+- Hidden branch tangle
+- Low moss beds
+
+9. OLDGROWTH
+- Ancient tree giant
+- Standing dead snag
+- Decaying log mass
+- Layered canopy pocket
+- Deep humus basin
+
+10. DENSE THICKETLAND
+- Interlocked shrub wall
+- Young tree cluster
+- Vine-draped growth
+- Hidden light pocket
+- Thorn belt
+
+11. WILDWOOD
+- Mixed-age tangle
+- Uprooted trees
+- Regrowth thicket
+- Uneven ground cover
+- Competing growth layers
+
+12. ROOTED FOREST
+- Exposed root web
+- Shallow-rooted stand
+- Root arch
+- Displaced ground plants
+- Erosion channel
+
+13. DEEPWOOD
+- Uniform trunk corridor
+- Sparse understory floor
+- Cold moss ground
+- Deep leaf litter
+- Isolated plant cluster
+
+14. MIREWOOD
+- Flooded tree stand
+- Shallow pool
+- Sedge patch
+- Spongy moss mat
+- Rotting log island
+
+15. BLACKWOOD
+- Dense trunk wall
+- Collapsed deadwood heap
+- Bare forest floor
+- Permanent damp bark
+- Lightless stand
+
+
+# TRANSVERSAL FOREST FEATURES
+(running through multiple forest areas)
+
+- Forest stream
+- Dry creek bed
+- Animal track
+- Root path
+- Fallen log line
+- Drainage hollow
+- Canopy gap line
+- Boulder chain
+- Worn ground path
+- Leaf-cleared path
+- Packed earth trail

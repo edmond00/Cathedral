@@ -1,4 +1,4 @@
-// GlyphSphereCore.cs - Core rendering engine for the glyph sphere
+﻿// GlyphSphereCore.cs - Core rendering engine for the glyph sphere
 // Contains OpenGL functionality, shaders, mesh generation, camera controls, and mouse collision detection
 using System;
 using System.Collections.Generic;
@@ -8,6 +8,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -31,6 +32,13 @@ namespace Cathedral.Glyph
         int glyphTexture;
         int indexCount;
         
+        // UI rendering (separate pass)
+        int uiProgram; // Yellowscale shader for UI elements
+        int uiVao;
+        int uiInstanceVbo;
+        int worldProgram; // Grayscale shader for world elements
+        int darkWorldProgram; // Dark grayscale shader for world during narration
+        
         // Background sphere (opaque backdrop)
         int backgroundProgram;
         int backgroundVao, backgroundVbo, backgroundEbo;
@@ -47,6 +55,8 @@ namespace Cathedral.Glyph
         List<uint> indices = new List<uint>();
         GlyphInfo[] glyphInfos = null!;
         int instanceCount = 0;
+        int worldInstanceCount = 0;
+        int uiInstanceCount = 0;
 
         // Camera system
         private Camera _camera;
@@ -54,6 +64,8 @@ namespace Cathedral.Glyph
         // Mouse interaction
         int hoveredVertexIndex = -1;
         int lastHoveredVertexIndex = -2;
+        private bool _worldInteractionsEnabled = true;
+        private bool _isNarrationMode = false; // Track if in narration/location interaction mode
         
         // Debug visualization
         Vector3 debugCameraPos = Vector3.Zero;
@@ -61,40 +73,56 @@ namespace Cathedral.Glyph
         Vector3 debugRayDirection = Vector3.Zero;
         Vector3 debugIntersectionPoint = Vector3.Zero;
         OpenTK.Mathematics.Vector2 debugMousePos = OpenTK.Mathematics.Vector2.Zero;
-        bool debugShowMarkers = false; // Toggle with 'M' key - enabled by default for avatar debugging
-        int debugAvatarVertex = -1; // Track avatar vertex for debug ray
+        bool debugShowMarkers = false; // Toggle with 'M' key - enabled by default for protagonist debugging
+        int debugProtagonistVertex = -1; // Track protagonist vertex for debug ray
         
         // Debug shader modes
         int debugShaderMode = 0; // 0=normal, 1=vertex colors only, 2=texture only, 3=wireframe, 4=grayscale
         int debugProgram1, debugProgram2, debugProgram3, debugProgram4;
 
-        // Shared constants to avoid hardcoded duplicates
-        const float QUAD_SIZE = 0.3f; // Size of each glyph quad on the sphere
-        const float VERTEX_SHADER_SIZE_MULTIPLIER = 2.0f; // Multiplier used in vertex shader
-        const float SPHERE_RADIUS = 25.0f; // Main sphere radius
-        const int SPHERE_SUBDIVISIONS = 5; // Icosphere subdivision level (affects vertex density)
-        const float CAMERA_DEFAULT_DISTANCE = 80.0f; // Default camera distance
-        const float CAMERA_MIN_DISTANCE = 30.0f; // Minimum camera distance
-        const float CAMERA_MAX_DISTANCE = 200f; // Maximum camera distance
-        
-        // Default glyph settings
-        const char DEFAULT_GLYPH = '.';
-        const int GLYPH_PIXEL_SIZE = 65; // raster size
-        const int GLYPH_CELL = 50; // cell in atlas
-
-        // Update timing for interface animations
-        const float UPDATE_INTERVAL = 0.1f; // Update every 0.5 seconds (2 Hz)
+        // Update timing state
         private float updateTimer = 0.0f;
 
         // Pathfinding
         private GlyphSphereGraph? _graph;
         private PathfindingService? _pathfindingService;
 
+        // Decorative sky and cloud layers
+        private SkyCloudRenderer? _skyCloudRenderer;
+
         // Events for interface interaction
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexHovered;
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexClicked;
         public event Action? CoreLoaded;
         public event Action<float>? UpdateRequested;
+        public event Action<float>? MouseWheelScrolled;
+        
+        /// <summary>
+        /// Fired before any mouse click handling. Subscribers can set Handled to true to consume the click.
+        /// Used for UI elements like popups that may extend outside normal terminal bounds.
+        /// </summary>
+        public event Func<OpenTK.Mathematics.Vector2, MouseButton, bool>? GlobalMouseClicked;
+        
+        /// <summary>
+        /// Enables or disables 3D world vertex interactions (hover highlighting, vertex detection)
+        /// </summary>
+        public void SetWorldInteractionsEnabled(bool enabled)
+        {
+            _worldInteractionsEnabled = enabled;
+            if (!enabled)
+            {
+                hoveredVertexIndex = -1; // Clear hover state
+            }
+        }
+        
+        /// <summary>
+        /// Sets whether the game is in narration/location interaction mode.
+        /// When true, uses dark grayscale shader for world to emphasize terminal UI.
+        /// </summary>
+        public void SetNarrationMode(bool isNarration)
+        {
+            _isNarrationMode = isNarration;
+        }
         
         // Terminal HUD
         private Cathedral.Terminal.TerminalHUD? _terminal;
@@ -125,6 +153,7 @@ namespace Cathedral.Glyph
         // Public interface for vertex manipulation
         public int VertexCount => vertices.Count;
         public Vector3 GetVertexPosition(int index) => vertices[index].Position;
+        public float GetVertexNoise(int index) => (index >= 0 && index < vertices.Count) ? vertices[index].Noise : 0f;
         
         // Public access to camera for external control
         /// <summary>
@@ -133,9 +162,9 @@ namespace Cathedral.Glyph
         /// </summary>
         public Camera Camera => _camera;
         
-        private string currentGlyphSet = DEFAULT_GLYPH.ToString();
+        private string currentGlyphSet = Config.GlyphSphere.DefaultGlyph.ToString();
         
-        public void SetVertexGlyph(int index, char glyph, Vector4 color, float size = 1.0f)
+        public void SetVertexGlyph(int index, char glyph, Vector4 color, float size = 1.0f, bool isUIElement = false)
         {
             if (index >= 0 && index < vertices.Count)
             {
@@ -156,7 +185,8 @@ namespace Cathedral.Glyph
                     GlyphChar = glyph,
                     Noise = vertices[index].Noise,
                     Color = color,
-                    Size = size
+                    Size = size,
+                    IsUIElement = isUIElement
                 };
             }
         }
@@ -196,7 +226,7 @@ namespace Cathedral.Glyph
             }
             
             // Build new atlas
-            glyphInfos = BuildGlyphAtlas(glyphSet, GLYPH_CELL, GLYPH_PIXEL_SIZE, out Image<Rgba32> atlasImage);
+            glyphInfos = BuildGlyphAtlas(glyphSet, Config.GlyphSphere.GlyphCellSize, Config.GlyphSphere.GlyphPixelSize, out Image<Rgba32> atlasImage);
             glyphTexture = LoadTexture(atlasImage);
             atlasImage.Dispose();
             
@@ -222,6 +252,11 @@ namespace Cathedral.Glyph
             debugProgram2 = CreateProgram(vertexShaderSrc, debugFragmentSrc2); // texture only
             debugProgram3 = CreateProgram(vertexShaderSrc, debugFragmentSrc3); // wireframe
             debugProgram4 = CreateProgram(vertexShaderSrc, debugFragmentSrc4); // grayscale
+            
+            // Build world and UI shaders
+            worldProgram = CreateProgram(vertexShaderSrc, worldFragmentShaderSrc); // grayscale for world
+            darkWorldProgram = CreateProgram(vertexShaderSrc, darkWorldFragmentShaderSrc); // dark grayscale for narration
+            uiProgram = CreateProgram(vertexShaderSrc, uiFragmentShaderSrc); // yellowscale for UI
 
             // Build background sphere shader
             backgroundProgram = CreateProgram(backgroundVertexShaderSrc, backgroundFragmentShaderSrc);
@@ -233,23 +268,24 @@ namespace Cathedral.Glyph
             GL.UseProgram(program);
             
             // Build sphere with default glyphs (green dots)
-            BuildSphere(SPHERE_SUBDIVISIONS, 0, SPHERE_RADIUS);
+            BuildSphere(Config.GlyphSphere.SphereSubdivisions, 0, Config.GlyphSphere.SphereRadius);
             
             // Create background sphere (90% radius, opaque)
-            BuildBackgroundSphere(SPHERE_SUBDIVISIONS, 0, SPHERE_RADIUS * 0.98f);
+            BuildBackgroundSphere(Config.GlyphSphere.SphereSubdivisions, 0, Config.GlyphSphere.SphereRadius * 0.98f);
 
             // Build glyph atlas with default glyph
-            string defaultGlyphSet = DEFAULT_GLYPH.ToString();
+            string defaultGlyphSet = Config.GlyphSphere.DefaultGlyph.ToString();
             Console.WriteLine($"Generated GlyphSet: \"{defaultGlyphSet}\" ({defaultGlyphSet.Length} characters)");
-            glyphInfos = BuildGlyphAtlas(defaultGlyphSet, GLYPH_CELL, GLYPH_PIXEL_SIZE, out Image<Rgba32> atlasImage);
+            glyphInfos = BuildGlyphAtlas(defaultGlyphSet, Config.GlyphSphere.GlyphCellSize, Config.GlyphSphere.GlyphPixelSize, out Image<Rgba32> atlasImage);
             
             glyphTexture = LoadTexture(atlasImage);
             atlasImage.Dispose();
 
             // Create VBO/VAO for quad + instance data approach
             SetupInstancedRendering();
+            SetupUIInstancedRendering();
 
-            // Fill instance buffer now
+            // Fill instance buffers now
             UpdateInstanceBuffer();
 
             // Set texture uniform
@@ -258,8 +294,8 @@ namespace Cathedral.Glyph
             int texLoc = GL.GetUniformLocation(program, "uAtlas");
             GL.Uniform1(texLoc, 0);
 
-            // Set initial projection
-            GL.Viewport(0, 0, Size.X, Size.Y);
+            // Set initial projection - use ClientSize (actual renderable area, not including title bar/borders)
+            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
             UpdateProjection();
 
             // For mouse click reading
@@ -271,11 +307,15 @@ namespace Cathedral.Glyph
             // Initialize terminal HUD (100x30 for Location Travel Mode UI)
             try 
             {
-                _terminal = new Cathedral.Terminal.TerminalHUD(100, 30, 16, 14);
+                _terminal = new Cathedral.Terminal.TerminalHUD(
+                    Config.Terminal.MainWidth, 
+                    Config.Terminal.MainHeight, 
+                    Config.Terminal.MainCellSize, 
+                    Config.Terminal.MainFontSize);
                 // Event handlers removed - terminal events will be handled by game modes
                 
-                // Set border height function for proper mouse position correction
-                _terminal.SetBorderHeightFunction(() => GetWindowBorderHeight());
+                // No border height correction needed - MousePosition is already client-relative in OpenTK 4.x
+                // and we use ClientSize consistently for viewport/projection/mouse math
                 
                 // Terminal starts hidden - will be shown by game modes as needed
                 _terminal.Visible = false;
@@ -283,7 +323,13 @@ namespace Cathedral.Glyph
                 Console.WriteLine("Terminal: HUD integrated with GlyphSphereCore (100x30 for Location Travel Mode)");
                 
                 // Initialize popup terminal (30x30, shares atlas with main terminal)
-                _popupTerminal = new Cathedral.Terminal.PopupTerminalHUD(30, 30, 16, _terminal.Atlas);
+                _popupTerminal = new Cathedral.Terminal.PopupTerminalHUD(
+                    Config.Terminal.PopupWidth, 
+                    Config.Terminal.PopupHeight, 
+                    Config.Terminal.PopupCellSize, 
+                    _terminal.Atlas,
+                    Config.Terminal.MainWidth,
+                    Config.Terminal.MainHeight);
                 Console.WriteLine("Popup Terminal: HUD integrated with GlyphSphereCore (30x30 mouse-following)");
             }
             catch (Exception ex)
@@ -293,73 +339,30 @@ namespace Cathedral.Glyph
                 _popupTerminal = null;
             }
             
-            // Log window border information
-            LogWindowBorderInfo();
+            // Initialize decorative sky and cloud spheres
+            try
+            {
+                _skyCloudRenderer = new SkyCloudRenderer();
+                _skyCloudRenderer.Initialize();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SkyCloudRenderer: Failed to initialize - {ex.Message}");
+                _skyCloudRenderer = null;
+            }
+            
+            // Log window info
+            LogWindowInfo();
             
             // Fire loaded event for interface setup
             CoreLoaded?.Invoke();
         }
         
-        #region Window Border Information
+        #region Window Info
         
-        private void LogWindowBorderInfo()
+        private void LogWindowInfo()
         {
-            // Log border information for debugging
-            Console.WriteLine("=== Window Border Information ===");
-            Console.WriteLine($"Client Size (content area): {ClientSize}");
-            Console.WriteLine($"Window Size (including borders): {Size}");
-            Console.WriteLine($"Window Position: {Location}");
-            Console.WriteLine($"Window Border: {WindowBorder}");
-            
-            // Calculate border sizes
-            var borderWidth = Size.X - ClientSize.X;
-            var borderHeight = Size.Y - ClientSize.Y;
-            
-            Console.WriteLine($"Total border width (left + right): {borderWidth}px");
-            Console.WriteLine($"Total border height (top + bottom): {borderHeight}px");
-            
-            // On Windows, typical values:
-            // - Title bar height: ~30-32px (depends on DPI/scaling)
-            // - Side borders: ~8-16px total (depends on DPI/scaling)
-            Console.WriteLine($"Estimated title bar height: ~{borderHeight - 8}px (assuming 4px top/bottom borders)");
-            Console.WriteLine("Note: Border sizes depend on OS theme, DPI scaling, and window style");
-            Console.WriteLine("=====================================");
-        }
-        
-        /// <summary>
-        /// Gets window border information that can be used by terminal for positioning
-        /// </summary>
-        public (int titleBarHeight, int borderWidth, int borderHeight) GetWindowBorderInfo()
-        {
-            var totalBorderWidth = Size.X - ClientSize.X;
-            var totalBorderHeight = Size.Y - ClientSize.Y;
-            
-            // The empirically correct title bar height for mouse positioning is 38px
-            // but our naive calculation (total - 8px) gives 31px. This 7px difference
-            // likely comes from OS window decoration complexities that aren't captured
-            // by simple Size vs ClientSize measurements.
-            
-            // Use an empirically-corrected calculation:
-            // - Start with the naive estimation
-            // - Apply a correction factor based on observed difference
-            var naiveEstimate = totalBorderHeight - 8; // Original calculation
-            var empiricalCorrection = 7; // Observed difference (38 - 31)
-            var correctedTitleBarHeight = naiveEstimate + empiricalCorrection;
-            
-            // Ensure we don't exceed the total border height
-            var titleBarHeight = Math.Min(correctedTitleBarHeight, totalBorderHeight);
-            
-            return (titleBarHeight, totalBorderWidth, totalBorderHeight);
-        }
-        
-        /// <summary>
-        /// Gets the window border height (title bar) for mouse position correction.
-        /// This is the global function for consistent border height handling across the application.
-        /// </summary>
-        public float GetWindowBorderHeight()
-        {
-            var (titleBarHeight, _, _) = GetWindowBorderInfo();
-            return Math.Max(0, titleBarHeight); // Ensure non-negative
+            Console.WriteLine($"Window Info - Client: {ClientSize.X}x{ClientSize.Y}, Total: {Size.X}x{Size.Y}");
         }
         
         #endregion
@@ -392,7 +395,7 @@ namespace Cathedral.Glyph
             _terminal.Text(3, 12, "• Click: Select vertex", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(3, 13, "• M: Toggle debug markers", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(3, 14, "• D: Cycle debug shaders", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
-            _terminal.Text(3, 15, "• Space: Avatar movement", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
+            _terminal.Text(3, 15, "• Space: Protagonist movement", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(3, 16, "• ESC: Exit application", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             
             // Draw status panel
@@ -403,13 +406,10 @@ namespace Cathedral.Glyph
             _terminal.Text(41, 11, "Hovered: None", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(41, 12, "Selected: None", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             
-            // Add window border information
-            var (titleBarHeight, borderWidth, borderHeight) = GetWindowBorderInfo();
+            // Add window information
             _terminal.Text(41, 14, "Window Info:", Cathedral.Terminal.Utils.Colors.Blue, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(41, 15, $"Client: {ClientSize.X}x{ClientSize.Y}", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             _terminal.Text(41, 16, $"Total: {Size.X}x{Size.Y}", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
-            _terminal.Text(41, 17, $"Title bar: ~{titleBarHeight}px", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
-            _terminal.Text(41, 18, $"Borders: {borderWidth}x{borderHeight}", Cathedral.Terminal.Utils.Colors.White, Cathedral.Terminal.Utils.Colors.Black);
             
             // Draw progress bar demo
             _terminal.Text(3, 20, "System Status:", Cathedral.Terminal.Utils.Colors.Yellow, Cathedral.Terminal.Utils.Colors.Black);
@@ -555,6 +555,67 @@ namespace Cathedral.Glyph
 
             GL.BindVertexArray(0);
         }
+        
+        private void SetupUIInstancedRendering()
+        {
+            uiVao = GL.GenVertexArray();
+            GL.BindVertexArray(uiVao);
+
+            // Reuse the same quad VBO and EBO
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+            
+            // attrib 0: local pos.xy (vec2)
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
+
+            // attrib 1: local uv (vec2)
+            GL.EnableVertexAttribArray(1);
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 2 * sizeof(float));
+
+            // Bind the same EBO
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+
+            // Create separate instance buffer for UI elements
+            uiInstanceVbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, uiInstanceVbo);
+            int maxInstances = vertices.Count; // Worst case: all vertices are UI
+            GL.BufferData(BufferTarget.ArrayBuffer, maxInstances * 18 * sizeof(float), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+            int attribIndex = 2;
+            int stride = 18 * sizeof(float);
+
+            // instancePos vec3
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 3, VertexAttribPointerType.Float, false, stride, 0);
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            // right vec3
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 3, VertexAttribPointerType.Float, false, stride, 3 * sizeof(float));
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            // up vec3
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 3, VertexAttribPointerType.Float, false, stride, 6 * sizeof(float));
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            // size float
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 1, VertexAttribPointerType.Float, false, stride, 9 * sizeof(float));
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            // uvRect vec4
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 4, VertexAttribPointerType.Float, false, stride, 10 * sizeof(float));
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            // color vec4
+            GL.EnableVertexAttribArray(attribIndex);
+            GL.VertexAttribPointer(attribIndex, 4, VertexAttribPointerType.Float, false, stride, 14 * sizeof(float));
+            GL.VertexAttribDivisor(attribIndex, 1); attribIndex++;
+
+            GL.BindVertexArray(0);
+        }
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
@@ -565,7 +626,7 @@ namespace Cathedral.Glyph
 
             // Update timing for interface animations
             updateTimer += (float)args.Time;
-            if (updateTimer >= UPDATE_INTERVAL)
+            if (updateTimer >= Config.GlyphSphere.UpdateInterval)
             {
                 UpdateRequested?.Invoke(updateTimer);
                 updateTimer = 0.0f;
@@ -577,19 +638,28 @@ namespace Cathedral.Glyph
             // Update instances for dynamic color changes (hover highlighting)
             UpdateInstanceBuffer();
 
+            // Update decorative sky/cloud animation
+            _skyCloudRenderer?.Update((float)args.Time);
+
             // Clear
             GL.ClearColor(0f, 0f, 0f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            // Build view & proj
+            // Build view & proj (far clip extended for sky sphere)
             var view = GetViewMatrix();
-            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y, Config.GlyphSphere.NearClipPlane, Config.GlyphSphere.FarClipPlane);
 
-            // Render background sphere first (opaque backdrop)
+            // Render sky stars first (behind everything)
+            _skyCloudRenderer?.RenderSky(view, proj);
+
+            // Render background sphere (opaque backdrop, hides stars behind world)
             RenderBackgroundSphere(view, proj);
 
             // Render main sphere
             RenderGlyphSphere(view, proj);
+
+            // Render cloud layer over the world (semi-transparent)
+            _skyCloudRenderer?.RenderClouds(view, proj);
 
             // Render debug markers if enabled
             if (debugShowMarkers)
@@ -600,13 +670,22 @@ namespace Cathedral.Glyph
             // Render terminal HUD overlay
             if (_terminal != null)
             {
-                _terminal.Render(Size);
+                // Darken terminal if popup is active (in fixed mode with visible content)
+                bool popupActive = false;
+                if (_popupTerminal != null && _popupTerminal.IsFixedMode)
+                {
+                    // Check if popup has any visible content
+                    popupActive = _popupTerminal.View.EnumerateCells().Any(c => c.cell.Character != ' ' || c.cell.BackgroundColor.W > 0.01f);
+                }
+                _terminal.SetDarkenFactor(popupActive ? 0.5f : 1.0f);
+                
+                _terminal.Render(ClientSize);
             }
             
             // Render popup terminal on top of everything
             if (_popupTerminal != null)
             {
-                _popupTerminal.Render(Size);
+                _popupTerminal.Render(ClientSize);
             }
 
             SwapBuffers();
@@ -640,17 +719,17 @@ namespace Cathedral.Glyph
                 Console.WriteLine($"Debug markers: {(debugShowMarkers ? "ON" : "OFF")}");
             }
 
-            // Center camera on avatar (SPACE key)
+            // Center camera on protagonist (SPACE key)
             if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Space))
             {
-                if (debugAvatarVertex >= 0)
+                if (debugProtagonistVertex >= 0)
                 {
-                    CenterCameraOnGlyph(debugAvatarVertex);
-                    Console.WriteLine($"🎯 Camera re-centered on avatar at vertex {debugAvatarVertex} (Press SPACE anytime to re-focus)");
+                    CenterCameraOnGlyph(debugProtagonistVertex);
+                    Console.WriteLine($"🎯 Camera re-centered on protagonist at vertex {debugProtagonistVertex} (Press SPACE anytime to re-focus)");
                 }
                 else
                 {
-                    Console.WriteLine("❌ No avatar found - cannot center camera. Avatar must be placed first.");
+                    Console.WriteLine("❌ No protagonist found - cannot center camera. Protagonist must be placed first.");
                 }
             }
         }
@@ -673,37 +752,82 @@ namespace Cathedral.Glyph
 
         private void RenderGlyphSphere(Matrix4 view, Matrix4 proj)
         {
-            // Select shader program based on debug mode
-            int currentProgram = debugShaderMode switch
+            // Select shader program based on debug mode and narration state
+            int currentWorldProgram = debugShaderMode switch
             {
-                0 => program,           // normal rendering
+                0 => _isNarrationMode ? darkWorldProgram : worldProgram, // Use dark grayscale during narration
                 1 => debugProgram1,     // vertex colors only
                 2 => debugProgram2,     // texture only
                 3 => debugProgram3,     // wireframe
                 4 => debugProgram4,     // grayscale
-                _ => program
+                _ => _isNarrationMode ? darkWorldProgram : worldProgram
             };
             
-            GL.UseProgram(currentProgram);
-            
-            int viewLoc = GL.GetUniformLocation(currentProgram, "uView");
-            int projLoc = GL.GetUniformLocation(currentProgram, "uProj");
-            GL.UniformMatrix4(viewLoc, false, ref view);
-            GL.UniformMatrix4(projLoc, false, ref proj);
-            
-            // Set texture uniform for current program
-            int texLoc = GL.GetUniformLocation(currentProgram, "uAtlas");
-            if (texLoc >= 0)
+            int currentUIProgram = debugShaderMode switch
             {
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, glyphTexture);
-                GL.Uniform1(texLoc, 0);
-            }
+                0 => uiProgram,         // yellowscale for UI
+                1 => debugProgram1,     // vertex colors only
+                2 => debugProgram2,     // texture only
+                3 => debugProgram3,     // wireframe
+                4 => debugProgram4,     // grayscale
+                _ => uiProgram
+            };
+            
+            // First pass: Render world glyphs with grayscale shader
+            if (worldInstanceCount > 0)
+            {
+                GL.UseProgram(currentWorldProgram);
+                
+                int viewLoc = GL.GetUniformLocation(currentWorldProgram, "uView");
+                int projLoc = GL.GetUniformLocation(currentWorldProgram, "uProj");
+                GL.UniformMatrix4(viewLoc, false, ref view);
+                GL.UniformMatrix4(projLoc, false, ref proj);
+                
+                int texLoc = GL.GetUniformLocation(currentWorldProgram, "uAtlas");
+                if (texLoc >= 0)
+                {
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.BindTexture(TextureTarget.Texture2D, glyphTexture);
+                    GL.Uniform1(texLoc, 0);
+                }
+                
+                // Set darkening factor uniform if using dark world shader
+                if (currentWorldProgram == darkWorldProgram)
+                {
+                    int darkeningLoc = GL.GetUniformLocation(currentWorldProgram, "uDarkeningFactor");
+                    if (darkeningLoc >= 0)
+                    {
+                        GL.Uniform1(darkeningLoc, Cathedral.Config.GlyphSphere.NarrationWorldDarkeningFactor);
+                    }
+                }
 
-            // Draw instanced quads
-            GL.BindVertexArray(vao);
-            GL.DrawElementsInstanced(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero, instanceCount);
-            GL.BindVertexArray(0);
+                GL.BindVertexArray(vao);
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero, worldInstanceCount);
+                GL.BindVertexArray(0);
+            }
+            
+            // Second pass: Render UI glyphs with yellowscale shader
+            if (uiInstanceCount > 0)
+            {
+                GL.UseProgram(currentUIProgram);
+                
+                int viewLoc = GL.GetUniformLocation(currentUIProgram, "uView");
+                int projLoc = GL.GetUniformLocation(currentUIProgram, "uProj");
+                GL.UniformMatrix4(viewLoc, false, ref view);
+                GL.UniformMatrix4(projLoc, false, ref proj);
+                
+                int texLoc = GL.GetUniformLocation(currentUIProgram, "uAtlas");
+                if (texLoc >= 0)
+                {
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.BindTexture(TextureTarget.Texture2D, glyphTexture);
+                    GL.Uniform1(texLoc, 0);
+                }
+
+                GL.BindVertexArray(uiVao);
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, IntPtr.Zero, uiInstanceCount);
+                GL.BindVertexArray(0);
+            }
         }
 
         protected override void OnMouseMove(MouseMoveEventArgs e)
@@ -712,7 +836,7 @@ namespace Cathedral.Glyph
             
             var mouse = MousePosition;
             
-            // Update popup terminal position (always follows mouse)
+            // Update popup terminal position (only if not in fixed mode)
             if (_popupTerminal != null)
             {
                 _popupTerminal.SetMousePosition(mouse);
@@ -721,7 +845,7 @@ namespace Cathedral.Glyph
             // Handle terminal input first (HUD takes priority)
             if (_terminal != null)
             {
-                _terminal.HandleMouseMove(mouse, Size);
+                _terminal.HandleMouseMove(mouse, ClientSize);
             }
             
             var (rayOrig, rayDir) = GetMouseRay(mouse);
@@ -731,11 +855,12 @@ namespace Cathedral.Glyph
             debugRayDirection = rayDir;
             debugMousePos = mouse;
 
-            // Find hovered vertex (only if mouse is not over terminal)
-            if (_terminal == null || !_terminal.IsPositionInTerminal(mouse, Size))
+            // Find hovered vertex (only if mouse is not over terminal and interactions are enabled)
+            if (_worldInteractionsEnabled && (_terminal == null || !_terminal.IsPositionInTerminal(mouse, ClientSize)))
             {
                 int newHover = FindVertexByMagentaRayIntersection(mouse);
                 
+                // Only use expensive screen-space search as fallback and limit frequency
                 if (newHover == -1)
                 {
                     newHover = FindClosestVertexInScreenSpace(mouse);
@@ -749,6 +874,12 @@ namespace Cathedral.Glyph
                     VertexHovered?.Invoke(newHover, mouse);
                 }
             }
+            else if (!_worldInteractionsEnabled && hoveredVertexIndex != -1)
+            {
+                // Clear hover state when interactions are disabled
+                hoveredVertexIndex = -1;
+                VertexHovered?.Invoke(-1, mouse);
+            }
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -758,8 +889,21 @@ namespace Cathedral.Glyph
             
             var mouse = MousePosition;
             
-            // Handle terminal input first (HUD takes priority)
-            if (_terminal != null && _terminal.HandleMouseDown(mouse, Size, e.Button))
+            // Check global click handlers first (for UI popups that extend outside terminal bounds)
+            if (GlobalMouseClicked != null)
+            {
+                foreach (Func<OpenTK.Mathematics.Vector2, MouseButton, bool> handler in GlobalMouseClicked.GetInvocationList())
+                {
+                    if (handler(mouse, e.Button))
+                    {
+                        Console.WriteLine("Global handler consumed mouse click");
+                        return; // A global handler consumed the event
+                    }
+                }
+            }
+            
+            // Handle terminal input (HUD takes priority)
+            if (_terminal != null && _terminal.HandleMouseDown(mouse, ClientSize, e.Button))
             {
                 Console.WriteLine("Terminal handled mouse click");
                 return; // Terminal handled the event
@@ -803,6 +947,14 @@ namespace Cathedral.Glyph
             }
         }
 
+        protected override void OnMouseWheel(MouseWheelEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            
+            // Fire event for scroll handling
+            MouseWheelScrolled?.Invoke(e.OffsetY);
+        }
+
         // Mouse ray casting and vertex finding methods remain the same
         private int FindVertexByMagentaRayIntersection(OpenTK.Mathematics.Vector2 mousePos)
         {
@@ -814,7 +966,7 @@ namespace Cathedral.Glyph
             Vector3 rayDirection = Vector3.Normalize(mouseProjection - cameraPos);
             
             Vector3 sphereCenter = Vector3.Zero;
-            float sphereRadius = SPHERE_RADIUS;
+            float sphereRadius = Config.GlyphSphere.SphereRadius;
             
             Vector3 oc = rayOrigin - sphereCenter;
             float a = Vector3.Dot(rayDirection, rayDirection);
@@ -840,7 +992,7 @@ namespace Cathedral.Glyph
                 Vector3 vertexPos = vertices[i].Position;
                 float dist = Vector3.Distance(intersectionPoint, vertexPos);
                 
-                float maxDist = QUAD_SIZE * VERTEX_SHADER_SIZE_MULTIPLIER;
+                float maxDist = Config.GlyphSphere.QuadSize * Config.GlyphSphere.VertexShaderSizeMultiplier;
                 if (dist <= maxDist && dist < closestDist)
                 {
                     closestDist = dist;
@@ -854,7 +1006,7 @@ namespace Cathedral.Glyph
         private int FindClosestVertexInScreenSpace(OpenTK.Mathematics.Vector2 mousePos)
         {
             var view = GetViewMatrix();
-            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)Size.X / Size.Y, 0.01f, 100f);
+            var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y, Config.GlyphSphere.NearClipPlane, Config.GlyphSphere.FarClipPlane);
             var viewProj = view * proj;
             
             float bestDist = float.MaxValue;
@@ -871,8 +1023,8 @@ namespace Cathedral.Glyph
                 
                 if (ndc.X < -1 || ndc.X > 1 || ndc.Y < -1 || ndc.Y > 1) continue;
                 
-                var screenX = (ndc.X + 1.0f) * 0.5f * Size.X;
-                var screenY = (1.0f - ndc.Y) * 0.5f * Size.Y;
+                var screenX = (ndc.X + 1.0f) * 0.5f * ClientSize.X;
+                var screenY = (1.0f - ndc.Y) * 0.5f * ClientSize.Y;
                 
                 float dx = screenX - mousePos.X;
                 float dy = screenY - mousePos.Y;
@@ -912,15 +1064,15 @@ namespace Cathedral.Glyph
         private (Vector3 rayOrigin, Vector3 rayDirection) GetMouseRay(OpenTK.Mathematics.Vector2 mousePos)
         {
             // Use the Camera class method for mouse ray calculation
-            var (rayOrigin, rayDirection) = _camera.GetMouseRay(new OpenTK.Mathematics.Vector2(mousePos.X, mousePos.Y), Size.X, Size.Y);
+            var (rayOrigin, rayDirection) = _camera.GetMouseRay(new OpenTK.Mathematics.Vector2(mousePos.X, mousePos.Y), ClientSize.X, ClientSize.Y);
             return (rayOrigin, rayDirection);
         }
 
         // Legacy method for compatibility - TODO: Remove when all callers updated
         private (Vector3 rayOrigin, Vector3 rayDirection) GetMouseRay_Legacy(OpenTK.Mathematics.Vector2 mousePos)
         {
-            float x = (2.0f * mousePos.X) / Size.X - 1.0f;
-            float y = 1.0f - (2.0f * mousePos.Y) / Size.Y;
+            float x = (2.0f * mousePos.X) / ClientSize.X - 1.0f;
+            float y = 1.0f - (2.0f * mousePos.Y) / ClientSize.Y;
             
             Vector3 camDir = _camera.GetCameraDirection();
             Vector3 rayOrigin = _camera.GetCameraPosition();
@@ -930,7 +1082,7 @@ namespace Cathedral.Glyph
             Vector3 cameraUp = Vector3.Cross(right, camDir);
             
             float fovY = MathHelper.DegreesToRadians(60f);
-            float aspect = (float)Size.X / Size.Y;
+            float aspect = (float)ClientSize.X / ClientSize.Y;
             
             float tanHalfFov = MathF.Tan(fovY / 2.0f);
             Vector3 rayDirection = Vector3.Normalize(
@@ -952,22 +1104,28 @@ namespace Cathedral.Glyph
 
             BuildIcosphere(subdivisions, radius);
 
-            // Initialize all vertices with default green dots
+            // Initialize random with fixed seed for consistent pathfinding noise
+            var random = new Random(Config.GlyphSphere.PathfindingNoiseSeed);
+
+            // Initialize all vertices with default green dots and pathfinding noise
             for (int i = 0; i < vertices.Count; i++)
             {
+                // Generate noise value between 0 and 1 for this vertex
+                float noiseValue = (float)random.NextDouble();
+                
                 vertices[i] = new Vertex 
                 { 
                     Position = vertices[i].Position,
                     GlyphIndex = 0,
-                    GlyphChar = DEFAULT_GLYPH,
-                    Noise = 0,
+                    GlyphChar = Config.GlyphSphere.DefaultGlyph,
+                    Noise = noiseValue,
                     Color = new Vector4(0.0f, 1.0f, 0.0f, 1.0f), // Green color
                     Size = 1.0f // Default size
                 };
             }
 
             instanceCount = vertices.Count;
-            Console.WriteLine($"Generated {vertices.Count} vertices with default green dots");
+            Console.WriteLine($"Generated {vertices.Count} vertices with pathfinding noise (seed: {Config.GlyphSphere.PathfindingNoiseSeed})");
         }
 
         private void BuildIcosphere(int subdivisions, float radius)
@@ -1057,7 +1215,7 @@ namespace Cathedral.Glyph
 
             foreach (var pos in currentVertices)
             {
-                vertices.Add(new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = DEFAULT_GLYPH, Noise = 0, Color = Vector4.One, Size = 1.0f });
+                vertices.Add(new Vertex { Position = pos, GlyphIndex = 0, GlyphChar = Config.GlyphSphere.DefaultGlyph, Noise = 0, Color = Vector4.One, Size = 1.0f });
             }
 
             indices.AddRange(currentIndices);
@@ -1169,43 +1327,80 @@ namespace Cathedral.Glyph
 
         private void UpdateInstanceBuffer()
         {
-            instanceCount = vertices.Count;
-            float[] data = new float[instanceCount * 18];
-            for (int i = 0; i < instanceCount; i++)
+            // Separate world and UI vertices
+            var worldVertices = new List<(Vertex v, int index)>();
+            var uiVertices = new List<(Vertex v, int index)>();
+            
+            for (int i = 0; i < vertices.Count; i++)
             {
-                var v = vertices[i];
-
-                var normal = Vector3.Normalize(v.Position);
-                Vector3 pole = Vector3.UnitY;
-                var poleProj = pole - normal * Vector3.Dot(pole, normal);
-                if (poleProj.LengthSquared < 1e-6f)
-                    poleProj = Vector3.Cross(normal, Vector3.UnitX);
-                poleProj = Vector3.Normalize(poleProj);
-                var right = Vector3.Normalize(Vector3.Cross(poleProj, normal));
-                var up = poleProj;
-                float size = QUAD_SIZE * v.Size;
-
-                var gi = glyphInfos[v.GlyphIndex];
-                var uvx = gi.UvX; var uvy = gi.UvY; var uvw = gi.UvW; var uvh = gi.UvH;
-
-                Vector4 col = v.Color;
-                if (i == hoveredVertexIndex)
+                if (vertices[i].IsUIElement)
+                    uiVertices.Add((vertices[i], i));
+                else
+                    worldVertices.Add((vertices[i], i));
+            }
+            
+            worldInstanceCount = worldVertices.Count;
+            uiInstanceCount = uiVertices.Count;
+            
+            // Fill world buffer
+            if (worldInstanceCount > 0)
+            {
+                float[] worldData = new float[worldInstanceCount * 18];
+                for (int i = 0; i < worldInstanceCount; i++)
                 {
-                    col = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+                    var (v, vertexIndex) = worldVertices[i];
+                    FillInstanceData(worldData, i, v, vertexIndex);
                 }
+                
+                GL.BindBuffer(BufferTarget.ArrayBuffer, instanceVbo);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, worldData.Length * sizeof(float), worldData);
+            }
+            
+            // Fill UI buffer
+            if (uiInstanceCount > 0)
+            {
+                float[] uiData = new float[uiInstanceCount * 18];
+                for (int i = 0; i < uiInstanceCount; i++)
+                {
+                    var (v, vertexIndex) = uiVertices[i];
+                    FillInstanceData(uiData, i, v, vertexIndex);
+                }
+                
+                GL.BindBuffer(BufferTarget.ArrayBuffer, uiInstanceVbo);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, uiData.Length * sizeof(float), uiData);
+            }
+            
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        }
+        
+        private void FillInstanceData(float[] data, int instanceIdx, Vertex v, int vertexIndex)
+        {
+            var normal = Vector3.Normalize(v.Position);
+            Vector3 pole = Vector3.UnitY;
+            var poleProj = pole - normal * Vector3.Dot(pole, normal);
+            if (poleProj.LengthSquared < 1e-6f)
+                poleProj = Vector3.Cross(normal, Vector3.UnitX);
+            poleProj = Vector3.Normalize(poleProj);
+            var right = Vector3.Normalize(Vector3.Cross(poleProj, normal));
+            var up = poleProj;
+            float size = Config.GlyphSphere.QuadSize * v.Size;
 
-                int baseIdx = i * 18;
-                data[baseIdx + 0] = v.Position.X; data[baseIdx + 1] = v.Position.Y; data[baseIdx + 2] = v.Position.Z;
-                data[baseIdx + 3] = right.X; data[baseIdx + 4] = right.Y; data[baseIdx + 5] = right.Z;
-                data[baseIdx + 6] = up.X; data[baseIdx + 7] = up.Y; data[baseIdx + 8] = up.Z;
-                data[baseIdx + 9] = size;
-                data[baseIdx + 10] = uvx; data[baseIdx + 11] = uvy; data[baseIdx + 12] = uvw; data[baseIdx + 13] = uvh;
-                data[baseIdx + 14] = col.X; data[baseIdx + 15] = col.Y; data[baseIdx + 16] = col.Z; data[baseIdx + 17] = col.W;
+            var gi = glyphInfos[v.GlyphIndex];
+            var uvx = gi.UvX; var uvy = gi.UvY; var uvw = gi.UvW; var uvh = gi.UvH;
+
+            Vector4 col = v.Color;
+            if (vertexIndex == hoveredVertexIndex)
+            {
+                col = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
             }
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, instanceVbo);
-            GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, data.Length * sizeof(float), data);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            int baseIdx = instanceIdx * 18;
+            data[baseIdx + 0] = v.Position.X; data[baseIdx + 1] = v.Position.Y; data[baseIdx + 2] = v.Position.Z;
+            data[baseIdx + 3] = right.X; data[baseIdx + 4] = right.Y; data[baseIdx + 5] = right.Z;
+            data[baseIdx + 6] = up.X; data[baseIdx + 7] = up.Y; data[baseIdx + 8] = up.Z;
+            data[baseIdx + 9] = size;
+            data[baseIdx + 10] = uvx; data[baseIdx + 11] = uvy; data[baseIdx + 12] = uvw; data[baseIdx + 13] = uvh;
+            data[baseIdx + 14] = col.X; data[baseIdx + 15] = col.Y; data[baseIdx + 16] = col.Z; data[baseIdx + 17] = col.W;
         }
 
         private GlyphInfo[] BuildGlyphAtlas(string glyphs, int cellSize, int fontPxSize, out Image<Rgba32> atlas)
@@ -1218,10 +1413,13 @@ namespace Cathedral.Glyph
             atlas = new Image<Rgba32>(atlasW, atlasH, Color.Transparent);
 
             Font font;
+            Font? fallbackFont = null;
+            var coll = new FontCollection();
+            
+            // Load main font
             try
             {
-                var coll = new FontCollection();
-                string fontPath = "assets/fonts/FreeMono.ttf";
+                string fontPath = Config.Terminal.FontPath;
                 if (System.IO.File.Exists(fontPath))
                 {
                     var fam = coll.Add(fontPath);
@@ -1236,19 +1434,44 @@ namespace Cathedral.Glyph
             {
                 font = SystemFonts.CreateFont("Consolas", fontPxSize, FontStyle.Regular);
             }
+            
+            // Load fallback font
+            try
+            {
+                string fallbackFontPath = Config.Terminal.FallbackFontPath;
+                if (System.IO.File.Exists(fallbackFontPath))
+                {
+                    var fallbackFam = coll.Add(fallbackFontPath);
+                    fallbackFont = fallbackFam.CreateFont(fontPxSize, FontStyle.Regular);
+                }
+            }
+            catch
+            {
+                // Fallback font is optional, continue without it
+            }
 
             var infos = new GlyphInfo[glyphs.Length];
             for (int i = 0; i < glyphs.Length; i++)
             {
                 int cx = i % cols;
                 int cy = i / cols;
-                var glyph = glyphs[i].ToString();
+                char glyphChar = glyphs[i];
+                var glyph = glyphChar.ToString();
                 int x = cx * cellSize;
                 int y = cy * cellSize;
+                
+                // Determine which font to use for this glyph
+                Font fontToUse = font;
+                
+                // Use fallback font if this glyph is in the fallback list
+                if (Config.Terminal.FallbackGlyphs.Contains(glyphChar) && fallbackFont != null)
+                {
+                    fontToUse = fallbackFont;
+                }
 
                 atlas.Mutate(ctx =>
                 {
-                    var textOptions = new RichTextOptions(font)
+                    var textOptions = new RichTextOptions(fontToUse)
                     {
                         Origin = new PointF(x + cellSize / 2f, y + cellSize / 2f),
                         HorizontalAlignment = HorizontalAlignment.Center,
@@ -1318,7 +1541,7 @@ namespace Cathedral.Glyph
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
-            GL.Viewport(0, 0, Size.X, Size.Y);
+            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
             UpdateProjection();
             
             // Force terminal to recalculate its layout immediately
@@ -1327,9 +1550,8 @@ namespace Cathedral.Glyph
                 _terminal.ForceRefresh();
             }
             
-            // Log border info on resize (useful for debugging terminal positioning)
-            var (titleBarHeight, borderWidth, borderHeight) = GetWindowBorderInfo();
-            Console.WriteLine($"Window resized - Client: {ClientSize}, Total: {Size}, Title bar: ~{titleBarHeight}px");
+            // Log window info on resize
+            Console.WriteLine($"Window resized - Client: {ClientSize}, Total: {Size}");
         }
 
         private void UpdateProjection()
@@ -1363,7 +1585,7 @@ namespace Cathedral.Glyph
                 Vector3 oc = debugRayOrigin;
                 float a = Vector3.Dot(debugRayDirection, debugRayDirection);
                 float b = 2.0f * Vector3.Dot(oc, debugRayDirection);
-                float c = Vector3.Dot(oc, oc) - SPHERE_RADIUS * SPHERE_RADIUS;
+                float c = Vector3.Dot(oc, oc) - Config.GlyphSphere.SphereRadius * Config.GlyphSphere.SphereRadius;
                 
                 float discriminant = b * b - 4 * a * c;
                 if (discriminant >= 0)
@@ -1393,10 +1615,10 @@ namespace Cathedral.Glyph
             
             AddScreenCanvasGrid();
             
-            // Add camera-to-avatar debug ray every frame
-            if (debugAvatarVertex >= 0)
+            // Add camera-to-protagonist debug ray every frame
+            if (debugProtagonistVertex >= 0)
             {
-                AddDebugCameraToAvatarRay(debugAvatarVertex);
+                AddDebugCameraToProtagonistRay(debugProtagonistVertex);
             }
             
             if (debugMousePos != OpenTK.Mathematics.Vector2.Zero)
@@ -1438,11 +1660,9 @@ namespace Cathedral.Glyph
 
         private Vector3 GetMouseProjectionOnScreen(OpenTK.Mathematics.Vector2 mousePos)
         {
-            float pixelOffsetY = GetWindowBorderHeight();
-            float correctedMouseY = mousePos.Y + pixelOffsetY;
-            
-            float x = (2.0f * mousePos.X) / Size.X - 1.0f;
-            float y = 1.0f - (2.0f * correctedMouseY) / Size.Y;
+            // MousePosition is already client-relative in OpenTK 4.x, no offset needed
+            float x = (2.0f * mousePos.X) / ClientSize.X - 1.0f;
+            float y = 1.0f - (2.0f * mousePos.Y) / ClientSize.Y;
             
             Vector3 camDir = _camera.GetCameraDirection();
             Vector3 cameraPos = _camera.GetCameraPosition();
@@ -1452,7 +1672,7 @@ namespace Cathedral.Glyph
             Vector3 cameraUp = Vector3.Cross(right, camDir);
             
             float fovY = MathHelper.DegreesToRadians(60f);
-            float aspect = (float)Size.X / Size.Y;
+            float aspect = (float)ClientSize.X / ClientSize.Y;
             float nearDist = 1.0f;
             
             float tanHalfFov = MathF.Tan(fovY / 2.0f);
@@ -1482,7 +1702,7 @@ namespace Cathedral.Glyph
             
             // Screen parameters
             float fovY = MathHelper.DegreesToRadians(60f);
-            float aspect = (float)Size.X / Size.Y;
+            float aspect = (float)ClientSize.X / ClientSize.Y;
             float nearDist = 1.0f; // Distance from camera where we draw the screen
             
             float tanHalfFov = MathF.Tan(fovY / 2.0f);
@@ -1596,7 +1816,7 @@ namespace Cathedral.Glyph
             
             // Calculate ray-sphere intersection
             Vector3 sphereCenter = Vector3.Zero;
-            float sphereRadius = SPHERE_RADIUS;
+            float sphereRadius = Config.GlyphSphere.SphereRadius;
             
             // Ray-sphere intersection math
             Vector3 oc = rayOrigin - sphereCenter;
@@ -1663,7 +1883,7 @@ namespace Cathedral.Glyph
             
             // Calculate ray-sphere intersection
             Vector3 sphereCenter = Vector3.Zero;
-            float sphereRadius = SPHERE_RADIUS;
+            float sphereRadius = Config.GlyphSphere.SphereRadius;
             
             // Ray-sphere intersection math
             Vector3 oc = rayOrigin - sphereCenter;
@@ -1730,6 +1950,7 @@ namespace Cathedral.Glyph
             public float Noise;
             public Vector4 Color;
             public float Size; // Size factor from BiomeType/LocationType
+            public bool IsUIElement; // True for UI elements (protagonist, waypoints, etc.)
         }
 
         private struct GlyphInfo
@@ -1758,7 +1979,7 @@ out vec4 vColor;
 
 void main()
 {{
-    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * {VERTEX_SHADER_SIZE_MULTIPLIER};
+    vec3 worldPos = iPos + (iRight * aLocalPos.x + iUp * aLocalPos.y) * iSize * {Config.GlyphSphere.VertexShaderSizeMultiplier};
     gl_Position = uProj * uView * vec4(worldPos, 1.0);
     vUv = vec2(iUvRect.x + aLocalUV.x * iUvRect.z, iUvRect.y + aLocalUV.y * iUvRect.w);
     vColor = iColor;
@@ -1833,6 +2054,72 @@ void main() {
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
         // Use the luminosity as a grayscale value
         FragColor = vec4(colorLuminance, colorLuminance, colorLuminance, 1.0);
+    } else {
+        discard;
+    }
+}";
+
+        private readonly string worldFragmentShaderSrc = @"
+#version 330 core
+in vec2 vUv;
+in vec4 vColor;
+out vec4 FragColor;
+uniform sampler2D uAtlas;
+void main() {
+    vec4 texSample = texture(uAtlas, vUv);
+    float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
+    
+    if (texLuminance > 0.1) {
+        // Compute luminosity of the original vertex color
+        float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
+        // Use the luminosity as a grayscale value
+        FragColor = vec4(colorLuminance, colorLuminance, colorLuminance, 1.0);
+    } else {
+        discard;
+    }
+}";
+
+        private readonly string uiFragmentShaderSrc = @"
+#version 330 core
+in vec2 vUv;
+in vec4 vColor;
+out vec4 FragColor;
+uniform sampler2D uAtlas;
+void main() {
+    vec4 texSample = texture(uAtlas, vUv);
+    float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
+    
+    if (texLuminance > 0.1) {
+        // Compute luminosity of the original vertex color
+        float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
+        // Map luminosity to yellow scale: dark yellow (0.4, 0.4, 0.0) to bright yellow (1.0, 1.0, 0.0)
+        float darkYellow = 0.4;
+        float yellowValue = mix(darkYellow, 1.0, colorLuminance);
+        // Boost brightness by using texLuminance as alpha to make thin glyphs appear brighter
+        float brightness = min(1.0, yellowValue * (1.0 + texLuminance * 0.5));
+        FragColor = vec4(brightness, brightness, 0.0, 1.0);
+    } else {
+        discard;
+    }
+}";
+
+        private readonly string darkWorldFragmentShaderSrc = @"
+#version 330 core
+in vec2 vUv;
+in vec4 vColor;
+out vec4 FragColor;
+uniform sampler2D uAtlas;
+uniform float uDarkeningFactor;
+void main() {
+    vec4 texSample = texture(uAtlas, vUv);
+    float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
+    
+    if (texLuminance > 0.1) {
+        // Compute luminosity of the original vertex color
+        float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
+        // Use the luminosity as a grayscale value, but darker (multiply by darkening factor)
+        float darkenedLuminance = colorLuminance * uDarkeningFactor;
+        FragColor = vec4(darkenedLuminance, darkenedLuminance, darkenedLuminance, 1.0);
     } else {
         discard;
     }
@@ -1924,17 +2211,17 @@ void main() { FragColor = vec4(vColor, 1.0); }";
         {
             if (vertexIndex >= 0 && vertexIndex < vertices.Count)
             {
-                Vector3 avatarPosition = GetVertexPosition(vertexIndex);
+                Vector3 protagonistPosition = GetVertexPosition(vertexIndex);
                 
                 // Use the camera's focus method to center on the glyph position
-                _camera.FocusOnPosition(avatarPosition, true);
+                _camera.FocusOnPosition(protagonistPosition, true);
                 
-                // STEP 1: Position camera at avatar position (this we know works)
-                // Calculate the direction from sphere center to avatar
-                Vector3 fromCenterToAvatar = avatarPosition.Normalized();
+                // STEP 1: Position camera at protagonist position (this we know works)
+                // Calculate the direction from sphere center to protagonist
+                Vector3 fromCenterToProtagonist = protagonistPosition.Normalized();
                 
                 // STEP 2: Move camera back along the same line to create "drone above" effect
-                // The camera should be on the line from center through avatar, but at original distance
+                // The camera should be on the line from center through protagonist, but at original distance
                 // Camera positioning handled by Camera class
                 
                 // STEP 3: Calculate camera angles to look toward sphere center from drone position
@@ -1943,26 +2230,26 @@ void main() { FragColor = vec4(vColor, 1.0); }";
                 
                 // Camera parameters updated by Camera class
                 
-                // Store avatar vertex for continuous debug ray rendering
-                debugAvatarVertex = vertexIndex;
+                // Store protagonist vertex for continuous debug ray rendering
+                debugProtagonistVertex = vertexIndex;
                 
                 // Verify the calculation
                 Vector3 calculatedCameraPos = _camera.GetCameraPosition();
                 
-                Console.WriteLine($"� Camera positioned like drone above avatar");
-                Console.WriteLine($"  Avatar position: {avatarPosition}");
+                Console.WriteLine($"� Camera positioned like drone above protagonist");
+                Console.WriteLine($"  Protagonist position: {protagonistPosition}");
                 Console.WriteLine($"  Camera position: {calculatedCameraPos}");
                 Console.WriteLine($"  Calculated camera pos: {calculatedCameraPos}");
-                Console.WriteLine($"  Camera focused on target: {Vector3.Distance(avatarPosition, Vector3.Zero) > 0}");
+                Console.WriteLine($"  Camera focused on target: {Vector3.Distance(protagonistPosition, Vector3.Zero) > 0}");
                 Console.WriteLine($"  Camera distance: {_camera.Distance:F2}");
                 Console.WriteLine($"  Camera angles: yaw={_camera.Yaw:F1}°, pitch={_camera.Pitch:F1}°");
             }
         }
 
         /// <summary>
-        /// Adds a debug ray from camera position to avatar glyph for visual debugging
+        /// Adds a debug ray from camera position to protagonist glyph for visual debugging
         /// </summary>
-        private void AddDebugCameraToAvatarRay(int avatarVertexIndex)
+        private void AddDebugCameraToProtagonistRay(int avatarVertexIndex)
         {
             if (avatarVertexIndex >= 0 && avatarVertexIndex < vertices.Count)
             {
@@ -1970,17 +2257,18 @@ void main() { FragColor = vec4(vColor, 1.0); }";
                 Vector3 cameraPos = _camera.GetCameraPosition();
                 Vector3 avatarPos = GetVertexPosition(avatarVertexIndex);
                 
-                // Camera-to-avatar debug ray: cyan camera marker, yellow avatar marker
+                // Camera-to-protagonist debug ray: cyan camera marker, yellow protagonist marker
                 debugVertices.Add(cameraPos);
                 debugColors.Add(new Vector3(0.0f, 1.0f, 1.0f)); // Cyan for camera position
                 
                 debugVertices.Add(avatarPos);
-                debugColors.Add(new Vector3(1.0f, 1.0f, 0.0f)); // Yellow for avatar position (target)
+                debugColors.Add(new Vector3(1.0f, 1.0f, 0.0f)); // Yellow for protagonist position (target)
             }
         }
 
         protected override void OnUnload()
         {
+            _skyCloudRenderer?.Dispose();
             _pathfindingService?.Dispose();
             _terminal?.Dispose();
             base.OnUnload();

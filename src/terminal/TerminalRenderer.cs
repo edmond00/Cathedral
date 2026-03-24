@@ -23,6 +23,7 @@ namespace Cathedral.Terminal
         private int _instanceVbo;
         private TerminalInstance[] _instances;
         private bool _instanceBufferDirty;
+        private float _darkenFactor = 1.0f;
         
         // Quad geometry (shared for all cells)
         private readonly float[] _quadVertices = {
@@ -225,6 +226,10 @@ namespace Cathedral.Terminal
             int projLoc = GL.GetUniformLocation(_program, "uProjection");
             GL.UniformMatrix4(projLoc, false, ref projectionMatrix);
             
+            // Set darken factor
+            int darkenLoc = GL.GetUniformLocation(_program, "uDarkenFactor");
+            GL.Uniform1(darkenLoc, _darkenFactor);
+            
             // Bind atlas texture
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, _atlas.TextureId);
@@ -331,6 +336,14 @@ namespace Cathedral.Terminal
             _instanceBufferDirty = true;
             _view.MarkAllDirty();
         }
+        
+        /// <summary>
+        /// Sets the darken factor for the terminal (0.0 = black, 1.0 = normal)
+        /// </summary>
+        public void SetDarkenFactor(float factor)
+        {
+            _darkenFactor = Math.Clamp(factor, 0.0f, 1.0f);
+        }
 
         /// <summary>
         /// Gets information about the current terminal layout for the given window size
@@ -389,13 +402,15 @@ in vec4 vBgColor;
 
 uniform sampler2D uGlyphAtlas;
 uniform int uRenderPass;
+uniform float uDarkenFactor;
 
 out vec4 FragColor;
 
 void main()
 {
     if (uRenderPass == 0) {
-        FragColor = vBgColor;
+        // Apply darken factor to background RGB
+        FragColor = vec4(vBgColor.rgb * uDarkenFactor, vBgColor.a);
     } else {
         vec4 atlasTexel = texture(uGlyphAtlas, vUV);
         float glyphAlpha = atlasTexel.r;
@@ -404,7 +419,8 @@ void main()
             discard;
         }
         
-        FragColor = vec4(vTextColor.rgb, vTextColor.a * glyphAlpha);
+        // Apply darken factor to text RGB
+        FragColor = vec4(vTextColor.rgb * uDarkenFactor, vTextColor.a * glyphAlpha);
     }
 }";
         }

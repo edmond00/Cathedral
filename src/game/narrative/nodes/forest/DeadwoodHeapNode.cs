@@ -1,0 +1,52 @@
+using System;
+using System.Collections.Generic;
+
+namespace Cathedral.Game.Narrative.Nodes.Forest;
+
+/// <summary>
+/// Deadwood Heap - A collapsed pile of dead branches and trunks.
+/// Associated with: Blackwood
+/// </summary>
+public class DeadwoodHeapNode : NarrationNode
+{
+    public override string NodeId => "deadwood_heap";
+    public override string ContextDescription => "climbing over deadwood";
+    public override string TransitionDescription => "climb the deadwood heap";
+    public override bool IsEntryNode => false;
+    
+    public override List<string> NodeKeywords => new() { "collapsed", "dead", "pile", "branches", "decay", "tangle", "heap", "brittle", "grey", "stacked" };
+    
+    private static readonly string[] Moods = { "collapsed", "tangled", "dead", "brittle", "chaotic", "decaying", "piled", "grey" };
+    
+    public override string GenerateNeutralDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        
+        return $"{mood} deadwood heap";
+    }
+    
+    public sealed class DeadBranch : Item
+    {
+        public override string ItemId => "dead_branch";
+        public override string DisplayName => "Dead Branch";
+        public override string Description => "A brittle, lifeless branch from the heap";
+        public override List<string> OutcomeKeywords => new() { "brittle", "grey", "dead", "dry", "branch", "lifeless", "snapping", "wood", "bare", "weathered" };
+    }
+    
+    public sealed class DryFungus : Item
+    {
+        public override string ItemId => "deadwood_heap_dry_fungus";
+        public override string DisplayName => "Dry Fungus";
+        public override string Description => "A papery bracket fungus from decaying wood";
+        public override List<string> OutcomeKeywords => new() { "papery", "bracket", "shelf", "dry", "layered", "ridged", "brown", "crumbling", "woody", "attached" };
+    }
+    
+    public sealed class BarkBeetle : Item
+    {
+        public override string ItemId => "deadwood_heap_bark_beetle";
+        public override string DisplayName => "Bark Beetle Specimen";
+        public override string Description => "Dead bark beetles found within the crumbling wood";
+        public override List<string> OutcomeKeywords => new() { "black", "shiny", "insect", "exoskeleton", "small", "beetle", "dead", "chitinous", "hard", "dried" };
+    }
+}
