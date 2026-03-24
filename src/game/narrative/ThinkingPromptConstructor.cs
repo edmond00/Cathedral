@@ -105,6 +105,93 @@ Output fields:
     }
     
     /// <summary>
+    /// Builds the reasoning-only first prompt for the batched thinking pipeline.
+    /// Asks the LLM for its internal reasoning about the keyword — no actions yet.
+    /// The slot retains this context for all subsequent action calls in the same batch.
+    /// </summary>
+    public string BuildReasoningPrompt(
+        string keyword,
+        string? keywordSourceOutcome,
+        NarrationNode node,
+        List<OutcomeWithMetadata> outcomesWithMetadata,
+        List<ModusMentis> actionModiMentis,
+        Protagonist protagonist,
+        ModusMentis thinkingModusMentis)
+    {
+        var straightforwardOutcomes = outcomesWithMetadata
+            .Where(o => !o.IsCircuitous)
+            .Select(o => o.Outcome.ToNaturalLanguageString())
+            .ToList();
+
+        var circuitousOutcomes = outcomesWithMetadata
+            .Where(o => o.IsCircuitous)
+            .Select(o => o.Outcome.ToNaturalLanguageString())
+            .ToList();
+
+        var outcomesSection = new System.Text.StringBuilder();
+        outcomesSection.AppendLine("What could happen:");
+        foreach (var outcome in straightforwardOutcomes)
+            outcomesSection.AppendLine($"- {outcome}");
+
+        if (circuitousOutcomes.Count > 0)
+        {
+            outcomesSection.AppendLine();
+            outcomesSection.AppendLine("Other possibilities (harder to achieve):");
+            foreach (var outcome in circuitousOutcomes)
+                outcomesSection.AppendLine($"- {outcome}");
+        }
+
+        string attentionLine = string.IsNullOrEmpty(keywordSourceOutcome)
+            ? $@"Your attention is drawn to: ""{keyword}"""
+            : $@"Your attention is drawn to the ""{keyword}"" aspect of ""{keywordSourceOutcome}""";
+
+        string thinkLine = string.IsNullOrEmpty(keywordSourceOutcome)
+            ? $@"Think about what ""{keyword}"" suggests to you. What possibilities does it open?"
+            : $@"Think about what ""{keyword}"" suggests to you in the context of observing ""{keywordSourceOutcome}"". What possibilities does it open?";
+
+        return $@"{attentionLine}
+
+Current situation:
+{node.GenerateNeutralDescription(protagonist.CurrentLocationId)}
+
+ModiMentis you can apply:
+{string.Join("\n", actionModiMentis.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
+
+{outcomesSection.ToString().TrimEnd()}
+
+{thinkLine}
+
+Express your internal thoughts about this element — why it catches your interest,
+what connections you see, how it relates to your capabilities.
+Speak as {thinkingModusMentis.PersonaTone}.
+
+Output field:
+- reasoning_text
+";
+    }
+
+    /// <summary>
+    /// Builds a single-action prompt for the batched thinking pipeline.
+    /// Called once per action after the reasoning call; the slot keeps prior context as CoT.
+    /// </summary>
+    public string BuildSingleActionPrompt(
+        int actionIndex,
+        int totalActions,
+        ModusMentis thinkingModusMentis)
+    {
+        return $@"As {thinkingModusMentis.PersonaTone}, propose action {actionIndex} of {totalActions}.
+
+Choose a modusMentis, select an outcome from the list above, and describe what you will try to do.
+Do not repeat an outcome already proposed.
+
+Output fields:
+- action_modusMentis
+- outcome
+- action_description (must start with ""try to "")
+";
+    }
+
+    /// <summary>
     /// Legacy overload that accepts plain outcomes (treats all as straightforward).
     /// Does not include outcome context for the keyword.
     /// </summary>

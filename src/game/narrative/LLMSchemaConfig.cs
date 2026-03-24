@@ -58,7 +58,37 @@ public static class LLMSchemaConfig
     #endregion
     
     #region Thinking Schemas
-    
+
+    /// <summary>
+    /// Schema for the reasoning-only first call of the batched thinking pipeline.
+    /// </summary>
+    public static CompositeField CreateReasoningSchema()
+    {
+        return new CompositeField("ReasoningResponse",
+            new StringField("reasoning_text",
+                MinLength: 50,
+                MaxLength: 800,
+                Hint: "Internal reasoning about the keyword and what possibilities it opens")
+        );
+    }
+
+    /// <summary>
+    /// Schema for a single action in the batched thinking pipeline.
+    /// Used for each action call after the reasoning call.
+    /// </summary>
+    public static CompositeField CreateSingleActionSchema(List<string> validActionModiMentis, List<string> validOutcomes)
+    {
+        return new CompositeField("Action",
+            new ChoiceField<string>("action_modusMentis", validActionModiMentis.ToArray()),
+            new ChoiceField<string>("outcome", validOutcomes.ToArray()),
+            new TemplateStringField("action_description",
+                Template: "try to <generated>",
+                MinGenLength: 10,
+                MaxGenLength: 200,
+                Hint: "Describe in few words the action the protagonist will try to take to achieve the outcome")
+        );
+    }
+
     /// <summary>
     /// Schema for thinking/planning responses.
     /// Includes reasoning text and a list of actions with modiMentis, outcomes, and descriptions.

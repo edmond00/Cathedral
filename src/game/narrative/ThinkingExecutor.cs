@@ -18,6 +18,7 @@ public class ThinkingExecutor
     private readonly LlamaServerManager _llmManager;
     private readonly ThinkingPromptConstructor _promptConstructor;
     private readonly ModusMentisSlotManager _slotManager;
+    private readonly Random _random = new();
 
     public ThinkingExecutor(
         LlamaServerManager llmManager,
@@ -60,45 +61,73 @@ public class ThinkingExecutor
         Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
-        // Extract outcomes for schema (schema just needs the natural language strings)
-        var possibleOutcomes = outcomesWithMetadata.Select(o => o.Outcome).ToList();
-        
-        // Build the user prompt with metadata (separates straightforward vs circuitous)
-        string userPrompt = _promptConstructor.BuildThinkingPrompt(
-            keyword,
-            keywordSourceOutcome,
-            node,
-            outcomesWithMetadata,  // Pass metadata so prompt shows separation
-            actionModiMentis,
-            protagonist,
-            thinkingModusMentis);
+        var outcomeStrings = outcomesWithMetadata.Select(o => o.Outcome.ToNaturalLanguageString()).ToList();
+        var modusMentisIds = actionModiMentis.Select(s => s.ModusMentisId).ToList();
 
-        // Build JSON schema
-        var schema = LLMSchemaConfig.CreateThinkingSchema(
-            actionModiMentis.Select(s => s.ModusMentisId).ToList(),
-            possibleOutcomes.Select(o => o.ToNaturalLanguageString()).ToList());
-
-        // Generate GBNF constraint
-        string gbnfGrammar = JsonConstraintGenerator.GenerateGBNF(schema);
-
-        // Get or create slot
+        // Get or create slot, then reset history so this thinking batch starts clean
         int slot = await GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
+        _llmManager.ResetInstance(slot);
 
-        // Request from LLM
-        string? jsonResponse = await RequestFromLLMAsync(
-            slot,
-            userPrompt,
-            gbnfGrammar,
-            600, // Max tokens for reasoning + actions
-            cancellationToken);
+        // ── Call 1: Reasoning ──────────────────────────────────────────────────────
+        string reasoningPrompt = _promptConstructor.BuildReasoningPrompt(
+            keyword, keywordSourceOutcome, node, outcomesWithMetadata,
+            actionModiMentis, protagonist, thinkingModusMentis);
 
-        if (string.IsNullOrWhiteSpace(jsonResponse))
+        string reasoningGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateReasoningSchema());
+
+        string? reasoningJson = await RequestFromLLMAsync(slot, reasoningPrompt, reasoningGbnf, 400, cancellationToken);
+        if (string.IsNullOrWhiteSpace(reasoningJson))
         {
+            Console.Error.WriteLine("ThinkingExecutor: Reasoning call returned empty response.");
             return null;
         }
 
-        // Parse JSON response (pass metadata for circuitous marking)
-        return ParseThinkingResponse(jsonResponse, outcomesWithMetadata, actionModiMentis, thinkingModusMentis, keyword);
+        string reasoningText = ParseReasoningResponse(reasoningJson);
+        Console.WriteLine($"ThinkingExecutor: Reasoning complete ({reasoningText.Length} chars)");
+
+        // ── Calls 2..N: Actions ────────────────────────────────────────────────────
+        int totalActions = Math.Min(_random.Next(2, 4), outcomesWithMetadata.Count);
+        totalActions = Math.Max(totalActions, 2); // at least 2
+
+        string actionGbnf = JsonConstraintGenerator.GenerateGBNF(
+            LLMSchemaConfig.CreateSingleActionSchema(modusMentisIds, outcomeStrings));
+
+        var actions = new List<ParsedNarrativeAction>();
+
+        for (int i = 1; i <= totalActions; i++)
+        {
+            string actionPrompt = _promptConstructor.BuildSingleActionPrompt(i, totalActions, thinkingModusMentis);
+            string? actionJson = await RequestFromLLMAsync(slot, actionPrompt, actionGbnf, 200, cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(actionJson))
+            {
+                Console.Error.WriteLine($"ThinkingExecutor: Action {i} call returned empty response.");
+                continue;
+            }
+
+            var action = ParseSingleActionResponse(actionJson, outcomesWithMetadata, actionModiMentis, thinkingModusMentis, keyword);
+            if (action != null)
+            {
+                actions.Add(action);
+                Console.WriteLine($"ThinkingExecutor: Action {i}/{totalActions} parsed: '{action.DisplayText}'");
+            }
+            else
+            {
+                Console.Error.WriteLine($"ThinkingExecutor: Action {i} failed to parse.");
+            }
+        }
+
+        if (actions.Count == 0)
+        {
+            Console.Error.WriteLine("ThinkingExecutor: All action calls failed.");
+            return null;
+        }
+
+        return new ThinkingResponse
+        {
+            ReasoningText = reasoningText,
+            Actions = actions
+        };
     }
     
     /// <summary>
@@ -206,6 +235,78 @@ public class ThinkingExecutor
     }
 
 
+
+    /// <summary>
+    /// Parses the reasoning-only call response.
+    /// </summary>
+    private string ParseReasoningResponse(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.GetProperty("reasoning_text").GetString() ?? "";
+        }
+        catch (JsonException ex)
+        {
+            Console.Error.WriteLine($"ThinkingExecutor: Failed to parse reasoning JSON: {ex.Message}");
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// Parses a single-action call response into a <see cref="ParsedNarrativeAction"/>.
+    /// Returns null if the action cannot be matched to a known outcome.
+    /// </summary>
+    private ParsedNarrativeAction? ParseSingleActionResponse(
+        string json,
+        List<OutcomeWithMetadata> outcomesWithMetadata,
+        List<ModusMentis> actionModiMentis,
+        ModusMentis thinkingModusMentis,
+        string keyword)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            string actionModusMentisId = root.GetProperty("action_modusMentis").GetString() ?? "";
+            string outcomeStr = root.GetProperty("outcome").GetString() ?? "";
+            string actionDesc = root.GetProperty("action_description").GetString() ?? "";
+
+            var outcomeWithMeta = outcomesWithMetadata.FirstOrDefault(o =>
+                o.Outcome.ToNaturalLanguageString().Equals(outcomeStr, StringComparison.OrdinalIgnoreCase));
+
+            if (outcomeWithMeta == null)
+            {
+                Console.WriteLine($"ThinkingExecutor: Could not match outcome '{outcomeStr}'");
+                return null;
+            }
+
+            string displayText = actionDesc.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
+                ? actionDesc.Substring(7)
+                : actionDesc;
+
+            var resolvedModusMentis = actionModiMentis.FirstOrDefault(s => s.ModusMentisId == actionModusMentisId);
+
+            return new ParsedNarrativeAction
+            {
+                ActionModusMentisId = actionModusMentisId,
+                ActionModusMentis = resolvedModusMentis,
+                PreselectedOutcome = outcomeWithMeta.Outcome,
+                ActionText = actionDesc,
+                DisplayText = displayText,
+                ThinkingModusMentis = thinkingModusMentis,
+                Keyword = keyword,
+                IsCircuitous = outcomeWithMeta.IsCircuitous,
+                IntermediateNode = outcomeWithMeta.IntermediateNode
+            };
+        }
+        catch (JsonException ex)
+        {
+            Console.Error.WriteLine($"ThinkingExecutor: Failed to parse single action JSON: {ex.Message}");
+            return null;
+        }
+    }
 
     /// <summary>
     /// Parses the LLM JSON response into a ThinkingResponse.
