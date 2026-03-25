@@ -546,8 +546,8 @@ public static class Config
     {
         // Sampling parameters (narrative generation and constrained single-token requests)
         public const int GenerationMaxTokens = 2048;
-        public const double Temperature = 0.3;
-        public const int TopK = 3;
+        public const double Temperature = 0.5;
+        public const int TopK = 10;
         public const double TopP = 0.9;
 
         // Temperature for utility requests (health-check, prompt pre-caching)
