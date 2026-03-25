@@ -13,7 +13,7 @@ public class HighwoodNode : NarrationNode
     public override string TransitionDescription => "enter the highwood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "tall", "soaring", "sparse", "lichen", "bark", "giants", "towering", "exposed", "roots", "vertical" };
+    public override List<string> NodeKeywords => new() { "lichen", "bark", "roots", "height" };
     
     private static readonly string[] Moods = { "towering", "majestic", "imposing", "grand", "austere", "noble", "dominant", "lofty" };
     
@@ -30,7 +30,7 @@ public class HighwoodNode : NarrationNode
         public override string ItemId => "highwood_lichen";
         public override string DisplayName => "Highwood Lichen";
         public override string Description => "Pale lichen scraped from highwood bark";
-        public override List<string> OutcomeKeywords => new() { "lichen", "pale", "bark", "crusty", "gray", "textured", "growth", "dry", "ancient", "crumbling" };
+        public override List<string> OutcomeKeywords => new() { "lichen", "crust", "bark" };
     }
     
     public sealed class BarkShavings : Item
@@ -38,6 +38,6 @@ public class HighwoodNode : NarrationNode
         public override string ItemId => "highwood_bark_shavings";
         public override string DisplayName => "Bark Shavings";
         public override string Description => "Thin strips of bark peeled from tall trunks";
-        public override List<string> OutcomeKeywords => new() { "bark", "shavings", "strips", "thin", "brown", "fibrous", "peeled", "curled", "dry", "woody" };
+        public override List<string> OutcomeKeywords => new() { "bark", "shaving", "fiber" };
     }
 }

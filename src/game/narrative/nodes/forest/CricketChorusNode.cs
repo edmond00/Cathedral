@@ -13,7 +13,7 @@ public class CricketChorusNode : NarrationNode
     public override string TransitionDescription => "follow the cricket sounds";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "chirping", "rhythmic", "singing", "insects", "night", "chorus", "loud", "trilling", "music", "sound" };
+    public override List<string> NodeKeywords => new() { "chirp", "chorus", "night", "rhythm" };
     
     private static readonly string[] Moods = { "chirping", "rhythmic", "singing", "loud", "harmonious", "nocturnal", "resonant", "trilling" };
     
@@ -30,7 +30,7 @@ public class CricketChorusNode : NarrationNode
         public override string ItemId => "cricket_chorus_cricket_legs";
         public override string DisplayName => "Cricket Legs";
         public override string Description => "Jointed legs from dead crickets";
-        public override List<string> OutcomeKeywords => new() { "legs", "jointed", "spindly", "brown", "thin", "segments", "insect", "dried", "delicate", "appendages" };
+        public override List<string> OutcomeKeywords => new() { "leg", "joint", "appendage" };
     }
     
     public sealed class CricketChirp : Item
@@ -38,6 +38,6 @@ public class CricketChorusNode : NarrationNode
         public override string ItemId => "cricket_chorus_cricket_chirp_sample";
         public override string DisplayName => "Cricket Chirp Sample";
         public override string Description => "A living cricket captured for its song";
-        public override List<string> OutcomeKeywords => new() { "cricket", "chirping", "singing", "sound", "rhythmic", "musical", "nocturnal", "calling", "insect", "alive" };
+        public override List<string> OutcomeKeywords => new() { "chirp", "resonance", "night" };
     }
 }

@@ -14,7 +14,7 @@ public class BareForestFloorNode : NarrationNode
     public override string TransitionDescription => "step onto bare floor";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "bare", "empty", "lifeless", "dark", "soil", "exposed", "barren", "nothing", "devoid", "sterile" };
+    public override List<string> NodeKeywords => new() { "soil", "barren", "emptiness", "stillness" };
     
     private static readonly string[] Moods = { "bare", "lifeless", "empty", "barren", "devoid", "sterile", "dark", "desolate" };
     
@@ -31,7 +31,7 @@ public class BareForestFloorNode : NarrationNode
         public override string ItemId => "bare_black_soil";
         public override string DisplayName => "Bare Black Soil";
         public override string Description => "Dark, sterile soil from the lightless floor";
-        public override List<string> OutcomeKeywords => new() { "dark", "black", "sterile", "soil", "bare", "lifeless", "cold", "hard", "compacted", "dead" };
+        public override List<string> OutcomeKeywords => new() { "soil", "earth", "sterility" };
     }
     
     public sealed class CompactedEarth : Item
@@ -39,6 +39,6 @@ public class BareForestFloorNode : NarrationNode
         public override string ItemId => "bare_floor_compacted_earth";
         public override string DisplayName => "Compacted Earth";
         public override string Description => "Hard-packed earth untouched by growth";
-        public override List<string> OutcomeKeywords => new() { "hard", "packed", "compressed", "surface", "smooth", "dense", "unyielding", "trampled", "grey", "solid" };
+        public override List<string> OutcomeKeywords => new() { "earth", "compaction", "surface" };
     }
 }

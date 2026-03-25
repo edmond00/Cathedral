@@ -22,7 +22,7 @@ public class ValleyUpperFloorNode : PyramidalFeatureNode
     public override string TransitionDescription => "enter the valley upper floor";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "valley", "floor", "upper", "wide", "flat", "meadow", "open", "gentle", "grass", "spacious" };
+    public override List<string> NodeKeywords => new() { "valley", "meadow", "grass", "openness" };
     
     private static readonly string[] Moods = { "wide", "open", "spacious", "peaceful" };
     
@@ -37,7 +37,7 @@ public class ValleyUpperFloorNode : PyramidalFeatureNode
         public override string ItemId => "valley_upper_floor_meadow_grass";
         public override string DisplayName => "Meadow Grass";
         public override string Description => "Tall grass covering the valley floor";
-        public override List<string> OutcomeKeywords => new() { "meadow", "grass", "tall", "green", "waving", "lush", "soft", "covering", "thick", "abundant" };
+        public override List<string> OutcomeKeywords => new() { "grass", "meadow", "abundance" };
     }
     
     public sealed class WildflowerPatch : Item
@@ -45,7 +45,7 @@ public class ValleyUpperFloorNode : PyramidalFeatureNode
         public override string ItemId => "valley_upper_floor_wildflower_patch";
         public override string DisplayName => "Wildflower Patch";
         public override string Description => "Colorful flowers in the meadow";
-        public override List<string> OutcomeKeywords => new() { "wildflower", "patch", "colorful", "flowers", "blooming", "bright", "scattered", "beautiful", "vibrant", "mixed" };
+        public override List<string> OutcomeKeywords => new() { "wildflower", "bloom", "patch" };
     }
     
     public sealed class GentleSlope : Item
@@ -53,6 +53,6 @@ public class ValleyUpperFloorNode : PyramidalFeatureNode
         public override string ItemId => "valley_upper_floor_gentle_slope";
         public override string DisplayName => "Gentle Slope";
         public override string Description => "Gradual incline across the floor";
-        public override List<string> OutcomeKeywords => new() { "gentle", "slope", "gradual", "incline", "easy", "smooth", "rolling", "subtle", "mild", "walking" };
+        public override List<string> OutcomeKeywords => new() { "slope", "incline", "gradient" };
     }
 }

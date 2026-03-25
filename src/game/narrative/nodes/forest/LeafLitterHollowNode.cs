@@ -14,7 +14,7 @@ public class LeafLitterHollowNode : NarrationNode
     public override string TransitionDescription => "descend into the hollow";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "depression", "leaves", "decomposing", "deep", "soft", "brown", "mulch", "organic", "moist", "layer" };
+    public override List<string> NodeKeywords => new() { "mulch", "depression", "leaf", "decomposition" };
     
     private static readonly string[] Moods = { "deep", "soft", "decomposing", "layered", "accumulated", "moist", "rich", "organic" };
     
@@ -31,7 +31,7 @@ public class LeafLitterHollowNode : NarrationNode
         public override string ItemId => "leaf_mold";
         public override string DisplayName => "Leaf Mold";
         public override string Description => "Rich, partially decomposed leaf matter";
-        public override List<string> OutcomeKeywords => new() { "dark", "crumbly", "rich", "organic", "decomposed", "humus", "fertile", "moist", "earthy", "mold" };
+        public override List<string> OutcomeKeywords => new() { "mold", "humus", "decomposition" };
     }
     
     public sealed class Millipede : Item
@@ -39,6 +39,6 @@ public class LeafLitterHollowNode : NarrationNode
         public override string ItemId => "leaf_litter_millipede";
         public override string DisplayName => "Millipede";
         public override string Description => "A long millipede coiling defensively";
-        public override List<string> OutcomeKeywords => new() { "segmented", "coiling", "black", "legs", "many", "defensive", "curled", "arthropod", "cylindrical", "slow" };
+        public override List<string> OutcomeKeywords => new() { "millipede", "segment", "arthropod" };
     }
 }

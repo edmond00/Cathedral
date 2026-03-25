@@ -16,7 +16,7 @@ public class SnowCorniceCrestNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the snow cornice crest";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "overhang", "cornice", "precarious", "snow", "dangerous", "wind-formed", "fragile", "curved", "white", "unstable" };
+    public override List<string> NodeKeywords => new() { "cornice", "overhang", "snow", "danger" };
     
     private static readonly string[] Moods = { "precarious", "overhanging", "delicate", "dangerous" };
     

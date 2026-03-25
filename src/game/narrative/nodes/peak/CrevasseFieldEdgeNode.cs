@@ -16,7 +16,7 @@ public class CrevasseFieldEdgeNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the crevasse field edge";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "crevasse", "edge", "crack", "dangerous", "gap", "ice", "precipice", "chasm", "split", "deep" };
+    public override List<string> NodeKeywords => new() { "crevasse", "gap", "chasm", "danger" };
     
     private static readonly string[] Moods = { "dangerous", "fractured", "treacherous", "deep" };
     
@@ -31,7 +31,7 @@ public class CrevasseFieldEdgeNode : PyramidalFeatureNode
         public override string ItemId => "crevasse_field_edge_crevasse_lip";
         public override string DisplayName => "Crevasse Lip";
         public override string Description => "Edge of the crevasse opening";
-        public override List<string> OutcomeKeywords => new() { "lip", "edge", "crevasse", "rim", "ice", "frozen", "sharp", "precipice", "brink", "dangerous" };
+        public override List<string> OutcomeKeywords => new() { "lip", "crevasse", "ice" };
     }
     
 }

@@ -20,7 +20,7 @@ public class BrambleRunNode : NarrationNode
     public override string TransitionDescription => "push through the brambles";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "thorny", "berries", "black", "ripe", "tangled", "sharp", "vines", "purple", "juicy", "scratching" };
+    public override List<string> NodeKeywords => new() { "thorn", "berry", "bramble", "vine" };
     
     private static readonly string[] Moods = { "thorny", "tangled", "scratching", "productive", "wild", "dense", "prickly", "guarded" };
     
@@ -37,7 +37,7 @@ public class BrambleRunNode : NarrationNode
         public override string ItemId => "wild_blackberry";
         public override string DisplayName => "Wild Blackberry";
         public override string Description => "A cluster of ripe blackberries";
-        public override List<string> OutcomeKeywords => new() { "black", "ripe", "juicy", "sweet", "purple", "cluster", "berry", "tart", "drupes", "staining" };
+        public override List<string> OutcomeKeywords => new() { "berry", "drupe", "cluster", "stain" };
     }
     
     public sealed class BrambleThorn : Item
@@ -45,6 +45,6 @@ public class BrambleRunNode : NarrationNode
         public override string ItemId => "bramble_run_thorn";
         public override string DisplayName => "Bramble Thorn";
         public override string Description => "A sharp curved thorn from a bramble cane";
-        public override List<string> OutcomeKeywords => new() { "sharp", "curved", "pointed", "hooked", "dangerous", "needle", "spine", "piercing", "rigid", "defensive" };
+        public override List<string> OutcomeKeywords => new() { "thorn", "spine", "hook" };
     }
 }

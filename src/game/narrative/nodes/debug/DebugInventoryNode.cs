@@ -203,7 +203,7 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size       => ItemSize.Small;
         public override List<ItemType> Types => new() { ItemType.Other };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
-        public override List<string> OutcomeKeywords => new() { "knife", "blade", "short" };
+        public override List<string> OutcomeKeywords => new() { "knife", "blade", "edge" };
         public override string[] Info => new[]
         {
             "Damage: 1d4+2",
@@ -244,7 +244,7 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Small;
         public override List<ItemType> Types => new() { ItemType.Liquid };
         public override EquipmentAnchor? PreferredAnchor => null;
-        public override List<string> OutcomeKeywords => new() { "water", "liquid", "clear" };
+        public override List<string> OutcomeKeywords => new() { "water", "liquid", "purity" };
         public override string[] Info => new[]
         {
             "Clean and refreshing.",
@@ -262,7 +262,7 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Small;
         public override List<ItemType> Types => new() { ItemType.Liquid };
         public override EquipmentAnchor? PreferredAnchor => null;
-        public override List<string> OutcomeKeywords => new() { "wine", "liquid", "red" };
+        public override List<string> OutcomeKeywords => new() { "wine", "liquid", "fermentation" };
         public override string[] Info => new[]
         {
             "Faintly astringent.",

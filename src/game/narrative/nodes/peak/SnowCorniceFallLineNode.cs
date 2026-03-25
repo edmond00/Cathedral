@@ -16,7 +16,7 @@ public class SnowCorniceFallLineNode : PyramidalFeatureNode
     public override string TransitionDescription => "move to the cornice fall line";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "fall", "line", "steep", "avalanche", "slope", "snow", "descent", "dangerous", "icy", "angled" };
+    public override List<string> NodeKeywords => new() { "fall", "avalanche", "descent", "slope" };
     
     private static readonly string[] Moods = { "steep", "treacherous", "angled", "exposed" };
     
@@ -31,7 +31,7 @@ public class SnowCorniceFallLineNode : PyramidalFeatureNode
         public override string ItemId => "cornice_debris";
         public override string DisplayName => "Cornice Debris";
         public override string Description => "Debris from cornice collapse";
-        public override List<string> OutcomeKeywords => new() { "debris", "cornice", "snow", "ice", "mixed", "chaotic", "fallen", "scattered", "broken", "jumbled" };
+        public override List<string> OutcomeKeywords => new() { "debris", "cornice", "snow" };
     }
     
 }

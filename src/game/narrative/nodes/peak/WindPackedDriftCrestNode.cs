@@ -16,7 +16,7 @@ public class WindPackedDriftCrestNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the wind-packed drift crest";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "drift", "crest", "wind-packed", "sculpted", "white", "frozen", "ridge", "snow", "hardened", "wave" };
+    public override List<string> NodeKeywords => new() { "drift", "crest", "wind", "sculpture" };
     
     private static readonly string[] Moods = { "sculpted", "hardened", "wave-like", "frozen" };
     

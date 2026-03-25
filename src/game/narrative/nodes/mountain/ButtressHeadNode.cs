@@ -15,7 +15,7 @@ public class ButtressHeadNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the buttress head";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "buttress", "projection", "outcrop", "high", "rocky", "jutting", "exposed", "prominence", "peak", "crag" };
+    public override List<string> NodeKeywords => new() { "buttress", "outcrop", "crag", "prominence" };
     
     private static readonly string[] Moods = { "jutting", "prominent", "protruding", "commanding" };
     
@@ -30,7 +30,7 @@ public class ButtressHeadNode : PyramidalFeatureNode
         public override string ItemId => "buttress_head_weathered_granite";
         public override string DisplayName => "Weathered Granite";
         public override string Description => "Exposed granite at the buttress top";
-        public override List<string> OutcomeKeywords => new() { "granite", "weathered", "gray", "hard", "crystalline", "exposed", "solid", "ancient", "textured", "rough" };
+        public override List<string> OutcomeKeywords => new() { "granite", "crystal", "weathering" };
     }
     
     public sealed class ClimbingRoute : Item
@@ -38,7 +38,7 @@ public class ButtressHeadNode : PyramidalFeatureNode
         public override string ItemId => "buttress_head_climbing_route";
         public override string DisplayName => "Climbing Route";
         public override string Description => "Possible path up the rock face";
-        public override List<string> OutcomeKeywords => new() { "route", "climbing", "path", "handholds", "ascent", "technical", "challenging", "vertical", "grips", "passage" };
+        public override List<string> OutcomeKeywords => new() { "route", "handhold", "ascent" };
     }
     
     public sealed class StoneCap : Item
@@ -46,6 +46,6 @@ public class ButtressHeadNode : PyramidalFeatureNode
         public override string ItemId => "buttress_head_stone_cap";
         public override string DisplayName => "Stone Cap";
         public override string Description => "Large capstone crowning the buttress";
-        public override List<string> OutcomeKeywords => new() { "cap", "crown", "stone", "large", "massive", "top", "summit", "prominent", "blocking", "terminal" };
+        public override List<string> OutcomeKeywords => new() { "cap", "crown", "stone" };
     }
 }

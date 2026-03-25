@@ -14,7 +14,7 @@ public class VineDrapedGrowthNode : NarrationNode
     public override string TransitionDescription => "enter the vine tangle";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "vines", "draped", "hanging", "climbing", "covered", "wrapped", "entangled", "clinging", "green", "tendrils" };
+    public override List<string> NodeKeywords => new() { "vine", "tendril", "climbing", "entanglement" };
     
     private static readonly string[] Moods = { "draped", "vine-covered", "entangled", "hanging", "wrapped", "smothered", "festooned", "shrouded" };
     
@@ -31,7 +31,7 @@ public class VineDrapedGrowthNode : NarrationNode
         public override string ItemId => "vine_tendril";
         public override string DisplayName => "Vine Tendril";
         public override string Description => "A flexible climbing tendril";
-        public override List<string> OutcomeKeywords => new() { "flexible", "green", "coiled", "tendril", "climbing", "vine", "curling", "thin", "strong", "wiry" };
+        public override List<string> OutcomeKeywords => new() { "tendril", "vine", "curl" };
     }
     
     public sealed class VineLeaf : Item
@@ -39,6 +39,6 @@ public class VineDrapedGrowthNode : NarrationNode
         public override string ItemId => "vine_draped_leaf";
         public override string DisplayName => "Vine Leaf";
         public override string Description => "A broad heart-shaped leaf from the climbing vines";
-        public override List<string> OutcomeKeywords => new() { "heart", "shaped", "broad", "green", "leaf", "veined", "climbing", "smooth", "fresh", "lobed" };
+        public override List<string> OutcomeKeywords => new() { "leaf", "vine", "lobe", "vein" };
     }
 }

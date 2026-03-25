@@ -13,7 +13,7 @@ public class WornGroundPathNode : NarrationNode
     public override string TransitionDescription => "take the worn path";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "trampled", "bare", "earth", "compacted", "trail", "smooth", "travelled", "packed", "dusty", "clear" };
+    public override List<string> NodeKeywords => new() { "trail", "earth", "dust", "compaction" };
     
     private static readonly string[] Moods = { "well-worn", "trampled", "smooth", "clear", "obvious", "easy", "traveled", "beaten" };
     
@@ -30,6 +30,6 @@ public class WornGroundPathNode : NarrationNode
         public override string ItemId => "worn_ground_path_path_dust";
         public override string DisplayName => "Path Dust";
         public override string Description => "Fine dust from the heavily traveled path";
-        public override List<string> OutcomeKeywords => new() { "dust", "fine", "powder", "gray", "dry", "trampled", "path", "particles", "soft", "powdery" };
+        public override List<string> OutcomeKeywords => new() { "dust", "powder", "path" };
     }
 }

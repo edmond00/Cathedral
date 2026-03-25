@@ -13,7 +13,7 @@ public class DrainageHollowNode : NarrationNode
     public override string TransitionDescription => "follow the drainage";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "depression", "damp", "channel", "muddy", "carved", "wet", "hollow", "eroded", "slippery", "moss" };
+    public override List<string> NodeKeywords => new() { "hollow", "channel", "mud", "depression" };
     
     private static readonly string[] Moods = { "damp", "muddy", "slippery", "wet", "eroded", "carved", "soggy", "moist" };
     
@@ -30,7 +30,7 @@ public class DrainageHollowNode : NarrationNode
         public override string ItemId => "drainage_clay";
         public override string DisplayName => "Clay Deposit";
         public override string Description => "Sticky clay accumulated in the drainage channel";
-        public override List<string> OutcomeKeywords => new() { "sticky", "grey", "smooth", "wet", "malleable", "thick", "heavy", "clay", "cold", "mineral" };
+        public override List<string> OutcomeKeywords => new() { "clay", "mineral", "plasticity" };
     }
     
     public sealed class StagnantWater : Item
@@ -38,6 +38,6 @@ public class DrainageHollowNode : NarrationNode
         public override string ItemId => "drainage_hollow_stagnant_water";
         public override string DisplayName => "Stagnant Water";
         public override string Description => "Still water pooled in the hollow";
-        public override List<string> OutcomeKeywords => new() { "water", "stagnant", "still", "murky", "pooled", "brackish", "dark", "motionless", "cloudy", "stale" };
+        public override List<string> OutcomeKeywords => new() { "water", "stagnation", "pool" };
     }
 }

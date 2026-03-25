@@ -13,7 +13,7 @@ public class PackedEarthTrailNode : NarrationNode
     public override string TransitionDescription => "follow the trail";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "hard", "compacted", "smooth", "brown", "solid", "trail", "firm", "packed", "earthen", "reliable" };
+    public override List<string> NodeKeywords => new() { "trail", "earth", "compaction", "path" };
     
     private static readonly string[] Moods = { "firm", "solid", "reliable", "hard", "stable", "compacted", "dependable", "sturdy" };
     
@@ -30,6 +30,6 @@ public class PackedEarthTrailNode : NarrationNode
         public override string ItemId => "packed_earth_trail_hard_clay";
         public override string DisplayName => "Hard Clay";
         public override string Description => "Compacted clay from the trail surface";
-        public override List<string> OutcomeKeywords => new() { "clay", "hard", "compacted", "brown", "solid", "earthen", "dense", "smooth", "firm", "packed" };
+        public override List<string> OutcomeKeywords => new() { "clay", "earth", "compaction" };
     }
 }

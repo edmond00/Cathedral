@@ -13,7 +13,7 @@ public class RootPathNode : NarrationNode
     public override string TransitionDescription => "take the root path";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "twisted", "roots", "network", "interwoven", "gnarled", "knotted", "raised", "natural", "pathway", "woody" };
+    public override List<string> NodeKeywords => new() { "root", "network", "pathway", "gnarl" };
     
     private static readonly string[] Moods = { "twisted", "winding", "serpentine", "tangled", "knotted", "interlaced", "convoluted", "meandering" };
     
@@ -30,7 +30,7 @@ public class RootPathNode : NarrationNode
         public override string ItemId => "root_bark_chunk";
         public override string DisplayName => "Root Bark Chunk";
         public override string Description => "A piece of rough bark from the exposed roots";
-        public override List<string> OutcomeKeywords => new() { "rough", "textured", "brown", "fibrous", "woody", "dry", "flaky", "thick", "bark", "cork-like" };
+        public override List<string> OutcomeKeywords => new() { "bark", "cork", "fiber" };
     }
     
     public sealed class RootSap : Item
@@ -38,6 +38,6 @@ public class RootPathNode : NarrationNode
         public override string ItemId => "root_path_root_sap";
         public override string DisplayName => "Root Sap";
         public override string Description => "Sticky sap oozing from damaged roots";
-        public override List<string> OutcomeKeywords => new() { "sap", "sticky", "amber", "resinous", "oozing", "thick", "sweet", "viscous", "golden", "tree" };
+        public override List<string> OutcomeKeywords => new() { "sap", "resin", "amber" };
     }
 }

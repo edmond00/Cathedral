@@ -20,7 +20,7 @@ public class ShadowwoodNode : NarrationNode
     public override string TransitionDescription => "enter the shadowwood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "dark", "bare", "lichen", "crusted", "shadowy", "branches", "moss", "gloomy", "hidden", "murky" };
+    public override List<string> NodeKeywords => new() { "shadow", "lichen", "moss", "gloom" };
     
     private static readonly string[] Moods = { "gloomy", "darkened", "shadowy", "murky", "obscure", "dim", "somber", "dusky" };
     
@@ -37,6 +37,6 @@ public class ShadowwoodNode : NarrationNode
         public override string ItemId => "shadowwood_dark_bark";
         public override string DisplayName => "Dark Bark";
         public override string Description => "Nearly black bark from shadowwood trees";
-        public override List<string> OutcomeKeywords => new() { "bark", "dark", "black", "rough", "shadowy", "charred", "thick", "gnarled", "ancient", "hardened" };
+        public override List<string> OutcomeKeywords => new() { "bark", "shadow", "gnarl" };
     }
 }

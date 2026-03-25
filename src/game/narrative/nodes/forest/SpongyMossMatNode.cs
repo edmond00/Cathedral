@@ -14,7 +14,7 @@ public class SpongyMossMatNode : NarrationNode
     public override string TransitionDescription => "step onto the moss mat";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "spongy", "wet", "squelching", "moss", "waterlogged", "soft", "yielding", "green", "thick", "saturated" };
+    public override List<string> NodeKeywords => new() { "moss", "sponge", "water", "saturation" };
     
     private static readonly string[] Moods = { "spongy", "waterlogged", "squelching", "soft", "saturated", "yielding", "wet", "sodden" };
     
@@ -31,7 +31,7 @@ public class SpongyMossMatNode : NarrationNode
         public override string ItemId => "wet_sphagnum_moss";
         public override string DisplayName => "Wet Sphagnum Moss";
         public override string Description => "Waterlogged moss from the mat";
-        public override List<string> OutcomeKeywords => new() { "wet", "spongy", "green", "moss", "waterlogged", "soft", "absorbent", "saturated", "sphagnum", "living" };
+        public override List<string> OutcomeKeywords => new() { "sphagnum", "moss", "water" };
     }
     
     public sealed class MossMatWater : Item
@@ -39,6 +39,6 @@ public class SpongyMossMatNode : NarrationNode
         public override string ItemId => "spongy_moss_mat_bog_water";
         public override string DisplayName => "Bog Water";
         public override string Description => "Brown peaty water squeezed from moss";
-        public override List<string> OutcomeKeywords => new() { "brown", "peaty", "acidic", "stained", "water", "tannin", "amber", "preserved", "organic", "dark" };
+        public override List<string> OutcomeKeywords => new() { "water", "tannin", "peat", "amber" };
     }
 }

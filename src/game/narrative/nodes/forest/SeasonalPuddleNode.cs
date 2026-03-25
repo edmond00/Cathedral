@@ -14,7 +14,7 @@ public class SeasonalPuddleNode : NarrationNode
     public override string TransitionDescription => "approach the puddle";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "water", "reflection", "shallow", "temporary", "muddy", "edges", "wet", "pool", "still", "murky" };
+    public override List<string> NodeKeywords => new() { "pool", "mud", "reflection", "temporality" };
     
     private static readonly string[] Moods = { "shallow", "murky", "still", "reflective", "temporary", "muddy", "stagnant", "rain-filled" };
     
@@ -31,7 +31,7 @@ public class SeasonalPuddleNode : NarrationNode
         public override string ItemId => "puddle_mud";
         public override string DisplayName => "Puddle Mud";
         public override string Description => "Wet, sticky mud from the puddle edge";
-        public override List<string> OutcomeKeywords => new() { "wet", "sticky", "brown", "mud", "clay", "squelching", "soft", "dark", "moist", "earthy" };
+        public override List<string> OutcomeKeywords => new() { "mud", "clay", "muck" };
     }
     
     public sealed class TadpoleWater : Item
@@ -39,6 +39,6 @@ public class SeasonalPuddleNode : NarrationNode
         public override string ItemId => "seasonal_puddle_tadpole_water";
         public override string DisplayName => "Tadpole Water";
         public override string Description => "Water sample teeming with tiny tadpoles";
-        public override List<string> OutcomeKeywords => new() { "wriggling", "alive", "swimming", "tiny", "black", "water", "larvae", "moving", "life", "temporary" };
+        public override List<string> OutcomeKeywords => new() { "tadpole", "water", "larvae" };
     }
 }

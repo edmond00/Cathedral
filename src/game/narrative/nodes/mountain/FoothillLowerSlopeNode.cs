@@ -15,7 +15,7 @@ public class FoothillLowerSlopeNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the foothill lower slope";
     public override bool IsEntryNode => true;
     
-    public override List<string> NodeKeywords => new() { "foothill", "slope", "lower", "gentle", "transition", "plain", "grassland", "edge", "boundary", "approach" };
+    public override List<string> NodeKeywords => new() { "foothill", "slope", "grassland", "boundary" };
     
     private static readonly string[] Moods = { "gentle", "transitional", "peaceful", "welcoming" };
     
@@ -30,7 +30,7 @@ public class FoothillLowerSlopeNode : PyramidalFeatureNode
         public override string ItemId => "foothill_lower_slope_low_grass";
         public override string DisplayName => "Low Grass";
         public override string Description => "Short grass at the mountain's edge";
-        public override List<string> OutcomeKeywords => new() { "low", "grass", "short", "edge", "green", "soft", "gentle", "covering", "meadow", "plain" };
+        public override List<string> OutcomeKeywords => new() { "grass", "meadow", "plain" };
     }
     
     public sealed class MountainShadow : Item
@@ -38,6 +38,6 @@ public class FoothillLowerSlopeNode : PyramidalFeatureNode
         public override string ItemId => "foothill_lower_slope_mountain_shadow";
         public override string DisplayName => "Mountain Shadow";
         public override string Description => "Shade cast by the peaks above";
-        public override List<string> OutcomeKeywords => new() { "mountain", "shadow", "shade", "cast", "dark", "cool", "looming", "covering", "presence", "silhouette" };
+        public override List<string> OutcomeKeywords => new() { "shadow", "mountain", "silhouette" };
     }
 }

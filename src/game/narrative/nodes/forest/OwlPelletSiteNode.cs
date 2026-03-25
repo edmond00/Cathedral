@@ -13,7 +13,7 @@ public class OwlPelletSiteNode : NarrationNode
     public override string TransitionDescription => "investigate the pellets";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "grey", "compressed", "bones", "fur", "pellets", "regurgitated", "dry", "cylindrical", "raptor", "remains" };
+    public override List<string> NodeKeywords => new() { "pellet", "bone", "fur", "raptor" };
     
     private static readonly string[] Moods = { "dry", "scattered", "compressed", "aged", "numerous", "grey", "informative", "preserved" };
     
@@ -30,7 +30,7 @@ public class OwlPelletSiteNode : NarrationNode
         public override string ItemId => "pellet_tiny_bones";
         public override string DisplayName => "Tiny Bones";
         public override string Description => "Small rodent bones from dissected owl pellets";
-        public override List<string> OutcomeKeywords => new() { "white", "small", "fragile", "skull", "vertebrae", "bones", "delicate", "cleaned", "skeletal", "rodent" };
+        public override List<string> OutcomeKeywords => new() { "bone", "skull", "vertebra" };
     }
     
     public sealed class MatPellet : Item
@@ -38,6 +38,6 @@ public class OwlPelletSiteNode : NarrationNode
         public override string ItemId => "owl_pellet_mat_pellet";
         public override string DisplayName => "Matted Pellet";
         public override string Description => "A compressed pellet of fur and bone";
-        public override List<string> OutcomeKeywords => new() { "grey", "compressed", "cylindrical", "matted", "fur", "hard", "regurgitated", "dry", "compact", "dense" };
+        public override List<string> OutcomeKeywords => new() { "pellet", "fur", "compression" };
     }
 }

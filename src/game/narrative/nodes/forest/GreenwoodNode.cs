@@ -13,7 +13,7 @@ public class GreenwoodNode : NarrationNode
     public override string TransitionDescription => "enter the greenwood";
     public override bool IsEntryNode => true;
     
-    public override List<string> NodeKeywords => new() { "verdant", "mixed", "hazel", "fungal", "lush", "leafy", "mossy", "green", "dense", "alive" };
+    public override List<string> NodeKeywords => new() { "hazel", "fungus", "moss", "vitality" };
     
     private static readonly string[] Moods = { "thriving", "lush", "verdant", "rich", "vibrant", "living", "dense", "flourishing" };
     
@@ -30,6 +30,6 @@ public class GreenwoodNode : NarrationNode
         public override string ItemId => "greenwood_hazel_nuts";
         public override string DisplayName => "Hazel Nuts";
         public override string Description => "Small brown nuts from greenwood hazel trees";
-        public override List<string> OutcomeKeywords => new() { "hazel", "nuts", "brown", "small", "hard", "shell", "round", "edible", "woody", "clustered" };
+        public override List<string> OutcomeKeywords => new() { "nut", "shell", "hazel", "cluster" };
     }
 }

@@ -16,7 +16,7 @@ public class SummitDomeShoulderNode : PyramidalFeatureNode
     public override string TransitionDescription => "move to the summit dome shoulder";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "sloped", "shoulder", "curved", "icy", "rounded", "exposed", "frozen", "near-summit", "cold", "steep" };
+    public override List<string> NodeKeywords => new() { "shoulder", "ice", "slope", "summit" };
     
     private static readonly string[] Moods = { "curved", "exposed", "steep", "frozen" };
     

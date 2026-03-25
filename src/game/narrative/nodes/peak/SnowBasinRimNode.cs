@@ -16,7 +16,7 @@ public class SnowBasinRimNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the snow basin rim";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "basin", "rim", "edge", "snow", "circular", "white", "bowl", "crater", "frozen", "boundary" };
+    public override List<string> NodeKeywords => new() { "basin", "rim", "crater", "boundary" };
     
     private static readonly string[] Moods = { "circular", "enclosing", "elevated", "sheltering" };
     

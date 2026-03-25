@@ -13,7 +13,7 @@ public class IsolatedOakNode : NarrationNode
     public override string TransitionDescription => "approach the oak";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "massive", "trunk", "branches", "bark", "acorns", "crown", "solitary", "ancient", "gnarled", "spreading" };
+    public override List<string> NodeKeywords => new() { "trunk", "acorn", "crown", "gnarl" };
     
     private static readonly string[] Moods = { "majestic", "solitary", "towering", "ancient", "venerable", "impressive", "grand", "stalwart" };
     
@@ -30,7 +30,7 @@ public class IsolatedOakNode : NarrationNode
         public override string ItemId => "oak_acorn";
         public override string DisplayName => "Acorn";
         public override string Description => "A brown acorn with its cap intact";
-        public override List<string> OutcomeKeywords => new() { "brown", "cap", "seed", "nut", "smooth", "oval", "woody", "hard", "acorn", "small" };
+        public override List<string> OutcomeKeywords => new() { "acorn", "cap", "seed" };
     }
     
     public sealed class OakGall : Item
@@ -38,6 +38,6 @@ public class IsolatedOakNode : NarrationNode
         public override string ItemId => "isolated_oak_gall";
         public override string DisplayName => "Oak Gall";
         public override string Description => "A round oak apple gall formed by wasp larvae";
-        public override List<string> OutcomeKeywords => new() { "round", "warty", "growth", "brown", "sphere", "abnormal", "hard", "tannic", "insect", "ball" };
+        public override List<string> OutcomeKeywords => new() { "gall", "sphere", "tannin", "insect" };
     }
 }

@@ -16,7 +16,7 @@ public class IceBlockFieldUpperNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb through the upper ice blocks";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "blocks", "upper", "ice", "field", "jumbled", "fractured", "maze", "frozen", "chaotic", "angular" };
+    public override List<string> NodeKeywords => new() { "ice", "block", "maze", "chaos" };
     
     private static readonly string[] Moods = { "chaotic", "fractured", "jumbled", "maze-like" };
     

@@ -15,7 +15,7 @@ public class RockfallCrownNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the rockfall crown";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "rockfall", "crown", "source", "collapse", "fracture", "scar", "fresh", "exposed", "broken", "unstable" };
+    public override List<string> NodeKeywords => new() { "rockfall", "fracture", "scar", "collapse" };
     
     private static readonly string[] Moods = { "fractured", "collapsed", "scarred", "broken" };
     
@@ -30,7 +30,7 @@ public class RockfallCrownNode : PyramidalFeatureNode
         public override string ItemId => "rockfall_crown_fracture_zone";
         public override string DisplayName => "Fracture Zone";
         public override string Description => "Area where rock face has split";
-        public override List<string> OutcomeKeywords => new() { "fracture", "split", "crack", "broken", "fissure", "separation", "gap", "opening", "structural", "damage" };
+        public override List<string> OutcomeKeywords => new() { "fracture", "crack", "fissure" };
     }
     
     public sealed class TeeringBlock : Item
@@ -38,7 +38,7 @@ public class RockfallCrownNode : PyramidalFeatureNode
         public override string ItemId => "rockfall_crown_teetering_block";
         public override string DisplayName => "Teetering Block";
         public override string Description => "Large rock ready to fall";
-        public override List<string> OutcomeKeywords => new() { "teetering", "block", "unstable", "dangerous", "loose", "massive", "hanging", "precarious", "falling", "threatening" };
+        public override List<string> OutcomeKeywords => new() { "block", "instability", "danger" };
     }
     
     public sealed class FreshScar : Item
@@ -46,6 +46,6 @@ public class RockfallCrownNode : PyramidalFeatureNode
         public override string ItemId => "rockfall_crown_fresh_scar";
         public override string DisplayName => "Fresh Scar";
         public override string Description => "Exposed rock where material has fallen";
-        public override List<string> OutcomeKeywords => new() { "scar", "fresh", "exposed", "raw", "new", "bright", "unweathered", "clean", "recent", "white" };
+        public override List<string> OutcomeKeywords => new() { "scar", "exposure", "rawness" };
     }
 }

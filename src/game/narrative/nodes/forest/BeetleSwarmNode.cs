@@ -13,7 +13,7 @@ public class BeetleSwarmNode : NarrationNode
     public override string TransitionDescription => "approach the beetles";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "black", "shiny", "carapace", "crawling", "clustered", "insects", "hard", "chitinous", "beetles", "swarming" };
+    public override List<string> NodeKeywords => new() { "carapace", "beetles", "chitin", "swarm" };
     
     private static readonly string[] Moods = { "swarming", "clustered", "busy", "shiny", "teeming", "crowded", "active", "abundant" };
     
@@ -30,7 +30,7 @@ public class BeetleSwarmNode : NarrationNode
         public override string ItemId => "beetle_swarm_beetle_carapace";
         public override string DisplayName => "Beetle Carapace";
         public override string Description => "Hard black shell from a dead beetle";
-        public override List<string> OutcomeKeywords => new() { "carapace", "shell", "hard", "black", "shiny", "chitinous", "exoskeleton", "glossy", "armor", "beetle" };
+        public override List<string> OutcomeKeywords => new() { "carapace", "exoskeleton", "chitin", "shell" };
     }
     
     public sealed class BeetleFrass : Item
@@ -38,6 +38,6 @@ public class BeetleSwarmNode : NarrationNode
         public override string ItemId => "beetle_swarm_beetle_frass";
         public override string DisplayName => "Beetle Frass";
         public override string Description => "Wood powder from beetle boring activity";
-        public override List<string> OutcomeKeywords => new() { "frass", "powder", "sawdust", "boring", "fine", "wood", "particles", "debris", "waste", "brown" };
+        public override List<string> OutcomeKeywords => new() { "frass", "sawdust", "debris" };
     }
 }

@@ -15,7 +15,7 @@ public class CliffTopNode : PyramidalFeatureNode
     public override string TransitionDescription => "ascend to the cliff top";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "cliff", "edge", "precipice", "drop", "void", "vertiginous", "high", "overlook", "brink", "abyss" };
+    public override List<string> NodeKeywords => new() { "precipice", "void", "abyss", "edge" };
     
     private static readonly string[] Moods = { "vertiginous", "dizzying", "precipitous", "commanding" };
     
@@ -30,7 +30,7 @@ public class CliffTopNode : PyramidalFeatureNode
         public override string ItemId => "cliff_top_cracked_rock";
         public override string DisplayName => "Cracked Rock";
         public override string Description => "Fractured stone near the cliff edge";
-        public override List<string> OutcomeKeywords => new() { "cracked", "fractured", "unstable", "split", "fissured", "dangerous", "breaking", "weak", "damaged", "fragile" };
+        public override List<string> OutcomeKeywords => new() { "rock", "fracture", "fissure" };
     }
     
     public sealed class RaptorFeather : Item
@@ -38,7 +38,7 @@ public class CliffTopNode : PyramidalFeatureNode
         public override string ItemId => "cliff_top_raptor_feather";
         public override string DisplayName => "Raptor Feather";
         public override string Description => "Large feather from a bird of prey";
-        public override List<string> OutcomeKeywords => new() { "feather", "raptor", "brown", "striped", "large", "hunting", "flight", "predator", "soaring", "bird" };
+        public override List<string> OutcomeKeywords => new() { "feather", "raptor", "hunter" };
     }
     
 }

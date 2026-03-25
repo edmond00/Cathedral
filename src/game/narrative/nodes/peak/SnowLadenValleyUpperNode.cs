@@ -16,7 +16,7 @@ public class SnowLadenValleyUpperNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the upper snow-laden valley";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "valley", "upper", "snow", "laden", "white", "deep", "pristine", "untouched", "cold", "expansive" };
+    public override List<string> NodeKeywords => new() { "valley", "snow", "expanse", "pristine" };
     
     private static readonly string[] Moods = { "pristine", "deep", "untouched", "expansive" };
     

@@ -21,7 +21,7 @@ public class DeepwoodNode : NarrationNode
     public override string TransitionDescription => "enter the deepwood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "uniform", "corridor", "sparse", "cold", "moss", "litter", "silent", "isolated", "deep", "still" };
+    public override List<string> NodeKeywords => new() { "silence", "moss", "litter", "corridor" };
     
     private static readonly string[] Moods = { "silent", "still", "hushed", "quiet", "somber", "serene", "remote", "isolated" };
     
@@ -38,6 +38,6 @@ public class DeepwoodNode : NarrationNode
         public override string ItemId => "deepwood_dark_loam";
         public override string DisplayName => "Dark Loam";
         public override string Description => "Rich black soil from the deepwood floor";
-        public override List<string> OutcomeKeywords => new() { "loam", "soil", "dark", "rich", "black", "earth", "fertile", "moist", "deep", "organic" };
+        public override List<string> OutcomeKeywords => new() { "loam", "soil", "earth", "fertility" };
     }
 }

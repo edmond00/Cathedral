@@ -14,7 +14,7 @@ public class IvyCladTrunkNode : NarrationNode
     public override string TransitionDescription => "approach the ivy trunk";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "climbing", "vines", "green", "leaves", "clinging", "wrapped", "covered", "thick", "dense", "woody" };
+    public override List<string> NodeKeywords => new() { "vine", "leaves", "trunk", "tenacity" };
     
     private static readonly string[] Moods = { "vine-covered", "wrapped", "engulfed", "cloaked", "draped", "smothered", "verdant", "encased" };
     
@@ -31,7 +31,7 @@ public class IvyCladTrunkNode : NarrationNode
         public override string ItemId => "ivy_leaf";
         public override string DisplayName => "Ivy Leaf";
         public override string Description => "A glossy, lobed ivy leaf";
-        public override List<string> OutcomeKeywords => new() { "glossy", "lobed", "green", "waxy", "shaped", "leaf", "dark", "veined", "evergreen", "thick" };
+        public override List<string> OutcomeKeywords => new() { "leaf", "lobe", "vein", "wax" };
     }
     
     public sealed class AerialRoot : Item
@@ -39,6 +39,6 @@ public class IvyCladTrunkNode : NarrationNode
         public override string ItemId => "ivy_trunk_aerial_root";
         public override string DisplayName => "Aerial Root";
         public override string Description => "Clinging ivy roots attached to bark";
-        public override List<string> OutcomeKeywords => new() { "clinging", "rootlets", "adhesive", "brown", "hairlike", "gripping", "attached", "tiny", "fibrous", "climbing" };
+        public override List<string> OutcomeKeywords => new() { "rootlet", "adhesion", "fiber" };
     }
 }

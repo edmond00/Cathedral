@@ -15,7 +15,7 @@ public class CrestRidgeNode : PyramidalFeatureNode
     public override string TransitionDescription => "ascend to the crest ridge";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "summit", "peak", "crest", "wind", "highest", "thin", "exposed", "sharp", "sky", "panoramic" };
+    public override List<string> NodeKeywords => new() { "summit", "crest", "wind", "peak" };
     
     private static readonly string[] Moods = { "windswept", "exposed", "highest", "razor-sharp" };
     
@@ -30,7 +30,7 @@ public class CrestRidgeNode : PyramidalFeatureNode
         public override string ItemId => "crest_ridge_frost_shatter";
         public override string DisplayName => "Frost Shatter";
         public override string Description => "Ice-fractured rock fragments at the summit";
-        public override List<string> OutcomeKeywords => new() { "frost", "shattered", "ice", "fractured", "sharp", "crystalline", "frozen", "splintered", "brittle", "cold" };
+        public override List<string> OutcomeKeywords => new() { "frost", "ice", "fracture" };
     }
     
     public sealed class RidgePolishedStone : Item
@@ -38,7 +38,7 @@ public class CrestRidgeNode : PyramidalFeatureNode
         public override string ItemId => "ridge_polished_stone";
         public override string DisplayName => "Ridge-Polished Stone";
         public override string Description => "Smooth stone shaped by constant wind";
-        public override List<string> OutcomeKeywords => new() { "polished", "smooth", "wind", "worn", "glossy", "shaped", "weathered", "rounded", "sleek", "buffed" };
+        public override List<string> OutcomeKeywords => new() { "stone", "polish", "wind" };
     }
     
     public sealed class SummitCairn : Item
@@ -46,6 +46,6 @@ public class CrestRidgeNode : PyramidalFeatureNode
         public override string ItemId => "crest_ridge_summit_cairn";
         public override string DisplayName => "Summit Cairn";
         public override string Description => "Stacked stones marking the highest point";
-        public override List<string> OutcomeKeywords => new() { "cairn", "stacked", "marker", "stones", "monument", "peak", "pillar", "memorial", "landmark", "tower" };
+        public override List<string> OutcomeKeywords => new() { "cairn", "monument", "marker" };
     }
 }

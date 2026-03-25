@@ -15,7 +15,7 @@ public class LowerStepNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the lower step";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "terrace", "step", "lower", "bench", "platform", "wide", "sheltered", "base", "foundation", "level" };
+    public override List<string> NodeKeywords => new() { "terrace", "platform", "bench", "foundation" };
     
     private static readonly string[] Moods = { "wide", "sheltered", "stable", "foundational" };
     
@@ -30,7 +30,7 @@ public class LowerStepNode : PyramidalFeatureNode
         public override string ItemId => "lower_step_stone_slabs";
         public override string DisplayName => "Stone Slabs";
         public override string Description => "Large flat rocks on the terrace";
-        public override List<string> OutcomeKeywords => new() { "slabs", "stone", "flat", "large", "horizontal", "layers", "solid", "thick", "stable", "massive" };
+        public override List<string> OutcomeKeywords => new() { "slab", "stone", "layer" };
     }
     
     public sealed class SoilPocket : Item
@@ -38,6 +38,6 @@ public class LowerStepNode : PyramidalFeatureNode
         public override string ItemId => "lower_step_soil_pocket";
         public override string DisplayName => "Soil Pocket";
         public override string Description => "Small patch of earth with vegetation";
-        public override List<string> OutcomeKeywords => new() { "soil", "pocket", "earth", "vegetation", "small", "growing", "green", "life", "plants", "fertile" };
+        public override List<string> OutcomeKeywords => new() { "soil", "pocket", "earth" };
     }
 }

@@ -16,7 +16,7 @@ public class FrozenWaterfallLipNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the frozen waterfall lip";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "waterfall", "lip", "frozen", "ice", "cascade", "edge", "drop", "suspended", "blue", "crystalline" };
+    public override List<string> NodeKeywords => new() { "waterfall", "ice", "lip", "suspension" };
     
     private static readonly string[] Moods = { "suspended", "frozen", "cascading", "precipitous" };
     

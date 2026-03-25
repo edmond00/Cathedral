@@ -14,7 +14,7 @@ public class SaplingThicketNode : NarrationNode
     public override string TransitionDescription => "force through the saplings";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "young", "thin", "trunks", "crowded", "competing", "dense", "shoots", "vigorous", "tangled", "growth" };
+    public override List<string> NodeKeywords => new() { "sapling", "shoot", "competition", "trunk" };
     
     private static readonly string[] Moods = { "dense", "crowded", "competing", "vigorous", "tangled", "impenetrable", "young", "chaotic" };
     
@@ -31,7 +31,7 @@ public class SaplingThicketNode : NarrationNode
         public override string ItemId => "sapling_shoot";
         public override string DisplayName => "Sapling Shoot";
         public override string Description => "A straight young shoot from the thicket";
-        public override List<string> OutcomeKeywords => new() { "straight", "flexible", "green", "young", "smooth", "shoot", "slender", "thin", "bark", "vigorous" };
+        public override List<string> OutcomeKeywords => new() { "shoot", "bark", "sapling" };
     }
     
     public sealed class SaplingBud : Item
@@ -39,6 +39,6 @@ public class SaplingThicketNode : NarrationNode
         public override string ItemId => "sapling_thicket_bud";
         public override string DisplayName => "Sapling Bud";
         public override string Description => "A swollen leaf bud ready to burst";
-        public override List<string> OutcomeKeywords => new() { "swollen", "tight", "green", "bud", "emerging", "potential", "spring", "promise", "unopened", "ready" };
+        public override List<string> OutcomeKeywords => new() { "bud", "spring", "potential" };
     }
 }

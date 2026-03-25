@@ -15,7 +15,7 @@ public class TorrentChannelNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the torrent channel";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "torrent", "channel", "water", "rushing", "carved", "narrow", "deep", "flowing", "erosion", "carved" };
+    public override List<string> NodeKeywords => new() { "torrent", "channel", "erosion", "water" };
     
     private static readonly string[] Moods = { "rushing", "carved", "narrow", "powerful" };
     
@@ -30,7 +30,7 @@ public class TorrentChannelNode : PyramidalFeatureNode
         public override string ItemId => "torrent_channel_torrent_gravel";
         public override string DisplayName => "Torrent Gravel";
         public override string Description => "Water-rounded pebbles collectible from the channel";
-        public override List<string> OutcomeKeywords => new() { "gravel", "pebbles", "rounded", "water-worn", "smooth", "mixed", "colorful", "small", "tumbled", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "gravel", "pebble", "tumbling" };
     }
     
     public sealed class SmoothChannel : Item
@@ -38,6 +38,6 @@ public class TorrentChannelNode : PyramidalFeatureNode
         public override string ItemId => "torrent_channel_smooth_channel";
         public override string DisplayName => "Smooth Channel";
         public override string Description => "Water-carved stone passage";
-        public override List<string> OutcomeKeywords => new() { "smooth", "channel", "carved", "polished", "water", "erosion", "worn", "flowing", "grooved", "sculpted" };
+        public override List<string> OutcomeKeywords => new() { "channel", "groove", "erosion" };
     }
 }

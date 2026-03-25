@@ -15,7 +15,7 @@ public class ArchCrestNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the arch crest";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "arch", "crest", "top", "bridge", "span", "high", "curved", "natural", "formation", "spectacular" };
+    public override List<string> NodeKeywords => new() { "arch", "crest", "formation", "span" };
     
     private static readonly string[] Moods = { "graceful", "curved", "spectacular", "precarious" };
     
@@ -30,7 +30,7 @@ public class ArchCrestNode : PyramidalFeatureNode
         public override string ItemId => "arch_crest_keystone";
         public override string DisplayName => "Arch Keystone";
         public override string Description => "Central supporting stone at arch peak";
-        public override List<string> OutcomeKeywords => new() { "keystone", "central", "supporting", "crucial", "peak", "balanced", "structural", "critical", "top", "apex" };
+        public override List<string> OutcomeKeywords => new() { "keystone", "apex", "structure" };
     }
     
     public sealed class ViewPoint : Item
@@ -38,7 +38,7 @@ public class ArchCrestNode : PyramidalFeatureNode
         public override string ItemId => "arch_crest_view_point";
         public override string DisplayName => "View Point";
         public override string Description => "Commanding vantage from arch top";
-        public override List<string> OutcomeKeywords => new() { "view", "point", "vantage", "commanding", "panoramic", "vista", "overlook", "spectacular", "sight", "perspective" };
+        public override List<string> OutcomeKeywords => new() { "vista", "vantage", "panorama" };
     }
     
     public sealed class WeatheredSurface : Item
@@ -46,6 +46,6 @@ public class ArchCrestNode : PyramidalFeatureNode
         public override string ItemId => "arch_crest_weathered_surface";
         public override string DisplayName => "Weathered Surface";
         public override string Description => "Eroded rock on the arch spine";
-        public override List<string> OutcomeKeywords => new() { "weathered", "surface", "eroded", "worn", "rough", "textured", "ancient", "wind", "exposed", "aged" };
+        public override List<string> OutcomeKeywords => new() { "surface", "erosion", "weathering" };
     }
 }

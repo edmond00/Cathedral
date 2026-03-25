@@ -16,7 +16,7 @@ public class FrozenStreamChannelNode : PyramidalFeatureNode
     public override string TransitionDescription => "follow the frozen stream channel";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "stream", "channel", "frozen", "ice", "flow", "bed", "cold", "winding", "ribbon", "blue" };
+    public override List<string> NodeKeywords => new() { "stream", "ice", "channel", "ribbon" };
     
     private static readonly string[] Moods = { "winding", "frozen", "sinuous", "icy" };
     

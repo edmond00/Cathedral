@@ -13,7 +13,7 @@ public class PineConeClusterNode : NarrationNode
     public override string TransitionDescription => "collect pine cones";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "scales", "woody", "brown", "seeds", "scattered", "resinous", "cones", "dry", "fallen", "scaly" };
+    public override List<string> NodeKeywords => new() { "cone", "scale", "seed", "resin" };
     
     private static readonly string[] Moods = { "scattered", "abundant", "dry", "fallen", "plentiful", "numerous", "clustered", "collected" };
     
@@ -30,7 +30,7 @@ public class PineConeClusterNode : NarrationNode
         public override string ItemId => "pine_cone";
         public override string DisplayName => "Pine Cone";
         public override string Description => "A woody pine cone with open scales";
-        public override List<string> OutcomeKeywords => new() { "woody", "brown", "scaly", "seeds", "resinous", "cone", "dry", "hard", "scales", "aromatic" };
+        public override List<string> OutcomeKeywords => new() { "cone", "scale", "resin", "seed" };
     }
     
     public sealed class PineNeedle : Item
@@ -38,6 +38,6 @@ public class PineConeClusterNode : NarrationNode
         public override string ItemId => "pine_cone_cluster_needles";
         public override string DisplayName => "Pine Needles";
         public override string Description => "A bundle of fallen pine needles";
-        public override List<string> OutcomeKeywords => new() { "long", "thin", "green", "needles", "bundle", "sharp", "pointed", "evergreen", "resinous", "aromatic" };
+        public override List<string> OutcomeKeywords => new() { "needle", "bundle", "resin" };
     }
 }

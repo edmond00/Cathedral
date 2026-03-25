@@ -13,7 +13,7 @@ public class FallenLogLineNode : NarrationNode
     public override string TransitionDescription => "follow the fallen logs";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "fallen", "collapsed", "massive", "decaying", "bark", "moss-covered", "horizontal", "trunk", "rotting", "insects" };
+    public override List<string> NodeKeywords => new() { "trunk", "moss", "decay", "bark" };
     
     private static readonly string[] Moods = { "decaying", "moss-covered", "ancient", "crumbling", "weathered", "decomposing", "rotting", "collapsed" };
     
@@ -30,7 +30,7 @@ public class FallenLogLineNode : NarrationNode
         public override string ItemId => "rotten_log_wood";
         public override string DisplayName => "Rotten Wood";
         public override string Description => "Soft, decomposing wood from the fallen logs";
-        public override List<string> OutcomeKeywords => new() { "soft", "crumbly", "dark", "moist", "decayed", "fibrous", "spongy", "musty", "wood", "decomposed" };
+        public override List<string> OutcomeKeywords => new() { "wood", "rot", "mycelium" };
     }
     
     public sealed class BeetleLarvae : Item
@@ -38,6 +38,6 @@ public class FallenLogLineNode : NarrationNode
         public override string ItemId => "fallen_log_line_beetle_larvae";
         public override string DisplayName => "Beetle Larvae";
         public override string Description => "Pale larvae boring through the rotting wood";
-        public override List<string> OutcomeKeywords => new() { "larvae", "beetle", "pale", "grubs", "boring", "wriggling", "soft", "small", "white", "insects" };
+        public override List<string> OutcomeKeywords => new() { "larva", "grub", "beetle" };
     }
 }

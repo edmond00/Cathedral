@@ -15,7 +15,7 @@ public class FanApexNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the fan apex";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "fan", "apex", "top", "origin", "channel", "gravel", "stream", "spreading", "source", "upper" };
+    public override List<string> NodeKeywords => new() { "fan", "apex", "gravel", "source" };
     
     private static readonly string[] Moods = { "spreading", "radiating", "distributive", "channeled" };
     
@@ -30,7 +30,7 @@ public class FanApexNode : PyramidalFeatureNode
         public override string ItemId => "fan_apex_channel_split";
         public override string DisplayName => "Channel Split";
         public override string Description => "Point where water divides into multiple paths";
-        public override List<string> OutcomeKeywords => new() { "channel", "split", "divide", "branching", "distributary", "fork", "separation", "flow", "diverging", "multiple" };
+        public override List<string> OutcomeKeywords => new() { "channel", "fork", "distributary" };
     }
     
     public sealed class CoarseGravel : Item
@@ -38,7 +38,7 @@ public class FanApexNode : PyramidalFeatureNode
         public override string ItemId => "fan_apex_coarse_gravel";
         public override string DisplayName => "Coarse Gravel";
         public override string Description => "Large stones at the fan origin";
-        public override List<string> OutcomeKeywords => new() { "coarse", "gravel", "large", "stones", "angular", "rough", "heavy", "deposit", "accumulated", "sorted" };
+        public override List<string> OutcomeKeywords => new() { "gravel", "stone", "deposit" };
     }
     
     public sealed class FastFlow : Item
@@ -46,6 +46,6 @@ public class FanApexNode : PyramidalFeatureNode
         public override string ItemId => "fan_apex_fast_flow";
         public override string DisplayName => "Fast Flow";
         public override string Description => "Rapid water movement at the apex";
-        public override List<string> OutcomeKeywords => new() { "fast", "flow", "rapid", "water", "swift", "rushing", "powerful", "current", "moving", "energetic" };
+        public override List<string> OutcomeKeywords => new() { "torrent", "current", "water" };
     }
 }

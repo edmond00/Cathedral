@@ -20,7 +20,7 @@ public class WildwoodNode : NarrationNode
     public override string TransitionDescription => "enter the wildwood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "mixed-age", "uprooted", "regrowth", "uneven", "competing", "chaotic", "wild", "tangled", "disrupted", "rough" };
+    public override List<string> NodeKeywords => new() { "wildness", "regrowth", "tangle", "chaos" };
     
     private static readonly string[] Moods = { "chaotic", "wild", "untamed", "disordered", "turbulent", "rugged", "rough", "feral" };
     
@@ -37,7 +37,7 @@ public class WildwoodNode : NarrationNode
         public override string ItemId => "wildwood_untamed_seeds";
         public override string DisplayName => "Untamed Seeds";
         public override string Description => "Wild seeds scattered across the untamed forest";
-        public override List<string> OutcomeKeywords => new() { "seeds", "wild", "scattered", "small", "brown", "untamed", "chaotic", "pods", "dispersed", "natural" };
+        public override List<string> OutcomeKeywords => new() { "seed", "pod", "wildness" };
     }
     
     public sealed class WildGrowth : Item
@@ -45,6 +45,6 @@ public class WildwoodNode : NarrationNode
         public override string ItemId => "wildwood_wild_growth";
         public override string DisplayName => "Wild Growth";
         public override string Description => "Uncultivated plant matter from the wildwood";
-        public override List<string> OutcomeKeywords => new() { "growth", "wild", "uncultivated", "tangled", "green", "overgrown", "natural", "plant", "untamed", "dense" };
+        public override List<string> OutcomeKeywords => new() { "growth", "wildness", "plant" };
     }
 }

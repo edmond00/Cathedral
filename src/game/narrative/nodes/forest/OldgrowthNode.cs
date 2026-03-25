@@ -21,7 +21,7 @@ public class OldgrowthNode : NarrationNode
     public override string TransitionDescription => "enter the oldgrowth";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ancient", "giant", "dead", "decaying", "layered", "humus", "massive", "snag", "old", "timeless" };
+    public override List<string> NodeKeywords => new() { "snag", "humus", "age", "giant" };
     
     private static readonly string[] Moods = { "ancient", "primordial", "timeless", "venerable", "aged", "eternal", "prehistoric", "primeval" };
     
@@ -38,7 +38,7 @@ public class OldgrowthNode : NarrationNode
         public override string ItemId => "oldgrowth_ancient_wood";
         public override string DisplayName => "Ancient Wood";
         public override string Description => "Weathered wood from ancient oldgrowth trees";
-        public override List<string> OutcomeKeywords => new() { "wood", "ancient", "weathered", "gray", "solid", "old", "hard", "timeless", "dense", "preserved" };
+        public override List<string> OutcomeKeywords => new() { "wood", "age", "preservation" };
     }
     
     public sealed class OldgrowthResin : Item
@@ -46,6 +46,6 @@ public class OldgrowthNode : NarrationNode
         public override string ItemId => "oldgrowth_oldgrowth_resin";
         public override string DisplayName => "Oldgrowth Resin";
         public override string Description => "Hardened resin oozing from ancient trees";
-        public override List<string> OutcomeKeywords => new() { "resin", "hardened", "amber", "ancient", "sticky", "tree", "golden", "preserved", "crystalline", "sap" };
+        public override List<string> OutcomeKeywords => new() { "resin", "amber", "sap" };
     }
 }

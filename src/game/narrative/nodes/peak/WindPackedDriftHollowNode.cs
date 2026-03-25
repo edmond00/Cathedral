@@ -16,7 +16,7 @@ public class WindPackedDriftHollowNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend into the drift hollow";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "hollow", "drift", "sheltered", "depression", "snow", "wind-carved", "basin", "cold", "white", "concave" };
+    public override List<string> NodeKeywords => new() { "hollow", "drift", "snow", "shelter" };
     
     private static readonly string[] Moods = { "sheltered", "scooped", "concave", "protected" };
     

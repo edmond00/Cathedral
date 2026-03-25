@@ -15,7 +15,7 @@ public class WallBaseNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the wall base";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "wall", "base", "cliff", "towering", "shadow", "massive", "vertical", "imposing", "solid", "foundation" };
+    public override List<string> NodeKeywords => new() { "wall", "cliff", "shadow", "foundation" };
     
     private static readonly string[] Moods = { "towering", "shadowed", "massive", "imposing" };
     
@@ -30,7 +30,7 @@ public class WallBaseNode : PyramidalFeatureNode
         public override string ItemId => "wall_base_fallen_stone";
         public override string DisplayName => "Fallen Stone";
         public override string Description => "Large rock that has dropped from above";
-        public override List<string> OutcomeKeywords => new() { "fallen", "stone", "large", "dropped", "debris", "rockfall", "heavy", "gray", "angular", "fresh" };
+        public override List<string> OutcomeKeywords => new() { "stone", "rockfall", "debris" };
     }
     
     public sealed class ClimbingCracks : Item
@@ -38,6 +38,6 @@ public class WallBaseNode : PyramidalFeatureNode
         public override string ItemId => "wall_base_climbing_cracks";
         public override string DisplayName => "Climbing Cracks";
         public override string Description => "Fissures offering handholds";
-        public override List<string> OutcomeKeywords => new() { "cracks", "climbing", "fissures", "handholds", "vertical", "route", "grips", "lines", "openings", "passage" };
+        public override List<string> OutcomeKeywords => new() { "crack", "fissure", "handhold" };
     }
 }

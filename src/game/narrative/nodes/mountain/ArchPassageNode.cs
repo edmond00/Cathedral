@@ -15,7 +15,7 @@ public class ArchPassageNode : PyramidalFeatureNode
     public override string TransitionDescription => "pass through the arch passage";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "arch", "passage", "beneath", "tunnel", "opening", "gateway", "span", "shadowed", "frame", "portal" };
+    public override List<string> NodeKeywords => new() { "arch", "passage", "gateway", "portal" };
     
     private static readonly string[] Moods = { "shadowed", "framed", "impressive", "sheltered" };
     
@@ -30,7 +30,7 @@ public class ArchPassageNode : PyramidalFeatureNode
         public override string ItemId => "arch_passage_framed_sky";
         public override string DisplayName => "Framed Sky";
         public override string Description => "Sky visible through the arch opening";
-        public override List<string> OutcomeKeywords => new() { "framed", "sky", "opening", "view", "arch", "window", "portal", "blue", "light", "visible" };
+        public override List<string> OutcomeKeywords => new() { "sky", "frame", "window" };
     }
     
     public sealed class EchoSpace : Item
@@ -38,6 +38,6 @@ public class ArchPassageNode : PyramidalFeatureNode
         public override string ItemId => "arch_passage_echo_space";
         public override string DisplayName => "Echo Space";
         public override string Description => "Acoustic chamber beneath the arch";
-        public override List<string> OutcomeKeywords => new() { "echo", "space", "acoustic", "reverb", "sound", "resonant", "hollow", "amplified", "bouncing", "chamber" };
+        public override List<string> OutcomeKeywords => new() { "echo", "resonance", "chamber" };
     }
 }

@@ -13,7 +13,7 @@ public class AlderGroveNode : NarrationNode
     public override string TransitionDescription => "enter the alders";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "damp", "nitrogen", "catkins", "cones", "grey", "smooth", "bark", "moist", "grove", "water-loving" };
+    public override List<string> NodeKeywords => new() { "catkin", "bark", "nitrogen", "grove" };
     
     private static readonly string[] Moods = { "damp", "grey", "quiet", "moist", "cool", "shadowy", "nitrogen-rich", "serene" };
     
@@ -30,7 +30,7 @@ public class AlderGroveNode : NarrationNode
         public override string ItemId => "alder_cone";
         public override string DisplayName => "Alder Cone";
         public override string Description => "A small woody cone from an alder tree";
-        public override List<string> OutcomeKeywords => new() { "small", "woody", "brown", "cone", "dry", "scaly", "seed", "hard", "oval", "rough" };
+        public override List<string> OutcomeKeywords => new() { "cone", "seed", "bark" };
     }
     
     public sealed class AlderCatkin : Item
@@ -38,6 +38,6 @@ public class AlderGroveNode : NarrationNode
         public override string ItemId => "alder_grove_catkin";
         public override string DisplayName => "Alder Catkin";
         public override string Description => "A dangling catkin from an alder branch";
-        public override List<string> OutcomeKeywords => new() { "dangling", "yellow", "pollen", "fuzzy", "elongated", "hanging", "spring", "flower", "soft", "cylindrical" };
+        public override List<string> OutcomeKeywords => new() { "pollen", "catkin", "flower" };
     }
 }

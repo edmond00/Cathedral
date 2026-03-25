@@ -13,7 +13,7 @@ public class MossyStoneOutcropNode : NarrationNode
     public override string TransitionDescription => "climb the outcrop";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "green", "soft", "damp", "cushiony", "stone", "ancient", "velvet", "thick", "moss", "rock" };
+    public override List<string> NodeKeywords => new() { "moss", "stone", "rock", "velvet" };
     
     private static readonly string[] Moods = { "moss-covered", "ancient", "verdant", "soft", "cushioned", "green", "damp", "thick" };
     
@@ -30,7 +30,7 @@ public class MossyStoneOutcropNode : NarrationNode
         public override string ItemId => "outcrop_moss";
         public override string DisplayName => "Thick Moss";
         public override string Description => "A cushion of deep green moss from the stones";
-        public override List<string> OutcomeKeywords => new() { "green", "soft", "thick", "damp", "velvet", "spongy", "fresh", "living", "moss", "cushiony" };
+        public override List<string> OutcomeKeywords => new() { "moss", "cushion", "velvet" };
     }
     
     public sealed class AncientStone : Item
@@ -38,6 +38,6 @@ public class MossyStoneOutcropNode : NarrationNode
         public override string ItemId => "mossy_outcrop_ancient_stone";
         public override string DisplayName => "Ancient Stone";
         public override string Description => "A weathered piece of the ancient rock outcrop";
-        public override List<string> OutcomeKeywords => new() { "grey", "weathered", "ancient", "hard", "cold", "mineral", "dense", "heavy", "granite", "enduring" };
+        public override List<string> OutcomeKeywords => new() { "stone", "granite", "mineral" };
     }
 }

@@ -13,7 +13,7 @@ public class WoodpeckerTreeNode : NarrationNode
     public override string TransitionDescription => "approach the pecked tree";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "holes", "drumming", "pecked", "bark", "chips", "excavation", "cavity", "tapping", "insects", "sound" };
+    public override List<string> NodeKeywords => new() { "hole", "drumming", "bark", "cavity" };
     
     private static readonly string[] Moods = { "rhythmic", "pecked", "excavated", "riddled", "hollowed", "worked", "tapped", "resonant" };
     
@@ -30,7 +30,7 @@ public class WoodpeckerTreeNode : NarrationNode
         public override string ItemId => "woodpecker_chips";
         public override string DisplayName => "Wood Chips";
         public override string Description => "Fresh wood chips from woodpecker excavation";
-        public override List<string> OutcomeKeywords => new() { "fresh", "pale", "splinters", "fragments", "wood", "carved", "sharp", "fibrous", "chips", "excavated" };
+        public override List<string> OutcomeKeywords => new() { "chip", "wood", "splinter" };
     }
     
     public sealed class BarkFragment : Item
@@ -38,6 +38,6 @@ public class WoodpeckerTreeNode : NarrationNode
         public override string ItemId => "woodpecker_tree_bark_fragment";
         public override string DisplayName => "Pecked Bark Fragment";
         public override string Description => "Bark pieces loosened by woodpecker drilling";
-        public override List<string> OutcomeKeywords => new() { "loosened", "bark", "fragments", "holes", "pecked", "drilled", "brown", "damaged", "flaking", "removed" };
+        public override List<string> OutcomeKeywords => new() { "bark", "hole", "fragment" };
     }
 }

@@ -16,7 +16,7 @@ public class IceCliffTopNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the ice cliff top";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "cliff", "top", "ice", "edge", "precipice", "frozen", "vertical", "drop", "blue", "massive" };
+    public override List<string> NodeKeywords => new() { "ice", "precipice", "edge", "drop" };
     
     private static readonly string[] Moods = { "imposing", "frozen", "precipitous", "towering" };
     

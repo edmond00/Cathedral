@@ -13,7 +13,7 @@ public class BrightwoodNode : NarrationNode
     public override string TransitionDescription => "enter the brightwood";
     public override bool IsEntryNode => true;
     
-    public override List<string> NodeKeywords => new() { "luminous", "beech", "ferns", "golden", "dappled", "smooth", "light", "green", "fresh", "young" };
+    public override List<string> NodeKeywords => new() { "beech", "fern", "light", "brightness" };
     
     private static readonly string[] Moods = { "radiant", "gleaming", "shimmering", "bright", "fresh", "vibrant", "golden", "cheerful" };
     
@@ -30,6 +30,6 @@ public class BrightwoodNode : NarrationNode
         public override string ItemId => "brightwood_beech_leaves";
         public override string DisplayName => "Beech Leaves";
         public override string Description => "Golden-green leaves from brightwood beech trees";
-        public override List<string> OutcomeKeywords => new() { "beech", "leaves", "golden", "smooth", "fresh", "green", "light", "delicate", "veined", "bright" };
+        public override List<string> OutcomeKeywords => new() { "leaf", "beech", "vein" };
     }
 }

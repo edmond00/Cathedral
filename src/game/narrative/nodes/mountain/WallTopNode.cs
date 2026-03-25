@@ -15,7 +15,7 @@ public class WallTopNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the wall top";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "wall", "top", "cliff", "edge", "vertical", "drop", "exposed", "high", "precipice", "overlook" };
+    public override List<string> NodeKeywords => new() { "wall", "precipice", "overlook", "drop" };
     
     private static readonly string[] Moods = { "exposed", "vertical", "precipitous", "commanding" };
     
@@ -30,7 +30,7 @@ public class WallTopNode : PyramidalFeatureNode
         public override string ItemId => "wall_top_loose_ledge";
         public override string DisplayName => "Loose Ledge";
         public override string Description => "Unstable rock at the wall edge";
-        public override List<string> OutcomeKeywords => new() { "loose", "ledge", "unstable", "dangerous", "edge", "crumbling", "weak", "precarious", "breaking", "fragile" };
+        public override List<string> OutcomeKeywords => new() { "ledge", "instability", "edge" };
     }
     
     public sealed class RaptorPerch : Item
@@ -38,7 +38,7 @@ public class WallTopNode : PyramidalFeatureNode
         public override string ItemId => "wall_top_raptor_perch";
         public override string DisplayName => "Raptor Perch";
         public override string Description => "Bird lookout point on the wall";
-        public override List<string> OutcomeKeywords => new() { "perch", "raptor", "bird", "lookout", "hunting", "high", "vantage", "droppings", "occupied", "nest" };
+        public override List<string> OutcomeKeywords => new() { "perch", "raptor", "vantage" };
     }
     
     public sealed class CliffEdge : Item
@@ -46,6 +46,6 @@ public class WallTopNode : PyramidalFeatureNode
         public override string ItemId => "wall_top_cliff_edge";
         public override string DisplayName => "Cliff Edge";
         public override string Description => "Sharp boundary at the wall top";
-        public override List<string> OutcomeKeywords => new() { "cliff", "edge", "sharp", "boundary", "drop", "line", "void", "precipice", "brink", "fall" };
+        public override List<string> OutcomeKeywords => new() { "edge", "void", "precipice" };
     }
 }

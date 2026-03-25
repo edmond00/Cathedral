@@ -21,7 +21,7 @@ public class GrassClearingNode : NarrationNode
     public override string TransitionDescription => "step into the clearing";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "grass", "meadow", "open", "green", "swaying", "tall", "blades", "soft", "sunny", "breeze" };
+    public override List<string> NodeKeywords => new() { "grass", "meadow", "blade", "breeze" };
     
     private static readonly string[] Moods = { "sun-drenched", "breezy", "peaceful", "swaying", "green", "open", "bright", "fresh" };
     
@@ -38,7 +38,7 @@ public class GrassClearingNode : NarrationNode
         public override string ItemId => "grass_seed";
         public override string DisplayName => "Grass Seed";
         public override string Description => "Small seeds from wild grasses";
-        public override List<string> OutcomeKeywords => new() { "small", "brown", "dry", "seeds", "grain", "chaff", "tiny", "scattered", "harvest", "wild" };
+        public override List<string> OutcomeKeywords => new() { "seed", "grain", "chaff" };
     }
     
     public sealed class GrassFlower : Item
@@ -46,6 +46,6 @@ public class GrassClearingNode : NarrationNode
         public override string ItemId => "grass_clearing_flower_head";
         public override string DisplayName => "Grass Flower Head";
         public override string Description => "A delicate grass flower panicle";
-        public override List<string> OutcomeKeywords => new() { "delicate", "panicle", "feathery", "wind", "pollinated", "golden", "swaying", "stem", "nodding", "spray" };
+        public override List<string> OutcomeKeywords => new() { "panicle", "stem", "pollen" };
     }
 }

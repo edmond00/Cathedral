@@ -13,7 +13,7 @@ public class WildHerbsNode : NarrationNode
     public override string TransitionDescription => "investigate the herbs";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "aromatic", "fragrant", "green", "leaves", "medicinal", "scent", "pungent", "herbs", "plants", "fresh" };
+    public override List<string> NodeKeywords => new() { "herb", "leaf", "scent", "medicine" };
     
     private static readonly string[] Moods = { "fragrant", "aromatic", "pungent", "fresh", "medicinal", "wild", "potent", "green" };
     
@@ -30,7 +30,7 @@ public class WildHerbsNode : NarrationNode
         public override string ItemId => "wild_herb_bundle";
         public override string DisplayName => "Wild Herb Bundle";
         public override string Description => "A bundle of aromatic forest herbs";
-        public override List<string> OutcomeKeywords => new() { "aromatic", "green", "fresh", "bundled", "fragrant", "tied", "herbs", "medicinal", "leaves", "pungent" };
+        public override List<string> OutcomeKeywords => new() { "herb", "bundle", "medicine" };
     }
     
     public sealed class HerbRoot : Item
@@ -38,6 +38,6 @@ public class WildHerbsNode : NarrationNode
         public override string ItemId => "wild_herbs_herb_root";
         public override string DisplayName => "Herb Root";
         public override string Description => "A pungent root from a medicinal herb";
-        public override List<string> OutcomeKeywords => new() { "pungent", "medicinal", "root", "fibrous", "aromatic", "white", "potent", "healing", "bitter", "thick" };
+        public override List<string> OutcomeKeywords => new() { "root", "medicine", "potency" };
     }
 }

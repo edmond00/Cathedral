@@ -13,7 +13,7 @@ public class SpiderWebNode : NarrationNode
     public override string TransitionDescription => "inspect the web";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "silk", "threads", "dew", "sticky", "pattern", "radial", "spiral", "delicate", "glistening", "web" };
+    public override List<string> NodeKeywords => new() { "web", "silk", "dew", "thread" };
     
     private static readonly string[] Moods = { "delicate", "glistening", "intricate", "perfect", "dew-covered", "shimmering", "geometric", "pristine" };
     
@@ -30,7 +30,7 @@ public class SpiderWebNode : NarrationNode
         public override string ItemId => "spider_web_spider_silk";
         public override string DisplayName => "Spider Silk";
         public override string Description => "Strong sticky threads from the web";
-        public override List<string> OutcomeKeywords => new() { "silk", "threads", "sticky", "strong", "white", "delicate", "gossamer", "fine", "protein", "web" };
+        public override List<string> OutcomeKeywords => new() { "silk", "gossamer", "thread", "protein" };
     }
     
     public sealed class TrappedInsects : Item
@@ -38,6 +38,6 @@ public class SpiderWebNode : NarrationNode
         public override string ItemId => "spider_web_trapped_insects";
         public override string DisplayName => "Trapped Insects";
         public override string Description => "Small insects caught in the sticky web";
-        public override List<string> OutcomeKeywords => new() { "insects", "trapped", "caught", "prey", "wrapped", "immobilized", "small", "ensnared", "victim", "struggling" };
+        public override List<string> OutcomeKeywords => new() { "insect", "prey", "trap" };
     }
 }

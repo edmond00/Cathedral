@@ -13,7 +13,7 @@ public class MushroomLogNode : NarrationNode
     public override string TransitionDescription => "inspect the mushroom log";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "shelf", "brackets", "layers", "rotting", "wood", "fungus", "overlapping", "leathery", "gills", "decay" };
+    public override List<string> NodeKeywords => new() { "bracket", "fungus", "decay", "wood" };
     
     private static readonly string[] Moods = { "layered", "shelf-like", "overlapping", "decaying", "fungal", "rotting", "tiered", "clustered" };
     
@@ -30,7 +30,7 @@ public class MushroomLogNode : NarrationNode
         public override string ItemId => "shelf_mushroom";
         public override string DisplayName => "Shelf Mushroom";
         public override string Description => "A tough, bracket-like shelf mushroom";
-        public override List<string> OutcomeKeywords => new() { "tough", "bracket", "brown", "woody", "shelf", "leathery", "fungus", "hard", "perennial", "ridged" };
+        public override List<string> OutcomeKeywords => new() { "mushroom", "bracket", "shelf" };
     }
     
     public sealed class DecayedLogWood : Item
@@ -38,7 +38,7 @@ public class MushroomLogNode : NarrationNode
         public override string ItemId => "mushroom_log_rotten_wood";
         public override string DisplayName => "Rotten Wood";
         public override string Description => "Soft, decaying wood riddled with fungal threads";
-        public override List<string> OutcomeKeywords => new() { "soft", "crumbling", "decay", "fungal", "brown", "mycelium", "decomposing", "spongy", "riddled", "moist" };
+        public override List<string> OutcomeKeywords => new() { "wood", "decay", "mycelium" };
     }
     
     public sealed class BeetleHole : Item
@@ -46,6 +46,6 @@ public class MushroomLogNode : NarrationNode
         public override string ItemId => "mushroom_log_beetle_hole";
         public override string DisplayName => "Beetle Gallery";
         public override string Description => "Network of beetle tunnels carved through the decaying wood";
-        public override List<string> OutcomeKeywords => new() { "tunnels", "carved", "insect", "galleries", "channels", "holes", "boring", "passages", "larvae", "excavated" };
+        public override List<string> OutcomeKeywords => new() { "gallery", "tunnel", "larvae" };
     }
 }

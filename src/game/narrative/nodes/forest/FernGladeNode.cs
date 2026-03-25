@@ -13,7 +13,7 @@ public class FernGladeNode : NarrationNode
     public override string TransitionDescription => "enter the ferns";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "fronds", "green", "unfurling", "delicate", "feathery", "spores", "lush", "dense", "ferns", "verdant" };
+    public override List<string> NodeKeywords => new() { "frond", "spore", "fern", "glade" };
     
     private static readonly string[] Moods = { "lush", "green", "feathery", "dense", "verdant", "delicate", "thriving", "prehistoric" };
     
@@ -30,7 +30,7 @@ public class FernGladeNode : NarrationNode
         public override string ItemId => "fern_frond";
         public override string DisplayName => "Fern Frond";
         public override string Description => "A fresh fern frond with delicate leaflets";
-        public override List<string> OutcomeKeywords => new() { "green", "feathery", "delicate", "divided", "fresh", "soft", "leaflets", "frond", "curved", "tender" };
+        public override List<string> OutcomeKeywords => new() { "frond", "leaflet", "feather" };
     }
     
     public sealed class GladeFernSpore : Item
@@ -38,6 +38,6 @@ public class FernGladeNode : NarrationNode
         public override string ItemId => "fern_glade_spore_patch";
         public override string DisplayName => "Spore Patch";
         public override string Description => "Undersides of mature fronds covered in brown spores";
-        public override List<string> OutcomeKeywords => new() { "brown", "dots", "reproductive", "underside", "dusty", "capsules", "pattern", "microscopic", "fertile", "coating" };
+        public override List<string> OutcomeKeywords => new() { "spore", "capsule", "reproduction" };
     }
 }

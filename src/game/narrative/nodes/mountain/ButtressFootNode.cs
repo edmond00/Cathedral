@@ -22,7 +22,7 @@ public class ButtressFootNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the buttress foot";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "buttress", "base", "foundation", "solid", "massive", "support", "root", "anchored", "ground", "stable" };
+    public override List<string> NodeKeywords => new() { "buttress", "foundation", "ground", "stability" };
     
     private static readonly string[] Moods = { "massive", "anchored", "solid", "foundational" };
     
@@ -37,7 +37,7 @@ public class ButtressFootNode : PyramidalFeatureNode
         public override string ItemId => "buttress_foot_talus_slope";
         public override string DisplayName => "Talus Slope";
         public override string Description => "Pile of fallen rocks at the buttress base";
-        public override List<string> OutcomeKeywords => new() { "talus", "slope", "rocks", "fallen", "accumulated", "unstable", "debris", "angled", "loose", "pile" };
+        public override List<string> OutcomeKeywords => new() { "talus", "debris", "rock" };
     }
     
     public sealed class RootedShrub : Item
@@ -45,6 +45,6 @@ public class ButtressFootNode : PyramidalFeatureNode
         public override string ItemId => "buttress_foot_rooted_shrub";
         public override string DisplayName => "Rooted Shrub";
         public override string Description => "Hardy plant growing at the rock base";
-        public override List<string> OutcomeKeywords => new() { "shrub", "rooted", "hardy", "plant", "green", "tough", "clinging", "survivor", "tenacious", "anchored" };
+        public override List<string> OutcomeKeywords => new() { "shrub", "root", "tenacity" };
     }
 }

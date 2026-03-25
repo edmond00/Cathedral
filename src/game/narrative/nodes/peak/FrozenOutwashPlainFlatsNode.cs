@@ -16,7 +16,7 @@ public class FrozenOutwashPlainFlatsNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the frozen outwash plain flats";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "outwash", "flats", "plain", "frozen", "flat", "expansive", "ice", "barren", "cold", "open" };
+    public override List<string> NodeKeywords => new() { "outwash", "plain", "ice", "barrenness" };
     
     private static readonly string[] Moods = { "expansive", "flat", "barren", "open" };
     
@@ -31,7 +31,7 @@ public class FrozenOutwashPlainFlatsNode : PyramidalFeatureNode
         public override string ItemId => "frozen_outwash_plain_flats_outwash_gravel";
         public override string DisplayName => "Outwash Gravel";
         public override string Description => "Glacial outwash gravel collectible from the flats";
-        public override List<string> OutcomeKeywords => new() { "gravel", "outwash", "glacial", "pebbles", "sediment", "rounded", "mixed", "sorted", "deposited", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "gravel", "outwash", "sediment" };
     }
     
     public sealed class OutwashClay : Item
@@ -39,6 +39,6 @@ public class FrozenOutwashPlainFlatsNode : PyramidalFeatureNode
         public override string ItemId => "frozen_outwash_plain_flats_outwash_clay";
         public override string DisplayName => "Outwash Clay";
         public override string Description => "Fine glacial clay collectible from the flats";
-        public override List<string> OutcomeKeywords => new() { "clay", "outwash", "fine", "glacial", "sediment", "smooth", "grey", "compact", "mineral", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "clay", "outwash", "mineral" };
     }
 }

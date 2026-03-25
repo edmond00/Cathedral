@@ -15,7 +15,7 @@ public class TorrentSourceNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the torrent source";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "torrent", "source", "spring", "water", "origin", "flowing", "fresh", "cold", "bubbling", "cascade" };
+    public override List<string> NodeKeywords => new() { "spring", "torrent", "cascade", "source" };
     
     private static readonly string[] Moods = { "rushing", "cascading", "powerful", "pristine" };
     
@@ -30,7 +30,7 @@ public class TorrentSourceNode : PyramidalFeatureNode
         public override string ItemId => "torrent_source_spring_pool";
         public override string DisplayName => "Spring Pool";
         public override string Description => "Small pool where water emerges";
-        public override List<string> OutcomeKeywords => new() { "spring", "pool", "water", "source", "clear", "cold", "bubbling", "fresh", "emerging", "pristine" };
+        public override List<string> OutcomeKeywords => new() { "spring", "pool", "water" };
     }
     
     public sealed class WetRocks : Item
@@ -38,7 +38,7 @@ public class TorrentSourceNode : PyramidalFeatureNode
         public override string ItemId => "torrent_source_wet_rocks";
         public override string DisplayName => "Wet Rocks";
         public override string Description => "Water-splashed stones near the spring";
-        public override List<string> OutcomeKeywords => new() { "wet", "rocks", "splashed", "slippery", "dark", "shining", "moist", "damp", "glistening", "slick" };
+        public override List<string> OutcomeKeywords => new() { "rock", "moisture", "slipperiness" };
     }
     
     public sealed class RiverStone : Item
@@ -46,6 +46,6 @@ public class TorrentSourceNode : PyramidalFeatureNode
         public override string ItemId => "torrent_source_river_stone";
         public override string DisplayName => "River Stone";
         public override string Description => "Smooth polished stone collectible from the source";
-        public override List<string> OutcomeKeywords => new() { "stone", "river", "smooth", "polished", "rounded", "water-worn", "heavy", "dense", "grey", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "stone", "river", "polish" };
     }
 }

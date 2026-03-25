@@ -16,7 +16,7 @@ public class GlacierTongueUpperNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the upper ice flow";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "glacier", "upper", "ice", "flow", "frozen", "blue", "moving", "massive", "ancient", "river" };
+    public override List<string> NodeKeywords => new() { "glacier", "ice", "flow", "antiquity" };
     
     private static readonly string[] Moods = { "massive", "flowing", "ancient", "frozen" };
     

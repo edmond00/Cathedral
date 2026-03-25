@@ -13,7 +13,7 @@ public class ButterflyGladeNode : NarrationNode
     public override string TransitionDescription => "enter the butterfly glade";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "wings", "colorful", "fluttering", "dancing", "bright", "flowers", "nectar", "delicate", "aerial", "insects" };
+    public override List<string> NodeKeywords => new() { "wing", "flower", "nectar", "glade" };
     
     private static readonly string[] Moods = { "colorful", "dancing", "fluttering", "bright", "lively", "vibrant", "magical", "enchanting" };
     
@@ -30,7 +30,7 @@ public class ButterflyGladeNode : NarrationNode
         public override string ItemId => "butterfly_glade_butterfly_wings";
         public override string DisplayName => "Butterfly Wings";
         public override string Description => "Colorful wings shed by butterflies";
-        public override List<string> OutcomeKeywords => new() { "wings", "colorful", "scales", "pattern", "delicate", "bright", "iridescent", "fragile", "powder", "vibrant" };
+        public override List<string> OutcomeKeywords => new() { "wing", "scale", "powder", "pattern" };
     }
     
     public sealed class Nectar : Item
@@ -38,6 +38,6 @@ public class ButterflyGladeNode : NarrationNode
         public override string ItemId => "butterfly_glade_nectar";
         public override string DisplayName => "Flower Nectar";
         public override string Description => "Sweet nectar from glade flowers";
-        public override List<string> OutcomeKeywords => new() { "nectar", "sweet", "flower", "sugary", "liquid", "golden", "fragrant", "sticky", "floral", "honey-like" };
+        public override List<string> OutcomeKeywords => new() { "nectar", "sweetness", "blossom" };
     }
 }

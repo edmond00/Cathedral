@@ -14,7 +14,7 @@ public class RegrowthThicketNode : NarrationNode
     public override string TransitionDescription => "enter the regrowth";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "new", "vigorous", "young", "reclaiming", "dense", "shoots", "growth", "recovery", "pioneer", "fresh" };
+    public override List<string> NodeKeywords => new() { "shoot", "pioneer", "regrowth", "recovery" };
     
     private static readonly string[] Moods = { "vigorous", "new", "thriving", "reclaiming", "dense", "fresh", "recovering", "pioneer" };
     
@@ -31,7 +31,7 @@ public class RegrowthThicketNode : NarrationNode
         public override string ItemId => "pioneer_seed";
         public override string DisplayName => "Pioneer Seeds";
         public override string Description => "Seeds from fast-growing pioneer plants";
-        public override List<string> OutcomeKeywords => new() { "small", "numerous", "pioneer", "seeds", "dispersed", "wild", "hardy", "brown", "light", "colonizing" };
+        public override List<string> OutcomeKeywords => new() { "seed", "pioneer", "dispersal" };
     }
     
     public sealed class FreshShoot : Item
@@ -39,6 +39,6 @@ public class RegrowthThicketNode : NarrationNode
         public override string ItemId => "regrowth_thicket_fresh_shoot";
         public override string DisplayName => "Fresh Shoot";
         public override string Description => "A vigorous new shoot pushing through soil";
-        public override List<string> OutcomeKeywords => new() { "green", "tender", "vigorous", "new", "young", "fresh", "growing", "shoot", "bright", "resilient" };
+        public override List<string> OutcomeKeywords => new() { "shoot", "growth", "vigor" };
     }
 }

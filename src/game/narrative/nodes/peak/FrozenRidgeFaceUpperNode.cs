@@ -16,7 +16,7 @@ public class FrozenRidgeFaceUpperNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the upper frozen ridge face";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "face", "upper", "frozen", "vertical", "ridge", "ice", "steep", "exposed", "climbing", "wall" };
+    public override List<string> NodeKeywords => new() { "ice", "ridge", "face", "climbing" };
     
     private static readonly string[] Moods = { "vertical", "frozen", "challenging", "exposed" };
     
@@ -31,7 +31,7 @@ public class FrozenRidgeFaceUpperNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ridge_face_upper_ice_hold";
         public override string DisplayName => "Ice Hold";
         public override string Description => "Frozen protrusion for climbing";
-        public override List<string> OutcomeKeywords => new() { "ice", "hold", "protrusion", "grip", "frozen", "climbing", "knob", "handhold", "solid", "jutting" };
+        public override List<string> OutcomeKeywords => new() { "ice", "handhold", "knob" };
     }
     
     public sealed class FrozenCrack : Item
@@ -39,7 +39,7 @@ public class FrozenRidgeFaceUpperNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ridge_face_upper_frozen_crack";
         public override string DisplayName => "Frozen Crack";
         public override string Description => "Ice-filled crack in the face";
-        public override List<string> OutcomeKeywords => new() { "crack", "frozen", "ice", "fissure", "filled", "narrow", "vertical", "cold", "seam", "crevice" };
+        public override List<string> OutcomeKeywords => new() { "crack", "fissure", "ice" };
     }
     
     public sealed class GlacierPolishedRock : Item
@@ -47,6 +47,6 @@ public class FrozenRidgeFaceUpperNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ridge_face_upper_glacier_polished_rock";
         public override string DisplayName => "Glacier-Polished Rock";
         public override string Description => "Stone embedded in ice, polished by glacial movement";
-        public override List<string> OutcomeKeywords => new() { "rock", "polished", "glacier", "smooth", "embedded", "stone", "rounded", "hard", "ancient", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "rock", "glacier", "polish" };
     }
 }

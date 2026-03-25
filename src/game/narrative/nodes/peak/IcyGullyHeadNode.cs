@@ -16,7 +16,7 @@ public class IcyGullyHeadNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the icy gully head";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "gully", "head", "ice", "channel", "steep", "narrow", "frozen", "source", "cold", "chute" };
+    public override List<string> NodeKeywords => new() { "gully", "ice", "chute", "source" };
     
     private static readonly string[] Moods = { "steep", "narrow", "icy", "channeled" };
     

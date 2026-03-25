@@ -14,7 +14,7 @@ public class LowMossBedNode : NarrationNode
     public override string TransitionDescription => "step onto the moss";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "soft", "carpet", "green", "cushiony", "damp", "moss", "silent", "thick", "covering", "velvet" };
+    public override List<string> NodeKeywords => new() { "moss", "carpet", "silence", "dampness" };
     
     private static readonly string[] Moods = { "soft", "silent", "cushioned", "thick", "velvety", "damp", "quiet", "green" };
     
@@ -31,7 +31,7 @@ public class LowMossBedNode : NarrationNode
         public override string ItemId => "moss_carpet";
         public override string DisplayName => "Moss Carpet";
         public override string Description => "A thick sheet of forest floor moss";
-        public override List<string> OutcomeKeywords => new() { "soft", "green", "thick", "damp", "sheet", "moss", "velvety", "cushiony", "living", "carpet" };
+        public override List<string> OutcomeKeywords => new() { "moss", "carpet", "velvet" };
     }
     
     public sealed class MossSpore : Item
@@ -39,6 +39,6 @@ public class LowMossBedNode : NarrationNode
         public override string ItemId => "low_moss_spore_capsule";
         public override string DisplayName => "Moss Spore Capsule";
         public override string Description => "Tiny capsules on thin stalks containing spores";
-        public override List<string> OutcomeKeywords => new() { "tiny", "capsules", "stalks", "brown", "reproductive", "nodding", "spores", "delicate", "dispersing", "minute" };
+        public override List<string> OutcomeKeywords => new() { "spore", "capsule", "stalk" };
     }
 }

@@ -14,7 +14,7 @@ public class BeechStandNode : NarrationNode
     public override string TransitionDescription => "enter the beeches";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "smooth", "grey", "bark", "tall", "elegant", "mast", "nuts", "copper", "leaves", "silver" };
+    public override List<string> NodeKeywords => new() { "bark", "mast", "leaves", "beech" };
     
     private static readonly string[] Moods = { "elegant", "silvery", "stately", "smooth-barked", "graceful", "noble", "towering", "luminous" };
     
@@ -31,7 +31,7 @@ public class BeechStandNode : NarrationNode
         public override string ItemId => "beechnut";
         public override string DisplayName => "Beechnut";
         public override string Description => "A triangular beechnut in its spiny husk";
-        public override List<string> OutcomeKeywords => new() { "triangular", "brown", "husk", "spiny", "shell", "nut", "edible", "small", "mast", "kernel" };
+        public override List<string> OutcomeKeywords => new() { "nut", "husk", "kernel", "mast" };
     }
     
     public sealed class BeechLeaf : Item
@@ -39,6 +39,6 @@ public class BeechStandNode : NarrationNode
         public override string ItemId => "beech_stand_copper_leaf";
         public override string DisplayName => "Copper Beech Leaf";
         public override string Description => "A copper-colored beech leaf with delicate veins";
-        public override List<string> OutcomeKeywords => new() { "copper", "oval", "veined", "thin", "papery", "wavy", "edges", "glossy", "bronze", "autumn" };
+        public override List<string> OutcomeKeywords => new() { "leaf", "vein", "autumn", "copper" };
     }
 }

@@ -14,7 +14,7 @@ public class HiddenBranchTangleNode : NarrationNode
     public override string TransitionDescription => "navigate the tangles";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "low", "tangled", "branches", "dark", "twisted", "hanging", "interwoven", "catching", "dense", "maze" };
+    public override List<string> NodeKeywords => new() { "branch", "tangle", "darkness", "maze" };
     
     private static readonly string[] Moods = { "tangled", "maze-like", "twisted", "dark", "catching", "dense", "interwoven", "hidden" };
     
@@ -31,7 +31,7 @@ public class HiddenBranchTangleNode : NarrationNode
         public override string ItemId => "tangled_twig";
         public override string DisplayName => "Tangled Twig";
         public override string Description => "A twisted twig from the dark tangle";
-        public override List<string> OutcomeKeywords => new() { "twisted", "dark", "bent", "twig", "gnarled", "crooked", "thin", "brittle", "branch", "curved" };
+        public override List<string> OutcomeKeywords => new() { "twig", "branch", "gnarl" };
     }
     
     public sealed class CobwebVeil : Item
@@ -39,6 +39,6 @@ public class HiddenBranchTangleNode : NarrationNode
         public override string ItemId => "hidden_tangle_cobweb";
         public override string DisplayName => "Cobweb Veil";
         public override string Description => "Thick spider webs draped across the branches";
-        public override List<string> OutcomeKeywords => new() { "silky", "sticky", "draped", "white", "web", "threads", "spider", "gauzy", "delicate", "catching" };
+        public override List<string> OutcomeKeywords => new() { "cobweb", "silk", "veil", "thread" };
     }
 }

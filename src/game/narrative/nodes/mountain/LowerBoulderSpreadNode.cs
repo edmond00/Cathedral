@@ -15,7 +15,7 @@ public class LowerBoulderSpreadNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend into the lower boulder spread";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "boulders", "lower", "spread", "settled", "mossy", "damp", "shaded", "cool", "stable", "ancient" };
+    public override List<string> NodeKeywords => new() { "boulder", "moss", "shade", "dampness" };
     
     private static readonly string[] Moods = { "settled", "mossy", "shaded", "ancient" };
     
@@ -30,7 +30,7 @@ public class LowerBoulderSpreadNode : PyramidalFeatureNode
         public override string ItemId => "lower_boulder_spread_mossy_crevice";
         public override string DisplayName => "Mossy Crevice";
         public override string Description => "Damp crack between boulders";
-        public override List<string> OutcomeKeywords => new() { "mossy", "crevice", "damp", "green", "crack", "moist", "sheltered", "dark", "narrow", "cool" };
+        public override List<string> OutcomeKeywords => new() { "crevice", "moss", "darkness" };
     }
     
     public sealed class ShelterSpace : Item
@@ -38,6 +38,6 @@ public class LowerBoulderSpreadNode : PyramidalFeatureNode
         public override string ItemId => "lower_boulder_spread_shelter_space";
         public override string DisplayName => "Shelter Space";
         public override string Description => "Protected area beneath overhanging rocks";
-        public override List<string> OutcomeKeywords => new() { "shelter", "space", "protected", "overhang", "dry", "refuge", "cave-like", "enclosed", "safe", "hidden" };
+        public override List<string> OutcomeKeywords => new() { "shelter", "refuge", "overhang" };
     }
 }

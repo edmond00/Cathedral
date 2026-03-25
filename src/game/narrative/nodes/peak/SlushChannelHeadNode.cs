@@ -16,7 +16,7 @@ public class SlushChannelHeadNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the slush channel head";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "slush", "channel", "head", "wet", "snow", "melting", "source", "cold", "slushy", "transitional" };
+    public override List<string> NodeKeywords => new() { "slush", "channel", "melting", "transition" };
     
     private static readonly string[] Moods = { "slushy", "melting", "wet", "transitional" };
     

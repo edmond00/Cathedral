@@ -15,7 +15,7 @@ public class RiverbedNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the riverbed";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "riverbed", "water", "stones", "flow", "shallow", "current", "rocks", "channel", "wet", "stream" };
+    public override List<string> NodeKeywords => new() { "stone", "current", "channel", "flow" };
     
     private static readonly string[] Moods = { "flowing", "rocky", "shallow", "active" };
     
@@ -30,7 +30,7 @@ public class RiverbedNode : PyramidalFeatureNode
         public override string ItemId => "riverbed_river_stones";
         public override string DisplayName => "River Stones";
         public override string Description => "Smooth rounded rocks in the water";
-        public override List<string> OutcomeKeywords => new() { "stones", "river", "smooth", "rounded", "water", "polished", "wet", "colorful", "varied", "tumbled" };
+        public override List<string> OutcomeKeywords => new() { "stone", "river", "polish" };
     }
     
     public sealed class RiverSand : Item
@@ -38,6 +38,6 @@ public class RiverbedNode : PyramidalFeatureNode
         public override string ItemId => "riverbed_river_sand";
         public override string DisplayName => "River Sand";
         public override string Description => "Coarse sand deposit collectible from the riverbed";
-        public override List<string> OutcomeKeywords => new() { "sand", "coarse", "granular", "gritty", "quartz", "golden", "mineral", "sediment", "loose", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "sand", "quartz", "mineral" };
     }
 }

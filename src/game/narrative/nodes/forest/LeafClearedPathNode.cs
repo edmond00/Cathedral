@@ -13,7 +13,7 @@ public class LeafClearedPathNode : NarrationNode
     public override string TransitionDescription => "take the cleared path";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "swept", "clear", "clean", "wind", "bare", "tidy", "maintained", "path", "trail", "open" };
+    public override List<string> NodeKeywords => new() { "path", "wind", "clarity", "trail" };
     
     private static readonly string[] Moods = { "swept", "clear", "tidy", "clean", "maintained", "neat", "orderly", "pristine" };
     
@@ -30,6 +30,6 @@ public class LeafClearedPathNode : NarrationNode
         public override string ItemId => "leaf_cleared_path_swept_leaves";
         public override string DisplayName => "Swept Leaves";
         public override string Description => "Leaves gathered from the edges of the cleared path";
-        public override List<string> OutcomeKeywords => new() { "leaves", "swept", "edges", "gathered", "dry", "piled", "crisp", "brown", "accumulated", "cleared" };
+        public override List<string> OutcomeKeywords => new() { "leaf", "pile", "dryness" };
     }
 }

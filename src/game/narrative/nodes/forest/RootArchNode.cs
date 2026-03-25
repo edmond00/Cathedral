@@ -14,7 +14,7 @@ public class RootArchNode : NarrationNode
     public override string TransitionDescription => "pass through the root arch";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "arched", "curved", "spanning", "roots", "natural", "bridge", "suspended", "overhead", "sculptural", "tunnel" };
+    public override List<string> NodeKeywords => new() { "arch", "root", "bridge", "sculpture" };
     
     private static readonly string[] Moods = { "arched", "curved", "sculptural", "natural", "spanning", "suspended", "bridge-like", "overhead" };
     
@@ -31,7 +31,7 @@ public class RootArchNode : NarrationNode
         public override string ItemId => "arched_root_piece";
         public override string DisplayName => "Arched Root Piece";
         public override string Description => "A curved piece from the root arch";
-        public override List<string> OutcomeKeywords => new() { "curved", "hard", "woody", "root", "arched", "brown", "thick", "sculptural", "weathered", "strong" };
+        public override List<string> OutcomeKeywords => new() { "root", "arch", "wood" };
     }
     
     public sealed class BarkRubbing : Item
@@ -39,6 +39,6 @@ public class RootArchNode : NarrationNode
         public override string ItemId => "root_arch_bark_rubbing";
         public override string DisplayName => "Bark Fragment";
         public override string Description => "A piece of bark worn smooth by passage";
-        public override List<string> OutcomeKeywords => new() { "smooth", "worn", "polished", "bark", "fragment", "rubbed", "glossy", "brown", "handled", "textured" };
+        public override List<string> OutcomeKeywords => new() { "bark", "rubbing", "polish" };
     }
 }

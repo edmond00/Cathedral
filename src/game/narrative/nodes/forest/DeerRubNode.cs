@@ -20,7 +20,7 @@ public class DeerRubNode : NarrationNode
     public override string TransitionDescription => "investigate the marked tree";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "scraped", "bark", "stripped", "antler", "marks", "territory", "fresh", "scent", "damage", "rubbed" };
+    public override List<string> NodeKeywords => new() { "antler", "bark", "territory", "scent" };
     
     private static readonly string[] Moods = { "fresh", "marked", "scraped", "territorial", "recent", "obvious", "stripped", "damaged" };
     
@@ -37,7 +37,7 @@ public class DeerRubNode : NarrationNode
         public override string ItemId => "scraped_bark";
         public override string DisplayName => "Scraped Bark";
         public override string Description => "Bark strips torn off by deer antlers";
-        public override List<string> OutcomeKeywords => new() { "torn", "fresh", "fibrous", "pale", "bark", "strips", "damaged", "scraped", "shredded", "wood" };
+        public override List<string> OutcomeKeywords => new() { "bark", "strip", "wood" };
     }
     
     public sealed class DeerScent : Item
@@ -45,6 +45,6 @@ public class DeerRubNode : NarrationNode
         public override string ItemId => "deer_rub_scent_marker";
         public override string DisplayName => "Scent Marker";
         public override string Description => "A patch of bark marked with deer gland secretions";
-        public override List<string> OutcomeKeywords => new() { "musky", "territorial", "pungent", "scent", "marker", "chemical", "claim", "strong", "aromatic", "signal" };
+        public override List<string> OutcomeKeywords => new() { "scent", "musk", "territory" };
     }
 }

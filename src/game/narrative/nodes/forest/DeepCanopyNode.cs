@@ -13,7 +13,7 @@ public class DeepCanopyNode : NarrationNode
     public override string TransitionDescription => "enter the deep canopy";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "closed", "crown", "roots", "stone", "shade", "filtered", "shafts", "dim", "trunk", "carpet" };
+    public override List<string> NodeKeywords => new() { "crown", "shade", "roots", "trunk" };
     
     private static readonly string[] Moods = { "sheltered", "enclosed", "shadowed", "filtered", "dim", "protected", "covered", "roofed" };
     
@@ -30,7 +30,7 @@ public class DeepCanopyNode : NarrationNode
         public override string ItemId => "deep_canopy_fallen_leaves";
         public override string DisplayName => "Fallen Leaves";
         public override string Description => "Layers of leaves fallen from the high canopy";
-        public override List<string> OutcomeKeywords => new() { "leaves", "fallen", "layers", "brown", "dry", "rustling", "dead", "crisp", "carpet", "accumulated" };
+        public override List<string> OutcomeKeywords => new() { "leaf", "layer", "rustle", "carpet" };
     }
     
     public sealed class CanopySeed : Item
@@ -38,6 +38,6 @@ public class DeepCanopyNode : NarrationNode
         public override string ItemId => "deep_canopy_canopy_seed";
         public override string DisplayName => "Canopy Seed";
         public override string Description => "Large seed fallen from the high canopy";
-        public override List<string> OutcomeKeywords => new() { "seed", "large", "hard", "brown", "woody", "fallen", "tree", "heavy", "oval", "canopy" };
+        public override List<string> OutcomeKeywords => new() { "seed", "canopy", "tree" };
     }
 }

@@ -22,7 +22,7 @@ public class UpperLedgeNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the upper ledge";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ledge", "upper", "platform", "stone", "flat", "high", "overlook", "view", "shelf", "perch" };
+    public override List<string> NodeKeywords => new() { "ledge", "perch", "overlook", "view" };
     
     private static readonly string[] Moods = { "commanding", "elevated", "projecting", "prominent" };
     
@@ -37,7 +37,7 @@ public class UpperLedgeNode : PyramidalFeatureNode
         public override string ItemId => "upper_ledge_nest";
         public override string DisplayName => "Ledge Nest";
         public override string Description => "Bird nest on the high stone platform";
-        public override List<string> OutcomeKeywords => new() { "nest", "bird", "twigs", "high", "sheltered", "occupied", "woven", "perched", "eggs", "feathers" };
+        public override List<string> OutcomeKeywords => new() { "nest", "bird", "egg" };
     }
     
     public sealed class FlatStone : Item
@@ -45,7 +45,7 @@ public class UpperLedgeNode : PyramidalFeatureNode
         public override string ItemId => "upper_ledge_flat_stone";
         public override string DisplayName => "Flat Stone";
         public override string Description => "Smooth stone surface on the ledge";
-        public override List<string> OutcomeKeywords => new() { "flat", "smooth", "stone", "surface", "level", "platform", "solid", "stable", "horizontal", "even" };
+        public override List<string> OutcomeKeywords => new() { "stone", "surface", "platform" };
     }
     
     public sealed class OverhangShadow : Item
@@ -53,6 +53,6 @@ public class UpperLedgeNode : PyramidalFeatureNode
         public override string ItemId => "upper_ledge_overhang_shadow";
         public override string DisplayName => "Overhang Shadow";
         public override string Description => "Dark shade cast by the rock above";
-        public override List<string> OutcomeKeywords => new() { "shadow", "overhang", "shade", "dark", "sheltered", "cool", "protected", "dim", "shaded", "covered" };
+        public override List<string> OutcomeKeywords => new() { "shadow", "overhang", "shelter" };
     }
 }

@@ -16,7 +16,7 @@ public class FrozenOutwashPlainMarginNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the frozen outwash plain margin";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "outwash", "margin", "ice", "edge", "glacial", "frozen", "boundary", "transition", "plain", "cold" };
+    public override List<string> NodeKeywords => new() { "outwash", "margin", "glacier", "transition" };
     
     private static readonly string[] Moods = { "transitional", "frozen", "marginal", "boundary" };
     
@@ -31,6 +31,6 @@ public class FrozenOutwashPlainMarginNode : PyramidalFeatureNode
         public override string ItemId => "frozen_outwash_plain_margin_glacial_cobble";
         public override string DisplayName => "Glacial Cobble";
         public override string Description => "Glacier-rounded stone collectible from the margin";
-        public override List<string> OutcomeKeywords => new() { "cobble", "glacial", "rounded", "stone", "deposited", "smooth", "heavy", "worn", "transported", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "cobble", "glacier", "stone" };
     }
 }

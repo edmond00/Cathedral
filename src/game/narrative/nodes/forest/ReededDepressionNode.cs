@@ -14,7 +14,7 @@ public class ReededDepressionNode : NarrationNode
     public override string TransitionDescription => "descend into the reeds";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "reeds", "tall", "wet", "hollow", "swaying", "green", "stems", "water", "cattails", "marsh" };
+    public override List<string> NodeKeywords => new() { "reed", "cattail", "marsh", "water" };
     
     private static readonly string[] Moods = { "wet", "swaying", "marshy", "sodden", "reed-filled", "damp", "boggy", "hollow" };
     
@@ -31,7 +31,7 @@ public class ReededDepressionNode : NarrationNode
         public override string ItemId => "reed_stem";
         public override string DisplayName => "Reed Stem";
         public override string Description => "A tall, hollow reed stem";
-        public override List<string> OutcomeKeywords => new() { "tall", "hollow", "green", "stem", "tubular", "flexible", "reed", "smooth", "straight", "fibrous" };
+        public override List<string> OutcomeKeywords => new() { "stem", "reed", "hollow" };
     }
     
     public sealed class CattailFluff : Item
@@ -39,6 +39,6 @@ public class ReededDepressionNode : NarrationNode
         public override string ItemId => "reeded_depression_cattail_fluff";
         public override string DisplayName => "Cattail Fluff";
         public override string Description => "Soft brown seed fluff from a cattail head";
-        public override List<string> OutcomeKeywords => new() { "soft", "brown", "fluffy", "seeds", "cottony", "dispersing", "downy", "light", "airborne", "insulating" };
+        public override List<string> OutcomeKeywords => new() { "fluff", "seed", "cattail" };
     }
 }

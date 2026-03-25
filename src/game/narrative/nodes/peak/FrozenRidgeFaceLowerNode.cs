@@ -16,7 +16,7 @@ public class FrozenRidgeFaceLowerNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the lower frozen ridge face";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "face", "lower", "frozen", "base", "ice", "steep", "wall", "cold", "vertical", "towering" };
+    public override List<string> NodeKeywords => new() { "ice", "face", "wall", "verticality" };
     
     private static readonly string[] Moods = { "towering", "frozen", "imposing", "icy" };
     

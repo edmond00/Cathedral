@@ -13,7 +13,7 @@ public class CanopyGapLineNode : NarrationNode
     public override string TransitionDescription => "follow the light gap";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "light", "shaft", "bright", "opening", "sunshine", "ray", "illuminated", "warm", "golden", "gap" };
+    public override List<string> NodeKeywords => new() { "light", "shaft", "gap", "sunshine" };
     
     private static readonly string[] Moods = { "bright", "sunlit", "illuminated", "radiant", "gleaming", "golden", "dappled", "shimmering" };
     
@@ -30,7 +30,7 @@ public class CanopyGapLineNode : NarrationNode
         public override string ItemId => "sunwarm_leaves";
         public override string DisplayName => "Sunwarm Leaves";
         public override string Description => "Fresh leaves warmed by direct sunlight";
-        public override List<string> OutcomeKeywords => new() { "warm", "green", "fresh", "bright", "tender", "illuminated", "photosynthetic", "vibrant", "leaf", "living" };
+        public override List<string> OutcomeKeywords => new() { "leaf", "warmth", "growth" };
     }
     
     public sealed class YoungShoots : Item
@@ -38,6 +38,6 @@ public class CanopyGapLineNode : NarrationNode
         public override string ItemId => "canopy_gap_line_young_shoots";
         public override string DisplayName => "Young Shoots";
         public override string Description => "Tender plant shoots growing in the sunlight";
-        public override List<string> OutcomeKeywords => new() { "shoots", "young", "tender", "green", "new", "sprouting", "fresh", "growing", "saplings", "sunlit" };
+        public override List<string> OutcomeKeywords => new() { "shoot", "sapling", "growth" };
     }
 }

@@ -13,7 +13,7 @@ public class RootedForestNode : NarrationNode
     public override string TransitionDescription => "enter the rooted forest";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "exposed", "roots", "web", "arch", "erosion", "channel", "shallow", "displaced", "network", "knotted" };
+    public override List<string> NodeKeywords => new() { "root", "web", "erosion", "network" };
     
     private static readonly string[] Moods = { "gnarled", "exposed", "twisted", "contorted", "webbed", "interlaced", "serpentine", "convoluted" };
     
@@ -30,7 +30,7 @@ public class RootedForestNode : NarrationNode
         public override string ItemId => "rooted_forest_exposed_root_fiber";
         public override string DisplayName => "Exposed Root Fiber";
         public override string Description => "Fibrous strands from massive exposed roots";
-        public override List<string> OutcomeKeywords => new() { "root", "fiber", "exposed", "fibrous", "thick", "tangled", "brown", "strong", "woody", "massive" };
+        public override List<string> OutcomeKeywords => new() { "root", "fiber", "wood" };
     }
     
     public sealed class RootGrip : Item
@@ -38,6 +38,6 @@ public class RootedForestNode : NarrationNode
         public override string ItemId => "rooted_forest_root_grip";
         public override string DisplayName => "Root Grip";
         public override string Description => "Sturdy root section useful for climbing";
-        public override List<string> OutcomeKeywords => new() { "root", "grip", "sturdy", "handholds", "thick", "climbing", "strong", "exposed", "reliable", "woody" };
+        public override List<string> OutcomeKeywords => new() { "root", "grip", "handhold" };
     }
 }

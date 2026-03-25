@@ -23,7 +23,7 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the frozen ravine lip";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ravine", "lip", "edge", "frozen", "precipice", "drop", "ice", "deep", "dangerous", "rim" };
+    public override List<string> NodeKeywords => new() { "lip", "precipice", "ice", "danger" };
     
     private static readonly string[] Moods = { "precipitous", "frozen", "deep", "dangerous" };
     
@@ -38,7 +38,7 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ravine_lip_ravine_quartz";
         public override string DisplayName => "Ravine Quartz";
         public override string Description => "Milky quartz collectible from the ravine edge";
-        public override List<string> OutcomeKeywords => new() { "quartz", "milky", "white", "crystalline", "translucent", "hard", "mineral", "vein", "collectible", "stone" };
+        public override List<string> OutcomeKeywords => new() { "quartz", "vein", "mineral" };
     }
     
     public sealed class FrozenRock : Item
@@ -46,7 +46,7 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ravine_lip_frozen_rock";
         public override string DisplayName => "Frozen Rock";
         public override string Description => "Ice-covered rock at edge";
-        public override List<string> OutcomeKeywords => new() { "rock", "frozen", "ice", "covered", "edge", "cold", "hard", "coated", "slippery", "glazed" };
+        public override List<string> OutcomeKeywords => new() { "rock", "ice", "glaze" };
     }
     
     public sealed class IcicleFormation : Item
@@ -54,6 +54,6 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ravine_lip_icicle_formation";
         public override string DisplayName => "Icicle Formation";
         public override string Description => "Cluster of icicles hanging over edge";
-        public override List<string> OutcomeKeywords => new() { "icicles", "formation", "hanging", "frozen", "cluster", "sharp", "pointed", "crystalline", "translucent", "dangerous" };
+        public override List<string> OutcomeKeywords => new() { "icicle", "formation", "crystal" };
     }
 }

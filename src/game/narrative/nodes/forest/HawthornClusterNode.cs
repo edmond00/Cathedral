@@ -13,7 +13,7 @@ public class HawthornClusterNode : NarrationNode
     public override string TransitionDescription => "approach the hawthorns";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "thorny", "white", "flowers", "berries", "sharp", "twisted", "dense", "cluster", "fragrant", "spines" };
+    public override List<string> NodeKeywords => new() { "thorn", "flower", "berry", "hawthorn" };
     
     private static readonly string[] Moods = { "thorny", "defensive", "prickly", "flowering", "fragrant", "clustered", "tangled", "guarded" };
     
@@ -30,7 +30,7 @@ public class HawthornClusterNode : NarrationNode
         public override string ItemId => "hawthorn_berry";
         public override string DisplayName => "Haw";
         public override string Description => "A red hawthorn berry, slightly mealy";
-        public override List<string> OutcomeKeywords => new() { "red", "berry", "small", "round", "mealy", "fruit", "tart", "scarlet", "seed", "edible" };
+        public override List<string> OutcomeKeywords => new() { "berry", "seed", "fruit" };
     }
     
     public sealed class HawthornThorn : Item
@@ -38,6 +38,6 @@ public class HawthornClusterNode : NarrationNode
         public override string ItemId => "hawthorn_cluster_thorn";
         public override string DisplayName => "Hawthorn Thorn";
         public override string Description => "A long, sharp thorn from a hawthorn branch";
-        public override List<string> OutcomeKeywords => new() { "long", "sharp", "pointed", "woody", "spine", "needle", "dangerous", "hard", "straight", "defensive" };
+        public override List<string> OutcomeKeywords => new() { "thorn", "spine", "needle" };
     }
 }

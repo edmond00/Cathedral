@@ -14,7 +14,7 @@ public class DeepLeafLitterNode : NarrationNode
     public override string TransitionDescription => "push into the deep litter";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "deep", "thick", "layers", "leaves", "accumulated", "brown", "rustling", "ankle-deep", "dry", "buried" };
+    public override List<string> NodeKeywords => new() { "leaf", "litter", "depth", "layers" };
     
     private static readonly string[] Moods = { "deep", "thick", "accumulated", "layered", "rustling", "abundant", "ankle-deep", "buried" };
     
@@ -31,7 +31,7 @@ public class DeepLeafLitterNode : NarrationNode
         public override string ItemId => "dried_leaf_pile";
         public override string DisplayName => "Dried Leaf Pile";
         public override string Description => "A bundle of crisp, layered leaves";
-        public override List<string> OutcomeKeywords => new() { "dry", "crisp", "brown", "layers", "leaves", "rustling", "papery", "brittle", "accumulated", "bundle" };
+        public override List<string> OutcomeKeywords => new() { "leaf", "bundle", "rustling" };
     }
     
     public sealed class HiddenAcorn : Item
@@ -39,6 +39,6 @@ public class DeepLeafLitterNode : NarrationNode
         public override string ItemId => "deep_litter_hidden_acorn";
         public override string DisplayName => "Hidden Acorn";
         public override string Description => "An acorn buried deep beneath the leaf layers";
-        public override List<string> OutcomeKeywords => new() { "buried", "brown", "cap", "oval", "forgotten", "cached", "smooth", "nut", "hidden", "stashed" };
+        public override List<string> OutcomeKeywords => new() { "acorn", "cap", "cache" };
     }
 }

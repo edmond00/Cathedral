@@ -16,7 +16,7 @@ public class FrozenStreamSourceNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the frozen stream source";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "stream", "source", "frozen", "spring", "ice", "origin", "cold", "seep", "nascent", "beginning" };
+    public override List<string> NodeKeywords => new() { "spring", "ice", "source", "seep" };
     
     private static readonly string[] Moods = { "nascent", "frozen", "pristine", "originating" };
     
@@ -31,6 +31,6 @@ public class FrozenStreamSourceNode : PyramidalFeatureNode
         public override string ItemId => "frozen_stream_source_spring_quartz";
         public override string DisplayName => "Spring Quartz";
         public override string Description => "Clear quartz crystal collectible from the spring";
-        public override List<string> OutcomeKeywords => new() { "quartz", "crystal", "clear", "spring", "transparent", "hexagonal", "hard", "mineral", "pure", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "quartz", "crystal", "spring" };
     }
 }

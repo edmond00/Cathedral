@@ -15,7 +15,7 @@ public class ChannelBankNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the channel bank";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "channel", "bank", "floodplain", "edge", "water", "raised", "levee", "grass", "gentle", "slope" };
+    public override List<string> NodeKeywords => new() { "bank", "channel", "levee", "floodplain" };
     
     private static readonly string[] Moods = { "gentle", "grassy", "raised", "vegetated" };
     
@@ -30,7 +30,7 @@ public class ChannelBankNode : PyramidalFeatureNode
         public override string ItemId => "channel_bank_reed_bed";
         public override string DisplayName => "Reed Bed";
         public override string Description => "Tall reeds growing at water's edge";
-        public override List<string> OutcomeKeywords => new() { "reed", "bed", "tall", "growing", "waterside", "dense", "green", "swaying", "thick", "rustling" };
+        public override List<string> OutcomeKeywords => new() { "reed", "bed", "waterside" };
     }
     
     public sealed class BankSediment : Item
@@ -38,7 +38,7 @@ public class ChannelBankNode : PyramidalFeatureNode
         public override string ItemId => "channel_bank_sediment";
         public override string DisplayName => "Bank Sediment";
         public override string Description => "Layered deposits from past floods";
-        public override List<string> OutcomeKeywords => new() { "sediment", "deposits", "layered", "flood", "silt", "soil", "stratified", "accumulated", "fine", "rich" };
+        public override List<string> OutcomeKeywords => new() { "sediment", "silt", "deposit" };
     }
     
     public sealed class MountainReedStem : Item
@@ -46,6 +46,6 @@ public class ChannelBankNode : PyramidalFeatureNode
         public override string ItemId => "mountain_reed_stem";
         public override string DisplayName => "Mountain Reed Stem";
         public override string Description => "Dried reed stem collectible from the bank";
-        public override List<string> OutcomeKeywords => new() { "reed", "stem", "dried", "hollow", "tubular", "light", "brown", "plant", "fibrous", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "stem", "reed", "hollow" };
     }
 }

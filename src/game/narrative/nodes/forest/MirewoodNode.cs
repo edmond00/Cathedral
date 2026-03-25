@@ -21,7 +21,7 @@ public class MirewoodNode : NarrationNode
     public override string TransitionDescription => "wade into the mirewood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "flooded", "pool", "sedge", "spongy", "moss", "rotting", "water", "swamp", "mire", "wet" };
+    public override List<string> NodeKeywords => new() { "pool", "sedge", "swamp", "mire" };
     
     private static readonly string[] Moods = { "waterlogged", "marshy", "boggy", "swampy", "sodden", "saturated", "squelching", "quagmire" };
     
@@ -38,7 +38,7 @@ public class MirewoodNode : NarrationNode
         public override string ItemId => "mirewood_bog_water";
         public override string DisplayName => "Bog Water";
         public override string Description => "Stagnant water collected from mirewood pools";
-        public override List<string> OutcomeKeywords => new() { "water", "bog", "stagnant", "murky", "dark", "still", "brackish", "swampy", "thick", "clouded" };
+        public override List<string> OutcomeKeywords => new() { "water", "bog", "stagnation" };
     }
     
     public sealed class BogPeat : Item
@@ -46,6 +46,6 @@ public class MirewoodNode : NarrationNode
         public override string ItemId => "mirewood_bog_peat";
         public override string DisplayName => "Bog Peat";
         public override string Description => "Dense organic matter from the mirewood bog";
-        public override List<string> OutcomeKeywords => new() { "peat", "bog", "organic", "dark", "compressed", "fuel", "wet", "fibrous", "carbon", "dense" };
+        public override List<string> OutcomeKeywords => new() { "peat", "bog", "carbon" };
     }
 }

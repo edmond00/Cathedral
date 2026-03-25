@@ -23,7 +23,7 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the lower ice flow";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "glacier", "lower", "ice", "terminus", "frozen", "melting", "edge", "blue", "cold", "ending" };
+    public override List<string> NodeKeywords => new() { "glacier", "terminus", "ice", "melting" };
     
     private static readonly string[] Moods = { "terminating", "melting", "ending", "transitional" };
     
@@ -38,7 +38,7 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
         public override string ItemId => "glacier_tongue_lower_moraine_dirt";
         public override string DisplayName => "Moraine Dirt";
         public override string Description => "Dirt and rock from glacier edge";
-        public override List<string> OutcomeKeywords => new() { "dirt", "moraine", "rock", "sediment", "glacial", "debris", "earth", "mixed", "deposited", "ground" };
+        public override List<string> OutcomeKeywords => new() { "moraine", "dirt", "debris" };
     }
     
     public sealed class GlacialErratic : Item
@@ -46,6 +46,6 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
         public override string ItemId => "glacier_tongue_lower_glacial_erratic";
         public override string DisplayName => "Glacial Erratic";
         public override string Description => "Glacier-deposited boulder fragment collectible from ice edge";
-        public override List<string> OutcomeKeywords => new() { "erratic", "boulder", "glacial", "deposited", "fragment", "transported", "foreign", "rock", "heavy", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "erratic", "boulder", "glacier" };
     }
 }

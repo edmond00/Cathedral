@@ -15,7 +15,7 @@ public class GullyLipNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the gully lip";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "gully", "lip", "edge", "rim", "shaded", "dark", "drop", "opening", "entrance", "brink" };
+    public override List<string> NodeKeywords => new() { "lip", "rim", "edge", "drop" };
     
     private static readonly string[] Moods = { "shaded", "dark", "shadowy", "dim" };
     
@@ -30,7 +30,7 @@ public class GullyLipNode : PyramidalFeatureNode
         public override string ItemId => "gully_lip_overhanging_fern";
         public override string DisplayName => "Overhanging Fern";
         public override string Description => "Lush fern growing at the gully edge";
-        public override List<string> OutcomeKeywords => new() { "fern", "overhanging", "lush", "green", "fronds", "hanging", "moist", "delicate", "shade", "plant" };
+        public override List<string> OutcomeKeywords => new() { "fern", "frond", "overhang" };
     }
     
     public sealed class CoolAir : Item
@@ -38,7 +38,7 @@ public class GullyLipNode : PyramidalFeatureNode
         public override string ItemId => "gully_lip_cool_air";
         public override string DisplayName => "Cool Air";
         public override string Description => "Cold air rising from the gully";
-        public override List<string> OutcomeKeywords => new() { "cool", "air", "cold", "rising", "draft", "breeze", "chill", "flowing", "moist", "fresh" };
+        public override List<string> OutcomeKeywords => new() { "draft", "chill", "breeze" };
     }
     
     public sealed class SlipperyEdge : Item
@@ -46,6 +46,6 @@ public class GullyLipNode : PyramidalFeatureNode
         public override string ItemId => "gully_lip_slippery_edge";
         public override string DisplayName => "Slippery Edge";
         public override string Description => "Moist rock at the gully entrance";
-        public override List<string> OutcomeKeywords => new() { "slippery", "edge", "moist", "wet", "dangerous", "moss", "slick", "precarious", "damp", "treacherous" };
+        public override List<string> OutcomeKeywords => new() { "edge", "slipperiness", "moss" };
     }
 }

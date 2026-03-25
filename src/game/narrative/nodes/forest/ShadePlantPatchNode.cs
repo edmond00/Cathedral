@@ -14,7 +14,7 @@ public class ShadePlantPatchNode : NarrationNode
     public override string TransitionDescription => "investigate the shade plants";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "dark", "green", "adapted", "low", "broad", "leaves", "shade", "tolerant", "dim", "specialized" };
+    public override List<string> NodeKeywords => new() { "shade", "leaf", "adaptation", "dimness" };
     
     private static readonly string[] Moods = { "adapted", "shade-loving", "dim", "specialized", "dark-green", "tolerant", "low-growing", "sparse" };
     
@@ -31,7 +31,7 @@ public class ShadePlantPatchNode : NarrationNode
         public override string ItemId => "shade_broad_leaf";
         public override string DisplayName => "Broad Shade Leaf";
         public override string Description => "A wide, dark green leaf from a shade plant";
-        public override List<string> OutcomeKeywords => new() { "broad", "dark", "green", "wide", "flat", "leaf", "smooth", "large", "shade", "adapted" };
+        public override List<string> OutcomeKeywords => new() { "leaf", "shade", "breadth" };
     }
     
     public sealed class ShadeFern : Item
@@ -39,6 +39,6 @@ public class ShadePlantPatchNode : NarrationNode
         public override string ItemId => "shade_plant_fern";
         public override string DisplayName => "Shade Fern";
         public override string Description => "A delicate shade-adapted fern frond";
-        public override List<string> OutcomeKeywords => new() { "delicate", "feathery", "dark", "green", "frond", "small", "low", "shade", "fern", "adapted" };
+        public override List<string> OutcomeKeywords => new() { "frond", "fern", "shade" };
     }
 }

@@ -13,7 +13,7 @@ public class WildStrawberryPatchNode : NarrationNode
     public override string TransitionDescription => "approach the strawberries";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "red", "tiny", "sweet", "ground", "runners", "white", "flowers", "berries", "fragrant", "delicate" };
+    public override List<string> NodeKeywords => new() { "berry", "runner", "flower", "fragrance" };
     
     private static readonly string[] Moods = { "tiny", "sweet", "abundant", "ground-hugging", "fragrant", "delicate", "wild", "productive" };
     
@@ -30,7 +30,7 @@ public class WildStrawberryPatchNode : NarrationNode
         public override string ItemId => "wild_strawberry";
         public override string DisplayName => "Wild Strawberry";
         public override string Description => "Tiny, intensely sweet wild strawberries";
-        public override List<string> OutcomeKeywords => new() { "red", "tiny", "sweet", "seeds", "fragrant", "berries", "fruit", "intense", "delicate", "wild" };
+        public override List<string> OutcomeKeywords => new() { "berry", "seed", "fragrance" };
     }
     
     public sealed class StrawberryRunner : Item
@@ -38,7 +38,7 @@ public class WildStrawberryPatchNode : NarrationNode
         public override string ItemId => "wild_strawberry_runner";
         public override string DisplayName => "Strawberry Runner";
         public override string Description => "A thin stem sending out new plants";
-        public override List<string> OutcomeKeywords => new() { "thin", "runner", "stem", "spreading", "rooting", "propagating", "green", "connecting", "tendril", "network" };
+        public override List<string> OutcomeKeywords => new() { "runner", "stem", "propagation" };
     }
     
     public sealed class StrawberryLeaf : Item
@@ -46,6 +46,6 @@ public class WildStrawberryPatchNode : NarrationNode
         public override string ItemId => "wild_strawberry_leaf";
         public override string DisplayName => "Strawberry Leaf";
         public override string Description => "Triple-leaflet leaves with serrated edges";
-        public override List<string> OutcomeKeywords => new() { "triple", "serrated", "green", "leaflet", "toothed", "compound", "edges", "three", "veined", "textured" };
+        public override List<string> OutcomeKeywords => new() { "leaflet", "serration", "vein" };
     }
 }

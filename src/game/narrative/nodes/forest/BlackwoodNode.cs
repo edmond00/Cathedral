@@ -21,7 +21,7 @@ public class BlackwoodNode : NarrationNode
     public override string TransitionDescription => "enter the blackwood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "dense", "wall", "deadwood", "heap", "bare", "damp", "lightless", "dark", "black", "collapsed" };
+    public override List<string> NodeKeywords => new() { "deadwood", "darkness", "heap", "collapse" };
     
     private static readonly string[] Moods = { "lightless", "pitch-dark", "oppressive", "suffocating", "impenetrable", "black", "void-like", "abyssal" };
     
@@ -38,6 +38,6 @@ public class BlackwoodNode : NarrationNode
         public override string ItemId => "blackwood_charred_twigs";
         public override string DisplayName => "Charred Twigs";
         public override string Description => "Blackened twigs from the scorched blackwood";
-        public override List<string> OutcomeKeywords => new() { "twigs", "charred", "blackened", "burnt", "brittle", "scorched", "ashen", "fragile", "dark", "crumbling" };
+        public override List<string> OutcomeKeywords => new() { "charcoal", "ash", "twig", "cinder" };
     }
 }

@@ -14,7 +14,7 @@ public class YoungMapleGroupNode : NarrationNode
     public override string TransitionDescription => "approach the maples";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "sapling", "palmate", "leaves", "young", "green", "cluster", "slender", "growing", "vibrant", "fresh" };
+    public override List<string> NodeKeywords => new() { "sapling", "leaf", "maple", "cluster" };
     
     private static readonly string[] Moods = { "vigorous", "young", "thriving", "verdant", "growing", "clustered", "healthy", "vibrant" };
     
@@ -31,7 +31,7 @@ public class YoungMapleGroupNode : NarrationNode
         public override string ItemId => "maple_seed";
         public override string DisplayName => "Maple Seed";
         public override string Description => "A winged maple seed, ready to spin";
-        public override List<string> OutcomeKeywords => new() { "winged", "spinning", "helicopter", "seed", "brown", "paired", "samara", "propeller", "flying", "light" };
+        public override List<string> OutcomeKeywords => new() { "samara", "seed", "wing" };
     }
     
     public sealed class MapleLeaf : Item
@@ -39,6 +39,6 @@ public class YoungMapleGroupNode : NarrationNode
         public override string ItemId => "young_maple_palmate_leaf";
         public override string DisplayName => "Palmate Maple Leaf";
         public override string Description => "A fresh young maple leaf with pointed lobes";
-        public override List<string> OutcomeKeywords => new() { "palmate", "green", "lobed", "pointed", "veined", "fresh", "young", "bright", "five", "fingered" };
+        public override List<string> OutcomeKeywords => new() { "leaf", "lobe", "vein" };
     }
 }

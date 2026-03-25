@@ -21,7 +21,7 @@ public class AnimalTrackNode : NarrationNode
     public override string TransitionDescription => "follow the track";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "trampled", "prints", "trail", "wildlife", "narrow", "worn", "path", "scent", "droppings", "marks" };
+    public override List<string> NodeKeywords => new() { "trail", "droppings", "scent", "prints" };
     
     private static readonly string[] Moods = { "well-worn", "faint", "fresh", "winding", "meandering", "hidden", "obvious", "subtle" };
     
@@ -38,7 +38,7 @@ public class AnimalTrackNode : NarrationNode
         public override string ItemId => "animal_droppings";
         public override string DisplayName => "Animal Droppings";
         public override string Description => "Fresh droppings indicating recent animal passage";
-        public override List<string> OutcomeKeywords => new() { "fresh", "pungent", "dark", "pellets", "scattered", "recent", "organic", "earthy", "wildlife", "sign" };
+        public override List<string> OutcomeKeywords => new() { "droppings", "pellets", "musk", "scent" };
     }
     
     public sealed class TuftOfFur : Item
@@ -46,6 +46,6 @@ public class AnimalTrackNode : NarrationNode
         public override string ItemId => "animal_track_tuft_of_fur";
         public override string DisplayName => "Tuft of Fur";
         public override string Description => "Animal fur snagged on nearby brush";
-        public override List<string> OutcomeKeywords => new() { "fur", "tuft", "soft", "brown", "snagged", "coarse", "animal", "fibers", "caught", "wildlife" };
+        public override List<string> OutcomeKeywords => new() { "fur", "tuft", "fiber" };
     }
 }

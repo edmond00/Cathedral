@@ -13,7 +13,7 @@ public class BeehiveNode : NarrationNode
     public override string TransitionDescription => "approach the hive cautiously";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "buzzing", "honey", "wax", "insects", "flying", "entrance", "busy", "golden", "swarm", "colony" };
+    public override List<string> NodeKeywords => new() { "honey", "wax", "swarm", "colony" };
     
     private static readonly string[] Moods = { "buzzing", "busy", "active", "thriving", "humming", "industrious", "protective", "organized" };
     
@@ -30,7 +30,7 @@ public class BeehiveNode : NarrationNode
         public override string ItemId => "wild_honeycomb";
         public override string DisplayName => "Wild Honeycomb";
         public override string Description => "A small piece of honeycomb carefully extracted";
-        public override List<string> OutcomeKeywords => new() { "golden", "hexagonal", "sweet", "wax", "honey", "cells", "sticky", "aromatic", "comb", "nectar" };
+        public override List<string> OutcomeKeywords => new() { "honeycomb", "wax", "nectar", "comb" };
     }
     
     public sealed class BeeswaxFragment : Item
@@ -38,7 +38,7 @@ public class BeehiveNode : NarrationNode
         public override string ItemId => "beehive_beeswax_fragment";
         public override string DisplayName => "Beeswax Fragment";
         public override string Description => "A small piece of pure beeswax from the hive";
-        public override List<string> OutcomeKeywords => new() { "yellow", "waxy", "smooth", "pliable", "aromatic", "pure", "malleable", "soft", "fragrant", "golden" };
+        public override List<string> OutcomeKeywords => new() { "wax", "warmth", "fragrance" };
     }
     
     public sealed class RoyalJelly : Item
@@ -46,6 +46,6 @@ public class BeehiveNode : NarrationNode
         public override string ItemId => "beehive_royal_jelly";
         public override string DisplayName => "Royal Jelly";
         public override string Description => "Precious milky substance secreted by worker bees";
-        public override List<string> OutcomeKeywords => new() { "milky", "white", "creamy", "nutritious", "precious", "protein", "secretion", "glandular", "queen", "rich" };
+        public override List<string> OutcomeKeywords => new() { "jelly", "secretion", "queen", "protein" };
     }
 }

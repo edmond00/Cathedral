@@ -13,7 +13,7 @@ public class TreeSapFlowNode : NarrationNode
     public override string TransitionDescription => "investigate the sap";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "sticky", "amber", "resin", "oozing", "crystallized", "golden", "wound", "dripping", "viscous", "sweet" };
+    public override List<string> NodeKeywords => new() { "resin", "amber", "sap", "wound" };
     
     private static readonly string[] Moods = { "oozing", "dripping", "sticky", "golden", "amber", "fresh", "crystallizing", "gleaming" };
     
@@ -30,7 +30,7 @@ public class TreeSapFlowNode : NarrationNode
         public override string ItemId => "tree_resin";
         public override string DisplayName => "Tree Resin";
         public override string Description => "Sticky amber resin collected from the tree";
-        public override List<string> OutcomeKeywords => new() { "sticky", "amber", "golden", "viscous", "aromatic", "resin", "hard", "translucent", "preserved", "sap" };
+        public override List<string> OutcomeKeywords => new() { "resin", "sap", "amber" };
     }
     
     public sealed class CrystallizedSap : Item
@@ -38,6 +38,6 @@ public class TreeSapFlowNode : NarrationNode
         public override string ItemId => "tree_sap_crystallized";
         public override string DisplayName => "Crystallized Sap";
         public override string Description => "Hardened amber crystals of ancient sap";
-        public override List<string> OutcomeKeywords => new() { "hard", "amber", "crystal", "transparent", "golden", "fossilized", "glassy", "preserved", "ancient", "solid" };
+        public override List<string> OutcomeKeywords => new() { "crystal", "amber", "fossil", "sap" };
     }
 }

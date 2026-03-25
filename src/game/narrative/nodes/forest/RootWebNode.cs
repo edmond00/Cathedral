@@ -14,7 +14,7 @@ public class RootWebNode : NarrationNode
     public override string TransitionDescription => "step through the root web";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "network", "interwoven", "exposed", "surface", "complex", "roots", "tangled", "maze", "spreading", "interconnected" };
+    public override List<string> NodeKeywords => new() { "root", "network", "maze", "web" };
     
     private static readonly string[] Moods = { "intricate", "interwoven", "complex", "network", "maze-like", "tangled", "spreading", "interconnected" };
     
@@ -31,7 +31,7 @@ public class RootWebNode : NarrationNode
         public override string ItemId => "root_fiber";
         public override string DisplayName => "Root Fibers";
         public override string Description => "Thin, tough fibers from surface roots";
-        public override List<string> OutcomeKeywords => new() { "thin", "fibrous", "tough", "string", "root", "brown", "strong", "flexible", "wiry", "threadlike" };
+        public override List<string> OutcomeKeywords => new() { "root", "fiber", "wire" };
     }
     
     public sealed class RootBark : Item
@@ -39,6 +39,6 @@ public class RootWebNode : NarrationNode
         public override string ItemId => "root_web_root_bark";
         public override string DisplayName => "Root Bark";
         public override string Description => "Papery bark peeling from exposed roots";
-        public override List<string> OutcomeKeywords => new() { "papery", "peeling", "bark", "thin", "strips", "curling", "brown", "dry", "flaking", "exposed" };
+        public override List<string> OutcomeKeywords => new() { "bark", "peel", "strip" };
     }
 }

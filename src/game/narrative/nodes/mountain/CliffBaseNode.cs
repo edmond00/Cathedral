@@ -22,7 +22,7 @@ public class CliffBaseNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the cliff base";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "towering", "stone", "vertical", "base", "shadow", "cold", "massive", "wall", "imposing", "steep" };
+    public override List<string> NodeKeywords => new() { "cliff", "stone", "wall", "shadow" };
     
     private static readonly string[] Moods = { "imposing", "shadowed", "towering", "daunting" };
     
@@ -37,7 +37,7 @@ public class CliffBaseNode : PyramidalFeatureNode
         public override string ItemId => "cliff_base_loose_rock";
         public override string DisplayName => "Loose Rock";
         public override string Description => "Unstable rock at the cliff base";
-        public override List<string> OutcomeKeywords => new() { "loose", "unstable", "gray", "sharp", "angular", "fallen", "debris", "dangerous", "shifting", "rockfall" };
+        public override List<string> OutcomeKeywords => new() { "rock", "debris", "rockfall" };
     }
     
     public sealed class CrumblingStone : Item
@@ -45,6 +45,6 @@ public class CliffBaseNode : PyramidalFeatureNode
         public override string ItemId => "cliff_base_crumbling_stone";
         public override string DisplayName => "Crumbling Stone";
         public override string Description => "Weathered stone fragments from erosion";
-        public override List<string> OutcomeKeywords => new() { "crumbling", "weathered", "fragments", "eroded", "brittle", "powder", "dusty", "degraded", "weak", "breaking" };
+        public override List<string> OutcomeKeywords => new() { "stone", "fragment", "erosion" };
     }
 }

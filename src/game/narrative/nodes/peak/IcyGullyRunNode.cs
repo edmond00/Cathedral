@@ -16,7 +16,7 @@ public class IcyGullyRunNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend into the icy gully run";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "gully", "run", "ice", "channel", "narrow", "frozen", "descent", "cold", "confined", "flowing" };
+    public override List<string> NodeKeywords => new() { "gully", "ice", "channel", "descent" };
     
     private static readonly string[] Moods = { "narrow", "flowing", "confined", "icy" };
     
@@ -31,6 +31,6 @@ public class IcyGullyRunNode : PyramidalFeatureNode
         public override string ItemId => "icy_gully_run_gully_obsidian";
         public override string DisplayName => "Gully Obsidian";
         public override string Description => "Volcanic glass collectible from the gully";
-        public override List<string> OutcomeKeywords => new() { "obsidian", "volcanic", "glass", "black", "shiny", "sharp", "glassy", "lustrous", "smooth", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "obsidian", "glass", "volcanic" };
     }
 }

@@ -14,7 +14,7 @@ public class LichenBarkNode : NarrationNode
     public override string TransitionDescription => "approach the lichened trunks";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "grey-green", "crusty", "textured", "bark", "symbiotic", "patterns", "encrusted", "ancient", "rough", "growth" };
+    public override List<string> NodeKeywords => new() { "lichen", "bark", "crust", "symbiosis" };
     
     private static readonly string[] Moods = { "encrusted", "patterned", "ancient", "textured", "weathered", "colonized", "aged", "symbiotic" };
     
@@ -31,7 +31,7 @@ public class LichenBarkNode : NarrationNode
         public override string ItemId => "lichen_crust";
         public override string DisplayName => "Lichen Crust";
         public override string Description => "A piece of lichen-covered bark";
-        public override List<string> OutcomeKeywords => new() { "crusty", "grey-green", "rough", "dry", "scaly", "lichen", "symbiotic", "textured", "bark", "flaky" };
+        public override List<string> OutcomeKeywords => new() { "lichen", "crust", "bark" };
     }
     
     public sealed class LichenDust : Item
@@ -39,6 +39,6 @@ public class LichenBarkNode : NarrationNode
         public override string ItemId => "lichen_bark_soredia";
         public override string DisplayName => "Lichen Soredia";
         public override string Description => "Fine reproductive dust from lichen bodies";
-        public override List<string> OutcomeKeywords => new() { "fine", "powdery", "green", "dust", "reproductive", "granular", "tiny", "spores", "dispersal", "microscopic" };
+        public override List<string> OutcomeKeywords => new() { "dust", "spore", "dispersal" };
     }
 }

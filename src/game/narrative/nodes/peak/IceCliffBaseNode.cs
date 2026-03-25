@@ -16,7 +16,7 @@ public class IceCliffBaseNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the ice cliff base";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "frozen", "blue", "vertical", "base", "cold", "massive", "icy", "wall", "glittering", "crystalline" };
+    public override List<string> NodeKeywords => new() { "ice", "cliff", "wall", "glitter" };
     
     private static readonly string[] Moods = { "frigid", "glittering", "towering", "ominous" };
     
@@ -31,7 +31,7 @@ public class IceCliffBaseNode : PyramidalFeatureNode
         public override string ItemId => "ice_cliff_base_glacier_debris";
         public override string DisplayName => "Glacier Debris";
         public override string Description => "Rock fragments deposited by glacier movement";
-        public override List<string> OutcomeKeywords => new() { "debris", "glacier", "rock", "fragments", "deposited", "angular", "mixed", "moraine", "ground", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "debris", "moraine", "rock" };
     }
     
     public sealed class FrozenDebris : Item
@@ -39,6 +39,6 @@ public class IceCliffBaseNode : PyramidalFeatureNode
         public override string ItemId => "ice_cliff_base_frozen_debris";
         public override string DisplayName => "Frozen Debris";
         public override string Description => "Ice-encased debris at the cliff base";
-        public override List<string> OutcomeKeywords => new() { "debris", "frozen", "encased", "ice", "trapped", "rock", "cold", "embedded", "preserved", "hard" };
+        public override List<string> OutcomeKeywords => new() { "debris", "ice", "encasement" };
     }
 }

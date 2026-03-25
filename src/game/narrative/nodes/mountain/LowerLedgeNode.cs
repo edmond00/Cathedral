@@ -15,7 +15,7 @@ public class LowerLedgeNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the lower ledge";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ledge", "lower", "shelf", "narrow", "stone", "below", "shadowed", "protected", "alcove", "recess" };
+    public override List<string> NodeKeywords => new() { "ledge", "alcove", "shelf", "recess" };
     
     private static readonly string[] Moods = { "shadowed", "sheltered", "recessed", "protected" };
     
@@ -30,7 +30,7 @@ public class LowerLedgeNode : PyramidalFeatureNode
         public override string ItemId => "lower_ledge_mossy_stone";
         public override string DisplayName => "Mossy Stone";
         public override string Description => "Moisture-covered rock on the ledge";
-        public override List<string> OutcomeKeywords => new() { "mossy", "stone", "damp", "green", "covered", "moist", "soft", "sheltered", "fuzzy", "wet" };
+        public override List<string> OutcomeKeywords => new() { "stone", "moss", "dampness" };
     }
     
     public sealed class CalciteFormation : Item
@@ -38,6 +38,6 @@ public class LowerLedgeNode : PyramidalFeatureNode
         public override string ItemId => "lower_ledge_calcite_formation";
         public override string DisplayName => "Calcite Formation";
         public override string Description => "Limestone deposit collectible from the ledge";
-        public override List<string> OutcomeKeywords => new() { "calcite", "limestone", "formation", "deposit", "white", "crystalline", "layered", "mineral", "carbonate", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "calcite", "formation", "mineral" };
     }
 }

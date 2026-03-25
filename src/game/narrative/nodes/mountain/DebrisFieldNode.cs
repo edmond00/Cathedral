@@ -22,7 +22,7 @@ public class DebrisFieldNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the debris field";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "debris", "field", "scattered", "boulders", "rocks", "chaotic", "fallen", "spread", "jumbled", "broken" };
+    public override List<string> NodeKeywords => new() { "debris", "boulder", "rock", "chaos" };
     
     private static readonly string[] Moods = { "chaotic", "scattered", "jumbled", "devastated" };
     
@@ -37,7 +37,7 @@ public class DebrisFieldNode : PyramidalFeatureNode
         public override string ItemId => "debris_field_large_boulder";
         public override string DisplayName => "Large Boulder";
         public override string Description => "Massive rock fallen from above";
-        public override List<string> OutcomeKeywords => new() { "boulder", "large", "massive", "fallen", "heavy", "huge", "solid", "gray", "settled", "imposing" };
+        public override List<string> OutcomeKeywords => new() { "boulder", "rock", "mass" };
     }
     
     public sealed class RockDust : Item
@@ -45,6 +45,6 @@ public class DebrisFieldNode : PyramidalFeatureNode
         public override string ItemId => "debris_field_rock_dust";
         public override string DisplayName => "Rock Dust";
         public override string Description => "Fine powder from the impact";
-        public override List<string> OutcomeKeywords => new() { "dust", "powder", "fine", "gray", "covering", "settled", "impact", "pulverized", "coating", "residue" };
+        public override List<string> OutcomeKeywords => new() { "dust", "powder", "mineral" };
     }
 }

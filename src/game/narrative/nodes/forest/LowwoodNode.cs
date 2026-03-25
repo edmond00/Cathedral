@@ -13,7 +13,7 @@ public class LowwoodNode : NarrationNode
     public override string TransitionDescription => "descend into the lowwood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "moist", "alder", "damp", "fungal", "reeds", "puddles", "wet", "soggy", "low", "depression" };
+    public override List<string> NodeKeywords => new() { "alder", "reed", "puddle", "dampness" };
     
     private static readonly string[] Moods = { "damp", "soggy", "humid", "waterlogged", "misty", "moist", "dripping", "wet" };
     
@@ -30,7 +30,7 @@ public class LowwoodNode : NarrationNode
         public override string ItemId => "lowwood_wet_moss";
         public override string DisplayName => "Wet Moss";
         public override string Description => "Damp moss gathered from lowwood ground";
-        public override List<string> OutcomeKeywords => new() { "moss", "wet", "damp", "green", "soft", "spongy", "cool", "moist", "dense", "ground" };
+        public override List<string> OutcomeKeywords => new() { "moss", "dampness", "ground" };
     }
     
     public sealed class PuddleWater : Item
@@ -38,6 +38,6 @@ public class LowwoodNode : NarrationNode
         public override string ItemId => "lowwood_puddle_water";
         public override string DisplayName => "Puddle Water";
         public override string Description => "Water collected from lowwood puddles";
-        public override List<string> OutcomeKeywords => new() { "water", "puddle", "stagnant", "dark", "murky", "still", "accumulated", "collected", "low", "pooled" };
+        public override List<string> OutcomeKeywords => new() { "water", "puddle", "stagnation" };
     }
 }

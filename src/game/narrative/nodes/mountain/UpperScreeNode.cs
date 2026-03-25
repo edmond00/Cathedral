@@ -15,7 +15,7 @@ public class UpperScreeNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the upper scree";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "scree", "loose", "sliding", "unstable", "angular", "rock", "treacherous", "steep", "shifting", "dangerous" };
+    public override List<string> NodeKeywords => new() { "scree", "rock", "instability", "danger" };
     
     private static readonly string[] Moods = { "treacherous", "unstable", "sliding", "precarious" };
     
@@ -30,7 +30,7 @@ public class UpperScreeNode : PyramidalFeatureNode
         public override string ItemId => "upper_scree_loose_chips";
         public override string DisplayName => "Loose Chips";
         public override string Description => "Small angular rock fragments";
-        public override List<string> OutcomeKeywords => new() { "chips", "loose", "angular", "small", "sharp", "fragments", "mobile", "shifting", "scattered", "gravel" };
+        public override List<string> OutcomeKeywords => new() { "chip", "fragment", "gravel" };
     }
     
     public sealed class SlideTrack : Item
@@ -38,7 +38,7 @@ public class UpperScreeNode : PyramidalFeatureNode
         public override string ItemId => "upper_scree_slide_track";
         public override string DisplayName => "Slide Track";
         public override string Description => "Path where rocks have recently slid";
-        public override List<string> OutcomeKeywords => new() { "slide", "track", "path", "fresh", "scar", "movement", "flow", "cascade", "avalanche", "runout" };
+        public override List<string> OutcomeKeywords => new() { "track", "slide", "scar" };
     }
     
     public sealed class UnstableRock : Item
@@ -46,6 +46,6 @@ public class UpperScreeNode : PyramidalFeatureNode
         public override string ItemId => "upper_scree_unstable_rock";
         public override string DisplayName => "Unstable Rock";
         public override string Description => "Larger stone perched in the scree";
-        public override List<string> OutcomeKeywords => new() { "unstable", "rock", "perched", "dangerous", "teetering", "loose", "large", "hazard", "balanced", "precarious" };
+        public override List<string> OutcomeKeywords => new() { "rock", "hazard", "instability" };
     }
 }

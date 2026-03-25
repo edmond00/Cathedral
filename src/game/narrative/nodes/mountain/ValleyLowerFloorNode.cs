@@ -23,7 +23,7 @@ public class ValleyLowerFloorNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the valley lower floor";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "valley", "floor", "lower", "flat", "fertile", "lush", "green", "peaceful", "sheltered", "protected" };
+    public override List<string> NodeKeywords => new() { "valley", "floor", "fertility", "shelter" };
     
     private static readonly string[] Moods = { "fertile", "lush", "peaceful", "sheltered" };
     
@@ -38,7 +38,7 @@ public class ValleyLowerFloorNode : PyramidalFeatureNode
         public override string ItemId => "valley_soil";
         public override string DisplayName => "Rich Soil";
         public override string Description => "Dark fertile earth in the valley";
-        public override List<string> OutcomeKeywords => new() { "rich", "soil", "dark", "fertile", "earth", "loamy", "deep", "productive", "healthy", "nourishing" };
+        public override List<string> OutcomeKeywords => new() { "soil", "earth", "fertility" };
     }
     
     public sealed class StreamMeander : Item
@@ -46,6 +46,6 @@ public class ValleyLowerFloorNode : PyramidalFeatureNode
         public override string ItemId => "valley_lower_floor_stream_meander";
         public override string DisplayName => "Stream Meander";
         public override string Description => "Winding water course through the valley";
-        public override List<string> OutcomeKeywords => new() { "stream", "meander", "winding", "water", "course", "serpentine", "flowing", "gentle", "curves", "peaceful" };
+        public override List<string> OutcomeKeywords => new() { "stream", "meander", "serpentine" };
     }
 }

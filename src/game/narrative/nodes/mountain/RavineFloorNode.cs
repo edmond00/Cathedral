@@ -22,7 +22,7 @@ public class RavineFloorNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the ravine floor";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ravine", "floor", "bottom", "narrow", "shadowed", "enclosed", "steep", "walls", "confined", "dark" };
+    public override List<string> NodeKeywords => new() { "ravine", "floor", "confinement", "shadow" };
     
     private static readonly string[] Moods = { "shadowed", "narrow", "enclosed", "claustrophobic" };
     
@@ -37,7 +37,7 @@ public class RavineFloorNode : PyramidalFeatureNode
         public override string ItemId => "ravine_floor_streamlet_flow";
         public override string DisplayName => "Streamlet Flow";
         public override string Description => "Thin water flow along the floor";
-        public override List<string> OutcomeKeywords => new() { "streamlet", "flow", "water", "thin", "trickling", "clear", "cold", "running", "constant", "narrow" };
+        public override List<string> OutcomeKeywords => new() { "streamlet", "water", "trickle" };
     }
     
     public sealed class WedgedLog : Item
@@ -45,6 +45,6 @@ public class RavineFloorNode : PyramidalFeatureNode
         public override string ItemId => "ravine_floor_wedged_log";
         public override string DisplayName => "Wedged Log";
         public override string Description => "Dead tree trapped between walls";
-        public override List<string> OutcomeKeywords => new() { "log", "wedged", "trapped", "wood", "dead", "stuck", "jammed", "horizontal", "spanning", "debris" };
+        public override List<string> OutcomeKeywords => new() { "log", "wood", "wedge" };
     }
 }

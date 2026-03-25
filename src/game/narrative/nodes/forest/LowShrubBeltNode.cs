@@ -14,7 +14,7 @@ public class LowShrubBeltNode : NarrationNode
     public override string TransitionDescription => "enter the shrub belt";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "dense", "waist-high", "twigs", "branches", "leaves", "bushy", "tangled", "green", "growth", "low" };
+    public override List<string> NodeKeywords => new() { "twig", "branch", "leaves", "belt" };
     
     private static readonly string[] Moods = { "dense", "tangled", "bushy", "thick", "crowded", "vigorous", "lush", "low-lying" };
     
@@ -31,7 +31,7 @@ public class LowShrubBeltNode : NarrationNode
         public override string ItemId => "shrub_twig";
         public override string DisplayName => "Shrub Twig";
         public override string Description => "A flexible twig from the shrub belt";
-        public override List<string> OutcomeKeywords => new() { "flexible", "thin", "brown", "woody", "straight", "twig", "branch", "stripped", "smooth", "green" };
+        public override List<string> OutcomeKeywords => new() { "twig", "branch", "wood" };
     }
     
     public sealed class BerryCluster : Item
@@ -39,6 +39,6 @@ public class LowShrubBeltNode : NarrationNode
         public override string ItemId => "low_shrub_berry_cluster";
         public override string DisplayName => "Wild Berry Cluster";
         public override string Description => "Small red berries hanging from a shrub";
-        public override List<string> OutcomeKeywords => new() { "red", "small", "cluster", "hanging", "ripe", "bright", "berries", "glossy", "tart", "bunch" };
+        public override List<string> OutcomeKeywords => new() { "berry", "cluster", "ripeness" };
     }
 }

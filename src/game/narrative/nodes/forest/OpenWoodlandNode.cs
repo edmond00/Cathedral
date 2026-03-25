@@ -13,7 +13,7 @@ public class OpenWoodlandNode : NarrationNode
     public override string TransitionDescription => "move into the open woodland";
     public override bool IsEntryNode => true;
     
-    public override List<string> NodeKeywords => new() { "airy", "scattered", "grassy", "sunlit", "sparse", "meadow", "open", "bright", "wildflowers", "gentle" };
+    public override List<string> NodeKeywords => new() { "meadow", "wildflower", "sunshine", "openness" };
     
     private static readonly string[] Moods = { "peaceful", "sunny", "breezy", "bright", "quiet", "serene", "windswept", "tranquil" };
     
@@ -30,6 +30,6 @@ public class OpenWoodlandNode : NarrationNode
         public override string ItemId => "open_woodland_wild_grass";
         public override string DisplayName => "Wild Grass";
         public override string Description => "Long blades of wild grass from the open clearing";
-        public override List<string> OutcomeKeywords => new() { "grass", "blades", "meadow", "green", "fresh", "tall", "wild", "stems", "soft", "swaying" };
+        public override List<string> OutcomeKeywords => new() { "grass", "blade", "meadow", "stem" };
     }
 }

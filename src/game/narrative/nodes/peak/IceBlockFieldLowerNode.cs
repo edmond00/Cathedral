@@ -16,7 +16,7 @@ public class IceBlockFieldLowerNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend through the lower ice blocks";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "blocks", "lower", "ice", "field", "fractured", "scattered", "frozen", "jumbled", "maze", "blue" };
+    public override List<string> NodeKeywords => new() { "ice", "block", "field", "maze" };
     
     private static readonly string[] Moods = { "scattered", "fractured", "labyrinthine", "icy" };
     
@@ -31,7 +31,7 @@ public class IceBlockFieldLowerNode : PyramidalFeatureNode
         public override string ItemId => "ice_block_field_lower_small_ice_block";
         public override string DisplayName => "Small Ice Block";
         public override string Description => "Smaller fractured ice block";
-        public override List<string> OutcomeKeywords => new() { "ice", "block", "small", "fractured", "frozen", "blue", "angular", "cold", "solid", "chunk" };
+        public override List<string> OutcomeKeywords => new() { "ice", "block", "chunk" };
     }
     
     public sealed class MorainePebbles : Item
@@ -39,6 +39,6 @@ public class IceBlockFieldLowerNode : PyramidalFeatureNode
         public override string ItemId => "ice_block_field_lower_moraine_pebbles";
         public override string DisplayName => "Moraine Pebbles";
         public override string Description => "Glacial deposit pebbles collectible from the moraine";
-        public override List<string> OutcomeKeywords => new() { "pebbles", "moraine", "glacial", "deposit", "rounded", "mixed", "small", "varied", "ground", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "pebble", "moraine", "glacier" };
     }
 }

@@ -15,7 +15,7 @@ public class FanSpreadNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the fan spread";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "fan", "spread", "wide", "gravel", "deposit", "gentle", "slope", "distributary", "scattered", "sorted" };
+    public override List<string> NodeKeywords => new() { "fan", "gravel", "deposit", "distributary" };
     
     private static readonly string[] Moods = { "wide", "gentle", "spreading", "deposited" };
     
@@ -30,7 +30,7 @@ public class FanSpreadNode : PyramidalFeatureNode
         public override string ItemId => "fan_gravel";
         public override string DisplayName => "Fine Gravel";
         public override string Description => "Small sorted stones across the fan";
-        public override List<string> OutcomeKeywords => new() { "fine", "gravel", "small", "sorted", "smooth", "rounded", "deposit", "spread", "layer", "distributed" };
+        public override List<string> OutcomeKeywords => new() { "gravel", "deposit", "layer" };
     }
     
     public sealed class WanderingChannel : Item
@@ -38,6 +38,6 @@ public class FanSpreadNode : PyramidalFeatureNode
         public override string ItemId => "fan_spread_wandering_channel";
         public override string DisplayName => "Wandering Channel";
         public override string Description => "Shallow braided water paths";
-        public override List<string> OutcomeKeywords => new() { "wandering", "channel", "braided", "shallow", "water", "shifting", "multiple", "paths", "meandering", "temporary" };
+        public override List<string> OutcomeKeywords => new() { "channel", "braid", "meandering" };
     }
 }

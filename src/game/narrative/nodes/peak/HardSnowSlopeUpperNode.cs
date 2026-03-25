@@ -16,7 +16,7 @@ public class HardSnowSlopeUpperNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the upper hard snow slope";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "snowfield", "upper", "hard", "packed", "white", "steep", "frozen", "exposed", "wind-hardened", "slope" };
+    public override List<string> NodeKeywords => new() { "snowfield", "slope", "wind", "hardness" };
     
     private static readonly string[] Moods = { "hard-packed", "gleaming", "steep", "wind-hardened" };
     

@@ -24,7 +24,7 @@ public class WindScouredRidgeCrestNode : PyramidalFeatureNode
     public override string TransitionDescription => "ascend to the wind-scoured ridge crest";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "wind", "scoured", "ridge", "exposed", "narrow", "howling", "bare", "icy", "knife-edge", "precipitous" };
+    public override List<string> NodeKeywords => new() { "wind", "ridge", "ice", "barrenness" };
     
     private static readonly string[] Moods = { "howling", "exposed", "barren", "relentless" };
     
@@ -39,7 +39,7 @@ public class WindScouredRidgeCrestNode : PyramidalFeatureNode
         public override string ItemId => "wind_scoured_ridge_crest_alpine_gneiss";
         public override string DisplayName => "Alpine Gneiss";
         public override string Description => "Banded metamorphic rock collectible from the ridge";
-        public override List<string> OutcomeKeywords => new() { "gneiss", "metamorphic", "banded", "foliated", "striped", "dense", "hard", "crystalline", "ancient", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "gneiss", "metamorphic", "banding" };
     }
     
     public sealed class BareRock : Item
@@ -47,6 +47,6 @@ public class WindScouredRidgeCrestNode : PyramidalFeatureNode
         public override string ItemId => "wind_scoured_ridge_crest_bare_rock";
         public override string DisplayName => "Bare Rock";
         public override string Description => "Rock stripped of all ice by wind";
-        public override List<string> OutcomeKeywords => new() { "rock", "bare", "exposed", "scoured", "wind-cleaned", "naked", "hard", "grey", "weathered", "stark" };
+        public override List<string> OutcomeKeywords => new() { "rock", "wind", "scouring" };
     }
 }

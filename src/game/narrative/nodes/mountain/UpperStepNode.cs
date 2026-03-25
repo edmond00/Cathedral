@@ -15,7 +15,7 @@ public class UpperStepNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the upper step";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "terrace", "step", "upper", "ledge", "platform", "flat", "elevated", "layered", "bench", "tier" };
+    public override List<string> NodeKeywords => new() { "terrace", "step", "platform", "tier" };
     
     private static readonly string[] Moods = { "elevated", "tiered", "layered", "stepped" };
     
@@ -30,7 +30,7 @@ public class UpperStepNode : PyramidalFeatureNode
         public override string ItemId => "upper_step_flat_terrace";
         public override string DisplayName => "Flat Terrace";
         public override string Description => "Level stone platform";
-        public override List<string> OutcomeKeywords => new() { "flat", "terrace", "level", "platform", "horizontal", "smooth", "stable", "walking", "easy", "wide" };
+        public override List<string> OutcomeKeywords => new() { "terrace", "platform", "level" };
     }
     
     public sealed class ErosionLayer : Item
@@ -38,7 +38,7 @@ public class UpperStepNode : PyramidalFeatureNode
         public override string ItemId => "upper_step_erosion_layer";
         public override string DisplayName => "Erosion Layer";
         public override string Description => "Visible strata in the rock";
-        public override List<string> OutcomeKeywords => new() { "erosion", "layer", "strata", "lines", "bands", "geological", "ancient", "visible", "history", "sedimentary" };
+        public override List<string> OutcomeKeywords => new() { "stratum", "erosion", "layer" };
     }
     
     public sealed class TerraceEdge : Item
@@ -46,6 +46,6 @@ public class UpperStepNode : PyramidalFeatureNode
         public override string ItemId => "upper_step_terrace_edge";
         public override string DisplayName => "Terrace Edge";
         public override string Description => "Sharp drop to the next level";
-        public override List<string> OutcomeKeywords => new() { "edge", "terrace", "drop", "sharp", "boundary", "step", "fall", "line", "rim", "border" };
+        public override List<string> OutcomeKeywords => new() { "edge", "rim", "boundary" };
     }
 }

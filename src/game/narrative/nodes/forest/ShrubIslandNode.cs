@@ -14,7 +14,7 @@ public class ShrubIslandNode : NarrationNode
     public override string TransitionDescription => "approach the shrub clump";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "dense", "clump", "isolated", "circular", "impenetrable", "shrubs", "cluster", "thick", "rounded", "mass" };
+    public override List<string> NodeKeywords => new() { "shrub", "clump", "isolation" };
     
     private static readonly string[] Moods = { "dense", "impenetrable", "circular", "isolated", "thick", "clustered", "tight", "rounded" };
     
@@ -31,7 +31,7 @@ public class ShrubIslandNode : NarrationNode
         public override string ItemId => "shrub_berry";
         public override string DisplayName => "Shrub Berry";
         public override string Description => "Small dark berries from the shrub island";
-        public override List<string> OutcomeKeywords => new() { "small", "dark", "berry", "tart", "wild", "round", "fruit", "clustered", "bitter", "purple" };
+        public override List<string> OutcomeKeywords => new() { "berry", "fruit", "bitterness" };
     }
     
     public sealed class ThornScratch : Item
@@ -39,6 +39,6 @@ public class ShrubIslandNode : NarrationNode
         public override string ItemId => "shrub_island_thorn";
         public override string DisplayName => "Defensive Thorn";
         public override string Description => "A sharp thorn from the impenetrable shrubs";
-        public override List<string> OutcomeKeywords => new() { "sharp", "pointed", "defensive", "woody", "thorn", "spine", "brown", "rigid", "protective", "hard" };
+        public override List<string> OutcomeKeywords => new() { "thorn", "spine", "defense" };
     }
 }

@@ -15,7 +15,7 @@ public class ChannelBedNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the channel bed";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "channel", "bed", "floodplain", "water", "flowing", "sandy", "shallow", "wide", "gentle", "slow" };
+    public override List<string> NodeKeywords => new() { "channel", "bed", "floodplain", "sand" };
     
     private static readonly string[] Moods = { "shallow", "gentle", "flowing", "sandy" };
     
@@ -30,7 +30,7 @@ public class ChannelBedNode : PyramidalFeatureNode
         public override string ItemId => "channel_bed_sand_bar";
         public override string DisplayName => "Sand Bar";
         public override string Description => "Exposed sand deposit in the channel";
-        public override List<string> OutcomeKeywords => new() { "sand", "bar", "exposed", "deposit", "dry", "light", "shifting", "island", "temporary", "pale" };
+        public override List<string> OutcomeKeywords => new() { "sandbar", "deposit", "island" };
     }
     
     public sealed class SiltStone : Item
@@ -38,6 +38,6 @@ public class ChannelBedNode : PyramidalFeatureNode
         public override string ItemId => "channel_bed_silt_stone";
         public override string DisplayName => "Silt Stone";
         public override string Description => "Fine sedimentary rock collectible from the channel bed";
-        public override List<string> OutcomeKeywords => new() { "siltstone", "sedimentary", "fine-grained", "layered", "soft", "grey", "compact", "smooth", "mineral", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "siltstone", "sediment", "mineral" };
     }
 }

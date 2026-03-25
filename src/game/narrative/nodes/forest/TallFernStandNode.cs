@@ -14,7 +14,7 @@ public class TallFernStandNode : NarrationNode
     public override string TransitionDescription => "enter the fern stand";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "tall", "fronds", "feathery", "dense", "green", "waist-high", "prehistoric", "lush", "spores", "divided" };
+    public override List<string> NodeKeywords => new() { "frond", "spore", "prehistory", "lushness" };
     
     private static readonly string[] Moods = { "tall", "dense", "lush", "prehistoric", "towering", "feathery", "thick", "verdant" };
     
@@ -31,7 +31,7 @@ public class TallFernStandNode : NarrationNode
         public override string ItemId => "fern_spore";
         public override string DisplayName => "Fern Spores";
         public override string Description => "Fine brown spores from fern undersides";
-        public override List<string> OutcomeKeywords => new() { "fine", "brown", "powder", "spores", "dust", "reproductive", "tiny", "microscopic", "scattered", "dry" };
+        public override List<string> OutcomeKeywords => new() { "spore", "dust", "powder" };
     }
     
     public sealed class FernRhizome : Item
@@ -39,6 +39,6 @@ public class TallFernStandNode : NarrationNode
         public override string ItemId => "tall_fern_rhizome";
         public override string DisplayName => "Fern Rhizome";
         public override string Description => "A thick underground fern stem";
-        public override List<string> OutcomeKeywords => new() { "thick", "brown", "fibrous", "underground", "stem", "rhizome", "hardy", "root", "spreading", "rough" };
+        public override List<string> OutcomeKeywords => new() { "rhizome", "root", "fiber" };
     }
 }

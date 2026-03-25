@@ -36,7 +36,7 @@ public class ExampleNode : NarrationNode
 {
     public override string NodeId => "node_id";
     public override bool IsEntryNode => false;  // Can be entry node in some graphs
-    public override List<string> NodeKeywords => new() { /* 10 keywords */ };
+    public override List<string> NodeKeywords => new() { /* 3-5 noun keywords */ };
     
     // PossibleOutcomes is now an instance field populated by factories at runtime
     // No override needed - it's set by NarrationGraphFactory.ConnectNodes()
@@ -55,7 +55,7 @@ public class ExampleNode : NarrationNode
         public override string ItemId => "unique_item_id";
         public override string DisplayName => "Display Name";
         public override string Description => "Description text";
-        public override List<string> OutcomeKeywords => new() { /* 10 keywords */ };
+        public override List<string> OutcomeKeywords => new() { /* 3-5 noun keywords */ };
     }
 }
 ```
@@ -64,32 +64,30 @@ public class ExampleNode : NarrationNode
 **Purpose:** Keywords are narrative anchors that appear in LLM-generated observation text. When players see highlighted keywords, they can click them to discover items or transitions.
 
 **RULES:**
-- Each node/item should have approximately 10 keywords (can be less if natural)
-- Keywords focus on INDIRECT observations, not direct object names
+- Each node/item should have **3-5 keywords** (focused, not exhaustive)
+- Keywords MUST be **nouns** (names) — never adjectives, verbs, or adverbs
+  - ❌ "dark", "smooth", "tiny", "pale", "ripe", "fresh" (adjectives)
+  - ✅ "darkness", "texture", "smallness", "pallor", "ripeness", "freshness" (nouns)
 - The item/node name itself CANNOT be used as its own keyword
   - ❌ "mushroom" as keyword for Mushroom item
-  - ✅ "fungus", "cap", "pale" as keywords for mushroom
-- Categories ARE valid keywords
-  - ✅ "berry" for blueberry
-  - ✅ "fish" for trout parts
+  - ✅ "fungus", "cap", "gill" as keywords for mushroom
+- The keyword must represent something **strongly related** to the outcome/node
 
-**Keyword Categories (prioritized):**
-1. **Visual details:** color, shape, size, texture
-   - Examples: "blue", "round", "small", "pale", "spotted", "shimmering"
-2. **Other sensory:** sound, smell, touch, taste
-   - Examples: "babbling", "sweet", "earthy", "cool", "moist"
-3. **Location/container:** where item is found
-   - Examples: "bush", "ground", "stream", "damp"
-4. **State/condition:** ripeness, freshness, age
-   - Examples: "ripe", "fresh", "wild", "dead"
-5. **Parts/features:** physical components
-   - Examples: "gills", "stem", "scales", "fins"
+**Valid Noun Types:**
+1. **Objects in the location** — physical things found there
+   - Examples: "catkin", "thorn", "boulder", "reed", "nest"
+2. **Synonyms of the outcome object** — alternate names or categories
+   - Examples: "nut" for beechnut, "berry" for blueberry, "fungus" for mushroom
+3. **Parts of the outcome object** — physical components
+   - Examples: "gill", "cap", "stem" for mushroom; "bark", "cambium" for tree
+4. **Feelings as nouns** — atmospheric or emotional impressions expressed as nouns
+   - Examples: "darkness", "silence", "emptiness", "barrenness", "wildness"
 
 **Bad Keywords to Avoid:**
-- Direct object names (the item's own name)
-- Generic verbs ("get", "take", "use")
-- Abstract concepts not observable ("value", "purpose")
-- Meta-game terms ("item", "object")
+- Adjectives: "dark", "smooth", "small", "pale", "ancient", "soft"
+- Verbs: "get", "take", "use", "flow", "climb"
+- Abstract meta-game terms: "item", "object", "valuable", "rare"
+- The item's own name: "mushroom" for Mushroom, "acorn" for Acorn
 
 ### 3. World Coherence Rules
 - Living creatures should NOT be items (they're companions in the future)
@@ -237,12 +235,12 @@ RegisterNarrationFactory("city", new Narrative.Factories.CityGraphFactory());
 6. Never list items in PossibleOutcomes (reflection discovers them)
 
 ### Improving Existing Keywords
-1. Check if any keywords match the item/node's own name - remove them
-2. Ensure ~10 keywords per item/node
-3. Replace generic keywords with sensory details
-4. Add visual, auditory, olfactory, or tactile observations
-5. Include location/container keywords where appropriate
-6. Verify keywords would naturally appear in narrative text
+1. Remove any adjectives (color words, size words, texture words, state words like "fresh", "dry")
+2. Reduce list to 3-5 keywords — keep only those with the strongest relation to the outcome
+3. Check if any keywords match the item/node's own name — remove them
+4. Replace adjectives with their noun equivalents where fitting (e.g., "dark" → "darkness")
+5. Ensure remaining keywords are nouns: objects, synonyms, parts, or feelings-as-nouns
+6. Verify keywords would naturally appear in narrative text as highlighted anchor words
 
 ### Validating Content
 1. Ensure all items are nested classes within nodes
@@ -265,9 +263,9 @@ When creating large amounts of content (multiple nodes, items, or factories), us
 ### Consistency Checklist (Per Node/Item)
 Use this checklist for every piece of content:
 - [ ] Unique identifier with proper naming convention
-- [ ] Exactly ~10 keywords (7-12 acceptable range)
+- [ ] 3-5 noun keywords per list (2-5 acceptable range)
 - [ ] No self-referential keywords (item name not in its keywords)
-- [ ] Keywords focus on sensory/observational details
+- [ ] Keywords are nouns only (no adjectives, no verbs)
 - [ ] Origin prefix in item names (ForestX, StreamY)
 - [ ] Items are sealed inner classes within nodes
 - [ ] GenerateNeutralDescription has procedural variety
@@ -295,7 +293,7 @@ This systematic approach prevents errors from accumulating and makes large conte
 When creating or modifying content:
 1. List all nodes and their items
 2. For factories: describe the graph structure (core paths, optional nodes, entry variations)
-3. Show keyword counts and note any below 7 or above 12
+3. Show keyword counts and note any not in the 3-5 noun range; flag any adjectives still present
 4. Highlight any violations of naming rules
 5. Suggest running `dotnet build` to verify compilation
 6. Remind to test validation at startup

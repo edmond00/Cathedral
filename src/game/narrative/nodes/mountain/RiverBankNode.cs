@@ -15,7 +15,7 @@ public class RiverBankNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the river bank";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "river", "bank", "edge", "cut", "eroded", "steep", "water", "channel", "slope", "embankment" };
+    public override List<string> NodeKeywords => new() { "bank", "river", "embankment", "erosion" };
     
     private static readonly string[] Moods = { "eroded", "undercut", "steep", "crumbling" };
     
@@ -30,7 +30,7 @@ public class RiverBankNode : PyramidalFeatureNode
         public override string ItemId => "river_bank_roots_exposed";
         public override string DisplayName => "Exposed Roots";
         public override string Description => "Tree roots hanging from eroded bank";
-        public override List<string> OutcomeKeywords => new() { "roots", "exposed", "hanging", "eroded", "tree", "network", "tangled", "brown", "reaching", "bare" };
+        public override List<string> OutcomeKeywords => new() { "root", "erosion", "network" };
     }
     
     public sealed class UndercutEdge : Item
@@ -38,7 +38,7 @@ public class RiverBankNode : PyramidalFeatureNode
         public override string ItemId => "river_bank_undercut_edge";
         public override string DisplayName => "Undercut Edge";
         public override string Description => "Overhanging bank carved by water";
-        public override List<string> OutcomeKeywords => new() { "undercut", "edge", "overhanging", "carved", "erosion", "dangerous", "hollow", "unstable", "lip", "precarious" };
+        public override List<string> OutcomeKeywords => new() { "overhang", "erosion", "instability" };
     }
     
     public sealed class RiverGrass : Item
@@ -46,6 +46,6 @@ public class RiverBankNode : PyramidalFeatureNode
         public override string ItemId => "river_bank_river_grass";
         public override string DisplayName => "River Grass";
         public override string Description => "Tall grass growing at water's edge";
-        public override List<string> OutcomeKeywords => new() { "grass", "river", "tall", "green", "swaying", "reeds", "growing", "dense", "waterside", "lush" };
+        public override List<string> OutcomeKeywords => new() { "grass", "reed", "waterside" };
     }
 }

@@ -15,7 +15,7 @@ public class CrestShoulderNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the crest shoulder";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "shoulder", "near-summit", "slope", "steep", "rocky", "exposed", "high", "wind", "cold", "barren" };
+    public override List<string> NodeKeywords => new() { "shoulder", "slope", "wind", "barrenness" };
     
     private static readonly string[] Moods = { "steep", "exposed", "wind-battered", "barren" };
     
@@ -30,7 +30,7 @@ public class CrestShoulderNode : PyramidalFeatureNode
         public override string ItemId => "crest_shoulder_loose_scree";
         public override string DisplayName => "Loose Scree";
         public override string Description => "Unstable rock debris on the shoulder";
-        public override List<string> OutcomeKeywords => new() { "loose", "scree", "unstable", "sliding", "treacherous", "shifting", "gravel", "dangerous", "slippery", "mobile" };
+        public override List<string> OutcomeKeywords => new() { "scree", "gravel", "instability" };
     }
     
     public sealed class AlpineQuartz : Item
@@ -38,6 +38,6 @@ public class CrestShoulderNode : PyramidalFeatureNode
         public override string ItemId => "crest_shoulder_alpine_quartz";
         public override string DisplayName => "Alpine Quartz";
         public override string Description => "Clear quartz crystal collectible from the shoulder";
-        public override List<string> OutcomeKeywords => new() { "quartz", "crystal", "clear", "transparent", "hexagonal", "hard", "glassy", "collectible", "mineral", "sparkling" };
+        public override List<string> OutcomeKeywords => new() { "quartz", "crystal", "mineral" };
     }
 }

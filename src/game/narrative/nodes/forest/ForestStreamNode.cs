@@ -13,7 +13,7 @@ public class ForestStreamNode : NarrationNode
     public override string TransitionDescription => "follow the stream";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "flowing", "water", "babbling", "current", "stones", "banks", "ripples", "fresh", "clear", "cool" };
+    public override List<string> NodeKeywords => new() { "water", "current", "stone", "babbling" };
     
     private static readonly string[] Moods = { "babbling", "rushing", "trickling", "murmuring", "gurgling", "flowing", "cascading", "meandering" };
     
@@ -30,7 +30,7 @@ public class ForestStreamNode : NarrationNode
         public override string ItemId => "stream_water";
         public override string DisplayName => "Stream Water";
         public override string Description => "Clear, cold water flowing from upstream";
-        public override List<string> OutcomeKeywords => new() { "clear", "cold", "fresh", "flowing", "drinkable", "cool", "pure", "clean", "transparent", "crisp" };
+        public override List<string> OutcomeKeywords => new() { "water", "purity", "freshness" };
     }
     
     public sealed class WatersmoothedPebbles : Item
@@ -38,6 +38,6 @@ public class ForestStreamNode : NarrationNode
         public override string ItemId => "forest_stream_water_smoothed_pebbles";
         public override string DisplayName => "Water-smoothed Pebbles";
         public override string Description => "Smooth pebbles from the stream bed";
-        public override List<string> OutcomeKeywords => new() { "pebbles", "smooth", "round", "polished", "wet", "stones", "small", "multicolored", "stream", "worn" };
+        public override List<string> OutcomeKeywords => new() { "pebble", "stone", "polish", "stream" };
     }
 }

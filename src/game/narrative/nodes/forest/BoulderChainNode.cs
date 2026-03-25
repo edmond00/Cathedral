@@ -13,7 +13,7 @@ public class BoulderChainNode : NarrationNode
     public override string TransitionDescription => "follow the boulders";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "stone", "massive", "rock", "grey", "lichen", "ancient", "weathered", "solid", "rough", "chain" };
+    public override List<string> NodeKeywords => new() { "boulder", "lichen", "rock", "chain" };
     
     private static readonly string[] Moods = { "ancient", "massive", "imposing", "weathered", "solid", "monolithic", "enduring", "timeless" };
     
@@ -30,7 +30,7 @@ public class BoulderChainNode : NarrationNode
         public override string ItemId => "boulder_lichen";
         public override string DisplayName => "Boulder Lichen";
         public override string Description => "Crusty lichen growing on ancient stone";
-        public override List<string> OutcomeKeywords => new() { "crusty", "grey-green", "rough", "dry", "scaly", "ancient", "symbiotic", "hardy", "lichen", "encrusted" };
+        public override List<string> OutcomeKeywords => new() { "lichen", "crust", "symbiosis" };
     }
     
     public sealed class StoneDust : Item
@@ -38,6 +38,6 @@ public class BoulderChainNode : NarrationNode
         public override string ItemId => "boulder_chain_stone_dust";
         public override string DisplayName => "Stone Dust";
         public override string Description => "Fine mineral dust weathered from the boulders";
-        public override List<string> OutcomeKeywords => new() { "dust", "stone", "fine", "gray", "mineral", "powdery", "weathered", "gritty", "particles", "eroded" };
+        public override List<string> OutcomeKeywords => new() { "dust", "stone", "mineral" };
     }
 }

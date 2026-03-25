@@ -14,7 +14,7 @@ public class AncientTreeGiantNode : NarrationNode
     public override string TransitionDescription => "approach the giant tree";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "massive", "ancient", "centuries", "enormous", "trunk", "girth", "towering", "patriarch", "old", "venerable" };
+    public override List<string> NodeKeywords => new() { "trunk", "girth", "patriarch", "centuries" };
     
     private static readonly string[] Moods = { "massive", "ancient", "venerable", "primeval", "enormous", "patriarch", "timeless", "monumental" };
     
@@ -31,7 +31,7 @@ public class AncientTreeGiantNode : NarrationNode
         public override string ItemId => "ancient_bark";
         public override string DisplayName => "Ancient Bark";
         public override string Description => "A piece of deeply furrowed bark from the ancient tree";
-        public override List<string> OutcomeKeywords => new() { "thick", "furrowed", "ancient", "rough", "bark", "aged", "weathered", "deep", "textured", "hard" };
+        public override List<string> OutcomeKeywords => new() { "bark", "furrow", "age", "weathering" };
     }
     
     public sealed class HollowCavity : Item
@@ -39,7 +39,7 @@ public class AncientTreeGiantNode : NarrationNode
         public override string ItemId => "ancient_tree_hollow_cavity";
         public override string DisplayName => "Hollow Cavity";
         public override string Description => "A deep cavity within the ancient trunk";
-        public override List<string> OutcomeKeywords => new() { "dark", "hollow", "cavity", "deep", "shelter", "echoing", "cavernous", "rot", "entrance", "hidden" };
+        public override List<string> OutcomeKeywords => new() { "cavity", "shelter", "rot", "hollow" };
     }
     
     public sealed class TreeLichen : Item
@@ -47,6 +47,6 @@ public class AncientTreeGiantNode : NarrationNode
         public override string ItemId => "ancient_tree_lichen";
         public override string DisplayName => "Ancient Lichen Patch";
         public override string Description => "Centuries-old lichen growing on the weathered bark";
-        public override List<string> OutcomeKeywords => new() { "grey", "green", "crusted", "symbiotic", "ancient", "textured", "slow", "growth", "pale", "weathered" };
+        public override List<string> OutcomeKeywords => new() { "lichen", "crust", "symbiosis", "bark" };
     }
 }

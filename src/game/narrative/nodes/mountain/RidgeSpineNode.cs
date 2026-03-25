@@ -15,7 +15,7 @@ public class RidgeSpineNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb onto the ridge spine";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ridge", "spine", "narrow", "exposed", "drop", "knife-edge", "wind", "precipitous", "vertiginous", "balance" };
+    public override List<string> NodeKeywords => new() { "spine", "ridge", "knife", "wind" };
     
     private static readonly string[] Moods = { "knife-edge", "precipitous", "vertiginous", "exposed" };
     
@@ -30,7 +30,7 @@ public class RidgeSpineNode : PyramidalFeatureNode
         public override string ItemId => "ridge_spine_sharp_rock";
         public override string DisplayName => "Sharp Rock";
         public override string Description => "Angular stone jutting from the ridge";
-        public override List<string> OutcomeKeywords => new() { "sharp", "angular", "jutting", "pointed", "jagged", "cutting", "exposed", "hard", "dangerous", "edged" };
+        public override List<string> OutcomeKeywords => new() { "rock", "edge", "angularity" };
     }
     
     public sealed class HornfelsChip : Item
@@ -38,7 +38,7 @@ public class RidgeSpineNode : PyramidalFeatureNode
         public override string ItemId => "ridge_spine_hornfels_chip";
         public override string DisplayName => "Hornfels Chip";
         public override string Description => "Metamorphic rock fragment collectible from the ridge";
-        public override List<string> OutcomeKeywords => new() { "hornfels", "metamorphic", "chip", "fragment", "dark", "dense", "fine-grained", "angular", "hard", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "hornfels", "chip", "metamorphic" };
     }
     
     public sealed class NarrowPath : Item
@@ -46,6 +46,6 @@ public class RidgeSpineNode : PyramidalFeatureNode
         public override string ItemId => "ridge_spine_narrow_path";
         public override string DisplayName => "Narrow Path";
         public override string Description => "Thin walkable line along the ridge crest";
-        public override List<string> OutcomeKeywords => new() { "narrow", "path", "thin", "walkable", "precarious", "line", "route", "traverse", "passage", "treacherous" };
+        public override List<string> OutcomeKeywords => new() { "path", "traverse", "passage" };
     }
 }

@@ -15,7 +15,7 @@ public class RavineRimNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the ravine rim";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ravine", "rim", "edge", "narrow", "deep", "chasm", "gorge", "precipice", "drop", "vertiginous" };
+    public override List<string> NodeKeywords => new() { "rim", "chasm", "gorge", "precipice" };
     
     private static readonly string[] Moods = { "narrow", "vertiginous", "precipitous", "dizzying" };
     
@@ -30,7 +30,7 @@ public class RavineRimNode : PyramidalFeatureNode
         public override string ItemId => "ravine_rim_overhanging_edge";
         public override string DisplayName => "Overhanging Edge";
         public override string Description => "Rock jutting over the ravine";
-        public override List<string> OutcomeKeywords => new() { "overhanging", "edge", "jutting", "dangerous", "precarious", "projecting", "unstable", "extending", "cantilever", "risky" };
+        public override List<string> OutcomeKeywords => new() { "overhang", "edge", "danger" };
     }
     
     public sealed class EchoSound : Item
@@ -38,7 +38,7 @@ public class RavineRimNode : PyramidalFeatureNode
         public override string ItemId => "ravine_rim_echo_sound";
         public override string DisplayName => "Echo Sound";
         public override string Description => "Sounds reverberating in the chasm";
-        public override List<string> OutcomeKeywords => new() { "echo", "sound", "reverberating", "bouncing", "repeating", "hollow", "deep", "resonating", "acoustic", "amplified" };
+        public override List<string> OutcomeKeywords => new() { "echo", "resonance", "depth" };
     }
     
     public sealed class CliffSwallow : Item
@@ -46,6 +46,6 @@ public class RavineRimNode : PyramidalFeatureNode
         public override string ItemId => "ravine_rim_cliff_swallow";
         public override string DisplayName => "Cliff Swallow";
         public override string Description => "Bird darting through the ravine";
-        public override List<string> OutcomeKeywords => new() { "swallow", "bird", "darting", "flying", "swift", "aerial", "acrobatic", "nesting", "brown", "agile" };
+        public override List<string> OutcomeKeywords => new() { "swallow", "bird", "agility" };
     }
 }

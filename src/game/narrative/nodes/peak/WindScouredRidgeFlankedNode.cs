@@ -16,7 +16,7 @@ public class WindScouredRidgeFlankedNode : PyramidalFeatureNode
     public override string TransitionDescription => "move to the scoured flank";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "flank", "scoured", "sloped", "windswept", "icy", "steep", "exposed", "cold", "barren", "tilted" };
+    public override List<string> NodeKeywords => new() { "ice", "wind", "flank", "barrenness" };
     
     private static readonly string[] Moods = { "windswept", "harsh", "scoured", "desolate" };
     

@@ -15,7 +15,7 @@ public class RidgeFlankNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the ridge flank";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "flank", "side", "slope", "angled", "steep", "exposed", "grassy", "rocky", "descending", "inclined" };
+    public override List<string> NodeKeywords => new() { "flank", "slope", "grass", "rock" };
     
     private static readonly string[] Moods = { "sloping", "angled", "steep", "descending" };
     
@@ -30,7 +30,7 @@ public class RidgeFlankNode : PyramidalFeatureNode
         public override string ItemId => "ridge_flank_alpine_grass";
         public override string DisplayName => "Alpine Grass";
         public override string Description => "Hardy grass clinging to the ridge side";
-        public override List<string> OutcomeKeywords => new() { "alpine", "grass", "hardy", "clinging", "tough", "sparse", "windswept", "green", "clumped", "stubborn" };
+        public override List<string> OutcomeKeywords => new() { "grass", "alpine", "persistence" };
     }
     
     public sealed class SlopeDebris : Item
@@ -38,6 +38,6 @@ public class RidgeFlankNode : PyramidalFeatureNode
         public override string ItemId => "ridge_flank_slope_debris";
         public override string DisplayName => "Slope Debris";
         public override string Description => "Loose rock and gravel on the flank";
-        public override List<string> OutcomeKeywords => new() { "debris", "loose", "gravel", "scattered", "unstable", "rocky", "fragments", "sliding", "shifting", "mobile" };
+        public override List<string> OutcomeKeywords => new() { "debris", "gravel", "instability" };
     }
 }

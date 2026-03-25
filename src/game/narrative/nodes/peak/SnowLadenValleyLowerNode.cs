@@ -23,7 +23,7 @@ public class SnowLadenValleyLowerNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the lower snow-laden valley";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "valley", "lower", "snow", "laden", "white", "deep", "cold", "broad", "sheltered", "accumulated" };
+    public override List<string> NodeKeywords => new() { "valley", "snow", "silence", "shelter" };
     
     private static readonly string[] Moods = { "broad", "sheltered", "deep", "quiet" };
     
@@ -38,7 +38,7 @@ public class SnowLadenValleyLowerNode : PyramidalFeatureNode
         public override string ItemId => "snow_laden_valley_lower_valley_schist";
         public override string DisplayName => "Valley Schist";
         public override string Description => "Foliated metamorphic rock collectible from the valley";
-        public override List<string> OutcomeKeywords => new() { "schist", "metamorphic", "foliated", "layered", "flaky", "grey", "mineral", "crystalline", "banded", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "schist", "metamorphic", "mineral" };
     }
     
     public sealed class ValleyMoss : Item
@@ -46,6 +46,6 @@ public class SnowLadenValleyLowerNode : PyramidalFeatureNode
         public override string ItemId => "snow_laden_valley_lower_valley_moss";
         public override string DisplayName => "Valley Moss";
         public override string Description => "Sheltered moss collectible from the lower valley";
-        public override List<string> OutcomeKeywords => new() { "moss", "valley", "green", "soft", "damp", "sheltered", "growth", "plant", "cushion", "collectible" };
+        public override List<string> OutcomeKeywords => new() { "moss", "valley", "cushion" };
     }
 }

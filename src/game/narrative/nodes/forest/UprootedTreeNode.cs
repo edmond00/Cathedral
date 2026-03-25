@@ -14,7 +14,7 @@ public class UprootedTreeNode : NarrationNode
     public override string TransitionDescription => "investigate the fallen tree";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "fallen", "roots", "toppled", "crater", "exposed", "disrupted", "torn", "earth", "recent", "horizontal" };
+    public override List<string> NodeKeywords => new() { "root", "crater", "earth", "upheaval" };
     
     private static readonly string[] Moods = { "toppled", "fallen", "disrupted", "torn", "recent", "exposed", "crashed", "uprooted" };
     
@@ -31,7 +31,7 @@ public class UprootedTreeNode : NarrationNode
         public override string ItemId => "root_ball_soil";
         public override string DisplayName => "Root Ball Soil";
         public override string Description => "Fresh soil clinging to uprooted roots";
-        public override List<string> OutcomeKeywords => new() { "fresh", "dark", "moist", "soil", "roots", "clinging", "rich", "earthy", "exposed", "crumbly" };
+        public override List<string> OutcomeKeywords => new() { "mud", "soil", "roots" };
     }
     
     public sealed class TornRoot : Item
@@ -39,7 +39,7 @@ public class UprootedTreeNode : NarrationNode
         public override string ItemId => "uprooted_tree_torn_root";
         public override string DisplayName => "Torn Root";
         public override string Description => "A thick root torn from the earth";
-        public override List<string> OutcomeKeywords => new() { "torn", "thick", "exposed", "root", "broken", "raw", "wood", "fibrous", "split", "damaged" };
+        public override List<string> OutcomeKeywords => new() { "root", "wood", "fiber" };
     }
     
     public sealed class CraterMud : Item
@@ -47,6 +47,6 @@ public class UprootedTreeNode : NarrationNode
         public override string ItemId => "uprooted_tree_crater_mud";
         public override string DisplayName => "Crater Mud";
         public override string Description => "Wet clay-rich mud from the deep crater left by the uprooting";
-        public override List<string> OutcomeKeywords => new() { "wet", "clay", "dark", "sticky", "crater", "deep", "mud", "subsoil", "moist", "heavy" };
+        public override List<string> OutcomeKeywords => new() { "clay", "mud", "subsoil" };
     }
 }
