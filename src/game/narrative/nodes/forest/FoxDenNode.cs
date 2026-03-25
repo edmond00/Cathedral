@@ -31,6 +31,13 @@ public class FoxDenNode : NarrationNode
         
         return $"{mood} fox den";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"observing a {mood} fox den";
+    }
     
     public sealed class FoxFur : Item
     {

@@ -33,6 +33,13 @@ public class WindScouredRidgeCrestNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} wind-scoured ridge crest";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing on a {mood} wind-scoured ridge crest";
+    }
     
     public sealed class AlpineGneiss : Item
     {

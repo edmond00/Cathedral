@@ -24,6 +24,13 @@ public class UpperStepNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} upper step";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"on a {mood} upper step";
+    }
     
     public sealed class FlatTerrace : Item
     {

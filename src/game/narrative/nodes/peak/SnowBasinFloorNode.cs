@@ -25,5 +25,12 @@ public class SnowBasinFloorNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} basin floor";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing on a {mood} snow basin floor";
+    }
     
 }

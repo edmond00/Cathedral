@@ -24,6 +24,13 @@ public class WildflowerPatchNode : NarrationNode
         
         return $"{mood} wildflower patch";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"admiring a {mood} wildflower patch";
+    }
     
     public sealed class WildflowerBouquet : Item
     {

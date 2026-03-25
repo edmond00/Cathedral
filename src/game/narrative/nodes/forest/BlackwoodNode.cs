@@ -32,6 +32,13 @@ public class BlackwoodNode : NarrationNode
         
         return $"{mood} blackwood";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"feeling through a {mood} blackwood";
+    }
     
     public sealed class CharredTwigs : Item
     {

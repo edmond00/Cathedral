@@ -32,6 +32,13 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} ravine lip";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing at a {mood} ravine lip";
+    }
     
     public sealed class RavineQuartz : Item
     {

@@ -25,6 +25,13 @@ public class UprootedTreeNode : NarrationNode
         
         return $"{mood} uprooted tree";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} uprooted tree";
+    }
     
     public sealed class RootBall : Item
     {

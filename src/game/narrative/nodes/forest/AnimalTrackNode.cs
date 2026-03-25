@@ -32,6 +32,13 @@ public class AnimalTrackNode : NarrationNode
         
         return $"{mood} animal track";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"following a {mood} animal track";
+    }
     
     public sealed class AnimalDroppings : Item
     {

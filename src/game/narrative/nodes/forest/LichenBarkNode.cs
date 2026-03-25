@@ -25,6 +25,13 @@ public class LichenBarkNode : NarrationNode
         
         return $"{mood} lichen bark";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} lichen bark";
+    }
     
     public sealed class LichenCrust : Item
     {

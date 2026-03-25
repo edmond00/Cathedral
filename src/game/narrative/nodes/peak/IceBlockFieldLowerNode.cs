@@ -25,6 +25,13 @@ public class IceBlockFieldLowerNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} lower ice blocks";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing in a {mood} lower ice block field";
+    }
     
     public sealed class SmallIceBlock : Item
     {

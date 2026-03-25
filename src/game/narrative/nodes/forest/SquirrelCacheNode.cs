@@ -24,6 +24,13 @@ public class SquirrelCacheNode : NarrationNode
         
         return $"{mood} squirrel cache";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"discovering a {mood} squirrel cache";
+    }
     
     public sealed class CachedNuts : Item
     {

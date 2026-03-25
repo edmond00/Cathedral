@@ -24,6 +24,13 @@ public class ButterflyGladeNode : NarrationNode
         
         return $"{mood} butterfly glade";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"wandering in a {mood} butterfly glade";
+    }
     
     public sealed class ButterflyWings : Item
     {

@@ -24,6 +24,13 @@ public class CrestShoulderNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} crest shoulder";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"on a {mood} crest shoulder";
+    }
     
     public sealed class LooseScree : Item
     {

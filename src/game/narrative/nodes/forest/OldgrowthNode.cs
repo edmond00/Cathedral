@@ -32,6 +32,13 @@ public class OldgrowthNode : NarrationNode
         
         return $"{mood} oldgrowth";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"exploring a {mood} oldgrowth";
+    }
     
     public sealed class AncientWood : Item
     {

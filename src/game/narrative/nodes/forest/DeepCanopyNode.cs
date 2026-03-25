@@ -24,6 +24,13 @@ public class DeepCanopyNode : NarrationNode
         
         return $"{mood} deep canopy";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"walking beneath a {mood} deep canopy";
+    }
     
     public sealed class FallenLeaves : Item
     {

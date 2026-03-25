@@ -24,26 +24,33 @@ public class ObservationPromptConstructor
         NarrationNode node,
         int locationId,
         ConcreteOutcome outcome,
-        string personaTone)
+        string personaTone,
+        string biomeType)
     {
-        var locationDescription = node.GenerateNeutralDescription(locationId);
+        var locationContext = node.BuildLocationContext(biomeType, locationId);
         var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
-        
+
         return $@"You are a {personaTone}.
-You are now in {locationDescription}.
+{locationContext}
 Your attention is drawn to {GetOutcomeLabel(outcome)}.
 What do you feel and observe? (include one of: {string.Join(", ", outcomeKeywords)})";
     }
 
     /// <summary>
     /// Builds the prompt for a general scene description — the opening sentence of an overall observation.
-    /// No specific outcome or keyword hints; describes the scene broadly from the persona's perspective.
+    /// Includes node keywords as atmospheric hints (not clickable, just context).
     /// </summary>
-    public string BuildGeneralDescriptionPrompt(NarrationNode node, int locationId, string personaTone)
+    public string BuildGeneralDescriptionPrompt(NarrationNode node, int locationId, string personaTone, string biomeType)
     {
-        var locationDescription = node.GenerateNeutralDescription(locationId);
+        var locationContext = node.BuildLocationContext(biomeType, locationId);
+        var nodeKeywords = node.NodeKeywords;
+
+        string keywordHint = nodeKeywords.Count > 0
+            ? $"\nYou may notice things like: {string.Join(", ", nodeKeywords)}."
+            : "";
+
         return $@"You are a {personaTone}.
-You are now in {locationDescription}.
+{locationContext}{keywordHint}
 What do you feel and observe?";
     }
 

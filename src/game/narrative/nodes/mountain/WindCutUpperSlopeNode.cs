@@ -24,6 +24,13 @@ public class WindCutUpperSlopeNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} wind-cut upper slope";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"on a {mood} wind-cut upper slope";
+    }
     
     public sealed class ErodedRock : Item
     {

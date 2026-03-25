@@ -24,6 +24,13 @@ public class BeehiveNode : NarrationNode
         
         return $"{mood} beehive";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"carefully observing a {mood} beehive";
+    }
     
     public sealed class WildHoneycomb : Item
     {

@@ -25,6 +25,13 @@ public class SeasonalPuddleNode : NarrationNode
         
         return $"{mood} seasonal puddle";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} seasonal puddle";
+    }
     
     public sealed class PuddleMud : Item
     {

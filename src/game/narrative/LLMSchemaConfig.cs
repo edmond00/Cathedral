@@ -86,6 +86,47 @@ public static class LLMSchemaConfig
     }
 
     /// <summary>
+    /// Call 1 (WHY): thinking modusMentis explains why observing the keyword makes it want the outcome.
+    /// </summary>
+    public static CompositeField CreateWhySchema()
+    {
+        return new CompositeField("WhyResponse",
+            new TemplateStringField("what_do_i_think",
+                Template: "I <generated>.",
+                MinGenLength: 30,
+                MaxGenLength: 300)
+        );
+    }
+
+    /// <summary>
+    /// Call 2 (HOW): thinking modusMentis picks which action skill to use and briefly explains.
+    /// </summary>
+    public static CompositeField CreateHowSchema(List<string> validSkills)
+    {
+        return new CompositeField("HowResponse",
+            new TemplateStringField("how_could_i_do_it",
+                Template: "<generated>.",
+                MinGenLength: 20,
+                MaxGenLength: 250),
+            new ChoiceField<string>("selected_skill", validSkills.ToArray())
+        );
+    }
+
+    /// <summary>
+    /// Call 3 (WHAT): action modusMentis describes concretely what it will attempt.
+    /// </summary>
+    public static CompositeField CreateWhatSchema()
+    {
+        return new CompositeField("WhatResponse",
+            new TemplateStringField("action_description",
+                Template: "try to <generated>.",
+                MinGenLength: 10,
+                MaxGenLength: 200,
+                Hint: "In a few words, what exactly will you try to do?")
+        );
+    }
+
+    /// <summary>
     /// Schema for the intermediate skill-selection call (step 3a).
     /// The outcome is hardcoded; the LLM reasons about which skill fits best, then picks one.
     /// Field order: outcome (hardcoded) → how_my_skills_could_help → which_skill_and_why → selected_skill

@@ -32,6 +32,13 @@ public class GullyBottomNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} gully bottom";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"in a {mood} gully bottom";
+    }
     
     public sealed class GullyMoss : Item
     {

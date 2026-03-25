@@ -25,6 +25,13 @@ public class FrozenRidgeFaceUpperNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} upper frozen ridge face";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"clinging to a {mood} upper frozen ridge face";
+    }
     
     public sealed class IceHold : Item
     {

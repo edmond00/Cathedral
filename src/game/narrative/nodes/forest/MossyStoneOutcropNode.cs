@@ -24,6 +24,13 @@ public class MossyStoneOutcropNode : NarrationNode
         
         return $"{mood} mossy stone outcrop";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} mossy stone outcrop";
+    }
     
     public sealed class OutcropMoss : Item
     {

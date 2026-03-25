@@ -24,6 +24,13 @@ public class GullyLipNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} gully lip";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"at a {mood} gully lip";
+    }
     
     public sealed class OverhangingFern : Item
     {

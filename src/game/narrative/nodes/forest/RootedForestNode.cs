@@ -24,6 +24,13 @@ public class RootedForestNode : NarrationNode
         
         return $"{mood} rooted forest";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"climbing through a {mood} rooted forest";
+    }
     
     public sealed class ExposedRootFiber : Item
     {

@@ -24,6 +24,13 @@ public class ArchPassageNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} arch passage";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"through a {mood} arch passage";
+    }
     
     public sealed class FramedSky : Item
     {

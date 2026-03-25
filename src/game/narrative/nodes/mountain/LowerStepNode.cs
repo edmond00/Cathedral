@@ -24,6 +24,13 @@ public class LowerStepNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} lower step";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"on a {mood} lower step";
+    }
     
     public sealed class StoneSlabs : Item
     {

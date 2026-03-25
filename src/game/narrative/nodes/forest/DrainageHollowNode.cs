@@ -24,6 +24,13 @@ public class DrainageHollowNode : NarrationNode
         
         return $"{mood} drainage hollow";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"descending through a {mood} drainage hollow";
+    }
     
     public sealed class ClayDeposit : Item
     {

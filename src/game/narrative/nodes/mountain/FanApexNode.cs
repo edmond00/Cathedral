@@ -24,6 +24,13 @@ public class FanApexNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} fan apex";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"at a {mood} fan apex";
+    }
     
     public sealed class ChannelSplit : Item
     {

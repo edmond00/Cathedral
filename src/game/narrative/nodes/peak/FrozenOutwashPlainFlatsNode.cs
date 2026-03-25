@@ -25,6 +25,13 @@ public class FrozenOutwashPlainFlatsNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} frozen flats";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing on a {mood} frozen flats";
+    }
     
     public sealed class OutwashGravel : Item
     {

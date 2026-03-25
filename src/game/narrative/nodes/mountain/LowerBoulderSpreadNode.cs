@@ -24,6 +24,13 @@ public class LowerBoulderSpreadNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} lower boulder spread";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"in a {mood} lower boulder spread";
+    }
     
     public sealed class MossyCrevice : Item
     {

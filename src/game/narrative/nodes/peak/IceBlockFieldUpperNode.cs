@@ -25,5 +25,12 @@ public class IceBlockFieldUpperNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} upper ice blocks";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing in a {mood} upper ice block field";
+    }
     
 }

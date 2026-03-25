@@ -24,6 +24,13 @@ public class MushroomLogNode : NarrationNode
         
         return $"{mood} mushroom log";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} mushroom log";
+    }
     
     public sealed class ShelfMushroom : Item
     {

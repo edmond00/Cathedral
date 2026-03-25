@@ -25,6 +25,13 @@ public class AncientTreeGiantNode : NarrationNode
         
         return $"{mood} ancient tree giant";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing before a {mood} ancient tree giant";
+    }
     
     public sealed class AncientBark : Item
     {

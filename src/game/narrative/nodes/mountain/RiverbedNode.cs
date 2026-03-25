@@ -24,6 +24,13 @@ public class RiverbedNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} riverbed";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"in a {mood} riverbed";
+    }
     
     public sealed class RiverStones : Item
     {

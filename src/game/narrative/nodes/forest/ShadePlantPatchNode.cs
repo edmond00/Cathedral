@@ -25,6 +25,13 @@ public class ShadePlantPatchNode : NarrationNode
         
         return $"{mood} shade plant patch";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} shade plant patch";
+    }
     
     public sealed class BroadLeaf : Item
     {

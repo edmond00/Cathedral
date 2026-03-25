@@ -24,6 +24,13 @@ public class BeetleSwarmNode : NarrationNode
         
         return $"{mood} beetle swarm";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"observing a {mood} beetle swarm";
+    }
     
     public sealed class BeetleCarapace : Item
     {

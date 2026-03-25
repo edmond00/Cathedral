@@ -24,6 +24,13 @@ public class RidgeSpineNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} ridge spine";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"traversing a {mood} ridge spine";
+    }
     
     public sealed class SharpRock : Item
     {

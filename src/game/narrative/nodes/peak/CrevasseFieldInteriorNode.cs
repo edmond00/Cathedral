@@ -25,5 +25,12 @@ public class CrevasseFieldInteriorNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} crevasse interior";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"inside a {mood} crevasse interior";
+    }
     
 }

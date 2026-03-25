@@ -25,6 +25,13 @@ public class ReededDepressionNode : NarrationNode
         
         return $"{mood} reeded depression";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"wading through a {mood} reeded depression";
+    }
     
     public sealed class ReedStem : Item
     {

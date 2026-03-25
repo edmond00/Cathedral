@@ -25,6 +25,13 @@ public class BareForestFloorNode : NarrationNode
         
         return $"{mood} bare forest floor";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"walking on a {mood} bare forest floor";
+    }
     
     public sealed class BareSoil : Item
     {

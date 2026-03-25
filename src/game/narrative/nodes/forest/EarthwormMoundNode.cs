@@ -24,6 +24,13 @@ public class EarthwormMoundNode : NarrationNode
         
         return $"{mood} earthworm mound";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"digging in a {mood} earthworm mound";
+    }
     
     public sealed class MoundSoil : Item
     {

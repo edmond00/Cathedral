@@ -40,6 +40,111 @@ public class ThinkingExecutor
     }
 
     /// <summary>
+    /// New 3-call pipeline: WHY (thinking slot) → HOW (thinking slot) → WHAT (action slot).
+    /// The outcome is fully predetermined by the clicked keyword.
+    /// Returns a ThinkingResponse with one action, or null if any call fails.
+    /// </summary>
+    public async Task<ThinkingResponse?> GenerateThinkingAsync(
+        ModusMentis thinkingModusMentis,
+        ConcreteOutcome targetOutcome,
+        string keyword,
+        NarrationNode node,
+        List<ModusMentis> actionModiMentis,
+        Protagonist protagonist,
+        string biomeType,
+        CancellationToken cancellationToken = default)
+    {
+        string outcomeDescription = targetOutcome.ToNaturalLanguageString();
+        var modusMentisIds = actionModiMentis.Select(s => s.ModusMentisId).ToList();
+
+        // Get thinking slot — reset context for a fresh batch
+        int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
+        _llmManager.ResetInstance(thinkingSlot);
+
+        // ── Call 1: WHY ────────────────────────────────────────────────────────────
+        string whyPrompt = _promptConstructor.BuildWhyPrompt(keyword, outcomeDescription, node, thinkingModusMentis, protagonist, biomeType);
+        string whyGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
+
+        string? whyJson = await RequestFromLLMAsync(thinkingSlot, whyPrompt, whyGbnf, 350, cancellationToken);
+        if (string.IsNullOrWhiteSpace(whyJson))
+        {
+            Console.Error.WriteLine("ThinkingExecutor: WHY call returned empty response.");
+            return null;
+        }
+
+        string whyText = ParseSingleTextField(whyJson, "what_do_i_think");
+        Console.WriteLine($"ThinkingExecutor: WHY complete ({whyText.Length} chars)");
+
+        // ── Call 2: HOW ────────────────────────────────────────────────────────────
+        string howPrompt = _promptConstructor.BuildHowPrompt(outcomeDescription, actionModiMentis);
+        string howGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateHowSchema(modusMentisIds));
+
+        string? howJson = await RequestFromLLMAsync(thinkingSlot, howPrompt, howGbnf, 350, cancellationToken);
+        if (string.IsNullOrWhiteSpace(howJson))
+        {
+            Console.Error.WriteLine("ThinkingExecutor: HOW call returned empty response.");
+            return null;
+        }
+
+        var (howText, selectedSkillId) = ParseHowResponse(howJson);
+        if (string.IsNullOrEmpty(selectedSkillId))
+        {
+            Console.Error.WriteLine("ThinkingExecutor: HOW call could not parse selected_skill.");
+            return null;
+        }
+
+        Console.WriteLine($"ThinkingExecutor: HOW complete — selected skill: '{selectedSkillId}'");
+
+        var selectedModusMentis = actionModiMentis.FirstOrDefault(s => s.ModusMentisId == selectedSkillId);
+        if (selectedModusMentis == null)
+        {
+            Console.Error.WriteLine($"ThinkingExecutor: Selected skill '{selectedSkillId}' not found in action modiMentis.");
+            return null;
+        }
+
+        // ── Call 3: WHAT (action modusMentis slot) ─────────────────────────────────
+        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(selectedModusMentis);
+        _llmManager.ResetInstance(actionSlot);
+
+        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, outcomeDescription, node, protagonist, selectedModusMentis, biomeType);
+        string whatGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema());
+
+        string? whatJson = await RequestFromLLMAsync(actionSlot, whatPrompt, whatGbnf, 250, cancellationToken);
+        if (string.IsNullOrWhiteSpace(whatJson))
+        {
+            Console.Error.WriteLine("ThinkingExecutor: WHAT call returned empty response.");
+            return null;
+        }
+
+        string actionDescription = ParseSingleTextField(whatJson, "action_description");
+        string displayText = actionDescription.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
+            ? actionDescription.Substring(7)
+            : actionDescription;
+
+        Console.WriteLine($"ThinkingExecutor: WHAT complete — action: '{displayText}'");
+
+        // Combine WHY + HOW reasoning into one block
+        string reasoningText = (whyText + " " + howText).Trim();
+
+        var action = new ParsedNarrativeAction
+        {
+            ActionModusMentisId = selectedSkillId,
+            ActionModusMentis = selectedModusMentis,
+            PreselectedOutcome = targetOutcome,
+            ActionText = actionDescription,
+            DisplayText = displayText,
+            ThinkingModusMentis = thinkingModusMentis,
+            Keyword = keyword
+        };
+
+        return new ThinkingResponse
+        {
+            ReasoningText = reasoningText,
+            Actions = new List<ParsedNarrativeAction> { action }
+        };
+    }
+
+    /// <summary>
     /// Generates CoT reasoning and actions for the given keyword.
     /// Returns the parsed thinking response or null if generation failed.
     /// </summary>
@@ -277,6 +382,43 @@ public class ThinkingExecutor
     }
 
 
+
+    /// <summary>
+    /// Parses a single named text field from a JSON response. Returns "" on failure.
+    /// </summary>
+    private string ParseSingleTextField(string json, string fieldName)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.GetProperty(fieldName).GetString() ?? "";
+        }
+        catch (JsonException ex)
+        {
+            Console.Error.WriteLine($"ThinkingExecutor: Failed to parse '{fieldName}' from JSON: {ex.Message}");
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// Parses the HOW call response. Returns (howText, selectedSkillId).
+    /// </summary>
+    private (string HowText, string SelectedSkillId) ParseHowResponse(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            string howText = root.GetProperty("how_could_i_do_it").GetString() ?? "";
+            string skillId = root.GetProperty("selected_skill").GetString() ?? "";
+            return (howText, skillId);
+        }
+        catch (JsonException ex)
+        {
+            Console.Error.WriteLine($"ThinkingExecutor: Failed to parse HOW response: {ex.Message}");
+            return ("", "");
+        }
+    }
 
     /// <summary>
     /// Parses the reasoning-only call response.

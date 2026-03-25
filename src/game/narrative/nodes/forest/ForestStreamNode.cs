@@ -24,6 +24,13 @@ public class ForestStreamNode : NarrationNode
         
         return $"{mood} forest stream";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"following a {mood} forest stream";
+    }
     
     public sealed class StreamWater : Item
     {

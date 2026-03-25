@@ -24,6 +24,13 @@ public class OpenWoodlandNode : NarrationNode
         
         return $"{mood} open woodland";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"exploring a {mood} open woodland";
+    }
     
     public sealed class WildGrass : Item
     {

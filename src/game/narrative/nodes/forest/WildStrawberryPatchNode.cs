@@ -24,6 +24,13 @@ public class WildStrawberryPatchNode : NarrationNode
         
         return $"{mood} wild strawberry patch";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"picking from a {mood} wild strawberry patch";
+    }
     
     public sealed class WildStrawberry : Item
     {

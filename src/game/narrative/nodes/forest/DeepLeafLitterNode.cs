@@ -25,6 +25,13 @@ public class DeepLeafLitterNode : NarrationNode
         
         return $"{mood} deep leaf litter";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"wading through a {mood} deep leaf litter";
+    }
     
     public sealed class DriedLeafPile : Item
     {

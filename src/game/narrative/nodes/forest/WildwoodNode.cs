@@ -31,6 +31,13 @@ public class WildwoodNode : NarrationNode
         
         return $"{mood} wildwood";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"navigating a {mood} wildwood";
+    }
     
     public sealed class UntamedSeeds : Item
     {

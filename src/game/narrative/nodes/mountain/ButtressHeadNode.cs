@@ -24,6 +24,13 @@ public class ButtressHeadNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} buttress head";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"at a {mood} buttress head";
+    }
     
     public sealed class WeatheredGranite : Item
     {

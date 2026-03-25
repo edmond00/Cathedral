@@ -32,6 +32,13 @@ public class MirewoodNode : NarrationNode
         
         return $"{mood} mirewood";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"wading through a {mood} mirewood";
+    }
     
     public sealed class BogWater : Item
     {

@@ -25,6 +25,13 @@ public class RootWebNode : NarrationNode
         
         return $"{mood} root web";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"navigating a {mood} root web";
+    }
     
     public sealed class WebRootFiber : Item
     {

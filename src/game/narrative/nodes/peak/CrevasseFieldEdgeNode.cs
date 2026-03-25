@@ -25,6 +25,13 @@ public class CrevasseFieldEdgeNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} crevasse field edge";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing at a {mood} crevasse field edge";
+    }
     
     public sealed class CrevasseLip : Item
     {

@@ -25,6 +25,13 @@ public class IsolatedPlantClusterNode : NarrationNode
         
         return $"{mood} isolated plant cluster";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} isolated plant cluster";
+    }
     
     public sealed class RarePlant : Item
     {

@@ -31,6 +31,13 @@ public class FungalRingNode : NarrationNode
         
         return $"{mood} fungal ring";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"observing a {mood} fungal ring";
+    }
     
     public sealed class FairyRingMushroom : Item
     {

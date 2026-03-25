@@ -24,6 +24,13 @@ public class HazelUndergrowthNode : NarrationNode
         
         return $"{mood} hazel undergrowth";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"searching a {mood} hazel undergrowth";
+    }
     
     public sealed class Hazelnut : Item
     {

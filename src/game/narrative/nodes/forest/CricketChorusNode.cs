@@ -24,6 +24,13 @@ public class CricketChorusNode : NarrationNode
         
         return $"{mood} cricket chorus";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"listening to a {mood} cricket chorus";
+    }
     
     public sealed class CricketLegs : Item
     {

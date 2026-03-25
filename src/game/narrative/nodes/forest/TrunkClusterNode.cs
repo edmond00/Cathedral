@@ -25,6 +25,13 @@ public class TrunkClusterNode : NarrationNode
         
         return $"{mood} trunk cluster";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"navigating a {mood} trunk cluster";
+    }
     
     public sealed class InnerBark : Item
     {

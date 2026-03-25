@@ -24,6 +24,13 @@ public class DryCreekBedNode : NarrationNode
         
         return $"{mood} dry creek bed";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"walking along a {mood} dry creek bed";
+    }
     
     public sealed class SmoothStone : Item
     {

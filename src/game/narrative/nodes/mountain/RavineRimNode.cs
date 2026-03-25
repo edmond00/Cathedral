@@ -24,6 +24,13 @@ public class RavineRimNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} ravine rim";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"at a {mood} ravine rim";
+    }
     
     public sealed class OverhangingEdge : Item
     {

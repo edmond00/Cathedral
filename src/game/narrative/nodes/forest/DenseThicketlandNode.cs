@@ -24,6 +24,13 @@ public class DenseThicketlandNode : NarrationNode
         
         return $"{mood} dense thicketland";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"pushing through a {mood} dense thicketland";
+    }
     
     public sealed class ThornedBranch : Item
     {

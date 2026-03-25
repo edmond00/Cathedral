@@ -25,6 +25,13 @@ public class RegrowthThicketNode : NarrationNode
         
         return $"{mood} regrowth thicket";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"pushing through a {mood} regrowth thicket";
+    }
     
     public sealed class PioneerSeed : Item
     {

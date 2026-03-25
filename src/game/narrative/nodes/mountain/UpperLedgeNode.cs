@@ -31,6 +31,13 @@ public class UpperLedgeNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} upper ledge";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing on a {mood} upper ledge";
+    }
     
     public sealed class LedgeNest : Item
     {

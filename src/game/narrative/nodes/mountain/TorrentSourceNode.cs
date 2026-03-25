@@ -24,6 +24,13 @@ public class TorrentSourceNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} torrent source";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"at a {mood} torrent source";
+    }
     
     public sealed class SpringPool : Item
     {

@@ -33,6 +33,13 @@ public class AvalanchePathRunoutNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} runout zone";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing in a {mood} runout zone";
+    }
     
     public sealed class AvalancheDebris : Item
     {

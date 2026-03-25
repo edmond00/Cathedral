@@ -25,6 +25,13 @@ public class HiddenBranchTangleNode : NarrationNode
         
         return $"{mood} hidden branch tangle";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"ducking through a {mood} hidden branch tangle";
+    }
     
     public sealed class TangledTwig : Item
     {

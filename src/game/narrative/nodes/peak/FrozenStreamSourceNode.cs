@@ -25,6 +25,13 @@ public class FrozenStreamSourceNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} frozen source";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing at a {mood} frozen source";
+    }
     
     public sealed class SpringQuartz : Item
     {

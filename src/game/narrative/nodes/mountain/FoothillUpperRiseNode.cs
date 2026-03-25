@@ -24,6 +24,13 @@ public class FoothillUpperRiseNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} foothill upper rise";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"on a {mood} foothill upper rise";
+    }
     
     public sealed class RollingGrass : Item
     {

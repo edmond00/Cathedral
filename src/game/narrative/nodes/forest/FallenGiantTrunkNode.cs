@@ -24,6 +24,13 @@ public class FallenGiantTrunkNode : NarrationNode
         
         return $"{mood} fallen giant trunk";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"climbing a {mood} fallen giant trunk";
+    }
     
     public sealed class BeetleLarva : Item
     {

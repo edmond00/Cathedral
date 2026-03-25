@@ -32,6 +32,13 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} lower ice flow";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing on a {mood} lower ice flow";
+    }
     
     public sealed class MoraineDirt : Item
     {

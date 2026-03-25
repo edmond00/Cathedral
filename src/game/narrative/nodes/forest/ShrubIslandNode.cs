@@ -25,6 +25,13 @@ public class ShrubIslandNode : NarrationNode
         
         return $"{mood} shrub island";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"circling a {mood} shrub island";
+    }
     
     public sealed class ShrubBerry : Item
     {

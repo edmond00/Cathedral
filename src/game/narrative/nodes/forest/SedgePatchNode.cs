@@ -25,6 +25,13 @@ public class SedgePatchNode : NarrationNode
         
         return $"{mood} sedge patch";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"wading through a {mood} sedge patch";
+    }
     
     public sealed class SedgeHead : Item
     {

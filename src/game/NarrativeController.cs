@@ -116,7 +116,7 @@ public class NarrativeController
         LlmMonitorDebugManager.Show();
         
         // Initialize controllers
-        _observationController = new ObservationPhaseController(llamaServer, slotManager);
+        _observationController = new ObservationPhaseController(llamaServer, slotManager, biomeType);
         _thinkingExecutor = thinkingExecutor;
         _actionExecutor = actionExecutor;
         
@@ -224,39 +224,29 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Executing thinking with {thinkingModusMentis.DisplayName} on keyword '{keyword}'");
 
-            // Build outcomes with metadata using LinkedOutcome from the source block.
-            // The block already knows which outcome each sentence described, so we don't need keyword-based lookup.
-            var outcomesWithMetadata = new List<OutcomeWithMetadata>();
+            // Resolve the single outcome linked to the clicked keyword
+            var targetOutcome = sourceObservationBlock?.LinkedOutcome
+                ?? _currentNode.GetOutcomeOwningKeyword(keyword);
 
-            // Normal sentence clicked: straightforward outcome
-            var linkedOutcome = sourceObservationBlock?.LinkedOutcome;
-            if (linkedOutcome != null)
-                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(linkedOutcome));
-            else
+            if (targetOutcome == null)
             {
-                // Fallback: use keyword-based lookup for blocks created before this refactor
-                foreach (var o in _currentNode.GetOutcomesForKeyword(keyword))
-                    outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(o));
+                throw new Exception($"No outcome found for keyword '{keyword}'");
             }
 
             // Get action modiMentis
             var actionModiMentis = _protagonist.GetActionModiMentis();
 
-            Console.WriteLine($"NarrativeController: Total {outcomesWithMetadata.Count} outcomes, {actionModiMentis.Count} action modiMentis");
+            Console.WriteLine($"NarrativeController: Outcome '{targetOutcome.DisplayName}', {actionModiMentis.Count} action modiMentis");
 
-            // Use LinkedOutcome display name for context if available, otherwise keyword-based lookup
-            var keywordSourceOutcomeName = sourceObservationBlock?.LinkedOutcome?.DisplayName
-                ?? _currentNode.GetOutcomeOwningKeyword(keyword)?.DisplayName;
-
-            // Call ThinkingExecutor to generate reasoning + actions
+            // Call ThinkingExecutor — new single-outcome 3-call pipeline
             var response = await _thinkingExecutor.GenerateThinkingAsync(
                 thinkingModusMentis,
+                targetOutcome,
                 keyword,
-                keywordSourceOutcomeName,
                 _currentNode,
-                outcomesWithMetadata,
                 actionModiMentis,
                 _protagonist,
+                _biomeType,
                 CancellationToken.None);
 
             if (response == null || response.Actions.Count == 0)

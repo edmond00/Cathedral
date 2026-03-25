@@ -25,6 +25,13 @@ public class FrozenOutwashPlainMarginNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} ice margin";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing at a {mood} ice margin";
+    }
     
     public sealed class GlacialCobble : Item
     {

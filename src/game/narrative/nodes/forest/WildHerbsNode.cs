@@ -24,6 +24,13 @@ public class WildHerbsNode : NarrationNode
         
         return $"{mood} wild herbs";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} wild herbs";
+    }
     
     public sealed class HerbBundle : Item
     {

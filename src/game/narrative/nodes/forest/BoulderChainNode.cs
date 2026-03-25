@@ -24,6 +24,13 @@ public class BoulderChainNode : NarrationNode
         
         return $"{mood} boulder chain";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"climbing along a {mood} boulder chain";
+    }
     
     public sealed class LichenSample : Item
     {

@@ -21,8 +21,14 @@ public class BrightwoodNode : NarrationNode
     {
         var rng = new Random(locationId);
         var mood = Moods[rng.Next(Moods.Length)];
-        
         return $"{mood} brightwood";
+    }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"wandering through a {mood} brightwood";
     }
     
     public sealed class BeechLeaves : Item

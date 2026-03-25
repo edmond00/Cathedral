@@ -24,6 +24,13 @@ public class UpperBoulderSpreadNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} upper boulder spread";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"in a {mood} upper boulder spread";
+    }
     
     public sealed class RoundedBoulder : Item
     {

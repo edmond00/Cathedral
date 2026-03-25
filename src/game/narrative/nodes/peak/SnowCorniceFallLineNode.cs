@@ -25,6 +25,13 @@ public class SnowCorniceFallLineNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} cornice fall line";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing on a {mood} cornice fall line";
+    }
     
     public sealed class CorniceDebris : Item
     {

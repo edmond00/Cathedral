@@ -31,6 +31,13 @@ public class DebrisFieldNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} debris field";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"in a {mood} debris field";
+    }
     
     public sealed class LargeBoulder : Item
     {

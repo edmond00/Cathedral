@@ -24,6 +24,13 @@ public class ArchCrestNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} arch crest";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"atop a {mood} arch crest";
+    }
     
     public sealed class ArchKeystone : Item
     {

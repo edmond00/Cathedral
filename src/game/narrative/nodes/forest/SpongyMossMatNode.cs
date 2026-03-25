@@ -25,6 +25,13 @@ public class SpongyMossMatNode : NarrationNode
         
         return $"{mood} spongy moss mat";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"treading on a {mood} spongy moss mat";
+    }
     
     public sealed class SphagnumMoss : Item
     {

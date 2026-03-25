@@ -24,6 +24,13 @@ public class CanopyGapLineNode : NarrationNode
         
         return $"{mood} canopy gap line";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"walking through a {mood} canopy gap line";
+    }
     
     public sealed class SunwarmLeaves : Item
     {

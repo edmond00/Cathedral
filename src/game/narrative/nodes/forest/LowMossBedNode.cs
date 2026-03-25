@@ -25,6 +25,13 @@ public class LowMossBedNode : NarrationNode
         
         return $"{mood} low moss bed";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"walking on a {mood} low moss bed";
+    }
     
     public sealed class MossCarpet : Item
     {

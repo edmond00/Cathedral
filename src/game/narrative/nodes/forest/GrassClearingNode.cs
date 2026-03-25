@@ -32,6 +32,13 @@ public class GrassClearingNode : NarrationNode
         
         return $"{mood} grass clearing";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing in a {mood} grass clearing";
+    }
     
     public sealed class GrassSeed : Item
     {

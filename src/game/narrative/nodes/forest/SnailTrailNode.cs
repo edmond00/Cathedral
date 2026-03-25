@@ -24,6 +24,13 @@ public class SnailTrailNode : NarrationNode
         
         return $"{mood} snail trail";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"following a {mood} snail trail";
+    }
     
     public sealed class SnailShell : Item
     {

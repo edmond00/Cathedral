@@ -32,6 +32,13 @@ public class SnowLadenValleyLowerNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} lower valley";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing in a {mood} lower snow-laden valley";
+    }
     
     public sealed class ValleySchist : Item
     {

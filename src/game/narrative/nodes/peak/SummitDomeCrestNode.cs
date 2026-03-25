@@ -32,6 +32,13 @@ public class SummitDomeCrestNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} summit dome crest";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"standing atop a {mood} summit dome crest";
+    }
     
     public sealed class FrozenCrystal : Item
     {

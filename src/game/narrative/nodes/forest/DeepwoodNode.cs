@@ -32,6 +32,13 @@ public class DeepwoodNode : NarrationNode
         
         return $"{mood} deepwood";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"walking through a {mood} deepwood";
+    }
     
     public sealed class DarkLoam : Item
     {

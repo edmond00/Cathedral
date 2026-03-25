@@ -25,6 +25,13 @@ public class ExposedRootPlateNode : NarrationNode
         
         return $"{mood} exposed root plate";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"climbing a {mood} exposed root plate";
+    }
     
     public sealed class ClayClod : Item
     {

@@ -25,6 +25,13 @@ public class TallFernStandNode : NarrationNode
         
         return $"{mood} tall fern stand";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"wading through a {mood} tall fern stand";
+    }
     
     public sealed class FernSpore : Item
     {

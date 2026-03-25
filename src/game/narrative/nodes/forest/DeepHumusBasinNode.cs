@@ -25,6 +25,13 @@ public class DeepHumusBasinNode : NarrationNode
         
         return $"{mood} deep humus basin";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"exploring a {mood} deep humus basin";
+    }
     
     public sealed class PureHumus : Item
     {

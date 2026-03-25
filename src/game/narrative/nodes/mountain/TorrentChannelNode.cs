@@ -24,6 +24,13 @@ public class TorrentChannelNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} torrent channel";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"in a {mood} torrent channel";
+    }
     
     public sealed class TorrentGravel : Item
     {

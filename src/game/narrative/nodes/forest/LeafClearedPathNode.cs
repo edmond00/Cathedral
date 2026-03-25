@@ -24,6 +24,13 @@ public class LeafClearedPathNode : NarrationNode
         
         return $"{mood} leaf-cleared path";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"walking a {mood} leaf-cleared path";
+    }
     
     public sealed class SweptLeaves : Item
     {

@@ -24,6 +24,13 @@ public class RootPathNode : NarrationNode
         
         return $"{mood} root path";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"walking a {mood} root path";
+    }
     
     public sealed class BarkChunk : Item
     {

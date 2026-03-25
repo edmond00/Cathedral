@@ -24,6 +24,13 @@ public class PackedEarthTrailNode : NarrationNode
         
         return $"{mood} packed earth trail";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"walking a {mood} packed earth trail";
+    }
     
     public sealed class HardClay : Item
     {

@@ -24,6 +24,13 @@ public class FallenLogLineNode : NarrationNode
         
         return $"{mood} fallen log line";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"climbing along a {mood} fallen log line";
+    }
     
     public sealed class RottenWood : Item
     {

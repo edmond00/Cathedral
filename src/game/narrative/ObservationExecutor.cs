@@ -246,10 +246,11 @@ public class ObservationExecutor
         ConcreteOutcome outcome,
         bool isFirstSentence,
         string personaTone,
+        string biomeType,
         CancellationToken ct = default)
     {
         var prompt = isFirstSentence
-            ? _promptConstructor.BuildFirstSentencePrompt(node, locationId, outcome, personaTone)
+            ? _promptConstructor.BuildFirstSentencePrompt(node, locationId, outcome, personaTone, biomeType)
             : _promptConstructor.BuildContinuationSentencePrompt(outcome);
 
         var schema = isFirstSentence
@@ -283,10 +284,9 @@ public class ObservationExecutor
 
     /// <summary>
     /// Extracts the single best keyword from a sentence, given a list of candidate keywords.
-    /// Returns the first candidate keyword found in the sentence (earliest position).
-    /// Falls back to the longest word in the sentence if no candidate keyword is found.
+    /// Returns the first candidate keyword found in the sentence (earliest position), or null if none found.
     /// </summary>
-    public string ExtractKeywordFromSentence(string sentence, List<string> outcomeKeywords)
+    public string? ExtractKeywordFromSentence(string sentence, List<string> outcomeKeywords)
     {
         if (outcomeKeywords.Count > 0)
         {
@@ -296,15 +296,13 @@ public class ObservationExecutor
                 return firstFound.KeywordValue;
         }
 
-        // Fallback: longest word in sentence
-        var words = sentence.Split(new[] { ' ', ',', '.', '!', '?', ';', ':', '"', '\'' }, StringSplitOptions.RemoveEmptyEntries);
-        return words.OrderByDescending(w => w.Length).FirstOrDefault() ?? sentence;
+        return null;
     }
 
     /// <summary>
     /// Scans the combined text of a transition + focus sentence for matching outcome keywords,
     /// randomly samples up to <paramref name="maxCount"/> of them, and returns the list.
-    /// Falls back to the longest word of the focus sentence if no keyword is found.
+    /// Returns an empty list if no outcome keyword appears in the text.
     /// </summary>
     public List<string> ExtractKeywordsFromSentences(
         string transitionText,
@@ -333,22 +331,13 @@ public class ObservationExecutor
             foundKeywords.AddRange(distinct);
         }
 
-        if (foundKeywords.Count == 0)
-        {
-            // Fallback: longest word of focus sentence
-            var words = focusText.Split(new[] { ' ', ',', '.', '!', '?', ';', ':', '"', '\'' }, StringSplitOptions.RemoveEmptyEntries);
-            var longest = words.OrderByDescending(w => w.Length).FirstOrDefault();
-            if (!string.IsNullOrEmpty(longest))
-                foundKeywords.Add(longest);
-        }
-
         return foundKeywords;
     }
 
     /// <summary>
     /// Assigns each keyword to either the transition or focus sentence by checking
     /// which sentence text contains the keyword. Keywords only in focus go to focus;
-    /// ones in both or only in transition go to transition. Longest-word fallbacks go to focus.
+    /// ones in both or only in transition go to transition.
     /// </summary>
     public (List<string> TransitionKeywords, List<string> FocusKeywords) AssignKeywordsToSentences(
         List<string> keywords,

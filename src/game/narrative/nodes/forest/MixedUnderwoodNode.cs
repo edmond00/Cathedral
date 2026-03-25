@@ -24,6 +24,13 @@ public class MixedUnderwoodNode : NarrationNode
         
         return $"{mood} mixed underwood";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"pushing through a {mood} mixed underwood";
+    }
     
     public sealed class TangledVines : Item
     {

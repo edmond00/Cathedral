@@ -31,6 +31,13 @@ public class BrambleRunNode : NarrationNode
         
         return $"{mood} bramble run";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"navigating a {mood} bramble run";
+    }
     
     public sealed class Blackberry : Item
     {

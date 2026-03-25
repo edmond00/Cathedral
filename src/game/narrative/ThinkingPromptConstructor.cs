@@ -10,6 +10,63 @@ namespace Cathedral.Game.Narrative;
 public class ThinkingPromptConstructor
 {
     /// <summary>
+    /// Call 1 (WHY): asks the thinking modusMentis why observing the keyword makes it want the outcome.
+    /// Direct question — no roleplay framing.
+    /// </summary>
+    public string BuildWhyPrompt(
+        string keyword,
+        string outcomeDescription,
+        NarrationNode node,
+        ModusMentis thinkingModusMentis,
+        Protagonist protagonist,
+        string biomeType)
+    {
+        return $@"{node.BuildLocationContext(biomeType, protagonist.CurrentLocationId)}
+
+You noticed some {keyword} and now you want to {outcomeDescription}.
+
+Why does what you observed make you want this?";
+    }
+
+    /// <summary>
+    /// Call 2 (HOW): asks the thinking modusMentis which skill could help reach the outcome.
+    /// Sent as a follow-up in the same slot context (the WHY reasoning is already in context).
+    /// Direct question — no roleplay framing.
+    /// </summary>
+    public string BuildHowPrompt(
+        string outcomeDescription,
+        List<ModusMentis> actionModiMentis)
+    {
+        return $@"Your goal is to {outcomeDescription}.
+
+Among your skills:
+{string.Join("\n", actionModiMentis.Select(s => $"- {s.ModusMentisId}: {s.ShortDescription}"))}
+
+Which skill could best help you achieve this goal, and how would you use it?";
+    }
+
+    /// <summary>
+    /// Call 3 (WHAT): asks the selected action modusMentis what it will concretely try to do.
+    /// Sent to the action modusMentis's own slot (fresh context) — full context is provided
+    /// since this instance has no prior conversation history.
+    /// Direct question — no roleplay framing.
+    /// </summary>
+    public string BuildWhatPrompt(
+        string keyword,
+        string outcomeDescription,
+        NarrationNode node,
+        Protagonist protagonist,
+        ModusMentis actionModusMentis,
+        string biomeType)
+    {
+        return $@"{node.BuildLocationContext(biomeType, protagonist.CurrentLocationId)}
+
+You noticed some {keyword}. Now you want to {outcomeDescription}.
+
+Using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescription}), what exactly are you going to try to do?";
+    }
+
+    /// <summary>
     /// Builds a thinking request for the LLM.
     /// Includes keyword context, possible outcomes, available action modiMentis, and protagonist state.
     /// Separates straightforward outcomes from circuitous outcomes in the prompt.

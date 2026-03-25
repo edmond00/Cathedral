@@ -24,6 +24,13 @@ public class RockfallCrownNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} rockfall crown";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"at a {mood} rockfall crown";
+    }
     
     public sealed class FractureZone : Item
     {

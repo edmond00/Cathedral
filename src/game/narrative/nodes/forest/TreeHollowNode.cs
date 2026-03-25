@@ -31,6 +31,13 @@ public class TreeHollowNode : NarrationNode
         
         return $"{mood} tree hollow";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"peering into a {mood} tree hollow";
+    }
     
     public sealed class DriedLeaves : Item
     {

@@ -24,6 +24,13 @@ public class TreeSapFlowNode : NarrationNode
         
         return $"{mood} tree sap flow";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} tree sap flow";
+    }
     
     public sealed class TreeResin : Item
     {

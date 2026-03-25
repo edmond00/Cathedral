@@ -31,6 +31,13 @@ public class DeerRubNode : NarrationNode
         
         return $"{mood} deer rub";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} deer rub";
+    }
     
     public sealed class ScrapedBark : Item
     {

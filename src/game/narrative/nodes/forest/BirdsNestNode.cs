@@ -24,6 +24,13 @@ public class BirdsNestNode : NarrationNode
         
         return $"{mood} bird's nest";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"observing a {mood} bird's nest";
+    }
     
     public sealed class BirdFeather : Item
     {

@@ -24,6 +24,13 @@ public class HawthornClusterNode : NarrationNode
         
         return $"{mood} hawthorn cluster";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} hawthorn cluster";
+    }
     
     public sealed class Haw : Item
     {

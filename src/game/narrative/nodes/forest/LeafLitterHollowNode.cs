@@ -25,6 +25,13 @@ public class LeafLitterHollowNode : NarrationNode
         
         return $"{mood} leaf-litter hollow";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"exploring a {mood} leaf-litter hollow";
+    }
     
     public sealed class LeafMold : Item
     {

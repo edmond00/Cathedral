@@ -24,6 +24,13 @@ public class LowwoodNode : NarrationNode
         
         return $"{mood} lowwood";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"treading through a {mood} lowwood";
+    }
     
     public sealed class WetMoss : Item
     {

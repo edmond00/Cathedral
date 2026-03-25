@@ -25,6 +25,13 @@ public class VineDrapedGrowthNode : NarrationNode
         
         return $"{mood} vine-draped growth";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"pushing through a {mood} vine-draped growth";
+    }
     
     public sealed class VineTendril : Item
     {

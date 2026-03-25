@@ -194,6 +194,23 @@ public abstract class NarrationNode : ConcreteOutcome
     /// </summary>
     /// <param name="locationId">Location ID used as RNG seed for consistency</param>
     public abstract string GenerateNeutralDescription(int locationId = 0);
+
+    /// <summary>
+    /// Generates an enriched context description that includes a mood qualifier.
+    /// Default: returns ContextDescription as-is.
+    /// Override in nodes that have a Moods array to inject the mood into the verb phrase.
+    /// Example override: $"wandering through a {mood} brightwood"
+    /// </summary>
+    public virtual string GenerateEnrichedContextDescription(int locationId = 0)
+        => ContextDescription;
+
+    /// <summary>
+    /// Builds the two-line location context used at the start of every first LLM call.
+    /// Line 1: overall biome ("You are in a forest.")
+    /// Line 2: enriched node context ("You are currently wandering through a radiant brightwood.")
+    /// </summary>
+    public string BuildLocationContext(string biomeType, int locationId)
+        => $"You are in a {biomeType}. You are currently {GenerateEnrichedContextDescription(locationId)}.";
     
     /// <summary>
     /// Gets all outcomes that have a specific keyword.

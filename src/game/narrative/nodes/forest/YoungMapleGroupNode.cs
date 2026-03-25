@@ -25,6 +25,13 @@ public class YoungMapleGroupNode : NarrationNode
         
         return $"{mood} young maple group";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"examining a {mood} young maple group";
+    }
     
     public sealed class MapleSeed : Item
     {

@@ -25,6 +25,13 @@ public class BeechStandNode : NarrationNode
         
         return $"{mood} beech stand";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"walking through a {mood} beech stand";
+    }
     
     public sealed class Beechnut : Item
     {

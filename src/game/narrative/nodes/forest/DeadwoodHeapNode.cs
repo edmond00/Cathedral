@@ -25,6 +25,13 @@ public class DeadwoodHeapNode : NarrationNode
         
         return $"{mood} deadwood heap";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"climbing over a {mood} deadwood heap";
+    }
     
     public sealed class DeadBranch : Item
     {

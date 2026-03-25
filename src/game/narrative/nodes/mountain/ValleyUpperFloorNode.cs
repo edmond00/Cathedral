@@ -31,6 +31,13 @@ public class ValleyUpperFloorNode : PyramidalFeatureNode
         var rng = new Random(locationId);
         return $"{Moods[rng.Next(Moods.Length)]} valley upper floor";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"on a {mood} valley upper floor";
+    }
     
     public sealed class MeadowGrass : Item
     {

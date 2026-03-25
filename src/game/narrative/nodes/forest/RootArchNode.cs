@@ -25,6 +25,13 @@ public class RootArchNode : NarrationNode
         
         return $"{mood} root arch";
     }
+
+    public override string GenerateEnrichedContextDescription(int locationId = 0)
+    {
+        var rng = new Random(locationId);
+        var mood = Moods[rng.Next(Moods.Length)];
+        return $"ducking under a {mood} root arch";
+    }
     
     public sealed class ArchedRoot : Item
     {
