@@ -25,8 +25,8 @@ public class LlamaServerManager : IDisposable
     // Model aliases and their corresponding file names
     private readonly Dictionary<string, string> _modelAliases = new()
     {
-        { "tiny", "qwen2.5-0.5b-instruct-q5_k_m.gguf" },
-        { "medium", "phi-4-Q4_1.gguf" }
+        { "tiny", "qwen2.5-1.5b-instruct-q5_k_m.gguf" },
+        { "medium", "qwen2.5-3b-instruct-q4_k_m.gguf" }
     };
     
     private string _currentModelAlias = "tiny"; // Default model

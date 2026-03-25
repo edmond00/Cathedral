@@ -142,24 +142,56 @@ Output field:
     }
 
     /// <summary>
-    /// Builds a single-action prompt for the batched thinking pipeline.
-    /// Called once per action after the reasoning call; the slot keeps prior context as CoT.
-    /// The outcome is pre-assigned — the LLM must choose the appropriate skill and write the description.
+    /// Builds the intermediate skill-selection prompt (step 3a).
+    /// The outcome is fixed; the LLM reasons about skills then picks one.
+    /// When <paramref name="alreadyChosenSkills"/> is non-empty, the LLM is asked to
+    /// prefer a different skill from those already selected.
+    /// </summary>
+    public string BuildSkillSelectionPrompt(
+        string hardcodedOutcome,
+        List<ModusMentis> actionModiMentis,
+        ModusMentis thinkingModusMentis,
+        List<string> alreadyChosenSkills)
+    {
+        string avoidanceLine = alreadyChosenSkills.Count > 0
+            ? $"Try to choose a different skill from the ones already selected if possible (avoid: {string.Join(", ", alreadyChosenSkills)}).\n\n"
+            : "";
+
+        return $@"The target outcome is fixed: ""{hardcodedOutcome}"".
+
+Skills available:
+{string.Join("\n", actionModiMentis.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
+
+{avoidanceLine}As {thinkingModusMentis.PersonaTone}, reason briefly about which skill would be most
+effective to achieve this outcome, then name the single best skill.
+
+Output fields:
+- outcome (must be ""{hardcodedOutcome}"")
+- skill_reasoning_text
+- selected_skill
+";
+    }
+
+    /// <summary>
+    /// Builds a single-action prompt for the batched thinking pipeline (step 3b).
+    /// Both outcome and skill are fixed; the LLM only writes the action description.
     /// </summary>
     public string BuildSingleActionPrompt(
         int actionIndex,
         int totalActions,
         ModusMentis thinkingModusMentis,
-        string hardcodedOutcome)
+        string hardcodedOutcome,
+        string hardcodedSkill)
     {
-        return $@"As {thinkingModusMentis.PersonaTone}, propose action {actionIndex} of {totalActions}.
+        return $@"As {thinkingModusMentis.PersonaTone}, write action {actionIndex} of {totalActions}.
 
 Your outcome is fixed: ""{hardcodedOutcome}"".
-Choose the skill best suited to achieve this outcome, then describe what you will try to do.
+Your skill is fixed: ""{hardcodedSkill}"".
+Describe what you will try to do using that skill to achieve that outcome.
 
 Output fields:
 - outcome (must be ""{hardcodedOutcome}"")
-- skill
+- skill (must be ""{hardcodedSkill}"")
 - action_description (must start with ""try to "")
 ";
     }

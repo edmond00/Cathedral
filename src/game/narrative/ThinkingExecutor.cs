@@ -89,37 +89,68 @@ public class ThinkingExecutor
         string reasoningText = ParseReasoningResponse(reasoningJson);
         Console.WriteLine($"ThinkingExecutor: Reasoning complete ({reasoningText.Length} chars)");
 
-        // ── Calls 2..N: Actions (one per sampled outcome, outcome hardcoded in GBNF) ──────────────
+        // ── Per-outcome: step 3a (skill selection) + step 3b (action description) ──────────────
         var actions = new List<ParsedNarrativeAction>();
+        var skillReasoningTexts = new List<string>();
+        var chosenSkillIds = new List<string>();
+        int actionIndex = 1;
 
-        for (int i = 1; i <= totalActions; i++)
+        for (int i = 0; i < totalActions; i++)
         {
-            var hardcodedOutcome = sampledOutcomes[i - 1];
+            var hardcodedOutcome = sampledOutcomes[i];
             string hardcodedOutcomeStr = hardcodedOutcome.Outcome.ToNaturalLanguageString();
 
-            string actionGbnf = JsonConstraintGenerator.GenerateGBNF(
-                LLMSchemaConfig.CreateSingleActionSchema(modusMentisIds, hardcodedOutcomeStr));
+            // Step 3a — skill selection
+            string skillSelectionGbnf = JsonConstraintGenerator.GenerateGBNF(
+                LLMSchemaConfig.CreateSkillSelectionSchema(modusMentisIds, hardcodedOutcomeStr));
+            string skillSelectionPrompt = _promptConstructor.BuildSkillSelectionPrompt(
+                hardcodedOutcomeStr, actionModiMentis, thinkingModusMentis, chosenSkillIds);
 
+            string? skillSelectionJson = await RequestFromLLMAsync(
+                slot, skillSelectionPrompt, skillSelectionGbnf, 300, cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(skillSelectionJson))
+            {
+                Console.Error.WriteLine($"ThinkingExecutor: Skill-selection {i + 1} returned empty response, skipping outcome.");
+                continue;
+            }
+
+            var (skillReasoningText, selectedSkillId) = ParseSkillSelectionResponse(skillSelectionJson);
+            if (string.IsNullOrEmpty(selectedSkillId))
+            {
+                Console.Error.WriteLine($"ThinkingExecutor: Skill-selection {i + 1} could not parse selected_skill, skipping outcome.");
+                continue;
+            }
+
+            skillReasoningTexts.Add(skillReasoningText);
+            chosenSkillIds.Add(selectedSkillId);
+            Console.WriteLine($"ThinkingExecutor: Skill-selection {i + 1}/{totalActions}: '{selectedSkillId}' for '{hardcodedOutcomeStr}'");
+
+            // Step 3b — action description
+            string actionGbnf = JsonConstraintGenerator.GenerateGBNF(
+                LLMSchemaConfig.CreateSingleActionSchema(hardcodedOutcomeStr, selectedSkillId));
             string actionPrompt = _promptConstructor.BuildSingleActionPrompt(
-                i, totalActions, thinkingModusMentis, hardcodedOutcomeStr);
+                actionIndex, totalActions, thinkingModusMentis, hardcodedOutcomeStr, selectedSkillId);
 
             string? actionJson = await RequestFromLLMAsync(slot, actionPrompt, actionGbnf, 200, cancellationToken);
 
             if (string.IsNullOrWhiteSpace(actionJson))
             {
-                Console.Error.WriteLine($"ThinkingExecutor: Action {i} call returned empty response.");
+                Console.Error.WriteLine($"ThinkingExecutor: Action description {i + 1} returned empty response.");
                 continue;
             }
 
-            var action = ParseSingleActionResponse(actionJson, hardcodedOutcome, actionModiMentis, thinkingModusMentis, keyword);
+            var action = ParseSingleActionResponse(
+                actionJson, hardcodedOutcome, selectedSkillId, actionModiMentis, thinkingModusMentis, keyword);
             if (action != null)
             {
                 actions.Add(action);
-                Console.WriteLine($"ThinkingExecutor: Action {i}/{totalActions} parsed: '{action.DisplayText}'");
+                Console.WriteLine($"ThinkingExecutor: Action {actionIndex}/{totalActions} parsed: '{action.DisplayText}'");
+                actionIndex++;
             }
             else
             {
-                Console.Error.WriteLine($"ThinkingExecutor: Action {i} failed to parse.");
+                Console.Error.WriteLine($"ThinkingExecutor: Action description {i + 1} failed to parse.");
             }
         }
 
@@ -129,9 +160,14 @@ public class ThinkingExecutor
             return null;
         }
 
+        // Concatenate overall reasoning with all per-outcome skill reasoning texts into one block
+        string fullReasoningText = skillReasoningTexts.Count > 0
+            ? reasoningText + " " + string.Join(" ", skillReasoningTexts)
+            : reasoningText;
+
         return new ThinkingResponse
         {
-            ReasoningText = reasoningText,
+            ReasoningText = fullReasoningText,
             Actions = actions
         };
     }
@@ -260,12 +296,34 @@ public class ThinkingExecutor
     }
 
     /// <summary>
-    /// Parses a single-action call response into a <see cref="ParsedNarrativeAction"/>.
-    /// The outcome is pre-assigned (hardcoded in the GBNF) — only the skill and description are parsed.
+    /// Parses the skill-selection call response (step 3a).
+    /// Returns (SkillReasoningText, SelectedSkillId); returns ("", "") on failure.
+    /// </summary>
+    private (string SkillReasoningText, string SelectedSkillId) ParseSkillSelectionResponse(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            string skillReasoning = root.GetProperty("skill_reasoning_text").GetString() ?? "";
+            string selectedSkill = root.GetProperty("selected_skill").GetString() ?? "";
+            return (skillReasoning, selectedSkill);
+        }
+        catch (JsonException ex)
+        {
+            Console.Error.WriteLine($"ThinkingExecutor: Failed to parse skill-selection JSON: {ex.Message}");
+            return ("", "");
+        }
+    }
+
+    /// <summary>
+    /// Parses a single-action call response (step 3b) into a <see cref="ParsedNarrativeAction"/>.
+    /// Both outcome and skill are passed as hardcoded parameters — only action_description is read from JSON.
     /// </summary>
     private ParsedNarrativeAction? ParseSingleActionResponse(
         string json,
         OutcomeWithMetadata hardcodedOutcome,
+        string hardcodedSkillId,
         List<ModusMentis> actionModiMentis,
         ModusMentis thinkingModusMentis,
         string keyword)
@@ -275,18 +333,17 @@ public class ThinkingExecutor
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            string skillId = root.GetProperty("skill").GetString() ?? "";
             string actionDesc = root.GetProperty("action_description").GetString() ?? "";
 
             string displayText = actionDesc.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
                 ? actionDesc.Substring(7)
                 : actionDesc;
 
-            var resolvedModusMentis = actionModiMentis.FirstOrDefault(s => s.ModusMentisId == skillId);
+            var resolvedModusMentis = actionModiMentis.FirstOrDefault(s => s.ModusMentisId == hardcodedSkillId);
 
             return new ParsedNarrativeAction
             {
-                ActionModusMentisId = skillId,
+                ActionModusMentisId = hardcodedSkillId,
                 ActionModusMentis = resolvedModusMentis,
                 PreselectedOutcome = hardcodedOutcome.Outcome,
                 ActionText = actionDesc,

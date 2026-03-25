@@ -73,16 +73,32 @@ public static class LLMSchemaConfig
     }
 
     /// <summary>
-    /// Schema for a single action in the batched thinking pipeline.
-    /// Used for each action call after the reasoning call.
-    /// The outcome is pre-sampled and hardcoded; the LLM only chooses the skill and writes the description.
-    /// Field order: outcome (hardcoded) → skill → action_description
+    /// Schema for the intermediate skill-selection call (step 3a).
+    /// The outcome is hardcoded; the LLM reasons about which skill fits best, then picks one.
+    /// Field order: outcome (hardcoded) → skill_reasoning_text → selected_skill
     /// </summary>
-    public static CompositeField CreateSingleActionSchema(List<string> validSkills, string hardcodedOutcome)
+    public static CompositeField CreateSkillSelectionSchema(List<string> validSkills, string hardcodedOutcome)
+    {
+        return new CompositeField("SkillSelection",
+            new ChoiceField<string>("outcome", new[] { hardcodedOutcome }),
+            new StringField("skill_reasoning_text",
+                MinLength: 20,
+                MaxLength: 400,
+                Hint: "Brief reasoning about which skill is best suited to achieve the outcome"),
+            new ChoiceField<string>("selected_skill", validSkills.ToArray())
+        );
+    }
+
+    /// <summary>
+    /// Schema for the action-description call (step 3b).
+    /// Both outcome and skill are hardcoded; the LLM only writes the action description.
+    /// Field order: outcome (hardcoded) → skill (hardcoded) → action_description
+    /// </summary>
+    public static CompositeField CreateSingleActionSchema(string hardcodedOutcome, string hardcodedSkill)
     {
         return new CompositeField("Action",
             new ChoiceField<string>("outcome", new[] { hardcodedOutcome }),
-            new ChoiceField<string>("skill", validSkills.ToArray()),
+            new ChoiceField<string>("skill", new[] { hardcodedSkill }),
             new TemplateStringField("action_description",
                 Template: "try to <generated>",
                 MinGenLength: 10,
