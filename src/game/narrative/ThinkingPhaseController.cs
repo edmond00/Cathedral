@@ -67,13 +67,6 @@ public class ThinkingPhaseController
         // Get possible outcomes for this keyword
         var possibleOutcomes = node.GetOutcomesForKeyword(keyword);
         
-        // Always add FeelGoodOutcome as a fallback option
-        var feelGoodOutcome = new FeelGoodOutcome();
-        if (!possibleOutcomes.Any(o => o is FeelGoodOutcome))
-        {
-            possibleOutcomes.Add(feelGoodOutcome);
-        }
-
         // Get action modiMentis
         var actionModiMentis = _protagonist.GetActionModiMentis();
         
@@ -146,8 +139,7 @@ public class ThinkingPhaseController
             {
                 Item item => $"try to obtain {item.DisplayName} from the {keyword}",
                 NarrationNode node => $"try to explore the {keyword} to discover {node.NodeId}",
-                FeelGoodOutcome => $"try to appreciate the {keyword}",
-                HumorOutcome => $"try to contemplate the {keyword}",
+HumorOutcome => $"try to contemplate the {keyword}",
                 _ => $"try to interact with the {keyword}"
             };
 

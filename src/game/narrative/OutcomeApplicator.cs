@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Narrative;
@@ -26,7 +25,7 @@ public class OutcomeApplicator
     /// <summary>
     /// Applies an outcome to the protagonist and game state.
     /// </summary>
-    public async Task ApplyOutcomeAsync(OutcomeBase outcome, Protagonist protagonist)
+    public Task ApplyOutcomeAsync(OutcomeBase outcome, Protagonist protagonist)
     {
         switch (outcome)
         {
@@ -37,10 +36,6 @@ public class OutcomeApplicator
             case NarrationNode node:
                 // Transition is handled externally by the narrative controller
                 Console.WriteLine($"OutcomeApplicator: Transition to {node.NodeId}");
-                break;
-
-            case FeelGoodOutcome feelGood:
-                await ApplyFeelGoodOutcomeAsync(feelGood, protagonist);
                 break;
 
             case HumorOutcome humor:
@@ -61,6 +56,8 @@ public class OutcomeApplicator
                 Console.WriteLine($"OutcomeApplicator: Unknown outcome type {outcome.GetType().Name}");
                 break;
         }
+
+        return Task.CompletedTask;
     }
 
     private void ApplyItemOutcome(Item item, Protagonist protagonist)
@@ -70,14 +67,6 @@ public class OutcomeApplicator
             Console.WriteLine($"OutcomeApplicator: Could not place '{item.DisplayName}' anywhere — inventory full.");
         else
             Console.WriteLine($"OutcomeApplicator: Acquired {item.DisplayName}");
-    }
-
-    private Task ApplyFeelGoodOutcomeAsync(FeelGoodOutcome feelGood, Protagonist protagonist)
-    {
-        // FeelGoodOutcome determines which humor to increase at runtime
-        // Note: This requires context about the action, so it should be determined before applying
-        Console.WriteLine($"OutcomeApplicator: Feel-good outcome (humor determination happens during execution)");
-        return Task.CompletedTask;
     }
 
     private void ApplyHumorOutcome(HumorOutcome humor, Protagonist protagonist)

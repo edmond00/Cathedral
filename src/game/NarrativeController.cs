@@ -228,7 +228,7 @@ public class NarrativeController
             // The block already knows which outcome each sentence described, so we don't need keyword-based lookup.
             var outcomesWithMetadata = new List<OutcomeWithMetadata>();
 
-            // Normal sentence clicked: straightforward outcome + FeelGood
+            // Normal sentence clicked: straightforward outcome
             var linkedOutcome = sourceObservationBlock?.LinkedOutcome;
             if (linkedOutcome != null)
                 outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(linkedOutcome));
@@ -238,9 +238,6 @@ public class NarrativeController
                 foreach (var o in _currentNode.GetOutcomesForKeyword(keyword))
                     outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(o));
             }
-
-            if (!outcomesWithMetadata.Any(o => o.Outcome is FeelGoodOutcome))
-                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(new FeelGoodOutcome()));
 
             // Get action modiMentis
             var actionModiMentis = _protagonist.GetActionModiMentis();
