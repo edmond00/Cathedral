@@ -69,7 +69,7 @@ public class OutcomeNarrator
         try
         {
             using var doc = JsonDocument.Parse(jsonResponse);
-            string narration = doc.RootElement.GetProperty("narration").GetString() ?? "";
+            string narration = doc.RootElement.GetProperty("what_happened").GetString() ?? "";
             return !string.IsNullOrWhiteSpace(narration) 
                 ? narration 
                 : GenerateFallbackNarration(action, succeeded, outcome);
@@ -93,22 +93,12 @@ public class OutcomeNarrator
         // Use the action modusMentis's slot for plausibility failure narration
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
 
-        string prompt = $@"You are {actionModusMentis.DisplayName}, explaining why an action cannot be performed.
+        string prompt = $@"You are {actionModusMentis.DisplayName}.
+You tried to {action.ActionText} but it could not be done.
 
-The attempted action was: ""{action.ActionText}""
+The reason: {plausibilityError}
 
-The reason it's not possible: {plausibilityError}
-
-As {actionModusMentis.DisplayName}, explain in your unique voice why this action cannot be done right now.
-- Be concise but characterful
-- Stay in character with {actionModusMentis.PersonaTone} tone
-- Suggest what might be needed or what's wrong with the attempt
-- Keep it 50-200 characters
-
-Respond in JSON format:
-{{
-  ""narration"": ""your explanation""
-}}";
+What do you think about this?";
 
         var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
         string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
@@ -123,7 +113,7 @@ Respond in JSON format:
         try
         {
             using var doc = JsonDocument.Parse(jsonResponse);
-            string narration = doc.RootElement.GetProperty("narration").GetString() ?? "";
+            string narration = doc.RootElement.GetProperty("what_happened").GetString() ?? "";
             return !string.IsNullOrWhiteSpace(narration) ? narration : plausibilityError;
         }
         catch (JsonException)
@@ -156,36 +146,20 @@ Respond in JSON format:
         string? failureHint = null)
     {
         string outcomeDescription = outcome.ToNaturalLanguageString();
-        string successStatus = succeeded ? "succeeded" : "failed";
         string difficultyDesc = difficulty < 0.3 ? "easy" : difficulty < 0.7 ? "moderate" : "hard";
 
         string failureGuidance = "";
         if (!succeeded && !string.IsNullOrEmpty(failureHint))
         {
-            failureGuidance = $"\nWhat happened in the failure: {failureHint}";
+            failureGuidance = $" {failureHint}";
         }
 
-        return $@"You are {actionModusMentis.DisplayName}, narrating the outcome of an action you performed.
+        return $@"You are {actionModusMentis.DisplayName}.
+You tried to {action.ActionText}.
 
-The action was: ""{action.ActionText}""
-
-Difficulty: {difficultyDesc}
-Result: {successStatus}
-
-{(succeeded 
-    ? $"Outcome: {outcomeDescription}" 
-    : $"The attempt did not achieve the desired result.{failureGuidance}")}
-
-Narrate what happened from your perspective as {actionModusMentis.DisplayName}. 
-- If success: Describe how you accomplished it and what you achieved
-- If failure: Describe specifically what went wrong based on the failure guidance
-- Use the tone of {actionModusMentis.PersonaTone}
-- Keep it 100-400 characters
-
-Respond in JSON format:
-{{
-  ""narration"": ""your narration text""
-}}";
+{(succeeded
+    ? $"You succeeded ({difficultyDesc}). Outcome: {outcomeDescription}.\n\nWhat happened?"
+    : $"The attempt failed ({difficultyDesc}).{failureGuidance}\n\nWhat happened?")}";
     }
 
     /// <summary>

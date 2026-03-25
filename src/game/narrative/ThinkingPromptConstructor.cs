@@ -30,62 +30,26 @@ public class ThinkingPromptConstructor
         Protagonist protagonist,
         ModusMentis thinkingModusMentis)
     {
-        // Get all outcomes as flat list
         var allOutcomes = outcomesWithMetadata
             .Select(o => o.Outcome.ToNaturalLanguageString())
             .ToList();
-        
-        // Get action modusMentis IDs
-        var actionModusMentisIds = actionModiMentis.Select(s => s.ModusMentisId).ToList();
-        
-        // Build outcomes section
-        var outcomesSection = new System.Text.StringBuilder();
-        outcomesSection.AppendLine("What could happen:");
-        foreach (var outcome in allOutcomes)
-        {
-            outcomesSection.AppendLine($"- {outcome}");
-        }
-        
-        // Build the attention line with optional outcome context
-        string attentionLine = string.IsNullOrEmpty(keywordSourceOutcome)
-            ? $@"Your attention is drawn to: ""{keyword}"""
-            : $@"Your attention is drawn to the ""{keyword}"" aspect of ""{keywordSourceOutcome}""";
-        
-        // Build the think line with optional outcome context
-        string thinkLine = string.IsNullOrEmpty(keywordSourceOutcome)
-            ? $@"Think about what ""{keyword}"" suggests to you. What possibilities does it open?"
-            : $@"Think about what ""{keyword}"" suggests to you in the context of observing ""{keywordSourceOutcome}"". What possibilities does it open?";
-        
-        var prompt = $@"{attentionLine}
 
-Current situation:
-{node.GenerateNeutralDescription(protagonist.CurrentLocationId)}
+        string keywordContext = string.IsNullOrEmpty(keywordSourceOutcome)
+            ? $"\"{keyword}\""
+            : $"\"{keyword}\" (noticed while observing \"{keywordSourceOutcome}\")";
 
-ModiMentis you can apply:
+        return $@"You are a {thinkingModusMentis.PersonaTone}.
+You are now in {node.GenerateNeutralDescription(protagonist.CurrentLocationId)}.
+
+You notice {keywordContext} and start wondering what it could lead to.
+
+Among your skills:
 {string.Join("\n", actionModiMentis.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
 
-{outcomesSection.ToString().TrimEnd()}
+What could happen:
+{string.Join("\n", allOutcomes.Select(o => $"- {o}"))}
 
-{thinkLine}
-
-First, express your internal thoughts about this element—why it catches your interest,
-what connections you see, how it relates to your capabilities.
-
-Then propose 2–5 specific things you could try.
-
-Guidelines:
-- Think and speak as {thinkingModusMentis.PersonaTone}.
-- Your perspective and instincts drive everything.
-- Connect ""{keyword}"" naturally to what you can do.
-- Each action begins with 'try to'.
-- Let your reasoning flow into your proposed actions.
-
-Output fields:
-- reasoning_text
-- actions[] with: action_modusMentis, outcome, action_description
-";
-
-        return prompt;
+What do you think and feel about {keywordContext}? Which of your skills could help you here? Propose 2-5 things you could try.";
     }
     
     /// <summary>
@@ -102,43 +66,26 @@ Output fields:
         Protagonist protagonist,
         ModusMentis thinkingModusMentis)
     {
-        var allOutcomes2 = outcomesWithMetadata
+        var allOutcomes = outcomesWithMetadata
             .Select(o => o.Outcome.ToNaturalLanguageString())
             .ToList();
 
-        var outcomesSection = new System.Text.StringBuilder();
-        outcomesSection.AppendLine("What could happen:");
-        foreach (var outcome in allOutcomes2)
-            outcomesSection.AppendLine($"- {outcome}");
+        string keywordContext = string.IsNullOrEmpty(keywordSourceOutcome)
+            ? $"\"{keyword}\""
+            : $"\"{keyword}\" (noticed while observing \"{keywordSourceOutcome}\")";
 
-        string attentionLine = string.IsNullOrEmpty(keywordSourceOutcome)
-            ? $@"Your attention is drawn to: ""{keyword}"""
-            : $@"Your attention is drawn to the ""{keyword}"" aspect of ""{keywordSourceOutcome}""";
+        return $@"You are a {thinkingModusMentis.PersonaTone}.
+You are now in {node.GenerateNeutralDescription(protagonist.CurrentLocationId)}.
 
-        string thinkLine = string.IsNullOrEmpty(keywordSourceOutcome)
-            ? $@"Think about what ""{keyword}"" suggests to you. What possibilities does it open?"
-            : $@"Think about what ""{keyword}"" suggests to you in the context of observing ""{keywordSourceOutcome}"". What possibilities does it open?";
+You are wondering how you could handle {keywordContext}.
 
-        return $@"{attentionLine}
-
-Current situation:
-{node.GenerateNeutralDescription(protagonist.CurrentLocationId)}
-
-Skills you can apply:
+Among your skills:
 {string.Join("\n", actionModiMentis.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
 
-{outcomesSection.ToString().TrimEnd()}
+What could happen:
+{string.Join("\n", allOutcomes.Select(o => $"- {o}"))}
 
-{thinkLine}
-
-Express your internal thoughts about this element — why it catches your interest,
-what connections you see, how it relates to your capabilities.
-For each possible outcome, consider which skill would be most effective to achieve it.
-Speak as {thinkingModusMentis.PersonaTone}.
-
-Output field:
-- reasoning_text
-";
+Which of your skills could help? What do you think and feel?";
     }
 
     /// <summary>
@@ -154,22 +101,17 @@ Output field:
         List<string> alreadyChosenSkills)
     {
         string avoidanceLine = alreadyChosenSkills.Count > 0
-            ? $"Try to choose a different skill from the ones already selected if possible (avoid: {string.Join(", ", alreadyChosenSkills)}).\n\n"
-            : "";
+            ? $"Other than the skills you already considered ({string.Join(", ", alreadyChosenSkills)}), which "
+            : "Which ";
 
-        return $@"The target outcome is fixed: ""{hardcodedOutcome}"".
+        string outcomeQuoted = $"\"{hardcodedOutcome}\"";
+        return $@"You are wondering how you could achieve: {outcomeQuoted}.
 
-Skills available:
+Among your skills:
 {string.Join("\n", actionModiMentis.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
 
-{avoidanceLine}As {thinkingModusMentis.PersonaTone}, reason briefly about which skill would be most
-effective to achieve this outcome, then name the single best skill.
-
-Output fields:
-- outcome (must be ""{hardcodedOutcome}"")
-- skill_reasoning_text
-- selected_skill
-";
+Question 1: How could my skills help me achieve {outcomeQuoted}?
+Question 2: {avoidanceLine}skill is most appropriate and why?";
     }
 
     /// <summary>
@@ -183,17 +125,10 @@ Output fields:
         string hardcodedOutcome,
         string hardcodedSkill)
     {
-        return $@"As {thinkingModusMentis.PersonaTone}, write action {actionIndex} of {totalActions}.
+        string outcomeQuoted = $"\"{hardcodedOutcome}\"";
+        return $@"You have decided to use {hardcodedSkill} to achieve {outcomeQuoted}.
 
-Your outcome is fixed: ""{hardcodedOutcome}"".
-Your skill is fixed: ""{hardcodedSkill}"".
-Describe what you will try to do using that skill to achieve that outcome.
-
-Output fields:
-- outcome (must be ""{hardcodedOutcome}"")
-- skill (must be ""{hardcodedSkill}"")
-- action_description (must start with ""try to "")
-";
+What exactly will you try?";
     }
 
     /// <summary>

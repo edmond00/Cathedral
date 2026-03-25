@@ -15,7 +15,7 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public class ObservationResponse
 {
-    [JsonPropertyName("narration_text")]
+    [JsonPropertyName("what_do_i_feel_and_observe")]
     public string NarrationText { get; set; } = "";
 }
 
@@ -252,7 +252,9 @@ public class ObservationExecutor
             ? _promptConstructor.BuildFirstSentencePrompt(node, locationId, outcome, personaTone)
             : _promptConstructor.BuildContinuationSentencePrompt(outcome);
 
-        var schema = LLMSchemaConfig.CreateObservationSchema();
+        var schema = isFirstSentence
+            ? LLMSchemaConfig.CreateObservationSchema()
+            : LLMSchemaConfig.CreateContinuationObservationSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
 
         var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
@@ -267,9 +269,12 @@ public class ObservationExecutor
     public async Task<string> GenerateSentenceFromPromptAsync(
         int slotId,
         string prompt,
+        bool isFirstInBatch = false,
         CancellationToken ct = default)
     {
-        var schema = LLMSchemaConfig.CreateObservationSchema();
+        var schema = isFirstInBatch
+            ? LLMSchemaConfig.CreateObservationSchema()
+            : LLMSchemaConfig.CreateContinuationObservationSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
         var parsed = ParseObservationResponse(jsonResponse ?? "", new List<string>());

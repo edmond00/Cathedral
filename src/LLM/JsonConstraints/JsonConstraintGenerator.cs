@@ -337,12 +337,28 @@ public static class JsonConstraintGenerator
         {
             var before = template.Substring(0, template.IndexOf(generatedMarker));
             var after = template.Substring(template.IndexOf(generatedMarker) + generatedMarker.Length);
-            
-            var charPattern = field.MinGenLength == field.MaxGenLength
-                ? $"[a-zA-Z0-9 _]{{{field.MinGenLength}}}"
-                : $"[a-zA-Z0-9 _]{{{field.MinGenLength},{field.MaxGenLength}}}";
-            
-            var rule = ruleName + " ::= \"\\\"" + before + "\" " + charPattern + " \"" + after + "\\\"\"";
+
+            string bodyPattern;
+            string firstCharPrefix = "";
+            if (string.IsNullOrEmpty(before))
+            {
+                // No literal prefix — force first generated char to be a letter to prevent
+                // leading punctuation artifacts (e.g. ", I ..." instead of "I ...").
+                firstCharPrefix = "[a-zA-Z] ";
+                int restMin = Math.Max(0, field.MinGenLength - 1);
+                int restMax = field.MaxGenLength - 1;
+                bodyPattern = restMin == restMax
+                    ? $"[^\"\\n]{{{restMin}}}"
+                    : $"[^\"\\n]{{{restMin},{restMax}}}";
+            }
+            else
+            {
+                bodyPattern = field.MinGenLength == field.MaxGenLength
+                    ? $"[^\"\\n]{{{field.MinGenLength}}}"
+                    : $"[^\"\\n]{{{field.MinGenLength},{field.MaxGenLength}}}";
+            }
+
+            var rule = ruleName + " ::= \"\\\"" + before + "\" " + firstCharPrefix + bodyPattern + " \"" + after + "\\\"\"";
             processedRules.Add(rule);
         }
         else

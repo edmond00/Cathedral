@@ -286,7 +286,7 @@ public class ThinkingExecutor
         try
         {
             using var doc = JsonDocument.Parse(json);
-            return doc.RootElement.GetProperty("reasoning_text").GetString() ?? "";
+            return doc.RootElement.GetProperty("what_do_i_think").GetString() ?? "";
         }
         catch (JsonException ex)
         {
@@ -305,7 +305,9 @@ public class ThinkingExecutor
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
-            string skillReasoning = root.GetProperty("skill_reasoning_text").GetString() ?? "";
+            string part1 = root.GetProperty("how_my_skills_could_help").GetString() ?? "";
+            string part2 = root.GetProperty("which_skill_and_why").GetString() ?? "";
+            string skillReasoning = (part1 + " " + part2).Trim();
             string selectedSkill = root.GetProperty("selected_skill").GetString() ?? "";
             return (skillReasoning, selectedSkill);
         }
@@ -384,7 +386,7 @@ public class ThinkingExecutor
             using var doc = JsonDocument.Parse(jsonResponse);
             var root = doc.RootElement;
 
-            string reasoningText = root.GetProperty("reasoning_text").GetString() ?? "";
+            string reasoningText = root.GetProperty("what_do_i_think").GetString() ?? "";
             
             var actions = new List<ParsedNarrativeAction>();
             var actionsArray = root.GetProperty("actions");

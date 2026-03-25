@@ -20,10 +20,24 @@ public static class LLMSchemaConfig
     public static CompositeField CreateObservationSchema()
     {
         return new CompositeField("ObservationResponse",
-            new StringField("narration_text", 
-                MinLength: 50, 
-                MaxLength: 1000, 
-                Hint: "A short description of what the protagonist observes in the environment")
+            new TemplateStringField("what_do_i_feel_and_observe",
+                Template: "I <generated>.",
+                MinGenLength: 20,
+                MaxGenLength: 300)
+        );
+    }
+
+    /// <summary>
+    /// Continuation observation schema — no forced 'I ' prefix.
+    /// Used for transition and focus sentences after the first sentence in a batch.
+    /// </summary>
+    public static CompositeField CreateContinuationObservationSchema()
+    {
+        return new CompositeField("ObservationResponse",
+            new TemplateStringField("what_do_i_feel_and_observe",
+                Template: "<generated>.",
+                MinGenLength: 20,
+                MaxGenLength: 300)
         );
     }
     
@@ -41,16 +55,15 @@ public static class LLMSchemaConfig
             return CreateObservationSchema();
         }
         
-        // Build template with first keyword intro: "You notice {keyword}"
-        // The <generated> placeholder tells the LLM where to continue generating
-        var firstIntro = $"You notice {keywords.First()}";
+        // Build template forcing "I notice {keyword}" intro
+        var firstIntro = $"I notice {keywords.First()}";
         
         return new CompositeField("ObservationResponse",
             new TemplateStringField(
-                "narration_text",
-                Template: firstIntro + " <generated>",  // Fixed intro + placeholder for LLM generation
-                MinGenLength: 50,      // LLM must generate at least 50 more chars after intro
-                MaxGenLength: 550      // Up to 550 more chars
+                "what_do_i_feel_and_observe",
+                Template: firstIntro + " <generated>.",
+                MinGenLength: 10,
+                MaxGenLength: 280
             )
         );
     }
@@ -65,26 +78,30 @@ public static class LLMSchemaConfig
     public static CompositeField CreateReasoningSchema()
     {
         return new CompositeField("ReasoningResponse",
-            new StringField("reasoning_text",
-                MinLength: 50,
-                MaxLength: 800,
-                Hint: "Internal reasoning about the keyword and what possibilities it opens")
+            new TemplateStringField("what_do_i_think",
+                Template: "I <generated>.",
+                MinGenLength: 50,
+                MaxGenLength: 400)
         );
     }
 
     /// <summary>
     /// Schema for the intermediate skill-selection call (step 3a).
     /// The outcome is hardcoded; the LLM reasons about which skill fits best, then picks one.
-    /// Field order: outcome (hardcoded) → skill_reasoning_text → selected_skill
+    /// Field order: outcome (hardcoded) → how_my_skills_could_help → which_skill_and_why → selected_skill
     /// </summary>
     public static CompositeField CreateSkillSelectionSchema(List<string> validSkills, string hardcodedOutcome)
     {
         return new CompositeField("SkillSelection",
             new ChoiceField<string>("outcome", new[] { hardcodedOutcome }),
-            new StringField("skill_reasoning_text",
-                MinLength: 20,
-                MaxLength: 400,
-                Hint: "Brief reasoning about which skill is best suited to achieve the outcome"),
+            new TemplateStringField("how_my_skills_could_help",
+                Template: "<generated>.",
+                MinGenLength: 20,
+                MaxGenLength: 300),
+            new TemplateStringField("which_skill_and_why",
+                Template: "<generated>.",
+                MinGenLength: 20,
+                MaxGenLength: 300),
             new ChoiceField<string>("selected_skill", validSkills.ToArray())
         );
     }
@@ -100,7 +117,7 @@ public static class LLMSchemaConfig
             new ChoiceField<string>("outcome", new[] { hardcodedOutcome }),
             new ChoiceField<string>("skill", new[] { hardcodedSkill }),
             new TemplateStringField("action_description",
-                Template: "try to <generated>",
+                Template: "try to <generated>.",
                 MinGenLength: 10,
                 MaxGenLength: 200,
                 Hint: "Describe in few words the action the protagonist will try to take to achieve the outcome")
@@ -116,18 +133,18 @@ public static class LLMSchemaConfig
     public static CompositeField CreateThinkingSchema(List<string> validActionModiMentis, List<string> validOutcomes)
     {
         return new CompositeField("ThinkingResponse",
-            new StringField("reasoning_text", 
-                MinLength: 50, 
-                MaxLength: 1000, 
-                Hint: "A short reasoning process the protagonist used to decide on actions"),
+            new TemplateStringField("what_do_i_think",
+                Template: "I <generated>.",
+                MinGenLength: 50,
+                MaxGenLength: 498),
             new ArrayField("actions",
                 ElementType: new CompositeField("Action",
                     new ChoiceField<string>("action_modusMentis", validActionModiMentis.ToArray()),
                     new ChoiceField<string>("outcome", validOutcomes.ToArray()),
                     new TemplateStringField("action_description", 
-                        Template: "try to <generated>",
+                        Template: "try to <generated>.",
                         MinGenLength: 10,
-                        MaxGenLength: 400,
+                        MaxGenLength: 200,
                         Hint: "Describe in few words the action the protagonist will try to take to achieve the outcome")
                 ),
                 MinLength: 2,
@@ -147,10 +164,10 @@ public static class LLMSchemaConfig
     public static CompositeField CreateOutcomeNarrationSchema()
     {
         return new CompositeField("OutcomeNarration",
-            new StringField("narration", 
-                MinLength: 50, 
-                MaxLength: 1000, 
-                Hint: "A short narration text describing the outcome of the action")
+            new TemplateStringField("what_happened",
+                Template: "I <generated>.",
+                MinGenLength: 50,
+                MaxGenLength: 350)
         );
     }
     

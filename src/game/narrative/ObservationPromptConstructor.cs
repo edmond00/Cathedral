@@ -29,16 +29,10 @@ public class ObservationPromptConstructor
         var locationDescription = node.GenerateNeutralDescription(locationId);
         var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
         
-        return $@"You are observing: {locationDescription}
-
-Write one sentence (20-120 characters) from the perspective of {personaTone}.
-Focus specifically on: {GetOutcomeLabel(outcome)}
-Include one of these keywords naturally: {string.Join(", ", outcomeKeywords)}
-
-Respond in JSON format:
-{{
-  ""narration_text"": ""your single observation sentence""
-}}";
+        return $@"You are a {personaTone}.
+You are now in {locationDescription}.
+Your attention is drawn to {GetOutcomeLabel(outcome)}.
+What do you feel and observe? (include one of: {string.Join(", ", outcomeKeywords)})";
     }
 
     /// <summary>
@@ -48,15 +42,9 @@ Respond in JSON format:
     public string BuildGeneralDescriptionPrompt(NarrationNode node, int locationId, string personaTone)
     {
         var locationDescription = node.GenerateNeutralDescription(locationId);
-        return $@"You are observing: {locationDescription}
-
-Write one sentence (20-120 characters) as a general description of this scene from the perspective of {personaTone}.
-Describe the overall atmosphere or most prominent feature. Do not mention specific interactable objects or named items — keep it broad.
-
-Respond in JSON format:
-{{
-  ""narration_text"": ""your single general observation sentence""
-}}";
+        return $@"You are a {personaTone}.
+You are now in {locationDescription}.
+What do you feel and observe?";
     }
 
     /// <summary>
@@ -65,14 +53,8 @@ Respond in JSON format:
     /// </summary>
     public string BuildTransitionSentencePrompt(ConcreteOutcome outcome, string previousDescription)
     {
-        return $@"The previous description was of: {previousDescription}.
-Write one short transition sentence (15-80 characters) that bridges from there toward: {GetOutcomeLabel(outcome)}
-The sentence should hint at or lead toward the subject without describing it in detail.
-
-Respond in JSON format:
-{{
-  ""narration_text"": ""your single transition sentence""
-}}";
+        return $@"You were observing {previousDescription} but now you notice {GetOutcomeLabel(outcome)}.
+What catches your attention?";
     }
 
     /// <summary>
@@ -81,13 +63,8 @@ Respond in JSON format:
     public string BuildOutcomeDescriptionSentencePrompt(ConcreteOutcome outcome)
     {
         var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
-        return $@"Write one sentence (20-120 characters) focused on: {GetOutcomeLabel(outcome)}
-Include one of these keywords naturally: {string.Join(", ", outcomeKeywords)}
-
-Respond in JSON format:
-{{
-  ""narration_text"": ""your single outcome description sentence""
-}}";
+        return $@"You are now looking at {GetOutcomeLabel(outcome)}.
+What do you observe? (include one of: {string.Join(", ", outcomeKeywords)})";
     }
 
     /// <summary>
@@ -98,14 +75,7 @@ Respond in JSON format:
     {
         var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
 
-        return $@"Write the next sentence in this observation.
-Focus on: {GetOutcomeLabel(outcome)}
-Include one of these keywords naturally: {string.Join(", ", outcomeKeywords)}
-
-Respond in JSON format:
-{{
-  ""narration_text"": ""your single observation sentence""
-}}";
+        return $@"What else do you notice? (include one of: {string.Join(", ", outcomeKeywords)})";
     }
 
 
@@ -116,34 +86,18 @@ Respond in JSON format:
         List<string> targetKeywords,
         bool promptKeywordUsage = true)
     {
-        var prompt = $@"You are observing this scene:
-
-{node.GenerateNeutralDescription(protagonist.CurrentLocationId)}";
+        var locationDescription = node.GenerateNeutralDescription(protagonist.CurrentLocationId);
+        var prompt = $"You are a {observationModusMentis.PersonaTone}.\nYou are now in {locationDescription}.";
 
         if (promptKeywordUsage && targetKeywords.Count > 0)
         {
-            // Get keywords grouped by their source outcome
             var keywordsByOutcome = node.GetKeywordsByOutcome();
-            
-            // Filter to only include keywords that are in our target list
             var filteredKeywordsByOutcome = FilterKeywordsByTarget(keywordsByOutcome, targetKeywords);
             
-            prompt += $@"
-
-Notable elements you should describe in your narration using specific keywords (include 3-5 of these):
-{FormatKeywordsByOutcome(filteredKeywordsByOutcome)}";
+            prompt += $"\nYou notice some elements around you:\n{FormatKeywordsByOutcome(filteredKeywordsByOutcome)}";
         }
 
-        prompt += $@"
-
-Generate a brief narration (50-300 characters) from your perspective that describes what you observe. Include specific details about the notable elements.
-
-Write like {observationModusMentis.PersonaTone}.
-
-Respond in JSON format:
-{{
-  ""narration_text"": ""your observation narration""
-}}";
+        prompt += "\nWhat do you feel and observe? Try to mention 3-5 of those elements naturally.";
 
         return prompt;
     }
@@ -159,36 +113,13 @@ Respond in JSON format:
         ModusMentis observationModusMentis,
         List<string> targetKeywords)
     {
-        // Get a few intro examples
-        // Generate intro examples dynamically from the first 3 keywords
-        var keywords = targetKeywords.Take(3).ToList();
-        var introExamples = keywords.Select(k => $"You notice {k}").ToList();
-        
-        var examplesText = string.Join("\n", introExamples.Select(intro => 
-            $"Example: \"{intro} [continue observation...]\""));
+        var locationDescription = node.GenerateNeutralDescription(protagonist.CurrentLocationId);
+        var firstKeyword = targetKeywords.FirstOrDefault() ?? "something";
 
-        var prompt = $@"You are observing this scene:
-
-{node.GenerateNeutralDescription(protagonist.CurrentLocationId)}
-
-Your narration MUST begin with one of these keyword introductions:
-{string.Join("\n", introExamples.Select(intro => $"- Start with: \"{intro}\""))}
-
-{examplesText}
-
-IMPORTANT: Your narration MUST:
-1. Start with one of the exact phrases above
-2. Include at least 3 of these keywords naturally: {string.Join(", ", targetKeywords)}
-3. Be 50-300 characters total
-
-Write like {observationModusMentis.PersonaTone}.
-
-Respond in JSON format:
-{{
-  ""narration_text"": ""your observation starting with one of the required phrases""
-}}";
-
-        return prompt;
+        return $@"You are a {observationModusMentis.PersonaTone}.
+You are now in {locationDescription}.
+What do you notice first? Start your response with ""I notice {firstKeyword}"".
+Try to include at least 3 of: {string.Join(", ", targetKeywords)}";
     }
     
     /// <summary>
