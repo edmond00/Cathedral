@@ -47,9 +47,8 @@ public static class DebugMode
             var a = actions[i];
             string outcomeType = a.PreselectedOutcome?.GetType().Name ?? "???";
             string outcomeDesc = a.PreselectedOutcome?.DisplayName ?? "unknown";
-            string circuitous = a.IsCircuitous ? " [CIRCUITOUS]" : "";
             Console.WriteLine($"  {i + 1}) {a.ActionText}");
-            Console.WriteLine($"     Modus Mentis: {a.ActionModusMentisId}  |  Outcome: {outcomeType} → {outcomeDesc}{circuitous}");
+            Console.WriteLine($"     Modus Mentis: {a.ActionModusMentisId}  |  Outcome: {outcomeType} → {outcomeDesc}");
         }
         Console.WriteLine("[DEBUG] ═════════════════════════");
         Console.ResetColor();

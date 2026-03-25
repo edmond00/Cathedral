@@ -403,9 +403,9 @@ public class LlamaServerManager : IDisposable
                 ["stream"] = false,
                 ["cache_prompt"] = true,
                 ["slot_id"] = slotId,
-                ["top_k"] = 3,           // Limit to top 3 most likely tokens
-                ["temperature"] = 0.3,   // Low temperature for more deterministic output
-                ["top_p"] = 0.9          // Nucleus sampling threshold
+                ["top_k"] = Config.LLM.TopK,
+                ["temperature"] = Config.LLM.Temperature,
+                ["top_p"] = Config.LLM.TopP
             };
             
             if (!string.IsNullOrWhiteSpace(gbnfGrammar))
@@ -628,13 +628,13 @@ public class LlamaServerManager : IDisposable
             {
                 ["model"] = "local",
                 ["messages"] = instance.GetMessages(),
-                ["max_tokens"] = 2048,
+                ["max_tokens"] = Config.LLM.GenerationMaxTokens,
                 ["stream"] = true,
                 ["cache_prompt"] = true,
                 ["slot_id"] = slotId,
-                ["top_k"] = 3,           // Limit to top 3 most likely tokens
-                ["temperature"] = 0.3,   // Low temperature for more deterministic output
-                ["top_p"] = 0.9          // Nucleus sampling threshold
+                ["top_k"] = Config.LLM.TopK,
+                ["temperature"] = Config.LLM.Temperature,
+                ["top_p"] = Config.LLM.TopP
             };
             
             // Add GBNF grammar if provided
@@ -1245,7 +1245,7 @@ public class LlamaServerManager : IDisposable
                         new { role = "user", content = "test" }
                     },
                     max_tokens = 1,
-                    temperature = 0.1
+                    temperature = Config.LLM.UtilityTemperature
                 };
                 
                 var testResponse = await _httpClient.PostAsJsonAsync("v1/chat/completions", testRequest);
@@ -1316,7 +1316,7 @@ public class LlamaServerManager : IDisposable
             slot_id = instance.SlotId,
             cache_prompt = true,
             max_tokens = 1,
-            temperature = 0.1,
+            temperature = Config.LLM.UtilityTemperature,
             stream = false
         };
         

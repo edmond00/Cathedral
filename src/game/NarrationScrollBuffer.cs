@@ -43,9 +43,10 @@ public class NarrationScrollBuffer
         // Clean potentially truncated text before storing
         string cleanedText = TextTruncationUtils.CleanTruncatedText(block.Text);
         
-        // Create a new block with cleaned text if it was modified
+        // Create a new block with cleaned text if it was modified, preserving all properties
         var blockToAdd = cleanedText != block.Text 
-            ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Keywords, block.Actions, block.ChainOrigin)
+            ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Keywords, block.Actions, block.ChainOrigin,
+                block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences)
             : block;
         
         _blocks.Add(blockToAdd);
@@ -270,48 +271,24 @@ public class NarrationScrollBuffer
                 _ => LineType.Content
             };
 
-            // For observation blocks with per-sentence data, wrap each sentence separately
-            // so each wrapped line only carries the keyword assigned to that sentence —
-            // preventing cross-sentence keyword highlighting.
-            if (block.Sentences != null && block.Sentences.Count > 0)
-            {
-                foreach (var sentence in block.Sentences)
-                {
-                    var sentenceLines = WrapText(sentence.Text, _maxWidth);
-                    var singleKeyword = new List<string> { sentence.Keyword };
+            // Wrap and render content. Observation blocks use block.Text (all sentences joined
+            // with spaces) so the text flows as one continuous paragraph — no blank line between
+            // sentences.  block.Keywords contains all keywords; RenderLineWithKeywords will only
+            // highlight those that actually appear in each wrapped line.
+            var wrappedLines = WrapText(block.Text, _maxWidth);
 
-                    foreach (var line in sentenceLines)
-                    {
-                        _renderedLines.Add(new RenderedLine(
-                            Text: line,
-                            Type: lineType,
-                            BlockType: block.Type,
-                            Keywords: singleKeyword,
-                            Actions: null,
-                            IsHistory: false,
-                            GlobalActionIndex: -1,
-                            SourceBlock: block
-                        ));
-                    }
-                }
-            }
-            else
+            foreach (var line in wrappedLines)
             {
-                var wrappedLines = WrapText(block.Text, _maxWidth);
-
-                foreach (var line in wrappedLines)
-                {
-                    _renderedLines.Add(new RenderedLine(
-                        Text: line,
-                        Type: lineType,
-                        BlockType: block.Type,
-                        Keywords: block.Keywords, // Associate keywords with this line
-                        Actions: null,
-                        IsHistory: false,
-                        GlobalActionIndex: -1,
-                        SourceBlock: block
-                    ));
-                }
+                _renderedLines.Add(new RenderedLine(
+                    Text: line,
+                    Type: lineType,
+                    BlockType: block.Type,
+                    Keywords: block.Keywords,
+                    Actions: null,
+                    IsHistory: false,
+                    GlobalActionIndex: -1,
+                    SourceBlock: block
+                ));
             }
 
             // Add action lines if this is a Thinking block

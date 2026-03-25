@@ -11,6 +11,11 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public class ObservationPromptConstructor
 {
+    /// Returns a human-readable label for an outcome: uses GenerateNeutralDescription for
+    /// NarrationNode outcomes instead of the raw NodeId from DisplayName.
+    private static string GetOutcomeLabel(ConcreteOutcome outcome) =>
+        outcome is NarrationNode n ? n.GenerateNeutralDescription(0) : outcome.DisplayName;
+
     /// <summary>
     /// Builds the prompt for the FIRST sentence in a per-sentence observation batch.
     /// Provides the full scene context, persona reminder, and outcome keywords as hints.
@@ -27,12 +32,61 @@ public class ObservationPromptConstructor
         return $@"You are observing: {locationDescription}
 
 Write one sentence (20-120 characters) from the perspective of {personaTone}.
-Focus specifically on: {outcome.DisplayName}
+Focus specifically on: {GetOutcomeLabel(outcome)}
 Include one of these keywords naturally: {string.Join(", ", outcomeKeywords)}
 
 Respond in JSON format:
 {{
   ""narration_text"": ""your single observation sentence""
+}}";
+    }
+
+    /// <summary>
+    /// Builds the prompt for a general scene description — the opening sentence of an overall observation.
+    /// No specific outcome or keyword hints; describes the scene broadly from the persona's perspective.
+    /// </summary>
+    public string BuildGeneralDescriptionPrompt(NarrationNode node, int locationId, string personaTone)
+    {
+        var locationDescription = node.GenerateNeutralDescription(locationId);
+        return $@"You are observing: {locationDescription}
+
+Write one sentence (20-120 characters) as a general description of this scene from the perspective of {personaTone}.
+Describe the overall atmosphere or most prominent feature. Do not mention specific interactable objects or named items — keep it broad.
+
+Respond in JSON format:
+{{
+  ""narration_text"": ""your single general observation sentence""
+}}";
+    }
+
+    /// <summary>
+    /// Builds a continuation prompt that writes a short transition sentence linking
+    /// the previous description to a specific outcome.
+    /// </summary>
+    public string BuildTransitionSentencePrompt(ConcreteOutcome outcome, string previousDescription)
+    {
+        return $@"The previous description was of: {previousDescription}.
+Write one short transition sentence (15-80 characters) that bridges from there toward: {GetOutcomeLabel(outcome)}
+The sentence should hint at or lead toward the subject without describing it in detail.
+
+Respond in JSON format:
+{{
+  ""narration_text"": ""your single transition sentence""
+}}";
+    }
+
+    /// <summary>
+    /// Builds a continuation prompt focused on a specific outcome, including its keywords.
+    /// </summary>
+    public string BuildOutcomeDescriptionSentencePrompt(ConcreteOutcome outcome)
+    {
+        var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
+        return $@"Write one sentence (20-120 characters) focused on: {GetOutcomeLabel(outcome)}
+Include one of these keywords naturally: {string.Join(", ", outcomeKeywords)}
+
+Respond in JSON format:
+{{
+  ""narration_text"": ""your single outcome description sentence""
 }}";
     }
 
@@ -45,7 +99,7 @@ Respond in JSON format:
         var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
 
         return $@"Write the next sentence in this observation.
-Focus on: {outcome.DisplayName}
+Focus on: {GetOutcomeLabel(outcome)}
 Include one of these keywords naturally: {string.Join(", ", outcomeKeywords)}
 
 Respond in JSON format:

@@ -261,6 +261,22 @@ public class ObservationExecutor
     }
 
     /// <summary>
+    /// Generates one observation sentence using a pre-built prompt string.
+    /// Used by the refactored observation phase which composes prompts externally.
+    /// </summary>
+    public async Task<string> GenerateSentenceFromPromptAsync(
+        int slotId,
+        string prompt,
+        CancellationToken ct = default)
+    {
+        var schema = LLMSchemaConfig.CreateObservationSchema();
+        var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
+        var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
+        var parsed = ParseObservationResponse(jsonResponse ?? "", new List<string>());
+        return parsed.NarrationText;
+    }
+
+    /// <summary>
     /// Extracts the single best keyword from a sentence, given a list of candidate keywords.
     /// Returns the first candidate keyword found in the sentence (earliest position).
     /// Falls back to the longest word in the sentence if no candidate keyword is found.
@@ -278,6 +294,80 @@ public class ObservationExecutor
         // Fallback: longest word in sentence
         var words = sentence.Split(new[] { ' ', ',', '.', '!', '?', ';', ':', '"', '\'' }, StringSplitOptions.RemoveEmptyEntries);
         return words.OrderByDescending(w => w.Length).FirstOrDefault() ?? sentence;
+    }
+
+    /// <summary>
+    /// Scans the combined text of a transition + focus sentence for matching outcome keywords,
+    /// randomly samples up to <paramref name="maxCount"/> of them, and returns the list.
+    /// Falls back to the longest word of the focus sentence if no keyword is found.
+    /// </summary>
+    public List<string> ExtractKeywordsFromSentences(
+        string transitionText,
+        string focusText,
+        List<string> outcomeKeywords,
+        Random rng,
+        int maxCount = 3)
+    {
+        var combined = (transitionText + " " + focusText).Trim();
+        var foundKeywords = new List<string>();
+
+        if (outcomeKeywords.Count > 0)
+        {
+            var renderer = new KeywordRenderer();
+            var segments = renderer.ParseNarrationWithKeywords(combined, outcomeKeywords);
+            var distinct = segments
+                .Where(s => s.IsKeyword && !string.IsNullOrEmpty(s.KeywordValue))
+                .Select(s => s.KeywordValue!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            // Randomly sample up to maxCount
+            if (distinct.Count > maxCount)
+                distinct = distinct.OrderBy(_ => rng.Next()).Take(maxCount).ToList();
+
+            foundKeywords.AddRange(distinct);
+        }
+
+        if (foundKeywords.Count == 0)
+        {
+            // Fallback: longest word of focus sentence
+            var words = focusText.Split(new[] { ' ', ',', '.', '!', '?', ';', ':', '"', '\'' }, StringSplitOptions.RemoveEmptyEntries);
+            var longest = words.OrderByDescending(w => w.Length).FirstOrDefault();
+            if (!string.IsNullOrEmpty(longest))
+                foundKeywords.Add(longest);
+        }
+
+        return foundKeywords;
+    }
+
+    /// <summary>
+    /// Assigns each keyword to either the transition or focus sentence by checking
+    /// which sentence text contains the keyword. Keywords only in focus go to focus;
+    /// ones in both or only in transition go to transition. Longest-word fallbacks go to focus.
+    /// </summary>
+    public (List<string> TransitionKeywords, List<string> FocusKeywords) AssignKeywordsToSentences(
+        List<string> keywords,
+        string transitionText,
+        string focusText)
+    {
+        var transKws = new List<string>();
+        var focKws = new List<string>();
+        var renderer = new KeywordRenderer();
+
+        foreach (var kw in keywords)
+        {
+            var kwList = new List<string> { kw };
+            bool inTransition = transitionText.Length > 0 &&
+                renderer.ParseNarrationWithKeywords(transitionText, kwList).Any(s => s.IsKeyword);
+            bool inFocus = renderer.ParseNarrationWithKeywords(focusText, kwList).Any(s => s.IsKeyword);
+
+            if (inTransition)
+                transKws.Add(kw);
+            else
+                focKws.Add(kw); // inFocus only, or fallback longest-word
+        }
+
+        return (transKws, focKws);
     }
 
 

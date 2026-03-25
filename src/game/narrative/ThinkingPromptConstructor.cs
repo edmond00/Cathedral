@@ -30,36 +30,20 @@ public class ThinkingPromptConstructor
         Protagonist protagonist,
         ModusMentis thinkingModusMentis)
     {
-        // Separate straightforward and circuitous outcomes
-        var straightforwardOutcomes = outcomesWithMetadata
-            .Where(o => !o.IsCircuitous)
-            .Select(o => o.Outcome.ToNaturalLanguageString())
-            .ToList();
-            
-        var circuitousOutcomes = outcomesWithMetadata
-            .Where(o => o.IsCircuitous)
+        // Get all outcomes as flat list
+        var allOutcomes = outcomesWithMetadata
             .Select(o => o.Outcome.ToNaturalLanguageString())
             .ToList();
         
         // Get action modusMentis IDs
         var actionModusMentisIds = actionModiMentis.Select(s => s.ModusMentisId).ToList();
         
-        // Build outcomes section with separation
+        // Build outcomes section
         var outcomesSection = new System.Text.StringBuilder();
         outcomesSection.AppendLine("What could happen:");
-        foreach (var outcome in straightforwardOutcomes)
+        foreach (var outcome in allOutcomes)
         {
             outcomesSection.AppendLine($"- {outcome}");
-        }
-        
-        if (circuitousOutcomes.Count > 0)
-        {
-            outcomesSection.AppendLine();
-            outcomesSection.AppendLine("Other possibilities (harder to achieve):");
-            foreach (var outcome in circuitousOutcomes)
-            {
-                outcomesSection.AppendLine($"- {outcome}");
-            }
         }
         
         // Build the attention line with optional outcome context
@@ -118,28 +102,14 @@ Output fields:
         Protagonist protagonist,
         ModusMentis thinkingModusMentis)
     {
-        var straightforwardOutcomes = outcomesWithMetadata
-            .Where(o => !o.IsCircuitous)
-            .Select(o => o.Outcome.ToNaturalLanguageString())
-            .ToList();
-
-        var circuitousOutcomes = outcomesWithMetadata
-            .Where(o => o.IsCircuitous)
+        var allOutcomes2 = outcomesWithMetadata
             .Select(o => o.Outcome.ToNaturalLanguageString())
             .ToList();
 
         var outcomesSection = new System.Text.StringBuilder();
         outcomesSection.AppendLine("What could happen:");
-        foreach (var outcome in straightforwardOutcomes)
+        foreach (var outcome in allOutcomes2)
             outcomesSection.AppendLine($"- {outcome}");
-
-        if (circuitousOutcomes.Count > 0)
-        {
-            outcomesSection.AppendLine();
-            outcomesSection.AppendLine("Other possibilities (harder to achieve):");
-            foreach (var outcome in circuitousOutcomes)
-                outcomesSection.AppendLine($"- {outcome}");
-        }
 
         string attentionLine = string.IsNullOrEmpty(keywordSourceOutcome)
             ? $@"Your attention is drawn to: ""{keyword}"""

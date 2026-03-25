@@ -228,62 +228,24 @@ public class NarrativeController
             // The block already knows which outcome each sentence described, so we don't need keyword-based lookup.
             var outcomesWithMetadata = new List<OutcomeWithMetadata>();
 
-            if (sourceObservationBlock?.IsCircuitousSentence == true && sourceObservationBlock.FocusOriginNode != null)
-            {
-                // Circuitous sentence clicked: the action options are the circuitous target
-                // (as a circuitous outcome) + the origin node + FeelGood
-                outcomesWithMetadata.Add(OutcomeWithMetadata.Circuitous(
-                    sourceObservationBlock.LinkedOutcome!,
-                    sourceObservationBlock.FocusOriginNode));
-                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(sourceObservationBlock.FocusOriginNode));
-                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(new FeelGoodOutcome()));
-            }
+            // Normal sentence clicked: straightforward outcome + FeelGood
+            var linkedOutcome = sourceObservationBlock?.LinkedOutcome;
+            if (linkedOutcome != null)
+                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(linkedOutcome));
             else
             {
-                // Normal sentence clicked: straightforward outcome + a few circuitous + FeelGood
-                var linkedOutcome = sourceObservationBlock?.LinkedOutcome;
-                if (linkedOutcome != null)
-                    outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(linkedOutcome));
-                else
-                {
-                    // Fallback: use keyword-based lookup for blocks created before This refactor
-                    foreach (var o in _currentNode.GetOutcomesForKeyword(keyword))
-                        outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(o));
-                }
-
-                if (Config.Narrative.EnableCircuitousOutcomes)
-                {
-                    var observationType = sourceObservationBlock?.SourceObservationType ?? ObservationType.Overall;
-                    var circuitousOutcomes = _currentNode.GetCircuitousOutcomesForKeyword(keyword, observationType);
-                    var filteredCircuitous = circuitousOutcomes
-                        .Where(c => !outcomesWithMetadata.Any(o =>
-                            o.Outcome.ToNaturalLanguageString().Equals(
-                                c.Outcome.ToNaturalLanguageString(), StringComparison.OrdinalIgnoreCase)))
-                        .ToList();
-
-                    if (filteredCircuitous.Count > Config.Narrative.MaxCircuitousOutcomes)
-                    {
-                        var rng = new Random();
-                        filteredCircuitous = filteredCircuitous
-                            .OrderBy(_ => rng.Next())
-                            .Take(Config.Narrative.MaxCircuitousOutcomes)
-                            .ToList();
-                    }
-
-                    foreach (var c in filteredCircuitous)
-                        outcomesWithMetadata.Add(OutcomeWithMetadata.Circuitous(c.Outcome, c.IntermediateNode));
-
-                    Console.WriteLine($"NarrativeController: Added {filteredCircuitous.Count} circuitous outcomes");
-                }
-
-                if (!outcomesWithMetadata.Any(o => o.Outcome is FeelGoodOutcome))
-                    outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(new FeelGoodOutcome()));
+                // Fallback: use keyword-based lookup for blocks created before this refactor
+                foreach (var o in _currentNode.GetOutcomesForKeyword(keyword))
+                    outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(o));
             }
+
+            if (!outcomesWithMetadata.Any(o => o.Outcome is FeelGoodOutcome))
+                outcomesWithMetadata.Add(OutcomeWithMetadata.Straightforward(new FeelGoodOutcome()));
 
             // Get action modiMentis
             var actionModiMentis = _protagonist.GetActionModiMentis();
 
-            Console.WriteLine($"NarrativeController: Total {outcomesWithMetadata.Count} outcomes ({outcomesWithMetadata.Count(o => o.IsCircuitous)} circuitous), {actionModiMentis.Count} action modiMentis");
+            Console.WriteLine($"NarrativeController: Total {outcomesWithMetadata.Count} outcomes, {actionModiMentis.Count} action modiMentis");
 
             // Use LinkedOutcome display name for context if available, otherwise keyword-based lookup
             var keywordSourceOutcomeName = sourceObservationBlock?.LinkedOutcome?.DisplayName
@@ -306,7 +268,7 @@ public class NarrativeController
                 throw new Exception("Thinking LLM returned no actions");
             }
             
-            Console.WriteLine($"NarrativeController: Generated {response.Actions.Count} actions ({response.Actions.Count(a => a.IsCircuitous)} circuitous)");
+            Console.WriteLine($"NarrativeController: Generated {response.Actions.Count} actions");
             
             // Create thinking block with reasoning + actions
             // ChainOrigin points to the observation block that contained the clicked keyword
@@ -882,8 +844,6 @@ public class NarrativeController
                         ConcreteOutcome? focusOutcome = null;
                         if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
                             focusOutcome = fko;
-                        else if (sourceBlock?.IsCircuitousSentence == true && sourceBlock.FocusOriginNode != null)
-                            focusOutcome = sourceBlock.FocusOriginNode;
                         else
                             focusOutcome = sourceBlock?.LinkedOutcome ?? _currentNode.GetOutcomeOwningKeyword(keyword);
 
@@ -1129,8 +1089,6 @@ public class NarrativeController
                         ConcreteOutcome? focusOutcome = null;
                         if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
                             focusOutcome = fko;
-                        else if (sourceBlock?.IsCircuitousSentence == true && sourceBlock.FocusOriginNode != null)
-                            focusOutcome = sourceBlock.FocusOriginNode;
                         else
                             focusOutcome = sourceBlock?.LinkedOutcome ?? _currentNode.GetOutcomeOwningKeyword(keyword);
 

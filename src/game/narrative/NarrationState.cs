@@ -115,7 +115,7 @@ public class NarrationState
 /// Stored on an observation NarrationBlock so the scroll buffer can assign each keyword
 /// only to the wrapped lines of its own sentence, preventing cross-sentence highlighting.
 /// </summary>
-public record NarrationSentence(string Text, string Keyword);
+public record NarrationSentence(string Text, List<string> Keywords);
 
 /// <summary>
 /// Represents a single block of narration text in the UI.
@@ -139,7 +139,6 @@ public class NarrationBlock : ModusMentisChainElement
     
     /// <summary>
     /// For observation blocks, indicates if this is an overall or focus observation.
-    /// Used to determine circuitous outcome availability.
     /// </summary>
     public ObservationType? SourceObservationType { get; init; } = null;
 
@@ -149,19 +148,6 @@ public class NarrationBlock : ModusMentisChainElement
     /// For merged multi-sentence blocks, prefer KeywordOutcomeMap instead.
     /// </summary>
     public ConcreteOutcome? LinkedOutcome { get; init; } = null;
-
-    /// <summary>
-    /// True when this is a circuitous sentence inside a focus observation
-    /// (i.e. it describes an outcome reachable through the focus-origin node, not directly).
-    /// </summary>
-    public bool IsCircuitousSentence { get; init; } = false;
-
-    /// <summary>
-    /// For circuitous sentences: the intermediate node that must be traversed to reach LinkedOutcome.
-    /// Also equals the "main" focus outcome of the surrounding focus observation.
-    /// Null for non-circuitous sentences.
-    /// </summary>
-    public NarrationNode? FocusOriginNode { get; init; } = null;
 
     /// <summary>
     /// Per-keyword outcome map for merged observation blocks (multiple sentences joined into one block).
@@ -187,8 +173,6 @@ public class NarrationBlock : ModusMentisChainElement
         ModusMentisChainElement? ChainOrigin = null,
         ObservationType? SourceObservationType = null,
         ConcreteOutcome? LinkedOutcome = null,
-        bool IsCircuitousSentence = false,
-        NarrationNode? FocusOriginNode = null,
         Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap = null,
         List<NarrationSentence>? Sentences = null)
     {
@@ -200,8 +184,6 @@ public class NarrationBlock : ModusMentisChainElement
         this.ChainOrigin = ChainOrigin;
         this.SourceObservationType = SourceObservationType;
         this.LinkedOutcome = LinkedOutcome;
-        this.IsCircuitousSentence = IsCircuitousSentence;
-        this.FocusOriginNode = FocusOriginNode;
         this.KeywordOutcomeMap = KeywordOutcomeMap;
         this.Sentences = Sentences;
     }
@@ -245,18 +227,6 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public ModusMentis ThinkingModusMentis { get; set; } = null!;         // Which thinking modusMentis generated this
     public OutcomeBase PreselectedOutcome { get; set; } = null!;  // Success outcome chosen by thinking modusMentis
     public string Keyword { get; set; } = "";                 // Keyword this action relates to
-    
-    /// <summary>
-    /// Whether this is a circuitous action (requires going through an intermediate node).
-    /// Circuitous actions have additional difficulty penalty.
-    /// </summary>
-    public bool IsCircuitous { get; set; } = false;
-    
-    /// <summary>
-    /// For circuitous actions, the intermediate node that must be traversed.
-    /// Null for straightforward actions.
-    /// </summary>
-    public NarrationNode? IntermediateNode { get; set; } = null;
     
     /// <summary>
     /// Implements ModusMentisChainElement.ChainModusMentis - returns the action modusMentis.

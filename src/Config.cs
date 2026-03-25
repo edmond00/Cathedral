@@ -401,26 +401,6 @@ public static class Config
         /// For focus observations: if more keywords than this, sample this many keywords.
         /// </summary>
         public const int TargetKeywordCount = 10;
-        
-        /// <summary>
-        /// Whether to include circuitous outcomes in the thinking phase.
-        /// Circuitous outcomes are "outcomes of outcomes" - they require going through an intermediate node.
-        /// </summary>
-        public const bool EnableCircuitousOutcomes = true;
-        
-        /// <summary>
-        /// Maximum number of circuitous outcomes to include in the thinking phase.
-        /// If more circuitous outcomes are available, a random sample of this size will be used.
-        /// This ensures straightforward outcomes remain the most common options.
-        /// </summary>
-        public const int MaxCircuitousOutcomes = 3;
-        
-        /// <summary>
-        /// Difficulty score penalty (0.0-1.0) added to circuitous outcomes.
-        /// Each 0.1 roughly corresponds to +1 difficulty level.
-        /// Default: 0.1 = +1 difficulty level for circuitous actions.
-        /// </summary>
-        public const double CircuitousDifficultyPenalty = 0.1;
     }
     
     #endregion
@@ -553,6 +533,25 @@ public static class Config
         {
             return Factors.TryGetValue(c, out float factor) ? factor : 1.0f;
         }
+    }
+    
+    #endregion
+    
+    #region LLM Configuration
+    
+    /// <summary>
+    /// Parameters sent to the local llama.cpp server for all LLM requests.
+    /// </summary>
+    public static class LLM
+    {
+        // Sampling parameters (narrative generation and constrained single-token requests)
+        public const int GenerationMaxTokens = 2048;
+        public const double Temperature = 0.3;
+        public const int TopK = 3;
+        public const double TopP = 0.9;
+
+        // Temperature for utility requests (health-check, prompt pre-caching)
+        public const double UtilityTemperature = 0.1;
     }
     
     #endregion

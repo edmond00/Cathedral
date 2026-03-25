@@ -292,9 +292,7 @@ public class ThinkingExecutor
                 ActionText = actionDesc,
                 DisplayText = displayText,
                 ThinkingModusMentis = thinkingModusMentis,
-                Keyword = keyword,
-                IsCircuitous = hardcodedOutcome.IsCircuitous,
-                IntermediateNode = hardcodedOutcome.IntermediateNode
+                Keyword = keyword
             };
         }
         catch (JsonException ex)
@@ -363,10 +361,8 @@ public class ThinkingExecutor
                         PreselectedOutcome = outcomeWithMeta.Outcome,
                         ActionText = actionDesc,
                         DisplayText = displayText,
-                        ThinkingModusMentis = thinkingModusMentis,  // Set the thinking modusMentis that generated this action
-                        Keyword = keyword,
-                        IsCircuitous = outcomeWithMeta.IsCircuitous,
-                        IntermediateNode = outcomeWithMeta.IntermediateNode
+                        ThinkingModusMentis = thinkingModusMentis,
+                        Keyword = keyword
                     });
                 }
                 else
