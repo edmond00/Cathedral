@@ -30,13 +30,24 @@ public class LlamaServerManager : IDisposable
     };
     
     private string _currentModelAlias = "tiny"; // Default model
+
+    // Loading progress tracking
+    private DateTime _loadingStartTime = DateTime.MinValue;
+    private volatile float _loadingProgress = 0f;
+    private volatile string _loadingStatusMessage = "Starting...";
     
     // Events
     public event EventHandler<ServerStatusEventArgs>? ServerReady;
     public event EventHandler<TokenStreamedEventArgs>? TokenStreamed;
     public event EventHandler<RequestCompletedEventArgs>? RequestCompleted;
+    /// <summary>Fired periodically while the model is loading. Provides progress 0–1 and a status string.</summary>
+    public event EventHandler<LoadingProgressEventArgs>? LoadingProgressUpdated;
     
     public bool IsServerReady => _isServerReady;
+    /// <summary>Current model loading progress from 0.0 to 1.0. Reaches 1.0 only when fully ready.</summary>
+    public float LoadingProgress => _loadingProgress;
+    /// <summary>Human-readable description of the current loading stage.</summary>
+    public string LoadingStatusMessage => _loadingStatusMessage;
     
     /// <summary>
     /// Gets the context size configured for the server and instances
@@ -161,6 +172,8 @@ public class LlamaServerManager : IDisposable
             if (await IsServerRunningAsync())
             {
                 _isServerReady = true;
+                _loadingProgress = 1.0f;
+                _loadingStatusMessage = "Model loaded!";
                 Console.WriteLine("Llama server is already running.");
                 
                 // Still create a session log directory for this run
@@ -169,6 +182,7 @@ public class LlamaServerManager : IDisposable
                 Directory.CreateDirectory(_sessionLogDir);
                 Console.WriteLine($"LLM logs will be saved to: {_sessionLogDir}");
                 
+                LoadingProgressUpdated?.Invoke(this, new LoadingProgressEventArgs(1.0f, "Model loaded!", 0));
                 ServerReady?.Invoke(this, new ServerStatusEventArgs(true, "Server already running"));
                 onServerReady?.Invoke(true);
                 
@@ -1178,6 +1192,11 @@ public class LlamaServerManager : IDisposable
         // Create log file and start logging
         _logWriter = new StreamWriter(logFilePath, append: false);
         
+        // Record when model loading started
+        _loadingStartTime = DateTime.Now;
+        _loadingProgress = 0.05f;
+        _loadingStatusMessage = "Launching server process...";
+        
         // Log stdout in background
         _ = Task.Run(async () =>
         {
@@ -1190,6 +1209,7 @@ public class LlamaServerManager : IDisposable
                     {
                         await _logWriter.WriteLineAsync($"[STDOUT] {DateTime.Now:HH:mm:ss.fff} {line}");
                         await _logWriter.FlushAsync();
+                        ParseLoadingProgress(line);
                     }
                 }
             }
@@ -1199,7 +1219,7 @@ public class LlamaServerManager : IDisposable
             }
         });
         
-        // Log stderr in background
+        // Log stderr in background (llama.cpp writes most progress to stderr)
         _ = Task.Run(async () =>
         {
             try
@@ -1211,6 +1231,7 @@ public class LlamaServerManager : IDisposable
                     {
                         await _logWriter.WriteLineAsync($"[STDERR] {DateTime.Now:HH:mm:ss.fff} {line}");
                         await _logWriter.FlushAsync();
+                        ParseLoadingProgress(line);
                     }
                 }
             }
@@ -1222,6 +1243,53 @@ public class LlamaServerManager : IDisposable
         
         // Give the process a moment to start
         await Task.Delay(2000);
+    }
+
+    /// <summary>
+    /// Parses a line from the llama-server process output to update loading progress.
+    /// llama.cpp writes loading stages to stderr in a predictable pattern.
+    /// </summary>
+    private void ParseLoadingProgress(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line)) return;
+
+        // Progress milestones based on llama.cpp loading output patterns
+        if (line.Contains("llm_load_print_meta") || line.Contains("print_meta"))
+        {
+            UpdateLoadingStage(0.20f, "Reading model metadata...");
+        }
+        else if (line.Contains("llm_load_tensors") && line.Contains("offload"))
+        {
+            UpdateLoadingStage(0.50f, "Offloading layers to GPU...");
+        }
+        else if (line.Contains("llm_load_tensors") && !line.Contains("offload"))
+        {
+            UpdateLoadingStage(0.35f, "Loading model tensors...");
+        }
+        else if (line.Contains("llm_load_end") || line.Contains("load_end"))
+        {
+            UpdateLoadingStage(0.80f, "Finalizing model load...");
+        }
+        else if (line.Contains("slot") && line.Contains("id") && !line.Contains("save"))
+        {
+            UpdateLoadingStage(0.90f, "Initializing inference slots...");
+        }
+        else if (line.Contains("all slots are idle") || line.Contains("server is listening"))
+        {
+            UpdateLoadingStage(0.95f, "Server ready, waiting for first request...");
+        }
+    }
+
+    private void UpdateLoadingStage(float minProgress, string status)
+    {
+        if (_loadingProgress < minProgress)
+        {
+            _loadingProgress = minProgress;
+            _loadingStatusMessage = status;
+            var elapsed = _loadingStartTime != DateTime.MinValue
+                ? (DateTime.Now - _loadingStartTime).TotalSeconds : 0;
+            LoadingProgressUpdated?.Invoke(this, new LoadingProgressEventArgs(_loadingProgress, status, elapsed));
+        }
     }
     
     private async Task<bool> WaitForServerReadyAsync()
@@ -1252,15 +1320,28 @@ public class LlamaServerManager : IDisposable
                 
                 if (testResponse.IsSuccessStatusCode)
                 {
+                    _loadingProgress = 1.0f;
+                    _loadingStatusMessage = "Model loaded!";
+                    var finalElapsed = (DateTime.Now - startTime).TotalSeconds;
+                    LoadingProgressUpdated?.Invoke(this, new LoadingProgressEventArgs(1.0f, "Model loaded!", finalElapsed));
                     return true;
                 }
                 
                 if (testResponse.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
                 {
                     retryCount++;
+                    var elapsed = (DateTime.Now - startTime).TotalSeconds;
+                    // Time-based progress: soft-cap at 90% until confirmed ready
+                    // Assumes ~90 seconds typical load time; adjust _loadingProgress upward only
+                    var timeProgress = (float)Math.Min(0.90, elapsed / 90.0);
+                    if (_loadingProgress < timeProgress)
+                    {
+                        _loadingProgress = timeProgress;
+                        LoadingProgressUpdated?.Invoke(this, new LoadingProgressEventArgs(
+                            _loadingProgress, _loadingStatusMessage, elapsed));
+                    }
                     if (retryCount % 5 == 0)
                     {
-                        var elapsed = (DateTime.Now - startTime).TotalSeconds;
                         Console.WriteLine($"Model still loading... ({elapsed:F0}s elapsed, attempt {retryCount})");
                     }
                     await Task.Delay(3000);
@@ -1273,9 +1354,16 @@ public class LlamaServerManager : IDisposable
             catch (HttpRequestException ex) when (ex.Message.Contains("503"))
             {
                 retryCount++;
+                var elapsed = (DateTime.Now - startTime).TotalSeconds;
+                var timeProgress = (float)Math.Min(0.90, elapsed / 90.0);
+                if (_loadingProgress < timeProgress)
+                {
+                    _loadingProgress = timeProgress;
+                    LoadingProgressUpdated?.Invoke(this, new LoadingProgressEventArgs(
+                        _loadingProgress, _loadingStatusMessage, elapsed));
+                }
                 if (retryCount % 5 == 0)
                 {
-                    var elapsed = (DateTime.Now - startTime).TotalSeconds;
                     Console.WriteLine($"Model still loading... ({elapsed:F0}s elapsed, attempt {retryCount})");
                 }
                 await Task.Delay(3000);

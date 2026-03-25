@@ -58,6 +58,26 @@ public class ServerStatusEventArgs : EventArgs
 }
 
 /// <summary>
+/// Event arguments for model loading progress updates
+/// </summary>
+public class LoadingProgressEventArgs : EventArgs
+{
+    /// <summary>Loading progress from 0.0 (not started) to 1.0 (fully loaded).</summary>
+    public float Progress { get; }
+    /// <summary>Human-readable status message describing the current loading stage.</summary>
+    public string StatusMessage { get; }
+    /// <summary>Seconds elapsed since loading started.</summary>
+    public double ElapsedSeconds { get; }
+
+    public LoadingProgressEventArgs(float progress, string statusMessage, double elapsedSeconds)
+    {
+        Progress       = progress;
+        StatusMessage  = statusMessage;
+        ElapsedSeconds = elapsedSeconds;
+    }
+}
+
+/// <summary>
 /// Represents the state of an LLM conversation instance
 /// </summary>
 public class LlamaInstance

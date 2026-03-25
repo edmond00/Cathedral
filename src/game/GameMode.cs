@@ -6,11 +6,17 @@
 public enum GameMode
 {
     /// <summary>
+    /// Displayed while the LLM model is still loading on startup.
+    /// A full-screen loading screen with progress bar is shown until the server is ready.
+    /// </summary>
+    LLMLoading,
+
+    /// <summary>
     /// Main menu shown at startup or when ESC is pressed in WorldView.
     /// GlyphSphere is darkened, Terminal shows menu buttons.
     /// </summary>
     MainMenu,
-    
+
     /// <summary>
     /// Player is viewing the 3D glyph sphere world, can click locations to travel.
     /// GlyphSphere is interactive, Terminal is hidden or minimal.

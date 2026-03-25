@@ -41,6 +41,13 @@ public class LocationTravelGameController : IDisposable
     private FightModeAdapter? _fightAdapter = null;
     private DialogueModeAdapter? _dialogueAdapter = null;
     
+    // LLM loading screen
+    private LLMLoadingRenderer? _llmLoadingRenderer;
+    private volatile bool _llmBecameReady = false;
+    private volatile float _llmLoadProgress = 0f;
+    private string _llmLoadStatus = "Starting...";
+    private readonly object _llmLoadLock = new object();
+
     // Main menu
     private MainMenuRenderer? _mainMenuRenderer;
     private bool _hasGameStarted = false;
@@ -140,8 +147,56 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// Updates the game controller (called every frame).
     /// </summary>
+    /// <summary>
+    /// Called from the ServerReady event (background thread) when the LLM model finishes loading.
+    /// The actual mode transition happens on the next Update() tick (main thread).
+    /// </summary>
+    public void NotifyLLMReady()
+    {
+        _llmBecameReady = true;
+    }
+
+    /// <summary>
+    /// Thread-safe update of LLM loading progress. Safe to call from background threads.
+    /// </summary>
+    public void UpdateLLMProgress(float progress, string status)
+    {
+        lock (_llmLoadLock)
+        {
+            _llmLoadProgress = progress;
+            _llmLoadStatus   = status;
+        }
+    }
+
     public void Update()
     {
+        // If LLM finished loading, transition to main menu (executed on main thread)
+        if (_llmBecameReady)
+        {
+            _llmBecameReady = false;
+            if (_currentMode == GameMode.LLMLoading)
+            {
+                // Show 100% briefly then transition
+                _llmLoadingRenderer?.Update(1.0f, "Model loaded!");
+                SetMode(GameMode.MainMenu);
+            }
+            return;
+        }
+
+        // Animate the LLM loading screen every frame
+        if (_currentMode == GameMode.LLMLoading)
+        {
+            float progress;
+            string status;
+            lock (_llmLoadLock)
+            {
+                progress = _llmLoadProgress;
+                status   = _llmLoadStatus;
+            }
+            _llmLoadingRenderer?.Update(progress, status);
+            return;
+        }
+
         // Update protagonist creation blink animation
         if (_currentMode == GameMode.ProtagonistCreation && _protagonistCreationRenderer != null)
         {
@@ -529,6 +584,10 @@ public class LocationTravelGameController : IDisposable
         // Handle mode-specific setup
         switch (newMode)
         {
+            case GameMode.LLMLoading:
+                OnEnterLLMLoading();
+                break;
+
             case GameMode.MainMenu:
                 OnEnterMainMenu();
                 break;
@@ -744,7 +803,30 @@ public class LocationTravelGameController : IDisposable
     }
 
     // Mode entry handlers
-    
+
+    private void OnEnterLLMLoading()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered LLMLoading mode");
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+
+        if (_core.Terminal != null)
+        {
+            if (_llmLoadingRenderer == null)
+                _llmLoadingRenderer = new LLMLoadingRenderer(_core.Terminal, "AI Model");
+
+            float progress;
+            string status;
+            lock (_llmLoadLock)
+            {
+                progress = _llmLoadProgress;
+                status   = _llmLoadStatus;
+            }
+            _llmLoadingRenderer.Update(progress, status);
+        }
+    }
+
     private void OnEnterMainMenu()
     {
         Console.WriteLine("LocationTravelGameController: Entered MainMenu mode");

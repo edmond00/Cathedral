@@ -158,14 +158,24 @@ public static class LocationTravelModeLauncher
             }
             else if (llamaServer != null)
             {
-                Console.WriteLine("LLM server not ready yet - will set up executor when available");
-                
-                // Set up a callback to initialize executor when server becomes ready
+                Console.WriteLine("LLM server not ready yet — showing loading screen...");
+
+                // Show loading screen while the model loads
+                gameController.UpdateLLMProgress(llamaServer.LoadingProgress, llamaServer.LoadingStatusMessage);
+                gameController.SetMode(GameMode.LLMLoading);
+
+                // Forward progress events from the background task to the game controller
+                llamaServer.LoadingProgressUpdated += (sender, e) =>
+                {
+                    gameController?.UpdateLLMProgress(e.Progress, e.StatusMessage);
+                };
+
+                // Wire the ServerReady callback to transition out of loading screen
                 llamaServer.ServerReady += async (sender, e) =>
                 {
-                    if (e.IsReady && llmExecutor == null && gameController != null)
+                    if (e.IsReady && gameController != null)
                     {
-                        Console.WriteLine("LLM server became ready - setting up executor...");
+                        Console.WriteLine("LLM server became ready - setting up executor and leaving loading screen...");
                         try
                         {
                             var simpleExecutor = new SimpleActionExecutor();
@@ -179,6 +189,14 @@ public static class LocationTravelModeLauncher
                         {
                             Console.WriteLine($"✗ Failed to initialize delayed LLM executor: {ex.Message}");
                         }
+                        // Signal the main-thread game loop to leave LLMLoading mode
+                        gameController.NotifyLLMReady();
+                    }
+                    else if (!e.IsReady && gameController != null)
+                    {
+                        // LLM failed — still let the player into the game (without LLM)
+                        Console.WriteLine("✗ LLM failed to start, continuing without AI.");
+                        gameController.NotifyLLMReady();
                     }
                 };
             }
