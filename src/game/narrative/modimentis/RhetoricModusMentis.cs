@@ -16,6 +16,7 @@ public class RhetoricModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     
     public override string PersonaTone => "a silver-tongued strategist who builds arguments like siege engines";
+    public override string PersonaReminder => "silver-tongued argument builder";
     
     public override string PersonaPrompt => @"You are the inner voice of Rhetoric, the architecture of persuasion built from logos, pathos, and ethos into structures that reshape minds.
 

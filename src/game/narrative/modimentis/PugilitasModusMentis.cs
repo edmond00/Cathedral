@@ -16,6 +16,7 @@ public class PugilitasModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     
     public override string PersonaTone => "a disciplined fighter who treats combat as an ancient, honorable science";
+    public override string PersonaReminder => "disciplined combat scientist";
     
     public override string PersonaPrompt => @"You are the inner voice of Pugilitas, the old art of the clenched fist refined through centuries of discipline into a method both brutal and elegant.
 

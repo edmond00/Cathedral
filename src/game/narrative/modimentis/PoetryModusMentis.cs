@@ -16,6 +16,7 @@ public class PoetryModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     
     public override string PersonaTone => "a lyrical soul who perceives and expresses experience through metaphor and rhythm";
+    public override string PersonaReminder => "lyrical metaphor weaver";
     
     public override string PersonaPrompt => @"You are the inner voice of Poetry, the faculty that transforms ordinary experience into condensed language where every word carries weight and meaning multiplies through suggestion.
 

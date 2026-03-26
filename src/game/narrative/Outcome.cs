@@ -31,6 +31,15 @@ public abstract class ConcreteOutcome : OutcomeBase
     /// appear in observation narration and link to this specific outcome.
     /// </summary>
     public abstract List<string> OutcomeKeywords { get; }
+
+    /// <summary>
+    /// Returns a single sentence that contextualises a clicked keyword in relation to this outcome.
+    /// Used in thinking prompts to bridge "You noticed {keyword}" and "Now you want to {outcome}".
+    /// Example: "This stream leads to a mossy forest clearing."
+    /// Subclasses override this to provide outcome-type-appropriate syntax.
+    /// </summary>
+    public virtual string GetKeywordToOutcomeTransition(string keyword)
+        => $"This {keyword} is connected to {DisplayName}.";
 }
 
 /// <summary>

@@ -237,6 +237,83 @@ public class KeywordRenderer
     }
     
     /// <summary>
+    /// Like <see cref="ParseNarrationWithKeywords"/> but highlights only the specific occurrence
+    /// (0-based index within this line) of each keyword rather than every occurrence.
+    /// <paramref name="keywords"/> and <paramref name="occurrenceIndices"/> are parallel lists.
+    /// </summary>
+    public List<TextSegment> ParseNarrationWithKeywordsAtOccurrences(
+        string narrationText, List<string> keywords, List<int> occurrenceIndices)
+    {
+        var segments = new List<TextSegment>();
+
+        if (string.IsNullOrEmpty(narrationText) || keywords == null || keywords.Count == 0)
+        {
+            segments.Add(new TextSegment { Text = narrationText, IsKeyword = false });
+            return segments;
+        }
+
+        var matches = new List<(int Start, int Length, string Keyword, string MatchedText)>();
+
+        for (int ki = 0; ki < keywords.Count; ki++)
+        {
+            string keyword = keywords[ki];
+            int targetOccurrence = ki < occurrenceIndices.Count ? occurrenceIndices[ki] : 0;
+
+            var variations = GenerateKeywordVariations(keyword);
+            // Collect all matches across all variations, sorted by position
+            var allMatches = new List<(int Start, int Length, string MatchedText)>();
+            foreach (var variation in variations)
+            {
+                string pattern = @"\b" + Regex.Escape(variation) + @"\b";
+                var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                foreach (Match m in regex.Matches(narrationText))
+                    allMatches.Add((m.Index, m.Length, m.Value));
+            }
+            // Deduplicate overlapping, sort by position
+            allMatches = allMatches
+                .OrderBy(m => m.Start)
+                .ThenByDescending(m => m.Length)
+                .ToList();
+            var deduped = new List<(int Start, int Length, string MatchedText)>();
+            foreach (var m in allMatches)
+            {
+                if (!deduped.Any(e => m.Start < e.Start + e.Length && m.Start + m.Length > e.Start))
+                    deduped.Add(m);
+            }
+            deduped = deduped.OrderBy(m => m.Start).ToList();
+
+            if (targetOccurrence < deduped.Count)
+            {
+                var chosen = deduped[targetOccurrence];
+                matches.Add((chosen.Start, chosen.Length, keyword, chosen.MatchedText));
+            }
+        }
+
+        // Remove overlapping matches (keep first encountered)
+        matches = matches.OrderBy(m => m.Start).ThenByDescending(m => m.Length).ToList();
+        var nonOverlapping = new List<(int Start, int Length, string Keyword, string MatchedText)>();
+        foreach (var match in matches)
+        {
+            if (!nonOverlapping.Any(e => match.Start < e.Start + e.Length && match.Start + match.Length > e.Start))
+                nonOverlapping.Add(match);
+        }
+        nonOverlapping = nonOverlapping.OrderBy(m => m.Start).ToList();
+
+        int currentPos = 0;
+        foreach (var match in nonOverlapping)
+        {
+            if (match.Start > currentPos)
+                segments.Add(new TextSegment { Text = narrationText.Substring(currentPos, match.Start - currentPos) });
+            segments.Add(new TextSegment { Text = match.MatchedText, IsKeyword = true, KeywordValue = match.Keyword });
+            currentPos = match.Start + match.Length;
+        }
+        if (currentPos < narrationText.Length)
+            segments.Add(new TextSegment { Text = narrationText.Substring(currentPos) });
+
+        return segments;
+    }
+
+    /// <summary>
     /// Checks if a character position in the narration text is within a keyword.
     /// Returns the keyword if found, null otherwise.
     /// </summary>

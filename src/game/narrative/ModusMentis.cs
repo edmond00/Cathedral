@@ -34,6 +34,12 @@ public abstract class ModusMentis
     /// Used as a quick reminder of the modusMentis's personality in individual LLM calls.
     /// </summary>
     public virtual string? PersonaTone => null;
+
+    /// <summary>
+    /// Very short phrase (3-5 words) used as "As a [PersonaReminder], what/why/..." in prompts.
+    /// Example: "theatrical performance analyst", "relentless clinical investigator".
+    /// </summary>
+    public virtual string? PersonaReminder => null;
 }
 
 /// <summary>

@@ -332,7 +332,7 @@ public static class JsonConstraintGenerator
         // For template strings, we need to identify the <generated> placeholder
         var template = field.Template;
         var generatedMarker = "<generated>";
-        
+
         if (template.Contains(generatedMarker))
         {
             var before = template.Substring(0, template.IndexOf(generatedMarker));
@@ -340,22 +340,50 @@ public static class JsonConstraintGenerator
 
             string bodyPattern;
             string firstCharPrefix = "";
-            if (string.IsNullOrEmpty(before))
+
+            if (field.FirstSentenceMaxLength > 0)
             {
-                // No literal prefix — force first generated char to be a letter to prevent
-                // leading punctuation artifacts (e.g. ", I ..." instead of "I ...").
-                firstCharPrefix = "[a-zA-Z] ";
-                int restMin = Math.Max(0, field.MinGenLength - 1);
-                int restMax = field.MaxGenLength - 1;
-                bodyPattern = restMin == restMax
-                    ? $"[^\"\\n]{{{restMin}}}"
-                    : $"[^\"\\n]{{{restMin},{restMax}}}";
+                // Split pattern: first sentence (periods excluded) + mandatory "." + free continuation.
+                // The template must NOT end with "." when this mode is active.
+                int firstMax = field.FirstSentenceMaxLength;
+                int restMax = Math.Max(0, field.MaxGenLength - firstMax);
+                string continuation = restMax > 0
+                    ? $" \".\" [^\"\\n]{{0,{restMax}}}"
+                    : " \".\"";
+
+                if (string.IsNullOrEmpty(before))
+                {
+                    // No prefix — force first char to be a letter.
+                    firstCharPrefix = "[a-zA-Z] ";
+                    int restFirstMin = Math.Max(0, field.MinGenLength - 1);
+                    int restFirstMax = firstMax - 1;
+                    bodyPattern = $"[^\"\\n.]{{{restFirstMin},{restFirstMax}}}{continuation}";
+                }
+                else
+                {
+                    bodyPattern = $"[^\"\\n.]{{{field.MinGenLength},{firstMax}}}{continuation}";
+                }
             }
             else
             {
-                bodyPattern = field.MinGenLength == field.MaxGenLength
-                    ? $"[^\"\\n]{{{field.MinGenLength}}}"
-                    : $"[^\"\\n]{{{field.MinGenLength},{field.MaxGenLength}}}";
+                // Original pattern: free text, period forced by the template's "after" suffix.
+                if (string.IsNullOrEmpty(before))
+                {
+                    // No literal prefix — force first generated char to be a letter to prevent
+                    // leading punctuation artifacts (e.g. ", I ..." instead of "I ...").
+                    firstCharPrefix = "[a-zA-Z] ";
+                    int restMin = Math.Max(0, field.MinGenLength - 1);
+                    int restMax = field.MaxGenLength - 1;
+                    bodyPattern = restMin == restMax
+                        ? $"[^\"\\n]{{{restMin}}}"
+                        : $"[^\"\\n]{{{restMin},{restMax}}}";
+                }
+                else
+                {
+                    bodyPattern = field.MinGenLength == field.MaxGenLength
+                        ? $"[^\"\\n]{{{field.MinGenLength}}}"
+                        : $"[^\"\\n]{{{field.MinGenLength},{field.MaxGenLength}}}";
+                }
             }
 
             var rule = ruleName + " ::= \"\\\"" + before + "\" " + firstCharPrefix + bodyPattern + " \"" + after + "\\\"\"";
@@ -367,7 +395,7 @@ public static class JsonConstraintGenerator
             var rule = ruleName + " ::= \"\\\"" + template + "\\\"\"";
             processedRules.Add(rule);
         }
-        
+
         return ruleName;
     }
     

@@ -261,6 +261,8 @@ public class ObservationExecutor
             {
                 throw new JsonException("Deserialized response is null or empty");
             }
+
+            response.NarrationText = TextTruncationUtils.TrimToLastSentence(response.NarrationText);
             
             Console.WriteLine($"ObservationExecutor: Successfully parsed narration ({response.NarrationText.Length} chars)");
             

@@ -41,4 +41,10 @@ public abstract class Item : ConcreteOutcome
     public virtual EquipmentAnchor? PreferredAnchor => null;
 
     public override string ToNaturalLanguageString() => $"acquire {DisplayName}";
+
+    /// <inheritdoc/>
+    /// For items, the keyword is one of the OutcomeKeywords that describe this item.
+    /// Example: keyword="fish" → "This fish is a Trout."
+    public override string GetKeywordToOutcomeTransition(string keyword)
+        => $"This {keyword} is {DisplayName}.";
 }

@@ -16,6 +16,7 @@ public class AlgebraicAnalysisModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     
     public override string PersonaTone => "a cold, abstract thinker who reduces everything to variables, patterns, and mathematical transformations";
+    public override string PersonaReminder => "cold pattern analyst";
     
     public override string PersonaPrompt => @"You are the inner voice of ALGEBRAIC ANALYSIS, a cold, abstract, pattern-obsessed way of thinking.
 

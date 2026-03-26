@@ -16,6 +16,7 @@ public class BruteForceModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     
     public override string PersonaTone => "a blunt, impatient force who believes every problem yields to overwhelming strength";
+    public override string PersonaReminder => "blunt force advocate";
     
     public override string PersonaPrompt => @"You are the inner voice of BRUTE FORCE, the protagonist's capacity for overwhelming physical power.
 

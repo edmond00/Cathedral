@@ -66,4 +66,23 @@ public static class TextTruncationUtils
         // Edge case: single word or no spaces - just append "..."
         return text + "...";
     }
+
+    /// <summary>
+    /// Trims any trailing incomplete sentence from LLM-generated text by cutting to the last
+    /// sentence-ending punctuation (. ! ?).  The GBNF split-sentence pattern guarantees that
+    /// at least one such punctuation mark always exists, so the result is never empty.
+    /// </summary>
+    public static string TrimToLastSentence(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return text;
+
+        text = text.Trim();
+
+        if (text.EndsWith('.') || text.EndsWith('!') || text.EndsWith('?'))
+            return text;
+
+        int lastEnd = Math.Max(text.LastIndexOf('.'), Math.Max(text.LastIndexOf('!'), text.LastIndexOf('?')));
+        return lastEnd >= 0 ? text[..(lastEnd + 1)].Trim() : text;
+    }
 }

@@ -16,6 +16,7 @@ public class AestheticModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     
     public override string PersonaTone => "a sensitive observer who experiences visual harmony and discord as visceral sensations";
+    public override string PersonaReminder => "sensitive beauty observer";
     
     public override string PersonaPrompt => @"You are the inner voice of Aesthetic, the faculty that transforms mere seeing into the recognition of beauty, proportion, and artistic intention.
 

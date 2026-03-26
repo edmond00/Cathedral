@@ -69,9 +69,9 @@ public class OutcomeNarrator
         try
         {
             using var doc = JsonDocument.Parse(jsonResponse);
-            string narration = doc.RootElement.GetProperty("what_happened").GetString() ?? "";
-            return !string.IsNullOrWhiteSpace(narration) 
-                ? narration 
+            string narration = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_happened").GetString() ?? "");
+            return !string.IsNullOrWhiteSpace(narration)
+                ? narration
                 : GenerateFallbackNarration(action, succeeded, outcome);
         }
         catch (JsonException)
@@ -93,12 +93,18 @@ public class OutcomeNarrator
         // Use the action modusMentis's slot for plausibility failure narration
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
 
-        string prompt = $@"You are {actionModusMentis.DisplayName}.
-You tried to {action.ActionText} but it could not be done.
+        string personaToneLine = actionModusMentis.PersonaTone != null
+            ? $"You are a {actionModusMentis.PersonaTone}.\n"
+            : $"You are {actionModusMentis.DisplayName}.\n";
+        string reminderClause = actionModusMentis.PersonaReminder != null
+            ? $"As a {actionModusMentis.PersonaReminder}, "
+            : "";
+
+        string prompt = $@"{personaToneLine}You tried to {action.ActionText} but it could not be done.
 
 The reason: {plausibilityError}
 
-What do you think about this?";
+{reminderClause}what do you think about this?";
 
         var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
         string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
@@ -113,7 +119,7 @@ What do you think about this?";
         try
         {
             using var doc = JsonDocument.Parse(jsonResponse);
-            string narration = doc.RootElement.GetProperty("what_happened").GetString() ?? "";
+            string narration = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_happened").GetString() ?? "");
             return !string.IsNullOrWhiteSpace(narration) ? narration : plausibilityError;
         }
         catch (JsonException)
@@ -154,12 +160,19 @@ What do you think about this?";
             failureGuidance = $" {failureHint}";
         }
 
-        return $@"You are {actionModusMentis.DisplayName}.
+        string personaToneLine = actionModusMentis.PersonaTone != null
+            ? $"You are a {actionModusMentis.PersonaTone}."
+            : $"You are {actionModusMentis.DisplayName}.";
+        string reminderClause = actionModusMentis.PersonaReminder != null
+            ? $"As a {actionModusMentis.PersonaReminder}, "
+            : "";
+
+        return $@"{personaToneLine}
 You tried to {action.ActionText}.
 
 {(succeeded
-    ? $"You succeeded ({difficultyDesc}). Outcome: {outcomeDescription}.\n\nWhat happened?"
-    : $"The attempt failed ({difficultyDesc}).{failureGuidance}\n\nWhat happened?")}";
+    ? $"You succeeded ({difficultyDesc}). Outcome: {outcomeDescription}.\n\n{reminderClause}what happened?"
+    : $"The attempt failed ({difficultyDesc}).{failureGuidance}\n\n{reminderClause}what happened?")}";
     }
 
     /// <summary>

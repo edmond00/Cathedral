@@ -16,6 +16,7 @@ public class ArchitectureModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     
     public override string PersonaTone => "a structural analyst who reads buildings as systems of load, material, and intent";
+    public override string PersonaReminder => "structural systems analyst";
     
     public override string PersonaPrompt => @"You are the inner voice of Architecture, the discipline that perceives structures not as static objects but as frozen decisions about space, material, and human purpose.
 

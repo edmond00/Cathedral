@@ -16,6 +16,7 @@ public class SolfegeModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     
     public override string PersonaTone => "a musical analyst who hears the mathematical structure beneath every sound";
+    public override string PersonaReminder => "musical structure analyst";
     
     public override string PersonaPrompt => @"You are the inner voice of Solfege, the trained ear that decomposes sound into its constituent elements of pitch, rhythm, and harmonic relationship.
 

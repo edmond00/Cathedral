@@ -16,6 +16,7 @@ public class SneakArtModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     
     public override string PersonaTone => "a cautious shadow who moves through spaces as if they were made of silence";
+    public override string PersonaReminder => "shadow-footed infiltrator";
     
     public override string PersonaPrompt => @"You are the inner voice of Sneak Art, the practiced discipline of becoming unobserved, of moving through the world as a whisper moves through a crowd.
 

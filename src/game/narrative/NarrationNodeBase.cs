@@ -195,6 +195,12 @@ public abstract class NarrationNode : ConcreteOutcome
     /// <param name="locationId">Location ID used as RNG seed for consistency</param>
     public abstract string GenerateNeutralDescription(int locationId = 0);
 
+    /// <inheritdoc/>
+    /// For narration nodes, the keyword is one of the NodeKeywords that represent this place.
+    /// Example: keyword="stream" → "This is the stream of a mossy forest clearing."
+    public override string GetKeywordToOutcomeTransition(string keyword)
+        => $"This is the {keyword} of {GenerateNeutralDescription(0)}.";
+
     /// <summary>
     /// Generates an enriched context description that includes a mood qualifier.
     /// Default: returns ContextDescription as-is.

@@ -62,7 +62,7 @@ public class ThinkingExecutor
         _llmManager.ResetInstance(thinkingSlot);
 
         // ── Call 1: WHY ────────────────────────────────────────────────────────────
-        string whyPrompt = _promptConstructor.BuildWhyPrompt(keyword, outcomeDescription, node, thinkingModusMentis, protagonist, biomeType);
+        string whyPrompt = _promptConstructor.BuildWhyPrompt(keyword, outcomeDescription, node, thinkingModusMentis, protagonist, biomeType, targetOutcome);
         string whyGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
 
         string? whyJson = await RequestFromLLMAsync(thinkingSlot, whyPrompt, whyGbnf, 350, cancellationToken);
@@ -76,7 +76,7 @@ public class ThinkingExecutor
         Console.WriteLine($"ThinkingExecutor: WHY complete ({whyText.Length} chars)");
 
         // ── Call 2: HOW ────────────────────────────────────────────────────────────
-        string howPrompt = _promptConstructor.BuildHowPrompt(outcomeDescription, actionModiMentis);
+        string howPrompt = _promptConstructor.BuildHowPrompt(outcomeDescription, actionModiMentis, thinkingModusMentis);
         string howGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateHowSchema(modusMentisIds));
 
         string? howJson = await RequestFromLLMAsync(thinkingSlot, howPrompt, howGbnf, 350, cancellationToken);
@@ -106,7 +106,7 @@ public class ThinkingExecutor
         int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(selectedModusMentis);
         _llmManager.ResetInstance(actionSlot);
 
-        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, outcomeDescription, node, protagonist, selectedModusMentis, biomeType);
+        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, outcomeDescription, node, protagonist, selectedModusMentis, biomeType, targetOutcome);
         string whatGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema());
 
         string? whatJson = await RequestFromLLMAsync(actionSlot, whatPrompt, whatGbnf, 250, cancellationToken);
@@ -391,7 +391,7 @@ public class ThinkingExecutor
         try
         {
             using var doc = JsonDocument.Parse(json);
-            return doc.RootElement.GetProperty(fieldName).GetString() ?? "";
+            return TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty(fieldName).GetString() ?? "");
         }
         catch (JsonException ex)
         {
@@ -428,7 +428,7 @@ public class ThinkingExecutor
         try
         {
             using var doc = JsonDocument.Parse(json);
-            return doc.RootElement.GetProperty("what_do_i_think").GetString() ?? "";
+            return TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_do_i_think").GetString() ?? "");
         }
         catch (JsonException ex)
         {
@@ -447,8 +447,8 @@ public class ThinkingExecutor
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
-            string part1 = root.GetProperty("how_my_skills_could_help").GetString() ?? "";
-            string part2 = root.GetProperty("which_skill_and_why").GetString() ?? "";
+            string part1 = TextTruncationUtils.TrimToLastSentence(root.GetProperty("how_my_skills_could_help").GetString() ?? "");
+            string part2 = TextTruncationUtils.TrimToLastSentence(root.GetProperty("which_skill_and_why").GetString() ?? "");
             string skillReasoning = (part1 + " " + part2).Trim();
             string selectedSkill = root.GetProperty("selected_skill").GetString() ?? "";
             return (skillReasoning, selectedSkill);

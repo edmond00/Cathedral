@@ -271,24 +271,63 @@ public class NarrationScrollBuffer
                 _ => LineType.Content
             };
 
-            // Wrap and render content. Observation blocks use block.Text (all sentences joined
-            // with spaces) so the text flows as one continuous paragraph — no blank line between
-            // sentences.  block.Keywords contains all keywords; RenderLineWithKeywords will only
-            // highlight those that actually appear in each wrapped line.
-            var wrappedLines = WrapText(block.Text, _maxWidth);
-
-            foreach (var line in wrappedLines)
+            // Wrap block.Text as one continuous paragraph (preserving natural word-flow).
+            // When per-sentence data is available, compute which character range each sentence
+            // occupies in block.Text and assign each wrapped line only the keywords from the
+            // sentence(s) that overlap its character range — preventing cross-sentence highlighting.
+            if (block.Sentences != null && block.Sentences.Count > 0)
             {
-                _renderedLines.Add(new RenderedLine(
-                    Text: line,
-                    Type: lineType,
-                    BlockType: block.Type,
-                    Keywords: block.Keywords,
-                    Actions: null,
-                    IsHistory: false,
-                    GlobalActionIndex: -1,
-                    SourceBlock: block
-                ));
+                var sentenceRanges = ComputeSentenceRanges(block.Text, block.Sentences);
+                var linesWithOffsets = WrapTextWithOffsets(block.Text, _maxWidth);
+                foreach (var (lineText, lineStart) in linesWithOffsets)
+                {
+                    int lineEnd = lineStart + lineText.Length;
+                    var lineKeywords = new List<string>();
+                    var lineOccurrences = new List<int>();
+                    foreach (var (sentStart, sentEnd, kwsWithOffsets) in sentenceRanges)
+                    {
+                        if (sentStart >= lineEnd || sentEnd <= lineStart) continue;
+                        foreach (var (kw, absOffset) in kwsWithOffsets)
+                        {
+                            if (absOffset >= lineStart && absOffset < lineEnd)
+                            {
+                                // Count how many times kw appears in the line before this position
+                                int occIndexInLine = CountOccurrencesUpTo(lineText, kw, absOffset - lineStart);
+                                lineKeywords.Add(kw);
+                                lineOccurrences.Add(occIndexInLine);
+                            }
+                        }
+                    }
+                    _renderedLines.Add(new RenderedLine(
+                        Text: lineText,
+                        Type: lineType,
+                        BlockType: block.Type,
+                        Keywords: lineKeywords.Count > 0 ? lineKeywords : null,
+                        Actions: null,
+                        IsHistory: false,
+                        GlobalActionIndex: -1,
+                        SourceBlock: block,
+                        KeywordOccurrenceIndices: lineKeywords.Count > 0 ? lineOccurrences : null
+                    ));
+                }
+            }
+            else
+            {
+                // Fallback for blocks without sentence data: wrap whole text with all keywords.
+                var wrappedLines = WrapText(block.Text, _maxWidth);
+                foreach (var line in wrappedLines)
+                {
+                    _renderedLines.Add(new RenderedLine(
+                        Text: line,
+                        Type: lineType,
+                        BlockType: block.Type,
+                        Keywords: block.Keywords,
+                        Actions: null,
+                        IsHistory: false,
+                        GlobalActionIndex: -1,
+                        SourceBlock: block
+                    ));
+                }
             }
 
             // Add action lines if this is a Thinking block
@@ -356,6 +395,128 @@ public class NarrationScrollBuffer
                 SourceBlock: block
             ));
         }
+    }
+
+    /// <summary>
+    /// Computes the character range [start, end) of each sentence within blockText,
+    /// and for each keyword finds its absolute char offset within blockText (first occurrence
+    /// inside the sentence range). Returns (start, end, [(keyword, absOffset)]) per sentence.
+    /// </summary>
+    private static List<(int Start, int End, List<(string Keyword, int AbsOffset)> Keywords)> ComputeSentenceRanges(
+        string blockText, List<NarrationSentence> sentences)
+    {
+        var ranges = new List<(int, int, List<(string, int)>)>();
+        int searchFrom = 0;
+        foreach (var sentence in sentences)
+        {
+            int idx = blockText.IndexOf(sentence.Text, searchFrom, StringComparison.Ordinal);
+            if (idx < 0)
+                idx = blockText.IndexOf(sentence.Text, StringComparison.Ordinal);
+            if (idx < 0) continue;
+
+            int sentEnd = idx + sentence.Text.Length;
+            var kwsWithOffsets = new List<(string, int)>();
+            foreach (var kw in sentence.Keywords)
+            {
+                int kwPos = blockText.IndexOf(kw, idx, sentEnd - idx, StringComparison.OrdinalIgnoreCase);
+                if (kwPos >= 0)
+                    kwsWithOffsets.Add((kw, kwPos));
+            }
+            ranges.Add((idx, sentEnd, kwsWithOffsets));
+            searchFrom = sentEnd;
+        }
+        return ranges;
+    }
+
+    /// <summary>
+    /// Counts how many times <paramref name="keyword"/> appears (case-insensitive substring)
+    /// in <paramref name="text"/> strictly before <paramref name="upToIndex"/>.
+    /// Used to compute the occurrence index of a keyword within a single rendered line.
+    /// </summary>
+    private static int CountOccurrencesUpTo(string text, string keyword, int upToIndex)
+    {
+        int count = 0;
+        int pos = 0;
+        while (pos < upToIndex)
+        {
+            int found = text.IndexOf(keyword, pos, StringComparison.OrdinalIgnoreCase);
+            if (found < 0 || found >= upToIndex) break;
+            count++;
+            pos = found + keyword.Length;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// Same word-wrap logic as WrapText but also returns the start character offset of each
+    /// line within the original text, so callers can map lines back to sentence ranges.
+    /// </summary>
+    private List<(string Line, int StartOffset)> WrapTextWithOffsets(string text, int maxWidth)
+    {
+        var result = new List<(string, int)>();
+        if (string.IsNullOrEmpty(text)) { result.Add(("", 0)); return result; }
+
+        int globalOffset = 0;
+        var paragraphs = text.Split(new[] { '\n', '\r' }, StringSplitOptions.None);
+
+        foreach (var paragraph in paragraphs)
+        {
+            if (string.IsNullOrWhiteSpace(paragraph))
+            {
+                result.Add(("", globalOffset));
+                globalOffset += paragraph.Length + 1;
+                continue;
+            }
+
+            var sb = new StringBuilder();
+            int lineStartInParagraph = 0;
+            int pos = 0;
+
+            while (pos < paragraph.Length)
+            {
+                // Skip spaces
+                while (pos < paragraph.Length && paragraph[pos] == ' ') pos++;
+                if (pos >= paragraph.Length) break;
+
+                int wordStart = pos;
+                while (pos < paragraph.Length && paragraph[pos] != ' ') pos++;
+                string word = paragraph.Substring(wordStart, pos - wordStart);
+
+                string testLine = sb.Length == 0 ? word : sb + " " + word;
+                if (testLine.Length <= maxWidth)
+                {
+                    if (sb.Length == 0) lineStartInParagraph = wordStart;
+                    else sb.Append(' ');
+                    sb.Append(word);
+                }
+                else
+                {
+                    if (sb.Length > 0)
+                    {
+                        result.Add((sb.ToString(), globalOffset + lineStartInParagraph));
+                        sb.Clear();
+                    }
+                    if (word.Length > maxWidth)
+                    {
+                        result.Add((word[..maxWidth], globalOffset + wordStart));
+                        sb.Append(word[maxWidth..]);
+                        lineStartInParagraph = wordStart + maxWidth;
+                    }
+                    else
+                    {
+                        lineStartInParagraph = wordStart;
+                        sb.Append(word);
+                    }
+                }
+            }
+
+            if (sb.Length > 0)
+                result.Add((sb.ToString(), globalOffset + lineStartInParagraph));
+
+            globalOffset += paragraph.Length + 1;
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -501,7 +662,8 @@ public record RenderedLine(
     List<ParsedNarrativeAction>? Actions,  // Actions for rendering (only for Action lines)
     bool IsHistory = false,  // True if this line is part of history (from previous narration nodes)
     int GlobalActionIndex = -1,  // Global action index (0-based) across all thinking blocks, -1 if not an action line
-    NarrationBlock? SourceBlock = null  // The narration block this line comes from (for modusMentis chain tracking)
+    NarrationBlock? SourceBlock = null,  // The narration block this line comes from (for modusMentis chain tracking)
+    List<int>? KeywordOccurrenceIndices = null  // Parallel to Keywords: which occurrence (0-based) within this line to highlight
 );
 
 /// <summary>

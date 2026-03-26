@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Cathedral.Game.Narrative;
@@ -11,7 +11,7 @@ public class ThinkingPromptConstructor
 {
     /// <summary>
     /// Call 1 (WHY): asks the thinking modusMentis why observing the keyword makes it want the outcome.
-    /// Direct question — no roleplay framing.
+    /// Includes the full persona tone at the head (first call in the batch).
     /// </summary>
     public string BuildWhyPrompt(
         string keyword,
@@ -19,37 +19,50 @@ public class ThinkingPromptConstructor
         NarrationNode node,
         ModusMentis thinkingModusMentis,
         Protagonist protagonist,
-        string biomeType)
+        string biomeType,
+        ConcreteOutcome targetOutcome)
     {
-        return $@"{node.BuildLocationContext(biomeType, protagonist.CurrentLocationId)}
+        string personaToneLine = thinkingModusMentis.PersonaTone != null
+            ? $"You are a {thinkingModusMentis.PersonaTone}.\n"
+            : "";
+        string reminderClause = thinkingModusMentis.PersonaReminder != null
+            ? $"As a {thinkingModusMentis.PersonaReminder}, "
+            : "";
+        string transition = targetOutcome.GetKeywordToOutcomeTransition(keyword);
 
-You noticed some {keyword} and now you want to {outcomeDescription}.
+        return $@"{personaToneLine}{node.BuildLocationContext(biomeType, protagonist.CurrentLocationId)}
 
-Why does what you observed make you want this?";
+You noticed {keyword}. {transition} Now you want to {outcomeDescription}.
+
+{reminderClause}why does what you observed make you want this?";
     }
 
     /// <summary>
     /// Call 2 (HOW): asks the thinking modusMentis which skill could help reach the outcome.
     /// Sent as a follow-up in the same slot context (the WHY reasoning is already in context).
-    /// Direct question — no roleplay framing.
     /// </summary>
     public string BuildHowPrompt(
         string outcomeDescription,
-        List<ModusMentis> actionModiMentis)
+        List<ModusMentis> actionModiMentis,
+        ModusMentis thinkingModusMentis)
     {
+        string reminderClause = thinkingModusMentis.PersonaReminder != null
+            ? $"As a {thinkingModusMentis.PersonaReminder}, "
+            : "";
+
         return $@"Your goal is to {outcomeDescription}.
 
 Among your skills:
 {string.Join("\n", actionModiMentis.Select(s => $"- {s.ModusMentisId}: {s.ShortDescription}"))}
 
-Which skill could best help you achieve this goal, and how would you use it?";
+{reminderClause}which skill could best help you achieve this goal, and how would you use it?";
     }
 
     /// <summary>
     /// Call 3 (WHAT): asks the selected action modusMentis what it will concretely try to do.
     /// Sent to the action modusMentis's own slot (fresh context) — full context is provided
     /// since this instance has no prior conversation history.
-    /// Direct question — no roleplay framing.
+    /// Includes the action modusMentis's persona tone at the head (first call in this slot).
     /// </summary>
     public string BuildWhatPrompt(
         string keyword,
@@ -57,13 +70,22 @@ Which skill could best help you achieve this goal, and how would you use it?";
         NarrationNode node,
         Protagonist protagonist,
         ModusMentis actionModusMentis,
-        string biomeType)
+        string biomeType,
+        ConcreteOutcome targetOutcome)
     {
-        return $@"{node.BuildLocationContext(biomeType, protagonist.CurrentLocationId)}
+        string personaToneLine = actionModusMentis.PersonaTone != null
+            ? $"You are a {actionModusMentis.PersonaTone}.\n"
+            : "";
+        string reminderClause = actionModusMentis.PersonaReminder != null
+            ? $"As a {actionModusMentis.PersonaReminder}, "
+            : "";
+        string transition = targetOutcome.GetKeywordToOutcomeTransition(keyword);
 
-You noticed some {keyword}. Now you want to {outcomeDescription}.
+        return $@"{personaToneLine}{node.BuildLocationContext(biomeType, protagonist.CurrentLocationId)}
 
-Using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescription}), what exactly are you going to try to do?";
+You noticed {keyword}. {transition} Now you want to {outcomeDescription}.
+
+{reminderClause}using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescription}), what exactly are you going to try to do?";
     }
 
     /// <summary>
@@ -95,6 +117,10 @@ Using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescri
             ? $"\"{keyword}\""
             : $"\"{keyword}\" (noticed while observing \"{keywordSourceOutcome}\")";
 
+        string reminderClause = thinkingModusMentis.PersonaReminder != null
+            ? $"As a {thinkingModusMentis.PersonaReminder}, "
+            : "";
+
         return $@"You are a {thinkingModusMentis.PersonaTone}.
 You are now in {node.GenerateNeutralDescription(protagonist.CurrentLocationId)}.
 
@@ -106,9 +132,9 @@ Among your skills:
 What could happen:
 {string.Join("\n", allOutcomes.Select(o => $"- {o}"))}
 
-What do you think and feel about {keywordContext}? Which of your skills could help you here? Propose 2-5 things you could try.";
+{reminderClause}what do you think and feel about {keywordContext}? Which of your skills could help you here? Propose 2-5 things you could try.";
     }
-    
+
     /// <summary>
     /// Builds the reasoning-only first prompt for the batched thinking pipeline.
     /// Asks the LLM for its internal reasoning about the keyword — no actions yet.
@@ -131,6 +157,10 @@ What do you think and feel about {keywordContext}? Which of your skills could he
             ? $"\"{keyword}\""
             : $"\"{keyword}\" (noticed while observing \"{keywordSourceOutcome}\")";
 
+        string reminderClause = thinkingModusMentis.PersonaReminder != null
+            ? $"As a {thinkingModusMentis.PersonaReminder}, "
+            : "";
+
         return $@"You are a {thinkingModusMentis.PersonaTone}.
 You are now in {node.GenerateNeutralDescription(protagonist.CurrentLocationId)}.
 
@@ -142,7 +172,7 @@ Among your skills:
 What could happen:
 {string.Join("\n", allOutcomes.Select(o => $"- {o}"))}
 
-Which of your skills could help? What do you think and feel?";
+{reminderClause}which of your skills could help? What do you think and feel?";
     }
 
     /// <summary>
@@ -162,12 +192,16 @@ Which of your skills could help? What do you think and feel?";
             : "Which ";
 
         string outcomeQuoted = $"\"{hardcodedOutcome}\"";
+        string reminderClause = thinkingModusMentis.PersonaReminder != null
+            ? $"As a {thinkingModusMentis.PersonaReminder}, answer:\n"
+            : "";
+
         return $@"You are wondering how you could achieve: {outcomeQuoted}.
 
 Among your skills:
 {string.Join("\n", actionModiMentis.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
 
-Question 1: How could my skills help me achieve {outcomeQuoted}?
+{reminderClause}Question 1: How could my skills help me achieve {outcomeQuoted}?
 Question 2: {avoidanceLine}skill is most appropriate and why?";
     }
 
@@ -183,9 +217,13 @@ Question 2: {avoidanceLine}skill is most appropriate and why?";
         string hardcodedSkill)
     {
         string outcomeQuoted = $"\"{hardcodedOutcome}\"";
+        string reminderClause = thinkingModusMentis.PersonaReminder != null
+            ? $"As a {thinkingModusMentis.PersonaReminder}, "
+            : "";
+
         return $@"You have decided to use {hardcodedSkill} to achieve {outcomeQuoted}.
 
-What exactly will you try?";
+{reminderClause}what exactly will you try?";
     }
 
     /// <summary>
@@ -203,7 +241,7 @@ What exactly will you try?";
         var outcomesWithMetadata = possibleOutcomes
             .Select(o => OutcomeWithMetadata.Straightforward(o))
             .ToList();
-            
+
         return BuildThinkingPrompt(keyword, null, node, outcomesWithMetadata, actionModiMentis, protagonist, thinkingModusMentis);
     }
 }

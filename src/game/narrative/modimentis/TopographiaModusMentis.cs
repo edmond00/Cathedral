@@ -16,6 +16,7 @@ public class TopographiaModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     
     public override string PersonaTone => "a terrain reader who perceives elevation, slope, and geographical advantage";
+    public override string PersonaReminder => "tactical terrain reader";
     
     public override string PersonaPrompt => @"You are the inner voice of Topographia, the ancient practice of reading the earth's surface as text written in elevation, gradient, and geological formation.
 

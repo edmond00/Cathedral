@@ -21,9 +21,10 @@ public static class LLMSchemaConfig
     {
         return new CompositeField("ObservationResponse",
             new TemplateStringField("what_do_i_feel_and_observe",
-                Template: "I <generated>.",
+                Template: "I <generated>",
                 MinGenLength: 20,
-                MaxGenLength: 300)
+                MaxGenLength: 600,
+                FirstSentenceMaxLength: 200)
         );
     }
 
@@ -35,9 +36,10 @@ public static class LLMSchemaConfig
     {
         return new CompositeField("ObservationResponse",
             new TemplateStringField("what_do_i_feel_and_observe",
-                Template: "<generated>.",
+                Template: "<generated>",
                 MinGenLength: 20,
-                MaxGenLength: 300)
+                MaxGenLength: 600,
+                FirstSentenceMaxLength: 200)
         );
     }
     
@@ -52,9 +54,10 @@ public static class LLMSchemaConfig
     {
         return new CompositeField("ReasoningResponse",
             new TemplateStringField("what_do_i_think",
-                Template: "I <generated>.",
+                Template: "I <generated>",
                 MinGenLength: 50,
-                MaxGenLength: 400)
+                MaxGenLength: 600,
+                FirstSentenceMaxLength: 200)
         );
     }
 
@@ -65,9 +68,10 @@ public static class LLMSchemaConfig
     {
         return new CompositeField("WhyResponse",
             new TemplateStringField("what_do_i_think",
-                Template: "I <generated>.",
+                Template: "I <generated>",
                 MinGenLength: 30,
-                MaxGenLength: 300)
+                MaxGenLength: 500,
+                FirstSentenceMaxLength: 200)
         );
     }
 
@@ -78,9 +82,10 @@ public static class LLMSchemaConfig
     {
         return new CompositeField("HowResponse",
             new TemplateStringField("how_could_i_do_it",
-                Template: "<generated>.",
+                Template: "<generated>",
                 MinGenLength: 20,
-                MaxGenLength: 250),
+                MaxGenLength: 400,
+                FirstSentenceMaxLength: 150),
             new ChoiceField<string>("selected_skill", validSkills.ToArray())
         );
     }
@@ -94,7 +99,7 @@ public static class LLMSchemaConfig
             new TemplateStringField("action_description",
                 Template: "try to <generated>.",
                 MinGenLength: 10,
-                MaxGenLength: 200,
+                MaxGenLength: 300,
                 Hint: "In a few words, what exactly will you try to do?")
         );
     }
@@ -109,13 +114,15 @@ public static class LLMSchemaConfig
         return new CompositeField("SkillSelection",
             new ChoiceField<string>("outcome", new[] { hardcodedOutcome }),
             new TemplateStringField("how_my_skills_could_help",
-                Template: "<generated>.",
+                Template: "<generated>",
                 MinGenLength: 20,
-                MaxGenLength: 300),
+                MaxGenLength: 450,
+                FirstSentenceMaxLength: 150),
             new TemplateStringField("which_skill_and_why",
-                Template: "<generated>.",
+                Template: "<generated>",
                 MinGenLength: 20,
-                MaxGenLength: 300),
+                MaxGenLength: 450,
+                FirstSentenceMaxLength: 150),
             new ChoiceField<string>("selected_skill", validSkills.ToArray())
         );
     }
@@ -133,7 +140,7 @@ public static class LLMSchemaConfig
             new TemplateStringField("action_description",
                 Template: "try to <generated>.",
                 MinGenLength: 10,
-                MaxGenLength: 200,
+                MaxGenLength: 300,
                 Hint: "Describe in few words the action the protagonist will try to take to achieve the outcome")
         );
     }
@@ -148,9 +155,10 @@ public static class LLMSchemaConfig
     {
         return new CompositeField("ThinkingResponse",
             new TemplateStringField("what_do_i_think",
-                Template: "I <generated>.",
+                Template: "I <generated>",
                 MinGenLength: 50,
-                MaxGenLength: 498),
+                MaxGenLength: 600,
+                FirstSentenceMaxLength: 200),
             new ArrayField("actions",
                 ElementType: new CompositeField("Action",
                     new ChoiceField<string>("action_modusMentis", validActionModiMentis.ToArray()),
@@ -179,9 +187,10 @@ public static class LLMSchemaConfig
     {
         return new CompositeField("OutcomeNarration",
             new TemplateStringField("what_happened",
-                Template: "I <generated>.",
+                Template: "I <generated>",
                 MinGenLength: 50,
-                MaxGenLength: 350)
+                MaxGenLength: 600,
+                FirstSentenceMaxLength: 200)
         );
     }
     

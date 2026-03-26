@@ -268,7 +268,8 @@ public class NarrativeUI : TerminalPanelUI
                         thinkingAttemptsRemaining,
                         hoveredKeyword,
                         shouldDimThisLine,
-                        renderedLine.SourceBlock);
+                        renderedLine.SourceBlock,
+                        renderedLine.KeywordOccurrenceIndices);
                     break;
                     
                 case LineType.Action:
@@ -392,11 +393,12 @@ public class NarrativeUI : TerminalPanelUI
         int thinkingAttemptsRemaining,
         KeywordRegion? hoveredKeyword,
         bool dimContent = false,
-        NarrationBlock? sourceBlock = null)
+        NarrationBlock? sourceBlock = null,
+        List<int>? keywordOccurrenceIndices = null)
     {
         if (string.IsNullOrEmpty(text))
             return;
-        
+
         if (keywords == null || keywords.Count == 0)
         {
             // No keywords, just render normal text
@@ -404,9 +406,11 @@ public class NarrativeUI : TerminalPanelUI
             _terminal.Text(startX, y, text, textColor, Config.NarrativeUI.BackgroundColor);
             return;
         }
-        
-        // Use KeywordRenderer to properly parse keywords with morphological variations and word boundaries
-        var segments = _keywordRenderer.ParseNarrationWithKeywords(text, keywords);
+
+        // Use occurrence-aware parsing when indices are provided, otherwise highlight all occurrences
+        var segments = keywordOccurrenceIndices != null
+            ? _keywordRenderer.ParseNarrationWithKeywordsAtOccurrences(text, keywords, keywordOccurrenceIndices)
+            : _keywordRenderer.ParseNarrationWithKeywords(text, keywords);
         
         int currentX = startX;
         

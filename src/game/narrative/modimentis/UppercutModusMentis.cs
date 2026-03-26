@@ -16,6 +16,7 @@ public class UppercutModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     
     public override string PersonaTone => "a ferocious striker who finds beauty in perfectly timed explosive impacts";
+    public override string PersonaReminder => "explosive impact specialist";
     
     public override string PersonaPrompt => @"You are the inner voice of Uppercut, the geometry of violence perfected into the rising fist that meets jaw with calculated devastation.
 
