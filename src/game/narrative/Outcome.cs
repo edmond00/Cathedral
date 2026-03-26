@@ -41,25 +41,3 @@ public abstract class ConcreteOutcome : OutcomeBase
     public virtual string GetKeywordToOutcomeTransition(string keyword)
         => $"This {keyword} is connected to {DisplayName}.";
 }
-
-/// <summary>
-/// Wrapper that associates an outcome with contextual metadata for the thinking phase.
-/// </summary>
-public class OutcomeWithMetadata
-{
-    /// <summary>
-    /// The actual outcome.
-    /// </summary>
-    public OutcomeBase Outcome { get; }
-    
-    public OutcomeWithMetadata(OutcomeBase outcome)
-    {
-        Outcome = outcome;
-    }
-    
-    /// <summary>
-    /// Creates an outcome wrapper.
-    /// </summary>
-    public static OutcomeWithMetadata Straightforward(OutcomeBase outcome) 
-        => new(outcome);
-}

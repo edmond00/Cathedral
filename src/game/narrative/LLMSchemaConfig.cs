@@ -48,20 +48,6 @@ public static class LLMSchemaConfig
     #region Thinking Schemas
 
     /// <summary>
-    /// Schema for the reasoning-only first call of the batched thinking pipeline.
-    /// </summary>
-    public static CompositeField CreateReasoningSchema()
-    {
-        return new CompositeField("ReasoningResponse",
-            new TemplateStringField("what_do_i_think",
-                Template: "I <generated>",
-                MinGenLength: 30,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 120)
-        );
-    }
-
-    /// <summary>
     /// Call 1 (WHY): thinking modusMentis explains why observing the keyword makes it want the outcome.
     /// </summary>
     public static CompositeField CreateWhySchema()
@@ -105,79 +91,6 @@ public static class LLMSchemaConfig
         );
     }
 
-    /// <summary>
-    /// Schema for the intermediate skill-selection call (step 3a).
-    /// The outcome is hardcoded; the LLM reasons about which skill fits best, then picks one.
-    /// Field order: outcome (hardcoded) → how_my_skills_could_help → which_skill_and_why → selected_skill
-    /// </summary>
-    /// <param name="validMeans">List of "with X" approach strings the LLM can choose from</param>
-    public static CompositeField CreateSkillSelectionSchema(List<string> validMeans, string hardcodedOutcome)
-    {
-        return new CompositeField("SkillSelection",
-            new ChoiceField<string>("outcome", new[] { hardcodedOutcome }),
-            new TemplateStringField("how_could_i_proceed",
-                Template: "<generated>",
-                MinGenLength: 20,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 100),
-            new TemplateStringField("which_approach_and_why",
-                Template: "<generated>",
-                MinGenLength: 20,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 100),
-            new ChoiceField<string>("selected_approach", validMeans.ToArray())
-        );
-    }
-
-    /// <summary>
-    /// Schema for the action-description call (step 3b).
-    /// Both outcome and skill are hardcoded; the LLM only writes the action description.
-    /// Field order: outcome (hardcoded) → skill (hardcoded) → action_description
-    /// </summary>
-    /// <param name="hardcodedApproach">The "with X" means string that was selected</param>
-    public static CompositeField CreateSingleActionSchema(string hardcodedOutcome, string hardcodedApproach)
-    {
-        return new CompositeField("Action",
-            new ChoiceField<string>("outcome", new[] { hardcodedOutcome }),
-            new ChoiceField<string>("approach", new[] { hardcodedApproach }),
-            new TemplateStringField("action_description",
-                Template: "try to <generated>.",
-                MinGenLength: 10,
-                MaxGenLength: 300,
-                Hint: "Describe in few words the action the protagonist will try to take to achieve the outcome")
-        );
-    }
-
-    /// <summary>
-    /// Schema for thinking/planning responses.
-    /// Includes reasoning text and a list of actions with modiMentis, outcomes, and descriptions.
-    /// </summary>
-    /// <param name="validActionModiMentis">List of action modusMentis names the protagonist can use</param>
-    /// <param name="validOutcomes">List of valid outcome keywords for the current situation</param>
-    public static CompositeField CreateThinkingSchema(List<string> validActionModiMentis, List<string> validOutcomes)
-    {
-        return new CompositeField("ThinkingResponse",
-            new TemplateStringField("what_do_i_think",
-                Template: "I <generated>",
-                MinGenLength: 30,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 120),
-            new ArrayField("actions",
-                ElementType: new CompositeField("Action",
-                    new ChoiceField<string>("action_modusMentis", validActionModiMentis.ToArray()),
-                    new ChoiceField<string>("outcome", validOutcomes.ToArray()),
-                    new TemplateStringField("action_description", 
-                        Template: "try to <generated>.",
-                        MinGenLength: 10,
-                        MaxGenLength: 200,
-                        Hint: "Describe in few words the action the protagonist will try to take to achieve the outcome")
-                ),
-                MinLength: 2,
-                MaxLength: 5
-            )
-        );
-    }
-    
     #endregion
     
     #region Outcome Narration Schemas
