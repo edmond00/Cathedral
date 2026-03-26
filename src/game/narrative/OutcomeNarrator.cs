@@ -101,6 +101,7 @@ public class OutcomeNarrator
             : "";
 
         string prompt = $@"{personaToneLine}
+{WorldContext.EpochContext}
 You tried to {action.ActionText} but it could not happen.
 {plausibilityError}
 
@@ -178,6 +179,7 @@ You tried to {action.ActionText} but it could not happen.
         }
 
         return $@"{personaToneLine}
+{WorldContext.EpochContext}
 You tried to {action.ActionText}.
 {resultLine}
 

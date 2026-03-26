@@ -27,15 +27,15 @@ public class ObservationPhaseController
     private readonly ObservationExecutor _observationExecutor;
     private readonly ObservationPromptConstructor _promptConstructor;
     private readonly KeywordRenderer _keywordRenderer;
-    private readonly string _biomeType;
+    private readonly WorldContext _worldContext;
     private readonly Random _random = new();
 
-    public ObservationPhaseController(LlamaServerManager llamaServer, ModusMentisSlotManager slotManager, string biomeType = "forest")
+    public ObservationPhaseController(LlamaServerManager llamaServer, ModusMentisSlotManager slotManager, WorldContext? worldContext = null)
     {
         _observationExecutor = new ObservationExecutor(llamaServer, slotManager);
         _promptConstructor = new ObservationPromptConstructor();
         _keywordRenderer = new KeywordRenderer();
-        _biomeType = biomeType;
+        _worldContext = worldContext ?? new ForestBiomeContext();
     }
 
     /// <summary>
@@ -87,7 +87,7 @@ public class ObservationPhaseController
         // 1. General description sentence (no outcome or keyword hints)
         try
         {
-            var generalPrompt = _promptConstructor.BuildGeneralDescriptionPrompt(currentNode, locationId, modusMentis.PersonaTone, _biomeType, modusMentis.PersonaReminder);
+            var generalPrompt = _promptConstructor.BuildGeneralDescriptionPrompt(currentNode, locationId, modusMentis.PersonaTone, _worldContext, modusMentis.PersonaReminder);
             var generalText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, generalPrompt, isFirstInBatch: true, ct);
             sentences.Add(new NarrationSentence(generalText, new List<string>()));
             Console.WriteLine($"ObservationPhaseController: General sentence generated");
@@ -186,7 +186,7 @@ public class ObservationPhaseController
         try
         {
             var focusOutcomeKeywords = focusOutcome is NarrationNode fn ? fn.NodeKeywords : focusOutcome.OutcomeKeywords;
-            var firstPrompt = _promptConstructor.BuildFirstSentencePrompt(currentNode, locationId, focusOutcome, observationModusMentis.PersonaTone, _biomeType, observationModusMentis.PersonaReminder);
+            var firstPrompt = _promptConstructor.BuildFirstSentencePrompt(currentNode, locationId, focusOutcome, observationModusMentis.PersonaTone, _worldContext, observationModusMentis.PersonaReminder);
             var firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, isFirstInBatch: true, ct);
 
             var firstKws = _observationExecutor.ExtractKeywordsFromSentences("", firstText, focusOutcomeKeywords, _random, 3);

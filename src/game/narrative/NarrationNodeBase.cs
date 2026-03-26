@@ -212,11 +212,11 @@ public abstract class NarrationNode : ConcreteOutcome
 
     /// <summary>
     /// Builds the two-line location context used at the start of every first LLM call.
-    /// Line 1: overall biome ("You are in a forest.")
-    /// Line 2: enriched node context ("You are currently wandering through a radiant brightwood.")
+    /// Line 1: world context with stable flavor ("You are in a gloomy forest.")
+    /// Line 2: enriched node context ("You are currently wandering through a mossy brightwood.")
     /// </summary>
-    public string BuildLocationContext(string biomeType, int locationId)
-        => $"You are in a {biomeType}. You are currently {GenerateEnrichedContextDescription(locationId)}.";
+    public string BuildLocationContext(WorldContext worldContext, int locationId)
+        => $"You are in a {worldContext.GenerateContextDescription(locationId)}. You are currently {GenerateEnrichedContextDescription(locationId)}.";
     
     /// <summary>
     /// Gets all outcomes that have a specific keyword.

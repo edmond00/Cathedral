@@ -1189,10 +1189,11 @@ public class LocationTravelGameController : IDisposable
                 _criticEvaluator
             );
             
-            // Get the appropriate narration factory for this biome
+            // Get the appropriate narration factory for this biome/location
             var biomeInfo = _interface.GetDetailedBiomeInfoAt(vertexIndex);
             var biomeName = biomeInfo.biome.Name.ToLowerInvariant();
-            
+            var worldContext = Narrative.WorldContext.From(biomeInfo.biome, biomeInfo.location);
+
             if (!_narrationFactories.TryGetValue(biomeName, out var graphFactory))
             {
                 Console.WriteLine($"LocationTravelGameController: No narration factory for biome '{biomeName}', using default forest factory");
@@ -1221,8 +1222,8 @@ public class LocationTravelGameController : IDisposable
                 _thinkingExecutor,
                 actionExecutor,
                 graphFactory,
-                vertexIndex,  // Use vertex index as location ID seed
-                biomeName     // Pass biome type for UI display
+                vertexIndex,   // Use vertex index as location ID seed
+                worldContext   // Typed world context for flavor and display
             );
             
             // Mark as active

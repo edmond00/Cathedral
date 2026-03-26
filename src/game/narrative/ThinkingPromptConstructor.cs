@@ -19,7 +19,7 @@ public class ThinkingPromptConstructor
         NarrationNode node,
         ModusMentis thinkingModusMentis,
         Protagonist protagonist,
-        string biomeType,
+        WorldContext worldContext,
         ConcreteOutcome targetOutcome)
     {
         string personaToneLine = thinkingModusMentis.PersonaTone != null
@@ -30,7 +30,8 @@ public class ThinkingPromptConstructor
             : "";
         string transition = targetOutcome.GetKeywordToOutcomeTransition(keyword);
 
-        return $@"{personaToneLine}{node.BuildLocationContext(biomeType, protagonist.CurrentLocationId)}
+        return $@"{personaToneLine}{WorldContext.EpochContext}
+{node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
 You noticed {keyword}. {transition} Now you want to {outcomeDescription}.
 
@@ -70,7 +71,7 @@ How do you want to proceed?
         NarrationNode node,
         Protagonist protagonist,
         ModusMentis actionModusMentis,
-        string biomeType,
+        WorldContext worldContext,
         ConcreteOutcome targetOutcome)
     {
         string personaToneLine = actionModusMentis.PersonaTone != null
@@ -81,7 +82,8 @@ How do you want to proceed?
             : "";
         string transition = targetOutcome.GetKeywordToOutcomeTransition(keyword);
 
-        return $@"{personaToneLine}{node.BuildLocationContext(biomeType, protagonist.CurrentLocationId)}
+        return $@"{personaToneLine}{WorldContext.EpochContext}
+{node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
 You noticed {keyword}. {transition} Now you want to {outcomeDescription}.
 

@@ -46,15 +46,15 @@ public class NarrativeUI : TerminalPanelUI
     /// <summary>
     /// Render the header with location name and thinking attempts.
     /// </summary>
-    public void RenderHeader(string locationName, int thinkingAttemptsRemaining, string biomeType = "forest")
+    public void RenderHeader(string locationName, int thinkingAttemptsRemaining, WorldContext? worldContext = null)
     {
         // Header starts after top padding
         int headerY = _layout.TOP_PADDING;
-        
-        // Line 0: Location name with biome type
-        string biomeTitle = char.ToUpper(biomeType[0]) + biomeType.Substring(1);
+
+        // Line 0: Location name with world context display name
+        string contextTitle = worldContext?.DisplayName ?? "Forest";
         string formattedLocationName = locationName.Replace("_", " ");
-        string title = $"{biomeTitle} - {formattedLocationName}";
+        string title = $"{contextTitle} - {formattedLocationName}";
         _terminal.Text(_layout.CONTENT_START_X, headerY, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
         
         // Thinking attempts indicator (right side)

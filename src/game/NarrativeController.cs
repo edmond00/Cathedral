@@ -24,7 +24,7 @@ public class NarrativeController
     private readonly NarrationScrollBuffer _scrollBuffer;
     private readonly NarrativeUI _ui;
     private readonly TerminalThinkingModusMentisPopup _modusMentisPopup;
-    private readonly string _biomeType;
+    private readonly WorldContext _worldContext;
     
     // Dependencies
     private readonly Protagonist _protagonist;
@@ -64,7 +64,7 @@ public class NarrativeController
         ActionExecutionController actionExecutor,
         NarrationGraphFactory? graphFactory = null,
         int locationId = 0,
-        string biomeType = "forest")
+        WorldContext? worldContext = null)
     {
         if (terminal == null)
             throw new ArgumentNullException(nameof(terminal));
@@ -97,7 +97,7 @@ public class NarrativeController
         _modusMentisPopup = new TerminalThinkingModusMentisPopup(popup);
         _core = core;
         _terminalInputHandler = terminalInputHandler;
-        _biomeType = biomeType;
+        _worldContext = worldContext ?? new ForestBiomeContext();
         _locationId = locationId;
         
         // Initialize protagonist with random modiMentis and memory
@@ -116,7 +116,7 @@ public class NarrativeController
         LlmMonitorDebugManager.Show();
         
         // Initialize controllers
-        _observationController = new ObservationPhaseController(llamaServer, slotManager, biomeType);
+        _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext);
         _thinkingExecutor = thinkingExecutor;
         _actionExecutor = actionExecutor;
         
@@ -246,7 +246,7 @@ public class NarrativeController
                 _currentNode,
                 actionModiMentis,
                 _protagonist,
-                _biomeType,
+                _worldContext,
                 CancellationToken.None);
 
             if (response == null || response.Actions.Count == 0)
@@ -660,7 +660,7 @@ public class NarrativeController
         _ui.Clear();
         
         // Render header
-        _ui.RenderHeader(_currentNode.DisplayName, _narrationState.ThinkingAttemptsRemaining, _biomeType);
+        _ui.RenderHeader(_currentNode.DisplayName, _narrationState.ThinkingAttemptsRemaining, _worldContext);
         
         // Show error if present
         if (_narrationState.ErrorMessage != null)

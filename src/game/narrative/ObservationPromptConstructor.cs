@@ -20,14 +20,15 @@ public class ObservationPromptConstructor
         int locationId,
         ConcreteOutcome outcome,
         string personaTone,
-        string biomeType,
+        WorldContext worldContext,
         string? personaReminder = null)
     {
-        var locationContext = node.BuildLocationContext(biomeType, locationId);
+        var locationContext = node.BuildLocationContext(worldContext, locationId);
         var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
 
         return $@"You are a {personaTone}.
+{WorldContext.EpochContext}
 {locationContext}
 Your attention is drawn to {GetOutcomeLabel(outcome)}.
 {reminderClause}what do you feel and observe? (include one of: {string.Join(", ", outcomeKeywords)})";
@@ -37,9 +38,9 @@ Your attention is drawn to {GetOutcomeLabel(outcome)}.
     /// Builds the prompt for a general scene description — the opening sentence of an overall observation.
     /// Includes node keywords as atmospheric hints (not clickable, just context).
     /// </summary>
-    public string BuildGeneralDescriptionPrompt(NarrationNode node, int locationId, string personaTone, string biomeType, string? personaReminder = null)
+    public string BuildGeneralDescriptionPrompt(NarrationNode node, int locationId, string personaTone, WorldContext worldContext, string? personaReminder = null)
     {
-        var locationContext = node.BuildLocationContext(biomeType, locationId);
+        var locationContext = node.BuildLocationContext(worldContext, locationId);
         var nodeKeywords = node.NodeKeywords;
 
         string keywordHint = nodeKeywords.Count > 0
@@ -49,6 +50,7 @@ Your attention is drawn to {GetOutcomeLabel(outcome)}.
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
 
         return $@"You are a {personaTone}.
+{WorldContext.EpochContext}
 {locationContext}{keywordHint}
 {reminderClause}what do you feel and observe?";
     }
