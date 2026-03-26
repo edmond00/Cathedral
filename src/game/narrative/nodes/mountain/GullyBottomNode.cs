@@ -23,7 +23,7 @@ public class GullyBottomNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the gully bottom";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "gully", "moss", "shade", "dampness" };
+    public override List<string> NodeKeywords => new() { "runnel", "moss", "shade", "dampness" };
     
     private static readonly string[] Moods = { "shadowed", "damp", "enclosed", "dark" };
     
@@ -45,14 +45,7 @@ public class GullyBottomNode : PyramidalFeatureNode
         public override string ItemId => "gully_moss";
         public override string DisplayName => "Thick Moss";
         public override string Description => "Dense mossy carpet in the shade";
-        public override List<string> OutcomeKeywords => new() { "moss", "carpet", "dampness" };
+        public override List<string> OutcomeKeywords => new() { "carpet", "dampness", "cushion" };
     }
     
-    public sealed class TrickleStream : Item
-    {
-        public override string ItemId => "gully_bottom_trickle_stream";
-        public override string DisplayName => "Trickle Stream";
-        public override string Description => "Thin water flow along the gully floor";
-        public override List<string> OutcomeKeywords => new() { "stream", "trickle", "seep" };
-    }
 }

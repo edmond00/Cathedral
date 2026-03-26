@@ -38,7 +38,7 @@ public class LichenBarkNode : NarrationNode
         public override string ItemId => "lichen_crust";
         public override string DisplayName => "Lichen Crust";
         public override string Description => "A piece of lichen-covered bark";
-        public override List<string> OutcomeKeywords => new() { "lichen", "crust", "bark" };
+        public override List<string> OutcomeKeywords => new() { "thallus", "symbiosis", "pigment" };
     }
     
     public sealed class LichenDust : Item

@@ -22,7 +22,6 @@ public class ObservationResponse
 /// <summary>
 /// Executes observation modusMentis LLM requests to generate environment perceptions.
 /// Manages observation modusMentis slots (0-9) with cached persona prompts.
-/// Implements keyword fallback strategy.
 /// </summary>
 public class ObservationExecutor
 {
@@ -35,98 +34,6 @@ public class ObservationExecutor
         _llamaServer = llamaServer ?? throw new ArgumentNullException(nameof(llamaServer));
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
         _promptConstructor = new ObservationPromptConstructor();
-    }
-    
-    /// <summary>
-    /// Generates an observation narration using an observation modusMentis.
-    /// Implements two-tier keyword fallback strategy.
-    /// </summary>
-    public async Task<ObservationResponse> GenerateObservationAsync(
-        ModusMentis observationModusMentis,
-        NarrationNode node,
-        Protagonist protagonist)
-    {
-        // Use all node keywords by default
-        return await GenerateObservationAsync(observationModusMentis, node, protagonist, node.OutcomeKeywords);
-    }
-    
-    /// <summary>
-    /// Generates an observation narration using an observation modusMentis with specific keywords.
-    /// Used for focused observations that target a specific outcome's keywords.
-    /// </summary>
-    public async Task<ObservationResponse> GenerateObservationAsync(
-        ModusMentis observationModusMentis,
-        NarrationNode node,
-        Protagonist protagonist,
-        List<string> targetKeywords)
-    {
-        if (!observationModusMentis.Functions.Contains(ModusMentisFunction.Observation))
-            throw new ArgumentException($"ModusMentis {observationModusMentis.DisplayName} is not an observation modusMentis");
-        
-        if (string.IsNullOrEmpty(observationModusMentis.PersonaPrompt))
-            throw new ArgumentException($"Observation modusMentis {observationModusMentis.DisplayName} has no persona prompt");
-        
-        // Get or create slot for this modusMentis
-        int slotId = await GetOrCreateSlotForModusMentisAsync(observationModusMentis);
-        
-        // First attempt: Natural narration (prompted but not constrained)
-        try
-        {
-            var response = await GenerateObservationNaturalAsync(slotId, node, protagonist, observationModusMentis, targetKeywords);
-            
-            // Extract keywords from response text to check quality
-            var segments = new KeywordRenderer().ParseNarrationWithKeywords(
-                response.NarrationText,
-                targetKeywords
-            );
-            int keywordCount = segments.Count(s => s.IsKeyword);
-            
-            if (keywordCount >= 1)
-            {
-                return response; // Success!
-            }
-            
-            Console.WriteLine($"ObservationExecutor: Natural prompt returned {keywordCount} keywords, trying fallback");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"ObservationExecutor: Natural prompt failed: {ex.Message}, trying fallback");
-        }
-        
-        // Fallback: Use keyword intro examples to force inclusion
-        return await GenerateObservationWithFallbackAsync(slotId, node, protagonist, observationModusMentis, targetKeywords);
-    }
-    
-    private async Task<ObservationResponse> GenerateObservationNaturalAsync(
-        int slotId,
-        NarrationNode node,
-        Protagonist protagonist,
-        ModusMentis observationModusMentis,
-        List<string> targetKeywords)
-    {
-        var prompt = _promptConstructor.BuildObservationPrompt(node, protagonist, observationModusMentis, targetKeywords, promptKeywordUsage: true);
-        var schema = LLMSchemaConfig.CreateObservationSchema();
-        var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
-        
-        var response = await RequestFromLLMAsync(slotId, prompt, gbnf);
-        
-        return ParseObservationResponse(response ?? "", targetKeywords);
-    }
-    
-    private async Task<ObservationResponse> GenerateObservationWithFallbackAsync(
-        int slotId,
-        NarrationNode node,
-        Protagonist protagonist,
-        ModusMentis observationModusMentis,
-        List<string> targetKeywords)
-    {
-        var prompt = _promptConstructor.BuildObservationPromptWithIntros(node, protagonist, observationModusMentis, targetKeywords);
-        var schema = LLMSchemaConfig.CreateObservationSchemaWithIntros(targetKeywords);
-        var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
-        
-        var response = await RequestFromLLMAsync(slotId, prompt, gbnf);
-        
-        return ParseObservationResponse(response ?? "", targetKeywords);
     }
     
     /// <summary>
@@ -234,36 +141,7 @@ public class ObservationExecutor
         Console.WriteLine($"ObservationExecutor: Reset slot {slotId} for new observation batch");
     }
 
-    /// <summary>
-    /// Generates one observation sentence focused on a specific outcome.
-    /// Uses a first-sentence prompt with full context, or a continuation prompt if not the first.
-    /// Returns the raw narration text string.
-    /// </summary>
-    public async Task<string> GenerateSentenceAsync(
-        int slotId,
-        NarrationNode node,
-        int locationId,
-        ConcreteOutcome outcome,
-        bool isFirstSentence,
-        string personaTone,
-        string biomeType,
-        CancellationToken ct = default)
-    {
-        var prompt = isFirstSentence
-            ? _promptConstructor.BuildFirstSentencePrompt(node, locationId, outcome, personaTone, biomeType)
-            : _promptConstructor.BuildContinuationSentencePrompt(outcome);
-
-        var schema = isFirstSentence
-            ? LLMSchemaConfig.CreateObservationSchema()
-            : LLMSchemaConfig.CreateContinuationObservationSchema();
-        var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
-
-        var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
-        var parsed = ParseObservationResponse(jsonResponse ?? "", new List<string>());
-        return parsed.NarrationText;
-    }
-
-    /// <summary>
+/// <summary>
     /// Generates one observation sentence using a pre-built prompt string.
     /// Used by the refactored observation phase which composes prompts externally.
     /// </summary>

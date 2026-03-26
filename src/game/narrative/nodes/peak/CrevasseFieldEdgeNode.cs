@@ -38,7 +38,7 @@ public class CrevasseFieldEdgeNode : PyramidalFeatureNode
         public override string ItemId => "crevasse_field_edge_crevasse_lip";
         public override string DisplayName => "Crevasse Lip";
         public override string Description => "Edge of the crevasse opening";
-        public override List<string> OutcomeKeywords => new() { "lip", "crevasse", "ice" };
+        public override List<string> OutcomeKeywords => new() { "brink", "bergschrund", "ice" };
     }
     
 }

@@ -37,7 +37,7 @@ public class RidgeSpineNode : PyramidalFeatureNode
         public override string ItemId => "ridge_spine_sharp_rock";
         public override string DisplayName => "Sharp Rock";
         public override string Description => "Angular stone jutting from the ridge";
-        public override List<string> OutcomeKeywords => new() { "rock", "edge", "angularity" };
+        public override List<string> OutcomeKeywords => new() { "shard", "edge", "angularity" };
     }
     
     public sealed class HornfelsChip : Item
@@ -45,14 +45,7 @@ public class RidgeSpineNode : PyramidalFeatureNode
         public override string ItemId => "ridge_spine_hornfels_chip";
         public override string DisplayName => "Hornfels Chip";
         public override string Description => "Metamorphic rock fragment collectible from the ridge";
-        public override List<string> OutcomeKeywords => new() { "hornfels", "chip", "metamorphic" };
+        public override List<string> OutcomeKeywords => new() { "fragment", "metamorphic", "hardness" };
     }
     
-    public sealed class NarrowPath : Item
-    {
-        public override string ItemId => "ridge_spine_narrow_path";
-        public override string DisplayName => "Narrow Path";
-        public override string Description => "Thin walkable line along the ridge crest";
-        public override List<string> OutcomeKeywords => new() { "path", "traverse", "passage" };
-    }
 }

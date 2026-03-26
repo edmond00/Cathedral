@@ -11,7 +11,7 @@ public class IceBlockFieldLowerNode : PyramidalFeatureNode
     public override bool IsBottomNode => true;
     public override Type PairedNodeType => typeof(IceBlockFieldUpperNode);
     
-    public override string NodeId => "ice_block_field_lower";
+    public override string NodeId => "lower_ice_block_field";
     public override string ContextDescription => "standing in the lower ice block field";
     public override string TransitionDescription => "descend through the lower ice blocks";
     public override bool IsEntryNode => false;
@@ -38,7 +38,7 @@ public class IceBlockFieldLowerNode : PyramidalFeatureNode
         public override string ItemId => "ice_block_field_lower_small_ice_block";
         public override string DisplayName => "Small Ice Block";
         public override string Description => "Smaller fractured ice block";
-        public override List<string> OutcomeKeywords => new() { "ice", "block", "chunk" };
+        public override List<string> OutcomeKeywords => new() { "firn", "serac", "chunk" };
     }
     
     public sealed class MorainePebbles : Item
@@ -46,6 +46,6 @@ public class IceBlockFieldLowerNode : PyramidalFeatureNode
         public override string ItemId => "ice_block_field_lower_moraine_pebbles";
         public override string DisplayName => "Moraine Pebbles";
         public override string Description => "Glacial deposit pebbles collectible from the moraine";
-        public override List<string> OutcomeKeywords => new() { "pebble", "moraine", "glacier" };
+        public override List<string> OutcomeKeywords => new() { "clast", "till", "glacier" };
     }
 }

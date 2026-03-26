@@ -37,7 +37,7 @@ public class RootedForestNode : NarrationNode
         public override string ItemId => "rooted_forest_exposed_root_fiber";
         public override string DisplayName => "Exposed Root Fiber";
         public override string Description => "Fibrous strands from massive exposed roots";
-        public override List<string> OutcomeKeywords => new() { "root", "fiber", "wood" };
+        public override List<string> OutcomeKeywords => new() { "taproot", "radicle", "wood" };
     }
     
     public sealed class RootGrip : Item
@@ -45,6 +45,6 @@ public class RootedForestNode : NarrationNode
         public override string ItemId => "rooted_forest_root_grip";
         public override string DisplayName => "Root Grip";
         public override string Description => "Sturdy root section useful for climbing";
-        public override List<string> OutcomeKeywords => new() { "root", "grip", "handhold" };
+        public override List<string> OutcomeKeywords => new() { "taproot", "holdfast", "handhold" };
     }
 }

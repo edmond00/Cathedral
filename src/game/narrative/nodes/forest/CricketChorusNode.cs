@@ -37,14 +37,7 @@ public class CricketChorusNode : NarrationNode
         public override string ItemId => "cricket_chorus_cricket_legs";
         public override string DisplayName => "Cricket Legs";
         public override string Description => "Jointed legs from dead crickets";
-        public override List<string> OutcomeKeywords => new() { "leg", "joint", "appendage" };
+        public override List<string> OutcomeKeywords => new() { "joint", "appendage", "chitin" };
     }
     
-    public sealed class CricketChirp : Item
-    {
-        public override string ItemId => "cricket_chorus_cricket_chirp_sample";
-        public override string DisplayName => "Cricket Chirp Sample";
-        public override string Description => "A living cricket captured for its song";
-        public override List<string> OutcomeKeywords => new() { "chirp", "resonance", "night" };
-    }
 }

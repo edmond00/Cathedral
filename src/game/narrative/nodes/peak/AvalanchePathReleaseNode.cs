@@ -16,7 +16,7 @@ public class AvalanchePathReleaseNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the avalanche release zone";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "avalanche", "fracture", "snow", "danger" };
+    public override List<string> NodeKeywords => new() { "tension", "fracture", "snow", "danger" };
     
     private static readonly string[] Moods = { "dangerous", "unstable", "steep", "threatening" };
     
@@ -38,7 +38,7 @@ public class AvalanchePathReleaseNode : PyramidalFeatureNode
         public override string ItemId => "avalanche_path_release_fracture_line";
         public override string DisplayName => "Fracture Line";
         public override string Description => "Line where avalanche released";
-        public override List<string> OutcomeKeywords => new() { "fracture", "crack", "snow" };
+        public override List<string> OutcomeKeywords => new() { "scarp", "crack", "snow" };
     }
     
 }

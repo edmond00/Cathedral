@@ -38,6 +38,6 @@ public class IcyGullyRunNode : PyramidalFeatureNode
         public override string ItemId => "icy_gully_run_gully_obsidian";
         public override string DisplayName => "Gully Obsidian";
         public override string Description => "Volcanic glass collectible from the gully";
-        public override List<string> OutcomeKeywords => new() { "obsidian", "glass", "volcanic" };
+        public override List<string> OutcomeKeywords => new() { "vitrophyre", "glass", "volcanic" };
     }
 }

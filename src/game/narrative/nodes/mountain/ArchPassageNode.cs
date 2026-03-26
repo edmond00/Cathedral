@@ -32,19 +32,4 @@ public class ArchPassageNode : PyramidalFeatureNode
         return $"through a {mood} arch passage";
     }
     
-    public sealed class FramedSky : Item
-    {
-        public override string ItemId => "arch_passage_framed_sky";
-        public override string DisplayName => "Framed Sky";
-        public override string Description => "Sky visible through the arch opening";
-        public override List<string> OutcomeKeywords => new() { "sky", "frame", "window" };
-    }
-    
-    public sealed class EchoSpace : Item
-    {
-        public override string ItemId => "arch_passage_echo_space";
-        public override string DisplayName => "Echo Space";
-        public override string Description => "Acoustic chamber beneath the arch";
-        public override List<string> OutcomeKeywords => new() { "echo", "resonance", "chamber" };
-    }
 }

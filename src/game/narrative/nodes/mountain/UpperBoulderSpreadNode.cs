@@ -37,15 +37,7 @@ public class UpperBoulderSpreadNode : PyramidalFeatureNode
         public override string ItemId => "upper_boulder_spread_rounded_boulder";
         public override string DisplayName => "Rounded Boulder";
         public override string Description => "Large water-smoothed stone";
-        public override List<string> OutcomeKeywords => new() { "boulder", "glacier", "age" };
-    }
-    
-    public sealed class BoulderGap : Item
-    {
-        public override string ItemId => "upper_boulder_spread_boulder_gap";
-        public override string DisplayName => "Boulder Gap";
-        public override string Description => "Space between massive rocks";
-        public override List<string> OutcomeKeywords => new() { "gap", "passage", "shadow" };
+        public override List<string> OutcomeKeywords => new() { "mass", "glacier", "age" };
     }
     
     public sealed class BoulderLichen : Item
@@ -53,6 +45,6 @@ public class UpperBoulderSpreadNode : PyramidalFeatureNode
         public override string ItemId => "boulder_lichen";
         public override string DisplayName => "Lichen Patch";
         public override string Description => "Colorful growth on rock surface";
-        public override List<string> OutcomeKeywords => new() { "lichen", "patch", "symbiosis" };
+        public override List<string> OutcomeKeywords => new() { "crust", "symbiosis", "growth" };
     }
 }

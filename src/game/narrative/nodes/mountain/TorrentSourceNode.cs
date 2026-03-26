@@ -37,7 +37,7 @@ public class TorrentSourceNode : PyramidalFeatureNode
         public override string ItemId => "torrent_source_spring_pool";
         public override string DisplayName => "Spring Pool";
         public override string Description => "Small pool where water emerges";
-        public override List<string> OutcomeKeywords => new() { "spring", "pool", "water" };
+        public override List<string> OutcomeKeywords => new() { "seep", "basin", "water" };
     }
     
     public sealed class WetRocks : Item
@@ -45,7 +45,7 @@ public class TorrentSourceNode : PyramidalFeatureNode
         public override string ItemId => "torrent_source_wet_rocks";
         public override string DisplayName => "Wet Rocks";
         public override string Description => "Water-splashed stones near the spring";
-        public override List<string> OutcomeKeywords => new() { "rock", "moisture", "slipperiness" };
+        public override List<string> OutcomeKeywords => new() { "felsite", "moisture", "slipperiness" };
     }
     
     public sealed class RiverStone : Item
@@ -53,6 +53,6 @@ public class TorrentSourceNode : PyramidalFeatureNode
         public override string ItemId => "torrent_source_river_stone";
         public override string DisplayName => "River Stone";
         public override string Description => "Smooth polished stone collectible from the source";
-        public override List<string> OutcomeKeywords => new() { "stone", "river", "polish" };
+        public override List<string> OutcomeKeywords => new() { "cobble", "fluvial", "polish" };
     }
 }

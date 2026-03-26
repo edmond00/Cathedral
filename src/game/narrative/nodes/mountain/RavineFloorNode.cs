@@ -39,19 +39,11 @@ public class RavineFloorNode : PyramidalFeatureNode
         return $"on a {mood} ravine floor";
     }
     
-    public sealed class StreamletFlow : Item
-    {
-        public override string ItemId => "ravine_floor_streamlet_flow";
-        public override string DisplayName => "Streamlet Flow";
-        public override string Description => "Thin water flow along the floor";
-        public override List<string> OutcomeKeywords => new() { "streamlet", "water", "trickle" };
-    }
-    
     public sealed class WedgedLog : Item
     {
         public override string ItemId => "ravine_floor_wedged_log";
         public override string DisplayName => "Wedged Log";
         public override string Description => "Dead tree trapped between walls";
-        public override List<string> OutcomeKeywords => new() { "log", "wood", "wedge" };
+        public override List<string> OutcomeKeywords => new() { "bark", "wood", "grain" };
     }
 }

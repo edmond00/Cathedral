@@ -11,12 +11,12 @@ public class SnowLadenValleyUpperNode : PyramidalFeatureNode
     public override bool IsBottomNode => false;
     public override Type PairedNodeType => typeof(SnowLadenValleyLowerNode);
     
-    public override string NodeId => "snow_laden_valley_upper";
+    public override string NodeId => "upper_snow_laden_valley";
     public override string ContextDescription => "standing in the upper snow-laden valley";
     public override string TransitionDescription => "reach the upper snow-laden valley";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "valley", "snow", "expanse", "pristine" };
+    public override List<string> NodeKeywords => new() { "valley", "snow", "expanse", "purity" };
     
     private static readonly string[] Moods = { "pristine", "deep", "untouched", "expansive" };
     

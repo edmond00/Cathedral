@@ -37,15 +37,7 @@ public class RiverBankNode : PyramidalFeatureNode
         public override string ItemId => "river_bank_roots_exposed";
         public override string DisplayName => "Exposed Roots";
         public override string Description => "Tree roots hanging from eroded bank";
-        public override List<string> OutcomeKeywords => new() { "root", "erosion", "network" };
-    }
-    
-    public sealed class UndercutEdge : Item
-    {
-        public override string ItemId => "river_bank_undercut_edge";
-        public override string DisplayName => "Undercut Edge";
-        public override string Description => "Overhanging bank carved by water";
-        public override List<string> OutcomeKeywords => new() { "overhang", "erosion", "instability" };
+        public override List<string> OutcomeKeywords => new() { "tendril", "erosion", "network" };
     }
     
     public sealed class RiverGrass : Item
@@ -53,6 +45,6 @@ public class RiverBankNode : PyramidalFeatureNode
         public override string ItemId => "river_bank_river_grass";
         public override string DisplayName => "River Grass";
         public override string Description => "Tall grass growing at water's edge";
-        public override List<string> OutcomeKeywords => new() { "grass", "reed", "waterside" };
+        public override List<string> OutcomeKeywords => new() { "blade", "reed", "waterside" };
     }
 }

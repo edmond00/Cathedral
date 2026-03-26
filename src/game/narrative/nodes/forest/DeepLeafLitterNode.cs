@@ -38,7 +38,7 @@ public class DeepLeafLitterNode : NarrationNode
         public override string ItemId => "dried_leaf_pile";
         public override string DisplayName => "Dried Leaf Pile";
         public override string Description => "A bundle of crisp, layered leaves";
-        public override List<string> OutcomeKeywords => new() { "leaf", "bundle", "rustling" };
+        public override List<string> OutcomeKeywords => new() { "lamina", "bundle", "rustling" };
     }
     
     public sealed class HiddenAcorn : Item
@@ -46,6 +46,6 @@ public class DeepLeafLitterNode : NarrationNode
         public override string ItemId => "deep_litter_hidden_acorn";
         public override string DisplayName => "Hidden Acorn";
         public override string Description => "An acorn buried deep beneath the leaf layers";
-        public override List<string> OutcomeKeywords => new() { "acorn", "cap", "cache" };
+        public override List<string> OutcomeKeywords => new() { "cupule", "cap", "cache" };
     }
 }

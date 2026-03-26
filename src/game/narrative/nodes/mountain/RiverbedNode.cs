@@ -37,7 +37,7 @@ public class RiverbedNode : PyramidalFeatureNode
         public override string ItemId => "riverbed_river_stones";
         public override string DisplayName => "River Stones";
         public override string Description => "Smooth rounded rocks in the water";
-        public override List<string> OutcomeKeywords => new() { "stone", "river", "polish" };
+        public override List<string> OutcomeKeywords => new() { "cobble", "fluvial", "polish" };
     }
     
     public sealed class RiverSand : Item
@@ -45,6 +45,6 @@ public class RiverbedNode : PyramidalFeatureNode
         public override string ItemId => "riverbed_river_sand";
         public override string DisplayName => "River Sand";
         public override string Description => "Coarse sand deposit collectible from the riverbed";
-        public override List<string> OutcomeKeywords => new() { "sand", "quartz", "mineral" };
+        public override List<string> OutcomeKeywords => new() { "alluvium", "quartz", "mineral" };
     }
 }

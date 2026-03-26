@@ -32,27 +32,4 @@ public class RavineRimNode : PyramidalFeatureNode
         return $"at a {mood} ravine rim";
     }
     
-    public sealed class OverhangingEdge : Item
-    {
-        public override string ItemId => "ravine_rim_overhanging_edge";
-        public override string DisplayName => "Overhanging Edge";
-        public override string Description => "Rock jutting over the ravine";
-        public override List<string> OutcomeKeywords => new() { "overhang", "edge", "danger" };
-    }
-    
-    public sealed class EchoSound : Item
-    {
-        public override string ItemId => "ravine_rim_echo_sound";
-        public override string DisplayName => "Echo Sound";
-        public override string Description => "Sounds reverberating in the chasm";
-        public override List<string> OutcomeKeywords => new() { "echo", "resonance", "depth" };
-    }
-    
-    public sealed class CliffSwallow : Item
-    {
-        public override string ItemId => "ravine_rim_cliff_swallow";
-        public override string DisplayName => "Cliff Swallow";
-        public override string Description => "Bird darting through the ravine";
-        public override List<string> OutcomeKeywords => new() { "swallow", "bird", "agility" };
-    }
 }

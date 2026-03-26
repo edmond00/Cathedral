@@ -38,7 +38,7 @@ public class SedgePatchNode : NarrationNode
         public override string ItemId => "sedge_seed_head";
         public override string DisplayName => "Sedge Seed Head";
         public override string Description => "A triangular sedge stem with seed head";
-        public override List<string> OutcomeKeywords => new() { "seed", "head", "sedge" };
+        public override List<string> OutcomeKeywords => new() { "propagule", "utricle", "inflorescence" };
     }
     
     public sealed class SedgeRoot : Item
@@ -46,6 +46,6 @@ public class SedgePatchNode : NarrationNode
         public override string ItemId => "sedge_patch_rhizome";
         public override string DisplayName => "Sedge Rhizome";
         public override string Description => "A tough underground sedge rhizome";
-        public override List<string> OutcomeKeywords => new() { "rhizome", "root", "fiber" };
+        public override List<string> OutcomeKeywords => new() { "stolon", "root", "fiber" };
     }
 }

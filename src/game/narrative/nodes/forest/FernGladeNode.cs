@@ -37,7 +37,7 @@ public class FernGladeNode : NarrationNode
         public override string ItemId => "fern_frond";
         public override string DisplayName => "Fern Frond";
         public override string Description => "A fresh fern frond with delicate leaflets";
-        public override List<string> OutcomeKeywords => new() { "frond", "leaflet", "feather" };
+        public override List<string> OutcomeKeywords => new() { "pinnule", "leaflet", "rachis" };
     }
     
     public sealed class GladeFernSpore : Item

@@ -41,33 +41,6 @@ public static class LLMSchemaConfig
         );
     }
     
-    /// <summary>
-    /// Observation schema with keyword intro template for fallback strategy.
-    /// Forces the LLM to start with a specific keyword intro to guarantee keyword inclusion.
-    /// </summary>
-    /// <param name="keywords">Available keywords for the current location</param>
-    /// <returns>Schema with template-constrained intro using first keyword</returns>
-    public static CompositeField CreateObservationSchemaWithIntros(List<string> keywords)
-    {
-        if (keywords.Count == 0)
-        {
-            // Fallback to basic schema if no keywords available
-            return CreateObservationSchema();
-        }
-        
-        // Build template forcing "I notice {keyword}" intro
-        var firstIntro = $"I notice {keywords.First()}";
-        
-        return new CompositeField("ObservationResponse",
-            new TemplateStringField(
-                "what_do_i_feel_and_observe",
-                Template: firstIntro + " <generated>.",
-                MinGenLength: 10,
-                MaxGenLength: 280
-            )
-        );
-    }
-    
     #endregion
     
     #region Thinking Schemas

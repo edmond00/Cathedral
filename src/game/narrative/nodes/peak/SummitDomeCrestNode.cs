@@ -45,7 +45,7 @@ public class SummitDomeCrestNode : PyramidalFeatureNode
         public override string ItemId => "summit_dome_crest_frozen_crystal";
         public override string DisplayName => "Frozen Crystal";
         public override string Description => "Ice crystal formed by extreme altitude";
-        public override List<string> OutcomeKeywords => new() { "crystal", "ice", "altitude" };
+        public override List<string> OutcomeKeywords => new() { "dendrite", "ice", "altitude" };
     }
     
     public sealed class SummitPolishedStone : Item
@@ -53,7 +53,7 @@ public class SummitDomeCrestNode : PyramidalFeatureNode
         public override string ItemId => "summit_polished_stone";
         public override string DisplayName => "Summit-Polished Stone";
         public override string Description => "Stone smoothed by endless winds";
-        public override List<string> OutcomeKeywords => new() { "stone", "wind", "endurance" };
+        public override List<string> OutcomeKeywords => new() { "cobble", "wind", "endurance" };
     }
     
     public sealed class SummitGranite : Item
@@ -61,6 +61,6 @@ public class SummitDomeCrestNode : PyramidalFeatureNode
         public override string ItemId => "summit_dome_crest_summit_granite";
         public override string DisplayName => "Summit Granite";
         public override string Description => "Peak granite collectible from the highest point";
-        public override List<string> OutcomeKeywords => new() { "granite", "igneous", "summit" };
+        public override List<string> OutcomeKeywords => new() { "pegmatite", "igneous", "apex" };
     }
 }

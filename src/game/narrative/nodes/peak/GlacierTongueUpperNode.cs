@@ -11,7 +11,7 @@ public class GlacierTongueUpperNode : PyramidalFeatureNode
     public override bool IsBottomNode => false;
     public override Type PairedNodeType => typeof(GlacierTongueLowerNode);
     
-    public override string NodeId => "glacier_tongue_upper";
+    public override string NodeId => "upper_glacier_tongue";
     public override string ContextDescription => "standing on the upper ice flow";
     public override string TransitionDescription => "climb to the upper ice flow";
     public override bool IsEntryNode => false;

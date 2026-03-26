@@ -32,19 +32,4 @@ public class LowerBoulderSpreadNode : PyramidalFeatureNode
         return $"in a {mood} lower boulder spread";
     }
     
-    public sealed class MossyCrevice : Item
-    {
-        public override string ItemId => "lower_boulder_spread_mossy_crevice";
-        public override string DisplayName => "Mossy Crevice";
-        public override string Description => "Damp crack between boulders";
-        public override List<string> OutcomeKeywords => new() { "crevice", "moss", "darkness" };
-    }
-    
-    public sealed class ShelterSpace : Item
-    {
-        public override string ItemId => "lower_boulder_spread_shelter_space";
-        public override string DisplayName => "Shelter Space";
-        public override string Description => "Protected area beneath overhanging rocks";
-        public override List<string> OutcomeKeywords => new() { "shelter", "refuge", "overhang" };
-    }
 }

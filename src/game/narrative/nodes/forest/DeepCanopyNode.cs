@@ -37,7 +37,7 @@ public class DeepCanopyNode : NarrationNode
         public override string ItemId => "deep_canopy_fallen_leaves";
         public override string DisplayName => "Fallen Leaves";
         public override string Description => "Layers of leaves fallen from the high canopy";
-        public override List<string> OutcomeKeywords => new() { "leaf", "layer", "rustle", "carpet" };
+        public override List<string> OutcomeKeywords => new() { "lamina", "layer", "rustle", "carpet" };
     }
     
     public sealed class CanopySeed : Item
@@ -45,6 +45,6 @@ public class DeepCanopyNode : NarrationNode
         public override string ItemId => "deep_canopy_canopy_seed";
         public override string DisplayName => "Canopy Seed";
         public override string Description => "Large seed fallen from the high canopy";
-        public override List<string> OutcomeKeywords => new() { "seed", "canopy", "tree" };
+        public override List<string> OutcomeKeywords => new() { "propagule", "emergent", "tree" };
     }
 }

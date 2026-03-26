@@ -44,14 +44,7 @@ public class WildwoodNode : NarrationNode
         public override string ItemId => "wildwood_untamed_seeds";
         public override string DisplayName => "Untamed Seeds";
         public override string Description => "Wild seeds scattered across the untamed forest";
-        public override List<string> OutcomeKeywords => new() { "seed", "pod", "wildness" };
+        public override List<string> OutcomeKeywords => new() { "kernel", "pod", "wildness" };
     }
     
-    public sealed class WildGrowth : Item
-    {
-        public override string ItemId => "wildwood_wild_growth";
-        public override string DisplayName => "Wild Growth";
-        public override string Description => "Uncultivated plant matter from the wildwood";
-        public override List<string> OutcomeKeywords => new() { "growth", "wildness", "plant" };
-    }
 }

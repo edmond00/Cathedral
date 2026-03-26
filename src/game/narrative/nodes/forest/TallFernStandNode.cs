@@ -38,7 +38,7 @@ public class TallFernStandNode : NarrationNode
         public override string ItemId => "fern_spore";
         public override string DisplayName => "Fern Spores";
         public override string Description => "Fine brown spores from fern undersides";
-        public override List<string> OutcomeKeywords => new() { "spore", "dust", "powder" };
+        public override List<string> OutcomeKeywords => new() { "sporangium", "dust", "powder" };
     }
     
     public sealed class FernRhizome : Item
@@ -46,6 +46,6 @@ public class TallFernStandNode : NarrationNode
         public override string ItemId => "tall_fern_rhizome";
         public override string DisplayName => "Fern Rhizome";
         public override string Description => "A thick underground fern stem";
-        public override List<string> OutcomeKeywords => new() { "rhizome", "root", "fiber" };
+        public override List<string> OutcomeKeywords => new() { "stolon", "root", "fiber" };
     }
 }

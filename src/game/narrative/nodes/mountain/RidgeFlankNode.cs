@@ -37,7 +37,7 @@ public class RidgeFlankNode : PyramidalFeatureNode
         public override string ItemId => "ridge_flank_alpine_grass";
         public override string DisplayName => "Alpine Grass";
         public override string Description => "Hardy grass clinging to the ridge side";
-        public override List<string> OutcomeKeywords => new() { "grass", "alpine", "persistence" };
+        public override List<string> OutcomeKeywords => new() { "culm", "montane", "persistence" };
     }
     
     public sealed class SlopeDebris : Item
@@ -45,6 +45,6 @@ public class RidgeFlankNode : PyramidalFeatureNode
         public override string ItemId => "ridge_flank_slope_debris";
         public override string DisplayName => "Slope Debris";
         public override string Description => "Loose rock and gravel on the flank";
-        public override List<string> OutcomeKeywords => new() { "debris", "gravel", "instability" };
+        public override List<string> OutcomeKeywords => new() { "detritus", "gravel", "instability" };
     }
 }

@@ -39,27 +39,12 @@ public class UpperLedgeNode : PyramidalFeatureNode
         return $"standing on a {mood} upper ledge";
     }
     
-    public sealed class LedgeNest : Item
-    {
-        public override string ItemId => "upper_ledge_nest";
-        public override string DisplayName => "Ledge Nest";
-        public override string Description => "Bird nest on the high stone platform";
-        public override List<string> OutcomeKeywords => new() { "nest", "bird", "egg" };
-    }
-    
     public sealed class FlatStone : Item
     {
         public override string ItemId => "upper_ledge_flat_stone";
         public override string DisplayName => "Flat Stone";
         public override string Description => "Smooth stone surface on the ledge";
-        public override List<string> OutcomeKeywords => new() { "stone", "surface", "platform" };
+        public override List<string> OutcomeKeywords => new() { "slab", "surface", "platform" };
     }
     
-    public sealed class OverhangShadow : Item
-    {
-        public override string ItemId => "upper_ledge_overhang_shadow";
-        public override string DisplayName => "Overhang Shadow";
-        public override string Description => "Dark shade cast by the rock above";
-        public override List<string> OutcomeKeywords => new() { "shadow", "overhang", "shelter" };
-    }
 }

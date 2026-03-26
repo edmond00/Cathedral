@@ -11,7 +11,7 @@ public class IceCrustedLedgeUpperNode : PyramidalFeatureNode
     public override bool IsBottomNode => false;
     public override Type PairedNodeType => typeof(IceCrustedLedgeLowerNode);
     
-    public override string NodeId => "ice_crusted_ledge_upper";
+    public override string NodeId => "upper_ice_crusted_ledge";
     public override string ContextDescription => "standing on the upper ice-crusted ledge";
     public override string TransitionDescription => "climb to the upper ice-crusted ledge";
     public override bool IsEntryNode => false;
@@ -38,7 +38,7 @@ public class IceCrustedLedgeUpperNode : PyramidalFeatureNode
         public override string ItemId => "ice_crusted_ledge_upper_ledge_lichen";
         public override string DisplayName => "Ledge Lichen";
         public override string Description => "Hardy lichen collectible from the icy ledge";
-        public override List<string> OutcomeKeywords => new() { "lichen", "symbiosis", "survival" };
+        public override List<string> OutcomeKeywords => new() { "thallus", "symbiosis", "survival" };
     }
     
     public sealed class Icicle : Item
@@ -46,7 +46,7 @@ public class IceCrustedLedgeUpperNode : PyramidalFeatureNode
         public override string ItemId => "ice_crusted_ledge_upper_icicle";
         public override string DisplayName => "Icicle";
         public override string Description => "Hanging icicle from the ledge";
-        public override List<string> OutcomeKeywords => new() { "icicle", "crystal", "drip" };
+        public override List<string> OutcomeKeywords => new() { "pendant", "crystal", "drip" };
     }
     
     public sealed class FrozenMoss : Item
@@ -54,6 +54,6 @@ public class IceCrustedLedgeUpperNode : PyramidalFeatureNode
         public override string ItemId => "ice_crusted_ledge_upper_frozen_moss";
         public override string DisplayName => "Frozen Moss";
         public override string Description => "Moss encased in ice";
-        public override List<string> OutcomeKeywords => new() { "moss", "ice", "dormancy" };
+        public override List<string> OutcomeKeywords => new() { "bryophyte", "ice", "dormancy" };
     }
 }

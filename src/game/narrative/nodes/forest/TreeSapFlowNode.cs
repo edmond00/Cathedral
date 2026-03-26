@@ -37,7 +37,7 @@ public class TreeSapFlowNode : NarrationNode
         public override string ItemId => "tree_resin";
         public override string DisplayName => "Tree Resin";
         public override string Description => "Sticky amber resin collected from the tree";
-        public override List<string> OutcomeKeywords => new() { "resin", "sap", "amber" };
+        public override List<string> OutcomeKeywords => new() { "oleoresin", "exudate", "amber" };
     }
     
     public sealed class CrystallizedSap : Item
@@ -45,6 +45,6 @@ public class TreeSapFlowNode : NarrationNode
         public override string ItemId => "tree_sap_crystallized";
         public override string DisplayName => "Crystallized Sap";
         public override string Description => "Hardened amber crystals of ancient sap";
-        public override List<string> OutcomeKeywords => new() { "crystal", "amber", "fossil", "sap" };
+        public override List<string> OutcomeKeywords => new() { "crystal", "amber", "fossil", "copal" };
     }
 }

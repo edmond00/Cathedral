@@ -14,7 +14,7 @@ public class DeadwoodHeapNode : NarrationNode
     public override string TransitionDescription => "climb the deadwood heap";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "heap", "deadwood", "decay", "branches" };
+    public override List<string> NodeKeywords => new() { "pile", "rot", "decay", "branches" };
     
     private static readonly string[] Moods = { "collapsed", "tangled", "dead", "brittle", "chaotic", "decaying", "piled", "grey" };
     
@@ -38,7 +38,7 @@ public class DeadwoodHeapNode : NarrationNode
         public override string ItemId => "dead_branch";
         public override string DisplayName => "Dead Branch";
         public override string Description => "A brittle, lifeless branch from the heap";
-        public override List<string> OutcomeKeywords => new() { "branch", "wood", "decay" };
+        public override List<string> OutcomeKeywords => new() { "bough", "wood", "decay" };
     }
     
     public sealed class DryFungus : Item
@@ -46,7 +46,7 @@ public class DeadwoodHeapNode : NarrationNode
         public override string ItemId => "deadwood_heap_dry_fungus";
         public override string DisplayName => "Dry Fungus";
         public override string Description => "A papery bracket fungus from decaying wood";
-        public override List<string> OutcomeKeywords => new() { "bracket", "shelf", "fungus" };
+        public override List<string> OutcomeKeywords => new() { "bracket", "shelf", "conk" };
     }
     
     public sealed class BarkBeetle : Item
@@ -54,6 +54,6 @@ public class DeadwoodHeapNode : NarrationNode
         public override string ItemId => "deadwood_heap_bark_beetle";
         public override string DisplayName => "Bark Beetle Specimen";
         public override string Description => "Dead bark beetles found within the crumbling wood";
-        public override List<string> OutcomeKeywords => new() { "beetle", "carapace", "chitin" };
+        public override List<string> OutcomeKeywords => new() { "scolytid", "carapace", "chitin" };
     }
 }

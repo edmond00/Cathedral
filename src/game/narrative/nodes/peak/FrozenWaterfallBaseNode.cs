@@ -38,7 +38,7 @@ public class FrozenWaterfallBaseNode : PyramidalFeatureNode
         public override string ItemId => "frozen_waterfall_base_waterfall_basalt";
         public override string DisplayName => "Waterfall Basalt";
         public override string Description => "Volcanic basalt collectible from the frozen pool";
-        public override List<string> OutcomeKeywords => new() { "basalt", "column", "igneous" };
+        public override List<string> OutcomeKeywords => new() { "phonolite", "column", "igneous" };
     }
     
     public sealed class PeakMoss : Item
@@ -46,6 +46,6 @@ public class FrozenWaterfallBaseNode : PyramidalFeatureNode
         public override string ItemId => "frozen_waterfall_base_peak_moss";
         public override string DisplayName => "Peak Moss";
         public override string Description => "Hardy alpine moss collectible from the base";
-        public override List<string> OutcomeKeywords => new() { "moss", "alpine", "resilience" };
+        public override List<string> OutcomeKeywords => new() { "bryophyte", "alpine", "resilience" };
     }
 }

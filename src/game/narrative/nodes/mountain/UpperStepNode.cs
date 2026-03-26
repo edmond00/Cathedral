@@ -32,27 +32,4 @@ public class UpperStepNode : PyramidalFeatureNode
         return $"on a {mood} upper step";
     }
     
-    public sealed class FlatTerrace : Item
-    {
-        public override string ItemId => "upper_step_flat_terrace";
-        public override string DisplayName => "Flat Terrace";
-        public override string Description => "Level stone platform";
-        public override List<string> OutcomeKeywords => new() { "terrace", "platform", "level" };
-    }
-    
-    public sealed class ErosionLayer : Item
-    {
-        public override string ItemId => "upper_step_erosion_layer";
-        public override string DisplayName => "Erosion Layer";
-        public override string Description => "Visible strata in the rock";
-        public override List<string> OutcomeKeywords => new() { "stratum", "erosion", "layer" };
-    }
-    
-    public sealed class TerraceEdge : Item
-    {
-        public override string ItemId => "upper_step_terrace_edge";
-        public override string DisplayName => "Terrace Edge";
-        public override string Description => "Sharp drop to the next level";
-        public override List<string> OutcomeKeywords => new() { "edge", "rim", "boundary" };
-    }
 }

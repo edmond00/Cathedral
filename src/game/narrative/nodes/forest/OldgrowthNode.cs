@@ -45,7 +45,7 @@ public class OldgrowthNode : NarrationNode
         public override string ItemId => "oldgrowth_ancient_wood";
         public override string DisplayName => "Ancient Wood";
         public override string Description => "Weathered wood from ancient oldgrowth trees";
-        public override List<string> OutcomeKeywords => new() { "wood", "age", "preservation" };
+        public override List<string> OutcomeKeywords => new() { "heartwood", "age", "preservation" };
     }
     
     public sealed class OldgrowthResin : Item
@@ -53,6 +53,6 @@ public class OldgrowthNode : NarrationNode
         public override string ItemId => "oldgrowth_oldgrowth_resin";
         public override string DisplayName => "Oldgrowth Resin";
         public override string Description => "Hardened resin oozing from ancient trees";
-        public override List<string> OutcomeKeywords => new() { "resin", "amber", "sap" };
+        public override List<string> OutcomeKeywords => new() { "oleoresin", "amber", "sap" };
     }
 }

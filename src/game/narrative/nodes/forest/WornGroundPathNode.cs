@@ -37,6 +37,6 @@ public class WornGroundPathNode : NarrationNode
         public override string ItemId => "worn_ground_path_path_dust";
         public override string DisplayName => "Path Dust";
         public override string Description => "Fine dust from the heavily traveled path";
-        public override List<string> OutcomeKeywords => new() { "dust", "powder", "path" };
+        public override List<string> OutcomeKeywords => new() { "silt", "powder", "artery" };
     }
 }

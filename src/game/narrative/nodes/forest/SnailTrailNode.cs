@@ -37,7 +37,7 @@ public class SnailTrailNode : NarrationNode
         public override string ItemId => "empty_snail_shell";
         public override string DisplayName => "Empty Snail Shell";
         public override string Description => "A spiral snail shell, the occupant long gone";
-        public override List<string> OutcomeKeywords => new() { "shell", "spiral", "calcium" };
+        public override List<string> OutcomeKeywords => new() { "whorl", "spiral", "calcium" };
     }
     
     public sealed class SlimeTrail : Item
@@ -45,7 +45,7 @@ public class SnailTrailNode : NarrationNode
         public override string ItemId => "snail_trail_slime";
         public override string DisplayName => "Fresh Slime Trail";
         public override string Description => "Glistening mucus trail still wet";
-        public override List<string> OutcomeKeywords => new() { "slime", "mucus", "iridescence" };
+        public override List<string> OutcomeKeywords => new() { "mucus", "iridescence", "viscosity" };
     }
     
     public sealed class MossClump : Item
@@ -53,6 +53,6 @@ public class SnailTrailNode : NarrationNode
         public override string ItemId => "snail_trail_moss_clump";
         public override string DisplayName => "Damp Moss Clump";
         public override string Description => "Small clump of moss where snails graze and rest";
-        public override List<string> OutcomeKeywords => new() { "moss", "clump", "cushion" };
+        public override List<string> OutcomeKeywords => new() { "bryophyte", "tuft", "cushion" };
     }
 }

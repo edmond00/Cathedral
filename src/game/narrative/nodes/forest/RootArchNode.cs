@@ -38,7 +38,7 @@ public class RootArchNode : NarrationNode
         public override string ItemId => "arched_root_piece";
         public override string DisplayName => "Arched Root Piece";
         public override string Description => "A curved piece from the root arch";
-        public override List<string> OutcomeKeywords => new() { "root", "arch", "wood" };
+        public override List<string> OutcomeKeywords => new() { "sinew", "curvature", "wood" };
     }
     
     public sealed class BarkRubbing : Item
@@ -46,6 +46,6 @@ public class RootArchNode : NarrationNode
         public override string ItemId => "root_arch_bark_rubbing";
         public override string DisplayName => "Bark Fragment";
         public override string Description => "A piece of bark worn smooth by passage";
-        public override List<string> OutcomeKeywords => new() { "bark", "rubbing", "polish" };
+        public override List<string> OutcomeKeywords => new() { "shaving", "rubbing", "polish" };
     }
 }

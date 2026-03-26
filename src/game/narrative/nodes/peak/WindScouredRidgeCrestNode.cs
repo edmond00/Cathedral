@@ -46,7 +46,7 @@ public class WindScouredRidgeCrestNode : PyramidalFeatureNode
         public override string ItemId => "wind_scoured_ridge_crest_alpine_gneiss";
         public override string DisplayName => "Alpine Gneiss";
         public override string Description => "Banded metamorphic rock collectible from the ridge";
-        public override List<string> OutcomeKeywords => new() { "gneiss", "metamorphic", "banding" };
+        public override List<string> OutcomeKeywords => new() { "schist", "metamorphic", "banding" };
     }
     
     public sealed class BareRock : Item
@@ -54,6 +54,6 @@ public class WindScouredRidgeCrestNode : PyramidalFeatureNode
         public override string ItemId => "wind_scoured_ridge_crest_bare_rock";
         public override string DisplayName => "Bare Rock";
         public override string Description => "Rock stripped of all ice by wind";
-        public override List<string> OutcomeKeywords => new() { "rock", "wind", "scouring" };
+        public override List<string> OutcomeKeywords => new() { "cobble", "wind", "scouring" };
     }
 }

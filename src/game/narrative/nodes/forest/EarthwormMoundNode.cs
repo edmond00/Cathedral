@@ -37,7 +37,7 @@ public class EarthwormMoundNode : NarrationNode
         public override string ItemId => "earthworm_rich_soil";
         public override string DisplayName => "Rich Soil";
         public override string Description => "Dark, fertile soil enriched by earthworms";
-        public override List<string> OutcomeKeywords => new() { "soil", "earth", "fertility", "loam" };
+        public override List<string> OutcomeKeywords => new() { "humus", "earth", "fertility", "loam" };
     }
     
     public sealed class WormCasting : Item
@@ -45,6 +45,6 @@ public class EarthwormMoundNode : NarrationNode
         public override string ItemId => "earthworm_mound_casting";
         public override string DisplayName => "Worm Casting";
         public override string Description => "Small mounds of processed soil left by earthworms";
-        public override List<string> OutcomeKeywords => new() { "casting", "pellet", "nutrient" };
+        public override List<string> OutcomeKeywords => new() { "pellet", "nutrient", "excrement" };
     }
 }

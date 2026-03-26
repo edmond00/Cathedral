@@ -13,7 +13,7 @@ public class AntColonyNode : NarrationNode
     public override string TransitionDescription => "observe the ants";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "mound", "workers", "trails", "colony" };
+    public override List<string> NodeKeywords => new() { "mound", "workers", "trails", "chamber" };
     
     private static readonly string[] Moods = { "busy", "industrious", "swarming", "organized", "active", "thriving", "teeming", "bustling" };
     
@@ -37,7 +37,7 @@ public class AntColonyNode : NarrationNode
         public override string ItemId => "ant_colony_ant_eggs";
         public override string DisplayName => "Ant Eggs";
         public override string Description => "Tiny pale eggs from the ant colony";
-        public override List<string> OutcomeKeywords => new() { "eggs", "larvae", "brood" };
+        public override List<string> OutcomeKeywords => new() { "pupae", "larvae", "brood" };
     }
     
     public sealed class ForamicAcid : Item
@@ -45,6 +45,6 @@ public class AntColonyNode : NarrationNode
         public override string ItemId => "ant_colony_foramic_acid";
         public override string DisplayName => "Foramic Acid";
         public override string Description => "Pungent defensive secretion from worker ants";
-        public override List<string> OutcomeKeywords => new() { "acid", "secretion", "defense" };
+        public override List<string> OutcomeKeywords => new() { "formate", "secretion", "defense" };
     }
 }

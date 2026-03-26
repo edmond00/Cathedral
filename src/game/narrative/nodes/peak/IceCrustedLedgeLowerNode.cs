@@ -11,7 +11,7 @@ public class IceCrustedLedgeLowerNode : PyramidalFeatureNode
     public override bool IsBottomNode => true;
     public override Type PairedNodeType => typeof(IceCrustedLedgeUpperNode);
     
-    public override string NodeId => "ice_crusted_ledge_lower";
+    public override string NodeId => "lower_ice_crusted_ledge";
     public override string ContextDescription => "standing on the lower ice-crusted ledge";
     public override string TransitionDescription => "descend to the lower ice-crusted ledge";
     public override bool IsEntryNode => false;
@@ -38,6 +38,6 @@ public class IceCrustedLedgeLowerNode : PyramidalFeatureNode
         public override string ItemId => "ice_crusted_ledge_lower_frost_lichen";
         public override string DisplayName => "Frost Lichen";
         public override string Description => "Frost-resistant lichen collectible from the lower ledge";
-        public override List<string> OutcomeKeywords => new() { "lichen", "frost", "symbiosis" };
+        public override List<string> OutcomeKeywords => new() { "crustose", "rime", "symbiosis" };
     }
 }

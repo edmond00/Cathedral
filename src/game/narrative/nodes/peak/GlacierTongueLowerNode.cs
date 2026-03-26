@@ -13,7 +13,7 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
     public override bool IsBottomNode => true;
     public override Type PairedNodeType => typeof(GlacierTongueUpperNode);
     
-    public override string NodeId => "glacier_tongue_lower";
+    public override string NodeId => "lower_glacier_tongue";
 
     public override List<NpcEncounterSlot> PossibleEncounters => new()
     {
@@ -45,7 +45,7 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
         public override string ItemId => "glacier_tongue_lower_moraine_dirt";
         public override string DisplayName => "Moraine Dirt";
         public override string Description => "Dirt and rock from glacier edge";
-        public override List<string> OutcomeKeywords => new() { "moraine", "dirt", "debris" };
+        public override List<string> OutcomeKeywords => new() { "till", "loam", "debris" };
     }
     
     public sealed class GlacialErratic : Item
@@ -53,6 +53,6 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
         public override string ItemId => "glacier_tongue_lower_glacial_erratic";
         public override string DisplayName => "Glacial Erratic";
         public override string Description => "Glacier-deposited boulder fragment collectible from ice edge";
-        public override List<string> OutcomeKeywords => new() { "erratic", "boulder", "glacier" };
+        public override List<string> OutcomeKeywords => new() { "dropstone", "boulder", "glacier" };
     }
 }

@@ -52,6 +52,6 @@ public class BrambleRunNode : NarrationNode
         public override string ItemId => "bramble_run_thorn";
         public override string DisplayName => "Bramble Thorn";
         public override string Description => "A sharp curved thorn from a bramble cane";
-        public override List<string> OutcomeKeywords => new() { "thorn", "spine", "hook" };
+        public override List<string> OutcomeKeywords => new() { "barb", "spine", "hook" };
     }
 }

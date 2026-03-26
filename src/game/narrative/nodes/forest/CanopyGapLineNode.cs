@@ -37,7 +37,7 @@ public class CanopyGapLineNode : NarrationNode
         public override string ItemId => "sunwarm_leaves";
         public override string DisplayName => "Sunwarm Leaves";
         public override string Description => "Fresh leaves warmed by direct sunlight";
-        public override List<string> OutcomeKeywords => new() { "leaf", "warmth", "growth" };
+        public override List<string> OutcomeKeywords => new() { "lamina", "warmth", "growth" };
     }
     
     public sealed class YoungShoots : Item
@@ -45,6 +45,6 @@ public class CanopyGapLineNode : NarrationNode
         public override string ItemId => "canopy_gap_line_young_shoots";
         public override string DisplayName => "Young Shoots";
         public override string Description => "Tender plant shoots growing in the sunlight";
-        public override List<string> OutcomeKeywords => new() { "shoot", "sapling", "growth" };
+        public override List<string> OutcomeKeywords => new() { "apical", "sapling", "growth" };
     }
 }

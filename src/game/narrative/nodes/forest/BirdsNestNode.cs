@@ -37,7 +37,7 @@ public class BirdsNestNode : NarrationNode
         public override string ItemId => "bird_feather";
         public override string DisplayName => "Bird Feather";
         public override string Description => "A small feather from the nest lining";
-        public override List<string> OutcomeKeywords => new() { "feather", "barb", "down" };
+        public override List<string> OutcomeKeywords => new() { "plume", "barb", "down" };
     }
     
     public sealed class EggshellFragment : Item
@@ -45,7 +45,7 @@ public class BirdsNestNode : NarrationNode
         public override string ItemId => "birds_nest_eggshell";
         public override string DisplayName => "Eggshell Fragment";
         public override string Description => "A pale blue eggshell fragment from a hatched egg";
-        public override List<string> OutcomeKeywords => new() { "shell", "fragment", "porcelain" };
+        public override List<string> OutcomeKeywords => new() { "calcareous", "pigment", "porcelain" };
     }
     
     public sealed class TwigBundle : Item
@@ -53,6 +53,6 @@ public class BirdsNestNode : NarrationNode
         public override string ItemId => "birds_nest_twig_bundle";
         public override string DisplayName => "Twig Bundle";
         public override string Description => "Small interwoven twigs from the nest structure";
-        public override List<string> OutcomeKeywords => new() { "twig", "bundle", "weave" };
+        public override List<string> OutcomeKeywords => new() { "fiber", "weave", "lattice" };
     }
 }

@@ -37,7 +37,7 @@ public class WindCutLowerSlopeNode : PyramidalFeatureNode
         public override string ItemId => "wind_cut_lower_slope_accumulated_debris";
         public override string DisplayName => "Accumulated Debris";
         public override string Description => "Material deposited by wind from above";
-        public override List<string> OutcomeKeywords => new() { "debris", "wind", "drift" };
+        public override List<string> OutcomeKeywords => new() { "detritus", "wind", "drift" };
     }
     
     public sealed class ShelterStone : Item
@@ -45,6 +45,6 @@ public class WindCutLowerSlopeNode : PyramidalFeatureNode
         public override string ItemId => "wind_cut_lower_slope_shelter_stone";
         public override string DisplayName => "Shelter Stone";
         public override string Description => "Boulder providing wind protection";
-        public override List<string> OutcomeKeywords => new() { "shelter", "boulder", "windbreak" };
+        public override List<string> OutcomeKeywords => new() { "refuge", "boulder", "windbreak" };
     }
 }

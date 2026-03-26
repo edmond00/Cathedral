@@ -38,7 +38,7 @@ public class FrozenOutwashPlainFlatsNode : PyramidalFeatureNode
         public override string ItemId => "frozen_outwash_plain_flats_outwash_gravel";
         public override string DisplayName => "Outwash Gravel";
         public override string Description => "Glacial outwash gravel collectible from the flats";
-        public override List<string> OutcomeKeywords => new() { "gravel", "outwash", "sediment" };
+        public override List<string> OutcomeKeywords => new() { "clast", "sandur", "sediment" };
     }
     
     public sealed class OutwashClay : Item
@@ -46,6 +46,6 @@ public class FrozenOutwashPlainFlatsNode : PyramidalFeatureNode
         public override string ItemId => "frozen_outwash_plain_flats_outwash_clay";
         public override string DisplayName => "Outwash Clay";
         public override string Description => "Fine glacial clay collectible from the flats";
-        public override List<string> OutcomeKeywords => new() { "clay", "outwash", "mineral" };
+        public override List<string> OutcomeKeywords => new() { "glaciomarine", "sandur", "mineral" };
     }
 }

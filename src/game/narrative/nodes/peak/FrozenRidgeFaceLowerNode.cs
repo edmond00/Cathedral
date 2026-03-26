@@ -11,7 +11,7 @@ public class FrozenRidgeFaceLowerNode : PyramidalFeatureNode
     public override bool IsBottomNode => true;
     public override Type PairedNodeType => typeof(FrozenRidgeFaceUpperNode);
     
-    public override string NodeId => "frozen_ridge_face_lower";
+    public override string NodeId => "lower_frozen_ridge_face";
     public override string ContextDescription => "standing at the lower frozen ridge face";
     public override string TransitionDescription => "descend to the lower frozen ridge face";
     public override bool IsEntryNode => false;

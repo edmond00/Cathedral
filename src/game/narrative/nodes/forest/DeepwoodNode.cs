@@ -45,6 +45,6 @@ public class DeepwoodNode : NarrationNode
         public override string ItemId => "deepwood_dark_loam";
         public override string DisplayName => "Dark Loam";
         public override string Description => "Rich black soil from the deepwood floor";
-        public override List<string> OutcomeKeywords => new() { "loam", "soil", "earth", "fertility" };
+        public override List<string> OutcomeKeywords => new() { "humus", "soil", "earth", "fertility" };
     }
 }

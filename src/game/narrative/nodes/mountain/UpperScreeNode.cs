@@ -37,22 +37,7 @@ public class UpperScreeNode : PyramidalFeatureNode
         public override string ItemId => "upper_scree_loose_chips";
         public override string DisplayName => "Loose Chips";
         public override string Description => "Small angular rock fragments";
-        public override List<string> OutcomeKeywords => new() { "chip", "fragment", "gravel" };
+        public override List<string> OutcomeKeywords => new() { "fragment", "gravel", "shard" };
     }
     
-    public sealed class SlideTrack : Item
-    {
-        public override string ItemId => "upper_scree_slide_track";
-        public override string DisplayName => "Slide Track";
-        public override string Description => "Path where rocks have recently slid";
-        public override List<string> OutcomeKeywords => new() { "track", "slide", "scar" };
-    }
-    
-    public sealed class UnstableRock : Item
-    {
-        public override string ItemId => "upper_scree_unstable_rock";
-        public override string DisplayName => "Unstable Rock";
-        public override string Description => "Larger stone perched in the scree";
-        public override List<string> OutcomeKeywords => new() { "rock", "hazard", "instability" };
-    }
 }

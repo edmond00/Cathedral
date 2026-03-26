@@ -44,7 +44,7 @@ public class DebrisFieldNode : PyramidalFeatureNode
         public override string ItemId => "debris_field_large_boulder";
         public override string DisplayName => "Large Boulder";
         public override string Description => "Massive rock fallen from above";
-        public override List<string> OutcomeKeywords => new() { "boulder", "rock", "mass" };
+        public override List<string> OutcomeKeywords => new() { "erratic", "rock", "mass" };
     }
     
     public sealed class RockDust : Item
@@ -52,6 +52,6 @@ public class DebrisFieldNode : PyramidalFeatureNode
         public override string ItemId => "debris_field_rock_dust";
         public override string DisplayName => "Rock Dust";
         public override string Description => "Fine powder from the impact";
-        public override List<string> OutcomeKeywords => new() { "dust", "powder", "mineral" };
+        public override List<string> OutcomeKeywords => new() { "silt", "powder", "mineral" };
     }
 }

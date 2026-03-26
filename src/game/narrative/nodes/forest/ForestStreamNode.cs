@@ -37,7 +37,7 @@ public class ForestStreamNode : NarrationNode
         public override string ItemId => "stream_water";
         public override string DisplayName => "Stream Water";
         public override string Description => "Clear, cold water flowing from upstream";
-        public override List<string> OutcomeKeywords => new() { "water", "purity", "freshness" };
+        public override List<string> OutcomeKeywords => new() { "current", "purity", "freshness" };
     }
     
     public sealed class WatersmoothedPebbles : Item
@@ -45,6 +45,6 @@ public class ForestStreamNode : NarrationNode
         public override string ItemId => "forest_stream_water_smoothed_pebbles";
         public override string DisplayName => "Water-smoothed Pebbles";
         public override string Description => "Smooth pebbles from the stream bed";
-        public override List<string> OutcomeKeywords => new() { "pebble", "stone", "polish", "stream" };
+        public override List<string> OutcomeKeywords => new() { "cobble", "stone", "polish", "stream" };
     }
 }

@@ -37,6 +37,6 @@ public class GreenwoodNode : NarrationNode
         public override string ItemId => "greenwood_hazel_nuts";
         public override string DisplayName => "Hazel Nuts";
         public override string Description => "Small brown nuts from greenwood hazel trees";
-        public override List<string> OutcomeKeywords => new() { "nut", "shell", "hazel", "cluster" };
+        public override List<string> OutcomeKeywords => new() { "caryopsis", "shell", "corylus", "cluster" };
     }
 }

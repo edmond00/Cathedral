@@ -37,7 +37,7 @@ public class WildflowerPatchNode : NarrationNode
         public override string ItemId => "wildflower_bouquet";
         public override string DisplayName => "Wildflower Bouquet";
         public override string Description => "A handful of picked wildflowers";
-        public override List<string> OutcomeKeywords => new() { "bouquet", "petal", "flower" };
+        public override List<string> OutcomeKeywords => new() { "nosegay", "petal", "flower" };
     }
     
     public sealed class FlowerPetal : Item
@@ -45,7 +45,7 @@ public class WildflowerPatchNode : NarrationNode
         public override string ItemId => "wildflower_patch_petal";
         public override string DisplayName => "Flower Petal";
         public override string Description => "A single delicate wildflower petal";
-        public override List<string> OutcomeKeywords => new() { "petal", "silk", "bloom" };
+        public override List<string> OutcomeKeywords => new() { "tepal", "silk", "bloom" };
     }
     
     public sealed class ButterflyWing : Item
@@ -53,6 +53,6 @@ public class WildflowerPatchNode : NarrationNode
         public override string ItemId => "wildflower_patch_butterfly_wing";
         public override string DisplayName => "Butterfly Wing";
         public override string Description => "A shed butterfly wing dusted with colorful scales";
-        public override List<string> OutcomeKeywords => new() { "wing", "scale", "membrane" };
+        public override List<string> OutcomeKeywords => new() { "ala", "scale", "membrane" };
     }
 }

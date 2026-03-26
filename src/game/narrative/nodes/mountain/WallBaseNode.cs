@@ -37,7 +37,7 @@ public class WallBaseNode : PyramidalFeatureNode
         public override string ItemId => "wall_base_fallen_stone";
         public override string DisplayName => "Fallen Stone";
         public override string Description => "Large rock that has dropped from above";
-        public override List<string> OutcomeKeywords => new() { "stone", "rockfall", "debris" };
+        public override List<string> OutcomeKeywords => new() { "fragment", "rockfall", "debris" };
     }
     
     public sealed class ClimbingCracks : Item
@@ -45,6 +45,6 @@ public class WallBaseNode : PyramidalFeatureNode
         public override string ItemId => "wall_base_climbing_cracks";
         public override string DisplayName => "Climbing Cracks";
         public override string Description => "Fissures offering handholds";
-        public override List<string> OutcomeKeywords => new() { "crack", "fissure", "handhold" };
+        public override List<string> OutcomeKeywords => new() { "crevice", "fissure", "handhold" };
     }
 }

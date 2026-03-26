@@ -37,7 +37,7 @@ public class IsolatedOakNode : NarrationNode
         public override string ItemId => "oak_acorn";
         public override string DisplayName => "Acorn";
         public override string Description => "A brown acorn with its cap intact";
-        public override List<string> OutcomeKeywords => new() { "acorn", "cap", "seed" };
+        public override List<string> OutcomeKeywords => new() { "cupule", "cap", "seed" };
     }
     
     public sealed class OakGall : Item
@@ -45,6 +45,6 @@ public class IsolatedOakNode : NarrationNode
         public override string ItemId => "isolated_oak_gall";
         public override string DisplayName => "Oak Gall";
         public override string Description => "A round oak apple gall formed by wasp larvae";
-        public override List<string> OutcomeKeywords => new() { "gall", "sphere", "tannin", "insect" };
+        public override List<string> OutcomeKeywords => new() { "sphere", "tannin", "insect", "tumor" };
     }
 }

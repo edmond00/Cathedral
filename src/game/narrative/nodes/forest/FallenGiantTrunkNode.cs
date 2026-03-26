@@ -45,6 +45,6 @@ public class FallenGiantTrunkNode : NarrationNode
         public override string ItemId => "fallen_trunk_soft_rot";
         public override string DisplayName => "Soft Rot Wood";
         public override string Description => "Punky, decomposing wood from the trunk interior";
-        public override List<string> OutcomeKeywords => new() { "rot", "decay", "fungus" };
+        public override List<string> OutcomeKeywords => new() { "decay", "fungus", "spore" };
     }
 }

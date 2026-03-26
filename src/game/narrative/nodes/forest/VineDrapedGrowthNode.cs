@@ -38,7 +38,7 @@ public class VineDrapedGrowthNode : NarrationNode
         public override string ItemId => "vine_tendril";
         public override string DisplayName => "Vine Tendril";
         public override string Description => "A flexible climbing tendril";
-        public override List<string> OutcomeKeywords => new() { "tendril", "vine", "curl" };
+        public override List<string> OutcomeKeywords => new() { "cirrus", "liana", "curl" };
     }
     
     public sealed class VineLeaf : Item
@@ -46,6 +46,6 @@ public class VineDrapedGrowthNode : NarrationNode
         public override string ItemId => "vine_draped_leaf";
         public override string DisplayName => "Vine Leaf";
         public override string Description => "A broad heart-shaped leaf from the climbing vines";
-        public override List<string> OutcomeKeywords => new() { "leaf", "vine", "lobe", "vein" };
+        public override List<string> OutcomeKeywords => new() { "lamina", "liana", "lobe", "vein" };
     }
 }

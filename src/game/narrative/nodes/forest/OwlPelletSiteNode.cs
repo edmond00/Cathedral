@@ -45,6 +45,6 @@ public class OwlPelletSiteNode : NarrationNode
         public override string ItemId => "owl_pellet_mat_pellet";
         public override string DisplayName => "Matted Pellet";
         public override string Description => "A compressed pellet of fur and bone";
-        public override List<string> OutcomeKeywords => new() { "pellet", "fur", "compression" };
+        public override List<string> OutcomeKeywords => new() { "bolus", "fur", "compression" };
     }
 }

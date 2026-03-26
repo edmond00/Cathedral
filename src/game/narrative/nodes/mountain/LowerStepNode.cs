@@ -37,7 +37,7 @@ public class LowerStepNode : PyramidalFeatureNode
         public override string ItemId => "lower_step_stone_slabs";
         public override string DisplayName => "Stone Slabs";
         public override string Description => "Large flat rocks on the terrace";
-        public override List<string> OutcomeKeywords => new() { "slab", "stone", "layer" };
+        public override List<string> OutcomeKeywords => new() { "slab", "flagstone", "layer" };
     }
     
     public sealed class SoilPocket : Item
@@ -45,6 +45,6 @@ public class LowerStepNode : PyramidalFeatureNode
         public override string ItemId => "lower_step_soil_pocket";
         public override string DisplayName => "Soil Pocket";
         public override string Description => "Small patch of earth with vegetation";
-        public override List<string> OutcomeKeywords => new() { "soil", "pocket", "earth" };
+        public override List<string> OutcomeKeywords => new() { "loam", "niche", "earth" };
     }
 }

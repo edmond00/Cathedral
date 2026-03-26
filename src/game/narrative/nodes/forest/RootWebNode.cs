@@ -38,7 +38,7 @@ public class RootWebNode : NarrationNode
         public override string ItemId => "root_fiber";
         public override string DisplayName => "Root Fibers";
         public override string Description => "Thin, tough fibers from surface roots";
-        public override List<string> OutcomeKeywords => new() { "root", "fiber", "wire" };
+        public override List<string> OutcomeKeywords => new() { "tendril", "fiber", "wire" };
     }
     
     public sealed class RootBark : Item
@@ -46,6 +46,6 @@ public class RootWebNode : NarrationNode
         public override string ItemId => "root_web_root_bark";
         public override string DisplayName => "Root Bark";
         public override string Description => "Papery bark peeling from exposed roots";
-        public override List<string> OutcomeKeywords => new() { "bark", "peel", "strip" };
+        public override List<string> OutcomeKeywords => new() { "cambium", "peel", "strip" };
     }
 }

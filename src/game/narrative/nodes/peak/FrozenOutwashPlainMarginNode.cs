@@ -38,6 +38,6 @@ public class FrozenOutwashPlainMarginNode : PyramidalFeatureNode
         public override string ItemId => "frozen_outwash_plain_margin_glacial_cobble";
         public override string DisplayName => "Glacial Cobble";
         public override string Description => "Glacier-rounded stone collectible from the margin";
-        public override List<string> OutcomeKeywords => new() { "cobble", "glacier", "stone" };
+        public override List<string> OutcomeKeywords => new() { "erratic", "glacier", "stone" };
     }
 }

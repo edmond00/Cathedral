@@ -44,7 +44,7 @@ public class CliffBaseNode : PyramidalFeatureNode
         public override string ItemId => "cliff_base_loose_rock";
         public override string DisplayName => "Loose Rock";
         public override string Description => "Unstable rock at the cliff base";
-        public override List<string> OutcomeKeywords => new() { "rock", "debris", "rockfall" };
+        public override List<string> OutcomeKeywords => new() { "scree", "debris", "rockfall" };
     }
     
     public sealed class CrumblingStone : Item
@@ -52,6 +52,6 @@ public class CliffBaseNode : PyramidalFeatureNode
         public override string ItemId => "cliff_base_crumbling_stone";
         public override string DisplayName => "Crumbling Stone";
         public override string Description => "Weathered stone fragments from erosion";
-        public override List<string> OutcomeKeywords => new() { "stone", "fragment", "erosion" };
+        public override List<string> OutcomeKeywords => new() { "rubble", "fragment", "erosion" };
     }
 }

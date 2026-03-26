@@ -37,6 +37,6 @@ public class OpenWoodlandNode : NarrationNode
         public override string ItemId => "open_woodland_wild_grass";
         public override string DisplayName => "Wild Grass";
         public override string Description => "Long blades of wild grass from the open clearing";
-        public override List<string> OutcomeKeywords => new() { "grass", "blade", "meadow", "stem" };
+        public override List<string> OutcomeKeywords => new() { "culm", "blade", "meadow", "stem" };
     }
 }

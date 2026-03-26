@@ -44,7 +44,7 @@ public class LowerScreeNode : PyramidalFeatureNode
         public override string ItemId => "scree_gravel";
         public override string DisplayName => "Fine Gravel";
         public override string Description => "Small stones settled at the base";
-        public override List<string> OutcomeKeywords => new() { "gravel", "stone", "deposit" };
+        public override List<string> OutcomeKeywords => new() { "pebble", "stone", "deposit" };
     }
     
     public sealed class BuriedRock : Item
@@ -52,6 +52,6 @@ public class LowerScreeNode : PyramidalFeatureNode
         public override string ItemId => "lower_scree_buried_rock";
         public override string DisplayName => "Buried Rock";
         public override string Description => "Large stone partially covered by scree";
-        public override List<string> OutcomeKeywords => new() { "rock", "burial", "anchor" };
+        public override List<string> OutcomeKeywords => new() { "lithic", "burial", "anchor" };
     }
 }

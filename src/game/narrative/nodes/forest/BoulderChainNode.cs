@@ -37,7 +37,7 @@ public class BoulderChainNode : NarrationNode
         public override string ItemId => "boulder_lichen";
         public override string DisplayName => "Boulder Lichen";
         public override string Description => "Crusty lichen growing on ancient stone";
-        public override List<string> OutcomeKeywords => new() { "lichen", "crust", "symbiosis" };
+        public override List<string> OutcomeKeywords => new() { "crust", "symbiosis", "pigment" };
     }
     
     public sealed class StoneDust : Item
@@ -45,6 +45,6 @@ public class BoulderChainNode : NarrationNode
         public override string ItemId => "boulder_chain_stone_dust";
         public override string DisplayName => "Stone Dust";
         public override string Description => "Fine mineral dust weathered from the boulders";
-        public override List<string> OutcomeKeywords => new() { "dust", "stone", "mineral" };
+        public override List<string> OutcomeKeywords => new() { "powder", "mineral", "grit" };
     }
 }

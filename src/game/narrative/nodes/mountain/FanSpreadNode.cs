@@ -37,14 +37,7 @@ public class FanSpreadNode : PyramidalFeatureNode
         public override string ItemId => "fan_gravel";
         public override string DisplayName => "Fine Gravel";
         public override string Description => "Small sorted stones across the fan";
-        public override List<string> OutcomeKeywords => new() { "gravel", "deposit", "layer" };
+        public override List<string> OutcomeKeywords => new() { "fragment", "deposit", "layer" };
     }
     
-    public sealed class WanderingChannel : Item
-    {
-        public override string ItemId => "fan_spread_wandering_channel";
-        public override string DisplayName => "Wandering Channel";
-        public override string Description => "Shallow braided water paths";
-        public override List<string> OutcomeKeywords => new() { "channel", "braid", "meandering" };
-    }
 }

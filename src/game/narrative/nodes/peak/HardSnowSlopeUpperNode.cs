@@ -11,7 +11,7 @@ public class HardSnowSlopeUpperNode : PyramidalFeatureNode
     public override bool IsBottomNode => false;
     public override Type PairedNodeType => typeof(HardSnowSlopeLowerNode);
     
-    public override string NodeId => "hard_snow_slope_upper";
+    public override string NodeId => "upper_hard_snow_slope";
     public override string ContextDescription => "standing on the upper hard snow slope";
     public override string TransitionDescription => "climb to the upper hard snow slope";
     public override bool IsEntryNode => false;

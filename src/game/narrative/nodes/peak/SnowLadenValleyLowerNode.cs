@@ -13,7 +13,7 @@ public class SnowLadenValleyLowerNode : PyramidalFeatureNode
     public override bool IsBottomNode => true;
     public override Type PairedNodeType => typeof(SnowLadenValleyUpperNode);
     
-    public override string NodeId => "snow_laden_valley_lower";
+    public override string NodeId => "lower_snow_laden_valley";
 
     public override List<NpcEncounterSlot> PossibleEncounters => new()
     {
@@ -45,7 +45,7 @@ public class SnowLadenValleyLowerNode : PyramidalFeatureNode
         public override string ItemId => "snow_laden_valley_lower_valley_schist";
         public override string DisplayName => "Valley Schist";
         public override string Description => "Foliated metamorphic rock collectible from the valley";
-        public override List<string> OutcomeKeywords => new() { "schist", "metamorphic", "mineral" };
+        public override List<string> OutcomeKeywords => new() { "phyllite", "metamorphic", "mineral" };
     }
     
     public sealed class ValleyMoss : Item
@@ -53,6 +53,6 @@ public class SnowLadenValleyLowerNode : PyramidalFeatureNode
         public override string ItemId => "snow_laden_valley_lower_valley_moss";
         public override string DisplayName => "Valley Moss";
         public override string Description => "Sheltered moss collectible from the lower valley";
-        public override List<string> OutcomeKeywords => new() { "moss", "valley", "cushion" };
+        public override List<string> OutcomeKeywords => new() { "bryophyte", "riparian", "cushion" };
     }
 }

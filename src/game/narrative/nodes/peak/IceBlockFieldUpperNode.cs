@@ -11,7 +11,7 @@ public class IceBlockFieldUpperNode : PyramidalFeatureNode
     public override bool IsBottomNode => false;
     public override Type PairedNodeType => typeof(IceBlockFieldLowerNode);
     
-    public override string NodeId => "ice_block_field_upper";
+    public override string NodeId => "upper_ice_block_field";
     public override string ContextDescription => "standing in the upper ice block field";
     public override string TransitionDescription => "climb through the upper ice blocks";
     public override bool IsEntryNode => false;

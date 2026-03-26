@@ -38,7 +38,7 @@ public class IvyCladTrunkNode : NarrationNode
         public override string ItemId => "ivy_leaf";
         public override string DisplayName => "Ivy Leaf";
         public override string Description => "A glossy, lobed ivy leaf";
-        public override List<string> OutcomeKeywords => new() { "leaf", "lobe", "vein", "wax" };
+        public override List<string> OutcomeKeywords => new() { "lobe", "vein", "wax", "lamina" };
     }
     
     public sealed class AerialRoot : Item

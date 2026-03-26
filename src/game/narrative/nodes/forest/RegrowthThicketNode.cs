@@ -38,7 +38,7 @@ public class RegrowthThicketNode : NarrationNode
         public override string ItemId => "pioneer_seed";
         public override string DisplayName => "Pioneer Seeds";
         public override string Description => "Seeds from fast-growing pioneer plants";
-        public override List<string> OutcomeKeywords => new() { "seed", "pioneer", "dispersal" };
+        public override List<string> OutcomeKeywords => new() { "propagule", "dispersal", "germination" };
     }
     
     public sealed class FreshShoot : Item
@@ -46,6 +46,6 @@ public class RegrowthThicketNode : NarrationNode
         public override string ItemId => "regrowth_thicket_fresh_shoot";
         public override string DisplayName => "Fresh Shoot";
         public override string Description => "A vigorous new shoot pushing through soil";
-        public override List<string> OutcomeKeywords => new() { "shoot", "growth", "vigor" };
+        public override List<string> OutcomeKeywords => new() { "sprout", "growth", "vigor" };
     }
 }

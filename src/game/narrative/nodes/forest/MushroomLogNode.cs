@@ -37,7 +37,7 @@ public class MushroomLogNode : NarrationNode
         public override string ItemId => "shelf_mushroom";
         public override string DisplayName => "Shelf Mushroom";
         public override string Description => "A tough, bracket-like shelf mushroom";
-        public override List<string> OutcomeKeywords => new() { "mushroom", "bracket", "shelf" };
+        public override List<string> OutcomeKeywords => new() { "polypore", "bracket", "conk" };
     }
     
     public sealed class DecayedLogWood : Item
@@ -45,7 +45,7 @@ public class MushroomLogNode : NarrationNode
         public override string ItemId => "mushroom_log_rotten_wood";
         public override string DisplayName => "Rotten Wood";
         public override string Description => "Soft, decaying wood riddled with fungal threads";
-        public override List<string> OutcomeKeywords => new() { "wood", "decay", "mycelium" };
+        public override List<string> OutcomeKeywords => new() { "punky", "decay", "mycelium" };
     }
     
     public sealed class BeetleHole : Item

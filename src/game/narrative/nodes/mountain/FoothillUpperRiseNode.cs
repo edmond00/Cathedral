@@ -32,27 +32,4 @@ public class FoothillUpperRiseNode : PyramidalFeatureNode
         return $"on a {mood} foothill upper rise";
     }
     
-    public sealed class RollingGrass : Item
-    {
-        public override string ItemId => "foothill_upper_rise_rolling_grass";
-        public override string DisplayName => "Rolling Grass";
-        public override string Description => "Grass covering the gentle slopes";
-        public override List<string> OutcomeKeywords => new() { "grass", "slope", "meadow" };
-    }
-    
-    public sealed class ScatteredShrubs : Item
-    {
-        public override string ItemId => "foothill_upper_rise_scattered_shrubs";
-        public override string DisplayName => "Scattered Shrubs";
-        public override string Description => "Bushes dotting the hillside";
-        public override List<string> OutcomeKeywords => new() { "shrub", "bush", "vegetation" };
-    }
-    
-    public sealed class ViewUpward : Item
-    {
-        public override string ItemId => "foothill_upper_rise_view_upward";
-        public override string DisplayName => "Upward View";
-        public override string Description => "Sight of higher peaks above";
-        public override List<string> OutcomeKeywords => new() { "peak", "vista", "mountain" };
-    }
 }

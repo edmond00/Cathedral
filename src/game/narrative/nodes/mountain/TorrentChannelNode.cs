@@ -37,14 +37,7 @@ public class TorrentChannelNode : PyramidalFeatureNode
         public override string ItemId => "torrent_channel_torrent_gravel";
         public override string DisplayName => "Torrent Gravel";
         public override string Description => "Water-rounded pebbles collectible from the channel";
-        public override List<string> OutcomeKeywords => new() { "gravel", "pebble", "tumbling" };
+        public override List<string> OutcomeKeywords => new() { "pebble", "tumbling", "smoothness" };
     }
     
-    public sealed class SmoothChannel : Item
-    {
-        public override string ItemId => "torrent_channel_smooth_channel";
-        public override string DisplayName => "Smooth Channel";
-        public override string Description => "Water-carved stone passage";
-        public override List<string> OutcomeKeywords => new() { "channel", "groove", "erosion" };
-    }
 }

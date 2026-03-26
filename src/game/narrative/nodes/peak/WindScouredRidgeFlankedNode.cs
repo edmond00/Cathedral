@@ -11,7 +11,7 @@ public class WindScouredRidgeFlankedNode : PyramidalFeatureNode
     public override bool IsBottomNode => true;
     public override Type PairedNodeType => typeof(WindScouredRidgeCrestNode);
     
-    public override string NodeId => "wind_scoured_ridge_flanked";
+    public override string NodeId => "wind_scoured_ridge_flank";
     public override string ContextDescription => "standing on the scoured flank";
     public override string TransitionDescription => "move to the scoured flank";
     public override bool IsEntryNode => false;

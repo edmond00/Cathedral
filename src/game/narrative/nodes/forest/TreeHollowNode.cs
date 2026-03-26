@@ -44,7 +44,7 @@ public class TreeHollowNode : NarrationNode
         public override string ItemId => "hollow_dried_leaves";
         public override string DisplayName => "Dried Leaves";
         public override string Description => "Crispy dried leaves collected from the hollow";
-        public override List<string> OutcomeKeywords => new() { "leaf", "tinder", "dryness" };
+        public override List<string> OutcomeKeywords => new() { "lamina", "tinder", "dryness" };
     }
     
     public sealed class BatGuano : Item
@@ -52,7 +52,7 @@ public class TreeHollowNode : NarrationNode
         public override string ItemId => "tree_hollow_bat_guano";
         public override string DisplayName => "Bat Guano";
         public override string Description => "Small deposits of bat droppings in the hollow";
-        public override List<string> OutcomeKeywords => new() { "guano", "droppings", "nitrogen" };
+        public override List<string> OutcomeKeywords => new() { "castings", "droppings", "nitrogen" };
     }
     
     public sealed class SquirrelNest : Item
@@ -60,6 +60,6 @@ public class TreeHollowNode : NarrationNode
         public override string ItemId => "tree_hollow_squirrel_nest";
         public override string DisplayName => "Squirrel Nest Material";
         public override string Description => "Shredded bark and leaves forming a drey inside the hollow";
-        public override List<string> OutcomeKeywords => new() { "nest", "bedding", "bark" };
+        public override List<string> OutcomeKeywords => new() { "drey", "bedding", "bark" };
     }
 }

@@ -37,7 +37,7 @@ public class LowerLedgeNode : PyramidalFeatureNode
         public override string ItemId => "lower_ledge_mossy_stone";
         public override string DisplayName => "Mossy Stone";
         public override string Description => "Moisture-covered rock on the ledge";
-        public override List<string> OutcomeKeywords => new() { "stone", "moss", "dampness" };
+        public override List<string> OutcomeKeywords => new() { "cobble", "bryophyte", "dampness" };
     }
     
     public sealed class CalciteFormation : Item
@@ -45,6 +45,6 @@ public class LowerLedgeNode : PyramidalFeatureNode
         public override string ItemId => "lower_ledge_calcite_formation";
         public override string DisplayName => "Calcite Formation";
         public override string Description => "Limestone deposit collectible from the ledge";
-        public override List<string> OutcomeKeywords => new() { "calcite", "formation", "mineral" };
+        public override List<string> OutcomeKeywords => new() { "aragonite", "speleothem", "mineral" };
     }
 }

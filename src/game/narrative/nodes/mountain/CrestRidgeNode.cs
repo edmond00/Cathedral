@@ -37,7 +37,7 @@ public class CrestRidgeNode : PyramidalFeatureNode
         public override string ItemId => "crest_ridge_frost_shatter";
         public override string DisplayName => "Frost Shatter";
         public override string Description => "Ice-fractured rock fragments at the summit";
-        public override List<string> OutcomeKeywords => new() { "frost", "ice", "fracture" };
+        public override List<string> OutcomeKeywords => new() { "gelifract", "ice", "fracture" };
     }
     
     public sealed class RidgePolishedStone : Item
@@ -45,7 +45,7 @@ public class CrestRidgeNode : PyramidalFeatureNode
         public override string ItemId => "ridge_polished_stone";
         public override string DisplayName => "Ridge-Polished Stone";
         public override string Description => "Smooth stone shaped by constant wind";
-        public override List<string> OutcomeKeywords => new() { "stone", "polish", "wind" };
+        public override List<string> OutcomeKeywords => new() { "cobble", "polish", "wind" };
     }
     
     public sealed class SummitCairn : Item
@@ -53,6 +53,6 @@ public class CrestRidgeNode : PyramidalFeatureNode
         public override string ItemId => "crest_ridge_summit_cairn";
         public override string DisplayName => "Summit Cairn";
         public override string Description => "Stacked stones marking the highest point";
-        public override List<string> OutcomeKeywords => new() { "cairn", "monument", "marker" };
+        public override List<string> OutcomeKeywords => new() { "waymarker", "monument", "marker" };
     }
 }

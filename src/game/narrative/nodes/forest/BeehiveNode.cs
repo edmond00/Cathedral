@@ -37,7 +37,7 @@ public class BeehiveNode : NarrationNode
         public override string ItemId => "wild_honeycomb";
         public override string DisplayName => "Wild Honeycomb";
         public override string Description => "A small piece of honeycomb carefully extracted";
-        public override List<string> OutcomeKeywords => new() { "honeycomb", "wax", "nectar", "comb" };
+        public override List<string> OutcomeKeywords => new() { "hexagon", "wax", "nectar", "cell" };
     }
     
     public sealed class BeeswaxFragment : Item
@@ -45,7 +45,7 @@ public class BeehiveNode : NarrationNode
         public override string ItemId => "beehive_beeswax_fragment";
         public override string DisplayName => "Beeswax Fragment";
         public override string Description => "A small piece of pure beeswax from the hive";
-        public override List<string> OutcomeKeywords => new() { "wax", "warmth", "fragrance" };
+        public override List<string> OutcomeKeywords => new() { "tallow", "warmth", "fragrance" };
     }
     
     public sealed class RoyalJelly : Item
@@ -53,6 +53,6 @@ public class BeehiveNode : NarrationNode
         public override string ItemId => "beehive_royal_jelly";
         public override string DisplayName => "Royal Jelly";
         public override string Description => "Precious milky substance secreted by worker bees";
-        public override List<string> OutcomeKeywords => new() { "jelly", "secretion", "queen", "protein" };
+        public override List<string> OutcomeKeywords => new() { "secretion", "queen", "protein", "vitality" };
     }
 }

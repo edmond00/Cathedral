@@ -36,6 +36,6 @@ public class BrightwoodNode : NarrationNode
         public override string ItemId => "brightwood_beech_leaves";
         public override string DisplayName => "Beech Leaves";
         public override string Description => "Golden-green leaves from brightwood beech trees";
-        public override List<string> OutcomeKeywords => new() { "leaf", "beech", "vein" };
+        public override List<string> OutcomeKeywords => new() { "lamina", "fagus", "vein" };
     }
 }

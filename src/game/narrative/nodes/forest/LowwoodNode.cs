@@ -37,7 +37,7 @@ public class LowwoodNode : NarrationNode
         public override string ItemId => "lowwood_wet_moss";
         public override string DisplayName => "Wet Moss";
         public override string Description => "Damp moss gathered from lowwood ground";
-        public override List<string> OutcomeKeywords => new() { "moss", "dampness", "ground" };
+        public override List<string> OutcomeKeywords => new() { "bryophyte", "dampness", "ground" };
     }
     
     public sealed class PuddleWater : Item
@@ -45,6 +45,6 @@ public class LowwoodNode : NarrationNode
         public override string ItemId => "lowwood_puddle_water";
         public override string DisplayName => "Puddle Water";
         public override string Description => "Water collected from lowwood puddles";
-        public override List<string> OutcomeKeywords => new() { "water", "puddle", "stagnation" };
+        public override List<string> OutcomeKeywords => new() { "runoff", "basin", "stagnation" };
     }
 }

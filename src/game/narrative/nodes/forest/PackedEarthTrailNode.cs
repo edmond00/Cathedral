@@ -37,6 +37,6 @@ public class PackedEarthTrailNode : NarrationNode
         public override string ItemId => "packed_earth_trail_hard_clay";
         public override string DisplayName => "Hard Clay";
         public override string Description => "Compacted clay from the trail surface";
-        public override List<string> OutcomeKeywords => new() { "clay", "earth", "compaction" };
+        public override List<string> OutcomeKeywords => new() { "kaolin", "earth", "compaction" };
     }
 }

@@ -38,6 +38,6 @@ public class FrozenStreamSourceNode : PyramidalFeatureNode
         public override string ItemId => "frozen_stream_source_spring_quartz";
         public override string DisplayName => "Spring Quartz";
         public override string Description => "Clear quartz crystal collectible from the spring";
-        public override List<string> OutcomeKeywords => new() { "quartz", "crystal", "spring" };
+        public override List<string> OutcomeKeywords => new() { "silicate", "crystal", "seepage" };
     }
 }

@@ -44,6 +44,6 @@ public class ShadowwoodNode : NarrationNode
         public override string ItemId => "shadowwood_dark_bark";
         public override string DisplayName => "Dark Bark";
         public override string Description => "Nearly black bark from shadowwood trees";
-        public override List<string> OutcomeKeywords => new() { "bark", "shadow", "gnarl" };
+        public override List<string> OutcomeKeywords => new() { "cortex", "shadow", "gnarl" };
     }
 }

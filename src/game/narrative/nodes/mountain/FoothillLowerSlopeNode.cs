@@ -37,14 +37,7 @@ public class FoothillLowerSlopeNode : PyramidalFeatureNode
         public override string ItemId => "foothill_lower_slope_low_grass";
         public override string DisplayName => "Low Grass";
         public override string Description => "Short grass at the mountain's edge";
-        public override List<string> OutcomeKeywords => new() { "grass", "meadow", "plain" };
+        public override List<string> OutcomeKeywords => new() { "blade", "meadow", "plain" };
     }
     
-    public sealed class MountainShadow : Item
-    {
-        public override string ItemId => "foothill_lower_slope_mountain_shadow";
-        public override string DisplayName => "Mountain Shadow";
-        public override string Description => "Shade cast by the peaks above";
-        public override List<string> OutcomeKeywords => new() { "shadow", "mountain", "silhouette" };
-    }
 }

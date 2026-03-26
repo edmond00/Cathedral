@@ -38,7 +38,7 @@ public class ShrubIslandNode : NarrationNode
         public override string ItemId => "shrub_berry";
         public override string DisplayName => "Shrub Berry";
         public override string Description => "Small dark berries from the shrub island";
-        public override List<string> OutcomeKeywords => new() { "berry", "fruit", "bitterness" };
+        public override List<string> OutcomeKeywords => new() { "drupe", "fruit", "bitterness" };
     }
     
     public sealed class ThornScratch : Item
@@ -46,6 +46,6 @@ public class ShrubIslandNode : NarrationNode
         public override string ItemId => "shrub_island_thorn";
         public override string DisplayName => "Defensive Thorn";
         public override string Description => "A sharp thorn from the impenetrable shrubs";
-        public override List<string> OutcomeKeywords => new() { "thorn", "spine", "defense" };
+        public override List<string> OutcomeKeywords => new() { "aculeate", "spine", "defense" };
     }
 }

@@ -45,6 +45,6 @@ public class BlackwoodNode : NarrationNode
         public override string ItemId => "blackwood_charred_twigs";
         public override string DisplayName => "Charred Twigs";
         public override string Description => "Blackened twigs from the scorched blackwood";
-        public override List<string> OutcomeKeywords => new() { "charcoal", "ash", "twig", "cinder" };
+        public override List<string> OutcomeKeywords => new() { "charcoal", "ash", "splinter", "cinder" };
     }
 }

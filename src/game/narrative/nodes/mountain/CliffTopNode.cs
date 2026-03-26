@@ -37,7 +37,7 @@ public class CliffTopNode : PyramidalFeatureNode
         public override string ItemId => "cliff_top_cracked_rock";
         public override string DisplayName => "Cracked Rock";
         public override string Description => "Fractured stone near the cliff edge";
-        public override List<string> OutcomeKeywords => new() { "rock", "fracture", "fissure" };
+        public override List<string> OutcomeKeywords => new() { "limestone", "fracture", "fissure" };
     }
     
     public sealed class RaptorFeather : Item
@@ -45,7 +45,7 @@ public class CliffTopNode : PyramidalFeatureNode
         public override string ItemId => "cliff_top_raptor_feather";
         public override string DisplayName => "Raptor Feather";
         public override string Description => "Large feather from a bird of prey";
-        public override List<string> OutcomeKeywords => new() { "feather", "raptor", "hunter" };
+        public override List<string> OutcomeKeywords => new() { "plume", "accipiter", "hunter" };
     }
     
 }

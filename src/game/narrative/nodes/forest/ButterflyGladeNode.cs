@@ -37,7 +37,7 @@ public class ButterflyGladeNode : NarrationNode
         public override string ItemId => "butterfly_glade_butterfly_wings";
         public override string DisplayName => "Butterfly Wings";
         public override string Description => "Colorful wings shed by butterflies";
-        public override List<string> OutcomeKeywords => new() { "wing", "scale", "powder", "pattern" };
+        public override List<string> OutcomeKeywords => new() { "scale", "powder", "pattern", "iridescence" };
     }
     
     public sealed class Nectar : Item
@@ -45,6 +45,6 @@ public class ButterflyGladeNode : NarrationNode
         public override string ItemId => "butterfly_glade_nectar";
         public override string DisplayName => "Flower Nectar";
         public override string Description => "Sweet nectar from glade flowers";
-        public override List<string> OutcomeKeywords => new() { "nectar", "sweetness", "blossom" };
+        public override List<string> OutcomeKeywords => new() { "sweetness", "blossom", "pollen" };
     }
 }

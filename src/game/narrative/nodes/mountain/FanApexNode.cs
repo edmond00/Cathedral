@@ -32,27 +32,12 @@ public class FanApexNode : PyramidalFeatureNode
         return $"at a {mood} fan apex";
     }
     
-    public sealed class ChannelSplit : Item
-    {
-        public override string ItemId => "fan_apex_channel_split";
-        public override string DisplayName => "Channel Split";
-        public override string Description => "Point where water divides into multiple paths";
-        public override List<string> OutcomeKeywords => new() { "channel", "fork", "distributary" };
-    }
-    
     public sealed class CoarseGravel : Item
     {
         public override string ItemId => "fan_apex_coarse_gravel";
         public override string DisplayName => "Coarse Gravel";
         public override string Description => "Large stones at the fan origin";
-        public override List<string> OutcomeKeywords => new() { "gravel", "stone", "deposit" };
+        public override List<string> OutcomeKeywords => new() { "pebble", "stone", "deposit" };
     }
     
-    public sealed class FastFlow : Item
-    {
-        public override string ItemId => "fan_apex_fast_flow";
-        public override string DisplayName => "Fast Flow";
-        public override string Description => "Rapid water movement at the apex";
-        public override List<string> OutcomeKeywords => new() { "torrent", "current", "water" };
-    }
 }

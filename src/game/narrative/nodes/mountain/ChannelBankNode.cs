@@ -32,20 +32,12 @@ public class ChannelBankNode : PyramidalFeatureNode
         return $"on a {mood} channel bank";
     }
     
-    public sealed class ReedBed : Item
-    {
-        public override string ItemId => "channel_bank_reed_bed";
-        public override string DisplayName => "Reed Bed";
-        public override string Description => "Tall reeds growing at water's edge";
-        public override List<string> OutcomeKeywords => new() { "reed", "bed", "waterside" };
-    }
-    
     public sealed class BankSediment : Item
     {
         public override string ItemId => "channel_bank_sediment";
         public override string DisplayName => "Bank Sediment";
         public override string Description => "Layered deposits from past floods";
-        public override List<string> OutcomeKeywords => new() { "sediment", "silt", "deposit" };
+        public override List<string> OutcomeKeywords => new() { "silt", "deposit", "mineral" };
     }
     
     public sealed class MountainReedStem : Item
@@ -53,6 +45,6 @@ public class ChannelBankNode : PyramidalFeatureNode
         public override string ItemId => "mountain_reed_stem";
         public override string DisplayName => "Mountain Reed Stem";
         public override string Description => "Dried reed stem collectible from the bank";
-        public override List<string> OutcomeKeywords => new() { "stem", "reed", "hollow" };
+        public override List<string> OutcomeKeywords => new() { "internode", "hollow", "culm" };
     }
 }

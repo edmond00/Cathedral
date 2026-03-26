@@ -37,7 +37,7 @@ public class HighwoodNode : NarrationNode
         public override string ItemId => "highwood_lichen";
         public override string DisplayName => "Highwood Lichen";
         public override string Description => "Pale lichen scraped from highwood bark";
-        public override List<string> OutcomeKeywords => new() { "lichen", "crust", "bark" };
+        public override List<string> OutcomeKeywords => new() { "crustose", "crust", "cortex" };
     }
     
     public sealed class BarkShavings : Item
@@ -45,6 +45,6 @@ public class HighwoodNode : NarrationNode
         public override string ItemId => "highwood_bark_shavings";
         public override string DisplayName => "Bark Shavings";
         public override string Description => "Thin strips of bark peeled from tall trunks";
-        public override List<string> OutcomeKeywords => new() { "bark", "shaving", "fiber" };
+        public override List<string> OutcomeKeywords => new() { "cortex", "tinder", "fiber" };
     }
 }

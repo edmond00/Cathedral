@@ -37,15 +37,7 @@ public class ButtressHeadNode : PyramidalFeatureNode
         public override string ItemId => "buttress_head_weathered_granite";
         public override string DisplayName => "Weathered Granite";
         public override string Description => "Exposed granite at the buttress top";
-        public override List<string> OutcomeKeywords => new() { "granite", "crystal", "weathering" };
-    }
-    
-    public sealed class ClimbingRoute : Item
-    {
-        public override string ItemId => "buttress_head_climbing_route";
-        public override string DisplayName => "Climbing Route";
-        public override string Description => "Possible path up the rock face";
-        public override List<string> OutcomeKeywords => new() { "route", "handhold", "ascent" };
+        public override List<string> OutcomeKeywords => new() { "feldspar", "crystal", "grit" };
     }
     
     public sealed class StoneCap : Item
@@ -53,6 +45,6 @@ public class ButtressHeadNode : PyramidalFeatureNode
         public override string ItemId => "buttress_head_stone_cap";
         public override string DisplayName => "Stone Cap";
         public override string Description => "Large capstone crowning the buttress";
-        public override List<string> OutcomeKeywords => new() { "cap", "crown", "stone" };
+        public override List<string> OutcomeKeywords => new() { "crown", "summit", "boulder" };
     }
 }

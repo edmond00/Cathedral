@@ -38,7 +38,7 @@ public class LowMossBedNode : NarrationNode
         public override string ItemId => "moss_carpet";
         public override string DisplayName => "Moss Carpet";
         public override string Description => "A thick sheet of forest floor moss";
-        public override List<string> OutcomeKeywords => new() { "moss", "carpet", "velvet" };
+        public override List<string> OutcomeKeywords => new() { "cushion", "velvet", "dampness" };
     }
     
     public sealed class MossSpore : Item
@@ -46,6 +46,6 @@ public class LowMossBedNode : NarrationNode
         public override string ItemId => "low_moss_spore_capsule";
         public override string DisplayName => "Moss Spore Capsule";
         public override string Description => "Tiny capsules on thin stalks containing spores";
-        public override List<string> OutcomeKeywords => new() { "spore", "capsule", "stalk" };
+        public override List<string> OutcomeKeywords => new() { "sporophyte", "stalk", "propagule" };
     }
 }

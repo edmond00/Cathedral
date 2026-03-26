@@ -38,7 +38,7 @@ public class ExposedRootPlateNode : NarrationNode
         public override string ItemId => "root_clay_clod";
         public override string DisplayName => "Clay Clod";
         public override string Description => "A clump of clay from the root plate";
-        public override List<string> OutcomeKeywords => new() { "clay", "clod", "mineral" };
+        public override List<string> OutcomeKeywords => new() { "kaolin", "lump", "mineral" };
     }
     
     public sealed class RootFiber : Item
@@ -46,6 +46,6 @@ public class ExposedRootPlateNode : NarrationNode
         public override string ItemId => "exposed_root_fiber";
         public override string DisplayName => "Root Fiber";
         public override string Description => "Stringy root fibers torn from the earth";
-        public override List<string> OutcomeKeywords => new() { "root", "fiber", "thread", "network" };
+        public override List<string> OutcomeKeywords => new() { "tendril", "thread", "network", "sinew" };
     }
 }

@@ -37,7 +37,7 @@ public class CrestShoulderNode : PyramidalFeatureNode
         public override string ItemId => "crest_shoulder_loose_scree";
         public override string DisplayName => "Loose Scree";
         public override string Description => "Unstable rock debris on the shoulder";
-        public override List<string> OutcomeKeywords => new() { "scree", "gravel", "instability" };
+        public override List<string> OutcomeKeywords => new() { "talus", "gravel", "instability" };
     }
     
     public sealed class AlpineQuartz : Item
@@ -45,6 +45,6 @@ public class CrestShoulderNode : PyramidalFeatureNode
         public override string ItemId => "crest_shoulder_alpine_quartz";
         public override string DisplayName => "Alpine Quartz";
         public override string Description => "Clear quartz crystal collectible from the shoulder";
-        public override List<string> OutcomeKeywords => new() { "quartz", "crystal", "mineral" };
+        public override List<string> OutcomeKeywords => new() { "silicate", "crystal", "mineral" };
     }
 }

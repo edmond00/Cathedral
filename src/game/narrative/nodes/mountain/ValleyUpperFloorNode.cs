@@ -12,7 +12,7 @@ public class ValleyUpperFloorNode : PyramidalFeatureNode
     public override bool IsBottomNode => false;
     public override Type PairedNodeType => typeof(ValleyLowerFloorNode);
     
-    public override string NodeId => "valley_upper_floor";
+    public override string NodeId => "upper_valley_floor";
 
     public override List<NpcEncounterSlot> PossibleEncounters => new()
     {
@@ -44,22 +44,7 @@ public class ValleyUpperFloorNode : PyramidalFeatureNode
         public override string ItemId => "valley_upper_floor_meadow_grass";
         public override string DisplayName => "Meadow Grass";
         public override string Description => "Tall grass covering the valley floor";
-        public override List<string> OutcomeKeywords => new() { "grass", "meadow", "abundance" };
+        public override List<string> OutcomeKeywords => new() { "blade", "abundance", "verdure" };
     }
     
-    public sealed class WildflowerPatch : Item
-    {
-        public override string ItemId => "valley_upper_floor_wildflower_patch";
-        public override string DisplayName => "Wildflower Patch";
-        public override string Description => "Colorful flowers in the meadow";
-        public override List<string> OutcomeKeywords => new() { "wildflower", "bloom", "patch" };
-    }
-    
-    public sealed class GentleSlope : Item
-    {
-        public override string ItemId => "valley_upper_floor_gentle_slope";
-        public override string DisplayName => "Gentle Slope";
-        public override string Description => "Gradual incline across the floor";
-        public override List<string> OutcomeKeywords => new() { "slope", "incline", "gradient" };
-    }
 }

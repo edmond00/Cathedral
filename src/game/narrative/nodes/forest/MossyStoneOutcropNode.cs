@@ -37,7 +37,7 @@ public class MossyStoneOutcropNode : NarrationNode
         public override string ItemId => "outcrop_moss";
         public override string DisplayName => "Thick Moss";
         public override string Description => "A cushion of deep green moss from the stones";
-        public override List<string> OutcomeKeywords => new() { "moss", "cushion", "velvet" };
+        public override List<string> OutcomeKeywords => new() { "cushion", "velvet", "thallus" };
     }
     
     public sealed class AncientStone : Item
@@ -45,6 +45,6 @@ public class MossyStoneOutcropNode : NarrationNode
         public override string ItemId => "mossy_outcrop_ancient_stone";
         public override string DisplayName => "Ancient Stone";
         public override string Description => "A weathered piece of the ancient rock outcrop";
-        public override List<string> OutcomeKeywords => new() { "stone", "granite", "mineral" };
+        public override List<string> OutcomeKeywords => new() { "feldspar", "granite", "mineral" };
     }
 }

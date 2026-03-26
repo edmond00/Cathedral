@@ -37,7 +37,7 @@ public class WildHerbsNode : NarrationNode
         public override string ItemId => "wild_herb_bundle";
         public override string DisplayName => "Wild Herb Bundle";
         public override string Description => "A bundle of aromatic forest herbs";
-        public override List<string> OutcomeKeywords => new() { "herb", "bundle", "medicine" };
+        public override List<string> OutcomeKeywords => new() { "aromatic", "fascicle", "medicine" };
     }
     
     public sealed class HerbRoot : Item
@@ -45,6 +45,6 @@ public class WildHerbsNode : NarrationNode
         public override string ItemId => "wild_herbs_herb_root";
         public override string DisplayName => "Herb Root";
         public override string Description => "A pungent root from a medicinal herb";
-        public override List<string> OutcomeKeywords => new() { "root", "medicine", "potency" };
+        public override List<string> OutcomeKeywords => new() { "rhizome", "medicine", "potency" };
     }
 }

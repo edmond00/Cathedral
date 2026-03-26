@@ -16,7 +16,7 @@ public class SlushChannelSpreadNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the slush channel spread";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "slush", "snow", "melting", "spread" };
+    public override List<string> NodeKeywords => new() { "slush", "snow", "melting", "fan" };
     
     private static readonly string[] Moods = { "dispersed", "soggy", "spreading", "melting" };
     
@@ -33,19 +33,11 @@ public class SlushChannelSpreadNode : PyramidalFeatureNode
         return $"standing in a {mood} slush channel spread";
     }
     
-    public sealed class SlushPool : Item
-    {
-        public override string ItemId => "slush_channel_spread_slush_pool";
-        public override string DisplayName => "Slush Pool";
-        public override string Description => "Pool of accumulated slush";
-        public override List<string> OutcomeKeywords => new() { "slush", "pool", "water" };
-    }
-    
     public sealed class AlpineSedge : Item
     {
         public override string ItemId => "slush_channel_spread_alpine_sedge";
         public override string DisplayName => "Alpine Sedge";
         public override string Description => "Hardy grass collectible from the channel";
-        public override List<string> OutcomeKeywords => new() { "sedge", "alpine", "grass" };
+        public override List<string> OutcomeKeywords => new() { "blade", "tuft", "tussock" };
     }
 }

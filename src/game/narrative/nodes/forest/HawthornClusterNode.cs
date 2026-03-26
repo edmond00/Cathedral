@@ -45,6 +45,6 @@ public class HawthornClusterNode : NarrationNode
         public override string ItemId => "hawthorn_cluster_thorn";
         public override string DisplayName => "Hawthorn Thorn";
         public override string Description => "A long, sharp thorn from a hawthorn branch";
-        public override List<string> OutcomeKeywords => new() { "thorn", "spine", "needle" };
+        public override List<string> OutcomeKeywords => new() { "barb", "spine", "needle" };
     }
 }

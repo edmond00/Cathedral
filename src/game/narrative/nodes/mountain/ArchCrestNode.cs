@@ -37,22 +37,7 @@ public class ArchCrestNode : PyramidalFeatureNode
         public override string ItemId => "arch_crest_keystone";
         public override string DisplayName => "Arch Keystone";
         public override string Description => "Central supporting stone at arch peak";
-        public override List<string> OutcomeKeywords => new() { "keystone", "apex", "structure" };
+        public override List<string> OutcomeKeywords => new() { "capstone", "apex", "structure" };
     }
     
-    public sealed class ViewPoint : Item
-    {
-        public override string ItemId => "arch_crest_view_point";
-        public override string DisplayName => "View Point";
-        public override string Description => "Commanding vantage from arch top";
-        public override List<string> OutcomeKeywords => new() { "vista", "vantage", "panorama" };
-    }
-    
-    public sealed class WeatheredSurface : Item
-    {
-        public override string ItemId => "arch_crest_weathered_surface";
-        public override string DisplayName => "Weathered Surface";
-        public override string Description => "Eroded rock on the arch spine";
-        public override List<string> OutcomeKeywords => new() { "surface", "erosion", "weathering" };
-    }
 }

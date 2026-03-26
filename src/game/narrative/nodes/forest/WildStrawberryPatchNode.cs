@@ -45,7 +45,7 @@ public class WildStrawberryPatchNode : NarrationNode
         public override string ItemId => "wild_strawberry_runner";
         public override string DisplayName => "Strawberry Runner";
         public override string Description => "A thin stem sending out new plants";
-        public override List<string> OutcomeKeywords => new() { "runner", "stem", "propagation" };
+        public override List<string> OutcomeKeywords => new() { "stolon", "stem", "propagation" };
     }
     
     public sealed class StrawberryLeaf : Item

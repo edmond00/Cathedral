@@ -32,27 +32,4 @@ public class RockfallCrownNode : PyramidalFeatureNode
         return $"at a {mood} rockfall crown";
     }
     
-    public sealed class FractureZone : Item
-    {
-        public override string ItemId => "rockfall_crown_fracture_zone";
-        public override string DisplayName => "Fracture Zone";
-        public override string Description => "Area where rock face has split";
-        public override List<string> OutcomeKeywords => new() { "fracture", "crack", "fissure" };
-    }
-    
-    public sealed class TeeringBlock : Item
-    {
-        public override string ItemId => "rockfall_crown_teetering_block";
-        public override string DisplayName => "Teetering Block";
-        public override string Description => "Large rock ready to fall";
-        public override List<string> OutcomeKeywords => new() { "block", "instability", "danger" };
-    }
-    
-    public sealed class FreshScar : Item
-    {
-        public override string ItemId => "rockfall_crown_fresh_scar";
-        public override string DisplayName => "Fresh Scar";
-        public override string Description => "Exposed rock where material has fallen";
-        public override List<string> OutcomeKeywords => new() { "scar", "exposure", "rawness" };
-    }
 }

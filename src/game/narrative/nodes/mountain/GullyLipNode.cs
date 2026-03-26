@@ -15,7 +15,7 @@ public class GullyLipNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the gully lip";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "lip", "rim", "edge", "drop" };
+    public override List<string> NodeKeywords => new() { "brink", "rim", "edge", "drop" };
     
     private static readonly string[] Moods = { "shaded", "dark", "shadowy", "dim" };
     
@@ -37,22 +37,7 @@ public class GullyLipNode : PyramidalFeatureNode
         public override string ItemId => "gully_lip_overhanging_fern";
         public override string DisplayName => "Overhanging Fern";
         public override string Description => "Lush fern growing at the gully edge";
-        public override List<string> OutcomeKeywords => new() { "fern", "frond", "overhang" };
+        public override List<string> OutcomeKeywords => new() { "frond", "pinnule", "droop" };
     }
     
-    public sealed class CoolAir : Item
-    {
-        public override string ItemId => "gully_lip_cool_air";
-        public override string DisplayName => "Cool Air";
-        public override string Description => "Cold air rising from the gully";
-        public override List<string> OutcomeKeywords => new() { "draft", "chill", "breeze" };
-    }
-    
-    public sealed class SlipperyEdge : Item
-    {
-        public override string ItemId => "gully_lip_slippery_edge";
-        public override string DisplayName => "Slippery Edge";
-        public override string Description => "Moist rock at the gully entrance";
-        public override List<string> OutcomeKeywords => new() { "edge", "slipperiness", "moss" };
-    }
 }

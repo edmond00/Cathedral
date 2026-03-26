@@ -38,7 +38,7 @@ public class SnowCorniceFallLineNode : PyramidalFeatureNode
         public override string ItemId => "cornice_debris";
         public override string DisplayName => "Cornice Debris";
         public override string Description => "Debris from cornice collapse";
-        public override List<string> OutcomeKeywords => new() { "debris", "cornice", "snow" };
+        public override List<string> OutcomeKeywords => new() { "detritus", "overhang", "snow" };
     }
     
 }

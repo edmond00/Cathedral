@@ -37,7 +37,7 @@ public class SpiderWebNode : NarrationNode
         public override string ItemId => "spider_web_spider_silk";
         public override string DisplayName => "Spider Silk";
         public override string Description => "Strong sticky threads from the web";
-        public override List<string> OutcomeKeywords => new() { "silk", "gossamer", "thread", "protein" };
+        public override List<string> OutcomeKeywords => new() { "gossamer", "thread", "protein", "filament" };
     }
     
     public sealed class TrappedInsects : Item
@@ -45,6 +45,6 @@ public class SpiderWebNode : NarrationNode
         public override string ItemId => "spider_web_trapped_insects";
         public override string DisplayName => "Trapped Insects";
         public override string Description => "Small insects caught in the sticky web";
-        public override List<string> OutcomeKeywords => new() { "insect", "prey", "trap" };
+        public override List<string> OutcomeKeywords => new() { "arthropod", "prey", "trap" };
     }
 }

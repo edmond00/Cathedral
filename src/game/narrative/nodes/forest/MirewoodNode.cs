@@ -45,7 +45,7 @@ public class MirewoodNode : NarrationNode
         public override string ItemId => "mirewood_bog_water";
         public override string DisplayName => "Bog Water";
         public override string Description => "Stagnant water collected from mirewood pools";
-        public override List<string> OutcomeKeywords => new() { "water", "bog", "stagnation" };
+        public override List<string> OutcomeKeywords => new() { "leachate", "mire", "stagnation" };
     }
     
     public sealed class BogPeat : Item
@@ -53,6 +53,6 @@ public class MirewoodNode : NarrationNode
         public override string ItemId => "mirewood_bog_peat";
         public override string DisplayName => "Bog Peat";
         public override string Description => "Dense organic matter from the mirewood bog";
-        public override List<string> OutcomeKeywords => new() { "peat", "bog", "carbon" };
+        public override List<string> OutcomeKeywords => new() { "humus", "mire", "carbon" };
     }
 }

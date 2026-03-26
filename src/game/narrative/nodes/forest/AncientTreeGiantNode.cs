@@ -38,15 +38,7 @@ public class AncientTreeGiantNode : NarrationNode
         public override string ItemId => "ancient_bark";
         public override string DisplayName => "Ancient Bark";
         public override string Description => "A piece of deeply furrowed bark from the ancient tree";
-        public override List<string> OutcomeKeywords => new() { "bark", "furrow", "age", "weathering" };
-    }
-    
-    public sealed class HollowCavity : Item
-    {
-        public override string ItemId => "ancient_tree_hollow_cavity";
-        public override string DisplayName => "Hollow Cavity";
-        public override string Description => "A deep cavity within the ancient trunk";
-        public override List<string> OutcomeKeywords => new() { "cavity", "shelter", "rot", "hollow" };
+        public override List<string> OutcomeKeywords => new() { "fissure", "furrow", "age", "weathering" };
     }
     
     public sealed class TreeLichen : Item
@@ -54,6 +46,6 @@ public class AncientTreeGiantNode : NarrationNode
         public override string ItemId => "ancient_tree_lichen";
         public override string DisplayName => "Ancient Lichen Patch";
         public override string Description => "Centuries-old lichen growing on the weathered bark";
-        public override List<string> OutcomeKeywords => new() { "lichen", "crust", "symbiosis", "bark" };
+        public override List<string> OutcomeKeywords => new() { "crust", "symbiosis", "bark", "growth" };
     }
 }

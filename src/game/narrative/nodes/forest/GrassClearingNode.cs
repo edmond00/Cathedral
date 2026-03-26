@@ -45,7 +45,7 @@ public class GrassClearingNode : NarrationNode
         public override string ItemId => "grass_seed";
         public override string DisplayName => "Grass Seed";
         public override string Description => "Small seeds from wild grasses";
-        public override List<string> OutcomeKeywords => new() { "seed", "grain", "chaff" };
+        public override List<string> OutcomeKeywords => new() { "kernel", "grain", "chaff" };
     }
     
     public sealed class GrassFlower : Item

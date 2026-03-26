@@ -38,7 +38,7 @@ public class IceCliffBaseNode : PyramidalFeatureNode
         public override string ItemId => "ice_cliff_base_glacier_debris";
         public override string DisplayName => "Glacier Debris";
         public override string Description => "Rock fragments deposited by glacier movement";
-        public override List<string> OutcomeKeywords => new() { "debris", "moraine", "rock" };
+        public override List<string> OutcomeKeywords => new() { "detritus", "moraine", "rock" };
     }
     
     public sealed class FrozenDebris : Item
@@ -46,6 +46,6 @@ public class IceCliffBaseNode : PyramidalFeatureNode
         public override string ItemId => "ice_cliff_base_frozen_debris";
         public override string DisplayName => "Frozen Debris";
         public override string Description => "Ice-encased debris at the cliff base";
-        public override List<string> OutcomeKeywords => new() { "debris", "ice", "encasement" };
+        public override List<string> OutcomeKeywords => new() { "detritus", "ice", "encasement" };
     }
 }

@@ -38,7 +38,7 @@ public class IsolatedPlantClusterNode : NarrationNode
         public override string ItemId => "rare_deepwood_plant";
         public override string DisplayName => "Rare Deepwood Plant";
         public override string Description => "A specimen from the isolated cluster";
-        public override List<string> OutcomeKeywords => new() { "plant", "rarity", "adaptation", "specimen" };
+        public override List<string> OutcomeKeywords => new() { "rarity", "adaptation", "specimen", "tendril" };
     }
     
     public sealed class AdaptedRoot : Item
@@ -46,6 +46,6 @@ public class IsolatedPlantClusterNode : NarrationNode
         public override string ItemId => "isolated_plant_adapted_root";
         public override string DisplayName => "Adapted Root";
         public override string Description => "A specialized root structure showing survival adaptation";
-        public override List<string> OutcomeKeywords => new() { "root", "network", "adaptation" };
+        public override List<string> OutcomeKeywords => new() { "tendril", "network", "adaptation" };
     }
 }

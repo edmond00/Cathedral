@@ -46,6 +46,6 @@ public class BeechStandNode : NarrationNode
         public override string ItemId => "beech_stand_copper_leaf";
         public override string DisplayName => "Copper Beech Leaf";
         public override string Description => "A copper-colored beech leaf with delicate veins";
-        public override List<string> OutcomeKeywords => new() { "leaf", "vein", "autumn", "copper" };
+        public override List<string> OutcomeKeywords => new() { "vein", "autumn", "ochre", "petiole" };
     }
 }
