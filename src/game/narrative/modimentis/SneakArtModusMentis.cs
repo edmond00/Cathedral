@@ -11,6 +11,7 @@ public class SneakArtModusMentis : ModusMentis
     public override string ModusMentisId => "sneak_art";
     public override string DisplayName => "Sneak Art";
     public override string ShortDescription => "stealth, silent movement";
+    public override string SkillMeans => "stealth and silent movement";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs => new[] { "feet", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

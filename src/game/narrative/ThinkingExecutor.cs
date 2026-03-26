@@ -55,7 +55,7 @@ public class ThinkingExecutor
         CancellationToken cancellationToken = default)
     {
         string outcomeDescription = targetOutcome.ToNaturalLanguageString();
-        var modusMentisIds = actionModiMentis.Select(s => s.ModusMentisId).ToList();
+        var skillMeans = actionModiMentis.Select(s => $"with {s.SkillMeans}").ToList();
 
         // Get thinking slot — reset context for a fresh batch
         int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
@@ -77,7 +77,7 @@ public class ThinkingExecutor
 
         // ── Call 2: HOW ────────────────────────────────────────────────────────────
         string howPrompt = _promptConstructor.BuildHowPrompt(outcomeDescription, actionModiMentis, thinkingModusMentis);
-        string howGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateHowSchema(modusMentisIds));
+        string howGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateHowSchema(skillMeans));
 
         string? howJson = await RequestFromLLMAsync(thinkingSlot, howPrompt, howGbnf, 350, cancellationToken);
         if (string.IsNullOrWhiteSpace(howJson))
@@ -86,21 +86,22 @@ public class ThinkingExecutor
             return null;
         }
 
-        var (howText, selectedSkillId) = ParseHowResponse(howJson);
-        if (string.IsNullOrEmpty(selectedSkillId))
+        var (howText, selectedMeans) = ParseHowResponse(howJson);
+        if (string.IsNullOrEmpty(selectedMeans))
         {
-            Console.Error.WriteLine("ThinkingExecutor: HOW call could not parse selected_skill.");
+            Console.Error.WriteLine("ThinkingExecutor: HOW call could not parse selected_approach.");
             return null;
         }
 
-        Console.WriteLine($"ThinkingExecutor: HOW complete — selected skill: '{selectedSkillId}'");
+        Console.WriteLine($"ThinkingExecutor: HOW complete — selected approach: '{selectedMeans}'");
 
-        var selectedModusMentis = actionModiMentis.FirstOrDefault(s => s.ModusMentisId == selectedSkillId);
+        var selectedModusMentis = MapMeansToModusMentis(selectedMeans, actionModiMentis);
         if (selectedModusMentis == null)
         {
-            Console.Error.WriteLine($"ThinkingExecutor: Selected skill '{selectedSkillId}' not found in action modiMentis.");
+            Console.Error.WriteLine($"ThinkingExecutor: Could not map approach '{selectedMeans}' to any action modusMentis.");
             return null;
         }
+        string selectedSkillId = selectedModusMentis.ModusMentisId;
 
         // ── Call 3: WHAT (action modusMentis slot) ─────────────────────────────────
         int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(selectedModusMentis);
@@ -166,7 +167,7 @@ public class ThinkingExecutor
         Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
-        var modusMentisIds = actionModiMentis.Select(s => s.ModusMentisId).ToList();
+        var skillMeans = actionModiMentis.Select(s => $"with {s.SkillMeans}").ToList();
 
         // Get or create slot, then reset history so this thinking batch starts clean
         int slot = await GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
@@ -197,7 +198,7 @@ public class ThinkingExecutor
         // ── Per-outcome: step 3a (skill selection) + step 3b (action description) ──────────────
         var actions = new List<ParsedNarrativeAction>();
         var skillReasoningTexts = new List<string>();
-        var chosenSkillIds = new List<string>();
+        var chosenMeans = new List<string>();
         int actionIndex = 1;
 
         for (int i = 0; i < totalActions; i++)
@@ -205,11 +206,11 @@ public class ThinkingExecutor
             var hardcodedOutcome = sampledOutcomes[i];
             string hardcodedOutcomeStr = hardcodedOutcome.Outcome.ToNaturalLanguageString();
 
-            // Step 3a — skill selection
+            // Step 3a — approach selection
             string skillSelectionGbnf = JsonConstraintGenerator.GenerateGBNF(
-                LLMSchemaConfig.CreateSkillSelectionSchema(modusMentisIds, hardcodedOutcomeStr));
+                LLMSchemaConfig.CreateSkillSelectionSchema(skillMeans, hardcodedOutcomeStr));
             string skillSelectionPrompt = _promptConstructor.BuildSkillSelectionPrompt(
-                hardcodedOutcomeStr, actionModiMentis, thinkingModusMentis, chosenSkillIds);
+                hardcodedOutcomeStr, actionModiMentis, thinkingModusMentis, chosenMeans);
 
             string? skillSelectionJson = await RequestFromLLMAsync(
                 slot, skillSelectionPrompt, skillSelectionGbnf, 300, cancellationToken);
@@ -220,22 +221,25 @@ public class ThinkingExecutor
                 continue;
             }
 
-            var (skillReasoningText, selectedSkillId) = ParseSkillSelectionResponse(skillSelectionJson);
-            if (string.IsNullOrEmpty(selectedSkillId))
+            var (skillReasoningText, selectedMeans) = ParseSkillSelectionResponse(skillSelectionJson);
+            if (string.IsNullOrEmpty(selectedMeans))
             {
-                Console.Error.WriteLine($"ThinkingExecutor: Skill-selection {i + 1} could not parse selected_skill, skipping outcome.");
+                Console.Error.WriteLine($"ThinkingExecutor: Skill-selection {i + 1} could not parse selected_approach, skipping outcome.");
                 continue;
             }
 
+            var selectedModusMentis = MapMeansToModusMentis(selectedMeans, actionModiMentis);
+            string selectedSkillId = selectedModusMentis?.ModusMentisId ?? selectedMeans;
+
             skillReasoningTexts.Add(skillReasoningText);
-            chosenSkillIds.Add(selectedSkillId);
-            Console.WriteLine($"ThinkingExecutor: Skill-selection {i + 1}/{totalActions}: '{selectedSkillId}' for '{hardcodedOutcomeStr}'");
+            chosenMeans.Add(selectedMeans);
+            Console.WriteLine($"ThinkingExecutor: Skill-selection {i + 1}/{totalActions}: '{selectedSkillId}' ({selectedMeans}) for '{hardcodedOutcomeStr}'");
 
             // Step 3b — action description
             string actionGbnf = JsonConstraintGenerator.GenerateGBNF(
-                LLMSchemaConfig.CreateSingleActionSchema(hardcodedOutcomeStr, selectedSkillId));
+                LLMSchemaConfig.CreateSingleActionSchema(hardcodedOutcomeStr, selectedMeans));
             string actionPrompt = _promptConstructor.BuildSingleActionPrompt(
-                actionIndex, totalActions, thinkingModusMentis, hardcodedOutcomeStr, selectedSkillId);
+                actionIndex, totalActions, thinkingModusMentis, hardcodedOutcomeStr, selectedMeans);
 
             string? actionJson = await RequestFromLLMAsync(slot, actionPrompt, actionGbnf, 200, cancellationToken);
 
@@ -401,17 +405,17 @@ public class ThinkingExecutor
     }
 
     /// <summary>
-    /// Parses the HOW call response. Returns (howText, selectedSkillId).
+    /// Parses the HOW call response. Returns (howText, selectedMeans) where selectedMeans is "with X".
     /// </summary>
-    private (string HowText, string SelectedSkillId) ParseHowResponse(string json)
+    private (string HowText, string SelectedMeans) ParseHowResponse(string json)
     {
         try
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
             string howText = root.GetProperty("how_could_i_do_it").GetString() ?? "";
-            string skillId = root.GetProperty("selected_skill").GetString() ?? "";
-            return (howText, skillId);
+            string means = root.GetProperty("selected_approach").GetString() ?? "";
+            return (howText, means);
         }
         catch (JsonException ex)
         {
@@ -419,6 +423,12 @@ public class ThinkingExecutor
             return ("", "");
         }
     }
+
+    /// <summary>
+    /// Maps a "with X" means string back to the matching ModusMentis, or null if no match.
+    /// </summary>
+    private static ModusMentis? MapMeansToModusMentis(string means, List<ModusMentis> actionModiMentis)
+        => actionModiMentis.FirstOrDefault(s => $"with {s.SkillMeans}" == means);
 
     /// <summary>
     /// Parses the reasoning-only call response.
@@ -441,17 +451,21 @@ public class ThinkingExecutor
     /// Parses the skill-selection call response (step 3a).
     /// Returns (SkillReasoningText, SelectedSkillId); returns ("", "") on failure.
     /// </summary>
-    private (string SkillReasoningText, string SelectedSkillId) ParseSkillSelectionResponse(string json)
+    /// <summary>
+    /// Parses the skill-selection call response (step 3a).
+    /// Returns (ReasoningText, SelectedMeans) where SelectedMeans is "with X"; returns ("", "") on failure.
+    /// </summary>
+    private (string SkillReasoningText, string SelectedMeans) ParseSkillSelectionResponse(string json)
     {
         try
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
-            string part1 = TextTruncationUtils.TrimToLastSentence(root.GetProperty("how_my_skills_could_help").GetString() ?? "");
-            string part2 = TextTruncationUtils.TrimToLastSentence(root.GetProperty("which_skill_and_why").GetString() ?? "");
+            string part1 = TextTruncationUtils.TrimToLastSentence(root.GetProperty("how_could_i_proceed").GetString() ?? "");
+            string part2 = TextTruncationUtils.TrimToLastSentence(root.GetProperty("which_approach_and_why").GetString() ?? "");
             string skillReasoning = (part1 + " " + part2).Trim();
-            string selectedSkill = root.GetProperty("selected_skill").GetString() ?? "";
-            return (skillReasoning, selectedSkill);
+            string selectedMeans = root.GetProperty("selected_approach").GetString() ?? "";
+            return (skillReasoning, selectedMeans);
         }
         catch (JsonException ex)
         {

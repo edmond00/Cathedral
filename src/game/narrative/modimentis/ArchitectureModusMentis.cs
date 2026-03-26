@@ -11,6 +11,7 @@ public class ArchitectureModusMentis : ModusMentis
     public override string ModusMentisId => "architecture";
     public override string DisplayName => "Architecture";
     public override string ShortDescription => "structural design, spatial logic";
+    public override string SkillMeans => "structural and spatial thinking";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "eyes", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

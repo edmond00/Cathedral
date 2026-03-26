@@ -11,6 +11,7 @@ public class SolfegeModusMentis : ModusMentis
     public override string ModusMentisId => "solfege";
     public override string DisplayName => "Solfege";
     public override string ShortDescription => "pitch, rhythm, harmony";
+    public override string SkillMeans => "pitch, rhythm, and harmony";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "ears", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

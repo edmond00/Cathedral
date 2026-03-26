@@ -12,6 +12,11 @@ public abstract class ModusMentis
     public abstract string ModusMentisId { get; }           // "observation", "algebraic_analysis"
     public abstract string DisplayName { get; }       // "Observation", "Algebraic Analysis"
     public abstract string ShortDescription { get; }  // 2-4 word description for prompts
+    /// <summary>
+    /// How this skill operates, shown in action lists as "with [SkillMeans]".
+    /// Defaults to ShortDescription; override in subclasses for cleaner phrasing.
+    /// </summary>
+    public virtual string SkillMeans => ShortDescription;
     public abstract ModusMentisFunction[] Functions { get; } // Can have multiple functions (1-3)
     public abstract string[] Organs { get; }          // Associated organ ids (1-2)
     public int Level { get; set; }                    // 1-10, used for modusMentis checks (random initial)

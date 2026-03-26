@@ -11,6 +11,7 @@ public class ScrutinyModusMentis : ModusMentis
     public override string ModusMentisId => "scrutiny";
     public override string DisplayName => "Scrutiny";
     public override string ShortDescription => "intense examination, detail";
+    public override string SkillMeans => "intense close examination";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs => new[] { "eyes", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

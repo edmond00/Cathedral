@@ -11,6 +11,7 @@ public class AthleticsModusMentis : ModusMentis
     public override string ModusMentisId => "athletics";
     public override string DisplayName => "Athletics";
     public override string ShortDescription => "running, climbing, exertion";
+    public override string SkillMeans => "running, climbing, and exertion";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs => new[] { "legs", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

@@ -11,6 +11,7 @@ public class ButcheryModusMentis : ModusMentis
     public override string ModusMentisId => "butchery";
     public override string DisplayName => "Butchery";
     public override string ShortDescription => "anatomy, efficient cutting";
+    public override string SkillMeans => "precise anatomical cutting";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "hands", "viscera" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

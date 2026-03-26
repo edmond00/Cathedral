@@ -11,6 +11,7 @@ public class PoetryModusMentis : ModusMentis
     public override string ModusMentisId => "poetry";
     public override string DisplayName => "Poetry";
     public override string ShortDescription => "metaphor, lyrical expression";
+    public override string SkillMeans => "metaphor and lyrical expression";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Observation };
     public override string[] Organs => new[] { "tongue", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

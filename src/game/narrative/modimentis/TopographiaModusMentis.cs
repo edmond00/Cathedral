@@ -11,6 +11,7 @@ public class TopographiaModusMentis : ModusMentis
     public override string ModusMentisId => "topographia";
     public override string DisplayName => "Topographia";
     public override string ShortDescription => "terrain, elevation, landscape";
+    public override string SkillMeans => "terrain and landscape reading";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

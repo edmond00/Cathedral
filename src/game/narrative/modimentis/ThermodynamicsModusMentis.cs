@@ -11,6 +11,7 @@ public class ThermodynamicsModusMentis : ModusMentis
     public override string ModusMentisId => "thermodynamics";
     public override string DisplayName => "Thermodynamics";
     public override string ShortDescription => "energy, entropy, physics";
+    public override string SkillMeans => "energy and physics principles";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

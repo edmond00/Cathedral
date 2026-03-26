@@ -11,6 +11,7 @@ public class RhetoricModusMentis : ModusMentis
     public override string ModusMentisId => "rhetoric";
     public override string DisplayName => "Rhetoric";
     public override string ShortDescription => "persuasion, argumentation";
+    public override string SkillMeans => "persuasion and argumentation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs => new[] { "tongue", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

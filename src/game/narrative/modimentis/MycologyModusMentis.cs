@@ -11,6 +11,7 @@ public class MycologyModusMentis : ModusMentis
     public override string ModusMentisId => "mycology";
     public override string DisplayName => "Mycology";
     public override string ShortDescription => "fungi, decomposition";
+    public override string SkillMeans => "knowledge of fungi and decay";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "eyes", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

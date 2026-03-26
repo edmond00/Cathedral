@@ -11,6 +11,7 @@ public class FoulPlayModusMentis : ModusMentis
     public override string ModusMentisId => "foul_play";
     public override string DisplayName => "Foul Play";
     public override string ShortDescription => "dirty tricks, deception";
+    public override string SkillMeans => "dirty tricks and deception";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override string[] Organs => new[] { "cerebrum", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

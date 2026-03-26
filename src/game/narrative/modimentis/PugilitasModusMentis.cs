@@ -11,6 +11,7 @@ public class PugilitasModusMentis : ModusMentis
     public override string ModusMentisId => "pugilitas";
     public override string DisplayName => "Pugilitas";
     public override string ShortDescription => "boxing, hand-to-hand combat";
+    public override string SkillMeans => "boxing and hand-to-hand combat";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs => new[] { "arms", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

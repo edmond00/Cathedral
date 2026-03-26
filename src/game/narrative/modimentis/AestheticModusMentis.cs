@@ -11,6 +11,7 @@ public class AestheticModusMentis : ModusMentis
     public override string ModusMentisId => "aesthetic";
     public override string DisplayName => "Aesthetic";
     public override string ShortDescription => "beauty, visual harmony";
+    public override string SkillMeans => "keen aesthetic sense";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs => new[] { "eyes", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

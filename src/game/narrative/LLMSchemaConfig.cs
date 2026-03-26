@@ -78,7 +78,8 @@ public static class LLMSchemaConfig
     /// <summary>
     /// Call 2 (HOW): thinking modusMentis picks which action skill to use and briefly explains.
     /// </summary>
-    public static CompositeField CreateHowSchema(List<string> validSkills)
+    /// <param name="validMeans">List of "with X" approach strings the LLM can choose from</param>
+    public static CompositeField CreateHowSchema(List<string> validMeans)
     {
         return new CompositeField("HowResponse",
             new TemplateStringField("how_could_i_do_it",
@@ -86,7 +87,7 @@ public static class LLMSchemaConfig
                 MinGenLength: 20,
                 MaxGenLength: 400,
                 FirstSentenceMaxLength: 150),
-            new ChoiceField<string>("selected_skill", validSkills.ToArray())
+            new ChoiceField<string>("selected_approach", validMeans.ToArray())
         );
     }
 
@@ -109,21 +110,22 @@ public static class LLMSchemaConfig
     /// The outcome is hardcoded; the LLM reasons about which skill fits best, then picks one.
     /// Field order: outcome (hardcoded) → how_my_skills_could_help → which_skill_and_why → selected_skill
     /// </summary>
-    public static CompositeField CreateSkillSelectionSchema(List<string> validSkills, string hardcodedOutcome)
+    /// <param name="validMeans">List of "with X" approach strings the LLM can choose from</param>
+    public static CompositeField CreateSkillSelectionSchema(List<string> validMeans, string hardcodedOutcome)
     {
         return new CompositeField("SkillSelection",
             new ChoiceField<string>("outcome", new[] { hardcodedOutcome }),
-            new TemplateStringField("how_my_skills_could_help",
+            new TemplateStringField("how_could_i_proceed",
                 Template: "<generated>",
                 MinGenLength: 20,
                 MaxGenLength: 450,
                 FirstSentenceMaxLength: 150),
-            new TemplateStringField("which_skill_and_why",
+            new TemplateStringField("which_approach_and_why",
                 Template: "<generated>",
                 MinGenLength: 20,
                 MaxGenLength: 450,
                 FirstSentenceMaxLength: 150),
-            new ChoiceField<string>("selected_skill", validSkills.ToArray())
+            new ChoiceField<string>("selected_approach", validMeans.ToArray())
         );
     }
 
@@ -132,11 +134,12 @@ public static class LLMSchemaConfig
     /// Both outcome and skill are hardcoded; the LLM only writes the action description.
     /// Field order: outcome (hardcoded) → skill (hardcoded) → action_description
     /// </summary>
-    public static CompositeField CreateSingleActionSchema(string hardcodedOutcome, string hardcodedSkill)
+    /// <param name="hardcodedApproach">The "with X" means string that was selected</param>
+    public static CompositeField CreateSingleActionSchema(string hardcodedOutcome, string hardcodedApproach)
     {
         return new CompositeField("Action",
             new ChoiceField<string>("outcome", new[] { hardcodedOutcome }),
-            new ChoiceField<string>("skill", new[] { hardcodedSkill }),
+            new ChoiceField<string>("approach", new[] { hardcodedApproach }),
             new TemplateStringField("action_description",
                 Template: "try to <generated>.",
                 MinGenLength: 10,

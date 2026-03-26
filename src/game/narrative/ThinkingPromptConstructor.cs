@@ -52,10 +52,10 @@ You noticed {keyword}. {transition} Now you want to {outcomeDescription}.
 
         return $@"Your goal is to {outcomeDescription}.
 
-Among your skills:
-{string.Join("\n", actionModiMentis.Select(s => $"- {s.ModusMentisId}: {s.ShortDescription}"))}
+How do you want to proceed?
+{string.Join("\n", actionModiMentis.Select(s => $"- with {s.SkillMeans}"))}
 
-{reminderClause}which skill could best help you achieve this goal, and how would you use it?";
+{reminderClause}which approach could best help you achieve this goal, and how would you use it?";
     }
 
     /// <summary>
@@ -126,13 +126,13 @@ You are now in {node.GenerateNeutralDescription(protagonist.CurrentLocationId)}.
 
 You notice {keywordContext} and start wondering what it could lead to.
 
-Among your skills:
-{string.Join("\n", actionModiMentis.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
+How do you want to proceed?
+{string.Join("\n", actionModiMentis.Select(s => $"- with {s.SkillMeans}"))}
 
 What could happen:
 {string.Join("\n", allOutcomes.Select(o => $"- {o}"))}
 
-{reminderClause}what do you think and feel about {keywordContext}? Which of your skills could help you here? Propose 2-5 things you could try.";
+{reminderClause}what do you think and feel about {keywordContext}? Which approach could help you here? Propose 2-5 things you could try.";
     }
 
     /// <summary>
@@ -166,13 +166,13 @@ You are now in {node.GenerateNeutralDescription(protagonist.CurrentLocationId)}.
 
 You are wondering how you could handle {keywordContext}.
 
-Among your skills:
-{string.Join("\n", actionModiMentis.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
+How do you want to proceed?
+{string.Join("\n", actionModiMentis.Select(s => $"- with {s.SkillMeans}"))}
 
 What could happen:
 {string.Join("\n", allOutcomes.Select(o => $"- {o}"))}
 
-{reminderClause}which of your skills could help? What do you think and feel?";
+{reminderClause}which approach could help? What do you think and feel?";
     }
 
     /// <summary>
@@ -188,7 +188,7 @@ What could happen:
         List<string> alreadyChosenSkills)
     {
         string avoidanceLine = alreadyChosenSkills.Count > 0
-            ? $"Other than the skills you already considered ({string.Join(", ", alreadyChosenSkills)}), which "
+            ? $"Other than the approaches you already considered ({string.Join(", ", alreadyChosenSkills)}), which "
             : "Which ";
 
         string outcomeQuoted = $"\"{hardcodedOutcome}\"";
@@ -198,11 +198,11 @@ What could happen:
 
         return $@"You are wondering how you could achieve: {outcomeQuoted}.
 
-Among your skills:
-{string.Join("\n", actionModiMentis.Select(s => $"- {s.DisplayName}: {s.ShortDescription}"))}
+How do you want to proceed?
+{string.Join("\n", actionModiMentis.Select(s => $"- with {s.SkillMeans}"))}
 
-{reminderClause}Question 1: How could my skills help me achieve {outcomeQuoted}?
-Question 2: {avoidanceLine}skill is most appropriate and why?";
+{reminderClause}Question 1: How could I proceed to achieve {outcomeQuoted}?
+Question 2: {avoidanceLine}approach is most appropriate and why?";
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ Question 2: {avoidanceLine}skill is most appropriate and why?";
             ? $"As a {thinkingModusMentis.PersonaReminder}, "
             : "";
 
-        return $@"You have decided to use {hardcodedSkill} to achieve {outcomeQuoted}.
+        return $@"You have decided to proceed {hardcodedSkill} to achieve {outcomeQuoted}.
 
 {reminderClause}what exactly will you try?";
     }

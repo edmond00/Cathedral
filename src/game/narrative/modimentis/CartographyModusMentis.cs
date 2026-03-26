@@ -11,6 +11,7 @@ public class CartographyModusMentis : ModusMentis
     public override string ModusMentisId => "cartography";
     public override string DisplayName => "Cartography";
     public override string ShortDescription => "maps, spatial memory";
+    public override string SkillMeans => "spatial memory and mapping";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "eyes", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

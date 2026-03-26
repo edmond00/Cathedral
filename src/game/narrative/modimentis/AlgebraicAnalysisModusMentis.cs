@@ -11,6 +11,7 @@ public class AlgebraicAnalysisModusMentis : ModusMentis
     public override string ModusMentisId => "algebraic_analysis";
     public override string DisplayName => "Algebraic Analysis";
     public override string ShortDescription => "patterns, abstract reasoning";
+    public override string SkillMeans => "abstract pattern reasoning";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

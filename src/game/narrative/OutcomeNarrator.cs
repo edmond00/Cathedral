@@ -94,17 +94,17 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
 
         string personaToneLine = actionModusMentis.PersonaTone != null
-            ? $"You are a {actionModusMentis.PersonaTone}.\n"
-            : $"You are {actionModusMentis.DisplayName}.\n";
+            ? $"You are a {actionModusMentis.PersonaTone}."
+            : $"You are {actionModusMentis.DisplayName}.";
         string reminderClause = actionModusMentis.PersonaReminder != null
             ? $"As a {actionModusMentis.PersonaReminder}, "
             : "";
 
-        string prompt = $@"{personaToneLine}You tried to {action.ActionText} but it could not be done.
+        string prompt = $@"{personaToneLine}
+You tried to {action.ActionText} but it could not happen.
+{plausibilityError}
 
-The reason: {plausibilityError}
-
-{reminderClause}what do you think about this?";
+{reminderClause}what happened?";
 
         var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
         string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
@@ -151,15 +151,6 @@ The reason: {plausibilityError}
         Protagonist protagonist,
         string? failureHint = null)
     {
-        string outcomeDescription = outcome.ToNaturalLanguageString();
-        string difficultyDesc = difficulty < 0.3 ? "easy" : difficulty < 0.7 ? "moderate" : "hard";
-
-        string failureGuidance = "";
-        if (!succeeded && !string.IsNullOrEmpty(failureHint))
-        {
-            failureGuidance = $" {failureHint}";
-        }
-
         string personaToneLine = actionModusMentis.PersonaTone != null
             ? $"You are a {actionModusMentis.PersonaTone}."
             : $"You are {actionModusMentis.DisplayName}.";
@@ -167,12 +158,30 @@ The reason: {plausibilityError}
             ? $"As a {actionModusMentis.PersonaReminder}, "
             : "";
 
+        string resultLine;
+        if (succeeded)
+        {
+            string difficultyNote = difficulty < 0.3
+                ? "without much effort"
+                : difficulty < 0.7
+                    ? "after some difficulty"
+                    : "against the odds";
+            string outcomeDescription = outcome.ToNaturalLanguageString();
+            resultLine = $"You succeeded {difficultyNote}. {outcomeDescription}.";
+        }
+        else
+        {
+            string failureLine = string.IsNullOrEmpty(failureHint)
+                ? "You failed."
+                : $"You failed. {failureHint}";
+            resultLine = failureLine;
+        }
+
         return $@"{personaToneLine}
 You tried to {action.ActionText}.
+{resultLine}
 
-{(succeeded
-    ? $"You succeeded ({difficultyDesc}). Outcome: {outcomeDescription}.\n\n{reminderClause}what happened?"
-    : $"The attempt failed ({difficultyDesc}).{failureGuidance}\n\n{reminderClause}what happened?")}";
+{reminderClause}what happened?";
     }
 
     /// <summary>

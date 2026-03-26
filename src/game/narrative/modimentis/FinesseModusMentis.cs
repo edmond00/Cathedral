@@ -11,6 +11,7 @@ public class FinesseModusMentis : ModusMentis
     public override string ModusMentisId => "finesse";
     public override string DisplayName => "Finesse";
     public override string ShortDescription => "precision, delicate touch";
+    public override string SkillMeans => "precision and delicate touch";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs => new[] { "hands", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
