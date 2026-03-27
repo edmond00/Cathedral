@@ -14,7 +14,7 @@ public class AncientTreeGiantNode : NarrationNode
     public override string TransitionDescription => "approach the giant tree";
     public override bool IsEntryNode => false;
     
-    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a massive gnarled <trunk> rising above"), KeywordInContext.Parse("the enormous <girth> of the ancient tree"), KeywordInContext.Parse("a silent forest <patriarch> standing apart"), KeywordInContext.Parse("bark worn by <centuries> of wind and rain") };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a massive gnarled <trunk> rising above"), KeywordInContext.Parse("the enormous <girth> of the ancient tree"), KeywordInContext.Parse("a silent forest <patriarch> standing apart"), KeywordInContext.Parse("some <centuries> of wind and rain worn into the bark") };
     
     private static readonly string[] Moods = { "massive", "ancient", "venerable", "primeval", "enormous", "patriarch", "timeless", "monumental" };
     
@@ -46,6 +46,6 @@ public class AncientTreeGiantNode : NarrationNode
         public override string ItemId => "ancient_tree_lichen";
         public override string DisplayName => "Ancient Lichen Patch";
         public override string Description => "Centuries-old lichen growing on the weathered bark";
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a grey <crust> of lichen on the bark"), KeywordInContext.Parse("an ancient <symbiosis> of fungus and alga"), KeywordInContext.Parse("slow pale <growth> across the weathered wood") };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a grey <crust> of lichen on the bark"), KeywordInContext.Parse("an ancient <symbiosis> of fungus and alga"), KeywordInContext.Parse("a slow pale <growth> spreading across the weathered wood") };
     }
 }

@@ -53,6 +53,6 @@ public class WildStrawberryPatchNode : NarrationNode
         public override string ItemId => "wild_strawberry_leaf";
         public override string DisplayName => "Strawberry Leaf";
         public override string Description => "Triple-leaflet leaves with serrated edges";
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("one of the three distinct <leaflet> blades from the compound leaf"), KeywordInContext.Parse("the sharp <serration> along the edge of each leaflet"), KeywordInContext.Parse("a prominent <vein> running the length of the leaf") };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a serrated <leaflet> blade from the compound leaf"), KeywordInContext.Parse("the sharp <serration> along the edge of each leaflet"), KeywordInContext.Parse("a prominent <vein> running the length of the leaf") };
     }
 }

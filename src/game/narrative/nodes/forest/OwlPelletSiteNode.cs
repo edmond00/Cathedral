@@ -13,7 +13,7 @@ public class OwlPelletSiteNode : NarrationNode
     public override string TransitionDescription => "investigate the pellets";
     public override bool IsEntryNode => false;
     
-    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a grey oval <pellet> on the ground below"), KeywordInContext.Parse("some tiny <bone>s pressed into the pellet surface"), KeywordInContext.Parse("a mat of compacted <fur> around the bones"), KeywordInContext.Parse("evidence of a <raptor> roosting above") };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a grey oval <pellet> on the ground below"), KeywordInContext.Parse("some tiny <bone>s pressed into the pellet surface"), KeywordInContext.Parse("a mat of compacted <fur> around the bones"), KeywordInContext.Parse("the clear <evidence> of a raptor roosting above") };
     
     private static readonly string[] Moods = { "dry", "scattered", "compressed", "aged", "numerous", "grey", "informative", "preserved" };
     
