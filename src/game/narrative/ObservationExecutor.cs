@@ -2,22 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
 
 namespace Cathedral.Game.Narrative;
-
-/// <summary>
-/// Response from observation LLM request.
-/// Keywords are extracted from narration text, not provided by LLM.
-/// </summary>
-public class ObservationResponse
-{
-    [JsonPropertyName("what_do_i_feel_and_observe")]
-    public string NarrationText { get; set; } = "";
-}
 
 /// <summary>
 /// Executes observation modusMentis LLM requests to generate environment perceptions.
@@ -149,15 +138,18 @@ public class ObservationExecutor
         int slotId,
         string prompt,
         bool isFirstInBatch = false,
+        bool isTransition = false,
         CancellationToken ct = default)
     {
         var schema = isFirstInBatch
             ? LLMSchemaConfig.CreateObservationSchema()
-            : LLMSchemaConfig.CreateContinuationObservationSchema();
+            : isTransition
+                ? LLMSchemaConfig.CreateTransitionObservationSchema()
+                : LLMSchemaConfig.CreateContinuationObservationSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
-        var parsed = ParseObservationResponse(jsonResponse ?? "", new List<string>());
-        return parsed.NarrationText;
+        var parsed = ParseObservationResponse(jsonResponse ?? "");
+        return parsed;
     }
 
     /// <summary>
@@ -243,41 +235,38 @@ public class ObservationExecutor
     }
 
 
-    private ObservationResponse ParseObservationResponse(string jsonResponse, List<string> availableKeywords)
+    private string ParseObservationResponse(string jsonResponse)
     {
         try
         {
             Console.WriteLine($"ObservationExecutor: Parsing JSON response ({jsonResponse.Length} chars)");
             Console.WriteLine($"ObservationExecutor: Raw JSON: {jsonResponse}");
-            
-            var options = new JsonSerializerOptions 
-            { 
-                PropertyNameCaseInsensitive = true 
-            };
-            
-            var response = JsonSerializer.Deserialize<ObservationResponse>(jsonResponse, options);
-            
-            if (response == null || string.IsNullOrWhiteSpace(response.NarrationText))
+
+            using var doc = JsonDocument.Parse(jsonResponse);
+            var root = doc.RootElement;
+
+            string? text = null;
+            foreach (var fieldName in new[] { "what_do_i_feel_and_observe", "what_catches_my_attention" })
             {
-                throw new JsonException("Deserialized response is null or empty");
+                if (root.TryGetProperty(fieldName, out var prop))
+                {
+                    text = prop.GetString();
+                    break;
+                }
             }
 
-            response.NarrationText = TextTruncationUtils.TrimToLastSentence(response.NarrationText);
-            
-            Console.WriteLine($"ObservationExecutor: Successfully parsed narration ({response.NarrationText.Length} chars)");
-            
-            return response;
+            if (string.IsNullOrWhiteSpace(text))
+                throw new JsonException("No recognised narration field in response");
+
+            text = TextTruncationUtils.TrimToLastSentence(text);
+            Console.WriteLine($"ObservationExecutor: Successfully parsed narration ({text.Length} chars)");
+            return text;
         }
         catch (JsonException ex)
         {
             Console.Error.WriteLine($"ObservationExecutor: Failed to parse JSON: {ex.Message}");
             Console.Error.WriteLine($"Raw response: {jsonResponse}");
-            
-            // Return empty response on parse failure
-            return new ObservationResponse
-            {
-                NarrationText = "You observe the environment carefully."
-            };
+            return "You observe the environment carefully.";
         }
     }
 }

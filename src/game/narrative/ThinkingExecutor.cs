@@ -87,7 +87,7 @@ public class ThinkingExecutor
         var (howText, selectedMeans) = ParseHowResponse(howJson);
         if (string.IsNullOrEmpty(selectedMeans))
         {
-            Console.Error.WriteLine("ThinkingExecutor: HOW call could not parse selected_approach.");
+            Console.Error.WriteLine("ThinkingExecutor: HOW call could not parse 'how' field.");
             return null;
         }
 
@@ -115,7 +115,7 @@ public class ThinkingExecutor
             return null;
         }
 
-        string actionDescription = ParseSingleTextField(whatJson, "action_description");
+        string actionDescription = ParseSingleTextField(whatJson, "what_should_i_do");
         string displayText = actionDescription.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
             ? actionDescription.Substring(7)
             : actionDescription;
@@ -229,8 +229,8 @@ public class ThinkingExecutor
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
-            string howText = root.GetProperty("how_could_i_do_it").GetString() ?? "";
-            string means = root.GetProperty("selected_approach").GetString() ?? "";
+            string means = root.GetProperty("how").GetString() ?? "";
+            string howText = root.GetProperty("why").GetString() ?? "";
             return (howText, means);
         }
         catch (JsonException ex)

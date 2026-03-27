@@ -48,23 +48,17 @@ public class ActionEvaluationResult
 /// </summary>
 public class ActionExecutionController
 {
-    private readonly ActionScorer _actionScorer;
-    private readonly ActionDifficultyEvaluator _difficultyEvaluator;
     private readonly OutcomeNarrator _outcomeNarrator;
     private readonly OutcomeApplicator _outcomeApplicator;
     private readonly Protagonist _protagonist;
     private readonly CriticEvaluator _criticEvaluator;
 
     public ActionExecutionController(
-        ActionScorer actionScorer,
-        ActionDifficultyEvaluator difficultyEvaluator,
         OutcomeNarrator outcomeNarrator,
         OutcomeApplicator outcomeApplicator,
         Protagonist protagonist,
         CriticEvaluator criticEvaluator)
     {
-        _actionScorer = actionScorer;
-        _difficultyEvaluator = difficultyEvaluator;
         _outcomeNarrator = outcomeNarrator;
         _outcomeApplicator = outcomeApplicator;
         _protagonist = protagonist;

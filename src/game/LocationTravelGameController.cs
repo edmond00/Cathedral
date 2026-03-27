@@ -78,7 +78,6 @@ public class LocationTravelGameController : IDisposable
     // Action executors (used by NarrativeController)
     private LLMActionExecutor? _llmActionExecutor; // Optional - requires LLamaServerManager
     private CriticEvaluator? _criticEvaluator;
-    private ActionScorer? _actionScorer;
     
     // Events
     public event Action<GameMode, GameMode>? ModeChanged;
@@ -296,18 +295,16 @@ public class LocationTravelGameController : IDisposable
             Console.WriteLine("LocationTravelGameController: ModusMentisSlotManager and ThinkingExecutor initialized for Phase 6");
         }
         
-        // Also initialize Critic and ActionScorer
+        // Initialize Critic evaluator
         if (executor != null)
         {
             _criticEvaluator = new CriticEvaluator(executor.GetLlamaServerManager());
-            
-            // Initialize Critic asynchronously
+
             _ = Task.Run(async () =>
             {
                 try
                 {
                     await _criticEvaluator.InitializeAsync();
-                    _actionScorer = new ActionScorer(_criticEvaluator);
                     Console.WriteLine("LocationTravelGameController: Critic evaluator initialized");
                 }
                 catch (Exception ex)
@@ -1149,14 +1146,13 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
             
-            if (_criticEvaluator == null || _actionScorer == null)
+            if (_criticEvaluator == null)
             {
-                Console.WriteLine("LocationTravelGameController: Cannot enter Phase 6 mode - Critic/ActionScorer not initialized");
+                Console.WriteLine("LocationTravelGameController: Cannot enter Phase 6 mode - Critic not initialized");
                 return;
             }
-            
+
             // Create Action Execution Controller dependencies
-            var difficultyEvaluator = new ActionDifficultyEvaluator(_criticEvaluator);
             var outcomeApplicator = new OutcomeApplicator();
             var outcomeNarrator = new OutcomeNarrator(
                 _llmActionExecutor.GetLlamaServerManager(),
@@ -1181,8 +1177,6 @@ public class LocationTravelGameController : IDisposable
             var protagonist = _protagonist;
             
             var actionExecutor = new ActionExecutionController(
-                _actionScorer,
-                difficultyEvaluator,
                 outcomeNarrator,
                 outcomeApplicator,
                 protagonist,

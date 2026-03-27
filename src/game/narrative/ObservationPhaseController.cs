@@ -88,7 +88,7 @@ public class ObservationPhaseController
         try
         {
             var generalPrompt = _promptConstructor.BuildGeneralDescriptionPrompt(currentNode, locationId, modusMentis.PersonaTone, _worldContext, modusMentis.PersonaReminder);
-            var generalText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, generalPrompt, isFirstInBatch: true, ct);
+            var generalText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, generalPrompt, isFirstInBatch: true, ct: ct);
             sentences.Add(new NarrationSentence(generalText, new List<string>()));
             Console.WriteLine($"ObservationPhaseController: General sentence generated");
         }
@@ -106,7 +106,7 @@ public class ObservationPhaseController
 
                 // Transition sentence — tell the LLM what was previously described
                 var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(outcome, previousDescription, modusMentis.PersonaReminder);
-                var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, ct: ct);
+                var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, isTransition: true, ct: ct);
 
                 // Focus sentence with outcome keywords
                 var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(outcome, modusMentis.PersonaReminder);
@@ -187,7 +187,7 @@ public class ObservationPhaseController
         {
             var focusOutcomeKeywords = focusOutcome is NarrationNode fn ? fn.NodeKeywords : focusOutcome.OutcomeKeywords;
             var firstPrompt = _promptConstructor.BuildFirstSentencePrompt(currentNode, locationId, focusOutcome, observationModusMentis.PersonaTone, _worldContext, observationModusMentis.PersonaReminder);
-            var firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, isFirstInBatch: true, ct);
+            var firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, isFirstInBatch: true, ct: ct);
 
             var firstKws = _observationExecutor.ExtractKeywordsFromSentences("", firstText, focusOutcomeKeywords, _random, 3);
             sentences.Add(new NarrationSentence(firstText, firstKws));
@@ -219,7 +219,7 @@ public class ObservationPhaseController
                 var otherOutcomeKeywords = otherOutcome is NarrationNode on2 ? on2.NodeKeywords : otherOutcome.OutcomeKeywords;
 
                 var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(otherOutcome, previousDescription, observationModusMentis.PersonaReminder);
-                var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, ct: ct);
+                var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, isTransition: true, ct: ct);
 
                 var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(otherOutcome, observationModusMentis.PersonaReminder);
                 var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, ct: ct);

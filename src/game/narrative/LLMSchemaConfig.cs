@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using Cathedral.LLM.JsonConstraints;
-using Cathedral.Glyph.Microworld.LocationSystem;
 
 namespace Cathedral.Game.Narrative;
 
@@ -30,12 +28,27 @@ public static class LLMSchemaConfig
 
     /// <summary>
     /// Continuation observation schema — no forced 'I ' prefix.
-    /// Used for transition and focus sentences after the first sentence in a batch.
+    /// Used for focus sentences after the first sentence in a batch.
     /// </summary>
     public static CompositeField CreateContinuationObservationSchema()
     {
         return new CompositeField("ObservationResponse",
             new TemplateStringField("what_do_i_feel_and_observe",
+                Template: "<generated>",
+                MinGenLength: 20,
+                MaxGenLength: 300,
+                FirstSentenceMaxLength: 120)
+        );
+    }
+
+    /// <summary>
+    /// Transition observation schema — used when shifting attention from one outcome to another.
+    /// Field name mirrors the question: "what catches your attention?"
+    /// </summary>
+    public static CompositeField CreateTransitionObservationSchema()
+    {
+        return new CompositeField("TransitionObservationResponse",
+            new TemplateStringField("what_catches_my_attention",
                 Template: "<generated>",
                 MinGenLength: 20,
                 MaxGenLength: 300,
@@ -68,12 +81,12 @@ public static class LLMSchemaConfig
     public static CompositeField CreateHowSchema(List<string> validMeans)
     {
         return new CompositeField("HowResponse",
-            new TemplateStringField("how_could_i_do_it",
+            new ChoiceField<string>("how", validMeans.ToArray()),
+            new TemplateStringField("why",
                 Template: "<generated>",
                 MinGenLength: 20,
                 MaxGenLength: 300,
-                FirstSentenceMaxLength: 100),
-            new ChoiceField<string>("selected_approach", validMeans.ToArray())
+                FirstSentenceMaxLength: 100)
         );
     }
 
@@ -83,7 +96,7 @@ public static class LLMSchemaConfig
     public static CompositeField CreateWhatSchema()
     {
         return new CompositeField("WhatResponse",
-            new TemplateStringField("action_description",
+            new TemplateStringField("what_should_i_do",
                 Template: "try to <generated>.",
                 MinGenLength: 10,
                 MaxGenLength: 300,
@@ -112,51 +125,4 @@ public static class LLMSchemaConfig
     
     #endregion
     
-    #region Action Outcome Schemas
-    
-    /// <summary>
-    /// Schema for action outcome from Director LLM.
-    /// Includes success status, narrative, state changes, sublocation changes, items gained, and interaction end flag.
-    /// </summary>
-    /// <param name="stateCategories">Available state categories and their possible states</param>
-    /// <param name="accessibleSublocations">Sublocations the protagonist can move to</param>
-    /// <param name="availableItems">Items that can be gained from the action</param>
-    public static CompositeField CreateActionOutcomeSchema(
-        Dictionary<string, (string[] PossibleStates, string CurrentState)> stateCategories,
-        string[] accessibleSublocations,
-        string[] availableItems)
-    {
-        // State changes can be empty or specify a category/state change
-        var stateChangeOptions = new List<CompositeField>
-        {
-            new CompositeField("no_change", 
-                new ConstantStringField("category", "none"),
-                new ConstantStringField("new_state", "none"))
-        };
-
-        // Add possible state changes for each category
-        foreach (var (categoryId, data) in stateCategories)
-        {
-            if (data.PossibleStates.Length > 0)
-            {
-                stateChangeOptions.Add(new CompositeField($"change_{categoryId}",
-                    new ConstantStringField("category", categoryId),
-                    new ChoiceField<string>("new_state", data.PossibleStates)));
-            }
-        }
-
-        // Build the outcome structure
-        // Note: new_sublocation can be null or a string value
-        // Use ChoiceField to allow "none" as the value (we'll handle null parsing)
-        return new CompositeField("ActionOutcome",
-            new BooleanField("success"),
-            new StringField("narrative", 20, 300),
-            new VariantField("state_changes", stateChangeOptions.ToArray()),
-            new ChoiceField<string>("new_sublocation", accessibleSublocations.Concat(new[] { "none" }).ToArray()),
-            new ArrayField("items_gained", new ChoiceField<string>("item", availableItems.Distinct().ToArray()), 0, 3),
-            new BooleanField("ends_interaction")
-        );
-    }
-    
-    #endregion
 }

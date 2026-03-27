@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Cathedral;
 
 namespace Cathedral.Game.Narrative;
 
@@ -35,7 +36,8 @@ public class ThinkingPromptConstructor
 
 Your attention is drawn to {outcomeLabel}. Now you want to {outcomeDescription}.
 
-{reminderClause}why do you want this?";
+{reminderClause}why do you want this?
+{Config.Narrative.AnswerInstruction}";
     }
 
     /// <summary>
@@ -56,7 +58,8 @@ Your attention is drawn to {outcomeLabel}. Now you want to {outcomeDescription}.
 You could proceed:
 {string.Join("\n", actionModiMentis.Select(s => $"- with {s.SkillMeans}"))}
 
-{reminderClause}what approach will you take achieve your goal?";
+{reminderClause}what approach will you take and why?
+{Config.Narrative.AnswerInstruction}";
     }
 
     /// <summary>
@@ -87,7 +90,8 @@ You could proceed:
 
 You noticed {keyword}. {transition} Now you want to {outcomeDescription}.
 
-{reminderClause}using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescription}), what exactly are you going to try to do?";
+{reminderClause}using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescription}), what exactly are you going to try to do?
+{Config.Narrative.AnswerInstruction}";
     }
 
 }

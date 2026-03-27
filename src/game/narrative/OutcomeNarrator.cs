@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Cathedral;
 using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
 
@@ -105,7 +106,8 @@ public class OutcomeNarrator
 You tried to {action.ActionText} but it could not happen.
 {plausibilityError}
 
-{reminderClause}what happened?";
+{reminderClause}what happened?
+{Config.Narrative.AnswerInstruction}";
 
         var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
         string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
@@ -183,7 +185,8 @@ You tried to {action.ActionText} but it could not happen.
 You tried to {action.ActionText}.
 {resultLine}
 
-{reminderClause}what happened?";
+{reminderClause}what happened?
+{Config.Narrative.AnswerInstruction}";
     }
 
     /// <summary>

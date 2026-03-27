@@ -401,6 +401,11 @@ public static class Config
         /// For focus observations: if more keywords than this, sample this many keywords.
         /// </summary>
         public const int TargetKeywordCount = 10;
+
+        /// <summary>
+        /// Instruction appended to every LLM prompt question to enforce concise, grounded JSON responses.
+        /// </summary>
+        public const string AnswerInstruction = "Respond in JSON format. Answer in one short sentence (max 15 words) and stop. Use only the given information; no invention. Stay in character.";
     }
     
     #endregion

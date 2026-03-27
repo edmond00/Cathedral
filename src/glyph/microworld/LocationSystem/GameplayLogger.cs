@@ -49,46 +49,6 @@ namespace Cathedral.Glyph.Microworld.LocationSystem
             FlushToFile();
         }
 
-        public void LogDirectorRequest(string prompt, string gbnf)
-        {
-            _requestNumber++;
-            _logBuffer.AppendLine($"🎲 DIRECTOR REQUEST #{_requestNumber} (Turn {_turnNumber})");
-            _logBuffer.AppendLine($"Timestamp: {DateTime.Now:HH:mm:ss.fff}");
-            _logBuffer.AppendLine("PROMPT:");
-            _logBuffer.AppendLine("-".PadRight(60, '-'));
-            _logBuffer.AppendLine(prompt);
-            _logBuffer.AppendLine("-".PadRight(60, '-'));
-            _logBuffer.AppendLine("GBNF GRAMMAR:");
-            _logBuffer.AppendLine("-".PadRight(40, '-'));
-            _logBuffer.AppendLine(gbnf);
-            _logBuffer.AppendLine("-".PadRight(40, '-'));
-            _logBuffer.AppendLine();
-            FlushToFile();
-        }
-
-        public void LogDirectorResponse(string response, TimeSpan responseTime, bool isValid, List<string> validationErrors)
-        {
-            _logBuffer.AppendLine($"🎲 DIRECTOR RESPONSE #{_requestNumber}");
-            _logBuffer.AppendLine($"Response Time: {responseTime.TotalMilliseconds:F2}ms");
-            _logBuffer.AppendLine($"Validation: {(isValid ? "✓ VALID" : "✗ INVALID")}");
-            
-            if (!isValid && validationErrors.Any())
-            {
-                _logBuffer.AppendLine("Validation Errors:");
-                foreach (var error in validationErrors.Take(5))
-                {
-                    _logBuffer.AppendLine($"  - {error}");
-                }
-            }
-
-            _logBuffer.AppendLine("RESPONSE:");
-            _logBuffer.AppendLine("-".PadRight(60, '-'));
-            _logBuffer.AppendLine(response);
-            _logBuffer.AppendLine("-".PadRight(60, '-'));
-            _logBuffer.AppendLine();
-            FlushToFile();
-        }
-
         public void LogNarratorRequest(string prompt, string gbnf)
         {
             _requestNumber++;

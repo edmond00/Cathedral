@@ -1,3 +1,5 @@
+using Cathedral;
+
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
@@ -6,6 +8,7 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public class ObservationPromptConstructor
 {
+
     /// Returns a human-readable label for an outcome: uses GenerateNeutralDescription for
     /// NarrationNode outcomes instead of the raw NodeId from DisplayName.
     private static string GetOutcomeLabel(ConcreteOutcome outcome) =>
@@ -31,7 +34,8 @@ public class ObservationPromptConstructor
 {WorldContext.EpochContext}
 {locationContext}
 Your attention is drawn to {GetOutcomeLabel(outcome)}.
-{reminderClause}what do you feel and observe? (include one of: {string.Join(", ", outcomeKeywords)})";
+{reminderClause}what do you feel and observe? (include one of: {string.Join(", ", outcomeKeywords)})
+{Config.Narrative.AnswerInstruction}";
     }
 
     /// <summary>
@@ -52,7 +56,8 @@ Your attention is drawn to {GetOutcomeLabel(outcome)}.
         return $@"You are a {personaTone}.
 {WorldContext.EpochContext}
 {locationContext}{keywordHint}
-{reminderClause}what do you feel and observe?";
+{reminderClause}what do you feel and observe?
+{Config.Narrative.AnswerInstruction}";
     }
 
     /// <summary>
@@ -63,7 +68,8 @@ Your attention is drawn to {GetOutcomeLabel(outcome)}.
     {
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
         return $@"You were observing {previousDescription} but now you notice {GetOutcomeLabel(outcome)}.
-{reminderClause}what catches your attention?";
+{reminderClause}what catches your attention?
+{Config.Narrative.AnswerInstruction}";
     }
 
     /// <summary>
@@ -74,7 +80,8 @@ Your attention is drawn to {GetOutcomeLabel(outcome)}.
         var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
         return $@"You are now looking at {GetOutcomeLabel(outcome)}.
-{reminderClause}what do you observe? (include one of: {string.Join(", ", outcomeKeywords)})";
+{reminderClause}what do you observe? (include one of: {string.Join(", ", outcomeKeywords)})
+{Config.Narrative.AnswerInstruction}";
     }
 
 }
