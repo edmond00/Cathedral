@@ -83,7 +83,7 @@ public static class LLMSchemaConfig
         return new CompositeField("HowResponse",
             new ChoiceField<string>("how", validMeans.ToArray()),
             new TemplateStringField("why",
-                Template: "<generated>",
+                Template: "I <generated>",
                 MinGenLength: 20,
                 MaxGenLength: 300,
                 FirstSentenceMaxLength: 100)

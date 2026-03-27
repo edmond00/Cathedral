@@ -78,16 +78,17 @@ public class ObservationPhaseController
 
         var allKeywords = new List<string>();
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var keywordContextMap = new Dictionary<string, KeywordInContext>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
         int locationId = protagonist.CurrentLocationId;
 
-        // Start with the node's own neutral description as the initial previous context
         string previousDescription = currentNode.GenerateNeutralDescription(locationId);
+        KeywordInContext? previousKeywordInContext = null;
 
         // 1. General description sentence (no outcome or keyword hints)
         try
         {
-            var generalPrompt = _promptConstructor.BuildGeneralDescriptionPrompt(currentNode, locationId, modusMentis.PersonaTone, _worldContext, modusMentis.PersonaReminder);
+            var generalPrompt = _promptConstructor.BuildGeneralDescriptionPrompt(currentNode, locationId, modusMentis.PersonaTone, _worldContext, modusMentis.PersonaReminder, modusMentis.PersonaReminder2);
             var generalText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, generalPrompt, isFirstInBatch: true, ct: ct);
             sentences.Add(new NarrationSentence(generalText, new List<string>()));
             Console.WriteLine($"ObservationPhaseController: General sentence generated");
@@ -102,17 +103,15 @@ public class ObservationPhaseController
         {
             try
             {
-                var outcomeKeywords = outcome is NarrationNode nn ? nn.NodeKeywords : outcome.OutcomeKeywords;
+                var outcomeKics = outcome is NarrationNode nn ? nn.NodeKeywordsInContext : outcome.OutcomeKeywordsInContext;
+                var outcomeKeywords = outcomeKics.Select(k => k.Keyword).ToList();
 
-                // Transition sentence — tell the LLM what was previously described
-                var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(outcome, previousDescription, modusMentis.PersonaReminder);
+                var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(outcome, previousDescription, modusMentis.PersonaReminder, previousKeywordInContext, modusMentis.PersonaReminder2);
                 var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, isTransition: true, ct: ct);
 
-                // Focus sentence with outcome keywords
-                var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(outcome, modusMentis.PersonaReminder);
+                var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(outcome, modusMentis.PersonaReminder, modusMentis.PersonaReminder2);
                 var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, ct: ct);
 
-                // Extract up to 3 keywords from the two sentences combined
                 var sampledKws = _observationExecutor.ExtractKeywordsFromSentences(transText, focusText, outcomeKeywords, _random, 3);
                 var (transKws, focKws) = _observationExecutor.AssignKeywordsToSentences(sampledKws, transText, focusText);
 
@@ -123,12 +122,16 @@ public class ObservationPhaseController
                 {
                     allKeywords.Add(kw);
                     keywordOutcomeMap.TryAdd(kw, outcome);
+                    var matchedKic = outcomeKics.FirstOrDefault(k => k.Keyword.Equals(kw, StringComparison.OrdinalIgnoreCase));
+                    if (matchedKic != null) keywordContextMap.TryAdd(kw, matchedKic);
                 }
 
-                // Update previous description for the next transition
                 previousDescription = outcome is NarrationNode nn2 ? nn2.GenerateNeutralDescription(locationId) : outcome.DisplayName;
+                previousKeywordInContext = sampledKws.Count > 0
+                    ? outcomeKics.FirstOrDefault(k => k.Keyword.Equals(sampledKws[0], StringComparison.OrdinalIgnoreCase))
+                    : outcomeKics.FirstOrDefault();
 
-                Console.WriteLine($"ObservationPhaseController: Outcome '{outcome.DisplayName}' �� {sampledKws.Count} keywords");
+                Console.WriteLine($"ObservationPhaseController: Outcome '{outcome.DisplayName}' → {sampledKws.Count} keywords");
             }
             catch (Exception ex)
             {
@@ -150,7 +153,8 @@ public class ObservationPhaseController
             Actions: null,
             SourceObservationType: ObservationType.Overall,
             KeywordOutcomeMap: keywordOutcomeMap,
-            Sentences: sentences
+            Sentences: sentences,
+            KeywordContextMap: keywordContextMap
         );
 
         Console.WriteLine($"ObservationPhaseController: Overall observation complete ({sentences.Count} sentences, {allKeywords.Count} keywords)");
@@ -179,14 +183,17 @@ public class ObservationPhaseController
 
         var allKeywords = new List<string>();
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var keywordContextMap = new Dictionary<string, KeywordInContext>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
         int locationId = protagonist.CurrentLocationId;
 
-        // 1. Focus description of the clicked outcome (first sentence ? full context prompt)
+        // 1. Focus description of the clicked outcome (first sentence -- full context prompt)
+        KeywordInContext? previousKeywordInContext = null;
         try
         {
-            var focusOutcomeKeywords = focusOutcome is NarrationNode fn ? fn.NodeKeywords : focusOutcome.OutcomeKeywords;
-            var firstPrompt = _promptConstructor.BuildFirstSentencePrompt(currentNode, locationId, focusOutcome, observationModusMentis.PersonaTone, _worldContext, observationModusMentis.PersonaReminder);
+            var focusOutcomeKics = focusOutcome is NarrationNode fn ? fn.NodeKeywordsInContext : focusOutcome.OutcomeKeywordsInContext;
+            var focusOutcomeKeywords = focusOutcomeKics.Select(k => k.Keyword).ToList();
+            var firstPrompt = _promptConstructor.BuildFirstSentencePrompt(currentNode, locationId, focusOutcome, observationModusMentis.PersonaTone, _worldContext, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
             var firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, isFirstInBatch: true, ct: ct);
 
             var firstKws = _observationExecutor.ExtractKeywordsFromSentences("", firstText, focusOutcomeKeywords, _random, 3);
@@ -195,7 +202,12 @@ public class ObservationPhaseController
             {
                 allKeywords.Add(kw);
                 keywordOutcomeMap.TryAdd(kw, focusOutcome);
+                var matchedKic = focusOutcomeKics.FirstOrDefault(k => k.Keyword.Equals(kw, StringComparison.OrdinalIgnoreCase));
+                if (matchedKic != null) keywordContextMap.TryAdd(kw, matchedKic);
             }
+            previousKeywordInContext = firstKws.Count > 0
+                ? focusOutcomeKics.FirstOrDefault(k => k.Keyword.Equals(firstKws[0], StringComparison.OrdinalIgnoreCase))
+                : focusOutcomeKics.FirstOrDefault();
             Console.WriteLine($"ObservationPhaseController: Focus first sentence generated, {firstKws.Count} keywords");
         }
         catch (Exception ex)
@@ -203,10 +215,8 @@ public class ObservationPhaseController
             Console.Error.WriteLine($"ObservationPhaseController: Focus first sentence failed: {ex.Message}");
         }
 
-        // Previous description for the transition is the focus outcome we just described
         string previousDescription = focusOutcome is NarrationNode fn2 ? fn2.GenerateNeutralDescription(locationId) : focusOutcome.DisplayName;
 
-        // 2-3. One new outcome group: transition + focus for an other outcome at this node
         var otherOutcome = currentNode.GetAllDirectConcreteOutcomes()
             .Where(o => o != focusOutcome)
             .OrderBy(_ => _random.Next())
@@ -216,15 +226,16 @@ public class ObservationPhaseController
         {
             try
             {
-                var otherOutcomeKeywords = otherOutcome is NarrationNode on2 ? on2.NodeKeywords : otherOutcome.OutcomeKeywords;
+                var otherKics = otherOutcome is NarrationNode on2 ? on2.NodeKeywordsInContext : otherOutcome.OutcomeKeywordsInContext;
+                var otherKeywords = otherKics.Select(k => k.Keyword).ToList();
 
-                var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(otherOutcome, previousDescription, observationModusMentis.PersonaReminder);
+                var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(otherOutcome, previousDescription, observationModusMentis.PersonaReminder, previousKeywordInContext, observationModusMentis.PersonaReminder2);
                 var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, isTransition: true, ct: ct);
 
-                var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(otherOutcome, observationModusMentis.PersonaReminder);
+                var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(otherOutcome, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
                 var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, ct: ct);
 
-                var sampledKws = _observationExecutor.ExtractKeywordsFromSentences(transText, focusText, otherOutcomeKeywords, _random, 3);
+                var sampledKws = _observationExecutor.ExtractKeywordsFromSentences(transText, focusText, otherKeywords, _random, 3);
                 var (transKws, focKws) = _observationExecutor.AssignKeywordsToSentences(sampledKws, transText, focusText);
 
                 sentences.Add(new NarrationSentence(transText, transKws));
@@ -234,13 +245,15 @@ public class ObservationPhaseController
                 {
                     allKeywords.Add(kw);
                     keywordOutcomeMap.TryAdd(kw, otherOutcome);
+                    var matchedKic = otherKics.FirstOrDefault(k => k.Keyword.Equals(kw, StringComparison.OrdinalIgnoreCase));
+                    if (matchedKic != null) keywordContextMap.TryAdd(kw, matchedKic);
                 }
 
-                Console.WriteLine($"ObservationPhaseController: Focus second outcome '{otherOutcome.DisplayName}' �� {sampledKws.Count} keywords");
+                Console.WriteLine($"ObservationPhaseController: Focus second outcome '{otherOutcome.DisplayName}' -> {sampledKws.Count} keywords");
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"ObservationPhaseController: Focus second outcome sentences failed: {ex.Message}");
+                Console.Error.WriteLine($"ObservationPhaseController: Focus second outcome '{otherOutcome.DisplayName}' sentences failed: {ex.Message}");
             }
         }
 
@@ -258,7 +271,8 @@ public class ObservationPhaseController
             Actions: null,
             SourceObservationType: ObservationType.Focus,
             KeywordOutcomeMap: keywordOutcomeMap,
-            Sentences: sentences
+            Sentences: sentences,
+            KeywordContextMap: keywordContextMap
         );
 
         Console.WriteLine($"ObservationPhaseController: Focus observation complete ({sentences.Count} sentences, {allKeywords.Count} keywords)");

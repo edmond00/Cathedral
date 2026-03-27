@@ -24,7 +24,7 @@ public class WindScouredRidgeCrestNode : PyramidalFeatureNode
     public override string TransitionDescription => "ascend to the wind-scoured ridge crest";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "wind", "ridge", "ice", "barrenness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the howling <wind> cutting across the ridge"), KeywordInContext.Parse("the exposed <ridge> crest above the world"), KeywordInContext.Parse("a clear sheet of <ice> glazing the crest rock"), KeywordInContext.Parse("the absolute <barrenness> of the scoured ridge") };
     
     private static readonly string[] Moods = { "howling", "exposed", "barren", "relentless" };
     
@@ -46,7 +46,7 @@ public class WindScouredRidgeCrestNode : PyramidalFeatureNode
         public override string ItemId => "wind_scoured_ridge_crest_alpine_gneiss";
         public override string DisplayName => "Alpine Gneiss";
         public override string Description => "Banded metamorphic rock collectible from the ridge";
-        public override List<string> OutcomeKeywords => new() { "schist", "metamorphic", "banding" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a flaky <schist> layer at the ridge crest"), KeywordInContext.Parse("a banded <metamorphic> slab on the top"), KeywordInContext.Parse("the clear <banding> of the gneiss layers") };
     }
     
     public sealed class BareRock : Item
@@ -54,6 +54,6 @@ public class WindScouredRidgeCrestNode : PyramidalFeatureNode
         public override string ItemId => "wind_scoured_ridge_crest_bare_rock";
         public override string DisplayName => "Bare Rock";
         public override string Description => "Rock stripped of all ice by wind";
-        public override List<string> OutcomeKeywords => new() { "cobble", "wind", "scouring" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a smooth <cobble> stripped bare by wind"), KeywordInContext.Parse("the relentless <wind> stripping the ridge"), KeywordInContext.Parse("the deep <scouring> left by years of wind") };
     }
 }

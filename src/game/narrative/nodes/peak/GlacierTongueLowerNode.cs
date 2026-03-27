@@ -23,7 +23,7 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the lower ice flow";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "glacier", "terminus", "ice", "melting" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the retreating <glacier> tongue above"), KeywordInContext.Parse("the dirty <terminus> of the ice flow"), KeywordInContext.Parse("a clear sheet of <ice> cracking underfoot"), KeywordInContext.Parse("the slow <melting> of the glacier edge") };
     
     private static readonly string[] Moods = { "terminating", "melting", "ending", "transitional" };
     
@@ -45,7 +45,7 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
         public override string ItemId => "glacier_tongue_lower_moraine_dirt";
         public override string DisplayName => "Moraine Dirt";
         public override string Description => "Dirt and rock from glacier edge";
-        public override List<string> OutcomeKeywords => new() { "till", "loam", "debris" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the grey unsorted <till> at the glacier edge"), KeywordInContext.Parse("a dark <loam> mixed into the moraine"), KeywordInContext.Parse("the mixed <debris> of the glacial moraine") };
     }
     
     public sealed class GlacialErratic : Item
@@ -53,6 +53,6 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
         public override string ItemId => "glacier_tongue_lower_glacial_erratic";
         public override string DisplayName => "Glacial Erratic";
         public override string Description => "Glacier-deposited boulder fragment collectible from ice edge";
-        public override List<string> OutcomeKeywords => new() { "dropstone", "boulder", "glacier" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a far-travelled <dropstone> at the ice edge"), KeywordInContext.Parse("a glacier-deposited <boulder> in the moraine"), KeywordInContext.Parse("the legacy of the ancient <glacier> above") };
     }
 }

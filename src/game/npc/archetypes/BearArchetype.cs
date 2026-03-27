@@ -17,8 +17,14 @@ public class BearArchetype : NpcArchetype
         "Scarred Bear", "Old Bear", "Young Bear", "Massive Bear"
     };
 
-    protected override string[] BuildNarrationKeywords(string name)
-        => new[] { "bear", "massive", "claws", "growl", "fur", "beast", "lumber", "den" };
+    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
+        => new[]
+        {
+            KeywordInContext.Parse("a massive <bear> rearing on its haunches"),
+            KeywordInContext.Parse("some dark <claws> raking the bark"),
+            KeywordInContext.Parse("a deep <growl> rumbling from its chest"),
+            KeywordInContext.Parse("a thick <fur> matted with mud"),
+        };
 
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"a {name.ToLowerInvariant()} stands upright nearby, sniffing the air with a low growl";

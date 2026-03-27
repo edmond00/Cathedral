@@ -16,7 +16,7 @@ public class AvalanchePathReleaseNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the avalanche release zone";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "tension", "fracture", "snow", "danger" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the unbearable <tension> in the loaded snowpack"), KeywordInContext.Parse("a deep <fracture> line across the slope"), KeywordInContext.Parse("a packed <snow> slab ready to release"), KeywordInContext.Parse("the absolute <danger> of the release zone") };
     
     private static readonly string[] Moods = { "dangerous", "unstable", "steep", "threatening" };
     
@@ -38,7 +38,7 @@ public class AvalanchePathReleaseNode : PyramidalFeatureNode
         public override string ItemId => "avalanche_path_release_fracture_line";
         public override string DisplayName => "Fracture Line";
         public override string Description => "Line where avalanche released";
-        public override List<string> OutcomeKeywords => new() { "scarp", "crack", "snow" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the exposed <scarp> where the slab released"), KeywordInContext.Parse("a clean <crack> running through the snowpack"), KeywordInContext.Parse("the broken <snow> at the fracture line") };
     }
     
 }

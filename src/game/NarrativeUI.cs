@@ -423,11 +423,12 @@ public class NarrativeUI : TerminalPanelUI
                 {
                     // Track keyword region for click detection, including source block for modusMentis chain
                     var keywordRegion = new KeywordRegion(
-                        segment.KeywordValue!, 
-                        y, 
-                        currentX, 
+                        segment.KeywordValue!,
+                        y,
+                        currentX,
                         currentX + segment.Text.Length - 1,
-                        sourceBlock);
+                        sourceBlock,
+                        sourceBlock?.KeywordContextMap?.GetValueOrDefault(segment.KeywordValue!));
                     _keywordRegions.Add(keywordRegion);
                     
                     // Check if this specific region is hovered

@@ -42,9 +42,11 @@ public abstract class NarrationNode : ConcreteOutcome
     public abstract bool IsEntryNode { get; }
     
     /// <summary>
-    /// Node IDs that can be reached from this node via transitions.
+    /// Keywords with surrounding context that describe what can be noticed at this node.
+    /// Each entry is a contextual phrase like "a rough bark of the beech" with the keyword
+    /// word marked in the raw source. Used for LLM observation hints and UI keyword display.
     /// </summary>
-    public abstract List<string> NodeKeywords { get; }
+    public abstract List<KeywordInContext> NodeKeywordsInContext { get; }
     
     /// <summary>
     /// NPC encounter slots for this node. Override in subclasses to define
@@ -94,92 +96,64 @@ public abstract class NarrationNode : ConcreteOutcome
     
     /// <summary>
     /// All keywords available at this node: node's own keywords plus keywords from items and child nodes.
-    /// This is used to determine what the player can interact with at this location.
+    /// Deduplicated by bare keyword (case-insensitive); first occurrence wins.
     /// </summary>
-    public override List<string> OutcomeKeywords
+    public override List<KeywordInContext> OutcomeKeywordsInContext
     {
         get
         {
-            var allKeywords = new HashSet<string>(NodeKeywords, StringComparer.OrdinalIgnoreCase);
-            
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var allKeywords = new List<KeywordInContext>();
+
+            void Add(KeywordInContext kic)
+            {
+                if (seen.Add(kic.Keyword)) allKeywords.Add(kic);
+            }
+
+            foreach (var kic in NodeKeywordsInContext) Add(kic);
+
             // Add keywords from items discovered via reflection
             var items = GetAvailableItems();
             foreach (var item in items)
-            {
-                foreach (var keyword in item.OutcomeKeywords)
-                {
-                    allKeywords.Add(keyword);
-                }
-            }
-            
+                foreach (var kic in item.OutcomeKeywordsInContext) Add(kic);
+
             // Add keywords from child NarrationNodes
             foreach (var outcome in PossibleOutcomes)
-            {
                 if (outcome is NarrationNode childNode)
-                {
-                    foreach (var keyword in childNode.NodeKeywords)
-                    {
-                        allKeywords.Add(keyword);
-                    }
-                }
-            }
-            
+                    foreach (var kic in childNode.NodeKeywordsInContext) Add(kic);
+
             // Add keywords from spawned NPCs
             foreach (var npc in SpawnedNpcs)
-            {
-                foreach (var keyword in npc.NarrationKeywords)
-                {
-                    allKeywords.Add(keyword);
-                }
-            }
-            
-            return allKeywords.ToList();
+                foreach (var kic in npc.NarrationKeywordsInContext) Add(kic);
+
+            return allKeywords;
         }
     }
     
     /// <summary>
     /// Gets keywords grouped by their source outcome.
     /// Returns a dictionary mapping outcome display names to their associated keywords.
-    /// Used to provide context to LLM about which keywords relate to which outcomes.
     /// </summary>
-    public Dictionary<string, List<string>> GetKeywordsByOutcome()
+    public Dictionary<string, List<KeywordInContext>> GetKeywordsByOutcome()
     {
-        var result = new Dictionary<string, List<string>>();
-        
-        // Node's own keywords (grouped under current node name)
-        if (NodeKeywords.Count > 0)
-        {
-            result[NodeId] = new List<string>(NodeKeywords);
-        }
-        
-        // Keywords from items discovered via reflection
+        var result = new Dictionary<string, List<KeywordInContext>>();
+
+        if (NodeKeywordsInContext.Count > 0)
+            result[NodeId] = new List<KeywordInContext>(NodeKeywordsInContext);
+
         var items = GetAvailableItems();
         foreach (var item in items)
-        {
-            if (item.OutcomeKeywords.Count > 0)
-            {
-                result[item.DisplayName] = new List<string>(item.OutcomeKeywords);
-            }
-        }
-        
-        // Keywords from child NarrationNodes
+            if (item.OutcomeKeywordsInContext.Count > 0)
+                result[item.DisplayName] = new List<KeywordInContext>(item.OutcomeKeywordsInContext);
+
         foreach (var outcome in PossibleOutcomes)
-        {
-            if (outcome is NarrationNode childNode && childNode.NodeKeywords.Count > 0)
-            {
-                result[childNode.DisplayName] = new List<string>(childNode.NodeKeywords);
-            }
-        }
-        
-        // Keywords from spawned NPCs
+            if (outcome is NarrationNode childNode && childNode.NodeKeywordsInContext.Count > 0)
+                result[childNode.DisplayName] = new List<KeywordInContext>(childNode.NodeKeywordsInContext);
+
         foreach (var npc in SpawnedNpcs)
-        {
-            if (npc.NarrationKeywords.Length > 0)
-            {
-                result[npc.DisplayName] = new List<string>(npc.NarrationKeywords);
-            }
-        }
-        
+            if (npc.NarrationKeywordsInContext.Length > 0)
+                result[npc.DisplayName] = new List<KeywordInContext>(npc.NarrationKeywordsInContext);
+
         return result;
     }
     
@@ -196,7 +170,7 @@ public abstract class NarrationNode : ConcreteOutcome
     public abstract string GenerateNeutralDescription(int locationId = 0);
 
     /// <inheritdoc/>
-    /// For narration nodes, the keyword is one of the NodeKeywords that represent this place.
+    /// For narration nodes, the keyword is one of the NodeKeywordsInContext bare keywords.
     /// Example: keyword="stream" → "This is the stream of a mossy forest clearing."
     public override string GetKeywordToOutcomeTransition(string keyword)
         => $"This is the {keyword} of {GenerateNeutralDescription(0)}.";
@@ -227,16 +201,15 @@ public abstract class NarrationNode : ConcreteOutcome
     {
         var normalizedKeyword = keyword.ToLowerInvariant();
         var outcomes = new List<OutcomeBase>();
-        
-        // Check child nodes
+
         outcomes.AddRange(PossibleOutcomes
-            .Where(outcome => outcome is ConcreteOutcome co && co.OutcomeKeywords.Any(k => k.ToLowerInvariant() == normalizedKeyword)));
-        
-        // Check items from reflection
+            .Where(outcome => outcome is ConcreteOutcome co &&
+                co.OutcomeKeywordsInContext.Any(k => k.Keyword.ToLowerInvariant() == normalizedKeyword)));
+
         var items = GetAvailableItems();
         outcomes.AddRange(items
-            .Where(item => item.OutcomeKeywords.Any(k => k.ToLowerInvariant() == normalizedKeyword)));
-        
+            .Where(item => item.OutcomeKeywordsInContext.Any(k => k.Keyword.ToLowerInvariant() == normalizedKeyword)));
+
         return outcomes;
     }
     
@@ -255,15 +228,15 @@ public abstract class NarrationNode : ConcreteOutcome
 
         foreach (var outcome in PossibleOutcomes)
         {
-            if (outcome is NarrationNode childNode && childNode.NodeKeywords.Count > 0)
+            if (outcome is NarrationNode childNode && childNode.NodeKeywordsInContext.Count > 0)
                 outcomes.Add(childNode);
-            else if (outcome is ConcreteOutcome co && !(outcome is NarrationNode) && co.OutcomeKeywords.Count > 0)
+            else if (outcome is ConcreteOutcome co && !(outcome is NarrationNode) && co.OutcomeKeywordsInContext.Count > 0)
                 outcomes.Add(co);
         }
 
         foreach (var item in GetAvailableItems())
         {
-            if (item.OutcomeKeywords.Count > 0)
+            if (item.OutcomeKeywordsInContext.Count > 0)
                 outcomes.Add(item);
         }
 
@@ -276,10 +249,10 @@ public abstract class NarrationNode : ConcreteOutcome
     /// </summary>
     /// <param name="random">Random instance for consistent sampling</param>
     /// <param name="targetKeywordCount">Target number of keywords to return</param>
-    /// <returns>List of (keyword, outcome) tuples</returns>
-    public List<(string Keyword, ConcreteOutcome Outcome)> GetRepresentativeKeywordsPerOutcome(Random random, int targetKeywordCount = Cathedral.Config.Narrative.TargetKeywordCount)
+    /// <returns>List of (keyword-in-context, outcome) tuples</returns>
+    public List<(KeywordInContext Kic, ConcreteOutcome Outcome)> GetRepresentativeKeywordsPerOutcome(Random random, int targetKeywordCount = Cathedral.Config.Narrative.TargetKeywordCount)
     {
-        var result = new List<(string, ConcreteOutcome)>();
+        var result = new List<(KeywordInContext, ConcreteOutcome)>();
         
         // Get all immediate concrete outcomes (direct child nodes + items at this node)
         var concreteOutcomes = new List<ConcreteOutcome>();
@@ -291,13 +264,11 @@ public abstract class NarrationNode : ConcreteOutcome
         {
             if (outcome is ConcreteOutcome co)
             {
-                // For child NarrationNodes, check if they have NodeKeywords
-                // For other ConcreteOutcomes (like Items), check if they have OutcomeKeywords
-                if (outcome is NarrationNode node && node.NodeKeywords.Count > 0)
+                if (outcome is NarrationNode node && node.NodeKeywordsInContext.Count > 0)
                 {
                     concreteOutcomes.Add(co);
                 }
-                else if (!(outcome is NarrationNode) && co.OutcomeKeywords.Count > 0)
+                else if (!(outcome is NarrationNode) && co.OutcomeKeywordsInContext.Count > 0)
                 {
                     concreteOutcomes.Add(co);
                 }
@@ -308,7 +279,7 @@ public abstract class NarrationNode : ConcreteOutcome
         var items = GetAvailableItems();
         foreach (var item in items)
         {
-            if (item.OutcomeKeywords.Count > 0)
+            if (item.OutcomeKeywordsInContext.Count > 0)
             {
                 concreteOutcomes.Add(item);
             }
@@ -326,42 +297,32 @@ public abstract class NarrationNode : ConcreteOutcome
             var shuffledOutcomes = concreteOutcomes.OrderBy(_ => random.Next()).Take(targetKeywordCount);
             foreach (var outcome in shuffledOutcomes)
             {
-                // For child NarrationNodes, use NodeKeywords (not full OutcomeKeywords which include grandchildren)
-                // For Items, use OutcomeKeywords as usual
-                List<string> keywordsToUse = outcome is NarrationNode node ? node.NodeKeywords : outcome.OutcomeKeywords;
-                
-                if (keywordsToUse.Count > 0)
+                List<KeywordInContext> kicsToUse = outcome is NarrationNode node ? node.NodeKeywordsInContext : outcome.OutcomeKeywordsInContext;
+
+                if (kicsToUse.Count > 0)
                 {
-                    var selectedKeyword = keywordsToUse[random.Next(keywordsToUse.Count)];
-                    result.Add((selectedKeyword, outcome));
+                    var selectedKic = kicsToUse[random.Next(kicsToUse.Count)];
+                    result.Add((selectedKic, outcome));
                 }
             }
         }
         else
         {
-            // Fewer outcomes than target: sample multiple keywords per outcome until target reached
             var keywordsPerOutcome = targetKeywordCount / concreteOutcomes.Count;
             var extraKeywords = targetKeywordCount % concreteOutcomes.Count;
-            
+
             for (int i = 0; i < concreteOutcomes.Count; i++)
             {
                 var outcome = concreteOutcomes[i];
-                
-                // For child NarrationNodes, use NodeKeywords (not full OutcomeKeywords which include grandchildren)
-                // For Items, use OutcomeKeywords as usual
-                List<string> keywordsToUse = outcome is NarrationNode node ? node.NodeKeywords : outcome.OutcomeKeywords;
-                
-                if (keywordsToUse.Count == 0) continue;
-                
-                // Calculate how many keywords to take from this outcome
-                var keywordsToTake = keywordsPerOutcome + (i < extraKeywords ? 1 : 0);
-                keywordsToTake = Math.Min(keywordsToTake, keywordsToUse.Count);
-                
-                // Sample keywords without replacement from this outcome
-                var shuffledKeywords = keywordsToUse.OrderBy(_ => random.Next()).Take(keywordsToTake);
-                foreach (var keyword in shuffledKeywords)
+                List<KeywordInContext> kicsToUse = outcome is NarrationNode node ? node.NodeKeywordsInContext : outcome.OutcomeKeywordsInContext;
+
+                if (kicsToUse.Count == 0) continue;
+
+                var keywordsToTake = Math.Min(keywordsPerOutcome + (i < extraKeywords ? 1 : 0), kicsToUse.Count);
+                var shuffledKics = kicsToUse.OrderBy(_ => random.Next()).Take(keywordsToTake);
+                foreach (var kic in shuffledKics)
                 {
-                    result.Add((keyword, outcome));
+                    result.Add((kic, outcome));
                 }
             }
         }
@@ -376,27 +337,21 @@ public abstract class NarrationNode : ConcreteOutcome
     public ConcreteOutcome? GetOutcomeOwningKeyword(string keyword)
     {
         var normalizedKeyword = keyword.ToLowerInvariant();
-        
-        // Check child nodes
+
         foreach (var outcome in PossibleOutcomes)
         {
-            if (outcome is ConcreteOutcome co && 
-                co.OutcomeKeywords.Any(k => k.ToLowerInvariant() == normalizedKeyword))
-            {
+            if (outcome is ConcreteOutcome co &&
+                co.OutcomeKeywordsInContext.Any(k => k.Keyword.ToLowerInvariant() == normalizedKeyword))
                 return co;
-            }
         }
-        
-        // Check items from reflection
+
         var items = GetAvailableItems();
         foreach (var item in items)
         {
-            if (item.OutcomeKeywords.Any(k => k.ToLowerInvariant() == normalizedKeyword))
-            {
+            if (item.OutcomeKeywordsInContext.Any(k => k.Keyword.ToLowerInvariant() == normalizedKeyword))
                 return item;
-            }
         }
-        
+
         return null;
     }
 }

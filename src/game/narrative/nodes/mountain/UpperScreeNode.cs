@@ -15,7 +15,7 @@ public class UpperScreeNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the upper scree";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "scree", "rock", "instability", "danger" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("some loose <scree> shifting with every step"), KeywordInContext.Parse("a sharp angular <rock> among the debris"), KeywordInContext.Parse("the constant <instability> of the upper slope"), KeywordInContext.Parse("the genuine <danger> of the sliding scree") };
     
     private static readonly string[] Moods = { "treacherous", "unstable", "sliding", "precarious" };
     
@@ -37,7 +37,7 @@ public class UpperScreeNode : PyramidalFeatureNode
         public override string ItemId => "upper_scree_loose_chips";
         public override string DisplayName => "Loose Chips";
         public override string Description => "Small angular rock fragments";
-        public override List<string> OutcomeKeywords => new() { "fragment", "gravel", "shard" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a small angular <fragment> of fresh stone"), KeywordInContext.Parse("a pinch of coarse <gravel> underfoot"), KeywordInContext.Parse("a thin <shard> of split rock") };
     }
     
 }

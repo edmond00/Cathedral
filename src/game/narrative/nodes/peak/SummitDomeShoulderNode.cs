@@ -16,7 +16,7 @@ public class SummitDomeShoulderNode : PyramidalFeatureNode
     public override string TransitionDescription => "move to the summit dome shoulder";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "shoulder", "ice", "slope", "summit" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the broad rounded <shoulder> of the dome falling away here"), KeywordInContext.Parse("a patch of hard blue <ice> just beneath the snow surface"), KeywordInContext.Parse("the steep angled <slope> dropping from the shoulder"), KeywordInContext.Parse("the <summit> dome visible above and close now") };
     
     private static readonly string[] Moods = { "curved", "exposed", "steep", "frozen" };
     

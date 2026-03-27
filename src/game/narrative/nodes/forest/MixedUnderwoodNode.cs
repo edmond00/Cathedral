@@ -13,7 +13,7 @@ public class MixedUnderwoodNode : NarrationNode
     public override string TransitionDescription => "enter the underwood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "bramble", "sapling", "undergrowth", "thorn" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a sprawling <bramble> cane across the path"), KeywordInContext.Parse("a crowded young <sapling> among older stems"), KeywordInContext.Parse("the dense <undergrowth> pressing in on both sides"), KeywordInContext.Parse("a sharp <thorn> drawing blood from the wrist") };
     
     private static readonly string[] Moods = { "tangled", "crowded", "wild", "unruly", "chaotic", "cluttered", "overgrown", "untamed" };
     
@@ -37,7 +37,7 @@ public class MixedUnderwoodNode : NarrationNode
         public override string ItemId => "mixed_underwood_tangled_vines";
         public override string DisplayName => "Tangled Vines";
         public override string Description => "Twisted vines from the dense underwood";
-        public override List<string> OutcomeKeywords => new() { "liana", "tangle", "thorn" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a twisted <liana> vine roped around a stem"), KeywordInContext.Parse("a hopeless <tangle> of mixed underwood growth") };
     }
     
     public sealed class UnderbrushStems : Item
@@ -45,6 +45,6 @@ public class MixedUnderwoodNode : NarrationNode
         public override string ItemId => "mixed_underwood_underbrush_stems";
         public override string DisplayName => "Underbrush Stems";
         public override string Description => "Flexible stems from varied undergrowth";
-        public override List<string> OutcomeKeywords => new() { "internode", "shoot", "branch" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a hollow pale <internode> between two leaf joints"), KeywordInContext.Parse("a fresh <shoot> pushing past the older stems") };
     }
 }

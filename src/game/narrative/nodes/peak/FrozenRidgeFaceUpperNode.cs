@@ -16,7 +16,7 @@ public class FrozenRidgeFaceUpperNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the upper frozen ridge face";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ice", "ridge", "face", "climbing" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a clear sheet of <ice> on the upper face"), KeywordInContext.Parse("the knife-edge <ridge> locked in frozen rock"), KeywordInContext.Parse("the vertical ice <face> above the lip"), KeywordInContext.Parse("the technical <climbing> demanded by the ice") };
     
     private static readonly string[] Moods = { "vertical", "frozen", "challenging", "exposed" };
     
@@ -38,6 +38,6 @@ public class FrozenRidgeFaceUpperNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ridge_face_upper_glacier_polished_rock";
         public override string DisplayName => "Glacier-Polished Rock";
         public override string Description => "Stone embedded in ice, polished by glacial movement";
-        public override List<string> OutcomeKeywords => new() { "cobble", "polish", "smoothness" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a smooth <cobble> polished by glacial grinding"), KeywordInContext.Parse("the fine <polish> left by moving ice"), KeywordInContext.Parse("the glass-like <smoothness> of the glacier surface") };
     }
 }

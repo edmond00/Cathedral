@@ -16,7 +16,7 @@ public class IceBlockFieldLowerNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend through the lower ice blocks";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ice", "block", "field", "maze" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a clear sheet of <ice> underfoot"), KeywordInContext.Parse("a fractured ice <block> tipped at an angle"), KeywordInContext.Parse("the icy <field> of scattered seracs"), KeywordInContext.Parse("the confusing <maze> of lower ice blocks") };
     
     private static readonly string[] Moods = { "scattered", "fractured", "labyrinthine", "icy" };
     
@@ -38,7 +38,7 @@ public class IceBlockFieldLowerNode : PyramidalFeatureNode
         public override string ItemId => "ice_block_field_lower_small_ice_block";
         public override string DisplayName => "Small Ice Block";
         public override string Description => "Smaller fractured ice block";
-        public override List<string> OutcomeKeywords => new() { "firn", "serac", "chunk" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a granular <firn> layer below the ice block"), KeywordInContext.Parse("a toppling ice <serac> in the lower field"), KeywordInContext.Parse("a manageable <chunk> of fractured glacier ice") };
     }
     
     public sealed class MorainePebbles : Item
@@ -46,6 +46,6 @@ public class IceBlockFieldLowerNode : PyramidalFeatureNode
         public override string ItemId => "ice_block_field_lower_moraine_pebbles";
         public override string DisplayName => "Moraine Pebbles";
         public override string Description => "Glacial deposit pebbles collectible from the moraine";
-        public override List<string> OutcomeKeywords => new() { "clast", "till", "glacier" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a rough glacial <clast> in the moraine"), KeywordInContext.Parse("the unsorted <till> at the glacier base"), KeywordInContext.Parse("the legacy of the retreating <glacier>") };
     }
 }

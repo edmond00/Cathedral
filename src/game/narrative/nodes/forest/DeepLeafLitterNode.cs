@@ -14,7 +14,7 @@ public class DeepLeafLitterNode : NarrationNode
     public override string TransitionDescription => "push into the deep litter";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "leaf", "litter", "depth", "layers" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a crisp brown <leaf> underfoot"), KeywordInContext.Parse("the deep <litter> muffling every footfall"), KeywordInContext.Parse("the surprising <depth> sinking each step"), KeywordInContext.Parse("these compressed <layers> of seasons past") };
     
     private static readonly string[] Moods = { "deep", "thick", "accumulated", "layered", "rustling", "abundant", "ankle-deep", "buried" };
     
@@ -38,7 +38,7 @@ public class DeepLeafLitterNode : NarrationNode
         public override string ItemId => "dried_leaf_pile";
         public override string DisplayName => "Dried Leaf Pile";
         public override string Description => "A bundle of crisp, layered leaves";
-        public override List<string> OutcomeKeywords => new() { "lamina", "bundle", "rustling" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the dried <lamina> crumbling at the edges"), KeywordInContext.Parse("a <bundle> of pressed leaves from the litter") };
     }
     
     public sealed class HiddenAcorn : Item
@@ -46,6 +46,6 @@ public class DeepLeafLitterNode : NarrationNode
         public override string ItemId => "deep_litter_hidden_acorn";
         public override string DisplayName => "Hidden Acorn";
         public override string Description => "An acorn buried deep beneath the leaf layers";
-        public override List<string> OutcomeKeywords => new() { "cupule", "cap", "cache" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a small rough <cupule> still attached"), KeywordInContext.Parse("an acorn <cap> hiding beneath the leaves") };
     }
 }

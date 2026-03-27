@@ -22,7 +22,7 @@ public class CliffBaseNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the cliff base";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "cliff", "stone", "wall", "shadow" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("an imposing <cliff> face looming above"), KeywordInContext.Parse("a grey <stone> slick with moisture"), KeywordInContext.Parse("the sheer rock <wall> blocking the sky"), KeywordInContext.Parse("a deep <shadow> pooled at the base") };
     
     private static readonly string[] Moods = { "imposing", "shadowed", "towering", "daunting" };
     
@@ -44,7 +44,7 @@ public class CliffBaseNode : PyramidalFeatureNode
         public override string ItemId => "cliff_base_loose_rock";
         public override string DisplayName => "Loose Rock";
         public override string Description => "Unstable rock at the cliff base";
-        public override List<string> OutcomeKeywords => new() { "scree", "debris", "rockfall" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("some loose <scree> shifting at the base"), KeywordInContext.Parse("a pile of <debris> freshly fallen"), KeywordInContext.Parse("the scar of an old <rockfall> on the cliff") };
     }
     
     public sealed class CrumblingStone : Item
@@ -52,6 +52,6 @@ public class CliffBaseNode : PyramidalFeatureNode
         public override string ItemId => "cliff_base_crumbling_stone";
         public override string DisplayName => "Crumbling Stone";
         public override string Description => "Weathered stone fragments from erosion";
-        public override List<string> OutcomeKeywords => new() { "rubble", "fragment", "erosion" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a heap of coarse <rubble> at the cliff foot"), KeywordInContext.Parse("a small <fragment> broken from the face"), KeywordInContext.Parse("the slow work of <erosion> on the stone") };
     }
 }

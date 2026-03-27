@@ -13,7 +13,7 @@ public class IsolatedOakNode : NarrationNode
     public override string TransitionDescription => "approach the oak";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "trunk", "acorn", "crown", "gnarl" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the massive grey <trunk> of the solitary oak"), KeywordInContext.Parse("some brown <acorn>s scattered underfoot"), KeywordInContext.Parse("the wide spreading <crown> overhead"), KeywordInContext.Parse("a dark ancient <gnarl> in the bark") };
     
     private static readonly string[] Moods = { "majestic", "solitary", "towering", "ancient", "venerable", "impressive", "grand", "stalwart" };
     
@@ -37,7 +37,7 @@ public class IsolatedOakNode : NarrationNode
         public override string ItemId => "oak_acorn";
         public override string DisplayName => "Acorn";
         public override string Description => "A brown acorn with its cap intact";
-        public override List<string> OutcomeKeywords => new() { "cupule", "cap", "seed" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a rough scaly <cupule> still holding the acorn"), KeywordInContext.Parse("a smooth acorn <cap> left on the ground") };
     }
     
     public sealed class OakGall : Item
@@ -45,6 +45,6 @@ public class IsolatedOakNode : NarrationNode
         public override string ItemId => "isolated_oak_gall";
         public override string DisplayName => "Oak Gall";
         public override string Description => "A round oak apple gall formed by wasp larvae";
-        public override List<string> OutcomeKeywords => new() { "sphere", "tannin", "insect", "tumor" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a round smooth <sphere> of an oak apple gall"), KeywordInContext.Parse("the bitter <tannin> smell from a broken gall") };
     }
 }

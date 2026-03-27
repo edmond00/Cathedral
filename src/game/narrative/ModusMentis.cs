@@ -45,6 +45,13 @@ public abstract class ModusMentis
     /// Example: "theatrical performance analyst", "relentless clinical investigator".
     /// </summary>
     public virtual string? PersonaReminder => null;
+
+    /// <summary>
+    /// A paraphrase of <see cref="PersonaReminder"/> used at the end of prompts as
+    /// "Stay in the character of [PersonaReminder2]." — a different angle on the same persona.
+    /// Example: "someone who never misses a detail", "a mind that measures everything it touches".
+    /// </summary>
+    public virtual string? PersonaReminder2 => null;
 }
 
 /// <summary>

@@ -22,7 +22,7 @@ public class RavineFloorNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the ravine floor";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ravine", "floor", "confinement", "shadow" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the narrow <ravine> closing in on both sides"), KeywordInContext.Parse("the flat <floor> of the cut ravine"), KeywordInContext.Parse("the total <confinement> of the gorge walls"), KeywordInContext.Parse("the deep <shadow> that never leaves the bottom") };
     
     private static readonly string[] Moods = { "shadowed", "narrow", "enclosed", "claustrophobic" };
     
@@ -44,6 +44,6 @@ public class RavineFloorNode : PyramidalFeatureNode
         public override string ItemId => "ravine_floor_wedged_log";
         public override string DisplayName => "Wedged Log";
         public override string Description => "Dead tree trapped between walls";
-        public override List<string> OutcomeKeywords => new() { "bark", "wood", "grain" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the rough <bark> of the wedged log"), KeywordInContext.Parse("the pale <wood> exposed where bark split"), KeywordInContext.Parse("the clear <grain> running through the timber") };
     }
 }

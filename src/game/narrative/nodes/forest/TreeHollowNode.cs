@@ -20,7 +20,7 @@ public class TreeHollowNode : NarrationNode
     public override string TransitionDescription => "investigate the hollow";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "hollow", "cavity", "shelter", "bark" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the dark open <hollow> in the trunk"), KeywordInContext.Parse("the wide <cavity> worn smooth inside"), KeywordInContext.Parse("the sense of <shelter> inside the hollow tree"), KeywordInContext.Parse("the rough encircling <bark> around the entrance") };
     
     private static readonly string[] Moods = { "dark", "mysterious", "dry", "sheltered", "inviting", "hidden", "cozy", "shadowy" };
     
@@ -44,7 +44,7 @@ public class TreeHollowNode : NarrationNode
         public override string ItemId => "hollow_dried_leaves";
         public override string DisplayName => "Dried Leaves";
         public override string Description => "Crispy dried leaves collected from the hollow";
-        public override List<string> OutcomeKeywords => new() { "lamina", "tinder", "dryness" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("some dry crisp <tinder> leaves in the hollow"), KeywordInContext.Parse("a preserved <dryness> inside the sheltered cavity") };
     }
     
     public sealed class BatGuano : Item
@@ -52,7 +52,7 @@ public class TreeHollowNode : NarrationNode
         public override string ItemId => "tree_hollow_bat_guano";
         public override string DisplayName => "Bat Guano";
         public override string Description => "Small deposits of bat droppings in the hollow";
-        public override List<string> OutcomeKeywords => new() { "castings", "droppings", "nitrogen" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("some dark <castings> left by roosting bats"), KeywordInContext.Parse("a small pile of bat <droppings> below the roost") };
     }
     
     public sealed class SquirrelNest : Item
@@ -60,6 +60,6 @@ public class TreeHollowNode : NarrationNode
         public override string ItemId => "tree_hollow_squirrel_nest";
         public override string DisplayName => "Squirrel Nest Material";
         public override string Description => "Shredded bark and leaves forming a drey inside the hollow";
-        public override List<string> OutcomeKeywords => new() { "drey", "bedding", "bark" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the compact <drey> built inside the hollow"), KeywordInContext.Parse("some soft <bedding> material from the squirrel nest") };
     }
 }

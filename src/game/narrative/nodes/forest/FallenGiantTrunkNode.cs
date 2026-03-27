@@ -13,7 +13,7 @@ public class FallenGiantTrunkNode : NarrationNode
     public override string TransitionDescription => "climb onto the trunk";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "trunk", "bark", "decay", "insects" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the massive fallen <trunk> stretching ahead"), KeywordInContext.Parse("the loose crumbling <bark> peeling away"), KeywordInContext.Parse("the soft <decay> softening the inner wood"), KeywordInContext.Parse("a host of tiny <insects> moving through the rot") };
     
     private static readonly string[] Moods = { "massive", "fallen", "decaying", "moss-covered", "enormous", "ancient", "collapsed", "weathered" };
     
@@ -37,7 +37,7 @@ public class FallenGiantTrunkNode : NarrationNode
         public override string ItemId => "beetle_larva";
         public override string DisplayName => "Beetle Larva";
         public override string Description => "A fat white larva from beneath the bark";
-        public override List<string> OutcomeKeywords => new() { "larva", "grub", "protein" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a fat white <larva> found under the bark"), KeywordInContext.Parse("a soft pale <grub> curled in the rotting wood") };
     }
     
     public sealed class SoftRot : Item
@@ -45,6 +45,6 @@ public class FallenGiantTrunkNode : NarrationNode
         public override string ItemId => "fallen_trunk_soft_rot";
         public override string DisplayName => "Soft Rot Wood";
         public override string Description => "Punky, decomposing wood from the trunk interior";
-        public override List<string> OutcomeKeywords => new() { "decay", "fungus", "spore" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the soft punky <decay> crumbling in the hand"), KeywordInContext.Parse("some white <fungus> threads through the rotten wood") };
     }
 }

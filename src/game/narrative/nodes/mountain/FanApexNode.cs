@@ -15,7 +15,7 @@ public class FanApexNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the fan apex";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "fan", "apex", "gravel", "source" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the spreading alluvial <fan> above"), KeywordInContext.Parse("the narrow <apex> where channels begin"), KeywordInContext.Parse("a thick bed of coarse <gravel> underfoot"), KeywordInContext.Parse("the original <source> of the alluvial flow") };
     
     private static readonly string[] Moods = { "spreading", "radiating", "distributive", "channeled" };
     
@@ -37,7 +37,7 @@ public class FanApexNode : PyramidalFeatureNode
         public override string ItemId => "fan_apex_coarse_gravel";
         public override string DisplayName => "Coarse Gravel";
         public override string Description => "Large stones at the fan origin";
-        public override List<string> OutcomeKeywords => new() { "pebble", "stone", "deposit" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a water-rounded <pebble> at the fan origin"), KeywordInContext.Parse("a flat <stone> sorted by the current"), KeywordInContext.Parse("a layered <deposit> of mixed sediment") };
     }
     
 }

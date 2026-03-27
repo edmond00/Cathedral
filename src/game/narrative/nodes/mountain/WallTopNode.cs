@@ -15,7 +15,7 @@ public class WallTopNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the wall top";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "wall", "precipice", "overlook", "drop" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the top of the rock <wall> open to the wind"), KeywordInContext.Parse("the sheer <precipice> falling below"), KeywordInContext.Parse("a breathtaking <overlook> from the cliff top"), KeywordInContext.Parse("the vertiginous <drop> at the wall edge") };
     
     private static readonly string[] Moods = { "exposed", "vertical", "precipitous", "commanding" };
     

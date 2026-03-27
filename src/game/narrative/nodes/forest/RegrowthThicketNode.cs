@@ -14,7 +14,7 @@ public class RegrowthThicketNode : NarrationNode
     public override string TransitionDescription => "enter the regrowth";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "shoot", "pioneer", "regrowth", "recovery" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a vigorous new <shoot> pushing through soil"), KeywordInContext.Parse("some <pioneer> plants reclaiming disturbed ground"), KeywordInContext.Parse("the dense <regrowth> pressing in on every side") };
     
     private static readonly string[] Moods = { "vigorous", "new", "thriving", "reclaiming", "dense", "fresh", "recovering", "pioneer" };
     
@@ -38,7 +38,7 @@ public class RegrowthThicketNode : NarrationNode
         public override string ItemId => "pioneer_seed";
         public override string DisplayName => "Pioneer Seeds";
         public override string Description => "Seeds from fast-growing pioneer plants";
-        public override List<string> OutcomeKeywords => new() { "propagule", "dispersal", "germination" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a light <propagule> from a pioneer plant"), KeywordInContext.Parse("a ready <germination> in the disturbed earth") };
     }
     
     public sealed class FreshShoot : Item
@@ -46,6 +46,6 @@ public class RegrowthThicketNode : NarrationNode
         public override string ItemId => "regrowth_thicket_fresh_shoot";
         public override string DisplayName => "Fresh Shoot";
         public override string Description => "A vigorous new shoot pushing through soil";
-        public override List<string> OutcomeKeywords => new() { "sprout", "growth", "vigor" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a pale fresh <sprout> at the soil surface"), KeywordInContext.Parse("a remarkable <vigor> in the young plant stems") };
     }
 }

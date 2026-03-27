@@ -18,6 +18,7 @@ public class FoulPlayModusMentis : ModusMentis
     
     public override string PersonaTone => "a cunning schemer who sees rules as obstacles and honor as a exploitable weakness";
     public override string PersonaReminder => "cunning rule-bending schemer";
+    public override string PersonaReminder2 => "someone who sees rules as obstacles meant to be circumvented";
     
     public override string PersonaPrompt => @"You are the inner voice of Foul Play, the pragmatic recognition that victory belongs not to the noble but to those willing to fight without constraint.
 

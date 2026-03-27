@@ -155,6 +155,12 @@ public class NarrationBlock : ModusMentisChainElement
     /// Takes precedence over LinkedOutcome during click resolution.
     /// </summary>
     public Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap { get; init; } = null;
+
+    /// <summary>
+    /// Maps each extracted bare keyword → its full <see cref="KeywordInContext"/> (context phrase + keyword).
+    /// Used to pass the enriched keyword context to the thinking phase when a keyword is clicked.
+    /// </summary>
+    public Dictionary<string, KeywordInContext>? KeywordContextMap { get; init; } = null;
     
     /// <summary>
     /// Implements ModusMentisChainElement.ChainModusMentis - returns the modusMentis of this block.
@@ -174,7 +180,8 @@ public class NarrationBlock : ModusMentisChainElement
         ObservationType? SourceObservationType = null,
         ConcreteOutcome? LinkedOutcome = null,
         Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap = null,
-        List<NarrationSentence>? Sentences = null)
+        List<NarrationSentence>? Sentences = null,
+        Dictionary<string, KeywordInContext>? KeywordContextMap = null)
     {
         this.Type = Type;
         this.ModusMentis = ModusMentis;
@@ -186,6 +193,7 @@ public class NarrationBlock : ModusMentisChainElement
         this.LinkedOutcome = LinkedOutcome;
         this.KeywordOutcomeMap = KeywordOutcomeMap;
         this.Sentences = Sentences;
+        this.KeywordContextMap = KeywordContextMap;
     }
 }
 

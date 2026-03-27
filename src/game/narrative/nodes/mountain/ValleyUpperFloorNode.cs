@@ -22,7 +22,7 @@ public class ValleyUpperFloorNode : PyramidalFeatureNode
     public override string TransitionDescription => "enter the valley upper floor";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "valley", "meadow", "grass", "openness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the wide <valley> floor above the lower reaches"), KeywordInContext.Parse("a wide <meadow> of alpine grass"), KeywordInContext.Parse("the tall <grass> swaying across the valley"), KeywordInContext.Parse("the spacious <openness> of the upper floor") };
     
     private static readonly string[] Moods = { "wide", "open", "spacious", "peaceful" };
     
@@ -44,7 +44,7 @@ public class ValleyUpperFloorNode : PyramidalFeatureNode
         public override string ItemId => "valley_upper_floor_meadow_grass";
         public override string DisplayName => "Meadow Grass";
         public override string Description => "Tall grass covering the valley floor";
-        public override List<string> OutcomeKeywords => new() { "blade", "abundance", "verdure" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a long grass <blade> wet with morning dew"), KeywordInContext.Parse("the rich <abundance> of the sheltered meadow"), KeywordInContext.Parse("the deep <verdure> of the valley grass") };
     }
     
 }

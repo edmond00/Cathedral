@@ -403,9 +403,19 @@ public static class Config
         public const int TargetKeywordCount = 10;
 
         /// <summary>
-        /// Instruction appended to every LLM prompt question to enforce concise, grounded JSON responses.
+        /// Base instruction appended to every LLM prompt to enforce concise, grounded JSON responses.
+        /// Does not include the character reminder — use <see cref="AnswerInstructionFor"/> to get the full instruction.
         /// </summary>
-        public const string AnswerInstruction = "Respond in JSON format. Answer in one short sentence (max 15 words) and stop. Use only the given information; no invention. Stay in character.";
+        public const string AnswerInstruction = "Respond in JSON format. Answer in one short sentence and stop. Use only the given information; no invention.";
+
+        /// <summary>
+        /// Returns the full answer instruction, appending a character reminder from PersonaReminder2 when available.
+        /// Falls back to "Stay in character." when no reminder is provided.
+        /// </summary>
+        public static string AnswerInstructionFor(string? personaReminder2) =>
+            personaReminder2 != null
+                ? $"{AnswerInstruction} Stay in the character of {personaReminder2}."
+                : $"{AnswerInstruction} Stay in character.";
     }
     
     #endregion

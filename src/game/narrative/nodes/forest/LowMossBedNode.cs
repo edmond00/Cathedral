@@ -14,7 +14,7 @@ public class LowMossBedNode : NarrationNode
     public override string TransitionDescription => "step onto the moss";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "moss", "carpet", "silence", "dampness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a thick green <moss> covering the ground"), KeywordInContext.Parse("the soft yielding <carpet> of the forest floor"), KeywordInContext.Parse("a <silence> broken only by dripping water"), KeywordInContext.Parse("the cool <dampness> soaking through the boots") };
     
     private static readonly string[] Moods = { "soft", "silent", "cushioned", "thick", "velvety", "damp", "quiet", "green" };
     
@@ -38,7 +38,7 @@ public class LowMossBedNode : NarrationNode
         public override string ItemId => "moss_carpet";
         public override string DisplayName => "Moss Carpet";
         public override string Description => "A thick sheet of forest floor moss";
-        public override List<string> OutcomeKeywords => new() { "cushion", "velvet", "dampness" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a spongy <cushion> of deep forest moss"), KeywordInContext.Parse("the soft <velvet> texture of the moss mat") };
     }
     
     public sealed class MossSpore : Item
@@ -46,6 +46,6 @@ public class LowMossBedNode : NarrationNode
         public override string ItemId => "low_moss_spore_capsule";
         public override string DisplayName => "Moss Spore Capsule";
         public override string Description => "Tiny capsules on thin stalks containing spores";
-        public override List<string> OutcomeKeywords => new() { "sporophyte", "stalk", "propagule" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the tiny <sporophyte> rising above the moss"), KeywordInContext.Parse("a thin red <stalk> bearing the spore capsule") };
     }
 }

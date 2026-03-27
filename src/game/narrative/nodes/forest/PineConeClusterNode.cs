@@ -13,7 +13,7 @@ public class PineConeClusterNode : NarrationNode
     public override string TransitionDescription => "collect pine cones";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "cone", "scale", "seed", "resin" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a woody <cone> with its scales wide open"), KeywordInContext.Parse("a thin curved <scale> from the pine cone"), KeywordInContext.Parse("a tiny winged <seed> tucked behind each scale"), KeywordInContext.Parse("a sticky drop of <resin> on the cone surface") };
     
     private static readonly string[] Moods = { "scattered", "abundant", "dry", "fallen", "plentiful", "numerous", "clustered", "collected" };
     
@@ -37,7 +37,7 @@ public class PineConeClusterNode : NarrationNode
         public override string ItemId => "pine_cone";
         public override string DisplayName => "Pine Cone";
         public override string Description => "A woody pine cone with open scales";
-        public override List<string> OutcomeKeywords => new() { "strobilus", "scale", "resin", "seed" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a woody pine <strobilus> heavy with scales"), KeywordInContext.Parse("a sticky drop of <resin> on the cone surface") };
     }
     
     public sealed class PineNeedle : Item
@@ -45,6 +45,6 @@ public class PineConeClusterNode : NarrationNode
         public override string ItemId => "pine_cone_cluster_needles";
         public override string DisplayName => "Pine Needles";
         public override string Description => "A bundle of fallen pine needles";
-        public override List<string> OutcomeKeywords => new() { "fascicle", "bundle", "resin" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a <fascicle> of paired pine needles"), KeywordInContext.Parse("a sharp resinous <bundle> of fallen needles") };
     }
 }

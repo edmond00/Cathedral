@@ -20,7 +20,7 @@ public class FungalRingNode : NarrationNode
     public override string TransitionDescription => "approach the ring";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "arc", "mushroom", "mycelium", "spore" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the perfect <arc> of mushrooms in the grass"), KeywordInContext.Parse("some pale white <mushroom>s in a ring"), KeywordInContext.Parse("the hidden <mycelium> network beneath the ring"), KeywordInContext.Parse("a faint <spore> smell rising from disturbed caps") };
     
     private static readonly string[] Moods = { "mysterious", "perfect", "uncanny", "circular", "strange", "symmetrical", "eerie", "magical" };
     
@@ -44,7 +44,7 @@ public class FungalRingNode : NarrationNode
         public override string ItemId => "fairy_ring_mushroom";
         public override string DisplayName => "Fairy Ring Mushroom";
         public override string Description => "A white mushroom from the mysterious circle";
-        public override List<string> OutcomeKeywords => new() { "basidiocarp", "cap", "gill", "spore" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a pale <basidiocarp> from the fairy ring"), KeywordInContext.Parse("the flat white <cap> of the ring mushroom"), KeywordInContext.Parse("the fine pink <gill>s on the underside") };
     }
     
     public sealed class MyceliumThread : Item
@@ -52,7 +52,7 @@ public class FungalRingNode : NarrationNode
         public override string ItemId => "fungal_ring_mycelium";
         public override string DisplayName => "Mycelium Thread";
         public override string Description => "White fungal threads just beneath the soil";
-        public override List<string> OutcomeKeywords => new() { "hyphae", "strand", "network", "filament" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("some white <hyphae> beneath the topsoil"), KeywordInContext.Parse("a fine <strand> of mycelium on the finger") };
     }
     
     public sealed class SporeCloud : Item
@@ -60,6 +60,6 @@ public class FungalRingNode : NarrationNode
         public override string ItemId => "fungal_ring_spore_cloud";
         public override string DisplayName => "Spore Cloud Sample";
         public override string Description => "A faint puff of microscopic spores released from disturbed caps";
-        public override List<string> OutcomeKeywords => new() { "sporangium", "plume", "powder" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a burst <sporangium> releasing a faint puff"), KeywordInContext.Parse("a fine <powder> of spores drifting in the still air") };
     }
 }

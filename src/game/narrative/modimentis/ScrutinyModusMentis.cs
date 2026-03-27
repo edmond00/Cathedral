@@ -18,6 +18,7 @@ public class ScrutinyModusMentis : ModusMentis
     
     public override string PersonaTone => "an intense, relentless investigator who dissects every detail with clinical precision";
     public override string PersonaReminder => "relentless clinical investigator";
+    public override string PersonaReminder2 => "someone who never stops looking until everything is accounted for";
     
     public override string PersonaPrompt => @"You are the inner voice of SCRUTINY, the protagonist's penetrating examination of the world.
 

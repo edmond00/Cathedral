@@ -13,7 +13,7 @@ public class LowwoodNode : NarrationNode
     public override string TransitionDescription => "descend into the lowwood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "alder", "reed", "puddle", "dampness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("an <alder> tree standing ankle-deep in water"), KeywordInContext.Parse("some tall <reed>s edging a standing pool"), KeywordInContext.Parse("a wide <puddle> blocking the path forward"), KeywordInContext.Parse("an oppressive <dampness> soaking the clothing") };
     
     private static readonly string[] Moods = { "damp", "soggy", "humid", "waterlogged", "misty", "moist", "dripping", "wet" };
     
@@ -37,7 +37,7 @@ public class LowwoodNode : NarrationNode
         public override string ItemId => "lowwood_wet_moss";
         public override string DisplayName => "Wet Moss";
         public override string Description => "Damp moss gathered from lowwood ground";
-        public override List<string> OutcomeKeywords => new() { "bryophyte", "dampness", "ground" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a dripping <bryophyte> from the lowwood ground"), KeywordInContext.Parse("some soaking wet moss full of <dampness>") };
     }
     
     public sealed class PuddleWater : Item
@@ -45,6 +45,6 @@ public class LowwoodNode : NarrationNode
         public override string ItemId => "lowwood_puddle_water";
         public override string DisplayName => "Puddle Water";
         public override string Description => "Water collected from lowwood puddles";
-        public override List<string> OutcomeKeywords => new() { "runoff", "basin", "stagnation" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the muddy <runoff> collected from higher ground"), KeywordInContext.Parse("a shallow <basin> of standing lowwood water") };
     }
 }

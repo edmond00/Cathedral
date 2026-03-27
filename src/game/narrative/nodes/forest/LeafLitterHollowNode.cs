@@ -14,7 +14,7 @@ public class LeafLitterHollowNode : NarrationNode
     public override string TransitionDescription => "descend into the hollow";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "mulch", "depression", "leaf", "decomposition" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the soft dark <mulch> filling the hollow"), KeywordInContext.Parse("the hollow <depression> catching fallen leaves"), KeywordInContext.Parse("the smell of <decomposition> rising from the litter") };
     
     private static readonly string[] Moods = { "deep", "soft", "decomposing", "layered", "accumulated", "moist", "rich", "organic" };
     
@@ -38,7 +38,7 @@ public class LeafLitterHollowNode : NarrationNode
         public override string ItemId => "leaf_mold";
         public override string DisplayName => "Leaf Mold";
         public override string Description => "Rich, partially decomposed leaf matter";
-        public override List<string> OutcomeKeywords => new() { "humus", "decomposition", "spore" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("some dark <humus> from decomposed leaves"), KeywordInContext.Parse("a faint <spore> cloud rising from the mold") };
     }
     
     public sealed class Millipede : Item
@@ -46,6 +46,6 @@ public class LeafLitterHollowNode : NarrationNode
         public override string ItemId => "leaf_litter_millipede";
         public override string DisplayName => "Millipede";
         public override string Description => "A long millipede coiling defensively";
-        public override List<string> OutcomeKeywords => new() { "segment", "arthropod", "chitin" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a long <segment>ed millipede coiling up"), KeywordInContext.Parse("a slow <arthropod> moving through the litter") };
     }
 }

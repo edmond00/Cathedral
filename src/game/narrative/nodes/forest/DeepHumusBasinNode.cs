@@ -14,7 +14,7 @@ public class DeepHumusBasinNode : NarrationNode
     public override string TransitionDescription => "descend into the basin";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "humus", "basin", "fertility", "decay" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("some crumbly black <humus> filling the hollow"), KeywordInContext.Parse("the deep <basin> shaped by centuries of accumulation"), KeywordInContext.Parse("an extraordinary <fertility> in the rich dark earth") };
     
     private static readonly string[] Moods = { "deep", "rich", "black", "fertile", "accumulated", "organic", "soft", "ancient" };
     
@@ -38,7 +38,7 @@ public class DeepHumusBasinNode : NarrationNode
         public override string ItemId => "pure_humus";
         public override string DisplayName => "Pure Humus";
         public override string Description => "Black, crumbly humus from centuries of decay";
-        public override List<string> OutcomeKeywords => new() { "loam", "soil", "fertility", "decomposition" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the crumbly dark <loam> lifting easily"), KeywordInContext.Parse("a rich <soil> built from centuries of decay"), KeywordInContext.Parse("an intense <decomposition> smell rising from below") };
     }
     
     public sealed class AncientSeed : Item
@@ -46,6 +46,6 @@ public class DeepHumusBasinNode : NarrationNode
         public override string ItemId => "deep_humus_ancient_seed";
         public override string DisplayName => "Ancient Seed";
         public override string Description => "A long-buried seed preserved in the humus";
-        public override List<string> OutcomeKeywords => new() { "kernel", "dormancy", "husk" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a hard <kernel> preserved in the deep humus"), KeywordInContext.Parse("a cracked <husk> around an ancient seed") };
     }
 }

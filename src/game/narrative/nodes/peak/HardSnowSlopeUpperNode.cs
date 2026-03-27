@@ -16,7 +16,7 @@ public class HardSnowSlopeUpperNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the upper hard snow slope";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "snowfield", "slope", "wind", "hardness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the steep upper <snowfield> near the summit"), KeywordInContext.Parse("the hard-packed <slope> of wind-scoured snow"), KeywordInContext.Parse("the cutting <wind> across the upper snowfield"), KeywordInContext.Parse("the ice-like <hardness> of the compacted snow") };
     
     private static readonly string[] Moods = { "hard-packed", "gleaming", "steep", "wind-hardened" };
     

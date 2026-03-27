@@ -15,7 +15,7 @@ public class RidgeSpineNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb onto the ridge spine";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "spine", "ridge", "knife", "wind" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the narrow rock <spine> traversing the ridge"), KeywordInContext.Parse("the knife-edge <ridge> exposed to everything"), KeywordInContext.Parse("the sharpness of a stone <knife> along the crest"), KeywordInContext.Parse("a relentless <wind> howling across the spine") };
     
     private static readonly string[] Moods = { "knife-edge", "precipitous", "vertiginous", "exposed" };
     
@@ -37,7 +37,7 @@ public class RidgeSpineNode : PyramidalFeatureNode
         public override string ItemId => "ridge_spine_sharp_rock";
         public override string DisplayName => "Sharp Rock";
         public override string Description => "Angular stone jutting from the ridge";
-        public override List<string> OutcomeKeywords => new() { "shard", "edge", "angularity" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a glassy <shard> split from the ridge rock"), KeywordInContext.Parse("a razor-sharp <edge> on the broken stone"), KeywordInContext.Parse("the brutal <angularity> of unweathered rock") };
     }
     
     public sealed class HornfelsChip : Item
@@ -45,7 +45,7 @@ public class RidgeSpineNode : PyramidalFeatureNode
         public override string ItemId => "ridge_spine_hornfels_chip";
         public override string DisplayName => "Hornfels Chip";
         public override string Description => "Metamorphic rock fragment collectible from the ridge";
-        public override List<string> OutcomeKeywords => new() { "fragment", "metamorphic", "hardness" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a thin <fragment> of metamorphic rock"), KeywordInContext.Parse("a banded <metamorphic> chip from the ridge"), KeywordInContext.Parse("the extreme <hardness> of the hornfels under hand") };
     }
     
 }

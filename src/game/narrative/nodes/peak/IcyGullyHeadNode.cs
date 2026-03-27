@@ -16,7 +16,7 @@ public class IcyGullyHeadNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the icy gully head";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "gully", "ice", "chute", "source" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the top of a steep narrow <gully> cut into the mountain"), KeywordInContext.Parse("the hard old <ice> lining the gully walls"), KeywordInContext.Parse("the smooth angled <chute> of ice dropping away below"), KeywordInContext.Parse("the <source> point where all the ice and melt begins") };
     
     private static readonly string[] Moods = { "steep", "narrow", "icy", "channeled" };
     

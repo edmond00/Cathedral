@@ -15,7 +15,7 @@ public class RockfallCrownNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the rockfall crown";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "rockfall", "fracture", "scar", "collapse" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the origin point of a recent <rockfall>"), KeywordInContext.Parse("a gaping <fracture> where stone broke away"), KeywordInContext.Parse("the raw <scar> left in the cliff face"), KeywordInContext.Parse("the aftermath of a massive <collapse>") };
     
     private static readonly string[] Moods = { "fractured", "collapsed", "scarred", "broken" };
     

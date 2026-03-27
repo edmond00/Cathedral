@@ -16,7 +16,7 @@ public class SlushChannelSpreadNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the slush channel spread";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "slush", "snow", "melting", "fan" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a wide spread of wet <slush> across the slope"), KeywordInContext.Parse("a packed <snow> drifting across the spread"), KeywordInContext.Parse("the active <melting> spreading the channel"), KeywordInContext.Parse("the broad <fan> of slush below the channel") };
     
     private static readonly string[] Moods = { "dispersed", "soggy", "spreading", "melting" };
     
@@ -38,6 +38,6 @@ public class SlushChannelSpreadNode : PyramidalFeatureNode
         public override string ItemId => "slush_channel_spread_alpine_sedge";
         public override string DisplayName => "Alpine Sedge";
         public override string Description => "Hardy grass collectible from the channel";
-        public override List<string> OutcomeKeywords => new() { "blade", "tuft", "tussock" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a stiff sedge <blade> poking through the slush"), KeywordInContext.Parse("a dense <tuft> of alpine sedge"), KeywordInContext.Parse("a frozen <tussock> at the channel edge") };
     }
 }

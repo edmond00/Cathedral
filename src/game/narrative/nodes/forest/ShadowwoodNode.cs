@@ -20,7 +20,7 @@ public class ShadowwoodNode : NarrationNode
     public override string TransitionDescription => "enter the shadowwood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "shadow", "lichen", "moss", "gloom" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the deep <shadow> pooling between the trunks"), KeywordInContext.Parse("some grey <lichen> crusted on the bark"), KeywordInContext.Parse("the damp <moss> carpeting shadowed stones"), KeywordInContext.Parse("a pervasive <gloom> hanging between the trees") };
     
     private static readonly string[] Moods = { "gloomy", "darkened", "shadowy", "murky", "obscure", "dim", "somber", "dusky" };
     
@@ -44,6 +44,6 @@ public class ShadowwoodNode : NarrationNode
         public override string ItemId => "shadowwood_dark_bark";
         public override string DisplayName => "Dark Bark";
         public override string Description => "Nearly black bark from shadowwood trees";
-        public override List<string> OutcomeKeywords => new() { "cortex", "shadow", "gnarl" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the black <cortex> of the shadowwood bark"), KeywordInContext.Parse("a dark <gnarl> in the near-black trunk") };
     }
 }

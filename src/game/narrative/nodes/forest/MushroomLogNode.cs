@@ -13,7 +13,7 @@ public class MushroomLogNode : NarrationNode
     public override string TransitionDescription => "inspect the mushroom log";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "bracket", "fungus", "decay", "wood" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a large <bracket> fungus jutting from the log"), KeywordInContext.Parse("the earthy smell of <fungus> on the bark"), KeywordInContext.Parse("the soft inner <decay> of the log"), KeywordInContext.Parse("the crumbling <wood> riddled with fungal threads") };
     
     private static readonly string[] Moods = { "layered", "shelf-like", "overlapping", "decaying", "fungal", "rotting", "tiered", "clustered" };
     
@@ -37,7 +37,7 @@ public class MushroomLogNode : NarrationNode
         public override string ItemId => "shelf_mushroom";
         public override string DisplayName => "Shelf Mushroom";
         public override string Description => "A tough, bracket-like shelf mushroom";
-        public override List<string> OutcomeKeywords => new() { "polypore", "bracket", "conk" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a tough <polypore> from the log surface"), KeywordInContext.Parse("a woody layered <conk> growing from the side") };
     }
     
     public sealed class DecayedLogWood : Item
@@ -45,7 +45,7 @@ public class MushroomLogNode : NarrationNode
         public override string ItemId => "mushroom_log_rotten_wood";
         public override string DisplayName => "Rotten Wood";
         public override string Description => "Soft, decaying wood riddled with fungal threads";
-        public override List<string> OutcomeKeywords => new() { "punky", "decay", "mycelium" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the soft <punky> rot at the log's core"), KeywordInContext.Parse("some white <mycelium> threads through the wood") };
     }
     
     public sealed class BeetleHole : Item
@@ -53,6 +53,6 @@ public class MushroomLogNode : NarrationNode
         public override string ItemId => "mushroom_log_beetle_hole";
         public override string DisplayName => "Beetle Gallery";
         public override string Description => "Network of beetle tunnels carved through the decaying wood";
-        public override List<string> OutcomeKeywords => new() { "gallery", "tunnel", "larvae" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a network of beetle <gallery>s in the wood"), KeywordInContext.Parse("a winding <tunnel> carved by bark beetles") };
     }
 }

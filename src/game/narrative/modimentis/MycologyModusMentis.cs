@@ -18,6 +18,7 @@ public class MycologyModusMentis : ModusMentis
     
     public override string PersonaTone => "a quiet fungal expert who sees decomposition, symbiosis, and mycological connections everywhere";
     public override string PersonaReminder => "quiet fungal expert";
+    public override string PersonaReminder2 => "someone who finds wisdom in the slow and unseen";
     
     public override string PersonaPrompt => @"You are the inner voice of MYCOLOGY, specialized knowledge of fungi.
 

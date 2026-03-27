@@ -16,7 +16,7 @@ public class FrozenOutwashPlainMarginNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the frozen outwash plain margin";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "outwash", "margin", "glacier", "transition" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the frozen glacial <outwash> at its edge"), KeywordInContext.Parse("the indistinct <margin> between ice and rock"), KeywordInContext.Parse("the retreating <glacier> above this plain"), KeywordInContext.Parse("the slow <transition> from ice to bare ground") };
     
     private static readonly string[] Moods = { "transitional", "frozen", "marginal", "boundary" };
     
@@ -38,6 +38,6 @@ public class FrozenOutwashPlainMarginNode : PyramidalFeatureNode
         public override string ItemId => "frozen_outwash_plain_margin_glacial_cobble";
         public override string DisplayName => "Glacial Cobble";
         public override string Description => "Glacier-rounded stone collectible from the margin";
-        public override List<string> OutcomeKeywords => new() { "erratic", "glacier", "stone" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a rounded glacial <erratic> at the margin"), KeywordInContext.Parse("the ancient work of the <glacier> above"), KeywordInContext.Parse("a pale <stone> smoothed by glacial grinding") };
     }
 }

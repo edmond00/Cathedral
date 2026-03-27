@@ -15,7 +15,7 @@ public class CrestShoulderNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the crest shoulder";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "shoulder", "slope", "wind", "barrenness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the broad <shoulder> falling from the crest"), KeywordInContext.Parse("a steep <slope> dropping into the void"), KeywordInContext.Parse("a fierce <wind> battering the exposed rock"), KeywordInContext.Parse("the absolute <barrenness> of the high stone") };
     
     private static readonly string[] Moods = { "steep", "exposed", "wind-battered", "barren" };
     
@@ -37,7 +37,7 @@ public class CrestShoulderNode : PyramidalFeatureNode
         public override string ItemId => "crest_shoulder_loose_scree";
         public override string DisplayName => "Loose Scree";
         public override string Description => "Unstable rock debris on the shoulder";
-        public override List<string> OutcomeKeywords => new() { "talus", "gravel", "instability" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("some loose <talus> sliding from the shoulder"), KeywordInContext.Parse("a scatter of coarse <gravel> across the rock"), KeywordInContext.Parse("a creeping <instability> in the loose debris") };
     }
     
     public sealed class AlpineQuartz : Item
@@ -45,6 +45,6 @@ public class CrestShoulderNode : PyramidalFeatureNode
         public override string ItemId => "crest_shoulder_alpine_quartz";
         public override string DisplayName => "Alpine Quartz";
         public override string Description => "Clear quartz crystal collectible from the shoulder";
-        public override List<string> OutcomeKeywords => new() { "silicate", "crystal", "mineral" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a veined <silicate> embedded in the stone"), KeywordInContext.Parse("a clear <crystal> glinting in the cold light"), KeywordInContext.Parse("a rare <mineral> exposed by frost action") };
     }
 }

@@ -16,7 +16,7 @@ public class SnowLadenValleyUpperNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the upper snow-laden valley";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "valley", "snow", "expanse", "purity" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the high snow-laden <valley> near the summit"), KeywordInContext.Parse("a packed <snow> drifting across the slope"), KeywordInContext.Parse("the vast white <expanse> of the upper valley"), KeywordInContext.Parse("the untouched <purity> of pristine deep snow") };
     
     private static readonly string[] Moods = { "pristine", "deep", "untouched", "expansive" };
     

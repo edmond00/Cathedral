@@ -15,7 +15,7 @@ public class ChannelBankNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the channel bank";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "bank", "channel", "levee", "floodplain" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a grassy <bank> rising from the water"), KeywordInContext.Parse("the carved <channel> cutting through the soil"), KeywordInContext.Parse("a low <levee> holding back the flood"), KeywordInContext.Parse("the wide <floodplain> stretching below") };
     
     private static readonly string[] Moods = { "gentle", "grassy", "raised", "vegetated" };
     
@@ -37,7 +37,7 @@ public class ChannelBankNode : PyramidalFeatureNode
         public override string ItemId => "channel_bank_sediment";
         public override string DisplayName => "Bank Sediment";
         public override string Description => "Layered deposits from past floods";
-        public override List<string> OutcomeKeywords => new() { "silt", "deposit", "mineral" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a pale <silt> layered from past floods"), KeywordInContext.Parse("a thick <deposit> of sorted sediment"), KeywordInContext.Parse("a dark <mineral> streak in the bank wall") };
     }
     
     public sealed class MountainReedStem : Item
@@ -45,6 +45,6 @@ public class ChannelBankNode : PyramidalFeatureNode
         public override string ItemId => "mountain_reed_stem";
         public override string DisplayName => "Mountain Reed Stem";
         public override string Description => "Dried reed stem collectible from the bank";
-        public override List<string> OutcomeKeywords => new() { "internode", "hollow", "culm" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a jointed <internode> of dried stem"), KeywordInContext.Parse("a <hollow> reed rattling in the wind"), KeywordInContext.Parse("a stiff <culm> stripped from the bank") };
     }
 }

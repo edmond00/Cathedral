@@ -15,7 +15,7 @@ public class CliffTopNode : PyramidalFeatureNode
     public override string TransitionDescription => "ascend to the cliff top";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "precipice", "void", "abyss", "edge" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the sheer <precipice> dropping away underfoot"), KeywordInContext.Parse("a dizzying <void> opening below"), KeywordInContext.Parse("the dark <abyss> of the valley far down"), KeywordInContext.Parse("the crumbling <edge> where the cliff ends") };
     
     private static readonly string[] Moods = { "vertiginous", "dizzying", "precipitous", "commanding" };
     
@@ -37,7 +37,7 @@ public class CliffTopNode : PyramidalFeatureNode
         public override string ItemId => "cliff_top_cracked_rock";
         public override string DisplayName => "Cracked Rock";
         public override string Description => "Fractured stone near the cliff edge";
-        public override List<string> OutcomeKeywords => new() { "limestone", "fracture", "fissure" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a pale slab of <limestone> near the edge"), KeywordInContext.Parse("a deep <fracture> splitting the rock"), KeywordInContext.Parse("a thin <fissure> running through the cliff top") };
     }
     
     public sealed class RaptorFeather : Item
@@ -45,7 +45,7 @@ public class CliffTopNode : PyramidalFeatureNode
         public override string ItemId => "cliff_top_raptor_feather";
         public override string DisplayName => "Raptor Feather";
         public override string Description => "Large feather from a bird of prey";
-        public override List<string> OutcomeKeywords => new() { "plume", "accipiter", "hunter" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a broad <plume> caught on the updraft"), KeywordInContext.Parse("the silhouette of an <accipiter> circling"), KeywordInContext.Parse("the keen eye of a <hunter> scanning below") };
     }
     
 }

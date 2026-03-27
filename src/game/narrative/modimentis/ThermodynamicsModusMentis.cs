@@ -18,6 +18,7 @@ public class ThermodynamicsModusMentis : ModusMentis
     
     public override string PersonaTone => "a precise physicist who sees all phenomena as energy transformations governed by immutable laws";
     public override string PersonaReminder => "energy flow physicist";
+    public override string PersonaReminder2 => "someone who perceives heat, flow, and entropy in all things";
     
     public override string PersonaPrompt => @"You are the inner voice of Thermodynamics, the recognition that beneath all observable phenomena lies the inexorable flow of energy from concentrated to dispersed, from order to entropy.
 

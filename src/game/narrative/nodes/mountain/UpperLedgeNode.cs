@@ -22,7 +22,7 @@ public class UpperLedgeNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the upper ledge";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ledge", "perch", "overlook", "view" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a projecting stone <ledge> above the slope"), KeywordInContext.Parse("a commanding <perch> open to the wind"), KeywordInContext.Parse("a high <overlook> across the valley"), KeywordInContext.Parse("a wide <view> stretching into the distance") };
     
     private static readonly string[] Moods = { "commanding", "elevated", "projecting", "prominent" };
     
@@ -44,7 +44,7 @@ public class UpperLedgeNode : PyramidalFeatureNode
         public override string ItemId => "upper_ledge_flat_stone";
         public override string DisplayName => "Flat Stone";
         public override string Description => "Smooth stone surface on the ledge";
-        public override List<string> OutcomeKeywords => new() { "slab", "surface", "platform" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a broad flat <slab> forming the ledge"), KeywordInContext.Parse("the smooth <surface> worn by wind and rain"), KeywordInContext.Parse("a natural stone <platform> above the drop") };
     }
     
 }

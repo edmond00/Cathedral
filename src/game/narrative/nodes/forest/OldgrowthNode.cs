@@ -21,7 +21,7 @@ public class OldgrowthNode : NarrationNode
     public override string TransitionDescription => "enter the oldgrowth";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "snag", "humus", "age", "giant" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a dead standing <snag> among the living trees"), KeywordInContext.Parse("the deep black <humus> built across millennia"), KeywordInContext.Parse("an <age> beyond reckoning in each ring"), KeywordInContext.Parse("a true <giant> of the primeval forest") };
     
     private static readonly string[] Moods = { "ancient", "primordial", "timeless", "venerable", "aged", "eternal", "prehistoric", "primeval" };
     
@@ -45,7 +45,7 @@ public class OldgrowthNode : NarrationNode
         public override string ItemId => "oldgrowth_ancient_wood";
         public override string DisplayName => "Ancient Wood";
         public override string Description => "Weathered wood from ancient oldgrowth trees";
-        public override List<string> OutcomeKeywords => new() { "heartwood", "age", "preservation" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the dark dense <heartwood> at the tree's core"), KeywordInContext.Parse("some ancient <preservation> in the resin-soaked wood") };
     }
     
     public sealed class OldgrowthResin : Item
@@ -53,6 +53,6 @@ public class OldgrowthNode : NarrationNode
         public override string ItemId => "oldgrowth_oldgrowth_resin";
         public override string DisplayName => "Oldgrowth Resin";
         public override string Description => "Hardened resin oozing from ancient trees";
-        public override List<string> OutcomeKeywords => new() { "oleoresin", "amber", "sap" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the thick sticky <oleoresin> from an ancient wound"), KeywordInContext.Parse("some hardened <amber> resin on the bark surface") };
     }
 }

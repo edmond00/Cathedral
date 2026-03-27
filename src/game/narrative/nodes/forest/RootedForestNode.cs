@@ -13,7 +13,7 @@ public class RootedForestNode : NarrationNode
     public override string TransitionDescription => "enter the rooted forest";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "root", "web", "erosion", "network" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("an exposed <root> like a ridgeline underfoot"), KeywordInContext.Parse("the interlaced <web> of surface roots"), KeywordInContext.Parse("the <erosion> channel cut between exposed roots"), KeywordInContext.Parse("the vast <network> of roots threading the ground") };
     
     private static readonly string[] Moods = { "gnarled", "exposed", "twisted", "contorted", "webbed", "interlaced", "serpentine", "convoluted" };
     
@@ -37,7 +37,7 @@ public class RootedForestNode : NarrationNode
         public override string ItemId => "rooted_forest_exposed_root_fiber";
         public override string DisplayName => "Exposed Root Fiber";
         public override string Description => "Fibrous strands from massive exposed roots";
-        public override List<string> OutcomeKeywords => new() { "taproot", "radicle", "wood" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a thick exposed <taproot> rising from below"), KeywordInContext.Parse("a fine <radicle> at the tip of the root") };
     }
     
     public sealed class RootGrip : Item
@@ -45,6 +45,6 @@ public class RootedForestNode : NarrationNode
         public override string ItemId => "rooted_forest_root_grip";
         public override string DisplayName => "Root Grip";
         public override string Description => "Sturdy root section useful for climbing";
-        public override List<string> OutcomeKeywords => new() { "taproot", "holdfast", "handhold" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a firm <holdfast> root section to grab onto"), KeywordInContext.Parse("a good natural <handhold> in the root curve") };
     }
 }

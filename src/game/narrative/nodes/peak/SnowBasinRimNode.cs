@@ -16,7 +16,7 @@ public class SnowBasinRimNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the snow basin rim";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "basin", "rim", "crater", "boundary" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the enclosing wall of the <basin> visible ahead"), KeywordInContext.Parse("the curved <rim> of rock and ice at the top edge"), KeywordInContext.Parse("the circular <crater>-like form of the enclosed snow basin"), KeywordInContext.Parse("the <boundary> where sheltered snow gives way to open slope") };
     
     private static readonly string[] Moods = { "circular", "enclosing", "elevated", "sheltering" };
     

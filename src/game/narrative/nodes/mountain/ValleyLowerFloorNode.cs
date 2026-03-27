@@ -23,7 +23,7 @@ public class ValleyLowerFloorNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the valley lower floor";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "valley", "floor", "fertility", "shelter" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the broad <valley> opening between the peaks"), KeywordInContext.Parse("the flat <floor> of the mountain valley"), KeywordInContext.Parse("the deep <fertility> of the sheltered soil"), KeywordInContext.Parse("the complete <shelter> from the ridge wind") };
     
     private static readonly string[] Moods = { "fertile", "lush", "peaceful", "sheltered" };
     
@@ -45,7 +45,7 @@ public class ValleyLowerFloorNode : PyramidalFeatureNode
         public override string ItemId => "valley_soil";
         public override string DisplayName => "Rich Soil";
         public override string Description => "Dark fertile earth in the valley";
-        public override List<string> OutcomeKeywords => new() { "humus", "earth", "fertility" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the rich dark <humus> of the valley soil"), KeywordInContext.Parse("a handful of soft <earth> from the floor"), KeywordInContext.Parse("the deep <fertility> of alluvial ground") };
     }
     
 }

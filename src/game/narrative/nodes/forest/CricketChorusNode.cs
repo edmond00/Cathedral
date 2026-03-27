@@ -13,7 +13,7 @@ public class CricketChorusNode : NarrationNode
     public override string TransitionDescription => "follow the cricket sounds";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "chirp", "chorus", "night", "rhythm" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a dry repetitive <chirp> from every direction"), KeywordInContext.Parse("the swelling <chorus> rising around the clearing"), KeywordInContext.Parse("a steady <rhythm> pulsing through the dusk") };
     
     private static readonly string[] Moods = { "chirping", "rhythmic", "singing", "loud", "harmonious", "nocturnal", "resonant", "trilling" };
     
@@ -37,7 +37,7 @@ public class CricketChorusNode : NarrationNode
         public override string ItemId => "cricket_chorus_cricket_legs";
         public override string DisplayName => "Cricket Legs";
         public override string Description => "Jointed legs from dead crickets";
-        public override List<string> OutcomeKeywords => new() { "joint", "appendage", "chitin" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a segmented <joint> from a cricket leg"), KeywordInContext.Parse("a slender <appendage> broken from the body"), KeywordInContext.Parse("the brittle <chitin> shell of a dead cricket") };
     }
     
 }

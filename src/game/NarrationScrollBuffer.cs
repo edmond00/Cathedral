@@ -44,9 +44,9 @@ public class NarrationScrollBuffer
         string cleanedText = TextTruncationUtils.CleanTruncatedText(block.Text);
         
         // Create a new block with cleaned text if it was modified, preserving all properties
-        var blockToAdd = cleanedText != block.Text 
+        var blockToAdd = cleanedText != block.Text
             ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Keywords, block.Actions, block.ChainOrigin,
-                block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences)
+                block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences, block.KeywordContextMap)
             : block;
         
         _blocks.Add(blockToAdd);

@@ -16,7 +16,7 @@ public class FrozenOutwashPlainFlatsNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the frozen outwash plain flats";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "outwash", "plain", "ice", "barrenness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the frozen glacial <outwash> spreading flat"), KeywordInContext.Parse("the vast <plain> of ice-covered sediment"), KeywordInContext.Parse("a clear sheet of <ice> cracking underfoot"), KeywordInContext.Parse("the utter <barrenness> of the frozen flats") };
     
     private static readonly string[] Moods = { "expansive", "flat", "barren", "open" };
     
@@ -38,7 +38,7 @@ public class FrozenOutwashPlainFlatsNode : PyramidalFeatureNode
         public override string ItemId => "frozen_outwash_plain_flats_outwash_gravel";
         public override string DisplayName => "Outwash Gravel";
         public override string Description => "Glacial outwash gravel collectible from the flats";
-        public override List<string> OutcomeKeywords => new() { "clast", "sandur", "sediment" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a rough glacial <clast> embedded in the ice"), KeywordInContext.Parse("the wide flat <sandur> of glacial outwash"), KeywordInContext.Parse("the layered <sediment> beneath the frozen crust") };
     }
     
     public sealed class OutwashClay : Item
@@ -46,6 +46,6 @@ public class FrozenOutwashPlainFlatsNode : PyramidalFeatureNode
         public override string ItemId => "frozen_outwash_plain_flats_outwash_clay";
         public override string DisplayName => "Outwash Clay";
         public override string Description => "Fine glacial clay collectible from the flats";
-        public override List<string> OutcomeKeywords => new() { "glaciomarine", "sandur", "mineral" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a pale <glaciomarine> deposit in the flats"), KeywordInContext.Parse("the frozen surface of the <sandur> plain"), KeywordInContext.Parse("a fine <mineral> powder in the glacial clay") };
     }
 }

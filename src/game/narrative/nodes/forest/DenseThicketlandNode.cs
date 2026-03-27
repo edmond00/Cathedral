@@ -13,7 +13,7 @@ public class DenseThicketlandNode : NarrationNode
     public override string TransitionDescription => "force into the thicketland";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "thorn", "shrub", "vine", "thicket" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a sharp <thorn> catching the clothing"), KeywordInContext.Parse("a dense <shrub> wall blocking the path"), KeywordInContext.Parse("some tangled <vine>s across the way"), KeywordInContext.Parse("an impenetrable <thicket> stretching in all directions") };
     
     private static readonly string[] Moods = { "impenetrable", "tangled", "maze-like", "interwoven", "cluttered", "blocked", "choked", "knotted" };
     
@@ -37,7 +37,7 @@ public class DenseThicketlandNode : NarrationNode
         public override string ItemId => "dense_thicketland_thorned_branch";
         public override string DisplayName => "Thorned Branch";
         public override string Description => "Spiky branch broken from the dense thicket";
-        public override List<string> OutcomeKeywords => new() { "aculeate", "bough", "bramble" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("an <aculeate> spine on the branch"), KeywordInContext.Parse("a spiky <bough> from the thicket") };
     }
     
     public sealed class ThicketBerries : Item
@@ -45,6 +45,6 @@ public class DenseThicketlandNode : NarrationNode
         public override string ItemId => "dense_thicketland_thicket_berries";
         public override string DisplayName => "Thicket Berries";
         public override string Description => "Small dark berries hidden in the thicket";
-        public override List<string> OutcomeKeywords => new() { "drupe", "fruit", "bramble" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a small dark <drupe> hidden in the thicket"), KeywordInContext.Parse("some sharp-flavoured <fruit> found inside") };
     }
 }

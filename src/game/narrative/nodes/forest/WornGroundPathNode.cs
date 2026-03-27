@@ -13,7 +13,7 @@ public class WornGroundPathNode : NarrationNode
     public override string TransitionDescription => "take the worn path";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "trail", "earth", "dust", "compaction" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a worn <trail> through the forest floor"), KeywordInContext.Parse("the bare <earth> beneath many feet"), KeywordInContext.Parse("a fine <dust> rising from the path"), KeywordInContext.Parse("the hard <compaction> of the well-trodden ground") };
     
     private static readonly string[] Moods = { "well-worn", "trampled", "smooth", "clear", "obvious", "easy", "traveled", "beaten" };
     
@@ -37,6 +37,6 @@ public class WornGroundPathNode : NarrationNode
         public override string ItemId => "worn_ground_path_path_dust";
         public override string DisplayName => "Path Dust";
         public override string Description => "Fine dust from the heavily traveled path";
-        public override List<string> OutcomeKeywords => new() { "silt", "powder", "artery" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a fine <silt> coating every surface"), KeywordInContext.Parse("a dry <powder> of crushed earth"), KeywordInContext.Parse("the <artery> of movement through the forest") };
     }
 }

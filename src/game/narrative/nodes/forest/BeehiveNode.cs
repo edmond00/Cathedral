@@ -13,7 +13,7 @@ public class BeehiveNode : NarrationNode
     public override string TransitionDescription => "approach the hive cautiously";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "honey", "wax", "swarm", "colony" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the thick smell of wild <honey> in the air"), KeywordInContext.Parse("some golden <wax> oozing from the hive"), KeywordInContext.Parse("a restless <swarm> circling the opening"), KeywordInContext.Parse("a thriving bee <colony> deep in the hollow") };
     
     private static readonly string[] Moods = { "buzzing", "busy", "active", "thriving", "humming", "industrious", "protective", "organized" };
     
@@ -37,7 +37,7 @@ public class BeehiveNode : NarrationNode
         public override string ItemId => "wild_honeycomb";
         public override string DisplayName => "Wild Honeycomb";
         public override string Description => "A small piece of honeycomb carefully extracted";
-        public override List<string> OutcomeKeywords => new() { "hexagon", "wax", "nectar", "cell" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a perfect <hexagon> repeated across the comb"), KeywordInContext.Parse("the soft golden <wax> sealing each chamber"), KeywordInContext.Parse("a bead of pure <nectar> pooling at the base") };
     }
     
     public sealed class BeeswaxFragment : Item
@@ -45,7 +45,7 @@ public class BeehiveNode : NarrationNode
         public override string ItemId => "beehive_beeswax_fragment";
         public override string DisplayName => "Beeswax Fragment";
         public override string Description => "A small piece of pure beeswax from the hive";
-        public override List<string> OutcomeKeywords => new() { "tallow", "warmth", "fragrance" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a sweet <fragrance> rising from the warm wax"), KeywordInContext.Parse("the gentle <warmth> radiating from the comb") };
     }
     
     public sealed class RoyalJelly : Item
@@ -53,6 +53,6 @@ public class BeehiveNode : NarrationNode
         public override string ItemId => "beehive_royal_jelly";
         public override string DisplayName => "Royal Jelly";
         public override string Description => "Precious milky substance secreted by worker bees";
-        public override List<string> OutcomeKeywords => new() { "secretion", "queen", "protein", "vitality" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a milky <secretion> from the worker bees"), KeywordInContext.Parse("some <protein>-rich jelly filling the royal cell") };
     }
 }

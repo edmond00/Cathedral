@@ -21,7 +21,7 @@ public class MirewoodNode : NarrationNode
     public override string TransitionDescription => "wade into the mirewood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "pool", "sedge", "swamp", "mire" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a dark shallow <pool> between the trunks"), KeywordInContext.Parse("some <sedge> tufts rising from standing water"), KeywordInContext.Parse("the squelching ground of this flooded <swamp>"), KeywordInContext.Parse("the clinging <mire> underfoot refusing each step") };
     
     private static readonly string[] Moods = { "waterlogged", "marshy", "boggy", "swampy", "sodden", "saturated", "squelching", "quagmire" };
     
@@ -45,7 +45,7 @@ public class MirewoodNode : NarrationNode
         public override string ItemId => "mirewood_bog_water";
         public override string DisplayName => "Bog Water";
         public override string Description => "Stagnant water collected from mirewood pools";
-        public override List<string> OutcomeKeywords => new() { "leachate", "mire", "stagnation" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the dark <leachate> from the bog filtered into the pool"), KeywordInContext.Parse("the foul <stagnation> smell of the mirewood water") };
     }
     
     public sealed class BogPeat : Item
@@ -53,6 +53,6 @@ public class MirewoodNode : NarrationNode
         public override string ItemId => "mirewood_bog_peat";
         public override string DisplayName => "Bog Peat";
         public override string Description => "Dense organic matter from the mirewood bog";
-        public override List<string> OutcomeKeywords => new() { "humus", "mire", "carbon" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the dark compacted <humus> of the bog layer"), KeywordInContext.Parse("the dense <carbon>-rich peat in the hand") };
     }
 }

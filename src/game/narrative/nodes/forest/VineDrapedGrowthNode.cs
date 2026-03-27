@@ -14,7 +14,7 @@ public class VineDrapedGrowthNode : NarrationNode
     public override string TransitionDescription => "enter the vine tangle";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "vine", "tendril", "climbing", "entanglement" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a thick green <vine> looped between the branches"), KeywordInContext.Parse("a curling <tendril> reaching for any hold it can find"), KeywordInContext.Parse("the steady <climbing> progress of stems up every surface"), KeywordInContext.Parse("an <entanglement> of shoots that pulls at every step") };
     
     private static readonly string[] Moods = { "draped", "vine-covered", "entangled", "hanging", "wrapped", "smothered", "festooned", "shrouded" };
     
@@ -38,7 +38,7 @@ public class VineDrapedGrowthNode : NarrationNode
         public override string ItemId => "vine_tendril";
         public override string DisplayName => "Vine Tendril";
         public override string Description => "A flexible climbing tendril";
-        public override List<string> OutcomeKeywords => new() { "cirrus", "liana", "curl" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a delicate coiled <cirrus> still reaching outward"), KeywordInContext.Parse("a length of woody <liana> stripped from the shrub"), KeywordInContext.Parse("the tight spring of its <curl> still in the stem") };
     }
     
     public sealed class VineLeaf : Item
@@ -46,6 +46,6 @@ public class VineDrapedGrowthNode : NarrationNode
         public override string ItemId => "vine_draped_leaf";
         public override string DisplayName => "Vine Leaf";
         public override string Description => "A broad heart-shaped leaf from the climbing vines";
-        public override List<string> OutcomeKeywords => new() { "lamina", "liana", "lobe", "vein" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the wide flat <lamina> of a heart-shaped vine leaf"), KeywordInContext.Parse("a broad leaf torn from the climbing <liana>"), KeywordInContext.Parse("the rounded <lobe> at the base of the leaf blade"), KeywordInContext.Parse("a raised pale <vein> running through the leaf") };
     }
 }

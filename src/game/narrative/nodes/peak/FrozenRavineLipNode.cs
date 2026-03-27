@@ -23,7 +23,7 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the frozen ravine lip";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "lip", "precipice", "ice", "danger" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the icy <lip> of the frozen ravine"), KeywordInContext.Parse("the sheer <precipice> dropping into the ravine"), KeywordInContext.Parse("a clear sheet of <ice> cracking at the edge"), KeywordInContext.Parse("the mortal <danger> of the ravine lip") };
     
     private static readonly string[] Moods = { "precipitous", "frozen", "deep", "dangerous" };
     
@@ -45,7 +45,7 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ravine_lip_ravine_quartz";
         public override string DisplayName => "Ravine Quartz";
         public override string Description => "Milky quartz collectible from the ravine edge";
-        public override List<string> OutcomeKeywords => new() { "silica", "vein", "mineral" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a pale <silica> vein cutting the ravine wall"), KeywordInContext.Parse("a white quartz <vein> in the frozen rock"), KeywordInContext.Parse("a bright <mineral> streak in the ravine stone") };
     }
     
     public sealed class FrozenRock : Item
@@ -53,7 +53,7 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ravine_lip_frozen_rock";
         public override string DisplayName => "Frozen Rock";
         public override string Description => "Ice-covered rock at edge";
-        public override List<string> OutcomeKeywords => new() { "cobble", "ice", "glaze" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a smooth <cobble> locked in the ice"), KeywordInContext.Parse("a thick sheet of <ice> coating the rock"), KeywordInContext.Parse("a thin <glaze> of ice over the surface") };
     }
     
     public sealed class IcicleFormation : Item
@@ -61,6 +61,6 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ravine_lip_icicle_formation";
         public override string DisplayName => "Icicle Formation";
         public override string Description => "Cluster of icicles hanging over edge";
-        public override List<string> OutcomeKeywords => new() { "pendant", "speleothem", "crystal" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a tapering ice <pendant> above the drop"), KeywordInContext.Parse("a frozen <speleothem> dripping from the edge"), KeywordInContext.Parse("a clear ice <crystal> growing from the rock") };
     }
 }

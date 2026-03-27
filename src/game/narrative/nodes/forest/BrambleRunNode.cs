@@ -20,7 +20,7 @@ public class BrambleRunNode : NarrationNode
     public override string TransitionDescription => "push through the brambles";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "thorn", "berry", "bramble", "vine" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a curved <thorn> snagging the sleeve"), KeywordInContext.Parse("some dark ripe <berry> clusters hanging low"), KeywordInContext.Parse("a tangled <bramble> cane arching across the path"), KeywordInContext.Parse("a long trailing <vine> underfoot") };
     
     private static readonly string[] Moods = { "thorny", "tangled", "scratching", "productive", "wild", "dense", "prickly", "guarded" };
     
@@ -44,7 +44,7 @@ public class BrambleRunNode : NarrationNode
         public override string ItemId => "wild_blackberry";
         public override string DisplayName => "Wild Blackberry";
         public override string Description => "A cluster of ripe blackberries";
-        public override List<string> OutcomeKeywords => new() { "berry", "drupe", "cluster", "stain" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a plump dark <berry> from the cane"), KeywordInContext.Parse("a juicy <drupe> staining the fingers blue"), KeywordInContext.Parse("a hanging <cluster> of ripe blackberries") };
     }
     
     public sealed class BrambleThorn : Item
@@ -52,6 +52,6 @@ public class BrambleRunNode : NarrationNode
         public override string ItemId => "bramble_run_thorn";
         public override string DisplayName => "Bramble Thorn";
         public override string Description => "A sharp curved thorn from a bramble cane";
-        public override List<string> OutcomeKeywords => new() { "barb", "spine", "hook" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a recurved <barb> broken from the cane"), KeywordInContext.Parse("a stiff <spine> on the underside of the stem") };
     }
 }

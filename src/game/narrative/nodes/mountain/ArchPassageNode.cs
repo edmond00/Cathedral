@@ -15,7 +15,7 @@ public class ArchPassageNode : PyramidalFeatureNode
     public override string TransitionDescription => "pass through the arch passage";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "arch", "passage", "gateway", "portal" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a shadowed rock <arch> framing the way"), KeywordInContext.Parse("a narrow <passage> between stone walls"), KeywordInContext.Parse("a natural rock <gateway> into the mountain"), KeywordInContext.Parse("a dark stone <portal> open to the wind") };
     
     private static readonly string[] Moods = { "shadowed", "framed", "impressive", "sheltered" };
     

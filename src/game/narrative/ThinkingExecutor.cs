@@ -46,6 +46,7 @@ public class ThinkingExecutor
         ModusMentis thinkingModusMentis,
         ConcreteOutcome targetOutcome,
         string keyword,
+        KeywordInContext? keywordInContext,
         NarrationNode node,
         List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
@@ -60,7 +61,7 @@ public class ThinkingExecutor
         _llmManager.ResetInstance(thinkingSlot);
 
         // ── Call 1: WHY ────────────────────────────────────────────────────────────
-        string whyPrompt = _promptConstructor.BuildWhyPrompt(outcomeDescription, node, thinkingModusMentis, protagonist, worldContext, targetOutcome);
+        string whyPrompt = _promptConstructor.BuildWhyPrompt(outcomeDescription, node, thinkingModusMentis, protagonist, worldContext, targetOutcome, keywordInContext);
         string whyGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
 
         string? whyJson = await RequestFromLLMAsync(thinkingSlot, whyPrompt, whyGbnf, 350, cancellationToken);
@@ -105,7 +106,7 @@ public class ThinkingExecutor
         int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(selectedModusMentis);
         _llmManager.ResetInstance(actionSlot);
 
-        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, outcomeDescription, node, protagonist, selectedModusMentis, worldContext, targetOutcome);
+        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, keywordInContext, outcomeDescription, node, protagonist, selectedModusMentis, worldContext, targetOutcome);
         string whatGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema());
 
         string? whatJson = await RequestFromLLMAsync(actionSlot, whatPrompt, whatGbnf, 250, cancellationToken);

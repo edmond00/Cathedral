@@ -20,7 +20,8 @@ public class ThinkingPromptConstructor
         ModusMentis thinkingModusMentis,
         Protagonist protagonist,
         WorldContext worldContext,
-        ConcreteOutcome targetOutcome)
+        ConcreteOutcome targetOutcome,
+        KeywordInContext? keywordInContext = null)
     {
         string personaToneLine = thinkingModusMentis.PersonaTone != null
             ? $"You are a {thinkingModusMentis.PersonaTone}.\n"
@@ -31,13 +32,16 @@ public class ThinkingPromptConstructor
         string outcomeLabel = targetOutcome is NarrationNode n
             ? n.GenerateNeutralDescription(protagonist.CurrentLocationId)
             : targetOutcome.DisplayName;
+        string attentionLine = keywordInContext != null
+            ? $"Your attention is drawn to {keywordInContext.Context} of {WithArticle(outcomeLabel)}."
+            : $"Your attention is drawn to {WithArticle(outcomeLabel)}.";
         return $@"{personaToneLine}{WorldContext.EpochContext}
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
-Your attention is drawn to {outcomeLabel}. Now you want to {outcomeDescription}.
+{attentionLine} Now you want to {outcomeDescription}.
 
 {reminderClause}why do you want this?
-{Config.Narrative.AnswerInstruction}";
+{Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
     }
 
     /// <summary>
@@ -59,7 +63,7 @@ You could proceed:
 {string.Join("\n", actionModiMentis.Select(s => $"- with {s.SkillMeans}"))}
 
 {reminderClause}what approach will you take and why?
-{Config.Narrative.AnswerInstruction}";
+{Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
     }
 
     /// <summary>
@@ -68,8 +72,12 @@ You could proceed:
     /// since this instance has no prior conversation history.
     /// Includes the action modusMentis's persona tone at the head (first call in this slot).
     /// </summary>
+    private static string WithArticle(string s) =>
+        s.Length > 0 && "aeiouAEIOU".Contains(s[0]) ? $"an {s}" : $"a {s}";
+
     public string BuildWhatPrompt(
         string keyword,
+        KeywordInContext? keywordInContext,
         string outcomeDescription,
         NarrationNode node,
         Protagonist protagonist,
@@ -84,14 +92,15 @@ You could proceed:
             ? $"As a {actionModusMentis.PersonaReminder}, "
             : "";
         string transition = targetOutcome.GetKeywordToOutcomeTransition(keyword);
+        string noticedClause = keywordInContext != null ? keywordInContext.Context : keyword;
 
         return $@"{personaToneLine}{WorldContext.EpochContext}
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
-You noticed {keyword}. {transition} Now you want to {outcomeDescription}.
+You noticed {noticedClause}. {transition} Now you want to {outcomeDescription}.
 
 {reminderClause}using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescription}), what exactly are you going to try to do?
-{Config.Narrative.AnswerInstruction}";
+{Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
     }
 
 }

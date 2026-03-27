@@ -16,7 +16,7 @@ public class WindScouredRidgeFlankedNode : PyramidalFeatureNode
     public override string TransitionDescription => "move to the scoured flank";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ice", "wind", "flank", "barrenness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a clear sheet of <ice> glazing the flank"), KeywordInContext.Parse("the scything <wind> across the exposed flank"), KeywordInContext.Parse("the downward <flank> below the scoured crest"), KeywordInContext.Parse("the harsh <barrenness> of the wind-stripped slope") };
     
     private static readonly string[] Moods = { "windswept", "harsh", "scoured", "desolate" };
     

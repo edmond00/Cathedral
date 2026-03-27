@@ -16,7 +16,7 @@ public class FrozenRidgeFaceLowerNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the lower frozen ridge face";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ice", "face", "wall", "verticality" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a clear sheet of <ice> coating the face"), KeywordInContext.Parse("the frozen ridge <face> rising above"), KeywordInContext.Parse("the vertical rock <wall> locked in ice"), KeywordInContext.Parse("the sheer <verticality> of the frozen face") };
     
     private static readonly string[] Moods = { "towering", "frozen", "imposing", "icy" };
     

@@ -15,7 +15,7 @@ public class RavineRimNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the ravine rim";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "rim", "chasm", "gorge", "precipice" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the narrow <rim> at the ravine edge"), KeywordInContext.Parse("the dark <chasm> opening below"), KeywordInContext.Parse("the steep walls of the <gorge> dropping away"), KeywordInContext.Parse("the sheer <precipice> at the rim edge") };
     
     private static readonly string[] Moods = { "narrow", "vertiginous", "precipitous", "dizzying" };
     

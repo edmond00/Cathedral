@@ -13,7 +13,7 @@ public class LeafClearedPathNode : NarrationNode
     public override string TransitionDescription => "take the cleared path";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "path", "wind", "clarity", "trail" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a clear <path> swept free of leaves"), KeywordInContext.Parse("the <wind> that must have cleared the way"), KeywordInContext.Parse("a surprising <clarity> in an otherwise cluttered forest") };
     
     private static readonly string[] Moods = { "swept", "clear", "tidy", "clean", "maintained", "neat", "orderly", "pristine" };
     
@@ -37,6 +37,6 @@ public class LeafClearedPathNode : NarrationNode
         public override string ItemId => "leaf_cleared_path_swept_leaves";
         public override string DisplayName => "Swept Leaves";
         public override string Description => "Leaves gathered from the edges of the cleared path";
-        public override List<string> OutcomeKeywords => new() { "lamina", "pile", "dryness" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a crisp dry <lamina> from the swept edges"), KeywordInContext.Parse("a <pile> of leaves blown to the path's margin") };
     }
 }

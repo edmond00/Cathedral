@@ -14,7 +14,7 @@ public class RootWebNode : NarrationNode
     public override string TransitionDescription => "step through the root web";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "root", "network", "maze", "web" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("an exposed surface <root> crossing the path"), KeywordInContext.Parse("the intricate <network> of roots in the soil"), KeywordInContext.Parse("this branching <maze> underfoot"), KeywordInContext.Parse("the spreading <web> of interconnected roots") };
     
     private static readonly string[] Moods = { "intricate", "interwoven", "complex", "network", "maze-like", "tangled", "spreading", "interconnected" };
     
@@ -38,7 +38,7 @@ public class RootWebNode : NarrationNode
         public override string ItemId => "root_fiber";
         public override string DisplayName => "Root Fibers";
         public override string Description => "Thin, tough fibers from surface roots";
-        public override List<string> OutcomeKeywords => new() { "tendril", "fiber", "wire" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a thin wiry <tendril> of surface root"), KeywordInContext.Parse("a tough root <fiber> pulled from the tangle") };
     }
     
     public sealed class RootBark : Item
@@ -46,6 +46,6 @@ public class RootWebNode : NarrationNode
         public override string ItemId => "root_web_root_bark";
         public override string DisplayName => "Root Bark";
         public override string Description => "Papery bark peeling from exposed roots";
-        public override List<string> OutcomeKeywords => new() { "cambium", "peel", "strip" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the green <cambium> beneath the root bark"), KeywordInContext.Parse("a thin <peel> of papery bark from the root surface") };
     }
 }

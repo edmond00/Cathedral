@@ -16,7 +16,7 @@ public class CrevasseFieldEdgeNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the crevasse field edge";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "crevasse", "gap", "chasm", "danger" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a deep <crevasse> cutting through the glacier"), KeywordInContext.Parse("a terrifying <gap> in the ice surface"), KeywordInContext.Parse("the blue <chasm> dropping into darkness"), KeywordInContext.Parse("the immediate <danger> of the open crevasse") };
     
     private static readonly string[] Moods = { "dangerous", "fractured", "treacherous", "deep" };
     
@@ -38,7 +38,7 @@ public class CrevasseFieldEdgeNode : PyramidalFeatureNode
         public override string ItemId => "crevasse_field_edge_crevasse_lip";
         public override string DisplayName => "Crevasse Lip";
         public override string Description => "Edge of the crevasse opening";
-        public override List<string> OutcomeKeywords => new() { "brink", "bergschrund", "ice" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the crumbling <brink> of the crevasse opening"), KeywordInContext.Parse("the gaping <bergschrund> at the glacier head"), KeywordInContext.Parse("a clear sheet of <ice> cracking underfoot") };
     }
     
 }

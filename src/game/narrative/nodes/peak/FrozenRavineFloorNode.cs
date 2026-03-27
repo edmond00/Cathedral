@@ -23,7 +23,7 @@ public class FrozenRavineFloorNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the frozen ravine floor";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ravine", "ice", "confinement", "depth" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the frozen <ravine> floor in permanent shadow"), KeywordInContext.Parse("a clear sheet of <ice> covering the floor"), KeywordInContext.Parse("the complete <confinement> of the ravine walls"), KeywordInContext.Parse("the profound <depth> of the cut ravine") };
     
     private static readonly string[] Moods = { "shadowed", "narrow", "confined", "frigid" };
     
@@ -45,7 +45,7 @@ public class FrozenRavineFloorNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ravine_floor_peak_basalt";
         public override string DisplayName => "Peak Basalt";
         public override string Description => "Dark volcanic basalt collectible from the ravine floor";
-        public override List<string> OutcomeKeywords => new() { "gabbro", "volcanic", "igneous" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a dark heavy <gabbro> from the ravine floor"), KeywordInContext.Parse("a <volcanic> fragment in the frozen sediment"), KeywordInContext.Parse("an <igneous> basalt block locked in ice") };
     }
     
     public sealed class GlacierSilt : Item
@@ -53,6 +53,6 @@ public class FrozenRavineFloorNode : PyramidalFeatureNode
         public override string ItemId => "frozen_ravine_floor_glacier_silt";
         public override string DisplayName => "Glacier Silt";
         public override string Description => "Fine glacial sediment collectible from the floor";
-        public override List<string> OutcomeKeywords => new() { "loess", "flour", "moraine" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a fine pale <loess> drifted into the ravine"), KeywordInContext.Parse("the grey glacial <flour> coating the floor"), KeywordInContext.Parse("a dark <moraine> deposit frozen in place") };
     }
 }

@@ -20,7 +20,7 @@ public class DeerRubNode : NarrationNode
     public override string TransitionDescription => "investigate the marked tree";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "antler", "bark", "territory", "scent" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("some <antler> gouges cut deep into the bark"), KeywordInContext.Parse("the stripped <bark> hanging in shreds below"), KeywordInContext.Parse("a strong <scent> left as a territorial mark") };
     
     private static readonly string[] Moods = { "fresh", "marked", "scraped", "territorial", "recent", "obvious", "stripped", "damaged" };
     
@@ -44,7 +44,7 @@ public class DeerRubNode : NarrationNode
         public override string ItemId => "scraped_bark";
         public override string DisplayName => "Scraped Bark";
         public override string Description => "Bark strips torn off by deer antlers";
-        public override List<string> OutcomeKeywords => new() { "shaving", "strip", "wood" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a curled <shaving> of torn bark"), KeywordInContext.Parse("a pale <strip> of inner wood exposed by the rubbing") };
     }
     
 }

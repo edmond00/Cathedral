@@ -14,7 +14,7 @@ public class SpongyMossMatNode : NarrationNode
     public override string TransitionDescription => "step onto the moss mat";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "moss", "sponge", "water", "saturation" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the bright spongy <moss> filling the hollow"), KeywordInContext.Parse("the <sponge>-like texture underfoot"), KeywordInContext.Parse("the dark <water> squeezed from the saturated mat"), KeywordInContext.Parse("the total <saturation> of every green layer") };
     
     private static readonly string[] Moods = { "spongy", "waterlogged", "squelching", "soft", "saturated", "yielding", "wet", "sodden" };
     
@@ -38,7 +38,7 @@ public class SpongyMossMatNode : NarrationNode
         public override string ItemId => "wet_sphagnum_moss";
         public override string DisplayName => "Wet Sphagnum Moss";
         public override string Description => "Waterlogged moss from the mat";
-        public override List<string> OutcomeKeywords => new() { "sphagnum", "saturation", "cushion" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the waterlogged <sphagnum> moss squeezed out"), KeywordInContext.Parse("a soaking <cushion> of bog moss lifted from the mat") };
     }
     
     public sealed class MossMatWater : Item
@@ -46,6 +46,6 @@ public class SpongyMossMatNode : NarrationNode
         public override string ItemId => "spongy_moss_mat_bog_water";
         public override string DisplayName => "Bog Water";
         public override string Description => "Brown peaty water squeezed from moss";
-        public override List<string> OutcomeKeywords => new() { "tannin", "peat", "amber", "murk" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the bitter <tannin> staining the brown water"), KeywordInContext.Parse("an <amber> colour to the peaty squeezings") };
     }
 }

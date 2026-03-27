@@ -16,7 +16,7 @@ public class IcyGullyRunNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend into the icy gully run";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "gully", "ice", "channel", "descent" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the narrow icy <gully> cutting down the slope"), KeywordInContext.Parse("a clear sheet of <ice> lining the channel"), KeywordInContext.Parse("the carved ice <channel> of the gully run"), KeywordInContext.Parse("the steep <descent> of the frozen gully") };
     
     private static readonly string[] Moods = { "narrow", "flowing", "confined", "icy" };
     
@@ -38,6 +38,6 @@ public class IcyGullyRunNode : PyramidalFeatureNode
         public override string ItemId => "icy_gully_run_gully_obsidian";
         public override string DisplayName => "Gully Obsidian";
         public override string Description => "Volcanic glass collectible from the gully";
-        public override List<string> OutcomeKeywords => new() { "vitrophyre", "glass", "volcanic" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a sharp <vitrophyre> fragment in the gully"), KeywordInContext.Parse("the black <glass> of the volcanic obsidian"), KeywordInContext.Parse("a <volcanic> glass shard from the gully wall") };
     }
 }

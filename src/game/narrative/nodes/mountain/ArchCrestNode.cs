@@ -15,7 +15,7 @@ public class ArchCrestNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the arch crest";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "arch", "crest", "formation", "span" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a curved rock <arch> overhead"), KeywordInContext.Parse("the sharp <crest> of the arch above"), KeywordInContext.Parse("a dramatic <formation> of wind-carved stone"), KeywordInContext.Parse("a graceful <span> bridging the gap") };
     
     private static readonly string[] Moods = { "graceful", "curved", "spectacular", "precarious" };
     
@@ -37,7 +37,7 @@ public class ArchCrestNode : PyramidalFeatureNode
         public override string ItemId => "arch_crest_keystone";
         public override string DisplayName => "Arch Keystone";
         public override string Description => "Central supporting stone at arch peak";
-        public override List<string> OutcomeKeywords => new() { "capstone", "apex", "structure" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the central <capstone> locking the arch in place"), KeywordInContext.Parse("the highest <apex> of the stone span"), KeywordInContext.Parse("the whole <structure> balanced against the sky") };
     }
     
 }

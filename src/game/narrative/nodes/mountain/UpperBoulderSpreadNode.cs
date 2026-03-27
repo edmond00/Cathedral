@@ -15,7 +15,7 @@ public class UpperBoulderSpreadNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb into the upper boulder spread";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "boulder", "field", "maze", "glacier" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a massive <boulder> dropped by glacial retreat"), KeywordInContext.Parse("a chaotic <field> of scattered rock"), KeywordInContext.Parse("a confusing <maze> of huge stones"), KeywordInContext.Parse("the legacy of the <glacier> above") };
     
     private static readonly string[] Moods = { "massive", "scattered", "chaotic", "maze-like" };
     
@@ -37,7 +37,7 @@ public class UpperBoulderSpreadNode : PyramidalFeatureNode
         public override string ItemId => "upper_boulder_spread_rounded_boulder";
         public override string DisplayName => "Rounded Boulder";
         public override string Description => "Large water-smoothed stone";
-        public override List<string> OutcomeKeywords => new() { "mass", "glacier", "age" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the impressive <mass> of the rounded boulder"), KeywordInContext.Parse("the work of a long-retreated <glacier>"), KeywordInContext.Parse("a deep <age> written in the stone") };
     }
     
     public sealed class BoulderLichen : Item
@@ -45,6 +45,6 @@ public class UpperBoulderSpreadNode : PyramidalFeatureNode
         public override string ItemId => "boulder_lichen";
         public override string DisplayName => "Lichen Patch";
         public override string Description => "Colorful growth on rock surface";
-        public override List<string> OutcomeKeywords => new() { "crust", "symbiosis", "growth" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a colourful <crust> of lichen on the surface"), KeywordInContext.Parse("the quiet <symbiosis> of lichen and rock"), KeywordInContext.Parse("the slow <growth> spreading across the boulder") };
     }
 }

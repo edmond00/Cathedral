@@ -107,7 +107,7 @@ You tried to {action.ActionText} but it could not happen.
 {plausibilityError}
 
 {reminderClause}what happened?
-{Config.Narrative.AnswerInstruction}";
+{Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
 
         var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
         string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
@@ -186,7 +186,7 @@ You tried to {action.ActionText}.
 {resultLine}
 
 {reminderClause}what happened?
-{Config.Narrative.AnswerInstruction}";
+{Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
     }
 
     /// <summary>

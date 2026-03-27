@@ -14,7 +14,7 @@ public class YoungMapleGroupNode : NarrationNode
     public override string TransitionDescription => "approach the maples";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "sapling", "leaf", "maple", "cluster" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a slender <sapling> reaching toward the canopy"), KeywordInContext.Parse("a fresh <leaf> trembling in the breeze"), KeywordInContext.Parse("a young <maple> with pointed lobes"), KeywordInContext.Parse("a tight <cluster> of stems pushing upward") };
     
     private static readonly string[] Moods = { "vigorous", "young", "thriving", "verdant", "growing", "clustered", "healthy", "vibrant" };
     
@@ -38,7 +38,7 @@ public class YoungMapleGroupNode : NarrationNode
         public override string ItemId => "maple_seed";
         public override string DisplayName => "Maple Seed";
         public override string Description => "A winged maple seed, ready to spin";
-        public override List<string> OutcomeKeywords => new() { "samara", "achene", "wing" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a spinning <samara> drifting on the air"), KeywordInContext.Parse("a tiny <achene> clinging to the bark"), KeywordInContext.Parse("a papery <wing> catching the light") };
     }
     
     public sealed class MapleLeaf : Item
@@ -46,6 +46,6 @@ public class YoungMapleGroupNode : NarrationNode
         public override string ItemId => "young_maple_palmate_leaf";
         public override string DisplayName => "Palmate Maple Leaf";
         public override string Description => "A fresh young maple leaf with pointed lobes";
-        public override List<string> OutcomeKeywords => new() { "lamina", "lobe", "vein" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the flat <lamina> of the maple leaf"), KeywordInContext.Parse("a pointed <lobe> at the leaf edge"), KeywordInContext.Parse("a fine <vein> branching across the surface") };
     }
 }

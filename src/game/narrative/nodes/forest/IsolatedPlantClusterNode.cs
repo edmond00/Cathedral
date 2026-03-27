@@ -14,7 +14,7 @@ public class IsolatedPlantClusterNode : NarrationNode
     public override string TransitionDescription => "approach the plant cluster";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "isolation", "cluster", "survival", "rarity" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the <isolation> of these plants in the dark forest"), KeywordInContext.Parse("a small <cluster> of plants struggling forward"), KeywordInContext.Parse("a testament to <survival> in deep shadow") };
     
     private static readonly string[] Moods = { "isolated", "rare", "sparse", "struggling", "alone", "few", "tenacious", "surviving" };
     
@@ -38,7 +38,7 @@ public class IsolatedPlantClusterNode : NarrationNode
         public override string ItemId => "rare_deepwood_plant";
         public override string DisplayName => "Rare Deepwood Plant";
         public override string Description => "A specimen from the isolated cluster";
-        public override List<string> OutcomeKeywords => new() { "rarity", "adaptation", "specimen", "tendril" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a curious <adaptation> in this unusual plant"), KeywordInContext.Parse("a rare <specimen> from the deep forest cluster") };
     }
     
     public sealed class AdaptedRoot : Item
@@ -46,6 +46,6 @@ public class IsolatedPlantClusterNode : NarrationNode
         public override string ItemId => "isolated_plant_adapted_root";
         public override string DisplayName => "Adapted Root";
         public override string Description => "A specialized root structure showing survival adaptation";
-        public override List<string> OutcomeKeywords => new() { "tendril", "network", "adaptation" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a reaching <tendril> questing through the soil"), KeywordInContext.Parse("the specialist <adaptation> of this root structure") };
     }
 }

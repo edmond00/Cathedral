@@ -23,7 +23,7 @@ public class SummitDomeCrestNode : PyramidalFeatureNode
     public override string TransitionDescription => "ascend to the summit dome crest";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "summit", "crest", "sky", "exposure" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the highest <summit> dome above everything"), KeywordInContext.Parse("the wind-polished <crest> of the summit dome"), KeywordInContext.Parse("the vast open <sky> pressing from all sides"), KeywordInContext.Parse("the total <exposure> of the dome top") };
     
     private static readonly string[] Moods = { "windswept", "exposed", "majestic", "austere" };
     
@@ -45,7 +45,7 @@ public class SummitDomeCrestNode : PyramidalFeatureNode
         public override string ItemId => "summit_dome_crest_frozen_crystal";
         public override string DisplayName => "Frozen Crystal";
         public override string Description => "Ice crystal formed by extreme altitude";
-        public override List<string> OutcomeKeywords => new() { "dendrite", "ice", "altitude" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a branching <dendrite> of ice on the summit rock"), KeywordInContext.Parse("a clear sheet of <ice> on the dome crest"), KeywordInContext.Parse("the extreme <altitude> felt in every breath") };
     }
     
     public sealed class SummitPolishedStone : Item
@@ -53,7 +53,7 @@ public class SummitDomeCrestNode : PyramidalFeatureNode
         public override string ItemId => "summit_polished_stone";
         public override string DisplayName => "Summit-Polished Stone";
         public override string Description => "Stone smoothed by endless winds";
-        public override List<string> OutcomeKeywords => new() { "cobble", "wind", "endurance" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a smooth <cobble> shaped by summit winds"), KeywordInContext.Parse("the relentless <wind> polishing the stone"), KeywordInContext.Parse("the sense of <endurance> in the ancient rock") };
     }
     
     public sealed class SummitGranite : Item
@@ -61,6 +61,6 @@ public class SummitDomeCrestNode : PyramidalFeatureNode
         public override string ItemId => "summit_dome_crest_summit_granite";
         public override string DisplayName => "Summit Granite";
         public override string Description => "Peak granite collectible from the highest point";
-        public override List<string> OutcomeKeywords => new() { "pegmatite", "igneous", "apex" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a coarse <pegmatite> crystal at the summit"), KeywordInContext.Parse("a dense <igneous> block from the dome core"), KeywordInContext.Parse("the absolute <apex> of the summit granite") };
     }
 }

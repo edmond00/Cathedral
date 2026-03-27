@@ -16,7 +16,7 @@ public class IceCliffTopNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the ice cliff top";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ice", "precipice", "edge", "drop" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the blue-green solidity of the <ice> at the cliff face"), KeywordInContext.Parse("the sheer <precipice> falling away from the top edge"), KeywordInContext.Parse("the dangerous <edge> where the cliff lip crumbles"), KeywordInContext.Parse("the vertiginous <drop> visible directly below the feet") };
     
     private static readonly string[] Moods = { "imposing", "frozen", "precipitous", "towering" };
     

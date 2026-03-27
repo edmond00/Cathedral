@@ -23,7 +23,7 @@ public class GullyBottomNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the gully bottom";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "runnel", "moss", "shade", "dampness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a thin <runnel> of water threading the gully"), KeywordInContext.Parse("a thick pad of <moss> on every stone"), KeywordInContext.Parse("the cool <shade> never leaving the bottom"), KeywordInContext.Parse("the deep <dampness> clinging to the walls") };
     
     private static readonly string[] Moods = { "shadowed", "damp", "enclosed", "dark" };
     
@@ -45,7 +45,7 @@ public class GullyBottomNode : PyramidalFeatureNode
         public override string ItemId => "gully_moss";
         public override string DisplayName => "Thick Moss";
         public override string Description => "Dense mossy carpet in the shade";
-        public override List<string> OutcomeKeywords => new() { "carpet", "dampness", "cushion" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a dense <carpet> of moss covering the floor"), KeywordInContext.Parse("the heavy <dampness> seeping through the gully"), KeywordInContext.Parse("a soft <cushion> of green growth underfoot") };
     }
     
 }

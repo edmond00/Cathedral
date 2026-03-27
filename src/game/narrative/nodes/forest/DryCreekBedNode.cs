@@ -13,7 +13,7 @@ public class DryCreekBedNode : NarrationNode
     public override string TransitionDescription => "follow the dry creek";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "stone", "channel", "bed", "dryness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("some smooth river <stone>s on the dry floor"), KeywordInContext.Parse("the winding <channel> carved by old floods"), KeywordInContext.Parse("the dry cracked <bed> of the empty creek") };
     
     private static readonly string[] Moods = { "parched", "barren", "empty", "desiccated", "arid", "waterless", "dusty", "desolate" };
     
@@ -37,7 +37,7 @@ public class DryCreekBedNode : NarrationNode
         public override string ItemId => "smooth_creek_stone";
         public override string DisplayName => "Smooth Creek Stone";
         public override string Description => "A water-polished stone from the ancient creek bed";
-        public override List<string> OutcomeKeywords => new() { "cobble", "pebble", "polish" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a smooth rounded <cobble> from the old creek"), KeywordInContext.Parse("a water-polished <pebble> lifted from the bed") };
     }
     
     public sealed class DriedAlgae : Item
@@ -45,6 +45,6 @@ public class DryCreekBedNode : NarrationNode
         public override string ItemId => "dry_creek_bed_dried_algae";
         public override string DisplayName => "Dried Algae";
         public override string Description => "Brittle algae left from when water flowed here";
-        public override List<string> OutcomeKeywords => new() { "filament", "crust", "desiccation" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a brittle <filament> of dried algae"), KeywordInContext.Parse("a crumbling <crust> left by old water") };
     }
 }

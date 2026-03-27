@@ -294,7 +294,7 @@ public class NarrationGraphWindow : Form
         AppendColored("\n");
 
         AppendColored("Keywords:\n",                        Color.CornflowerBlue,  bold: true);
-        AppendColored(string.Join(", ", node.NodeKeywords) + "\n", Color.LightGray);
+        AppendColored(string.Join(", ", node.NodeKeywordsInContext.Select(k => k.Keyword)) + "\n", Color.LightGray);
 
         var items = node.GetAvailableItems();
         if (items.Count > 0)
@@ -302,7 +302,7 @@ public class NarrationGraphWindow : Form
             AppendColored("\nItems:\n", Color.MediumSeaGreen, bold: true);
             foreach (var item in items)
                 AppendColored(
-                    $"  • {item.DisplayName}\n    {string.Join(", ", item.OutcomeKeywords.Take(6))}\n",
+                    $"  • {item.DisplayName}\n    {string.Join(", ", item.OutcomeKeywordsInContext.Select(k => k.Keyword).Take(6))}\n",
                     Color.LightGray);
         }
 

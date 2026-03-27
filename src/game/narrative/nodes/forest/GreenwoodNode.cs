@@ -13,7 +13,7 @@ public class GreenwoodNode : NarrationNode
     public override string TransitionDescription => "enter the greenwood";
     public override bool IsEntryNode => true;
     
-    public override List<string> NodeKeywords => new() { "hazel", "fungus", "moss", "vitality" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a cluster of ripe <hazel> nuts hanging low"), KeywordInContext.Parse("some mottled <fungus> on a fallen log"), KeywordInContext.Parse("the deep <moss> covering stone and root alike"), KeywordInContext.Parse("a sense of <vitality> in the thriving undergrowth") };
     
     private static readonly string[] Moods = { "thriving", "lush", "verdant", "rich", "vibrant", "living", "dense", "flourishing" };
     
@@ -37,6 +37,6 @@ public class GreenwoodNode : NarrationNode
         public override string ItemId => "greenwood_hazel_nuts";
         public override string DisplayName => "Hazel Nuts";
         public override string Description => "Small brown nuts from greenwood hazel trees";
-        public override List<string> OutcomeKeywords => new() { "caryopsis", "shell", "corylus", "cluster" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a hard brown <shell> around the hazelnut"), KeywordInContext.Parse("a leafy <corylus> husk protecting the kernel"), KeywordInContext.Parse("a <cluster> of nuts still on the branch") };
     }
 }

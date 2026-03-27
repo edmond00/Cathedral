@@ -15,7 +15,7 @@ public class FanSpreadNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the fan spread";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "fan", "gravel", "deposit", "distributary" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the wide alluvial <fan> spread below"), KeywordInContext.Parse("a thin sheet of <gravel> across the surface"), KeywordInContext.Parse("a fresh <deposit> of sorted material"), KeywordInContext.Parse("a braided <distributary> crossing the fan") };
     
     private static readonly string[] Moods = { "wide", "gentle", "spreading", "deposited" };
     
@@ -37,7 +37,7 @@ public class FanSpreadNode : PyramidalFeatureNode
         public override string ItemId => "fan_gravel";
         public override string DisplayName => "Fine Gravel";
         public override string Description => "Small sorted stones across the fan";
-        public override List<string> OutcomeKeywords => new() { "fragment", "deposit", "layer" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a small <fragment> of transported stone"), KeywordInContext.Parse("a thin <deposit> of fine-grained material"), KeywordInContext.Parse("a visible <layer> of sorted sediment") };
     }
     
 }

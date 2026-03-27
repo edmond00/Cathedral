@@ -16,7 +16,7 @@ public class FrozenStreamSourceNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the frozen stream source";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "spring", "ice", "source", "seep" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a frozen mountain <spring> locked in ice"), KeywordInContext.Parse("a clear sheet of <ice> sealing the source"), KeywordInContext.Parse("the original <source> of the frozen stream"), KeywordInContext.Parse("a slow cold <seep> from beneath the ice") };
     
     private static readonly string[] Moods = { "nascent", "frozen", "pristine", "originating" };
     
@@ -38,6 +38,6 @@ public class FrozenStreamSourceNode : PyramidalFeatureNode
         public override string ItemId => "frozen_stream_source_spring_quartz";
         public override string DisplayName => "Spring Quartz";
         public override string Description => "Clear quartz crystal collectible from the spring";
-        public override List<string> OutcomeKeywords => new() { "silicate", "crystal", "seepage" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a veined <silicate> from the spring rock"), KeywordInContext.Parse("a clear <crystal> grown at the water seep"), KeywordInContext.Parse("the slow <seepage> welling beneath the ice") };
     }
 }

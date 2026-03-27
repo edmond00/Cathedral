@@ -14,7 +14,7 @@ public class LichenBarkNode : NarrationNode
     public override string TransitionDescription => "approach the lichened trunks";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "lichen", "bark", "crust", "symbiosis" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a pale <lichen> coating the trunk surface"), KeywordInContext.Parse("the rough <bark> encrusted with growth"), KeywordInContext.Parse("a grey-green <crust> pressed into the wood"), KeywordInContext.Parse("an ancient <symbiosis> written into the bark") };
     
     private static readonly string[] Moods = { "encrusted", "patterned", "ancient", "textured", "weathered", "colonized", "aged", "symbiotic" };
     
@@ -38,7 +38,7 @@ public class LichenBarkNode : NarrationNode
         public override string ItemId => "lichen_crust";
         public override string DisplayName => "Lichen Crust";
         public override string Description => "A piece of lichen-covered bark";
-        public override List<string> OutcomeKeywords => new() { "thallus", "symbiosis", "pigment" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the flat grey <thallus> of the lichen"), KeywordInContext.Parse("a pale <pigment> colouring the crust") };
     }
     
     public sealed class LichenDust : Item
@@ -46,6 +46,6 @@ public class LichenBarkNode : NarrationNode
         public override string ItemId => "lichen_bark_soredia";
         public override string DisplayName => "Lichen Soredia";
         public override string Description => "Fine reproductive dust from lichen bodies";
-        public override List<string> OutcomeKeywords => new() { "dust", "spore", "dispersal" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a puff of fine lichen <dust> in the air"), KeywordInContext.Parse("some <spore>-bearing soredia from the crust") };
     }
 }

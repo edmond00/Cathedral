@@ -13,7 +13,7 @@ public class OwlPelletSiteNode : NarrationNode
     public override string TransitionDescription => "investigate the pellets";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "pellet", "bone", "fur", "raptor" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a grey oval <pellet> on the ground below"), KeywordInContext.Parse("some tiny <bone>s pressed into the pellet surface"), KeywordInContext.Parse("a mat of compacted <fur> around the bones"), KeywordInContext.Parse("evidence of a <raptor> roosting above") };
     
     private static readonly string[] Moods = { "dry", "scattered", "compressed", "aged", "numerous", "grey", "informative", "preserved" };
     
@@ -37,7 +37,7 @@ public class OwlPelletSiteNode : NarrationNode
         public override string ItemId => "pellet_tiny_bones";
         public override string DisplayName => "Tiny Bones";
         public override string Description => "Small rodent bones from dissected owl pellets";
-        public override List<string> OutcomeKeywords => new() { "bone", "skull", "vertebra" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a tiny <bone> from a small rodent"), KeywordInContext.Parse("a minuscule <skull> intact inside the pellet") };
     }
     
     public sealed class MatPellet : Item
@@ -45,6 +45,6 @@ public class OwlPelletSiteNode : NarrationNode
         public override string ItemId => "owl_pellet_mat_pellet";
         public override string DisplayName => "Matted Pellet";
         public override string Description => "A compressed pellet of fur and bone";
-        public override List<string> OutcomeKeywords => new() { "bolus", "fur", "compression" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a compact <bolus> of compressed fur and bone"), KeywordInContext.Parse("the matted <fur> wrapping the indigestible parts") };
     }
 }

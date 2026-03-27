@@ -50,10 +50,10 @@ public class NpcEntity
     public bool IsPersistent { get; }
 
     /// <summary>
-    /// Keywords injected into the narration node when this NPC is present.
-    /// E.g., "wolf", "grey", "prowling" for a wolf — or "hermit", "cloaked", "old" for a human.
+    /// Keywords with context injected into the narration node when this NPC is present.
+    /// E.g., "a grey prowling &lt;wolf&gt;" or "an old solitary &lt;hermit&gt;".
     /// </summary>
-    public string[] NarrationKeywords { get; }
+    public KeywordInContext[] NarrationKeywordsInContext { get; }
 
     /// <summary>
     /// Short description used in LLM observation prompts to hint at the NPC's presence.
@@ -67,7 +67,7 @@ public class NpcEntity
         NpcArchetype archetype,
         bool isHostile,
         bool isPersistent,
-        string[] narrationKeywords,
+        KeywordInContext[] narrationKeywordsInContext,
         string observationHint,
         NpcPersona? persona = null,
         ConversationSubjectNode? conversationRoot = null,
@@ -78,7 +78,7 @@ public class NpcEntity
         Archetype = archetype;
         IsHostile = isHostile;
         IsPersistent = isPersistent;
-        NarrationKeywords = narrationKeywords;
+        NarrationKeywordsInContext = narrationKeywordsInContext;
         ObservationHint = observationHint;
         Persona = persona;
         ConversationRoot = conversationRoot;

@@ -13,7 +13,7 @@ public class HighwoodNode : NarrationNode
     public override string TransitionDescription => "enter the highwood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "lichen", "bark", "roots", "height" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("some pale <lichen> crusted on the upper bark"), KeywordInContext.Parse("the rough furrowed <bark> of a tall trunk"), KeywordInContext.Parse("the wide spreading <roots> at the trunk base"), KeywordInContext.Parse("the dizzying <height> of the trunks overhead") };
     
     private static readonly string[] Moods = { "towering", "majestic", "imposing", "grand", "austere", "noble", "dominant", "lofty" };
     
@@ -37,7 +37,7 @@ public class HighwoodNode : NarrationNode
         public override string ItemId => "highwood_lichen";
         public override string DisplayName => "Highwood Lichen";
         public override string Description => "Pale lichen scraped from highwood bark";
-        public override List<string> OutcomeKeywords => new() { "crustose", "crust", "cortex" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the flat <crustose> lichen on the bark"), KeywordInContext.Parse("a pale <crust> scraped from the highwood trunk") };
     }
     
     public sealed class BarkShavings : Item
@@ -45,6 +45,6 @@ public class HighwoodNode : NarrationNode
         public override string ItemId => "highwood_bark_shavings";
         public override string DisplayName => "Bark Shavings";
         public override string Description => "Thin strips of bark peeled from tall trunks";
-        public override List<string> OutcomeKeywords => new() { "cortex", "tinder", "fiber" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the outer <cortex> peeled in thin strips"), KeywordInContext.Parse("some dry bark <tinder> easily catching a spark") };
     }
 }

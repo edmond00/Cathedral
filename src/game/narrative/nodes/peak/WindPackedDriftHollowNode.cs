@@ -16,7 +16,7 @@ public class WindPackedDriftHollowNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend into the drift hollow";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "hollow", "drift", "snow", "shelter" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the scooped <hollow> worn by wind into the drift"), KeywordInContext.Parse("the deep smooth <drift> curved into a concave bowl"), KeywordInContext.Parse("the hard compacted <snow> forming the hollow walls"), KeywordInContext.Parse("a sense of <shelter> from the wind cutting above") };
     
     private static readonly string[] Moods = { "sheltered", "scooped", "concave", "protected" };
     

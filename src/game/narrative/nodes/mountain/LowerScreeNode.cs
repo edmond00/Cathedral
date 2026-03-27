@@ -22,7 +22,7 @@ public class LowerScreeNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the lower scree";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "scree", "debris", "gravel", "deposit" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("some loose <scree> shifting underfoot"), KeywordInContext.Parse("the settled <debris> accumulated at the base"), KeywordInContext.Parse("a bed of coarse <gravel> on the slope"), KeywordInContext.Parse("a thick <deposit> of eroded material") };
     
     private static readonly string[] Moods = { "accumulated", "settled", "deposited", "loose" };
     
@@ -44,7 +44,7 @@ public class LowerScreeNode : PyramidalFeatureNode
         public override string ItemId => "scree_gravel";
         public override string DisplayName => "Fine Gravel";
         public override string Description => "Small stones settled at the base";
-        public override List<string> OutcomeKeywords => new() { "pebble", "stone", "deposit" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a small <pebble> rattling down the scree"), KeywordInContext.Parse("a flat <stone> settled in the gravel"), KeywordInContext.Parse("a thin <deposit> of angular fragments") };
     }
     
     public sealed class BuriedRock : Item
@@ -52,6 +52,6 @@ public class LowerScreeNode : PyramidalFeatureNode
         public override string ItemId => "lower_scree_buried_rock";
         public override string DisplayName => "Buried Rock";
         public override string Description => "Large stone partially covered by scree";
-        public override List<string> OutcomeKeywords => new() { "lithic", "burial", "anchor" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a large <lithic> block half submerged in scree"), KeywordInContext.Parse("a partial <burial> of stone beneath the slope"), KeywordInContext.Parse("a firm <anchor> point in the shifting debris") };
     }
 }

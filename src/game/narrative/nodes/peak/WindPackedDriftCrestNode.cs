@@ -16,7 +16,7 @@ public class WindPackedDriftCrestNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the wind-packed drift crest";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "drift", "crest", "wind", "sculpture" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the hardened wave-form of the snow <drift> below the feet"), KeywordInContext.Parse("the sharp narrow <crest> of the wind-packed ridge"), KeywordInContext.Parse("the constant <wind> that shaped and packed this form"), KeywordInContext.Parse("the precise <sculpture> the wind has made of the snow") };
     
     private static readonly string[] Moods = { "sculpted", "hardened", "wave-like", "frozen" };
     

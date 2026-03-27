@@ -14,7 +14,7 @@ public class LowShrubBeltNode : NarrationNode
     public override string TransitionDescription => "enter the shrub belt";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "twig", "branch", "leaves", "belt" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a whippy <twig> catching the ankle"), KeywordInContext.Parse("a low <branch> blocking the way forward"), KeywordInContext.Parse("some fresh green <leaves> brushing the hands") };
     
     private static readonly string[] Moods = { "dense", "tangled", "bushy", "thick", "crowded", "vigorous", "lush", "low-lying" };
     
@@ -38,7 +38,7 @@ public class LowShrubBeltNode : NarrationNode
         public override string ItemId => "shrub_twig";
         public override string DisplayName => "Shrub Twig";
         public override string Description => "A flexible twig from the shrub belt";
-        public override List<string> OutcomeKeywords => new() { "splint", "branch", "wood" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a flexible <splint> cut from the shrub stem"), KeywordInContext.Parse("a thin supple <branch> good for binding") };
     }
     
     public sealed class BerryCluster : Item
@@ -46,6 +46,6 @@ public class LowShrubBeltNode : NarrationNode
         public override string ItemId => "low_shrub_berry_cluster";
         public override string DisplayName => "Wild Berry Cluster";
         public override string Description => "Small red berries hanging from a shrub";
-        public override List<string> OutcomeKeywords => new() { "drupe", "ripeness", "sweetness" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a small red <drupe> hanging from the shrub"), KeywordInContext.Parse("a soft <ripeness> to the berry when pressed") };
     }
 }

@@ -15,7 +15,7 @@ public class ButtressHeadNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the buttress head";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "buttress", "outcrop", "crag", "prominence" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a jutting rock <buttress> overhead"), KeywordInContext.Parse("a bare <outcrop> thrust from the cliff"), KeywordInContext.Parse("a weathered <crag> commanding the view"), KeywordInContext.Parse("a bold <prominence> rising above the slope") };
     
     private static readonly string[] Moods = { "jutting", "prominent", "protruding", "commanding" };
     
@@ -37,7 +37,7 @@ public class ButtressHeadNode : PyramidalFeatureNode
         public override string ItemId => "buttress_head_weathered_granite";
         public override string DisplayName => "Weathered Granite";
         public override string Description => "Exposed granite at the buttress top";
-        public override List<string> OutcomeKeywords => new() { "feldspar", "crystal", "grit" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a pale <feldspar> crystal in the granite"), KeywordInContext.Parse("a glinting <crystal> embedded in the rock"), KeywordInContext.Parse("a coarse <grit> ground from the stone face") };
     }
     
     public sealed class StoneCap : Item
@@ -45,6 +45,6 @@ public class ButtressHeadNode : PyramidalFeatureNode
         public override string ItemId => "buttress_head_stone_cap";
         public override string DisplayName => "Stone Cap";
         public override string Description => "Large capstone crowning the buttress";
-        public override List<string> OutcomeKeywords => new() { "crown", "summit", "boulder" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the flat <crown> of the buttress"), KeywordInContext.Parse("this small <summit> perched above"), KeywordInContext.Parse("a broad <boulder> capping the formation") };
     }
 }

@@ -16,7 +16,7 @@ public class SnowCorniceCrestNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the snow cornice crest";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "cornice", "overhang", "snow", "danger" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the curling lip of the <cornice> projecting into space"), KeywordInContext.Parse("the hollow void beneath the snow <overhang>"), KeywordInContext.Parse("the dense wind-packed <snow> that forms this precarious crest"), KeywordInContext.Parse("a sense of <danger> from the invisible fracture line") };
     
     private static readonly string[] Moods = { "precarious", "overhanging", "delicate", "dangerous" };
     

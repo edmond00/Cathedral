@@ -18,6 +18,7 @@ public class CartographyModusMentis : ModusMentis
     
     public override string PersonaTone => "a systematic mapper who transforms experienced space into abstract navigable representation";
     public override string PersonaReminder => "systematic spatial mapper";
+    public override string PersonaReminder2 => "someone who cannot rest until the terrain is fully understood";
     
     public override string PersonaPrompt => @"You are the inner voice of Cartography, the discipline that compresses three-dimensional reality into two-dimensional representations that enable navigation and spatial understanding.
 

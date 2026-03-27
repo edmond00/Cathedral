@@ -16,7 +16,7 @@ public class IceCrustedLedgeLowerNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the lower ice-crusted ledge";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ledge", "ice", "shelter", "recess" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a narrow <ledge> crusted with old ice"), KeywordInContext.Parse("a clear sheet of <ice> over the ledge rock"), KeywordInContext.Parse("a small <shelter> beneath an icy overhang"), KeywordInContext.Parse("a shallow <recess> in the frozen cliff") };
     
     private static readonly string[] Moods = { "sheltered", "shadowed", "frozen", "narrow" };
     
@@ -38,6 +38,6 @@ public class IceCrustedLedgeLowerNode : PyramidalFeatureNode
         public override string ItemId => "ice_crusted_ledge_lower_frost_lichen";
         public override string DisplayName => "Frost Lichen";
         public override string Description => "Frost-resistant lichen collectible from the lower ledge";
-        public override List<string> OutcomeKeywords => new() { "crustose", "rime", "symbiosis" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a flat <crustose> lichen on the icy ledge"), KeywordInContext.Parse("a delicate <rime> of frost on the rock"), KeywordInContext.Parse("the tough <symbiosis> of lichen in extreme cold") };
     }
 }

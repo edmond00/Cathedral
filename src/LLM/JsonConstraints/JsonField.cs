@@ -83,12 +83,13 @@ public record VariantField(string Name, CompositeField[] Variants, string? Hint 
 
 /// <summary>
 /// Represents a string field with a template and variable generation length.
-/// When <see cref="FirstSentenceMaxLength"/> is greater than zero, the GBNF grammar
-/// enforces exactly one sentence-ending period inside the generated text:
-///   [^"\n.]{MinGenLength,FirstSentenceMaxLength} "." [^"\n]{0,MaxGenLength-FirstSentenceMaxLength}
-/// In this mode the template must NOT end with "." — the period is baked into the body.
-/// Any trailing incomplete sentence is removed by post-processing with
-/// <see cref="Cathedral.Game.Narrative.TextTruncationUtils.TrimToLastSentence"/>.
+/// The GBNF grammar allows free text up to <see cref="MaxGenLength"/> characters.
+/// When no literal prefix precedes the <c>&lt;generated&gt;</c> slot, the first character
+/// is forced to be a letter to prevent leading punctuation artifacts.
+/// Post-processing via <see cref="Cathedral.Game.Narrative.TextTruncationUtils.TrimToLastSentence"/>
+/// appends "..." when the generated text does not end with sentence-ending punctuation.
+/// <see cref="FirstSentenceMaxLength"/> is retained for schema documentation purposes but no
+/// longer affects GBNF generation.
 /// </summary>
 public record TemplateStringField(string Name, string Template, int MinGenLength, int MaxGenLength, string? Hint = null, int FirstSentenceMaxLength = 0) : JsonField(Name, Hint)
 {

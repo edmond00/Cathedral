@@ -44,7 +44,7 @@ public abstract class NpcArchetype
         var combatant = new EnemyCombatant(name, Species);
         combatant.InitializeModiMentis(ModusMentisRegistry.Instance, ModiMentisCount);
 
-        var keywords = BuildNarrationKeywords(name);
+        var keywords = BuildNarrationKeywordsInContext(name);
         var hint = BuildObservationHint(name, nodeContext);
         var persona = CreatePersona();
         var graph = CreateConversationGraph();
@@ -61,8 +61,8 @@ public abstract class NpcArchetype
             graph);
     }
 
-    /// <summary>Override to provide narration keywords for this NPC type.</summary>
-    protected abstract string[] BuildNarrationKeywords(string name);
+    /// <summary>Override to provide narration keywords-in-context for this NPC type.</summary>
+    protected abstract KeywordInContext[] BuildNarrationKeywordsInContext(string name);
 
     /// <summary>Override to provide the observation hint sentence.</summary>
     protected abstract string BuildObservationHint(string name, string nodeContext);

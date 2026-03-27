@@ -27,7 +27,11 @@ public abstract class BottleItem : ContainerItem
     }
 
     /// <summary>Narrative keywords for LLM interaction. Bottles use generic terms by default.</summary>
-    public override List<string> OutcomeKeywords => new() { "bottle", "flask", "liquid" };
+    public override List<KeywordInContext> OutcomeKeywordsInContext => new()
+    {
+        KeywordInContext.Parse("a stoppered glass <bottle> held in the hand"),
+        KeywordInContext.Parse("the sloshing <liquid> visible through the clear flask"),
+    };
 
     public override List<ItemType> Types => new() { ItemType.BeltGear };
 }

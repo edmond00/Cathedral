@@ -15,7 +15,7 @@ public class ChannelBedNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the channel bed";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "channel", "bed", "floodplain", "sand" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the worn stone walls of the water <channel> around you"), KeywordInContext.Parse("the smooth gravel of the dry river <bed> underfoot"), KeywordInContext.Parse("the flat open <floodplain> stretching away on either side"), KeywordInContext.Parse("a bar of pale <sand> deposited at the channel bend") };
     
     private static readonly string[] Moods = { "shallow", "gentle", "flowing", "sandy" };
     
@@ -37,7 +37,7 @@ public class ChannelBedNode : PyramidalFeatureNode
         public override string ItemId => "channel_bed_sand_bar";
         public override string DisplayName => "Sand Bar";
         public override string Description => "Exposed sand deposit in the channel";
-        public override List<string> OutcomeKeywords => new() { "sandbar", "deposit", "island" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a low exposed <sandbar> rising from the channel floor"), KeywordInContext.Parse("a pale <deposit> of sand left by the last flood"), KeywordInContext.Parse("a dry sand <island> stranded between the flow lines") };
     }
     
     public sealed class SiltStone : Item
@@ -45,6 +45,6 @@ public class ChannelBedNode : PyramidalFeatureNode
         public override string ItemId => "channel_bed_silt_stone";
         public override string DisplayName => "Silt Stone";
         public override string Description => "Fine sedimentary rock collectible from the channel bed";
-        public override List<string> OutcomeKeywords => new() { "siltstone", "sediment", "mineral" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a flat piece of fine-grained <siltstone> from the channel"), KeywordInContext.Parse("the layered <sediment> visible in the cut bank beside the bed"), KeywordInContext.Parse("a dark <mineral> streak running through the exposed stone") };
     }
 }

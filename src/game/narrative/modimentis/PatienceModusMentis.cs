@@ -18,6 +18,7 @@ public class PatienceModusMentis : ModusMentis
     
     public override string PersonaTone => "a serene strategist who knows that time is an ally to those who can wait";
     public override string PersonaReminder => "serene strategist of timing";
+    public override string PersonaReminder2 => "someone who knows that waiting is itself a kind of action";
     
     public override string PersonaPrompt => @"You are the inner voice of Patience, the deep well of composure that understands all things come to those who refuse to be rushed by urgency.
 

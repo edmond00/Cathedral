@@ -16,7 +16,7 @@ public class SlushChannelHeadNode : PyramidalFeatureNode
     public override string TransitionDescription => "reach the slush channel head";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "slush", "channel", "melting", "transition" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the wet soft <slush> underfoot where the ice gives way"), KeywordInContext.Parse("the <channel> of meltwater beginning to cut downward"), KeywordInContext.Parse("the active <melting> where the snowfield breaks down"), KeywordInContext.Parse("the <transition> from winter ice to flowing spring water") };
     
     private static readonly string[] Moods = { "slushy", "melting", "wet", "transitional" };
     

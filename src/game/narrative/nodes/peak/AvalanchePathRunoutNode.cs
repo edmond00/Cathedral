@@ -24,7 +24,7 @@ public class AvalanchePathRunoutNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the avalanche runout zone";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "wreckage", "debris", "runout", "aftermath" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the total <wreckage> of snapped trees below"), KeywordInContext.Parse("the jumbled <debris> of the avalanche deposit"), KeywordInContext.Parse("the flat <runout> where the snow stopped"), KeywordInContext.Parse("the terrible <aftermath> of the slide") };
     
     private static readonly string[] Moods = { "chaotic", "jumbled", "destructive", "deposited" };
     
@@ -46,6 +46,6 @@ public class AvalanchePathRunoutNode : PyramidalFeatureNode
         public override string ItemId => "avalanche_path_runout_avalanche_debris";
         public override string DisplayName => "Avalanche Debris";
         public override string Description => "Rock fragments collectible from avalanche deposit";
-        public override List<string> OutcomeKeywords => new() { "detritus", "rock", "fragment" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the mixed <detritus> of rock and snow"), KeywordInContext.Parse("a jagged <rock> exposed by the avalanche"), KeywordInContext.Parse("a broken <fragment> embedded in the deposit") };
     }
 }

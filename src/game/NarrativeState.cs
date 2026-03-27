@@ -327,13 +327,13 @@ public static class ClickableRegionExtensions
 /// <summary>
 /// Represents a clickable keyword region in the terminal.
 /// </summary>
-public record KeywordRegion(string Keyword, int Y, int StartX, int EndX, NarrationBlock? SourceBlock = null) : IClickableRegion
+public record KeywordRegion(string Keyword, int Y, int StartX, int EndX, NarrationBlock? SourceBlock = null, KeywordInContext? KeywordInContext = null) : IClickableRegion
 {
     /// <summary>
     /// Starting Y coordinate (same as Y for single-line regions).
     /// </summary>
     public int StartY => Y;
-    
+
     /// <summary>
     /// Ending Y coordinate (same as Y for single-line regions).
     /// </summary>

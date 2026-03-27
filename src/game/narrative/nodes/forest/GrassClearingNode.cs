@@ -21,7 +21,7 @@ public class GrassClearingNode : NarrationNode
     public override string TransitionDescription => "step into the clearing";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "grass", "meadow", "blade", "breeze" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the long swaying <grass> of the clearing"), KeywordInContext.Parse("this small forest <meadow> opening up"), KeywordInContext.Parse("a single <blade> of grass bending in the wind"), KeywordInContext.Parse("a warm <breeze> crossing the open ground") };
     
     private static readonly string[] Moods = { "sun-drenched", "breezy", "peaceful", "swaying", "green", "open", "bright", "fresh" };
     
@@ -45,7 +45,7 @@ public class GrassClearingNode : NarrationNode
         public override string ItemId => "grass_seed";
         public override string DisplayName => "Grass Seed";
         public override string Description => "Small seeds from wild grasses";
-        public override List<string> OutcomeKeywords => new() { "kernel", "grain", "chaff" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a tiny <kernel> from the wild grass head"), KeywordInContext.Parse("some dry <chaff> from shaken seed heads") };
     }
     
     public sealed class GrassFlower : Item
@@ -53,6 +53,6 @@ public class GrassClearingNode : NarrationNode
         public override string ItemId => "grass_clearing_flower_head";
         public override string DisplayName => "Grass Flower Head";
         public override string Description => "A delicate grass flower panicle";
-        public override List<string> OutcomeKeywords => new() { "panicle", "stem", "pollen" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a delicate <panicle> of grass flowers"), KeywordInContext.Parse("some yellow <pollen> dusting the flower head") };
     }
 }

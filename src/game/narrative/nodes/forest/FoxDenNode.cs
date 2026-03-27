@@ -20,7 +20,7 @@ public class FoxDenNode : NarrationNode
     public override string TransitionDescription => "investigate the den";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "den", "burrow", "musk", "tunnel" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the dark earthy <den> entrance in the bank"), KeywordInContext.Parse("a wide <burrow> dug into the hillside roots"), KeywordInContext.Parse("the sharp <musk> of fox clinging to the air"), KeywordInContext.Parse("the dark <tunnel> descending beneath the roots") };
     
     private static readonly string[] Moods = { "musky", "hidden", "occupied", "abandoned", "earthy", "secretive", "dark", "sheltered" };
     
@@ -44,7 +44,7 @@ public class FoxDenNode : NarrationNode
         public override string ItemId => "fox_fur_tuft";
         public override string DisplayName => "Fox Fur Tuft";
         public override string Description => "A tuft of reddish fox fur caught on roots";
-        public override List<string> OutcomeKeywords => new() { "pelt", "russet", "softness" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a scrap of reddish <pelt> caught on a root"), KeywordInContext.Parse("a <russet> tuft of fur near the entrance") };
     }
     
     public sealed class BoneShard : Item
@@ -52,7 +52,7 @@ public class FoxDenNode : NarrationNode
         public override string ItemId => "fox_den_bone_shard";
         public override string DisplayName => "Bone Shard";
         public override string Description => "A gnawed bone fragment from a fox meal";
-        public override List<string> OutcomeKeywords => new() { "marrow", "prey", "calcite" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a gnawed bone split open for the <marrow>"), KeywordInContext.Parse("the remains of old <prey> near the den mouth") };
     }
     
     public sealed class FeatherRemains : Item
@@ -60,6 +60,6 @@ public class FoxDenNode : NarrationNode
         public override string ItemId => "fox_den_feather_remains";
         public override string DisplayName => "Scattered Feathers";
         public override string Description => "Bird feathers scattered near the den entrance from a kill";
-        public override List<string> OutcomeKeywords => new() { "plume", "prey", "kill" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a loose <plume> among scattered feathers"), KeywordInContext.Parse("the scattered evidence of a recent <kill>") };
     }
 }

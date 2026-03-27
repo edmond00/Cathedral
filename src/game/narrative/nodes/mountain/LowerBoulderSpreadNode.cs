@@ -15,7 +15,7 @@ public class LowerBoulderSpreadNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend into the lower boulder spread";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "boulder", "moss", "shade", "dampness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a moss-covered <boulder> blocking the path"), KeywordInContext.Parse("a thick pad of <moss> on every surface"), KeywordInContext.Parse("the permanent <shade> between the stones"), KeywordInContext.Parse("the pervasive <dampness> under the boulders") };
     
     private static readonly string[] Moods = { "settled", "mossy", "shaded", "ancient" };
     

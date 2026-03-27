@@ -16,7 +16,7 @@ public class FrozenWaterfallLipNode : PyramidalFeatureNode
     public override string TransitionDescription => "approach the frozen waterfall lip";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "waterfall", "ice", "lip", "suspension" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the frozen shape of a <waterfall> stopped in its fall"), KeywordInContext.Parse("the thick curtain of <ice> hanging from the lip"), KeywordInContext.Parse("the curved <lip> of rock where water once poured free"), KeywordInContext.Parse("a strange <suspension> of movement caught and held by cold") };
     
     private static readonly string[] Moods = { "suspended", "frozen", "cascading", "precipitous" };
     

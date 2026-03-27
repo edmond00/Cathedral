@@ -105,7 +105,7 @@ public static class NarrativeValidator
             
             Console.WriteLine($"Node: {node.NodeId} ({nodeType.Name})");
             Console.WriteLine($"  Is Entry Node: {node.IsEntryNode}");
-            Console.WriteLine($"  Keywords: {string.Join(", ", node.NodeKeywords)}");
+            Console.WriteLine($"  Keywords: {string.Join(", ", node.NodeKeywordsInContext.Select(k => k.Keyword))}");
             
             var items = node.GetAvailableItems();
             if (items.Any())

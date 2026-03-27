@@ -22,7 +22,7 @@ public class ButtressFootNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the buttress foot";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "buttress", "foundation", "ground", "stability" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a massive rock <buttress> anchoring the slope"), KeywordInContext.Parse("the broad <foundation> of ancient stone"), KeywordInContext.Parse("the hard <ground> at the base of the crag"), KeywordInContext.Parse("a sense of <stability> from the solid rock") };
     
     private static readonly string[] Moods = { "massive", "anchored", "solid", "foundational" };
     
@@ -44,6 +44,6 @@ public class ButtressFootNode : PyramidalFeatureNode
         public override string ItemId => "buttress_foot_rooted_shrub";
         public override string DisplayName => "Rooted Shrub";
         public override string Description => "Hardy plant growing at the rock base";
-        public override List<string> OutcomeKeywords => new() { "tendril", "tenacity", "twig" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a thin <tendril> gripping the stone"), KeywordInContext.Parse("a stubborn <tenacity> evident in every root"), KeywordInContext.Parse("a dry <twig> snapping underfoot") };
     }
 }

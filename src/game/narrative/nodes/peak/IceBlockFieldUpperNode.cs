@@ -16,7 +16,7 @@ public class IceBlockFieldUpperNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb through the upper ice blocks";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "ice", "block", "maze", "chaos" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a clear sheet of <ice> between the blocks"), KeywordInContext.Parse("a massive ice <block> fractured from above"), KeywordInContext.Parse("the confusing <maze> of upper ice seracs"), KeywordInContext.Parse("the total <chaos> of the fractured icefall") };
     
     private static readonly string[] Moods = { "chaotic", "fractured", "jumbled", "maze-like" };
     

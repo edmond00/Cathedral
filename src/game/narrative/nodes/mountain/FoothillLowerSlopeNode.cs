@@ -15,7 +15,7 @@ public class FoothillLowerSlopeNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the foothill lower slope";
     public override bool IsEntryNode => true;
     
-    public override List<string> NodeKeywords => new() { "foothill", "slope", "grassland", "boundary" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the gentle <foothill> at the mountain edge"), KeywordInContext.Parse("a grassy <slope> descending to the plain"), KeywordInContext.Parse("the open <grassland> meeting the mountain"), KeywordInContext.Parse("the soft <boundary> between worlds") };
     
     private static readonly string[] Moods = { "gentle", "transitional", "peaceful", "welcoming" };
     
@@ -37,7 +37,7 @@ public class FoothillLowerSlopeNode : PyramidalFeatureNode
         public override string ItemId => "foothill_lower_slope_low_grass";
         public override string DisplayName => "Low Grass";
         public override string Description => "Short grass at the mountain's edge";
-        public override List<string> OutcomeKeywords => new() { "blade", "meadow", "plain" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a single grass <blade> bending in the wind"), KeywordInContext.Parse("a wide <meadow> at the mountain foot"), KeywordInContext.Parse("the open <plain> visible far below") };
     }
     
 }

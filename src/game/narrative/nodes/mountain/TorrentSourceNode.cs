@@ -15,7 +15,7 @@ public class TorrentSourceNode : PyramidalFeatureNode
     public override string TransitionDescription => "climb to the torrent source";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "spring", "torrent", "cascade", "source" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a cold mountain <spring> bubbling from the rock"), KeywordInContext.Parse("the beginning of the <torrent> below"), KeywordInContext.Parse("a small <cascade> spilling over smooth stone"), KeywordInContext.Parse("the original <source> of the mountain stream") };
     
     private static readonly string[] Moods = { "rushing", "cascading", "powerful", "pristine" };
     
@@ -37,7 +37,7 @@ public class TorrentSourceNode : PyramidalFeatureNode
         public override string ItemId => "torrent_source_spring_pool";
         public override string DisplayName => "Spring Pool";
         public override string Description => "Small pool where water emerges";
-        public override List<string> OutcomeKeywords => new() { "seep", "basin", "water" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a slow <seep> welling from the rock face"), KeywordInContext.Parse("a small clear <basin> where water collects"), KeywordInContext.Parse("the cold fresh <water> from deep in the stone") };
     }
     
     public sealed class WetRocks : Item
@@ -45,7 +45,7 @@ public class TorrentSourceNode : PyramidalFeatureNode
         public override string ItemId => "torrent_source_wet_rocks";
         public override string DisplayName => "Wet Rocks";
         public override string Description => "Water-splashed stones near the spring";
-        public override List<string> OutcomeKeywords => new() { "felsite", "moisture", "slipperiness" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a pale <felsite> stone darkened by spray"), KeywordInContext.Parse("the constant <moisture> clinging to every surface"), KeywordInContext.Parse("the treacherous <slipperiness> of the wet rock") };
     }
     
     public sealed class RiverStone : Item
@@ -53,6 +53,6 @@ public class TorrentSourceNode : PyramidalFeatureNode
         public override string ItemId => "torrent_source_river_stone";
         public override string DisplayName => "River Stone";
         public override string Description => "Smooth polished stone collectible from the source";
-        public override List<string> OutcomeKeywords => new() { "cobble", "fluvial", "polish" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a rounded <cobble> polished by the source"), KeywordInContext.Parse("the <fluvial> smoothness of this ancient stone"), KeywordInContext.Parse("the mirror <polish> of the water-worn rock") };
     }
 }

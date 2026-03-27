@@ -15,7 +15,7 @@ public class LowerStepNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the lower step";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "terrace", "platform", "bench", "foundation" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a wide stone <terrace> cut into the slope"), KeywordInContext.Parse("a flat rock <platform> offering rest"), KeywordInContext.Parse("a natural stone <bench> at the step edge"), KeywordInContext.Parse("the solid rock <foundation> of the terrace") };
     
     private static readonly string[] Moods = { "wide", "sheltered", "stable", "foundational" };
     
@@ -37,7 +37,7 @@ public class LowerStepNode : PyramidalFeatureNode
         public override string ItemId => "lower_step_stone_slabs";
         public override string DisplayName => "Stone Slabs";
         public override string Description => "Large flat rocks on the terrace";
-        public override List<string> OutcomeKeywords => new() { "slab", "flagstone", "layer" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a broad <slab> forming the terrace floor"), KeywordInContext.Parse("a flat <flagstone> laid by frost and time"), KeywordInContext.Parse("a visible <layer> of bedded rock") };
     }
     
     public sealed class SoilPocket : Item
@@ -45,6 +45,6 @@ public class LowerStepNode : PyramidalFeatureNode
         public override string ItemId => "lower_step_soil_pocket";
         public override string DisplayName => "Soil Pocket";
         public override string Description => "Small patch of earth with vegetation";
-        public override List<string> OutcomeKeywords => new() { "loam", "niche", "earth" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a patch of dark <loam> between the rocks"), KeywordInContext.Parse("a sheltered <niche> collecting windblown soil"), KeywordInContext.Parse("a handful of rich <earth> in the rock hollow") };
     }
 }

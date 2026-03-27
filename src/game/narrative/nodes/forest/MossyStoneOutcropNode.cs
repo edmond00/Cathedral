@@ -13,7 +13,7 @@ public class MossyStoneOutcropNode : NarrationNode
     public override string TransitionDescription => "climb the outcrop";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "moss", "stone", "rock", "velvet" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the deep green <moss> covering the stone"), KeywordInContext.Parse("the ancient weathered <stone> beneath the moss"), KeywordInContext.Parse("a cold grey <rock> rising from the forest floor"), KeywordInContext.Parse("a <velvet> softness to the moss surface") };
     
     private static readonly string[] Moods = { "moss-covered", "ancient", "verdant", "soft", "cushioned", "green", "damp", "thick" };
     
@@ -37,7 +37,7 @@ public class MossyStoneOutcropNode : NarrationNode
         public override string ItemId => "outcrop_moss";
         public override string DisplayName => "Thick Moss";
         public override string Description => "A cushion of deep green moss from the stones";
-        public override List<string> OutcomeKeywords => new() { "cushion", "velvet", "thallus" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a soft <cushion> of green stone moss"), KeywordInContext.Parse("the flat <thallus> of the bryophyte on stone") };
     }
     
     public sealed class AncientStone : Item
@@ -45,6 +45,6 @@ public class MossyStoneOutcropNode : NarrationNode
         public override string ItemId => "mossy_outcrop_ancient_stone";
         public override string DisplayName => "Ancient Stone";
         public override string Description => "A weathered piece of the ancient rock outcrop";
-        public override List<string> OutcomeKeywords => new() { "feldspar", "granite", "mineral" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("some pale <feldspar> crystals in the ancient stone"), KeywordInContext.Parse("a chunk of coarse <granite> from the outcrop") };
     }
 }

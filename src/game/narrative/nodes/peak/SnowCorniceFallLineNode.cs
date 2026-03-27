@@ -16,7 +16,7 @@ public class SnowCorniceFallLineNode : PyramidalFeatureNode
     public override string TransitionDescription => "move to the cornice fall line";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "fall", "avalanche", "descent", "slope" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the vertical <fall> line from the cornice above"), KeywordInContext.Parse("the path of a past <avalanche> below"), KeywordInContext.Parse("the steep <descent> of the cornice fall line"), KeywordInContext.Parse("the unbroken <slope> beneath the cornice") };
     
     private static readonly string[] Moods = { "steep", "treacherous", "angled", "exposed" };
     
@@ -38,7 +38,7 @@ public class SnowCorniceFallLineNode : PyramidalFeatureNode
         public override string ItemId => "cornice_debris";
         public override string DisplayName => "Cornice Debris";
         public override string Description => "Debris from cornice collapse";
-        public override List<string> OutcomeKeywords => new() { "detritus", "overhang", "snow" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the mixed <detritus> of a past cornice fall"), KeywordInContext.Parse("the collapsed <overhang> of the broken cornice"), KeywordInContext.Parse("a packed <snow> block from the fallen cornice") };
     }
     
 }

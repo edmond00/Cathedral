@@ -13,7 +13,7 @@ public class HawthornClusterNode : NarrationNode
     public override string TransitionDescription => "approach the hawthorns";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "thorn", "flower", "berry", "hawthorn" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a long sharp <thorn> on the main stem"), KeywordInContext.Parse("some small white <flower>s in tight clusters"), KeywordInContext.Parse("a red haw <berry> among the leaves"), KeywordInContext.Parse("the impenetrable <hawthorn> hedge ahead") };
     
     private static readonly string[] Moods = { "thorny", "defensive", "prickly", "flowering", "fragrant", "clustered", "tangled", "guarded" };
     
@@ -37,7 +37,7 @@ public class HawthornClusterNode : NarrationNode
         public override string ItemId => "hawthorn_berry";
         public override string DisplayName => "Haw";
         public override string Description => "A red hawthorn berry, slightly mealy";
-        public override List<string> OutcomeKeywords => new() { "berry", "seed", "fruit" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a mealy red <berry> from the hawthorn"), KeywordInContext.Parse("the hard <seed> inside the haw fruit") };
     }
     
     public sealed class HawthornThorn : Item
@@ -45,6 +45,6 @@ public class HawthornClusterNode : NarrationNode
         public override string ItemId => "hawthorn_cluster_thorn";
         public override string DisplayName => "Hawthorn Thorn";
         public override string Description => "A long, sharp thorn from a hawthorn branch";
-        public override List<string> OutcomeKeywords => new() { "barb", "spine", "needle" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a sharp <barb> snapped from the branch"), KeywordInContext.Parse("a hard straight <spine> from the hawthorn stem") };
     }
 }

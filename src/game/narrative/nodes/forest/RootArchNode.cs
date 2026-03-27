@@ -14,7 +14,7 @@ public class RootArchNode : NarrationNode
     public override string TransitionDescription => "pass through the root arch";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "arch", "root", "bridge", "sculpture" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the perfect natural <arch> of roots overhead"), KeywordInContext.Parse("a thick curved <root> forming the lintel"), KeywordInContext.Parse("a natural <bridge> spanning the eroded channel"), KeywordInContext.Parse("a remarkable living <sculpture> of wood and earth") };
     
     private static readonly string[] Moods = { "arched", "curved", "sculptural", "natural", "spanning", "suspended", "bridge-like", "overhead" };
     
@@ -38,7 +38,7 @@ public class RootArchNode : NarrationNode
         public override string ItemId => "arched_root_piece";
         public override string DisplayName => "Arched Root Piece";
         public override string Description => "A curved piece from the root arch";
-        public override List<string> OutcomeKeywords => new() { "sinew", "curvature", "wood" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a tough <sinew> of root fiber from the arch"), KeywordInContext.Parse("the smooth <curvature> of the bent root") };
     }
     
     public sealed class BarkRubbing : Item
@@ -46,6 +46,6 @@ public class RootArchNode : NarrationNode
         public override string ItemId => "root_arch_bark_rubbing";
         public override string DisplayName => "Bark Fragment";
         public override string Description => "A piece of bark worn smooth by passage";
-        public override List<string> OutcomeKeywords => new() { "shaving", "rubbing", "polish" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a thin <shaving> from the worn arch bark"), KeywordInContext.Parse("a smooth <polish> from centuries of passing hands") };
     }
 }

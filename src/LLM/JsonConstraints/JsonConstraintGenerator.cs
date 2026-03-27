@@ -341,49 +341,22 @@ public static class JsonConstraintGenerator
             string bodyPattern;
             string firstCharPrefix = "";
 
-            if (field.FirstSentenceMaxLength > 0)
+            // Free text up to max length. If no literal prefix, force first char to be a letter
+            // to prevent leading punctuation artifacts (e.g. ", I ..." instead of "I ...").
+            if (string.IsNullOrEmpty(before))
             {
-                // Split pattern: first sentence (periods excluded) + mandatory "." + free continuation.
-                // The template must NOT end with "." when this mode is active.
-                int firstMax = field.FirstSentenceMaxLength;
-                int restMax = Math.Max(0, field.MaxGenLength - firstMax);
-                string continuation = restMax > 0
-                    ? $" \".\" [^\"\\n]{{0,{restMax}}}"
-                    : " \".\"";
-
-                if (string.IsNullOrEmpty(before))
-                {
-                    // No prefix — force first char to be a letter.
-                    firstCharPrefix = "[a-zA-Z] ";
-                    int restFirstMin = Math.Max(0, field.MinGenLength - 1);
-                    int restFirstMax = firstMax - 1;
-                    bodyPattern = $"[^\"\\n.]{{{restFirstMin},{restFirstMax}}}{continuation}";
-                }
-                else
-                {
-                    bodyPattern = $"[^\"\\n.]{{{field.MinGenLength},{firstMax}}}{continuation}";
-                }
+                firstCharPrefix = "[a-zA-Z] ";
+                int restMin = Math.Max(0, field.MinGenLength - 1);
+                int restMax = field.MaxGenLength - 1;
+                bodyPattern = restMin == restMax
+                    ? $"[^\"\\n]{{{restMin}}}"
+                    : $"[^\"\\n]{{{restMin},{restMax}}}";
             }
             else
             {
-                // Original pattern: free text, period forced by the template's "after" suffix.
-                if (string.IsNullOrEmpty(before))
-                {
-                    // No literal prefix — force first generated char to be a letter to prevent
-                    // leading punctuation artifacts (e.g. ", I ..." instead of "I ...").
-                    firstCharPrefix = "[a-zA-Z] ";
-                    int restMin = Math.Max(0, field.MinGenLength - 1);
-                    int restMax = field.MaxGenLength - 1;
-                    bodyPattern = restMin == restMax
-                        ? $"[^\"\\n]{{{restMin}}}"
-                        : $"[^\"\\n]{{{restMin},{restMax}}}";
-                }
-                else
-                {
-                    bodyPattern = field.MinGenLength == field.MaxGenLength
-                        ? $"[^\"\\n]{{{field.MinGenLength}}}"
-                        : $"[^\"\\n]{{{field.MinGenLength},{field.MaxGenLength}}}";
-                }
+                bodyPattern = field.MinGenLength == field.MaxGenLength
+                    ? $"[^\"\\n]{{{field.MinGenLength}}}"
+                    : $"[^\"\\n]{{{field.MinGenLength},{field.MaxGenLength}}}";
             }
 
             var rule = ruleName + " ::= \"\\\"" + before + "\" " + firstCharPrefix + bodyPattern + " \"" + after + "\\\"\"";

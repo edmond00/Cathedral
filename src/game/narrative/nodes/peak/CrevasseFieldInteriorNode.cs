@@ -16,7 +16,7 @@ public class CrevasseFieldInteriorNode : PyramidalFeatureNode
     public override string TransitionDescription => "enter the crevasse field interior";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "crevasse", "ice", "confinement", "depth" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the walls of a deep open <crevasse> on either side"), KeywordInContext.Parse("the blue-lit <ice> pressing in from the walls"), KeywordInContext.Parse("the physical <confinement> of the narrowing gap"), KeywordInContext.Parse("a <depth> of shadow below that refuses all light") };
     
     private static readonly string[] Moods = { "narrow", "shadowed", "confining", "blue-lit" };
     

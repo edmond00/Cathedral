@@ -15,7 +15,7 @@ public class CrestRidgeNode : PyramidalFeatureNode
     public override string TransitionDescription => "ascend to the crest ridge";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "summit", "crest", "wind", "peak" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the bare <summit> open to the sky"), KeywordInContext.Parse("the knife-edge <crest> of the ridge"), KeywordInContext.Parse("a cutting <wind> howling across the top"), KeywordInContext.Parse("the exposed <peak> above everything") };
     
     private static readonly string[] Moods = { "windswept", "exposed", "highest", "razor-sharp" };
     
@@ -37,7 +37,7 @@ public class CrestRidgeNode : PyramidalFeatureNode
         public override string ItemId => "crest_ridge_frost_shatter";
         public override string DisplayName => "Frost Shatter";
         public override string Description => "Ice-fractured rock fragments at the summit";
-        public override List<string> OutcomeKeywords => new() { "gelifract", "ice", "fracture" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a sharp <gelifract> split by repeated freezing"), KeywordInContext.Parse("a thin sheet of <ice> glazing the rock"), KeywordInContext.Parse("a clean <fracture> through the summit stone") };
     }
     
     public sealed class RidgePolishedStone : Item
@@ -45,7 +45,7 @@ public class CrestRidgeNode : PyramidalFeatureNode
         public override string ItemId => "ridge_polished_stone";
         public override string DisplayName => "Ridge-Polished Stone";
         public override string Description => "Smooth stone shaped by constant wind";
-        public override List<string> OutcomeKeywords => new() { "cobble", "polish", "wind" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a rounded <cobble> worn by the ridge wind"), KeywordInContext.Parse("a high <polish> on the windward face"), KeywordInContext.Parse("the constant <wind> that shaped the stone") };
     }
     
     public sealed class SummitCairn : Item
@@ -53,6 +53,6 @@ public class CrestRidgeNode : PyramidalFeatureNode
         public override string ItemId => "crest_ridge_summit_cairn";
         public override string DisplayName => "Summit Cairn";
         public override string Description => "Stacked stones marking the highest point";
-        public override List<string> OutcomeKeywords => new() { "waymarker", "monument", "marker" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a stone <waymarker> at the highest point"), KeywordInContext.Parse("a small <monument> of stacked rock"), KeywordInContext.Parse("a crude <marker> left by those before") };
     }
 }

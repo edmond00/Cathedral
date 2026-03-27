@@ -13,7 +13,7 @@ public class OpenWoodlandNode : NarrationNode
     public override string TransitionDescription => "move into the open woodland";
     public override bool IsEntryNode => true;
     
-    public override List<string> NodeKeywords => new() { "meadow", "wildflower", "sunshine", "openness" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a small grassy <meadow> between the trees"), KeywordInContext.Parse("some bright <wildflower>s scattered in the grass"), KeywordInContext.Parse("the warm <sunshine> unblocked by canopy"), KeywordInContext.Parse("a pleasant <openness> in the air ahead") };
     
     private static readonly string[] Moods = { "peaceful", "sunny", "breezy", "bright", "quiet", "serene", "windswept", "tranquil" };
     
@@ -37,6 +37,6 @@ public class OpenWoodlandNode : NarrationNode
         public override string ItemId => "open_woodland_wild_grass";
         public override string DisplayName => "Wild Grass";
         public override string Description => "Long blades of wild grass from the open clearing";
-        public override List<string> OutcomeKeywords => new() { "culm", "blade", "meadow", "stem" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a hollow <culm> of wild grass"), KeywordInContext.Parse("a long bending <blade> of open meadow grass") };
     }
 }

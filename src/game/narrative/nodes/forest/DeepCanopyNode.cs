@@ -13,7 +13,7 @@ public class DeepCanopyNode : NarrationNode
     public override string TransitionDescription => "enter the deep canopy";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "crown", "shade", "roots", "trunk" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the interlocked <crown>s far overhead"), KeywordInContext.Parse("the deep <shade> beneath the closed canopy"), KeywordInContext.Parse("some buttressed <roots> spreading across the ground"), KeywordInContext.Parse("a column-like <trunk> rising into the dark") };
     
     private static readonly string[] Moods = { "sheltered", "enclosed", "shadowed", "filtered", "dim", "protected", "covered", "roofed" };
     
@@ -37,7 +37,7 @@ public class DeepCanopyNode : NarrationNode
         public override string ItemId => "deep_canopy_fallen_leaves";
         public override string DisplayName => "Fallen Leaves";
         public override string Description => "Layers of leaves fallen from the high canopy";
-        public override List<string> OutcomeKeywords => new() { "lamina", "layer", "rustle", "carpet" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a broad dark <lamina> from the high canopy"), KeywordInContext.Parse("a deep <layer> of accumulated fallen leaves") };
     }
     
     public sealed class CanopySeed : Item
@@ -45,6 +45,6 @@ public class DeepCanopyNode : NarrationNode
         public override string ItemId => "deep_canopy_canopy_seed";
         public override string DisplayName => "Canopy Seed";
         public override string Description => "Large seed fallen from the high canopy";
-        public override List<string> OutcomeKeywords => new() { "propagule", "emergent", "tree" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a large <propagule> fallen from the high canopy"), KeywordInContext.Parse("a heavy <emergent> seed hitting the ground") };
     }
 }

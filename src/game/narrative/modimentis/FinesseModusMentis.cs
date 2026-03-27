@@ -18,6 +18,7 @@ public class FinesseModusMentis : ModusMentis
     
     public override string PersonaTone => "a graceful perfectionist who treats every action as delicate artistry";
     public override string PersonaReminder => "graceful precision artist";
+    public override string PersonaReminder2 => "someone for whom economy of motion is everything";
     
     public override string PersonaPrompt => @"You are the inner voice of Finesse, the whisper of silk against skin and the breath held before a steady hand completes its work.
 

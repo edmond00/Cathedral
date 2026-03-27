@@ -8,6 +8,8 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public class ObservationPromptConstructor
 {
+    private static string WithArticle(string s) =>
+        s.Length > 0 && "aeiouAEIOU".Contains(s[0]) ? $"an {s}" : $"a {s}";
 
     /// Returns a human-readable label for an outcome: uses GenerateNeutralDescription for
     /// NarrationNode outcomes instead of the raw NodeId from DisplayName.
@@ -24,31 +26,35 @@ public class ObservationPromptConstructor
         ConcreteOutcome outcome,
         string personaTone,
         WorldContext worldContext,
-        string? personaReminder = null)
+        string? personaReminder = null,
+        string? personaReminder2 = null)
     {
         var locationContext = node.BuildLocationContext(worldContext, locationId);
-        var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
+        var outcomeKics = outcome is NarrationNode childNode ? childNode.NodeKeywordsInContext : outcome.OutcomeKeywordsInContext;
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
+        string keywordHint = outcomeKics.Count > 0
+            ? $" You may notice things like: {string.Join(", ", outcomeKics.Select(k => k.Context))}."
+            : "";
 
         return $@"You are a {personaTone}.
 {WorldContext.EpochContext}
 {locationContext}
-Your attention is drawn to {GetOutcomeLabel(outcome)}.
-{reminderClause}what do you feel and observe? (include one of: {string.Join(", ", outcomeKeywords)})
-{Config.Narrative.AnswerInstruction}";
+Your attention is drawn to {WithArticle(GetOutcomeLabel(outcome))}.
+{reminderClause}what do you feel and observe?{keywordHint}
+{Config.Narrative.AnswerInstructionFor(personaReminder2)}";
     }
 
     /// <summary>
     /// Builds the prompt for a general scene description — the opening sentence of an overall observation.
     /// Includes node keywords as atmospheric hints (not clickable, just context).
     /// </summary>
-    public string BuildGeneralDescriptionPrompt(NarrationNode node, int locationId, string personaTone, WorldContext worldContext, string? personaReminder = null)
+    public string BuildGeneralDescriptionPrompt(NarrationNode node, int locationId, string personaTone, WorldContext worldContext, string? personaReminder = null, string? personaReminder2 = null)
     {
         var locationContext = node.BuildLocationContext(worldContext, locationId);
-        var nodeKeywords = node.NodeKeywords;
+        var nodeKics = node.NodeKeywordsInContext;
 
-        string keywordHint = nodeKeywords.Count > 0
-            ? $"\nYou may notice things like: {string.Join(", ", nodeKeywords)}."
+        string keywordHint = nodeKics.Count > 0
+            ? $"\nYou may notice things like: {string.Join(", ", nodeKics.Select(k => k.Context))}."
             : "";
 
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
@@ -57,31 +63,37 @@ Your attention is drawn to {GetOutcomeLabel(outcome)}.
 {WorldContext.EpochContext}
 {locationContext}{keywordHint}
 {reminderClause}what do you feel and observe?
-{Config.Narrative.AnswerInstruction}";
+{Config.Narrative.AnswerInstructionFor(personaReminder2)}";
     }
 
     /// <summary>
     /// Builds a continuation prompt that writes a short transition sentence linking
     /// the previous description to a specific outcome.
     /// </summary>
-    public string BuildTransitionSentencePrompt(ConcreteOutcome outcome, string previousDescription, string? personaReminder = null)
+    public string BuildTransitionSentencePrompt(ConcreteOutcome outcome, string previousDescription, string? personaReminder = null, KeywordInContext? previousKeywordInContext = null, string? personaReminder2 = null)
     {
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
-        return $@"You were observing {previousDescription} but now you notice {GetOutcomeLabel(outcome)}.
+        string observingClause = previousKeywordInContext != null
+            ? $"{previousKeywordInContext.Context} of {WithArticle(previousDescription)}"
+            : WithArticle(previousDescription);
+        return $@"You were observing {observingClause} but now you notice {WithArticle(GetOutcomeLabel(outcome))}.
 {reminderClause}what catches your attention?
-{Config.Narrative.AnswerInstruction}";
+{Config.Narrative.AnswerInstructionFor(personaReminder2)}";
     }
 
     /// <summary>
     /// Builds a continuation prompt focused on a specific outcome, including its keywords.
     /// </summary>
-    public string BuildOutcomeDescriptionSentencePrompt(ConcreteOutcome outcome, string? personaReminder = null)
+    public string BuildOutcomeDescriptionSentencePrompt(ConcreteOutcome outcome, string? personaReminder = null, string? personaReminder2 = null)
     {
-        var outcomeKeywords = outcome is NarrationNode childNode ? childNode.NodeKeywords : outcome.OutcomeKeywords;
+        var outcomeKics = outcome is NarrationNode childNode ? childNode.NodeKeywordsInContext : outcome.OutcomeKeywordsInContext;
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
-        return $@"You are now looking at {GetOutcomeLabel(outcome)}.
-{reminderClause}what do you observe? (include one of: {string.Join(", ", outcomeKeywords)})
-{Config.Narrative.AnswerInstruction}";
+        string keywordHint = outcomeKics.Count > 0
+            ? $" You may notice things like: {string.Join(", ", outcomeKics.Select(k => k.Context))}."
+            : "";
+        return $@"You are now looking at {WithArticle(GetOutcomeLabel(outcome))}.
+{reminderClause}what do you observe?{keywordHint}
+{Config.Narrative.AnswerInstructionFor(personaReminder2)}";
     }
 
 }

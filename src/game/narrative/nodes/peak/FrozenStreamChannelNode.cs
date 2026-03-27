@@ -16,7 +16,7 @@ public class FrozenStreamChannelNode : PyramidalFeatureNode
     public override string TransitionDescription => "follow the frozen stream channel";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "stream", "ice", "channel", "ribbon" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the frozen shape of the <stream> locked in winter"), KeywordInContext.Parse("the translucent <ice> covering the bed of the old flow"), KeywordInContext.Parse("the worn stone <channel> the water carved before it froze"), KeywordInContext.Parse("a pale <ribbon> of ice snaking down the mountain face") };
     
     private static readonly string[] Moods = { "winding", "frozen", "sinuous", "icy" };
     

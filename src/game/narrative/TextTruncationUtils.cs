@@ -68,9 +68,9 @@ public static class TextTruncationUtils
     }
 
     /// <summary>
-    /// Trims any trailing incomplete sentence from LLM-generated text by cutting to the last
-    /// sentence-ending punctuation (. ! ?).  The GBNF split-sentence pattern guarantees that
-    /// at least one such punctuation mark always exists, so the result is never empty.
+    /// Ensures LLM-generated text ends gracefully. If the text already ends with sentence-ending
+    /// punctuation (. ! ?) it is returned as-is. Otherwise "..." is appended to signal that the
+    /// text was cut mid-sentence, without removing the incomplete sentence.
     /// </summary>
     public static string TrimToLastSentence(string text)
     {
@@ -82,7 +82,6 @@ public static class TextTruncationUtils
         if (text.EndsWith('.') || text.EndsWith('!') || text.EndsWith('?'))
             return text;
 
-        int lastEnd = Math.Max(text.LastIndexOf('.'), Math.Max(text.LastIndexOf('!'), text.LastIndexOf('?')));
-        return lastEnd >= 0 ? text[..(lastEnd + 1)].Trim() : text;
+        return text + "...";
     }
 }

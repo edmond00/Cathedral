@@ -15,7 +15,7 @@ public class WallBaseNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the wall base";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "wall", "cliff", "shadow", "foundation" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a towering rock <wall> filling the sky"), KeywordInContext.Parse("the sheer <cliff> face above"), KeywordInContext.Parse("the deep <shadow> pooled at the wall base"), KeywordInContext.Parse("the broad <foundation> of the cliff wall") };
     
     private static readonly string[] Moods = { "towering", "shadowed", "massive", "imposing" };
     
@@ -37,7 +37,7 @@ public class WallBaseNode : PyramidalFeatureNode
         public override string ItemId => "wall_base_fallen_stone";
         public override string DisplayName => "Fallen Stone";
         public override string Description => "Large rock that has dropped from above";
-        public override List<string> OutcomeKeywords => new() { "fragment", "rockfall", "debris" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a large <fragment> that broke from above"), KeywordInContext.Parse("the evidence of a past <rockfall>"), KeywordInContext.Parse("the scattered <debris> at the wall foot") };
     }
     
     public sealed class ClimbingCracks : Item
@@ -45,6 +45,6 @@ public class WallBaseNode : PyramidalFeatureNode
         public override string ItemId => "wall_base_climbing_cracks";
         public override string DisplayName => "Climbing Cracks";
         public override string Description => "Fissures offering handholds";
-        public override List<string> OutcomeKeywords => new() { "crevice", "fissure", "handhold" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a narrow <crevice> in the cliff face"), KeywordInContext.Parse("a deep <fissure> splitting the wall rock"), KeywordInContext.Parse("a solid <handhold> in the cracked stone") };
     }
 }

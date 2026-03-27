@@ -103,7 +103,7 @@ public abstract class NarrationGraphFactory
                     writer.WriteLine($"  Is Entry Node: {node.IsEntryNode}");
                     writer.WriteLine($"  Context: {node.ContextDescription}");
                     writer.WriteLine($"  Transition: {node.TransitionDescription}");
-                    writer.WriteLine($"  Keywords: {string.Join(", ", node.NodeKeywords)}");
+                    writer.WriteLine($"  Keywords: {string.Join(", ", node.NodeKeywordsInContext.Select(k => k.Keyword))}");
                     
                     // List items discovered via reflection
                     var items = node.GetAvailableItems();
@@ -112,7 +112,7 @@ public abstract class NarrationGraphFactory
                         writer.WriteLine($"  Items ({items.Count}):");
                         foreach (var item in items)
                         {
-                            writer.WriteLine($"    - {item.DisplayName} ({item.ItemId}): {string.Join(", ", item.OutcomeKeywords)}");
+                            writer.WriteLine($"    - {item.DisplayName} ({item.ItemId}): {string.Join(", ", item.OutcomeKeywordsInContext.Select(k => k.Keyword))}");
                         }
                     }
                     

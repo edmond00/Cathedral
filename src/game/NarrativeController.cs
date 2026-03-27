@@ -215,7 +215,7 @@ public class NarrativeController
     /// <summary>
     /// Execute thinking phase with selected modusMentis and keyword (async).
     /// </summary>
-    private async Task ExecuteThinkingPhaseAsync(ModusMentis thinkingModusMentis, string keyword)
+    private async Task ExecuteThinkingPhaseAsync(ModusMentis thinkingModusMentis, string keyword, KeywordInContext? keywordInContext = null)
     {
         // Get the source observation block from the hovered keyword (for modusMentis chain tracking)
         var sourceObservationBlock = _narrationState.HoveredKeyword?.SourceBlock;
@@ -243,6 +243,7 @@ public class NarrativeController
                 thinkingModusMentis,
                 targetOutcome,
                 keyword,
+                keywordInContext,
                 _currentNode,
                 actionModiMentis,
                 _protagonist,
@@ -846,7 +847,7 @@ public class NarrativeController
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
 
                         // Fire-and-forget async task
-                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
+                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword, _narrationState.HoveredKeyword?.KeywordInContext);
                     }
                 }
             }
@@ -1091,7 +1092,7 @@ public class NarrativeController
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
 
                         // Fire-and-forget async task
-                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
+                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword, _narrationState.HoveredKeyword?.KeywordInContext);
                     }
                 }
             }
@@ -1365,7 +1366,7 @@ public class NarrativeController
             Console.WriteLine($"    Display: {node.DisplayName}");
             Console.WriteLine($"    Context: {node.ContextDescription}");
             Console.WriteLine($"    Entry Node: {node.IsEntryNode}");
-            Console.WriteLine($"    Keywords: {string.Join(", ", node.NodeKeywords)}");
+            Console.WriteLine($"    Keywords: {string.Join(", ", node.NodeKeywordsInContext.Select(k => k.Keyword))}");
             
             // Show items
             var items = node.GetAvailableItems();
@@ -1374,7 +1375,7 @@ public class NarrativeController
                 Console.WriteLine($"    Items ({items.Count}):");
                 foreach (var item in items)
                 {
-                    Console.WriteLine($"      - {item.DisplayName}: {string.Join(", ", item.OutcomeKeywords)}");
+                    Console.WriteLine($"      - {item.DisplayName}: {string.Join(", ", item.OutcomeKeywordsInContext.Select(k => k.Keyword))}");
                 }
             }
             

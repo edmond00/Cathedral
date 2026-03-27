@@ -21,7 +21,7 @@ public class BlackwoodNode : NarrationNode
     public override string TransitionDescription => "enter the blackwood";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "deadwood", "darkness", "heap", "collapse" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("a tangle of grey <deadwood> blocking the way"), KeywordInContext.Parse("the deep <darkness> between the trunk walls"), KeywordInContext.Parse("a rotting <heap> of collapsed branches") };
     
     private static readonly string[] Moods = { "lightless", "pitch-dark", "oppressive", "suffocating", "impenetrable", "black", "void-like", "abyssal" };
     
@@ -45,6 +45,6 @@ public class BlackwoodNode : NarrationNode
         public override string ItemId => "blackwood_charred_twigs";
         public override string DisplayName => "Charred Twigs";
         public override string Description => "Blackened twigs from the scorched blackwood";
-        public override List<string> OutcomeKeywords => new() { "charcoal", "ash", "splinter", "cinder" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a stick of black <charcoal> from a scorched branch"), KeywordInContext.Parse("some grey <ash> caked into the cracked wood"), KeywordInContext.Parse("a sharp <splinter> of blackened wood") };
     }
 }

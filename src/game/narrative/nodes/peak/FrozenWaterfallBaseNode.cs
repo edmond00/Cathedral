@@ -16,7 +16,7 @@ public class FrozenWaterfallBaseNode : PyramidalFeatureNode
     public override string TransitionDescription => "descend to the frozen waterfall base";
     public override bool IsEntryNode => false;
     
-    public override List<string> NodeKeywords => new() { "waterfall", "ice", "pool", "cascade" };
+    public override List<KeywordInContext> NodeKeywordsInContext => new() { KeywordInContext.Parse("the frozen <waterfall> towering above"), KeywordInContext.Parse("a clear sheet of <ice> coating the fall"), KeywordInContext.Parse("a shallow <pool> of ice at the base"), KeywordInContext.Parse("the frozen <cascade> suspended mid-fall") };
     
     private static readonly string[] Moods = { "towering", "massive", "frozen", "spectacular" };
     
@@ -38,7 +38,7 @@ public class FrozenWaterfallBaseNode : PyramidalFeatureNode
         public override string ItemId => "frozen_waterfall_base_waterfall_basalt";
         public override string DisplayName => "Waterfall Basalt";
         public override string Description => "Volcanic basalt collectible from the frozen pool";
-        public override List<string> OutcomeKeywords => new() { "phonolite", "column", "igneous" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a dark <phonolite> slab in the frozen pool"), KeywordInContext.Parse("a tall basalt <column> beside the fall"), KeywordInContext.Parse("an <igneous> rock darkened by the spray") };
     }
     
     public sealed class PeakMoss : Item
@@ -46,6 +46,6 @@ public class FrozenWaterfallBaseNode : PyramidalFeatureNode
         public override string ItemId => "frozen_waterfall_base_peak_moss";
         public override string DisplayName => "Peak Moss";
         public override string Description => "Hardy alpine moss collectible from the base";
-        public override List<string> OutcomeKeywords => new() { "bryophyte", "alpine", "resilience" };
+        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a hardy <bryophyte> surviving near the ice"), KeywordInContext.Parse("a tough <alpine> moss at the waterfall base"), KeywordInContext.Parse("the quiet <resilience> of the frozen plant") };
     }
 }
