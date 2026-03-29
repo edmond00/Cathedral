@@ -38,6 +38,10 @@ public class OutcomeApplicator
                 Console.WriteLine($"OutcomeApplicator: Transition to {node.NodeId}");
                 break;
 
+            case WoundOutcome wound:
+                ApplyWoundOutcome(wound, protagonist);
+                break;
+
             case HumorOutcome humor:
                 ApplyHumorOutcome(humor, protagonist);
                 break;
@@ -67,6 +71,19 @@ public class OutcomeApplicator
             Console.WriteLine($"OutcomeApplicator: Could not place '{item.DisplayName}' anywhere — inventory full.");
         else
             Console.WriteLine($"OutcomeApplicator: Acquired {item.DisplayName}");
+    }
+
+    private void ApplyWoundOutcome(WoundOutcome wound, Protagonist protagonist)
+    {
+        if (wound.Wound != null)
+        {
+            protagonist.Wounds.Add(wound.Wound);
+            Console.WriteLine($"OutcomeApplicator: Inflicted '{wound.Wound.WoundName}' on {protagonist.DisplayName} ({wound.Wound.TargetId.Replace('_', ' ')}, {wound.Wound.Handicap})");
+        }
+        else
+        {
+            Console.WriteLine("OutcomeApplicator: No wound applied.");
+        }
     }
 
     private void ApplyHumorOutcome(HumorOutcome humor, Protagonist protagonist)

@@ -1,66 +1,33 @@
-using System;
-
 namespace Cathedral.Game;
 
 /// <summary>
 /// Result of evaluating a single CriticNode.
+/// Records which choice the LLM selected and whether it was a failure choice.
 /// </summary>
 public class CriticNodeResult
 {
-    /// <summary>
-    /// The name of the node that was evaluated.
-    /// </summary>
+    /// <summary>The name of the node that was evaluated.</summary>
     public string NodeName { get; set; } = string.Empty;
-    
-    /// <summary>
-    /// The question that was asked.
-    /// </summary>
+
+    /// <summary>The question that was asked (without the choices list).</summary>
     public string Question { get; set; } = string.Empty;
-    
-    /// <summary>
-    /// Whether this node's check succeeded.
-    /// </summary>
-    public bool Success { get; set; }
-    
-    /// <summary>
-    /// The raw probability of "yes" response (0.0 to 1.0).
-    /// </summary>
-    public double ProbabilityYes { get; set; }
-    
-    /// <summary>
-    /// The raw probability of "no" response (0.0 to 1.0).
-    /// </summary>
-    public double ProbabilityNo { get; set; }
-    
-    /// <summary>
-    /// The computed score: p(yes) / (p(yes) + p(no)).
-    /// </summary>
-    public double Score { get; set; }
-    
-    /// <summary>
-    /// The threshold that was required for success.
-    /// </summary>
-    public double Threshold { get; set; }
-    
-    /// <summary>
-    /// Whether "yes" was considered the success answer for this node.
-    /// </summary>
-    public bool YesIsSuccess { get; set; }
-    
-    /// <summary>
-    /// Error message if the node failed, empty if succeeded.
-    /// </summary>
+
+    /// <summary>The choice id the LLM selected.</summary>
+    public string ChosenId { get; set; } = string.Empty;
+
+    /// <summary>True if the selected choice was a failure choice (tree stops here).</summary>
+    public bool IsFailure { get; set; }
+
+    /// <summary>Error message from the failure choice, if any.</summary>
     public string ErrorMessage { get; set; } = string.Empty;
-    
-    /// <summary>
-    /// Duration of this evaluation in milliseconds.
-    /// </summary>
+
+    /// <summary>Duration of this evaluation in milliseconds.</summary>
     public double DurationMs { get; set; }
-    
+
     public override string ToString()
     {
-        var status = Success ? "✓" : "✗";
-        var answer = YesIsSuccess ? "yes" : "no";
-        return $"[{status}] {NodeName}: score={Score:F3} (threshold={Threshold:F2}, {answer}=success) {(Success ? "" : $"- {ErrorMessage}")}";
+        var status = IsFailure ? "✗" : "✓";
+        var error = IsFailure && !string.IsNullOrEmpty(ErrorMessage) ? $" — {ErrorMessage}" : "";
+        return $"[{status}] {NodeName}: chose='{ChosenId}'{error} ({DurationMs:F0}ms)";
     }
 }

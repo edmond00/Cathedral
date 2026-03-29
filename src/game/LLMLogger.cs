@@ -560,33 +560,30 @@ public static class LLMLogger
             for (int i = 0; i < treeResult.Trace.Count; i++)
             {
                 var node = treeResult.Trace[i];
-                var nodeStatus = node.Success ? "✓" : "✗";
-                var answer = node.YesIsSuccess ? "yes=success" : "no=success";
-                
+                var nodeStatus = node.IsFailure ? "✗" : "✓";
+
                 sb.AppendLine($"  [{i + 1}] {nodeStatus} {node.NodeName}");
                 sb.AppendLine($"      Question: {TruncateForLog(node.Question, 100)}");
-                sb.AppendLine($"      Score: {node.Score:F4} (threshold: {node.Threshold:F2}, {answer})");
-                sb.AppendLine($"      Probabilities: yes={node.ProbabilityYes:F4}, no={node.ProbabilityNo:F4}");
+                sb.AppendLine($"      Chosen: {node.ChosenId}");
                 sb.AppendLine($"      Duration: {node.DurationMs:F0}ms");
-                
-                if (!node.Success && !string.IsNullOrEmpty(node.ErrorMessage))
+
+                if (node.IsFailure && !string.IsNullOrEmpty(node.ErrorMessage))
                 {
                     sb.AppendLine($"      Error: {node.ErrorMessage}");
                 }
                 sb.AppendLine();
             }
-            
+
             sb.AppendLine($"SUMMARY:");
             sb.AppendLine($"  Total Nodes: {treeResult.Trace.Count}");
-            sb.AppendLine($"  Failures: {treeResult.FailureCount}");
-            sb.AppendLine($"  Final Result: {(treeResult.FinalSuccess ? "Success" : "Failure")}");
             sb.AppendLine($"  Overall Success: {treeResult.OverallSuccess}");
+            sb.AppendLine($"  Final Chosen: {treeResult.FinalChosenId}");
             sb.AppendLine($"  Total Duration: {treeResult.TotalDurationMs:F0}ms");
-            
+
             if (!treeResult.OverallSuccess)
             {
                 sb.AppendLine();
-                sb.AppendLine($"  Failed Nodes: {string.Join(", ", treeResult.FailedNodeNames)}");
+                sb.AppendLine($"  Failure: {treeResult.FirstErrorMessage}");
                 foreach (var error in treeResult.AllErrorMessages)
                 {
                     sb.AppendLine($"  - {error}");

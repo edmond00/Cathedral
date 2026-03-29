@@ -107,13 +107,13 @@ public class ActionExecutionController
         Console.WriteLine($"\n🔍 [PLAUSIBILITY CHECK] Evaluating if action is possible...");
         
         var plausibilityTree = CriticTrees.BuildPlausibilityTree(action.ActionText, contextDescription);
-        var plausibilityResult = await _criticEvaluator.EvaluateTreeAsync(plausibilityTree, isPlausibilityTree: true);
+        var plausibilityResult = await _criticEvaluator.EvaluateTreeAsync(plausibilityTree);
         
         // If any plausibility check failed, return early
         if (!plausibilityResult.OverallSuccess)
         {
-            var errorMessage = plausibilityResult.FinalErrorMessage.Length > 0 
-                ? plausibilityResult.FinalErrorMessage 
+            var errorMessage = plausibilityResult.FirstErrorMessage.Length > 0
+                ? plausibilityResult.FirstErrorMessage
                 : "That action doesn't make sense in this situation.";
             
             Console.WriteLine($"   ❌ Action rejected: {errorMessage}\n");
@@ -136,8 +136,8 @@ public class ActionExecutionController
         
         var difficultyTree = CriticTrees.BuildDifficultyTree(action.ActionText, contextDescription);
         var difficultyResult = await _criticEvaluator.EvaluateTreeAsync(difficultyTree);
-        
-        // Calculate difficulty score (0.0 to 1.0) from average YES probabilities
+
+        // Map the chosen difficulty level to a 0.0–1.0 score
         double difficultyScore = CriticTrees.CalculateDifficultyFromResult(difficultyResult);
 
         int difficultyLevel = CriticTrees.DifficultyToScale(difficultyScore);
@@ -210,8 +210,8 @@ public class ActionExecutionController
 
         // Determine actual outcome
         OutcomeBase actualOutcome;
-        CriticTrees.FailureOutcomeType? failureOutcomeType = null;
-        
+        Wound? failureWound = null;
+
         if (succeeded)
         {
             actualOutcome = action.PreselectedOutcome;
@@ -220,29 +220,29 @@ public class ActionExecutionController
         {
             // === STEP 3: FAILURE OUTCOME TREE ===
             Console.WriteLine($"💥 [FAILURE OUTCOME] Determining consequence of failure...");
-            
+
             var contextDescription = currentNode.ContextDescription;
             var failureTree = CriticTrees.BuildFailureOutcomeTree(action.ActionText, contextDescription);
             var failureResult = await _criticEvaluator.EvaluateTreeAsync(failureTree);
-            
-            failureOutcomeType = CriticTrees.GetFailureOutcomeFromResult(failureResult);
-            
-            Console.WriteLine($"   Outcome: {failureOutcomeType.Name}");
-            Console.WriteLine($"   Effect: {failureOutcomeType.HumorAffected} +{failureOutcomeType.HumorAmount}");
-            Console.WriteLine($"   Hint: {failureOutcomeType.NarratorHint}\n");
-            
-            actualOutcome = new HumorOutcome(
-                failureOutcomeType.HumorAffected, 
-                failureOutcomeType.HumorAmount, 
-                failureOutcomeType.Description
-            );
+
+            failureWound = CriticTrees.GetWoundFromResult(failureResult);
+
+            if (failureWound != null)
+                Console.WriteLine($"   Wound: {failureWound.WoundName} ({failureWound.TargetId.Replace('_', ' ')}, {failureWound.Handicap})\n");
+            else
+                Console.WriteLine("   No wound inflicted.\n");
+
+            actualOutcome = new WoundOutcome(failureWound);
         }
 
         // Apply outcome to game state
         await _outcomeApplicator.ApplyOutcomeAsync(actualOutcome, _protagonist);
 
-        // Generate narration from thinking modusMentis's perspective
-        // Include failure hint if applicable
+        // Generate narration — pass wound description as failure hint
+        string? failureHint = failureWound != null
+            ? $"The character suffered a wound: {failureWound.WoundName} to their {failureWound.TargetId.Replace('_', ' ')}"
+            : null;
+
         string narration = await _outcomeNarrator.NarrateOutcomeAsync(
             action,
             actionModusMentis,
@@ -252,7 +252,7 @@ public class ActionExecutionController
             difficultyScore,
             _protagonist,
             cancellationToken,
-            failureOutcomeType?.NarratorHint);
+            failureHint);
 
         return new ActionExecutionResult
         {
@@ -264,7 +264,7 @@ public class ActionExecutionController
             Succeeded = succeeded,
             ActualOutcome = actualOutcome,
             Narration = narration,
-            FailureOutcomeType = failureOutcomeType,
+            FailureWound = failureWound,
             IsPlausibilityFailure = false
         };
     }
@@ -350,9 +350,9 @@ public class ActionExecutionResult
     public string Narration { get; set; } = "";
     
     /// <summary>
-    /// The failure outcome type if action failed (null if succeeded or plausibility failed).
+    /// The wound inflicted on the protagonist if action failed with a physical injury (null otherwise).
     /// </summary>
-    public CriticTrees.FailureOutcomeType? FailureOutcomeType { get; set; }
+    public Wound? FailureWound { get; set; }
     
     /// <summary>
     /// The plausibility error message if action was rejected as implausible.

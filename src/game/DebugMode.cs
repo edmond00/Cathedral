@@ -112,41 +112,46 @@ public static class DebugMode
     }
 
     /// <summary>
-    /// Prompt the user to choose yes or no for a critic node question.
-    /// Returns (pYes, pNo, score) matching the user's choice.
+    /// Prompt the user to choose from a list of critic choices.
+    /// Returns the chosen choice id.
     /// Only called when CurrentStrategy is Custom.
     /// </summary>
-    public static (double pYes, double pNo, double score) PromptCriticNode(string nodeName, string question)
+    public static string PromptCriticNode(string nodeName, string question, List<CriticChoice> choices)
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine();
         Console.WriteLine($"[DEBUG] Critic Node: {nodeName}");
         Console.WriteLine($"  Question: {question}");
-        Console.WriteLine($"  1) Yes");
-        Console.WriteLine($"  2) No");
-        Console.Write($"  Choice [1/2]: ");
+        for (int i = 0; i < choices.Count; i++)
+        {
+            var c = choices[i];
+            var desc = c.Description != null ? $": {c.Description}" : "";
+            Console.WriteLine($"  {i + 1}) {c.Id}{desc}");
+        }
+        Console.Write($"  Choice [1-{choices.Count}]: ");
         Console.ResetColor();
 
         while (true)
         {
             var input = Console.ReadLine()?.Trim();
-            if (input == "1" || input?.Equals("yes", StringComparison.OrdinalIgnoreCase) == true)
+            if (int.TryParse(input, out int idx) && idx >= 1 && idx <= choices.Count)
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"  → Yes (forced)");
+                var chosen = choices[idx - 1];
+                Console.ForegroundColor = chosen.IsFailure ? ConsoleColor.Red : ConsoleColor.Green;
+                Console.WriteLine($"  → {chosen.Id} (forced)");
                 Console.ResetColor();
-                return (0.95, 0.05, 0.95); // Strong yes
+                return chosen.Id;
             }
-            if (input == "2" || input?.Equals("no", StringComparison.OrdinalIgnoreCase) == true)
+            var match = choices.FirstOrDefault(c => c.Id.Equals(input, StringComparison.OrdinalIgnoreCase));
+            if (match != null)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"  → No (forced)");
+                Console.ForegroundColor = match.IsFailure ? ConsoleColor.Red : ConsoleColor.Green;
+                Console.WriteLine($"  → {match.Id} (forced)");
                 Console.ResetColor();
-                return (0.05, 0.95, 0.05); // Strong no
+                return match.Id;
             }
-
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write($"  Invalid. Enter 1 or 2: ");
+            Console.Write($"  Invalid. Enter 1-{choices.Count}: ");
             Console.ResetColor();
         }
     }
@@ -194,31 +199,41 @@ public static class DebugMode
     }
 
     /// <summary>
-    /// Returns the yes/no override for a critic node based on the current strategy.
+    /// Returns the choice id override for a critic node based on the current strategy.
     /// For non-Custom strategies, returns the auto-answer without prompting.
     /// For Custom, prompts interactively.
     /// </summary>
-    public static (double pYes, double pNo, double score) GetCriticOverride(string nodeName, string question, bool isPlausibilityNode)
+    public static string GetCriticOverride(string nodeName, string question, List<CriticChoice> choices, bool isPlausibilityNode)
     {
+        var failureChoice = choices.FirstOrDefault(c => c.IsFailure);
+        var passChoice = choices.FirstOrDefault(c => !c.IsFailure);
+
         switch (CurrentStrategy)
         {
             case DebugStrategy.FailPlausibility when isPlausibilityNode:
+            {
+                var id = failureChoice?.Id ?? choices[0].Id;
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"  [AUTO] {nodeName}: No (fail plausibility strategy)");
+                Console.WriteLine($"  [AUTO] {nodeName}: {id} (fail plausibility strategy)");
                 Console.ResetColor();
-                return (0.05, 0.95, 0.05);
+                return id;
+            }
 
             case DebugStrategy.FailPlausibility:
             case DebugStrategy.FailDiceRoll:
             case DebugStrategy.Succeed:
+            {
+                // For the Difficulty node, prefer "moderate" so success probability is reasonable
+                string id = nodeName == "Difficulty" ? "moderate" : (passChoice?.Id ?? choices[0].Id);
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"  [AUTO] {nodeName}: Yes (auto-pass)");
+                Console.WriteLine($"  [AUTO] {nodeName}: {id} (auto-pass)");
                 Console.ResetColor();
-                return (0.95, 0.05, 0.95);
+                return id;
+            }
 
             case DebugStrategy.Custom:
             default:
-                return PromptCriticNode(nodeName, question);
+                return PromptCriticNode(nodeName, question, choices);
         }
     }
 

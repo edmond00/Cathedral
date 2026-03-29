@@ -569,7 +569,106 @@ public class LlamaServerManager : IDisposable
             instance.IsActive = false;
         }
     }
-    
+
+    /// <summary>
+    /// Generates a short constrained string using a GBNF grammar.
+    /// Unlike GetNextTokenProbabilitiesAsync (which reads only the first token's logprobs),
+    /// this generates the full constrained output — needed for multi-token choices like "very_easy".
+    /// Resets the instance after generation to keep it stateless.
+    /// </summary>
+    public async Task<string> GenerateConstrainedStringAsync(
+        int slotId,
+        string userMessage,
+        string gbnfGrammar,
+        int maxTokens = 20)
+    {
+        if (!_instances.TryGetValue(slotId, out var instance))
+            throw new ArgumentException($"Instance with slot ID {slotId} not found.");
+
+        if (instance.IsActive)
+            throw new InvalidOperationException($"Instance {slotId} is currently processing another request.");
+
+        instance.IsActive = true;
+        instance.AddUserMessage(userMessage);
+        instance.RequestCount++;
+
+        var startTime = DateTime.Now;
+        var timestamp = startTime.ToString("HH-mm-ss-fff");
+
+        string? requestLogDir = null;
+        if (_sessionLogDir != null)
+        {
+            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
+            Directory.CreateDirectory(requestLogDir);
+            await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+        }
+
+        try
+        {
+            var requestData = new Dictionary<string, object>
+            {
+                ["model"] = "local",
+                ["messages"] = instance.GetMessages(),
+                ["max_tokens"] = maxTokens,
+                ["stream"] = false,
+                ["cache_prompt"] = true,
+                ["slot_id"] = slotId,
+                ["top_k"] = Config.LLM.TopK,
+                ["temperature"] = Config.LLM.Temperature,
+                ["top_p"] = Config.LLM.TopP,
+                ["grammar"] = gbnfGrammar
+            };
+
+            if (requestLogDir != null)
+            {
+                var messagesArray = (object[])requestData["messages"];
+                var contextJson = JsonSerializer.Serialize(messagesArray, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "full_context.json"), contextJson);
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "gbnf_constraints.txt"), gbnfGrammar);
+            }
+
+            var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", requestData);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"GenerateConstrainedStringAsync failed: {response.StatusCode} - {errorContent}");
+            }
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(jsonResponse);
+            var root = doc.RootElement;
+
+            string generated = string.Empty;
+            if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+            {
+                var choice = choices[0];
+                if (choice.TryGetProperty("message", out var message) &&
+                    message.TryGetProperty("content", out var content))
+                {
+                    generated = content.GetString() ?? string.Empty;
+                }
+            }
+
+            generated = generated.Trim();
+
+            if (requestLogDir != null)
+            {
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "response.txt"), generated);
+                var endTime = DateTime.Now;
+                var timingText = $"Duration: {(endTime - startTime).TotalMilliseconds:F0}ms";
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "timing.txt"), timingText);
+            }
+
+            instance.AddAssistantResponse(generated);
+            return generated;
+        }
+        finally
+        {
+            instance.IsActive = false;
+            try { ResetInstance(slotId); } catch { /* Ignore reset errors */ }
+        }
+    }
+
     /// <summary>
     /// Continue a conversation with an LLM instance, optionally using GBNF grammar constraints
     /// </summary>
