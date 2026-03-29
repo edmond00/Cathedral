@@ -39,6 +39,8 @@ public class TreeHollowNode : NarrationNode
         return $"peering into a {mood} tree hollow";
     }
     
+    public override List<Item> GetItems() => new() { new DriedLeaves(), new BatGuano(), new SquirrelNest() };
+
     public sealed class DriedLeaves : Item
     {
         public override string ItemId => "hollow_dried_leaves";

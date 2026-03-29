@@ -32,6 +32,8 @@ public class DrainageHollowNode : NarrationNode
         return $"descending through a {mood} drainage hollow";
     }
     
+    public override List<Item> GetItems() => new() { new ClayDeposit(), new StagnantWater() };
+
     public sealed class ClayDeposit : Item
     {
         public override string ItemId => "drainage_clay";

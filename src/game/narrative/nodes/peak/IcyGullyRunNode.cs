@@ -33,6 +33,8 @@ public class IcyGullyRunNode : PyramidalFeatureNode
         return $"standing in a {mood} icy gully run";
     }
     
+    public override List<Item> GetItems() => new() { new GullyObsidian() };
+
     public sealed class GullyObsidian : Item
     {
         public override string ItemId => "icy_gully_run_gully_obsidian";

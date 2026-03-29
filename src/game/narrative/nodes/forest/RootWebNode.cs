@@ -33,6 +33,8 @@ public class RootWebNode : NarrationNode
         return $"navigating a {mood} root web";
     }
     
+    public override List<Item> GetItems() => new() { new WebRootFiber(), new RootBark() };
+
     public sealed class WebRootFiber : Item
     {
         public override string ItemId => "root_fiber";

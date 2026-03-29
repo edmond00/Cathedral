@@ -39,6 +39,8 @@ public class CliffBaseNode : PyramidalFeatureNode
         return $"standing at a {mood} cliff base";
     }
     
+    public override List<Item> GetItems() => new() { new LooseRock(), new CrumblingStone() };
+
     public sealed class LooseRock : Item
     {
         public override string ItemId => "cliff_base_loose_rock";

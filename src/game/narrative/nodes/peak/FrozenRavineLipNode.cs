@@ -40,6 +40,8 @@ public class FrozenRavineLipNode : PyramidalFeatureNode
         return $"standing at a {mood} ravine lip";
     }
     
+    public override List<Item> GetItems() => new() { new RavineQuartz(), new FrozenRock(), new IcicleFormation() };
+
     public sealed class RavineQuartz : Item
     {
         public override string ItemId => "frozen_ravine_lip_ravine_quartz";

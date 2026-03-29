@@ -32,6 +32,8 @@ public class MossyStoneOutcropNode : NarrationNode
         return $"examining a {mood} mossy stone outcrop";
     }
     
+    public override List<Item> GetItems() => new() { new OutcropMoss(), new AncientStone() };
+
     public sealed class OutcropMoss : Item
     {
         public override string ItemId => "outcrop_moss";

@@ -33,6 +33,8 @@ public class DeepHumusBasinNode : NarrationNode
         return $"exploring a {mood} deep humus basin";
     }
     
+    public override List<Item> GetItems() => new() { new PureHumus(), new AncientSeed() };
+
     public sealed class PureHumus : Item
     {
         public override string ItemId => "pure_humus";

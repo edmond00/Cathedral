@@ -32,6 +32,8 @@ public class WildflowerPatchNode : NarrationNode
         return $"admiring a {mood} wildflower patch";
     }
     
+    public override List<Item> GetItems() => new() { new WildflowerBouquet(), new FlowerPetal(), new ButterflyWing() };
+
     public sealed class WildflowerBouquet : Item
     {
         public override string ItemId => "wildflower_bouquet";

@@ -32,6 +32,8 @@ public class BeehiveNode : NarrationNode
         return $"carefully observing a {mood} beehive";
     }
     
+    public override List<Item> GetItems() => new() { new WildHoneycomb(), new BeeswaxFragment(), new RoyalJelly() };
+
     public sealed class WildHoneycomb : Item
     {
         public override string ItemId => "wild_honeycomb";

@@ -32,6 +32,8 @@ public class UpperBoulderSpreadNode : PyramidalFeatureNode
         return $"in a {mood} upper boulder spread";
     }
     
+    public override List<Item> GetItems() => new() { new RoundedBoulder(), new BoulderLichen() };
+
     public sealed class RoundedBoulder : Item
     {
         public override string ItemId => "upper_boulder_spread_rounded_boulder";

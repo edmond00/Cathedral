@@ -32,6 +32,8 @@ public class HawthornClusterNode : NarrationNode
         return $"examining a {mood} hawthorn cluster";
     }
     
+    public override List<Item> GetItems() => new() { new Haw(), new HawthornThorn() };
+
     public sealed class Haw : Item
     {
         public override string ItemId => "hawthorn_berry";

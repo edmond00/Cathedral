@@ -40,6 +40,8 @@ public class GullyBottomNode : PyramidalFeatureNode
         return $"in a {mood} gully bottom";
     }
     
+    public override List<Item> GetItems() => new() { new GullyMoss() };
+
     public sealed class GullyMoss : Item
     {
         public override string ItemId => "gully_moss";

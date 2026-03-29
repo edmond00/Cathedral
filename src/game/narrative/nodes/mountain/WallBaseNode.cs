@@ -32,6 +32,8 @@ public class WallBaseNode : PyramidalFeatureNode
         return $"at a {mood} wall base";
     }
     
+    public override List<Item> GetItems() => new() { new FallenStone(), new ClimbingCracks() };
+
     public sealed class FallenStone : Item
     {
         public override string ItemId => "wall_base_fallen_stone";

@@ -33,6 +33,8 @@ public class TrunkClusterNode : NarrationNode
         return $"navigating a {mood} trunk cluster";
     }
     
+    public override List<Item> GetItems() => new() { new InnerBark(), new BarkShaving() };
+
     public sealed class InnerBark : Item
     {
         public override string ItemId => "inner_bark_strip";

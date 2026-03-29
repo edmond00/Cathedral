@@ -32,6 +32,8 @@ public class MixedUnderwoodNode : NarrationNode
         return $"pushing through a {mood} mixed underwood";
     }
     
+    public override List<Item> GetItems() => new() { new TangledVines(), new UnderbrushStems() };
+
     public sealed class TangledVines : Item
     {
         public override string ItemId => "mixed_underwood_tangled_vines";

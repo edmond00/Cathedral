@@ -103,7 +103,9 @@ public class ObservationPhaseController
         {
             try
             {
-                var outcomeKics = outcome is NarrationNode nn ? nn.NodeKeywordsInContext : outcome.OutcomeKeywordsInContext;
+                var outcomeKics = outcome is NarrationNode nn ? nn.NodeKeywordsInContext
+                    : outcome is ObservationObject obs2 ? obs2.ObservationKeywordsInContext
+                    : outcome.OutcomeKeywordsInContext;
                 var outcomeKeywords = outcomeKics.Select(k => k.Keyword).ToList();
 
                 var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(outcome, previousDescription, modusMentis.PersonaReminder, previousKeywordInContext, modusMentis.PersonaReminder2);
@@ -191,7 +193,9 @@ public class ObservationPhaseController
         KeywordInContext? previousKeywordInContext = null;
         try
         {
-            var focusOutcomeKics = focusOutcome is NarrationNode fn ? fn.NodeKeywordsInContext : focusOutcome.OutcomeKeywordsInContext;
+            var focusOutcomeKics = focusOutcome is NarrationNode fn ? fn.NodeKeywordsInContext
+                    : focusOutcome is ObservationObject fobs ? fobs.ObservationKeywordsInContext
+                    : focusOutcome.OutcomeKeywordsInContext;
             var focusOutcomeKeywords = focusOutcomeKics.Select(k => k.Keyword).ToList();
             var firstPrompt = _promptConstructor.BuildFirstSentencePrompt(currentNode, locationId, focusOutcome, observationModusMentis.PersonaTone, _worldContext, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
             var firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, isFirstInBatch: true, ct: ct);
@@ -226,7 +230,9 @@ public class ObservationPhaseController
         {
             try
             {
-                var otherKics = otherOutcome is NarrationNode on2 ? on2.NodeKeywordsInContext : otherOutcome.OutcomeKeywordsInContext;
+                var otherKics = otherOutcome is NarrationNode on2 ? on2.NodeKeywordsInContext
+                    : otherOutcome is ObservationObject oobs ? oobs.ObservationKeywordsInContext
+                    : otherOutcome.OutcomeKeywordsInContext;
                 var otherKeywords = otherKics.Select(k => k.Keyword).ToList();
 
                 var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(otherOutcome, previousDescription, observationModusMentis.PersonaReminder, previousKeywordInContext, observationModusMentis.PersonaReminder2);

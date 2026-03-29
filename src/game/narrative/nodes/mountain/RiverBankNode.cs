@@ -32,6 +32,8 @@ public class RiverBankNode : PyramidalFeatureNode
         return $"on a {mood} river bank";
     }
     
+    public override List<Item> GetItems() => new() { new RootsExposed(), new RiverGrass() };
+
     public sealed class RootsExposed : Item
     {
         public override string ItemId => "river_bank_roots_exposed";

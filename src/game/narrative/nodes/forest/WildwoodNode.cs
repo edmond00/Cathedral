@@ -39,6 +39,8 @@ public class WildwoodNode : NarrationNode
         return $"navigating a {mood} wildwood";
     }
     
+    public override List<Item> GetItems() => new() { new UntamedSeeds() };
+
     public sealed class UntamedSeeds : Item
     {
         public override string ItemId => "wildwood_untamed_seeds";

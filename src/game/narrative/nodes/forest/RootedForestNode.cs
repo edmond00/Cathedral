@@ -32,6 +32,8 @@ public class RootedForestNode : NarrationNode
         return $"climbing through a {mood} rooted forest";
     }
     
+    public override List<Item> GetItems() => new() { new ExposedRootFiber(), new RootGrip() };
+
     public sealed class ExposedRootFiber : Item
     {
         public override string ItemId => "rooted_forest_exposed_root_fiber";

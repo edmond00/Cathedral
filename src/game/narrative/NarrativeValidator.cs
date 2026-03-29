@@ -36,12 +36,15 @@ public static class NarrativeValidator
         Console.WriteLine($"Found {itemTypes.Count} item types and {nodeTypes.Count} node types");
         Console.WriteLine($"Note: PossibleOutcomes validation skipped (populated at runtime by factories)");
         
-        // Validation 1: Every Item type must be declared inside a NarrationNode
-        var itemsOutsideNodes = itemTypes.Where(t => t.DeclaringType == null || !typeof(NarrationNode).IsAssignableFrom(t.DeclaringType)).ToList();
+        // Validation 1: Every Item type must be declared inside a NarrationNode or ObservationObject
+        var itemsOutsideNodes = itemTypes.Where(t =>
+            t.DeclaringType == null ||
+            (!typeof(NarrationNode).IsAssignableFrom(t.DeclaringType) &&
+             !typeof(ObservationObject).IsAssignableFrom(t.DeclaringType))).ToList();
         if (itemsOutsideNodes.Any())
         {
             throw new InvalidOperationException(
-                $"Items must be declared as inner classes of NarrationNode. Found {itemsOutsideNodes.Count} items outside nodes: " +
+                $"Items must be declared as inner classes of NarrationNode or ObservationObject. Found {itemsOutsideNodes.Count} items outside nodes: " +
                 string.Join(", ", itemsOutsideNodes.Select(t => t.Name)));
         }
         
@@ -62,9 +65,10 @@ public static class NarrativeValidator
                 throw new InvalidOperationException($"Item {itemType.Name} has no declaring type");
             }
             
-            if (!typeof(NarrationNode).IsAssignableFrom(itemType.DeclaringType))
+            if (!typeof(NarrationNode).IsAssignableFrom(itemType.DeclaringType) &&
+                !typeof(ObservationObject).IsAssignableFrom(itemType.DeclaringType))
             {
-                throw new InvalidOperationException($"Item {itemType.Name} is not declared in a NarrationNode");
+                throw new InvalidOperationException($"Item {itemType.Name} is not declared in a NarrationNode or ObservationObject");
             }
         }
         
@@ -77,7 +81,7 @@ public static class NarrativeValidator
                 string.Join(", ", unsealedItems.Select(t => t.Name)));
         }
         
-        Console.WriteLine("✓ All items are inner classes of nodes");
+        Console.WriteLine("✓ All items are inner classes of nodes or observations");
         Console.WriteLine("✓ All item names are unique");
         Console.WriteLine("✓ All items have exactly one origin node");
         Console.WriteLine("✓ All items are sealed");

@@ -33,6 +33,8 @@ public class AncientTreeGiantNode : NarrationNode
         return $"standing before a {mood} ancient tree giant";
     }
     
+    public override List<Item> GetItems() => new() { new AncientBark(), new TreeLichen() };
+
     public sealed class AncientBark : Item
     {
         public override string ItemId => "ancient_bark";

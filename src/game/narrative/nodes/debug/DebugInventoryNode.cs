@@ -83,6 +83,8 @@ public class DebugInventoryNode : NarrationNode
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Hard leather cap.</summary>
+    public override List<Item> GetItems() => new() { new LeatherCap(), new WoolenCloak(), new LinenShirt(), new WoolSocks(), new LeatherBoots(), new IronSword(), new FightKnife(), new IronDagger(), new SpringWater(), new RedWine() };
+
     public sealed class LeatherCap : Item
     {
         public override string ItemId        => "debug_leather_cap";

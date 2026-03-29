@@ -33,6 +33,8 @@ public class BeechStandNode : NarrationNode
         return $"walking through a {mood} beech stand";
     }
     
+    public override List<Item> GetItems() => new() { new Beechnut(), new BeechLeaf() };
+
     public sealed class Beechnut : Item
     {
         public override string ItemId => "beechnut";

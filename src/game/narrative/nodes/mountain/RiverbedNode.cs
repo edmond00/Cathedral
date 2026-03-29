@@ -32,6 +32,8 @@ public class RiverbedNode : PyramidalFeatureNode
         return $"in a {mood} riverbed";
     }
     
+    public override List<Item> GetItems() => new() { new RiverStones(), new RiverSand() };
+
     public sealed class RiverStones : Item
     {
         public override string ItemId => "riverbed_river_stones";

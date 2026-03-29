@@ -33,6 +33,8 @@ public class SeasonalPuddleNode : NarrationNode
         return $"examining a {mood} seasonal puddle";
     }
     
+    public override List<Item> GetItems() => new() { new PuddleMud(), new TadpoleWater() };
+
     public sealed class PuddleMud : Item
     {
         public override string ItemId => "puddle_mud";

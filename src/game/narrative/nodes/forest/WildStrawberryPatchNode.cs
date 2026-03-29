@@ -32,6 +32,8 @@ public class WildStrawberryPatchNode : NarrationNode
         return $"picking from a {mood} wild strawberry patch";
     }
     
+    public override List<Item> GetItems() => new() { new WildStrawberry(), new StrawberryRunner(), new StrawberryLeaf() };
+
     public sealed class WildStrawberry : Item
     {
         public override string ItemId => "wild_strawberry";

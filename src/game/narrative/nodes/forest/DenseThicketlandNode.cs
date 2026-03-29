@@ -32,6 +32,8 @@ public class DenseThicketlandNode : NarrationNode
         return $"pushing through a {mood} dense thicketland";
     }
     
+    public override List<Item> GetItems() => new() { new ThornedBranch(), new ThicketBerries() };
+
     public sealed class ThornedBranch : Item
     {
         public override string ItemId => "dense_thicketland_thorned_branch";

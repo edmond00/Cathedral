@@ -11,6 +11,57 @@ namespace Cathedral.Game.Narrative;
 public class ThinkingPromptConstructor
 {
     /// <summary>
+    /// Call 0a (REFLECT): asks the thinking modusMentis what it thinks about the observation as a whole.
+    /// This is the FIRST call in the GOAL batch — resets the slot and provides full context.
+    /// The response text is prepended to the final reasoning block shown to the player.
+    /// </summary>
+    public static string BuildReflectPrompt(
+        ObservationObject observation,
+        NarrationNode node,
+        ModusMentis thinkingModusMentis,
+        Protagonist protagonist,
+        WorldContext worldContext)
+    {
+        string personaToneLine = thinkingModusMentis.PersonaTone != null
+            ? $"You are a {thinkingModusMentis.PersonaTone}.\n"
+            : "";
+        string reminderClause = thinkingModusMentis.PersonaReminder != null
+            ? $"As a {thinkingModusMentis.PersonaReminder}, "
+            : "";
+        var kics = observation.ObservationKeywordsInContext;
+        string keywordHint = kics.Count > 0
+            ? $" You notice things like: {string.Join(", ", kics.Select(k => k.Context))}."
+            : "";
+
+        return $@"{personaToneLine}{WorldContext.EpochContext}
+{node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
+
+You are observing {WithArticle(observation.GenerateNeutralDescription(protagonist.CurrentLocationId))}.{keywordHint}
+{reminderClause}what do you think?
+{Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
+    }
+
+    /// <summary>
+    /// Call 0b (GOAL): follow-up in the same slot after REFLECT — asks which sub-outcome to pursue.
+    /// Short continuation: no full context repeat since the slot already has it from REFLECT.
+    /// </summary>
+    public static string BuildGoalPrompt(
+        List<ConcreteOutcome> subOutcomes,
+        ModusMentis thinkingModusMentis)
+    {
+        string reminderClause = thinkingModusMentis.PersonaReminder != null
+            ? $"As a {thinkingModusMentis.PersonaReminder}, "
+            : "";
+        string optionsList = string.Join("\n", subOutcomes.Select(o => $"- {o.ToNaturalLanguageString()}"));
+
+        return $@"You could:
+{optionsList}
+
+{reminderClause}what do you want to do?
+{Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
+    }
+
+    /// <summary>
     /// Call 1 (WHY): asks the thinking modusMentis why observing the keyword makes it want the outcome.
     /// Includes the full persona tone at the head (first call in the batch).
     /// </summary>

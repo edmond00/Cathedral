@@ -32,6 +32,8 @@ public class MushroomLogNode : NarrationNode
         return $"examining a {mood} mushroom log";
     }
     
+    public override List<Item> GetItems() => new() { new ShelfMushroom(), new DecayedLogWood(), new BeetleHole() };
+
     public sealed class ShelfMushroom : Item
     {
         public override string ItemId => "shelf_mushroom";

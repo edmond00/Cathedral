@@ -32,6 +32,8 @@ public class PineConeClusterNode : NarrationNode
         return $"gathering from a {mood} pine cone cluster";
     }
     
+    public override List<Item> GetItems() => new() { new PineCone(), new PineNeedle() };
+
     public sealed class PineCone : Item
     {
         public override string ItemId => "pine_cone";

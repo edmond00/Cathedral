@@ -32,6 +32,8 @@ public class WildHerbsNode : NarrationNode
         return $"examining a {mood} wild herbs";
     }
     
+    public override List<Item> GetItems() => new() { new HerbBundle(), new HerbRoot() };
+
     public sealed class HerbBundle : Item
     {
         public override string ItemId => "wild_herb_bundle";

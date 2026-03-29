@@ -32,6 +32,8 @@ public class WoodpeckerTreeNode : NarrationNode
         return $"examining a {mood} woodpecker tree";
     }
     
+    public override List<Item> GetItems() => new() { new WoodChips(), new BarkFragment() };
+
     public sealed class WoodChips : Item
     {
         public override string ItemId => "woodpecker_chips";

@@ -32,6 +32,8 @@ public class CricketChorusNode : NarrationNode
         return $"listening to a {mood} cricket chorus";
     }
     
+    public override List<Item> GetItems() => new() { new CricketLegs() };
+
     public sealed class CricketLegs : Item
     {
         public override string ItemId => "cricket_chorus_cricket_legs";

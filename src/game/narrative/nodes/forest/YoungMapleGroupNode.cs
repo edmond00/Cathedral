@@ -33,6 +33,8 @@ public class YoungMapleGroupNode : NarrationNode
         return $"examining a {mood} young maple group";
     }
     
+    public override List<Item> GetItems() => new() { new MapleSeed(), new MapleLeaf() };
+
     public sealed class MapleSeed : Item
     {
         public override string ItemId => "maple_seed";

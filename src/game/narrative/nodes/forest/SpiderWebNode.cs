@@ -32,6 +32,8 @@ public class SpiderWebNode : NarrationNode
         return $"examining a {mood} spider web";
     }
     
+    public override List<Item> GetItems() => new() { new SpiderSilk(), new TrappedInsects() };
+
     public sealed class SpiderSilk : Item
     {
         public override string ItemId => "spider_web_spider_silk";

@@ -33,6 +33,8 @@ public class LichenBarkNode : NarrationNode
         return $"examining a {mood} lichen bark";
     }
     
+    public override List<Item> GetItems() => new() { new LichenCrust(), new LichenDust() };
+
     public sealed class LichenCrust : Item
     {
         public override string ItemId => "lichen_crust";

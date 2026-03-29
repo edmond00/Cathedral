@@ -32,6 +32,8 @@ public class ArchCrestNode : PyramidalFeatureNode
         return $"atop a {mood} arch crest";
     }
     
+    public override List<Item> GetItems() => new() { new ArchKeystone() };
+
     public sealed class ArchKeystone : Item
     {
         public override string ItemId => "arch_crest_keystone";

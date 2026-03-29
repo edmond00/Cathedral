@@ -33,6 +33,8 @@ public class BareForestFloorNode : NarrationNode
         return $"walking on a {mood} bare forest floor";
     }
     
+    public override List<Item> GetItems() => new() { new BareSoil(), new CompactedEarth() };
+
     public sealed class BareSoil : Item
     {
         public override string ItemId => "bare_black_soil";

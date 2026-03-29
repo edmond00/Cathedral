@@ -32,6 +32,8 @@ public class ButterflyGladeNode : NarrationNode
         return $"wandering in a {mood} butterfly glade";
     }
     
+    public override List<Item> GetItems() => new() { new ButterflyWings(), new Nectar() };
+
     public sealed class ButterflyWings : Item
     {
         public override string ItemId => "butterfly_glade_butterfly_wings";

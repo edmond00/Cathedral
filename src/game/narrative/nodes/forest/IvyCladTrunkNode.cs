@@ -33,6 +33,8 @@ public class IvyCladTrunkNode : NarrationNode
         return $"examining a {mood} ivy-clad trunk";
     }
     
+    public override List<Item> GetItems() => new() { new IvyLeaf(), new AerialRoot() };
+
     public sealed class IvyLeaf : Item
     {
         public override string ItemId => "ivy_leaf";

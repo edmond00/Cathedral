@@ -39,6 +39,8 @@ public class ButtressFootNode : PyramidalFeatureNode
         return $"at a {mood} buttress foot";
     }
     
+    public override List<Item> GetItems() => new() { new RootedShrub() };
+
     public sealed class RootedShrub : Item
     {
         public override string ItemId => "buttress_foot_rooted_shrub";

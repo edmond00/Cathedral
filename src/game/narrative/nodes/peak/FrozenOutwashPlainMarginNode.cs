@@ -33,6 +33,8 @@ public class FrozenOutwashPlainMarginNode : PyramidalFeatureNode
         return $"standing at a {mood} ice margin";
     }
     
+    public override List<Item> GetItems() => new() { new GlacialCobble() };
+
     public sealed class GlacialCobble : Item
     {
         public override string ItemId => "frozen_outwash_plain_margin_glacial_cobble";

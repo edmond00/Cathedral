@@ -39,6 +39,8 @@ public class LowerScreeNode : PyramidalFeatureNode
         return $"on a {mood} lower scree";
     }
     
+    public override List<Item> GetItems() => new() { new ScreeGravel(), new BuriedRock() };
+
     public sealed class ScreeGravel : Item
     {
         public override string ItemId => "scree_gravel";

@@ -32,6 +32,8 @@ public class BeetleSwarmNode : NarrationNode
         return $"observing a {mood} beetle swarm";
     }
     
+    public override List<Item> GetItems() => new() { new BeetleCarapace(), new BeetleFrass() };
+
     public sealed class BeetleCarapace : Item
     {
         public override string ItemId => "beetle_swarm_beetle_carapace";

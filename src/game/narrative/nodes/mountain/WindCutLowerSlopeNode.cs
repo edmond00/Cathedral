@@ -32,6 +32,8 @@ public class WindCutLowerSlopeNode : PyramidalFeatureNode
         return $"on a {mood} wind-cut lower slope";
     }
     
+    public override List<Item> GetItems() => new() { new AccumulatedDebris(), new ShelterStone() };
+
     public sealed class AccumulatedDebris : Item
     {
         public override string ItemId => "wind_cut_lower_slope_accumulated_debris";

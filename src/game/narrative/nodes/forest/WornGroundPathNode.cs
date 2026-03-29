@@ -32,6 +32,8 @@ public class WornGroundPathNode : NarrationNode
         return $"following a {mood} worn ground path";
     }
     
+    public override List<Item> GetItems() => new() { new PathDust() };
+
     public sealed class PathDust : Item
     {
         public override string ItemId => "worn_ground_path_path_dust";

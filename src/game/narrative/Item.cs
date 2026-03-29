@@ -5,8 +5,9 @@ namespace Cathedral.Game.Narrative;
 /// <summary>
 /// Base class for items that can be acquired through successful actions.
 /// Items have specific names but should not include qualifiers (e.g., "Trout" not "Small Fish").
+/// Implements IObservation as self-referential: an Item IS its own single observation.
 /// </summary>
-public abstract class Item : ConcreteOutcome
+public abstract class Item : ConcreteOutcome, IObservation
 {
     /// <summary>Unique identifier for this item.</summary>
     public abstract string ItemId { get; }
@@ -47,4 +48,10 @@ public abstract class Item : ConcreteOutcome
     /// Example: keyword="fish" → "This fish is a Trout."
     public override string GetKeywordToOutcomeTransition(string keyword)
         => $"This {keyword} is {DisplayName}.";
+
+    // ── IObservation (self-referential) ───────────────────────────────────────
+    string IObservation.ObservationId => ItemId;
+    List<KeywordInContext> IObservation.ObservationKeywords => OutcomeKeywordsInContext;
+    IReadOnlyList<ConcreteOutcome> IObservation.ObservationOutcomes =>
+        new System.Collections.ObjectModel.ReadOnlyCollection<ConcreteOutcome>(new List<ConcreteOutcome> { this });
 }

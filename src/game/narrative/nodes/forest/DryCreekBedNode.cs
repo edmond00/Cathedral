@@ -32,6 +32,8 @@ public class DryCreekBedNode : NarrationNode
         return $"walking along a {mood} dry creek bed";
     }
     
+    public override List<Item> GetItems() => new() { new SmoothStone(), new DriedAlgae() };
+
     public sealed class SmoothStone : Item
     {
         public override string ItemId => "smooth_creek_stone";

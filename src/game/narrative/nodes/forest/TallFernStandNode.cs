@@ -33,6 +33,8 @@ public class TallFernStandNode : NarrationNode
         return $"wading through a {mood} tall fern stand";
     }
     
+    public override List<Item> GetItems() => new() { new FernSpore(), new FernRhizome() };
+
     public sealed class FernSpore : Item
     {
         public override string ItemId => "fern_spore";

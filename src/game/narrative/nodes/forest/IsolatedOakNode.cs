@@ -32,6 +32,8 @@ public class IsolatedOakNode : NarrationNode
         return $"examining a {mood} isolated oak";
     }
     
+    public override List<Item> GetItems() => new() { new Acorn(), new OakGall() };
+
     public sealed class Acorn : Item
     {
         public override string ItemId => "oak_acorn";

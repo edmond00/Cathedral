@@ -40,6 +40,8 @@ public class GrassClearingNode : NarrationNode
         return $"standing in a {mood} grass clearing";
     }
     
+    public override List<Item> GetItems() => new() { new GrassSeed(), new GrassFlower() };
+
     public sealed class GrassSeed : Item
     {
         public override string ItemId => "grass_seed";

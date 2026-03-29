@@ -61,6 +61,18 @@ public static class LLMSchemaConfig
     #region Thinking Schemas
 
     /// <summary>
+    /// Call 0 (GOAL): thinking modusMentis picks which sub-outcome of an ObservationObject to pursue.
+    /// Fires only when the observation has more than one sub-outcome.
+    /// </summary>
+    /// <param name="validGoals">List of natural-language goal strings from SubOutcomes.ToNaturalLanguageString()</param>
+    public static CompositeField CreateGoalSchema(List<string> validGoals)
+    {
+        return new CompositeField("GoalResponse",
+            new ChoiceField<string>("goal", validGoals.ToArray())
+        );
+    }
+
+    /// <summary>
     /// Call 1 (WHY): thinking modusMentis explains why observing the keyword makes it want the outcome.
     /// </summary>
     public static CompositeField CreateWhySchema()

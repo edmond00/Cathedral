@@ -33,6 +33,8 @@ public class HiddenBranchTangleNode : NarrationNode
         return $"ducking through a {mood} hidden branch tangle";
     }
     
+    public override List<Item> GetItems() => new() { new TangledTwig(), new CobwebVeil() };
+
     public sealed class TangledTwig : Item
     {
         public override string ItemId => "tangled_twig";

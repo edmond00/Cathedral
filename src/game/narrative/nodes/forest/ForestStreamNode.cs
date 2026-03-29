@@ -32,6 +32,8 @@ public class ForestStreamNode : NarrationNode
         return $"following a {mood} forest stream";
     }
     
+    public override List<Item> GetItems() => new() { new StreamWater(), new WatersmoothedPebbles() };
+
     public sealed class StreamWater : Item
     {
         public override string ItemId => "stream_water";

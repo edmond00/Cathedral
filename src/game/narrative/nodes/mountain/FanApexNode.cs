@@ -32,6 +32,8 @@ public class FanApexNode : PyramidalFeatureNode
         return $"at a {mood} fan apex";
     }
     
+    public override List<Item> GetItems() => new() { new CoarseGravel() };
+
     public sealed class CoarseGravel : Item
     {
         public override string ItemId => "fan_apex_coarse_gravel";

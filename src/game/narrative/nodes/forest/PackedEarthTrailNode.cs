@@ -32,6 +32,8 @@ public class PackedEarthTrailNode : NarrationNode
         return $"walking a {mood} packed earth trail";
     }
     
+    public override List<Item> GetItems() => new() { new HardClay() };
+
     public sealed class HardClay : Item
     {
         public override string ItemId => "packed_earth_trail_hard_clay";

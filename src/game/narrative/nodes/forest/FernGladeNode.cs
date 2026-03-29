@@ -32,6 +32,8 @@ public class FernGladeNode : NarrationNode
         return $"walking through a {mood} fern glade";
     }
     
+    public override List<Item> GetItems() => new() { new FernFrond(), new GladeFernSpore() };
+
     public sealed class FernFrond : Item
     {
         public override string ItemId => "fern_frond";

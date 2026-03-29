@@ -32,6 +32,8 @@ public class CrestShoulderNode : PyramidalFeatureNode
         return $"on a {mood} crest shoulder";
     }
     
+    public override List<Item> GetItems() => new() { new LooseScree(), new AlpineQuartz() };
+
     public sealed class LooseScree : Item
     {
         public override string ItemId => "crest_shoulder_loose_scree";

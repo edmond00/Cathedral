@@ -33,6 +33,8 @@ public class ShrubIslandNode : NarrationNode
         return $"circling a {mood} shrub island";
     }
     
+    public override List<Item> GetItems() => new() { new ShrubBerry(), new ThornScratch() };
+
     public sealed class ShrubBerry : Item
     {
         public override string ItemId => "shrub_berry";

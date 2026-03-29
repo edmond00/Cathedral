@@ -33,6 +33,8 @@ public class SpongyMossMatNode : NarrationNode
         return $"treading on a {mood} spongy moss mat";
     }
     
+    public override List<Item> GetItems() => new() { new SphagnumMoss(), new MossMatWater() };
+
     public sealed class SphagnumMoss : Item
     {
         public override string ItemId => "wet_sphagnum_moss";

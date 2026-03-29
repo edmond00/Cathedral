@@ -32,6 +32,8 @@ public class GreenwoodNode : NarrationNode
         return $"walking through a {mood} greenwood";
     }
     
+    public override List<Item> GetItems() => new() { new HazelNuts() };
+
     public sealed class HazelNuts : Item
     {
         public override string ItemId => "greenwood_hazel_nuts";

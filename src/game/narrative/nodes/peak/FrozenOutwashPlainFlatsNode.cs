@@ -33,6 +33,8 @@ public class FrozenOutwashPlainFlatsNode : PyramidalFeatureNode
         return $"standing on a {mood} frozen flats";
     }
     
+    public override List<Item> GetItems() => new() { new OutwashGravel(), new OutwashClay() };
+
     public sealed class OutwashGravel : Item
     {
         public override string ItemId => "frozen_outwash_plain_flats_outwash_gravel";

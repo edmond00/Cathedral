@@ -40,6 +40,8 @@ public class GlacierTongueLowerNode : PyramidalFeatureNode
         return $"standing on a {mood} lower ice flow";
     }
     
+    public override List<Item> GetItems() => new() { new MoraineDirt(), new GlacialErratic() };
+
     public sealed class MoraineDirt : Item
     {
         public override string ItemId => "glacier_tongue_lower_moraine_dirt";

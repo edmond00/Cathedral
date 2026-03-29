@@ -40,6 +40,8 @@ public class AnimalTrackNode : NarrationNode
         return $"following a {mood} animal track";
     }
     
+    public override List<Item> GetItems() => new() { new AnimalDroppings(), new TuftOfFur() };
+
     public sealed class AnimalDroppings : Item
     {
         public override string ItemId => "animal_droppings";

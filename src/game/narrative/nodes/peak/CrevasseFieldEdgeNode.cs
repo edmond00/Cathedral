@@ -33,6 +33,8 @@ public class CrevasseFieldEdgeNode : PyramidalFeatureNode
         return $"standing at a {mood} crevasse field edge";
     }
     
+    public override List<Item> GetItems() => new() { new CrevasseLip() };
+
     public sealed class CrevasseLip : Item
     {
         public override string ItemId => "crevasse_field_edge_crevasse_lip";

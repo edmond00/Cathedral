@@ -33,6 +33,8 @@ public class ShadePlantPatchNode : NarrationNode
         return $"examining a {mood} shade plant patch";
     }
     
+    public override List<Item> GetItems() => new() { new BroadLeaf(), new ShadeFern() };
+
     public sealed class BroadLeaf : Item
     {
         public override string ItemId => "shade_broad_leaf";

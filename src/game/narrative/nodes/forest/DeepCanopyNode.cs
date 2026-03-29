@@ -32,6 +32,8 @@ public class DeepCanopyNode : NarrationNode
         return $"walking beneath a {mood} deep canopy";
     }
     
+    public override List<Item> GetItems() => new() { new FallenLeaves(), new CanopySeed() };
+
     public sealed class FallenLeaves : Item
     {
         public override string ItemId => "deep_canopy_fallen_leaves";

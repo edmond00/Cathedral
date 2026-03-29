@@ -32,6 +32,8 @@ public class FanSpreadNode : PyramidalFeatureNode
         return $"on a {mood} fan spread";
     }
     
+    public override List<Item> GetItems() => new() { new FanGravel() };
+
     public sealed class FanGravel : Item
     {
         public override string ItemId => "fan_gravel";

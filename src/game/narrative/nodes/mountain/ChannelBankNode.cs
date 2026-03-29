@@ -32,6 +32,8 @@ public class ChannelBankNode : PyramidalFeatureNode
         return $"on a {mood} channel bank";
     }
     
+    public override List<Item> GetItems() => new() { new BankSediment(), new MountainReedStem() };
+
     public sealed class BankSediment : Item
     {
         public override string ItemId => "channel_bank_sediment";

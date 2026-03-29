@@ -32,6 +32,8 @@ public class FallenLogLineNode : NarrationNode
         return $"climbing along a {mood} fallen log line";
     }
     
+    public override List<Item> GetItems() => new() { new RottenWood(), new BeetleLarvae() };
+
     public sealed class RottenWood : Item
     {
         public override string ItemId => "rotten_log_wood";

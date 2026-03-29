@@ -32,6 +32,8 @@ public class FallenGiantTrunkNode : NarrationNode
         return $"climbing a {mood} fallen giant trunk";
     }
     
+    public override List<Item> GetItems() => new() { new BeetleLarva(), new SoftRot() };
+
     public sealed class BeetleLarva : Item
     {
         public override string ItemId => "beetle_larva";

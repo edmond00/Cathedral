@@ -32,6 +32,8 @@ public class TorrentChannelNode : PyramidalFeatureNode
         return $"in a {mood} torrent channel";
     }
     
+    public override List<Item> GetItems() => new() { new TorrentGravel() };
+
     public sealed class TorrentGravel : Item
     {
         public override string ItemId => "torrent_channel_torrent_gravel";

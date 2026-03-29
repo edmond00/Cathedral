@@ -40,6 +40,8 @@ public class SummitDomeCrestNode : PyramidalFeatureNode
         return $"standing atop a {mood} summit dome crest";
     }
     
+    public override List<Item> GetItems() => new() { new FrozenCrystal(), new SummitPolishedStone(), new SummitGranite() };
+
     public sealed class FrozenCrystal : Item
     {
         public override string ItemId => "summit_dome_crest_frozen_crystal";

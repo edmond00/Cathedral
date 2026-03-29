@@ -32,6 +32,8 @@ public class FoothillLowerSlopeNode : PyramidalFeatureNode
         return $"on a {mood} foothill lower slope";
     }
     
+    public override List<Item> GetItems() => new() { new LowGrass() };
+
     public sealed class LowGrass : Item
     {
         public override string ItemId => "foothill_lower_slope_low_grass";

@@ -41,6 +41,8 @@ public class AvalanchePathRunoutNode : PyramidalFeatureNode
         return $"standing in a {mood} runout zone";
     }
     
+    public override List<Item> GetItems() => new() { new AvalancheDebris() };
+
     public sealed class AvalancheDebris : Item
     {
         public override string ItemId => "avalanche_path_runout_avalanche_debris";

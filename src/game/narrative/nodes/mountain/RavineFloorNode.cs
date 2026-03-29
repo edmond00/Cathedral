@@ -39,6 +39,8 @@ public class RavineFloorNode : PyramidalFeatureNode
         return $"on a {mood} ravine floor";
     }
     
+    public override List<Item> GetItems() => new() { new WedgedLog() };
+
     public sealed class WedgedLog : Item
     {
         public override string ItemId => "ravine_floor_wedged_log";

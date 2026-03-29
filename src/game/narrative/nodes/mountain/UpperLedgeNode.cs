@@ -39,6 +39,8 @@ public class UpperLedgeNode : PyramidalFeatureNode
         return $"standing on a {mood} upper ledge";
     }
     
+    public override List<Item> GetItems() => new() { new FlatStone() };
+
     public sealed class FlatStone : Item
     {
         public override string ItemId => "upper_ledge_flat_stone";

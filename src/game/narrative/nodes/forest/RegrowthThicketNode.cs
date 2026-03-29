@@ -33,6 +33,8 @@ public class RegrowthThicketNode : NarrationNode
         return $"pushing through a {mood} regrowth thicket";
     }
     
+    public override List<Item> GetItems() => new() { new PioneerSeed(), new FreshShoot() };
+
     public sealed class PioneerSeed : Item
     {
         public override string ItemId => "pioneer_seed";

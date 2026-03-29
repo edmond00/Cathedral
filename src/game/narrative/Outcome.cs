@@ -3,6 +3,22 @@ using System.Collections.Generic;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
+/// Uniform interface implemented by NarrationNode, Item, and ObservationObject.
+/// Lets the graph be traversed as a list of observations regardless of the concrete type.
+/// </summary>
+public interface IObservation
+{
+    /// <summary>Stable identifier for this observation (NodeId / ItemId / ObservationId).</summary>
+    string ObservationId { get; }
+
+    /// <summary>Keywords describing this observation (node-level, item-level, or observation-level).</summary>
+    List<KeywordInContext> ObservationKeywords { get; }
+
+    /// <summary>Concrete outcomes reachable through this observation.</summary>
+    IReadOnlyList<ConcreteOutcome> ObservationOutcomes { get; }
+}
+
+/// <summary>
 /// Base class for all possible outcomes in the narrative system.
 /// Outcomes are achieved through successful actions.
 /// </summary>

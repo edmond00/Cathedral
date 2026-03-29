@@ -33,6 +33,8 @@ public class UprootedTreeNode : NarrationNode
         return $"examining a {mood} uprooted tree";
     }
     
+    public override List<Item> GetItems() => new() { new RootBall(), new TornRoot(), new CraterMud() };
+
     public sealed class RootBall : Item
     {
         public override string ItemId => "root_ball_soil";

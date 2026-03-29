@@ -33,6 +33,8 @@ public class LowShrubBeltNode : NarrationNode
         return $"pushing through a {mood} low shrub belt";
     }
     
+    public override List<Item> GetItems() => new() { new ShrubTwig(), new BerryCluster() };
+
     public sealed class ShrubTwig : Item
     {
         public override string ItemId => "shrub_twig";

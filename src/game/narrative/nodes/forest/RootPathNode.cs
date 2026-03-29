@@ -32,6 +32,8 @@ public class RootPathNode : NarrationNode
         return $"walking a {mood} root path";
     }
     
+    public override List<Item> GetItems() => new() { new BarkChunk(), new RootSap() };
+
     public sealed class BarkChunk : Item
     {
         public override string ItemId => "root_bark_chunk";

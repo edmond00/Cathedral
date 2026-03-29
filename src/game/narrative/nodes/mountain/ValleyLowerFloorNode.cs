@@ -40,6 +40,8 @@ public class ValleyLowerFloorNode : PyramidalFeatureNode
         return $"on a {mood} valley lower floor";
     }
     
+    public override List<Item> GetItems() => new() { new ValleySoil() };
+
     public sealed class ValleySoil : Item
     {
         public override string ItemId => "valley_soil";

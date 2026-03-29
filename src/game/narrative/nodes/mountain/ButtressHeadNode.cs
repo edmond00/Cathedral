@@ -32,6 +32,8 @@ public class ButtressHeadNode : PyramidalFeatureNode
         return $"at a {mood} buttress head";
     }
     
+    public override List<Item> GetItems() => new() { new WeatheredGranite(), new StoneCap() };
+
     public sealed class WeatheredGranite : Item
     {
         public override string ItemId => "buttress_head_weathered_granite";

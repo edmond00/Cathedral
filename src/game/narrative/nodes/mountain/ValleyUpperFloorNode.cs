@@ -39,6 +39,8 @@ public class ValleyUpperFloorNode : PyramidalFeatureNode
         return $"on a {mood} valley upper floor";
     }
     
+    public override List<Item> GetItems() => new() { new MeadowGrass() };
+
     public sealed class MeadowGrass : Item
     {
         public override string ItemId => "valley_upper_floor_meadow_grass";

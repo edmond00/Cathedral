@@ -39,6 +39,8 @@ public class DebrisFieldNode : PyramidalFeatureNode
         return $"in a {mood} debris field";
     }
     
+    public override List<Item> GetItems() => new() { new LargeBoulder(), new RockDust() };
+
     public sealed class LargeBoulder : Item
     {
         public override string ItemId => "debris_field_large_boulder";

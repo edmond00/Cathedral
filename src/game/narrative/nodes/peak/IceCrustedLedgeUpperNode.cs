@@ -33,6 +33,8 @@ public class IceCrustedLedgeUpperNode : PyramidalFeatureNode
         return $"standing on a {mood} upper ice-crusted ledge";
     }
     
+    public override List<Item> GetItems() => new() { new LedgeLichen(), new Icicle(), new FrozenMoss() };
+
     public sealed class LedgeLichen : Item
     {
         public override string ItemId => "ice_crusted_ledge_upper_ledge_lichen";

@@ -6,6 +6,7 @@ using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Narrative;
 
+
 /// <summary>
 /// Validates the world coherence rules for the narrative system.
 /// Ensures all items are inner classes of nodes and have unique names.
@@ -50,10 +51,12 @@ public static class NarrativeWorldValidator
                 invalidItems.Add(itemType);
                 continue;
             }
-            
-            // Check if the declaring type is a NarrationNode
+
+            // Check if the declaring type is a NarrationNode or ObservationObject
             var declaringType = itemType.DeclaringType;
-            if (declaringType == null || !typeof(NarrationNode).IsAssignableFrom(declaringType))
+            if (declaringType == null ||
+                (!typeof(NarrationNode).IsAssignableFrom(declaringType) &&
+                 !typeof(ObservationObject).IsAssignableFrom(declaringType)))
             {
                 invalidItems.Add(itemType);
             }
@@ -125,10 +128,11 @@ public static class NarrativeWorldValidator
                 itemsWithInvalidOrigins.Add($"{itemType.Name}: No declaring type");
                 continue;
             }
-            
-            if (!typeof(NarrationNode).IsAssignableFrom(declaringType))
+
+            if (!typeof(NarrationNode).IsAssignableFrom(declaringType) &&
+                !typeof(ObservationObject).IsAssignableFrom(declaringType))
             {
-                itemsWithInvalidOrigins.Add($"{itemType.Name}: Origin is not a NarrationNode ({declaringType.Name})");
+                itemsWithInvalidOrigins.Add($"{itemType.Name}: Origin is not a NarrationNode or ObservationObject ({declaringType.Name})");
             }
         }
         
@@ -194,6 +198,34 @@ public static class NarrativeWorldValidator
             }
         }
 
+        // ── ObservationObjects ─────────────────────────────────────────────────
+        var observationTypes = assembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(ObservationObject).IsAssignableFrom(t))
+            .ToList();
+
+        foreach (var obsType in observationTypes)
+        {
+            ObservationObject? obs;
+            try { obs = (ObservationObject?)Activator.CreateInstance(obsType); }
+            catch { continue; }
+            if (obs == null) continue;
+
+            try { _ = obs.ObservationKeywordsInContext; }
+            catch (Exception ex)
+            {
+                errors.Add($"ObservationObject {obsType.Name}.ObservationKeywordsInContext: {ex.Message}");
+            }
+
+            foreach (var sub in obs.SubOutcomes)
+            {
+                try { _ = sub.OutcomeKeywordsInContext; }
+                catch (Exception ex)
+                {
+                    errors.Add($"ObservationObject {obsType.Name} sub-outcome {sub.DisplayName}.OutcomeKeywordsInContext: {ex.Message}");
+                }
+            }
+        }
+
         // ── NPC archetypes ─────────────────────────────────────────────────────
         var archetypeTypes = assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && typeof(NpcArchetype).IsAssignableFrom(t))
@@ -231,7 +263,8 @@ public static class NarrativeWorldValidator
         int totalNodes = nodeTypes.Count;
         int totalItems = itemTypes.Count;
         int totalArchetypes = archetypeTypes.Count;
-        Console.WriteLine($"  ✓ All KeywordsInContext valid ({totalNodes} nodes, {totalItems} items, {totalArchetypes} NPC archetypes)");
+        int totalObservations = observationTypes.Count;
+        Console.WriteLine($"  ✓ All KeywordsInContext valid ({totalNodes} nodes, {totalItems} items, {totalObservations} observations, {totalArchetypes} NPC archetypes)");
     }
 
     /// <summary>

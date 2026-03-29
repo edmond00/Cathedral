@@ -32,6 +32,8 @@ public class LowerLedgeNode : PyramidalFeatureNode
         return $"on a {mood} lower ledge";
     }
     
+    public override List<Item> GetItems() => new() { new MossyStone(), new CalciteFormation() };
+
     public sealed class MossyStone : Item
     {
         public override string ItemId => "lower_ledge_mossy_stone";

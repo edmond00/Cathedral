@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Narrative;
@@ -10,8 +9,9 @@ namespace Cathedral.Game.Narrative;
 /// Represents a discrete narrative context within a location that can be reached as an outcome.
 /// Nodes have their own keywords (for being discovered as transitions) plus keywords from immediate outcomes.
 /// Neutral descriptions are generated with random qualifiers for variety.
+/// Implements IObservation: a node IS its own observation whose outcomes are its items + child NarrationNodes.
 /// </summary>
-public abstract class NarrationNode : ConcreteOutcome
+public abstract class NarrationNode : ConcreteOutcome, IObservation
 {
     /// <summary>
     /// Unique identifier for this node (e.g., "clearing", "stream").
@@ -62,34 +62,40 @@ public abstract class NarrationNode : ConcreteOutcome
     public List<NpcEntity> SpawnedNpcs { get; set; } = new();
 
     /// <summary>
-    /// Gets all items available at this node by discovering Item inner classes via reflection.
-    /// Items are automatically discovered - they do not need to be manually listed.
+    /// Extra encounter slots propagated from child ObservationObjects (e.g., FoxDenObservation).
+    /// Merged into the effective encounter list by <see cref="GetAllEncounters"/>.
+    /// </summary>
+    private readonly List<NpcEncounterSlot> _additionalEncounters = new();
+
+    /// <summary>
+    /// Adds an encounter slot propagated from a child ObservationObject.
+    /// Called by NarrationGraphFactory when attaching an observation.
+    /// </summary>
+    public void AddAdditionalEncounter(NpcEncounterSlot slot) => _additionalEncounters.Add(slot);
+
+    /// <summary>
+    /// All effective NPC encounter slots: own PossibleEncounters plus any added by ObservationObjects.
+    /// </summary>
+    public List<NpcEncounterSlot> GetAllEncounters()
+    {
+        if (_additionalEncounters.Count == 0) return PossibleEncounters;
+        var merged = new List<NpcEncounterSlot>(PossibleEncounters);
+        merged.AddRange(_additionalEncounters);
+        return merged;
+    }
+
+    /// <summary>
+    /// Returns the items available at this node. Override in subclasses to list items explicitly.
+    /// Replaces the old reflection-based discovery — items are declared here, not auto-discovered.
+    /// </summary>
+    public virtual List<Item> GetItems() => new();
+
+    /// <summary>
+    /// Gets all items available at this node. Delegates to <see cref="GetItems"/>.
     /// </summary>
     public List<Item> GetAvailableItems()
     {
-        var items = new List<Item>();
-        var nodeType = GetType();
-        
-        // Find all nested types that inherit from Item
-        var itemTypes = nodeType.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic)
-            .Where(t => t.IsClass && !t.IsAbstract && typeof(Item).IsAssignableFrom(t));
-        
-        foreach (var itemType in itemTypes)
-        {
-            try
-            {
-                // Create an instance of the item
-                var item = (Item?)Activator.CreateInstance(itemType);
-                if (item != null)
-                {
-                    items.Add(item);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Warning: Failed to instantiate item type {itemType.Name}: {ex.Message}");
-            }
-        }
+        var items = GetItems();
         
         return items;
     }
@@ -117,10 +123,15 @@ public abstract class NarrationNode : ConcreteOutcome
             foreach (var item in items)
                 foreach (var kic in item.OutcomeKeywordsInContext) Add(kic);
 
-            // Add keywords from child NarrationNodes
+            // Add keywords from child NarrationNodes and ObservationObjects
             foreach (var outcome in PossibleOutcomes)
+            {
                 if (outcome is NarrationNode childNode)
                     foreach (var kic in childNode.NodeKeywordsInContext) Add(kic);
+                else if (outcome is ObservationObject obs)
+                    foreach (var kic in obs.ObservationKeywordsInContext) Add(kic);
+                // Sub-outcome keywords are NOT bubbled up here — only accessed inside the observation
+            }
 
             // Add keywords from spawned NPCs
             foreach (var npc in SpawnedNpcs)
@@ -218,6 +229,20 @@ public abstract class NarrationNode : ConcreteOutcome
         return TransitionDescription;
     }
 
+    // ── IObservation ──────────────────────────────────────────────────────────
+    string IObservation.ObservationId => NodeId;
+    List<KeywordInContext> IObservation.ObservationKeywords => NodeKeywordsInContext;
+    IReadOnlyList<ConcreteOutcome> IObservation.ObservationOutcomes
+    {
+        get
+        {
+            var result = new List<ConcreteOutcome>();
+            result.AddRange(GetAvailableItems());
+            result.AddRange(PossibleOutcomes.OfType<NarrationNode>());
+            return result.AsReadOnly();
+        }
+    }
+
     /// <summary>
     /// Gets all concrete outcomes directly available at this node (child nodes + items + spawned NPCs).
     /// Used for sampling which outcomes to generate observation sentences for.
@@ -230,7 +255,9 @@ public abstract class NarrationNode : ConcreteOutcome
         {
             if (outcome is NarrationNode childNode && childNode.NodeKeywordsInContext.Count > 0)
                 outcomes.Add(childNode);
-            else if (outcome is ConcreteOutcome co && !(outcome is NarrationNode) && co.OutcomeKeywordsInContext.Count > 0)
+            else if (outcome is ObservationObject obs && obs.ObservationKeywordsInContext.Count > 0)
+                outcomes.Add(obs);
+            else if (outcome is ConcreteOutcome co && !(outcome is NarrationNode) && !(outcome is ObservationObject) && co.OutcomeKeywordsInContext.Count > 0)
                 outcomes.Add(co);
         }
 
@@ -241,6 +268,23 @@ public abstract class NarrationNode : ConcreteOutcome
         }
 
         return outcomes;
+    }
+
+    /// <summary>
+    /// Gets all observations at this node as IObservation instances:
+    /// ObservationObjects, child NarrationNodes, and items (each self-referential).
+    /// </summary>
+    public List<IObservation> GetObservations()
+    {
+        var result = new List<IObservation>();
+        foreach (var outcome in PossibleOutcomes)
+        {
+            if (outcome is ObservationObject obs) result.Add(obs);
+            else if (outcome is NarrationNode nn) result.Add(nn);
+        }
+        foreach (var item in GetAvailableItems())
+            result.Add(item);
+        return result;
     }
 
 
@@ -257,21 +301,18 @@ public abstract class NarrationNode : ConcreteOutcome
         // Get all immediate concrete outcomes (direct child nodes + items at this node)
         var concreteOutcomes = new List<ConcreteOutcome>();
         
-        // Add child nodes that are concrete outcomes
-        // NOTE: We only add the node itself, not its recursive keywords
-        // The child node's OutcomeKeywords will be used only when actually transitioning to that node
+        // Add child nodes, observations, and other concrete outcomes
+        // NOTE: We only add the node/observation itself, not its recursive keywords
         foreach (var outcome in PossibleOutcomes)
         {
             if (outcome is ConcreteOutcome co)
             {
                 if (outcome is NarrationNode node && node.NodeKeywordsInContext.Count > 0)
-                {
                     concreteOutcomes.Add(co);
-                }
-                else if (!(outcome is NarrationNode) && co.OutcomeKeywordsInContext.Count > 0)
-                {
+                else if (outcome is ObservationObject obs && obs.ObservationKeywordsInContext.Count > 0)
                     concreteOutcomes.Add(co);
-                }
+                else if (!(outcome is NarrationNode) && !(outcome is ObservationObject) && co.OutcomeKeywordsInContext.Count > 0)
+                    concreteOutcomes.Add(co);
             }
         }
         
@@ -297,7 +338,9 @@ public abstract class NarrationNode : ConcreteOutcome
             var shuffledOutcomes = concreteOutcomes.OrderBy(_ => random.Next()).Take(targetKeywordCount);
             foreach (var outcome in shuffledOutcomes)
             {
-                List<KeywordInContext> kicsToUse = outcome is NarrationNode node ? node.NodeKeywordsInContext : outcome.OutcomeKeywordsInContext;
+                List<KeywordInContext> kicsToUse = outcome is NarrationNode node ? node.NodeKeywordsInContext
+                    : outcome is ObservationObject obs ? obs.ObservationKeywordsInContext
+                    : outcome.OutcomeKeywordsInContext;
 
                 if (kicsToUse.Count > 0)
                 {
@@ -314,7 +357,9 @@ public abstract class NarrationNode : ConcreteOutcome
             for (int i = 0; i < concreteOutcomes.Count; i++)
             {
                 var outcome = concreteOutcomes[i];
-                List<KeywordInContext> kicsToUse = outcome is NarrationNode node ? node.NodeKeywordsInContext : outcome.OutcomeKeywordsInContext;
+                List<KeywordInContext> kicsToUse = outcome is NarrationNode node ? node.NodeKeywordsInContext
+                    : outcome is ObservationObject obs ? obs.ObservationKeywordsInContext
+                    : outcome.OutcomeKeywordsInContext;
 
                 if (kicsToUse.Count == 0) continue;
 
@@ -338,8 +383,18 @@ public abstract class NarrationNode : ConcreteOutcome
     {
         var normalizedKeyword = keyword.ToLowerInvariant();
 
+        // Check ObservationObjects first: any keyword they expose (own + sub) routes to the obs
         foreach (var outcome in PossibleOutcomes)
         {
+            if (outcome is ObservationObject obs &&
+                obs.OutcomeKeywordsInContext.Any(k => k.Keyword.ToLowerInvariant() == normalizedKeyword))
+                return obs;
+        }
+
+        // Then check plain NarrationNode children and other ConcreteOutcomes
+        foreach (var outcome in PossibleOutcomes)
+        {
+            if (outcome is ObservationObject) continue; // already handled above
             if (outcome is ConcreteOutcome co &&
                 co.OutcomeKeywordsInContext.Any(k => k.Keyword.ToLowerInvariant() == normalizedKeyword))
                 return co;

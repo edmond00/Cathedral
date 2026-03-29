@@ -33,6 +33,8 @@ public class RootArchNode : NarrationNode
         return $"ducking under a {mood} root arch";
     }
     
+    public override List<Item> GetItems() => new() { new ArchedRoot(), new BarkRubbing() };
+
     public sealed class ArchedRoot : Item
     {
         public override string ItemId => "arched_root_piece";

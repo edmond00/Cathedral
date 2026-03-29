@@ -33,6 +33,8 @@ public class VineDrapedGrowthNode : NarrationNode
         return $"pushing through a {mood} vine-draped growth";
     }
     
+    public override List<Item> GetItems() => new() { new VineTendril(), new VineLeaf() };
+
     public sealed class VineTendril : Item
     {
         public override string ItemId => "vine_tendril";

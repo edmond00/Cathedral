@@ -40,6 +40,8 @@ public class FrozenRavineFloorNode : PyramidalFeatureNode
         return $"standing on a {mood} ravine floor";
     }
     
+    public override List<Item> GetItems() => new() { new PeakBasalt(), new GlacierSilt() };
+
     public sealed class PeakBasalt : Item
     {
         public override string ItemId => "frozen_ravine_floor_peak_basalt";

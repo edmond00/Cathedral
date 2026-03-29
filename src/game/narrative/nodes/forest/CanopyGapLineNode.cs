@@ -32,6 +32,8 @@ public class CanopyGapLineNode : NarrationNode
         return $"walking through a {mood} canopy gap line";
     }
     
+    public override List<Item> GetItems() => new() { new SunwarmLeaves(), new YoungShoots() };
+
     public sealed class SunwarmLeaves : Item
     {
         public override string ItemId => "sunwarm_leaves";

@@ -40,6 +40,8 @@ public class MirewoodNode : NarrationNode
         return $"wading through a {mood} mirewood";
     }
     
+    public override List<Item> GetItems() => new() { new BogWater(), new BogPeat() };
+
     public sealed class BogWater : Item
     {
         public override string ItemId => "mirewood_bog_water";

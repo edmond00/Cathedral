@@ -39,6 +39,8 @@ public class ShadowwoodNode : NarrationNode
         return $"moving through a {mood} shadowwood";
     }
     
+    public override List<Item> GetItems() => new() { new DarkBark() };
+
     public sealed class DarkBark : Item
     {
         public override string ItemId => "shadowwood_dark_bark";

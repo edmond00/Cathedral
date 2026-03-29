@@ -32,6 +32,8 @@ public class RidgeSpineNode : PyramidalFeatureNode
         return $"traversing a {mood} ridge spine";
     }
     
+    public override List<Item> GetItems() => new() { new SharpRock(), new HornfelsChip() };
+
     public sealed class SharpRock : Item
     {
         public override string ItemId => "ridge_spine_sharp_rock";

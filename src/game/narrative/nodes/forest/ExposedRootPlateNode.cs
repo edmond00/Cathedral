@@ -33,6 +33,8 @@ public class ExposedRootPlateNode : NarrationNode
         return $"climbing a {mood} exposed root plate";
     }
     
+    public override List<Item> GetItems() => new() { new ClayClod(), new RootFiber() };
+
     public sealed class ClayClod : Item
     {
         public override string ItemId => "root_clay_clod";

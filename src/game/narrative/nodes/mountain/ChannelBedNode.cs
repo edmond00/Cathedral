@@ -32,6 +32,8 @@ public class ChannelBedNode : PyramidalFeatureNode
         return $"in a {mood} channel bed";
     }
     
+    public override List<Item> GetItems() => new() { new SandBar(), new SiltStone() };
+
     public sealed class SandBar : Item
     {
         public override string ItemId => "channel_bed_sand_bar";

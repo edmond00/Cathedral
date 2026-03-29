@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative.Nodes.Forest;
+using Cathedral.Game.Narrative.Observations.Forest;
 
 namespace Cathedral.Game.Narrative.Factories;
 
@@ -100,31 +101,31 @@ public class ForestGraphFactory : NarrationGraphFactory
         typeof(WildStrawberryPatchNode),
         typeof(PineConeClusterNode),
         typeof(WildHerbsNode),
-        typeof(SquirrelCacheNode)
+        typeof(SquirrelCacheObservation)
     };
-    
+
     private readonly List<Type> _wildlifeNodes = new()
     {
-        typeof(BirdsNestNode),
-        typeof(AntColonyNode),
+        typeof(BirdsNestObservation),
+        typeof(AntColonyObservation),
         typeof(SpiderWebNode),
         typeof(TreeHollowNode),
-        typeof(SnailTrailNode),
+        typeof(SnailTrailObservation),
         typeof(ButterflyGladeNode),
         typeof(WoodpeckerTreeNode),
         typeof(BeetleSwarmNode),
-        typeof(OwlPelletSiteNode),
+        typeof(OwlPelletSiteObservation),
         typeof(DeerRubNode),
-        typeof(FoxDenNode),
+        typeof(FoxDenObservation),
         typeof(BeehiveNode),
         typeof(CricketChorusNode)
     };
-    
+
     private readonly List<Type> _featureNodes = new()
     {
         typeof(FallenGiantTrunkNode),
         typeof(TreeSapFlowNode),
-        typeof(EarthwormMoundNode),
+        typeof(EarthwormMoundObservation),
         typeof(MushroomLogNode)
     };
     
@@ -181,35 +182,31 @@ public class ForestGraphFactory : NarrationGraphFactory
             ConnectNodes(area2, transNode);
         }
         
-        // Step 6: Add random child nodes to each area
+        // Step 6: Add random child nodes/observations to each area
         var allChildTypes = _vegetationNodes.Concat(_forageNodes).Concat(_wildlifeNodes).Concat(_featureNodes).ToList();
-        
+
         foreach (var area in areaNodes)
         {
             int childCount = rng.Next(2, 5); // 2-4 children per area
             var childIndices = SampleUniqueIndices(rng, allChildTypes.Count, childCount);
-            
+
             foreach (var childIndex in childIndices)
             {
-                var childNode = (NarrationNode)Activator.CreateInstance(allChildTypes[childIndex])!;
-                ConnectNodes(area, childNode);
-                ConnectNodes(childNode, area); // Return path
+                AttachChildToParent(area, allChildTypes[childIndex]);
             }
         }
-        
-        // Step 7: Also add 1-2 child nodes to some transversal features
+
+        // Step 7: Also add 1-2 child nodes/observations to some transversal features
         foreach (var transNode in transversalNodes)
         {
             if (rng.NextDouble() < 0.5) // 50% chance
             {
                 int childCount = rng.Next(1, 3); // 1-2 children
                 var childIndices = SampleUniqueIndices(rng, allChildTypes.Count, childCount);
-                
+
                 foreach (var childIndex in childIndices)
                 {
-                    var childNode = (NarrationNode)Activator.CreateInstance(allChildTypes[childIndex])!;
-                    ConnectNodes(transNode, childNode);
-                    ConnectNodes(childNode, transNode);
+                    AttachChildToParent(transNode, allChildTypes[childIndex]);
                 }
             }
         }
@@ -238,6 +235,28 @@ public class ForestGraphFactory : NarrationGraphFactory
         return entryNode;
     }
     
+    /// <summary>
+    /// Attaches a child type (NarrationNode or ObservationObject) to a parent node.
+    /// NarrationNodes get bidirectional edges; ObservationObjects are added directly to
+    /// PossibleOutcomes without a back-edge, and their encounters are propagated up.
+    /// </summary>
+    private void AttachChildToParent(NarrationNode parent, Type childType)
+    {
+        if (typeof(ObservationObject).IsAssignableFrom(childType))
+        {
+            var obs = (ObservationObject)Activator.CreateInstance(childType)!;
+            parent.PossibleOutcomes.Add(obs);
+            foreach (var enc in obs.AssociatedEncounters)
+                parent.AddAdditionalEncounter(enc);
+        }
+        else
+        {
+            var childNode = (NarrationNode)Activator.CreateInstance(childType)!;
+            ConnectNodes(parent, childNode);
+            ConnectNodes(childNode, parent); // Return path
+        }
+    }
+
     /// <summary>
     /// Samples unique random indices from [0, maxIndex).
     /// </summary>

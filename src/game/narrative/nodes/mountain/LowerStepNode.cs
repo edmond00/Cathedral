@@ -32,6 +32,8 @@ public class LowerStepNode : PyramidalFeatureNode
         return $"on a {mood} lower step";
     }
     
+    public override List<Item> GetItems() => new() { new StoneSlabs(), new SoilPocket() };
+
     public sealed class StoneSlabs : Item
     {
         public override string ItemId => "lower_step_stone_slabs";

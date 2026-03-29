@@ -40,6 +40,8 @@ public class DeepwoodNode : NarrationNode
         return $"walking through a {mood} deepwood";
     }
     
+    public override List<Item> GetItems() => new() { new DarkLoam() };
+
     public sealed class DarkLoam : Item
     {
         public override string ItemId => "deepwood_dark_loam";

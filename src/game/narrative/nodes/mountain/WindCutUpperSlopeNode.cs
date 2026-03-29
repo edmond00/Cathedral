@@ -32,6 +32,8 @@ public class WindCutUpperSlopeNode : PyramidalFeatureNode
         return $"on a {mood} wind-cut upper slope";
     }
     
+    public override List<Item> GetItems() => new() { new ErodedRock() };
+
     public sealed class ErodedRock : Item
     {
         public override string ItemId => "wind_cut_upper_slope_eroded_rock";

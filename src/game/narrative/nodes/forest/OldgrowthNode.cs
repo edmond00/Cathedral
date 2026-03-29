@@ -40,6 +40,8 @@ public class OldgrowthNode : NarrationNode
         return $"exploring a {mood} oldgrowth";
     }
     
+    public override List<Item> GetItems() => new() { new AncientWood(), new OldgrowthResin() };
+
     public sealed class AncientWood : Item
     {
         public override string ItemId => "oldgrowth_ancient_wood";

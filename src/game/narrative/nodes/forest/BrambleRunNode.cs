@@ -39,6 +39,8 @@ public class BrambleRunNode : NarrationNode
         return $"navigating a {mood} bramble run";
     }
     
+    public override List<Item> GetItems() => new() { new Blackberry(), new BrambleThorn() };
+
     public sealed class Blackberry : Item
     {
         public override string ItemId => "wild_blackberry";

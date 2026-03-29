@@ -31,10 +31,11 @@ public class NarrationGraphWindow : Form
     private readonly Dictionary<string, NarrationNode> _allNodes = new();
 
     // ── Node fill colours (by category priority: entry > encounter > items > plain) ──
-    private static readonly MsaglColor ColorEntry     = new( 90, 185, 110); // green   — entry node
-    private static readonly MsaglColor ColorEncounter = new(210,  90,  90); // red     — has encounters
-    private static readonly MsaglColor ColorItems     = new( 90, 145, 210); // blue    — has items only
-    private static readonly MsaglColor ColorPlain     = new(160, 160, 170); // gray    — no items, no encounters
+    private static readonly MsaglColor ColorEntry       = new( 90, 185, 110); // green   — entry node
+    private static readonly MsaglColor ColorEncounter   = new(210,  90,  90); // red     — has encounters
+    private static readonly MsaglColor ColorItems       = new( 90, 145, 210); // blue    — has items only
+    private static readonly MsaglColor ColorPlain       = new(160, 160, 170); // gray    — no items, no encounters
+    private static readonly MsaglColor ColorObservation = new(210, 160,  50); // amber   — ObservationObject
 
     // ── Border styles ────────────────────────────────────────────────
     private static readonly MsaglColor BorderNormal  = new( 80,  80,  90); // thin dark border (non-current)
@@ -76,6 +77,7 @@ public class NarrationGraphWindow : Form
             (Color.FromArgb(210,  90,  90), Color.FromArgb( 80,  80,  90), " encounter "),
             (Color.FromArgb( 90, 145, 210), Color.FromArgb( 80,  80,  90), " items "),
             (Color.FromArgb(160, 160, 170), Color.FromArgb( 80,  80,  90), " plain "),
+            (Color.FromArgb(210, 160,  50), Color.FromArgb( 80,  80,  90), " observation "),
             (Color.FromArgb(45,  45,  48),  Color.FromArgb(255, 220,   0), " current "),
         };
 
@@ -248,10 +250,25 @@ public class NarrationGraphWindow : Form
             msaglNode.Attr.LineWidth = node.NodeId == _currentNodeId ? LineWidthCurrent : LineWidthNormal;
             msaglNode.Label.FontSize = 9;
 
-            foreach (var child in node.PossibleOutcomes.OfType<NarrationNode>())
+            foreach (var outcome in node.PossibleOutcomes)
             {
-                graph.AddEdge(node.NodeId, child.NodeId);
-                queue.Enqueue(child);
+                if (outcome is NarrationNode child)
+                {
+                    graph.AddEdge(node.NodeId, child.NodeId);
+                    queue.Enqueue(child);
+                }
+                else if (outcome is ObservationObject obs)
+                {
+                    string obsId = $"obs:{obs.ObservationId}";
+                    var obsNode = graph.AddNode(obsId);
+                    obsNode.LabelText      = obs.ObservationId;
+                    obsNode.Attr.Shape     = MsaglShape.Diamond;
+                    obsNode.Attr.FillColor = ColorObservation;
+                    obsNode.Attr.Color     = BorderNormal;
+                    obsNode.Attr.LineWidth = LineWidthNormal;
+                    obsNode.Label.FontSize = 8;
+                    graph.AddEdge(node.NodeId, obsId);
+                }
             }
         }
 
@@ -262,9 +279,9 @@ public class NarrationGraphWindow : Form
     /// Priority: entry &gt; has encounters &gt; has items &gt; plain.
     private static MsaglColor NodeFillColor(NarrationNode node)
     {
-        if (node.IsEntryNode)                 return ColorEntry;
-        if (node.PossibleEncounters.Count > 0) return ColorEncounter;
-        if (node.GetAvailableItems().Count > 0) return ColorItems;
+        if (node.IsEntryNode)                      return ColorEntry;
+        if (node.GetAllEncounters().Count > 0)     return ColorEncounter;
+        if (node.GetAvailableItems().Count > 0)    return ColorItems;
         return ColorPlain;
     }
 
@@ -314,6 +331,18 @@ public class NarrationGraphWindow : Form
                 AppendColored(
                     $"  ! {enc.Archetype.ArchetypeId}  ({(int)(enc.SpawnChance * 100)}% chance, max {enc.MaxCount})\n",
                     Color.LightGray);
+        }
+
+        var observations = node.PossibleOutcomes.OfType<ObservationObject>().ToList();
+        if (observations.Count > 0)
+        {
+            AppendColored("\nObservations:\n", Color.FromArgb(210, 160, 50), bold: true);
+            foreach (var obs in observations)
+            {
+                AppendColored($"  ◇ {obs.ObservationId}  ({obs.SubOutcomes.Count} sub-outcomes)\n", Color.LightGray);
+                foreach (var sub in obs.SubOutcomes)
+                    AppendColored($"      • {sub.DisplayName}\n", Color.DarkGray);
+            }
         }
 
         var connected = node.PossibleOutcomes.OfType<NarrationNode>().ToList();

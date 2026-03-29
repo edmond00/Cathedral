@@ -32,6 +32,8 @@ public class AlderGroveNode : NarrationNode
         return $"walking through a {mood} alder grove";
     }
     
+    public override List<Item> GetItems() => new() { new AlderCone(), new AlderCatkin() };
+
     public sealed class AlderCone : Item
     {
         public override string ItemId => "alder_cone";

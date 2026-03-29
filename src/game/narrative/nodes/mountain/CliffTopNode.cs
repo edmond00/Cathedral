@@ -32,6 +32,8 @@ public class CliffTopNode : PyramidalFeatureNode
         return $"standing at a {mood} cliff top";
     }
     
+    public override List<Item> GetItems() => new() { new CrackedRock(), new RaptorFeather() };
+
     public sealed class CrackedRock : Item
     {
         public override string ItemId => "cliff_top_cracked_rock";

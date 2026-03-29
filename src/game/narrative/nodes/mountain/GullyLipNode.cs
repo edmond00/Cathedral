@@ -32,6 +32,8 @@ public class GullyLipNode : PyramidalFeatureNode
         return $"at a {mood} gully lip";
     }
     
+    public override List<Item> GetItems() => new() { new OverhangingFern() };
+
     public sealed class OverhangingFern : Item
     {
         public override string ItemId => "gully_lip_overhanging_fern";

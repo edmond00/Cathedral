@@ -40,6 +40,8 @@ public class SnowLadenValleyLowerNode : PyramidalFeatureNode
         return $"standing in a {mood} lower snow-laden valley";
     }
     
+    public override List<Item> GetItems() => new() { new ValleySchist(), new ValleyMoss() };
+
     public sealed class ValleySchist : Item
     {
         public override string ItemId => "snow_laden_valley_lower_valley_schist";

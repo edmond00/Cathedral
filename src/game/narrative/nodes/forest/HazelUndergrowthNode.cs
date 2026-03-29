@@ -32,6 +32,8 @@ public class HazelUndergrowthNode : NarrationNode
         return $"searching a {mood} hazel undergrowth";
     }
     
+    public override List<Item> GetItems() => new() { new Hazelnut(), new HazelCatkin() };
+
     public sealed class Hazelnut : Item
     {
         public override string ItemId => "hazelnut";

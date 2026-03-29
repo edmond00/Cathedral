@@ -31,6 +31,8 @@ public class BrightwoodNode : NarrationNode
         return $"wandering through a {mood} brightwood";
     }
     
+    public override List<Item> GetItems() => new() { new BeechLeaves() };
+
     public sealed class BeechLeaves : Item
     {
         public override string ItemId => "brightwood_beech_leaves";

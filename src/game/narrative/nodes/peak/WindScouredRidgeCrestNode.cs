@@ -41,6 +41,8 @@ public class WindScouredRidgeCrestNode : PyramidalFeatureNode
         return $"standing on a {mood} wind-scoured ridge crest";
     }
     
+    public override List<Item> GetItems() => new() { new AlpineGneiss(), new BareRock() };
+
     public sealed class AlpineGneiss : Item
     {
         public override string ItemId => "wind_scoured_ridge_crest_alpine_gneiss";

@@ -33,6 +33,8 @@ public class DeadwoodHeapNode : NarrationNode
         return $"climbing over a {mood} deadwood heap";
     }
     
+    public override List<Item> GetItems() => new() { new DeadBranch(), new DryFungus(), new BarkBeetle() };
+
     public sealed class DeadBranch : Item
     {
         public override string ItemId => "dead_branch";

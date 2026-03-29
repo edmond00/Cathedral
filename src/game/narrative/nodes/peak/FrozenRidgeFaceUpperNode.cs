@@ -33,6 +33,8 @@ public class FrozenRidgeFaceUpperNode : PyramidalFeatureNode
         return $"clinging to a {mood} upper frozen ridge face";
     }
     
+    public override List<Item> GetItems() => new() { new GlacierPolishedRock() };
+
     public sealed class GlacierPolishedRock : Item
     {
         public override string ItemId => "frozen_ridge_face_upper_glacier_polished_rock";

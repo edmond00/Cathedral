@@ -32,6 +32,8 @@ public class LeafClearedPathNode : NarrationNode
         return $"walking a {mood} leaf-cleared path";
     }
     
+    public override List<Item> GetItems() => new() { new SweptLeaves() };
+
     public sealed class SweptLeaves : Item
     {
         public override string ItemId => "leaf_cleared_path_swept_leaves";

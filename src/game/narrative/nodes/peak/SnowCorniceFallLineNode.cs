@@ -33,6 +33,8 @@ public class SnowCorniceFallLineNode : PyramidalFeatureNode
         return $"standing on a {mood} cornice fall line";
     }
     
+    public override List<Item> GetItems() => new() { new CorniceDebris() };
+
     public sealed class CorniceDebris : Item
     {
         public override string ItemId => "cornice_debris";

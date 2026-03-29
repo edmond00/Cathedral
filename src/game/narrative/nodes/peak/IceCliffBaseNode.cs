@@ -33,6 +33,8 @@ public class IceCliffBaseNode : PyramidalFeatureNode
         return $"standing at a {mood} ice cliff base";
     }
     
+    public override List<Item> GetItems() => new() { new GlacierDebris(), new FrozenDebris() };
+
     public sealed class GlacierDebris : Item
     {
         public override string ItemId => "ice_cliff_base_glacier_debris";

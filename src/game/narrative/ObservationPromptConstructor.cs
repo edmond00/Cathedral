@@ -12,9 +12,11 @@ public class ObservationPromptConstructor
         s.Length > 0 && "aeiouAEIOU".Contains(s[0]) ? $"an {s}" : $"a {s}";
 
     /// Returns a human-readable label for an outcome: uses GenerateNeutralDescription for
-    /// NarrationNode outcomes instead of the raw NodeId from DisplayName.
+    /// NarrationNode and ObservationObject outcomes instead of the raw id from DisplayName.
     private static string GetOutcomeLabel(ConcreteOutcome outcome) =>
-        outcome is NarrationNode n ? n.GenerateNeutralDescription(0) : outcome.DisplayName;
+        outcome is NarrationNode n ? n.GenerateNeutralDescription(0) :
+        outcome is ObservationObject obs ? obs.GenerateNeutralDescription(0) :
+        outcome.DisplayName;
 
     /// <summary>
     /// Builds the prompt for the FIRST sentence in a per-sentence observation batch.
@@ -30,7 +32,9 @@ public class ObservationPromptConstructor
         string? personaReminder2 = null)
     {
         var locationContext = node.BuildLocationContext(worldContext, locationId);
-        var outcomeKics = outcome is NarrationNode childNode ? childNode.NodeKeywordsInContext : outcome.OutcomeKeywordsInContext;
+        var outcomeKics = outcome is NarrationNode childNode ? childNode.NodeKeywordsInContext
+            : outcome is ObservationObject obs ? obs.ObservationKeywordsInContext
+            : outcome.OutcomeKeywordsInContext;
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
         string keywordHint = outcomeKics.Count > 0
             ? $" You may notice things like: {string.Join(", ", outcomeKics.Select(k => k.Context))}."
@@ -86,7 +90,9 @@ Your attention is drawn to {WithArticle(GetOutcomeLabel(outcome))}.
     /// </summary>
     public string BuildOutcomeDescriptionSentencePrompt(ConcreteOutcome outcome, string? personaReminder = null, string? personaReminder2 = null)
     {
-        var outcomeKics = outcome is NarrationNode childNode ? childNode.NodeKeywordsInContext : outcome.OutcomeKeywordsInContext;
+        var outcomeKics = outcome is NarrationNode childNode ? childNode.NodeKeywordsInContext
+            : outcome is ObservationObject obs ? obs.ObservationKeywordsInContext
+            : outcome.OutcomeKeywordsInContext;
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
         string keywordHint = outcomeKics.Count > 0
             ? $" You may notice things like: {string.Join(", ", outcomeKics.Select(k => k.Context))}."

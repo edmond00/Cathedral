@@ -33,6 +33,8 @@ public class SedgePatchNode : NarrationNode
         return $"wading through a {mood} sedge patch";
     }
     
+    public override List<Item> GetItems() => new() { new SedgeHead(), new SedgeRoot() };
+
     public sealed class SedgeHead : Item
     {
         public override string ItemId => "sedge_seed_head";

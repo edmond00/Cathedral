@@ -32,6 +32,8 @@ public class OpenWoodlandNode : NarrationNode
         return $"exploring a {mood} open woodland";
     }
     
+    public override List<Item> GetItems() => new() { new WildGrass() };
+
     public sealed class WildGrass : Item
     {
         public override string ItemId => "open_woodland_wild_grass";

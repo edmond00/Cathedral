@@ -33,6 +33,8 @@ public class LeafLitterHollowNode : NarrationNode
         return $"exploring a {mood} leaf-litter hollow";
     }
     
+    public override List<Item> GetItems() => new() { new LeafMold(), new Millipede() };
+
     public sealed class LeafMold : Item
     {
         public override string ItemId => "leaf_mold";

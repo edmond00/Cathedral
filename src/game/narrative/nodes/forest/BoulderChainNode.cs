@@ -32,6 +32,8 @@ public class BoulderChainNode : NarrationNode
         return $"climbing along a {mood} boulder chain";
     }
     
+    public override List<Item> GetItems() => new() { new LichenSample(), new StoneDust() };
+
     public sealed class LichenSample : Item
     {
         public override string ItemId => "boulder_lichen";

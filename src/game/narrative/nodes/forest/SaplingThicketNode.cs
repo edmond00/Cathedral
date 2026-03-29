@@ -33,6 +33,8 @@ public class SaplingThicketNode : NarrationNode
         return $"pushing through a {mood} sapling thicket";
     }
     
+    public override List<Item> GetItems() => new() { new SaplingShoot(), new SaplingBud() };
+
     public sealed class SaplingShoot : Item
     {
         public override string ItemId => "sapling_shoot";

@@ -39,6 +39,8 @@ public class FungalRingNode : NarrationNode
         return $"observing a {mood} fungal ring";
     }
     
+    public override List<Item> GetItems() => new() { new FairyRingMushroom(), new MyceliumThread(), new SporeCloud() };
+
     public sealed class FairyRingMushroom : Item
     {
         public override string ItemId => "fairy_ring_mushroom";

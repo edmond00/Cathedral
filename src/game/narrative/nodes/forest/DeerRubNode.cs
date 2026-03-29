@@ -39,6 +39,8 @@ public class DeerRubNode : NarrationNode
         return $"examining a {mood} deer rub";
     }
     
+    public override List<Item> GetItems() => new() { new ScrapedBark() };
+
     public sealed class ScrapedBark : Item
     {
         public override string ItemId => "scraped_bark";

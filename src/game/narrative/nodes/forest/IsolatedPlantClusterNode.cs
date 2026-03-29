@@ -33,6 +33,8 @@ public class IsolatedPlantClusterNode : NarrationNode
         return $"examining a {mood} isolated plant cluster";
     }
     
+    public override List<Item> GetItems() => new() { new RarePlant(), new AdaptedRoot() };
+
     public sealed class RarePlant : Item
     {
         public override string ItemId => "rare_deepwood_plant";

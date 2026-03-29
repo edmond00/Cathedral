@@ -32,6 +32,8 @@ public class HighwoodNode : NarrationNode
         return $"walking beneath a {mood} highwood";
     }
     
+    public override List<Item> GetItems() => new() { new HighwoodLichen(), new BarkShavings() };
+
     public sealed class HighwoodLichen : Item
     {
         public override string ItemId => "highwood_lichen";

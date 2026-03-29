@@ -33,6 +33,8 @@ public class SlushChannelSpreadNode : PyramidalFeatureNode
         return $"standing in a {mood} slush channel spread";
     }
     
+    public override List<Item> GetItems() => new() { new AlpineSedge() };
+
     public sealed class AlpineSedge : Item
     {
         public override string ItemId => "slush_channel_spread_alpine_sedge";

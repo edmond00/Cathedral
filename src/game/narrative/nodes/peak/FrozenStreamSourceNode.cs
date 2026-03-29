@@ -33,6 +33,8 @@ public class FrozenStreamSourceNode : PyramidalFeatureNode
         return $"standing at a {mood} frozen source";
     }
     
+    public override List<Item> GetItems() => new() { new SpringQuartz() };
+
     public sealed class SpringQuartz : Item
     {
         public override string ItemId => "frozen_stream_source_spring_quartz";

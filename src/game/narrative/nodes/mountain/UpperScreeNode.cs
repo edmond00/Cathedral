@@ -32,6 +32,8 @@ public class UpperScreeNode : PyramidalFeatureNode
         return $"on a {mood} upper scree";
     }
     
+    public override List<Item> GetItems() => new() { new LooseChips() };
+
     public sealed class LooseChips : Item
     {
         public override string ItemId => "upper_scree_loose_chips";

@@ -33,6 +33,8 @@ public class ReededDepressionNode : NarrationNode
         return $"wading through a {mood} reeded depression";
     }
     
+    public override List<Item> GetItems() => new() { new ReedStem(), new CattailFluff() };
+
     public sealed class ReedStem : Item
     {
         public override string ItemId => "reed_stem";

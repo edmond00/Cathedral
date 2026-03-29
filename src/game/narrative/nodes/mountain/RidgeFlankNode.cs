@@ -32,6 +32,8 @@ public class RidgeFlankNode : PyramidalFeatureNode
         return $"on a {mood} ridge flank";
     }
     
+    public override List<Item> GetItems() => new() { new AlpineGrass(), new SlopeDebris() };
+
     public sealed class AlpineGrass : Item
     {
         public override string ItemId => "ridge_flank_alpine_grass";

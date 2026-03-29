@@ -33,6 +33,8 @@ public class FrozenWaterfallBaseNode : PyramidalFeatureNode
         return $"standing at a {mood} waterfall base";
     }
     
+    public override List<Item> GetItems() => new() { new WaterfallBasalt(), new PeakMoss() };
+
     public sealed class WaterfallBasalt : Item
     {
         public override string ItemId => "frozen_waterfall_base_waterfall_basalt";

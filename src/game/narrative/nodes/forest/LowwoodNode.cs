@@ -32,6 +32,8 @@ public class LowwoodNode : NarrationNode
         return $"treading through a {mood} lowwood";
     }
     
+    public override List<Item> GetItems() => new() { new WetMoss(), new PuddleWater() };
+
     public sealed class WetMoss : Item
     {
         public override string ItemId => "lowwood_wet_moss";

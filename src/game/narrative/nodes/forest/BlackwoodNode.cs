@@ -40,6 +40,8 @@ public class BlackwoodNode : NarrationNode
         return $"feeling through a {mood} blackwood";
     }
     
+    public override List<Item> GetItems() => new() { new CharredTwigs() };
+
     public sealed class CharredTwigs : Item
     {
         public override string ItemId => "blackwood_charred_twigs";

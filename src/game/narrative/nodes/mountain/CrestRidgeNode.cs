@@ -32,6 +32,8 @@ public class CrestRidgeNode : PyramidalFeatureNode
         return $"standing on a {mood} crest ridge";
     }
     
+    public override List<Item> GetItems() => new() { new FrostShatter(), new RidgePolishedStone(), new SummitCairn() };
+
     public sealed class FrostShatter : Item
     {
         public override string ItemId => "crest_ridge_frost_shatter";

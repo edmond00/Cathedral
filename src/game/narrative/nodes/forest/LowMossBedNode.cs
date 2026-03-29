@@ -33,6 +33,8 @@ public class LowMossBedNode : NarrationNode
         return $"walking on a {mood} low moss bed";
     }
     
+    public override List<Item> GetItems() => new() { new MossCarpet(), new MossSpore() };
+
     public sealed class MossCarpet : Item
     {
         public override string ItemId => "moss_carpet";

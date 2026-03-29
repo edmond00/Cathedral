@@ -32,6 +32,8 @@ public class TreeSapFlowNode : NarrationNode
         return $"examining a {mood} tree sap flow";
     }
     
+    public override List<Item> GetItems() => new() { new TreeResin(), new CrystallizedSap() };
+
     public sealed class TreeResin : Item
     {
         public override string ItemId => "tree_resin";

@@ -33,6 +33,8 @@ public class DeepLeafLitterNode : NarrationNode
         return $"wading through a {mood} deep leaf litter";
     }
     
+    public override List<Item> GetItems() => new() { new DriedLeafPile(), new HiddenAcorn() };
+
     public sealed class DriedLeafPile : Item
     {
         public override string ItemId => "dried_leaf_pile";

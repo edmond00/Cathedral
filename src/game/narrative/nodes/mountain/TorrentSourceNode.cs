@@ -32,6 +32,8 @@ public class TorrentSourceNode : PyramidalFeatureNode
         return $"at a {mood} torrent source";
     }
     
+    public override List<Item> GetItems() => new() { new SpringPool(), new WetRocks(), new RiverStone() };
+
     public sealed class SpringPool : Item
     {
         public override string ItemId => "torrent_source_spring_pool";

@@ -33,6 +33,8 @@ public class IceBlockFieldLowerNode : PyramidalFeatureNode
         return $"standing in a {mood} lower ice block field";
     }
     
+    public override List<Item> GetItems() => new() { new SmallIceBlock(), new MorainePebbles() };
+
     public sealed class SmallIceBlock : Item
     {
         public override string ItemId => "ice_block_field_lower_small_ice_block";

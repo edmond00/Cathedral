@@ -33,6 +33,8 @@ public class AvalanchePathReleaseNode : PyramidalFeatureNode
         return $"standing in a {mood} release zone";
     }
     
+    public override List<Item> GetItems() => new() { new FractureLine() };
+
     public sealed class FractureLine : Item
     {
         public override string ItemId => "avalanche_path_release_fracture_line";
