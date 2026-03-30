@@ -222,13 +222,14 @@ public class ActionExecutionController
             Console.WriteLine($"💥 [FAILURE OUTCOME] Determining consequence of failure...");
 
             var contextDescription = currentNode.ContextDescription;
-            var failureTree = CriticTrees.BuildFailureOutcomeTree(action.ActionText, contextDescription);
+            var wildcardCandidates = BuildWildcardCandidates();
+            var failureTree = CriticTrees.BuildFailureOutcomeTree(action.ActionText, contextDescription, wildcardCandidates);
             var failureResult = await _criticEvaluator.EvaluateTreeAsync(failureTree);
 
-            failureWound = CriticTrees.GetWoundFromResult(failureResult);
+            failureWound = CriticTrees.GetWoundFromResult(failureResult, wildcardCandidates);
 
             if (failureWound != null)
-                Console.WriteLine($"   Wound: {failureWound.WoundName} ({failureWound.TargetId.Replace('_', ' ')}, {failureWound.Handicap})\n");
+                Console.WriteLine($"   Wound: {failureWound.WoundName} ({WoundLocationLabel(failureWound)}, {failureWound.Handicap})\n");
             else
                 Console.WriteLine("   No wound inflicted.\n");
 
@@ -240,7 +241,7 @@ public class ActionExecutionController
 
         // Generate narration — pass wound description as failure hint
         string? failureHint = failureWound != null
-            ? $"The character suffered a wound: {failureWound.WoundName} to their {failureWound.TargetId.Replace('_', ' ')}"
+            ? $"The character suffered a wound: {failureWound.WoundName} to their {WoundLocationLabel(failureWound)}"
             : null;
 
         string narration = await _outcomeNarrator.NarrateOutcomeAsync(
@@ -295,6 +296,37 @@ public class ActionExecutionController
         
         // Phase 2: Execute dice roll and get outcome
         return await ExecuteDiceRollAsync(evalResult, succeeded, cancellationToken);
+    }
+
+    /// <summary>
+    /// Builds the list of locations that can receive wildcard wounds in the failure tree.
+    /// Body parts with AcceptsWildcardWounds=true contribute one candidate each.
+    /// Organs with AcceptsWildcardWounds=true contribute one candidate per organ part.
+    /// </summary>
+    private IReadOnlyList<WildcardCandidate> BuildWildcardCandidates()
+    {
+        var candidates = new List<WildcardCandidate>();
+
+        foreach (var bp in _protagonist.BodyParts)
+        {
+            if (bp.AcceptsWildcardWounds)
+                candidates.Add(new WildcardCandidate(bp.Id, bp.DisplayName, bp.Id));
+
+            foreach (var organ in bp.Organs.Where(o => o.AcceptsWildcardWounds))
+                foreach (var part in organ.Parts)
+                    candidates.Add(new WildcardCandidate(part.Id, part.DisplayName, part.Id));
+        }
+
+        return candidates;
+    }
+
+    /// <summary>Returns a readable location label for a wound, using WildcardZoneHint as fallback.</summary>
+    private static string WoundLocationLabel(Wound wound)
+    {
+        var raw = wound.TargetId.Length > 0
+            ? wound.TargetId
+            : wound.WildcardZoneHint ?? "body";
+        return raw.Replace('_', ' ');
     }
 
     /// <summary>

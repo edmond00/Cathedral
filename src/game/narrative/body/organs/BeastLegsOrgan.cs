@@ -9,6 +9,7 @@ public class BeastLegsOrgan : Organ
 {
     public override string Id => "legs";
     public override string DisplayName => "Legs";
+    public override bool AcceptsWildcardWounds => true;
     public override string BodyPartId => "limbs";
 
     private readonly List<OrganPart> _parts;

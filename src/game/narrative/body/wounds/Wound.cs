@@ -61,6 +61,13 @@ public abstract class Wound
     /// <summary>Art Y coordinate for wildcard wounds placed on the body ASCII art.</summary>
     public int? ArtY { get; set; }
 
+    /// <summary>
+    /// For wildcard wounds created from the failure critic tree, constrains art placement
+    /// to cells belonging to the chosen location. Stores a body-part id (e.g. "trunk") or
+    /// organ-part id (e.g. "left_arm"). Null means any free body cell (legacy behaviour).
+    /// </summary>
+    public string? WildcardZoneHint { get; set; }
+
     /// <summary>Returns true if the given organ part is directly or transitively affected by this wound.
     /// Note: BodyPart-targeted wounds do NOT cascade down to organs/organ-parts.
     /// Wildcard (Low handicap) wounds never affect organs.</summary>

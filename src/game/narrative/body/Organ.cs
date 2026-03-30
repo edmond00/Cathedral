@@ -16,6 +16,12 @@ public abstract class Organ
     public abstract List<OrganPart> Parts { get; }
     
     /// <summary>
+    /// When true, each organ part of this organ appears as a candidate target for wildcard
+    /// wounds in the narrative failure outcome critic tree.
+    /// </summary>
+    public virtual bool AcceptsWildcardWounds => false;
+
+    /// <summary>
     /// Score is the sum of all organ part scores.
     /// </summary>
     public int Score => Parts.Sum(p => p.Score);

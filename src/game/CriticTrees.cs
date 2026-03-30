@@ -116,8 +116,16 @@ public static class CriticTrees
     /// Level 1 — Does the failure cause a wound? (yes/no)
     /// Level 2 — Which body part / organ is damaged? (enum of all wound targets)
     /// Level 3 — What type of wound? (enum of wounds for that target)
+    /// <para>
+    /// <paramref name="wildcardCandidates"/> adds body-part / organ-part locations that accept
+    /// wildcard (Low-handicap) wounds. For targets already present in the named-wound list the
+    /// wildcard choices are appended; otherwise a new choice + node is created.
+    /// </para>
     /// </summary>
-    public static CriticNode BuildFailureOutcomeTree(string actionText, string contextDescription)
+    public static CriticNode BuildFailureOutcomeTree(
+        string actionText,
+        string contextDescription,
+        IReadOnlyList<WildcardCandidate>? wildcardCandidates = null)
     {
         var ctx = $"Context: {contextDescription}\nThe {Config.Narrative.PlayerName} failed at: \"{actionText}\"";
 
@@ -143,11 +151,46 @@ public static class CriticTrees
                 choices: woundChoices);
         }
 
+        // Inject wildcard wound choices for candidate locations
+        if (wildcardCandidates != null && wildcardCandidates.Count > 0)
+        {
+            var wildcardChoices = WoundRegistry.WildcardTemplates
+                .Select(w => new CriticChoice(
+                    id: w.WoundId.ToString(),
+                    description: $"{w.WoundName} (Low severity — superficial)"))
+                .ToList();
+
+            foreach (var candidate in wildcardCandidates)
+            {
+                if (woundTypeNodes.TryGetValue(candidate.TargetId, out var existingNode))
+                {
+                    // Append wildcard choices to the existing named-wound node
+                    existingNode.Choices.AddRange(wildcardChoices);
+                }
+                else
+                {
+                    // New target only reachable via wildcard wounds
+                    woundTypeNodes[candidate.TargetId] = new CriticNode(
+                        name: $"WoundType_{candidate.TargetId}",
+                        question: $"{ctx}\n\nA wound has been inflicted on '{candidate.DisplayName}'. What type of wound is it?",
+                        choices: new List<CriticChoice>(wildcardChoices));
+                }
+            }
+        }
+
         // Level 2 — body part / organ selection
+        // Start from named-wound targets, then append any wildcard-only candidates
+        var namedTargetIds = new HashSet<string>(targetToWounds.Keys);
         var bodyPartChoices = targetToWounds.Keys
             .OrderBy(id => id)
             .Select(id => new CriticChoice(id: id, description: GetTargetDisplayName(id)))
             .ToList();
+
+        if (wildcardCandidates != null)
+        {
+            foreach (var candidate in wildcardCandidates.Where(c => !namedTargetIds.Contains(c.TargetId)))
+                bodyPartChoices.Add(new CriticChoice(id: candidate.TargetId, description: candidate.DisplayName));
+        }
 
         var bodyPartNode = new CriticNode(
             name: "BodyPartAffected",
@@ -156,7 +199,6 @@ public static class CriticTrees
 
         foreach (var (targetId, woundNode) in woundTypeNodes)
             bodyPartNode.WithBranch(targetId, woundNode);
-        // Any target without a specific wound node (shouldn't happen) leads to null (terminal)
 
         // Level 1 — does this cause a wound at all?
         var woundCheck = new CriticNode(
@@ -176,17 +218,40 @@ public static class CriticTrees
     /// <summary>
     /// Extracts the wound selected at the end of the failure outcome tree.
     /// Returns null if the tree determined no wound occurs.
+    /// <para>
+    /// When <paramref name="wildcardCandidates"/> is supplied and the selected wound is a
+    /// wildcard type, a fresh instance is returned (not the registry singleton) with
+    /// <see cref="Wound.WildcardZoneHint"/> set so BodyArtViewer can constrain placement.
+    /// </para>
     /// </summary>
-    public static Wound? GetWoundFromResult(CriticTreeResult result)
+    public static Wound? GetWoundFromResult(
+        CriticTreeResult result,
+        IReadOnlyList<WildcardCandidate>? wildcardCandidates = null)
     {
         // Tree has 3 nodes when a wound was chosen: WoundCheck → BodyPartAffected → WoundType_X
         if (result.Trace.Count < 3) return null;
 
         var woundIdStr = result.FinalChosenId;
-        if (woundIdStr.Length == 1 && WoundRegistry.All.TryGetValue(woundIdStr[0], out var wound))
-            return wound;
+        if (woundIdStr.Length != 1) return null;
+        if (!WoundRegistry.All.TryGetValue(woundIdStr[0], out var wound)) return null;
 
-        return null;
+        // For wildcard wounds, create a fresh instance and attach the zone hint
+        if (wound.TargetKind == WoundTargetKind.Wildcard && wildcardCandidates != null)
+        {
+            string chosenTargetId = result.Trace[1].ChosenId;
+            var candidate = wildcardCandidates.FirstOrDefault(c => c.TargetId == chosenTargetId);
+            if (candidate != null)
+            {
+                var freshWound = System.Activator.CreateInstance(wound.GetType()) as WildcardWound;
+                if (freshWound != null)
+                {
+                    freshWound.WildcardZoneHint = candidate.ZoneHint;
+                    return freshWound;
+                }
+            }
+        }
+
+        return wound;
     }
 
     private static string GetTargetDisplayName(string targetId) => targetId switch

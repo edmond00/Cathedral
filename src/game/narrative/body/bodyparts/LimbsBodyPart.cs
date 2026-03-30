@@ -10,6 +10,7 @@ public class LimbsBodyPart : BodyPart
 {
     public override string Id => "limbs";
     public override string DisplayName => "Limbs";
+    public override bool AcceptsWildcardWounds => true;
 
     private readonly List<Organ> _organs;
     public override List<Organ> Organs => _organs;

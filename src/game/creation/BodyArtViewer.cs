@@ -493,9 +493,14 @@ public class BodyArtViewer
             foreach (var wound in _protagonist.Wounds.Where(w => w.ArtX == null && w.TargetKind == Cathedral.Game.Narrative.WoundTargetKind.Wildcard))
             {
                 if (freeCells.Count == 0) break;
-                int idx = rng.Next(freeCells.Count);
-                var chosen = freeCells[idx];
-                freeCells.RemoveAt(idx);
+                // Prefer cells in the wound's target zone; fall back to any free cell
+                var pool = wound.WildcardZoneHint != null
+                    ? freeCells.Where(p => IsWoundCellInZone(p.x, p.y, wound.WildcardZoneHint)).ToList()
+                    : freeCells;
+                if (pool.Count == 0) pool = freeCells;
+                int idx = rng.Next(pool.Count);
+                var chosen = pool[idx];
+                freeCells.Remove(chosen);
                 wound.ArtX = chosen.x;
                 wound.ArtY = chosen.y;
                 occupiedByWounds.Add(chosen);
@@ -535,6 +540,17 @@ public class BodyArtViewer
     }
 
     /// <summary>
+    /// <summary>
+    /// Returns true if the art cell at (x, y) belongs to the given zone hint.
+    /// Checks body-part id first, then organ-part name and organ name from organs.csv.
+    /// </summary>
+    private bool IsWoundCellInZone(int x, int y, string zoneHint)
+    {
+        if (_artData.GetBodyPartIdAt(x, y) == zoneHint) return true;
+        var info = _artData.GetOrganPartInfoAt(x, y);
+        return info?.OrganPartName == zoneHint || info?.OrganName == zoneHint;
+    }
+
     /// Renders an HP bar in the black empty space at the top of the body art panel.
     /// One █ per HP point: DarkYellowGrey for remaining, DarkGray35 for lost.
     /// </summary>

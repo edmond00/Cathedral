@@ -19,6 +19,6 @@ public class WoundOutcome : OutcomeBase
 
     public override string ToNaturalLanguageString() =>
         Wound != null
-            ? $"suffered a {Wound.WoundName} to {Wound.TargetId.Replace('_', ' ')}"
+            ? $"suffered a {Wound.WoundName} to {(Wound.TargetId.Length > 0 ? Wound.TargetId : Wound.WildcardZoneHint ?? "body").Replace('_', ' ')}"
             : "escaped without injury";
 }

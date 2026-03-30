@@ -10,6 +10,7 @@ public class MuzzleBodyPart : BodyPart
 {
     public override string Id => "muzzle";
     public override string DisplayName => "Muzzle";
+    public override bool AcceptsWildcardWounds => true;
 
     private readonly List<Organ> _organs;
     public override List<Organ> Organs => _organs;

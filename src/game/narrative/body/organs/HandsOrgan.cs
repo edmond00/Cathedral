@@ -9,6 +9,7 @@ public class HandsOrgan : Organ
 {
     public override string Id => "hands";
     public override string DisplayName => "Hands";
+    public override bool AcceptsWildcardWounds => true;
     public override string BodyPartId => "upper_limbs";
     
     private readonly List<OrganPart> _parts;

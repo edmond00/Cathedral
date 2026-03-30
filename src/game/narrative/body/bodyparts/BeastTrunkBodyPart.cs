@@ -11,6 +11,7 @@ public class BeastTrunkBodyPart : BodyPart
 {
     public override string Id => "trunk";
     public override string DisplayName => "Trunk";
+    public override bool AcceptsWildcardWounds => true;
 
     private readonly List<Organ> _organs;
     public override List<Organ> Organs => _organs;

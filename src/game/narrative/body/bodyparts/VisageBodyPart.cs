@@ -9,6 +9,7 @@ public class VisageBodyPart : BodyPart
 {
     public override string Id => "visage";
     public override string DisplayName => "Visage";
+    public override bool AcceptsWildcardWounds => true;
     
     private readonly List<Organ> _organs;
     public override List<Organ> Organs => _organs;
