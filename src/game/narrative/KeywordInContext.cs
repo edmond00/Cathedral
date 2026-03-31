@@ -64,13 +64,6 @@ public sealed record KeywordInContext
         return new KeywordInContext(context, keyword);
     }
 
-    /// <summary>
-    /// Creates a minimal KeywordInContext for a word derived from an observation name
-    /// (e.g. splitting "mushroom_log" yields "mushroom" and "log").
-    /// Uses a context of "a &lt;keyword&gt;" — never shown in LLM prompts, only used for matching.
-    /// </summary>
-    internal static KeywordInContext CreateDirect(string keyword)
-        => new KeywordInContext($"a {keyword}", keyword);
 
     public override string ToString() => Context;
 }

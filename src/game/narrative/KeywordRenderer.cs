@@ -137,6 +137,34 @@ public class KeywordRenderer
         c = char.ToLowerInvariant(c);
         return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u';
     }
+
+    /// <summary>
+    /// Removes keyword matches that are directly adjacent to a previously kept match
+    /// (i.e. separated only by whitespace, e.g. "boulder chain").
+    /// Keeps the first of any adjacent pair; the second is silently dropped so that
+    /// compound-style sequences are not rendered as two consecutive highlighted words.
+    /// Non-whitespace characters between matches (punctuation, other words) are enough
+    /// to let both keywords be highlighted independently.
+    /// </summary>
+    private static List<(int Start, int Length, string Keyword, string MatchedText)>
+        RemoveAdjacentKeywords(
+            List<(int Start, int Length, string Keyword, string MatchedText)> matches,
+            string text)
+    {
+        var result = new List<(int Start, int Length, string Keyword, string MatchedText)>();
+        foreach (var match in matches)
+        {
+            if (result.Count > 0)
+            {
+                var prev = result[^1];
+                var gap = text.Substring(prev.Start + prev.Length, match.Start - (prev.Start + prev.Length));
+                if (gap.All(char.IsWhiteSpace))
+                    continue; // adjacent — suppress the second keyword
+            }
+            result.Add(match);
+        }
+        return result;
+    }
     
     /// <summary>
     /// Parses narration text and identifies keyword locations.
@@ -197,10 +225,15 @@ public class KeywordRenderer
         
         // Sort again by position for segment building
         nonOverlapping = nonOverlapping.OrderBy(m => m.Start).ToList();
-        
+
+        // Suppress adjacent keywords: if two matches are separated only by whitespace
+        // (e.g. "boulder chain"), keep the first and drop the second to avoid highlighting
+        // a compound noun as two separate clickable words.
+        nonOverlapping = RemoveAdjacentKeywords(nonOverlapping, narrationText);
+
         // Build segments
         int currentPos = 0;
-        
+
         foreach (var match in nonOverlapping)
         {
             // Add text before keyword
@@ -299,6 +332,7 @@ public class KeywordRenderer
                 nonOverlapping.Add(match);
         }
         nonOverlapping = nonOverlapping.OrderBy(m => m.Start).ToList();
+        nonOverlapping = RemoveAdjacentKeywords(nonOverlapping, narrationText);
 
         int currentPos = 0;
         foreach (var match in nonOverlapping)

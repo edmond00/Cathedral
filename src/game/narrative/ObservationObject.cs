@@ -44,16 +44,18 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     /// (e.g. "mushroom_log" → ["mushroom", "log"]).
     /// NOT given as hints to the LLM. Used as a fallback when the generated text contains
     /// none of the indirect keywords — the player can still click through to this observation.
+    /// These are plain strings, not KeywordInContext, so they never participate in the
+    /// "you were observing a &lt;keyword&gt; of &lt;observation&gt;" prompt phrasing.
     ///
     /// Default: splits <see cref="ObservationId"/> on underscores and keeps words longer than
     /// one character. Override when the id contains non-noun parts (adjectives, participles)
     /// that could produce false positives, e.g. "frozen_pond" → override to return ["pond"].
     /// </summary>
-    public virtual List<KeywordInContext> DirectObservationKeywords
+    public virtual List<string> DirectObservationKeywords
         => ObservationId
             .Split('_', StringSplitOptions.RemoveEmptyEntries)
             .Where(w => w.Length > 1)
-            .Select(w => KeywordInContext.CreateDirect(w.ToLowerInvariant()))
+            .Select(w => w.ToLowerInvariant())
             .ToList();
 
     /// <summary>
@@ -92,7 +94,6 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
             }
 
             foreach (var kic in ObservationKeywordsInContext) Add(kic);
-            foreach (var kic in DirectObservationKeywords) Add(kic);
             foreach (var sub in SubOutcomes)
                 foreach (var kic in sub.OutcomeKeywordsInContext) Add(kic);
 

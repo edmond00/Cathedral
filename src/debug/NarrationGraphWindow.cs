@@ -28,7 +28,8 @@ public class NarrationGraphWindow : Form
     private readonly RichTextBox _detailsBox;
     private readonly MsaglGraph _msaglGraph;
     private string _currentNodeId;
-    private readonly Dictionary<string, NarrationNode> _allNodes = new();
+    private readonly Dictionary<string, NarrationNode>     _allNodes        = new();
+    private readonly Dictionary<string, ObservationObject> _allObservations = new();
 
     // ── Node fill colours (by category priority: encounter > items > plain) ──
     private static readonly MsaglColor ColorEncounter   = new(210,  90,  90); // red     — has encounters
@@ -258,6 +259,7 @@ public class NarrationGraphWindow : Form
                 else if (outcome is ObservationObject obs)
                 {
                     string obsId = $"obs:{obs.ObservationId}";
+                    _allObservations.TryAdd(obsId, obs);
                     var obsNode = graph.AddNode(obsId);
                     obsNode.LabelText      = obs.ObservationId;
                     obsNode.Attr.Shape     = MsaglShape.Diamond;
@@ -284,11 +286,12 @@ public class NarrationGraphWindow : Form
 
     private void OnViewerMouseClick(object? sender, System.Windows.Forms.MouseEventArgs e)
     {
-        if (_viewer.SelectedObject is MsaglNode selectedNode &&
-            _allNodes.TryGetValue(selectedNode.Id, out var node))
-        {
+        if (_viewer.SelectedObject is not MsaglNode selectedNode) return;
+
+        if (_allNodes.TryGetValue(selectedNode.Id, out var node))
             ShowNodeDetails(node);
-        }
+        else if (_allObservations.TryGetValue(selectedNode.Id, out var obs))
+            ShowObservationDetails(obs);
     }
 
     private void ShowNodeDetails(NarrationNode node)
@@ -304,8 +307,15 @@ public class NarrationGraphWindow : Form
         AppendColored(node.TransitionDescription + "\n",    Color.LightGray);
         AppendColored("\n");
 
-        AppendColored("Keywords:\n",                        Color.CornflowerBlue,  bold: true);
+        AppendColored("Indirect keywords:\n",               Color.CornflowerBlue,  bold: true);
         AppendColored(string.Join(", ", node.NodeKeywordsInContext.Select(k => k.Keyword)) + "\n", Color.LightGray);
+
+        var directKws = node.NodeId
+            .Split('_', StringSplitOptions.RemoveEmptyEntries)
+            .Where(w => w.Length > 1)
+            .Select(w => w.ToLowerInvariant());
+        AppendColored("Direct keywords:\n",                 Color.CornflowerBlue,  bold: true);
+        AppendColored(string.Join(", ", directKws) + "\n",  Color.LightGray);
 
         var items = node.GetAvailableItems();
         if (items.Count > 0)
@@ -345,6 +355,42 @@ public class NarrationGraphWindow : Form
             AppendColored("\nConnected nodes:\n", Color.CornflowerBlue, bold: true);
             foreach (var n in connected)
                 AppendColored($"  → {n.NodeId}\n", Color.LightGray);
+        }
+    }
+
+    private void ShowObservationDetails(ObservationObject obs)
+    {
+        _detailsBox.Clear();
+
+        AppendColored($"◇ {obs.ObservationId}\n",             Color.FromArgb(210, 160, 50), bold: true);
+        AppendColored($"{obs.GenerateNeutralDescription(0)}\n", Color.LightGray);
+        AppendColored("\n");
+
+        AppendColored("Indirect keywords:\n",                  Color.CornflowerBlue, bold: true);
+        AppendColored(string.Join(", ", obs.ObservationKeywordsInContext.Select(k => k.Keyword)) + "\n", Color.LightGray);
+
+        AppendColored("Direct keywords:\n",                    Color.CornflowerBlue, bold: true);
+        AppendColored(string.Join(", ", obs.DirectObservationKeywords) + "\n", Color.LightGray);
+
+        if (obs.SubOutcomes.Count > 0)
+        {
+            AppendColored("\nSub-outcomes:\n", Color.MediumSeaGreen, bold: true);
+            foreach (var sub in obs.SubOutcomes)
+            {
+                AppendColored($"  • {sub.DisplayName}\n", Color.LightGray);
+                var subKws = sub.OutcomeKeywordsInContext.Select(k => k.Keyword).Take(6).ToList();
+                if (subKws.Count > 0)
+                    AppendColored($"    {string.Join(", ", subKws)}\n", Color.DarkGray);
+            }
+        }
+
+        if (obs.AssociatedEncounters.Count > 0)
+        {
+            AppendColored("\nEncounters:\n", Color.LightCoral, bold: true);
+            foreach (var enc in obs.AssociatedEncounters)
+                AppendColored(
+                    $"  ! {enc.Archetype.ArchetypeId}  ({(int)(enc.SpawnChance * 100)}% chance, max {enc.MaxCount})\n",
+                    Color.LightGray);
         }
     }
 

@@ -108,8 +108,7 @@ public class ObservationPhaseController
                     : outcome.OutcomeKeywordsInContext;
                 var outcomeKeywords = outcomeKics.Select(k => k.Keyword).ToList();
 
-                var directKics = outcome is ObservationObject obsD ? obsD.DirectObservationKeywords : new List<KeywordInContext>();
-                var directKeywords = directKics.Select(k => k.Keyword).ToList();
+                var directKeywords = outcome is ObservationObject obsD ? obsD.DirectObservationKeywords : new List<string>();
 
                 var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(outcome, previousDescription, modusMentis.PersonaReminder, previousKeywordInContext, modusMentis.PersonaReminder2);
                 var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, isTransition: true, ct: ct);
@@ -123,12 +122,11 @@ public class ObservationPhaseController
                 sentences.Add(new NarrationSentence(transText, transKws));
                 sentences.Add(new NarrationSentence(focusText, focKws));
 
-                var allOutcomeKics = outcomeKics.Concat(directKics).ToList();
                 foreach (var kw in sampledKws)
                 {
                     allKeywords.Add(kw);
                     keywordOutcomeMap.TryAdd(kw, outcome);
-                    var matchedKic = allOutcomeKics.FirstOrDefault(k => k.Keyword.Equals(kw, StringComparison.OrdinalIgnoreCase));
+                    var matchedKic = outcomeKics.FirstOrDefault(k => k.Keyword.Equals(kw, StringComparison.OrdinalIgnoreCase));
                     if (matchedKic != null) keywordContextMap.TryAdd(kw, matchedKic);
                 }
 
@@ -201,20 +199,18 @@ public class ObservationPhaseController
                     : focusOutcome is ObservationObject fobs ? fobs.ObservationKeywordsInContext
                     : focusOutcome.OutcomeKeywordsInContext;
             var focusOutcomeKeywords = focusOutcomeKics.Select(k => k.Keyword).ToList();
-            var focusDirectKics = focusOutcome is ObservationObject fobsD ? fobsD.DirectObservationKeywords : new List<KeywordInContext>();
-            var focusDirectKeywords = focusDirectKics.Select(k => k.Keyword).ToList();
+            var focusDirectKeywords = focusOutcome is ObservationObject fobsD ? fobsD.DirectObservationKeywords : new List<string>();
 
             var firstPrompt = _promptConstructor.BuildFirstSentencePrompt(currentNode, locationId, focusOutcome, observationModusMentis.PersonaTone, _worldContext, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
             var firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, isFirstInBatch: true, ct: ct);
 
             var firstKws = _observationExecutor.ExtractKeywordsFromSentences("", firstText, focusOutcomeKeywords, focusDirectKeywords, _random, 3);
             sentences.Add(new NarrationSentence(firstText, firstKws));
-            var allFocusOutcomeKics = focusOutcomeKics.Concat(focusDirectKics).ToList();
             foreach (var kw in firstKws)
             {
                 allKeywords.Add(kw);
                 keywordOutcomeMap.TryAdd(kw, focusOutcome);
-                var matchedKic = allFocusOutcomeKics.FirstOrDefault(k => k.Keyword.Equals(kw, StringComparison.OrdinalIgnoreCase));
+                var matchedKic = focusOutcomeKics.FirstOrDefault(k => k.Keyword.Equals(kw, StringComparison.OrdinalIgnoreCase));
                 if (matchedKic != null) keywordContextMap.TryAdd(kw, matchedKic);
             }
             previousKeywordInContext = firstKws.Count > 0
@@ -242,8 +238,7 @@ public class ObservationPhaseController
                     : otherOutcome is ObservationObject oobs ? oobs.ObservationKeywordsInContext
                     : otherOutcome.OutcomeKeywordsInContext;
                 var otherKeywords = otherKics.Select(k => k.Keyword).ToList();
-                var otherDirectKics = otherOutcome is ObservationObject oobsD ? oobsD.DirectObservationKeywords : new List<KeywordInContext>();
-                var otherDirectKeywords = otherDirectKics.Select(k => k.Keyword).ToList();
+                var otherDirectKeywords = otherOutcome is ObservationObject oobsD ? oobsD.DirectObservationKeywords : new List<string>();
 
                 var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(otherOutcome, previousDescription, observationModusMentis.PersonaReminder, previousKeywordInContext, observationModusMentis.PersonaReminder2);
                 var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, isTransition: true, ct: ct);
@@ -257,12 +252,11 @@ public class ObservationPhaseController
                 sentences.Add(new NarrationSentence(transText, transKws));
                 sentences.Add(new NarrationSentence(focusText, focKws));
 
-                var allOtherKics = otherKics.Concat(otherDirectKics).ToList();
                 foreach (var kw in sampledKws)
                 {
                     allKeywords.Add(kw);
                     keywordOutcomeMap.TryAdd(kw, otherOutcome);
-                    var matchedKic = allOtherKics.FirstOrDefault(k => k.Keyword.Equals(kw, StringComparison.OrdinalIgnoreCase));
+                    var matchedKic = otherKics.FirstOrDefault(k => k.Keyword.Equals(kw, StringComparison.OrdinalIgnoreCase));
                     if (matchedKic != null) keywordContextMap.TryAdd(kw, matchedKic);
                 }
 
