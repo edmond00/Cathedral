@@ -170,9 +170,51 @@ public class ObservationExecutor
     }
 
     /// <summary>
-    /// Scans the combined text of a transition + focus sentence for matching outcome keywords,
-    /// randomly samples up to <paramref name="maxCount"/> of them, and returns the list.
-    /// Returns an empty list if no outcome keyword appears in the text.
+    /// Scans the combined text of a transition + focus sentence for matching outcome keywords.
+    /// Tries <paramref name="indirectKeywords"/> first (the LLM-hinted ones); if none are found,
+    /// falls back to <paramref name="directKeywords"/> (observation-name-derived words).
+    /// Randomly samples up to <paramref name="maxCount"/> results.
+    /// Both transition and focus text are scanned — word boundaries handle punctuation
+    /// (e.g. "leaf" is matched inside "leaf-litter").
+    /// </summary>
+    public List<string> ExtractKeywordsFromSentences(
+        string transitionText,
+        string focusText,
+        List<string> indirectKeywords,
+        List<string> directKeywords,
+        Random rng,
+        int maxCount = 3)
+    {
+        var combined = (transitionText + " " + focusText).Trim();
+        var renderer = new KeywordRenderer();
+
+        static List<string> FindDistinct(KeywordRenderer r, string text, List<string> kws, Random rng, int max)
+        {
+            var segments = r.ParseNarrationWithKeywords(text, kws);
+            var distinct = segments
+                .Where(s => s.IsKeyword && !string.IsNullOrEmpty(s.KeywordValue))
+                .Select(s => s.KeywordValue!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (distinct.Count > max)
+                distinct = distinct.OrderBy(_ => rng.Next()).Take(max).ToList();
+            return distinct;
+        }
+
+        if (indirectKeywords.Count > 0)
+        {
+            var found = FindDistinct(renderer, combined, indirectKeywords, rng, maxCount);
+            if (found.Count > 0) return found;
+        }
+
+        if (directKeywords.Count > 0)
+            return FindDistinct(renderer, combined, directKeywords, rng, maxCount);
+
+        return new List<string>();
+    }
+
+    /// <summary>
+    /// Overload without direct-keyword fallback — delegates to the main overload with an empty fallback list.
     /// </summary>
     public List<string> ExtractKeywordsFromSentences(
         string transitionText,
@@ -180,29 +222,7 @@ public class ObservationExecutor
         List<string> outcomeKeywords,
         Random rng,
         int maxCount = 3)
-    {
-        var combined = (transitionText + " " + focusText).Trim();
-        var foundKeywords = new List<string>();
-
-        if (outcomeKeywords.Count > 0)
-        {
-            var renderer = new KeywordRenderer();
-            var segments = renderer.ParseNarrationWithKeywords(combined, outcomeKeywords);
-            var distinct = segments
-                .Where(s => s.IsKeyword && !string.IsNullOrEmpty(s.KeywordValue))
-                .Select(s => s.KeywordValue!)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            // Randomly sample up to maxCount
-            if (distinct.Count > maxCount)
-                distinct = distinct.OrderBy(_ => rng.Next()).Take(maxCount).ToList();
-
-            foundKeywords.AddRange(distinct);
-        }
-
-        return foundKeywords;
-    }
+        => ExtractKeywordsFromSentences(transitionText, focusText, outcomeKeywords, new List<string>(), rng, maxCount);
 
     /// <summary>
     /// Assigns each keyword to either the transition or focus sentence by checking

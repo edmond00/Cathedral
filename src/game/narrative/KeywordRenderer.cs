@@ -162,8 +162,9 @@ public class KeywordRenderer
             
             foreach (var variation in variations)
             {
-                // Use regex with word boundaries to match whole words only
-                // \b ensures space/punctuation before and after
+                // \b is a zero-width word boundary (between \w and \W).
+                // Because punctuation characters (-  ,  .  "  (  )  …) are all \W,
+                // this correctly matches "leaf" inside "leaf-litter", "leaf," or "(leaf)".
                 string pattern = @"\b" + Regex.Escape(variation) + @"\b";
                 var regex = new Regex(pattern, RegexOptions.IgnoreCase);
                 

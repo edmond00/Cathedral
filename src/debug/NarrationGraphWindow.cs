@@ -30,8 +30,7 @@ public class NarrationGraphWindow : Form
     private string _currentNodeId;
     private readonly Dictionary<string, NarrationNode> _allNodes = new();
 
-    // ── Node fill colours (by category priority: entry > encounter > items > plain) ──
-    private static readonly MsaglColor ColorEntry       = new( 90, 185, 110); // green   — entry node
+    // ── Node fill colours (by category priority: encounter > items > plain) ──
     private static readonly MsaglColor ColorEncounter   = new(210,  90,  90); // red     — has encounters
     private static readonly MsaglColor ColorItems       = new( 90, 145, 210); // blue    — has items only
     private static readonly MsaglColor ColorPlain       = new(160, 160, 170); // gray    — no items, no encounters
@@ -73,7 +72,6 @@ public class NarrationGraphWindow : Form
         // Legend items: (fill color, border color, label)
         var legendItems = new (Color fill, Color border, string text)[]
         {
-            (Color.FromArgb( 90, 185, 110), Color.FromArgb( 80,  80,  90), " entry "),
             (Color.FromArgb(210,  90,  90), Color.FromArgb( 80,  80,  90), " encounter "),
             (Color.FromArgb( 90, 145, 210), Color.FromArgb( 80,  80,  90), " items "),
             (Color.FromArgb(160, 160, 170), Color.FromArgb( 80,  80,  90), " plain "),
@@ -279,7 +277,6 @@ public class NarrationGraphWindow : Form
     /// Priority: entry &gt; has encounters &gt; has items &gt; plain.
     private static MsaglColor NodeFillColor(NarrationNode node)
     {
-        if (node.IsEntryNode)                      return ColorEntry;
         if (node.GetAllEncounters().Count > 0)     return ColorEncounter;
         if (node.GetAvailableItems().Count > 0)    return ColorItems;
         return ColorPlain;
@@ -299,9 +296,6 @@ public class NarrationGraphWindow : Form
         _detailsBox.Clear();
 
         AppendColored($"=== {node.NodeId} ===\n",          Color.Orange,          bold: true);
-        AppendColored($"Entry node: {node.IsEntryNode}\n",  Color.LightYellow);
-        AppendColored("\n");
-
         AppendColored("Context:\n",                         Color.CornflowerBlue,  bold: true);
         AppendColored(node.ContextDescription + "\n",       Color.LightGray);
         AppendColored("\n");

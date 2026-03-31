@@ -34,6 +34,13 @@ public static class DebugMode
     public static DebugStrategy CurrentStrategy { get; private set; } = DebugStrategy.Custom;
 
     /// <summary>
+    /// Set to true while the failure outcome tree (wound selection) is being evaluated.
+    /// Causes GetCriticOverride to prompt interactively regardless of strategy,
+    /// so the user can control which wound is inflicted.
+    /// </summary>
+    public static bool InFailureOutcomeTree { get; set; } = false;
+
+    /// <summary>
     /// Print all available actions and their outcomes to the console.
     /// Called before the user clicks an action so they know what each one does.
     /// </summary>
@@ -205,6 +212,10 @@ public static class DebugMode
     /// </summary>
     public static string GetCriticOverride(string nodeName, string question, List<CriticChoice> choices, bool isPlausibilityNode)
     {
+        // Wound selection is always prompted so the user controls which wound is inflicted.
+        if (InFailureOutcomeTree)
+            return PromptCriticNode(nodeName, question, choices);
+
         var failureChoice = choices.FirstOrDefault(c => c.IsFailure);
         var passChoice = choices.FirstOrDefault(c => !c.IsFailure);
 

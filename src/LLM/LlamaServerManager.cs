@@ -653,7 +653,7 @@ public class LlamaServerManager : IDisposable
 
             if (requestLogDir != null)
             {
-                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "response.txt"), generated);
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "llm_response.txt"), generated);
                 var endTime = DateTime.Now;
                 var timingText = $"Duration: {(endTime - startTime).TotalMilliseconds:F0}ms";
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "timing.txt"), timingText);

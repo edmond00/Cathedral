@@ -224,7 +224,9 @@ public class ActionExecutionController
             var contextDescription = currentNode.ContextDescription;
             var wildcardCandidates = BuildWildcardCandidates();
             var failureTree = CriticTrees.BuildFailureOutcomeTree(action.ActionText, contextDescription, wildcardCandidates);
+            DebugMode.InFailureOutcomeTree = true;
             var failureResult = await _criticEvaluator.EvaluateTreeAsync(failureTree);
+            DebugMode.InFailureOutcomeTree = false;
 
             failureWound = CriticTrees.GetWoundFromResult(failureResult, wildcardCandidates);
 

@@ -26,11 +26,35 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     public abstract string ObservationId { get; }
 
     /// <summary>
+    /// Indirect observation keywords — describe this observation with rich context phrases.
+    /// These are given as hints to the LLM and are the primary keywords to search for in
+    /// the generated text. Same content as <see cref="ObservationKeywordsInContext"/>.
+    /// </summary>
+    public List<KeywordInContext> IndirectObservationKeywords => ObservationKeywordsInContext;
+
+    /// <summary>
     /// Keywords with surrounding context that describe this observation as a whole.
     /// These are the keywords that appear in the parent node's observation text and
     /// route the player into this observation.
     /// </summary>
     public abstract List<KeywordInContext> ObservationKeywordsInContext { get; }
+
+    /// <summary>
+    /// Direct keywords derived from the observation name itself
+    /// (e.g. "mushroom_log" → ["mushroom", "log"]).
+    /// NOT given as hints to the LLM. Used as a fallback when the generated text contains
+    /// none of the indirect keywords — the player can still click through to this observation.
+    ///
+    /// Default: splits <see cref="ObservationId"/> on underscores and keeps words longer than
+    /// one character. Override when the id contains non-noun parts (adjectives, participles)
+    /// that could produce false positives, e.g. "frozen_pond" → override to return ["pond"].
+    /// </summary>
+    public virtual List<KeywordInContext> DirectObservationKeywords
+        => ObservationId
+            .Split('_', StringSplitOptions.RemoveEmptyEntries)
+            .Where(w => w.Length > 1)
+            .Select(w => KeywordInContext.CreateDirect(w.ToLowerInvariant()))
+            .ToList();
 
     /// <summary>
     /// All concrete sub-outcomes reachable through this observation (items, node transitions).
@@ -68,6 +92,7 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
             }
 
             foreach (var kic in ObservationKeywordsInContext) Add(kic);
+            foreach (var kic in DirectObservationKeywords) Add(kic);
             foreach (var sub in SubOutcomes)
                 foreach (var kic in sub.OutcomeKeywordsInContext) Add(kic);
 
