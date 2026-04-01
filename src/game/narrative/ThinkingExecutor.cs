@@ -38,9 +38,12 @@ public class ThinkingExecutor
     }
 
     /// <summary>
-    /// New 3-call pipeline: WHY (thinking slot) → HOW (thinking slot) → WHAT (action slot).
-    /// The outcome is fully predetermined by the clicked keyword.
-    /// Returns a ThinkingResponse with one action, or null if any call fails.
+    /// CoT pipeline: REFLECT+GOAL → WHY → (HOW → WHAT, or early exit if IGNORE).
+    /// For ObservationObject targets the thinking modusMentis first reflects and picks a
+    /// goal (including the "ignore and move on" option). If it chooses to ignore, only the
+    /// WHY reasoning is returned and no action is generated. Otherwise the full
+    /// HOW → WHAT pipeline runs and one action is returned.
+    /// Returns null if any required LLM call fails.
     /// </summary>
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
         ModusMentis thinkingModusMentis,
@@ -53,33 +56,33 @@ public class ThinkingExecutor
         WorldContext worldContext,
         CancellationToken cancellationToken = default)
     {
-        // ── Call 0: REFLECT + GOAL (only when targeting a multi-outcome ObservationObject) ──
-        ConcreteOutcome resolvedOutcome = targetOutcome;
-        string reflectText = "";
-        if (targetOutcome is ObservationObject obs)
-        {
-            if (obs.SubOutcomes.Count == 1)
-            {
-                resolvedOutcome = obs.SubOutcomes[0];
-            }
-            else if (obs.SubOutcomes.Count > 1)
-            {
-                var (goalOutcome, reflect) = await GenerateGoalAsync(
-                    obs, node, thinkingModusMentis, protagonist, worldContext, cancellationToken);
-                resolvedOutcome = goalOutcome ?? obs.SubOutcomes[0];
-                reflectText = reflect;
-            }
-        }
+        // Acquire and reset the thinking slot once at the start of the procedure.
+        int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
+        _llmManager.ResetInstance(thinkingSlot);
+
+        // ── Call 0: REFLECT + GOAL (always) ─────────────────────────────────────────
+        // For ObservationObjects use their sub-outcomes; for plain outcomes wrap in a list.
+        var (reflectTarget, subOutcomes) = targetOutcome is ObservationObject obs
+            ? (obs as ConcreteOutcome, obs.SubOutcomes)
+            : (targetOutcome, new List<ConcreteOutcome> { targetOutcome });
+
+        var (goalOutcome, reflect) = await GenerateGoalAsync(
+            thinkingSlot, reflectTarget, subOutcomes, node, thinkingModusMentis, protagonist, worldContext, cancellationToken);
+
+        ConcreteOutcome resolvedOutcome = goalOutcome ?? subOutcomes[0];
+        string reflectText = reflect;
+        ObservationObject? sourceObs = targetOutcome as ObservationObject;
 
         string outcomeDescription = resolvedOutcome.ToNaturalLanguageString();
         var skillMeans = actionModiMentis.Select(s => $"with {s.SkillMeans}").ToList();
 
-        // Get thinking slot — reset context for a fresh batch
-        int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
-        _llmManager.ResetInstance(thinkingSlot);
-
         // ── Call 1: WHY ────────────────────────────────────────────────────────────
-        string whyPrompt = _promptConstructor.BuildWhyPrompt(outcomeDescription, node, thinkingModusMentis, protagonist, worldContext, resolvedOutcome, keywordInContext);
+        // For the ignore outcome use the source observation as the attention label so
+        // the prompt reads naturally ("drawn to [observation]… want to ignore and move on").
+        ConcreteOutcome whyTargetOutcome = (resolvedOutcome is IgnoreOutcome && sourceObs != null)
+            ? sourceObs
+            : resolvedOutcome;
+        string whyPrompt = _promptConstructor.BuildWhyPrompt(outcomeDescription, node, thinkingModusMentis, protagonist, worldContext, whyTargetOutcome, keywordInContext);
         string whyGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
 
         string? whyJson = await RequestFromLLMAsync(thinkingSlot, whyPrompt, whyGbnf, 350, cancellationToken);
@@ -91,6 +94,19 @@ public class ThinkingExecutor
 
         string whyText = ParseSingleTextField(whyJson, "what_do_i_think");
         Console.WriteLine($"ThinkingExecutor: WHY complete ({whyText.Length} chars)");
+
+        // ── Early exit: IGNORE ─────────────────────────────────────────────────────
+        if (resolvedOutcome is IgnoreOutcome)
+        {
+            Console.WriteLine("ThinkingExecutor: IGNORE selected — skipping HOW/WHAT, returning reasoning only.");
+            string ignoreReasoning = string.Join(" ", new[] { reflectText, whyText }
+                .Where(s => !string.IsNullOrWhiteSpace(s)));
+            return new ThinkingResponse
+            {
+                ReasoningText = ignoreReasoning,
+                Actions = new List<ParsedNarrativeAction>()
+            };
+        }
 
         // ── Call 2: HOW ────────────────────────────────────────────────────────────
         string howPrompt = _promptConstructor.BuildHowPrompt(outcomeDescription, actionModiMentis, thinkingModusMentis);
@@ -165,23 +181,24 @@ public class ThinkingExecutor
 
     /// <summary>
     /// REFLECT + GOAL batch: two calls in the same slot.
-    /// Call 0a (REFLECT): full context, asks what the thinker makes of the observation → reasoning text.
-    /// Call 0b (GOAL): short continuation, picks which sub-outcome to pursue.
-    /// Returns (chosen sub-outcome, reflect reasoning text). Outcome is null on failure.
+    /// Call 0a (REFLECT): full context, asks what the thinker makes of <paramref name="reflectTarget"/> → reasoning text.
+    /// Call 0b (GOAL): short continuation, picks from <paramref name="subOutcomes"/> or "ignore and move on".
+    /// Returns (chosen sub-outcome or IgnoreOutcome, reflect text). Outcome is null on LLM failure.
     /// </summary>
     private async Task<(ConcreteOutcome? Outcome, string ReflectText)> GenerateGoalAsync(
-        ObservationObject obs,
+        int thinkingSlot,
+        ConcreteOutcome reflectTarget,
+        List<ConcreteOutcome> subOutcomes,
         NarrationNode node,
         ModusMentis thinkingModusMentis,
         Protagonist protagonist,
         WorldContext worldContext,
         CancellationToken cancellationToken)
     {
-        int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
-        _llmManager.ResetInstance(thinkingSlot);
-
         // ── Call 0a: REFLECT ───────────────────────────────────────────────────────
-        string reflectPrompt = ThinkingPromptConstructor.BuildReflectPrompt(obs, node, thinkingModusMentis, protagonist, worldContext);
+        string reflectPrompt = reflectTarget is ObservationObject obsTarget
+            ? ThinkingPromptConstructor.BuildReflectPrompt(obsTarget, node, thinkingModusMentis, protagonist, worldContext)
+            : ThinkingPromptConstructor.BuildReflectPrompt(reflectTarget, node, thinkingModusMentis, protagonist, worldContext);
         string reflectGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
 
         string? reflectJson = await RequestFromLLMAsync(thinkingSlot, reflectPrompt, reflectGbnf, 350, cancellationToken);
@@ -197,8 +214,12 @@ public class ThinkingExecutor
         }
 
         // ── Call 0b: GOAL ──────────────────────────────────────────────────────────
-        var goalOptions = obs.SubOutcomes.Select(o => o.ToNaturalLanguageString()).ToList();
-        string goalPrompt = ThinkingPromptConstructor.BuildGoalPrompt(obs.SubOutcomes, thinkingModusMentis);
+        // Always append "ignore and move on" so there are at least 2 choices.
+        var goalOptions = subOutcomes
+            .Select(o => o.ToNaturalLanguageString())
+            .Append(IgnoreOutcome.GoalString)
+            .ToList();
+        string goalPrompt = ThinkingPromptConstructor.BuildGoalPrompt(goalOptions, thinkingModusMentis);
         string goalGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateGoalSchema(goalOptions));
 
         string? goalJson = await RequestFromLLMAsync(thinkingSlot, goalPrompt, goalGbnf, 100, cancellationToken);
@@ -212,9 +233,11 @@ public class ThinkingExecutor
         {
             using var doc = JsonDocument.Parse(goalJson);
             string chosen = doc.RootElement.GetProperty("goal").GetString() ?? "";
-            var match = obs.SubOutcomes.FirstOrDefault(o =>
-                o.ToNaturalLanguageString().Equals(chosen, StringComparison.OrdinalIgnoreCase));
             Console.WriteLine($"ThinkingExecutor: GOAL selected '{chosen}'");
+            if (chosen.Equals(IgnoreOutcome.GoalString, StringComparison.OrdinalIgnoreCase))
+                return (IgnoreOutcome.Instance, reflectText);
+            var match = subOutcomes.FirstOrDefault(o =>
+                o.ToNaturalLanguageString().Equals(chosen, StringComparison.OrdinalIgnoreCase));
             return (match, reflectText);
         }
         catch (JsonException ex)

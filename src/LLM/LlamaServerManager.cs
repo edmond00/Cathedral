@@ -560,6 +560,15 @@ public class LlamaServerManager : IDisposable
                 timingText.AppendLine($"  End:      {endTime:yyyy-MM-dd HH:mm:ss.fff}");
                 timingText.AppendLine($"  Duration: {duration.TotalMilliseconds:F0}ms ({duration.TotalSeconds:F2}s)");
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "timing.txt"), timingText.ToString());
+
+                if (root.TryGetProperty("usage", out var usageEl))
+                {
+                    int pt = usageEl.TryGetProperty("prompt_tokens", out var ptEl) ? ptEl.GetInt32() : 0;
+                    int ct = usageEl.TryGetProperty("completion_tokens", out var ctEl) ? ctEl.GetInt32() : 0;
+                    double fillPct = _contextSize > 0 ? pt * 100.0 / _contextSize : 0;
+                    var ctxText = $"Prompt Tokens:     {pt}\nCompletion Tokens: {ct}\nContext Size:      {_contextSize}\nContext Fill:      {fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}%\n";
+                    await File.WriteAllTextAsync(Path.Combine(requestLogDir, "context_usage.txt"), ctxText);
+                }
             }
             
             return probabilities;
@@ -657,6 +666,15 @@ public class LlamaServerManager : IDisposable
                 var endTime = DateTime.Now;
                 var timingText = $"Duration: {(endTime - startTime).TotalMilliseconds:F0}ms";
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "timing.txt"), timingText);
+
+                if (root.TryGetProperty("usage", out var usageEl))
+                {
+                    int pt = usageEl.TryGetProperty("prompt_tokens", out var ptEl) ? ptEl.GetInt32() : 0;
+                    int ct = usageEl.TryGetProperty("completion_tokens", out var ctEl) ? ctEl.GetInt32() : 0;
+                    double fillPct = _contextSize > 0 ? pt * 100.0 / _contextSize : 0;
+                    var ctxText = $"Prompt Tokens:     {pt}\nCompletion Tokens: {ct}\nContext Size:      {_contextSize}\nContext Fill:      {fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}%\n";
+                    await File.WriteAllTextAsync(Path.Combine(requestLogDir, "context_usage.txt"), ctxText);
+                }
             }
 
             instance.AddAssistantResponse(generated);
@@ -723,6 +741,8 @@ public class LlamaServerManager : IDisposable
         {
             var llmStartTime = DateTime.Now;
             var fullResponse = new StringBuilder();
+            int promptTokens = 0;
+            int completionTokens = 0;
             
             // Check if conversation history is too long and trim if needed
             int estimatedTokens = instance.EstimateConversationTokens();
@@ -793,14 +813,23 @@ public class LlamaServerManager : IDisposable
                     {
                         using var doc = JsonDocument.Parse(jsonData);
                         var rootElement = doc.RootElement;
-                        
+
+                        // Capture usage stats from the final chunk (sent by llama.cpp before [DONE])
+                        if (rootElement.TryGetProperty("usage", out var usageEl))
+                        {
+                            if (usageEl.TryGetProperty("prompt_tokens", out var ptEl))
+                                promptTokens = ptEl.GetInt32();
+                            if (usageEl.TryGetProperty("completion_tokens", out var ctEl))
+                                completionTokens = ctEl.GetInt32();
+                        }
+
                         // Debug: Log the JSON structure if needed
                         if (!rootElement.TryGetProperty("choices", out var choices))
                         {
                             await LogWarningAsync($"Missing 'choices' in response: {jsonData}");
                             continue;
                         }
-                        
+
                         if (choices.GetArrayLength() > 0)
                         {
                             var choice = choices[0];
@@ -811,7 +840,7 @@ public class LlamaServerManager : IDisposable
                                 if (!string.IsNullOrEmpty(token))
                                 {
                                     fullResponse.Append(token);
-                                    
+
                                     // Invoke callbacks
                                     onTokenStreamed?.Invoke(token, slotId);
                                     TokenStreamed?.Invoke(this, new TokenStreamedEventArgs(token, slotId));
@@ -871,6 +900,12 @@ public class LlamaServerManager : IDisposable
                 timingText.AppendLine($"  Empty Result:  {string.IsNullOrWhiteSpace(responseText)}");
                 timingText.AppendLine($"  Response Len:  {responseText.Length} chars");
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "timing.txt"), timingText.ToString());
+
+                int reportedPrompt = promptTokens > 0 ? promptTokens : estimatedTokens;
+                bool isEstimate    = promptTokens == 0;
+                double fillPct     = _contextSize > 0 ? reportedPrompt * 100.0 / _contextSize : 0;
+                var ctxText = $"Prompt Tokens:     {reportedPrompt}{(isEstimate ? " (estimated)" : "")}\nCompletion Tokens: {completionTokens}\nContext Size:      {_contextSize}\nContext Fill:      {fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}%\n";
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "context_usage.txt"), ctxText);
             }
             
             // Invoke completion callbacks
@@ -1009,6 +1044,18 @@ public class LlamaServerManager : IDisposable
         
         instance.Reset();
         Console.WriteLine($"✓ Reset instance {slotId}.");
+
+        // Write a marker file so the LLM monitor can show a visible cache-reset separator.
+        if (_sessionLogDir != null)
+        {
+            var slotDir = Path.Combine(_sessionLogDir, $"slot_{slotId}");
+            if (Directory.Exists(slotDir))
+            {
+                var ts = DateTime.Now.ToString("HH-mm-ss-fff");
+                var markerPath = Path.Combine(slotDir, $"cache_reset_{instance.RequestCount:D3}_{ts}.txt");
+                File.WriteAllText(markerPath, $"Cache reset at {DateTime.Now:HH:mm:ss.fff} after request {instance.RequestCount}");
+            }
+        }
     }
     
     /// <summary>

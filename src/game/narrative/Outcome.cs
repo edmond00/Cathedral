@@ -52,10 +52,13 @@ public abstract class ConcreteOutcome : OutcomeBase
 
     /// <summary>
     /// Returns a single sentence that contextualises a clicked keyword in relation to this outcome.
-    /// Used in thinking prompts to bridge "You noticed {keyword}" and "Now you want to {outcome}".
-    /// Example: "This stream leads to a mossy forest clearing."
+    /// Used in thinking prompts to bridge "You noticed {keyword/context}" and "Now you want to {outcome}".
+    /// When <paramref name="keywordInContext"/> is provided, uses "It" instead of "This {keyword}" to
+    /// avoid repeating words already present in the noticed clause.
     /// Subclasses override this to provide outcome-type-appropriate syntax.
     /// </summary>
-    public virtual string GetKeywordToOutcomeTransition(string keyword)
-        => $"This {keyword} is connected to {DisplayName}.";
+    public virtual string GetKeywordToOutcomeTransition(string keyword, KeywordInContext? keywordInContext = null)
+        => keywordInContext != null
+            ? $"It is connected to {DisplayName}."
+            : $"This {keyword} is connected to {DisplayName}.";
 }

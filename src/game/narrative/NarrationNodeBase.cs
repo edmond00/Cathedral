@@ -182,9 +182,15 @@ public abstract class NarrationNode : ConcreteOutcome, IObservation
 
     /// <inheritdoc/>
     /// For narration nodes, the keyword is one of the NodeKeywordsInContext bare keywords.
-    /// Example: keyword="stream" → "This is the stream of a mossy forest clearing."
-    public override string GetKeywordToOutcomeTransition(string keyword)
-        => $"This is the {keyword} of {GenerateNeutralDescription(0)}.";
+    /// Example: keyword="stream" → "This stream is part of a mossy forest clearing."
+    public override string GetKeywordToOutcomeTransition(string keyword, KeywordInContext? keywordInContext = null)
+    {
+        string desc = GenerateNeutralDescription(0);
+        string withArticle = desc.Length > 0 && "aeiouAEIOU".Contains(desc[0]) ? $"an {desc}" : $"a {desc}";
+        return keywordInContext != null
+            ? $"It is part of {withArticle}."
+            : $"This {keyword} is part of {withArticle}.";
+    }
 
     /// <summary>
     /// Generates an enriched context description that includes a mood qualifier.

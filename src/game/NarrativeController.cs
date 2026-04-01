@@ -250,22 +250,24 @@ public class NarrativeController
                 _worldContext,
                 CancellationToken.None);
 
-            if (response == null || response.Actions.Count == 0)
+            if (response == null)
             {
-                // Display error - no fallback as per user request
-                throw new Exception("Thinking LLM returned no actions");
+                throw new Exception("Thinking LLM returned null response");
             }
-            
-            Console.WriteLine($"NarrativeController: Generated {response.Actions.Count} actions");
-            
-            // Create thinking block with reasoning + actions
+
+            bool hasActions = response.Actions.Count > 0;
+            Console.WriteLine(hasActions
+                ? $"NarrativeController: Generated {response.Actions.Count} actions"
+                : "NarrativeController: Thinking chose to ignore — no action generated");
+
+            // Create thinking block with reasoning + actions (null when ignored)
             // ChainOrigin points to the observation block that contained the clicked keyword
             var thinkingBlock = new NarrationBlock(
                 Type: NarrationBlockType.Thinking,
                 ModusMentis: thinkingModusMentis,
                 Text: response.ReasoningText,
                 Keywords: null,
-                Actions: response.Actions,
+                Actions: hasActions ? response.Actions : null,
                 ChainOrigin: sourceObservationBlock
             );
             

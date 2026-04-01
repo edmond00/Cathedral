@@ -12,7 +12,7 @@ public class PatienceModusMentis : ModusMentis
     public override string DisplayName => "Patience";
     public override string ShortDescription => "waiting, endurance";
     public override string SkillMeans => "waiting and endurance";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "pineal_gland", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     

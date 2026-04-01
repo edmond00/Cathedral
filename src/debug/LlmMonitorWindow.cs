@@ -42,6 +42,7 @@ public sealed class LlmMonitorWindow : Form
     private static readonly Color FgTiming      = Color.FromArgb(220, 195, 80);    // gold
     private static readonly Color FgEmpty       = Color.FromArgb(210, 100, 100);   // coral
     private static readonly Color FgGbnf        = Color.FromArgb(130, 130, 145);   // muted gray
+    private static readonly Color FgContext     = Color.FromArgb(80,  200, 180);   // teal
     private static readonly Color FgListNormal  = Color.FromArgb(190, 190, 200);
     private static readonly Color FgListSelect  = Color.FromArgb(255, 220, 160);
     private static readonly Color BgListSelect  = Color.FromArgb(50, 50, 70);
@@ -397,6 +398,20 @@ public sealed class LlmMonitorWindow : Form
             AppendLine("  No requests logged yet.", FgGbnf);
         }
 
+        // Build a sorted list of cache-reset markers: seq → timestamp string
+        var resetMarkers = new HashSet<string>();
+        if (Directory.Exists(slot.Dir))
+        {
+            foreach (var f in Directory.GetFiles(slot.Dir, "cache_reset_*.txt"))
+            {
+                var fname = Path.GetFileNameWithoutExtension(f);
+                var parts = fname.Split('_');
+                // format: cache_reset_NNN_HH-mm-ss-fff → parts[2] = NNN
+                if (parts.Length >= 3)
+                    resetMarkers.Add(parts[2]);
+            }
+        }
+
         foreach (var reqDir in requestDirs)
         {
             var reqName = Path.GetFileName(reqDir);
@@ -412,6 +427,20 @@ public sealed class LlmMonitorWindow : Form
                 var timingText = File.ReadAllText(timingFile);
                 var ms = ParseDuration(timingText);
                 AppendLine($"  ⏱  {ms}", FgTiming);
+            }
+
+            // context fill
+            var ctxFile = Path.Combine(reqDir, "context_usage.txt");
+            if (File.Exists(ctxFile))
+            {
+                var ctxText = File.ReadAllText(ctxFile);
+                var (ptok, ctok, ctxSize, fillPct, isEstimate) = ParseContextUsage(ctxText);
+                if (ctxSize > 0)
+                {
+                    var bar    = BuildContextBar(fillPct);
+                    var prefix = isEstimate ? "~" : "";
+                    AppendLine($"  ◈  {prefix}{ptok}+{ctok} / {ctxSize} tokens  {bar}  {fillPct:F1}%", FgContext);
+                }
             }
 
             // GBNF note
@@ -447,6 +476,15 @@ public sealed class LlmMonitorWindow : Form
                 }
             }
             AppendLine("", FgDefault);
+
+            // Cache-reset marker: show a separator if the instance was reset after this request
+            if (resetMarkers.Contains(seq))
+            {
+                AppendLine("╔══════════════════════════════════════════════════════════╗", FgEmpty, bold: true);
+                AppendLine("║          [ CACHE RESET — conversation cleared ]          ║", FgEmpty, bold: true);
+                AppendLine("╚══════════════════════════════════════════════════════════╝", FgEmpty, bold: true);
+                AppendLine("", FgDefault);
+            }
         }
 
         _conversation.ResumeLayout();
@@ -531,5 +569,28 @@ public sealed class LlmMonitorWindow : Form
     {
         var lines = text.Split('\n');
         return string.Join("\n", lines.Select(l => indent + l));
+    }
+
+    private static (int ptok, int ctok, int ctxSize, double fillPct, bool isEstimate) ParseContextUsage(string text)
+    {
+        int Parse(string key)
+        {
+            var m = Regex.Match(text, $@"{key}:\s*(\d+)");
+            return m.Success ? int.Parse(m.Groups[1].Value) : 0;
+        }
+        int ptok       = Parse("Prompt Tokens");
+        int ctok       = Parse("Completion Tokens");
+        int ctxSize    = Parse("Context Size");
+        bool isEstimate = text.Contains("(estimated)");
+        var fillM      = Regex.Match(text, @"Context Fill:\s*([\d.]+)%");
+        double fill    = fillM.Success ? double.Parse(fillM.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
+        return (ptok, ctok, ctxSize, fill, isEstimate);
+    }
+
+    private static string BuildContextBar(double fillPct)
+    {
+        const int w = 20;
+        int filled = Math.Clamp((int)Math.Round(fillPct / 100.0 * w), 0, w);
+        return "[" + new string('█', filled) + new string('░', w - filled) + "]";
     }
 }

@@ -10,10 +10,9 @@ namespace Cathedral.Game.Narrative;
 /// Groups a set of related ConcreteOutcomes under shared observation keywords,
 /// allowing multiple items to share the same visual "spot" in the narrative graph.
 ///
-/// When a keyword on an ObservationObject is clicked:
-/// - If SubOutcomes.Count == 1  → proceeds directly to WHY/HOW/WHAT (no extra LLM call).
-/// - If SubOutcomes.Count  > 1  → fires a GOAL LLM call first so the thinking modusMentis
-///   chooses which sub-outcome it wants to pursue, then continues with WHY/HOW/WHAT.
+/// When a keyword on an ObservationObject is clicked, the thinking modusMentis always runs
+/// REFLECT + GOAL before WHY/HOW/WHAT. The GOAL choices include all SubOutcomes plus the
+/// "ignore and move on" sentinel — so the thinker can always opt out of acting.
 ///
 /// Items are nested inside their ObservationObject class exactly as they were nested inside
 /// NarrationNode — the validator and reflection-based item discovery are updated accordingly.
@@ -109,8 +108,14 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
 
     /// <inheritdoc/>
     /// Example: "This musk is part of a musky fox den."
-    public override string GetKeywordToOutcomeTransition(string keyword)
-        => $"This {keyword} is part of {GenerateNeutralDescription(0)}.";
+    public override string GetKeywordToOutcomeTransition(string keyword, KeywordInContext? keywordInContext = null)
+    {
+        string desc = GenerateNeutralDescription(0);
+        string withArticle = desc.Length > 0 && "aeiouAEIOU".Contains(desc[0]) ? $"an {desc}" : $"a {desc}";
+        return keywordInContext != null
+            ? $"It is part of {withArticle}."
+            : $"This {keyword} is part of {withArticle}.";
+    }
 
     // ── Routing helpers ───────────────────────────────────────────────────────
 

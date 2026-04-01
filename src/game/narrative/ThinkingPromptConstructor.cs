@@ -22,21 +22,58 @@ public class ThinkingPromptConstructor
         Protagonist protagonist,
         WorldContext worldContext)
     {
+        var kics = observation.ObservationKeywordsInContext;
+        string keywordHint = kics.Count > 0
+            ? $" You notice things like: {string.Join(", ", kics.Select(k => k.Context))}."
+            : "";
+        return BuildReflectPromptCore(
+            observation.GenerateNeutralDescription(protagonist.CurrentLocationId),
+            keywordHint, node, thinkingModusMentis, protagonist, worldContext);
+    }
+
+    /// <summary>
+    /// Call 0a (REFLECT) overload for a plain ConcreteOutcome (single-outcome targets).
+    /// </summary>
+    public static string BuildReflectPrompt(
+        ConcreteOutcome outcome,
+        NarrationNode node,
+        ModusMentis thinkingModusMentis,
+        Protagonist protagonist,
+        WorldContext worldContext)
+    {
+        var kics = outcome.OutcomeKeywordsInContext;
+        string keywordHint = kics.Count > 0
+            ? $" You notice things like: {string.Join(", ", kics.Select(k => k.Context))}."
+            : "";
+        // Use GenerateNeutralDescription for types that have it (NarrationNode, ObservationObject),
+        // so we get e.g. "the alder grove" rather than the transition verb "follow the draining".
+        string description = outcome is NarrationNode nn ? nn.GenerateNeutralDescription(0)
+            : outcome is ObservationObject ob ? ob.GenerateNeutralDescription(0)
+            : outcome.DisplayName;
+        return BuildReflectPromptCore(
+            description,
+            keywordHint, node, thinkingModusMentis, protagonist, worldContext);
+    }
+
+    private static string BuildReflectPromptCore(
+        string description,
+        string keywordHint,
+        NarrationNode node,
+        ModusMentis thinkingModusMentis,
+        Protagonist protagonist,
+        WorldContext worldContext)
+    {
         string personaToneLine = thinkingModusMentis.PersonaTone != null
             ? $"You are a {thinkingModusMentis.PersonaTone}.\n"
             : "";
         string reminderClause = thinkingModusMentis.PersonaReminder != null
             ? $"As a {thinkingModusMentis.PersonaReminder}, "
             : "";
-        var kics = observation.ObservationKeywordsInContext;
-        string keywordHint = kics.Count > 0
-            ? $" You notice things like: {string.Join(", ", kics.Select(k => k.Context))}."
-            : "";
 
         return $@"{personaToneLine}{WorldContext.EpochContext}
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
-You are observing {WithArticle(observation.GenerateNeutralDescription(protagonist.CurrentLocationId))}.{keywordHint}
+You are observing {WithArticle(description)}.{keywordHint}
 {reminderClause}what do you think?
 {Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
     }
@@ -44,15 +81,16 @@ You are observing {WithArticle(observation.GenerateNeutralDescription(protagonis
     /// <summary>
     /// Call 0b (GOAL): follow-up in the same slot after REFLECT — asks which sub-outcome to pursue.
     /// Short continuation: no full context repeat since the slot already has it from REFLECT.
+    /// <paramref name="goalOptions"/> must include the "ignore and move on" sentinel string.
     /// </summary>
     public static string BuildGoalPrompt(
-        List<ConcreteOutcome> subOutcomes,
+        IEnumerable<string> goalOptions,
         ModusMentis thinkingModusMentis)
     {
         string reminderClause = thinkingModusMentis.PersonaReminder != null
             ? $"As a {thinkingModusMentis.PersonaReminder}, "
             : "";
-        string optionsList = string.Join("\n", subOutcomes.Select(o => $"- {o.ToNaturalLanguageString()}"));
+        string optionsList = string.Join("\n", goalOptions.Select(o => $"- {o}"));
 
         return $@"You could:
 {optionsList}
@@ -142,8 +180,8 @@ You could proceed:
         string reminderClause = actionModusMentis.PersonaReminder != null
             ? $"As a {actionModusMentis.PersonaReminder}, "
             : "";
-        string transition = targetOutcome.GetKeywordToOutcomeTransition(keyword);
         string noticedClause = keywordInContext != null ? keywordInContext.Context : keyword;
+        string transition = targetOutcome.GetKeywordToOutcomeTransition(keyword, keywordInContext);
 
         return $@"{personaToneLine}{WorldContext.EpochContext}
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
