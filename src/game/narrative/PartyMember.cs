@@ -153,6 +153,40 @@ public abstract class PartyMember
         return true; // acquisition itself always succeeds; caller is informed via log
     }
 
+    /// <summary>
+    /// Remove a specific item from wherever it is held (overflow, anchor slot, or container).
+    /// Returns true when the item was found and removed.
+    /// </summary>
+    public bool RemoveItem(Item item)
+    {
+        if (Inventory.Remove(item)) return true;
+        foreach (var list in EquippedItems.Values)
+            if (list.Remove(item)) return true;
+        foreach (var list in EquippedItems.Values)
+            foreach (var equipped in list)
+                if (equipped is ContainerItem c && c.TryRemove(item)) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// Returns all items currently held: overflow inventory, every anchor slot,
+    /// and the contents of any equipped containers.
+    /// </summary>
+    public List<Item> GetAllItems()
+    {
+        var result = new List<Item>(Inventory);
+        foreach (var list in EquippedItems.Values)
+        {
+            foreach (var item in list)
+            {
+                result.Add(item);
+                if (item is ContainerItem c)
+                    result.AddRange(c.Contents);
+            }
+        }
+        return result;
+    }
+
     // ── Body initialisation ──────────────────────────────────────
     private void ApplySpeciesMaxScores(Species species)
     {

@@ -164,6 +164,36 @@ You could proceed:
     private static string WithArticle(string s) =>
         s.Length > 0 && "aeiouAEIOU".Contains(s[0]) ? $"an {s}" : $"a {s}";
 
+    /// <summary>
+    /// Builds the prompt asking the action modusMentis to reformulate an existing action text
+    /// to incorporate a combined item.  Sent to the action modusMentis's own slot (fresh context).
+    /// Style mirrors <see cref="BuildWhatPrompt"/>: direct, immersive, first-person.
+    /// </summary>
+    public string BuildItemReformulationPrompt(
+        string originalActionText,
+        Item combinedItem,
+        ModusMentis actionModusMentis,
+        NarrationNode node,
+        Protagonist protagonist,
+        WorldContext worldContext)
+    {
+        string personaToneLine = actionModusMentis.PersonaTone != null
+            ? $"You are a {actionModusMentis.PersonaTone}.\n"
+            : "";
+        string reminderClause = actionModusMentis.PersonaReminder != null
+            ? $"As a {actionModusMentis.PersonaReminder}, "
+            : "";
+
+        return $@"{personaToneLine}{WorldContext.EpochContext}
+{node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
+
+You are about to: {originalActionText}.
+You are holding: {combinedItem.ItemId} ({combinedItem.Description}).
+
+{reminderClause}using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescription}), describe simply what you will do, incorporating the use of {combinedItem.ItemId} in your action.
+{Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
+    }
+
     public string BuildWhatPrompt(
         string keyword,
         KeywordInContext? keywordInContext,

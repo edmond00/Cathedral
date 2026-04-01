@@ -142,6 +142,16 @@ public class NarrativeState
     /// Is the modusMentis popup being shown for focus observation (right-click) rather than thinking (left-click)?
     /// </summary>
     public bool IsSelectingObservationModusMentis { get; set; } = false;
+
+    /// <summary>
+    /// Is the item selection popup being shown to combine an item with an action?
+    /// </summary>
+    public bool IsSelectingItemForAction { get; set; } = false;
+
+    /// <summary>
+    /// The action waiting to receive a combined item (set when item popup is shown).
+    /// </summary>
+    public ParsedNarrativeAction? ActionPendingItemCombination { get; set; } = null;
     
     /// <summary>
     /// Is the system currently generating a focus observation via LLM?
@@ -190,6 +200,8 @@ public class NarrativeState
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
         IsSelectingObservationModusMentis = false;
+        IsSelectingItemForAction = false;
+        ActionPendingItemCombination = null;
         PendingTransitionNode = null;
         ErrorMessage = null;
         ClearDiceRoll();
@@ -215,6 +227,8 @@ public class NarrativeState
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
         IsSelectingObservationModusMentis = false;
+        IsSelectingItemForAction = false;
+        ActionPendingItemCombination = null;
         PendingTransitionNode = null;
         ErrorMessage = null;
         ClearDiceRoll();

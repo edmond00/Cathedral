@@ -340,6 +340,49 @@ public class ThinkingExecutor
     private static ModusMentis? MapMeansToModusMentis(string means, List<ModusMentis> actionModiMentis)
         => actionModiMentis.FirstOrDefault(s => $"with {s.SkillMeans}" == means);
 
+    /// <summary>
+    /// Asks the action modusMentis to reformulate an existing action text to incorporate a combined item.
+    /// Uses the WHAT-style prompt. Returns the reformulated display text, or null on LLM failure.
+    /// </summary>
+    public async Task<string?> ExecuteItemReformulationAsync(
+        ParsedNarrativeAction originalAction,
+        Item item,
+        NarrationNode node,
+        Protagonist protagonist,
+        WorldContext worldContext,
+        CancellationToken cancellationToken = default)
+    {
+        var actionModusMentis = originalAction.ActionModusMentis;
+        if (actionModusMentis == null)
+        {
+            Console.Error.WriteLine("ThinkingExecutor: Item reformulation skipped — action has no resolved modusMentis.");
+            return null;
+        }
+
+        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(actionModusMentis);
+        _llmManager.ResetInstance(actionSlot);
+
+        string prompt = _promptConstructor.BuildItemReformulationPrompt(
+            originalAction.ActionText, item, actionModusMentis, node, protagonist, worldContext);
+        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema());
+
+        string? jsonResponse = await RequestFromLLMAsync(actionSlot, prompt, gbnf, cancellationToken);
+        if (string.IsNullOrWhiteSpace(jsonResponse))
+        {
+            Console.Error.WriteLine("ThinkingExecutor: Item reformulation LLM call returned empty response.");
+            return null;
+        }
+
+        string reformulated = ParseSingleTextField(jsonResponse, "what_should_i_do");
+        if (string.IsNullOrWhiteSpace(reformulated))
+            return null;
+
+        // Strip "try to " prefix like the WHAT pipeline does
+        return reformulated.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
+            ? reformulated.Substring(7)
+            : reformulated;
+    }
+
 }
 
 /// <summary>

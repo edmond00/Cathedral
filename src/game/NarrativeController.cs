@@ -24,6 +24,7 @@ public class NarrativeController
     private readonly NarrationScrollBuffer _scrollBuffer;
     private readonly NarrativeUI _ui;
     private readonly TerminalThinkingModusMentisPopup _modusMentisPopup;
+    private readonly TerminalItemSelectionPopup _itemSelectionPopup;
     private readonly WorldContext _worldContext;
     
     // Dependencies
@@ -95,6 +96,7 @@ public class NarrativeController
         int contentWidth = layout.CONTENT_WIDTH - 1; // -1 for scrollbar
         _scrollBuffer = new NarrationScrollBuffer(maxWidth: contentWidth, layout: layout);
         _modusMentisPopup = new TerminalThinkingModusMentisPopup(popup);
+        _itemSelectionPopup = new TerminalItemSelectionPopup(popup);
         _core = core;
         _terminalInputHandler = terminalInputHandler;
         _worldContext = worldContext ?? new ForestBiomeContext();
@@ -469,7 +471,11 @@ public class NarrativeController
             baseDice += bonusDice;
         }
         
-        return Math.Clamp(baseDice, 3, 8);
+        // Combined item usage level adds bonus dice
+        if (action.CombinedItem != null)
+            baseDice += action.CombinedItem.UsageLevel;
+
+        return Math.Clamp(baseDice, 3, 12);
     }
     
     /// <summary>
@@ -787,15 +793,15 @@ public class NarrativeController
     /// </summary>
     public void OnRawMouseMove(Vector2 screenPosition)
     {
-        // If popup is visible, use raw screen coordinates for accurate hit detection
+        // Get cell size for hit detection (shared by both popups)
+        var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
+        int cellPixelSize = (int)layoutInfo.CellSize.X;
+
         if (_modusMentisPopup.IsVisible)
-        {
-            // Get cell size for hit detection
-            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
-            int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
-            
             _modusMentisPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
-        }
+
+        if (_itemSelectionPopup.IsVisible)
+            _itemSelectionPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
     }
     
     /// <summary>
@@ -869,8 +875,8 @@ public class NarrativeController
         _lastMouseX = mouseX;
         _lastMouseY = mouseY;
         
-        // If popup is visible, raw mouse events are handled separately
-        if (_modusMentisPopup.IsVisible)
+        // If any popup is visible, raw mouse events are handled separately
+        if (_modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible)
         {
             return;
         }
@@ -1045,8 +1051,32 @@ public class NarrativeController
             // but scrollbar clicks are allowed (processed above)
             return;
         }
-        
-        // If popup is visible, handle popup click with screen coordinates
+
+        // If item selection popup is visible, handle item popup click
+        if (_itemSelectionPopup.IsVisible)
+        {
+            Vector2 correctedScreenPos = _terminalInputHandler.GetCorrectedMousePosition();
+            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
+            int cellPixelSize = (int)layoutInfo.CellSize.X;
+
+            var selectedItem = _itemSelectionPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.ClientSize, cellPixelSize);
+            if (selectedItem != null && _narrationState.ActionPendingItemCombination != null)
+            {
+                var pendingAction = _narrationState.ActionPendingItemCombination;
+                _narrationState.IsSelectingItemForAction = false;
+                _narrationState.ActionPendingItemCombination = null;
+                _ = ExecuteItemCombinationAsync(pendingAction, selectedItem);
+            }
+            else
+            {
+                Console.WriteLine("NarrativeController: Item popup closed (clicked outside)");
+                _narrationState.IsSelectingItemForAction = false;
+                _narrationState.ActionPendingItemCombination = null;
+            }
+            return;
+        }
+
+        // If modus mentis popup is visible, handle popup click with screen coordinates
         if (_modusMentisPopup.IsVisible)
         {
             // Get screen mouse position
@@ -1171,9 +1201,37 @@ public class NarrativeController
         if (_narrationState.ShowContinueButton)
             return;
         
+        // Check if right-clicked on an action button (item combination)
+        ActionRegion? rightClickedAction = _ui.GetHoveredAction(mouseX, mouseY);
+        if (rightClickedAction != null)
+        {
+            var action = GetActionAtIndex(rightClickedAction.ActionIndex);
+            if (action != null && action.CombinedItem == null)
+            {
+                var candidateItems = GetCombinableItems();
+                if (candidateItems.Count > 0)
+                {
+                    Console.WriteLine($"NarrativeController: Right-clicked action '{action.DisplayText}' — showing item selection popup ({candidateItems.Count} candidates)");
+                    _narrationState.IsSelectingItemForAction = true;
+                    _narrationState.ActionPendingItemCombination = action;
+                    Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
+                    _itemSelectionPopup.Show(screenPos, candidateItems, "Combine Item with Action");
+                }
+                else
+                {
+                    Console.WriteLine("NarrativeController: No combinable items available.");
+                }
+            }
+            else if (action?.CombinedItem != null)
+            {
+                Console.WriteLine($"NarrativeController: Action already has combined item '{action.CombinedItem.ItemId}' — ignoring right-click.");
+            }
+            return;
+        }
+
         // Check if right-clicked on a keyword
         KeywordRegion? clickedKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
-        
+
         if (clickedKeyword != null && _narrationState.ThinkingAttemptsRemaining > 0)
         {
             Console.WriteLine($"NarrativeController: Right-clicked keyword: {clickedKeyword.Keyword}");
@@ -1402,5 +1460,142 @@ public class NarrativeController
         }
         
         Console.WriteLine($"=== Total: {nodeCount} nodes, {visited.Count} unique ===\n");
+    }
+
+    // ── Item combination helpers ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns all items the protagonist currently holds that can be combined with an action:
+    /// non-containers, or containers whose Contents list is empty.
+    /// </summary>
+    private List<Item> GetCombinableItems()
+    {
+        return _protagonist.GetAllItems()
+            .Where(i => i is not ContainerItem c || c.Contents.Count == 0)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Looks up the ParsedNarrativeAction at a given global index across all thinking blocks.
+    /// Mirrors the lookup in OnMouseClick.
+    /// </summary>
+    private ParsedNarrativeAction? GetActionAtIndex(int actionIndex)
+    {
+        var allActions = new List<ParsedNarrativeAction>();
+        foreach (var block in _narrationState.Blocks)
+        {
+            if (block.Type == NarrationBlockType.Thinking && block.Actions != null)
+                allActions.AddRange(block.Actions);
+        }
+        return actionIndex >= 0 && actionIndex < allActions.Count ? allActions[actionIndex] : null;
+    }
+
+    /// <summary>
+    /// Orchestrates item combination:
+    ///   1. Critic checks if the item can help realise the action.
+    ///   2. If yes → action modusMentis reformulates action text incorporating the item;
+    ///              result appears as a new action button.
+    ///   3. If no  → action modusMentis narrates a short failure description.
+    /// </summary>
+    private async Task ExecuteItemCombinationAsync(ParsedNarrativeAction action, Item item)
+    {
+        _narrationState.IsLoadingAction = true;
+        _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingAction;
+
+        try
+        {
+            // Resolve action modusMentis
+            var actionModusMentis = action.ActionModusMentis
+                ?? _protagonist.ModiMentis.FirstOrDefault(m => m.ModusMentisId == action.ActionModusMentisId);
+
+            if (actionModusMentis == null)
+            {
+                Console.Error.WriteLine("NarrativeController: Cannot execute item combination — action modusMentis not resolved.");
+                _narrationState.IsLoadingAction = false;
+                return;
+            }
+
+            string itemContext = $"{item.ItemId} ({item.Description})";
+            Console.WriteLine($"NarrativeController: Item combination — action='{action.DisplayText}', item='{itemContext}'");
+
+            // Build critic context
+            var goalDescription = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
+            var criticContext = new CriticContext(_currentNode, _worldContext, _locationId, goalDescription);
+            criticContext.CombinedItemContext = itemContext;
+
+            // === CRITIC: can the item help? ===
+            var appropriatenessTree = CriticTrees.BuildItemAppropriatenessTree(action.ActionText, itemContext, criticContext);
+            var appropriatenessResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(appropriatenessTree);
+
+            if (appropriatenessResult.OverallSuccess)
+            {
+                Console.WriteLine($"NarrativeController: Item '{item.ItemId}' approved — reformulating action.");
+
+                // Ask action modusMentis to reformulate
+                string? reformulatedText = await _thinkingExecutor.ExecuteItemReformulationAsync(
+                    action, item, _currentNode, _protagonist, _worldContext);
+
+                if (string.IsNullOrWhiteSpace(reformulatedText))
+                    reformulatedText = action.DisplayText; // fallback: keep original
+
+                // Create new action with combined item
+                var combinedAction = new ParsedNarrativeAction
+                {
+                    ActionText = reformulatedText,
+                    DisplayText = reformulatedText,
+                    ActionModusMentisId = action.ActionModusMentisId,
+                    ActionModusMentis = action.ActionModusMentis,
+                    ThinkingModusMentis = action.ThinkingModusMentis,
+                    PreselectedOutcome = action.PreselectedOutcome,
+                    Keyword = action.Keyword,
+                    CombinedItem = item,
+                    ChainOrigin = action.ChainOrigin
+                };
+
+                // Add new action as a new thinking block (simplest scroll buffer integration)
+                var combinedBlock = new NarrationBlock(
+                    Type: NarrationBlockType.Thinking,
+                    ModusMentis: action.ThinkingModusMentis,
+                    Text: "",
+                    Keywords: null,
+                    Actions: new List<ParsedNarrativeAction> { combinedAction },
+                    ChainOrigin: action.ChainOrigin
+                );
+                combinedAction.ChainOrigin = combinedBlock;
+
+                _scrollBuffer.AddBlock(combinedBlock);
+                _narrationState.AddBlock(combinedBlock);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            }
+            else
+            {
+                Console.WriteLine($"NarrativeController: Item '{item.ItemId}' rejected — narrating failure.");
+
+                string failureNarration = await _actionExecutor.OutcomeNarrator.NarrateItemCombinationFailureAsync(
+                    action, item, actionModusMentis);
+
+                var failureBlock = new NarrationBlock(
+                    Type: NarrationBlockType.Outcome,
+                    ModusMentis: actionModusMentis,
+                    Text: failureNarration,
+                    Keywords: null,
+                    Actions: null,
+                    ChainOrigin: action.ChainOrigin
+                );
+                _scrollBuffer.AddBlock(failureBlock);
+                _narrationState.AddBlock(failureBlock);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"NarrativeController: Error during item combination: {ex.Message}");
+        }
+        finally
+        {
+            _narrationState.IsLoadingAction = false;
+        }
     }
 }

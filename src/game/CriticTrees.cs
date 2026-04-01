@@ -27,6 +27,13 @@ public class CriticContext
     /// Builds the shared preamble injected at the top of every critic question.
     /// Written in third person so the critic judges as an exterior observer.
     /// </summary>
+    /// <summary>
+    /// When set, this item context string ("ItemName (description)") is appended to
+    /// every critic preamble so that tool-missing checks don't misfire when a proper
+    /// item is being used.
+    /// </summary>
+    public string? CombinedItemContext { get; set; } = null;
+
     public string BuildPreamble()
     {
         string worldDesc = WorldContext.GenerateContextDescription(LocationId);
@@ -34,11 +41,15 @@ public class CriticContext
         string goalLine  = GoalDescription.Length > 0
             ? $"The character's goal is to {GoalDescription}."
             : "";
+        string itemLine  = CombinedItemContext != null
+            ? $"The character is using: {CombinedItemContext}."
+            : "";
         return string.Join("\n", new[]
         {
             "Setting: a medieval world, pre-industrial, no firearms or modern technology.",
             $"The scene: a {worldDesc}. The character is {nodeDesc}.",
-            goalLine
+            goalLine,
+            itemLine
         }.Where(s => s.Length > 0));
     }
 }
@@ -273,6 +284,58 @@ public static class CriticTrees
         return wound;
     }
 
+    #endregion
+
+    #region Item Appropriateness Tree
+
+    /// <summary>
+    /// Asks the LLM critic whether a combined item can plausibly help realise an action.
+    /// Only "clearly_helps" and "plausibly_helps" are passing choices.
+    /// </summary>
+    public static CriticNode BuildItemAppropriatenessTree(string actionText, string itemContext, CriticContext context)
+    {
+        return new CriticNode(
+            name: "ItemAppropriateness",
+            question: $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} wants to: \"{actionText}\"\nThe character is holding: {itemContext}.\n\nCan {itemContext} plausibly help to realise this action?",
+            choices: new List<CriticChoice>
+            {
+                new("clearly_helps",    "the item directly enables or clearly assists the action"),
+                new("plausibly_helps",  "the item could plausibly assist in some way"),
+                new("unlikely_to_help", "the item is unlikely to be useful here", isFailure: true, errorMessage: "That item is unlikely to help with this."),
+                new("cannot_help",      "the item cannot help with this action",  isFailure: true, errorMessage: "That item cannot help with this action."),
+                new("makes_no_sense",   "using this item here makes no sense",    isFailure: true, errorMessage: "Using that item here makes no sense."),
+            });
+    }
+
+    #endregion
+
+    #region Item Consumption Tree
+
+    /// <summary>
+    /// Asks the LLM critic whether an item was consumed while performing an action.
+    /// "definitely_consumed" and "probably_consumed" map to consumed = true.
+    /// </summary>
+    public static CriticNode BuildItemConsumptionTree(string actionText, string itemContext, CriticContext context)
+    {
+        return new CriticNode(
+            name: "ItemConsumption",
+            question: $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} performed: \"{actionText}\"\nUsing: {itemContext}.\n\nWas {itemContext} consumed, destroyed, or used up in the process?",
+            choices: new List<CriticChoice>
+            {
+                new("definitely_consumed",    "the item was certainly used up or destroyed"),
+                new("probably_consumed",      "the item was very likely consumed or rendered unusable"),
+                new("possibly_consumed",      "the item might have been partially consumed"),
+                new("probably_not_consumed",  "the item was probably not consumed"),
+                new("definitely_not_consumed","the item was not consumed and is still intact"),
+            });
+    }
+
+    /// <summary>Returns true when the critic decided the item was consumed.</summary>
+    public static bool IsItemConsumedFromResult(CriticTreeResult result) =>
+        result.FinalChosenId is "definitely_consumed" or "probably_consumed";
+
+    #endregion
+
     private static string GetTargetDisplayName(string targetId) => targetId switch
     {
         "encephalon"  => "skull / brain (encephalon)",
@@ -299,6 +362,4 @@ public static class CriticTrees
         "right_foot"  => "right foot",
         _             => targetId.Replace('_', ' ')
     };
-
-    #endregion
 }

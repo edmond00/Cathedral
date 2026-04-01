@@ -235,6 +235,14 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public ModusMentis ThinkingModusMentis { get; set; } = null!;         // Which thinking modusMentis generated this
     public OutcomeBase PreselectedOutcome { get; set; } = null!;  // Success outcome chosen by thinking modusMentis
     public string Keyword { get; set; } = "";                 // Keyword this action relates to
+
+    /// <summary>
+    /// Item combined with this action via right-click item selection.
+    /// Null when no item is combined. When set, the action text has been reformulated
+    /// by the action modusMentis to incorporate the item, and dice rolls receive a bonus
+    /// equal to the item's UsageLevel.
+    /// </summary>
+    public Item? CombinedItem { get; set; } = null;
     
     /// <summary>
     /// Implements ModusMentisChainElement.ChainModusMentis - returns the action modusMentis.

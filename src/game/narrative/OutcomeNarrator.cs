@@ -144,6 +144,55 @@ You tried to {action.ActionText} but it could not happen.
     }
 
     /// <summary>
+    /// Generates a short narration explaining why a combined item cannot be used for the action
+    /// (i.e. the item appropriateness critic rejected the combination).
+    /// </summary>
+    public async Task<string> NarrateItemCombinationFailureAsync(
+        ParsedNarrativeAction action,
+        Item item,
+        ModusMentis actionModusMentis,
+        CancellationToken cancellationToken = default)
+    {
+        int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
+
+        string personaToneLine = actionModusMentis.PersonaTone != null
+            ? $"You are a {actionModusMentis.PersonaTone}."
+            : $"You are {actionModusMentis.DisplayName}.";
+        string reminderClause = actionModusMentis.PersonaReminder != null
+            ? $"As a {actionModusMentis.PersonaReminder}, "
+            : "";
+
+        string prompt = $@"{personaToneLine}
+{WorldContext.EpochContext}
+You want to: {action.ActionText}.
+You are holding: {item.ItemId} ({item.Description}).
+
+{reminderClause}explain in one sentence why using {item.ItemId} here simply does not work or makes no sense.
+{Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
+
+        var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
+        string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
+
+        string? jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf, cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(jsonResponse))
+            return $"Using {item.ItemId} here does not help.";
+
+        try
+        {
+            using var doc = JsonDocument.Parse(jsonResponse);
+            string narration = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_happened").GetString() ?? "");
+            return string.IsNullOrWhiteSpace(narration)
+                ? $"Using {item.ItemId} here does not help."
+                : narration;
+        }
+        catch (JsonException)
+        {
+            return $"Using {item.ItemId} here does not help.";
+        }
+    }
+
+    /// <summary>
     /// Ensures the narrator slot is initialized with the action modusMentis's persona.
     /// Returns the slot ID for this modusMentis.
     /// </summary>

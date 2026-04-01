@@ -41,6 +41,12 @@ public abstract class Item : ConcreteOutcome, IObservation
     /// </summary>
     public virtual EquipmentAnchor? PreferredAnchor => null;
 
+    /// <summary>
+    /// Usage level (1–10): adds bonus dice to the action roll when this item is combined
+    /// with an action. Higher levels represent more specialised or potent tools.
+    /// </summary>
+    public virtual int UsageLevel => 1;
+
     public override string ToNaturalLanguageString() => $"acquire {DisplayName}";
 
     /// <inheritdoc/>

@@ -752,7 +752,7 @@ public sealed class InventoryMenuRenderer
                 border = NormalBoxBorder; bg = NormalBoxBg; textCol = NormalTextColor;
             }
 
-            DrawItemBox(item.DisplayName, termX, itemY, boxH, border, bg, textCol);
+            DrawItemBox(item.DisplayName, termX, itemY, boxH, border, bg, textCol, item.UsageLevel);
             _itemHits.Add(new ItemHit(anchor, i, termX, itemY, termX + ItemBoxW - 1, itemY + boxH - 1));
             itemY += boxH;
         }
@@ -794,7 +794,7 @@ public sealed class InventoryMenuRenderer
         }
     }
 
-    private void DrawItemBox(string label, int x, int y, int h, Vector4 border, Vector4 bg, Vector4 fg)
+    private void DrawItemBox(string label, int x, int y, int h, Vector4 border, Vector4 bg, Vector4 fg, int usageLevel = 0)
     {
         for (int dy = 0; dy < h; dy++)
             for (int dx = 0; dx < ItemBoxW; dx++)
@@ -802,12 +802,22 @@ public sealed class InventoryMenuRenderer
 
         _terminal.DrawBox(x, y, ItemBoxW, h, BoxStyle.Single, border, bg);
 
+        int innerW = ItemBoxW - 2;
+        int nameRow = h >= 4 ? y + h / 2 - 1 : y + h / 2;
+
         if (!string.IsNullOrEmpty(label))
         {
-            int innerW = ItemBoxW - 2;
-            if (label.Length > innerW) label = TruncRight(label, innerW);
-            int lx = x + 1 + (innerW - label.Length) / 2;
-            _terminal.Text(lx, y + h / 2, label, fg, bg);
+            string name = label.Length > innerW ? TruncRight(label, innerW) : label;
+            int lx = x + 1 + (innerW - name.Length) / 2;
+            _terminal.Text(lx, nameRow, name, fg, bg);
+        }
+
+        // Usage level indicators — shown only when box is tall enough and level > 0
+        if (usageLevel > 0 && h >= 4)
+        {
+            string indicators = new string(Config.Symbols.ModusMentisLevelIndicator, Math.Min(usageLevel, innerW));
+            int lx = x + 1 + (innerW - indicators.Length) / 2;
+            _terminal.Text(lx, nameRow + 1, indicators, Config.Colors.BrightYellow, bg);
         }
     }
 
