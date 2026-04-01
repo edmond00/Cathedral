@@ -16,7 +16,9 @@ public enum DebugStrategy
     /// <summary>Auto-pass everything (plausibility, difficulty, dice roll).</summary>
     Succeed,
     /// <summary>Prompt each critic node individually (original behavior).</summary>
-    Custom
+    Custom,
+    /// <summary>Run LLM and RNG normally with no override; debug mode stays active for the next decision.</summary>
+    Auto
 }
 
 /// <summary>
@@ -32,6 +34,9 @@ public static class DebugMode
 
     /// <summary>Current strategy for the action being executed.</summary>
     public static DebugStrategy CurrentStrategy { get; private set; } = DebugStrategy.Custom;
+
+    /// <summary>True when the current strategy is Auto — LLM and RNG run normally, no override.</summary>
+    public static bool IsAutoStrategy => CurrentStrategy == DebugStrategy.Auto;
 
     /// <summary>
     /// Set to true while the failure outcome tree (wound selection) is being evaluated.
@@ -77,7 +82,8 @@ public static class DebugMode
         Console.WriteLine($"  2) Fail dice roll     (pass checks, then force dice failure)");
         Console.WriteLine($"  3) Succeed            (pass everything, dice succeeds)");
         Console.WriteLine($"  4) Custom             (answer each critic node individually)");
-        Console.Write($"  Choice [1-4]: ");
+        Console.WriteLine($"  5) Auto               (run normally, no override)");
+        Console.Write($"  Choice [1-5]: ");
         Console.ResetColor();
 
         while (true)
@@ -109,9 +115,15 @@ public static class DebugMode
                     Console.WriteLine($"  → Strategy: Custom (per-node prompts)");
                     Console.ResetColor();
                     return;
+                case "5":
+                    CurrentStrategy = DebugStrategy.Auto;
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"  → Strategy: Auto (running normally)");
+                    Console.ResetColor();
+                    return;
                 default:
                     Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.Write($"  Invalid. Enter 1-4: ");
+                    Console.Write($"  Invalid. Enter 1-5: ");
                     Console.ResetColor();
                     break;
             }

@@ -402,7 +402,7 @@ public class NarrativeController
             // Roll for success
             double roll;
             bool succeeded;
-            if (DebugMode.IsActive)
+            if (DebugMode.IsActive && !DebugMode.IsAutoStrategy)
             {
                 succeeded = DebugMode.GetDiceRollOverride(action.ActionText, evalResult.SuccessProbability);
                 roll = succeeded ? 0.0 : 1.0; // Synthetic roll value for logging

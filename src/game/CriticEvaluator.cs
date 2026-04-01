@@ -84,7 +84,7 @@ public class CriticEvaluator : IDisposable
             bool isPlausibilityNode = node.Choices.Any(c => c.IsFailure);
 
             string chosenId;
-            if (DebugMode.IsActive)
+            if (DebugMode.IsActive && !DebugMode.IsAutoStrategy)
             {
                 chosenId = DebugMode.GetCriticOverride(node.Name, node.Question, node.Choices, isPlausibilityNode);
             }
