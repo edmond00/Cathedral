@@ -119,7 +119,7 @@ public static class LLMSchemaConfig
     #endregion
     
     #region Outcome Narration Schemas
-    
+
     /// <summary>
     /// Schema for outcome narration text.
     /// Simple narration describing the result of an action.
@@ -134,7 +134,22 @@ public static class LLMSchemaConfig
                 FirstSentenceMaxLength: 120)
         );
     }
-    
+
+    /// <summary>
+    /// Schema for the feeling follow-up after outcome narration.
+    /// One short sentence of sensory/emotional flavor from the modusMentis's perspective.
+    /// </summary>
+    public static CompositeField CreateFeelingSchema()
+    {
+        return new CompositeField("FeelingResponse",
+            new TemplateStringField("what_i_feel",
+                Template: "I <generated>",
+                MinGenLength: 10,
+                MaxGenLength: 150,
+                FirstSentenceMaxLength: 150)
+        );
+    }
+
     #endregion
     
 }

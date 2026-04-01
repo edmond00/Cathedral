@@ -52,17 +52,23 @@ public class ActionExecutionController
     private readonly OutcomeApplicator _outcomeApplicator;
     private readonly Protagonist _protagonist;
     private readonly CriticEvaluator _criticEvaluator;
+    private readonly WorldContext _worldContext;
+    private readonly int _locationId;
 
     public ActionExecutionController(
         OutcomeNarrator outcomeNarrator,
         OutcomeApplicator outcomeApplicator,
         Protagonist protagonist,
-        CriticEvaluator criticEvaluator)
+        CriticEvaluator criticEvaluator,
+        WorldContext worldContext,
+        int locationId)
     {
         _outcomeNarrator = outcomeNarrator;
         _outcomeApplicator = outcomeApplicator;
         _protagonist = protagonist;
         _criticEvaluator = criticEvaluator;
+        _worldContext = worldContext;
+        _locationId = locationId;
     }
 
     /// <summary>
@@ -100,24 +106,29 @@ public class ActionExecutionController
             };
         }
 
-        // Get context description for trees
-        var contextDescription = currentNode.ContextDescription;
+        // Build rich context for critic trees
+        var goalDescription = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
+        var criticContext = new CriticContext(
+            currentNode, _worldContext, _locationId, goalDescription);
 
         // === STEP 1: PLAUSIBILITY TREE ===
         Console.WriteLine($"\n🔍 [PLAUSIBILITY CHECK] Evaluating if action is possible...");
-        
-        var plausibilityTree = CriticTrees.BuildPlausibilityTree(action.ActionText, contextDescription);
-        var plausibilityResult = await _criticEvaluator.EvaluateTreeAsync(plausibilityTree);
-        
+
+        var plausibilityTree = CriticTrees.BuildPlausibilityTree(action.ActionText, criticContext);
+        var plausibilityResult = await _criticEvaluator.EvaluateTreeAsync(plausibilityTree, continueOnFailure: true);
+
         // If any plausibility check failed, return early
         if (!plausibilityResult.OverallSuccess)
         {
-            var errorMessage = plausibilityResult.FirstErrorMessage.Length > 0
-                ? plausibilityResult.FirstErrorMessage
-                : "That action doesn't make sense in this situation.";
-            
+            // Prefer the critic's free-text reason over the generic error label
+            var errorMessage = plausibilityResult.CombinedFailureReason.Length > 0
+                ? plausibilityResult.CombinedFailureReason
+                : plausibilityResult.FirstErrorMessage.Length > 0
+                    ? plausibilityResult.FirstErrorMessage
+                    : "That action doesn't make sense in this situation.";
+
             Console.WriteLine($"   ❌ Action rejected: {errorMessage}\n");
-            
+
             return new ActionEvaluationResult
             {
                 IsPlausible = false,
@@ -128,13 +139,13 @@ public class ActionExecutionController
                 CurrentNode = currentNode
             };
         }
-        
+
         Console.WriteLine($"   ✓ Action approved as plausible ({plausibilityResult.Trace.Count} checks passed)\n");
 
         // === STEP 2: DIFFICULTY TREE ===
         Console.WriteLine($"🎯 [DIFFICULTY CHECK] Evaluating action difficulty...");
-        
-        var difficultyTree = CriticTrees.BuildDifficultyTree(action.ActionText, contextDescription);
+
+        var difficultyTree = CriticTrees.BuildDifficultyTree(action.ActionText, criticContext);
         var difficultyResult = await _criticEvaluator.EvaluateTreeAsync(difficultyTree);
 
         // Map the chosen difficulty level to a 0.0–1.0 score
@@ -221,9 +232,11 @@ public class ActionExecutionController
             // === STEP 3: FAILURE OUTCOME TREE ===
             Console.WriteLine($"💥 [FAILURE OUTCOME] Determining consequence of failure...");
 
-            var contextDescription = currentNode.ContextDescription;
+            var goalDescription2 = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
+            var failureCriticContext = new CriticContext(
+                currentNode, _worldContext, _locationId, goalDescription2);
             var wildcardCandidates = BuildWildcardCandidates();
-            var failureTree = CriticTrees.BuildFailureOutcomeTree(action.ActionText, contextDescription, wildcardCandidates);
+            var failureTree = CriticTrees.BuildFailureOutcomeTree(action.ActionText, failureCriticContext, wildcardCandidates);
             DebugMode.InFailureOutcomeTree = true;
             var failureResult = await _criticEvaluator.EvaluateTreeAsync(failureTree);
             DebugMode.InFailureOutcomeTree = false;

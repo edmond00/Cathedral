@@ -33,8 +33,11 @@ public class CriticEvaluator : IDisposable
     /// Evaluates a decision tree rooted at the given node.
     /// Traverses by following the branch matching the LLM's chosen id at each node.
     /// Stops on a failure choice or when a branch leads to null (terminal).
+    /// When <paramref name="continueOnFailure"/> is true, a failing choice is still
+    /// recorded but traversal continues via the success branch so all nodes are visited.
+    /// The result is still a failure if any node failed.
     /// </summary>
-    public async Task<CriticTreeResult> EvaluateTreeAsync(CriticNode rootNode)
+    public async Task<CriticTreeResult> EvaluateTreeAsync(CriticNode rootNode, bool continueOnFailure = false)
     {
         if (rootNode == null) throw new ArgumentNullException(nameof(rootNode));
 
@@ -52,11 +55,16 @@ public class CriticEvaluator : IDisposable
 
             Console.WriteLine($"     {nodeResult}");
 
-            if (nodeResult.IsFailure)
+            if (nodeResult.IsFailure && !continueOnFailure)
                 break;
 
-            // Navigate to next node via branch map; null = terminal success
-            currentNode = currentNode.Branches.TryGetValue(nodeResult.ChosenId, out var next) ? next : null;
+            // On failure with continueOnFailure: follow the success branch to reach the next node.
+            string navigateId = (nodeResult.IsFailure && continueOnFailure)
+                ? (currentNode.Choices.FirstOrDefault(c => !c.IsFailure)?.Id ?? nodeResult.ChosenId)
+                : nodeResult.ChosenId;
+
+            // Navigate to next node via branch map; null = terminal
+            currentNode = currentNode.Branches.TryGetValue(navigateId, out var next) ? next : null;
             if (currentNode != null)
                 Console.WriteLine($"     → {currentNode.Name}");
         }
@@ -99,6 +107,18 @@ public class CriticEvaluator : IDisposable
             nodeResult.IsFailure = choiceObj?.IsFailure ?? false;
             nodeResult.ErrorMessage = choiceObj?.ErrorMessage ?? string.Empty;
 
+            if (nodeResult.IsFailure)
+            {
+                // Ask the critic why while its answer is still in context; resets slot afterwards
+                nodeResult.FailureReason = await GetFailureReasonAsync();
+                Console.WriteLine($"     Reason: {nodeResult.FailureReason}");
+            }
+            else
+            {
+                // No follow-up needed — reset now (skipReset=true was used in GetChoiceAsync)
+                _llamaServer.ResetInstance(_criticSlotId);
+            }
+
             _totalEvaluations++;
         }
         catch (Exception ex)
@@ -132,18 +152,48 @@ public class CriticEvaluator : IDisposable
         string prompt = BuildChoicePrompt(question, choices);
         string grammar = BuildGrammar(choices);
 
+        // skipReset=true so context is preserved for a follow-up "why" call if needed.
+        // The caller (EvaluateNodeAsync) resets manually after the optional follow-up.
         string result = await _llamaServer.GenerateConstrainedStringAsync(
-            _criticSlotId, prompt, grammar, maxTokens: 20);
+            _criticSlotId, prompt, grammar, maxTokens: 20, skipReset: true);
 
         // Validate the returned id is one of the expected choices
         result = result.Trim();
         if (!choices.Any(c => c.Id == result))
         {
             Console.Error.WriteLine($"CriticEvaluator: LLM returned unexpected id '{result}', falling back to first choice.");
+            _llamaServer.ResetInstance(_criticSlotId);
             return choices[0].Id;
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Asks the critic a follow-up "why" question while its previous answer is still in context.
+    /// Resets the slot afterwards. Returns a short free-text sentence, or empty on failure.
+    /// </summary>
+    private async Task<string> GetFailureReasonAsync()
+    {
+        if (!_isInitialized || !_llamaServer.IsServerReady || _criticSlotId < 0)
+            return string.Empty;
+
+        try
+        {
+            string reason = await _llamaServer.GenerateConstrainedStringAsync(
+                _criticSlotId,
+                "In one short sentence, why did you answer that way?",
+                gbnfGrammar: string.Empty,
+                maxTokens: 60,
+                skipReset: false); // reset after this call
+            return reason.Trim();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"CriticEvaluator: Failed to get failure reason: {ex.Message}");
+            _llamaServer.ResetInstance(_criticSlotId);
+            return string.Empty;
+        }
     }
 
     private static string BuildChoicePrompt(string question, List<CriticChoice> choices)

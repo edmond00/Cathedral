@@ -1176,17 +1176,19 @@ public class LocationTravelGameController : IDisposable
             }
             var protagonist = _protagonist;
             
-            var actionExecutor = new ActionExecutionController(
-                outcomeNarrator,
-                outcomeApplicator,
-                protagonist,
-                _criticEvaluator
-            );
-            
             // Get the appropriate narration factory for this biome/location
             var biomeInfo = _interface.GetDetailedBiomeInfoAt(vertexIndex);
             var biomeName = biomeInfo.biome.Name.ToLowerInvariant();
             var worldContext = Narrative.WorldContext.From(biomeInfo.biome, biomeInfo.location);
+
+            var actionExecutor = new ActionExecutionController(
+                outcomeNarrator,
+                outcomeApplicator,
+                protagonist,
+                _criticEvaluator,
+                worldContext,
+                vertexIndex
+            );
 
             if (!_narrationFactories.TryGetValue(biomeName, out var graphFactory))
             {

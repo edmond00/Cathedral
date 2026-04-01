@@ -188,7 +188,7 @@ You could proceed:
 
 You noticed {noticedClause}. {transition} Now you want to {outcomeDescription}.
 
-{reminderClause}using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescription}), what exactly are you going to try to do?
+{reminderClause}using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescription}), explain simply what you are going to try to do.
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
     }
 

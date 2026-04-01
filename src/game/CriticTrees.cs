@@ -6,6 +6,44 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game;
 
 /// <summary>
+/// All context needed to build a full critic preamble: location, node, epoch, and goal.
+/// </summary>
+public class CriticContext
+{
+    public NarrationNode Node { get; }
+    public WorldContext WorldContext { get; }
+    public int LocationId { get; }
+    public string GoalDescription { get; }
+
+    public CriticContext(NarrationNode node, WorldContext worldContext, int locationId, string goalDescription)
+    {
+        Node = node;
+        WorldContext = worldContext;
+        LocationId = locationId;
+        GoalDescription = goalDescription;
+    }
+
+    /// <summary>
+    /// Builds the shared preamble injected at the top of every critic question.
+    /// Written in third person so the critic judges as an exterior observer.
+    /// </summary>
+    public string BuildPreamble()
+    {
+        string worldDesc = WorldContext.GenerateContextDescription(LocationId);
+        string nodeDesc  = Node.GenerateEnrichedContextDescription(LocationId);
+        string goalLine  = GoalDescription.Length > 0
+            ? $"The character's goal is to {GoalDescription}."
+            : "";
+        return string.Join("\n", new[]
+        {
+            "Setting: a medieval world, pre-industrial, no firearms or modern technology.",
+            $"The scene: a {worldDesc}. The character is {nodeDesc}.",
+            goalLine
+        }.Where(s => s.Length > 0));
+    }
+}
+
+/// <summary>
 /// Factory for the standard Critic evaluation trees.
 /// All trees use enum-choice nodes: the LLM picks one option from a constrained list.
 /// </summary>
@@ -14,56 +52,37 @@ public static class CriticTrees
     #region Plausibility Tree
 
     /// <summary>
-    /// Builds the plausibility tree — a linear chain of yes/no questions.
-    /// Choosing "no" at any node stops the tree immediately with a rejection message.
+    /// Builds the plausibility tree from <see cref="Config.PlausibilityQuestions.Questions"/>.
+    /// Each question becomes one independent node. All nodes are chained in order so that
+    /// continueOnFailure mode visits every question even when one fails.
     /// </summary>
-    public static CriticNode BuildPlausibilityTree(string actionText, string contextDescription)
+    public static CriticNode BuildPlausibilityTree(string actionText, CriticContext context)
     {
-        var ctx = $"Context: {contextDescription}\nThe {Config.Narrative.PlayerName} wants to: \"{actionText}\"";
+        var preamble = $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} wants to: \"{actionText}\"";
+        var questions = Config.PlausibilityQuestions.Questions;
 
-        CriticNode YesNo(string name, string questionBody, string errorMessage)
+        // Build one CriticNode per question
+        var nodes = questions.Select(q =>
         {
+            var choices = q.Choices
+                .Select(c => new CriticChoice(c.Id, c.Description, c.IsFailure, c.ErrorMessage))
+                .ToList();
             return new CriticNode(
-                name: name,
-                question: $"{ctx}\n\n{questionBody}",
-                choices: new List<CriticChoice>
-                {
-                    new("yes", "this is true"),
-                    new("no", "this is false or unclear",
-                        isFailure: true, errorMessage: errorMessage)
-                });
+                name: q.Name,
+                question: $"{preamble}\n\n{q.Text}",
+                choices: choices);
+        }).ToList();
+
+        // Chain: each node's pass-choices branch leads to the next node
+        for (int i = 0; i < nodes.Count - 1; i++)
+        {
+            var current = nodes[i];
+            var next = nodes[i + 1];
+            foreach (var choice in questions[i].Choices.Where(c => !c.IsFailure))
+                current.WithBranch(choice.Id, next);
         }
 
-        var notContradictory = YesNo(
-            "NotContradictory",
-            "Is this action consistent with what just happened and doesn't contradict recent events?",
-            "This contradicts what just occurred");
-
-        var hasRequiredElements = YesNo(
-            "HasRequiredElements",
-            "Are the objects, people, or elements needed for this action available or present?",
-            "You don't have what's needed to do this");
-        hasRequiredElements.WithBranch("yes", notContradictory);
-
-        var contextAppropriate = YesNo(
-            "ContextAppropriate",
-            "Does this action make sense given the current location and situation?",
-            "This action doesn't fit the current situation");
-        contextAppropriate.WithBranch("yes", hasRequiredElements);
-
-        var reasonableTimeframe = YesNo(
-            "ReasonableTimeframe",
-            "Is this action short enough to be completed in less than one hour?",
-            "This action would take too long to complete");
-        reasonableTimeframe.WithBranch("yes", contextAppropriate);
-
-        var physicallyPossible = YesNo(
-            "PhysicallyPossible",
-            "Is this action physically possible for a human to attempt?",
-            "This action is physically impossible");
-        physicallyPossible.WithBranch("yes", reasonableTimeframe);
-
-        return physicallyPossible;
+        return nodes[0];
     }
 
     #endregion
@@ -73,11 +92,11 @@ public static class CriticTrees
     /// <summary>
     /// Builds the difficulty tree — a single node asking the LLM to rate difficulty in 5 levels.
     /// </summary>
-    public static CriticNode BuildDifficultyTree(string actionText, string contextDescription)
+    public static CriticNode BuildDifficultyTree(string actionText, CriticContext context)
     {
         return new CriticNode(
             name: "Difficulty",
-            question: $"Context: {contextDescription}\nThe {Config.Narrative.PlayerName} wants to: \"{actionText}\"\n\nHow difficult is this action to perform?",
+            question: $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} wants to: \"{actionText}\"\n\nHow difficult is this action to perform?",
             choices: new List<CriticChoice>
             {
                 new("very_easy", "trivial, no risk, anyone could do it"),
@@ -124,10 +143,10 @@ public static class CriticTrees
     /// </summary>
     public static CriticNode BuildFailureOutcomeTree(
         string actionText,
-        string contextDescription,
+        CriticContext context,
         IReadOnlyList<WildcardCandidate>? wildcardCandidates = null)
     {
-        var ctx = $"Context: {contextDescription}\nThe {Config.Narrative.PlayerName} failed at: \"{actionText}\"";
+        var ctx = $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} failed at: \"{actionText}\"";
 
         // Build a mapping: targetId → list of wounds targeting it (excluding wildcards)
         var targetToWounds = WoundRegistry.All.Values

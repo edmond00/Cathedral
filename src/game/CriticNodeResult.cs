@@ -21,6 +21,13 @@ public class CriticNodeResult
     /// <summary>Error message from the failure choice, if any.</summary>
     public string ErrorMessage { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Free-text reason the critic gave for a failing choice.
+    /// Populated by a follow-up "why" call made immediately after a failure, while
+    /// the critic's answer is still in context. Empty for passing nodes.
+    /// </summary>
+    public string FailureReason { get; set; } = string.Empty;
+
     /// <summary>Duration of this evaluation in milliseconds.</summary>
     public double DurationMs { get; set; }
 
@@ -28,6 +35,7 @@ public class CriticNodeResult
     {
         var status = IsFailure ? "✗" : "✓";
         var error = IsFailure && !string.IsNullOrEmpty(ErrorMessage) ? $" — {ErrorMessage}" : "";
-        return $"[{status}] {NodeName}: chose='{ChosenId}'{error} ({DurationMs:F0}ms)";
+        var reason = IsFailure && !string.IsNullOrEmpty(FailureReason) ? $" | Reason: {FailureReason}" : "";
+        return $"[{status}] {NodeName}: chose='{ChosenId}'{error}{reason} ({DurationMs:F0}ms)";
     }
 }

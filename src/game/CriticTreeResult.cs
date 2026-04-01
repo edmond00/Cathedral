@@ -30,6 +30,27 @@ public class CriticTreeResult
         Trace.Where(r => r.IsFailure && !string.IsNullOrEmpty(r.ErrorMessage))
              .Select(r => r.ErrorMessage);
 
+    /// <summary>
+    /// Concatenated critic reasoning for all failed nodes.
+    /// Combines the structured error message with the free-text reason where available.
+    /// </summary>
+    public string CombinedFailureReason
+    {
+        get
+        {
+            var parts = Trace
+                .Where(r => r.IsFailure)
+                .Select(r =>
+                {
+                    if (!string.IsNullOrEmpty(r.FailureReason)) return r.FailureReason;
+                    if (!string.IsNullOrEmpty(r.ErrorMessage))  return r.ErrorMessage;
+                    return null;
+                })
+                .Where(s => s != null);
+            return string.Join(" ", parts);
+        }
+    }
+
     public string GetTraceString()
     {
         if (Trace.Count == 0)

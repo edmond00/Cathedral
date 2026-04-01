@@ -583,13 +583,15 @@ public class LlamaServerManager : IDisposable
     /// Generates a short constrained string using a GBNF grammar.
     /// Unlike GetNextTokenProbabilitiesAsync (which reads only the first token's logprobs),
     /// this generates the full constrained output — needed for multi-token choices like "very_easy".
-    /// Resets the instance after generation to keep it stateless.
+    /// Resets the instance after generation unless <paramref name="skipReset"/> is true,
+    /// which allows a follow-up call before the caller resets manually.
     /// </summary>
     public async Task<string> GenerateConstrainedStringAsync(
         int slotId,
         string userMessage,
         string gbnfGrammar,
-        int maxTokens = 20)
+        int maxTokens = 20,
+        bool skipReset = false)
     {
         if (!_instances.TryGetValue(slotId, out var instance))
             throw new ArgumentException($"Instance with slot ID {slotId} not found.");
@@ -683,7 +685,8 @@ public class LlamaServerManager : IDisposable
         finally
         {
             instance.IsActive = false;
-            try { ResetInstance(slotId); } catch { /* Ignore reset errors */ }
+            if (!skipReset)
+                try { ResetInstance(slotId); } catch { /* Ignore reset errors */ }
         }
     }
 

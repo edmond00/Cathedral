@@ -417,7 +417,83 @@ public static class Config
                 ? $"{AnswerInstruction} Stay in the character of {personaReminder2}."
                 : $"{AnswerInstruction} Stay in character.";
     }
-    
+
+    /// <summary>
+    /// Configuration for the plausibility check questions asked to the critic LLM.
+    /// Each entry defines one independent question, its enum choices, and which choice ids
+    /// count as a failure (action rejected). Questions are evaluated in order; all are always
+    /// asked (continueOnFailure mode) so every check is visible in the trace.
+    /// Add, remove, or reorder entries here to change the plausibility check battery.
+    /// </summary>
+    public static class PlausibilityQuestions
+    {
+        public record Choice(string Id, string Description, bool IsFailure, string? ErrorMessage = null);
+        public record Question(string Name, string Text, List<Choice> Choices);
+
+        public static readonly List<Question> Questions =
+        [
+            new Question(
+                Name: "PhysicalFeasibility",
+                Text: "Can a human body physically perform this action at all?",
+                Choices:
+                [
+                    new("clearly_possible",    "clearly within human physical capability",            IsFailure: false),
+                    new("possible_with_effort","possible but requires significant physical effort",   IsFailure: false),
+                    new("borderline",          "borderline — requires exceptional ability",           IsFailure: false),
+                    new("barely_possible",     "barely conceivable for an exceptional individual",   IsFailure: false),
+                    new("physically_impossible","physically impossible for any human",                IsFailure: true,
+                        ErrorMessage: "This action is physically impossible"),
+                ]
+            ),
+
+            new Question(
+                Name: "RequiredElements",
+                Text: "“Is anything missing for this action to be attempted?”?",
+                Choices:
+                [
+                    new("nothing_missing",  "nothing is missing, all required elements are present", IsFailure: false),
+                    new("minor_missing",    "a minor, easily improvised element is absent",          IsFailure: false),
+                    new("tool_missing",     "a specific tool or object is absent",                   IsFailure: true,
+                        ErrorMessage: "A required object is not available"),
+                    new("person_missing",   "a required person or creature is absent",               IsFailure: true,
+                        ErrorMessage: "A required person is not present"),
+                    new("location_wrong",   "the wrong location — a specific place is required",    IsFailure: true,
+                        ErrorMessage: "This action requires a different location"),
+                ]
+            ),
+
+            new Question(
+                Name: "Duration",
+                Text: "How long would this action realistically take to complete?",
+                Choices:
+                [
+                    new("seconds", "a few seconds",   IsFailure: false),
+                    new("minutes", "several minutes", IsFailure: false),
+                    new("hours",   "a few hours",     IsFailure: false),
+                    new("days",    "multiple days",   IsFailure: true,
+                        ErrorMessage: "This action would take too many days to complete"),
+                    new("weeks",   "weeks or longer", IsFailure: true,
+                        ErrorMessage: "This action would take weeks — far too long"),
+                ]
+            ),
+
+            new Question(
+                Name: "SituationalConsistency",
+                Text: "How well does this action fit the current situation and recent events?",
+                Choices:
+                [
+                    new("fully_consistent",      "fully consistent with the current situation",          IsFailure: false),
+                    new("mostly_consistent",     "mostly consistent, minor tension with the situation",  IsFailure: false),
+                    new("somewhat_inconsistent", "somewhat inconsistent with recent events",             IsFailure: false),
+                    new("contradicts_events",    "directly contradicts what just happened",              IsFailure: true,
+                        ErrorMessage: "This contradicts what just occurred"),
+                    new("nonsensical",           "makes no sense given the current context",             IsFailure: true,
+                        ErrorMessage: "This action makes no sense in the current situation"),
+                ]
+            ),
+        ];
+    }
+
     #endregion
     
     #region Image-to-Text Conversion

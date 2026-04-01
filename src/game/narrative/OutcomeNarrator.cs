@@ -67,18 +67,24 @@ public class OutcomeNarrator
         }
 
         // Parse response
+        string narrationText;
         try
         {
             using var doc = JsonDocument.Parse(jsonResponse);
-            string narration = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_happened").GetString() ?? "");
-            return !string.IsNullOrWhiteSpace(narration)
-                ? narration
-                : GenerateFallbackNarration(action, succeeded, outcome);
+            narrationText = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_happened").GetString() ?? "");
+            if (string.IsNullOrWhiteSpace(narrationText))
+                return GenerateFallbackNarration(action, succeeded, outcome);
         }
         catch (JsonException)
         {
             return GenerateFallbackNarration(action, succeeded, outcome);
         }
+
+        // Follow-up: what do you feel?
+        string feeling = await RequestFeelingAsync(slotId, actionModusMentis.PersonaReminder2, cancellationToken);
+        return string.IsNullOrWhiteSpace(feeling)
+            ? narrationText
+            : $"{narrationText} {feeling}";
     }
     
     /// <summary>
@@ -119,16 +125,24 @@ You tried to {action.ActionText} but it could not happen.
             return plausibilityError; // Fallback to the raw error message
         }
 
+        string narrationText;
         try
         {
             using var doc = JsonDocument.Parse(jsonResponse);
-            string narration = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_happened").GetString() ?? "");
-            return !string.IsNullOrWhiteSpace(narration) ? narration : plausibilityError;
+            narrationText = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_happened").GetString() ?? "");
+            if (string.IsNullOrWhiteSpace(narrationText))
+                return plausibilityError;
         }
         catch (JsonException)
         {
             return plausibilityError;
         }
+
+        // Follow-up: what do you feel?
+        string feeling = await RequestFeelingAsync(slotId, actionModusMentis.PersonaReminder2, cancellationToken);
+        return string.IsNullOrWhiteSpace(feeling)
+            ? narrationText
+            : $"{narrationText} {feeling}";
     }
 
     /// <summary>
@@ -187,6 +201,33 @@ You tried to {action.ActionText}.
 
 {reminderClause}what happened?
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
+    }
+
+    /// <summary>
+    /// Follow-up call in the same slot: asks "what do you feel?" after outcome narration.
+    /// The slot still holds the narration context, so no prompt reset is needed.
+    /// Returns the parsed feeling sentence, or empty string on failure.
+    /// </summary>
+    private async Task<string> RequestFeelingAsync(int slotId, string? personaReminder2, CancellationToken cancellationToken)
+    {
+        string prompt = "What do you feel about this outcome?\n" + Config.Narrative.AnswerInstructionFor(personaReminder2);
+        var schema = LLMSchemaConfig.CreateFeelingSchema();
+        string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
+
+        string? jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf, cancellationToken);
+        if (string.IsNullOrWhiteSpace(jsonResponse))
+            return string.Empty;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(jsonResponse);
+            return TextTruncationUtils.TrimToLastSentence(
+                doc.RootElement.GetProperty("what_i_feel").GetString() ?? "");
+        }
+        catch (JsonException)
+        {
+            return string.Empty;
+        }
     }
 
     /// <summary>
