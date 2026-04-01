@@ -28,16 +28,7 @@ public class ThinkingExecutor
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
     }
 
-    /// <summary>
-    /// Gets or creates a slot for the given thinking modusMentis.
-    /// Caches the persona prompt in the slot for reuse.
-    /// </summary>
-    private async Task<int> GetOrCreateSlotForModusMentisAsync(ModusMentis modusMentis)
-    {
-        return await _slotManager.GetOrCreateSlotForModusMentisAsync(modusMentis);
-    }
-
-    /// <summary>
+/// <summary>
     /// CoT pipeline: REFLECT+GOAL → WHY → (HOW → WHAT, or early exit if IGNORE).
     /// For ObservationObject targets the thinking modusMentis first reflects and picks a
     /// goal (including the "ignore and move on" option). If it chooses to ignore, only the
@@ -85,7 +76,7 @@ public class ThinkingExecutor
         string whyPrompt = _promptConstructor.BuildWhyPrompt(outcomeDescription, node, thinkingModusMentis, protagonist, worldContext, whyTargetOutcome, keywordInContext);
         string whyGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
 
-        string? whyJson = await RequestFromLLMAsync(thinkingSlot, whyPrompt, whyGbnf, 350, cancellationToken);
+        string? whyJson = await RequestFromLLMAsync(thinkingSlot, whyPrompt, whyGbnf, cancellationToken);
         if (string.IsNullOrWhiteSpace(whyJson))
         {
             Console.Error.WriteLine("ThinkingExecutor: WHY call returned empty response.");
@@ -112,7 +103,7 @@ public class ThinkingExecutor
         string howPrompt = _promptConstructor.BuildHowPrompt(outcomeDescription, actionModiMentis, thinkingModusMentis);
         string howGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateHowSchema(skillMeans));
 
-        string? howJson = await RequestFromLLMAsync(thinkingSlot, howPrompt, howGbnf, 350, cancellationToken);
+        string? howJson = await RequestFromLLMAsync(thinkingSlot, howPrompt, howGbnf, cancellationToken);
         if (string.IsNullOrWhiteSpace(howJson))
         {
             Console.Error.WriteLine("ThinkingExecutor: HOW call returned empty response.");
@@ -143,7 +134,7 @@ public class ThinkingExecutor
         string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, keywordInContext, outcomeDescription, node, protagonist, selectedModusMentis, worldContext, resolvedOutcome);
         string whatGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema());
 
-        string? whatJson = await RequestFromLLMAsync(actionSlot, whatPrompt, whatGbnf, 250, cancellationToken);
+        string? whatJson = await RequestFromLLMAsync(actionSlot, whatPrompt, whatGbnf, cancellationToken);
         if (string.IsNullOrWhiteSpace(whatJson))
         {
             Console.Error.WriteLine("ThinkingExecutor: WHAT call returned empty response.");
@@ -201,7 +192,7 @@ public class ThinkingExecutor
             : ThinkingPromptConstructor.BuildReflectPrompt(reflectTarget, node, thinkingModusMentis, protagonist, worldContext);
         string reflectGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
 
-        string? reflectJson = await RequestFromLLMAsync(thinkingSlot, reflectPrompt, reflectGbnf, 350, cancellationToken);
+        string? reflectJson = await RequestFromLLMAsync(thinkingSlot, reflectPrompt, reflectGbnf, cancellationToken);
         string reflectText = "";
         if (!string.IsNullOrWhiteSpace(reflectJson))
         {
@@ -222,7 +213,7 @@ public class ThinkingExecutor
         string goalPrompt = ThinkingPromptConstructor.BuildGoalPrompt(goalOptions, thinkingModusMentis);
         string goalGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateGoalSchema(goalOptions));
 
-        string? goalJson = await RequestFromLLMAsync(thinkingSlot, goalPrompt, goalGbnf, 100, cancellationToken);
+        string? goalJson = await RequestFromLLMAsync(thinkingSlot, goalPrompt, goalGbnf, cancellationToken);
         if (string.IsNullOrWhiteSpace(goalJson))
         {
             Console.Error.WriteLine("ThinkingExecutor: GOAL call returned empty response.");
@@ -255,7 +246,6 @@ public class ThinkingExecutor
         int slot,
         string prompt,
         string grammar,
-        int maxTokens,
         CancellationToken cancellationToken)
     {
         var tcs = new TaskCompletionSource<string>();

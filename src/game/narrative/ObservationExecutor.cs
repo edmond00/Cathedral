@@ -15,14 +15,12 @@ namespace Cathedral.Game.Narrative;
 public class ObservationExecutor
 {
     private readonly LlamaServerManager _llamaServer;
-    private readonly ObservationPromptConstructor _promptConstructor;
     private readonly ModusMentisSlotManager _slotManager;
-    
+
     public ObservationExecutor(LlamaServerManager llamaServer, ModusMentisSlotManager slotManager)
     {
         _llamaServer = llamaServer ?? throw new ArgumentNullException(nameof(llamaServer));
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
-        _promptConstructor = new ObservationPromptConstructor();
     }
     
     /// <summary>
@@ -150,23 +148,6 @@ public class ObservationExecutor
         var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
         var parsed = ParseObservationResponse(jsonResponse ?? "");
         return parsed;
-    }
-
-    /// <summary>
-    /// Extracts the single best keyword from a sentence, given a list of candidate keywords.
-    /// Returns the first candidate keyword found in the sentence (earliest position), or null if none found.
-    /// </summary>
-    public string? ExtractKeywordFromSentence(string sentence, List<string> outcomeKeywords)
-    {
-        if (outcomeKeywords.Count > 0)
-        {
-            var segments = new KeywordRenderer().ParseNarrationWithKeywords(sentence, outcomeKeywords);
-            var firstFound = segments.FirstOrDefault(s => s.IsKeyword);
-            if (firstFound != null && !string.IsNullOrEmpty(firstFound.KeywordValue))
-                return firstFound.KeywordValue;
-        }
-
-        return null;
     }
 
     /// <summary>

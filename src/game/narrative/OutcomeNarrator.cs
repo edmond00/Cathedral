@@ -31,7 +31,6 @@ public class OutcomeNarrator
     public async Task<string> NarrateOutcomeAsync(
         ParsedNarrativeAction action,
         ModusMentis actionModusMentis,
-        ModusMentis thinkingModusMentis,
         OutcomeBase outcome,
         bool succeeded,
         double difficulty,
@@ -46,7 +45,6 @@ public class OutcomeNarrator
         string prompt = BuildNarrationPrompt(
             action,
             actionModusMentis,
-            thinkingModusMentis,
             outcome,
             succeeded,
             difficulty,
@@ -161,7 +159,6 @@ You tried to {action.ActionText} but it could not happen.
     private string BuildNarrationPrompt(
         ParsedNarrativeAction action,
         ModusMentis actionModusMentis,
-        ModusMentis thinkingModusMentis,
         OutcomeBase outcome,
         bool succeeded,
         double difficulty,

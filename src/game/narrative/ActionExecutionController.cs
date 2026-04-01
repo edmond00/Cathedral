@@ -262,7 +262,6 @@ public class ActionExecutionController
         string narration = await _outcomeNarrator.NarrateOutcomeAsync(
             action,
             actionModusMentis,
-            thinkingModusMentisUsed,
             actualOutcome,
             succeeded,
             difficultyScore,
