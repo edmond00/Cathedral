@@ -341,6 +341,44 @@ public class ThinkingExecutor
         => actionModiMentis.FirstOrDefault(s => $"with {s.SkillMeans}" == means);
 
     /// <summary>
+    /// Asks the action modusMentis to reason about how the combined item helps realise the action.
+    /// Uses the WHY schema ("what_do_i_think"). Returns the reasoning text, or null on LLM failure.
+    /// Called before <see cref="ExecuteItemReformulationAsync"/>; the result is displayed as a
+    /// reasoning block before the reformulated action button.
+    /// </summary>
+    public async Task<string?> ExecuteItemReasoningAsync(
+        ParsedNarrativeAction originalAction,
+        Item item,
+        NarrationNode node,
+        Protagonist protagonist,
+        WorldContext worldContext,
+        CancellationToken cancellationToken = default)
+    {
+        var actionModusMentis = originalAction.ActionModusMentis;
+        if (actionModusMentis == null)
+        {
+            Console.Error.WriteLine("ThinkingExecutor: Item reasoning skipped — action has no resolved modusMentis.");
+            return null;
+        }
+
+        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(actionModusMentis);
+        _llmManager.ResetInstance(actionSlot);
+
+        string prompt = _promptConstructor.BuildItemReasoningPrompt(
+            originalAction.ActionText, item, actionModusMentis, node, protagonist, worldContext);
+        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
+
+        string? jsonResponse = await RequestFromLLMAsync(actionSlot, prompt, gbnf, cancellationToken);
+        if (string.IsNullOrWhiteSpace(jsonResponse))
+        {
+            Console.Error.WriteLine("ThinkingExecutor: Item reasoning LLM call returned empty response.");
+            return null;
+        }
+
+        return ParseSingleTextField(jsonResponse, "what_do_i_think");
+    }
+
+    /// <summary>
     /// Asks the action modusMentis to reformulate an existing action text to incorporate a combined item.
     /// Uses the WHAT-style prompt. Returns the reformulated display text, or null on LLM failure.
     /// </summary>

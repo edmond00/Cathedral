@@ -119,7 +119,7 @@ public class ActionExecutionController
 
         // Attach item context so tool-missing checks don't misfire when a proper item is in use
         if (action.CombinedItem != null)
-            criticContext.CombinedItemContext = $"{action.CombinedItem.ItemId} ({action.CombinedItem.Description})";
+            criticContext.CombinedItemContext = $"{action.CombinedItem.DisplayName} ({action.CombinedItem.Description})";
 
         // === STEP 1: PLAUSIBILITY TREE ===
         Console.WriteLine($"\n🔍 [PLAUSIBILITY CHECK] Evaluating if action is possible...");
@@ -268,7 +268,7 @@ public class ActionExecutionController
         if (action.CombinedItem != null)
         {
             Console.WriteLine($"🧪 [ITEM CONSUMPTION] Checking if {action.CombinedItem.ItemId} was consumed...");
-            string itemContext = $"{action.CombinedItem.ItemId} ({action.CombinedItem.Description})";
+            string itemContext = $"{action.CombinedItem.DisplayName} ({action.CombinedItem.Description})";
             var goalDescription3 = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
             var consumptionCriticContext = new CriticContext(currentNode, _worldContext, _locationId, goalDescription3);
             var consumptionTree = CriticTrees.BuildItemConsumptionTree(action.ActionText, itemContext, consumptionCriticContext);

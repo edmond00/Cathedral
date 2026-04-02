@@ -810,13 +810,32 @@ public class NarrativeController
     /// </summary>
     public void OnRawMouseClick(Vector2 screenPosition)
     {
+        var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
+        int cellPixelSize = (int)layoutInfo.CellSize.X;
+
+        // Item selection popup takes priority when visible
+        if (_itemSelectionPopup.IsVisible)
+        {
+            var selectedItem = _itemSelectionPopup.HandleClick(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+            if (selectedItem != null && _narrationState.ActionPendingItemCombination != null)
+            {
+                var pendingAction = _narrationState.ActionPendingItemCombination;
+                _narrationState.IsSelectingItemForAction = false;
+                _narrationState.ActionPendingItemCombination = null;
+                _ = ExecuteItemCombinationAsync(pendingAction, selectedItem);
+            }
+            else
+            {
+                Console.WriteLine("NarrativeController: Item popup closed (clicked outside)");
+                _narrationState.IsSelectingItemForAction = false;
+                _narrationState.ActionPendingItemCombination = null;
+            }
+            return;
+        }
+
         // If popup is visible, handle popup click with screen coordinates
         if (_modusMentisPopup.IsVisible)
         {
-            // Get cell size for hit detection
-            var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
-            int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
-            
             var selectedModusMentis = _modusMentisPopup.HandleClick(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
             if (selectedModusMentis != null)
             {
@@ -1281,7 +1300,7 @@ public class NarrativeController
     /// <summary>
     /// Check if the thinking modusMentis popup is visible.
     /// </summary>
-    public bool IsPopupVisible => _modusMentisPopup.IsVisible;
+    public bool IsPopupVisible => _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible;
     
     /// <summary>
     /// Close the thinking modusMentis popup if it's open.
@@ -1515,7 +1534,7 @@ public class NarrativeController
                 return;
             }
 
-            string itemContext = $"{item.ItemId} ({item.Description})";
+            string itemContext = $"{item.DisplayName} ({item.Description})";
             Console.WriteLine($"NarrativeController: Item combination — action='{action.DisplayText}', item='{itemContext}'");
 
             // Build critic context
@@ -1529,42 +1548,53 @@ public class NarrativeController
 
             if (appropriatenessResult.OverallSuccess)
             {
-                Console.WriteLine($"NarrativeController: Item '{item.ItemId}' approved — reformulating action.");
+                Console.WriteLine($"NarrativeController: Item '{item.DisplayName}' approved — generating reasoning then reformulating.");
 
-                // Ask action modusMentis to reformulate
+                // ── Step 1: reasoning (how does the item help?) ─────────────────
+                string? reasoningText = await _thinkingExecutor.ExecuteItemReasoningAsync(
+                    action, item, _currentNode, _protagonist, _worldContext);
+                if (string.IsNullOrWhiteSpace(reasoningText))
+                    reasoningText = $"I could use {item.DisplayName} to help with this.";
+
+                // ── Step 2: reformulation (rewrite the action incorporating the item) ──
                 string? reformulatedText = await _thinkingExecutor.ExecuteItemReformulationAsync(
                     action, item, _currentNode, _protagonist, _worldContext);
-
                 if (string.IsNullOrWhiteSpace(reformulatedText))
-                    reformulatedText = action.DisplayText; // fallback: keep original
+                    reformulatedText = action.DisplayText;
 
-                // Create new action with combined item
+                // ── Step 3: build the combined action ────────────────────────────
+                // Chain leaf: a synthetic ModusMentis carrying item name + UsageLevel so that:
+                //   - the action button shows [ItemName ◼◼] instead of [ActionSkill ◼◼◼]
+                //   - GetTotalModusMentisLevel() = obs.Level + thinking.Level + action.Level + item.UsageLevel (no repetition)
+                var itemModusMentis = new SyntheticItemModusMentis(item.ItemId, item.DisplayName, item.UsageLevel);
+
                 var combinedAction = new ParsedNarrativeAction
                 {
-                    ActionText = reformulatedText,
-                    DisplayText = reformulatedText,
-                    ActionModusMentisId = action.ActionModusMentisId,
-                    ActionModusMentis = action.ActionModusMentis,
-                    ThinkingModusMentis = action.ThinkingModusMentis,
-                    PreselectedOutcome = action.PreselectedOutcome,
-                    Keyword = action.Keyword,
-                    CombinedItem = item,
-                    ChainOrigin = action.ChainOrigin
+                    ActionText             = reformulatedText,
+                    DisplayText            = reformulatedText,
+                    ActionModusMentisId    = action.ActionModusMentisId,   // real skill for execution/slot lookup
+                    ActionModusMentis      = action.ActionModusMentis,     // real skill for organ score etc.
+                    CombinedActionModusMentis = itemModusMentis,           // item as chain leaf / display prefix
+                    ThinkingModusMentis    = action.ThinkingModusMentis,
+                    PreselectedOutcome     = action.PreselectedOutcome,
+                    Keyword                = action.Keyword,
+                    CombinedItem           = item,
                 };
 
-                // Add new action as a new thinking block (simplest scroll buffer integration)
-                var combinedBlock = new NarrationBlock(
+                // ── Step 4: reasoning block (action skill as prefix, chains back to thinking) ──
+                // Chain: combinedAction (item) → reasoningBlock (actionSkill) → thinking block → observation
+                var reasoningBlock = new NarrationBlock(
                     Type: NarrationBlockType.Thinking,
-                    ModusMentis: action.ThinkingModusMentis,
-                    Text: "",
+                    ModusMentis: actionModusMentis,
+                    Text: reasoningText,
                     Keywords: null,
                     Actions: new List<ParsedNarrativeAction> { combinedAction },
-                    ChainOrigin: action.ChainOrigin
+                    ChainOrigin: action.ChainOrigin   // = original thinking block
                 );
-                combinedAction.ChainOrigin = combinedBlock;
+                combinedAction.ChainOrigin = reasoningBlock;
 
-                _scrollBuffer.AddBlock(combinedBlock);
-                _narrationState.AddBlock(combinedBlock);
+                _scrollBuffer.AddBlock(reasoningBlock);
+                _narrationState.AddBlock(reasoningBlock);
                 _scrollBuffer.ScrollToBottom();
                 _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
             }

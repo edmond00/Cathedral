@@ -13,7 +13,7 @@ namespace Cathedral.Game;
 /// </summary>
 public class TerminalItemSelectionPopup
 {
-    private const int POPUP_WIDTH = 45;
+    private const int POPUP_WIDTH = 38;
     private const int MAX_VISIBLE_ITEMS = 15;
 
     private readonly PopupTerminalHUD _popup;
@@ -162,7 +162,7 @@ public class TerminalItemSelectionPopup
             Vector4 bgColor = isHovered ? Config.ThinkingModusMentisPopup.ModusMentisHoverBackgroundColor : Config.ThinkingModusMentisPopup.BackgroundColor;
 
             string prefix = isHovered ? "> " : "  ";
-            string label = $"{prefix}{item.DisplayName} ({item.Description})";
+            string label = $"{prefix}{item.DisplayName}";
 
             int maxTextWidth = POPUP_WIDTH - 4;
             if (label.Length > maxTextWidth)

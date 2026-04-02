@@ -165,9 +165,9 @@ You tried to {action.ActionText} but it could not happen.
         string prompt = $@"{personaToneLine}
 {WorldContext.EpochContext}
 You want to: {action.ActionText}.
-You are holding: {item.ItemId} ({item.Description}).
+You are holding: {item.DisplayName} ({item.Description}).
 
-{reminderClause}explain in one sentence why using {item.ItemId} here simply does not work or makes no sense.
+{reminderClause}explain in one sentence why using {item.DisplayName} here simply does not work or makes no sense.
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
 
         var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
@@ -176,19 +176,19 @@ You are holding: {item.ItemId} ({item.Description}).
         string? jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf, cancellationToken);
 
         if (string.IsNullOrWhiteSpace(jsonResponse))
-            return $"Using {item.ItemId} here does not help.";
+            return $"Using {item.DisplayName} here does not help.";
 
         try
         {
             using var doc = JsonDocument.Parse(jsonResponse);
             string narration = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_happened").GetString() ?? "");
             return string.IsNullOrWhiteSpace(narration)
-                ? $"Using {item.ItemId} here does not help."
+                ? $"Using {item.DisplayName} here does not help."
                 : narration;
         }
         catch (JsonException)
         {
-            return $"Using {item.ItemId} here does not help.";
+            return $"Using {item.DisplayName} here does not help.";
         }
     }
 

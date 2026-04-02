@@ -243,9 +243,19 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     /// equal to the item's UsageLevel.
     /// </summary>
     public Item? CombinedItem { get; set; } = null;
-    
+
     /// <summary>
-    /// Implements ModusMentisChainElement.ChainModusMentis - returns the action modusMentis.
+    /// When set (item-combined actions), acts as the chain leaf instead of ActionModusMentis.
+    /// Holds a SyntheticItemModusMentis whose DisplayName = item name and Level = item.UsageLevel,
+    /// so that the UI shows the item name as the action button prefix and the chain is:
+    ///   observation → thinking → action (reasoning block) → item (this action).
+    /// ActionModusMentis is still used for actual execution (slot lookup, organ score).
     /// </summary>
-    public override ModusMentis ChainModusMentis => ActionModusMentis!;
+    public ModusMentis? CombinedActionModusMentis { get; set; } = null;
+
+    /// <summary>
+    /// Returns the item-level synthetic ModusMentis when this is a combined action,
+    /// otherwise the real action ModusMentis. Used for chain traversal and display.
+    /// </summary>
+    public override ModusMentis ChainModusMentis => CombinedActionModusMentis ?? ActionModusMentis!;
 }

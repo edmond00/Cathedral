@@ -351,8 +351,8 @@ public class NarrationScrollBuffer
                     // Calculate wrapped lines for this action
                     // Format: "> [ModusMentisName ◼◼◼] action text" - need to account for level indicators
                     string prefix = "> ";
-                    string modusMentisName = action.ActionModusMentis?.DisplayName ?? action.ActionModusMentisId;
-                    int modusMentisLevel = action.ActionModusMentis?.Level ?? 1;
+                    string modusMentisName = action.ChainModusMentis?.DisplayName ?? action.ActionModusMentisId;
+                    int modusMentisLevel = action.ChainModusMentis?.Level ?? 1;
                     string levelIndicators = new string(Config.Symbols.ModusMentisLevelIndicator, modusMentisLevel);
                     string fullModusMentisBracket = $"[{modusMentisName} {levelIndicators}] ";
                     

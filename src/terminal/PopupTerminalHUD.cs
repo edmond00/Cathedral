@@ -149,6 +149,10 @@ namespace Cathedral.Terminal
         /// </summary>
         public (float left, float top, float right, float bottom)? GetScreenBounds(Vector2i windowSize)
         {
+            // Recompute from current cell state so hit-detection works even before the
+            // game-loop has had a chance to call Render() (e.g. first mouse-move after Show()).
+            var visualBounds = CalculateVisualBounds();
+            _renderer.SetVisualBounds(visualBounds);
             return _renderer.GetCalculatedScreenBounds(windowSize);
         }
         

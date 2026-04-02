@@ -526,8 +526,8 @@ public class NarrativeUI : TerminalPanelUI
             string prefix = "> ";
             
             // Build modusMentis bracket with level indicators
-            string modusMentisName = action.ActionModusMentis?.DisplayName ?? action.ActionModusMentisId;
-            int modusMentisLevel = action.ActionModusMentis?.Level ?? 1;
+            string modusMentisName = action.ChainModusMentis?.DisplayName ?? action.ActionModusMentisId;
+            int modusMentisLevel = action.ChainModusMentis?.Level ?? 1;
             string levelIndicators = new string(Config.Symbols.ModusMentisLevelIndicator, modusMentisLevel);
             
             _terminal.Text(startX, y, prefix, prefixColor, Config.NarrativeUI.BackgroundColor);
