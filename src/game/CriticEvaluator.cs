@@ -92,9 +92,13 @@ public class CriticEvaluator : IDisposable
             bool isPlausibilityNode = node.Choices.Any(c => c.IsFailure);
 
             string chosenId;
-            if (DebugMode.IsActive && !DebugMode.IsAutoStrategy)
+            string? debugOverride = (DebugMode.IsActive && !DebugMode.IsAutoStrategy)
+                ? DebugMode.GetCriticOverride(node.Name, node.Question, node.Choices, isPlausibilityNode)
+                : null;
+
+            if (debugOverride != null)
             {
-                chosenId = DebugMode.GetCriticOverride(node.Name, node.Question, node.Choices, isPlausibilityNode);
+                chosenId = debugOverride;
             }
             else
             {
@@ -182,7 +186,7 @@ public class CriticEvaluator : IDisposable
         {
             string reason = await _llamaServer.GenerateConstrainedStringAsync(
                 _criticSlotId,
-                "In one short sentence, why did you answer that way?",
+                "In one short sentence (around 12 words), explain to the character why you answered that way (address him directly in the second person).",
                 gbnfGrammar: string.Empty,
                 maxTokens: 60,
                 skipReset: false); // reset after this call

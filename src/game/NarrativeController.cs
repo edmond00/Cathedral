@@ -1603,7 +1603,7 @@ public class NarrativeController
                 Console.WriteLine($"NarrativeController: Item '{item.ItemId}' rejected — narrating failure.");
 
                 string failureNarration = await _actionExecutor.OutcomeNarrator.NarrateItemCombinationFailureAsync(
-                    action, item, actionModusMentis);
+                    action, item, actionModusMentis, appropriatenessResult.CombinedFailureReason);
 
                 var failureBlock = new NarrationBlock(
                     Type: NarrationBlockType.Outcome,

@@ -151,6 +151,7 @@ You tried to {action.ActionText} but it could not happen.
         ParsedNarrativeAction action,
         Item item,
         ModusMentis actionModusMentis,
+        string criticReason = "",
         CancellationToken cancellationToken = default)
     {
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
@@ -161,12 +162,16 @@ You tried to {action.ActionText} but it could not happen.
         string reminderClause = actionModusMentis.PersonaReminder != null
             ? $"As a {actionModusMentis.PersonaReminder}, "
             : "";
+        string criticLine = !string.IsNullOrWhiteSpace(criticReason)
+            ? $"{criticReason}\n"
+            : "";
 
         string prompt = $@"{personaToneLine}
 {WorldContext.EpochContext}
-You want to: {action.ActionText}.
+You are about to: {action.ActionText}.
 You are holding: {item.DisplayName} ({item.Description}).
-
+You want to use this item to realize this action but it is not suitable.
+{criticLine}
 {reminderClause}explain in one sentence why using {item.DisplayName} here simply does not work or makes no sense.
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
 

@@ -132,10 +132,10 @@ public static class DebugMode
 
     /// <summary>
     /// Prompt the user to choose from a list of critic choices.
-    /// Returns the chosen choice id.
+    /// Returns the chosen choice id, or null if the user chose "auto" (let the LLM decide).
     /// Only called when CurrentStrategy is Custom.
     /// </summary>
-    public static string PromptCriticNode(string nodeName, string question, List<CriticChoice> choices)
+    public static string? PromptCriticNode(string nodeName, string question, List<CriticChoice> choices)
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine();
@@ -147,12 +147,20 @@ public static class DebugMode
             var desc = c.Description != null ? $": {c.Description}" : "";
             Console.WriteLine($"  {i + 1}) {c.Id}{desc}");
         }
-        Console.Write($"  Choice [1-{choices.Count}]: ");
+        Console.WriteLine($"  0) auto (let the LLM decide)");
+        Console.Write($"  Choice [0-{choices.Count}]: ");
         Console.ResetColor();
 
         while (true)
         {
             var input = Console.ReadLine()?.Trim();
+            if (input == "0" || input?.Equals("auto", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($"  → auto (LLM decides)");
+                Console.ResetColor();
+                return null;
+            }
             if (int.TryParse(input, out int idx) && idx >= 1 && idx <= choices.Count)
             {
                 var chosen = choices[idx - 1];
@@ -170,7 +178,7 @@ public static class DebugMode
                 return match.Id;
             }
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write($"  Invalid. Enter 1-{choices.Count}: ");
+            Console.Write($"  Invalid. Enter 0-{choices.Count}: ");
             Console.ResetColor();
         }
     }
@@ -218,11 +226,12 @@ public static class DebugMode
     }
 
     /// <summary>
-    /// Returns the choice id override for a critic node based on the current strategy.
+    /// Returns the choice id override for a critic node based on the current strategy,
+    /// or null if the LLM should decide (user selected "auto" in Custom mode).
     /// For non-Custom strategies, returns the auto-answer without prompting.
     /// For Custom, prompts interactively.
     /// </summary>
-    public static string GetCriticOverride(string nodeName, string question, List<CriticChoice> choices, bool isPlausibilityNode)
+    public static string? GetCriticOverride(string nodeName, string question, List<CriticChoice> choices, bool isPlausibilityNode)
     {
         // Wound selection is always prompted so the user controls which wound is inflicted.
         if (InFailureOutcomeTree)

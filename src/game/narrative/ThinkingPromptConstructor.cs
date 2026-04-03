@@ -221,7 +221,7 @@ You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
 You are about to: {originalActionText}.
 You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
 
-{reminderClause}using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescription}), describe simply what you will do, incorporating the use of {combinedItem.DisplayName} in your action.
+{reminderClause}expert in {actionModusMentis.ShortDescription}, describe simply what you will do, incorporating the use of {combinedItem.DisplayName} in your action.
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
     }
 
@@ -249,7 +249,7 @@ You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
 
 You noticed {noticedClause}. {transition} Now you want to {outcomeDescription}.
 
-{reminderClause}using your {actionModusMentis.DisplayName} skill ({actionModusMentis.ShortDescription}), explain simply what you are going to try to do.
+{reminderClause}expert in {actionModusMentis.ShortDescription}, explain simply what you are going to try to do.
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
     }
 

@@ -392,7 +392,7 @@ public static class Config
         /// The name used to refer to the player in prompts and UI text.
         /// Default: "player" (can be changed to "protagonist", "protagonist", etc.)
         /// </summary>
-        public const string PlayerName = "player";
+        public const string PlayerName = "character";
         
         /// <summary>
         /// Target number of keywords to include in observations.
@@ -448,7 +448,7 @@ public static class Config
 
             new Question(
                 Name: "RequiredElements",
-                Text: "“Is anything missing for this action to be attempted?”?",
+                Text: "Is anything missing for this action to be attempted?",
                 Choices:
                 [
                     new("nothing_missing",  "nothing is missing, all required elements are present", IsFailure: false),
