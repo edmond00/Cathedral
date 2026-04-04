@@ -31,8 +31,8 @@ public static class Config
         // Main terminal dimensions
         public const int MainWidth = 100;
         public const int MainHeight = 100;
-        public const int MainCellSize = 20;
-        public const int MainFontSize = 22;
+        public const int MainCellSize = 33;
+        public const int MainFontSize = 33;
         
         // Popup terminal dimensions
         public const int PopupWidth = 40;
@@ -49,7 +49,7 @@ public static class Config
         // Sphere geometry
         public const float QuadSize = 0.3f; // Size of each glyph quad on the sphere
         public const float VertexShaderSizeMultiplier = 2.0f; // Multiplier used in vertex shader
-        public const float SphereRadius = 50.0f; // Main sphere radius
+        public const float SphereRadius = 45.0f; // Main sphere radius
         public const int SphereSubdivisions = 6; // Icosphere subdivision level (affects vertex density)
         
         // Camera settings
@@ -64,8 +64,8 @@ public static class Config
         
         // Default glyph settings
         public const char DefaultGlyph = '.';
-        public const int GlyphPixelSize = 65; // Raster size
-        public const int GlyphCellSize = 50; // Cell in atlas
+        public const int GlyphFontSize = 65; // Raster size
+        public const int GlyphCellSize = 60; // Cell in atlas
         
         // Protagonist and pathfinding characters
         public const char ProtagonistChar = '☻'; // Smiling face for protagonist
@@ -105,7 +105,7 @@ public static class Config
     public static class SkyCloud
     {
         // Cloud sphere (slightly larger than world)
-        public const float CloudSphereRadius = 52.0f;
+        public const float CloudSphereRadius = 46.0f;
         public const int CloudSubdivisions = 6;           // Icosphere detail level (6 = ~40k verts, use CloudQuadSize for coverage)
         public const float CloudRotationSpeed = 0.3f;     // Degrees per second
         public const float CloudGlyphMinSize = 0.4f;

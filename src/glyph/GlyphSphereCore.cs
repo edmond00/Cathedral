@@ -226,7 +226,7 @@ namespace Cathedral.Glyph
             }
             
             // Build new atlas
-            glyphInfos = BuildGlyphAtlas(glyphSet, Config.GlyphSphere.GlyphCellSize, Config.GlyphSphere.GlyphPixelSize, out Image<Rgba32> atlasImage);
+            glyphInfos = BuildGlyphAtlas(glyphSet, Config.GlyphSphere.GlyphCellSize, Config.GlyphSphere.GlyphFontSize, out Image<Rgba32> atlasImage);
             glyphTexture = LoadTexture(atlasImage);
             atlasImage.Dispose();
             
@@ -276,7 +276,7 @@ namespace Cathedral.Glyph
             // Build glyph atlas with default glyph
             string defaultGlyphSet = Config.GlyphSphere.DefaultGlyph.ToString();
             Console.WriteLine($"Generated GlyphSet: \"{defaultGlyphSet}\" ({defaultGlyphSet.Length} characters)");
-            glyphInfos = BuildGlyphAtlas(defaultGlyphSet, Config.GlyphSphere.GlyphCellSize, Config.GlyphSphere.GlyphPixelSize, out Image<Rgba32> atlasImage);
+            glyphInfos = BuildGlyphAtlas(defaultGlyphSet, Config.GlyphSphere.GlyphCellSize, Config.GlyphSphere.GlyphFontSize, out Image<Rgba32> atlasImage);
             
             glyphTexture = LoadTexture(atlasImage);
             atlasImage.Dispose();
@@ -1504,8 +1504,8 @@ namespace Cathedral.Glyph
 
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, img.Width, img.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
             
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             

@@ -529,7 +529,7 @@ namespace Cathedral.Glyph
         private void BuildGlyphAtlas(string chars)
         {
             int cellSize = Cathedral.Config.GlyphSphere.GlyphCellSize;
-            int fontPxSize = Cathedral.Config.GlyphSphere.GlyphPixelSize;
+            int fontPxSize = Cathedral.Config.GlyphSphere.GlyphFontSize;
 
             int cols = chars.Length;
             int atlasW = cols * cellSize;
