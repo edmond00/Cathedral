@@ -144,6 +144,26 @@ public class NarrativeState
     public bool IsSelectingObservationModusMentis { get; set; } = false;
 
     /// <summary>
+    /// Is the modusMentis popup being shown to select a speaking modusMentis (step 1 of Speak About)?
+    /// </summary>
+    public bool IsSelectingModusMentisForSpeaking { get; set; } = false;
+
+    /// <summary>
+    /// The speaking modusMentis chosen in step 1 of Speak About, held while companion selection popup is shown.
+    /// </summary>
+    public ModusMentis? SpeakingModusMentisPending { get; set; } = null;
+
+    /// <summary>
+    /// Is the companion selection popup currently visible (step 2 of Speak About)?
+    /// </summary>
+    public bool IsSelectingCompanionForSpeaking { get; set; } = false;
+
+    /// <summary>
+    /// Is the system currently generating speaking text via LLM?
+    /// </summary>
+    public bool IsLoadingSpeaking { get; set; } = false;
+
+    /// <summary>
     /// Is the item selection popup being shown to combine an item with an action?
     /// </summary>
     public bool IsSelectingItemForAction { get; set; } = false;
@@ -216,6 +236,10 @@ public class NarrativeState
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
         IsSelectingObservationModusMentis = false;
+        IsSelectingModusMentisForSpeaking = false;
+        SpeakingModusMentisPending = null;
+        IsSelectingCompanionForSpeaking = false;
+        IsLoadingSpeaking = false;
         IsSelectingItemForAction = false;
         ActionPendingItemCombination = null;
         IsSelectingInteractionMode = false;
@@ -225,7 +249,7 @@ public class NarrativeState
         ErrorMessage = null;
         ClearDiceRoll();
     }
-    
+
     /// <summary>
     /// Reset state for a new narration node without clearing blocks.
     /// Used when transitioning to preserve history.
@@ -238,6 +262,7 @@ public class NarrativeState
         IsLoadingThinking = false;
         IsLoadingAction = false;
         IsLoadingFocusObservation = false;
+        IsLoadingSpeaking = false;
         LoadingMessage = Config.LoadingMessages.Default;
         HoveredKeyword = null;
         HoveredAction = null;
@@ -246,6 +271,45 @@ public class NarrativeState
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
         IsSelectingObservationModusMentis = false;
+        IsSelectingModusMentisForSpeaking = false;
+        SpeakingModusMentisPending = null;
+        IsSelectingCompanionForSpeaking = false;
+        IsSelectingItemForAction = false;
+        ActionPendingItemCombination = null;
+        IsSelectingInteractionMode = false;
+        InteractionModeIsForKeyword = false;
+        ActionPendingModeSelection = null;
+        PendingTransitionNode = null;
+        ErrorMessage = null;
+        ClearDiceRoll();
+        // Note: ScrollOffset is NOT reset - it's managed by the scroll buffer
+    }
+
+    /// <summary>
+    /// Reset state when the active party member changes via Speak About.
+    /// Like ResetForNewNode but preserves ThinkingAttemptsRemaining — noetic points
+    /// are shared across the speaking and any subsequent companion thinking.
+    /// </summary>
+    public void ResetForPartyMemberChange()
+    {
+        Blocks.Clear();
+        KeywordRegions.Clear();
+        IsLoadingObservations = false;
+        IsLoadingThinking = false;
+        IsLoadingAction = false;
+        IsLoadingFocusObservation = false;
+        IsLoadingSpeaking = false;
+        LoadingMessage = Config.LoadingMessages.Default;
+        HoveredKeyword = null;
+        HoveredAction = null;
+        ActionRegions.Clear();
+        // NOTE: ThinkingAttemptsRemaining intentionally NOT reset
+        ShowContinueButton = false;
+        IsContinueButtonHovered = false;
+        IsSelectingObservationModusMentis = false;
+        IsSelectingModusMentisForSpeaking = false;
+        SpeakingModusMentisPending = null;
+        IsSelectingCompanionForSpeaking = false;
         IsSelectingItemForAction = false;
         ActionPendingItemCombination = null;
         IsSelectingInteractionMode = false;

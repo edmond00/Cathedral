@@ -54,6 +54,11 @@ public class NarrativeController
     
     // Random for dice rolls
     private readonly Random _diceRandom = new Random();
+
+    // Active party member (starts as protagonist, switches to companion after Speak About)
+    private PartyMember _activePartyMember = null!;
+    // Companion list parallel to the companion selection choice popup choices
+    private List<Companion> _pendingCompanions = new();
     
     public NarrativeController(
         TerminalHUD terminal,
@@ -109,6 +114,9 @@ public class NarrativeController
         _protagonist.InitializeModiMentis(ModusMentisRegistry.Instance, modusMentisCount: 50);
         _protagonist.InitializeMemory();
         _protagonist.AssignModiMentisToMemoryRandom();
+        // Also generate random companions for testing the Speak About mechanic
+        _protagonist.CompanionParty.AddRange(Companion.GenerateRandom(ModusMentisRegistry.Instance, count: 3));
+        _activePartyMember = _protagonist;
         
         // Generate graph for this location using factory
         if (graphFactory == null)
@@ -136,6 +144,7 @@ public class NarrativeController
     {
         _narrationState.Clear();
         _scrollBuffer.Clear();
+        _activePartyMember = _protagonist;
         
         // Populate NPCs for this node
         _npcSpawner.PopulateNode(_currentNode, _locationId);
@@ -156,6 +165,7 @@ public class NarrativeController
     private void StartObservationPhaseWithHistory()
     {
         // Note: ResetForNewNode() should already be called before this
+        _activePartyMember = _protagonist;
         // Populate NPCs for the new node
         _npcSpawner.PopulateNode(_currentNode, _locationId);
         
@@ -237,8 +247,8 @@ public class NarrativeController
                 throw new Exception($"No outcome found for keyword '{keyword}'");
             }
 
-            // Get action modiMentis
-            var actionModiMentis = _protagonist.GetActionModiMentis();
+            // Get action modiMentis from the active party member
+            var actionModiMentis = _activePartyMember.GetActionModiMentis();
 
             Console.WriteLine($"NarrativeController: Outcome '{targetOutcome.DisplayName}', {actionModiMentis.Count} action modiMentis");
 
@@ -680,6 +690,87 @@ public class NarrativeController
     }
     
     /// <summary>
+    /// Speak About phase: active party member speaks directly to a companion about a keyword.
+    /// Greys out current text, preserves noetic points, adds the speaking block as the new
+    /// observation root, and switches the active party member to the companion.
+    /// </summary>
+    private async Task ExecuteSpeakingPhaseAsync(
+        ModusMentis speakingModusMentis,
+        Companion companion,
+        KeywordRegion keywordRegion)
+    {
+        string keyword = keywordRegion.Keyword;
+        var sourceBlock = keywordRegion.SourceBlock;
+
+        try
+        {
+            Console.WriteLine($"NarrativeController: Speaking phase — skill={speakingModusMentis.DisplayName}, companion={companion.Name}, keyword='{keyword}'");
+
+            // Resolve the outcome linked to this keyword
+            ConcreteOutcome? linkedOutcome = null;
+            if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var ko) == true)
+                linkedOutcome = ko;
+            else
+                linkedOutcome = sourceBlock?.LinkedOutcome ?? _currentNode.GetOutcomeOwningKeyword(keyword);
+
+            if (linkedOutcome == null)
+            {
+                Console.Error.WriteLine($"NarrativeController: Speaking — no outcome found for keyword '{keyword}'");
+                _narrationState.IsLoadingSpeaking = false;
+                return;
+            }
+
+            var speakingBlock = await _observationController.GenerateSpeakingTextAsync(
+                keyword,
+                keywordRegion.KeywordInContext,
+                speakingModusMentis,
+                companion.Name,
+                linkedOutcome,
+                _currentNode,
+                _protagonist,
+                _worldContext
+            );
+
+            if (speakingBlock == null)
+            {
+                Console.Error.WriteLine("NarrativeController: Speaking generation returned null.");
+                _narrationState.IsLoadingSpeaking = false;
+                _narrationState.ErrorMessage = "Speaking failed — no text generated.";
+                return;
+            }
+
+            // Grey out current content and reset without spending all noetic points
+            _scrollBuffer.ConvertToHistory();
+            _narrationState.ResetForPartyMemberChange();
+            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
+            // Speaking block is the new observation root for this sequence
+            _scrollBuffer.AddBlock(speakingBlock);
+            _narrationState.AddBlock(speakingBlock);
+            _scrollBuffer.ScrollToBottom();
+            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
+            // Consume one noetic point (same as think/observe)
+            _narrationState.ThinkingAttemptsRemaining--;
+
+            // Switch active party member to the companion
+            _activePartyMember = companion;
+
+            _narrationState.IsLoadingSpeaking = false;
+            _narrationState.ErrorMessage = null;
+
+            Console.WriteLine($"NarrativeController: Speaking phase complete — active party member is now {companion.Name}");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"NarrativeController: Speaking phase error: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            _narrationState.IsLoadingSpeaking = false;
+            _narrationState.ErrorMessage = $"Speaking failed: {ex.Message}";
+        }
+    }
+
+    /// <summary>
     /// Update loop - called at 10 Hz by game controller.
     /// </summary>
     public void Update()
@@ -717,8 +808,8 @@ public class NarrativeController
         }
         
         // Show loading indicator if generating (for non-action loading, or action evaluation phase before dice roll)
-        bool isLoadingNonDice = _narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking || 
-                                _narrationState.IsLoadingFocusObservation || 
+        bool isLoadingNonDice = _narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking ||
+                                _narrationState.IsLoadingFocusObservation || _narrationState.IsLoadingSpeaking ||
                                 (_narrationState.IsLoadingAction && !_narrationState.IsDiceRollActive);
         if (isLoadingNonDice)
         {
@@ -871,14 +962,25 @@ public class NarrativeController
             if (selectedModusMentis != null)
             {
                 Console.WriteLine($"NarrativeController: Selected modusMentis: {selectedModusMentis.DisplayName}");
-                
+
+                if (_narrationState.IsSelectingModusMentisForSpeaking)
+                {
+                    // Step 1 of Speak About: speaking modusMentis selected → show companion selection
+                    _narrationState.IsSelectingModusMentisForSpeaking = false;
+                    _narrationState.SpeakingModusMentisPending = selectedModusMentis;
+                    _pendingCompanions = _protagonist.CompanionParty.ToList();
+                    var companionNames = _pendingCompanions.Select(c => c.Name).ToList();
+                    _narrationState.IsSelectingCompanionForSpeaking = true;
+                    Vector2 screenPos2 = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
+                    _choicePopup.Show(screenPos2, companionNames, "Who do you address?");
+                }
                 // Get the keyword that was clicked (stored before popup appeared)
-                if (_narrationState.HoveredKeyword != null)
+                else if (_narrationState.HoveredKeyword != null)
                 {
                     string keyword = _narrationState.HoveredKeyword.Keyword;
                     var sourceBlock = _narrationState.HoveredKeyword.SourceBlock;
 
-                    // Check if we're selecting an observation modusMentis (right-click) or thinking modusMentis (left-click)
+                    // Check if we're selecting an observation modusMentis or thinking modusMentis
                     if (_narrationState.IsSelectingObservationModusMentis)
                     {
                         // Focus observation phase
@@ -900,11 +1002,9 @@ public class NarrativeController
                     }
                     else
                     {
-                        // Thinking phase (left-click)
+                        // Thinking phase
                         _narrationState.IsLoadingThinking = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-
-                        // Fire-and-forget async task
                         _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword, _narrationState.HoveredKeyword?.KeywordInContext);
                     }
                 }
@@ -913,6 +1013,7 @@ public class NarrativeController
             {
                 Console.WriteLine("NarrativeController: Popup closed (clicked outside)");
                 _narrationState.IsSelectingObservationModusMentis = false;
+                _narrationState.IsSelectingModusMentisForSpeaking = false;
             }
         }
     }
@@ -1144,23 +1245,34 @@ public class NarrativeController
         {
             // Get screen mouse position
             Vector2 correctedScreenPos = _terminalInputHandler.GetCorrectedMousePosition();
-            
+
             // Get cell size for hit detection
             var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
             int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
-            
+
             var selectedModusMentis = _modusMentisPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.ClientSize, cellPixelSize);
             if (selectedModusMentis != null)
             {
                 Console.WriteLine($"NarrativeController: Selected modusMentis: {selectedModusMentis.DisplayName}");
-                
+
+                if (_narrationState.IsSelectingModusMentisForSpeaking)
+                {
+                    // Step 1 of Speak About: speaking modusMentis selected → show companion selection
+                    _narrationState.IsSelectingModusMentisForSpeaking = false;
+                    _narrationState.SpeakingModusMentisPending = selectedModusMentis;
+                    _pendingCompanions = _protagonist.CompanionParty.ToList();
+                    var companionNames = _pendingCompanions.Select(c => c.Name).ToList();
+                    _narrationState.IsSelectingCompanionForSpeaking = true;
+                    Vector2 screenPos2 = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
+                    _choicePopup.Show(screenPos2, companionNames, "Who do you address?");
+                }
                 // Get the keyword that was clicked (stored before popup appeared)
-                if (_narrationState.HoveredKeyword != null)
+                else if (_narrationState.HoveredKeyword != null)
                 {
                     string keyword = _narrationState.HoveredKeyword.Keyword;
                     var sourceBlock = _narrationState.HoveredKeyword.SourceBlock;
 
-                    // Check if we're selecting an observation modusMentis (right-click) or thinking modusMentis (left-click)
+                    // Check if we're selecting an observation modusMentis or thinking modusMentis
                     if (_narrationState.IsSelectingObservationModusMentis)
                     {
                         // Focus observation phase
@@ -1182,11 +1294,9 @@ public class NarrativeController
                     }
                     else
                     {
-                        // Thinking phase (left-click)
+                        // Thinking phase
                         _narrationState.IsLoadingThinking = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-
-                        // Fire-and-forget async task
                         _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword, _narrationState.HoveredKeyword?.KeywordInContext);
                     }
                 }
@@ -1195,6 +1305,7 @@ public class NarrativeController
             {
                 Console.WriteLine("NarrativeController: Popup closed (clicked outside)");
                 _narrationState.IsSelectingObservationModusMentis = false;
+                _narrationState.IsSelectingModusMentisForSpeaking = false;
             }
             return;
         }
@@ -1216,7 +1327,8 @@ public class NarrativeController
                 var action = allActions[clickedAction.ActionIndex];
 
                 bool hasItems = action.CombinedItem == null && GetCombinableItems().Count > 0;
-                var disabledIndices = hasItems ? new HashSet<int>() : new HashSet<int> { 1 };
+                bool canUseItem = hasItems && _narrationState.ThinkingAttemptsRemaining > 0;
+                var disabledIndices = canUseItem ? new HashSet<int>() : new HashSet<int> { 1 };
 
                 Console.WriteLine($"NarrativeController: Showing action mode choice for '{action.ActionText}' (hasItems={hasItems})");
                 _narrationState.ActionPendingModeSelection = action;
@@ -1242,23 +1354,58 @@ public class NarrativeController
             _narrationState.IsSelectingInteractionMode = true;
             _narrationState.InteractionModeIsForKeyword = true;
             Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
-            _choicePopup.Show(screenPos, new List<string> { "Think", "Observe" }, "Keyword Action");
+            var speakChoices = new List<string> { "Think", "Observe", "Speak About" };
+            var speakDisabled = new HashSet<int>();
+            bool canSpeak = _activePartyMember.GetSpeakingModiMentis().Count > 0
+                         && _narrationState.ThinkingAttemptsRemaining > 0
+                         && _protagonist.CompanionParty.Count > 0;
+            if (!canSpeak) speakDisabled.Add(2);
+            _choicePopup.Show(screenPos, speakChoices, "Keyword Action", speakDisabled);
         }
     }
 
     /// <summary>
-    /// Dispatches the result of the Think/Observe or Execute/Use Item choice popup.
+    /// Dispatches the result of the Think/Observe/SpeakAbout or Execute/Use Item choice popup.
     /// </summary>
     private void DispatchChoiceSelection(int? choiceIndex)
     {
+        // Companion selection (step 2 of Speak About) — checked first because it also uses _choicePopup
+        if (_narrationState.IsSelectingCompanionForSpeaking)
+        {
+            _narrationState.IsSelectingCompanionForSpeaking = false;
+            if (choiceIndex.HasValue
+                && choiceIndex.Value >= 0
+                && choiceIndex.Value < _pendingCompanions.Count
+                && _narrationState.SpeakingModusMentisPending != null
+                && _narrationState.HoveredKeyword != null)
+            {
+                var companion   = _pendingCompanions[choiceIndex.Value];
+                var speakingMM  = _narrationState.SpeakingModusMentisPending;
+                _narrationState.SpeakingModusMentisPending = null;
+                _pendingCompanions.Clear();
+                Console.WriteLine($"NarrativeController: Speak About — companion={companion.Name}, skill={speakingMM.DisplayName}");
+                _narrationState.IsLoadingSpeaking = true;
+                _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+                _ = ExecuteSpeakingPhaseAsync(speakingMM, companion, _narrationState.HoveredKeyword);
+            }
+            else
+            {
+                Console.WriteLine("NarrativeController: Companion selection dismissed");
+                _narrationState.SpeakingModusMentisPending = null;
+                _pendingCompanions.Clear();
+            }
+            return;
+        }
+
         if (_narrationState.InteractionModeIsForKeyword)
         {
-            // Keyword choice: 0 = Think, 1 = Observe
+            // Keyword choice: 0 = Think, 1 = Observe, 2 = Speak About
             if (choiceIndex == 0 && _narrationState.HoveredKeyword != null)
             {
                 Console.WriteLine("NarrativeController: Choice — Think");
                 _narrationState.IsSelectingObservationModusMentis = false;
-                var thinkingModiMentis = _protagonist.GetThinkingModiMentis();
+                _narrationState.IsSelectingModusMentisForSpeaking = false;
+                var thinkingModiMentis = _activePartyMember.GetThinkingModiMentis();
                 Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
                 _modusMentisPopup.Show(screenPos, thinkingModiMentis, "Select Thinking ModusMentis");
             }
@@ -1266,9 +1413,19 @@ public class NarrativeController
             {
                 Console.WriteLine("NarrativeController: Choice — Observe");
                 _narrationState.IsSelectingObservationModusMentis = true;
-                var observationModiMentis = _protagonist.GetObservationModiMentis();
+                _narrationState.IsSelectingModusMentisForSpeaking = false;
+                var observationModiMentis = _activePartyMember.GetObservationModiMentis();
                 Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
                 _modusMentisPopup.Show(screenPos, observationModiMentis, "Select Observation ModusMentis");
+            }
+            else if (choiceIndex == 2 && _narrationState.HoveredKeyword != null)
+            {
+                Console.WriteLine("NarrativeController: Choice — Speak About");
+                _narrationState.IsSelectingObservationModusMentis = false;
+                _narrationState.IsSelectingModusMentisForSpeaking = true;
+                var speakingModiMentis = _activePartyMember.GetSpeakingModiMentis();
+                Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
+                _modusMentisPopup.Show(screenPos, speakingModiMentis, "Select Speaking ModusMentis");
             }
             else
             {
@@ -1358,11 +1515,15 @@ public class NarrativeController
         {
             _choicePopup.Hide();
             _narrationState.IsSelectingInteractionMode = false;
+            _narrationState.IsSelectingCompanionForSpeaking = false;
+            _narrationState.SpeakingModusMentisPending = null;
+            _pendingCompanions.Clear();
             return true;
         }
         if (_modusMentisPopup.IsVisible)
         {
             _modusMentisPopup.Hide();
+            _narrationState.IsSelectingModusMentisForSpeaking = false;
             return true;
         }
         return false;
@@ -1649,6 +1810,10 @@ public class NarrativeController
                 _narrationState.AddBlock(reasoningBlock);
                 _scrollBuffer.ScrollToBottom();
                 _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
+                // Item combination costs one noetic point
+                _narrationState.ThinkingAttemptsRemaining = Math.Max(0, _narrationState.ThinkingAttemptsRemaining - 1);
+                Console.WriteLine($"NarrativeController: Item combination consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
             }
             else
             {

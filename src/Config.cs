@@ -40,7 +40,7 @@ public static class Config
         public const int PopupCellSize = MainCellSize;
 
         // Glyph scale relative to cell (1.0 = exact fit, >1.0 = slight overflow for natural look)
-        public const float GlyphScale = 1.25f;
+        public const float GlyphScale = 1.2f;
     }
     
     #endregion

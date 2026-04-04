@@ -151,6 +151,18 @@ public class ObservationExecutor
     }
 
     /// <summary>
+    /// Generates speaking text (party member addressing a companion directly).
+    /// Uses the speaking schema to enforce quoted dialogue output.
+    /// </summary>
+    public async Task<string> GenerateSpeakingTextAsync(int slotId, string prompt, CancellationToken ct = default)
+    {
+        var schema = LLMSchemaConfig.CreateSpeakingSchema();
+        var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
+        var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
+        return ParseObservationResponse(jsonResponse ?? "");
+    }
+
+    /// <summary>
     /// Scans the combined text of a transition + focus sentence for matching outcome keywords.
     /// Tries <paramref name="indirectKeywords"/> first (the LLM-hinted ones); if none are found,
     /// falls back to <paramref name="directKeywords"/> (observation-name-derived words).
@@ -247,7 +259,7 @@ public class ObservationExecutor
             var root = doc.RootElement;
 
             string? text = null;
-            foreach (var fieldName in new[] { "what_do_i_feel_and_observe", "what_catches_my_attention" })
+            foreach (var fieldName in new[] { "what_do_i_feel_and_observe", "what_catches_my_attention", "what_do_i_say" })
             {
                 if (root.TryGetProperty(fieldName, out var prop))
                 {

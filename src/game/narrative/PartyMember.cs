@@ -311,6 +311,8 @@ public abstract class PartyMember
         LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Thinking)).ToList();
     public List<ModusMentis> GetActionModiMentis() =>
         LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Action)).ToList();
+    public List<ModusMentis> GetSpeakingModiMentis() =>
+        LearnedModiMentis.Where(s => s.Functions.Contains(ModusMentisFunction.Speaking)).ToList();
     public ModusMentis? GetModusMentisById(string modusMentisId) =>
         LearnedModiMentis.FirstOrDefault(s => s.ModusMentisId == modusMentisId);
 

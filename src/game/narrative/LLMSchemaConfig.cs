@@ -118,6 +118,26 @@ public static class LLMSchemaConfig
 
     #endregion
     
+    #region Speaking Schemas
+
+    /// <summary>
+    /// Schema for speaking modusMentis output.
+    /// The template enforces that the generated text is wrapped in double-quotes,
+    /// producing dialogue-style output addressed to the selected companion.
+    /// </summary>
+    public static CompositeField CreateSpeakingSchema()
+    {
+        return new CompositeField("SpeakingResponse",
+            new TemplateStringField("what_do_i_say",
+                Template: "\"<generated>\"",
+                MinGenLength: 20,
+                MaxGenLength: 300,
+                FirstSentenceMaxLength: 200)
+        );
+    }
+
+    #endregion
+
     #region Outcome Narration Schemas
 
     /// <summary>

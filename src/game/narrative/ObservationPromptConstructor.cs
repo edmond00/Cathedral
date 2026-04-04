@@ -86,6 +86,43 @@ Your attention is drawn to {WithArticle(GetOutcomeLabel(outcome))}.
     }
 
     /// <summary>
+    /// Builds the prompt for a speaking modusMentis addressing a companion directly.
+    /// The output is a single line of first-person dialogue in second person to the companion,
+    /// wrapped in quotes by the GBNF schema.
+    /// </summary>
+    public string BuildSpeakingPrompt(
+        NarrationNode node,
+        int locationId,
+        ConcreteOutcome linkedOutcome,
+        string keyword,
+        KeywordInContext? keywordInContext,
+        string companionName,
+        string? personaTone,
+        WorldContext worldContext,
+        string? personaReminder = null,
+        string? personaReminder2 = null)
+    {
+        var locationContext = node.BuildLocationContext(worldContext, locationId);
+        string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
+        string contextClause = keywordInContext != null
+            ? $"You are thinking about {keywordInContext.Context}."
+            : $"You are thinking about {keyword}.";
+        var outcomeKics = linkedOutcome is NarrationNode nn ? nn.NodeKeywordsInContext
+            : linkedOutcome is ObservationObject obs ? obs.ObservationKeywordsInContext
+            : linkedOutcome.OutcomeKeywordsInContext;
+        string keywordHint = outcomeKics.Count > 0
+            ? $" You may mention things like: {string.Join(", ", outcomeKics.Select(k => k.Context))}."
+            : "";
+
+        return $@"You are a {personaTone}.
+{WorldContext.EpochContext}
+{locationContext}
+{contextClause} You want to address your companion {companionName} directly about {WithArticle(GetOutcomeLabel(linkedOutcome))}.{keywordHint}
+{reminderClause}what do you say to {companionName}? Speak directly to them in second person, in a single sentence.
+{Config.Narrative.AnswerInstructionFor(personaReminder2)}";
+    }
+
+    /// <summary>
     /// Builds a continuation prompt focused on a specific outcome, including its keywords.
     /// </summary>
     public string BuildOutcomeDescriptionSentencePrompt(ConcreteOutcome outcome, string? personaReminder = null, string? personaReminder2 = null)

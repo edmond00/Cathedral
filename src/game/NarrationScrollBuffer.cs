@@ -46,7 +46,7 @@ public class NarrationScrollBuffer
         // Create a new block with cleaned text if it was modified, preserving all properties
         var blockToAdd = cleanedText != block.Text
             ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Keywords, block.Actions, block.ChainOrigin,
-                block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences, block.KeywordContextMap)
+                block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences, block.KeywordContextMap, block.SpeakerName)
             : block;
         
         _blocks.Add(blockToAdd);
@@ -236,7 +236,9 @@ public class NarrationScrollBuffer
             {
                 // Generate modusMentis level indicators using dice glyphs
                 string levelIndicators = new string(Config.Symbols.ModusMentisLevelIndicator, block.ModusMentis.Level);
-                string headerText = $"[{block.ModusMentis.DisplayName.ToUpper()} {levelIndicators}]";
+                string headerText = block.Type == NarrationBlockType.Speaking && block.SpeakerName != null
+                    ? $"[{block.SpeakerName.ToUpper()}/{block.ModusMentis.DisplayName.ToUpper()} {levelIndicators}]"
+                    : $"[{block.ModusMentis.DisplayName.ToUpper()} {levelIndicators}]";
                 
                 _renderedLines.Add(new RenderedLine(
                     Text: headerText,
@@ -268,6 +270,7 @@ public class NarrationScrollBuffer
             {
                 NarrationBlockType.Action => LineType.Action,
                 NarrationBlockType.Outcome => LineType.Outcome,
+                NarrationBlockType.Speaking => LineType.Content,
                 _ => LineType.Content
             };
 

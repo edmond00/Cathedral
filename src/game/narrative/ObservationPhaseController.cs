@@ -315,6 +315,85 @@ public class ObservationPhaseController
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
+
+    /// <summary>
+    /// Generates a Speaking block: the active party member addresses a companion about a keyword.
+    /// The spoken text is wrapped in quotes by the GBNF schema, contains highlighted keywords,
+    /// and acts as the chain root for the companion's subsequent thinking/action blocks.
+    /// </summary>
+    public async Task<NarrationBlock?> GenerateSpeakingTextAsync(
+        string keyword,
+        KeywordInContext? keywordInContext,
+        ModusMentis speakingModusMentis,
+        string companionName,
+        ConcreteOutcome linkedOutcome,
+        NarrationNode currentNode,
+        Protagonist protagonist,
+        WorldContext worldContext,
+        CancellationToken ct = default)
+    {
+        Console.WriteLine($"ObservationPhaseController: Speaking to '{companionName}' about '{keyword}' with {speakingModusMentis.DisplayName}");
+
+        var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(speakingModusMentis);
+        _observationExecutor.ResetSlot(slotId);
+
+        int locationId = protagonist.CurrentLocationId;
+
+        try
+        {
+            var prompt = _promptConstructor.BuildSpeakingPrompt(
+                currentNode, locationId, linkedOutcome,
+                keyword, keywordInContext, companionName,
+                speakingModusMentis.PersonaTone, worldContext,
+                speakingModusMentis.PersonaReminder, speakingModusMentis.PersonaReminder2);
+
+            var spokenText = await _observationExecutor.GenerateSpeakingTextAsync(slotId, prompt, ct);
+
+            if (string.IsNullOrWhiteSpace(spokenText))
+            {
+                Console.WriteLine("ObservationPhaseController: Speaking generation returned empty text.");
+                return null;
+            }
+
+            // Extract keywords from the spoken text using the outcome's keyword hints
+            var outcomeKics = linkedOutcome is NarrationNode nn ? nn.NodeKeywordsInContext
+                : linkedOutcome is ObservationObject obs ? obs.ObservationKeywordsInContext
+                : linkedOutcome.OutcomeKeywordsInContext;
+            var outcomeKeywords = outcomeKics.Select(k => k.Keyword).ToList();
+            var extractedKeywords = _observationExecutor.ExtractKeywordsFromSentences(
+                "", spokenText, outcomeKeywords, _random, 3);
+
+            var keywordContextMap = new Dictionary<string, KeywordInContext>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kw in extractedKeywords)
+            {
+                var match = outcomeKics.FirstOrDefault(k => k.Keyword.Equals(kw, StringComparison.OrdinalIgnoreCase));
+                if (match != null) keywordContextMap.TryAdd(kw, match);
+            }
+
+            var block = new NarrationBlock(
+                Type: NarrationBlockType.Speaking,
+                ModusMentis: speakingModusMentis,
+                Text: spokenText,
+                Keywords: extractedKeywords.Count > 0 ? extractedKeywords : null,
+                Actions: null,
+                ChainOrigin: null,            // speaking block is a chain root
+                LinkedOutcome: linkedOutcome, // preserved so keyword clicks resolve correctly
+                KeywordOutcomeMap: null,
+                Sentences: new List<NarrationSentence> { new NarrationSentence(spokenText, extractedKeywords) },
+                KeywordContextMap: keywordContextMap.Count > 0 ? keywordContextMap : null,
+                SpeakerName: protagonist.DisplayName
+            );
+
+            Console.WriteLine($"ObservationPhaseController: Speaking generation complete ({extractedKeywords.Count} keywords)");
+            return block;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ObservationPhaseController: Speaking generation failed: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            return null;
+        }
+    }
 }
 
 

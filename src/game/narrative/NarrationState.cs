@@ -161,7 +161,13 @@ public class NarrationBlock : ModusMentisChainElement
     /// Used to pass the enriched keyword context to the thinking phase when a keyword is clicked.
     /// </summary>
     public Dictionary<string, KeywordInContext>? KeywordContextMap { get; init; } = null;
-    
+
+    /// <summary>
+    /// For Speaking blocks: the display name of the character who spoke (e.g., "Protagonist").
+    /// Null for all other block types.
+    /// </summary>
+    public string? SpeakerName { get; init; } = null;
+
     /// <summary>
     /// Implements ModusMentisChainElement.ChainModusMentis - returns the modusMentis of this block.
     /// </summary>
@@ -181,7 +187,8 @@ public class NarrationBlock : ModusMentisChainElement
         ConcreteOutcome? LinkedOutcome = null,
         Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap = null,
         List<NarrationSentence>? Sentences = null,
-        Dictionary<string, KeywordInContext>? KeywordContextMap = null)
+        Dictionary<string, KeywordInContext>? KeywordContextMap = null,
+        string? SpeakerName = null)
     {
         this.Type = Type;
         this.ModusMentis = ModusMentis;
@@ -194,6 +201,7 @@ public class NarrationBlock : ModusMentisChainElement
         this.KeywordOutcomeMap = KeywordOutcomeMap;
         this.Sentences = Sentences;
         this.KeywordContextMap = KeywordContextMap;
+        this.SpeakerName = SpeakerName;
     }
 }
 
@@ -205,7 +213,8 @@ public enum NarrationBlockType
     Observation,   // ModusMentis perceives environment
     Thinking,      // ModusMentis reasons about keyword (CoT)
     Action,        // Player selected action (modusMentis check result)
-    Outcome        // Result of action (success/failure)
+    Outcome,       // Result of action (success/failure)
+    Speaking       // Active party member speaks directly to a companion
 }
 
 /// <summary>
