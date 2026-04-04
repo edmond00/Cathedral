@@ -229,6 +229,10 @@ namespace Cathedral.Terminal
             // Set darken factor
             int darkenLoc = GL.GetUniformLocation(_program, "uDarkenFactor");
             GL.Uniform1(darkenLoc, _darkenFactor);
+
+            // Set glyph scale
+            int glyphScaleLoc = GL.GetUniformLocation(_program, "uGlyphScale");
+            GL.Uniform1(glyphScaleLoc, Config.Terminal.GlyphScale);
             
             // Bind atlas texture
             GL.ActiveTexture(TextureUnit.Texture0);

@@ -11,6 +11,7 @@ layout(location = 6) in vec4 iBgColor;     // Background color
 
 uniform mat4 uProjection;  // Orthographic projection for HUD
 uniform int uRenderPass;   // 0=background, 1=glyph
+uniform float uGlyphScale; // Scale of glyph quad relative to cell (1.0 = exact fit)
 
 out vec2 vUV;
 out vec4 vTextColor;
@@ -19,7 +20,8 @@ out vec4 vBgColor;
 void main()
 {
     // Convert to screen space (position is already in screen coordinates)
-    vec2 screenPos = iPosition.xy + aLocalPos * iSize;
+    float scale = (uRenderPass == 1) ? uGlyphScale : 1.0;
+    vec2 screenPos = iPosition.xy + aLocalPos * iSize * scale;
     gl_Position = uProjection * vec4(screenPos, 0.0, 1.0);
     
     // Calculate UV coordinates

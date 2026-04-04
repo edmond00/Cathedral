@@ -31,13 +31,16 @@ public static class Config
         // Main terminal dimensions
         public const int MainWidth = 100;
         public const int MainHeight = 100;
-        public const int MainCellSize = 33;
-        public const int MainFontSize = 33;
+        public const int MainCellSize = 35;
+        public const int MainFontSize = 35;
         
         // Popup terminal dimensions
         public const int PopupWidth = 40;
         public const int PopupHeight = 40;
         public const int PopupCellSize = MainCellSize;
+
+        // Glyph scale relative to cell (1.0 = exact fit, >1.0 = slight overflow for natural look)
+        public const float GlyphScale = 1.25f;
     }
     
     #endregion

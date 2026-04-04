@@ -349,14 +349,14 @@ public static class JsonConstraintGenerator
                 int restMin = Math.Max(0, field.MinGenLength - 1);
                 int restMax = field.MaxGenLength - 1;
                 bodyPattern = restMin == restMax
-                    ? $"[^\"\\n]{{{restMin}}}"
-                    : $"[^\"\\n]{{{restMin},{restMax}}}";
+                    ? $"[-a-zA-Z0-9 .,?!'`]{{{restMin}}}"
+                    : $"[-a-zA-Z0-9 .,?!'`]{{{restMin},{restMax}}}";
             }
             else
             {
                 bodyPattern = field.MinGenLength == field.MaxGenLength
-                    ? $"[^\"\\n]{{{field.MinGenLength}}}"
-                    : $"[^\"\\n]{{{field.MinGenLength},{field.MaxGenLength}}}";
+                    ? $"[-a-zA-Z0-9 .,?!'`]{{{field.MinGenLength}}}"
+                    : $"[-a-zA-Z0-9 .,?!'`]{{{field.MinGenLength},{field.MaxGenLength}}}";
             }
 
             var rule = ruleName + " ::= \"\\\"" + before + "\" " + firstCharPrefix + bodyPattern + " \"" + after + "\\\"\"";

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Cathedral;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -238,6 +239,10 @@ namespace Cathedral.Terminal
             // Set darken factor (always 1.0 for popup - no darkening)
             int darkenLoc = GL.GetUniformLocation(_program, "uDarkenFactor");
             GL.Uniform1(darkenLoc, 1.0f);
+
+            // Set glyph scale
+            int glyphScaleLoc = GL.GetUniformLocation(_program, "uGlyphScale");
+            GL.Uniform1(glyphScaleLoc, Config.Terminal.GlyphScale);
             
             // Bind atlas texture
             GL.ActiveTexture(TextureUnit.Texture0);
@@ -452,6 +457,7 @@ layout(location = 6) in vec4 iBgColor;
 
 uniform mat4 uProjection;
 uniform int uRenderPass;
+uniform float uGlyphScale;
 
 out vec2 vUV;
 out vec4 vTextColor;
@@ -459,7 +465,8 @@ out vec4 vBgColor;
 
 void main()
 {
-    vec2 screenPos = iPosition.xy + aLocalPos * iSize;
+    float scale = (uRenderPass == 1) ? uGlyphScale : 1.0;
+    vec2 screenPos = iPosition.xy + aLocalPos * iSize * scale;
     gl_Position = uProjection * vec4(screenPos, 0.0, 1.0);
     
     if (uRenderPass == 0) {

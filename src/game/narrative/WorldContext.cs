@@ -21,7 +21,7 @@ public abstract class WorldContext
     /// and guards against modern language or real-world references.
     /// </summary>
     public static readonly string EpochContext =
-        "You stand in a grim age of iron and superstition, where shadows linger long and the old ways still hold sway.";
+        "You stand in a grim age of iron and myth, where shadows linger long and the old ways still hold sway.";
 
     /// <summary>Short name shown in the UI header (e.g., "Forest", "Castle").</summary>
     public abstract string DisplayName { get; }
