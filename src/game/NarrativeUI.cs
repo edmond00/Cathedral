@@ -522,16 +522,26 @@ public class NarrativeUI : TerminalPanelUI
         
         if (lineIndex == 0)
         {
-            // First line: render with prefix and modusMentis (including level)
-            string prefix = "> ";
-            
+            // First line: render difficulty glyph prefix + modusMentis bracket
+            char diffChar = action.DifficultyLevel > 0
+                ? Config.Symbols.DifficultyGlyphs[Math.Clamp(action.DifficultyLevel, 1, 10) - 1]
+                : '>';
+            string diffPrefix = $"{diffChar} ";
+
             // Build modusMentis bracket with level indicators
             string modusMentisName = action.ChainModusMentis?.DisplayName ?? action.ActionModusMentisId;
             int modusMentisLevel = action.ChainModusMentis?.Level ?? 1;
             string levelIndicators = new string(Config.Symbols.ModusMentisLevelIndicator, modusMentisLevel);
-            
-            _terminal.Text(startX, y, prefix, prefixColor, Config.NarrativeUI.BackgroundColor);
-            startX += prefix.Length;
+
+            // Glyph always uses difficulty-mapped color (dimmed in history)
+            Vector4 diffGlyphColor = dimContent
+                ? Config.NarrativeUI.DimmedContentColor
+                : (action.DifficultyLevel > 0
+                    ? Config.Symbols.DifficultyLevelColor(action.DifficultyLevel)
+                    : modusMentisBracketColor);
+
+            _terminal.Text(startX, y, diffPrefix, diffGlyphColor, Config.NarrativeUI.BackgroundColor);
+            startX += diffPrefix.Length;
             
             // Render modusMentis bracket parts with hover-aware colors and backgrounds
             _terminal.Text(startX, y, "[", modusMentisBracketColor, modusMentisBracketBackground);

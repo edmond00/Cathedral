@@ -226,6 +226,27 @@ public static class Config
         
         // Difficulty level glyphs (1-10)
         public static readonly char[] DifficultyGlyphs = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩' };
+
+        /// <summary>
+        /// Color for a difficulty level on the 1-10 scale:
+        /// two-segment gradient: white (1) → yellow (5-6) → red (10).
+        /// </summary>
+        public static Vector4 DifficultyLevelColor(int level)
+        {
+            float t = (Math.Clamp(level, 1, 10) - 1) / 9.0f; // 0.0 = easy, 1.0 = hard
+            if (t <= 0.5f)
+            {
+                // white → yellow
+                float s = t / 0.5f;
+                return new Vector4(1.0f, 1.0f, 1.0f - s, 1.0f);
+            }
+            else
+            {
+                // yellow → red
+                float s = (t - 0.5f) / 0.5f;
+                return new Vector4(1.0f, 1.0f - s, 0.0f, 1.0f);
+            }
+        }
         
         // Loading spinner frames
         public static readonly string[] LoadingSpinner = new[] { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" };

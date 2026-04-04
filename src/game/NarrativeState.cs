@@ -152,7 +152,23 @@ public class NarrativeState
     /// The action waiting to receive a combined item (set when item popup is shown).
     /// </summary>
     public ParsedNarrativeAction? ActionPendingItemCombination { get; set; } = null;
-    
+
+    /// <summary>
+    /// Is the initial "Think/Observe" or "Execute/Use Item" choice popup currently visible?
+    /// </summary>
+    public bool IsSelectingInteractionMode { get; set; } = false;
+
+    /// <summary>
+    /// True when the choice popup was triggered by a keyword click (Think/Observe).
+    /// False when triggered by an action click (Execute/Use Item).
+    /// </summary>
+    public bool InteractionModeIsForKeyword { get; set; } = false;
+
+    /// <summary>
+    /// The action waiting for the player to choose between Execute and Use Item.
+    /// </summary>
+    public ParsedNarrativeAction? ActionPendingModeSelection { get; set; } = null;
+
     /// <summary>
     /// Is the system currently generating a focus observation via LLM?
     /// </summary>
@@ -202,6 +218,9 @@ public class NarrativeState
         IsSelectingObservationModusMentis = false;
         IsSelectingItemForAction = false;
         ActionPendingItemCombination = null;
+        IsSelectingInteractionMode = false;
+        InteractionModeIsForKeyword = false;
+        ActionPendingModeSelection = null;
         PendingTransitionNode = null;
         ErrorMessage = null;
         ClearDiceRoll();
@@ -229,6 +248,9 @@ public class NarrativeState
         IsSelectingObservationModusMentis = false;
         IsSelectingItemForAction = false;
         ActionPendingItemCombination = null;
+        IsSelectingInteractionMode = false;
+        InteractionModeIsForKeyword = false;
+        ActionPendingModeSelection = null;
         PendingTransitionNode = null;
         ErrorMessage = null;
         ClearDiceRoll();

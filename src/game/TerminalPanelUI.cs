@@ -405,12 +405,7 @@ public abstract class TerminalPanelUI
         // Difficulty indicator
         int  diffClamp   = Math.Clamp(difficulty, 1, 10);
         char diffGlyph   = Config.Symbols.DifficultyGlyphs[diffClamp - 1];
-        float diffRatio  = (diffClamp - 1) / 9.0f;
-        var   diffColor  = new Vector4(
-            1.0f + (Config.Colors.DarkYellow.X - 1.0f) * diffRatio,
-            1.0f + (Config.Colors.DarkYellow.Y - 1.0f) * diffRatio,
-            1.0f + (Config.Colors.DarkYellow.Z - 1.0f) * diffRatio,
-            1.0f);
+        var  diffColor   = Config.Symbols.DifficultyLevelColor(diffClamp);
         string diffLabel  = $"Difficulty: {diffGlyph} ({diffClamp} {(diffClamp == 1 ? "six" : "sixes")} needed)";
         int    diffLabelX = (_layout.TERMINAL_WIDTH - diffLabel.Length) / 2;
         int    diffLabelY = centerY - 8;

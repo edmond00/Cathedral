@@ -25,6 +25,7 @@ public class NarrativeController
     private readonly NarrativeUI _ui;
     private readonly TerminalThinkingModusMentisPopup _modusMentisPopup;
     private readonly TerminalItemSelectionPopup _itemSelectionPopup;
+    private readonly TerminalSimpleChoicePopup _choicePopup;
     private readonly WorldContext _worldContext;
     
     // Dependencies
@@ -97,6 +98,7 @@ public class NarrativeController
         _scrollBuffer = new NarrationScrollBuffer(maxWidth: contentWidth, layout: layout);
         _modusMentisPopup = new TerminalThinkingModusMentisPopup(popup);
         _itemSelectionPopup = new TerminalItemSelectionPopup(popup);
+        _choicePopup = new TerminalSimpleChoicePopup(popup);
         _core = core;
         _terminalInputHandler = terminalInputHandler;
         _worldContext = worldContext ?? new ForestBiomeContext();
@@ -277,6 +279,23 @@ public class NarrativeController
             foreach (var action in response.Actions)
             {
                 action.ChainOrigin = thinkingBlock;
+            }
+
+            // Pre-compute difficulty for each action while still in loading state
+            if (response.Actions.Count > 0)
+            {
+                _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingDifficulty;
+                foreach (var act in response.Actions)
+                {
+                    var criticContext = new CriticContext(
+                        _currentNode, _worldContext, _locationId,
+                        act.PreselectedOutcome?.ToNaturalLanguageString() ?? "");
+                    var difficultyTree = CriticTrees.BuildDifficultyTree(act.ActionText, criticContext);
+                    var difficultyResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(difficultyTree);
+                    double difficultyScore = CriticTrees.CalculateDifficultyFromResult(difficultyResult);
+                    act.DifficultyLevel = CriticTrees.DifficultyToScale(difficultyScore);
+                    Console.WriteLine($"NarrativeController: Pre-computed difficulty for '{act.DisplayText}': {act.DifficultyLevel}/10");
+                }
             }
             
             // Add to scroll buffer
@@ -802,6 +821,9 @@ public class NarrativeController
 
         if (_itemSelectionPopup.IsVisible)
             _itemSelectionPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+
+        if (_choicePopup.IsVisible)
+            _choicePopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
     }
     
     /// <summary>
@@ -812,6 +834,15 @@ public class NarrativeController
     {
         var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
         int cellPixelSize = (int)layoutInfo.CellSize.X;
+
+        // Choice popup (Think/Observe or Execute/Use Item) takes highest priority
+        if (_choicePopup.IsVisible)
+        {
+            int? choiceIndex = _choicePopup.HandleClick(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+            _narrationState.IsSelectingInteractionMode = false;
+            DispatchChoiceSelection(choiceIndex);
+            return;
+        }
 
         // Item selection popup takes priority when visible
         if (_itemSelectionPopup.IsVisible)
@@ -1071,6 +1102,19 @@ public class NarrativeController
             return;
         }
 
+        // If choice popup is visible, handle it first
+        if (_choicePopup.IsVisible)
+        {
+            Vector2 correctedScreenPos = _terminalInputHandler.GetCorrectedMousePosition();
+            var layoutInfoC = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
+            int cellPixelSizeC = (int)layoutInfoC.CellSize.X;
+
+            int? choiceIndex = _choicePopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.ClientSize, cellPixelSizeC);
+            _narrationState.IsSelectingInteractionMode = false;
+            DispatchChoiceSelection(choiceIndex);
+            return;
+        }
+
         // If item selection popup is visible, handle item popup click
         if (_itemSelectionPopup.IsVisible)
         {
@@ -1164,18 +1208,22 @@ public class NarrativeController
             foreach (var block in _narrationState.Blocks)
             {
                 if (block.Type == NarrationBlockType.Thinking && block.Actions != null)
-                {
                     allActions.AddRange(block.Actions);
-                }
             }
-            
+
             if (clickedAction.ActionIndex < allActions.Count)
             {
                 var action = allActions[clickedAction.ActionIndex];
-                Console.WriteLine($"NarrativeController: Executing action '{action.ActionText}' with modusMentis '{action.ActionModusMentisId}'");
-                
-                // Fire-and-forget async task
-                _ = ExecuteActionPhaseAsync(action);
+
+                bool hasItems = action.CombinedItem == null && GetCombinableItems().Count > 0;
+                var disabledIndices = hasItems ? new HashSet<int>() : new HashSet<int> { 1 };
+
+                Console.WriteLine($"NarrativeController: Showing action mode choice for '{action.ActionText}' (hasItems={hasItems})");
+                _narrationState.ActionPendingModeSelection = action;
+                _narrationState.IsSelectingInteractionMode = true;
+                _narrationState.InteractionModeIsForKeyword = false;
+                Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
+                _choicePopup.Show(screenPos, new List<string> { "Execute", "Use Item" }, "Action", disabledIndices);
             }
             else
             {
@@ -1183,57 +1231,70 @@ public class NarrativeController
             }
             return;
         }
-        
+
         // Check if clicked on a keyword
         KeywordRegion? clickedKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
-        
+
         if (clickedKeyword != null && _narrationState.ThinkingAttemptsRemaining > 0)
         {
             Console.WriteLine($"NarrativeController: Clicked keyword: {clickedKeyword}");
-            
-            // Show thinking modusMentis selection popup (left-click = thinking)
-            _narrationState.IsSelectingObservationModusMentis = false;
-            var thinkingModiMentis = _protagonist.GetThinkingModiMentis();
-            
-            // Convert terminal cell coordinates to screen pixel coordinates
+            _narrationState.HoveredKeyword = clickedKeyword;
+            _narrationState.IsSelectingInteractionMode = true;
+            _narrationState.InteractionModeIsForKeyword = true;
             Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
-            
-            _modusMentisPopup.Show(screenPos, thinkingModiMentis, "Select Thinking ModusMentis");
-            Console.WriteLine($"NarrativeController: Showing {thinkingModiMentis.Count} thinking modiMentis at screen position ({screenPos.X}, {screenPos.Y})");;
+            _choicePopup.Show(screenPos, new List<string> { "Think", "Observe" }, "Keyword Action");
         }
     }
-    
+
     /// <summary>
-    /// Handle right mouse click event - triggers focus observation on keywords.
+    /// Dispatches the result of the Think/Observe or Execute/Use Item choice popup.
     /// </summary>
-    public void OnRightClick(int mouseX, int mouseY)
+    private void DispatchChoiceSelection(int? choiceIndex)
     {
-        // Don't handle right-clicks if popup is visible or in loading state
-        if (_modusMentisPopup.IsVisible)
-            return;
-        
-        if (_narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking || 
-            _narrationState.IsLoadingAction || _narrationState.IsLoadingFocusObservation)
-            return;
-        
-        // Don't handle if continue button is shown
-        if (_narrationState.ShowContinueButton)
-            return;
-        
-        // Check if right-clicked on an action button (item combination)
-        ActionRegion? rightClickedAction = _ui.GetHoveredAction(mouseX, mouseY);
-        if (rightClickedAction != null)
+        if (_narrationState.InteractionModeIsForKeyword)
         {
-            var action = GetActionAtIndex(rightClickedAction.ActionIndex);
-            if (action != null && action.CombinedItem == null)
+            // Keyword choice: 0 = Think, 1 = Observe
+            if (choiceIndex == 0 && _narrationState.HoveredKeyword != null)
+            {
+                Console.WriteLine("NarrativeController: Choice — Think");
+                _narrationState.IsSelectingObservationModusMentis = false;
+                var thinkingModiMentis = _protagonist.GetThinkingModiMentis();
+                Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
+                _modusMentisPopup.Show(screenPos, thinkingModiMentis, "Select Thinking ModusMentis");
+            }
+            else if (choiceIndex == 1 && _narrationState.HoveredKeyword != null)
+            {
+                Console.WriteLine("NarrativeController: Choice — Observe");
+                _narrationState.IsSelectingObservationModusMentis = true;
+                var observationModiMentis = _protagonist.GetObservationModiMentis();
+                Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
+                _modusMentisPopup.Show(screenPos, observationModiMentis, "Select Observation ModusMentis");
+            }
+            else
+            {
+                Console.WriteLine("NarrativeController: Keyword choice dismissed");
+            }
+        }
+        else
+        {
+            // Action choice: 0 = Execute, 1 = Use Item
+            var action = _narrationState.ActionPendingModeSelection;
+            _narrationState.ActionPendingModeSelection = null;
+
+            if (choiceIndex == 0 && action != null)
+            {
+                Console.WriteLine($"NarrativeController: Choice — Execute '{action.ActionText}'");
+                _ = ExecuteActionPhaseAsync(action);
+            }
+            else if (choiceIndex == 1 && action != null)
             {
                 var candidateItems = GetCombinableItems();
                 if (candidateItems.Count > 0)
                 {
-                    Console.WriteLine($"NarrativeController: Right-clicked action '{action.DisplayText}' — showing item selection popup ({candidateItems.Count} candidates)");
+                    Console.WriteLine($"NarrativeController: Choice — Use Item for '{action.ActionText}'");
                     _narrationState.IsSelectingItemForAction = true;
                     _narrationState.ActionPendingItemCombination = action;
-                    Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
+                    Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
                     _itemSelectionPopup.Show(screenPos, candidateItems, "Combine Item with Action");
                 }
                 else
@@ -1241,32 +1302,17 @@ public class NarrativeController
                     Console.WriteLine("NarrativeController: No combinable items available.");
                 }
             }
-            else if (action?.CombinedItem != null)
+            else
             {
-                Console.WriteLine($"NarrativeController: Action already has combined item '{action.CombinedItem.ItemId}' — ignoring right-click.");
+                Console.WriteLine("NarrativeController: Action choice dismissed");
             }
-            return;
-        }
-
-        // Check if right-clicked on a keyword
-        KeywordRegion? clickedKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
-
-        if (clickedKeyword != null && _narrationState.ThinkingAttemptsRemaining > 0)
-        {
-            Console.WriteLine($"NarrativeController: Right-clicked keyword: {clickedKeyword.Keyword}");
-            
-            // Show observation modusMentis selection popup (right-click = focus observation)
-            _narrationState.IsSelectingObservationModusMentis = true;
-            _narrationState.HoveredKeyword = clickedKeyword;  // Store for later use
-            var observationModiMentis = _protagonist.GetObservationModiMentis();
-            
-            // Convert terminal cell coordinates to screen pixel coordinates
-            Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
-            
-            _modusMentisPopup.Show(screenPos, observationModiMentis, "Select Observation ModusMentis");
-            Console.WriteLine($"NarrativeController: Showing {observationModiMentis.Count} observation modiMentis for focus observation at screen position ({screenPos.X}, {screenPos.Y})");
         }
     }
+
+    /// <summary>
+    /// Right-click is no longer used for narrative interactions.
+    /// </summary>
+    public void OnRightClick(int mouseX, int mouseY) { }
     
     /// <summary>
     /// Handle mouse wheel scroll event.
@@ -1300,7 +1346,7 @@ public class NarrativeController
     /// <summary>
     /// Check if the thinking modusMentis popup is visible.
     /// </summary>
-    public bool IsPopupVisible => _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible;
+    public bool IsPopupVisible => _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible || _choicePopup.IsVisible;
     
     /// <summary>
     /// Close the thinking modusMentis popup if it's open.
@@ -1308,6 +1354,12 @@ public class NarrativeController
     /// </summary>
     public bool ClosePopup()
     {
+        if (_choicePopup.IsVisible)
+        {
+            _choicePopup.Hide();
+            _narrationState.IsSelectingInteractionMode = false;
+            return true;
+        }
         if (_modusMentisPopup.IsVisible)
         {
             _modusMentisPopup.Hide();

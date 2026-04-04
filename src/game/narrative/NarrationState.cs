@@ -245,6 +245,12 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public Item? CombinedItem { get; set; } = null;
 
     /// <summary>
+    /// Difficulty level pre-computed after the thinking phase (1–10 scale).
+    /// 0 means not yet evaluated.
+    /// </summary>
+    public int DifficultyLevel { get; set; } = 0;
+
+    /// <summary>
     /// When set (item-combined actions), acts as the chain leaf instead of ActionModusMentis.
     /// Holds a SyntheticItemModusMentis whose DisplayName = item name and Level = item.UsageLevel,
     /// so that the UI shows the item name as the action button prefix and the chain is:

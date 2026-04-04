@@ -101,7 +101,7 @@ public static class CriticTrees
     #region Difficulty Tree
 
     /// <summary>
-    /// Builds the difficulty tree — a single node asking the LLM to rate difficulty in 5 levels.
+    /// Builds the difficulty tree — a single node asking the LLM to rate difficulty in 4 levels.
     /// </summary>
     public static CriticNode BuildDifficultyTree(string actionText, CriticContext context)
     {
@@ -112,7 +112,6 @@ public static class CriticTrees
             {
                 new("very_easy", "trivial, no risk, anyone could do it"),
                 new("easy",      "simple, low effort, minor skill required"),
-                new("moderate",  "requires care or sustained effort"),
                 new("hard",      "difficult, significant risk or skill required"),
                 new("very_hard", "extreme difficulty or serious danger"),
             });
@@ -125,10 +124,9 @@ public static class CriticTrees
         return result.FinalChosenId switch
         {
             "very_easy" => 0.1,
-            "easy"      => 0.3,
-            "moderate"  => 0.5,
+            "easy"      => 0.4,
             "hard"      => 0.7,
-            "very_hard" => 0.9,
+            "very_hard" => 1.0,
             _           => 0.5
         };
     }

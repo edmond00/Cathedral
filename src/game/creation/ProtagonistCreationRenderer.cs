@@ -8,7 +8,7 @@ namespace Cathedral.Game.Creation;
 /// <summary>
 /// Renders the protagonist creation screen: body art on the left with interactive
 /// organ-part highlighting, stats panel on the right with score bars.
-/// Left-click art cells to +1 organ part score, right-click to -1.
+/// Left-click art cells to cycle organ part score (increments, wraps back to 0).
 ///
 /// Delegates body art rendering and hover logic to BodyArtViewer,
 /// adding score editing controls and the continue button on top.
@@ -101,33 +101,13 @@ public class ProtagonistCreationRenderer
         var clickedPart = _viewer.GetOrganPartAtPosition(x, y);
         if (clickedPart != null)
         {
-            _viewer.AdjustOrganPartScore(clickedPart, +1);
+            _viewer.CycleOrganPartScore(clickedPart);
             Render();
         }
     }
 
-    /// <summary>Handle right click at terminal coordinates (-1 to organ part score).</summary>
-    public void OnRightClick(int x, int y)
-    {
-        int arrowDelta = _viewer.GetArrowClickDelta(x, y);
-        if (arrowDelta != 0)
-        {
-            var partId = _viewer.GetOrganPartIdAtRow(y);
-            if (partId != null)
-            {
-                _viewer.AdjustOrganPartScore(partId, arrowDelta);
-                Render();
-                return;
-            }
-        }
-
-        var clickedPart = _viewer.GetOrganPartAtPosition(x, y);
-        if (clickedPart != null)
-        {
-            _viewer.AdjustOrganPartScore(clickedPart, -1);
-            Render();
-        }
-    }
+    /// <summary>Right click has no effect in creation mode.</summary>
+    public void OnRightClick(int x, int y) { }
 
     // ── Panel header ─────────────────────────────────────────────
 

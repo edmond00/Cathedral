@@ -1002,9 +1002,7 @@ public class BodyArtViewer
 
             if (ShowClickHints)
             {
-                _terminal.Text(PanelContentX, row, "Left-click: +1", Config.Colors.DarkYellowGrey, Config.Colors.Black);
-                row++;
-                _terminal.Text(PanelContentX, row, "Right-click: -1", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+                _terminal.Text(PanelContentX, row, "Click: cycle score", Config.Colors.DarkYellowGrey, Config.Colors.Black);
             }
         }
     }
@@ -1070,6 +1068,20 @@ public class BodyArtViewer
 
         if (organPart != null)
             organPart.Score = Math.Clamp(organPart.Score + delta, 0, organPart.MaxScore);
+    }
+
+    /// <summary>
+    /// Cycles the score of an organ part: increments by 1, wrapping back to 0 after MaxScore.
+    /// </summary>
+    public void CycleOrganPartScore(string organPartName)
+    {
+        var organPart = _protagonist.BodyParts
+            .SelectMany(bp => bp.Organs)
+            .SelectMany(o => o.Parts)
+            .FirstOrDefault(p => p.Id == organPartName);
+
+        if (organPart != null)
+            organPart.Score = organPart.Score >= organPart.MaxScore ? 0 : organPart.Score + 1;
     }
 
     // ═══════════════════════════════════════════════════════════════
