@@ -86,11 +86,11 @@ Your attention is drawn to {WithArticle(GetOutcomeLabel(outcome))}.
     }
 
     /// <summary>
-    /// Builds the prompt for a speaking modusMentis addressing a companion directly.
-    /// The output is a single line of first-person dialogue in second person to the companion,
-    /// wrapped in quotes by the GBNF schema.
+    /// Chained speaking — request 1 of 3.
+    /// Establishes full scene context and asks the speaker to call the companion's attention
+    /// to what they are observing. No keyword hints — sets up context for the chain.
     /// </summary>
-    public string BuildSpeakingPrompt(
+    public string BuildSpeakingAttentionPrompt(
         NarrationNode node,
         int locationId,
         ConcreteOutcome linkedOutcome,
@@ -107,19 +107,62 @@ Your attention is drawn to {WithArticle(GetOutcomeLabel(outcome))}.
         string contextClause = keywordInContext != null
             ? $"You are thinking about {keywordInContext.Context}."
             : $"You are thinking about {keyword}.";
-        var outcomeKics = linkedOutcome is NarrationNode nn ? nn.NodeKeywordsInContext
-            : linkedOutcome is ObservationObject obs ? obs.ObservationKeywordsInContext
-            : linkedOutcome.OutcomeKeywordsInContext;
-        string keywordHint = outcomeKics.Count > 0
-            ? $" You may mention things like: {string.Join(", ", outcomeKics.Select(k => k.Context))}."
-            : "";
+        string personaReminder2Clause = personaReminder2 != null
+            ? $" Stay in the character of {personaReminder2}."
+            : " Stay in character.";
 
         return $@"You are a {personaTone}.
 {WorldContext.EpochContext}
 {locationContext}
-{contextClause} You want to address your companion {companionName} directly about {WithArticle(GetOutcomeLabel(linkedOutcome))}.{keywordHint}
-{reminderClause}what do you say to {companionName}? Speak directly to them in second person, in a single sentence.
-{Config.Narrative.AnswerInstructionFor(personaReminder2)}";
+{contextClause} You want to share this with your companion {companionName}.
+{reminderClause}In one sentence, call {companionName}'s attention to {WithArticle(GetOutcomeLabel(linkedOutcome))} you are observing.
+{Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2)}";
+    }
+
+    /// <summary>
+    /// Chained speaking — request 2 of 3.
+    /// Continuation prompt (no full context needed — LLM already has the scene).
+    /// Asks the speaker to describe the observation using the keyword list.
+    /// Keywords from this sentence are extracted and made clickable.
+    /// </summary>
+    public string BuildSpeakingDescriptionPrompt(
+        ConcreteOutcome linkedOutcome,
+        string companionName,
+        string? personaReminder = null,
+        string? personaReminder2 = null)
+    {
+        var outcomeKics = linkedOutcome is NarrationNode nn ? nn.NodeKeywordsInContext
+            : linkedOutcome is ObservationObject obs ? obs.ObservationKeywordsInContext
+            : linkedOutcome.OutcomeKeywordsInContext;
+        string keywordHint = outcomeKics.Count > 0
+            ? $" You notice things like: {string.Join(", ", outcomeKics.Select(k => k.Context))}."
+            : "";
+        string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
+        string personaReminder2Clause = personaReminder2 != null
+            ? $" Stay in the character of {personaReminder2}."
+            : " Stay in character.";
+
+        return $@"{reminderClause}In one sentence, describe what you observe about {WithArticle(GetOutcomeLabel(linkedOutcome))}.{keywordHint}
+{Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2)}";
+    }
+
+    /// <summary>
+    /// Chained speaking — request 3 of 3.
+    /// Continuation prompt — asks the speaker to end with one open question to the companion.
+    /// No description or keyword hints to keep it focused on the question.
+    /// </summary>
+    public string BuildSpeakingQuestionPrompt(
+        string companionName,
+        string? personaReminder = null,
+        string? personaReminder2 = null)
+    {
+        string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
+        string personaReminder2Clause = personaReminder2 != null
+            ? $" Stay in the character of {personaReminder2}."
+            : " Stay in character.";
+
+        return $@"{reminderClause}In one sentence, ask {companionName} an open question about what you just shared.
+{Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2)}";
     }
 
     /// <summary>

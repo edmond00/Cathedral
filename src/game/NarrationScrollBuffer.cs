@@ -40,8 +40,11 @@ public class NarrationScrollBuffer
     /// </summary>
     public void AddBlock(NarrationBlock block)
     {
-        // Clean potentially truncated text before storing
-        string cleanedText = TextTruncationUtils.CleanTruncatedText(block.Text);
+        // Speaking blocks are manually assembled with outer quotes — skip truncation cleanup
+        // because CleanTruncatedText would strip the closing " (it only recognises . ! ? as endings).
+        string cleanedText = block.Type == NarrationBlockType.Speaking
+            ? block.Text
+            : TextTruncationUtils.CleanTruncatedText(block.Text);
         
         // Create a new block with cleaned text if it was modified, preserving all properties
         var blockToAdd = cleanedText != block.Text

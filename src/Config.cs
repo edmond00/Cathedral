@@ -440,6 +440,15 @@ public static class Config
             personaReminder2 != null
                 ? $"{AnswerInstruction} Stay in the character of {personaReminder2}."
                 : $"{AnswerInstruction} Stay in character.";
+
+        /// <summary>
+        /// Like <see cref="AnswerInstructionFor"/> but adds a 2nd-person dialogue reminder
+        /// for speaking prompts where the character is directly addressing a companion.
+        /// </summary>
+        public static string SpeakingAnswerInstructionFor(string? personaReminder2) =>
+            personaReminder2 != null
+                ? $"{AnswerInstruction} Stay in the character of {personaReminder2}. Address your companion using \"you\". No narration, no third-person phrasing."
+                : $"{AnswerInstruction} Stay in character. Adress your companion using \"you\". No narration, no third-person phrasing.";
     }
 
     /// <summary>

@@ -59,6 +59,9 @@ public class NarrativeController
     private PartyMember _activePartyMember = null!;
     // Companion list parallel to the companion selection choice popup choices
     private List<Companion> _pendingCompanions = new();
+    // Per-member noetic point counters — keyed by DisplayName.
+    // Preserved across hand-offs so returning to a member keeps their remaining points.
+    private readonly Dictionary<string, int> _memberNoeticPoints = new();
     
     public NarrativeController(
         TerminalHUD terminal,
@@ -145,6 +148,7 @@ public class NarrativeController
         _narrationState.Clear();
         _scrollBuffer.Clear();
         _activePartyMember = _protagonist;
+        _memberNoeticPoints.Clear();
         
         // Populate NPCs for this node
         _npcSpawner.PopulateNode(_currentNode, _locationId);
@@ -166,6 +170,7 @@ public class NarrativeController
     {
         // Note: ResetForNewNode() should already be called before this
         _activePartyMember = _protagonist;
+        _memberNoeticPoints.Clear(); // New node — everyone starts with a fresh counter
         // Populate NPCs for the new node
         _npcSpawner.PopulateNode(_currentNode, _locationId);
         
@@ -689,6 +694,20 @@ public class NarrativeController
         }
     }
     
+    /// Persist the active member's current noetic counter into the per-member dictionary.
+    private void SaveActiveNoeticPoints()
+    {
+        _memberNoeticPoints[_activePartyMember.DisplayName] = _narrationState.ThinkingAttemptsRemaining;
+    }
+
+    /// Load a member's noetic counter from the dictionary (full if they haven't acted yet).
+    private void LoadNoeticPoints(PartyMember member)
+    {
+        if (!_memberNoeticPoints.TryGetValue(member.DisplayName, out var points))
+            points = NarrativeUI.GetMaxThinkingAttempts();
+        _narrationState.ThinkingAttemptsRemaining = points;
+    }
+
     /// <summary>
     /// Speak About phase: active party member speaks directly to a companion about a keyword.
     /// Greys out current text, preserves noetic points, adds the speaking block as the new
@@ -750,11 +769,13 @@ public class NarrativeController
             _scrollBuffer.ScrollToBottom();
             _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
 
-            // Consume one noetic point (same as think/observe)
+            // Consume one noetic point from the speaker's own pool, then save it.
             _narrationState.ThinkingAttemptsRemaining--;
+            SaveActiveNoeticPoints();
 
-            // Switch active party member to the companion
+            // Switch to companion and load their own counter (fresh if first hand-off to them).
             _activePartyMember = companion;
+            LoadNoeticPoints(companion);
 
             _narrationState.IsLoadingSpeaking = false;
             _narrationState.ErrorMessage = null;
@@ -779,7 +800,7 @@ public class NarrativeController
         _ui.Clear();
         
         // Render header
-        _ui.RenderHeader(_currentNode.DisplayName, _narrationState.ThinkingAttemptsRemaining, _worldContext);
+        _ui.RenderHeader(_currentNode.DisplayName, _narrationState.ThinkingAttemptsRemaining, _worldContext, _activePartyMember.DisplayName);
         
         // Show error if present
         if (_narrationState.ErrorMessage != null)

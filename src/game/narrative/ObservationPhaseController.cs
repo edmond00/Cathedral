@@ -334,6 +334,7 @@ public class ObservationPhaseController
     {
         Console.WriteLine($"ObservationPhaseController: Speaking to '{companionName}' about '{keyword}' with {speakingModusMentis.DisplayName}");
 
+        // Acquire slot once and reset — all 3 requests run on this slot without further resets.
         var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(speakingModusMentis);
         _observationExecutor.ResetSlot(slotId);
 
@@ -341,50 +342,102 @@ public class ObservationPhaseController
 
         try
         {
-            var prompt = _promptConstructor.BuildSpeakingPrompt(
+            // --- Request 1: Call companion's attention (no keyword hints) ---
+            var prompt1 = _promptConstructor.BuildSpeakingAttentionPrompt(
                 currentNode, locationId, linkedOutcome,
                 keyword, keywordInContext, companionName,
                 speakingModusMentis.PersonaTone, worldContext,
                 speakingModusMentis.PersonaReminder, speakingModusMentis.PersonaReminder2);
 
-            var spokenText = await _observationExecutor.GenerateSpeakingTextAsync(slotId, prompt, ct);
+            var raw1 = await _observationExecutor.GenerateSpeakingTextAsync(slotId, prompt1, ct);
+            var sentence1 = raw1.Trim().Trim('"');
+            Console.WriteLine($"ObservationPhaseController: Speaking sentence 1: {sentence1}");
 
-            if (string.IsNullOrWhiteSpace(spokenText))
+            // --- Request 2: Describe observation with keyword hints (continuation — no slot reset) ---
+            var prompt2 = _promptConstructor.BuildSpeakingDescriptionPrompt(
+                linkedOutcome, companionName,
+                speakingModusMentis.PersonaReminder, speakingModusMentis.PersonaReminder2);
+
+            var raw2 = await _observationExecutor.GenerateSpeakingTextAsync(slotId, prompt2, ct);
+            var sentence2 = raw2.Trim().Trim('"');
+            Console.WriteLine($"ObservationPhaseController: Speaking sentence 2: {sentence2}");
+
+            // --- Request 3: Open question to companion (continuation — no slot reset) ---
+            var prompt3 = _promptConstructor.BuildSpeakingQuestionPrompt(
+                companionName,
+                speakingModusMentis.PersonaReminder, speakingModusMentis.PersonaReminder2);
+
+            var raw3 = await _observationExecutor.GenerateSpeakingTextAsync(slotId, prompt3, ct);
+            var sentence3 = raw3.Trim().Trim('"');
+            Console.WriteLine($"ObservationPhaseController: Speaking sentence 3: {sentence3}");
+
+            // Combine non-empty sentences
+            var parts = new[] { sentence1, sentence2, sentence3 }
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .ToList();
+
+            if (parts.Count == 0)
             {
-                Console.WriteLine("ObservationPhaseController: Speaking generation returned empty text.");
+                Console.WriteLine("ObservationPhaseController: All speaking sentences empty.");
                 return null;
             }
 
-            // Extract keywords from the spoken text using the outcome's keyword hints
+            var rawCombined = string.Join(" ", parts);
+            var spokenText = $"\"{rawCombined}\"";
+            Console.WriteLine($"ObservationPhaseController: Speaking full text: {spokenText}");
+
+            // Extract keywords per sentence — sentence 2 is specifically prompted with keyword hints,
+            // but any sentence may use them if the LLM happens to.
             var outcomeKics = linkedOutcome is NarrationNode nn ? nn.NodeKeywordsInContext
                 : linkedOutcome is ObservationObject obs ? obs.ObservationKeywordsInContext
                 : linkedOutcome.OutcomeKeywordsInContext;
             var outcomeKeywords = outcomeKics.Select(k => k.Keyword).ToList();
-            var extractedKeywords = _observationExecutor.ExtractKeywordsFromSentences(
-                "", spokenText, outcomeKeywords, _random, 3);
+
+            var kws1 = string.IsNullOrWhiteSpace(sentence1)
+                ? new List<string>()
+                : _observationExecutor.ExtractKeywordsFromSentences("", sentence1, outcomeKeywords, _random, 3);
+            var kws2 = string.IsNullOrWhiteSpace(sentence2)
+                ? new List<string>()
+                : _observationExecutor.ExtractKeywordsFromSentences("", sentence2, outcomeKeywords, _random, 3);
+            var kws3 = string.IsNullOrWhiteSpace(sentence3)
+                ? new List<string>()
+                : _observationExecutor.ExtractKeywordsFromSentences("", sentence3, outcomeKeywords, _random, 3);
+
+            var allExtractedKeywords = kws1.Concat(kws2).Concat(kws3)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
             var keywordContextMap = new Dictionary<string, KeywordInContext>(StringComparer.OrdinalIgnoreCase);
-            foreach (var kw in extractedKeywords)
+            foreach (var kw in allExtractedKeywords)
             {
                 var match = outcomeKics.FirstOrDefault(k => k.Keyword.Equals(kw, StringComparison.OrdinalIgnoreCase));
                 if (match != null) keywordContextMap.TryAdd(kw, match);
             }
 
+            // Per-sentence keyword assignment feeds the scroll buffer's per-line highlighting.
+            var sentences = new List<NarrationSentence>();
+            if (!string.IsNullOrWhiteSpace(sentence1))
+                sentences.Add(new NarrationSentence(sentence1, kws1));
+            if (!string.IsNullOrWhiteSpace(sentence2))
+                sentences.Add(new NarrationSentence(sentence2, kws2));
+            if (!string.IsNullOrWhiteSpace(sentence3))
+                sentences.Add(new NarrationSentence(sentence3, kws3));
+
             var block = new NarrationBlock(
                 Type: NarrationBlockType.Speaking,
                 ModusMentis: speakingModusMentis,
                 Text: spokenText,
-                Keywords: extractedKeywords.Count > 0 ? extractedKeywords : null,
+                Keywords: allExtractedKeywords.Count > 0 ? allExtractedKeywords : null,
                 Actions: null,
                 ChainOrigin: null,            // speaking block is a chain root
                 LinkedOutcome: linkedOutcome, // preserved so keyword clicks resolve correctly
                 KeywordOutcomeMap: null,
-                Sentences: new List<NarrationSentence> { new NarrationSentence(spokenText, extractedKeywords) },
+                Sentences: sentences,
                 KeywordContextMap: keywordContextMap.Count > 0 ? keywordContextMap : null,
                 SpeakerName: protagonist.DisplayName
             );
 
-            Console.WriteLine($"ObservationPhaseController: Speaking generation complete ({extractedKeywords.Count} keywords)");
+            Console.WriteLine($"ObservationPhaseController: Speaking generation complete ({allExtractedKeywords.Count} keywords)");
             return block;
         }
         catch (Exception ex)

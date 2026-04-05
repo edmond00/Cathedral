@@ -129,10 +129,10 @@ public static class LLMSchemaConfig
     {
         return new CompositeField("SpeakingResponse",
             new TemplateStringField("what_do_i_say",
-                Template: "\"<generated>\"",
-                MinGenLength: 20,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 200)
+                Template: "<generated>",
+                MinGenLength: 10,
+                MaxGenLength: 400,
+                FirstSentenceMaxLength: 400)
         );
     }
 
