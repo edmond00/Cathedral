@@ -46,7 +46,7 @@ public class NarrativeUI : TerminalPanelUI
     /// <summary>
     /// Render the header with location name and thinking attempts.
     /// </summary>
-    public void RenderHeader(string locationName, int thinkingAttemptsRemaining, WorldContext? worldContext = null, string? activePartyMemberName = null)
+    public void RenderHeader(string locationName, int thinkingAttemptsRemaining, WorldContext? worldContext = null, string? activePartyMemberName = null, TimePeriod? timePeriod = null)
     {
         // Header starts after top padding
         int headerY = _layout.TOP_PADDING;
@@ -55,7 +55,8 @@ public class NarrativeUI : TerminalPanelUI
         string contextTitle = worldContext?.DisplayName ?? "Forest";
         string formattedLocationName = locationName.Replace("_", " ");
         string memberSuffix = activePartyMemberName != null ? $"  [{activePartyMemberName.ToUpper()}]" : "";
-        string title = $"{contextTitle} - {formattedLocationName}{memberSuffix}";
+        string timeSuffix = timePeriod.HasValue ? $"  | {timePeriod.Value}" : "";
+        string title = $"{contextTitle} - {formattedLocationName}{memberSuffix}{timeSuffix}";
         _terminal.Text(_layout.CONTENT_START_X, headerY, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
         
         // Thinking attempts indicator (right side)

@@ -13,44 +13,46 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Npc;
 using Microsoft.Msagl.GraphViewerGdi;
 
 namespace Cathedral.Debug;
 
 /// <summary>
 /// WinForms window that renders the narration graph for the current location using MSAGL.
-/// Opened automatically when --debug is active. Highlights the current node in real-time
-/// and shows full node details in a side panel on click.
+/// Shows NPC schedules in the details panel and highlights NPC-occupied nodes.
 /// </summary>
 public class NarrationGraphWindow : Form
 {
     private readonly GViewer _viewer;
     private readonly RichTextBox _detailsBox;
     private readonly MsaglGraph _msaglGraph;
+    private readonly NarrationGraph _graph;
     private string _currentNodeId;
     private readonly Dictionary<string, NarrationNode>     _allNodes        = new();
     private readonly Dictionary<string, ObservationObject> _allObservations = new();
 
-    // ── Node fill colours (by category priority: encounter > items > plain) ──
-    private static readonly MsaglColor ColorEncounter   = new(210,  90,  90); // red     — has encounters
+    // ── Node fill colours ────────────────────────────────────────────
+    private static readonly MsaglColor ColorNpc         = new(140,  70, 200); // purple  — has NPCs in schedule
     private static readonly MsaglColor ColorItems       = new( 90, 145, 210); // blue    — has items only
-    private static readonly MsaglColor ColorPlain       = new(160, 160, 170); // gray    — no items, no encounters
+    private static readonly MsaglColor ColorPlain       = new(160, 160, 170); // gray    — plain
     private static readonly MsaglColor ColorObservation = new(210, 160,  50); // amber   — ObservationObject
 
     // ── Border styles ────────────────────────────────────────────────
-    private static readonly MsaglColor BorderNormal  = new( 80,  80,  90); // thin dark border (non-current)
-    private static readonly MsaglColor BorderCurrent = new(255, 220,   0); // thick yellow border (current node)
+    private static readonly MsaglColor BorderNormal  = new( 80,  80,  90);
+    private static readonly MsaglColor BorderCurrent = new(255, 220,   0);
     private const double LineWidthNormal  = 1.0;
     private const double LineWidthCurrent = 4.0;
 
-    public NarrationGraphWindow(NarrationNode entryNode, int locationId)
+    public NarrationGraphWindow(NarrationGraph graph, int locationId)
     {
-        Text = $"Narration Graph — Location {locationId}";
+        _graph = graph;
+        Text   = $"Narration Graph — Location {locationId}";
         Width  = 1200;
         Height = 820;
         MinimumSize = new Size(700, 500);
 
-        // ── title bar with inline coloured legend ─────────────────────
+        // ── Title bar with legend ────────────────────────────────────
         var titlePanel = new Panel
         {
             Dock      = DockStyle.Top,
@@ -58,10 +60,9 @@ public class NarrationGraphWindow : Form
             BackColor = Color.FromArgb(45, 45, 48),
         };
 
-        // Location label (left side)
         var locationLabel = new Label
         {
-            Text      = $"Location {locationId}  •  Entry: {entryNode.NodeId}",
+            Text      = $"Location {locationId}  •  Entry: {graph.EntryNode.NodeId}  •  NPCs: {graph.Npcs.Count}",
             AutoSize  = true,
             Font      = new Font("Consolas", 9, FontStyle.Bold),
             ForeColor = Color.White,
@@ -70,34 +71,23 @@ public class NarrationGraphWindow : Form
         };
         titlePanel.Controls.Add(locationLabel);
 
-        // Legend items: (fill color, border color, label)
         var legendItems = new (Color fill, Color border, string text)[]
         {
-            (Color.FromArgb(210,  90,  90), Color.FromArgb( 80,  80,  90), " encounter "),
+            (Color.FromArgb(140,  70, 200), Color.FromArgb( 80,  80,  90), " NPC "),
             (Color.FromArgb( 90, 145, 210), Color.FromArgb( 80,  80,  90), " items "),
             (Color.FromArgb(160, 160, 170), Color.FromArgb( 80,  80,  90), " plain "),
             (Color.FromArgb(210, 160,  50), Color.FromArgb( 80,  80,  90), " observation "),
             (Color.FromArgb(45,  45,  48),  Color.FromArgb(255, 220,   0), " current "),
         };
 
-        int legendX = 500;
+        int legendX = 520;
         foreach (var (fill, border, text) in legendItems)
         {
-            // Coloured square
-            var square = new Panel
-            {
-                Size      = new Size(14, 14),
-                BackColor = fill,
-                Location  = new Point(legendX, 6),
-            };
-            square.Paint += (_, pe) =>
-            {
-                pe.Graphics.DrawRectangle(new System.Drawing.Pen(border, 2), 1, 1, 11, 11);
-            };
+            var square = new Panel { Size = new Size(14, 14), BackColor = fill, Location = new Point(legendX, 6) };
+            square.Paint += (_, pe) => pe.Graphics.DrawRectangle(new System.Drawing.Pen(border, 2), 1, 1, 11, 11);
             titlePanel.Controls.Add(square);
             legendX += 18;
 
-            // Text label
             var lbl = new Label
             {
                 Text      = text,
@@ -111,29 +101,21 @@ public class NarrationGraphWindow : Form
             legendX += lbl.PreferredWidth + 6;
         }
 
-        // ── SplitContainer: graph left | details right ────────────────
+        // ── SplitContainer ───────────────────────────────────────────
         var split = new SplitContainer
         {
             Dock        = DockStyle.Fill,
             Orientation = Orientation.Vertical,
             BackColor   = Color.FromArgb(30, 30, 30),
         };
-        // Panel2MinSize and SplitterDistance both call set_SplitterDistance internally.
-        // They must be deferred to Load when the control has its real pixel dimensions.
         Load += (_, _) =>
         {
-            split.Panel2MinSize    = 260;
-            split.SplitterDistance = (int)(split.Width * 0.70);
+            split.Panel2MinSize    = 280;
+            split.SplitterDistance = (int)(split.Width * 0.68);
         };
 
-        // Left: MSAGL GViewer
-        _viewer = new GViewer
-        {
-            Dock              = DockStyle.Fill,
-            NavigationVisible = true,
-        };
+        _viewer = new GViewer { Dock = DockStyle.Fill, NavigationVisible = true };
 
-        // Right: details header + richtext
         var detailsHeader = new Label
         {
             Text      = "  Node Details",
@@ -162,89 +144,63 @@ public class NarrationGraphWindow : Form
         Controls.Add(split);
         Controls.Add(titlePanel);
 
-        // ── build graph ──────────────────────────────────────────────
-        CollectAllNodes(entryNode);
-        _currentNodeId = entryNode.NodeId;
-        _msaglGraph    = BuildMsaglGraph(entryNode);
+        // ── Build MSAGL graph ────────────────────────────────────────
+        _allNodes.Clear();
+        foreach (var (id, node) in graph.AllNodes)
+            _allNodes[id] = node;
+
+        _currentNodeId = graph.EntryNode.NodeId;
+        _msaglGraph    = BuildMsaglGraph(graph);
         _viewer.Graph  = _msaglGraph;
 
-        // GViewer sets SelectedObject before raising MouseClick, so we
-        // subscribe to MouseClick to detect node selection.
         _viewer.MouseClick += OnViewerMouseClick;
-
-        // Show entry node details immediately
-        ShowNodeDetails(entryNode);
+        ShowNodeDetails(graph.EntryNode);
     }
 
     // ── Public API ───────────────────────────────────────────────────
 
-    /// <summary>
-    /// Highlights <paramref name="newNodeId"/> as the current node (thick yellow border).
-    /// Thread-safe — may be called from the game thread.
-    /// </summary>
     public void UpdateCurrentNode(string newNodeId)
     {
-        if (InvokeRequired)
-        {
-            Invoke(() => UpdateCurrentNode(newNodeId));
-            return;
-        }
+        if (InvokeRequired) { Invoke(() => UpdateCurrentNode(newNodeId)); return; }
 
-        // Restore previous node to its normal border
-        if (_currentNodeId.Length > 0 && _msaglGraph.FindNode(_currentNodeId) is { } prevMsagl)
+        if (_currentNodeId.Length > 0 && _msaglGraph.FindNode(_currentNodeId) is { } prev)
         {
-            prevMsagl.Attr.Color     = BorderNormal;
-            prevMsagl.Attr.LineWidth = LineWidthNormal;
+            prev.Attr.Color     = BorderNormal;
+            prev.Attr.LineWidth = LineWidthNormal;
         }
 
         _currentNodeId = newNodeId;
 
-        // Apply thick yellow border to current node
-        if (_msaglGraph.FindNode(newNodeId) is { } curMsagl)
+        if (_msaglGraph.FindNode(newNodeId) is { } cur)
         {
-            curMsagl.Attr.Color     = BorderCurrent;
-            curMsagl.Attr.LineWidth = LineWidthCurrent;
+            cur.Attr.Color     = BorderCurrent;
+            cur.Attr.LineWidth = LineWidthCurrent;
         }
 
-        // Reassign graph to force a redraw
         _viewer.Graph = _msaglGraph;
 
         if (_allNodes.TryGetValue(newNodeId, out var nodeData))
             ShowNodeDetails(nodeData);
     }
 
-    // ── Private helpers ──────────────────────────────────────────────
+    // ── Private: graph building ──────────────────────────────────────
 
-    private void CollectAllNodes(NarrationNode entry)
+    private MsaglGraph BuildMsaglGraph(NarrationGraph graph)
     {
-        var queue = new Queue<NarrationNode>();
-        queue.Enqueue(entry);
-        while (queue.Count > 0)
-        {
-            var node = queue.Dequeue();
-            if (_allNodes.ContainsKey(node.NodeId)) continue;
-            _allNodes[node.NodeId] = node;
-            foreach (var child in node.PossibleOutcomes.OfType<NarrationNode>())
-                queue.Enqueue(child);
-        }
-    }
-
-    private MsaglGraph BuildMsaglGraph(NarrationNode entry)
-    {
-        var graph   = new MsaglGraph("narration");
+        var msagl   = new MsaglGraph("narration");
         var visited = new HashSet<string>();
         var queue   = new Queue<NarrationNode>();
-        queue.Enqueue(entry);
+        queue.Enqueue(graph.EntryNode);
 
         while (queue.Count > 0)
         {
             var node = queue.Dequeue();
             if (!visited.Add(node.NodeId)) continue;
 
-            var msaglNode = graph.AddNode(node.NodeId);
+            var msaglNode = msagl.AddNode(node.NodeId);
             msaglNode.LabelText      = node.NodeId;
             msaglNode.Attr.Shape     = MsaglShape.Box;
-            msaglNode.Attr.FillColor = NodeFillColor(node);
+            msaglNode.Attr.FillColor = NodeFillColor(node, graph);
             msaglNode.Attr.Color     = node.NodeId == _currentNodeId ? BorderCurrent : BorderNormal;
             msaglNode.Attr.LineWidth = node.NodeId == _currentNodeId ? LineWidthCurrent : LineWidthNormal;
             msaglNode.Label.FontSize = 9;
@@ -253,69 +209,65 @@ public class NarrationGraphWindow : Form
             {
                 if (outcome is NarrationNode child)
                 {
-                    graph.AddEdge(node.NodeId, child.NodeId);
+                    msagl.AddEdge(node.NodeId, child.NodeId);
                     queue.Enqueue(child);
                 }
                 else if (outcome is ObservationObject obs)
                 {
                     string obsId = $"obs:{obs.ObservationId}";
                     _allObservations.TryAdd(obsId, obs);
-                    var obsNode = graph.AddNode(obsId);
+                    var obsNode = msagl.AddNode(obsId);
                     obsNode.LabelText      = obs.ObservationId;
                     obsNode.Attr.Shape     = MsaglShape.Diamond;
                     obsNode.Attr.FillColor = ColorObservation;
                     obsNode.Attr.Color     = BorderNormal;
                     obsNode.Attr.LineWidth = LineWidthNormal;
                     obsNode.Label.FontSize = 8;
-                    graph.AddEdge(node.NodeId, obsId);
+                    msagl.AddEdge(node.NodeId, obsId);
                 }
             }
         }
 
-        return graph;
+        return msagl;
     }
 
-    /// Returns the fill colour for a node based on its category.
-    /// Priority: entry &gt; has encounters &gt; has items &gt; plain.
-    private static MsaglColor NodeFillColor(NarrationNode node)
+    private static MsaglColor NodeFillColor(NarrationNode node, NarrationGraph graph)
     {
-        if (node.GetAllEncounters().Count > 0)     return ColorEncounter;
-        if (node.GetAvailableItems().Count > 0)    return ColorItems;
+        // Purple if any NPC is scheduled for this node during any period
+        if (graph.GetNpcsScheduledForNode(node.NodeId).Any()) return ColorNpc;
+        if (node.GetAvailableItems().Count > 0)               return ColorItems;
         return ColorPlain;
     }
 
+    // ── Private: click handling ──────────────────────────────────────
+
     private void OnViewerMouseClick(object? sender, System.Windows.Forms.MouseEventArgs e)
     {
-        if (_viewer.SelectedObject is not MsaglNode selectedNode) return;
+        if (_viewer.SelectedObject is not MsaglNode selected) return;
 
-        if (_allNodes.TryGetValue(selectedNode.Id, out var node))
+        if (_allNodes.TryGetValue(selected.Id, out var node))
             ShowNodeDetails(node);
-        else if (_allObservations.TryGetValue(selectedNode.Id, out var obs))
+        else if (_allObservations.TryGetValue(selected.Id, out var obs))
             ShowObservationDetails(obs);
     }
+
+    // ── Private: detail panels ───────────────────────────────────────
 
     private void ShowNodeDetails(NarrationNode node)
     {
         _detailsBox.Clear();
 
-        AppendColored($"=== {node.NodeId} ===\n",          Color.Orange,          bold: true);
-        AppendColored("Context:\n",                         Color.CornflowerBlue,  bold: true);
-        AppendColored(node.ContextDescription + "\n",       Color.LightGray);
+        AppendColored($"=== {node.NodeId} ===\n",         Color.Orange,         bold: true);
+        AppendColored("Context:\n",                        Color.CornflowerBlue, bold: true);
+        AppendColored(node.ContextDescription + "\n",      Color.LightGray);
         AppendColored("\n");
 
-        AppendColored("Transition:\n",                      Color.CornflowerBlue,  bold: true);
-        AppendColored(node.TransitionDescription + "\n",    Color.LightGray);
+        AppendColored("Transition:\n",                     Color.CornflowerBlue, bold: true);
+        AppendColored(node.TransitionDescription + "\n",   Color.LightGray);
         AppendColored("\n");
 
-        AppendColored("Indirect keywords:\n",               Color.CornflowerBlue,  bold: true);
+        AppendColored("Indirect keywords:\n",              Color.CornflowerBlue, bold: true);
         AppendColored(string.Join(", ", node.NodeKeywordsInContext.Select(k => k.Keyword)) + "\n", Color.LightGray);
-
-        var directKws = node.NodeId
-            .Split('_', StringSplitOptions.RemoveEmptyEntries)
-            .Where(w => w.Length > 1)
-            .Select(w => w.ToLowerInvariant());
-        AppendColored("Direct keywords:\n",                 Color.CornflowerBlue,  bold: true);
-        AppendColored(string.Join(", ", directKws) + "\n",  Color.LightGray);
 
         var items = node.GetAvailableItems();
         if (items.Count > 0)
@@ -324,16 +276,6 @@ public class NarrationGraphWindow : Form
             foreach (var item in items)
                 AppendColored(
                     $"  • {item.DisplayName}\n    {string.Join(", ", item.OutcomeKeywordsInContext.Select(k => k.Keyword).Take(6))}\n",
-                    Color.LightGray);
-        }
-
-        var encounters = node.PossibleEncounters;
-        if (encounters.Count > 0)
-        {
-            AppendColored("\nEncounters:\n", Color.LightCoral, bold: true);
-            foreach (var enc in encounters)
-                AppendColored(
-                    $"  ! {enc.Archetype.ArchetypeId}  ({(int)(enc.SpawnChance * 100)}% chance, max {enc.MaxCount})\n",
                     Color.LightGray);
         }
 
@@ -349,6 +291,39 @@ public class NarrationGraphWindow : Form
             }
         }
 
+        // NPC schedule: show which NPCs are routed here during which periods
+        var scheduledNpcs = _graph.GetNpcsScheduledForNode(node.NodeId).ToList();
+        if (scheduledNpcs.Count > 0)
+        {
+            AppendColored("\nNPCs (schedule):\n", Color.FromArgb(180, 100, 240), bold: true);
+            foreach (var gnpc in scheduledNpcs)
+            {
+                var presentPeriods = gnpc.Schedule.ActivePeriods
+                    .Where(p => p.NodeId == node.NodeId)
+                    .Select(p => p.Period.Label())
+                    .ToList();
+                AppendColored(
+                    $"  ★ {gnpc.Entity.DisplayName}  [{gnpc.Entity.Archetype.ArchetypeId}]\n",
+                    Color.FromArgb(200, 150, 255));
+                AppendColored(
+                    $"      Periods: {string.Join(", ", presentPeriods)}\n",
+                    Color.DarkGray);
+                AppendColored(
+                    $"      CanDialogue: {gnpc.Entity.CanDialogue}  Hostile: {gnpc.Entity.IsHostile}\n",
+                    Color.DarkGray);
+            }
+        }
+
+        var encounters = node.PossibleEncounters;
+        if (encounters.Count > 0)
+        {
+            AppendColored("\nEncounter slots (graph build):\n", Color.LightCoral, bold: true);
+            foreach (var enc in encounters)
+                AppendColored(
+                    $"  ! {enc.Archetype.ArchetypeId}  ({(int)(enc.SpawnChance * 100)}% inclusion chance, max {enc.MaxCount})\n",
+                    Color.LightGray);
+        }
+
         var connected = node.PossibleOutcomes.OfType<NarrationNode>().ToList();
         if (connected.Count > 0)
         {
@@ -362,14 +337,14 @@ public class NarrationGraphWindow : Form
     {
         _detailsBox.Clear();
 
-        AppendColored($"◇ {obs.ObservationId}\n",             Color.FromArgb(210, 160, 50), bold: true);
+        AppendColored($"◇ {obs.ObservationId}\n",              Color.FromArgb(210, 160, 50), bold: true);
         AppendColored($"{obs.GenerateNeutralDescription(0)}\n", Color.LightGray);
         AppendColored("\n");
 
-        AppendColored("Indirect keywords:\n",                  Color.CornflowerBlue, bold: true);
+        AppendColored("Indirect keywords:\n",                   Color.CornflowerBlue, bold: true);
         AppendColored(string.Join(", ", obs.ObservationKeywordsInContext.Select(k => k.Keyword)) + "\n", Color.LightGray);
 
-        AppendColored("Direct keywords:\n",                    Color.CornflowerBlue, bold: true);
+        AppendColored("Direct keywords:\n",                     Color.CornflowerBlue, bold: true);
         AppendColored(string.Join(", ", obs.DirectObservationKeywords) + "\n", Color.LightGray);
 
         if (obs.SubOutcomes.Count > 0)
@@ -386,10 +361,10 @@ public class NarrationGraphWindow : Form
 
         if (obs.AssociatedEncounters.Count > 0)
         {
-            AppendColored("\nEncounters:\n", Color.LightCoral, bold: true);
+            AppendColored("\nAssociated encounter slots (graph build):\n", Color.LightCoral, bold: true);
             foreach (var enc in obs.AssociatedEncounters)
                 AppendColored(
-                    $"  ! {enc.Archetype.ArchetypeId}  ({(int)(enc.SpawnChance * 100)}% chance, max {enc.MaxCount})\n",
+                    $"  ! {enc.Archetype.ArchetypeId}  ({(int)(enc.SpawnChance * 100)}% inclusion chance, max {enc.MaxCount})\n",
                     Color.LightGray);
         }
     }
@@ -401,10 +376,8 @@ public class NarrationGraphWindow : Form
         if (color.HasValue || bold)
         {
             _detailsBox.Select(start, text.Length);
-            if (color.HasValue)
-                _detailsBox.SelectionColor = color.Value;
-            if (bold)
-                _detailsBox.SelectionFont = new Font(_detailsBox.Font, FontStyle.Bold);
+            if (color.HasValue)  _detailsBox.SelectionColor = color.Value;
+            if (bold)            _detailsBox.SelectionFont  = new Font(_detailsBox.Font, FontStyle.Bold);
             _detailsBox.SelectionStart  = _detailsBox.TextLength;
             _detailsBox.SelectionLength = 0;
         }

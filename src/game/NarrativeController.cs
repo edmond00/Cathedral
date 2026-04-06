@@ -44,8 +44,7 @@ public class NarrativeController
     // Pending action result (stored while waiting for dice roll continue)
     private ActionExecutionResult? _pendingActionResult = null;
     
-    // NPC spawner for populating nodes with encounters
-    private readonly NpcSpawner _npcSpawner = new();
+    private readonly NarrationGraph _graph;
     private readonly int _locationId;
     
     // Pending fight/dialogue transitions (set by OnDiceRollContinue, consumed by game controller)
@@ -124,10 +123,11 @@ public class NarrativeController
         // Generate graph for this location using factory
         if (graphFactory == null)
             throw new ArgumentNullException(nameof(graphFactory), "NarrationGraphFactory is required - no fallback provided");
-        
-        _currentNode = graphFactory.GenerateGraph(locationId);
-        Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}'");
-        NarrationGraphDebugManager.Show(_currentNode, _locationId);
+
+        _graph       = graphFactory.GenerateGraph(locationId);
+        _currentNode = _graph.EntryNode;
+        Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}' ({_graph.Npcs.Count} NPCs)");
+        NarrationGraphDebugManager.Show(_graph, _locationId);
         LlmMonitorDebugManager.Show();
         
         // Initialize controllers
@@ -150,15 +150,17 @@ public class NarrativeController
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear();
         
-        // Populate NPCs for this node
-        _npcSpawner.PopulateNode(_currentNode, _locationId);
-        
+        // Place NPCs into nodes based on a randomly selected time period
+        var period = TimePeriodExtensions.Random(_diceRandom);
+        _graph.TimeUpdate(period);
+        Console.WriteLine($"NarrativeController: Time period is {period}");
+
         _narrationState.IsLoadingObservations = true;
         _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
-        
+
         // Fire-and-forget async task
         _ = GenerateObservationsAsync();
-        
+
         Console.WriteLine("NarrativeController: Started observation phase");
     }
     
@@ -171,8 +173,8 @@ public class NarrativeController
         // Note: ResetForNewNode() should already be called before this
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear(); // New node — everyone starts with a fresh counter
-        // Populate NPCs for the new node
-        _npcSpawner.PopulateNode(_currentNode, _locationId);
+        // Re-apply the current time period so new node gets its NPCs placed
+        _graph.TimeUpdate(_graph.CurrentPeriod);
         
         // Just set loading state and start generation
         _narrationState.IsLoadingObservations = true;
@@ -800,7 +802,7 @@ public class NarrativeController
         _ui.Clear();
         
         // Render header
-        _ui.RenderHeader(_currentNode.DisplayName, _narrationState.ThinkingAttemptsRemaining, _worldContext, _activePartyMember.DisplayName);
+        _ui.RenderHeader(_currentNode.DisplayName, _narrationState.ThinkingAttemptsRemaining, _worldContext, _activePartyMember.DisplayName, _graph.CurrentPeriod);
         
         // Show error if present
         if (_narrationState.ErrorMessage != null)
@@ -1602,14 +1604,7 @@ public class NarrativeController
         };
         
         if (result == Fight.FightAdapterResult.Victory && !npc.IsAlive)
-        {
-            // Remove dead NPC from node
-            _npcSpawner.RemoveNpc(npc, _currentNode);
-            _currentNode.SpawnedNpcs.RemoveAll(n => n.NpcId == npc.NpcId);
-            _currentNode.PossibleOutcomes.RemoveAll(o =>
-                (o is FightOutcome fo && fo.Target.NpcId == npc.NpcId) ||
-                (o is DialogueOutcome dlo && dlo.Target.NpcId == npc.NpcId));
-        }
+            _graph.NotifyNpcDead(npc);
         
         // Add outcome to scroll buffer
         var block = new NarrationBlock(

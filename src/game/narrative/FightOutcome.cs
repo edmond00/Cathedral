@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Narrative;
@@ -6,8 +7,9 @@ namespace Cathedral.Game.Narrative;
 /// Outcome that triggers combat with an NPC.
 /// Can be a positive outcome (player chose to attack) or a failure outcome (NPC attacks player).
 /// When applied, the narrative controller pauses and enters fight mode.
+/// Extends ConcreteOutcome so it can appear as a sub-outcome inside NpcObservationObject.
 /// </summary>
-public class FightOutcome : OutcomeBase
+public class FightOutcome : ConcreteOutcome
 {
     /// <summary>The NPC to fight.</summary>
     public NpcEntity Target { get; }
@@ -22,6 +24,9 @@ public class FightOutcome : OutcomeBase
             ? $"combat with {target.DisplayName}"
             : combatContext;
     }
+
+    /// <summary>No keywords — selection is driven by the GOAL LLM, not keyword clicking.</summary>
+    public override List<KeywordInContext> OutcomeKeywordsInContext => new();
 
     public override string DisplayName => $"Fight {Target.DisplayName}";
 

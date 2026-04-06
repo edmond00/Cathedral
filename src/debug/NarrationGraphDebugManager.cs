@@ -17,20 +17,16 @@ public static class NarrationGraphDebugManager
     private static NarrationGraphWindow? _window;
     private static Thread? _uiThread;
 
-    // WinForms application-level bootstrap must happen exactly once per process and
-    // must precede any win32 handle creation.  Track it with a flag so we don't call
-    // it again on a second location visit (which would throw InvalidOperationException).
     private static bool _appInitialized;
 
     /// <summary>
-    /// Opens (or re-opens) the graph window for the given entry node.
+    /// Opens (or re-opens) the graph window for the given graph.
     /// No-op when DebugMode is inactive.
     /// </summary>
-    public static void Show(NarrationNode entryNode, int locationId)
+    public static void Show(NarrationGraph graph, int locationId)
     {
         if (!DebugMode.IsActive) return;
 
-        // Close any previous window (e.g., player visited a new location)
         CloseInternal();
 
         _uiThread = new Thread(() =>
@@ -44,11 +40,11 @@ public static class NarrationGraphDebugManager
                         Application.EnableVisualStyles();
                         Application.SetCompatibleTextRenderingDefault(false);
                     }
-                    catch { /* Another debug window may have already initialized WinForms. */ }
+                    catch { }
                     _appInitialized = true;
                 }
 
-                _window = new NarrationGraphWindow(entryNode, locationId);
+                _window = new NarrationGraphWindow(graph, locationId);
                 Application.Run(_window);
             }
             catch (Exception ex)
@@ -63,7 +59,7 @@ public static class NarrationGraphDebugManager
         });
 
         _uiThread.SetApartmentState(ApartmentState.STA);
-        _uiThread.IsBackground = true;   // terminates when the main process exits
+        _uiThread.IsBackground = true;
         _uiThread.Name = "NarrationGraphDebugUI";
         _uiThread.Start();
     }
@@ -80,23 +76,16 @@ public static class NarrationGraphDebugManager
             _window.Invoke(() => _window.UpdateCurrentNode(node.NodeId));
         }
         catch (ObjectDisposedException) { }
-        catch (InvalidOperationException) { }  // window handle not created yet
+        catch (InvalidOperationException) { }
     }
 
-    /// <summary>
-    /// Closes the debug window if open. Safe to call from any thread.
-    /// </summary>
+    /// <summary>Closes the debug window if open.</summary>
     public static void Close() => CloseInternal();
-
-    // ── private ──────────────────────────────────────────────────────────────
 
     private static void CloseInternal()
     {
         if (_window is null || _window.IsDisposed) return;
-        try
-        {
-            _window.Invoke(() => _window.Close());
-        }
+        try { _window.Invoke(() => _window.Close()); }
         catch (ObjectDisposedException) { }
         catch (InvalidOperationException) { }
         _window = null;

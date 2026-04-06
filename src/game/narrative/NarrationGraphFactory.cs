@@ -2,161 +2,210 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Cathedral.LLM;
+using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Abstract base class for procedural narration graph generation.
-/// Each location gets a unique graph instance seeded by locationId for determinism.
+/// Abstract base for procedural narration graph generation.
+/// Each location gets a unique <see cref="NarrationGraph"/> seeded by locationId.
+///
+/// Subclass responsibilities:
+///   <see cref="BuildNodes"/>  — build the NarrationNode network and return the entry node.
+///   <see cref="BuildNpcs"/>   — (optional override) produce GraphNpc list with schedules.
+///
+/// The base <see cref="BuildNpcs"/> reads <c>PossibleEncounters</c> from every node and
+/// <c>AssociatedEncounters</c> from every ObservationObject, rolls RNG for graph inclusion,
+/// and assigns a simple <see cref="NpcSchedule.Always"/> schedule by default.
+/// Override in a subclass to add time-of-day movement.
 /// </summary>
 public abstract class NarrationGraphFactory
 {
+    protected readonly string? _sessionPath;
+
+    protected NarrationGraphFactory(string? sessionPath = null)
+    {
+        _sessionPath = sessionPath;
+    }
+
+    // ── Public API ────────────────────────────────────────────────────────────
+
     /// <summary>
-    /// Generates a unique narration graph for the given location.
-    /// Returns the entry node with PossibleOutcomes populated.
+    /// Builds and returns a complete <see cref="NarrationGraph"/> for the given location.
+    /// Deterministic: same locationId always produces the same graph structure.
     /// </summary>
-    /// <param name="locationId">Location identifier (e.g., vertex index) used as RNG seed</param>
-    /// <returns>Entry node of the generated graph</returns>
-    public abstract NarrationNode GenerateGraph(int locationId);
-    
+    public NarrationGraph GenerateGraph(int locationId)
+    {
+        var rng      = CreateSeededRandom(locationId);
+        var entry    = BuildNodes(rng, locationId);
+        var allNodes = CollectAllNodes(entry);
+        var npcs     = BuildNpcs(rng, allNodes, locationId);
+        var graph    = new NarrationGraph(entry, npcs, allNodes);
+        WriteGraphToLog(graph, locationId);
+        return graph;
+    }
+
+    // ── Abstract / virtual hooks ──────────────────────────────────────────────
+
     /// <summary>
-    /// Creates a seeded random number generator for deterministic graph generation.
-    /// Same locationId always produces the same graph structure.
+    /// Build the NarrationNode network (area nodes, transversals, observations, etc.)
+    /// and return the entry node.  PossibleOutcomes must be populated before returning.
     /// </summary>
+    protected abstract NarrationNode BuildNodes(Random rng, int locationId);
+
+    /// <summary>
+    /// Build the GraphNpc list for this graph.
+    /// The default implementation reads <c>PossibleEncounters</c> on every node and
+    /// <c>AssociatedEncounters</c> on every ObservationObject, rolls RNG against
+    /// SpawnChance (now treated as graph inclusion probability), spawns the NPC once,
+    /// and assigns <see cref="NpcSchedule.Always"/> at that node.
+    ///
+    /// Override to apply richer per-archetype schedules or roaming patterns.
+    /// </summary>
+    protected virtual List<GraphNpc> BuildNpcs(
+        Random rng,
+        IReadOnlyDictionary<string, NarrationNode> allNodes,
+        int locationId)
+    {
+        var npcs = new List<GraphNpc>();
+
+        foreach (var (nodeId, node) in allNodes)
+        {
+            // Node-level encounter slots
+            foreach (var slot in node.PossibleEncounters)
+                TryAddNpc(npcs, slot, nodeId, rng, node.ContextDescription);
+
+            // ObservationObject associated encounter slots
+            foreach (var obs in node.PossibleOutcomes.OfType<ObservationObject>())
+                foreach (var slot in obs.AssociatedEncounters)
+                    TryAddNpc(npcs, slot, nodeId, rng, node.ContextDescription);
+        }
+
+        return npcs;
+    }
+
+    // ── Shared helpers ────────────────────────────────────────────────────────
+
     protected Random CreateSeededRandom(int locationId)
-    {
-        return new Random(locationId);
-    }
-    
-    /// <summary>
-    /// Creates a new instance of a narration node.
-    /// </summary>
-    protected T CreateNode<T>() where T : NarrationNode, new()
-    {
-        return new T();
-    }
-    
-    /// <summary>
-    /// Connects two nodes by adding 'to' to 'from.PossibleOutcomes'.
-    /// Prevents self-loops (a node connecting to itself).
-    /// </summary>
+        => new Random(locationId);
+
     protected void ConnectNodes(NarrationNode from, NarrationNode to)
     {
-        // Prevent self-loops
-        if (from == to)
-            return;
-            
+        if (from == to) return;
         if (!from.PossibleOutcomes.Contains(to))
-        {
             from.PossibleOutcomes.Add(to);
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private static void TryAddNpc(
+        List<GraphNpc> npcs,
+        NpcEncounterSlot slot,
+        string nodeId,
+        Random rng,
+        string nodeContext)
+    {
+        for (int i = 0; i < slot.MaxCount; i++)
+        {
+            if (rng.NextDouble() > slot.SpawnChance) continue;  // graph inclusion roll
+            var entity   = slot.Archetype.Spawn(rng, nodeContext);
+            var schedule = NpcSchedule.Always(nodeId);
+            npcs.Add(new GraphNpc(entity, schedule));
         }
     }
-    
-    /// <summary>
-    /// Writes the generated graph structure to a log file in the current LLM session folder.
-    /// Traverses the graph breadth-first to show all nodes and their connections.
-    /// Requires a LlamaServerManager to be initialized with a session directory.
-    /// </summary>
-    /// <param name="entryNode">The entry node of the graph</param>
-    /// <param name="locationId">Location identifier for the filename</param>
-    /// <param name="sessionPath">Session log directory path (optional)</param>
-    protected void WriteGraphToLog(NarrationNode entryNode, int locationId, string? sessionPath = null)
+
+    private static IReadOnlyDictionary<string, NarrationNode> CollectAllNodes(NarrationNode entry)
+    {
+        var dict  = new Dictionary<string, NarrationNode>();
+        var queue = new Queue<NarrationNode>();
+        queue.Enqueue(entry);
+        while (queue.Count > 0)
+        {
+            var node = queue.Dequeue();
+            if (dict.ContainsKey(node.NodeId)) continue;
+            dict[node.NodeId] = node;
+            foreach (var child in node.PossibleOutcomes.OfType<NarrationNode>())
+                queue.Enqueue(child);
+        }
+        return dict;
+    }
+
+    // ── Graph logging ─────────────────────────────────────────────────────────
+
+    protected void WriteGraphToLog(NarrationGraph graph, int locationId)
     {
         try
         {
-            // If no session path provided, create in logs root
-            if (string.IsNullOrEmpty(sessionPath))
+            string logDir = string.IsNullOrEmpty(_sessionPath)
+                ? Path.Combine(Environment.CurrentDirectory, "logs")
+                : _sessionPath;
+
+            Directory.CreateDirectory(logDir);
+            var logPath = Path.Combine(logDir, $"graph_location_{locationId}.txt");
+
+            using var writer = new StreamWriter(logPath);
+            writer.WriteLine($"=== Narration Graph for Location {locationId} ===");
+            writer.WriteLine($"Generated at: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+            writer.WriteLine($"Entry Node: {graph.EntryNode.NodeId}");
+            writer.WriteLine();
+
+            // Nodes
+            int nodeCount = 0;
+            foreach (var node in graph.AllNodes.Values)
             {
-                var logsDir = Path.Combine(Environment.CurrentDirectory, "logs");
-                if (!Directory.Exists(logsDir))
+                nodeCount++;
+                writer.WriteLine($"Node: {node.NodeId}");
+                writer.WriteLine($"  Context:    {node.ContextDescription}");
+                writer.WriteLine($"  Transition: {node.TransitionDescription}");
+                writer.WriteLine($"  Keywords:   {string.Join(", ", node.NodeKeywordsInContext.Select(k => k.Keyword))}");
+
+                var items = node.GetAvailableItems();
+                if (items.Count > 0)
                 {
-                    Directory.CreateDirectory(logsDir);
+                    writer.WriteLine($"  Items ({items.Count}):");
+                    foreach (var item in items)
+                        writer.WriteLine($"    - {item.DisplayName} ({item.ItemId})");
                 }
-                sessionPath = logsDir;
-                Console.WriteLine($"NarrationGraphFactory: No active LLM session, writing graph to logs root");
-            }
-            
-            var logPath = Path.Combine(sessionPath, $"graph_location_{locationId}.txt");
-            
-            using (var writer = new StreamWriter(logPath))
-            {
-                writer.WriteLine($"=== Narration Graph for Location {locationId} ===");
-                writer.WriteLine($"Generated at: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                writer.WriteLine($"Entry Node: {entryNode.NodeId}");
+
+                var observations = node.PossibleOutcomes.OfType<ObservationObject>().ToList();
+                if (observations.Count > 0)
+                {
+                    writer.WriteLine($"  Observations ({observations.Count}):");
+                    foreach (var obs in observations)
+                        writer.WriteLine($"    ◇ {obs.ObservationId}  ({obs.SubOutcomes.Count} sub-outcomes)");
+                }
+
+                var connected = node.PossibleOutcomes.OfType<NarrationNode>().ToList();
+                if (connected.Count > 0)
+                {
+                    writer.WriteLine($"  Connected ({connected.Count}):");
+                    foreach (var child in connected)
+                        writer.WriteLine($"    → {child.NodeId}");
+                }
+
                 writer.WriteLine();
-                
-                // Breadth-first traversal to avoid infinite loops from circular references
-                var visited = new HashSet<string>();
-                var queue = new Queue<NarrationNode>();
-                queue.Enqueue(entryNode);
-                visited.Add(entryNode.NodeId);
-                
-                int nodeCount = 0;
-                while (queue.Count > 0)
-                {
-                    var node = queue.Dequeue();
-                    nodeCount++;
-                    
-                    writer.WriteLine($"Node: {node.NodeId}");
-                    writer.WriteLine($"  Display Name: {node.DisplayName}");
-                    writer.WriteLine($"  Is Entry Node: {node.IsEntryNode}");
-                    writer.WriteLine($"  Context: {node.ContextDescription}");
-                    writer.WriteLine($"  Transition: {node.TransitionDescription}");
-                    writer.WriteLine($"  Keywords: {string.Join(", ", node.NodeKeywordsInContext.Select(k => k.Keyword))}");
-                    
-                    // List items discovered via reflection
-                    var items = node.GetAvailableItems();
-                    if (items.Count > 0)
-                    {
-                        writer.WriteLine($"  Items ({items.Count}):");
-                        foreach (var item in items)
-                        {
-                            writer.WriteLine($"    - {item.DisplayName} ({item.ItemId}): {string.Join(", ", item.OutcomeKeywordsInContext.Select(k => k.Keyword))}");
-                        }
-                    }
-                    
-                    // List possible encounters
-                    if (node.PossibleEncounters.Count > 0)
-                    {
-                        writer.WriteLine($"  Encounters ({node.PossibleEncounters.Count}):");
-                        foreach (var slot in node.PossibleEncounters)
-                        {
-                            writer.WriteLine($"    ! {slot.Archetype.ArchetypeId} ({slot.SpawnChance:P0} spawn chance, max {slot.MaxCount})");
-                        }
-                    }
-                    
-                    // List connected nodes
-                    var childNodes = node.PossibleOutcomes.OfType<NarrationNode>().ToList();
-                    if (childNodes.Count > 0)
-                    {
-                        writer.WriteLine($"  Connected Nodes ({childNodes.Count}):");
-                        foreach (var childNode in childNodes)
-                        {
-                            writer.WriteLine($"    -> {childNode.NodeId}");
-                            
-                            // Queue unvisited nodes for traversal
-                            if (!visited.Contains(childNode.NodeId))
-                            {
-                                visited.Add(childNode.NodeId);
-                                queue.Enqueue(childNode);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        writer.WriteLine($"  Connected Nodes: (none)");
-                    }
-                    
-                    writer.WriteLine();
-                }
-                
-                writer.WriteLine($"=== Graph Summary ===");
-                writer.WriteLine($"Total Nodes: {nodeCount}");
-                writer.WriteLine($"Unique Node Types: {visited.Count}");
             }
-            
-            Console.WriteLine($"NarrationGraphFactory: Graph structure written to {logPath}");
+
+            // NPCs
+            writer.WriteLine($"=== NPCs ({graph.Npcs.Count}) ===");
+            foreach (var gnpc in graph.Npcs)
+            {
+                writer.WriteLine($"NPC: {gnpc.Entity.DisplayName}  [{gnpc.Entity.Archetype.ArchetypeId}]");
+                writer.WriteLine($"  Persistent: {gnpc.Entity.IsPersistent}  CanDialogue: {gnpc.Entity.CanDialogue}");
+                writer.WriteLine($"  Schedule:");
+                foreach (TimePeriod p in Enum.GetValues(typeof(TimePeriod)))
+                {
+                    var nodeId = gnpc.Schedule.GetNodeId(p);
+                    writer.WriteLine($"    {p,-10} → {nodeId ?? "(absent)"}");
+                }
+                writer.WriteLine();
+            }
+
+            writer.WriteLine($"=== Summary ===");
+            writer.WriteLine($"Total nodes: {nodeCount}");
+            writer.WriteLine($"Total NPCs:  {graph.Npcs.Count}");
+
+            Console.WriteLine($"NarrationGraphFactory: Graph written to {logPath}");
         }
         catch (Exception ex)
         {

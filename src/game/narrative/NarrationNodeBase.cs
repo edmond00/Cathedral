@@ -49,40 +49,13 @@ public abstract class NarrationNode : ConcreteOutcome, IObservation
     public abstract List<KeywordInContext> NodeKeywordsInContext { get; }
     
     /// <summary>
-    /// NPC encounter slots for this node. Override in subclasses to define
-    /// which NPC types can appear here and with what probability.
+    /// NPC encounter slots for this node.  Used by <see cref="NarrationGraphFactory.BuildNpcs"/>
+    /// at graph-construction time to decide whether to include an NPC in this location
+    /// (SpawnChance = graph inclusion probability).  Override in subclasses to declare
+    /// which archetypes can appear here.
     /// Empty by default (no encounters).
     /// </summary>
     public virtual List<NpcEncounterSlot> PossibleEncounters => new();
-
-    /// <summary>
-    /// NPCs currently present at this node (populated at runtime by NpcSpawner).
-    /// Persistent NPCs survive across visits; transient ones are re-rolled each time.
-    /// </summary>
-    public List<NpcEntity> SpawnedNpcs { get; set; } = new();
-
-    /// <summary>
-    /// Extra encounter slots propagated from child ObservationObjects (e.g., FoxDenObservation).
-    /// Merged into the effective encounter list by <see cref="GetAllEncounters"/>.
-    /// </summary>
-    private readonly List<NpcEncounterSlot> _additionalEncounters = new();
-
-    /// <summary>
-    /// Adds an encounter slot propagated from a child ObservationObject.
-    /// Called by NarrationGraphFactory when attaching an observation.
-    /// </summary>
-    public void AddAdditionalEncounter(NpcEncounterSlot slot) => _additionalEncounters.Add(slot);
-
-    /// <summary>
-    /// All effective NPC encounter slots: own PossibleEncounters plus any added by ObservationObjects.
-    /// </summary>
-    public List<NpcEncounterSlot> GetAllEncounters()
-    {
-        if (_additionalEncounters.Count == 0) return PossibleEncounters;
-        var merged = new List<NpcEncounterSlot>(PossibleEncounters);
-        merged.AddRange(_additionalEncounters);
-        return merged;
-    }
 
     /// <summary>
     /// Returns the items available at this node. Override in subclasses to list items explicitly.
@@ -133,10 +106,6 @@ public abstract class NarrationNode : ConcreteOutcome, IObservation
                 // Sub-outcome keywords are NOT bubbled up here — only accessed inside the observation
             }
 
-            // Add keywords from spawned NPCs
-            foreach (var npc in SpawnedNpcs)
-                foreach (var kic in npc.NarrationKeywordsInContext) Add(kic);
-
             return allKeywords;
         }
     }
@@ -160,10 +129,6 @@ public abstract class NarrationNode : ConcreteOutcome, IObservation
         foreach (var outcome in PossibleOutcomes)
             if (outcome is NarrationNode childNode && childNode.NodeKeywordsInContext.Count > 0)
                 result[childNode.DisplayName] = new List<KeywordInContext>(childNode.NodeKeywordsInContext);
-
-        foreach (var npc in SpawnedNpcs)
-            if (npc.NarrationKeywordsInContext.Length > 0)
-                result[npc.DisplayName] = new List<KeywordInContext>(npc.NarrationKeywordsInContext);
 
         return result;
     }
