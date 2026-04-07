@@ -12,6 +12,8 @@ using Cathedral.Glyph.Interaction;
 using Cathedral.LLM;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Scene.Plain;
 using Cathedral.Game.Creation;
 using Cathedral.Game.Management;
 using Cathedral.Game.Dialogue;
@@ -123,8 +125,7 @@ public class LocationTravelGameController : IDisposable
         RegisterGenerator("forest", new ForestFeatureGenerator());
         
         // Register narration graph factories for biomes
-        // Note: Factories need session path which will be updated via SetLLMActionExecutor
-        RegisterNarrationFactory("plain", new Narrative.Factories.PlainGraphFactory());
+        // Note: plain biome uses the Scene system (PlainSceneFactory) via the fallback path below
         
         // Wire up events from the microworld interface
         _interface.VertexClickEvent += OnVertexClicked;
@@ -1190,34 +1191,43 @@ public class LocationTravelGameController : IDisposable
 
             if (!_narrationFactories.TryGetValue(biomeName, out var graphFactory))
             {
-                Console.WriteLine($"LocationTravelGameController: No narration factory for biome '{biomeName}', using plain factory");
+                // Plain biome: use the new Scene system
+                Console.WriteLine($"LocationTravelGameController: No narration factory for biome '{biomeName}', using PlainSceneFactory (new Scene system)");
                 var sessionPath = _llmActionExecutor.GetLlamaServerManager().SessionLogDir;
-                graphFactory = new Narrative.Factories.PlainGraphFactory(sessionPath);
+                var sceneFactory = new PlainSceneFactory(sessionPath);
+                var scene = sceneFactory.Build(vertexIndex);
+
+                _narrativeController = new NarrativeController(
+                    _core.Terminal,
+                    _core.PopupTerminal,
+                    _core,
+                    _llmActionExecutor.GetLlamaServerManager(),
+                    _modusMentisSlotManager,
+                    inputHandler,
+                    _thinkingExecutor,
+                    actionExecutor,
+                    scene,
+                    vertexIndex,
+                    worldContext
+                );
             }
             else
             {
-                // Update factory with current session path
-                if (graphFactory is Narrative.Factories.PlainGraphFactory)
-                {
-                    var sessionPath = _llmActionExecutor.GetLlamaServerManager().SessionLogDir;
-                    graphFactory = new Narrative.Factories.PlainGraphFactory(sessionPath);
-                }
+                // Create Phase 6 controller with graph factory and vertex as location ID
+                _narrativeController = new NarrativeController(
+                    _core.Terminal,
+                    _core.PopupTerminal,
+                    _core,
+                    _llmActionExecutor.GetLlamaServerManager(),
+                    _modusMentisSlotManager,
+                    inputHandler,
+                    _thinkingExecutor,
+                    actionExecutor,
+                    graphFactory,
+                    vertexIndex,   // Use vertex index as location ID seed
+                    worldContext   // Typed world context for flavor and display
+                );
             }
-            
-            // Create Phase 6 controller with graph factory and vertex as location ID
-            _narrativeController = new NarrativeController(
-                _core.Terminal,
-                _core.PopupTerminal,
-                _core,
-                _llmActionExecutor.GetLlamaServerManager(),
-                _modusMentisSlotManager,
-                inputHandler,
-                _thinkingExecutor,
-                actionExecutor,
-                graphFactory,
-                vertexIndex,   // Use vertex index as location ID seed
-                worldContext   // Typed world context for flavor and display
-            );
             
             // Mark as active
             _isInNarrativeMode = true;

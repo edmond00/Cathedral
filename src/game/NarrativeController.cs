@@ -6,6 +6,7 @@ using Cathedral.Debug;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Nodes;
 using Cathedral.Game.Npc;
+using Cathedral.Game.Scene;
 using Cathedral.LLM;
 using Cathedral.Terminal;
 using Cathedral.Glyph;
@@ -46,6 +47,10 @@ public class NarrativeController
     
     private readonly NarrationGraph _graph;
     private readonly int _locationId;
+    
+    // ── Scene system (new backend, coexists with NarrationGraph) ──
+    private readonly Cathedral.Game.Scene.Scene? _scene;
+    private PoV? _pov;
     
     // Pending fight/dialogue transitions (set by OnDiceRollContinue, consumed by game controller)
     private FightOutcome? _pendingFightOutcome = null;
@@ -138,7 +143,62 @@ public class NarrativeController
         Console.WriteLine($"NarrativeController: Initialized with node {_currentNode.NodeId}");
         Console.WriteLine($"NarrativeController: Protagonist has {_protagonist.ModiMentis.Count} modiMentis");
     }
-    
+
+    /// <summary>
+    /// Constructs a NarrativeController backed by the new Scene system.
+    /// The Scene is converted to a synthetic NarrationNode/NarrationGraph via SceneViewAdapter
+    /// so the existing LLM pipeline can consume it transparently.
+    /// </summary>
+    public NarrativeController(
+        TerminalHUD terminal,
+        PopupTerminalHUD popup,
+        GlyphSphereCore core,
+        LlamaServerManager llamaServer,
+        ModusMentisSlotManager slotManager,
+        TerminalInputHandler terminalInputHandler,
+        ThinkingExecutor thinkingExecutor,
+        ActionExecutionController actionExecutor,
+        Cathedral.Game.Scene.Scene scene,
+        int locationId,
+        WorldContext? worldContext = null)
+        : this(terminal, popup, core, llamaServer, slotManager, terminalInputHandler,
+               thinkingExecutor, actionExecutor,
+               CreateGraphFactoryForScene(scene, locationId),
+               locationId, worldContext)
+    {
+        _scene = scene;
+
+        // Build initial PoV from the first area
+        var firstArea = scene.AllAreas.FirstOrDefault();
+        if (firstArea != null)
+        {
+            _pov = new PoV(firstArea, TimePeriod.Morning);
+            Console.WriteLine($"NarrativeController [Scene]: PoV at {firstArea.DisplayName}");
+        }
+
+        // Show scene debug viewer alongside graph viewer
+        SceneDebugManager.Show(scene, _pov, locationId);
+    }
+
+    /// <summary>
+    /// Creates a synthetic NarrationGraphFactory that wraps a Scene for the existing constructor.
+    /// </summary>
+    private static NarrationGraphFactory CreateGraphFactoryForScene(Cathedral.Game.Scene.Scene scene, int locationId)
+    {
+        return new SceneSyntheticGraphFactory(scene, locationId);
+    }
+
+    /// <summary>
+    /// Returns true when this controller is backed by the new Scene system.
+    /// </summary>
+    public bool IsSceneBacked => _scene != null;
+
+    /// <summary>The scene backing this controller, or null for legacy graph mode.</summary>
+    public Cathedral.Game.Scene.Scene? Scene => _scene;
+
+    /// <summary>The current point of view, or null for legacy graph mode.</summary>
+    public PoV? CurrentPoV => _pov;
+
     /// <summary>
     /// Start the observation phase (generates observations asynchronously).
     /// This clears all history - use for initial start only.
