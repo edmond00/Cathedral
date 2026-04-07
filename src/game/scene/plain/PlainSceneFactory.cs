@@ -123,23 +123,52 @@ public class PlainSceneFactory : SceneFactory
 
             var targetArea = allAreas[rng.Next(allAreas.Count)];
             var entity = archetype.Spawn(rng, targetArea.ContextDescription);
-            var sceneNpc = new SceneNpc(entity);
+            var sceneNpc = new SceneNpc(entity, new List<KeywordInContext>(entity.NarrationKeywordsInContext));
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);
 
-            var schedule = BuildPlainSchedule(archetype.ArchetypeId, targetArea.DisplayName.ToLowerInvariant());
+            var schedule = BuildPlainSchedule(archetype.ArchetypeId, allAreas, rng);
             scene.NpcSchedules[sceneNpc.Id] = schedule;
         }
     }
 
-    private static NpcSchedule BuildPlainSchedule(string archetypeId, string areaName)
-        => archetypeId switch
+    private static NpcSchedule BuildPlainSchedule(string archetypeId, List<Area> areas, Random rng)
+    {
+        // Which periods the NPC can appear at all (archetype-dependent)
+        TimePeriod[] activePeriods = archetypeId switch
         {
-            "fox"        => NpcSchedule.OnlyDuring(areaName, TimePeriod.Dawn, TimePeriod.Evening),
-            "black_bear" => NpcSchedule.OnlyDuring(areaName, TimePeriod.Morning, TimePeriod.Noon, TimePeriod.Afternoon),
-            "stray_cat"  => NpcSchedule.OnlyDuring(areaName, TimePeriod.Morning, TimePeriod.Evening),
-            _            => NpcSchedule.Always(areaName),
+            "fox"        => new[] { TimePeriod.Dawn, TimePeriod.Evening },
+            "black_bear" => new[] { TimePeriod.Morning, TimePeriod.Noon, TimePeriod.Afternoon },
+            "stray_cat"  => new[] { TimePeriod.Morning, TimePeriod.Evening },
+            _            => (TimePeriod[])Enum.GetValues(typeof(TimePeriod)),
         };
+
+        var map = new Dictionary<TimePeriod, string?>();
+        foreach (TimePeriod p in Enum.GetValues(typeof(TimePeriod)))
+        {
+            if (Array.IndexOf(activePeriods, p) < 0)
+            {
+                map[p] = null; // absent this period
+                continue;
+            }
+            // 25% chance absent even during an active period
+            if (rng.NextDouble() < 0.25)
+            {
+                map[p] = null;
+                continue;
+            }
+            map[p] = areas[rng.Next(areas.Count)].DisplayName.ToLowerInvariant();
+        }
+
+        // Ensure at least one active period so the NPC isn't completely invisible
+        if (map.Values.All(v => v == null))
+        {
+            var period = activePeriods[rng.Next(activePeriods.Length)];
+            map[period] = areas[rng.Next(areas.Count)].DisplayName.ToLowerInvariant();
+        }
+
+        return NpcSchedule.Roaming(map);
+    }
 
     // ── Area builders ─────────────────────────────────────────────────────────
 

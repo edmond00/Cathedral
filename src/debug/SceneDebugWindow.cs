@@ -288,7 +288,7 @@ public class SceneDebugWindow : Form
             string prefix = "";
             if (entry.Source is Spot)          { fill = ColorSpot;      }
             else if (entry.Source is ItemElement) { fill = ColorItem;   }
-            else if (entry.Source is SceneNpc)    { fill = ColorNpc; prefix = "NPC: "; }
+            else if (entry.Source is SceneNpc npcEntry) { fill = ColorNpc; prefix = $"NPC ({npcEntry.Entity.Archetype.Species.DisplayName}): "; }
             else if (entry.Source is Area)        { fill = ColorReachable; prefix = "→ "; }
             else                                  { fill = ColorKeyword; }
 
@@ -375,7 +375,7 @@ public class SceneDebugWindow : Form
         foreach (var npc in _scene.Npcs)
         {
             var npcId = npc.Id.ToString();
-            AddNode(msagl, addedNodes, npcId, $"NPC: {npc.DisplayName}", ColorNpc);
+            AddNode(msagl, addedNodes, npcId, $"NPC ({npc.Entity.Archetype.Species.DisplayName}): {npc.DisplayName}", ColorNpc);
 
             if (_scene.NpcSchedules.TryGetValue(npc.Id, out var schedule))
             {
@@ -613,6 +613,8 @@ public class SceneDebugWindow : Form
         {
             lines.Add("");
             lines.Add("─── NPC Info ───");
+            lines.Add($"  Species: {npc.Entity.Archetype.Species.DisplayName}");
+            lines.Add($"  Archetype: {npc.Entity.Archetype.ArchetypeId}");
             lines.Add($"  Hostile: {npc.IsHostile}");
             lines.Add($"  Alive: {npc.IsAlive}");
             if (_scene.NpcSchedules.TryGetValue(npc.Id, out var schedule))
