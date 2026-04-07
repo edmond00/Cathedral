@@ -108,7 +108,7 @@ public class NarrativeController
         _choicePopup = new TerminalSimpleChoicePopup(popup);
         _core = core;
         _terminalInputHandler = terminalInputHandler;
-        _worldContext = worldContext ?? new ForestBiomeContext();
+        _worldContext = worldContext ?? new PlainBiomeContext();
         _locationId = locationId;
         
         // Initialize protagonist with random modiMentis and memory

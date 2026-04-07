@@ -124,9 +124,7 @@ public class LocationTravelGameController : IDisposable
         
         // Register narration graph factories for biomes
         // Note: Factories need session path which will be updated via SetLLMActionExecutor
-        RegisterNarrationFactory("forest", new Narrative.Factories.ForestGraphFactory());
-        RegisterNarrationFactory("mountain", new Narrative.Factories.MountainGraphFactory());
-        RegisterNarrationFactory("peak", new Narrative.Factories.PeakGraphFactory());
+        RegisterNarrationFactory("plain", new Narrative.Factories.PlainGraphFactory());
         
         // Wire up events from the microworld interface
         _interface.VertexClickEvent += OnVertexClicked;
@@ -1119,7 +1117,7 @@ public class LocationTravelGameController : IDisposable
     }
     
     /// <summary>
-    /// Starts Phase 6 Chain-of-Thought forest interaction.
+    /// Starts Phase 6 Chain-of-Thought narrative interaction.
     /// </summary>
     private void StartNarrativeInteraction(int vertexIndex)
     {
@@ -1192,18 +1190,17 @@ public class LocationTravelGameController : IDisposable
 
             if (!_narrationFactories.TryGetValue(biomeName, out var graphFactory))
             {
-                Console.WriteLine($"LocationTravelGameController: No narration factory for biome '{biomeName}', using default forest factory");
-                // Create factory with session path from LLM server
+                Console.WriteLine($"LocationTravelGameController: No narration factory for biome '{biomeName}', using plain factory");
                 var sessionPath = _llmActionExecutor.GetLlamaServerManager().SessionLogDir;
-                graphFactory = new Narrative.Factories.ForestGraphFactory(sessionPath);
+                graphFactory = new Narrative.Factories.PlainGraphFactory(sessionPath);
             }
             else
             {
                 // Update factory with current session path
-                if (graphFactory is Narrative.Factories.ForestGraphFactory forestFactory)
+                if (graphFactory is Narrative.Factories.PlainGraphFactory)
                 {
                     var sessionPath = _llmActionExecutor.GetLlamaServerManager().SessionLogDir;
-                    graphFactory = new Narrative.Factories.ForestGraphFactory(sessionPath);
+                    graphFactory = new Narrative.Factories.PlainGraphFactory(sessionPath);
                 }
             }
             
@@ -1236,7 +1233,7 @@ public class LocationTravelGameController : IDisposable
             // Start observation phase (async)
             _narrativeController.StartObservationPhase();
             
-            Console.WriteLine("LocationTravelGameController: Phase 6 forest interaction started");
+            Console.WriteLine("LocationTravelGameController: Phase 6 narrative interaction started");
         }
         catch (Exception ex)
         {

@@ -35,7 +35,7 @@ public class ObservationPhaseController
         _observationExecutor = new ObservationExecutor(llamaServer, slotManager);
         _promptConstructor = new ObservationPromptConstructor();
         _keywordRenderer = new KeywordRenderer();
-        _worldContext = worldContext ?? new ForestBiomeContext();
+        _worldContext = worldContext ?? new PlainBiomeContext();
     }
 
     /// <summary>

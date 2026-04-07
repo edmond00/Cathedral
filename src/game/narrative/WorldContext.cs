@@ -50,72 +50,29 @@ public abstract class WorldContext
 
         return biome.Name.ToLowerInvariant() switch
         {
-            "forest"   => new ForestBiomeContext(),
-            "mountain" => new MountainBiomeContext(),
-            "peak"     => new PeakBiomeContext(),
-            _          => new FallbackWorldContext(biome.Name)
+            "plain" => new PlainBiomeContext(),
+            _       => new FallbackWorldContext(biome.Name)
         };
     }
 }
 
 /// <summary>
-/// Dense, lightless woodlands of the dark-fantasy world — ancient trees, deep shade,
-/// the smell of rot and moss.
+/// Open plains — wide skies, rolling grass, scattered trees and gentle hills.
 /// </summary>
-public sealed class ForestBiomeContext : WorldContext
+public sealed class PlainBiomeContext : WorldContext
 {
     private static readonly string[] Flavors =
     {
-        "gloomy", "fog-drenched", "ancient", "shadowed", "tangled",
-        "moss-choked", "sunless", "brooding", "dense", "overgrown",
+        "open", "windswept", "sun-bleached", "rolling", "wide", "quiet",
+        "grassy", "vast", "golden", "still",
     };
 
-    public override string DisplayName => "Forest";
+    public override string DisplayName => "Plain";
 
     public override string GenerateContextDescription(int locationId)
     {
         var rng = new Random(locationId);
-        return $"{Flavors[rng.Next(Flavors.Length)]} forest";
-    }
-}
-
-/// <summary>
-/// The harsh mid-elevation heights — bare rock, cutting wind, treacherous paths.
-/// </summary>
-public sealed class MountainBiomeContext : WorldContext
-{
-    private static readonly string[] Flavors =
-    {
-        "craggy", "harsh", "frost-scarred", "treacherous", "bare",
-        "windswept", "forbidding", "steep", "bleak", "boulder-strewn",
-    };
-
-    public override string DisplayName => "Mountain";
-
-    public override string GenerateContextDescription(int locationId)
-    {
-        var rng = new Random(locationId);
-        return $"{Flavors[rng.Next(Flavors.Length)]} mountain";
-    }
-}
-
-/// <summary>
-/// The highest, most desolate summits — ice, storm, and silence.
-/// </summary>
-public sealed class PeakBiomeContext : WorldContext
-{
-    private static readonly string[] Flavors =
-    {
-        "frozen", "desolate", "storm-beaten", "ice-scarred", "savage",
-        "bitter", "merciless", "barren", "remote", "snow-blasted",
-    };
-
-    public override string DisplayName => "Peak";
-
-    public override string GenerateContextDescription(int locationId)
-    {
-        var rng = new Random(locationId);
-        return $"{Flavors[rng.Next(Flavors.Length)]} peak";
+        return $"{Flavors[rng.Next(Flavors.Length)]} plain";
     }
 }
 

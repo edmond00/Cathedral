@@ -52,11 +52,11 @@ public class NarrativeUI : TerminalPanelUI
         int headerY = _layout.TOP_PADDING;
 
         // Line 0: Location name with world context display name
-        string contextTitle = worldContext?.DisplayName ?? "Forest";
         string formattedLocationName = locationName.Replace("_", " ");
         string memberSuffix = activePartyMemberName != null ? $"  [{activePartyMemberName.ToUpper()}]" : "";
         string timeSuffix = timePeriod.HasValue ? $"  | {timePeriod.Value}" : "";
-        string title = $"{contextTitle} - {formattedLocationName}{memberSuffix}{timeSuffix}";
+        string contextPrefix = worldContext != null ? $"{worldContext.DisplayName} - " : "";
+        string title = $"{contextPrefix}{formattedLocationName}{memberSuffix}{timeSuffix}";
         _terminal.Text(_layout.CONTENT_START_X, headerY, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
         
         // Thinking attempts indicator (right side)

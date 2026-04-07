@@ -6,151 +6,71 @@ using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Narrative;
 
-
 /// <summary>
-/// Validates the world coherence rules for the narrative system.
-/// Ensures all items are inner classes of nodes and have unique names.
+/// Validates world coherence rules for the narrative system at startup.
+///
+/// Items may live either as nested inner classes of NarrationNode / ObservationObject
+/// (legacy pattern) or as standalone classes in the Cathedral.Game.Narrative.Items
+/// namespace. Both locations are fully supported.
 /// </summary>
 public static class NarrativeWorldValidator
 {
-    /// <summary>
-    /// Validates all narrative world coherence rules.
-    /// Throws exceptions if validation fails.
-    /// </summary>
     public static void ValidateWorldCoherence()
     {
         Console.WriteLine("=== Validating Narrative World Coherence ===");
-        
-        ValidateAllItemsAreInnerClasses();
-        ValidateUniqueItemNames();
-        ValidateItemOrigins();
+
+        ValidateUniqueItemIds();
         ValidateKeywordsInContext();
 
         Console.WriteLine("=== Narrative World Coherence: PASSED ===");
     }
-    
+
+    // ── Item ID uniqueness ────────────────────────────────────────────────────
+
     /// <summary>
-    /// Ensures every Item type is declared inside a NarrationNode.
+    /// Instantiates every concrete Item type and checks that no two share the same ItemId.
     /// </summary>
-    private static void ValidateAllItemsAreInnerClasses()
+    private static void ValidateUniqueItemIds()
     {
-        Console.WriteLine("Checking: All items must be inner classes of nodes...");
-        
+        Console.WriteLine("Checking: All items must have unique ItemIds...");
+
         var assembly = Assembly.GetExecutingAssembly();
         var allItemTypes = assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && typeof(Item).IsAssignableFrom(t))
             .ToList();
-        
-        var invalidItems = new List<Type>();
-        
+
+        var idToTypes = new Dictionary<string, List<string>>();
+
         foreach (var itemType in allItemTypes)
         {
-            // Check if it's a nested type
-            if (!itemType.IsNested)
-            {
-                invalidItems.Add(itemType);
-                continue;
-            }
+            Item? item;
+            try { item = (Item?)Activator.CreateInstance(itemType); }
+            catch { continue; }
+            if (item == null) continue;
 
-            // Check if the declaring type is a NarrationNode or ObservationObject
-            var declaringType = itemType.DeclaringType;
-            if (declaringType == null ||
-                (!typeof(NarrationNode).IsAssignableFrom(declaringType) &&
-                 !typeof(ObservationObject).IsAssignableFrom(declaringType)))
-            {
-                invalidItems.Add(itemType);
-            }
+            if (!idToTypes.TryGetValue(item.ItemId, out var list))
+                idToTypes[item.ItemId] = list = new List<string>();
+            list.Add(itemType.FullName ?? itemType.Name);
         }
-        
-        if (invalidItems.Any())
-        {
-            var errorMessage = "VALIDATION FAILED: The following items are not inner classes of NarrationNode:\n" +
-                               string.Join("\n", invalidItems.Select(t => $"  - {t.FullName}"));
-            throw new InvalidOperationException(errorMessage);
-        }
-        
-        Console.WriteLine($"  ✓ All {allItemTypes.Count} item types are properly nested in nodes");
-    }
-    
-    /// <summary>
-    /// Ensures no two Item types share the same name.
-    /// </summary>
-    private static void ValidateUniqueItemNames()
-    {
-        Console.WriteLine("Checking: All items must have unique names...");
-        
-        var assembly = Assembly.GetExecutingAssembly();
-        var allItemTypes = assembly.GetTypes()
-            .Where(t => t.IsClass && !t.IsAbstract && typeof(Item).IsAssignableFrom(t))
-            .ToList();
-        
-        var nameGroups = allItemTypes
-            .GroupBy(t => t.Name)
-            .Where(g => g.Count() > 1)
-            .ToList();
-        
-        if (nameGroups.Any())
-        {
-            var errorMessage = "VALIDATION FAILED: The following item names are used by multiple types:\n" +
-                               string.Join("\n", nameGroups.Select(g => 
-                                   $"  - {g.Key}: {string.Join(", ", g.Select(t => t.FullName))}"));
-            throw new InvalidOperationException(errorMessage);
-        }
-        
-        Console.WriteLine($"  ✓ All {allItemTypes.Count} item types have unique names");
-    }
-    
-    /// <summary>
-    /// Validates that every Item has exactly one origin node (its declaring type).
-    /// </summary>
-    private static void ValidateItemOrigins()
-    {
-        Console.WriteLine("Checking: All items must have exactly one origin node...");
-        
-        var assembly = Assembly.GetExecutingAssembly();
-        var allItemTypes = assembly.GetTypes()
-            .Where(t => t.IsClass && !t.IsAbstract && typeof(Item).IsAssignableFrom(t))
-            .ToList();
-        
-        var itemsWithInvalidOrigins = new List<string>();
-        
-        foreach (var itemType in allItemTypes)
-        {
-            if (!itemType.IsNested)
-            {
-                itemsWithInvalidOrigins.Add($"{itemType.Name}: No origin (not nested)");
-                continue;
-            }
-            
-            var declaringType = itemType.DeclaringType;
-            if (declaringType == null)
-            {
-                itemsWithInvalidOrigins.Add($"{itemType.Name}: No declaring type");
-                continue;
-            }
 
-            if (!typeof(NarrationNode).IsAssignableFrom(declaringType) &&
-                !typeof(ObservationObject).IsAssignableFrom(declaringType))
-            {
-                itemsWithInvalidOrigins.Add($"{itemType.Name}: Origin is not a NarrationNode or ObservationObject ({declaringType.Name})");
-            }
-        }
-        
-        if (itemsWithInvalidOrigins.Any())
+        var duplicates = idToTypes.Where(kv => kv.Value.Count > 1).ToList();
+        if (duplicates.Any())
         {
-            var errorMessage = "VALIDATION FAILED: The following items have invalid origins:\n" +
-                               string.Join("\n", itemsWithInvalidOrigins.Select(s => $"  - {s}"));
-            throw new InvalidOperationException(errorMessage);
+            var msg = "VALIDATION FAILED: The following ItemIds are duplicated:\n" +
+                      string.Join("\n", duplicates.Select(kv =>
+                          $"  - \"{kv.Key}\": {string.Join(", ", kv.Value)}"));
+            throw new InvalidOperationException(msg);
         }
-        
-        Console.WriteLine($"  ✓ All {allItemTypes.Count} items have valid single origins");
+
+        Console.WriteLine($"  ✓ All {allItemTypes.Count} item types have unique ItemIds");
     }
-    
+
+    // ── Keyword validation ────────────────────────────────────────────────────
+
     /// <summary>
-    /// Eagerly instantiates every node, item, and NPC archetype and accesses their
-    /// KeywordsInContext properties. Because KeywordInContext.Parse() validates on
-    /// construction, any malformed phrase is caught here at startup rather than
-    /// at runtime when the node is first visited.
+    /// Eagerly instantiates every node, item, observation, and NPC archetype and accesses
+    /// their KeywordsInContext properties. Because KeywordInContext.Parse() validates on
+    /// construction, any malformed phrase is caught here at startup rather than at runtime.
     /// Collects all errors before throwing so the full list is visible at once.
     /// </summary>
     private static void ValidateKeywordsInContext()
@@ -160,7 +80,7 @@ public static class NarrativeWorldValidator
         var assembly = Assembly.GetExecutingAssembly();
         var errors = new List<string>();
 
-        // ── Nodes ──────────────────────────────────────────────────────────────
+        // ── Nodes ─────────────────────────────────────────────────────────────
         var nodeTypes = assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && typeof(NarrationNode).IsAssignableFrom(t))
             .ToList();
@@ -169,7 +89,7 @@ public static class NarrativeWorldValidator
         {
             NarrationNode? node;
             try { node = (NarrationNode?)Activator.CreateInstance(nodeType); }
-            catch { continue; } // skip nodes with non-default constructors
+            catch { continue; }
             if (node == null) continue;
 
             try { _ = node.NodeKeywordsInContext; }
@@ -179,7 +99,7 @@ public static class NarrativeWorldValidator
             }
         }
 
-        // ── Items (nested inside nodes) ────────────────────────────────────────
+        // ── Items ─────────────────────────────────────────────────────────────
         var itemTypes = assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && typeof(Item).IsAssignableFrom(t))
             .ToList();
@@ -198,7 +118,7 @@ public static class NarrativeWorldValidator
             }
         }
 
-        // ── ObservationObjects ─────────────────────────────────────────────────
+        // ── ObservationObjects ────────────────────────────────────────────────
         var observationTypes = assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && typeof(ObservationObject).IsAssignableFrom(t))
             .ToList();
@@ -226,7 +146,7 @@ public static class NarrativeWorldValidator
             }
         }
 
-        // ── NPC archetypes ─────────────────────────────────────────────────────
+        // ── NPC archetypes ────────────────────────────────────────────────────
         var archetypeTypes = assembly.GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && typeof(NpcArchetype).IsAssignableFrom(t))
             .ToList();
@@ -260,48 +180,39 @@ public static class NarrativeWorldValidator
                 string.Join("\n", errors.Select(e => $"  - {e}")));
         }
 
-        int totalNodes = nodeTypes.Count;
-        int totalItems = itemTypes.Count;
-        int totalArchetypes = archetypeTypes.Count;
-        int totalObservations = observationTypes.Count;
-        Console.WriteLine($"  ✓ All KeywordsInContext valid ({totalNodes} nodes, {totalItems} items, {totalObservations} observations, {totalArchetypes} NPC archetypes)");
+        Console.WriteLine($"  ✓ All KeywordsInContext valid ({nodeTypes.Count} nodes, {itemTypes.Count} items, {observationTypes.Count} observations, {archetypeTypes.Count} NPC archetypes)");
     }
 
-    /// <summary>
-    /// Prints a summary of all nodes and their items (for debugging).
-    /// </summary>
+    // ── Debug helper ──────────────────────────────────────────────────────────
+
+    /// <summary>Prints all item types grouped by their location (standalone vs nested).</summary>
     public static void PrintWorldStructure()
     {
         Console.WriteLine("\n=== Narrative World Structure ===");
-        
+
         var assembly = Assembly.GetExecutingAssembly();
-        var allNodeTypes = assembly.GetTypes()
-            .Where(t => t.IsClass && !t.IsAbstract && typeof(NarrationNode).IsAssignableFrom(t))
+        var allItemTypes = assembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(Item).IsAssignableFrom(t))
             .OrderBy(t => t.Name)
             .ToList();
-        
-        foreach (var nodeType in allNodeTypes)
+
+        var standalone = allItemTypes.Where(t => !t.IsNested).ToList();
+        var nested     = allItemTypes.Where(t => t.IsNested).ToList();
+
+        Console.WriteLine($"\nStandalone items ({standalone.Count}):");
+        foreach (var t in standalone)
         {
-            Console.WriteLine($"\n{nodeType.Name}:");
-            
-            // Find nested item types
-            var itemTypes = nodeType.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic)
-                .Where(t => t.IsClass && !t.IsAbstract && typeof(Item).IsAssignableFrom(t))
-                .ToList();
-            
-            if (itemTypes.Any())
-            {
-                foreach (var itemType in itemTypes)
-                {
-                    Console.WriteLine($"  → {itemType.Name}");
-                }
-            }
-            else
-            {
-                Console.WriteLine("  (no items)");
-            }
+            var item = (Item?)Activator.CreateInstance(t);
+            Console.WriteLine($"  [{item?.ItemId}]  {t.Name}  ({t.Namespace})");
         }
-        
+
+        Console.WriteLine($"\nNested items ({nested.Count}):");
+        foreach (var t in nested)
+        {
+            var item = (Item?)Activator.CreateInstance(t);
+            Console.WriteLine($"  [{item?.ItemId}]  {t.DeclaringType?.Name}.{t.Name}");
+        }
+
         Console.WriteLine("\n=================================\n");
     }
 }
