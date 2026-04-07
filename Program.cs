@@ -22,6 +22,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("    --stretch                        Stretch/shrink to exact width/height (ignore aspect ratio)");
     Console.WriteLine("  --dialogue                         Run the dialogue system demo (NPC conversation test)");
     Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console)");
+    Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
 }
@@ -123,6 +124,17 @@ if (args.Any(a => a == "--debug"))
     Console.ForegroundColor = ConsoleColor.Yellow;
     Console.WriteLine("*** DEBUG MODE ACTIVE ***");
     Console.WriteLine("LLM critic decisions and dice rolls will prompt for manual override via console.");
+    Console.ResetColor();
+    Console.WriteLine();
+}
+
+// Check for --cpu flag (run LLM on CPU only)
+if (args.Any(a => a == "--cpu"))
+{
+    Cathedral.Config.LLM.GpuLayers = 0;
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine("*** CPU-ONLY MODE ***");
+    Console.WriteLine("LLM will run entirely on CPU (no GPU layer offloading).");
     Console.ResetColor();
     Console.WriteLine();
 }

@@ -132,7 +132,6 @@ public class NarrativeController
         _graph       = graphFactory.GenerateGraph(locationId);
         _currentNode = _graph.EntryNode;
         Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}' ({_graph.Npcs.Count} NPCs)");
-        NarrationGraphDebugManager.Show(_graph, _locationId);
         LlmMonitorDebugManager.Show();
         
         // Initialize controllers
@@ -1263,7 +1262,6 @@ public class NarrativeController
                     
                     // Perform the transition
                     _currentNode = _narrationState.PendingTransitionNode;
-                    NarrationGraphDebugManager.UpdateCurrentNode(_currentNode);
                     
                     // Convert current narration to history (grayed out, non-interactive)
                     _scrollBuffer.ConvertToHistory();

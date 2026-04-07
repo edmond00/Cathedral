@@ -42,12 +42,15 @@ public static class SceneDebugManager
                 }
 
                 _window = new SceneDebugWindow(scene, pov, locationId);
+                _window.Show();
                 Application.Run(_window);
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"[SceneDebugManager] Scene debug window error: {ex.Message}");
-                Console.Error.WriteLine(ex.StackTrace);
+                Console.WriteLine($"[SceneDebugManager] Scene debug window error: {ex.GetType().Name}: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                if (ex.InnerException != null)
+                    Console.WriteLine($"  Inner: {ex.InnerException.GetType().Name}: {ex.InnerException.Message}");
             }
             finally
             {

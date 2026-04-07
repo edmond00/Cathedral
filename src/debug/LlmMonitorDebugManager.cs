@@ -17,8 +17,7 @@ public static class LlmMonitorDebugManager
     private static LlmMonitorWindow? _window;
     private static Thread? _uiThread;
 
-    // Shared with NarrationGraphDebugManager — WinForms bootstrap must happen exactly
-    // once per process.  Check the same flag so whichever manager starts first wins.
+    // WinForms bootstrap must happen exactly once per process.
     private static bool _appInitialized;
 
     /// <summary>

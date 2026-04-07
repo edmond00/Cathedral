@@ -100,10 +100,15 @@ public class SceneDebugWindow : Form
             Orientation = Orientation.Vertical,
             BackColor   = Color.FromArgb(30, 30, 30),
         };
-        frontTab.Layout += (_, _) =>
+        frontSplit.SizeChanged += (_, _) =>
         {
-            frontSplit.Panel2MinSize    = 300;
-            frontSplit.SplitterDistance = (int)(frontSplit.Width * 0.62);
+            try
+            {
+                if (frontSplit.Width < 400) return;
+                frontSplit.Panel2MinSize = Math.Min(300, frontSplit.Width / 3);
+                frontSplit.SplitterDistance = (int)(frontSplit.Width * 0.62);
+            }
+            catch (InvalidOperationException) { }
         };
 
         _frontViewer = new GViewer { Dock = DockStyle.Fill, NavigationVisible = true };
@@ -144,10 +149,15 @@ public class SceneDebugWindow : Form
             Orientation = Orientation.Vertical,
             BackColor   = Color.FromArgb(30, 30, 30),
         };
-        backTab.Layout += (_, _) =>
+        backSplit.SizeChanged += (_, _) =>
         {
-            backSplit.Panel2MinSize    = 320;
-            backSplit.SplitterDistance = (int)(backSplit.Width * 0.65);
+            try
+            {
+                if (backSplit.Width < 400) return;
+                backSplit.Panel2MinSize = Math.Min(320, backSplit.Width / 3);
+                backSplit.SplitterDistance = (int)(backSplit.Width * 0.65);
+            }
+            catch (InvalidOperationException) { }
         };
 
         _backViewer = new GViewer { Dock = DockStyle.Fill, NavigationVisible = true };

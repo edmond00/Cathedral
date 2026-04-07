@@ -676,6 +676,10 @@ public static class Config
 
         // Temperature for utility requests (health-check, prompt pre-caching)
         public const double UtilityTemperature = 0.1;
+
+        // GPU layer offloading: 99 = all layers on GPU, 0 = CPU-only
+        // Set via --cpu flag at launch
+        public static int GpuLayers { get; set; } = 99;
     }
     
     #endregion
