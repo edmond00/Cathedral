@@ -76,6 +76,9 @@ public class LocationTravelGameController : IDisposable
     
     // Narration graph factories for different biomes
     private readonly Dictionary<string, NarrationGraphFactory> _narrationFactories = new();
+
+    // Scene factories for biomes that use the Scene system directly (not graph-based)
+    private readonly Dictionary<string, SceneFactory> _sceneFactories = new();
     
     // Action executors (used by NarrativeController)
     private LLMActionExecutor? _llmActionExecutor; // Optional - requires LLamaServerManager
@@ -1041,6 +1044,16 @@ public class LocationTravelGameController : IDisposable
         _narrationFactories[biomeName.ToLowerInvariant()] = factory;
         Console.WriteLine($"LocationTravelGameController: Registered narration factory for biome '{biomeName}'");
     }
+
+    /// <summary>
+    /// Registers a scene factory for a specific biome (Scene system, not graph-based).
+    /// Takes precedence over the default PlainSceneFactory fallback.
+    /// </summary>
+    public void RegisterSceneFactory(string biomeName, SceneFactory factory)
+    {
+        _sceneFactories[biomeName.ToLowerInvariant()] = factory;
+        Console.WriteLine($"LocationTravelGameController: Registered scene factory for biome '{biomeName}'");
+    }
     
     /// <summary>
     /// Regenerates actions based on current state.
@@ -1177,7 +1190,8 @@ public class LocationTravelGameController : IDisposable
             
             // Get the appropriate narration factory for this biome/location
             var biomeInfo = _interface.GetDetailedBiomeInfoAt(vertexIndex);
-            var biomeName = biomeInfo.biome.Name.ToLowerInvariant();
+            var biomeName    = biomeInfo.biome.Name.ToLowerInvariant();
+            var locationName = biomeInfo.location?.Name.ToLowerInvariant();
             var worldContext = Narrative.WorldContext.From(biomeInfo.biome, biomeInfo.location);
 
             var actionExecutor = new ActionExecutionController(
@@ -1189,12 +1203,24 @@ public class LocationTravelGameController : IDisposable
                 vertexIndex
             );
 
-            if (!_narrationFactories.TryGetValue(biomeName, out var graphFactory))
+            // Lookup key: prefer location type name (e.g. "farm") over biome name (e.g. "field")
+            var lookupKey = locationName ?? biomeName;
+
+            if (!_narrationFactories.TryGetValue(lookupKey, out var graphFactory) &&
+                !_narrationFactories.TryGetValue(biomeName, out graphFactory))
             {
-                // Plain biome: use the new Scene system
-                Console.WriteLine($"LocationTravelGameController: No narration factory for biome '{biomeName}', using PlainSceneFactory (new Scene system)");
+                // Scene system path: use a registered SceneFactory, checking location name then biome name
                 var sessionPath = _llmActionExecutor.GetLlamaServerManager().SessionLogDir;
-                var sceneFactory = new PlainSceneFactory(sessionPath);
+                if ((locationName == null || !_sceneFactories.TryGetValue(locationName, out var sceneFactory)) &&
+                    !_sceneFactories.TryGetValue(biomeName, out sceneFactory))
+                {
+                    Console.WriteLine($"LocationTravelGameController: No scene factory for '{locationName ?? biomeName}', using PlainSceneFactory");
+                    sceneFactory = new PlainSceneFactory(sessionPath);
+                }
+                else
+                {
+                    Console.WriteLine($"LocationTravelGameController: Using scene factory for '{locationName ?? biomeName}'");
+                }
                 var scene = sceneFactory.Build(vertexIndex);
 
                 _narrativeController = new NarrativeController(

@@ -1,0 +1,39 @@
+using System;
+using Cathedral.Game.Narrative;
+using Cathedral.Game.Scene.Building;
+
+namespace Cathedral.Game.Scene.Verbs;
+
+/// <summary>
+/// Unlocks a locked <see cref="DoorSpot"/> and immediately passes through it.
+/// Only possible from the front side when the door is locked.
+/// Combines "unlock" and "enter" into a single action because forcing a door
+/// requires committing to crossing the threshold.
+/// </summary>
+public class UnlockDoorVerb : Verb
+{
+    public override string VerbId      => "unlock_door";
+    public override string DisplayName => "Unlock";
+
+    public override bool IsPossible(Scene scene, PoV pov, Element target)
+    {
+        if (target is not DoorSpot door) return false;
+        return pov.Where.Id == door.FrontArea.Id && door.DoorState == DoorState.Locked;
+    }
+
+    public override string Verbatim(Scene scene, PoV pov, Element target)
+        => $"unlock and open {target.DisplayName.ToLowerInvariant()}";
+
+    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    {
+        if (target is not DoorSpot door)
+            throw new InvalidOperationException("UnlockDoorVerb target must be a DoorSpot");
+
+        door.DoorState = DoorState.Unlocked;
+        pov.Where      = door.BackArea;
+        pov.Focus      = null;
+        scene.StateChanges.Capture(door);
+
+        Console.WriteLine($"UnlockDoorVerb: Unlocked {door.DisplayName}, moved to {door.BackArea.DisplayName}");
+    }
+}

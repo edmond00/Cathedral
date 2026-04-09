@@ -6,6 +6,7 @@ using OpenTK.Windowing.Desktop;
 using Cathedral.Glyph;
 using Cathedral.Glyph.Microworld;
 using Cathedral.Game;
+using Cathedral.Game.Scene.Farm;
 using Cathedral.Engine;
 using Cathedral.LLM;
 
@@ -124,6 +125,9 @@ public static class LocationTravelModeLauncher
             
             Console.WriteLine("Creating game controller...");
             gameController = new LocationTravelGameController(core, microworldInterface);
+
+            // Register scene factories for specific biome types
+            gameController.RegisterSceneFactory("farm", new FarmSceneFactory());
             
             // Set up LLM action executor if server is ready
             if (llamaServer != null && llamaServer.IsServerReady)
