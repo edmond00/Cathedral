@@ -9,6 +9,7 @@
          SixLabors.ImageSharp and SixLabors.Fonts. WinForms is referenced explicitly below instead. -->
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
     <RootNamespace>Cathedral</RootNamespace>
     <!-- Allow easy package management with central package management -->
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
