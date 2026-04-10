@@ -699,13 +699,25 @@ public class NarrativeController
             _narrationState.PendingTransitionNode = nextNode;
             _narrationState.ShowContinueButton = true;
         }
+        else if (result.ActualOutcome is VerbOutcome verbOutcome && _scene != null && _pov != null)
+        {
+            Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.VerbView.Verb.VerbId}' on '{verbOutcome.Target.DisplayName}', executing verb");
+            verbOutcome.VerbView.Verb.Execute(_scene, _pov, _protagonist, verbOutcome.Target);
+            SceneDebugManager.UpdatePoV(_pov);
+            _narrationState.PendingTransitionNode = null;
+            _narrationState.ShowContinueButton = true;
+        }
         else
         {
             Console.WriteLine("NarrativeController: Non-transition outcome, showing continue button");
             _narrationState.PendingTransitionNode = null;
             _narrationState.ShowContinueButton = true;
         }
-        
+
+        // Refresh debug window to reflect any state changes
+        if (_pov != null)
+            SceneDebugManager.UpdatePoV(_pov);
+
         Console.WriteLine("NarrativeController: Action phase complete");
     }
     
@@ -1262,12 +1274,20 @@ public class NarrativeController
                     
                     // Perform the transition
                     _currentNode = _narrationState.PendingTransitionNode;
-                    
+
+                    // Sync PoV to the new node's area (scene-backed mode)
+                    if (_pov != null && _currentNode is SyntheticNarrationNode synNode && synNode.Area != null)
+                    {
+                        _pov.Where = synNode.Area;
+                        _pov.Focus = null;
+                        SceneDebugManager.UpdatePoV(_pov);
+                    }
+
                     // Convert current narration to history (grayed out, non-interactive)
                     _scrollBuffer.ConvertToHistory();
                     _narrationState.ResetForNewNode();
                     _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-                    
+
                     // Start new observation phase WITHOUT clearing history
                     StartObservationPhaseWithHistory();
                 }

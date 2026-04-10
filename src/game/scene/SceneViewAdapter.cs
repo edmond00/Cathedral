@@ -34,7 +34,8 @@ public static class SceneViewAdapter
             view.CurrentArea.DisplayName.ToLowerInvariant().Replace(' ', '_'),
             view.CurrentArea.ContextDescription,
             view.CurrentArea.TransitionDescription,
-            view.CurrentArea.Keywords);
+            view.CurrentArea.Keywords,
+            view.CurrentArea);
 
         // Convert each entry to an outcome
         foreach (var entry in view.Entries)
@@ -105,16 +106,21 @@ public class SyntheticNarrationNode : NarrationNode
     private readonly string _transitionDescription;
     private readonly List<KeywordInContext> _keywords;
 
+    /// <summary>The Area this node represents, if any.</summary>
+    public Area? Area { get; }
+
     public SyntheticNarrationNode(
         string nodeId,
         string contextDescription,
         string transitionDescription,
-        List<KeywordInContext> keywords)
+        List<KeywordInContext> keywords,
+        Area? area = null)
     {
         _nodeId                = nodeId;
         _contextDescription    = contextDescription;
         _transitionDescription = transitionDescription;
         _keywords              = keywords;
+        Area                   = area;
     }
 
     public override string NodeId => _nodeId;

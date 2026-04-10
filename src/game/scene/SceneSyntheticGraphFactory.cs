@@ -56,7 +56,8 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             area.DisplayName.ToLowerInvariant().Replace(' ', '_'),
             area.ContextDescription,
             area.TransitionDescription,
-            area.Keywords);
+            area.Keywords,
+            area);
 
         var pov = new PoV(area, TimePeriod.Morning);
 
@@ -82,6 +83,18 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
                     .ToList());
 
             node.PossibleOutcomes.Add(new SyntheticSpotObject(spot, entry));
+        }
+
+        // Add NPCs present at this area as NpcElementOutcomes
+        foreach (var npc in _scene.GetNpcsAt(area, pov.When))
+        {
+            var entry = new SceneViewEntry(npc, npc.Keywords,
+                _scene.Verbs
+                    .Where(v => v.IsPossible(_scene, pov, npc))
+                    .Select(v => new VerbView(v, v.Verbatim(_scene, pov, npc), npc))
+                    .ToList());
+
+            node.PossibleOutcomes.Add(new NpcElementOutcome(npc, entry));
         }
 
         return node;

@@ -252,7 +252,7 @@ public class HouseBuilder
             keywords: new()
             {
                 KeywordInContext.Parse("the steep <staircase> rising into the upper floor"),
-                KeywordInContext.Parse("each worn <tread> groaning under weight"),
+                KeywordInContext.Parse("the worn <tread>s groaning under weight"),
             }
         );
 
