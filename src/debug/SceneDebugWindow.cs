@@ -21,7 +21,7 @@ namespace Cathedral.Debug;
 /// <summary>
 /// WinForms window with two tabs for inspecting a Scene:
 ///   • Frontend / PoV — the currently visible observations and verb outcomes
-///   • Backend / Scene — the full Section→Area→Spot hierarchy, NPCs, area graph
+///   • Backend / Scene — the full Section→Area→PointOfInterest hierarchy, NPCs, area graph
 /// </summary>
 public class SceneDebugWindow : Form
 {
@@ -48,7 +48,7 @@ public class SceneDebugWindow : Form
     // ── Node fill colours ────────────────────────────────────────
     private static readonly MsaglColor ColorSection     = new(  0, 160, 160); // teal
     private static readonly MsaglColor ColorArea        = new( 90, 145, 210); // blue
-    private static readonly MsaglColor ColorSpot        = new(210, 160,  50); // amber
+    private static readonly MsaglColor ColorPointOfInterest = new(210, 160,  50); // amber
     private static readonly MsaglColor ColorItem        = new(120, 180, 120); // green
     private static readonly MsaglColor ColorNpc         = new(140,  70, 200); // purple
     private static readonly MsaglColor ColorVerb        = new(200, 100, 100); // red-ish
@@ -286,7 +286,7 @@ public class SceneDebugWindow : Form
             // Pick colour by element type
             MsaglColor fill;
             string prefix = "";
-            if (entry.Source is Spot)          { fill = ColorSpot;      }
+            if (entry.Source is PointOfInterest)    { fill = ColorPointOfInterest; }
             else if (entry.Source is ItemElement) { fill = ColorItem;   }
             else if (entry.Source is SceneNpc npcEntry) { fill = ColorNpc; prefix = $"NPC ({npcEntry.Entity.Archetype.Species.DisplayName}): "; }
             else if (entry.Source is Area)        { fill = ColorReachable; prefix = "→ "; }
@@ -339,17 +339,17 @@ public class SceneDebugWindow : Form
                 AddNode(msagl, addedNodes, areaId, area.DisplayName, ColorArea);
                 msagl.AddEdge(sectionId, "contains", areaId).Attr.Color = new MsaglColor(100, 100, 110);
 
-                foreach (var spot in area.Spots)
+                foreach (var poi in area.PointsOfInterest)
                 {
-                    var spotId = spot.Id.ToString();
-                    AddNode(msagl, addedNodes, spotId, spot.DisplayName, ColorSpot);
-                    msagl.AddEdge(areaId, "", spotId).Attr.Color = new MsaglColor(180, 140, 40);
+                    var poiId = poi.Id.ToString();
+                    AddNode(msagl, addedNodes, poiId, poi.DisplayName, ColorPointOfInterest);
+                    msagl.AddEdge(areaId, "", poiId).Attr.Color = new MsaglColor(180, 140, 40);
 
-                    foreach (var itemEl in spot.Items)
+                    foreach (var itemEl in poi.Items)
                     {
                         var itemId = itemEl.Id.ToString();
                         AddNode(msagl, addedNodes, itemId, itemEl.DisplayName, ColorItem);
-                        msagl.AddEdge(spotId, "", itemId).Attr.Color = new MsaglColor(100, 160, 100);
+                        msagl.AddEdge(poiId, "", itemId).Attr.Color = new MsaglColor(100, 160, 100);
                     }
                 }
             }
@@ -599,15 +599,15 @@ public class SceneDebugWindow : Form
             lines.Add("─── Area Info ───");
             lines.Add($"  Context: {area.ContextDescription}");
             lines.Add($"  Transition: {area.TransitionDescription}");
-            lines.Add($"  Spots: {area.Spots.Count}");
+            lines.Add($"  Points of Interest: {area.PointsOfInterest.Count}");
             var reachable = _scene.GetReachableAreas(area);
             lines.Add($"  Connects to: {string.Join(", ", reachable.Select(a => a.DisplayName))}");
         }
-        else if (element is Spot spot)
+        else if (element is PointOfInterest poi)
         {
             lines.Add("");
-            lines.Add("─── Spot Info ───");
-            lines.Add($"  Items: {string.Join(", ", spot.Items.Select(i => i.DisplayName))}");
+            lines.Add("─── Point of Interest Info ───");
+            lines.Add($"  Items: {string.Join(", ", poi.Items.Select(i => i.DisplayName))}");
         }
         else if (element is SceneNpc npc)
         {

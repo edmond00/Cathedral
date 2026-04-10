@@ -5,8 +5,8 @@ using Cathedral.Game.Scene.Building;
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Climbs a <see cref="StairSpot"/> from the bottom area to the top area.
-/// Only possible when the player is in the <see cref="StairSpot.BottomArea"/>.
+/// Climbs a <see cref="StairPointOfInterest"/> from the bottom area to the top area.
+/// Only possible when the player is in the <see cref="StairPointOfInterest.BottomArea"/>.
 /// </summary>
 public class GoUpStairsVerb : Verb
 {
@@ -15,7 +15,7 @@ public class GoUpStairsVerb : Verb
 
     public override bool IsPossible(Scene scene, PoV pov, Element target)
     {
-        if (target is not StairSpot stair) return false;
+        if (target is not StairPointOfInterest stair) return false;
         return pov.Where.Id == stair.BottomArea.Id;
     }
 
@@ -24,8 +24,8 @@ public class GoUpStairsVerb : Verb
 
     public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not StairSpot stair)
-            throw new InvalidOperationException("GoUpStairsVerb target must be a StairSpot");
+        if (target is not StairPointOfInterest stair)
+            throw new InvalidOperationException("GoUpStairsVerb target must be a StairPointOfInterest");
 
         pov.Where = stair.TopArea;
         pov.Focus = null;

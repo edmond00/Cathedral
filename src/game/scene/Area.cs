@@ -5,7 +5,7 @@ namespace Cathedral.Game.Scene;
 
 /// <summary>
 /// A specific space within a <see cref="Section"/>.
-/// Contains <see cref="Spot"/>s the player can focus on.
+/// Contains <see cref="PointOfInterest"/>s the player can focus on.
 /// Connected to other areas via directed edges in <see cref="Scene.AreaGraph"/>.
 /// </summary>
 public class Area : Element
@@ -20,8 +20,8 @@ public class Area : Element
     /// <summary>Transition description for LLM prompts (e.g. "move into the grassland").</summary>
     public string TransitionDescription { get; }
 
-    /// <summary>Spots (large objects, features) within this area.</summary>
-    public List<Spot> Spots { get; } = new();
+    /// <summary>Points of interest (large objects, features) within this area.</summary>
+    public List<PointOfInterest> PointsOfInterest { get; } = new();
 
     /// <summary>Mood adjectives for procedural neutral descriptions.</summary>
     public string[] Moods { get; }

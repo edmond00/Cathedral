@@ -5,8 +5,8 @@ using Cathedral.Game.Scene.Building;
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Descends a <see cref="StairSpot"/> from the top area to the bottom area.
-/// Only possible when the player is in the <see cref="StairSpot.TopArea"/>.
+/// Descends a <see cref="StairPointOfInterest"/> from the top area to the bottom area.
+/// Only possible when the player is in the <see cref="StairPointOfInterest.TopArea"/>.
 /// </summary>
 public class GoDownStairsVerb : Verb
 {
@@ -15,7 +15,7 @@ public class GoDownStairsVerb : Verb
 
     public override bool IsPossible(Scene scene, PoV pov, Element target)
     {
-        if (target is not StairSpot stair) return false;
+        if (target is not StairPointOfInterest stair) return false;
         return pov.Where.Id == stair.TopArea.Id;
     }
 
@@ -24,8 +24,8 @@ public class GoDownStairsVerb : Verb
 
     public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not StairSpot stair)
-            throw new InvalidOperationException("GoDownStairsVerb target must be a StairSpot");
+        if (target is not StairPointOfInterest stair)
+            throw new InvalidOperationException("GoDownStairsVerb target must be a StairPointOfInterest");
 
         pov.Where = stair.BottomArea;
         pov.Focus = null;

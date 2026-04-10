@@ -50,10 +50,10 @@ public class FarmSceneFactory : SceneFactory
         var shed            = BuildShed();
 
         // Populate outdoor spots before registration
-        PopulateChickenCoopSpots(chickenCoop);
-        PopulateShedSpots(shed);
-        PopulateVegetableGardenSpots(vegetableGarden, rng);
-        PopulateOrchardSpots(orchard, rng);
+        PopulateChickenCoopPointsOfInterest(chickenCoop);
+        PopulateShedPointsOfInterest(shed);
+        PopulateVegetableGardenPointsOfInterest(vegetableGarden, rng);
+        PopulateOrchardPointsOfInterest(orchard, rng);
 
         // Farmyard section — added to scene first so Courtyard is AllAreas[0]
         var farmyard = new Section(
@@ -73,13 +73,13 @@ public class FarmSceneFactory : SceneFactory
         RegisterAll(scene, grounds);
         scene.Sections.Add(grounds);
 
-        // Register outdoor spots (RegisterAll above only covers areas/sections, not spots added after)
+        // Register outdoor points of interest (RegisterAll above only covers areas/sections, not points added after)
         foreach (var area in new[] { courtyard, chickenCoop, pigsty, vegetableGarden, orchard, rabbitEnclosure, shed })
         {
-            foreach (var spot in area.Spots)
+            foreach (var poi in area.PointsOfInterest)
             {
-                spot.Register(scene);
-                foreach (var item in spot.Items)
+                poi.Register(scene);
+                foreach (var item in poi.Items)
                     item.Register(scene);
             }
         }
@@ -115,8 +115,8 @@ public class FarmSceneFactory : SceneFactory
         // ── 4. Main entrance door: Courtyard (front) → Hall (back) ───────────
 
         var entranceDoor = BuildMainEntranceDoor(courtyard, house.EntryRoom, house.Material);
-        courtyard.Spots.Add(entranceDoor);
-        house.EntryRoom.Spots.Add(entranceDoor);
+        courtyard.PointsOfInterest.Add(entranceDoor);
+        house.EntryRoom.PointsOfInterest.Add(entranceDoor);
         entranceDoor.Register(scene);
 
         Console.WriteLine($"FarmSceneFactory: Entry is Courtyard, entrance door placed");
@@ -328,11 +328,11 @@ public class FarmSceneFactory : SceneFactory
         moods: new[] { "low", "dusty", "dry", "cluttered", "dim", "quiet", "rusty" }
     );
 
-    // ── Outdoor spot population ───────────────────────────────────────────────
+    // ── Outdoor point of interest population ─────────────────────────────────
 
-    private static void PopulateChickenCoopSpots(Area chickenCoop)
+    private static void PopulateChickenCoopPointsOfInterest(Area chickenCoop)
     {
-        var nestBox = new Spot(
+        var nestBox = new PointOfInterest(
             displayName: "Nest Box",
             descriptions: new() { "A row of straw-lined boxes where hens lay" },
             keywords: new()
@@ -348,12 +348,12 @@ public class FarmSceneFactory : SceneFactory
             },
             moods: new[] { "warm", "straw-lined", "dim", "fragrant" }
         );
-        chickenCoop.Spots.Add(nestBox);
+        chickenCoop.PointsOfInterest.Add(nestBox);
     }
 
-    private static void PopulateShedSpots(Area shed)
+    private static void PopulateShedPointsOfInterest(Area shed)
     {
-        var hayStack = new Spot(
+        var hayStack = new PointOfInterest(
             displayName: "Hay Stack",
             descriptions: new() { "A compressed stack of hay bales rising to the shed roof" },
             keywords: new()
@@ -370,7 +370,7 @@ public class FarmSceneFactory : SceneFactory
             moods: new[] { "tall", "dry", "sweet-smelling", "golden" }
         );
 
-        var grainStore = new Spot(
+        var grainStore = new PointOfInterest(
             displayName: "Grain Sacks",
             descriptions: new() { "Cloth sacks of dried grain stacked along the wall" },
             keywords: new()
@@ -386,7 +386,7 @@ public class FarmSceneFactory : SceneFactory
             moods: new[] { "heavy", "dim", "dusty", "full" }
         );
 
-        var toolRack = new Spot(
+        var toolRack = new PointOfInterest(
             displayName: "Tool Rack",
             descriptions: new() { "A wooden rack of farm tools hanging from iron pegs on the wall" },
             keywords: new()
@@ -403,14 +403,14 @@ public class FarmSceneFactory : SceneFactory
             moods: new[] { "cluttered", "dim", "rusty", "functional" }
         );
 
-        shed.Spots.Add(hayStack);
-        shed.Spots.Add(grainStore);
-        shed.Spots.Add(toolRack);
+        shed.PointsOfInterest.Add(hayStack);
+        shed.PointsOfInterest.Add(grainStore);
+        shed.PointsOfInterest.Add(toolRack);
     }
 
-    private static void PopulateVegetableGardenSpots(Area garden, Random rng)
+    private static void PopulateVegetableGardenPointsOfInterest(Area garden, Random rng)
     {
-        var turnipBed = new Spot(
+        var turnipBed = new PointOfInterest(
             displayName: "Turnip Bed",
             descriptions: new() { "A row of swollen turnips half-emerged from the dark earth" },
             keywords: new()
@@ -426,7 +426,7 @@ public class FarmSceneFactory : SceneFactory
             moods: new[] { "earthy", "neat", "green", "damp" }
         );
 
-        var carrotBed = new Spot(
+        var carrotBed = new PointOfInterest(
             displayName: "Carrot Bed",
             descriptions: new() { "A bed of carrots, feathery tops waving above the soil" },
             keywords: new()
@@ -442,13 +442,13 @@ public class FarmSceneFactory : SceneFactory
             moods: new[] { "bright", "feathery", "neat", "damp" }
         );
 
-        garden.Spots.Add(turnipBed);
-        garden.Spots.Add(carrotBed);
+        garden.PointsOfInterest.Add(turnipBed);
+        garden.PointsOfInterest.Add(carrotBed);
     }
 
-    private static void PopulateOrchardSpots(Area orchard, Random rng)
+    private static void PopulateOrchardPointsOfInterest(Area orchard, Random rng)
     {
-        var appleTree = new Spot(
+        var appleTree = new PointOfInterest(
             displayName: "Apple Tree",
             descriptions: new() { "A gnarled old apple tree, its boughs heavy with fruit" },
             keywords: new()
@@ -466,12 +466,12 @@ public class FarmSceneFactory : SceneFactory
             moods: new[] { "gnarled", "laden", "shaded", "sweet" }
         );
 
-        orchard.Spots.Add(appleTree);
+        orchard.PointsOfInterest.Add(appleTree);
     }
 
     // ── Main entrance door ────────────────────────────────────────────────────
 
-    private static DoorSpot BuildMainEntranceDoor(Area courtyard, Area hall, BuildingMaterial material)
+    private static DoorPointOfInterest BuildMainEntranceDoor(Area courtyard, Area hall, BuildingMaterial material)
     {
         var matWord = material switch
         {
@@ -481,7 +481,7 @@ public class FarmSceneFactory : SceneFactory
             _                             => "wooden",
         };
 
-        return new DoorSpot(
+        return new DoorPointOfInterest(
             frontArea:   courtyard,
             backArea:    hall,
             displayName: "Farmhouse Door",

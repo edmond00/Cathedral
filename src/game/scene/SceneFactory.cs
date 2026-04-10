@@ -68,10 +68,10 @@ public abstract class SceneFactory
         foreach (var area in section.Areas)
         {
             area.Register(scene);
-            foreach (var spot in area.Spots)
+            foreach (var poi in area.PointsOfInterest)
             {
-                spot.Register(scene);
-                foreach (var itemElement in spot.Items)
+                poi.Register(scene);
+                foreach (var itemElement in poi.Items)
                     itemElement.Register(scene);
             }
         }
@@ -118,10 +118,10 @@ public abstract class SceneFactory
                     if (reachable.Count > 0)
                         writer.WriteLine($"    → Connects to: {string.Join(", ", reachable.Select(a => a.DisplayName))}");
 
-                    foreach (var spot in area.Spots)
+                    foreach (var poi in area.PointsOfInterest)
                     {
-                        writer.WriteLine($"    [Spot] {spot.DisplayName}");
-                        foreach (var item in spot.Items)
+                        writer.WriteLine($"    [PointOfInterest] {poi.DisplayName}");
+                        foreach (var item in poi.Items)
                             writer.WriteLine($"      [Item] {item.DisplayName}");
                     }
                 }

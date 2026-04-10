@@ -77,26 +77,26 @@ public class PlainSceneFactory : SceneFactory
         for (int i = 0; i < allAreas.Count - 1; i++)
             scene.ConnectAreasBidirectional(allAreas[i], allAreas[i + 1]);
 
-        // Step 3: Add 1-3 spots per area
-        var spotBuilders = new List<Func<Spot>>
+        // Step 3: Add 1-3 points of interest per area
+        var poiBuilders = new List<Func<PointOfInterest>>
         {
-            () => BuildAppleTreeSpot(),
-            () => BuildBoulderSpot(),
-            () => BuildBushSpot(),
-            () => BuildFlowerPatchSpot(),
-            () => BuildPineTreeSpot(),
+            () => BuildAppleTreePointOfInterest(),
+            () => BuildBoulderPointOfInterest(),
+            () => BuildBushPointOfInterest(),
+            () => BuildFlowerPatchPointOfInterest(),
+            () => BuildPineTreePointOfInterest(),
         };
 
         foreach (var area in allAreas)
         {
-            int spotCount = rng.Next(1, 4);
-            var spotIndices = SampleUniqueIndices(rng, spotBuilders.Count, spotCount);
-            foreach (var idx in spotIndices)
+            int poiCount = rng.Next(1, 4);
+            var poiIndices = SampleUniqueIndices(rng, poiBuilders.Count, poiCount);
+            foreach (var idx in poiIndices)
             {
-                var spot = spotBuilders[idx]();
-                area.Spots.Add(spot);
-                spot.Register(scene);
-                foreach (var itemEl in spot.Items)
+                var poi = poiBuilders[idx]();
+                area.PointsOfInterest.Add(poi);
+                poi.Register(scene);
+                foreach (var itemEl in poi.Items)
                     itemEl.Register(scene);
             }
         }
@@ -232,9 +232,9 @@ public class PlainSceneFactory : SceneFactory
         moods: new[] { "sheltered", "damp", "quiet", "lush", "shadowed", "still", "secluded", "overgrown" }
     );
 
-    // ── Spot builders ─────────────────────────────────────────────────────────
+    // ── PointOfInterest builders ──────────────────────────────────────────────
 
-    private static Spot BuildAppleTreeSpot() => new(
+    private static PointOfInterest BuildAppleTreePointOfInterest() => new(
         displayName: "Apple Tree",
         descriptions: new() { "A gnarled apple tree standing alone" },
         keywords: new()
@@ -254,7 +254,7 @@ public class PlainSceneFactory : SceneFactory
         moods: new[] { "gnarled", "laden", "solitary", "weathered", "ancient", "spreading", "crooked", "still" }
     );
 
-    private static Spot BuildBoulderSpot() => new(
+    private static PointOfInterest BuildBoulderPointOfInterest() => new(
         displayName: "Boulder",
         descriptions: new() { "A large stone half-buried in the ground" },
         keywords: new()
@@ -273,7 +273,7 @@ public class PlainSceneFactory : SceneFactory
         moods: new[] { "grey", "weathered", "mossy", "cold", "ancient", "massive", "silent", "half-buried" }
     );
 
-    private static Spot BuildBushSpot() => new(
+    private static PointOfInterest BuildBushPointOfInterest() => new(
         displayName: "Bush",
         descriptions: new() { "A thorny shrub common across the plain" },
         keywords: new()
@@ -292,7 +292,7 @@ public class PlainSceneFactory : SceneFactory
         moods: new[] { "thorny", "dense", "tangled", "dark", "overgrown", "low", "wild", "scraggly" }
     );
 
-    private static Spot BuildFlowerPatchSpot() => new(
+    private static PointOfInterest BuildFlowerPatchPointOfInterest() => new(
         displayName: "Flower Patch",
         descriptions: new() { "A colourful patch of wildflowers" },
         keywords: new()
@@ -312,7 +312,7 @@ public class PlainSceneFactory : SceneFactory
         moods: new[] { "bright", "fragrant", "colourful", "quiet", "cheerful", "scattered", "wild", "vivid" }
     );
 
-    private static Spot BuildPineTreeSpot() => new(
+    private static PointOfInterest BuildPineTreePointOfInterest() => new(
         displayName: "Pine Tree",
         descriptions: new() { "A lone pine standing at the edge of the plain" },
         keywords: new()

@@ -5,7 +5,7 @@ using Cathedral.Game.Scene.Building;
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Unlocks a locked <see cref="DoorSpot"/> and immediately passes through it.
+/// Unlocks a locked <see cref="DoorPointOfInterest"/> and immediately passes through it.
 /// Only possible from the front side when the door is locked.
 /// Combines "unlock" and "enter" into a single action because forcing a door
 /// requires committing to crossing the threshold.
@@ -17,7 +17,7 @@ public class UnlockDoorVerb : Verb
 
     public override bool IsPossible(Scene scene, PoV pov, Element target)
     {
-        if (target is not DoorSpot door) return false;
+        if (target is not DoorPointOfInterest door) return false;
         return pov.Where.Id == door.FrontArea.Id && door.DoorState == DoorState.Locked;
     }
 
@@ -26,8 +26,8 @@ public class UnlockDoorVerb : Verb
 
     public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not DoorSpot door)
-            throw new InvalidOperationException("UnlockDoorVerb target must be a DoorSpot");
+        if (target is not DoorPointOfInterest door)
+            throw new InvalidOperationException("UnlockDoorVerb target must be a DoorPointOfInterest");
 
         door.DoorState = DoorState.Unlocked;
         pov.Where      = door.BackArea;

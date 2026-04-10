@@ -16,7 +16,7 @@ namespace Cathedral.Game.Scene;
 ///
 /// Key mappings:
 ///   Area → synthetic NarrationNode (with SceneView-sourced keywords and outcomes)
-///   Spot → synthetic ObservationObject (with items as sub-outcomes)
+///   PointOfInterest → synthetic ObservationObject (with items as sub-outcomes)
 ///   ItemElement → existing Item (direct pass-through)
 ///   VerbView → synthetic ConcreteOutcome (with verb verbatim as transition description)
 /// </summary>
@@ -50,10 +50,10 @@ public static class SceneViewAdapter
                     node.PossibleOutcomes.Add(outcome);
                 }
             }
-            else if (entry.Source is Spot spot)
+            else if (entry.Source is PointOfInterest poi)
             {
-                // Spots → synthetic ObservationObject
-                var obs = new SyntheticObservationObject(spot, entry);
+                // PointsOfInterest → synthetic ObservationObject
+                var obs = new SyntheticObservationObject(poi, entry);
                 node.PossibleOutcomes.Add(obs);
             }
             else if (entry.Source is ItemElement itemElement)
@@ -125,38 +125,38 @@ public class SyntheticNarrationNode : NarrationNode
 }
 
 /// <summary>
-/// A synthetic ObservationObject backed by a <see cref="Spot"/>.
+/// A synthetic ObservationObject backed by a <see cref="PointOfInterest"/>.
 /// </summary>
 public class SyntheticObservationObject : ObservationObject
 {
-    private readonly Spot _spot;
+    private readonly PointOfInterest _poi;
     private readonly SceneViewEntry _entry;
 
-    public SyntheticObservationObject(Spot spot, SceneViewEntry entry)
+    public SyntheticObservationObject(PointOfInterest poi, SceneViewEntry entry)
     {
-        _spot  = spot;
+        _poi   = poi;
         _entry = entry;
 
-        // Populate sub-outcomes from spot's items
+        // Populate sub-outcomes from point of interest's items
         SubOutcomes = new List<ConcreteOutcome>();
-        foreach (var itemElement in spot.Items)
+        foreach (var itemElement in poi.Items)
             SubOutcomes.Add(itemElement.Item);
 
         // Add verb outcomes
         foreach (var vv in entry.ApplicableVerbs)
-            SubOutcomes.Add(new VerbOutcome(vv, spot));
+            SubOutcomes.Add(new VerbOutcome(vv, poi));
     }
 
-    public override string ObservationId => _spot.DisplayName.ToLowerInvariant().Replace(' ', '_');
+    public override string ObservationId => _poi.DisplayName.ToLowerInvariant().Replace(' ', '_');
 
-    public override List<KeywordInContext> ObservationKeywordsInContext => _spot.Keywords;
+    public override List<KeywordInContext> ObservationKeywordsInContext => _poi.Keywords;
 
     public override string GenerateNeutralDescription(int locationId = 0)
     {
-        var moods = _spot.Moods;
-        if (moods.Length == 0) return _spot.DisplayName.ToLowerInvariant();
+        var moods = _poi.Moods;
+        if (moods.Length == 0) return _poi.DisplayName.ToLowerInvariant();
         var rng = new Random(locationId);
-        return $"{moods[rng.Next(moods.Length)]} {_spot.DisplayName.ToLowerInvariant()}";
+        return $"{moods[rng.Next(moods.Length)]} {_poi.DisplayName.ToLowerInvariant()}";
     }
 }
 

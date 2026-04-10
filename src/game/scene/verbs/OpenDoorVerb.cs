@@ -5,7 +5,7 @@ using Cathedral.Game.Scene.Building;
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Passes through an unlocked <see cref="DoorSpot"/> (front → back),
+/// Passes through an unlocked <see cref="DoorPointOfInterest"/> (front → back),
 /// or exits back through it from the rear regardless of lock state.
 ///
 /// Lock semantics summary:
@@ -19,7 +19,7 @@ public class OpenDoorVerb : Verb
 
     public override bool IsPossible(Scene scene, PoV pov, Element target)
     {
-        if (target is not DoorSpot door) return false;
+        if (target is not DoorPointOfInterest door) return false;
 
         // Front → back: only when unlocked
         if (pov.Where.Id == door.FrontArea.Id && door.DoorState == DoorState.Unlocked) return true;
@@ -32,7 +32,7 @@ public class OpenDoorVerb : Verb
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
     {
-        if (target is not DoorSpot door) return "open the door";
+        if (target is not DoorPointOfInterest door) return "open the door";
 
         return pov.Where.Id == door.FrontArea.Id
             ? $"open {door.DisplayName.ToLowerInvariant()} and step through"
@@ -41,8 +41,8 @@ public class OpenDoorVerb : Verb
 
     public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not DoorSpot door)
-            throw new InvalidOperationException("OpenDoorVerb target must be a DoorSpot");
+        if (target is not DoorPointOfInterest door)
+            throw new InvalidOperationException("OpenDoorVerb target must be a DoorPointOfInterest");
 
         var destination = pov.Where.Id == door.FrontArea.Id ? door.BackArea : door.FrontArea;
         pov.Where = destination;

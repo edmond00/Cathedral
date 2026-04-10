@@ -5,8 +5,8 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Verb for picking up an item from a spot.
-/// Possible when the target is an <see cref="ItemElement"/> located in the current area's spots.
+/// Verb for picking up an item from a point of interest.
+/// Possible when the target is an <see cref="ItemElement"/> located in the current area's points of interest.
 /// </summary>
 public class GrabVerb : Verb
 {
@@ -17,8 +17,8 @@ public class GrabVerb : Verb
     {
         if (target is not ItemElement) return false;
 
-        // Check that the item is in one of the current area's spots
-        return pov.Where.Spots.Any(spot => spot.Items.Any(ie => ie.Id == target.Id));
+        // Check that the item is in one of the current area's points of interest
+        return pov.Where.PointsOfInterest.Any(poi => poi.Items.Any(ie => ie.Id == target.Id));
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
@@ -33,12 +33,12 @@ public class GrabVerb : Verb
         if (target is not ItemElement itemElement)
             throw new InvalidOperationException("GrabVerb target must be an ItemElement");
 
-        // Remove from spot
-        foreach (var spot in pov.Where.Spots)
+        // Remove from point of interest
+        foreach (var poi in pov.Where.PointsOfInterest)
         {
-            if (spot.Items.Remove(itemElement))
+            if (poi.Items.Remove(itemElement))
             {
-                Console.WriteLine($"GrabVerb: Removed {itemElement.DisplayName} from {spot.DisplayName}");
+                Console.WriteLine($"GrabVerb: Removed {itemElement.DisplayName} from {poi.DisplayName}");
                 break;
             }
         }

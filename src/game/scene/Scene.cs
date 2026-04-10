@@ -121,13 +121,13 @@ public class Scene
         // 1. Current area itself
         entries.Add(BuildEntry(pov.Where, pov));
 
-        // 2. Spots in current area
-        foreach (var spot in pov.Where.Spots)
+        // 2. Points of interest in current area
+        foreach (var poi in pov.Where.PointsOfInterest)
         {
-            entries.Add(BuildEntry(spot, pov));
+            entries.Add(BuildEntry(poi, pov));
 
-            // Items within each spot (as ItemElement wrappers)
-            foreach (var itemElement in spot.Items)
+            // Items within each point of interest (as ItemElement wrappers)
+            foreach (var itemElement in poi.Items)
                 entries.Add(BuildEntry(itemElement, pov));
         }
 

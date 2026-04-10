@@ -32,8 +32,8 @@ public record HouseResult(
 ///   • Ground floor: Hall + Kitchen + optional Pantry
 ///   • Upper floor (optional): Upper Landing + 1-3 Bedrooms
 ///
-/// Inter-room connections use <see cref="DoorSpot"/> (both areas get the spot).
-/// Vertical connections use <see cref="StairSpot"/> (both floor areas get the spot).
+/// Inter-room connections use <see cref="DoorPointOfInterest"/> (both areas get the point of interest).
+/// Vertical connections use <see cref="StairPointOfInterest"/> (both floor areas get the point of interest).
 /// The main entrance door from outside → Hall is NOT created here; the calling factory
 /// creates it so it can reference the outdoor area.
 ///
@@ -71,8 +71,8 @@ public class HouseBuilder
 
         // Hall ↔ Kitchen door (unlocked — inner door)
         var kitchenDoor = BuildInternalDoor("Kitchen Door", matWord, hall, kitchen, DoorState.Unlocked);
-        hall.Spots.Add(kitchenDoor);
-        kitchen.Spots.Add(kitchenDoor);
+        hall.PointsOfInterest.Add(kitchenDoor);
+        kitchen.PointsOfInterest.Add(kitchenDoor);
 
         // Optional pantry (60 % chance)
         Area? pantry = null;
@@ -81,8 +81,8 @@ public class HouseBuilder
             pantry = BuildPantry(matWord);
             allRooms.Add(pantry);
             var pantryDoor = BuildInternalDoor("Pantry Door", matWord, hall, pantry, DoorState.Unlocked);
-            hall.Spots.Add(pantryDoor);
-            pantry.Spots.Add(pantryDoor);
+            hall.PointsOfInterest.Add(pantryDoor);
+            pantry.PointsOfInterest.Add(pantryDoor);
         }
 
         // Single-storey: put bedrooms on ground floor
@@ -94,8 +94,8 @@ public class HouseBuilder
                 allRooms.Add(bedroom);
                 bedrooms.Add(bedroom);
                 var bedroomDoor = BuildInternalDoor(BedroomDoorName(i), matWord, hall, bedroom, DoorState.Unlocked);
-                hall.Spots.Add(bedroomDoor);
-                bedroom.Spots.Add(bedroomDoor);
+                hall.PointsOfInterest.Add(bedroomDoor);
+                bedroom.PointsOfInterest.Add(bedroomDoor);
             }
         }
 
@@ -119,8 +119,8 @@ public class HouseBuilder
 
             // Stairs: Hall ↔ Landing
             var stair = BuildStaircase(hall, landing);
-            hall.Spots.Add(stair);
-            landing.Spots.Add(stair);
+            hall.PointsOfInterest.Add(stair);
+            landing.PointsOfInterest.Add(stair);
 
             for (int i = 0; i < bedroomCount; i++)
             {
@@ -128,8 +128,8 @@ public class HouseBuilder
                 allRooms.Add(bedroom);
                 bedrooms.Add(bedroom);
                 var bedroomDoor = BuildInternalDoor(BedroomDoorName(i), matWord, landing, bedroom, DoorState.Unlocked);
-                landing.Spots.Add(bedroomDoor);
-                bedroom.Spots.Add(bedroomDoor);
+                landing.PointsOfInterest.Add(bedroomDoor);
+                bedroom.PointsOfInterest.Add(bedroomDoor);
             }
 
             var upperSection = new Section(
@@ -228,7 +228,7 @@ public class HouseBuilder
 
     // ── Door / stair builders ─────────────────────────────────────────────────
 
-    private static DoorSpot BuildInternalDoor(
+    private static DoorPointOfInterest BuildInternalDoor(
         string name, string mat, Area front, Area back, DoorState initialState)
         => new(
             frontArea: front,
@@ -243,7 +243,7 @@ public class HouseBuilder
             initialState: initialState
         );
 
-    private static StairSpot BuildStaircase(Area bottom, Area top)
+    private static StairPointOfInterest BuildStaircase(Area bottom, Area top)
         => new(
             bottomArea: bottom,
             topArea:    top,
@@ -278,62 +278,62 @@ public class HouseBuilder
     private static void PopulateHall(Area area, Random rng)
     {
         // Required
-        area.Spots.Add(BuildHearthSpot());
-        area.Spots.Add(BuildTrestleTableSpot());
+        area.PointsOfInterest.Add(BuildHearthPointOfInterest());
+        area.PointsOfInterest.Add(BuildTrestleTablePointOfInterest());
         // Optional: pick 1 from pool
-        var pool = new List<Func<Spot>>
+        var pool = new List<Func<PointOfInterest>>
         {
-            () => BuildCandleStandSpot(),
-            () => BuildSpinningWheelSpot(),
-            () => BuildRushMatSpot(),
+            () => BuildCandleStandPointOfInterest(),
+            () => BuildSpinningWheelPointOfInterest(),
+            () => BuildRushMatPointOfInterest(),
         };
-        foreach (var spot in SampleOptional(rng, pool, 1))
-            area.Spots.Add(spot);
+        foreach (var poi in SampleOptional(rng, pool, 1))
+            area.PointsOfInterest.Add(poi);
     }
 
     private static void PopulateKitchen(Area area, Random rng)
     {
         // Required
-        area.Spots.Add(BuildCookingHearthSpot());
-        area.Spots.Add(BuildKitchenShelfSpot(rng));
+        area.PointsOfInterest.Add(BuildCookingHearthPointOfInterest());
+        area.PointsOfInterest.Add(BuildKitchenShelfPointOfInterest(rng));
         // Optional: pick 1-2 from pool
-        var pool = new List<Func<Spot>>
+        var pool = new List<Func<PointOfInterest>>
         {
-            () => BuildHangingHerbsSpot(rng),
-            () => BuildSaltingBarrelSpot(rng),
-            () => BuildMortarAndPestleSpot(),
-            () => BuildButcherBlockSpot(rng),
+            () => BuildHangingHerbsPointOfInterest(rng),
+            () => BuildSaltingBarrelPointOfInterest(rng),
+            () => BuildMortarAndPestlePointOfInterest(),
+            () => BuildButcherBlockPointOfInterest(rng),
         };
-        foreach (var spot in SampleOptional(rng, pool, rng.Next(1, 3)))
-            area.Spots.Add(spot);
+        foreach (var poi in SampleOptional(rng, pool, rng.Next(1, 3)))
+            area.PointsOfInterest.Add(poi);
     }
 
     private static void PopulatePantry(Area area, Random rng)
     {
         // Both storage spots have randomised contents
-        area.Spots.Add(BuildBarrelSpot(PickFromPool(rng, BarrelPool(), 1, 2)));
-        area.Spots.Add(BuildShelfSpot(PickFromPool(rng, ShelfPool(), 1, 2)));
+        area.PointsOfInterest.Add(BuildBarrelPointOfInterest(PickFromPool(rng, BarrelPool(), 1, 2)));
+        area.PointsOfInterest.Add(BuildShelfPointOfInterest(PickFromPool(rng, ShelfPool(), 1, 2)));
         // 40% chance of an extra cold shelf
         if (rng.NextDouble() < 0.40)
-            area.Spots.Add(BuildColdShelfSpot(rng));
+            area.PointsOfInterest.Add(BuildColdShelfPointOfInterest(rng));
     }
 
     private static void PopulateBedroom(Area area, Random rng)
     {
         // Required
-        area.Spots.Add(BuildBedSpot(rng));
-        area.Spots.Add(BuildChestSpot(rng));
+        area.PointsOfInterest.Add(BuildBedPointOfInterest(rng));
+        area.PointsOfInterest.Add(BuildChestPointOfInterest(rng));
         // Optional: pick 1-2 from pool
-        var pool = new List<Func<Spot>>
+        var pool = new List<Func<PointOfInterest>>
         {
-            () => BuildWashstandSpot(),
-            () => BuildChamberPotSpot(),
-            () => BuildPrayerStoolSpot(),
-            () => BuildClothesPegSpot(rng),
-            () => BuildRushLightSpot(),
+            () => BuildWashstandPointOfInterest(),
+            () => BuildChamberPotPointOfInterest(),
+            () => BuildPrayerStoolPointOfInterest(),
+            () => BuildClothesPegPointOfInterest(rng),
+            () => BuildRushLightPointOfInterest(),
         };
-        foreach (var spot in SampleOptional(rng, pool, rng.Next(1, 3)))
-            area.Spots.Add(spot);
+        foreach (var poi in SampleOptional(rng, pool, rng.Next(1, 3)))
+            area.PointsOfInterest.Add(poi);
     }
 
     // ── Item pools for randomised storage ─────────────────────────────────────
@@ -376,12 +376,12 @@ public class HouseBuilder
 
     // ── Randomisation helpers ─────────────────────────────────────────────────
 
-    /// <summary>Picks count distinct spots from a builder pool using rng.</summary>
-    private static List<Spot> SampleOptional(Random rng, List<Func<Spot>> pool, int count)
+    /// <summary>Picks count distinct points of interest from a builder pool using rng.</summary>
+    private static List<PointOfInterest> SampleOptional(Random rng, List<Func<PointOfInterest>> pool, int count)
     {
         count = Math.Min(count, pool.Count);
         var indices = new List<int>(System.Linq.Enumerable.Range(0, pool.Count));
-        var result  = new List<Spot>();
+        var result  = new List<PointOfInterest>();
         for (int i = 0; i < count; i++)
         {
             int pick = rng.Next(indices.Count);
@@ -407,7 +407,7 @@ public class HouseBuilder
         return result.ToArray();
     }
 
-    private static Spot BuildHearthSpot() => new(
+    private static PointOfInterest BuildHearthPointOfInterest() => new(
         displayName: "Stone Hearth",
         descriptions: new() { "A wide stone hearth, ash-grey and cold between meals" },
         keywords: new()
@@ -418,7 +418,7 @@ public class HouseBuilder
         moods: new[] { "cold", "grey", "wide", "sooty", "still" }
     );
 
-    private static Spot BuildTrestleTableSpot() => new(
+    private static PointOfInterest BuildTrestleTablePointOfInterest() => new(
         displayName: "Trestle Table",
         descriptions: new() { "A long trestle table of rough wood, benches tucked beneath" },
         keywords: new()
@@ -429,7 +429,7 @@ public class HouseBuilder
         moods: new[] { "worn", "scarred", "long", "simple", "communal" }
     );
 
-    private static Spot BuildCookingHearthSpot() => new(
+    private static PointOfInterest BuildCookingHearthPointOfInterest() => new(
         displayName: "Cooking Hearth",
         descriptions: new() { "A clay-rimmed cooking hearth with an iron hook and suspended pot" },
         keywords: new()
@@ -440,11 +440,11 @@ public class HouseBuilder
         moods: new[] { "warm", "sooty", "smoky", "active", "dim" }
     );
 
-    private static Spot BuildKitchenShelfSpot(Random rng)
+    private static PointOfInterest BuildKitchenShelfPointOfInterest(Random rng)
     {
         var items = new List<ItemElement> { new(new Herb()) };
         if (rng.NextDouble() < 0.60) items.Add(new(new WoodenBowl()));
-        return new Spot(
+        return new PointOfInterest(
             displayName: "Kitchen Shelf",
             descriptions: new() { "Rough wooden shelves holding crockery, a salt block, and hanging herbs" },
             keywords: new()
@@ -457,9 +457,9 @@ public class HouseBuilder
         );
     }
 
-    private static Spot BuildBarrelSpot(params ItemElement[] items)
+    private static PointOfInterest BuildBarrelPointOfInterest(params ItemElement[] items)
     {
-        var spot = new Spot(
+        var poi = new PointOfInterest(
             displayName: "Storage Barrel",
             descriptions: new() { "A wide oak barrel, banded in iron, sealed with a waxed stopper" },
             keywords: new()
@@ -469,13 +469,13 @@ public class HouseBuilder
             },
             moods: new[] { "heavy", "solid", "dim", "full", "old" }
         );
-        spot.Items.AddRange(items);
-        return spot;
+        poi.Items.AddRange(items);
+        return poi;
     }
 
-    private static Spot BuildShelfSpot(params ItemElement[] items)
+    private static PointOfInterest BuildShelfPointOfInterest(params ItemElement[] items)
     {
-        var spot = new Spot(
+        var poi = new PointOfInterest(
             displayName: "Storage Shelf",
             descriptions: new() { "Sagging wooden shelves stacked with sacks and provisions" },
             keywords: new()
@@ -485,15 +485,15 @@ public class HouseBuilder
             },
             moods: new[] { "cluttered", "low", "dim", "heavy" }
         );
-        spot.Items.AddRange(items);
-        return spot;
+        poi.Items.AddRange(items);
+        return poi;
     }
 
-    private static Spot BuildColdShelfSpot(Random rng)
+    private static PointOfInterest BuildColdShelfPointOfInterest(Random rng)
     {
         var pool  = new Func<Item>[] { () => new Cheese(), () => new Egg(), () => new Bread() };
         var items = new List<ItemElement> { new(pool[rng.Next(pool.Length)]()) };
-        return new Spot(
+        return new PointOfInterest(
             displayName: "Cold Shelf",
             descriptions: new() { "A low stone shelf in the coolest corner, used for perishables" },
             keywords: new()
@@ -506,11 +506,11 @@ public class HouseBuilder
         );
     }
 
-    private static Spot BuildBedSpot(Random rng)
+    private static PointOfInterest BuildBedPointOfInterest(Random rng)
     {
         var items = new List<ItemElement> { new(new Straw()) };
         if (rng.NextDouble() < 0.40) items.Add(new(new WoolCap()));
-        return new Spot(
+        return new PointOfInterest(
             displayName: "Straw Pallet",
             descriptions: new() { "A straw-stuffed pallet on a low wooden frame — the sleeping place" },
             keywords: new()
@@ -523,10 +523,10 @@ public class HouseBuilder
         );
     }
 
-    private static Spot BuildChestSpot(Random rng)
+    private static PointOfInterest BuildChestPointOfInterest(Random rng)
     {
         var items = PickFromPool(rng, ChestPool(), 0, 2);
-        var spot  = new Spot(
+        var poi   = new PointOfInterest(
             displayName: "Wooden Chest",
             descriptions: new() { "A sturdy chest with a hasp lock, sitting at the foot of the bed" },
             keywords: new()
@@ -536,13 +536,13 @@ public class HouseBuilder
             },
             moods: new[] { "battered", "solid", "quiet", "closed" }
         );
-        spot.Items.AddRange(items);
-        return spot;
+        poi.Items.AddRange(items);
+        return poi;
     }
 
     // ── New optional furniture spots ──────────────────────────────────────────
 
-    private static Spot BuildCandleStandSpot() => new(
+    private static PointOfInterest BuildCandleStandPointOfInterest() => new(
         displayName: "Candle Stand",
         descriptions: new() { "A tall wooden post with an iron spike for a candle, black with old wax" },
         keywords: new()
@@ -554,7 +554,7 @@ public class HouseBuilder
         moods: new[] { "dim", "waxy", "quiet", "old" }
     );
 
-    private static Spot BuildSpinningWheelSpot() => new(
+    private static PointOfInterest BuildSpinningWheelPointOfInterest() => new(
         displayName: "Spinning Wheel",
         descriptions: new() { "A worn wooden spinning wheel in the corner, the spindle dusty from disuse" },
         keywords: new()
@@ -565,7 +565,7 @@ public class HouseBuilder
         moods: new[] { "quiet", "worn", "still", "dusty", "old" }
     );
 
-    private static Spot BuildRushMatSpot() => new(
+    private static PointOfInterest BuildRushMatPointOfInterest() => new(
         displayName: "Rush Mat",
         descriptions: new() { "A woven mat of dried rushes by the door, muddy at the edges" },
         keywords: new()
@@ -576,11 +576,11 @@ public class HouseBuilder
         moods: new[] { "flat", "earthy", "dry", "worn" }
     );
 
-    private static Spot BuildHangingHerbsSpot(Random rng)
+    private static PointOfInterest BuildHangingHerbsPointOfInterest(Random rng)
     {
         var items = new List<ItemElement> { new(new Herb()) };
         if (rng.NextDouble() < 0.50) items.Add(new(new Onion()));
-        return new Spot(
+        return new PointOfInterest(
             displayName: "Hanging Herbs",
             descriptions: new() { "Bundles of dried herbs and roots strung from a rafter, rustling in the draught" },
             keywords: new()
@@ -593,11 +593,11 @@ public class HouseBuilder
         );
     }
 
-    private static Spot BuildSaltingBarrelSpot(Random rng)
+    private static PointOfInterest BuildSaltingBarrelPointOfInterest(Random rng)
     {
         var items = new List<ItemElement> { new(new DriedMeat()) };
         if (rng.NextDouble() < 0.50) items.Add(new(new Tallow()));
-        return new Spot(
+        return new PointOfInterest(
             displayName: "Salting Barrel",
             descriptions: new() { "A wide barrel of dark brine in which cuts of meat are preserved" },
             keywords: new()
@@ -610,7 +610,7 @@ public class HouseBuilder
         );
     }
 
-    private static Spot BuildMortarAndPestleSpot() => new(
+    private static PointOfInterest BuildMortarAndPestlePointOfInterest() => new(
         displayName: "Mortar and Pestle",
         descriptions: new() { "A heavy stone mortar and pestle, stained dark with ground herbs and spices" },
         keywords: new()
@@ -621,11 +621,11 @@ public class HouseBuilder
         moods: new[] { "heavy", "old", "stained", "solid" }
     );
 
-    private static Spot BuildButcherBlockSpot(Random rng)
+    private static PointOfInterest BuildButcherBlockPointOfInterest(Random rng)
     {
         var items = new List<ItemElement>();
         if (rng.NextDouble() < 0.40) items.Add(new(new Knife()));
-        return new Spot(
+        return new PointOfInterest(
             displayName: "Butcher Block",
             descriptions: new() { "A thick scarred chopping block of end-grain wood, stained dark" },
             keywords: new()
@@ -638,7 +638,7 @@ public class HouseBuilder
         );
     }
 
-    private static Spot BuildWashstandSpot() => new(
+    private static PointOfInterest BuildWashstandPointOfInterest() => new(
         displayName: "Washstand",
         descriptions: new() { "A low wooden stand holding a clay basin and ewer for washing" },
         keywords: new()
@@ -649,7 +649,7 @@ public class HouseBuilder
         moods: new[] { "low", "plain", "cold", "damp", "sparse" }
     );
 
-    private static Spot BuildChamberPotSpot() => new(
+    private static PointOfInterest BuildChamberPotPointOfInterest() => new(
         displayName: "Chamber Pot",
         descriptions: new() { "A glazed clay chamber pot tucked under the bed" },
         keywords: new()
@@ -660,7 +660,7 @@ public class HouseBuilder
         moods: new[] { "plain", "utilitarian", "dim", "quiet" }
     );
 
-    private static Spot BuildPrayerStoolSpot() => new(
+    private static PointOfInterest BuildPrayerStoolPointOfInterest() => new(
         displayName: "Prayer Stool",
         descriptions: new() { "A simple kneeling stool worn smooth in the middle from long use" },
         keywords: new()
@@ -671,12 +671,12 @@ public class HouseBuilder
         moods: new[] { "quiet", "worn", "plain", "still", "humble" }
     );
 
-    private static Spot BuildClothesPegSpot(Random rng)
+    private static PointOfInterest BuildClothesPegPointOfInterest(Random rng)
     {
         var items = new List<ItemElement>();
         if (rng.NextDouble() < 0.60) items.Add(new(new WoolCloak()));
         if (rng.NextDouble() < 0.50) items.Add(new(new LinenTunic()));
-        return new Spot(
+        return new PointOfInterest(
             displayName: "Clothes Pegs",
             descriptions: new() { "A row of wooden pegs hammered into the wall for hanging clothes" },
             keywords: new()
@@ -689,7 +689,7 @@ public class HouseBuilder
         );
     }
 
-    private static Spot BuildRushLightSpot() => new(
+    private static PointOfInterest BuildRushLightPointOfInterest() => new(
         displayName: "Rush Light",
         descriptions: new() { "A tallow rush-light on an iron spike, the wick pinched and black" },
         keywords: new()

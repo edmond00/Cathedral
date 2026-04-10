@@ -59,17 +59,17 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             area.TransitionDescription,
             area.Keywords);
 
-        // Add spots as synthetic ObservationObjects
-        foreach (var spot in area.Spots)
+        // Add points of interest as synthetic ObservationObjects
+        foreach (var poi in area.PointsOfInterest)
         {
             var pov = new PoV(area, TimePeriod.Morning); // Default PoV for building
-            var entry = new SceneViewEntry(spot, spot.Keywords,
+            var entry = new SceneViewEntry(poi, poi.Keywords,
                 _scene.Verbs
-                    .Where(v => v.IsPossible(_scene, pov, spot))
-                    .Select(v => new VerbView(v, v.Verbatim(_scene, pov, spot), spot))
+                    .Where(v => v.IsPossible(_scene, pov, poi))
+                    .Select(v => new VerbView(v, v.Verbatim(_scene, pov, poi), poi))
                     .ToList());
 
-            var obs = new SyntheticObservationObject(spot, entry);
+            var obs = new SyntheticObservationObject(poi, entry);
             node.PossibleOutcomes.Add(obs);
         }
 
