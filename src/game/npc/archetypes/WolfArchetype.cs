@@ -3,7 +3,7 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game.Npc.Archetypes;
 
 /// <summary>Wolf NPC — hostile beast, pack hunter, moderate difficulty.</summary>
-public class WolfArchetype : NpcArchetype
+public class WolfArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "wolf";
     public override Species Species => SpeciesRegistry.Wolf;

@@ -16,6 +16,7 @@ namespace Cathedral.Game.Scene;
 ///
 /// Key mappings:
 ///   Area → synthetic NarrationNode (with SceneView-sourced keywords and outcomes)
+///   Spot → synthetic ObservationObject (as an enterable sub-location)
 ///   PointOfInterest → synthetic ObservationObject (with items as sub-outcomes)
 ///   ItemElement → existing Item (direct pass-through)
 ///   VerbView → synthetic ConcreteOutcome (with verb verbatim as transition description)
@@ -45,10 +46,13 @@ public static class SceneViewAdapter
             {
                 // Reachable areas → VerbOutcome wrapping MoveToAreaVerb
                 foreach (var vv in entry.ApplicableVerbs)
-                {
-                    var outcome = new VerbOutcome(vv, reachableArea);
-                    node.PossibleOutcomes.Add(outcome);
-                }
+                    node.PossibleOutcomes.Add(new VerbOutcome(vv, reachableArea));
+            }
+            else if (entry.Source is Spot spot)
+            {
+                // Spots → synthetic ObservationObject (enterable sub-location)
+                var obs = new SyntheticSpotObject(spot, entry);
+                node.PossibleOutcomes.Add(obs);
             }
             else if (entry.Source is PointOfInterest poi)
             {
@@ -64,8 +68,7 @@ public static class SceneViewAdapter
             else if (entry.Source is SceneNpc npc)
             {
                 // NPCs → synthetic outcome
-                var npcOutcome = new NpcElementOutcome(npc, entry);
-                node.PossibleOutcomes.Add(npcOutcome);
+                node.PossibleOutcomes.Add(new NpcElementOutcome(npc, entry));
             }
         }
 
@@ -137,18 +140,15 @@ public class SyntheticObservationObject : ObservationObject
         _poi   = poi;
         _entry = entry;
 
-        // Populate sub-outcomes from point of interest's items
         SubOutcomes = new List<ConcreteOutcome>();
         foreach (var itemElement in poi.Items)
             SubOutcomes.Add(itemElement.Item);
 
-        // Add verb outcomes
         foreach (var vv in entry.ApplicableVerbs)
             SubOutcomes.Add(new VerbOutcome(vv, poi));
     }
 
     public override string ObservationId => _poi.DisplayName.ToLowerInvariant().Replace(' ', '_');
-
     public override List<KeywordInContext> ObservationKeywordsInContext => _poi.Keywords;
 
     public override string GenerateNeutralDescription(int locationId = 0)
@@ -161,9 +161,31 @@ public class SyntheticObservationObject : ObservationObject
 }
 
 /// <summary>
+/// A synthetic ObservationObject backed by a <see cref="Spot"/> (enterable sub-location).
+/// </summary>
+public class SyntheticSpotObject : ObservationObject
+{
+    private readonly Spot _spot;
+
+    public SyntheticSpotObject(Spot spot, SceneViewEntry entry)
+    {
+        _spot       = spot;
+        SubOutcomes = new List<ConcreteOutcome>();
+
+        // Expose enter verb as sub-outcome
+        foreach (var vv in entry.ApplicableVerbs)
+            SubOutcomes.Add(new VerbOutcome(vv, spot));
+    }
+
+    public override string ObservationId => _spot.DisplayName.ToLowerInvariant().Replace(' ', '_');
+    public override List<KeywordInContext> ObservationKeywordsInContext => _spot.Keywords;
+
+    public override string GenerateNeutralDescription(int locationId = 0)
+        => _spot.DisplayName.ToLowerInvariant();
+}
+
+/// <summary>
 /// A synthetic outcome representing a Verb action.
-/// Used as a sub-outcome in synthetic ObservationObjects so the thinking phase
-/// can present verb-based actions alongside item-based outcomes.
 /// </summary>
 public class VerbOutcome : ConcreteOutcome
 {
@@ -180,7 +202,7 @@ public class VerbOutcome : ConcreteOutcome
     public override string ToNaturalLanguageString() => VerbView.Verbatim;
 
     public override List<KeywordInContext> OutcomeKeywordsInContext =>
-        Target.Keywords.Take(2).ToList(); // Use target's keywords
+        Target.Keywords.Take(2).ToList();
 }
 
 /// <summary>

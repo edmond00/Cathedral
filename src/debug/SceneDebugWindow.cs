@@ -21,7 +21,7 @@ namespace Cathedral.Debug;
 /// <summary>
 /// WinForms window with two tabs for inspecting a Scene:
 ///   • Frontend / PoV — the currently visible observations and verb outcomes
-///   • Backend / Scene — the full Section→Area→PointOfInterest hierarchy, NPCs, area graph
+///   • Backend / Scene — the full Section→Area→Spot→PointOfInterest hierarchy, NPCs, area graph
 /// </summary>
 public class SceneDebugWindow : Form
 {
@@ -46,14 +46,15 @@ public class SceneDebugWindow : Form
     private string _currentAreaId = "";
 
     // ── Node fill colours ────────────────────────────────────────
-    private static readonly MsaglColor ColorSection     = new(  0, 160, 160); // teal
-    private static readonly MsaglColor ColorArea        = new( 90, 145, 210); // blue
-    private static readonly MsaglColor ColorPointOfInterest = new(210, 160,  50); // amber
-    private static readonly MsaglColor ColorItem        = new(120, 180, 120); // green
-    private static readonly MsaglColor ColorNpc         = new(140,  70, 200); // purple
-    private static readonly MsaglColor ColorVerb        = new(200, 100, 100); // red-ish
-    private static readonly MsaglColor ColorKeyword     = new(180, 180, 130); // soft yellow
-    private static readonly MsaglColor ColorReachable   = new(100, 130, 180); // muted blue
+    private static readonly MsaglColor ColorSection          = new(  0, 160, 160); // teal
+    private static readonly MsaglColor ColorArea             = new( 90, 145, 210); // blue
+    private static readonly MsaglColor ColorSpot             = new(180, 110, 210); // violet
+    private static readonly MsaglColor ColorPointOfInterest  = new(210, 160,  50); // amber
+    private static readonly MsaglColor ColorItem             = new(120, 180, 120); // green
+    private static readonly MsaglColor ColorNpc              = new(140,  70, 200); // purple
+    private static readonly MsaglColor ColorVerb             = new(200, 100, 100); // red-ish
+    private static readonly MsaglColor ColorKeyword          = new(180, 180, 130); // soft yellow
+    private static readonly MsaglColor ColorReachable        = new(100, 130, 180); // muted blue
 
     private static readonly MsaglColor BorderNormal     = new( 80,  80,  90);
     private static readonly MsaglColor BorderCurrent    = new(255, 220,   0);
@@ -271,34 +272,46 @@ public class SceneDebugWindow : Form
 
         if (_pov == null) return msagl;
 
-        var view = _scene.View(_pov);
+        var view  = _scene.View(_pov);
         var added = new HashSet<string>();
 
-        // Central node: current area
-        var areaId = view.CurrentArea.Id.ToString();
-        AddNode(msagl, added, areaId, $"★ {view.CurrentArea.DisplayName}", ColorArea, MsaglShape.Diamond);
+        // Central node: current area (or current spot if inside one)
+        string hubId;
+        string hubLabel;
+        if (_pov.InSpot != null)
+        {
+            hubId    = _pov.InSpot.Id.ToString();
+            hubLabel = $"★ {_pov.InSpot.DisplayName} (spot)";
+            AddNode(msagl, added, hubId, hubLabel, ColorSpot, MsaglShape.Diamond);
+        }
+        else
+        {
+            hubId    = view.CurrentArea.Id.ToString();
+            hubLabel = $"★ {view.CurrentArea.DisplayName}";
+            AddNode(msagl, added, hubId, hubLabel, ColorArea, MsaglShape.Diamond);
+        }
 
         foreach (var entry in view.Entries)
         {
             var elId = entry.Source.Id.ToString();
-            if (elId == areaId) continue; // the hub is already placed
+            if (elId == hubId) continue;
 
-            // Pick colour by element type
             MsaglColor fill;
             string prefix = "";
-            if (entry.Source is PointOfInterest)    { fill = ColorPointOfInterest; }
-            else if (entry.Source is ItemElement) { fill = ColorItem;   }
-            else if (entry.Source is SceneNpc npcEntry) { fill = ColorNpc; prefix = $"NPC ({npcEntry.Entity.Archetype.Species.DisplayName}): "; }
-            else if (entry.Source is Area)        { fill = ColorReachable; prefix = "→ "; }
-            else                                  { fill = ColorKeyword; }
+            if (entry.Source is Spot)                          { fill = ColorSpot;           prefix = "⊙ "; }
+            else if (entry.Source is PointOfInterest)          { fill = ColorPointOfInterest; }
+            else if (entry.Source is ItemElement)              { fill = ColorItem;            }
+            else if (entry.Source is SceneNpc npcEntry)        { fill = ColorNpc;             prefix = $"NPC ({npcEntry.Entity.SpeciesName}): "; }
+            else if (entry.Source is Area)                     { fill = ColorReachable;       prefix = "→ "; }
+            else                                               { fill = ColorKeyword;         }
 
             AddNode(msagl, added, elId, $"{prefix}{entry.Source.DisplayName}", fill);
-            msagl.AddEdge(areaId, "", elId).Attr.Color = new MsaglColor(100, 100, 110);
+            msagl.AddEdge(hubId, "", elId).Attr.Color = new MsaglColor(100, 100, 110);
 
             // Verb verbatim sub-nodes
             for (int i = 0; i < entry.ApplicableVerbs.Count; i++)
             {
-                var vv = entry.ApplicableVerbs[i];
+                var vv        = entry.ApplicableVerbs[i];
                 var verbNodeId = $"v_{elId}_{i}";
                 AddNode(msagl, added, verbNodeId, vv.Verbatim, ColorVerb, MsaglShape.Octagon);
                 msagl.AddEdge(elId, "", verbNodeId).Attr.Color = new MsaglColor(180, 80, 80);
@@ -306,14 +319,10 @@ public class SceneDebugWindow : Form
         }
 
         // Highlight focus if set
-        if (view.Focus != null)
+        if (view.Focus != null && msagl.FindNode(view.Focus.Id.ToString()) is { } focusNode)
         {
-            var focusId = view.Focus.Id.ToString();
-            if (msagl.FindNode(focusId) is { } focusNode)
-            {
-                focusNode.Attr.Color     = BorderFocus;
-                focusNode.Attr.LineWidth = 3.0;
-            }
+            focusNode.Attr.Color     = BorderFocus;
+            focusNode.Attr.LineWidth = 3.0;
         }
 
         return msagl;
@@ -325,7 +334,7 @@ public class SceneDebugWindow : Form
 
     private MsaglGraph BuildBackendGraph()
     {
-        var msagl = new MsaglGraph("scene");
+        var msagl      = new MsaglGraph("scene");
         var addedNodes = new HashSet<string>();
 
         foreach (var section in _scene.Sections)
@@ -339,6 +348,7 @@ public class SceneDebugWindow : Form
                 AddNode(msagl, addedNodes, areaId, area.DisplayName, ColorArea);
                 msagl.AddEdge(sectionId, "contains", areaId).Attr.Color = new MsaglColor(100, 100, 110);
 
+                // PoIs
                 foreach (var poi in area.PointsOfInterest)
                 {
                     var poiId = poi.Id.ToString();
@@ -350,6 +360,28 @@ public class SceneDebugWindow : Form
                         var itemId = itemEl.Id.ToString();
                         AddNode(msagl, addedNodes, itemId, itemEl.DisplayName, ColorItem);
                         msagl.AddEdge(poiId, "", itemId).Attr.Color = new MsaglColor(100, 160, 100);
+                    }
+                }
+
+                // Spots
+                foreach (var spot in area.Spots)
+                {
+                    var spotId = spot.Id.ToString();
+                    AddNode(msagl, addedNodes, spotId, $"⊙ {spot.DisplayName}", ColorSpot);
+                    msagl.AddEdge(areaId, "spot", spotId).Attr.Color = new MsaglColor(140, 80, 180);
+
+                    foreach (var poi in spot.PointsOfInterest)
+                    {
+                        var poiId = poi.Id.ToString();
+                        AddNode(msagl, addedNodes, poiId, poi.DisplayName, ColorPointOfInterest);
+                        msagl.AddEdge(spotId, "", poiId).Attr.Color = new MsaglColor(180, 140, 40);
+
+                        foreach (var itemEl in poi.Items)
+                        {
+                            var itemId = itemEl.Id.ToString();
+                            AddNode(msagl, addedNodes, itemId, itemEl.DisplayName, ColorItem);
+                            msagl.AddEdge(poiId, "", itemId).Attr.Color = new MsaglColor(100, 160, 100);
+                        }
                     }
                 }
             }
@@ -375,7 +407,7 @@ public class SceneDebugWindow : Form
         foreach (var npc in _scene.Npcs)
         {
             var npcId = npc.Id.ToString();
-            AddNode(msagl, addedNodes, npcId, $"NPC ({npc.Entity.Archetype.Species.DisplayName}): {npc.DisplayName}", ColorNpc);
+            AddNode(msagl, addedNodes, npcId, $"NPC ({npc.Entity.SpeciesName}): {npc.DisplayName}", ColorNpc);
 
             if (_scene.NpcSchedules.TryGetValue(npc.Id, out var schedule))
             {
@@ -437,7 +469,8 @@ public class SceneDebugWindow : Form
             ? new (Color fill, string text)[]
               {
                   (Color.FromArgb( 90, 145, 210), " area "),
-                  (Color.FromArgb(210, 160,  50), " spot "),
+                  (Color.FromArgb(180, 110, 210), " spot "),
+                  (Color.FromArgb(210, 160,  50), " PoI "),
                   (Color.FromArgb(120, 180, 120), " item "),
                   (Color.FromArgb(140,  70, 200), " NPC "),
                   (Color.FromArgb(100, 130, 180), " reachable "),
@@ -447,7 +480,8 @@ public class SceneDebugWindow : Form
               {
                   (Color.FromArgb(  0, 160, 160), " section "),
                   (Color.FromArgb( 90, 145, 210), " area "),
-                  (Color.FromArgb(210, 160,  50), " spot "),
+                  (Color.FromArgb(180, 110, 210), " spot "),
+                  (Color.FromArgb(210, 160,  50), " PoI "),
                   (Color.FromArgb(120, 180, 120), " item "),
                   (Color.FromArgb(140,  70, 200), " NPC "),
               };
@@ -479,20 +513,15 @@ public class SceneDebugWindow : Form
         if (obj is not Microsoft.Msagl.Drawing.IViewerNode vn) return;
         var nodeId = vn.Node.Id;
 
-        // Verb nodes have synthetic IDs "v_{guid}_{index}" — extract the parent element
+        // Verb nodes have synthetic IDs "v_{guid}_{index}"
         if (nodeId.StartsWith("v_") && _pov != null)
         {
-            var view = _scene.View(_pov);
-            // Try to find the SceneViewEntry for the verb
+            var view  = _scene.View(_pov);
             var parts = nodeId.Split('_', 3);
             if (parts.Length >= 3 && Guid.TryParse(parts[1], out var parentGuid))
             {
                 var entry = view.Entries.FirstOrDefault(e => e.Source.Id == parentGuid);
-                if (entry != null)
-                {
-                    ShowFrontendEntryDetails(entry);
-                    return;
-                }
+                if (entry != null) { ShowFrontendEntryDetails(entry); return; }
             }
         }
 
@@ -500,13 +529,9 @@ public class SceneDebugWindow : Form
 
         if (_pov != null)
         {
-            var view = _scene.View(_pov);
+            var view  = _scene.View(_pov);
             var entry = view.Entries.FirstOrDefault(e => e.Source.Id == guid);
-            if (entry != null)
-            {
-                ShowFrontendEntryDetails(entry);
-                return;
-            }
+            if (entry != null) { ShowFrontendEntryDetails(entry); return; }
         }
     }
 
@@ -524,7 +549,7 @@ public class SceneDebugWindow : Form
 
     private void ShowFrontendEntryDetails(SceneViewEntry entry)
     {
-        var el = entry.Source;
+        var el    = entry.Source;
         var lines = new List<string>
         {
             $"Type: {el.GetType().Name}",
@@ -600,8 +625,18 @@ public class SceneDebugWindow : Form
             lines.Add($"  Context: {area.ContextDescription}");
             lines.Add($"  Transition: {area.TransitionDescription}");
             lines.Add($"  Points of Interest: {area.PointsOfInterest.Count}");
+            lines.Add($"  Spots: {area.Spots.Count}");
             var reachable = _scene.GetReachableAreas(area);
             lines.Add($"  Connects to: {string.Join(", ", reachable.Select(a => a.DisplayName))}");
+        }
+        else if (element is Spot spot)
+        {
+            lines.Add("");
+            lines.Add("─── Spot Info ───");
+            lines.Add($"  Parent Area: {spot.ParentArea.DisplayName}");
+            lines.Add($"  Points of Interest: {spot.PointsOfInterest.Count}");
+            foreach (var poi in spot.PointsOfInterest)
+                lines.Add($"    • {poi.DisplayName} ({poi.Items.Count} items)");
         }
         else if (element is PointOfInterest poi)
         {
@@ -613,7 +648,7 @@ public class SceneDebugWindow : Form
         {
             lines.Add("");
             lines.Add("─── NPC Info ───");
-            lines.Add($"  Species: {npc.Entity.Archetype.Species.DisplayName}");
+            lines.Add($"  Species: {npc.Entity.SpeciesName}");
             lines.Add($"  Archetype: {npc.Entity.Archetype.ArchetypeId}");
             lines.Add($"  Hostile: {npc.IsHostile}");
             lines.Add($"  Alive: {npc.IsAlive}");
@@ -639,7 +674,8 @@ public class SceneDebugWindow : Form
         }
 
         var focusName = _pov.Focus?.DisplayName ?? "(none)";
-        _povLabel.Text = $"  PoV — Where: {_pov.Where.DisplayName}  |  When: {_pov.When}  |  Focus: {focusName}";
+        var spotPart  = _pov.InSpot != null ? $"  |  Spot: {_pov.InSpot.DisplayName}" : "";
+        _povLabel.Text = $"  PoV — Where: {_pov.Where.DisplayName}{spotPart}  |  When: {_pov.When}  |  Focus: {focusName}";
     }
 
     private void UpdateStateBox()

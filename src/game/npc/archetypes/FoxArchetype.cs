@@ -3,7 +3,7 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game.Npc.Archetypes;
 
 /// <summary>Fox NPC — skittish beast, non-hostile, flees when threatened.</summary>
-public class FoxArchetype : NpcArchetype
+public class FoxArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "fox";
     public override Species Species => SpeciesRegistry.Fox;

@@ -73,17 +73,6 @@ public class FarmSceneFactory : SceneFactory
         RegisterAll(scene, grounds);
         scene.Sections.Add(grounds);
 
-        // Register outdoor points of interest (RegisterAll above only covers areas/sections, not points added after)
-        foreach (var area in new[] { courtyard, chickenCoop, pigsty, vegetableGarden, orchard, rabbitEnclosure, shed })
-        {
-            foreach (var poi in area.PointsOfInterest)
-            {
-                poi.Register(scene);
-                foreach (var item in poi.Items)
-                    item.Register(scene);
-            }
-        }
-
         // ── 2. Connect outdoor areas (Courtyard as hub) ───────────────────────
 
         var outdoorAreas = new[] { chickenCoop, pigsty, vegetableGarden, orchard, rabbitEnclosure, shed };
@@ -122,18 +111,19 @@ public class FarmSceneFactory : SceneFactory
         Console.WriteLine($"FarmSceneFactory: Entry is Courtyard, entrance door placed");
 
         // Store house result for NPC phase
-        _houseResult = house;
-        _courtyard   = courtyard;
-        _chickenCoop = chickenCoop;
-        _pigsty      = pigsty;
-        _garden      = vegetableGarden;
-        _orchard     = orchard;
-        _shed        = shed;
+        _houseResult      = house;
+        _courtyard        = courtyard;
+        _chickenCoop      = chickenCoop;
+        _pigsty           = pigsty;
+        _rabbitEnclosure  = rabbitEnclosure;
+        _garden           = vegetableGarden;
+        _orchard          = orchard;
+        _shed             = shed;
     }
 
     // Fields set during BuildSections for use in BuildNpcs
     private HouseResult? _houseResult;
-    private Area? _courtyard, _chickenCoop, _pigsty, _garden, _orchard, _shed;
+    private Area? _courtyard, _chickenCoop, _pigsty, _rabbitEnclosure, _garden, _orchard, _shed;
 
     // ── NPC construction ──────────────────────────────────────────────────────
 
@@ -141,13 +131,13 @@ public class FarmSceneFactory : SceneFactory
     {
         if (_houseResult is null || _courtyard is null) return;
 
-        var bedrooms = _houseResult.Bedrooms;
-        if (bedrooms.Count == 0) return;
+        // ── Human NPCs (farmer + farmhands, one per bedroom) ─────────────────
 
+        var bedrooms = _houseResult.Bedrooms;
         for (int i = 0; i < bedrooms.Count; i++)
         {
             var bedroom  = bedrooms[i];
-            NpcArchetype archetype = i == 0 ? new FarmerArchetype() : new FarmhandArchetype();
+            NamedNpcArchetype archetype = i == 0 ? new FarmerArchetype() : new FarmhandArchetype();
 
             var entity   = archetype.Spawn(rng, "a medieval farm");
             var sceneNpc = new SceneNpc(entity, new List<KeywordInContext>(entity.NarrationKeywordsInContext));
@@ -159,6 +149,33 @@ public class FarmSceneFactory : SceneFactory
 
             Console.WriteLine($"FarmSceneFactory: Spawned {entity.DisplayName} ({archetype.ArchetypeId}), beds in '{bedroom.DisplayName}'");
         }
+
+        // ── Shallow NPCs: farm animals ────────────────────────────────────────
+
+        SpawnShallowNpcs(rng, scene, new ChickenArchetype(), _chickenCoop!,
+            NpcSchedule.Always(_chickenCoop!.DisplayName.ToLowerInvariant()), count: rng.Next(3, 7));
+
+        SpawnShallowNpcs(rng, scene, new RabbitArchetype(), _rabbitEnclosure!,
+            NpcSchedule.Always(_rabbitEnclosure!.DisplayName.ToLowerInvariant()), count: rng.Next(3, 8));
+
+        SpawnShallowNpcs(rng, scene, new PigArchetype(), _pigsty!,
+            NpcSchedule.Always(_pigsty!.DisplayName.ToLowerInvariant()), count: rng.Next(1, 3));
+    }
+
+    private static void SpawnShallowNpcs(
+        Random rng, Scene scene,
+        ShallowNpcArchetype archetype, Area homeArea,
+        NpcSchedule schedule, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            var entity   = archetype.Spawn(rng, homeArea.DisplayName.ToLowerInvariant());
+            var sceneNpc = new SceneNpc(entity, new List<KeywordInContext>(entity.NarrationKeywordsInContext));
+            sceneNpc.Register(scene);
+            scene.Npcs.Add(sceneNpc);
+            scene.NpcSchedules[sceneNpc.Id] = schedule;
+        }
+        Console.WriteLine($"FarmSceneFactory: Spawned {count}x {archetype.TypeDisplayName} in '{homeArea.DisplayName}'");
     }
 
     /// <summary>

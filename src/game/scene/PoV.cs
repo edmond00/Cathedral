@@ -11,6 +11,12 @@ public class PoV
     /// <summary>The area the agent is currently in.</summary>
     public Area Where { get; set; }
 
+    /// <summary>
+    /// The spot the agent is currently examining within the area.
+    /// Null when the agent is observing the area at large (not inside any spot).
+    /// </summary>
+    public Spot? InSpot { get; set; }
+
     /// <summary>The current time period.</summary>
     public TimePeriod When { get; set; }
 
@@ -20,10 +26,11 @@ public class PoV
     /// </summary>
     public Element? Focus { get; set; }
 
-    public PoV(Area where, TimePeriod when, Element? focus = null)
+    public PoV(Area where, TimePeriod when, Element? focus = null, Spot? inSpot = null)
     {
-        Where = where;
-        When  = when;
-        Focus = focus;
+        Where  = where;
+        When   = when;
+        Focus  = focus;
+        InSpot = inSpot;
     }
 }

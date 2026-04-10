@@ -4,7 +4,7 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game.Npc.Archetypes;
 
 /// <summary>Druid NPC — nature keeper, dialogue-capable, can trade herbs. Hostile if disrespected.</summary>
-public class DruidArchetype : NpcArchetype
+public class DruidArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "druid";
     public override Species Species => SpeciesRegistry.Human;

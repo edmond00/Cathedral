@@ -1,29 +1,42 @@
 using System;
 using System.Linq;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Npc.Corpse;
 
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Verb for picking up an item from a point of interest.
-/// Possible when the target is an <see cref="ItemElement"/> located in the current area's points of interest.
+/// Picks up an item from a <see cref="PointOfInterest"/> in the current area or current spot.
+/// Does not apply to <see cref="CorpseBodyPartPoI"/> items — use <see cref="CutVerb"/> for those.
 /// </summary>
 public class GrabVerb : Verb
 {
-    public override string VerbId => "grab";
+    public override string VerbId      => "grab";
     public override string DisplayName => "Grab";
 
     public override bool IsPossible(Scene scene, PoV pov, Element target)
     {
-        if (target is not ItemElement) return false;
+        if (target is not ItemElement itemEl) return false;
 
-        // Check that the item is in one of the current area's points of interest
-        return pov.Where.PointsOfInterest.Any(poi => poi.Items.Any(ie => ie.Id == target.Id));
+        if (pov.InSpot != null)
+        {
+            // Inside a spot: item must be in a non-corpse PoI of the current spot
+            return pov.InSpot.PointsOfInterest
+                .Where(poi => poi is not CorpseBodyPartPoI)
+                .Any(poi => poi.Items.Any(ie => ie.Id == itemEl.Id));
+        }
+        else
+        {
+            // In an area: item must be in a non-corpse PoI of the current area
+            return pov.Where.PointsOfInterest
+                .Where(poi => poi is not CorpseBodyPartPoI)
+                .Any(poi => poi.Items.Any(ie => ie.Id == itemEl.Id));
+        }
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
     {
-        var name = target.DisplayName.ToLowerInvariant();
+        var name    = target.DisplayName.ToLowerInvariant();
         var article = "aeiou".Contains(name[0]) ? "an" : "a";
         return $"grab {article} {name}";
     }
@@ -33,8 +46,12 @@ public class GrabVerb : Verb
         if (target is not ItemElement itemElement)
             throw new InvalidOperationException("GrabVerb target must be an ItemElement");
 
-        // Remove from point of interest
-        foreach (var poi in pov.Where.PointsOfInterest)
+        // Remove from PoI (area or spot)
+        var searchPoIs = pov.InSpot != null
+            ? pov.InSpot.PointsOfInterest.Where(p => p is not CorpseBodyPartPoI)
+            : pov.Where.PointsOfInterest.Where(p => p is not CorpseBodyPartPoI);
+
+        foreach (var poi in searchPoIs)
         {
             if (poi.Items.Remove(itemElement))
             {
@@ -43,12 +60,8 @@ public class GrabVerb : Verb
             }
         }
 
-        // Add to protagonist inventory
         actor.Inventory.Add(itemElement.Item);
-
-        // Record state change
         scene.StateChanges.Capture(itemElement);
-
         Console.WriteLine($"GrabVerb: {actor.DisplayName} acquired {itemElement.DisplayName}");
     }
 }

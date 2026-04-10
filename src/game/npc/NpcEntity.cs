@@ -1,38 +1,52 @@
 using System;
 using Cathedral.Game.Dialogue;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Npc.Corpse;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Npc;
 
 /// <summary>
-/// Unified NPC entity bridging the narration, fight, and dialogue systems.
-/// Wraps an <see cref="EnemyCombatant"/> (full anatomy, modiMentis, wounds) and
-/// optionally a <see cref="NpcPersona"/> + conversation graph for dialogue-capable NPCs.
+/// A named NPC entity — wraps an <see cref="EnemyCombatant"/> (full anatomy, modiMentis, wounds)
+/// and optionally a <see cref="NpcPersona"/> + conversation graph for dialogue-capable NPCs.
+/// Implements <see cref="INpcEntity"/> so it can be used anywhere the shared NPC contract is required.
 /// </summary>
-public class NpcEntity
+public class NpcEntity : INpcEntity
 {
-    /// <summary>Stable identifier used to persist named NPCs across visits.</summary>
+    /// <inheritdoc/>
     public string NpcId { get; }
 
-    /// <summary>Display name shown in narration, combat, and dialogue (e.g., "Grey Wolf", "Hermit Aldous").</summary>
+    /// <inheritdoc/>
     public string DisplayName => Combatant.DisplayName;
 
     /// <summary>The underlying party member used for anatomy, wounds, stats, and combat.</summary>
     public EnemyCombatant Combatant { get; }
 
     /// <summary>The archetype that spawned this NPC (wolf, druid, etc.).</summary>
-    public NpcArchetype Archetype { get; }
+    public new NamedNpcArchetype Archetype { get; }
 
-    /// <summary>Whether this NPC is hostile by default (beasts, some humans).</summary>
+    NpcArchetype INpcEntity.Archetype => Archetype;
+
+    /// <inheritdoc/>
     public bool IsHostile { get; set; }
 
     /// <summary>Whether this NPC can be talked to (has persona + conversation graph).</summary>
     public bool CanDialogue => Persona != null && ConversationRoot != null;
 
-    /// <summary>Whether this NPC is still alive (delegates to combatant HP).</summary>
-    public bool IsAlive => Combatant.CurrentHp > 0;
+    // ── IsAlive ──────────────────────────────────────────────────────────────
 
-    // ── Dialogue fields (null for beasts) ──
+    private bool _isSlain = false;
+
+    /// <inheritdoc/>
+    /// True while the combatant has HP remaining and has not been explicitly slain.
+    /// Setting to false slays the NPC immediately (without combat).
+    public bool IsAlive
+    {
+        get => !_isSlain && Combatant.CurrentHp > 0;
+        set { if (!value) _isSlain = true; else _isSlain = false; }
+    }
+
+    // ── Dialogue ─────────────────────────────────────────────────────────────
 
     /// <summary>LLM persona defining speech patterns and knowledge. Null for non-speaking NPCs.</summary>
     public NpcPersona? Persona { get; }
@@ -40,31 +54,27 @@ public class NpcEntity
     /// <summary>Entry node of the conversation graph. Null for non-speaking NPCs.</summary>
     public ConversationSubjectNode? ConversationRoot { get; }
 
-    /// <summary>
-    /// Per-instance affinity score (0–100). Only meaningful for dialogue-capable NPCs.
-    /// Modified by dialogue outcomes.
-    /// </summary>
+    /// <summary>Per-instance affinity score (0–100). Only meaningful for dialogue-capable NPCs.</summary>
     public float Affinity { get; set; }
 
-    /// <summary>Whether this is a named/persistent NPC that survives across visits.</summary>
+    /// <inheritdoc/>
     public bool IsPersistent { get; }
 
-    /// <summary>
-    /// Keywords with context injected into the narration node when this NPC is present.
-    /// E.g., "a grey prowling &lt;wolf&gt;" or "an old solitary &lt;hermit&gt;".
-    /// </summary>
+    /// <inheritdoc/>
     public KeywordInContext[] NarrationKeywordsInContext { get; }
 
-    /// <summary>
-    /// Short description used in LLM observation prompts to hint at the NPC's presence.
-    /// E.g., "a grey wolf watches from the treeline" or "an old hermit sits by a smouldering fire".
-    /// </summary>
+    /// <inheritdoc/>
     public string ObservationHint { get; }
+
+    /// <inheritdoc/>
+    public string SpeciesName => Archetype.Species.DisplayName;
+
+    // ── Constructor ──────────────────────────────────────────────────────────
 
     public NpcEntity(
         string npcId,
         EnemyCombatant combatant,
-        NpcArchetype archetype,
+        NamedNpcArchetype archetype,
         bool isHostile,
         bool isPersistent,
         KeywordInContext[] narrationKeywordsInContext,
@@ -73,17 +83,25 @@ public class NpcEntity
         ConversationSubjectNode? conversationRoot = null,
         float initialAffinity = 50f)
     {
-        NpcId = npcId;
-        Combatant = combatant;
-        Archetype = archetype;
-        IsHostile = isHostile;
-        IsPersistent = isPersistent;
+        NpcId                      = npcId;
+        Combatant                  = combatant;
+        Archetype                  = archetype;
+        IsHostile                  = isHostile;
+        IsPersistent               = isPersistent;
         NarrationKeywordsInContext = narrationKeywordsInContext;
-        ObservationHint = observationHint;
-        Persona = persona;
-        ConversationRoot = conversationRoot;
-        Affinity = initialAffinity;
+        ObservationHint            = observationHint;
+        Persona                    = persona;
+        ConversationRoot           = conversationRoot;
+        Affinity                   = initialAffinity;
     }
+
+    // ── Corpse generation ────────────────────────────────────────────────────
+
+    /// <inheritdoc/>
+    public CorpseSpot GenerateCorpse(Area area)
+        => CorpseRegistry.CreateForNamedNpc(this, area);
+
+    // ── Dialogue conversion ──────────────────────────────────────────────────
 
     /// <summary>
     /// Creates a <see cref="NpcInstance"/> for the dialogue system from this entity.

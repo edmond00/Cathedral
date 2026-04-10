@@ -47,7 +47,6 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             }
         }
 
-        // Entry node = first area
         return areaNodes[firstArea.Id];
     }
 
@@ -59,18 +58,30 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             area.TransitionDescription,
             area.Keywords);
 
+        var pov = new PoV(area, TimePeriod.Morning);
+
         // Add points of interest as synthetic ObservationObjects
         foreach (var poi in area.PointsOfInterest)
         {
-            var pov = new PoV(area, TimePeriod.Morning); // Default PoV for building
             var entry = new SceneViewEntry(poi, poi.Keywords,
                 _scene.Verbs
                     .Where(v => v.IsPossible(_scene, pov, poi))
                     .Select(v => new VerbView(v, v.Verbatim(_scene, pov, poi), poi))
                     .ToList());
 
-            var obs = new SyntheticObservationObject(poi, entry);
-            node.PossibleOutcomes.Add(obs);
+            node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry));
+        }
+
+        // Add spots as synthetic enterable sub-locations
+        foreach (var spot in area.Spots)
+        {
+            var entry = new SceneViewEntry(spot, spot.Keywords,
+                _scene.Verbs
+                    .Where(v => v.IsPossible(_scene, pov, spot))
+                    .Select(v => new VerbView(v, v.Verbatim(_scene, pov, spot), spot))
+                    .ToList());
+
+            node.PossibleOutcomes.Add(new SyntheticSpotObject(spot, entry));
         }
 
         return node;

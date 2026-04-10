@@ -106,7 +106,7 @@ public class PlainSceneFactory : SceneFactory
 
     protected override void BuildNpcs(Random rng, int locationId, Scene scene)
     {
-        var encounters = new List<(NpcArchetype Archetype, float SpawnChance)>
+        var encounters = new List<(NamedNpcArchetype Archetype, float SpawnChance)>
         {
             (new FoxArchetype(),       0.40f),
             (new StrayDogArchetype(),  0.30f),

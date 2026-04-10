@@ -4,7 +4,7 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game.Npc.Archetypes;
 
 /// <summary>Hermit NPC — reclusive sage, dialogue-capable, knows mountain secrets. Generally peaceful.</summary>
-public class HermitArchetype : NpcArchetype
+public class HermitArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "hermit";
     public override Species Species => SpeciesRegistry.Human;

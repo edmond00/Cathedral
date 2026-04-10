@@ -3,7 +3,7 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game.Npc.Archetypes;
 
 /// <summary>Stray Cat NPC — cautious beast, non-hostile, territorial.</summary>
-public class StrayCatArchetype : NpcArchetype
+public class StrayCatArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "stray_cat";
     public override Species Species => SpeciesRegistry.Cat;

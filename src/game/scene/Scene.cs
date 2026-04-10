@@ -40,10 +40,7 @@ public class Scene
 
     // ── Element registration ──────────────────────────────────────────────────
 
-    /// <summary>
-    /// Registers an element in this scene's dictionary.
-    /// Called by <see cref="Element.Register"/>.
-    /// </summary>
+    /// <summary>Registers an element in this scene's dictionary. Called by <see cref="Element.Register"/>.</summary>
     public void RegisterElement(Element element)
     {
         Elements[element.Id] = element;
@@ -83,7 +80,7 @@ public class Scene
 
     // ── NPC schedule helpers ──────────────────────────────────────────────────
 
-    /// <summary>Returns NPCs present at the given area during the given time period.</summary>
+    /// <summary>Returns alive NPCs present at the given area during the given time period.</summary>
     public List<SceneNpc> GetNpcsAt(Area area, TimePeriod period)
     {
         var result = new List<SceneNpc>();
@@ -93,7 +90,6 @@ public class Scene
             if (!NpcSchedules.TryGetValue(npc.Id, out var schedule)) continue;
 
             var nodeId = schedule.GetNodeId(period);
-            // NpcSchedule uses string nodeIds — match against area DisplayName (lowered)
             if (nodeId != null && string.Equals(nodeId, area.DisplayName, StringComparison.OrdinalIgnoreCase))
                 result.Add(npc);
         }
@@ -108,38 +104,85 @@ public class Scene
     /// <summary>Gets an area by its UUID.</summary>
     public Area? GetArea(Guid id) => Elements.TryGetValue(id, out var el) && el is Area a ? a : null;
 
+    // ── Dynamic spot management ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Adds a spot to an area at runtime and registers it (and its PoIs/items) in the scene.
+    /// Used for temporary spots such as corpses that are spawned by verbs, not by the factory.
+    /// </summary>
+    public void AddSpotToArea(Area area, Spot spot)
+    {
+        area.Spots.Add(spot);
+        RegisterSpot(spot);
+    }
+
+    private void RegisterSpot(Spot spot)
+    {
+        RegisterElement(spot);
+        foreach (var poi in spot.PointsOfInterest)
+        {
+            RegisterElement(poi);
+            foreach (var item in poi.Items)
+                RegisterElement(item);
+        }
+    }
+
     // ── View (frontend output) ────────────────────────────────────────────────
 
     /// <summary>
-    /// Produces a <see cref="SceneView"/> for the given point of view:
-    /// only elements and verbs relevant to the current area, time, and focus.
+    /// Produces a <see cref="SceneView"/> for the given point of view.
+    ///
+    /// When <c>pov.InSpot != null</c> (player is inside a spot):
+    ///   Shows the spot and its PoIs/items. Movement to areas is blocked; Leave verb is offered.
+    ///
+    /// Otherwise (player is in an area):
+    ///   Shows the area, its PoIs/items, its spots, alive NPCs, and reachable areas.
     /// </summary>
     public SceneView View(PoV pov)
     {
         var entries = new List<SceneViewEntry>();
 
-        // 1. Current area itself
-        entries.Add(BuildEntry(pov.Where, pov));
-
-        // 2. Points of interest in current area
-        foreach (var poi in pov.Where.PointsOfInterest)
+        if (pov.InSpot != null)
         {
-            entries.Add(BuildEntry(poi, pov));
+            // ── Inside a spot ──────────────────────────────────────────────
+            entries.Add(BuildEntry(pov.InSpot, pov));
 
-            // Items within each point of interest (as ItemElement wrappers)
-            foreach (var itemElement in poi.Items)
-                entries.Add(BuildEntry(itemElement, pov));
+            foreach (var poi in pov.InSpot.PointsOfInterest)
+            {
+                entries.Add(BuildEntry(poi, pov));
+                foreach (var itemElement in poi.Items)
+                    entries.Add(BuildEntry(itemElement, pov));
+            }
+        }
+        else
+        {
+            // ── In an area ─────────────────────────────────────────────────
+
+            // 1. Current area
+            entries.Add(BuildEntry(pov.Where, pov));
+
+            // 2. Points of interest in current area
+            foreach (var poi in pov.Where.PointsOfInterest)
+            {
+                entries.Add(BuildEntry(poi, pov));
+                foreach (var itemElement in poi.Items)
+                    entries.Add(BuildEntry(itemElement, pov));
+            }
+
+            // 3. Spots in current area (shown as enterable sub-locations)
+            foreach (var spot in pov.Where.Spots)
+                entries.Add(BuildEntry(spot, pov));
+
+            // 4. NPCs present at current area and time
+            foreach (var npc in GetNpcsAt(pov.Where, pov.When))
+                entries.Add(BuildEntry(npc, pov));
+
+            // 5. Reachable areas (for movement verbs)
+            foreach (var reachable in GetReachableAreas(pov.Where))
+                entries.Add(BuildEntry(reachable, pov));
         }
 
-        // 3. NPCs present at current area and time
-        foreach (var npc in GetNpcsAt(pov.Where, pov.When))
-            entries.Add(BuildEntry(npc, pov));
-
-        // 4. Reachable areas (for movement verbs)
-        foreach (var reachable in GetReachableAreas(pov.Where))
-            entries.Add(BuildEntry(reachable, pov));
-
-        // 5. If there's a focused element not already in the list, add it
+        // Always include focused element if not already listed
         if (pov.Focus != null && entries.All(e => e.Source.Id != pov.Focus.Id))
             entries.Add(BuildEntry(pov.Focus, pov));
 
@@ -149,16 +192,12 @@ public class Scene
     private SceneViewEntry BuildEntry(Element element, PoV pov)
     {
         var keywords = element.Keywords;
-        var verbs = new List<VerbView>();
+        var verbs    = new List<VerbView>();
 
         foreach (var verb in Verbs)
         {
-            // Check each potential target
             if (verb.IsPossible(this, pov, element))
-            {
-                var verbatim = verb.Verbatim(this, pov, element);
-                verbs.Add(new VerbView(verb, verbatim, element));
-            }
+                verbs.Add(new VerbView(verb, verb.Verbatim(this, pov, element), element));
         }
 
         return new SceneViewEntry(element, keywords, verbs);

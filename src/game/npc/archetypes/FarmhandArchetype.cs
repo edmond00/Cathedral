@@ -7,7 +7,7 @@ namespace Cathedral.Game.Npc.Archetypes;
 /// Farm labourer — non-hostile, persistent, dialogue-capable.
 /// Works for the farmer, knows the daily routine, wary but friendly if treated well.
 /// </summary>
-public class FarmhandArchetype : NpcArchetype
+public class FarmhandArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId      => "farmhand";
     public override Species Species         => SpeciesRegistry.Human;

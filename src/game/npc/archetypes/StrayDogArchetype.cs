@@ -3,7 +3,7 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game.Npc.Archetypes;
 
 /// <summary>Stray Dog NPC — feral beast, hostile, unpredictable.</summary>
-public class StrayDogArchetype : NpcArchetype
+public class StrayDogArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "stray_dog";
     public override Species Species => SpeciesRegistry.Dog;

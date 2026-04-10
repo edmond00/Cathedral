@@ -60,21 +60,41 @@ public abstract class SceneFactory
     protected Random CreateSeededRandom(int locationId) => new(locationId);
 
     /// <summary>
-    /// Helper to register an element and all its children (section→areas→spots→items) in a scene.
+    /// Registers an element and all its children (section→areas→spots/PoIs→items) in a scene.
     /// </summary>
     protected void RegisterAll(Scene scene, Section section)
     {
         section.Register(scene);
         foreach (var area in section.Areas)
-        {
-            area.Register(scene);
-            foreach (var poi in area.PointsOfInterest)
-            {
-                poi.Register(scene);
-                foreach (var itemElement in poi.Items)
-                    itemElement.Register(scene);
-            }
-        }
+            RegisterAll(scene, area);
+    }
+
+    /// <summary>
+    /// Registers an area and all its PoIs, Spots (and their PoIs), and items.
+    /// Call this when adding a spot or area outside the normal section hierarchy.
+    /// </summary>
+    protected void RegisterAll(Scene scene, Area area)
+    {
+        area.Register(scene);
+        foreach (var poi in area.PointsOfInterest)
+            RegisterPoI(scene, poi);
+        foreach (var spot in area.Spots)
+            RegisterAll(scene, spot);
+    }
+
+    /// <summary>Registers a spot and all its PoIs and items.</summary>
+    protected void RegisterAll(Scene scene, Spot spot)
+    {
+        spot.Register(scene);
+        foreach (var poi in spot.PointsOfInterest)
+            RegisterPoI(scene, poi);
+    }
+
+    private static void RegisterPoI(Scene scene, PointOfInterest poi)
+    {
+        poi.Register(scene);
+        foreach (var itemElement in poi.Items)
+            itemElement.Register(scene);
     }
 
     /// <summary>Samples <paramref name="count"/> unique indices from [0, <paramref name="total"/>).</summary>

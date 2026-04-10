@@ -4,7 +4,7 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game.Npc.Archetypes;
 
 /// <summary>Savage NPC — territorial wild human, initially hostile, can be befriended or fought.</summary>
-public class SavageArchetype : NpcArchetype
+public class SavageArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "savage";
     public override Species Species => SpeciesRegistry.Human;

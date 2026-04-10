@@ -7,7 +7,7 @@ namespace Cathedral.Game.Npc.Archetypes;
 /// Farm owner — non-hostile, persistent, dialogue-capable.
 /// Runs the holding, knows the land, suspicious of strangers.
 /// </summary>
-public class FarmerArchetype : NpcArchetype
+public class FarmerArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId      => "farmer";
     public override Species Species         => SpeciesRegistry.Human;

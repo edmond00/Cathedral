@@ -3,7 +3,7 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game.Npc.Archetypes;
 
 /// <summary>Black Bear NPC — powerful beast, hostile, high HP.</summary>
-public class BlackBearArchetype : NpcArchetype
+public class BlackBearArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "black_bear";
     public override Species Species => SpeciesRegistry.Bear;
