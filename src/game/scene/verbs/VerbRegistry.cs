@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene.Verbs;
 
@@ -39,9 +40,9 @@ public class VerbRegistry
     /// <summary>Gets a verb by its ID, or null if not found.</summary>
     public Verb? Get(string verbId) => _verbs.TryGetValue(verbId, out var v) ? v : null;
 
-    /// <summary>Returns verbs that are possible given the current scene, PoV, and target element.</summary>
-    public List<Verb> GetApplicable(Scene scene, PoV pov, Element target)
+    /// <summary>Returns verbs that are possible given the current scene, PoV, target element, and actor.</summary>
+    public List<Verb> GetApplicable(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
-        return _verbs.Values.Where(v => v.IsPossible(scene, pov, target)).ToList();
+        return _verbs.Values.Where(v => v.IsPossible(scene, pov, target, actor)).ToList();
     }
 }

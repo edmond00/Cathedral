@@ -704,6 +704,17 @@ public class NarrativeController
             Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.VerbView.Verb.VerbId}' on '{verbOutcome.Target.DisplayName}', executing verb");
             verbOutcome.VerbView.Verb.Execute(_scene, _pov, _protagonist, verbOutcome.Target);
             SceneDebugManager.UpdatePoV(_pov);
+
+            // Check if the verb requested a dialogue session
+            if (_scene.PendingDialogueRequest != null)
+            {
+                var req = _scene.PendingDialogueRequest;
+                _scene.PendingDialogueRequest = null;
+                _pendingDialogueOutcome = new Cathedral.Game.Narrative.DialogueOutcome(req.Npc, req.TreeId);
+                Console.WriteLine($"NarrativeController: Dialogue verb triggered tree '{req.TreeId}' with {req.Npc.DisplayName}");
+                return;
+            }
+
             _narrationState.PendingTransitionNode = null;
             _narrationState.ShowContinueButton = true;
         }

@@ -29,7 +29,7 @@ public class NpcObservationObject : ObservationObject
         Npc = npc;
 
         var subs = new List<ConcreteOutcome>();
-        if (npc.CanDialogue)
+        if (npc.CanSpeak)
             subs.Add(new DialogueOutcome(npc));
         subs.Add(new FightOutcome(npc));
         SubOutcomes = subs;

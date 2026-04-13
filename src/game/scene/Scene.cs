@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Npc;
 using Cathedral.Game.Scene.Verbs;
 
 namespace Cathedral.Game.Scene;
@@ -138,20 +139,20 @@ public class Scene
     /// Otherwise (player is in an area):
     ///   Shows the area, its PoIs/items, its spots, alive NPCs, and reachable areas.
     /// </summary>
-    public SceneView View(PoV pov)
+    public SceneView View(PoV pov, Protagonist? actor = null)
     {
         var entries = new List<SceneViewEntry>();
 
         if (pov.InSpot != null)
         {
             // ── Inside a spot ──────────────────────────────────────────────
-            entries.Add(BuildEntry(pov.InSpot, pov));
+            entries.Add(BuildEntry(pov.InSpot, pov, actor));
 
             foreach (var poi in pov.InSpot.PointsOfInterest)
             {
-                entries.Add(BuildEntry(poi, pov));
+                entries.Add(BuildEntry(poi, pov, actor));
                 foreach (var itemElement in poi.Items)
-                    entries.Add(BuildEntry(itemElement, pov));
+                    entries.Add(BuildEntry(itemElement, pov, actor));
             }
         }
         else
@@ -159,47 +160,61 @@ public class Scene
             // ── In an area ─────────────────────────────────────────────────
 
             // 1. Current area
-            entries.Add(BuildEntry(pov.Where, pov));
+            entries.Add(BuildEntry(pov.Where, pov, actor));
 
             // 2. Points of interest in current area
             foreach (var poi in pov.Where.PointsOfInterest)
             {
-                entries.Add(BuildEntry(poi, pov));
+                entries.Add(BuildEntry(poi, pov, actor));
                 foreach (var itemElement in poi.Items)
-                    entries.Add(BuildEntry(itemElement, pov));
+                    entries.Add(BuildEntry(itemElement, pov, actor));
             }
 
             // 3. Spots in current area (shown as enterable sub-locations)
             foreach (var spot in pov.Where.Spots)
-                entries.Add(BuildEntry(spot, pov));
+                entries.Add(BuildEntry(spot, pov, actor));
 
             // 4. NPCs present at current area and time
             foreach (var npc in GetNpcsAt(pov.Where, pov.When))
-                entries.Add(BuildEntry(npc, pov));
+                entries.Add(BuildEntry(npc, pov, actor));
 
             // 5. Reachable areas (for movement verbs)
             foreach (var reachable in GetReachableAreas(pov.Where))
-                entries.Add(BuildEntry(reachable, pov));
+                entries.Add(BuildEntry(reachable, pov, actor));
         }
 
         // Always include focused element if not already listed
         if (pov.Focus != null && entries.All(e => e.Source.Id != pov.Focus.Id))
-            entries.Add(BuildEntry(pov.Focus, pov));
+            entries.Add(BuildEntry(pov.Focus, pov, actor));
 
         return new SceneView(pov.Where, pov.When, entries, pov.Focus);
     }
 
-    private SceneViewEntry BuildEntry(Element element, PoV pov)
+    private SceneViewEntry BuildEntry(Element element, PoV pov, Protagonist? actor = null)
     {
         var keywords = element.Keywords;
         var verbs    = new List<VerbView>();
 
         foreach (var verb in Verbs)
         {
-            if (verb.IsPossible(this, pov, element))
+            if (verb.IsPossible(this, pov, element, actor))
                 verbs.Add(new VerbView(verb, verb.Verbatim(this, pov, element), element));
         }
 
         return new SceneViewEntry(element, keywords, verbs);
     }
+
+    // ── Pending dialogue request (set by dialogue verbs) ─────────────────────
+
+    /// <summary>
+    /// Set by a dialogue verb's <c>Execute()</c>; consumed by <see cref="NarrativeController"/>
+    /// on the next frame to start a dialogue session.
+    /// </summary>
+    public DialogueRequest? PendingDialogueRequest { get; set; }
 }
+
+/// <summary>
+/// Set by a dialogue verb's Execute(); consumed by NarrativeController on the next frame
+/// to start a dialogue session using the specified tree.
+/// </summary>
+public record DialogueRequest(NpcEntity Npc, string TreeId);

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
 using Cathedral.Game.Npc;
@@ -139,7 +140,18 @@ public class FarmSceneFactory : SceneFactory
             var bedroom  = bedrooms[i];
             NamedNpcArchetype archetype = i == 0 ? new FarmerArchetype() : new FarmhandArchetype();
 
-            var entity   = archetype.Spawn(rng, "a medieval farm");
+            // Restore saved affinity for this NPC archetype if available
+            AffinityTable? savedAffinity = null;
+            if (_locationState?.NpcAffinityData.TryGetValue(archetype.ArchetypeId, out var affinityDict) == true)
+                savedAffinity = new AffinityTable(affinityDict);
+            else if (_locationState != null)
+            {
+                var newDict = new Dictionary<string, AffinityLevel>();
+                _locationState.NpcAffinityData[archetype.ArchetypeId] = newDict;
+                savedAffinity = new AffinityTable(newDict);
+            }
+
+            var entity   = archetype.Spawn(rng, "a medieval farm", savedAffinity);
             var sceneNpc = new SceneNpc(entity, new List<KeywordInContext>(entity.NarrationKeywordsInContext));
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);

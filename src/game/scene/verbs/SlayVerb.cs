@@ -14,7 +14,7 @@ public class SlayVerb : Verb
     public override string VerbId      => "slay";
     public override string DisplayName => "Slay";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target)
+    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not SceneNpc npc) return false;
         if (!npc.IsAlive) return false;

@@ -191,7 +191,7 @@ public abstract class NarrationGraphFactory
             foreach (var gnpc in graph.Npcs)
             {
                 writer.WriteLine($"NPC: {gnpc.Entity.DisplayName}  [{gnpc.Entity.Archetype.ArchetypeId}]");
-                writer.WriteLine($"  Persistent: {gnpc.Entity.IsPersistent}  CanDialogue: {gnpc.Entity.CanDialogue}");
+                writer.WriteLine($"  Persistent: {gnpc.Entity.IsPersistent}  CanSpeak: {gnpc.Entity.CanSpeak}");
                 writer.WriteLine($"  Schedule:");
                 foreach (TimePeriod p in Enum.GetValues(typeof(TimePeriod)))
                 {

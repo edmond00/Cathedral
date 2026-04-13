@@ -17,6 +17,7 @@ using Cathedral.Game.Scene.Plain;
 using Cathedral.Game.Creation;
 using Cathedral.Game.Management;
 using Cathedral.Game.Dialogue;
+using Cathedral.Game.Dialogue.Runtime;
 using Cathedral.Fight;
 using Cathedral.Terminal;
 
@@ -41,7 +42,7 @@ public class LocationTravelGameController : IDisposable
     
     // Embedded fight/dialogue adapters
     private FightModeAdapter? _fightAdapter = null;
-    private DialogueModeAdapter? _dialogueAdapter = null;
+    private DialogueTreeAdapter? _dialogueAdapter = null;
     
     // LLM loading screen
     private LLMLoadingRenderer? _llmLoadingRenderer;
@@ -1221,7 +1222,8 @@ public class LocationTravelGameController : IDisposable
                 {
                     Console.WriteLine($"LocationTravelGameController: Using scene factory for '{locationName ?? biomeName}'");
                 }
-                var scene = sceneFactory.Build(vertexIndex);
+                _locationStates.TryGetValue(vertexIndex, out var existingState);
+                var scene = sceneFactory.Build(vertexIndex, existingState);
 
                 _narrativeController = new NarrativeController(
                     _core.Terminal,
@@ -1376,13 +1378,14 @@ public class LocationTravelGameController : IDisposable
         
         Console.WriteLine($"LocationTravelGameController: Starting dialogue with {dialogueOutcome.Target.DisplayName}");
         
-        _dialogueAdapter = new DialogueModeAdapter(
-            dialogueOutcome.Target,
-            _narrativeController.Protagonist,
-            _llmActionExecutor.GetLlamaServerManager(),
-            _modusMentisSlotManager,
-            _core.Terminal);
-        
+        _dialogueAdapter = new DialogueTreeAdapter(
+            npc:         dialogueOutcome.Target,
+            protagonist: _narrativeController.Protagonist,
+            treeId:      dialogueOutcome.TreeId,
+            llmManager:  _llmActionExecutor.GetLlamaServerManager(),
+            slotManager: _modusMentisSlotManager,
+            terminal:    _core.Terminal);
+
         _dialogueAdapter.Start();
         SetMode(GameMode.Dialogue);
     }

@@ -17,9 +17,9 @@ public abstract class Verb
 
     /// <summary>
     /// Returns whether this verb can be executed right now given the scene state,
-    /// point of view, and the target element.
+    /// point of view, target element, and (optionally) the acting party member.
     /// </summary>
-    public abstract bool IsPossible(Scene scene, PoV pov, Element target);
+    public abstract bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null);
 
     /// <summary>
     /// Returns a natural-language string describing the action or its outcome.

@@ -1,5 +1,4 @@
-using System;
-using Cathedral.Game.Dialogue;
+using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene;
@@ -8,7 +7,7 @@ namespace Cathedral.Game.Npc;
 
 /// <summary>
 /// A named NPC entity — wraps an <see cref="EnemyCombatant"/> (full anatomy, modiMentis, wounds)
-/// and optionally a <see cref="NpcPersona"/> + conversation graph for dialogue-capable NPCs.
+/// and optionally dialogue capability (<see cref="CanSpeak"/>, <see cref="WayToSpeakDescription"/>).
 /// Implements <see cref="INpcEntity"/> so it can be used anywhere the shared NPC contract is required.
 /// </summary>
 public class NpcEntity : INpcEntity
@@ -30,32 +29,34 @@ public class NpcEntity : INpcEntity
     /// <inheritdoc/>
     public bool IsHostile { get; set; }
 
-    /// <summary>Whether this NPC can be talked to (has persona + conversation graph).</summary>
-    public bool CanDialogue => Persona != null && ConversationRoot != null;
+    // ── Dialogue ──────────────────────────────────────────────────────────────
 
-    // ── IsAlive ──────────────────────────────────────────────────────────────
+    /// <summary>Whether this NPC can be spoken to (has a way-to-speak description).</summary>
+    public bool CanSpeak { get; }
+
+    /// <summary>
+    /// Natural-language description of how this NPC speaks — used as the LLM system prompt
+    /// for the NPC's dedicated dialogue slot.
+    /// Null when <see cref="CanSpeak"/> is false.
+    /// </summary>
+    public string? WayToSpeakDescription { get; }
+
+    /// <summary>
+    /// Per-instance affinity table tracking relationships with party members and other NPCs.
+    /// Populated at spawn time from the scene's persisted affinity store.
+    /// </summary>
+    public AffinityTable AffinityTable { get; }
+
+    // ── IsAlive ───────────────────────────────────────────────────────────────
 
     private bool _isSlain = false;
 
     /// <inheritdoc/>
-    /// True while the combatant has HP remaining and has not been explicitly slain.
-    /// Setting to false slays the NPC immediately (without combat).
     public bool IsAlive
     {
         get => !_isSlain && Combatant.CurrentHp > 0;
         set { if (!value) _isSlain = true; else _isSlain = false; }
     }
-
-    // ── Dialogue ─────────────────────────────────────────────────────────────
-
-    /// <summary>LLM persona defining speech patterns and knowledge. Null for non-speaking NPCs.</summary>
-    public NpcPersona? Persona { get; }
-
-    /// <summary>Entry node of the conversation graph. Null for non-speaking NPCs.</summary>
-    public ConversationSubjectNode? ConversationRoot { get; }
-
-    /// <summary>Per-instance affinity score (0–100). Only meaningful for dialogue-capable NPCs.</summary>
-    public float Affinity { get; set; }
 
     /// <inheritdoc/>
     public bool IsPersistent { get; }
@@ -69,19 +70,19 @@ public class NpcEntity : INpcEntity
     /// <inheritdoc/>
     public string SpeciesName => Archetype.Species.DisplayName;
 
-    // ── Constructor ──────────────────────────────────────────────────────────
+    // ── Constructor ───────────────────────────────────────────────────────────
 
     public NpcEntity(
-        string npcId,
-        EnemyCombatant combatant,
-        NamedNpcArchetype archetype,
-        bool isHostile,
-        bool isPersistent,
-        KeywordInContext[] narrationKeywordsInContext,
-        string observationHint,
-        NpcPersona? persona = null,
-        ConversationSubjectNode? conversationRoot = null,
-        float initialAffinity = 50f)
+        string              npcId,
+        EnemyCombatant      combatant,
+        NamedNpcArchetype   archetype,
+        bool                isHostile,
+        bool                isPersistent,
+        KeywordInContext[]  narrationKeywordsInContext,
+        string              observationHint,
+        bool                canSpeak                = false,
+        string?             wayToSpeakDescription   = null,
+        AffinityTable?      affinityTable           = null)
     {
         NpcId                      = npcId;
         Combatant                  = combatant;
@@ -90,28 +91,14 @@ public class NpcEntity : INpcEntity
         IsPersistent               = isPersistent;
         NarrationKeywordsInContext = narrationKeywordsInContext;
         ObservationHint            = observationHint;
-        Persona                    = persona;
-        ConversationRoot           = conversationRoot;
-        Affinity                   = initialAffinity;
+        CanSpeak                   = canSpeak;
+        WayToSpeakDescription      = wayToSpeakDescription;
+        AffinityTable              = affinityTable ?? new AffinityTable();
     }
 
-    // ── Corpse generation ────────────────────────────────────────────────────
+    // ── Corpse generation ─────────────────────────────────────────────────────
 
     /// <inheritdoc/>
     public CorpseSpot GenerateCorpse(Area area)
         => CorpseRegistry.CreateForNamedNpc(this, area);
-
-    // ── Dialogue conversion ──────────────────────────────────────────────────
-
-    /// <summary>
-    /// Creates a <see cref="NpcInstance"/> for the dialogue system from this entity.
-    /// Only valid when <see cref="CanDialogue"/> is true.
-    /// </summary>
-    public NpcInstance ToDialogueNpc()
-    {
-        if (Persona == null || ConversationRoot == null)
-            throw new InvalidOperationException($"NPC '{DisplayName}' has no dialogue capability.");
-
-        return new NpcInstance(NpcId, Persona, ConversationRoot, Affinity);
-    }
 }

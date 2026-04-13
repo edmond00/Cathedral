@@ -13,7 +13,7 @@ public class MoveToAreaVerb : Verb
     public override string VerbId => "move";
     public override string DisplayName => "Move";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target)
+    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not Area targetArea) return false;
         if (targetArea.Id == pov.Where.Id) return false; // can't move to same area

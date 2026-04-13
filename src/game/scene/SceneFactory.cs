@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Linq;
 using Cathedral.Game.Scene.Verbs;
@@ -13,6 +12,12 @@ namespace Cathedral.Game.Scene;
 public abstract class SceneFactory
 {
     protected readonly string? _sessionPath;
+
+    /// <summary>
+    /// Optional location state injected via <see cref="Build(int, LocationInstanceState?)"/>.
+    /// Available to subclasses inside <see cref="BuildNpcs"/> for affinity injection.
+    /// </summary>
+    protected LocationInstanceState? _locationState;
 
     protected SceneFactory(string? sessionPath = null)
     {
@@ -33,6 +38,16 @@ public abstract class SceneFactory
         WriteSceneToLog(scene, locationId);
 
         return scene;
+    }
+
+    /// <summary>
+    /// Builds a scene, injecting <paramref name="locationState"/> so that subclasses can
+    /// restore per-NPC affinity data when spawning named NPCs.
+    /// </summary>
+    public Scene Build(int locationId, LocationInstanceState? locationState)
+    {
+        _locationState = locationState;
+        return Build(locationId);
     }
 
     /// <summary>

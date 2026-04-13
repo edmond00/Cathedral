@@ -13,7 +13,7 @@ public class CutVerb : Verb
     public override string VerbId      => "cut";
     public override string DisplayName => "Cut";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target)
+    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not ItemElement) return false;
         if (pov.InSpot is not CorpseSpot) return false;

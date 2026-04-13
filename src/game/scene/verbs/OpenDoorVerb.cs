@@ -17,7 +17,7 @@ public class OpenDoorVerb : Verb
     public override string VerbId      => "open_door";
     public override string DisplayName => "Open";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target)
+    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not DoorPointOfInterest door) return false;
 

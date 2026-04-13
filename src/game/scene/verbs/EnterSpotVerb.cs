@@ -12,7 +12,7 @@ public class EnterSpotVerb : Verb
     public override string VerbId      => "enter_spot";
     public override string DisplayName => "Examine";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target)
+    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not Spot spot) return false;
         if (pov.InSpot != null) return false;  // already inside a spot

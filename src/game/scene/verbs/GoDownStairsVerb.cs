@@ -13,7 +13,7 @@ public class GoDownStairsVerb : Verb
     public override string VerbId      => "go_down_stairs";
     public override string DisplayName => "Go Down";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target)
+    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not StairPointOfInterest stair) return false;
         return pov.Where.Id == stair.TopArea.Id;

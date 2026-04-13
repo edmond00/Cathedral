@@ -15,7 +15,7 @@ public class UnlockDoorVerb : Verb
     public override string VerbId      => "unlock_door";
     public override string DisplayName => "Unlock";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target)
+    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not DoorPointOfInterest door) return false;
         return pov.Where.Id == door.FrontArea.Id && door.DoorState == DoorState.Locked;

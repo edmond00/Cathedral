@@ -1,5 +1,5 @@
 using System;
-using Cathedral.Game.Dialogue;
+using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Npc;
@@ -26,10 +26,16 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// <summary>How many modiMentis to assign at creation.</summary>
     public virtual int ModiMentisCount => 8;
 
-    // ── Spawn ────────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Whether spawned NPCs can be spoken to.
+    /// Subclasses that provide a <see cref="GenerateWayToSpeakDescription"/> should override this to true.
+    /// </summary>
+    public virtual bool CanSpeak => false;
+
+    // ── Spawn ─────────────────────────────────────────────────────────────────
 
     /// <summary>Spawns a new <see cref="NpcEntity"/> from this archetype.</summary>
-    public NpcEntity Spawn(Random rng, string nodeContext = "")
+    public NpcEntity Spawn(Random rng, string nodeContext = "", AffinityTable? savedAffinity = null)
     {
         var name = NamePool[rng.Next(NamePool.Length)];
         var npcId = DefaultPersistent
@@ -39,18 +45,21 @@ public abstract class NamedNpcArchetype : NpcArchetype
         var combatant = new EnemyCombatant(name, Species);
         combatant.InitializeModiMentis(ModusMentisRegistry.Instance, ModiMentisCount);
 
-        var keywords = BuildNarrationKeywordsInContext(name);
-        var hint     = BuildObservationHint(name, nodeContext);
-        var persona  = CreatePersona();
-        var graph    = CreateConversationGraph();
+        var keywords       = BuildNarrationKeywordsInContext(name);
+        var hint           = BuildObservationHint(name, nodeContext);
+        var wayToSpeak     = CanSpeak ? GenerateWayToSpeakDescription(name, rng) : null;
+        var affinityTable  = savedAffinity ?? new AffinityTable();
 
         return new NpcEntity(
             npcId, combatant, this,
             DefaultHostile, DefaultPersistent,
-            keywords, hint, persona, graph);
+            keywords, hint,
+            canSpeak:              CanSpeak,
+            wayToSpeakDescription: wayToSpeak,
+            affinityTable:         affinityTable);
     }
 
-    // ── Overridable builders ────────────────────────────────────────────────
+    // ── Overridable builders ──────────────────────────────────────────────────
 
     /// <summary>Override to provide narration keywords for this NPC type.</summary>
     protected abstract KeywordInContext[] BuildNarrationKeywordsInContext(string name);
@@ -58,9 +67,10 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// <summary>Override to provide the observation hint sentence.</summary>
     protected abstract string BuildObservationHint(string name, string nodeContext);
 
-    /// <summary>Override to provide a dialogue persona. Return null for non-speaking NPCs.</summary>
-    protected virtual NpcPersona? CreatePersona() => null;
-
-    /// <summary>Override to provide a conversation graph. Return null for non-speaking NPCs.</summary>
-    protected virtual ConversationSubjectNode? CreateConversationGraph() => null;
+    /// <summary>
+    /// Override to return a natural-language description of how this NPC speaks.
+    /// This text is used as the LLM system prompt for the NPC's dialogue slot.
+    /// Only called when <see cref="CanSpeak"/> is true.
+    /// </summary>
+    protected virtual string GenerateWayToSpeakDescription(string name, Random rng) => string.Empty;
 }

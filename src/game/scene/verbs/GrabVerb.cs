@@ -14,7 +14,7 @@ public class GrabVerb : Verb
     public override string VerbId      => "grab";
     public override string DisplayName => "Grab";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target)
+    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not ItemElement itemEl) return false;
 

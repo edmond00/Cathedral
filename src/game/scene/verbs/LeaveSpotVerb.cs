@@ -12,7 +12,7 @@ public class LeaveSpotVerb : Verb
     public override string VerbId      => "leave";
     public override string DisplayName => "Leave";
 
-    public override bool IsPossible(Scene scene, PoV pov, Element target)
+    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (pov.InSpot == null) return false;
         return target is Spot spot && spot.Id == pov.InSpot.Id;

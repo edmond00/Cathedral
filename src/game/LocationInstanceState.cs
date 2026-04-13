@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Glyph.Microworld.LocationSystem;
 
 namespace Cathedral.Game;
@@ -62,6 +63,13 @@ public record LocationInstanceState
     public int VisitCount { get; init; }
 
     /// <summary>
+    /// Per-NPC affinity data, keyed by NPC display name.
+    /// Each inner dictionary is the shared backing store for that NPC's <see cref="AffinityTable"/>.
+    /// Mutable in place — changes during dialogue are preserved automatically.
+    /// </summary>
+    public Dictionary<string, Dictionary<string, AffinityLevel>> NpcAffinityData { get; init; }
+
+    /// <summary>
     /// Creates a new location instance state with default values.
     /// </summary>
     public LocationInstanceState(
@@ -79,6 +87,7 @@ public record LocationInstanceState
         CurrentTurnCount = 0;
         TotalTurnCount = 0;
         VisitCount = 1;
+        NpcAffinityData = new Dictionary<string, Dictionary<string, AffinityLevel>>();
     }
 
     /// <summary>
