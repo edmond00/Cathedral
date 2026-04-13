@@ -13,6 +13,7 @@ public class BruteForceModusMentis : ModusMentis
     public override string ShortDescription => "overwhelming physical power";
     public override string SkillMeans => "overwhelming physical force";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
+    public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "arms", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     

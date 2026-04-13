@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cathedral.Game.Dialogue.Tree;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Narrative;
@@ -15,14 +16,23 @@ public class DialogueOutcome : ConcreteOutcome
 
     /// <summary>
     /// The dialogue tree ID to use (e.g. "meet_stranger", "strengthen_relationship").
-    /// Null when the tree should be resolved at runtime based on current affinity.
+    /// Null when the tree should be resolved at runtime based on current affinity,
+    /// or when <see cref="Tree"/> is provided directly.
     /// </summary>
     public string? TreeId { get; init; }
 
-    public DialogueOutcome(NpcEntity target, string? treeId = null)
+    /// <summary>
+    /// A pre-built dialogue tree to use directly, bypassing <see cref="DialogueTreeRegistry"/>.
+    /// Takes precedence over <see cref="TreeId"/> when set.
+    /// Used for dynamically-created trees such as the "caught red-handed" confrontation.
+    /// </summary>
+    public DialogueTree? Tree { get; init; }
+
+    public DialogueOutcome(NpcEntity target, string? treeId = null, DialogueTree? tree = null)
     {
         Target = target;
         TreeId = treeId;
+        Tree   = tree;
     }
 
     /// <summary>No keywords — selection is driven by the GOAL LLM, not keyword clicking.</summary>

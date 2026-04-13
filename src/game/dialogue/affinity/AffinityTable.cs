@@ -10,12 +10,21 @@ namespace Cathedral.Game.Dialogue.Affinity;
 /// </summary>
 public class AffinityTable
 {
-    private readonly Dictionary<string, AffinityLevel> _table;
+    private readonly Dictionary<string, AffinityLevel>       _table;
+    private readonly Dictionary<string, CriminalAffinityType> _criminalRecord;
 
-    public AffinityTable() => _table = new Dictionary<string, AffinityLevel>();
+    public AffinityTable()
+    {
+        _table          = new Dictionary<string, AffinityLevel>();
+        _criminalRecord = new Dictionary<string, CriminalAffinityType>();
+    }
 
     /// <summary>Initialise from an existing (possibly persisted) dictionary — shares the reference.</summary>
-    public AffinityTable(Dictionary<string, AffinityLevel> sharedData) => _table = sharedData;
+    public AffinityTable(Dictionary<string, AffinityLevel> sharedData)
+    {
+        _table          = sharedData;
+        _criminalRecord = new Dictionary<string, CriminalAffinityType>();
+    }
 
     // ── Read ──────────────────────────────────────────────────────────────────
 
@@ -64,4 +73,25 @@ public class AffinityTable
 
     /// <summary>Exposes the raw dictionary for save/load serialisation.</summary>
     public Dictionary<string, AffinityLevel> GetRawData() => _table;
+
+    // ── Criminal record ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns the worst crime this NPC has witnessed the given party member commit.
+    /// Falls back to <see cref="CriminalAffinityType.None"/> when nothing is recorded.
+    /// </summary>
+    public CriminalAffinityType GetCrime(string partyMemberId)
+        => _criminalRecord.TryGetValue(partyMemberId, out var crime) ? crime : CriminalAffinityType.None;
+
+    /// <summary>Records (or upgrades) a witnessed crime for the given party member.</summary>
+    public void RecordCrime(string partyMemberId, CriminalAffinityType crime)
+    {
+        // Only escalate, never downgrade the criminal record.
+        if (!_criminalRecord.TryGetValue(partyMemberId, out var current) || crime > current)
+            _criminalRecord[partyMemberId] = crime;
+    }
+
+    /// <summary>Clears a previously recorded crime (e.g. after an accepted apology or pardon).</summary>
+    public void ClearCrime(string partyMemberId)
+        => _criminalRecord.Remove(partyMemberId);
 }

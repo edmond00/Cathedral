@@ -27,6 +27,13 @@ public abstract class ModusMentis
     /// Every subclass must declare its memory type explicitly.
     /// </summary>
     public abstract ModusMentisMemoryType MemoryType { get; }
+
+    /// <summary>
+    /// Ethical alignment of this modusMentis — used during illegal-action plausibility checks.
+    /// Low modiMentis support deception/violence; High ones resist it.
+    /// Defaults to <see cref="MoralLevel.Medium"/>; override in subclasses.
+    /// </summary>
+    public virtual MoralLevel MoralLevel => MoralLevel.Medium;
     
     /// <summary>
     /// Persona prompt for LLM (only for Observation and Thinking modiMentis).

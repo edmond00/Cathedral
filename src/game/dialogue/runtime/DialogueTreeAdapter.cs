@@ -23,6 +23,7 @@ public class DialogueTreeAdapter
     private readonly NpcEntity              _npc;
     private readonly Protagonist            _protagonist;
     private readonly string?                _treeId;
+    private readonly DialogueTree?          _prebuiltTree;
     private readonly LlamaServerManager     _llmManager;
     private readonly ModusMentisSlotManager _slotManager;
     private readonly TerminalHUD            _terminal;
@@ -48,14 +49,16 @@ public class DialogueTreeAdapter
         string?                treeId,
         LlamaServerManager     llmManager,
         ModusMentisSlotManager slotManager,
-        TerminalHUD            terminal)
+        TerminalHUD            terminal,
+        DialogueTree?          prebuiltTree = null)
     {
-        _npc         = npc;
-        _protagonist = protagonist;
-        _treeId      = treeId;
-        _llmManager  = llmManager;
-        _slotManager = slotManager;
-        _terminal    = terminal;
+        _npc          = npc;
+        _protagonist  = protagonist;
+        _treeId       = treeId;
+        _prebuiltTree = prebuiltTree;
+        _llmManager   = llmManager;
+        _slotManager  = slotManager;
+        _terminal     = terminal;
     }
 
     // ── Public API ──────────────────────────────────────────────────────────────
@@ -124,6 +127,9 @@ public class DialogueTreeAdapter
 
     private DialogueTree ResolveTree()
     {
+        // Pre-built tree (e.g. caught-red-handed) takes precedence over registry lookup.
+        if (_prebuiltTree != null) return _prebuiltTree;
+
         string partyMemberId = _protagonist.DisplayName;
 
         if (_treeId != null)

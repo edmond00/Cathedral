@@ -15,6 +15,9 @@ public class UnlockDoorVerb : Verb
     public override string VerbId      => "unlock_door";
     public override string DisplayName => "Unlock";
 
+    /// <summary>Forcing open a locked door without a key is illegal.</summary>
+    public override bool IsLegal => false;
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not DoorPointOfInterest door) return false;

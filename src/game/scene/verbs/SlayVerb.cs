@@ -14,6 +14,9 @@ public class SlayVerb : Verb
     public override string VerbId      => "slay";
     public override string DisplayName => "Slay";
 
+    /// <summary>Slaying a living person is never a legal action.</summary>
+    public override bool IsLegal => false;
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not SceneNpc npc) return false;

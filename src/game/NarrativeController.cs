@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Cathedral.Debug;
+using Cathedral.Game.Dialogue.Affinity;
+using Cathedral.Game.Dialogue.Tree.Trees;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Nodes;
 using Cathedral.Game.Npc;
@@ -713,6 +715,23 @@ public class NarrativeController
                 _pendingDialogueOutcome = new Cathedral.Game.Narrative.DialogueOutcome(req.Npc, req.TreeId);
                 Console.WriteLine($"NarrativeController: Dialogue verb triggered tree '{req.TreeId}' with {req.Npc.DisplayName}");
                 return;
+            }
+
+            // Check for illegal action: verb is illegal OR area is private.
+            bool verbIsIllegal  = !verbOutcome.VerbView.Verb.IsLegal;
+            bool areaIsPrivate  = _pov.Where.IsPrivate;
+            if (verbIsIllegal || areaIsPrivate)
+            {
+                var crimeType = DetermineCrimeType(verbOutcome.VerbView.Verb, areaIsPrivate);
+                var witness   = WitnessSelector.Select(_scene, _pov.Where, _pov.When);
+                if (witness != null)
+                {
+                    Console.WriteLine($"NarrativeController: Illegal action '{verbOutcome.VerbView.Verb.VerbId}' witnessed by {witness.DisplayName} (crime: {crimeType})");
+                    var catchTree = CaughtRedHandedTreeFactory.Create(crimeType, witness.IsBrave);
+                    _pendingDialogueOutcome = new Cathedral.Game.Narrative.DialogueOutcome(witness, tree: catchTree);
+                    return;
+                }
+                Console.WriteLine($"NarrativeController: Illegal action '{verbOutcome.VerbView.Verb.VerbId}' — no witness present");
             }
 
             _narrationState.PendingTransitionNode = null;
@@ -1805,6 +1824,21 @@ public class NarrativeController
     /// Returns all items the protagonist currently holds that can be combined with an action:
     /// non-containers, or containers whose Contents list is empty.
     /// </summary>
+    /// <summary>
+    /// Determines the <see cref="CriminalAffinityType"/> for a verb that was just executed.
+    /// </summary>
+    private static CriminalAffinityType DetermineCrimeType(Cathedral.Game.Scene.Verbs.Verb verb, bool areaIsPrivate)
+    {
+        return verb.VerbId switch
+        {
+            "steal"       => CriminalAffinityType.Thief,
+            "grab"        => areaIsPrivate ? CriminalAffinityType.Thief : CriminalAffinityType.None,
+            "slay"        => CriminalAffinityType.Murderer,
+            "unlock_door" => CriminalAffinityType.Intruder,
+            _             => areaIsPrivate ? CriminalAffinityType.Intruder : CriminalAffinityType.None,
+        };
+    }
+
     private List<Item> GetCombinableItems()
     {
         return _protagonist.GetAllItems()

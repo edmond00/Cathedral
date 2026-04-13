@@ -96,6 +96,10 @@ public class FarmSceneFactory : SceneFactory
 
         foreach (var section in house.Sections)
         {
+            // Mark all interior house areas as private — entering or stealing here is illegal.
+            foreach (var area in section.Areas)
+                area.IsPrivate = true;
+
             RegisterAll(scene, section);
             scene.Sections.Add(section);
         }
@@ -152,6 +156,14 @@ public class FarmSceneFactory : SceneFactory
             }
 
             var entity   = archetype.Spawn(rng, "a medieval farm", savedAffinity);
+
+            // The farmer (index 0) owns all house sections.
+            if (i == 0)
+            {
+                foreach (var section in _houseResult.Sections)
+                    entity.OwnedSectionIds.Add(section.Id.ToString());
+            }
+
             var sceneNpc = new SceneNpc(entity, new List<KeywordInContext>(entity.NarrationKeywordsInContext));
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);

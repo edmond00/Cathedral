@@ -1379,12 +1379,13 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine($"LocationTravelGameController: Starting dialogue with {dialogueOutcome.Target.DisplayName}");
         
         _dialogueAdapter = new DialogueTreeAdapter(
-            npc:         dialogueOutcome.Target,
-            protagonist: _narrativeController.Protagonist,
-            treeId:      dialogueOutcome.TreeId,
-            llmManager:  _llmActionExecutor.GetLlamaServerManager(),
-            slotManager: _modusMentisSlotManager,
-            terminal:    _core.Terminal);
+            npc:          dialogueOutcome.Target,
+            protagonist:  _narrativeController.Protagonist,
+            treeId:       dialogueOutcome.TreeId,
+            llmManager:   _llmActionExecutor.GetLlamaServerManager(),
+            slotManager:  _modusMentisSlotManager,
+            terminal:     _core.Terminal,
+            prebuiltTree: dialogueOutcome.Tree);
 
         _dialogueAdapter.Start();
         SetMode(GameMode.Dialogue);
@@ -1433,14 +1434,27 @@ public class LocationTravelGameController : IDisposable
     {
         if (_dialogueAdapter == null || _narrativeController == null)
             return;
-        
+
         var npc = _dialogueAdapter.TargetNpc;
-        
+
         Console.WriteLine($"LocationTravelGameController: Dialogue completed with {npc.DisplayName}");
-        
+
         _narrativeController.OnDialogueCompleted(npc);
+
+        // If the NPC demanded a fight during the dialogue (caught-red-handed provoke/rejection),
+        // transition directly into fight mode instead of returning to narrative.
+        if (npc.FightRequestedByDialogue)
+        {
+            npc.FightRequestedByDialogue = false;   // consume the flag
+            _dialogueAdapter = null;
+            Console.WriteLine($"LocationTravelGameController: NPC {npc.DisplayName} demanded fight — entering fight mode");
+            var fightOutcome = new FightOutcome(npc, $"confrontation with {npc.DisplayName}");
+            StartFightMode(fightOutcome);
+            return;
+        }
+
         _dialogueAdapter = null;
-        
+
         // Return to narrative mode
         SetMode(GameMode.LocationInteraction);
     }

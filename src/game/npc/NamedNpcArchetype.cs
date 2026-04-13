@@ -32,6 +32,24 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// </summary>
     public virtual bool CanSpeak => false;
 
+    /// <summary>
+    /// Whether spawned NPCs confront criminals bravely (demand fight) rather than submitting.
+    /// Override to true for guards, owners, or aggressive archetypes.
+    /// </summary>
+    public virtual bool IsBrave => false;
+
+    /// <summary>
+    /// Relative authority level (0 = civilian, higher = more official enforcement power).
+    /// Override in guard/lawkeeper archetypes.
+    /// </summary>
+    public virtual int AuthorityLevel => 0;
+
+    /// <summary>
+    /// Section ids that spawned NPCs own by default.
+    /// Override to list section ids this archetype has authority over (e.g. farmhouse interior).
+    /// </summary>
+    public virtual IReadOnlyList<string> DefaultOwnedSectionIds => [];
+
     // ── Spawn ─────────────────────────────────────────────────────────────────
 
     /// <summary>Spawns a new <see cref="NpcEntity"/> from this archetype.</summary>
@@ -56,7 +74,10 @@ public abstract class NamedNpcArchetype : NpcArchetype
             keywords, hint,
             canSpeak:              CanSpeak,
             wayToSpeakDescription: wayToSpeak,
-            affinityTable:         affinityTable);
+            affinityTable:         affinityTable,
+            isBrave:               IsBrave,
+            authorityLevel:        AuthorityLevel,
+            ownedSectionIds:       DefaultOwnedSectionIds);
     }
 
     // ── Overridable builders ──────────────────────────────────────────────────

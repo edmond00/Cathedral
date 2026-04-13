@@ -32,19 +32,27 @@ public class Area : Element
     /// <summary>Mood adjectives for procedural neutral descriptions.</summary>
     public string[] Moods { get; }
 
+    /// <summary>
+    /// When true, entering or taking items from this area without permission is an illegal action.
+    /// Triggers witness detection and the "caught red-handed" dialogue on failure.
+    /// </summary>
+    public bool IsPrivate { get; set; }
+
     public Area(
         string displayName,
         string contextDescription,
         string transitionDescription,
         List<string> descriptions,
         List<KeywordInContext> keywords,
-        string[]? moods = null)
+        string[]? moods = null,
+        bool isPrivate = false)
     {
         DisplayName           = displayName;
         ContextDescription    = contextDescription;
         TransitionDescription = transitionDescription;
         Descriptions          = descriptions;
         Keywords              = keywords;
-        Moods                 = moods ?? System.Array.Empty<string>();
+        Moods      = moods ?? System.Array.Empty<string>();
+        IsPrivate  = isPrivate;
     }
 }

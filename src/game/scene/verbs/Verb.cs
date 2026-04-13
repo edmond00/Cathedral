@@ -16,6 +16,13 @@ public abstract class Verb
     public abstract string DisplayName { get; }
 
     /// <summary>
+    /// Whether executing this verb is a legal action.
+    /// Override to false for verbs that constitute crimes (stealing, trespassing, attacking innocents).
+    /// Combined with <see cref="Scene.Area.IsPrivate"/> to determine full legality.
+    /// </summary>
+    public virtual bool IsLegal => true;
+
+    /// <summary>
     /// Returns whether this verb can be executed right now given the scene state,
     /// point of view, target element, and (optionally) the acting party member.
     /// </summary>

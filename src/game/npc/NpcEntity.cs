@@ -47,6 +47,35 @@ public class NpcEntity : INpcEntity
     /// </summary>
     public AffinityTable AffinityTable { get; }
 
+    // ── Witness / authority ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// When true this NPC will not flee or submit when confronting a criminal —
+    /// they will demand a fight instead (sets <see cref="FightRequestedByDialogue"/>).
+    /// </summary>
+    public bool IsBrave { get; }
+
+    /// <summary>
+    /// Relative authority level (0 = none, higher = more official).
+    /// Guards and law-enforcement archetypes set this > 0; commoners leave it 0.
+    /// </summary>
+    public int AuthorityLevel { get; }
+
+    /// <summary>
+    /// Ids of scene sections this NPC considers their own property.
+    /// An intruder in one of these sections triggers witness confrontation.
+    /// Populated at spawn time from <see cref="NamedNpcArchetype.DefaultOwnedSectionIds"/>;
+    /// the scene factory may append additional IDs after the scene is built.
+    /// </summary>
+    public List<string> OwnedSectionIds { get; }
+
+    /// <summary>
+    /// Set to true by a "caught red-handed" dialogue when the NPC demands combat
+    /// instead of accepting an apology or lie. Checked by the game controller
+    /// after dialogue ends to transition into fight mode.
+    /// </summary>
+    public bool FightRequestedByDialogue { get; set; }
+
     // ── IsAlive ───────────────────────────────────────────────────────────────
 
     private bool _isSlain = false;
@@ -82,7 +111,10 @@ public class NpcEntity : INpcEntity
         string              observationHint,
         bool                canSpeak                = false,
         string?             wayToSpeakDescription   = null,
-        AffinityTable?      affinityTable           = null)
+        AffinityTable?      affinityTable           = null,
+        bool                isBrave                 = false,
+        int                 authorityLevel          = 0,
+        IReadOnlyList<string>? ownedSectionIds      = null)
     {
         NpcId                      = npcId;
         Combatant                  = combatant;
@@ -94,6 +126,9 @@ public class NpcEntity : INpcEntity
         CanSpeak                   = canSpeak;
         WayToSpeakDescription      = wayToSpeakDescription;
         AffinityTable              = affinityTable ?? new AffinityTable();
+        IsBrave                    = isBrave;
+        AuthorityLevel             = authorityLevel;
+        OwnedSectionIds            = ownedSectionIds != null ? new List<string>(ownedSectionIds) : [];
     }
 
     // ── Corpse generation ─────────────────────────────────────────────────────
