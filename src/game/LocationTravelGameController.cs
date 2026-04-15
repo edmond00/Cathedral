@@ -1225,6 +1225,19 @@ public class LocationTravelGameController : IDisposable
                 _locationStates.TryGetValue(vertexIndex, out var existingState);
                 var scene = sceneFactory.Build(vertexIndex, existingState);
 
+                // Apply DefaultEnemy flag for hostile archetypes
+                if (_protagonist != null)
+                {
+                    foreach (var sceneNpc in scene.Npcs)
+                    {
+                        if (sceneNpc.Entity is Cathedral.Game.Npc.NpcEntity npcEnt &&
+                            npcEnt.Archetype.DefaultEnemy)
+                        {
+                            npcEnt.AffinityTable.SetEnemy(_protagonist.DisplayName);
+                        }
+                    }
+                }
+
                 _narrativeController = new NarrativeController(
                     _core.Terminal,
                     _core.PopupTerminal,
@@ -1350,20 +1363,55 @@ public class LocationTravelGameController : IDisposable
     
     /// <summary>
     /// Transitions from narrative mode into embedded fight mode.
+    /// Computes allies (brave NPCs in the same scene section as the player),
+    /// sets enemy affinity for all fighters, and passes allies to FightModeAdapter.
     /// </summary>
     private void StartFightMode(FightOutcome fightOutcome)
     {
         if (_core.Terminal == null || _narrativeController == null)
             return;
-        
-        Console.WriteLine($"LocationTravelGameController: Starting fight with {fightOutcome.Target.DisplayName}");
-        
+
+        var mainEnemy  = fightOutcome.Target;
+        var protagonist = _narrativeController.Protagonist;
+        var scene      = _narrativeController.Scene;
+        var pov        = _narrativeController.CurrentPoV;
+
+        Console.WriteLine($"LocationTravelGameController: Starting fight with {mainEnemy.DisplayName}");
+
+        // Mark main enemy and all allies as enemies of the protagonist
+        mainEnemy.AffinityTable.SetEnemy(protagonist.DisplayName);
+
+        // Compute allies: brave NPCs in the same section as the player (excluding main enemy)
+        var allies = new List<Cathedral.Game.Npc.NpcEntity>();
+        if (scene != null && pov != null)
+        {
+            var section = scene.Sections.FirstOrDefault(s => s.Areas.Contains(pov.Where));
+            if (section != null)
+            {
+                allies = section.Areas
+                    .SelectMany(a => scene.GetNpcsAt(a, pov.When))
+                    .Where(n => n.IsAlive
+                        && n.Entity is Cathedral.Game.Npc.NpcEntity ne
+                        && ne.IsBrave
+                        && ne != mainEnemy)
+                    .Select(n => (Cathedral.Game.Npc.NpcEntity)n.Entity)
+                    .Distinct()
+                    .ToList();
+
+                foreach (var ally in allies)
+                    ally.AffinityTable.SetEnemy(protagonist.DisplayName);
+
+                Console.WriteLine($"LocationTravelGameController: {allies.Count} ally(ies) joining the fight");
+            }
+        }
+
         _fightAdapter = new FightModeAdapter(
             _core.Terminal,
             _core.PopupTerminal,
-            fightOutcome.Target,
-            _narrativeController.Protagonist);
-        
+            mainEnemy,
+            protagonist,
+            allies);
+
         SetMode(GameMode.Fighting);
     }
     
@@ -1398,13 +1446,14 @@ public class LocationTravelGameController : IDisposable
     {
         if (_fightAdapter == null || _narrativeController == null)
             return;
-        
-        var result = _fightAdapter.Result;
-        var npc = _fightAdapter.TargetNpc;
-        
+
+        var result       = _fightAdapter.Result;
+        var npc          = _fightAdapter.TargetNpc;
+        var allEnemyNpcs = _fightAdapter.AllEnemyNpcs;
+
         Console.WriteLine($"LocationTravelGameController: Fight completed - {result}");
-        
-        _narrativeController.OnFightCompleted(result, npc);
+
+        _narrativeController.OnFightCompleted(result, npc, allEnemyNpcs);
         _fightAdapter = null;
         
         if (result == FightAdapterResult.Death)

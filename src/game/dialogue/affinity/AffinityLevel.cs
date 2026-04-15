@@ -12,6 +12,8 @@ public enum AffinityLevel
     CloseAcquaintance    = 3,
     DistantFriend        = 4,
     CloseFriend          = 5,
+    /// <summary>Post-reconcile state: the NPC is no longer hostile but remains deeply wary. Gives 0 bonus dice.</summary>
+    Suspicious          = 6,
 }
 
 public static class AffinityLevelExtensions
@@ -19,8 +21,13 @@ public static class AffinityLevelExtensions
     /// <summary>
     /// Returns the bonus dice count added to skill checks.
     /// Stranger gives 0 extra dice; CloseFriend gives 5.
+    /// Suspicious gives 0 (same as Stranger — trust has not been earned back).
     /// </summary>
-    public static int BonusDice(this AffinityLevel level) => (int)level;
+    public static int BonusDice(this AffinityLevel level) => level switch
+    {
+        AffinityLevel.Suspicious => 0,
+        _                        => (int)level,
+    };
 
     /// <summary>
     /// Returns a display string describing the relationship from the party member's perspective.
@@ -34,6 +41,7 @@ public static class AffinityLevelExtensions
         AffinityLevel.CloseAcquaintance    => $"an acquaintance ({npcName})",
         AffinityLevel.DistantFriend        => $"a friend ({npcName})",
         AffinityLevel.CloseFriend          => $"your close friend {npcName}",
+        AffinityLevel.Suspicious           => $"a suspicious acquaintance ({npcName})",
         _                                  => npcName,
     };
 
@@ -46,6 +54,7 @@ public static class AffinityLevelExtensions
         AffinityLevel.CloseAcquaintance    => "Acquaintance",
         AffinityLevel.DistantFriend        => "Distant Friend",
         AffinityLevel.CloseFriend          => "Close Friend",
+        AffinityLevel.Suspicious           => "Suspicious",
         _                                  => "Unknown",
     };
 

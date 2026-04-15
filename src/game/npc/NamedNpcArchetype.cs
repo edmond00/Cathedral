@@ -17,6 +17,12 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// <summary>Whether spawned NPCs are hostile by default.</summary>
     public abstract bool DefaultHostile { get; }
 
+    /// <summary>
+    /// Whether spawned NPCs start as enemies of the protagonist (e.g. bears, wolves, bandits).
+    /// When true, the enemy flag is set in AffinityTable at scene initialization.
+    /// </summary>
+    public virtual bool DefaultEnemy => false;
+
     /// <summary>Whether spawned NPCs persist across visits (named characters).</summary>
     public abstract bool DefaultPersistent { get; }
 

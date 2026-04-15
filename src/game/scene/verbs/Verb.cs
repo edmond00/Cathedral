@@ -23,6 +23,13 @@ public abstract class Verb
     public virtual bool IsLegal => true;
 
     /// <summary>
+    /// Whether this verb is valid to use when an enemy is nearby (same area).
+    /// When false, the LLM critic asks whether the enemy gets an opportunity attack.
+    /// Override to true for combat verbs (attack, slay, reconcile, appease).
+    /// </summary>
+    public virtual bool CanBeUsedUnderThreat => false;
+
+    /// <summary>
     /// Returns whether this verb can be executed right now given the scene state,
     /// point of view, target element, and (optionally) the acting party member.
     /// </summary>

@@ -211,6 +211,14 @@ public class Scene
     /// on the next frame to start a dialogue session.
     /// </summary>
     public DialogueRequest? PendingDialogueRequest { get; set; }
+
+    // ── Pending fight request (set by attack verb) ────────────────────────────
+
+    /// <summary>
+    /// Set by <c>AttackVerb.Execute()</c>; consumed by <see cref="NarrativeController"/>
+    /// on the next frame to start a fight.
+    /// </summary>
+    public FightRequest? PendingFightRequest { get; set; }
 }
 
 /// <summary>
@@ -218,3 +226,9 @@ public class Scene
 /// to start a dialogue session using the specified tree.
 /// </summary>
 public record DialogueRequest(NpcEntity Npc, string TreeId);
+
+/// <summary>
+/// Set by AttackVerb.Execute(); consumed by NarrativeController on the next frame
+/// to start a fight against the specified NPC.
+/// </summary>
+public record FightRequest(NpcEntity Npc);

@@ -19,6 +19,7 @@ public class DialogueTreeRegistry
     {
         Register(new MeetStrangerTree());
         Register(new StrengthenRelationshipTree());
+        Register(new ReconcileTree());
     }
 
     private void Register(DialogueTree tree) => _trees[tree.TreeId] = tree;

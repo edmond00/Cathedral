@@ -14,6 +14,7 @@ public class ActionRuleContext
     public Scene.Scene?           Scene      { get; }
     public PoV?                   PoV        { get; }
     public WitnessContext         WitnessContext { get; }
+    public ThreatContext          ThreatContext  { get; }
 
     private ModusMentis? _actionModusMentis;
 
@@ -30,12 +31,14 @@ public class ActionRuleContext
         Protagonist           protagonist,
         Scene.Scene?          scene,
         PoV?                  pov,
-        WitnessContext        witnessContext)
+        WitnessContext        witnessContext,
+        ThreatContext?        threatContext = null)
     {
         Action         = action;
         Protagonist    = protagonist;
         Scene          = scene;
         PoV            = pov;
         WitnessContext = witnessContext;
+        ThreatContext  = threatContext ?? ThreatContext.None;
     }
 }

@@ -12,11 +12,13 @@ public class AffinityTable
 {
     private readonly Dictionary<string, AffinityLevel>       _table;
     private readonly Dictionary<string, CriminalAffinityType> _criminalRecord;
+    private readonly HashSet<string>                          _enemies;
 
     public AffinityTable()
     {
         _table          = new Dictionary<string, AffinityLevel>();
         _criminalRecord = new Dictionary<string, CriminalAffinityType>();
+        _enemies        = new HashSet<string>();
     }
 
     /// <summary>Initialise from an existing (possibly persisted) dictionary — shares the reference.</summary>
@@ -24,6 +26,7 @@ public class AffinityTable
     {
         _table          = sharedData;
         _criminalRecord = new Dictionary<string, CriminalAffinityType>();
+        _enemies        = new HashSet<string>();
     }
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -73,6 +76,17 @@ public class AffinityTable
 
     /// <summary>Exposes the raw dictionary for save/load serialisation.</summary>
     public Dictionary<string, AffinityLevel> GetRawData() => _table;
+
+    // ── Enemy tracking ────────────────────────────────────────────────────────
+
+    /// <summary>True when this NPC currently considers <paramref name="partyMemberId"/> an enemy.</summary>
+    public bool IsEnemy(string partyMemberId) => _enemies.Contains(partyMemberId);
+
+    /// <summary>Marks <paramref name="partyMemberId"/> as an enemy of this NPC.</summary>
+    public void SetEnemy(string partyMemberId) => _enemies.Add(partyMemberId);
+
+    /// <summary>Clears the enemy flag (e.g. after a successful reconciliation).</summary>
+    public void ClearEnemy(string partyMemberId) => _enemies.Remove(partyMemberId);
 
     // ── Criminal record ───────────────────────────────────────────────────────
 

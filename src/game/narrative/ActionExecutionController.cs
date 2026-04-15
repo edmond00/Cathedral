@@ -48,6 +48,14 @@ public class ActionEvaluationResult
     /// </summary>
     public Cathedral.Game.Scene.WitnessContext WitnessContext { get; set; }
         = Cathedral.Game.Scene.WitnessContext.None;
+
+    /// <summary>
+    /// Threat context computed before the pipeline (enemy proximity).
+    /// Carried forward so <see cref="ActionExecutionController.ExecuteDiceRollAsync"/>
+    /// can ask the under-threat opportunity question on failure.
+    /// </summary>
+    public Cathedral.Game.Scene.ThreatContext ThreatContext { get; set; }
+        = Cathedral.Game.Scene.ThreatContext.None;
 }
 
 /// <summary>
@@ -91,12 +99,15 @@ public class ActionExecutionController
     /// Returns evaluation result with plausibility status and difficulty score.
     /// When <paramref name="witnessContext"/> is non-None, also asks the LLM
     /// how likely the witness is to detect the action (stored for step 4b re-ask on failure).
+    /// When <paramref name="threatContext"/> is non-None and the action cannot be used under
+    /// threat, asks the LLM whether the enemy gets an opportunity (informational).
     /// </summary>
     public async Task<ActionEvaluationResult> EvaluateActionAsync(
         ParsedNarrativeAction action,
         NarrationNode currentNode,
         ModusMentis thinkingModusMentisUsed,
         Cathedral.Game.Scene.WitnessContext? witnessContext = null,
+        Cathedral.Game.Scene.ThreatContext? threatContext = null,
         CancellationToken cancellationToken = default)
     {
         // Debug: Show what we're searching for and what we have
@@ -203,6 +214,24 @@ public class ActionExecutionController
             // Result stored for context only; step 4b re-asks with failure context.
         }
 
+        // === STEP 3b: UNDER-THREAT OPPORTUNITY QUESTION (visual enemy + action can't be used under threat) ===
+        var resolvedThreatContext = threatContext ?? Cathedral.Game.Scene.ThreatContext.None;
+        if (resolvedThreatContext.Level == Cathedral.Game.Scene.ThreatLevel.Visual)
+        {
+            bool canBeUsedUnderThreat = action.PreselectedOutcome is Cathedral.Game.Scene.VerbOutcome vo2
+                && vo2.VerbView.Verb.CanBeUsedUnderThreat;
+
+            if (!canBeUsedUnderThreat)
+            {
+                Console.WriteLine($"⚔ [UNDER THREAT] Visual enemy present — asking opportunity probability...");
+                var threatTree = CriticTrees.BuildUnderThreatTree(
+                    action.ActionText, resolvedThreatContext, criticContext, actionFailed: false);
+                var threatResult = await _criticEvaluator.EvaluateTreeAsync(threatTree);
+                Console.WriteLine($"   Opportunity chance: {threatResult.FinalChosenId}\n");
+                // Informational only — step 4b re-asks if action fails.
+            }
+        }
+
         return new ActionEvaluationResult
         {
             IsPlausible = true,
@@ -214,6 +243,7 @@ public class ActionExecutionController
             Action = action,
             CurrentNode = currentNode,
             WitnessContext = resolvedWitnessContext,
+            ThreatContext = resolvedThreatContext,
         };
     }
 
@@ -333,6 +363,30 @@ public class ActionExecutionController
             }
         }
 
+        // === STEP 4c: UNDER-THREAT OPPORTUNITY RE-ASK (failure path only) ===
+        // If an enemy is nearby and the action fails, ask whether they seize the moment.
+        bool fightTriggered = false;
+        Cathedral.Game.Npc.NpcEntity? fightEnemy = null;
+        if (!succeeded && evalResult.ThreatContext.Level != Cathedral.Game.Scene.ThreatLevel.None)
+        {
+            Console.WriteLine($"⚔ [UNDER THREAT — FAILURE] Re-evaluating enemy opportunity after failed action...");
+            var goalDescription5 = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
+            var threatCtx = new CriticContext(currentNode, _worldContext, _locationId, goalDescription5);
+            var threatTree = CriticTrees.BuildUnderThreatTree(
+                action.ActionText, evalResult.ThreatContext, threatCtx, actionFailed: true);
+            var threatResult = await _criticEvaluator.EvaluateTreeAsync(threatTree);
+            fightTriggered = CriticTrees.IsOpportunityFromResult(threatResult);
+            if (fightTriggered)
+            {
+                fightEnemy = evalResult.ThreatContext.Threat;
+                Console.WriteLine($"   Enemy seized the opportunity — fight triggered.\n");
+            }
+            else
+            {
+                Console.WriteLine($"   Enemy did not seize an opportunity ({threatResult.FinalChosenId}).\n");
+            }
+        }
+
         // Generate narration — pass wound description as failure hint
         string? failureHint = failureWound != null
             ? $"The character suffered a wound: {failureWound.WoundName} to their {WoundLocationLabel(failureWound)}"
@@ -362,6 +416,8 @@ public class ActionExecutionController
             IsPlausibilityFailure = false,
             WitnessDetected = witnessDetected,
             DetectedWitness = detectedWitness,
+            FightTriggered = fightTriggered,
+            FightEnemy = fightEnemy,
         };
     }
 
@@ -377,7 +433,7 @@ public class ActionExecutionController
         CancellationToken cancellationToken = default)
     {
         // Phase 1: Evaluate action
-        var evalResult = await EvaluateActionAsync(action, currentNode, thinkingModusMentisUsed, witnessContext: null, cancellationToken);
+        var evalResult = await EvaluateActionAsync(action, currentNode, thinkingModusMentisUsed, witnessContext: null, threatContext: null, cancellationToken);
         
         if (!evalResult.IsPlausible)
         {
@@ -502,4 +558,15 @@ public class ActionExecutionResult
     /// The NPC who detected the crime. Non-null only when <see cref="WitnessDetected"/> is true.
     /// </summary>
     public Cathedral.Game.Npc.NpcEntity? DetectedWitness { get; set; }
+
+    /// <summary>
+    /// True when a nearby enemy seized an opportunity to attack on the failure path (step 4c).
+    /// Always false on success.
+    /// </summary>
+    public bool FightTriggered { get; set; }
+
+    /// <summary>
+    /// The enemy who triggered the fight. Non-null only when <see cref="FightTriggered"/> is true.
+    /// </summary>
+    public Cathedral.Game.Npc.NpcEntity? FightEnemy { get; set; }
 }

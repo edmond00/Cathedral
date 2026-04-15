@@ -440,9 +440,14 @@ public class NarrativeController
                 ? WitnessSelector.ComputeContext(_scene, _pov)
                 : WitnessContext.None;
 
+            // Compute threat context (enemy proximity) — always, not just for illegal actions.
+            var threatContext = (_scene != null && _pov != null && _protagonist != null)
+                ? ThreatSelector.ComputeContext(_scene, _pov, _protagonist)
+                : ThreatContext.None;
+
             // Run all coded rules; a failure here is absolute — no LLM retry, no noetic cost.
             var ruleCtx = new Narrative.Rules.ActionRuleContext(
-                action, _protagonist!, _scene, _pov, witnessContext);
+                action, _protagonist!, _scene, _pov, witnessContext, threatContext);
             var ruleResult = Narrative.Rules.ActionRulesChecker.Check(ruleCtx);
             if (!ruleResult.Passed)
             {
@@ -478,12 +483,13 @@ public class NarrativeController
             _narrationState.IsLoadingAction = true;
             _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingAction;
 
-            // Evaluate plausibility and difficulty (+ witness detection question if relevant)
+            // Evaluate plausibility and difficulty (+ witness detection + under-threat questions if relevant)
             var evalResult = await _actionExecutor.EvaluateActionAsync(
                 action,
                 _currentNode,
                 action.ThinkingModusMentis,
                 witnessContext,
+                threatContext,
                 CancellationToken.None
             );
             
@@ -742,6 +748,16 @@ public class NarrativeController
             return;
         }
 
+        // === FAILURE-PATH ENEMY OPPORTUNITY ATTACK (step 4c) ===
+        // On failure, the executor asked the LLM whether the enemy seized an opportunity.
+        // If triggered, skip normal outcome and queue a fight immediately.
+        if (!result.Succeeded && result.FightTriggered && result.FightEnemy != null)
+        {
+            Console.WriteLine($"NarrativeController: Enemy '{result.FightEnemy.DisplayName}' seized opportunity — triggering fight");
+            _pendingFightOutcome = new FightOutcome(result.FightEnemy, $"opportunity attack by {result.FightEnemy.DisplayName}");
+            return;
+        }
+
         // Handle outcome based on type - show continue button for next step
         if (result.ActualOutcome is FightOutcome fightOutcome)
         {
@@ -774,6 +790,16 @@ public class NarrativeController
                 _scene.PendingDialogueRequest = null;
                 _pendingDialogueOutcome = new Cathedral.Game.Narrative.DialogueOutcome(req.Npc, req.TreeId);
                 Console.WriteLine($"NarrativeController: Dialogue verb triggered tree '{req.TreeId}' with {req.Npc.DisplayName}");
+                return;
+            }
+
+            // Check if the verb requested a fight (e.g. AttackVerb)
+            if (_scene.PendingFightRequest != null)
+            {
+                var req = _scene.PendingFightRequest;
+                _scene.PendingFightRequest = null;
+                _pendingFightOutcome = new FightOutcome(req.Npc, $"attack on {req.Npc.DisplayName}");
+                Console.WriteLine($"NarrativeController: Attack verb triggered fight with {req.Npc.DisplayName}");
                 return;
             }
 
@@ -1743,12 +1769,55 @@ public class NarrativeController
     
     /// <summary>
     /// Called by the game controller when returning from fight mode.
-    /// Resumes narration, optionally removing the NPC if dead.
+    /// Handles corpse spawning (victory), enemy affinity (runaway), and narration resumption.
     /// </summary>
-    public void OnFightCompleted(Fight.FightAdapterResult result, NpcEntity npc)
+    public void OnFightCompleted(
+        Fight.FightAdapterResult result,
+        NpcEntity npc,
+        IReadOnlyList<NpcEntity>? allEnemyNpcs = null)
     {
         Console.WriteLine($"NarrativeController: Fight completed with result {result} vs {npc.DisplayName}");
-        
+
+        var enemies = allEnemyNpcs ?? new List<NpcEntity> { npc };
+
+        if (result == Fight.FightAdapterResult.Victory)
+        {
+            // Spawn corpses for every dead enemy + focus on main enemy's corpse
+            Spot? mainCorpse = null;
+            foreach (var enemy in enemies)
+            {
+                if (!enemy.IsAlive && _scene != null && _pov != null)
+                {
+                    var corpse = enemy.GenerateCorpse(_pov.Where);
+                    _scene.AddSpotToArea(_pov.Where, corpse);
+                    _graph.NotifyNpcDead(enemy);
+                    Console.WriteLine($"NarrativeController: Corpse spawned for {enemy.DisplayName}");
+
+                    if (enemy == npc)
+                        mainCorpse = corpse;
+                }
+            }
+
+            // Focus on main enemy's corpse so the player can loot/inspect
+            if (mainCorpse != null && _pov != null)
+            {
+                _pov.Focus = mainCorpse;
+                SceneDebugManager.UpdatePoV(_pov);
+            }
+        }
+        else if (result == Fight.FightAdapterResult.Runaway)
+        {
+            // Every alive fighter who participated now considers the protagonist an enemy
+            foreach (var enemy in enemies)
+            {
+                if (enemy.IsAlive)
+                {
+                    enemy.AffinityTable.SetEnemy(_protagonist.DisplayName);
+                    Console.WriteLine($"NarrativeController: {enemy.DisplayName} flagged as enemy after runaway");
+                }
+            }
+        }
+
         string outcomeText = result switch
         {
             Fight.FightAdapterResult.Victory => $"You defeated {npc.DisplayName}.",
@@ -1756,10 +1825,7 @@ public class NarrativeController
             Fight.FightAdapterResult.Death => $"You were slain by {npc.DisplayName}.",
             _ => "The fight ended."
         };
-        
-        if (result == Fight.FightAdapterResult.Victory && !npc.IsAlive)
-            _graph.NotifyNpcDead(npc);
-        
+
         // Add outcome to scroll buffer
         var block = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
@@ -1772,7 +1838,7 @@ public class NarrativeController
         _narrationState.AddBlock(block);
         _scrollBuffer.ScrollToBottom();
         _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-        
+
         // For death/runaway, show continue button to exit
         if (result == Fight.FightAdapterResult.Death || result == Fight.FightAdapterResult.Runaway)
         {

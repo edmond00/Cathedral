@@ -17,6 +17,9 @@ public class SlayVerb : Verb
     /// <summary>Slaying a living person is never a legal action.</summary>
     public override bool IsLegal => false;
 
+    /// <summary>Slaying is an attack — it can be attempted even under direct threat.</summary>
+    public override bool CanBeUsedUnderThreat => true;
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not SceneNpc npc) return false;

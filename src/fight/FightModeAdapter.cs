@@ -42,6 +42,10 @@ public class FightModeAdapter
 
     // ── Source NPC (for outcome reporting) ───────────────────────────
     private readonly NpcEntity _targetNpc;
+    private readonly IReadOnlyList<NpcEntity> _allies;
+
+    /// <summary>All enemy NPCs in this fight: main target + allies.</summary>
+    public IReadOnlyList<NpcEntity> AllEnemyNpcs { get; }
 
     // ── Action mode ─────────────────────────────────────────────────
     private bool _isMoveMode = true;
@@ -95,11 +99,19 @@ public class FightModeAdapter
         TerminalHUD terminal,
         PopupTerminalHUD? popup,
         NpcEntity targetNpc,
-        Protagonist protagonist)
+        Protagonist protagonist,
+        IReadOnlyList<NpcEntity>? allies = null)
     {
         _terminal = terminal;
         _popup = popup;
         _targetNpc = targetNpc;
+        _allies = allies ?? Array.Empty<NpcEntity>();
+
+        // Build AllEnemyNpcs: main target + all allies
+        var allEnemies = new List<NpcEntity> { targetNpc };
+        allEnemies.AddRange(_allies);
+        AllEnemyNpcs = allEnemies;
+
         _skillRegistry = FightingSkillRegistry.Instance;
 
         // Generate arena
@@ -107,7 +119,7 @@ public class FightModeAdapter
         var area = generator.Generate();
 
         // Build fighters
-        var fighters = BuildFighters(protagonist, targetNpc);
+        var fighters = BuildFighters(protagonist, targetNpc, _allies);
 
         // Roll initiative
         foreach (var f in fighters)
@@ -140,7 +152,7 @@ public class FightModeAdapter
         Console.WriteLine($"FightModeAdapter: Fight started against {targetNpc.DisplayName}");
     }
 
-    private static List<Fighter> BuildFighters(Protagonist protagonist, NpcEntity npc)
+    private static List<Fighter> BuildFighters(Protagonist protagonist, NpcEntity npc, IReadOnlyList<NpcEntity> allies)
     {
         var fighters = new List<Fighter>();
 
@@ -161,11 +173,24 @@ public class FightModeAdapter
             fighters.Add(cf);
         }
 
-        // Enemy NPC
+        // Main enemy NPC
         var enemyFighter = new Fighter(npc.Combatant,
             FightArea.ZoneColStart + 2, FightArea.EnemyRowStart + 1,
             isPlayerControlled: false, FighterFaction.Enemy);
         fighters.Add(enemyFighter);
+
+        // Ally NPCs — spread horizontally in the top half (rows 0–29, near EnemyRowStart)
+        int allyOffset = 0;
+        foreach (var ally in allies)
+        {
+            allyOffset++;
+            int allyCol = FightArea.ZoneColStart + 2 + allyOffset * 3;
+            int allyRow = Math.Max(1, FightArea.EnemyRowStart - 3);  // above the main enemy zone
+            var allyFighter = new Fighter(ally.Combatant,
+                allyCol, allyRow,
+                isPlayerControlled: false, FighterFaction.Enemy);
+            fighters.Add(allyFighter);
+        }
 
         return fighters;
     }

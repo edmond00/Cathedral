@@ -334,6 +334,72 @@ public static class CriticTrees
 
     #endregion
 
+    #region Under-Threat Opportunity Tree
+
+    /// <summary>
+    /// Asks the LLM critic how likely it is that a nearby enemy seizes an opportunity
+    /// to attack during or after the attempted action.
+    ///
+    /// Used twice in the pipeline:
+    ///   - During evaluation (step 2, visual only): if the enemy is right there, does the action
+    ///     give them an opening? (informational — does not fail plausibility)
+    ///   - During failure resolution (step 4b): action failed — does the enemy now attack?
+    ///     "high" or "very_high" → FightTriggered.
+    /// </summary>
+    /// <param name="actionText">The action the character attempted.</param>
+    /// <param name="threat">Who the enemy is and their proximity.</param>
+    /// <param name="context">Standard critic context (setting, scene, goal).</param>
+    /// <param name="actionFailed">
+    ///   When true, the question notes that the action just failed.
+    /// </param>
+    public static CriticNode BuildUnderThreatTree(
+        string actionText,
+        Cathedral.Game.Scene.ThreatContext threat,
+        CriticContext context,
+        bool actionFailed = false)
+    {
+        var preamble = context.BuildPreamble();
+        var failedNote = actionFailed ? " The action failed." : "";
+        var threatName = threat.Threat?.DisplayName ?? "an enemy";
+
+        string question = threat.Level switch
+        {
+            Cathedral.Game.Scene.ThreatLevel.Visual =>
+                $"{preamble}\n\n" +
+                $"The {Config.Narrative.PlayerName} attempted to: \"{actionText}\".{failedNote}\n" +
+                $"Under the direct threat of {threatName} who is right here.\n\n" +
+                $"What are the chances this action gives {threatName} an opportunity to harm you?",
+
+            Cathedral.Game.Scene.ThreatLevel.Audio =>
+                $"{preamble}\n\n" +
+                $"The {Config.Narrative.PlayerName} attempted to: \"{actionText}\".{failedNote}\n" +
+                $"Under the threat of {threatName} a few steps away.\n\n" +
+                $"What are the chances the noise of this action draws {threatName} to attack?",
+
+            _ => throw new System.ArgumentException("Cannot build under-threat tree with no threat.")
+        };
+
+        return new CriticNode(
+            name: actionFailed ? "UnderThreatOpportunityFailure" : "UnderThreatOpportunity",
+            question: question,
+            choices: new System.Collections.Generic.List<CriticChoice>
+            {
+                new("very_low",  "the enemy gets no meaningful opportunity"),
+                new("low",       "the enemy is unlikely to seize an opening"),
+                new("high",      "the enemy is likely to take advantage and attack"),
+                new("very_high", "the enemy will almost certainly attack"),
+            });
+    }
+
+    /// <summary>
+    /// Returns true when the critic concluded the enemy seized an opportunity to attack.
+    /// "high" and "very_high" are treated as triggered.
+    /// </summary>
+    public static bool IsOpportunityFromResult(CriticTreeResult result) =>
+        result.FinalChosenId is "high" or "very_high";
+
+    #endregion
+
     #region Witness Detection Tree
 
     /// <summary>
