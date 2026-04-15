@@ -428,15 +428,62 @@ public class NarrativeController
                 DebugMode.PromptActionStrategy(action.ActionText, outcomeSummary);
             }
             
+            // === CODED RULES CHECK (before LLM — fast, deterministic, absolute) ===
+
+            // Determine if the action is illegal so we know whether to compute witness context.
+            bool isIllegalAction =
+                (action.PreselectedOutcome is VerbOutcome preVo && !preVo.VerbView.Verb.IsLegal)
+                || (_pov?.Where.IsPrivate ?? false);
+
+            // Compute witness context (visual = same area, audio = adjacent area).
+            var witnessContext = (isIllegalAction && _scene != null && _pov != null)
+                ? WitnessSelector.ComputeContext(_scene, _pov)
+                : WitnessContext.None;
+
+            // Run all coded rules; a failure here is absolute — no LLM retry, no noetic cost.
+            var ruleCtx = new Narrative.Rules.ActionRuleContext(
+                action, _protagonist!, _scene, _pov, witnessContext);
+            var ruleResult = Narrative.Rules.ActionRulesChecker.Check(ruleCtx);
+            if (!ruleResult.Passed)
+            {
+                Console.WriteLine($"NarrativeController: Coded rule blocked action — {ruleResult.ErrorMessage}");
+                _narrationState.IsLoadingAction = false;
+
+                var ruleBlock = new NarrationBlock(
+                    Type: NarrationBlockType.Outcome,
+                    ModusMentis: action.ThinkingModusMentis,
+                    Text: $"[IMPOSSIBLE] {ruleResult.ErrorMessage}",
+                    Keywords: null,
+                    Actions: null);
+                _scrollBuffer.AddBlock(ruleBlock);
+                _narrationState.AddBlock(ruleBlock);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
+                Console.WriteLine($"NarrativeController: Coded rule failure - consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
+
+                if (_narrationState.ThinkingAttemptsRemaining > 0)
+                {
+                    _narrationState.ThinkingAttemptsRemaining--;
+                    return;
+                }
+                else
+                {
+                    _narrationState.ShowContinueButton = true;
+                    return;
+                }
+            }
+
             // === PHASE 1: EVALUATION (normal loading screen) ===
             _narrationState.IsLoadingAction = true;
             _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingAction;
-            
-            // Evaluate plausibility and difficulty
+
+            // Evaluate plausibility and difficulty (+ witness detection question if relevant)
             var evalResult = await _actionExecutor.EvaluateActionAsync(
                 action,
                 _currentNode,
                 action.ThinkingModusMentis,
+                witnessContext,
                 CancellationToken.None
             );
             
@@ -681,7 +728,20 @@ public class NarrativeController
         
         // Clear dice roll state
         _narrationState.ClearDiceRoll();
-        
+
+        // === FAILURE-PATH WITNESS CONFRONTATION (step 4b) ===
+        // On failure, the executor already asked the LLM whether the witness noticed.
+        // If detected, override the normal failure flow with a caught-red-handed dialogue.
+        if (!result.Succeeded && result.WitnessDetected && result.DetectedWitness != null && _pov != null)
+        {
+            var criminalVerb = (result.Action.PreselectedOutcome as VerbOutcome)?.VerbView.Verb;
+            var crimeType    = DetermineCrimeType(criminalVerb, _pov.Where.IsPrivate);
+            Console.WriteLine($"NarrativeController: Witness '{result.DetectedWitness.DisplayName}' detected failed illegal action (crime: {crimeType})");
+            var catchTree = CaughtRedHandedTreeFactory.Create(crimeType, result.DetectedWitness.IsBrave);
+            _pendingDialogueOutcome = new Cathedral.Game.Narrative.DialogueOutcome(result.DetectedWitness, tree: catchTree);
+            return;
+        }
+
         // Handle outcome based on type - show continue button for next step
         if (result.ActualOutcome is FightOutcome fightOutcome)
         {
@@ -717,22 +777,8 @@ public class NarrativeController
                 return;
             }
 
-            // Check for illegal action: verb is illegal OR area is private.
-            bool verbIsIllegal  = !verbOutcome.VerbView.Verb.IsLegal;
-            bool areaIsPrivate  = _pov.Where.IsPrivate;
-            if (verbIsIllegal || areaIsPrivate)
-            {
-                var crimeType = DetermineCrimeType(verbOutcome.VerbView.Verb, areaIsPrivate);
-                var witness   = WitnessSelector.Select(_scene, _pov.Where, _pov.When);
-                if (witness != null)
-                {
-                    Console.WriteLine($"NarrativeController: Illegal action '{verbOutcome.VerbView.Verb.VerbId}' witnessed by {witness.DisplayName} (crime: {crimeType})");
-                    var catchTree = CaughtRedHandedTreeFactory.Create(crimeType, witness.IsBrave);
-                    _pendingDialogueOutcome = new Cathedral.Game.Narrative.DialogueOutcome(witness, tree: catchTree);
-                    return;
-                }
-                Console.WriteLine($"NarrativeController: Illegal action '{verbOutcome.VerbView.Verb.VerbId}' — no witness present");
-            }
+            // Success path (4a): witness confrontation is NOT triggered on success.
+            // Witness detection on failure is handled below via result.WitnessDetected.
 
             _narrationState.PendingTransitionNode = null;
             _narrationState.ShowContinueButton = true;
@@ -1827,8 +1873,9 @@ public class NarrativeController
     /// <summary>
     /// Determines the <see cref="CriminalAffinityType"/> for a verb that was just executed.
     /// </summary>
-    private static CriminalAffinityType DetermineCrimeType(Cathedral.Game.Scene.Verbs.Verb verb, bool areaIsPrivate)
+    private static CriminalAffinityType DetermineCrimeType(Cathedral.Game.Scene.Verbs.Verb? verb, bool areaIsPrivate)
     {
+        if (verb == null) return areaIsPrivate ? CriminalAffinityType.Intruder : CriminalAffinityType.None;
         return verb.VerbId switch
         {
             "steal"       => CriminalAffinityType.Thief,

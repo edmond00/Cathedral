@@ -40,6 +40,14 @@ public class ActionEvaluationResult
     public ModusMentis ThinkingModusMentis { get; set; } = null!;
     public ParsedNarrativeAction Action { get; set; } = null!;
     public NarrationNode CurrentNode { get; set; } = null!;
+
+    /// <summary>
+    /// Witness context computed before the pipeline. Carried forward so
+    /// <see cref="ActionExecutionController.ExecuteDiceRollAsync"/> can re-ask
+    /// the witness detection question on failure without needing the scene again.
+    /// </summary>
+    public Cathedral.Game.Scene.WitnessContext WitnessContext { get; set; }
+        = Cathedral.Game.Scene.WitnessContext.None;
 }
 
 /// <summary>
@@ -81,11 +89,14 @@ public class ActionExecutionController
     /// PHASE 1: Evaluate action plausibility and difficulty.
     /// Shows normal loading screen during this phase.
     /// Returns evaluation result with plausibility status and difficulty score.
+    /// When <paramref name="witnessContext"/> is non-None, also asks the LLM
+    /// how likely the witness is to detect the action (stored for step 4b re-ask on failure).
     /// </summary>
     public async Task<ActionEvaluationResult> EvaluateActionAsync(
         ParsedNarrativeAction action,
         NarrationNode currentNode,
         ModusMentis thinkingModusMentisUsed,
+        Cathedral.Game.Scene.WitnessContext? witnessContext = null,
         CancellationToken cancellationToken = default)
     {
         // Debug: Show what we're searching for and what we have
@@ -179,7 +190,19 @@ public class ActionExecutionController
         successProbability = Math.Clamp(successProbability, 0.1, 0.95);
         
         Console.WriteLine($"   Success probability: {successProbability:F2} (organ '{organId}': {organScore})\n");
-        
+
+        // === STEP 3: WITNESS DETECTION QUESTION (if a witness is present) ===
+        var resolvedWitnessContext = witnessContext ?? Cathedral.Game.Scene.WitnessContext.None;
+        if (resolvedWitnessContext.Type != Cathedral.Game.Scene.WitnessType.None)
+        {
+            Console.WriteLine($"👁 [WITNESS DETECTION] {resolvedWitnessContext.Type} witness present — asking detection probability...");
+            var witnessTree = CriticTrees.BuildWitnessDetectionTree(
+                action.ActionText, resolvedWitnessContext, criticContext, actionFailed: false);
+            var witnessResult = await _criticEvaluator.EvaluateTreeAsync(witnessTree);
+            Console.WriteLine($"   Detection chance: {witnessResult.FinalChosenId}\n");
+            // Result stored for context only; step 4b re-asks with failure context.
+        }
+
         return new ActionEvaluationResult
         {
             IsPlausible = true,
@@ -189,7 +212,8 @@ public class ActionExecutionController
             ActionModusMentis = actionModusMentis,
             ThinkingModusMentis = thinkingModusMentisUsed,
             Action = action,
-            CurrentNode = currentNode
+            CurrentNode = currentNode,
+            WitnessContext = resolvedWitnessContext,
         };
     }
 
@@ -284,6 +308,31 @@ public class ActionExecutionController
             }
         }
 
+        // === STEP 4b: WITNESS DETECTION RE-ASK (failure path only) ===
+        // On success the action was clean — no confrontation regardless of witnesses.
+        // On failure, re-ask whether the witness noticed, now knowing the action failed.
+        bool witnessDetected = false;
+        Cathedral.Game.Npc.NpcEntity? detectedWitness = null;
+        if (!succeeded && evalResult.WitnessContext.Type != Cathedral.Game.Scene.WitnessType.None)
+        {
+            Console.WriteLine($"👁 [WITNESS DETECTION — FAILURE] Re-evaluating witness detection after failed action...");
+            var goalDescription4 = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
+            var witnessCtx = new CriticContext(currentNode, _worldContext, _locationId, goalDescription4);
+            var witnessTree = CriticTrees.BuildWitnessDetectionTree(
+                action.ActionText, evalResult.WitnessContext, witnessCtx, actionFailed: true);
+            var witnessResult = await _criticEvaluator.EvaluateTreeAsync(witnessTree);
+            witnessDetected = CriticTrees.IsWitnessDetectedFromResult(witnessResult);
+            if (witnessDetected)
+            {
+                detectedWitness = evalResult.WitnessContext.Witness;
+                Console.WriteLine($"   Witness detected the failed action — confrontation pending.\n");
+            }
+            else
+            {
+                Console.WriteLine($"   Witness did not detect the failed action ({witnessResult.FinalChosenId}).\n");
+            }
+        }
+
         // Generate narration — pass wound description as failure hint
         string? failureHint = failureWound != null
             ? $"The character suffered a wound: {failureWound.WoundName} to their {WoundLocationLabel(failureWound)}"
@@ -310,7 +359,9 @@ public class ActionExecutionController
             ActualOutcome = actualOutcome,
             Narration = narration,
             FailureWound = failureWound,
-            IsPlausibilityFailure = false
+            IsPlausibilityFailure = false,
+            WitnessDetected = witnessDetected,
+            DetectedWitness = detectedWitness,
         };
     }
 
@@ -326,7 +377,7 @@ public class ActionExecutionController
         CancellationToken cancellationToken = default)
     {
         // Phase 1: Evaluate action
-        var evalResult = await EvaluateActionAsync(action, currentNode, thinkingModusMentisUsed, cancellationToken);
+        var evalResult = await EvaluateActionAsync(action, currentNode, thinkingModusMentisUsed, witnessContext: null, cancellationToken);
         
         if (!evalResult.IsPlausible)
         {
@@ -440,4 +491,15 @@ public class ActionExecutionResult
     /// Used to determine if player can retry with remaining noetic points.
     /// </summary>
     public bool IsPlausibilityFailure { get; set; }
+
+    /// <summary>
+    /// True when a witness detected the failed action (step 4b).
+    /// Always false on success — the new design never triggers witness confrontation on success.
+    /// </summary>
+    public bool WitnessDetected { get; set; }
+
+    /// <summary>
+    /// The NPC who detected the crime. Non-null only when <see cref="WitnessDetected"/> is true.
+    /// </summary>
+    public Cathedral.Game.Npc.NpcEntity? DetectedWitness { get; set; }
 }

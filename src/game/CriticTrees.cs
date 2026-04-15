@@ -334,6 +334,69 @@ public static class CriticTrees
 
     #endregion
 
+    #region Witness Detection Tree
+
+    /// <summary>
+    /// Asks the LLM critic how likely it is that a nearby witness perceived an illegal action.
+    /// Used twice in the pipeline:
+    ///   - During evaluation (step 2): baseline detection probability.
+    ///   - During failure resolution (step 4b): re-asked with failure context; the answer
+    ///     determines whether to trigger the "caught red-handed" confrontation dialogue.
+    /// </summary>
+    /// <param name="actionText">The action the character attempted.</param>
+    /// <param name="witnessContext">Who is present and how they can perceive the action.</param>
+    /// <param name="context">Standard critic context (setting, scene, goal).</param>
+    /// <param name="actionFailed">
+    ///   When true, the question notes that the action failed (failure is typically noisier).
+    /// </param>
+    public static CriticNode BuildWitnessDetectionTree(
+        string actionText,
+        Cathedral.Game.Scene.WitnessContext witnessContext,
+        CriticContext context,
+        bool actionFailed = false)
+    {
+        var preamble = context.BuildPreamble();
+        var failedNote = actionFailed ? " The action failed, which may have produced more noise or commotion." : "";
+        var witnessDesc = witnessContext.ToPromptDescription();
+
+        string question = witnessContext.Type switch
+        {
+            Cathedral.Game.Scene.WitnessType.Audio =>
+                $"{preamble}\n\n" +
+                $"The {Config.Narrative.PlayerName} attempted to: \"{actionText}\".{failedNote}\n" +
+                $"{witnessDesc}\n\n" +
+                "What are the chances this action was heard by the witness?",
+
+            Cathedral.Game.Scene.WitnessType.Visual =>
+                $"{preamble}\n\n" +
+                $"The {Config.Narrative.PlayerName} attempted to: \"{actionText}\".{failedNote}\n" +
+                $"{witnessDesc}\n\n" +
+                "What are the chances this action was seen or heard by the witness?",
+
+            _ => throw new System.ArgumentException("Cannot build witness detection tree with no witness.")
+        };
+
+        return new CriticNode(
+            name: actionFailed ? "WitnessDetectionFailure" : "WitnessDetection",
+            question: question,
+            choices: new System.Collections.Generic.List<CriticChoice>
+            {
+                new("very_low",  "the witness almost certainly did not notice anything"),
+                new("low",       "the witness probably did not notice"),
+                new("high",      "the witness likely noticed something"),
+                new("very_high", "the witness almost certainly detected the action"),
+            });
+    }
+
+    /// <summary>
+    /// Returns true when the critic concluded the witness detected the action.
+    /// "high" and "very_high" are treated as detected.
+    /// </summary>
+    public static bool IsWitnessDetectedFromResult(CriticTreeResult result) =>
+        result.FinalChosenId is "high" or "very_high";
+
+    #endregion
+
     private static string GetTargetDisplayName(string targetId) => targetId switch
     {
         "encephalon"  => "skull / brain (encephalon)",
