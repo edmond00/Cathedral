@@ -20,7 +20,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("    --negative                       Invert brightness");
     Console.WriteLine("    --auto-contrast                  Automatically stretch contrast");
     Console.WriteLine("    --stretch                        Stretch/shrink to exact width/height (ignore aspect ratio)");
-    Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console)");
+    Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console) + viewers");
+    Console.WriteLine("  --view                             Show LLM and scene viewers without console decision overriding");
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
@@ -113,9 +114,21 @@ if (args.Length >= 2 && args[0] == "--img-to-txt")
 if (args.Any(a => a == "--debug"))
 {
     Cathedral.Game.DebugMode.IsActive = true;
+    Cathedral.Game.DebugMode.ShowViewers = true;
     Console.ForegroundColor = ConsoleColor.Yellow;
     Console.WriteLine("*** DEBUG MODE ACTIVE ***");
     Console.WriteLine("LLM critic decisions and dice rolls will prompt for manual override via console.");
+    Console.ResetColor();
+    Console.WriteLine();
+}
+
+// Check for --view flag: viewers only, no console overriding
+if (args.Any(a => a == "--view"))
+{
+    Cathedral.Game.DebugMode.ShowViewers = true;
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine("*** VIEW MODE ACTIVE ***");
+    Console.WriteLine("LLM and scene viewers will open. No console decision overriding.");
     Console.ResetColor();
     Console.WriteLine();
 }

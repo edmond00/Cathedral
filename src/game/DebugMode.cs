@@ -29,8 +29,11 @@ public enum DebugStrategy
 /// </summary>
 public static class DebugMode
 {
-    /// <summary>Whether debug mode is active.</summary>
+    /// <summary>Whether debug mode is active (console decision overriding).</summary>
     public static bool IsActive { get; set; } = false;
+
+    /// <summary>Whether the LLM and scene viewer windows should be shown.</summary>
+    public static bool ShowViewers { get; set; } = false;
 
     /// <summary>Current strategy for the action being executed.</summary>
     public static DebugStrategy CurrentStrategy { get; private set; } = DebugStrategy.Custom;

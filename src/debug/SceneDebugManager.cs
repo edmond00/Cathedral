@@ -22,7 +22,7 @@ public static class SceneDebugManager
     /// </summary>
     public static void Show(Cathedral.Game.Scene.Scene scene, PoV? pov, int locationId)
     {
-        if (!DebugMode.IsActive) return;
+        if (!DebugMode.ShowViewers) return;
 
         CloseInternal();
 

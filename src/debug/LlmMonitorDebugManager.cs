@@ -28,7 +28,7 @@ public static class LlmMonitorDebugManager
     /// </summary>
     public static void Show(string logsBaseDir = "logs")
     {
-        if (!DebugMode.IsActive) return;
+        if (!DebugMode.ShowViewers) return;
 
         // Close any previous window
         CloseInternal();
