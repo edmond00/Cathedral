@@ -28,6 +28,7 @@ public class ObservationPhaseController
     private readonly ObservationPromptConstructor _promptConstructor;
     private readonly KeywordRenderer _keywordRenderer;
     private readonly WorldContext _worldContext;
+    private readonly QuestionFillerService _questionFillerService;
     private readonly Random _random = new();
 
     public ObservationPhaseController(LlamaServerManager llamaServer, ModusMentisSlotManager slotManager, WorldContext? worldContext = null)
@@ -36,6 +37,7 @@ public class ObservationPhaseController
         _promptConstructor = new ObservationPromptConstructor();
         _keywordRenderer = new KeywordRenderer();
         _worldContext = worldContext ?? new PlainBiomeContext();
+        _questionFillerService = QuestionFillerService.Instance;
     }
 
     /// <summary>
@@ -88,8 +90,9 @@ public class ObservationPhaseController
         // 1. General description sentence (no outcome or keyword hints)
         try
         {
-            var generalPrompt = _promptConstructor.BuildGeneralDescriptionPrompt(currentNode, locationId, modusMentis.PersonaTone, _worldContext, modusMentis.PersonaReminder, modusMentis.PersonaReminder2);
-            var generalText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, generalPrompt, isFirstInBatch: true, ct: ct);
+            var generalQ = _questionFillerService.GetNext(modusMentis, QuestionReference.ObserveFirst);
+            var generalPrompt = _promptConstructor.BuildGeneralDescriptionPrompt(currentNode, locationId, modusMentis.PersonaTone, _worldContext, generalQ.PromptText, modusMentis.PersonaReminder, modusMentis.PersonaReminder2);
+            var generalText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, generalPrompt, generalQ, isFirstInBatch: true, ct: ct);
             sentences.Add(new NarrationSentence(generalText, new List<string>()));
             Console.WriteLine($"ObservationPhaseController: General sentence generated");
         }
@@ -110,11 +113,13 @@ public class ObservationPhaseController
 
                 var directKeywords = outcome is ObservationObject obsD ? obsD.DirectObservationKeywords : new List<string>();
 
-                var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(outcome, previousDescription, modusMentis.PersonaReminder, previousKeywordInContext, modusMentis.PersonaReminder2);
-                var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, isTransition: true, ct: ct);
+                var transQ = _questionFillerService.GetNext(modusMentis, QuestionReference.ObserveTransition);
+                var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(outcome, previousDescription, transQ.PromptText, modusMentis.PersonaReminder, previousKeywordInContext, modusMentis.PersonaReminder2);
+                var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, transQ, isTransition: true, ct: ct);
 
-                var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(outcome, modusMentis.PersonaReminder, modusMentis.PersonaReminder2);
-                var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, ct: ct);
+                var focusQ = _questionFillerService.GetNext(modusMentis, QuestionReference.ObserveContinuation);
+                var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(outcome, focusQ.PromptText, modusMentis.PersonaReminder, modusMentis.PersonaReminder2);
+                var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, focusQ, ct: ct);
 
                 var sampledKws = _observationExecutor.ExtractKeywordsFromSentences(transText, focusText, outcomeKeywords, directKeywords, _random, 3);
                 var (transKws, focKws) = _observationExecutor.AssignKeywordsToSentences(sampledKws, transText, focusText);
@@ -201,8 +206,9 @@ public class ObservationPhaseController
             var focusOutcomeKeywords = focusOutcomeKics.Select(k => k.Keyword).ToList();
             var focusDirectKeywords = focusOutcome is ObservationObject fobsD ? fobsD.DirectObservationKeywords : new List<string>();
 
-            var firstPrompt = _promptConstructor.BuildFirstSentencePrompt(currentNode, locationId, focusOutcome, observationModusMentis.PersonaTone, _worldContext, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
-            var firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, isFirstInBatch: true, ct: ct);
+            var firstQ = _questionFillerService.GetNext(observationModusMentis, QuestionReference.ObserveFirst);
+            var firstPrompt = _promptConstructor.BuildFirstSentencePrompt(currentNode, locationId, focusOutcome, observationModusMentis.PersonaTone, _worldContext, firstQ.PromptText, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
+            var firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, firstQ, isFirstInBatch: true, ct: ct);
 
             var firstKws = _observationExecutor.ExtractKeywordsFromSentences("", firstText, focusOutcomeKeywords, focusDirectKeywords, _random, 3);
             sentences.Add(new NarrationSentence(firstText, firstKws));
@@ -240,11 +246,13 @@ public class ObservationPhaseController
                 var otherKeywords = otherKics.Select(k => k.Keyword).ToList();
                 var otherDirectKeywords = otherOutcome is ObservationObject oobsD ? oobsD.DirectObservationKeywords : new List<string>();
 
-                var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(otherOutcome, previousDescription, observationModusMentis.PersonaReminder, previousKeywordInContext, observationModusMentis.PersonaReminder2);
-                var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, isTransition: true, ct: ct);
+                var transQ2 = _questionFillerService.GetNext(observationModusMentis, QuestionReference.ObserveTransition);
+                var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(otherOutcome, previousDescription, transQ2.PromptText, observationModusMentis.PersonaReminder, previousKeywordInContext, observationModusMentis.PersonaReminder2);
+                var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, transQ2, isTransition: true, ct: ct);
 
-                var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(otherOutcome, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
-                var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, ct: ct);
+                var focusQ2 = _questionFillerService.GetNext(observationModusMentis, QuestionReference.ObserveContinuation);
+                var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(otherOutcome, focusQ2.PromptText, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
+                var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, focusQ2, ct: ct);
 
                 var sampledKws = _observationExecutor.ExtractKeywordsFromSentences(transText, focusText, otherKeywords, otherDirectKeywords, _random, 3);
                 var (transKws, focKws) = _observationExecutor.AssignKeywordsToSentences(sampledKws, transText, focusText);

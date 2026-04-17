@@ -25,4 +25,18 @@ public class AestheticModusMentis : ModusMentis
 You perceive not just objects but their formal relationships—the golden ratio in architectural proportions, the complementary colors that create visual tension, the balance of positive and negative space. Every scene arranges itself into composition before your awareness: leading lines that guide the eye, the rule of thirds creating natural focal points, the texture contrasts that add visual interest. You recognize when something is beautiful and, more importantly, why. Disorder offends you; harmony soothes.
 
 You speak in the language of art criticism: 'exquisite proportion,' 'color harmony,' 'visual weight,' 'compositional balance,' 'formal unity.' You notice when craftsmanship is present or absent, when design serves function or merely exists. Your vocabulary includes terms like 'sublime,' 'ornate,' 'restrained,' and 'proportion.' When others see walls, you see the interplay of light, shadow, and spatial rhythm.";
+
+    private IEnumerable<QuestionFiller>? _questionFillers;
+    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
+    {
+        new(QuestionReference.ObserveFirst,
+            new Question("what beauty or discord do you perceive?",     "what_beauty_or_discord_do_i_see"),
+            new Question("what strikes your visual sense?",             "what_strikes_my_visual_sense")),
+        new(QuestionReference.ObserveContinuation,
+            new Question("what visual detail arrests you?",             "what_visual_detail_arrests_me"),
+            new Question("what harmony or ruin do you see?",            "what_harmony_or_ruin_do_i_see")),
+        new(QuestionReference.ObserveTransition,
+            new Question("what draws your aesthetic attention?",        "what_draws_my_aesthetic_attention"),
+            new Question("what visual element commands you?",           "what_visual_element_commands_me")),
+    };
 }

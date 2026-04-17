@@ -101,7 +101,8 @@ public static class CriticTrees
     #region Difficulty Tree
 
     /// <summary>
-    /// Builds the difficulty tree — a single node asking the LLM to rate difficulty in 4 levels.
+    /// Builds the difficulty tree — a single node asking the LLM to rate situational difficulty in 4 levels.
+    /// The result is used as a modifier (+0..+3) on top of the verb's base difficulty.
     /// </summary>
     public static CriticNode BuildDifficultyTree(string actionText, CriticContext context)
     {
@@ -117,23 +118,81 @@ public static class CriticTrees
             });
     }
 
-    /// <summary>Maps the chosen difficulty id to a 0.0–1.0 score.</summary>
-    public static double CalculateDifficultyFromResult(CriticTreeResult result)
+    /// <summary>
+    /// Returns true if the action's leading verb is a movement/exit verb
+    /// (enter, go, leave, move). Used to decide whether Continue exits to world view
+    /// or restarts observation in the current scene.
+    /// </summary>
+    public static bool IsMovementVerb(string actionText)
     {
-        if (result.Trace.Count == 0) return 0.5;
-        return result.FinalChosenId switch
+        var verb = actionText.Trim()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault()?.ToLowerInvariant() ?? "";
+        return verb is "enter" or "go" or "leave" or "move";
+    }
+
+    /// <summary>
+    /// Returns the base difficulty (1–10) for the leading verb of an action.
+    /// Unknown verbs default to 3.
+    /// </summary>
+    public static int GetVerbBaseDifficulty(string actionText)
+    {
+        var verb = actionText.Trim()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault()?.ToLowerInvariant() ?? "";
+        return verb switch
         {
-            "very_easy" => 0.1,
-            "easy"      => 0.4,
-            "hard"      => 0.7,
-            "very_hard" => 1.0,
-            _           => 0.5
+            "appease"    => 5,
+            "attack"     => 2,
+            "cut"        => 2,
+            "enter"      => 1,
+            "go"         => 1,  // go down / go up
+            "leave"      => 1,
+            "move"       => 1,  // move to area
+            "grab"       => 1,
+            "reconcile"  => 3,
+            "slay"       => 5,
+            "steal"      => 3,
+            "strengthen" => 1,  // strengthen relation
+            "meet"       => 1,  // meet stranger
+            "unlock"     => 4,
+            _            => 3,
         };
     }
 
-    /// <summary>Converts a 0.0–1.0 difficulty score to a 1–10 integer scale.</summary>
-    public static int DifficultyToScale(double difficulty) =>
-        Math.Clamp((int)Math.Ceiling(difficulty * 10), 1, 10);
+    /// <summary>
+    /// Maps the critic's choice to a situational modifier added on top of the verb base:
+    /// very_easy → +0, easy → +1, hard → +2, very_hard → +3.
+    /// </summary>
+    public static int GetDifficultyModifier(CriticTreeResult result)
+    {
+        if (result.Trace.Count == 0) return 1;
+        return result.FinalChosenId switch
+        {
+            "very_easy" => 0,
+            "easy"      => 1,
+            "hard"      => 2,
+            "very_hard" => 3,
+            _           => 1,
+        };
+    }
+
+    /// <summary>
+    /// Combines verb base difficulty and situational modifier into a final 1–10 difficulty level.
+    /// </summary>
+    public static int CalculateFinalDifficulty(string actionText, CriticTreeResult result)
+    {
+        int baseDifficulty = GetVerbBaseDifficulty(actionText);
+        int modifier       = GetDifficultyModifier(result);
+        return Math.Clamp(baseDifficulty + modifier, 1, 10);
+    }
+
+    /// <summary>
+    /// Converts a 1–10 difficulty level to a 0.0–1.0 score used for success probability.
+    /// Level 1 → 0.0, level 10 → 1.0.
+    /// </summary>
+    public static double DifficultyLevelToScore(int level) =>
+        (Math.Clamp(level, 1, 10) - 1) / 9.0;
 
     #endregion
 
@@ -288,18 +347,39 @@ public static class CriticTrees
 
     /// <summary>
     /// Asks the LLM critic whether a combined item can plausibly help realise an action.
-    /// Only "clearly_helps" and "plausibly_helps" are passing choices.
+    /// Uses the raw persona-voice action text (first pass).
+    /// "clearly_helps", "plausibly_helps", and "detoured_use" are passing choices.
     /// </summary>
-    public static CriticNode BuildItemAppropriatenessTree(string actionText, string itemContext, CriticContext context)
+    public static CriticNode BuildItemAppropriatenessTreeByActionText(string actionText, string itemContext, CriticContext context)
     {
         return new CriticNode(
-            name: "ItemAppropriateness",
+            name: "ItemAppropriatenessActionText",
             question: $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} wants to: \"{actionText}\"\nThe character is holding: {itemContext}.\n\nCan {itemContext} plausibly help to realise this action?",
             choices: new List<CriticChoice>
             {
                 new("clearly_helps",    "the item directly enables or clearly assists the action"),
                 new("plausibly_helps",  "the item could plausibly assist in some way"),
-                new("unlikely_to_help", "the item is unlikely to be useful here", isFailure: true, errorMessage: "That item is unlikely to help with this."),
+                new("detoured_use",     "the item could help if used in a creative or detoured way"),
+                new("cannot_help",      "the item cannot help with this action",  isFailure: true, errorMessage: "That item cannot help with this action."),
+                new("makes_no_sense",   "using this item here makes no sense",    isFailure: true, errorMessage: "Using that item here makes no sense."),
+            });
+    }
+
+    /// <summary>
+    /// Asks the LLM critic whether a combined item can plausibly help realise an action.
+    /// Uses a neutral goal-based phrasing (second pass).
+    /// "clearly_helps", "plausibly_helps", and "detoured_use" are passing choices.
+    /// </summary>
+    public static CriticNode BuildItemAppropriatenessTree(string goalText, string modusMentisShortDescription, string itemName, CriticContext context)
+    {
+        return new CriticNode(
+            name: "ItemAppropriateness",
+            question: $"{context.BuildPreamble()}\n\nThe character wants to {goalText} with {modusMentisShortDescription}, using {itemName}.\n\nCan {itemName} plausibly help?",
+            choices: new List<CriticChoice>
+            {
+                new("clearly_helps",    "the item directly enables or clearly assists the action"),
+                new("plausibly_helps",  "the item could plausibly assist in some way"),
+                new("detoured_use",     "the item could help if used in a creative or detoured way"),
                 new("cannot_help",      "the item cannot help with this action",  isFailure: true, errorMessage: "That item cannot help with this action."),
                 new("makes_no_sense",   "using this item here makes no sense",    isFailure: true, errorMessage: "Using that item here makes no sense."),
             });

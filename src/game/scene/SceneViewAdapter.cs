@@ -15,17 +15,21 @@ namespace Cathedral.Game.Scene;
 /// without rewriting the controllers.
 ///
 /// Key mappings:
-///   Area → synthetic NarrationNode (with SceneView-sourced keywords and outcomes)
-///   Spot → synthetic ObservationObject (as an enterable sub-location)
-///   PointOfInterest → synthetic ObservationObject (with items as sub-outcomes)
-///   ItemElement → existing Item (direct pass-through)
-///   VerbView → synthetic ConcreteOutcome (with verb verbatim as transition description)
+///   Area            → SyntheticAreaObservationObject  (ObservationObject with MoveToAreaVerb)
+///   Spot            → SyntheticSpotObject             (ObservationObject with enter verb)
+///   PointOfInterest → SyntheticObservationObject      (ObservationObject with PoI verbs + folded item verbs)
+///   SceneNpc        → SyntheticNpcObservationObject   (ObservationObject with NPC verbs)
+///   ItemElement     → folded into parent PoI as VerbOutcome SubOutcomes (not a standalone observation)
+///
+/// Every synthetic ObservationObject receives an IgnoreVerb SubOutcome as its last entry,
+/// so the GOAL list always includes a "move on" option without ThinkingExecutor injecting it
+/// manually.
 /// </summary>
 public static class SceneViewAdapter
 {
     /// <summary>
     /// Creates a synthetic NarrationNode that represents the current area in the SceneView.
-    /// The node's PossibleOutcomes contain synthetic outcomes derived from SceneView entries.
+    /// The node's PossibleOutcomes contain synthetic ObservationObjects derived from SceneView entries.
     /// This node can be passed to ObservationPhaseController and ThinkingExecutor.
     /// </summary>
     public static SyntheticNarrationNode ToNarrationNode(SceneView view)
@@ -37,7 +41,16 @@ public static class SceneViewAdapter
             view.CurrentArea.Keywords,
             view.CurrentArea);
 
-        // Convert each entry to an outcome
+        // Index item entries by the element reference so PoI construction can look them up.
+        // Items are NOT observation objects — they are verb targets inside their parent PoI.
+        var itemEntryByElement = new Dictionary<Element, SceneViewEntry>();
+        foreach (var entry in view.Entries)
+        {
+            if (entry.Source is ItemElement)
+                itemEntryByElement[entry.Source] = entry;
+        }
+
+        // Convert each entry to an ObservationObject
         foreach (var entry in view.Entries)
         {
             if (entry.Source is Area area && area.Id == view.CurrentArea.Id)
@@ -45,31 +58,32 @@ public static class SceneViewAdapter
 
             if (entry.Source is Area reachableArea)
             {
-                // Reachable areas → VerbOutcome wrapping MoveToAreaVerb
-                foreach (var vv in entry.ApplicableVerbs)
-                    node.PossibleOutcomes.Add(new VerbOutcome(vv, reachableArea));
+                // Reachable areas → ObservationObject with MoveToAreaVerb SubOutcome
+                node.PossibleOutcomes.Add(new SyntheticAreaObservationObject(reachableArea, entry));
             }
             else if (entry.Source is Spot spot)
             {
                 // Spots → synthetic ObservationObject (enterable sub-location)
-                var obs = new SyntheticSpotObject(spot, entry);
-                node.PossibleOutcomes.Add(obs);
+                node.PossibleOutcomes.Add(new SyntheticSpotObject(spot, entry));
             }
             else if (entry.Source is PointOfInterest poi)
             {
-                // PointsOfInterest → synthetic ObservationObject
-                var obs = new SyntheticObservationObject(poi, entry);
-                node.PossibleOutcomes.Add(obs);
+                // PointsOfInterest → ObservationObject; item verb sub-entries are folded in.
+                var itemSubEntries = poi.Items
+                    .Select(ie => itemEntryByElement.GetValueOrDefault(ie))
+                    .Where(e => e != null)
+                    .Select(e => e!)
+                    .ToList();
+                node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry, itemSubEntries));
             }
-            else if (entry.Source is ItemElement itemElement)
+            else if (entry.Source is ItemElement)
             {
-                // Items → pass through (Item extends ConcreteOutcome)
-                node.PossibleOutcomes.Add(itemElement.Item);
+                // Items are handled as verb targets inside their parent PoI — skip standalone.
             }
             else if (entry.Source is SceneNpc npc)
             {
-                // NPCs → synthetic outcome
-                node.PossibleOutcomes.Add(new NpcElementOutcome(npc, entry));
+                // NPCs → ObservationObject with all NPC verbs (MeetStranger, Attack, etc.)
+                node.PossibleOutcomes.Add(new SyntheticNpcObservationObject(npc, entry));
             }
         }
 
@@ -77,22 +91,11 @@ public static class SceneViewAdapter
     }
 
     /// <summary>
-    /// Given a keyword click on a SceneView, resolves which VerbView(s) are applicable
-    /// and returns them paired with their target elements.
+    /// Creates a VerbOutcome wrapping IgnoreVerb for the given element.
+    /// Injected as the last SubOutcome of every synthetic ObservationObject.
     /// </summary>
-    public static List<VerbView> GetVerbsForKeyword(SceneView view, string keyword)
-    {
-        var result = new List<VerbView>();
-        foreach (var entry in view.Entries)
-        {
-            if (entry.ObservationKeywords.Any(k =>
-                    string.Equals(k.Keyword, keyword, StringComparison.OrdinalIgnoreCase)))
-            {
-                result.AddRange(entry.ApplicableVerbs);
-            }
-        }
-        return result;
-    }
+    public static VerbOutcome MakeIgnoreSubOutcome(Element target)
+        => new VerbOutcome(new VerbView(IgnoreVerb.Instance, "move on", target), target);
 }
 
 /// <summary>
@@ -135,27 +138,48 @@ public class SyntheticNarrationNode : NarrationNode
 
 /// <summary>
 /// A synthetic ObservationObject backed by a <see cref="PointOfInterest"/>.
+/// Items inside the PoI are NOT separate observations — their applicable verbs are folded
+/// in as SubOutcomes (e.g. "grab the apple", "grab the leaf") so the player can choose
+/// a specific verb+item combination during the thinking GOAL phase.
+/// Keywords aggregate the PoI's own keywords plus all item keywords.
 /// </summary>
 public class SyntheticObservationObject : ObservationObject
 {
     private readonly PointOfInterest _poi;
-    private readonly SceneViewEntry _entry;
+    private readonly List<SceneViewEntry> _itemSubEntries;
 
-    public SyntheticObservationObject(PointOfInterest poi, SceneViewEntry entry)
+    public SyntheticObservationObject(PointOfInterest poi, SceneViewEntry entry, List<SceneViewEntry> itemSubEntries)
     {
-        _poi   = poi;
-        _entry = entry;
+        _poi            = poi;
+        _itemSubEntries = itemSubEntries;
 
         SubOutcomes = new List<ConcreteOutcome>();
-        foreach (var itemElement in poi.Items)
-            SubOutcomes.Add(itemElement.Item);
 
+        // Verbs that act on the PoI itself (steal, open door, etc.)
         foreach (var vv in entry.ApplicableVerbs)
             SubOutcomes.Add(new VerbOutcome(vv, poi));
+
+        // Verbs that act on items inside the PoI (e.g. "grab the apple", "grab the leaf")
+        foreach (var itemEntry in itemSubEntries)
+            foreach (var vv in itemEntry.ApplicableVerbs)
+                SubOutcomes.Add(new VerbOutcome(vv, itemEntry.Source));
+
+        SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(poi));
     }
 
     public override string ObservationId => _poi.DisplayName.ToLowerInvariant().Replace(' ', '_');
-    public override List<KeywordInContext> ObservationKeywordsInContext => _poi.Keywords;
+
+    /// Aggregates the PoI's own keywords with all contained items' keywords.
+    public override List<KeywordInContext> ObservationKeywordsInContext
+    {
+        get
+        {
+            var result = new List<KeywordInContext>(_poi.Keywords);
+            foreach (var itemEntry in _itemSubEntries)
+                result.AddRange(itemEntry.ObservationKeywords);
+            return result;
+        }
+    }
 
     public override string GenerateNeutralDescription(int locationId = 0)
     {
@@ -181,6 +205,8 @@ public class SyntheticSpotObject : ObservationObject
         // Expose enter verb as sub-outcome
         foreach (var vv in entry.ApplicableVerbs)
             SubOutcomes.Add(new VerbOutcome(vv, spot));
+
+        SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(spot));
     }
 
     public override string ObservationId => _spot.DisplayName.ToLowerInvariant().Replace(' ', '_');
@@ -188,6 +214,58 @@ public class SyntheticSpotObject : ObservationObject
 
     public override string GenerateNeutralDescription(int locationId = 0)
         => _spot.DisplayName.ToLowerInvariant();
+}
+
+/// <summary>
+/// A synthetic ObservationObject backed by a reachable <see cref="Area"/>.
+/// SubOutcomes contain MoveToAreaVerb (and any other applicable verbs) plus IgnoreVerb.
+/// </summary>
+public class SyntheticAreaObservationObject : ObservationObject
+{
+    private readonly Area _area;
+
+    public SyntheticAreaObservationObject(Area area, SceneViewEntry entry)
+    {
+        _area       = area;
+        SubOutcomes = new List<ConcreteOutcome>();
+
+        foreach (var vv in entry.ApplicableVerbs)
+            SubOutcomes.Add(new VerbOutcome(vv, area));
+
+        SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(area));
+    }
+
+    public override string ObservationId => _area.DisplayName.ToLowerInvariant().Replace(' ', '_');
+    public override List<KeywordInContext> ObservationKeywordsInContext => _area.Keywords;
+
+    public override string GenerateNeutralDescription(int locationId = 0)
+        => _area.DisplayName.ToLowerInvariant();
+}
+
+/// <summary>
+/// A synthetic ObservationObject backed by a <see cref="SceneNpc"/>.
+/// SubOutcomes contain all applicable NPC verbs (MeetStranger, Attack, Appease, etc.) plus IgnoreVerb.
+/// </summary>
+public class SyntheticNpcObservationObject : ObservationObject
+{
+    private readonly SceneNpc _npc;
+
+    public SyntheticNpcObservationObject(SceneNpc npc, SceneViewEntry entry)
+    {
+        _npc        = npc;
+        SubOutcomes = new List<ConcreteOutcome>();
+
+        foreach (var vv in entry.ApplicableVerbs)
+            SubOutcomes.Add(new VerbOutcome(vv, npc));
+
+        SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(npc));
+    }
+
+    public override string ObservationId => _npc.DisplayName.ToLowerInvariant().Replace(' ', '_');
+    public override List<KeywordInContext> ObservationKeywordsInContext => _npc.Keywords;
+
+    public override string GenerateNeutralDescription(int locationId = 0)
+        => _npc.DisplayName.ToLowerInvariant();
 }
 
 /// <summary>
@@ -209,23 +287,4 @@ public class VerbOutcome : ConcreteOutcome
 
     public override List<KeywordInContext> OutcomeKeywordsInContext =>
         Target.Keywords.Take(2).ToList();
-}
-
-/// <summary>
-/// A synthetic outcome representing an NPC in the scene.
-/// </summary>
-public class NpcElementOutcome : ConcreteOutcome
-{
-    public SceneNpc Npc { get; }
-    private readonly SceneViewEntry _entry;
-
-    public NpcElementOutcome(SceneNpc npc, SceneViewEntry entry)
-    {
-        Npc    = npc;
-        _entry = entry;
-    }
-
-    public override string DisplayName => Npc.DisplayName;
-    public override string ToNaturalLanguageString() => $"interact with {Npc.DisplayName}";
-    public override List<KeywordInContext> OutcomeKeywordsInContext => Npc.Keywords;
 }

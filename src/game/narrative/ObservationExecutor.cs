@@ -16,11 +16,13 @@ public class ObservationExecutor
 {
     private readonly LlamaServerManager _llamaServer;
     private readonly ModusMentisSlotManager _slotManager;
+    private readonly QuestionFillerService _questionFillerService;
 
-    public ObservationExecutor(LlamaServerManager llamaServer, ModusMentisSlotManager slotManager)
+    public ObservationExecutor(LlamaServerManager llamaServer, ModusMentisSlotManager slotManager, QuestionFillerService? questionFillerService = null)
     {
         _llamaServer = llamaServer ?? throw new ArgumentNullException(nameof(llamaServer));
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
+        _questionFillerService = questionFillerService ?? QuestionFillerService.Instance;
     }
     
     /// <summary>
@@ -135,18 +137,19 @@ public class ObservationExecutor
     public async Task<string> GenerateSentenceFromPromptAsync(
         int slotId,
         string prompt,
+        Question question,
         bool isFirstInBatch = false,
         bool isTransition = false,
         CancellationToken ct = default)
     {
         var schema = isFirstInBatch
-            ? LLMSchemaConfig.CreateObservationSchema()
+            ? LLMSchemaConfig.CreateObservationSchema(question.JsonFieldName)
             : isTransition
-                ? LLMSchemaConfig.CreateTransitionObservationSchema()
-                : LLMSchemaConfig.CreateContinuationObservationSchema();
+                ? LLMSchemaConfig.CreateTransitionObservationSchema(question.JsonFieldName)
+                : LLMSchemaConfig.CreateContinuationObservationSchema(question.JsonFieldName);
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
-        var parsed = ParseObservationResponse(jsonResponse ?? "");
+        var parsed = ParseObservationResponse(jsonResponse ?? "", question.JsonFieldName);
         return parsed;
     }
 
@@ -159,7 +162,7 @@ public class ObservationExecutor
         var schema = LLMSchemaConfig.CreateSpeakingSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
-        return ParseObservationResponse(jsonResponse ?? "");
+        return ParseObservationResponse(jsonResponse ?? "", "what_do_i_say");
     }
 
     /// <summary>
@@ -248,7 +251,7 @@ public class ObservationExecutor
     }
 
 
-    private string ParseObservationResponse(string jsonResponse)
+    private string ParseObservationResponse(string jsonResponse, string primaryFieldName)
     {
         try
         {
@@ -259,7 +262,9 @@ public class ObservationExecutor
             var root = doc.RootElement;
 
             string? text = null;
-            foreach (var fieldName in new[] { "what_do_i_feel_and_observe", "what_catches_my_attention", "what_do_i_say" })
+            // Try the dynamic field name first, then fall back to legacy names
+            var candidates = new[] { primaryFieldName, "what_do_i_feel_and_observe", "what_catches_my_attention", "what_do_i_say" };
+            foreach (var fieldName in candidates.Distinct())
             {
                 if (root.TryGetProperty(fieldName, out var prop))
                 {

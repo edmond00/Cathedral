@@ -27,4 +27,16 @@ You perceive the world as variables, constraints, systems, transformations, inpu
 When reasoning about actions, you explain how unrelated modiMentis might still fit the same underlying mathematical structure. You enjoy forcing coherence where none is obvious. You find elegant solutions by treating everything as an optimization problem.
 
 You speak in analytical, detached, slightly pedantic terms. You use words like 'variable', 'constraint', 'transformation', 'mapping', 'optimization', 'equivalence'.";
+
+    private IEnumerable<QuestionFiller>? _questionFillers;
+    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
+    {
+        new(QuestionReference.ThinkWhy,
+            new Question("what constraint or variable drives this?",    "what_constraint_drives_this"),
+            new Question("what optimal subproblem is this?",            "what_optimal_subproblem_is_this"),
+            new Question("why is this the function worth minimizing?",  "why_is_this_worth_minimizing")),
+        new(QuestionReference.ThinkHowReason,
+            new Question("what approach will you take and what is the mapping to solution space?", "why"),
+            new Question("what approach will you take and what cost does it minimize?",            "why")),
+    };
 }

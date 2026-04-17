@@ -39,11 +39,11 @@ namespace Cathedral.Fight
                 terminal.SetCell(OffsetX + x, OffsetY + y, cell.Glyph, cell.TextColor, cell.BgColor);
             }
 
-            // Overlay zone glyphs: enemies (orange ☹) and party (white ☻)
+            // Overlay zone glyphs: enemies (purple ☹) and party (white ☻)
             OverlayZoneGlyphs(terminal, FightArea.ZoneColStart, FightArea.EnemyRowStart,
                 FightArea.ZoneColEnd - FightArea.ZoneColStart + 1,
                 FightArea.EnemyRowEnd - FightArea.EnemyRowStart + 1,
-                '☹', Config.Colors.Orange);
+                '☹', Config.Colors.Purple);
 
             OverlayZoneGlyphs(terminal, FightArea.ZoneColStart, FightArea.PlayerRowStart,
                 FightArea.ZoneColEnd - FightArea.ZoneColStart + 1,
@@ -89,7 +89,7 @@ namespace Cathedral.Fight
                 (TerrainType.FreeSpace,         '.', Config.Colors.DarkGray35,     "Free space"),
                 (TerrainType.SoftObstacle,      '·', Config.Colors.DarkYellowGrey, "Soft obstacle  (slow)"),
                 (TerrainType.TreacherousTerrain,'~', Config.Colors.MediumYellow,   "Treacherous    (fall risk)"),
-                (TerrainType.DangerousTerrain,  '∴', Config.Colors.Orange,         "Dangerous      (wound risk)"),
+                (TerrainType.DangerousTerrain,  '∴', Config.Colors.Purple,         "Dangerous      (wound risk)"),
                 (TerrainType.HardObstacle,      '#', Config.Colors.LightGray75,    "Hard obstacle  (blocks)"),
             };
 

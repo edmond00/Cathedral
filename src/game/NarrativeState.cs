@@ -206,6 +206,12 @@ public class NarrativeState
     public bool RequestedExit { get; set; } = false;
 
     /// <summary>
+    /// When true, clicking Continue exits to world view instead of restarting observation.
+    /// Set for movement/exit actions (leave, enter, go, move); false for all other actions.
+    /// </summary>
+    public bool ShouldExitOnContinue { get; set; } = false;
+
+    /// <summary>
     /// Error message if something went wrong (null if no error).
     /// </summary>
     public string? ErrorMessage { get; set; } = null;
@@ -246,6 +252,7 @@ public class NarrativeState
         InteractionModeIsForKeyword = false;
         ActionPendingModeSelection = null;
         PendingTransitionNode = null;
+        ShouldExitOnContinue = false;
         ErrorMessage = null;
         ClearDiceRoll();
     }
@@ -280,6 +287,7 @@ public class NarrativeState
         InteractionModeIsForKeyword = false;
         ActionPendingModeSelection = null;
         PendingTransitionNode = null;
+        ShouldExitOnContinue = false;
         ErrorMessage = null;
         ClearDiceRoll();
         // Note: ScrollOffset is NOT reset - it's managed by the scroll buffer
@@ -316,11 +324,12 @@ public class NarrativeState
         InteractionModeIsForKeyword = false;
         ActionPendingModeSelection = null;
         PendingTransitionNode = null;
+        ShouldExitOnContinue = false;
         ErrorMessage = null;
         ClearDiceRoll();
         // Note: ScrollOffset is NOT reset - it's managed by the scroll buffer
     }
-    
+
     /// <summary>
     /// Start a dice roll animation.
     /// </summary>

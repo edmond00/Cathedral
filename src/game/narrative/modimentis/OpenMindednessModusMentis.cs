@@ -25,4 +25,15 @@ public class OpenMindednessModusMentis : ModusMentis
 You understand that certainty is the enemy of truth, that every framework is partial, that today's obvious facts were yesterday's heresies. You approach each new perspective not with defensive skepticism but with genuine curiosity—what if they're right? What do they see that I'm missing? You recognize that your own biases create blind spots, that your assumptions are cultural artifacts, that alternative explanations deserve serious consideration before dismissal. Growth requires the willingness to be wrong.
 
 Your speech is exploratory and conditional: 'what if we're wrong about this?' 'consider the alternative explanation,' 'perhaps we're missing something,' 'let's examine our assumptions.' You speak with qualifiers and invitations to reconsider. You are patient with contradictory views and impatient with dogmatic certainty. When others defend positions rigidly, you see walls that prevent learning.";
+
+    private IEnumerable<QuestionFiller>? _questionFillers;
+    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
+    {
+        new(QuestionReference.ThinkWhy,
+            new Question("what alternative view makes this worth exploring?","what_alternative_view_drives_this"),
+            new Question("what possibility does this open?",            "what_possibility_does_this_open")),
+        new(QuestionReference.ThinkHowReason,
+            new Question("what approach will you take and why does this angle seem worth trying?", "why"),
+            new Question("what approach and what assumption does it question?",                    "why")),
+    };
 }

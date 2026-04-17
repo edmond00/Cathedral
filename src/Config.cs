@@ -177,6 +177,12 @@ public static class Config
         public static readonly Vector4 DarkYellowGrey = new(0.6f, 0.6f, 0.2f, 1.0f);   // Dark yellow-grey for important non-gameplay elements
         public static readonly Vector4 GoldYellow = new(1.0f, 0.85f, 0.2f, 1.0f);      // Gold yellow for special highlights (dice sixes)
         
+        // Purple variants (for negative elements, wounds, danger)
+        public static readonly Vector4 DarkPurple = new(0.3f, 0.0f, 0.45f, 1.0f);     // Dark purple for depleted HP, subtle negatives
+        public static readonly Vector4 Purple = new(0.55f, 0.0f, 0.75f, 1.0f);         // Standard purple for wounds, enemy UI
+        public static readonly Vector4 BrightPurple = new(0.72f, 0.0f, 1.0f, 1.0f);   // Bright purple for wound headers, defeat
+        public static readonly Vector4 LightPurple = new(0.85f, 0.55f, 1.0f, 1.0f);   // Light purple for severity/gradients
+
         // Semi-transparent colors
         public static readonly Vector4 BlackTransparent = new(0.0f, 0.0f, 0.0f, 0.9f);
         public static readonly Vector4 DarkYellowTransparent = new(0.2f, 0.2f, 0.0f, 0.9f); // Dark yellow transparent for hover backgrounds
@@ -232,7 +238,7 @@ public static class Config
 
         /// <summary>
         /// Color for a difficulty level on the 1-10 scale:
-        /// two-segment gradient: white (1) → yellow (5-6) → red (10).
+        /// two-segment gradient: white (1) → yellow (5-6) → purple (10).
         /// </summary>
         public static Vector4 DifficultyLevelColor(int level)
         {
@@ -245,9 +251,9 @@ public static class Config
             }
             else
             {
-                // yellow → red
+                // yellow → purple: (1,1,0) → (0.72,0,1)
                 float s = (t - 0.5f) / 0.5f;
-                return new Vector4(1.0f, 1.0f - s, 0.0f, 1.0f);
+                return new Vector4(1.0f - s * 0.28f, 1.0f - s, s, 1.0f);
             }
         }
         
@@ -467,15 +473,14 @@ public static class Config
         [
             new Question(
                 Name: "PhysicalFeasibility",
-                Text: "Can a human body physically perform this action at all?",
+                Text: "Can a human body physically attempt this action — regardless of whether it succeeds? Judge only whether a human body can make the attempt, not the outcome. Trying to outrun a horse is a valid attempt (it will likely fail, but the body can try). Flying unaided is not a valid attempt (human anatomy cannot produce flight at all).",
                 Choices:
                 [
-                    new("clearly_possible",    "clearly within human physical capability",            IsFailure: false),
-                    new("possible_with_effort","possible but requires significant physical effort",   IsFailure: false),
-                    new("borderline",          "borderline — requires exceptional ability",           IsFailure: false),
-                    new("barely_possible",     "barely conceivable for an exceptional individual",   IsFailure: false),
-                    new("physically_impossible","physically impossible for any human",                IsFailure: true,
-                        ErrorMessage: "This action is physically impossible"),
+                    new("clearly_possible",     "the human body can clearly attempt this",                           IsFailure: false),
+                    new("possible_with_effort", "the body can attempt this, though it demands exceptional exertion", IsFailure: false),
+                    new("borderline",           "the body can barely attempt this — at the very edge of anatomy",    IsFailure: false),
+                    new("physically_impossible","the human body cannot even attempt this — anatomy prevents it",      IsFailure: true,
+                        ErrorMessage: "The human body cannot attempt this action"),
                 ]
             ),
 

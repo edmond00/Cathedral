@@ -110,6 +110,7 @@ You are observing {WithArticle(description)}.{keywordHint}
         Protagonist protagonist,
         WorldContext worldContext,
         ConcreteOutcome targetOutcome,
+        string questionText,
         KeywordInContext? keywordInContext = null)
     {
         string personaToneLine = thinkingModusMentis.PersonaTone != null
@@ -129,7 +130,7 @@ You are observing {WithArticle(description)}.{keywordHint}
 
 {attentionLine} Now you want to {outcomeDescription}.
 
-{reminderClause}why do you want this?
+{reminderClause}{questionText}
 {Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
     }
 
@@ -140,7 +141,8 @@ You are observing {WithArticle(description)}.{keywordHint}
     public string BuildHowPrompt(
         string outcomeDescription,
         List<ModusMentis> actionModiMentis,
-        ModusMentis thinkingModusMentis)
+        ModusMentis thinkingModusMentis,
+        string questionText)
     {
         string reminderClause = thinkingModusMentis.PersonaReminder != null
             ? $"As a {thinkingModusMentis.PersonaReminder}, "
@@ -151,7 +153,7 @@ You are observing {WithArticle(description)}.{keywordHint}
 You could proceed:
 {string.Join("\n", actionModiMentis.Select(s => $"- with {s.SkillMeans}"))}
 
-{reminderClause}what approach will you take and why?
+{reminderClause}{questionText}
 {Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
     }
 
@@ -233,7 +235,8 @@ You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
         Protagonist protagonist,
         ModusMentis actionModusMentis,
         WorldContext worldContext,
-        ConcreteOutcome targetOutcome)
+        ConcreteOutcome targetOutcome,
+        string questionText)
     {
         string personaToneLine = actionModusMentis.PersonaTone != null
             ? $"You are a {actionModusMentis.PersonaTone}.\n"
@@ -243,13 +246,14 @@ You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
             : "";
         string noticedClause = keywordInContext != null ? keywordInContext.Context : keyword;
         string transition = targetOutcome.GetKeywordToOutcomeTransition(keyword, keywordInContext);
+        string formattedQuestion = string.Format(questionText, actionModusMentis.ShortDescription);
 
         return $@"{personaToneLine}{WorldContext.EpochContext}
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
 You noticed {noticedClause}. {transition} Now you want to {outcomeDescription}.
 
-{reminderClause}expert in {actionModusMentis.ShortDescription}, explain simply what you are going to try to do.
+{reminderClause}{formattedQuestion}
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
     }
 

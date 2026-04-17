@@ -18,11 +18,13 @@ public class OutcomeNarrator
 {
     private readonly LlamaServerManager _llmManager;
     private readonly ModusMentisSlotManager _slotManager;
+    private readonly QuestionFillerService _questionFillerService;
 
-    public OutcomeNarrator(LlamaServerManager llmManager, ModusMentisSlotManager slotManager)
+    public OutcomeNarrator(LlamaServerManager llmManager, ModusMentisSlotManager slotManager, QuestionFillerService? questionFillerService = null)
     {
         _llmManager = llmManager;
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
+        _questionFillerService = questionFillerService ?? QuestionFillerService.Instance;
     }
 
     /// <summary>
@@ -41,6 +43,9 @@ public class OutcomeNarrator
         // Ensure narrator slot is initialized with action modusMentis's persona
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
 
+        // Resolve questions from the filler service
+        var happenedQ = _questionFillerService.GetNext(actionModusMentis, QuestionReference.OutcomeHappened);
+
         // Build prompt
         string prompt = BuildNarrationPrompt(
             action,
@@ -49,10 +54,11 @@ public class OutcomeNarrator
             succeeded,
             difficulty,
             protagonist,
+            happenedQ.PromptText,
             failureHint);
 
         // Build JSON schema for narration
-        var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
+        var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema(happenedQ.JsonFieldName);
 
         string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
 
@@ -69,7 +75,7 @@ public class OutcomeNarrator
         try
         {
             using var doc = JsonDocument.Parse(jsonResponse);
-            narrationText = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_happened").GetString() ?? "");
+            narrationText = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty(happenedQ.JsonFieldName).GetString() ?? "");
             if (string.IsNullOrWhiteSpace(narrationText))
                 return GenerateFallbackNarration(action, succeeded, outcome);
         }
@@ -79,7 +85,7 @@ public class OutcomeNarrator
         }
 
         // Follow-up: what do you feel?
-        string feeling = await RequestFeelingAsync(slotId, actionModusMentis.PersonaReminder2, cancellationToken);
+        string feeling = await RequestFeelingAsync(slotId, actionModusMentis, cancellationToken);
         return string.IsNullOrWhiteSpace(feeling)
             ? narrationText
             : $"{narrationText} {feeling}";
@@ -105,15 +111,17 @@ public class OutcomeNarrator
             ? $"As a {actionModusMentis.PersonaReminder}, "
             : "";
 
+        var happenedQ = _questionFillerService.GetNext(actionModusMentis, QuestionReference.OutcomeHappened);
+
         string prompt = $@"{personaToneLine}
 {WorldContext.EpochContext}
 You tried to {action.ActionText} but it could not happen.
 {plausibilityError}
 
-{reminderClause}what happened?
+{reminderClause}{happenedQ.PromptText}
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
 
-        var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
+        var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema(happenedQ.JsonFieldName);
         string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
 
         string? jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf, cancellationToken);
@@ -127,7 +135,7 @@ You tried to {action.ActionText} but it could not happen.
         try
         {
             using var doc = JsonDocument.Parse(jsonResponse);
-            narrationText = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty("what_happened").GetString() ?? "");
+            narrationText = TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty(happenedQ.JsonFieldName).GetString() ?? "");
             if (string.IsNullOrWhiteSpace(narrationText))
                 return plausibilityError;
         }
@@ -137,7 +145,7 @@ You tried to {action.ActionText} but it could not happen.
         }
 
         // Follow-up: what do you feel?
-        string feeling = await RequestFeelingAsync(slotId, actionModusMentis.PersonaReminder2, cancellationToken);
+        string feeling = await RequestFeelingAsync(slotId, actionModusMentis, cancellationToken);
         return string.IsNullOrWhiteSpace(feeling)
             ? narrationText
             : $"{narrationText} {feeling}";
@@ -217,6 +225,7 @@ You want to use this item to realize this action but it is not suitable.
         bool succeeded,
         double difficulty,
         Protagonist protagonist,
+        string questionText,
         string? failureHint = null)
     {
         string personaToneLine = actionModusMentis.PersonaTone != null
@@ -250,7 +259,7 @@ You want to use this item to realize this action but it is not suitable.
 You tried to {action.ActionText}.
 {resultLine}
 
-{reminderClause}what happened?
+{reminderClause}{questionText}
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
     }
 
@@ -259,10 +268,11 @@ You tried to {action.ActionText}.
     /// The slot still holds the narration context, so no prompt reset is needed.
     /// Returns the parsed feeling sentence, or empty string on failure.
     /// </summary>
-    private async Task<string> RequestFeelingAsync(int slotId, string? personaReminder2, CancellationToken cancellationToken)
+    private async Task<string> RequestFeelingAsync(int slotId, ModusMentis actionModusMentis, CancellationToken cancellationToken)
     {
-        string prompt = "What do you feel about this outcome?\n" + Config.Narrative.AnswerInstructionFor(personaReminder2);
-        var schema = LLMSchemaConfig.CreateFeelingSchema();
+        var feelQ = _questionFillerService.GetNext(actionModusMentis, QuestionReference.OutcomeFeel);
+        string prompt = feelQ.PromptText + "\n" + Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2);
+        var schema = LLMSchemaConfig.CreateFeelingSchema(feelQ.JsonFieldName);
         string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
 
         string? jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf, cancellationToken);
@@ -273,7 +283,7 @@ You tried to {action.ActionText}.
         {
             using var doc = JsonDocument.Parse(jsonResponse);
             return TextTruncationUtils.TrimToLastSentence(
-                doc.RootElement.GetProperty("what_i_feel").GetString() ?? "");
+                doc.RootElement.GetProperty(feelQ.JsonFieldName).GetString() ?? "");
         }
         catch (JsonException)
         {

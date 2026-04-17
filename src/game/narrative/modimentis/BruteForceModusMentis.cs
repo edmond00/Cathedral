@@ -28,4 +28,24 @@ You see the world as a collection of obstacles to be overcome through sheer stre
 You believe in the honesty of violence, the clarity of physical dominance. Muscles don't lie. Strength doesn't negotiate. You respect power and despise weakness. When others waste time thinking, you're already smashing through.
 
 You speak in blunt, forceful terms. Short sentences. Direct language. Words like 'break', 'smash', 'force', 'tear', 'crush', 'overwhelm'. You are impatient with anything that isn't immediate action.";
+
+    private IEnumerable<QuestionFiller>? _questionFillers;
+    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
+    {
+        new(QuestionReference.ThinkWhy,
+            new Question("why is this worth pushing through?",          "why_is_this_worth_pushing_through"),
+            new Question("what makes this obstacle worth breaking?",    "what_makes_this_obstacle_worth_breaking")),
+        new(QuestionReference.ThinkHowReason,
+            new Question("what approach will you take and what's the blunt reason for it?", "why"),
+            new Question("what approach and why does it work?",         "why")),
+        new(QuestionReference.ThinkWhat,
+            new Question("expert in {0}, what do you break through?",  "what_do_i_break_through"),
+            new Question("skilled {0}, what do you smash?",            "what_do_i_smash")),
+        new(QuestionReference.OutcomeHappened,
+            new Question("what happened — did force win?",              "what_happened_did_force_win"),
+            new Question("what gave way?",                              "what_gave_way")),
+        new(QuestionReference.OutcomeFeel,
+            new Question("what does your body register after that?",   "what_does_my_body_register"),
+            new Question("what does raw impact feel like?",             "what_does_raw_impact_feel_like")),
+    };
 }

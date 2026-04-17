@@ -2068,12 +2068,28 @@ uniform sampler2D uAtlas;
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
-    
+
     if (texLuminance > 0.1) {
-        // Compute luminosity of the original vertex color
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
-        // Use the luminosity as a grayscale value
-        FragColor = vec4(colorLuminance, colorLuminance, colorLuminance, 1.0);
+
+        if (vColor.a > 3.5) {
+            // Agricultural field - midpoint between grayscale and dark yellow
+            float v = mix(0.2, 0.72, colorLuminance);
+            FragColor = vec4(mix(colorLuminance, v, 0.5),
+                             mix(colorLuminance, v * 0.84, 0.5),
+                             colorLuminance * 0.5, 1.0);
+        } else if (vColor.a > 2.5) {
+            // Human construction - dark yellow / ochre scale
+            float v = mix(0.2, 0.72, colorLuminance);
+            FragColor = vec4(v, v * 0.84, v * 0.10, 1.0);
+        } else if (vColor.a > 1.5) {
+            // Water - dark purple scale
+            float v = mix(0.28, 0.68, colorLuminance);
+            FragColor = vec4(v * 0.45, 0.0, v, 1.0);
+        } else {
+            // Nature - grayscale
+            FragColor = vec4(colorLuminance, colorLuminance, colorLuminance, 1.0);
+        }
     } else {
         discard;
     }
@@ -2113,13 +2129,28 @@ uniform float uDarkeningFactor;
 void main() {
     vec4 texSample = texture(uAtlas, vUv);
     float texLuminance = dot(texSample.rgb, vec3(0.299, 0.587, 0.114));
-    
+
     if (texLuminance > 0.1) {
-        // Compute luminosity of the original vertex color
         float colorLuminance = dot(vColor.rgb, vec3(0.299, 0.587, 0.114));
-        // Use the luminosity as a grayscale value, but darker (multiply by darkening factor)
-        float darkenedLuminance = colorLuminance * uDarkeningFactor;
-        FragColor = vec4(darkenedLuminance, darkenedLuminance, darkenedLuminance, 1.0);
+
+        if (vColor.a > 3.5) {
+            // Agricultural field - midpoint between grayscale and dark yellow, dimmed
+            float v = mix(0.2, 0.72, colorLuminance) * uDarkeningFactor;
+            float L = colorLuminance * uDarkeningFactor;
+            FragColor = vec4(mix(L, v, 0.5), mix(L, v * 0.84, 0.5), L * 0.5, 1.0);
+        } else if (vColor.a > 2.5) {
+            // Human construction - dark yellow, dimmed
+            float v = mix(0.2, 0.72, colorLuminance) * uDarkeningFactor;
+            FragColor = vec4(v, v * 0.84, v * 0.10, 1.0);
+        } else if (vColor.a > 1.5) {
+            // Water - dark purple, dimmed
+            float v = mix(0.12, 0.6, colorLuminance) * uDarkeningFactor;
+            FragColor = vec4(v * 0.45, 0.0, v, 1.0);
+        } else {
+            // Nature - grayscale, dimmed
+            float darkenedLuminance = colorLuminance * uDarkeningFactor;
+            FragColor = vec4(darkenedLuminance, darkenedLuminance, darkenedLuminance, 1.0);
+        }
     } else {
         discard;
     }

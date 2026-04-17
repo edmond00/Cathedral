@@ -275,46 +275,61 @@ public class SceneDebugWindow : Form
         var view  = _scene.View(_pov);
         var added = new HashSet<string>();
 
-        // Central node: current area (or current spot if inside one)
+        // Hub: current area or spot
         string hubId;
         string hubLabel;
+        MsaglColor hubColor;
         if (_pov.InSpot != null)
         {
             hubId    = _pov.InSpot.Id.ToString();
             hubLabel = $"★ {_pov.InSpot.DisplayName} (spot)";
-            AddNode(msagl, added, hubId, hubLabel, ColorSpot, MsaglShape.Diamond);
+            hubColor = ColorSpot;
         }
         else
         {
             hubId    = view.CurrentArea.Id.ToString();
             hubLabel = $"★ {view.CurrentArea.DisplayName}";
-            AddNode(msagl, added, hubId, hubLabel, ColorArea, MsaglShape.Diamond);
+            hubColor = ColorArea;
         }
+        AddNode(msagl, added, hubId, hubLabel, hubColor, MsaglShape.Diamond);
 
-        foreach (var entry in view.Entries)
+        // Build outcomes through the adapter — all entries now produce ObservationObjects.
+        var node = SceneViewAdapter.ToNarrationNode(view);
+        for (int oi = 0; oi < node.PossibleOutcomes.Count; oi++)
         {
-            var elId = entry.Source.Id.ToString();
-            if (elId == hubId) continue;
+            if (node.PossibleOutcomes[oi] is not ObservationObject obs) continue;
 
-            MsaglColor fill;
-            string prefix = "";
-            if (entry.Source is Spot)                          { fill = ColorSpot;           prefix = "⊙ "; }
-            else if (entry.Source is PointOfInterest)          { fill = ColorPointOfInterest; }
-            else if (entry.Source is ItemElement)              { fill = ColorItem;            }
-            else if (entry.Source is SceneNpc npcEntry)        { fill = ColorNpc;             prefix = $"NPC ({npcEntry.Entity.SpeciesName}): "; }
-            else if (entry.Source is Area)                     { fill = ColorReachable;       prefix = "→ "; }
-            else                                               { fill = ColorKeyword;         }
-
-            AddNode(msagl, added, elId, $"{prefix}{entry.Source.DisplayName}", fill);
-            msagl.AddEdge(hubId, "", elId).Attr.Color = new MsaglColor(100, 100, 110);
-
-            // Verb verbatim sub-nodes
-            for (int i = 0; i < entry.ApplicableVerbs.Count; i++)
+            MsaglColor obsColor = obs switch
             {
-                var vv        = entry.ApplicableVerbs[i];
-                var verbNodeId = $"v_{elId}_{i}";
-                AddNode(msagl, added, verbNodeId, vv.Verbatim, ColorVerb, MsaglShape.Octagon);
-                msagl.AddEdge(elId, "", verbNodeId).Attr.Color = new MsaglColor(180, 80, 80);
+                SyntheticAreaObservationObject => ColorReachable,
+                SyntheticNpcObservationObject  => ColorNpc,
+                SyntheticSpotObject            => ColorSpot,
+                SyntheticObservationObject     => ColorPointOfInterest,
+                _                              => ColorKeyword,
+            };
+
+            string obsId    = $"obs_{oi}_{obs.ObservationId}";
+            string obsLabel = obs switch
+            {
+                SyntheticAreaObservationObject => $"→ {obs.GenerateNeutralDescription()}",
+                SyntheticNpcObservationObject  => $"NPC: {obs.GenerateNeutralDescription()}",
+                SyntheticSpotObject            => $"⊙ {obs.GenerateNeutralDescription()}",
+                _                             => obs.GenerateNeutralDescription(),
+            };
+
+            AddNode(msagl, added, obsId, obsLabel, obsColor);
+            msagl.AddEdge(hubId, "", obsId).Attr.Color = new MsaglColor(100, 100, 110);
+
+            // Verb sub-nodes (VerbOutcomes only; IgnoreVerb shown in grey)
+            for (int vi = 0; vi < obs.SubOutcomes.Count; vi++)
+            {
+                if (obs.SubOutcomes[vi] is not VerbOutcome vo) continue;
+                bool isIgnore  = vo.VerbView.Verb is IgnoreVerb;
+                var  verbColor = isIgnore ? new MsaglColor(110, 110, 110) : ColorVerb;
+                string verbId    = $"v_{obsId}_{vi}";
+                string verbLabel = vo.VerbView.Verbatim;
+                AddNode(msagl, added, verbId, verbLabel, verbColor, MsaglShape.Octagon);
+                msagl.AddEdge(obsId, "", verbId).Attr.Color = new MsaglColor(180, 80, 80);
             }
         }
 

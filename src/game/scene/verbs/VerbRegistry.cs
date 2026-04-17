@@ -20,7 +20,8 @@ public class VerbRegistry
         var verbType = typeof(Verb);
         var concreteTypes = Assembly.GetExecutingAssembly()
             .GetTypes()
-            .Where(t => t.IsSubclassOf(verbType) && !t.IsAbstract);
+            .Where(t => t.IsSubclassOf(verbType) && !t.IsAbstract
+                     && t.GetConstructor(Type.EmptyTypes) != null);
 
         foreach (var type in concreteTypes)
         {

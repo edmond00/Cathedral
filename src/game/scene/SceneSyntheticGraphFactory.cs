@@ -70,7 +70,16 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
                     .Select(v => new VerbView(v, v.Verbatim(_scene, pov, poi), poi))
                     .ToList());
 
-            node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry));
+            // Build item sub-entries so item verbs (e.g. "grab the apple") fold into the PoI SubOutcomes.
+            var itemSubEntries = poi.Items
+                .Select(ie => new SceneViewEntry(ie, ie.Keywords,
+                    _scene.Verbs
+                        .Where(v => v.IsPossible(_scene, pov, ie))
+                        .Select(v => new VerbView(v, v.Verbatim(_scene, pov, ie), ie))
+                        .ToList()))
+                .ToList();
+
+            node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry, itemSubEntries));
         }
 
         // Add spots as synthetic enterable sub-locations
@@ -85,7 +94,7 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             node.PossibleOutcomes.Add(new SyntheticSpotObject(spot, entry));
         }
 
-        // Add NPCs present at this area as NpcElementOutcomes
+        // Add NPCs as ObservationObjects with verb SubOutcomes (attack, slay, meet, etc.)
         foreach (var npc in _scene.GetNpcsAt(area, pov.When))
         {
             var entry = new SceneViewEntry(npc, npc.Keywords,
@@ -94,7 +103,7 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
                     .Select(v => new VerbView(v, v.Verbatim(_scene, pov, npc), npc))
                     .ToList());
 
-            node.PossibleOutcomes.Add(new NpcElementOutcome(npc, entry));
+            node.PossibleOutcomes.Add(new SyntheticNpcObservationObject(npc, entry));
         }
 
         return node;

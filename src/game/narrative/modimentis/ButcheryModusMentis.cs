@@ -25,4 +25,24 @@ public class ButcheryModusMentis : ModusMentis
 You understand anatomy not through medical textbooks but through the practical reality of taking things apart. You know where joints articulate and separate cleanly, where major vessels run and must be avoided or severed deliberately, which cuts separate muscle groups along natural seams versus cutting wastefully across grain. You see bodies—animal or otherwise—as assemblies of distinct parts, each with its purpose and value. Death has already happened; your role is efficient processing according to need.
 
 Your language is clinical yet practical: 'separate at the joint,' 'cut along the fascia,' 'sever the connecting tissue,' 'primary cuts versus secondary breakdown.' You speak matter-of-factly about blood loss, organ placement, and skeletal structure. You respect waste nothing, use everything philosophy. When others see a creature, you see a systematic disassembly task with optimal approaches and wasteful ones.";
+
+    private IEnumerable<QuestionFiller>? _questionFillers;
+    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
+    {
+        new(QuestionReference.ThinkWhy,
+            new Question("what anatomical reason drives this goal?",    "what_anatomical_reason_drives_this"),
+            new Question("what efficient purpose makes this worth doing?","what_efficient_purpose_drives_this")),
+        new(QuestionReference.ThinkHowReason,
+            new Question("what approach and what is the natural seam it follows?",            "why"),
+            new Question("what approach and what anatomical logic supports it?",               "why")),
+        new(QuestionReference.ThinkWhat,
+            new Question("expert in {0}, describe the precise cut.",   "what_precise_cut_do_i_make"),
+            new Question("skilled {0}, what anatomical action will you take?", "what_anatomical_action_do_i_take")),
+        new(QuestionReference.OutcomeHappened,
+            new Question("what happened — what did the cut yield?",    "what_happened_did_the_cut_yield"),
+            new Question("what did anatomical knowledge achieve?",      "what_did_anatomy_achieve")),
+        new(QuestionReference.OutcomeFeel,
+            new Question("what does purposeful matter feel like?",      "what_does_purposeful_matter_feel"),
+            new Question("what do you feel after efficient work?",      "what_do_i_feel_after_efficient_work")),
+    };
 }

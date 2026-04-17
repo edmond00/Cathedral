@@ -150,9 +150,7 @@ namespace Cathedral.Glyph.Microworld
                     waterVertices.Add(i);
                 }
                 
-                // Set the vertex properties using the interface with size factor
-                var vec4Color = new Vector4(color.X / 255.0f, color.Y / 255.0f, color.Z / 255.0f, 1.0f);
-                SetVertexGlyph(i, glyphChar, vec4Color, size);
+                SetVertexGlyph(i, glyphChar, TileColor(vertexData[i]), size);
                 
                 // Collect statistics
                 noiseValues.Add(avgNoise);
@@ -233,8 +231,8 @@ namespace Cathedral.Glyph.Microworld
             if (perlinNoise3 > 0.3f)
                 return Biomes["mountain"];
 
-            // CITY (perlinNoise2)
-            if (perlinNoise2 < -0.4f)
+            // CITY (perlinNoise2) — tightened from -0.4 to -0.58
+            if (perlinNoise2 < -0.58f)
                 return Biomes["city"];
 
             // COAST (perlinNoise1)
@@ -245,8 +243,8 @@ namespace Cathedral.Glyph.Microworld
             if (perlinNoise2 > 0.25f)
                 return Biomes["forest"];
 
-            // FIELD (perlinNoise2)
-            if (perlinNoise2 < -0.15f)
+            // FIELD (perlinNoise2) — tightened from -0.15 to -0.38
+            if (perlinNoise2 < -0.38f)
                 return Biomes["field"];
 
             // PLAIN (default fallback)
@@ -374,8 +372,7 @@ namespace Cathedral.Glyph.Microworld
                     vertexData[vertexIndex] = updatedData;
                     
                     // Update the visual representation with original biome size
-                    var vec4Color = new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, 1.0f);
-                    SetVertexGlyph(vertexIndex, newGlyph, vec4Color, data.Biome.Size);
+                    SetVertexGlyph(vertexIndex, newGlyph, TileColor(data), data.Biome.Size);
                 }
             }
         }
@@ -452,12 +449,36 @@ namespace Cathedral.Glyph.Microworld
             }
         }
 
+        /// <summary>
+        /// Returns the shader category alpha for a tile:
+        ///   1.0 = nature (grayscale), 2.0 = water (dark purple),
+        ///   3.0 = human construction (dark yellow), 4.0 = field (intermediate)
+        /// </summary>
+        private static float GetTileCategory(VertexWorldData data)
+        {
+            if (data.Location.HasValue)
+            {
+                string n = data.Location.Value.Name;
+                if (BiomeDatabase.WaterLocations.Contains(n))  return 2.0f;
+                if (BiomeDatabase.HumanLocations.Contains(n))  return 3.0f;
+            }
+            else
+            {
+                string n = data.Biome.Name;
+                if (BiomeDatabase.WaterBiomes.Contains(n))     return 2.0f;
+                if (BiomeDatabase.HumanBiomes.Contains(n))     return 3.0f;
+                if (n == "field")                              return 4.0f;
+            }
+            return 1.0f;
+        }
+
+        private static Vector4 TileColor(VertexWorldData data) =>
+            new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, GetTileCategory(data));
+
         private void RestoreVertexData(int vertexIndex, VertexWorldData data)
         {
-            // Determine size based on location first, then biome
             float size = data.Location?.Size ?? data.Biome.Size;
-            var vec4Color = new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, 1.0f);
-            SetVertexGlyph(vertexIndex, data.GlyphChar, vec4Color, size);
+            SetVertexGlyph(vertexIndex, data.GlyphChar, TileColor(data), size);
         }
 
         public void HandleVertexHovered(int vertexIndex)
@@ -647,10 +668,7 @@ namespace Cathedral.Glyph.Microworld
                     int nodeId = _hoveredPath.GetNode(i);
                     if (nodeId != _protagonistVertex && vertexData.TryGetValue(nodeId, out var data))
                     {
-                        // Determine size based on location first, then biome
-                        float size = data.Location?.Size ?? data.Biome.Size;
-                        var vec4Color = new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, 1.0f);
-                        SetVertexGlyph(nodeId, data.GlyphChar, vec4Color, size);
+                        SetVertexGlyph(nodeId, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
                     }
                 }
             }
@@ -699,9 +717,7 @@ namespace Cathedral.Glyph.Microworld
                 int nodeId = _currentPath.GetNode(i);
                 if (nodeId != _protagonistVertex && vertexData.TryGetValue(nodeId, out var data))
                 {
-                    float size = data.Location?.Size ?? data.Biome.Size;
-                    var vec4Color = new Vector4(data.Color.X / 255.0f, data.Color.Y / 255.0f, data.Color.Z / 255.0f, 1.0f);
-                    SetVertexGlyph(nodeId, data.GlyphChar, vec4Color, size);
+                    SetVertexGlyph(nodeId, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
                 }
             }
         }
@@ -733,9 +749,7 @@ namespace Cathedral.Glyph.Microworld
                     {
                         if (_currentPath.GetNode(_pathIndex - 1) != _protagonistVertex)
                         {
-                            float size = prevData.Location?.Size ?? prevData.Biome.Size;
-                            var vec4Color = new Vector4(prevData.Color.X / 255.0f, prevData.Color.Y / 255.0f, prevData.Color.Z / 255.0f, 1.0f);
-                            SetVertexGlyph(_currentPath.GetNode(_pathIndex - 1), prevData.GlyphChar, vec4Color, size);
+                            SetVertexGlyph(_currentPath.GetNode(_pathIndex - 1), prevData.GlyphChar, TileColor(prevData), prevData.Location?.Size ?? prevData.Biome.Size);
                         }
                     }
                     

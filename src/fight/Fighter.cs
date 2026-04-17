@@ -51,7 +51,7 @@ public class Fighter
     public char DisplayChar  => Faction == FighterFaction.Party ? '☻' : '☹';
     public Vector4 DisplayColor => Faction == FighterFaction.Party
         ? Config.Colors.White
-        : Config.Colors.Orange;
+        : Config.Colors.Purple;
 
     // ── Constructor ───────────────────────────────────────────────
     public Fighter(PartyMember member, int x, int y, bool isPlayerControlled, FighterFaction faction)

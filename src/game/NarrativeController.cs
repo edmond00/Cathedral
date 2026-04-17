@@ -9,6 +9,7 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Nodes;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
+using Cathedral.Game.Scene.Verbs;
 using Cathedral.LLM;
 using Cathedral.Terminal;
 using Cathedral.Glyph;
@@ -370,8 +371,7 @@ public class NarrativeController
                         act.PreselectedOutcome?.ToNaturalLanguageString() ?? "");
                     var difficultyTree = CriticTrees.BuildDifficultyTree(act.ActionText, criticContext);
                     var difficultyResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(difficultyTree);
-                    double difficultyScore = CriticTrees.CalculateDifficultyFromResult(difficultyResult);
-                    act.DifficultyLevel = CriticTrees.DifficultyToScale(difficultyScore);
+                    act.DifficultyLevel = CriticTrees.CalculateFinalDifficulty(act.ActionText, difficultyResult);
                     Console.WriteLine($"NarrativeController: Pre-computed difficulty for '{act.DisplayText}': {act.DifficultyLevel}/10");
                 }
             }
@@ -807,12 +807,14 @@ public class NarrativeController
             // Witness detection on failure is handled below via result.WitnessDetected.
 
             _narrationState.PendingTransitionNode = null;
+            _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
             _narrationState.ShowContinueButton = true;
         }
         else
         {
             Console.WriteLine("NarrativeController: Non-transition outcome, showing continue button");
             _narrationState.PendingTransitionNode = null;
+            _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
             _narrationState.ShowContinueButton = true;
         }
 
@@ -1393,12 +1395,18 @@ public class NarrativeController
                     // Start new observation phase WITHOUT clearing history
                     StartObservationPhaseWithHistory();
                 }
+                else if (_narrationState.ShouldExitOnContinue)
+                {
+                    Console.WriteLine("NarrativeController: Continue button clicked — movement action, exiting to world view");
+                    _narrationState.RequestedExit = true;
+                }
                 else
                 {
-                    Console.WriteLine("NarrativeController: Continue button clicked, exiting to world view");
-                    // Signal exit by setting a flag that the game controller can check
-                    _narrationState.RequestedExit = true;
-                    // The calling controller should check HasRequestedExit() and exit mode
+                    Console.WriteLine("NarrativeController: Continue button clicked — staying in scene, restarting observation");
+                    _scrollBuffer.ConvertToHistory();
+                    _narrationState.ResetForNewNode();
+                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                    StartObservationPhaseWithHistory();
                 }
             }
             // When continue button is shown, don't process other clicks (keywords/actions)
@@ -1937,6 +1945,21 @@ public class NarrativeController
     /// non-containers, or containers whose Contents list is empty.
     /// </summary>
     /// <summary>
+    /// <summary>
+    /// Returns true if the action should exit to world travel after the continue button is clicked.
+    /// Prefers verb-type detection (MoveToAreaVerb) for scene-path actions; falls back to
+    /// action-text parsing for graph-level narrative nodes.
+    /// </summary>
+    private static bool IsMovementAction(ParsedNarrativeAction? action)
+    {
+        if (action == null) return false;
+        // Scene path: resolved outcome is a VerbOutcome wrapping MoveToAreaVerb.
+        if (action.PreselectedOutcome is VerbOutcome vo && vo.VerbView.Verb is MoveToAreaVerb)
+            return true;
+        // Graph-level fallback: parse action text for movement verbs.
+        return CriticTrees.IsMovementVerb(action.ActionText);
+    }
+
     /// Determines the <see cref="CriminalAffinityType"/> for a verb that was just executed.
     /// </summary>
     private static CriminalAffinityType DetermineCrimeType(Cathedral.Game.Scene.Verbs.Verb? verb, bool areaIsPrivate)
@@ -2007,11 +2030,28 @@ public class NarrativeController
             var criticContext = new CriticContext(_currentNode, _worldContext, _locationId, goalDescription);
             criticContext.CombinedItemContext = itemContext;
 
-            // === CRITIC: can the item help? ===
-            var appropriatenessTree = CriticTrees.BuildItemAppropriatenessTree(action.ActionText, itemContext, criticContext);
-            var appropriatenessResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(appropriatenessTree);
+            // === CRITIC: can the item help? (two passes — either succeeding is enough) ===
+            // Pass 1: original action-text phrasing (persona voice)
+            var appropriatenessTree1 = CriticTrees.BuildItemAppropriatenessTreeByActionText(action.ActionText, itemContext, criticContext);
+            var appropriatenessResult1 = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(appropriatenessTree1);
+            Console.WriteLine($"NarrativeController: Item appropriateness pass 1 (action text): {(appropriatenessResult1.OverallSuccess ? "success" : "fail")}");
 
-            if (appropriatenessResult.OverallSuccess)
+            // Pass 2: neutral goal-based phrasing (only if pass 1 failed)
+            bool appropriatenessSuccess = appropriatenessResult1.OverallSuccess;
+            var appropriatenessResult = appropriatenessResult1;
+            if (!appropriatenessSuccess)
+            {
+                var appropriatenessTree2 = CriticTrees.BuildItemAppropriatenessTree(goalDescription, actionModusMentis.ShortDescription, item.DisplayName, criticContext);
+                appropriatenessResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(appropriatenessTree2);
+                appropriatenessSuccess = appropriatenessResult.OverallSuccess;
+                Console.WriteLine($"NarrativeController: Item appropriateness pass 2 (neutral): {(appropriatenessSuccess ? "success" : "fail")}");
+            }
+
+            // Item combination always costs one noetic point, regardless of outcome
+            _narrationState.ThinkingAttemptsRemaining = Math.Max(0, _narrationState.ThinkingAttemptsRemaining - 1);
+            Console.WriteLine($"NarrativeController: Item combination consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
+
+            if (appropriatenessSuccess)
             {
                 Console.WriteLine($"NarrativeController: Item '{item.DisplayName}' approved — generating reasoning then reformulating.");
 
@@ -2044,6 +2084,7 @@ public class NarrativeController
                     PreselectedOutcome     = action.PreselectedOutcome,
                     Keyword                = action.Keyword,
                     CombinedItem           = item,
+                    DifficultyLevel        = action.DifficultyLevel,       // inherit difficulty so the glyph prefix renders
                 };
 
                 // ── Step 4: reasoning block (action skill as prefix, chains back to thinking) ──
@@ -2062,10 +2103,6 @@ public class NarrativeController
                 _narrationState.AddBlock(reasoningBlock);
                 _scrollBuffer.ScrollToBottom();
                 _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-
-                // Item combination costs one noetic point
-                _narrationState.ThinkingAttemptsRemaining = Math.Max(0, _narrationState.ThinkingAttemptsRemaining - 1);
-                Console.WriteLine($"NarrativeController: Item combination consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
             }
             else
             {

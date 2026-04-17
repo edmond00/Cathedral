@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Scene.Verbs;
 
 namespace Cathedral.Game.Narrative;
 
@@ -18,14 +20,18 @@ public class ThinkingExecutor
     private readonly LlamaServerManager _llmManager;
     private readonly ThinkingPromptConstructor _promptConstructor;
     private readonly ModusMentisSlotManager _slotManager;
+    private readonly QuestionFillerService _questionFillerService;
+
     public ThinkingExecutor(
         LlamaServerManager llmManager,
         ThinkingPromptConstructor promptConstructor,
-        ModusMentisSlotManager slotManager)
+        ModusMentisSlotManager slotManager,
+        QuestionFillerService? questionFillerService = null)
     {
         _llmManager = llmManager;
         _promptConstructor = promptConstructor;
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
+        _questionFillerService = questionFillerService ?? QuestionFillerService.Instance;
     }
 
 /// <summary>
@@ -70,11 +76,14 @@ public class ThinkingExecutor
         // ── Call 1: WHY ────────────────────────────────────────────────────────────
         // For the ignore outcome use the source observation as the attention label so
         // the prompt reads naturally ("drawn to [observation]… want to ignore and move on").
-        ConcreteOutcome whyTargetOutcome = (resolvedOutcome is IgnoreOutcome && sourceObs != null)
+        bool resolvedIsIgnore = resolvedOutcome is IgnoreOutcome
+            || (resolvedOutcome is VerbOutcome vIgn && vIgn.VerbView.Verb is IgnoreVerb);
+        ConcreteOutcome whyTargetOutcome = (resolvedIsIgnore && sourceObs != null)
             ? sourceObs
             : resolvedOutcome;
-        string whyPrompt = _promptConstructor.BuildWhyPrompt(outcomeDescription, node, thinkingModusMentis, protagonist, worldContext, whyTargetOutcome, keywordInContext);
-        string whyGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
+        var whyQ = _questionFillerService.GetNext(thinkingModusMentis, QuestionReference.ThinkWhy);
+        string whyPrompt = _promptConstructor.BuildWhyPrompt(outcomeDescription, node, thinkingModusMentis, protagonist, worldContext, whyTargetOutcome, whyQ.PromptText, keywordInContext);
+        string whyGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema(whyQ.JsonFieldName));
 
         string? whyJson = await RequestFromLLMAsync(thinkingSlot, whyPrompt, whyGbnf, cancellationToken);
         if (string.IsNullOrWhiteSpace(whyJson))
@@ -83,11 +92,13 @@ public class ThinkingExecutor
             return null;
         }
 
-        string whyText = ParseSingleTextField(whyJson, "what_do_i_think");
+        string whyText = ParseSingleTextField(whyJson, whyQ.JsonFieldName);
         Console.WriteLine($"ThinkingExecutor: WHY complete ({whyText.Length} chars)");
 
         // ── Early exit: IGNORE ─────────────────────────────────────────────────────
-        if (resolvedOutcome is IgnoreOutcome)
+        bool isIgnore = resolvedOutcome is IgnoreOutcome
+            || (resolvedOutcome is VerbOutcome vIgnore && vIgnore.VerbView.Verb is IgnoreVerb);
+        if (isIgnore)
         {
             Console.WriteLine("ThinkingExecutor: IGNORE selected — skipping HOW/WHAT, returning reasoning only.");
             string ignoreReasoning = string.Join(" ", new[] { reflectText, whyText }
@@ -100,8 +111,9 @@ public class ThinkingExecutor
         }
 
         // ── Call 2: HOW ────────────────────────────────────────────────────────────
-        string howPrompt = _promptConstructor.BuildHowPrompt(outcomeDescription, actionModiMentis, thinkingModusMentis);
-        string howGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateHowSchema(skillMeans));
+        var howQ = _questionFillerService.GetNext(thinkingModusMentis, QuestionReference.ThinkHowReason);
+        string howPrompt = _promptConstructor.BuildHowPrompt(outcomeDescription, actionModiMentis, thinkingModusMentis, howQ.PromptText);
+        string howGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateHowSchema(skillMeans, howQ.JsonFieldName));
 
         string? howJson = await RequestFromLLMAsync(thinkingSlot, howPrompt, howGbnf, cancellationToken);
         if (string.IsNullOrWhiteSpace(howJson))
@@ -110,7 +122,7 @@ public class ThinkingExecutor
             return null;
         }
 
-        var (howText, selectedMeans) = ParseHowResponse(howJson);
+        var (howText, selectedMeans) = ParseHowResponse(howJson, howQ.JsonFieldName);
         if (string.IsNullOrEmpty(selectedMeans))
         {
             Console.Error.WriteLine("ThinkingExecutor: HOW call could not parse 'how' field.");
@@ -131,8 +143,9 @@ public class ThinkingExecutor
         int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(selectedModusMentis);
         _llmManager.ResetInstance(actionSlot);
 
-        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, keywordInContext, outcomeDescription, node, protagonist, selectedModusMentis, worldContext, resolvedOutcome);
-        string whatGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema());
+        var whatQ = _questionFillerService.GetNext(selectedModusMentis, QuestionReference.ThinkWhat);
+        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, keywordInContext, outcomeDescription, node, protagonist, selectedModusMentis, worldContext, resolvedOutcome, whatQ.PromptText);
+        string whatGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema(whatQ.JsonFieldName));
 
         string? whatJson = await RequestFromLLMAsync(actionSlot, whatPrompt, whatGbnf, cancellationToken);
         if (string.IsNullOrWhiteSpace(whatJson))
@@ -141,7 +154,7 @@ public class ThinkingExecutor
             return null;
         }
 
-        string actionDescription = ParseSingleTextField(whatJson, "what_should_i_do");
+        string actionDescription = ParseSingleTextField(whatJson, whatQ.JsonFieldName);
         string displayText = actionDescription.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
             ? actionDescription.Substring(7)
             : actionDescription;
@@ -205,11 +218,16 @@ public class ThinkingExecutor
         }
 
         // ── Call 0b: GOAL ──────────────────────────────────────────────────────────
-        // Always append "ignore and move on" so there are at least 2 choices.
+        // Scene-path ObservationObjects already include IgnoreVerb ("move on") as a SubOutcome.
+        // For graph-level nodes that don't have it, append the legacy sentinel as fallback.
         var goalOptions = subOutcomes
             .Select(o => o.ToNaturalLanguageString())
-            .Append(IgnoreOutcome.GoalString)
             .ToList();
+        bool hasMoveon = goalOptions.Any(s =>
+            s.Equals("move on", StringComparison.OrdinalIgnoreCase) ||
+            s.Equals(IgnoreOutcome.GoalString, StringComparison.OrdinalIgnoreCase));
+        if (!hasMoveon)
+            goalOptions.Add(IgnoreOutcome.GoalString);
         string goalPrompt = ThinkingPromptConstructor.BuildGoalPrompt(goalOptions, thinkingModusMentis);
         string goalGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateGoalSchema(goalOptions));
 
@@ -225,11 +243,14 @@ public class ThinkingExecutor
             using var doc = JsonDocument.Parse(goalJson);
             string chosen = doc.RootElement.GetProperty("goal").GetString() ?? "";
             Console.WriteLine($"ThinkingExecutor: GOAL selected '{chosen}'");
-            if (chosen.Equals(IgnoreOutcome.GoalString, StringComparison.OrdinalIgnoreCase))
-                return (IgnoreOutcome.Instance, reflectText);
+            // Match against SubOutcomes first (covers IgnoreVerb "move on" and all verbs).
             var match = subOutcomes.FirstOrDefault(o =>
                 o.ToNaturalLanguageString().Equals(chosen, StringComparison.OrdinalIgnoreCase));
-            return (match, reflectText);
+            // If no match and the LLM chose the legacy sentinel, return ignore.
+            if (match == null && chosen.Equals(IgnoreOutcome.GoalString, StringComparison.OrdinalIgnoreCase))
+                return (IgnoreOutcome.Instance, reflectText);
+            // Unknown match → treat as ignore rather than crash.
+            return (match ?? IgnoreOutcome.Instance, reflectText);
         }
         catch (JsonException ex)
         {
@@ -317,14 +338,14 @@ public class ThinkingExecutor
     /// <summary>
     /// Parses the HOW call response. Returns (howText, selectedMeans) where selectedMeans is "with X".
     /// </summary>
-    private (string HowText, string SelectedMeans) ParseHowResponse(string json)
+    private (string HowText, string SelectedMeans) ParseHowResponse(string json, string whyFieldName = "why")
     {
         try
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
             string means = root.GetProperty("how").GetString() ?? "";
-            string howText = root.GetProperty("why").GetString() ?? "";
+            string howText = root.GetProperty(whyFieldName).GetString() ?? "";
             return (howText, means);
         }
         catch (JsonException ex)

@@ -29,4 +29,19 @@ Nothing escapes you. You measure not just what is there, but what should be ther
 You do not interpret motives, but you catalog evidence. You are thorough to the point of exhausting. You miss nothing because you examine everything.
 
 When narrating, you speak in precise, cutting sentences. Direct. Unadorned. Clinical in your thoroughness.";
+
+    private IEnumerable<QuestionFiller>? _questionFillers;
+    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
+    {
+        new(QuestionReference.ObserveFirst,
+            new Question("what do you detect and catalog?",             "what_do_i_detect_and_catalog"),
+            new Question("what does close inspection register?",        "what_does_inspection_register"),
+            new Question("what anomalies do you note?",                 "what_anomalies_do_i_note")),
+        new(QuestionReference.ObserveContinuation,
+            new Question("what further detail do you log?",             "what_further_detail_do_i_log"),
+            new Question("what does inspection reveal?",                "what_does_inspection_reveal")),
+        new(QuestionReference.ObserveTransition,
+            new Question("what inconsistency redirects your gaze?",     "what_inconsistency_redirects_me"),
+            new Question("what demands closer examination?",            "what_demands_closer_examination")),
+    };
 }

@@ -60,7 +60,7 @@ public static class FightModeUI
             Vector4 fg = isDead       ? Config.Colors.DarkGray
                        : isActive     ? Config.Colors.Yellow
                        : f.Faction == FighterFaction.Party ? Config.Colors.White
-                       : Config.Colors.Orange;
+                       : Config.Colors.Purple;
             Vector4 bg = isActive ? Config.Colors.DarkGray : Config.Colors.Black;
 
             string mark = isActive ? "▶ " : "  ";
@@ -106,7 +106,7 @@ public static class FightModeUI
 
         // HP bar (row TopRows+3)
         DrawBar(terminal, x, y++, LeftEnd - 2, fighter.CurrentHp, fighter.MaxHp,
-            "HP", Config.Colors.Yellow, Config.Colors.BrightRed);
+            "HP", Config.Colors.Yellow, Config.Colors.DarkPurple);
 
         // CP dot bar (row TopRows+4)
         DrawDotBar(terminal, x, y++, fighter.CurrentCineticPoints, fighter.MaxCineticPoints);
@@ -191,7 +191,7 @@ public static class FightModeUI
             ('.', Config.Colors.DarkGray35,      "Free space"),
             ('·', Config.Colors.DarkYellowGrey,  "Soft (slow)"),
             ('~', Config.Colors.MediumYellow,    "Treacherous"),
-            ('∴', Config.Colors.Orange,           "Dangerous"),
+            ('∴', Config.Colors.Purple,           "Dangerous"),
             ('#', Config.Colors.LightGray75,     "Hard obstacle"),
         };
 
@@ -453,9 +453,9 @@ public static class FightModeUI
         if (fighter.Member.Wounds.Count > 0)
         {
             y++;
-            popup.DrawText(1, y++, "Wounds:", Config.Colors.BrightRed, Config.Colors.Black);
+            popup.DrawText(1, y++, "Wounds:", Config.Colors.BrightPurple, Config.Colors.Black);
             foreach (var w in fighter.Member.Wounds.Take(5))
-                popup.DrawText(2, y++, w.WoundName, Config.Colors.Orange, Config.Colors.Black);
+                popup.DrawText(2, y++, w.WoundName, Config.Colors.Purple, Config.Colors.Black);
         }
     }
 
@@ -471,7 +471,7 @@ public static class FightModeUI
             _                      => "FIGHT OVER"
         };
         Vector4 color = result == FightResult.PartyWon ? Config.Colors.LightGreen
-                      : result == FightResult.EnemyWon ? Config.Colors.BrightRed
+                      : result == FightResult.EnemyWon ? Config.Colors.BrightPurple
                       : Config.Colors.Orange;
 
         int cx = 50 - msg.Length / 2;

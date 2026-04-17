@@ -180,10 +180,8 @@ public class ActionExecutionController
         var difficultyTree = CriticTrees.BuildDifficultyTree(action.ActionText, criticContext);
         var difficultyResult = await _criticEvaluator.EvaluateTreeAsync(difficultyTree);
 
-        // Map the chosen difficulty level to a 0.0–1.0 score
-        double difficultyScore = CriticTrees.CalculateDifficultyFromResult(difficultyResult);
-
-        int difficultyLevel = CriticTrees.DifficultyToScale(difficultyScore);
+        int difficultyLevel = CriticTrees.CalculateFinalDifficulty(action.ActionText, difficultyResult);
+        double difficultyScore = CriticTrees.DifficultyLevelToScore(difficultyLevel);
         
         Console.WriteLine($"   Difficulty: {difficultyScore:F3} (level {difficultyLevel}/10)");
         Console.WriteLine($"   Category: {(difficultyLevel <= 3 ? "Easy" : difficultyLevel <= 6 ? "Moderate" : "Hard")}");

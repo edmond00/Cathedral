@@ -103,6 +103,29 @@ namespace Cathedral.Glyph.Microworld
             ["villa"] = new LocationType("villa", '◈', new Vector3(220, 120, 80), 1.3f, new HashSet<string> { "city" }),
         };
 
+        // ── Tile category sets (used by the world sphere shader for coloring) ──
+
+        /// <summary>Biomes rendered in dark purple on the world sphere.</summary>
+        public static readonly HashSet<string> WaterBiomes = new HashSet<string> { "sea", "ocean" };
+
+        /// <summary>Biomes rendered in dark yellow on the world sphere.</summary>
+        public static readonly HashSet<string> HumanBiomes = new HashSet<string> { "city" };
+
+        /// <summary>Locations rendered in dark purple on the world sphere.</summary>
+        public static readonly HashSet<string> WaterLocations = new HashSet<string>
+        {
+            "lake", "reef", "mist", "haze", "sunken_city"
+        };
+
+        /// <summary>Locations rendered in dark yellow on the world sphere.</summary>
+        public static readonly HashSet<string> HumanLocations = new HashSet<string>
+        {
+            "village", "castle", "church", "stable", "farm", "tavern", "market", "forum",
+            "bank", "port", "forge", "workshop", "amphitheater", "stadium", "academy",
+            "sanatorium", "cathedral", "institute", "library", "villa", "circus",
+            "assassin_guild", "observatory", "monastery"
+        };
+
         /// <summary>
         /// Generates a glyph set string containing all unique glyphs from biomes and locations.
         /// This ensures the atlas includes all necessary characters automatically.

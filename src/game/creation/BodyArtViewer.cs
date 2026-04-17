@@ -506,7 +506,7 @@ public class BodyArtViewer
                 occupiedByWounds.Add(chosen);
             }
 
-            Vector4 woundColor = _blinkOn ? Config.Colors.Orange : Config.Colors.DarkGray35;
+            Vector4 woundColor = _blinkOn ? Config.Colors.Purple : Config.Colors.DarkGray35;
             foreach (var wound in _protagonist.Wounds)
             {
                 IEnumerable<(int x, int y)> positions;
@@ -602,7 +602,7 @@ public class BodyArtViewer
                 ArrowRenderer.DrawConnector(_terminal,
                     wx, wy,
                     PanelContentX - 1, targetRow,
-                    Config.Colors.Orange, Config.Colors.Black);
+                    Config.Colors.Purple, Config.Colors.Black);
             }
             return;
         }
@@ -658,9 +658,9 @@ public class BodyArtViewer
             }
             else if (bpHasWounds)
             {
-                headerColor      = _blinkOn ? Config.Colors.Orange : Config.Colors.LightGray75;
+                headerColor      = _blinkOn ? Config.Colors.Purple : Config.Colors.LightGray75;
                 headerBg         = Config.Colors.Black;
-                headerScoreColor = _blinkOn ? Config.Colors.Orange : Config.Colors.DarkGray35;
+                headerScoreColor = _blinkOn ? Config.Colors.Purple : Config.Colors.DarkGray35;
             }
             else
             {
@@ -709,18 +709,18 @@ public class BodyArtViewer
                     }
                     else if (partIsDisabled)
                     {
-                        nameColor = _blinkOn ? Config.Colors.Orange : Config.Colors.DarkGray35;
+                        nameColor = _blinkOn ? Config.Colors.BrightPurple : Config.Colors.DarkGray35;
                         barFill   = Config.Colors.DarkGray20;
                         barEmpty  = Config.Colors.DarkGray20;
-                        scoreFg   = _blinkOn ? Config.Colors.Orange : Config.Colors.DarkGray35;
+                        scoreFg   = _blinkOn ? Config.Colors.BrightPurple : Config.Colors.DarkGray35;
                         bg        = Config.Colors.Black;
                     }
                     else if (partIsWounded)
                     {
-                        nameColor = _blinkOn ? Config.Colors.Orange : Config.Colors.MediumGray60;
+                        nameColor = _blinkOn ? Config.Colors.Purple : Config.Colors.MediumGray60;
                         barFill   = Config.Colors.MediumGray50;
                         barEmpty  = Config.Colors.DarkGray20;
-                        scoreFg   = _blinkOn ? Config.Colors.Orange : Config.Colors.MediumGray60;
+                        scoreFg   = _blinkOn ? Config.Colors.Purple : Config.Colors.MediumGray60;
                         bg        = Config.Colors.Black;
                     }
                     else
@@ -744,22 +744,22 @@ public class BodyArtViewer
                     // ── Bar rendering ──────────────────────────────────────────────
                     if (partIsDisabled)
                     {
-                        // XXX in blinking orange for fully disabled organs
+                        // XXX in blinking purple for fully disabled organs
                         for (int i = 0; i < barWidth; i++)
                         {
                             char xc = i switch { 0 => 'X', 1 => 'X', 2 => 'X', _ => ' ' };
                             _terminal.SetCell(barX + i, row, xc,
-                                _blinkOn ? Config.Colors.Orange : Config.Colors.DarkGray35, bg);
+                                _blinkOn ? Config.Colors.BrightPurple : Config.Colors.DarkGray35, bg);
                         }
                     }
                     else if (partIsWounded && !isHoveredPart && !isHoveredOrgan)
                     {
-                        // Filled up to effective score, blinking orange for removed bars, empty after raw score
+                        // Filled up to effective score, blinking purple for removed bars, empty after raw score
                         for (int i = 0; i < barWidth; i++)
                         {
                             char barChar; Vector4 barColor;
                             if (i < partEffScore)           { barChar = '█'; barColor = barFill; }
-                            else if (i < part.Score)        { barChar = '█'; barColor = _blinkOn ? Config.Colors.Orange : Config.Colors.DarkGray35; }
+                            else if (i < part.Score)        { barChar = '█'; barColor = _blinkOn ? Config.Colors.Purple : Config.Colors.DarkGray35; }
                             else                            { barChar = '░'; barColor = barEmpty; }
                             _terminal.SetCell(barX + i, row, barChar, barColor, bg);
                         }
@@ -842,15 +842,15 @@ public class BodyArtViewer
                 int wRow = Math.Max(minRow + 1, 50);
                 _terminal.Text(PanelContentX, wRow, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
                 wRow += 2;
-                _terminal.Text(PanelContentX, wRow, "WOUND", Config.Colors.Orange, Config.Colors.Black);
+                _terminal.Text(PanelContentX, wRow, "WOUND", Config.Colors.BrightPurple, Config.Colors.Black);
                 wRow += 2;
-                _terminal.Text(PanelContentX, wRow, hovered.WoundName, Config.Colors.Black, Config.Colors.Orange);
+                _terminal.Text(PanelContentX, wRow, hovered.WoundName, Config.Colors.Black, Config.Colors.Purple);
                 wRow += 2;
                 string sev = hovered.Handicap == Cathedral.Game.Narrative.WoundHandicap.High ? "Severe (disables)" :
                              hovered.Handicap == Cathedral.Game.Narrative.WoundHandicap.Medium ? "Moderate (-1 penalty)" :
                              "Minor (-1 HP only)";
                 _terminal.Text(PanelContentX, wRow, sev, hovered.Handicap == Cathedral.Game.Narrative.WoundHandicap.High
-                    ? Config.Colors.Orange : Config.Colors.MediumGray60, Config.Colors.Black);
+                    ? Config.Colors.BrightPurple : Config.Colors.MediumGray60, Config.Colors.Black);
                 wRow++;
                 if (!string.IsNullOrEmpty(hovered.TargetId))
                 {
@@ -985,14 +985,14 @@ public class BodyArtViewer
             var wounds = _protagonist.GetWoundsForOrganPart(organPartId, organId, bodyPartId);
             if (wounds.Count > 0)
             {
-                _terminal.Text(PanelContentX, row, "Wounds", Config.Colors.Orange, Config.Colors.Black);
+                _terminal.Text(PanelContentX, row, "Wounds", Config.Colors.BrightPurple, Config.Colors.Black);
                 row++;
                 foreach (var wound in wounds)
                 {
                     string sev = wound.Handicap == Cathedral.Game.Narrative.WoundHandicap.High ? "●" : "◌";
                     string line = $"  {sev} {wound.WoundName}";
                     Vector4 wc = wound.Handicap == Cathedral.Game.Narrative.WoundHandicap.High
-                        ? (_blinkOn ? Config.Colors.Orange : Config.Colors.DarkGray35)
+                        ? (_blinkOn ? Config.Colors.BrightPurple : Config.Colors.DarkGray35)
                         : Config.Colors.MediumGray60;
                     _terminal.Text(PanelContentX, row, line, wc, Config.Colors.Black);
                     row++;

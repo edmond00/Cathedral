@@ -25,4 +25,24 @@ public class DramaturgyModusMentis : ModusMentis
 When observing, you notice who commands attention through presence, who plays to which audience, whose costume signals what character they're performing. You see the power dynamics written in who speaks when, who occupies center stage, whose dramatic arc is ascending or approaching crisis. Every conversation has three-act structure if you watch long enough. People aren't just themselves; they're performing versions of themselves for specific audiences.
 
 When reasoning, you think in theatrical terms: what scene is this? Who has the dramatic momentum? Where is the conflict building toward? What's the subtext beneath the spoken dialogue? You propose solutions that involve staging, performance, or recognizing the gap between presented character and actual self. Your language includes 'stage presence,' 'dramatic irony,' 'character motivation,' 'blocking,' and 'narrative arc.' When others see authentic interaction, you see constructed performance—and that's not cynicism, just recognition of how meaning is made.";
+
+    private IEnumerable<QuestionFiller>? _questionFillers;
+    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
+    {
+        new(QuestionReference.ObserveFirst,
+            new Question("what scene is staged here?",                  "what_scene_is_staged_here"),
+            new Question("what performance do you read in this space?", "what_performance_do_i_read")),
+        new(QuestionReference.ObserveContinuation,
+            new Question("what dramatic detail plays out?",             "what_dramatic_detail_plays_out"),
+            new Question("what does the blocking reveal?",              "what_does_the_blocking_reveal")),
+        new(QuestionReference.ObserveTransition,
+            new Question("what upstages your attention?",               "what_upstages_my_attention"),
+            new Question("what new scene demands reading?",             "what_new_scene_demands_reading")),
+        new(QuestionReference.ThinkWhy,
+            new Question("what dramatic motivation drives this?",       "what_dramatic_motivation_drives_this"),
+            new Question("what does your character's arc push toward?", "what_does_my_arc_push_toward")),
+        new(QuestionReference.ThinkHowReason,
+            new Question("what approach and what stage business justifies it?", "why"),
+            new Question("what approach and what is the subtext?",      "why")),
+    };
 }
