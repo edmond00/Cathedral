@@ -84,6 +84,7 @@ public class LocationTravelGameController : IDisposable
     // Action executors (used by NarrativeController)
     private LLMActionExecutor? _llmActionExecutor; // Optional - requires LLamaServerManager
     private CriticEvaluator? _criticEvaluator;
+    private KeywordFallbackService? _keywordFallbackService;
     
     // Events
     public event Action<GameMode, GameMode>? ModeChanged;
@@ -314,6 +315,26 @@ public class LocationTravelGameController : IDisposable
                 {
                     Console.WriteLine($"LocationTravelGameController: Failed to initialize Critic - {ex.Message}");
                     _criticEvaluator = null;
+                }
+            });
+        }
+
+        // Initialize keyword fallback service (uses its own LLM slot for noun selection)
+        if (executor != null)
+        {
+            _keywordFallbackService = new KeywordFallbackService(executor.GetLlamaServerManager());
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _keywordFallbackService.InitializeAsync();
+                    Console.WriteLine("LocationTravelGameController: KeywordFallbackService initialized");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"LocationTravelGameController: Failed to initialize KeywordFallbackService - {ex.Message}");
+                    _keywordFallbackService = null;
                 }
             });
         }
@@ -1249,7 +1270,8 @@ public class LocationTravelGameController : IDisposable
                     actionExecutor,
                     scene,
                     vertexIndex,
-                    worldContext
+                    worldContext,
+                    _keywordFallbackService
                 );
             }
             else
@@ -1265,8 +1287,9 @@ public class LocationTravelGameController : IDisposable
                     _thinkingExecutor,
                     actionExecutor,
                     graphFactory,
-                    vertexIndex,   // Use vertex index as location ID seed
-                    worldContext   // Typed world context for flavor and display
+                    vertexIndex,               // Use vertex index as location ID seed
+                    worldContext,              // Typed world context for flavor and display
+                    _keywordFallbackService    // LLM-based fallback keyword selection
                 );
             }
             
@@ -1572,8 +1595,9 @@ public class LocationTravelGameController : IDisposable
             _core.GlobalMouseClicked -= OnGlobalMouseClicked;
         }
         
-        // Dispose Critic evaluator
+        // Dispose Critic evaluator and keyword fallback service
         _criticEvaluator?.Dispose();
+        _keywordFallbackService?.Dispose();
         
         Console.WriteLine("LocationTravelGameController: Disposed");
     }

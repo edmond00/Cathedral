@@ -29,15 +29,21 @@ public class ObservationPhaseController
     private readonly KeywordRenderer _keywordRenderer;
     private readonly WorldContext _worldContext;
     private readonly QuestionFillerService _questionFillerService;
+    private readonly KeywordFallbackService? _keywordFallback;
     private readonly Random _random = new();
 
-    public ObservationPhaseController(LlamaServerManager llamaServer, ModusMentisSlotManager slotManager, WorldContext? worldContext = null)
+    public ObservationPhaseController(
+        LlamaServerManager llamaServer,
+        ModusMentisSlotManager slotManager,
+        WorldContext? worldContext = null,
+        KeywordFallbackService? keywordFallback = null)
     {
         _observationExecutor = new ObservationExecutor(llamaServer, slotManager);
         _promptConstructor = new ObservationPromptConstructor();
         _keywordRenderer = new KeywordRenderer();
         _worldContext = worldContext ?? new PlainBiomeContext();
         _questionFillerService = QuestionFillerService.Instance;
+        _keywordFallback = keywordFallback;
     }
 
     /// <summary>
@@ -122,6 +128,20 @@ public class ObservationPhaseController
                 var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, focusQ, ct: ct);
 
                 var sampledKws = _observationExecutor.ExtractKeywordsFromSentences(transText, focusText, outcomeKeywords, directKeywords, _random, 3);
+
+                // Fallback: if no keyword found in generated text, ask the critic LLM
+                // to pick the best noun from the observation text as a dynamic keyword.
+                if (sampledKws.Count == 0 && _keywordFallback != null)
+                {
+                    var combined = (transText + " " + focusText).Trim();
+                    var fallbackKw = await _keywordFallback.FindBestKeywordAsync(combined, GetNeutralDescription(outcome, locationId));
+                    if (fallbackKw != null)
+                    {
+                        sampledKws = new List<string> { fallbackKw };
+                        Console.WriteLine($"ObservationPhaseController: Fallback keyword '{fallbackKw}' for '{outcome.DisplayName}'");
+                    }
+                }
+
                 var (transKws, focKws) = _observationExecutor.AssignKeywordsToSentences(sampledKws, transText, focusText);
 
                 sentences.Add(new NarrationSentence(transText, transKws));
@@ -211,6 +231,18 @@ public class ObservationPhaseController
             var firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, firstQ, isFirstInBatch: true, ct: ct);
 
             var firstKws = _observationExecutor.ExtractKeywordsFromSentences("", firstText, focusOutcomeKeywords, focusDirectKeywords, _random, 3);
+
+            // Fallback: if no keyword found, ask the critic to pick the best noun from the text.
+            if (firstKws.Count == 0 && _keywordFallback != null)
+            {
+                var fallbackKw = await _keywordFallback.FindBestKeywordAsync(firstText, GetNeutralDescription(focusOutcome, locationId));
+                if (fallbackKw != null)
+                {
+                    firstKws = new List<string> { fallbackKw };
+                    Console.WriteLine($"ObservationPhaseController: Fallback keyword '{fallbackKw}' for focus outcome '{focusOutcome.DisplayName}'");
+                }
+            }
+
             sentences.Add(new NarrationSentence(firstText, firstKws));
             foreach (var kw in firstKws)
             {
@@ -255,6 +287,19 @@ public class ObservationPhaseController
                 var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, focusQ2, ct: ct);
 
                 var sampledKws = _observationExecutor.ExtractKeywordsFromSentences(transText, focusText, otherKeywords, otherDirectKeywords, _random, 3);
+
+                // Fallback: if no keyword found, ask the critic to pick the best noun from the text.
+                if (sampledKws.Count == 0 && _keywordFallback != null)
+                {
+                    var combined = (transText + " " + focusText).Trim();
+                    var fallbackKw = await _keywordFallback.FindBestKeywordAsync(combined, GetNeutralDescription(otherOutcome, locationId));
+                    if (fallbackKw != null)
+                    {
+                        sampledKws = new List<string> { fallbackKw };
+                        Console.WriteLine($"ObservationPhaseController: Fallback keyword '{fallbackKw}' for focus other-outcome '{otherOutcome.DisplayName}'");
+                    }
+                }
+
                 var (transKws, focKws) = _observationExecutor.AssignKeywordsToSentences(sampledKws, transText, focusText);
 
                 sentences.Add(new NarrationSentence(transText, transKws));
@@ -297,6 +342,17 @@ public class ObservationPhaseController
         Console.WriteLine($"ObservationPhaseController: Focus observation complete ({sentences.Count} sentences, {allKeywords.Count} keywords)");
         return new List<NarrationBlock> { block };
     }
+
+    /// <summary>
+    /// Returns a concise noun-phrase description of an outcome for use in LLM prompts.
+    /// Uses <c>GenerateNeutralDescription</c> for nodes and observations (e.g. "open meadow",
+    /// "musky fox den") rather than <c>ToNaturalLanguageString</c>, which returns the verb-form
+    /// transition description (e.g. "move into the open meadow") — unhelpful for noun selection.
+    /// </summary>
+    private static string GetNeutralDescription(ConcreteOutcome outcome, int locationId)
+        => outcome is NarrationNode nn   ? nn.GenerateNeutralDescription(locationId)
+         : outcome is ObservationObject obs ? obs.GenerateNeutralDescription(0)
+         : outcome.DisplayName;
 
     /// <summary>
     /// Formats narration blocks for terminal display with keyword highlighting.

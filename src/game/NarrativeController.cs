@@ -81,7 +81,8 @@ public class NarrativeController
         ActionExecutionController actionExecutor,
         NarrationGraphFactory? graphFactory = null,
         int locationId = 0,
-        WorldContext? worldContext = null)
+        WorldContext? worldContext = null,
+        KeywordFallbackService? keywordFallbackService = null)
     {
         if (terminal == null)
             throw new ArgumentNullException(nameof(terminal));
@@ -138,7 +139,7 @@ public class NarrativeController
         LlmMonitorDebugManager.Show();
         
         // Initialize controllers
-        _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext);
+        _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext, keywordFallbackService);
         _thinkingExecutor = thinkingExecutor;
         _actionExecutor = actionExecutor;
         
@@ -162,11 +163,12 @@ public class NarrativeController
         ActionExecutionController actionExecutor,
         Cathedral.Game.Scene.Scene scene,
         int locationId,
-        WorldContext? worldContext = null)
+        WorldContext? worldContext = null,
+        KeywordFallbackService? keywordFallbackService = null)
         : this(terminal, popup, core, llamaServer, slotManager, terminalInputHandler,
                thinkingExecutor, actionExecutor,
                CreateGraphFactoryForScene(scene, locationId),
-               locationId, worldContext)
+               locationId, worldContext, keywordFallbackService)
     {
         _scene = scene;
 
