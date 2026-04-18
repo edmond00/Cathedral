@@ -30,13 +30,13 @@ Your speech carries the weight of martial tradition, using terms like 'guard pos
     public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
     {
         new(QuestionReference.ThinkWhat,
-            new Question("expert in {0}, describe the strike or guard.", "what_strike_or_guard_do_i_make"),
+            new Question("expert in {0}, describe the disciplined technique.", "what_disciplined_technique_do_i_apply"),
             new Question("skilled {0}, what disciplined move will you execute?", "what_disciplined_move_do_i_execute")),
         new(QuestionReference.OutcomeHappened,
-            new Question("what happened in the exchange?",              "what_happened_in_the_exchange"),
+            new Question("what happened — did the technique hold?",     "what_happened_did_technique_hold"),
             new Question("what did that technique achieve?",            "what_did_that_technique_achieve")),
         new(QuestionReference.OutcomeFeel,
-            new Question("what does controlled violence feel like?",    "what_does_controlled_violence_feel"),
-            new Question("what does your body register after contact?", "what_does_my_body_register_after")),
+            new Question("what does disciplined control feel like?",    "what_does_disciplined_control_feel"),
+            new Question("what does your body register after that?",    "what_does_my_body_register_after")),
     };
 }

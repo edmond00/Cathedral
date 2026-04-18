@@ -39,13 +39,13 @@ You speak in blunt, forceful terms. Short sentences. Direct language. Words like
             new Question("what approach will you take and what's the blunt reason for it?", "why"),
             new Question("what approach and why does it work?",         "why")),
         new(QuestionReference.ThinkWhat,
-            new Question("expert in {0}, what do you break through?",  "what_do_i_break_through"),
-            new Question("skilled {0}, what do you smash?",            "what_do_i_smash")),
+            new Question("expert in {0}, what do you overpower?",      "what_do_i_overpower"),
+            new Question("skilled {0}, what do you force through?",    "what_do_i_force_through")),
         new(QuestionReference.OutcomeHappened,
             new Question("what happened — did force win?",              "what_happened_did_force_win"),
-            new Question("what gave way?",                              "what_gave_way")),
+            new Question("what came of throwing raw power at it?",      "what_came_of_raw_power")),
         new(QuestionReference.OutcomeFeel,
             new Question("what does your body register after that?",   "what_does_my_body_register"),
-            new Question("what does raw impact feel like?",             "what_does_raw_impact_feel_like")),
+            new Question("what does throwing your full force at it leave in you?", "what_does_full_force_leave_in_me")),
     };
 }

@@ -452,6 +452,7 @@ public class NarrativeController
             if (!ruleResult.Passed)
             {
                 Console.WriteLine($"NarrativeController: Coded rule blocked action — {ruleResult.ErrorMessage}");
+                action.IsImpossible = true;
                 _narrationState.IsLoadingAction = false;
 
                 var ruleBlock = new NarrationBlock(
@@ -497,7 +498,8 @@ public class NarrativeController
             if (!evalResult.IsPlausible)
             {
                 Console.WriteLine($"NarrativeController: Action failed plausibility check");
-                
+                action.IsImpossible = true;
+
                 // Generate plausibility failure narration
                 var plausibilityResult = await _actionExecutor.GeneratePlausibilityFailureNarrationAsync(
                     evalResult, CancellationToken.None);

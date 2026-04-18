@@ -246,7 +246,8 @@ You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
             : "";
         string noticedClause = keywordInContext != null ? keywordInContext.Context : keyword;
         string transition = targetOutcome.GetKeywordToOutcomeTransition(keyword, keywordInContext);
-        string formattedQuestion = string.Format(questionText, actionModusMentis.ShortDescription);
+        string formattedQuestion = string.Format(questionText, actionModusMentis.ShortDescription).TrimEnd('.', '?', '!')
+            + $" in order to {outcomeDescription}? Write a simple action naturally leading to the goal.";
 
         return $@"{personaToneLine}{WorldContext.EpochContext}
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}

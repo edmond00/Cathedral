@@ -36,13 +36,13 @@ You speak in measured, calm terms: 'wait for the right moment,' 'let the situati
             new Question("what approach and why does its timing make sense?",                  "why"),
             new Question("what approach and what does its pace tell you?",                     "why")),
         new(QuestionReference.ThinkWhat,
-            new Question("expert in {0}, what do you wait for and then do?", "what_do_i_wait_for_and_do"),
+            new Question("expert in {0}, what does restraint allow you to do here?", "what_does_restraint_allow_me_to_do"),
             new Question("skilled {0}, when do you act and how?",      "when_do_i_act_and_how")),
         new(QuestionReference.OutcomeHappened,
             new Question("what happened — did timing serve you?",       "what_happened_did_timing_serve"),
-            new Question("what did waiting make possible?",             "what_did_waiting_make_possible")),
+            new Question("what came of holding back?",                  "what_came_of_holding_back")),
         new(QuestionReference.OutcomeFeel,
-            new Question("what does the right moment feel like?",       "what_does_the_right_moment_feel"),
-            new Question("what do you feel now that the time came?",    "what_do_i_feel_now_time_came")),
+            new Question("what do you feel having held back until now?", "what_do_i_feel_having_held_back"),
+            new Question("what do you feel in the aftermath of your patience?", "what_do_i_feel_in_the_aftermath")),
     };
 }

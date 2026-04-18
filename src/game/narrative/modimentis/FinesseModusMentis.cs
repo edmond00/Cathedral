@@ -34,9 +34,9 @@ You speak in terms of flow, balance, and control. Words like 'delicate,' 'precis
             new Question("skilled {0}, what delicate action will you take?", "what_delicate_action_do_i_take")),
         new(QuestionReference.OutcomeHappened,
             new Question("what happened — did precision hold?",         "what_happened_did_precision_hold"),
-            new Question("what did the careful motion achieve?",        "what_did_careful_motion_achieve")),
+            new Question("what came of the careful motion?",            "what_came_of_careful_motion")),
         new(QuestionReference.OutcomeFeel,
-            new Question("what do you feel in your fingers?",           "what_do_i_feel_in_my_fingers"),
+            new Question("what does precision leave in your body?",     "what_does_precision_leave_in_my_body"),
             new Question("what does economy of motion leave behind?",   "what_does_economy_of_motion_leave")),
     };
 }

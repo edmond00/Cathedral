@@ -10,7 +10,7 @@ namespace Cathedral.Game.Narrative;
 public sealed class IgnoreOutcome : ConcreteOutcome
 {
     public static readonly IgnoreOutcome Instance = new();
-    public const string GoalString = "move on, no relevant option";
+    public const string GoalString = "move on and find something else to focus on";
 
     private IgnoreOutcome() { }
 

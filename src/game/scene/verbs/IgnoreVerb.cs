@@ -16,13 +16,13 @@ public sealed class IgnoreVerb : Verb
     private IgnoreVerb() { }
 
     public override string VerbId      => "ignore";
-    public override string DisplayName => "Move On";
+    public override string DisplayName => "Ignore and Move On";
 
     /// Always possible — the player can always choose not to act.
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null) => true;
 
     /// Natural-language text presented to ThinkingExecutor's GOAL list.
-    public override string Verbatim(Scene scene, PoV pov, Element target) => "move on";
+    public override string Verbatim(Scene scene, PoV pov, Element target) => "ignore and move on";
 
     /// No-op: IgnoreVerb is detected before action generation; Execute() is never called.
     public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target) { }

@@ -30,13 +30,13 @@ Your language is sharp and technical: 'explosive drive,' 'rising trajectory,' 'j
     public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
     {
         new(QuestionReference.ThinkWhat,
-            new Question("expert in {0}, describe the explosive moment.", "what_explosive_moment_do_i_make"),
-            new Question("skilled {0}, what decisive impact will you deliver?", "what_decisive_impact_do_i_deliver")),
+            new Question("expert in {0}, describe the decisive move.",  "what_decisive_move_do_i_make"),
+            new Question("skilled {0}, what do you commit to fully?",   "what_do_i_commit_to_fully")),
         new(QuestionReference.OutcomeHappened,
-            new Question("what happened at the moment of impact?",      "what_happened_at_impact"),
-            new Question("what did explosive contact achieve?",         "what_did_explosive_contact_achieve")),
+            new Question("what happened when you committed fully?",     "what_happened_when_committed_fully"),
+            new Question("what came of committing fully?",              "what_came_of_committing_fully")),
         new(QuestionReference.OutcomeFeel,
-            new Question("what does decisive contact feel like?",       "what_does_decisive_contact_feel"),
-            new Question("what does the peak of impact leave?",         "what_does_the_peak_of_impact_leave")),
+            new Question("what does committing fully leave in you?",    "what_does_committing_fully_leave"),
+            new Question("what does going all-in leave behind?",        "what_does_going_all_in_leave_behind")),
     };
 }

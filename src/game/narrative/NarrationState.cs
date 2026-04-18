@@ -260,6 +260,12 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public int DifficultyLevel { get; set; } = 0;
 
     /// <summary>
+    /// Set to true when this action has been judged IMPOSSIBLE by the critic LLM or a coded rule.
+    /// Causes the action header and text to render greyed-out in the narration UI.
+    /// </summary>
+    public bool IsImpossible { get; set; } = false;
+
+    /// <summary>
     /// When set (item-combined actions), acts as the chain leaf instead of ActionModusMentis.
     /// Holds a SyntheticItemModusMentis whose DisplayName = item name and Level = item.UsageLevel,
     /// so that the UI shows the item name as the action button prefix and the chain is:

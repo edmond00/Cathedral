@@ -268,7 +268,10 @@ public class SceneDebugWindow : Form
 
     private MsaglGraph BuildFrontendGraph()
     {
-        var msagl = new MsaglGraph("frontend");
+        var msagl = new MsaglGraph("frontend")
+        {
+            LayoutAlgorithmSettings = new Microsoft.Msagl.Layout.MDS.MdsLayoutSettings(),
+        };
 
         if (_pov == null) return msagl;
 
@@ -349,7 +352,10 @@ public class SceneDebugWindow : Form
 
     private MsaglGraph BuildBackendGraph()
     {
-        var msagl      = new MsaglGraph("scene");
+        var msagl = new MsaglGraph("scene")
+        {
+            LayoutAlgorithmSettings = new Microsoft.Msagl.Layout.MDS.MdsLayoutSettings(),
+        };
         var addedNodes = new HashSet<string>();
 
         foreach (var section in _scene.Sections)

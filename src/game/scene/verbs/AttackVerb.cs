@@ -24,6 +24,7 @@ public class AttackVerb : Verb
         if (target is not SceneNpc sceneNpc) return false;
         if (!sceneNpc.IsAlive) return false;
         if (pov.InSpot != null) return false;  // can't attack from inside a spot
+        if (sceneNpc.Entity is ShallowNpcEntity) return false;  // shallow NPCs have no anatomy — use Slay instead
 
         return scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id);
     }

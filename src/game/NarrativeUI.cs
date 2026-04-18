@@ -481,9 +481,12 @@ public class NarrativeUI : TerminalPanelUI
     /// </summary>
     private void RenderActionLine(string text, ParsedNarrativeAction action, int actionIndex, int y, int lineIndex, ActionRegion? hoveredAction, bool dimContent = false)
     {
+        // Actions judged impossible are always rendered greyed-out
+        dimContent = dimContent || action.IsImpossible;
+
         // Check if this action is hovered
         bool isHovered = hoveredAction != null && hoveredAction.ActionIndex == actionIndex;
-        
+
         // Calculate colors - when dimmed, use dark grey regardless of hover state
         Vector4 prefixColor = dimContent ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.NarrativeColor;
         Vector4 textColor = dimContent ? Config.NarrativeUI.DimmedContentColor : 
