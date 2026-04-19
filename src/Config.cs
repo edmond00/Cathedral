@@ -466,23 +466,48 @@ public static class Config
     /// </summary>
     public static class PlausibilityQuestions
     {
-        public record Choice(string Id, string Description, bool IsFailure, string? ErrorMessage = null);
+        /// <summary>
+        /// Runtime condition that must be met for a SecondOpinion to be triggered.
+        /// Add new values here as new second-opinion chains are introduced.
+        /// </summary>
+        public enum SecondOpinionCondition
+        {
+            /// <summary>The player combined an item with this action.</summary>
+            ItemInUse,
+            /// <summary>No item was combined with this action.</summary>
+            NoItemInUse,
+        }
+
+        /// <summary>
+        /// A follow-up question asked when a specific failure choice fires and its
+        /// runtime Condition is met.  If this question passes, it overrides the failure.
+        /// </summary>
+        public record SecondOpinion(SecondOpinionCondition Condition, Question Question);
+
+        /// <summary>
+        /// A failing choice may declare multiple second opinions (one per condition).
+        /// Each one whose condition is met at runtime is evaluated in order;
+        /// the first that passes overrides the failure.
+        /// </summary>
+        public record Choice(string Id, string Description, bool IsFailure,
+            string? ErrorMessage = null, List<SecondOpinion>? SecondOpinions = null);
+
         public record Question(string Name, string Text, List<Choice> Choices);
 
         public static readonly List<Question> Questions =
         [
-            new Question(
-                Name: "PhysicalFeasibility",
-                Text: "Can a human body physically attempt this action — regardless of whether it succeeds? Judge only whether a human body can make the attempt, not the outcome. Trying to outrun a horse is a valid attempt (it will likely fail, but the body can try). Flying unaided is not a valid attempt (human anatomy cannot produce flight at all).",
-                Choices:
-                [
-                    new("clearly_possible",     "the human body can clearly attempt this",                           IsFailure: false),
-                    new("possible_with_effort", "the body can attempt this, though it demands exceptional exertion", IsFailure: false),
-                    new("borderline",           "the body can barely attempt this — at the very edge of anatomy",    IsFailure: false),
-                    new("physically_impossible","the human body cannot even attempt this — anatomy prevents it",      IsFailure: true,
-                        ErrorMessage: "The human body cannot attempt this action"),
-                ]
-            ),
+            // new Question(
+            //     Name: "PhysicalFeasibility",
+            //     Text: "Can a human body physically attempt this action — regardless of whether it succeeds? Judge only whether a human body can make the attempt, not the outcome. Trying to outrun a horse is a valid attempt (it will likely fail, but the body can try). Flying unaided is not a valid attempt (human anatomy cannot produce flight at all).",
+            //     Choices:
+            //     [
+            //         new("clearly_possible",     "the human body can clearly attempt this",                           IsFailure: false),
+            //         new("possible_with_effort", "the body can attempt this, though it demands exceptional exertion", IsFailure: false),
+            //         new("borderline",           "the body can barely attempt this — at the very edge of anatomy",    IsFailure: false),
+            //         new("physically_impossible","the human body cannot even attempt this — anatomy prevents it",      IsFailure: true,
+            //             ErrorMessage: "The human body cannot attempt this action"),
+            //     ]
+            // ),
 
             new Question(
                 Name: "RequiredElements",
@@ -492,7 +517,38 @@ public static class Config
                     new("nothing_missing",  "nothing is missing, all required elements are present", IsFailure: false),
                     new("minor_missing",    "a minor, easily improvised element is absent",          IsFailure: false),
                     new("tool_missing",     "a specific tool or object is absent",                   IsFailure: true,
-                        ErrorMessage: "A required object is not available"),
+                        ErrorMessage: "A required object is not available",
+                        SecondOpinions:
+                        [
+                            new(
+                                Condition: SecondOpinionCondition.ItemInUse,
+                                Question: new(
+                                    Name: "ItemAppropriateness",
+                                    Text: "The character is using the item described above. Could this item serve — even improvised or unconventionally — as the tool needed to attempt this action?",
+                                    Choices:
+                                    [
+                                        new("clearly_appropriate",  "the item is clearly suitable for this action",                IsFailure: false),
+                                        new("somewhat_appropriate", "the item could work with ingenuity or improvisation",         IsFailure: false),
+                                        new("not_appropriate",      "the item cannot be used for this action in any way",          IsFailure: true,
+                                            ErrorMessage: "The item cannot be used for this action"),
+                                    ]
+                                )
+                            ),
+                            new(
+                                Condition: SecondOpinionCondition.NoItemInUse,
+                                Question: new(
+                                    Name: "BareHandsFeasibility",
+                                    Text: "No specific tool is being used. Could the character attempt this action using only their bare hands or body?",
+                                    Choices:
+                                    [
+                                        new("hands_sufficient",  "bare hands are sufficient to attempt this action",                IsFailure: false),
+                                        new("hands_improvised",  "bare hands could work as a rough improvisation",                  IsFailure: false),
+                                        new("hands_impossible",  "bare hands cannot substitute — a specific tool is truly required", IsFailure: true,
+                                            ErrorMessage: "This action requires a specific tool"),
+                                    ]
+                                )
+                            ),
+                        ]),
                     new("person_missing",   "a required person or creature is absent",               IsFailure: true,
                         ErrorMessage: "A required person is not present"),
                     new("location_wrong",   "the wrong location — a specific place is required",    IsFailure: true,
@@ -523,8 +579,6 @@ public static class Config
                     new("fully_consistent",      "fully consistent with the current situation",          IsFailure: false),
                     new("mostly_consistent",     "mostly consistent, minor tension with the situation",  IsFailure: false),
                     new("somewhat_inconsistent", "somewhat inconsistent with recent events",             IsFailure: false),
-                    new("contradicts_events",    "directly contradicts what just happened",              IsFailure: true,
-                        ErrorMessage: "This contradicts what just occurred"),
                     new("nonsensical",           "makes no sense given the current context",             IsFailure: true,
                         ErrorMessage: "This action makes no sense in the current situation"),
                 ]

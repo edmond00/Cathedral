@@ -24,7 +24,6 @@ public class AttackVerb : Verb
         if (target is not SceneNpc sceneNpc) return false;
         if (!sceneNpc.IsAlive) return false;
         if (pov.InSpot != null) return false;  // can't attack from inside a spot
-        if (sceneNpc.Entity is ShallowNpcEntity) return false;  // shallow NPCs have no anatomy — use Slay instead
 
         return scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id);
     }
@@ -34,7 +33,19 @@ public class AttackVerb : Verb
 
     public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc) return;
+        if (target is not SceneNpc sceneNpc) return;
+
+        // Shallow NPCs have no anatomy — instant kill instead of full combat
+        if (sceneNpc.Entity is ShallowNpcEntity)
+        {
+            sceneNpc.Entity.IsAlive = false;
+            var corpse = sceneNpc.Entity.GenerateCorpse(pov.Where);
+            scene.AddSpotToArea(pov.Where, corpse);
+            pov.Focus = null;
+            return;
+        }
+
+        if (sceneNpc.Entity is not NpcEntity npc) return;
         scene.PendingFightRequest = new FightRequest(npc);
     }
 }

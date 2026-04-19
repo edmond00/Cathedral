@@ -127,7 +127,7 @@ public class DiceRollComponent
 
         bool hasFinal = !IsRolling && _finalValues != null;
         int sixesCount = hasFinal ? _finalValues!.Count(v => v == 6) : 0;
-        bool isSuccess = sixesCount > Difficulty; // strictly greater-than (design choice)
+        bool isSuccess = sixesCount >= Difficulty;
 
         // ── Title ───────────────────────────────────────────────────────
         string title     = IsRolling ? "Rolling Dice..." : (isSuccess ? "SUCCESS!" : "FAILURE!");

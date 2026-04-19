@@ -165,9 +165,9 @@ You could proceed:
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
 You are about to: {originalActionText}.
-You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
+You are in possession of {combinedItem.WithArticle()} ({combinedItem.DescriptionLower()}).
 
-{reminderClause}in two or three sentences, explain how you could use {combinedItem.DisplayName} to help with this action.
+{reminderClause}in two or three sentences, explain how you could use {combinedItem.WithArticle()} to help with this action.
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
     }
 
@@ -193,9 +193,9 @@ You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
 You are about to: {originalActionText}.
-You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
+You are in possession of {combinedItem.WithArticle()} ({combinedItem.DescriptionLower()}).
 
-{reminderClause}expert in {actionModusMentis.ShortDescription}, describe simply what you will do, incorporating the use of {combinedItem.DisplayName} in your action.
+{reminderClause}expert in {actionModusMentis.ShortDescription}, describe simply what you will do, incorporating the use of {combinedItem.WithArticle()} in your action.
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
     }
 
@@ -206,7 +206,6 @@ You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
         Protagonist protagonist,
         ModusMentis actionModusMentis,
         WorldContext worldContext,
-        ConcreteOutcome targetOutcome,
         string questionText)
     {
         string personaToneLine = actionModusMentis.PersonaTone != null
@@ -215,17 +214,13 @@ You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
         string reminderClause = actionModusMentis.PersonaReminder != null
             ? $"As a {actionModusMentis.PersonaReminder}, "
             : "";
-        string outcomeLabel = targetOutcome is NarrationNode n
-            ? n.GenerateNeutralDescription(protagonist.CurrentLocationId)
-            : targetOutcome is ObservationObject obs ? obs.GenerateNeutralDescription(0)
-            : targetOutcome.DisplayName;
         string formattedQuestion = string.Format(questionText, actionModusMentis.ShortDescription).TrimEnd('.', '?', '!')
             + $" in order to {outcomeDescription}? Write a simple action naturally leading to the goal.";
 
         return $@"{personaToneLine}{WorldContext.EpochContext}
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
-You noticed {keyword}. It is part of {WithArticle(outcomeLabel)}. Now you want to {outcomeDescription}.
+You noticed {keyword}. Now you want to {outcomeDescription}.
 
 {reminderClause}{formattedQuestion}
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";

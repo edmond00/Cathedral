@@ -76,10 +76,20 @@ public class QuestionFillerService
         [QuestionReference.ThinkWhat] = new QuestionFiller(QuestionReference.ThinkWhat,
             new Question("expert in {0}, explain simply what you are going to try to do.", "what_should_i_do")),
 
-        [QuestionReference.OutcomeHappened] = new QuestionFiller(QuestionReference.OutcomeHappened,
-            new Question("what happened?", "what_happened")),
+        [QuestionReference.OutcomeSucceededHappened] = new QuestionFiller(QuestionReference.OutcomeSucceededHappened,
+            new Question("it worked — what exactly happened, and what did your action produce?", "what_happened"),
+            new Question("you succeeded — describe precisely what unfolded.", "what_happened")),
 
-        [QuestionReference.OutcomeFeel] = new QuestionFiller(QuestionReference.OutcomeFeel,
-            new Question("What do you feel about this outcome?", "what_i_feel")),
+        [QuestionReference.OutcomeSucceededFeel] = new QuestionFiller(QuestionReference.OutcomeSucceededFeel,
+            new Question("you succeeded — what do you feel now?", "what_i_feel"),
+            new Question("it worked — what does that leave you with?", "what_i_feel")),
+
+        [QuestionReference.OutcomeFailedHappened] = new QuestionFiller(QuestionReference.OutcomeFailedHappened,
+            new Question("it failed — what stopped you, and what does that tell you?", "what_happened"),
+            new Question("you failed — describe exactly what went wrong.", "what_happened")),
+
+        [QuestionReference.OutcomeFailedFeel] = new QuestionFiller(QuestionReference.OutcomeFailedFeel,
+            new Question("you failed — what do you feel now?", "what_i_feel"),
+            new Question("it didn't work — what does that leave you with?", "what_i_feel")),
     };
 }

@@ -96,6 +96,27 @@ public static class CriticTrees
         return nodes[0];
     }
 
+    /// <summary>
+    /// Builds a single-node critic tree for a <see cref="Config.PlausibilityQuestions.SecondOpinion"/>
+    /// question. The preamble from <paramref name="context"/> already contains the item context
+    /// (set by the caller before invoking the plausibility tree), so the question is injected
+    /// directly below it.
+    /// </summary>
+    public static CriticNode BuildSecondOpinionTree(
+        Config.PlausibilityQuestions.Question question,
+        string actionText,
+        CriticContext context)
+    {
+        var preamble = $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} wants to: \"{actionText}\"";
+        var choices = question.Choices
+            .Select(c => new CriticChoice(c.Id, c.Description, c.IsFailure, c.ErrorMessage))
+            .ToList();
+        return new CriticNode(
+            name: question.Name,
+            question: $"{preamble}\n\n{question.Text}",
+            choices: choices);
+    }
+
     #endregion
 
     #region Difficulty Tree
@@ -354,14 +375,14 @@ public static class CriticTrees
     {
         return new CriticNode(
             name: "ItemAppropriatenessActionText",
-            question: $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} wants to: \"{actionText}\"\nThe character is holding: {itemContext}.\n\nCan {itemContext} plausibly help to realise this action?",
+            question: $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} wants to: \"{actionText}\"\nThe character is holding: {itemContext}.\n\nCompared to attempting this action with bare hands, does {itemContext} provide a meaningful advantage?",
             choices: new List<CriticChoice>
             {
-                new("clearly_helps",    "the item directly enables or clearly assists the action"),
-                new("plausibly_helps",  "the item could plausibly assist in some way"),
-                new("detoured_use",     "the item could help if used in a creative or detoured way"),
-                new("cannot_help",      "the item cannot help with this action",  isFailure: true, errorMessage: "That item cannot help with this action."),
-                new("makes_no_sense",   "using this item here makes no sense",    isFailure: true, errorMessage: "Using that item here makes no sense."),
+                new("clearly_helps",    "the item provides a clear, direct advantage over bare hands"),
+                new("plausibly_helps",  "the item offers a real but modest advantage over bare hands"),
+                new("detoured_use",     "the item could help through creative use, though barely more than bare hands"),
+                new("cannot_help",      "the item offers no meaningful advantage over bare hands for this action", isFailure: true, errorMessage: "That item cannot help with this action."),
+                new("makes_no_sense",   "using this item here makes no sense compared to bare hands",             isFailure: true, errorMessage: "Using that item here makes no sense."),
             });
     }
 
@@ -374,14 +395,14 @@ public static class CriticTrees
     {
         return new CriticNode(
             name: "ItemAppropriateness",
-            question: $"{context.BuildPreamble()}\n\nThe character wants to {goalText} with {modusMentisShortDescription}, using {itemName}.\n\nCan {itemName} plausibly help?",
+            question: $"{context.BuildPreamble()}\n\nThe character wants to {goalText} with {modusMentisShortDescription}.\nThey are holding: {itemName}.\n\nCompared to attempting this with bare hands, does {itemName} provide a meaningful advantage for this action?",
             choices: new List<CriticChoice>
             {
-                new("clearly_helps",    "the item directly enables or clearly assists the action"),
-                new("plausibly_helps",  "the item could plausibly assist in some way"),
-                new("detoured_use",     "the item could help if used in a creative or detoured way"),
-                new("cannot_help",      "the item cannot help with this action",  isFailure: true, errorMessage: "That item cannot help with this action."),
-                new("makes_no_sense",   "using this item here makes no sense",    isFailure: true, errorMessage: "Using that item here makes no sense."),
+                new("clearly_helps",    "the item provides a clear, direct advantage over bare hands"),
+                new("plausibly_helps",  "the item offers a real but modest advantage over bare hands"),
+                new("detoured_use",     "the item could help through creative use, though barely more than bare hands"),
+                new("cannot_help",      "the item offers no meaningful advantage over bare hands for this action", isFailure: true, errorMessage: "That item cannot help with this action."),
+                new("makes_no_sense",   "using this item here makes no sense compared to bare hands",             isFailure: true, errorMessage: "Using that item here makes no sense."),
             });
     }
 

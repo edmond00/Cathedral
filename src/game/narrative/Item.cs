@@ -49,6 +49,38 @@ public abstract class Item : ConcreteOutcome, IObservation
 
     public override string ToNaturalLanguageString() => $"acquire {DisplayName}";
 
+    /// <summary>
+    /// Returns the item name with the appropriate indefinite article, all lowercase.
+    /// e.g. "a wool cloak", "an egg", "some grain", "some leather boots".
+    /// </summary>
+    public string WithArticle()
+    {
+        string lower = DisplayName.ToLowerInvariant();
+        string[] words = lower.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string last = words[^1];
+
+        // Plural form (ends in -s but not -ss) → "some"
+        if (last.Length > 1 && last.EndsWith('s') && !last.EndsWith("ss"))
+            return $"some {lower}";
+
+        // Mass / uncountable nouns → "some"
+        string[] massNouns = { "bark", "bread", "cheese", "clover", "grain",
+                                "hay", "lard", "meat", "moss", "sap", "salt",
+                                "straw", "tallow", "wool" };
+        if (System.Array.IndexOf(massNouns, last) >= 0)
+            return $"some {lower}";
+
+        // Vowel-initial → "an"
+        if ("aeiou".Contains(lower[0]))
+            return $"an {lower}";
+
+        return $"a {lower}";
+    }
+
+    /// <summary>Returns the description with its first letter lowercased.</summary>
+    public string DescriptionLower() =>
+        Description.Length == 0 ? Description : char.ToLowerInvariant(Description[0]) + Description[1..];
+
     // ── IObservation (self-referential) ───────────────────────────────────────
     string IObservation.ObservationId => ItemId;
     IReadOnlyList<ConcreteOutcome> IObservation.ObservationOutcomes =>

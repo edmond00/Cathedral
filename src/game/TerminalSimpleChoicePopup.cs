@@ -61,7 +61,7 @@ public class TerminalSimpleChoicePopup
     public bool IsVisible => _choices.Count > 0;
 
     /// <summary>Update hover highlight from screen pixel coordinates. Returns true if repaint needed.</summary>
-    public bool UpdateHover(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
+    public bool UpdateHover(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {
         if (!IsVisible) return false;
 
@@ -80,7 +80,7 @@ public class TerminalSimpleChoicePopup
     /// Returns the 0-based choice index if a choice was clicked, or null if clicked outside.
     /// The popup is hidden either way.
     /// </summary>
-    public int? HandleClick(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
+    public int? HandleClick(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {
         if (!IsVisible) return null;
 
@@ -91,7 +91,7 @@ public class TerminalSimpleChoicePopup
 
     // ── Internals ────────────────────────────────────────────────
 
-    private int? GetIndexAtPosition(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
+    private int? GetIndexAtPosition(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {
         var bounds = _popup.GetScreenBounds(windowSize);
         if (bounds == null) return null;

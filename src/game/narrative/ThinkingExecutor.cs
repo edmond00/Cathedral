@@ -143,7 +143,7 @@ public class ThinkingExecutor
         _llmManager.ResetInstance(actionSlot);
 
         var whatQ = _questionFillerService.GetNext(selectedModusMentis, QuestionReference.ThinkWhat);
-        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, outcomeDescription, node, protagonist, selectedModusMentis, worldContext, resolvedOutcome, whatQ.PromptText);
+        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, outcomeDescription, node, protagonist, selectedModusMentis, worldContext, whatQ.PromptText);
         string whatGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema(whatQ.JsonFieldName));
 
         string? whatJson = await RequestFromLLMAsync(actionSlot, whatPrompt, whatGbnf, cancellationToken);

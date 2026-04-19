@@ -44,7 +44,8 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
 
         // Resolve questions from the filler service
-        var happenedQ = _questionFillerService.GetNext(actionModusMentis, QuestionReference.OutcomeHappened);
+        var happenedRef = succeeded ? QuestionReference.OutcomeSucceededHappened : QuestionReference.OutcomeFailedHappened;
+        var happenedQ = _questionFillerService.GetNext(actionModusMentis, happenedRef);
 
         // Build prompt
         string prompt = BuildNarrationPrompt(
@@ -85,12 +86,12 @@ public class OutcomeNarrator
         }
 
         // Follow-up: what do you feel?
-        string feeling = await RequestFeelingAsync(slotId, actionModusMentis, cancellationToken);
+        string feeling = await RequestFeelingAsync(slotId, actionModusMentis, action.ActionText, succeeded, cancellationToken);
         return string.IsNullOrWhiteSpace(feeling)
             ? narrationText
             : $"{narrationText} {feeling}";
     }
-    
+
     /// <summary>
     /// Generates narration explaining why an action failed plausibility checks.
     /// </summary>
@@ -111,7 +112,7 @@ public class OutcomeNarrator
             ? $"As a {actionModusMentis.PersonaReminder}, "
             : "";
 
-        var happenedQ = _questionFillerService.GetNext(actionModusMentis, QuestionReference.OutcomeHappened);
+        var happenedQ = _questionFillerService.GetNext(actionModusMentis, QuestionReference.OutcomeFailedHappened);
 
         string prompt = $@"{personaToneLine}
 {WorldContext.EpochContext}
@@ -145,7 +146,7 @@ You tried to {action.ActionText} but it could not happen.
         }
 
         // Follow-up: what do you feel?
-        string feeling = await RequestFeelingAsync(slotId, actionModusMentis, cancellationToken);
+        string feeling = await RequestFeelingAsync(slotId, actionModusMentis, action.ActionText, false, cancellationToken);
         return string.IsNullOrWhiteSpace(feeling)
             ? narrationText
             : $"{narrationText} {feeling}";
@@ -177,10 +178,10 @@ You tried to {action.ActionText} but it could not happen.
         string prompt = $@"{personaToneLine}
 {WorldContext.EpochContext}
 You are about to: {action.ActionText}.
-You are holding: {item.DisplayName} ({item.Description}).
+You are in possession of {item.WithArticle()} ({item.DescriptionLower()}).
 You want to use this item to realize this action but it is not suitable.
 {criticLine}
-{reminderClause}explain in one sentence why using {item.DisplayName} here simply does not work or makes no sense.
+{reminderClause}explain in one sentence why using {item.WithArticle()} here simply does not work or makes no sense.
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
 
         var schema = LLMSchemaConfig.CreateOutcomeNarrationSchema();
@@ -268,10 +269,14 @@ You tried to {action.ActionText}.
     /// The slot still holds the narration context, so no prompt reset is needed.
     /// Returns the parsed feeling sentence, or empty string on failure.
     /// </summary>
-    private async Task<string> RequestFeelingAsync(int slotId, ModusMentis actionModusMentis, CancellationToken cancellationToken)
+    private async Task<string> RequestFeelingAsync(int slotId, ModusMentis actionModusMentis, string actionText, bool succeeded, CancellationToken cancellationToken)
     {
-        var feelQ = _questionFillerService.GetNext(actionModusMentis, QuestionReference.OutcomeFeel);
-        string prompt = feelQ.PromptText + "\n" + Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2);
+        var feelRef = succeeded ? QuestionReference.OutcomeSucceededFeel : QuestionReference.OutcomeFailedFeel;
+        var feelQ = _questionFillerService.GetNext(actionModusMentis, feelRef);
+        string outcomeReminder = succeeded
+            ? $"You tried to {actionText} and you succeeded."
+            : $"You tried to {actionText} and you failed.";
+        string prompt = $"{outcomeReminder}\n{feelQ.PromptText}\n{Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";
         var schema = LLMSchemaConfig.CreateFeelingSchema(feelQ.JsonFieldName);
         string gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
 

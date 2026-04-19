@@ -65,7 +65,7 @@ public class TerminalItemSelectionPopup
     /// Update hover state based on screen pixel mouse position.
     /// Returns true if hover state changed.
     /// </summary>
-    public bool UpdateHover(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
+    public bool UpdateHover(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {
         if (!IsVisible)
             return false;
@@ -86,7 +86,7 @@ public class TerminalItemSelectionPopup
     /// Handle click at the given screen pixel position.
     /// Returns the selected item, or null if clicked outside (closes the popup).
     /// </summary>
-    public Item? HandleClick(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
+    public Item? HandleClick(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {
         if (!IsVisible)
             return null;
@@ -106,7 +106,7 @@ public class TerminalItemSelectionPopup
         }
     }
 
-    private int? GetItemIndexAtPosition(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
+    private int? GetItemIndexAtPosition(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {
         var bounds = _popup.GetScreenBounds(windowSize);
         if (bounds == null)

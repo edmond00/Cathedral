@@ -149,27 +149,35 @@ public class ActionExecutionController
         var plausibilityTree = CriticTrees.BuildPlausibilityTree(action.ActionText, criticContext);
         var plausibilityResult = await _criticEvaluator.EvaluateTreeAsync(plausibilityTree, continueOnFailure: true);
 
-        // If any plausibility check failed, return early
+        // If any plausibility check failed, try second opinions before rejecting
         if (!plausibilityResult.OverallSuccess)
         {
-            // Prefer the critic's free-text reason over the generic error label
-            var errorMessage = plausibilityResult.CombinedFailureReason.Length > 0
-                ? plausibilityResult.CombinedFailureReason
-                : plausibilityResult.FirstErrorMessage.Length > 0
-                    ? plausibilityResult.FirstErrorMessage
-                    : "That action doesn't make sense in this situation.";
+            bool overridden = await EvaluateSecondOpinionsAsync(
+                plausibilityResult, action, criticContext, cancellationToken);
 
-            Console.WriteLine($"   ❌ Action rejected: {errorMessage}\n");
-
-            return new ActionEvaluationResult
+            if (!overridden)
             {
-                IsPlausible = false,
-                PlausibilityError = errorMessage,
-                ActionModusMentis = actionModusMentis,
-                ThinkingModusMentis = thinkingModusMentisUsed,
-                Action = action,
-                CurrentNode = currentNode
-            };
+                // Prefer the critic's free-text reason over the generic error label
+                var errorMessage = plausibilityResult.CombinedFailureReason.Length > 0
+                    ? plausibilityResult.CombinedFailureReason
+                    : plausibilityResult.FirstErrorMessage.Length > 0
+                        ? plausibilityResult.FirstErrorMessage
+                        : "That action doesn't make sense in this situation.";
+
+                Console.WriteLine($"   ❌ Action rejected: {errorMessage}\n");
+
+                return new ActionEvaluationResult
+                {
+                    IsPlausible = false,
+                    PlausibilityError = errorMessage,
+                    ActionModusMentis = actionModusMentis,
+                    ThinkingModusMentis = thinkingModusMentisUsed,
+                    Action = action,
+                    CurrentNode = currentNode
+                };
+            }
+
+            Console.WriteLine($"   ✓ Second opinion overrode plausibility failure — action approved.\n");
         }
 
         Console.WriteLine($"   ✓ Action approved as plausible ({plausibilityResult.Trace.Count} checks passed)\n");
@@ -438,10 +446,13 @@ public class ActionExecutionController
             return await GeneratePlausibilityFailureNarrationAsync(evalResult, cancellationToken);
         }
         
-        // Roll for success
+        // Roll n dice (1–6 each), succeed if sixes >= difficulty
         var rng = new Random();
-        double roll = rng.NextDouble();
-        bool succeeded = roll < evalResult.SuccessProbability;
+        int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
+        int sixes = 0;
+        for (int i = 0; i < numberOfDice; i++)
+            if (rng.Next(1, 7) == 6) sixes++;
+        bool succeeded = sixes >= evalResult.DifficultyLevel;
         
         // Phase 2: Execute dice roll and get outcome
         return await ExecuteDiceRollAsync(evalResult, succeeded, cancellationToken);
@@ -476,6 +487,67 @@ public class ActionExecutionController
             ? wound.TargetId
             : wound.WildcardZoneHint ?? "body";
         return raw.Replace('_', ' ');
+    }
+
+    /// <summary>
+    /// For each failing node in <paramref name="plausibilityResult"/>, checks whether the
+    /// corresponding choice has a <see cref="Config.PlausibilityQuestions.SecondOpinion"/> whose
+    /// runtime condition is satisfied.  If so, evaluates it and returns <c>true</c> the first
+    /// time one passes — meaning the original failure is overridden and the action is plausible.
+    /// Returns <c>false</c> if no second opinion overrides the failure.
+    /// </summary>
+    private async Task<bool> EvaluateSecondOpinionsAsync(
+        CriticTreeResult plausibilityResult,
+        ParsedNarrativeAction action,
+        CriticContext criticContext,
+        CancellationToken cancellationToken)
+    {
+        foreach (var failedNode in plausibilityResult.Trace.Where(r => r.IsFailure))
+        {
+            var question = Config.PlausibilityQuestions.Questions
+                .FirstOrDefault(q => q.Name == failedNode.NodeName);
+            if (question == null) continue;
+
+            var failedChoice = question.Choices.FirstOrDefault(c => c.Id == failedNode.ChosenId);
+            if (failedChoice?.SecondOpinions == null) continue;
+
+            foreach (var secondOpinion in failedChoice.SecondOpinions)
+            {
+                if (!IsSecondOpinionConditionMet(secondOpinion.Condition, action)) continue;
+
+                Console.WriteLine($"\n🔄 [SECOND OPINION — {secondOpinion.Question.Name}] " +
+                    (action.CombinedItem != null
+                        ? $"Checking if '{action.CombinedItem.DisplayName}' can serve as the required tool..."
+                        : "Checking if bare hands can substitute..."));
+
+                var soTree = CriticTrees.BuildSecondOpinionTree(
+                    secondOpinion.Question, action.ActionText, criticContext);
+                var soResult = await _criticEvaluator.EvaluateTreeAsync(soTree);
+
+                if (soResult.OverallSuccess)
+                {
+                    Console.WriteLine($"   ✓ [{soResult.FinalChosenId}] Overriding '{failedNode.ChosenId}'.");
+                    return true;
+                }
+
+                Console.WriteLine($"   ✗ [{soResult.FinalChosenId}] Second opinion confirms failure.");
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Returns true when the runtime condition for a second opinion is satisfied.</summary>
+    private static bool IsSecondOpinionConditionMet(
+        Config.PlausibilityQuestions.SecondOpinionCondition condition,
+        ParsedNarrativeAction action)
+    {
+        return condition switch
+        {
+            Config.PlausibilityQuestions.SecondOpinionCondition.ItemInUse   => action.CombinedItem != null,
+            Config.PlausibilityQuestions.SecondOpinionCondition.NoItemInUse => action.CombinedItem == null,
+            _ => false,
+        };
     }
 
     /// <summary>

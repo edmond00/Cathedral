@@ -28,9 +28,15 @@ public enum QuestionReference
     /// </summary>
     ThinkWhat,
 
-    /// <summary>Outcome narration — what happened?</summary>
-    OutcomeHappened,
+    /// <summary>Outcome narration (first call) — what happened, when the action succeeded.</summary>
+    OutcomeSucceededHappened,
 
-    /// <summary>Outcome feeling follow-up — what do you feel?</summary>
-    OutcomeFeel,
+    /// <summary>Outcome feeling follow-up (second call) — what do you feel, when the action succeeded.</summary>
+    OutcomeSucceededFeel,
+
+    /// <summary>Outcome narration (first call) — what happened, when the action failed or was impossible.</summary>
+    OutcomeFailedHappened,
+
+    /// <summary>Outcome feeling follow-up (second call) — what do you feel, when the action failed or was impossible.</summary>
+    OutcomeFailedFeel,
 }

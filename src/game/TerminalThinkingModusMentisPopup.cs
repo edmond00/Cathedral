@@ -72,7 +72,7 @@ public class TerminalThinkingModusMentisPopup
     /// Update hover state based on screen pixel mouse position.
     /// Returns true if hover state changed.
     /// </summary>
-    public bool UpdateHover(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
+    public bool UpdateHover(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {
         if (!IsVisible)
             return false;
@@ -92,7 +92,7 @@ public class TerminalThinkingModusMentisPopup
     /// <summary>
     /// Get the modusMentis index at the given screen pixel position, or null if none.
     /// </summary>
-    private int? GetModusMentisIndexAtPosition(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
+    private int? GetModusMentisIndexAtPosition(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {
         // Get popup screen bounds
         var bounds = _popup.GetScreenBounds(windowSize);
@@ -137,7 +137,7 @@ public class TerminalThinkingModusMentisPopup
     /// Handle click at the given screen pixel position.
     /// Returns the selected modusMentis, or null if clicked outside.
     /// </summary>
-    public ModusMentis? HandleClick(float screenX, float screenY, Vector2i windowSize, int cellPixelSize)
+    public ModusMentis? HandleClick(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {
         if (!IsVisible)
             return null;

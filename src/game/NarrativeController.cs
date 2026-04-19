@@ -547,53 +547,52 @@ public class NarrativeController
             
             // === PHASE 2: DICE ROLL (dice rolling animation) ===
             Console.WriteLine($"NarrativeController: Action passed plausibility, starting dice roll phase");
-            
-            // Calculate dice parameters for the roll animation
-            int numberOfDice = CalculateNumberOfDice(action);
-            
-            // Convert difficulty score (0.0-1.0) to dice difficulty (1-10)
-            int actualDifficulty = Math.Max(1, (int)Math.Ceiling(evalResult.DifficultyScore * Math.Min(numberOfDice, 10)));
-            actualDifficulty = Math.Clamp(actualDifficulty, 1, 10);
-            
+
+            // Number of dice = total modusMentis level summed across the chain
+            int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
+
+            // Difficulty = number of 6s needed to succeed (1-10, from LLM evaluation)
+            int actualDifficulty = evalResult.DifficultyLevel;
+
             // Start dice roll animation
             _narrationState.StartDiceRoll(numberOfDice, actualDifficulty);
             _narrationState.LoadingMessage = "Rolling dice...";
-            
-            // Roll for success
-            double roll;
+
+            // Roll each die independently (1–6) and count sixes
+            int[] finalDiceValues;
             bool succeeded;
             if (DebugMode.IsActive && !DebugMode.IsAutoStrategy)
             {
                 succeeded = DebugMode.GetDiceRollOverride(action.ActionText, evalResult.SuccessProbability);
-                roll = succeeded ? 0.0 : 1.0; // Synthetic roll value for logging
+                finalDiceValues = GenerateDiceValuesForResult(numberOfDice, actualDifficulty, succeeded);
             }
             else
             {
-                roll = _diceRandom.NextDouble();
-                succeeded = roll < evalResult.SuccessProbability;
+                finalDiceValues = new int[numberOfDice];
+                for (int i = 0; i < numberOfDice; i++)
+                    finalDiceValues[i] = _diceRandom.Next(1, 7);
+                int sixesCount = finalDiceValues.Count(v => v == 6);
+                succeeded = sixesCount >= actualDifficulty;
             }
-            
-            Console.WriteLine($"NarrativeController: Roll {roll:F3} vs probability {evalResult.SuccessProbability:F3} → {(succeeded ? "SUCCESS" : "FAILURE")}");
-            
+
+            Console.WriteLine($"NarrativeController: Rolled {finalDiceValues.Count(v => v == 6)} sixes out of {numberOfDice} dice (need {actualDifficulty}) → {(succeeded ? "SUCCESS" : "FAILURE")}");
+
             // Execute dice roll phase (failure outcome evaluation + narration generation)
             var result = await _actionExecutor.ExecuteDiceRollAsync(
                 evalResult,
                 succeeded,
                 CancellationToken.None
             );
-            
+
             Console.WriteLine($"NarrativeController: Action {(result.Succeeded ? "SUCCEEDED" : "FAILED")}");
-            
-            // Generate final dice values based on success/failure
-            int[] finalDiceValues = GenerateDiceValuesForResult(numberOfDice, actualDifficulty, result.Succeeded);
-            
+
             // Store the action result for later (when player clicks continue on dice screen)
             _pendingActionResult = result;
-            
+
             // Complete the dice roll (stops animation, shows final values and continue button)
             _narrationState.CompleteDiceRoll(finalDiceValues);
             _narrationState.IsLoadingAction = false;
-            
+
             Console.WriteLine($"NarrativeController: Dice roll complete - {finalDiceValues.Count(v => v == 6)} sixes rolled, difficulty {actualDifficulty}");
         }
         catch (Exception ex)
@@ -605,33 +604,6 @@ public class NarrativeController
             _narrationState.ClearDiceRoll();
             _narrationState.ErrorMessage = $"Action execution failed: {ex.Message}";
         }
-    }
-    
-    /// <summary>
-    /// Calculate number of dice to roll based on action modusMentis proficiency.
-    /// </summary>
-    private int CalculateNumberOfDice(ParsedNarrativeAction action)
-    {
-        // Base: 4 dice
-        int baseDice = 4;
-        
-        // Try to get modusMentis bonus from protagonist
-        if (action.ActionModusMentis != null)
-        {
-            // Get organ score (affects dice count)
-            int organScore = _protagonist.GetOrganScoreForModusMentis(action.ActionModusMentis);
-            if (organScore == 0) organScore = 5; // fallback
-            
-            // Organ score adds 0-3 extra dice
-            int bonusDice = (organScore - 1) / 3; // 1-3 = 0, 4-6 = 1, 7-9 = 2, 10 = 3
-            baseDice += bonusDice;
-        }
-        
-        // Combined item usage level adds bonus dice
-        if (action.CombinedItem != null)
-            baseDice += action.CombinedItem.UsageLevel;
-
-        return Math.Clamp(baseDice, 3, 12);
     }
     
     /// <summary>
@@ -1108,7 +1080,7 @@ public class NarrativeController
     {
         // Get cell size for hit detection (shared by both popups)
         var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
-        int cellPixelSize = (int)layoutInfo.CellSize.X;
+        float cellPixelSize = layoutInfo.CellSize.X;
 
         if (_modusMentisPopup.IsVisible)
             _modusMentisPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
@@ -1127,7 +1099,7 @@ public class NarrativeController
     public void OnRawMouseClick(Vector2 screenPosition)
     {
         var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
-        int cellPixelSize = (int)layoutInfo.CellSize.X;
+        float cellPixelSize = layoutInfo.CellSize.X;
 
         // Choice popup (Think/Observe or Execute/Use Item) takes highest priority
         if (_choicePopup.IsVisible)
@@ -1424,7 +1396,7 @@ public class NarrativeController
         {
             Vector2 correctedScreenPos = _terminalInputHandler.GetCorrectedMousePosition();
             var layoutInfoC = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
-            int cellPixelSizeC = (int)layoutInfoC.CellSize.X;
+            float cellPixelSizeC = layoutInfoC.CellSize.X;
 
             int? choiceIndex = _choicePopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.ClientSize, cellPixelSizeC);
             _narrationState.IsSelectingInteractionMode = false;
@@ -1437,7 +1409,7 @@ public class NarrativeController
         {
             Vector2 correctedScreenPos = _terminalInputHandler.GetCorrectedMousePosition();
             var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
-            int cellPixelSize = (int)layoutInfo.CellSize.X;
+            float cellPixelSize = layoutInfo.CellSize.X;
 
             var selectedItem = _itemSelectionPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.ClientSize, cellPixelSize);
             if (selectedItem != null && _narrationState.ActionPendingItemCombination != null)
@@ -1464,7 +1436,7 @@ public class NarrativeController
 
             // Get cell size for hit detection
             var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
-            int cellPixelSize = (int)layoutInfo.CellSize.X; // Assume square cells
+            float cellPixelSize = layoutInfo.CellSize.X;
 
             var selectedModusMentis = _modusMentisPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.ClientSize, cellPixelSize);
             if (selectedModusMentis != null)
