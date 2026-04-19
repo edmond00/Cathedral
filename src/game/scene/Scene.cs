@@ -192,7 +192,6 @@ public class Scene
 
     private SceneViewEntry BuildEntry(Element element, PoV pov, Protagonist? actor = null)
     {
-        var keywords = element.Keywords;
         var verbs    = new List<VerbView>();
 
         foreach (var verb in Verbs)
@@ -201,7 +200,7 @@ public class Scene
                 verbs.Add(new VerbView(verb, verb.Verbatim(this, pov, element), element));
         }
 
-        return new SceneViewEntry(element, keywords, verbs);
+        return new SceneViewEntry(element, verbs);
     }
 
     // ── Pending dialogue request (set by dialogue verbs) ─────────────────────

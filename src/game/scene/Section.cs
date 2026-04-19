@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene;
 
@@ -11,15 +10,13 @@ public class Section : Element
 {
     public override string DisplayName { get; }
     public override List<string> Descriptions { get; }
-    public override List<KeywordInContext> Keywords { get; }
 
     /// <summary>Areas belonging to this section.</summary>
     public List<Area> Areas { get; } = new();
 
-    public Section(string name, List<string> descriptions, List<KeywordInContext>? keywords = null)
+    public Section(string name, List<string> descriptions)
     {
         DisplayName  = name;
         Descriptions = descriptions;
-        Keywords     = keywords ?? new();
     }
 }

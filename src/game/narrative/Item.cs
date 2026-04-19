@@ -49,20 +49,8 @@ public abstract class Item : ConcreteOutcome, IObservation
 
     public override string ToNaturalLanguageString() => $"acquire {DisplayName}";
 
-    /// <inheritdoc/>
-    /// For items, the keyword is one of the OutcomeKeywords that describe this item.
-    /// Example: keyword="fish" → "This fish is a Trout."
-    public override string GetKeywordToOutcomeTransition(string keyword, KeywordInContext? keywordInContext = null)
-    {
-        string withArticle = DisplayName.Length > 0 && "aeiouAEIOU".Contains(DisplayName[0]) ? $"an {DisplayName}" : $"a {DisplayName}";
-        return keywordInContext != null
-            ? $"It is {withArticle}."
-            : $"This {keyword} is {withArticle}.";
-    }
-
     // ── IObservation (self-referential) ───────────────────────────────────────
     string IObservation.ObservationId => ItemId;
-    List<KeywordInContext> IObservation.ObservationKeywords => OutcomeKeywordsInContext;
     IReadOnlyList<ConcreteOutcome> IObservation.ObservationOutcomes =>
         new System.Collections.ObjectModel.ReadOnlyCollection<ConcreteOutcome>(new List<ConcreteOutcome> { this });
 }

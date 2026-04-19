@@ -21,15 +21,6 @@ public class FarmhandArchetype : NamedNpcArchetype
         "Hugh Swindle", "Joan Thatcher", "Robin Clod", "Cecily Field",
     };
 
-    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
-        => new[]
-        {
-            KeywordInContext.Parse("a young <farmhand> pausing their work to watch you"),
-            KeywordInContext.Parse("a rough-woven <tunic> belted with a length of rope"),
-            KeywordInContext.Parse("the mud-caked <boots> of someone who walks soft ground all day"),
-            KeywordInContext.Parse("a pair of <hands> perpetually dusted with chaff and dirt"),
-        };
-
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"a young labourer straightens from their work and eyes you warily — {name}, a hand on this farm";
 

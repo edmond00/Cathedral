@@ -17,15 +17,6 @@ public class StrayDogArchetype : NamedNpcArchetype
         "Mangy Hound", "Lean Cur", "Wild Hound", "Half-Starved Dog"
     };
 
-    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
-        => new[]
-        {
-            KeywordInContext.Parse("a gaunt <dog> circling with bared teeth"),
-            KeywordInContext.Parse("a low <snarl> rising from the grass"),
-            KeywordInContext.Parse("some matted <fur> raised along its spine"),
-            KeywordInContext.Parse("a pair of wild <eyes> locked on you"),
-        };
-
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"a {name.ToLowerInvariant()} stands hackles raised, a low snarl in its throat";
 }

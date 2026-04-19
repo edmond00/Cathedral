@@ -6,24 +6,20 @@ namespace Cathedral.Game.Scene;
 
 /// <summary>
 /// A single entry in a <see cref="SceneView"/>: one visible element with its
-/// observation keywords and applicable verb descriptions.
+/// applicable verb descriptions.
 /// </summary>
 public class SceneViewEntry
 {
     /// <summary>The element being observed.</summary>
     public Element Source { get; }
 
-    /// <summary>Keywords with context for this element in the current situation.</summary>
-    public List<KeywordInContext> ObservationKeywords { get; }
-
     /// <summary>Natural-language descriptions of possible actions (from applicable verbs).</summary>
     public List<VerbView> ApplicableVerbs { get; }
 
-    public SceneViewEntry(Element source, List<KeywordInContext> observationKeywords, List<VerbView> applicableVerbs)
+    public SceneViewEntry(Element source, List<VerbView> applicableVerbs)
     {
-        Source              = source;
-        ObservationKeywords = observationKeywords;
-        ApplicableVerbs     = applicableVerbs;
+        Source           = source;
+        ApplicableVerbs  = applicableVerbs;
     }
 }
 

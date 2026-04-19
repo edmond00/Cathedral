@@ -69,7 +69,6 @@ public abstract class NamedNpcArchetype : NpcArchetype
         var combatant = new EnemyCombatant(name, Species);
         combatant.InitializeModiMentis(ModusMentisRegistry.Instance, ModiMentisCount);
 
-        var keywords       = BuildNarrationKeywordsInContext(name);
         var hint           = BuildObservationHint(name, nodeContext);
         var wayToSpeak     = CanSpeak ? GenerateWayToSpeakDescription(name, rng) : null;
         var affinityTable  = savedAffinity ?? new AffinityTable();
@@ -77,7 +76,7 @@ public abstract class NamedNpcArchetype : NpcArchetype
         return new NpcEntity(
             npcId, combatant, this,
             DefaultHostile, DefaultPersistent,
-            keywords, hint,
+            hint,
             canSpeak:              CanSpeak,
             wayToSpeakDescription: wayToSpeak,
             affinityTable:         affinityTable,
@@ -87,9 +86,6 @@ public abstract class NamedNpcArchetype : NpcArchetype
     }
 
     // ── Overridable builders ──────────────────────────────────────────────────
-
-    /// <summary>Override to provide narration keywords for this NPC type.</summary>
-    protected abstract KeywordInContext[] BuildNarrationKeywordsInContext(string name);
 
     /// <summary>Override to provide the observation hint sentence.</summary>
     protected abstract string BuildObservationHint(string name, string nodeContext);

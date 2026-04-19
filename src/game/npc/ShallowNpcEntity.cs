@@ -1,4 +1,3 @@
-using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene;
 
@@ -15,7 +14,6 @@ public class ShallowNpcEntity : INpcEntity
     public bool   IsHostile   { get; }
     public bool   IsAlive     { get; set; } = true;
 
-    public KeywordInContext[] NarrationKeywordsInContext { get; }
     public string             ObservationHint            { get; }
     public NpcArchetype       Archetype                  { get; }
 
@@ -26,14 +24,12 @@ public class ShallowNpcEntity : INpcEntity
         string displayName,
         ShallowNpcArchetype archetype,
         bool isHostile,
-        KeywordInContext[] narrationKeywordsInContext,
         string observationHint)
     {
         NpcId                      = npcId;
         DisplayName                = displayName;
         Archetype                  = archetype;
         IsHostile                  = isHostile;
-        NarrationKeywordsInContext = narrationKeywordsInContext;
         ObservationHint            = observationHint;
     }
 

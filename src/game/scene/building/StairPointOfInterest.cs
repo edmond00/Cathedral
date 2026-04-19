@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene.Building;
 
@@ -21,9 +20,8 @@ public class StairPointOfInterest : PointOfInterest
         Area bottomArea,
         Area topArea,
         string displayName,
-        List<string> descriptions,
-        List<KeywordInContext> keywords)
-        : base(displayName, descriptions, keywords)
+        List<string> descriptions)
+        : base(displayName, descriptions)
     {
         BottomArea = bottomArea;
         TopArea    = topArea;

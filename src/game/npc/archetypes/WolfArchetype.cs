@@ -17,15 +17,6 @@ public class WolfArchetype : NamedNpcArchetype
         "Scarred Wolf", "Young Wolf", "Old Wolf", "Lone Wolf"
     };
 
-    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
-        => new[]
-        {
-            KeywordInContext.Parse("a grey <wolf> lurking nearby"),
-            KeywordInContext.Parse("some yellow <eyes> gleaming in the shadow"),
-            KeywordInContext.Parse("a low <howl> carried on the wind"),
-            KeywordInContext.Parse("some bared <fangs> catching the light"),
-        };
-
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"a {name.ToLowerInvariant()} watches from the shadows, yellow eyes gleaming";
 }

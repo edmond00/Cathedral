@@ -18,15 +18,6 @@ public class SavageArchetype : NamedNpcArchetype
         "Gnaw", "Bark-Hide", "Bone-Shaker", "Cinder"
     };
 
-    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
-        => new[]
-        {
-            KeywordInContext.Parse("a paint-streaked <savage> crouching in the shadows"),
-            KeywordInContext.Parse("a crude bone-tipped <spear> gripped in a scarred hand"),
-            KeywordInContext.Parse("some ash and ochre <paint> smeared across the face"),
-            KeywordInContext.Parse("a low <snarl> from behind the tangled hair"),
-        };
-
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"a wild, paint-streaked figure crouches nearby — {name}, eyeing you with suspicion";
 

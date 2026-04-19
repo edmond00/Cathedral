@@ -17,15 +17,6 @@ public class BlackBearArchetype : NamedNpcArchetype
         "Old Black Bear", "Young Bear", "Heavy Bear", "Scarred Bear"
     };
 
-    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
-        => new[]
-        {
-            KeywordInContext.Parse("a massive <bear> moving through the meadow"),
-            KeywordInContext.Parse("some dark <claws> raking the earth"),
-            KeywordInContext.Parse("a deep <grunt> rumbling from the animal"),
-            KeywordInContext.Parse("a thick black <pelt> catching the light"),
-        };
-
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"a {name.ToLowerInvariant()} lifts its broad head and sniffs the air, a low grunt rolling in its chest";
 }

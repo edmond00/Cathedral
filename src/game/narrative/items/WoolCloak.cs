@@ -10,9 +10,4 @@ public sealed class WoolCloak : Item
     public override ItemSize Size           => ItemSize.Large;
     public override List<ItemType> Types    => new() { ItemType.Outerwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Outerwear;
-    public override List<KeywordInContext> OutcomeKeywordsInContext => new()
-    {
-        KeywordInContext.Parse("a heavy brown wool <cloak> hanging on a peg"),
-        KeywordInContext.Parse("the rough <weave> of a weathered travelling cloak"),
-    };
 }

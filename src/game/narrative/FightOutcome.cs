@@ -25,9 +25,6 @@ public class FightOutcome : ConcreteOutcome
             : combatContext;
     }
 
-    /// <summary>No keywords — selection is driven by the GOAL LLM, not keyword clicking.</summary>
-    public override List<KeywordInContext> OutcomeKeywordsInContext => new();
-
     public override string DisplayName => $"Fight {Target.DisplayName}";
 
     public override string ToNaturalLanguageString()

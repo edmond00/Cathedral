@@ -157,12 +157,6 @@ public class NarrationBlock : ModusMentisChainElement
     public Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap { get; init; } = null;
 
     /// <summary>
-    /// Maps each extracted bare keyword → its full <see cref="KeywordInContext"/> (context phrase + keyword).
-    /// Used to pass the enriched keyword context to the thinking phase when a keyword is clicked.
-    /// </summary>
-    public Dictionary<string, KeywordInContext>? KeywordContextMap { get; init; } = null;
-
-    /// <summary>
     /// For Speaking blocks: the display name of the character who spoke (e.g., "Protagonist").
     /// Null for all other block types.
     /// </summary>
@@ -187,7 +181,6 @@ public class NarrationBlock : ModusMentisChainElement
         ConcreteOutcome? LinkedOutcome = null,
         Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap = null,
         List<NarrationSentence>? Sentences = null,
-        Dictionary<string, KeywordInContext>? KeywordContextMap = null,
         string? SpeakerName = null)
     {
         this.Type = Type;
@@ -200,7 +193,6 @@ public class NarrationBlock : ModusMentisChainElement
         this.LinkedOutcome = LinkedOutcome;
         this.KeywordOutcomeMap = KeywordOutcomeMap;
         this.Sentences = Sentences;
-        this.KeywordContextMap = KeywordContextMap;
         this.SpeakerName = SpeakerName;
     }
 }

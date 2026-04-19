@@ -123,7 +123,7 @@ public class PlainSceneFactory : SceneFactory
 
             var targetArea = allAreas[rng.Next(allAreas.Count)];
             var entity = archetype.Spawn(rng, targetArea.ContextDescription);
-            var sceneNpc = new SceneNpc(entity, new List<KeywordInContext>(entity.NarrationKeywordsInContext));
+            var sceneNpc = new SceneNpc(entity);
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);
 
@@ -177,13 +177,6 @@ public class PlainSceneFactory : SceneFactory
         contextDescription: "crossing the open grassland",
         transitionDescription: "move into the grassland",
         descriptions: new() { "Vast flat terrain of tall grass, sparse trees, wide sky" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the tall <grass> swaying in long waves"),
-            KeywordInContext.Parse("a broad <sky> pressing down on flat land"),
-            KeywordInContext.Parse("some dried <stalks> rattling in the breeze"),
-            KeywordInContext.Parse("the faint <trail> of something passing through the grass"),
-        },
         moods: new[] { "vast", "flat", "dry", "sweeping", "yellowed", "rustling", "endless", "sparse" }
     );
 
@@ -192,13 +185,6 @@ public class PlainSceneFactory : SceneFactory
         contextDescription: "wandering through the open meadow",
         transitionDescription: "move into the open meadow",
         descriptions: new() { "An open grassy expanse dotted with wildflowers, gentle and exposed" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("a wide <expanse> of unbroken grass ahead"),
-            KeywordInContext.Parse("some bright <wildflower>s nodding in the breeze"),
-            KeywordInContext.Parse("the warm <stillness> of open air"),
-            KeywordInContext.Parse("a gentle <slope> falling away to the south"),
-        },
         moods: new[] { "sunlit", "breezy", "quiet", "open", "peaceful", "windswept", "golden", "wide" }
     );
 
@@ -207,13 +193,6 @@ public class PlainSceneFactory : SceneFactory
         contextDescription: "climbing the open hill",
         transitionDescription: "move up onto the hill",
         descriptions: new() { "A gentle rise in the plain, offering a wider view, exposed to wind" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the gradual <rise> of grassy ground underfoot"),
-            KeywordInContext.Parse("a wide <vista> opening to the horizon"),
-            KeywordInContext.Parse("the cutting <wind> rolling across the crest"),
-            KeywordInContext.Parse("some pale <stone> breaking through the thin turf"),
-        },
         moods: new[] { "windswept", "exposed", "grassy", "bare", "lonely", "rolling", "open", "bleak" }
     );
 
@@ -222,13 +201,6 @@ public class PlainSceneFactory : SceneFactory
         contextDescription: "descending into the shallow valley",
         transitionDescription: "descend into the valley",
         descriptions: new() { "A shallow depression sheltered from wind, damp ground, lush growth" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the sheltered <hollow> cupped between two rises"),
-            KeywordInContext.Parse("some damp <earth> soft beneath the grass"),
-            KeywordInContext.Parse("a faint <trickle> of water somewhere below"),
-            KeywordInContext.Parse("the dense <green> of sheltered growth"),
-        },
         moods: new[] { "sheltered", "damp", "quiet", "lush", "shadowed", "still", "secluded", "overgrown" }
     );
 
@@ -237,13 +209,6 @@ public class PlainSceneFactory : SceneFactory
     private static PointOfInterest BuildAppleTreePointOfInterest() => new(
         displayName: "Apple Tree",
         descriptions: new() { "A gnarled apple tree standing alone" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("a gnarled <apple> tree standing alone in the grass"),
-            KeywordInContext.Parse("the wide <canopy> of a solitary fruit tree"),
-            KeywordInContext.Parse("some heavy <bough>s drooping with fruit"),
-            KeywordInContext.Parse("the sweet <scent> of ripe apples on the air"),
-        },
         items: new()
         {
             new ItemElement(new AppleLeaf()),
@@ -257,13 +222,6 @@ public class PlainSceneFactory : SceneFactory
     private static PointOfInterest BuildBoulderPointOfInterest() => new(
         displayName: "Boulder",
         descriptions: new() { "A large stone half-buried in the ground" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("a great grey <boulder> rising from the turf"),
-            KeywordInContext.Parse("the damp <moss> carpeting the north face of the stone"),
-            KeywordInContext.Parse("the cold smooth <surface> of old weathered rock"),
-            KeywordInContext.Parse("a <shadow> pooled at the base of the stone"),
-        },
         items: new()
         {
             new ItemElement(new Rock()),
@@ -276,13 +234,6 @@ public class PlainSceneFactory : SceneFactory
     private static PointOfInterest BuildBushPointOfInterest() => new(
         displayName: "Bush",
         descriptions: new() { "A thorny shrub common across the plain" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("a dense <thicket> of tangled thorny branches"),
-            KeywordInContext.Parse("some dark <berry>s clustered among the leaves"),
-            KeywordInContext.Parse("the sharp <thorn>s catching at passing cloth"),
-            KeywordInContext.Parse("a low <mound> of tangled undergrowth"),
-        },
         items: new()
         {
             new ItemElement(new BushLeaf()),
@@ -295,13 +246,6 @@ public class PlainSceneFactory : SceneFactory
     private static PointOfInterest BuildFlowerPatchPointOfInterest() => new(
         displayName: "Flower Patch",
         descriptions: new() { "A colourful patch of wildflowers" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("a bright <patch> of colour in the grass"),
-            KeywordInContext.Parse("the faint sweet <fragrance> drifting from the flowers"),
-            KeywordInContext.Parse("some nodding <daisy> heads catching the light"),
-            KeywordInContext.Parse("a <poppy> burning red against the green"),
-        },
         items: new()
         {
             new ItemElement(new Daisy()),
@@ -315,13 +259,6 @@ public class PlainSceneFactory : SceneFactory
     private static PointOfInterest BuildPineTreePointOfInterest() => new(
         displayName: "Pine Tree",
         descriptions: new() { "A lone pine standing at the edge of the plain" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("a tall <pine> rising above the surrounding grass"),
-            KeywordInContext.Parse("the sharp <resin> smell of pine on the air"),
-            KeywordInContext.Parse("a carpet of brown <needle>s around the base"),
-            KeywordInContext.Parse("some heavy <cone>s clustered on the lower branches"),
-        },
         items: new()
         {
             new ItemElement(new Branch()),

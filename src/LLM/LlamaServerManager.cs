@@ -16,6 +16,7 @@ public class LlamaServerManager : IDisposable
     private Process? _llamaProcess;
     private StreamWriter? _logWriter;
     private readonly Dictionary<int, LlamaInstance> _instances = new();
+    private readonly object _slotLock = new();
     private int _nextSlotId = 0;
     private bool _isServerReady = false;
     private bool _disposed = false;
@@ -324,12 +325,17 @@ public class LlamaServerManager : IDisposable
             throw new InvalidOperationException("Server is not ready. Call StartServerAsync first.");
         }
         
-        var slotId = _nextSlotId++;
-        var instance = new LlamaInstance(slotId, systemPrompt)
+        var slotId = -1;
+        LlamaInstance instance;
+        lock (_slotLock)
         {
-            MaxContextTokens = maxContextTokens ?? _contextSize
-        };
-        _instances[slotId] = instance;
+            slotId = _nextSlotId++;
+            instance = new LlamaInstance(slotId, systemPrompt)
+            {
+                MaxContextTokens = maxContextTokens ?? _contextSize
+            };
+            _instances[slotId] = instance;
+        }
         
         // Create instance log directory and save system prompt
         if (_sessionLogDir != null)

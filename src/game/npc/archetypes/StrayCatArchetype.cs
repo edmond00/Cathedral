@@ -17,15 +17,6 @@ public class StrayCatArchetype : NamedNpcArchetype
         "Thin Cat", "Old Cat", "Wild Cat", "Scarred Cat"
     };
 
-    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
-        => new[]
-        {
-            KeywordInContext.Parse("a lean <cat> crouching low in the grass"),
-            KeywordInContext.Parse("a <tail> curling slowly back and forth"),
-            KeywordInContext.Parse("some narrowed <pupils> fixed on the distance"),
-            KeywordInContext.Parse("a faint <hiss> carried on the wind"),
-        };
-
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"a {name.ToLowerInvariant()} regards you with narrowed eyes, tail twitching";
 }

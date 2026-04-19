@@ -7,15 +7,16 @@ namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// An intermediate narrative layer between a NarrationNode and its outcomes.
-/// Groups a set of related ConcreteOutcomes under shared observation keywords,
-/// allowing multiple items to share the same visual "spot" in the narrative graph.
+/// Groups a set of related ConcreteOutcomes under a shared observation, allowing
+/// multiple items to share the same visual "spot" in the narrative graph.
 ///
-/// When a keyword on an ObservationObject is clicked, the thinking modusMentis always runs
+/// When an ObservationObject keyword is clicked, the thinking modusMentis always runs
 /// REFLECT + GOAL before WHY/HOW/WHAT. The GOAL choices include all SubOutcomes plus the
-/// "ignore and move on" sentinel — so the thinker can always opt out of acting.
+/// "ignore and move on" sentinel.
 ///
-/// Items are nested inside their ObservationObject class exactly as they were nested inside
-/// NarrationNode — the validator and reflection-based item discovery are updated accordingly.
+/// Keywords are found dynamically in LLM-generated text by <see cref="KeywordFallbackService"/>.
+/// The description returned by <see cref="GenerateNeutralDescription"/> is used by the LLM
+/// as context when selecting the best keyword; make it rich and noun-phrase.
 /// </summary>
 public abstract class ObservationObject : ConcreteOutcome, IObservation
 {
@@ -25,80 +26,25 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     public abstract string ObservationId { get; }
 
     /// <summary>
-    /// Indirect observation keywords — describe this observation with rich context phrases.
-    /// These are given as hints to the LLM and are the primary keywords to search for in
-    /// the generated text. Same content as <see cref="ObservationKeywordsInContext"/>.
-    /// </summary>
-    public List<KeywordInContext> IndirectObservationKeywords => ObservationKeywordsInContext;
-
-    /// <summary>
-    /// Keywords with surrounding context that describe this observation as a whole.
-    /// These are the keywords that appear in the parent node's observation text and
-    /// route the player into this observation.
-    /// </summary>
-    public abstract List<KeywordInContext> ObservationKeywordsInContext { get; }
-
-    /// <summary>
-    /// Direct keywords derived from the observation name itself
-    /// (e.g. "mushroom_log" → ["mushroom", "log"]).
-    /// NOT given as hints to the LLM. Used as a fallback when the generated text contains
-    /// none of the indirect keywords — the player can still click through to this observation.
-    /// These are plain strings, not KeywordInContext, so they never participate in the
-    /// "you were observing a &lt;keyword&gt; of &lt;observation&gt;" prompt phrasing.
-    ///
-    /// Default: splits <see cref="ObservationId"/> on underscores and keeps words longer than
-    /// one character. Override when the id contains non-noun parts (adjectives, participles)
-    /// that could produce false positives, e.g. "frozen_pond" → override to return ["pond"].
-    /// </summary>
-    public virtual List<string> DirectObservationKeywords
-        => ObservationId
-            .Split('_', StringSplitOptions.RemoveEmptyEntries)
-            .Where(w => w.Length > 1)
-            .Select(w => w.ToLowerInvariant())
-            .ToList();
-
-    /// <summary>
     /// All concrete sub-outcomes reachable through this observation (items, node transitions).
     /// Populated in the subclass constructor.
     /// </summary>
     public List<ConcreteOutcome> SubOutcomes { get; protected set; } = new();
 
     /// <summary>
-    /// Generates a mood-qualified neutral description of this observation.
+    /// Generates a rich noun-phrase description of this observation used both in LLM prompts
+    /// and as context for dynamic keyword selection.
     /// Example: "musky fox den", "dry owl pellet site".
+    /// Make this description vivid — the richer it is, the better keyword matching works.
     /// </summary>
     public abstract string GenerateNeutralDescription(int locationId = 0);
 
     /// <summary>
     /// Optional NPC encounter slots associated with this observation.
-    /// Override to propagate encounters to the parent area node via ForestGraphFactory.
     /// </summary>
     public virtual List<NpcEncounterSlot> AssociatedEncounters => new();
 
     // ── ConcreteOutcome overrides ─────────────────────────────────────────────
-
-    /// <inheritdoc/>
-    /// Aggregates own ObservationKeywordsInContext plus keywords from all SubOutcomes,
-    /// de-duplicated by bare keyword (case-insensitive, first occurrence wins).
-    public override List<KeywordInContext> OutcomeKeywordsInContext
-    {
-        get
-        {
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var result = new List<KeywordInContext>();
-
-            void Add(KeywordInContext kic)
-            {
-                if (seen.Add(kic.Keyword)) result.Add(kic);
-            }
-
-            foreach (var kic in ObservationKeywordsInContext) Add(kic);
-            foreach (var sub in SubOutcomes)
-                foreach (var kic in sub.OutcomeKeywordsInContext) Add(kic);
-
-            return result;
-        }
-    }
 
     /// <inheritdoc/>
     public override string DisplayName => ObservationId;
@@ -106,36 +52,8 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     /// <inheritdoc/>
     public override string ToNaturalLanguageString() => GenerateNeutralDescription(0);
 
-    /// <inheritdoc/>
-    /// Example: "This musk is part of a musky fox den."
-    public override string GetKeywordToOutcomeTransition(string keyword, KeywordInContext? keywordInContext = null)
-    {
-        string desc = GenerateNeutralDescription(0);
-        string withArticle = desc.Length > 0 && "aeiouAEIOU".Contains(desc[0]) ? $"an {desc}" : $"a {desc}";
-        return keywordInContext != null
-            ? $"It is part of {withArticle}."
-            : $"This {keyword} is part of {withArticle}.";
-    }
-
-    // ── Routing helpers ───────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Builds a map from lowercase bare keyword to the sub-outcome that owns it.
-    /// Observation-level keywords (ObservationKeywordsInContext) are NOT in this map —
-    /// they route to the observation itself, not to a sub-outcome.
-    /// </summary>
-    public Dictionary<string, ConcreteOutcome> GetKeywordToSubOutcomeMap()
-    {
-        var map = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
-        foreach (var sub in SubOutcomes)
-            foreach (var kic in sub.OutcomeKeywordsInContext)
-                map.TryAdd(kic.Keyword, sub);
-        return map;
-    }
-
     // ── IObservation ──────────────────────────────────────────────────────────
-    // ObservationId is already declared as abstract above — satisfies the interface.
-    List<KeywordInContext> IObservation.ObservationKeywords => ObservationKeywordsInContext;
+    string IObservation.ObservationId => ObservationId;
     IReadOnlyList<ConcreteOutcome> IObservation.ObservationOutcomes =>
         SubOutcomes.AsReadOnly();
 }

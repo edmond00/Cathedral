@@ -151,13 +151,6 @@ public class HouseBuilder
         contextDescription: "standing in the farmhouse hall",
         transitionDescription: "enter the hall",
         descriptions: new() { $"The main room of the farmhouse — {mat} beams overhead, a hearthstone at one end, the smell of woodsmoke and tallow" },
-        keywords: new()
-        {
-            KeywordInContext.Parse($"the rough {mat} <beam>s crossing the low ceiling"),
-            KeywordInContext.Parse("the cold <hearthstone> blackened by years of fire"),
-            KeywordInContext.Parse("a long <trestle> pushed against the wall"),
-            KeywordInContext.Parse("the faint <smell> of tallow and old smoke"),
-        },
         moods: new[] { "smoky", "low-ceilinged", "worn", "quiet", "dim", "heavy", "dusty" }
     );
 
@@ -166,13 +159,6 @@ public class HouseBuilder
         contextDescription: "in the farmhouse kitchen",
         transitionDescription: "step into the kitchen",
         descriptions: new() { $"A cramped kitchen with a clay hearth, a roughhewn table, and shelves of crockery and hanging herbs" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the clay <hearth> ringed with soot and ash"),
-            KeywordInContext.Parse("a bundle of dried <herb>s hanging from a rafter"),
-            KeywordInContext.Parse("the rough-hewn <table> scored by years of knife work"),
-            KeywordInContext.Parse("some clay <pot>s stacked beside the fire"),
-        },
         moods: new[] { "warm", "cramped", "smoky", "fragrant", "cluttered", "low", "close" }
     );
 
@@ -181,13 +167,6 @@ public class HouseBuilder
         contextDescription: "in the farmhouse pantry",
         transitionDescription: "step into the pantry",
         descriptions: new() { "A cool storage room with shelves and barrels, smelling of grain, salt, and dried meat" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the heavy <barrel>s lined along the wall"),
-            KeywordInContext.Parse("some cloth <sack>s of grain piled in a corner"),
-            KeywordInContext.Parse("a <shelf> of earthen jars sealed with wax"),
-            KeywordInContext.Parse("the cool dry <smell> of cured provisions"),
-        },
         moods: new[] { "cool", "quiet", "dim", "dry", "musty", "orderly", "provisioned" }
     );
 
@@ -196,13 +175,6 @@ public class HouseBuilder
         contextDescription: "on the upper landing of the farmhouse",
         transitionDescription: "reach the upper landing",
         descriptions: new() { "A narrow landing at the top of the stairs, planked floor creaking with every step" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the narrow <landing> between the bedroom doors"),
-            KeywordInContext.Parse("the creaking <floor> of rough-sawn planks"),
-            KeywordInContext.Parse("a faint <draught> pushing through the eaves"),
-            KeywordInContext.Parse("the low <slope> of the roof pressing close overhead"),
-        },
         moods: new[] { "narrow", "creaking", "dim", "low", "quiet", "close", "dusky" }
     );
 
@@ -215,13 +187,6 @@ public class HouseBuilder
             contextDescription: $"inside the {name.ToLowerInvariant()}",
             transitionDescription: $"enter the {name.ToLowerInvariant()}",
             descriptions: new() { "A sparse sleeping room with a straw pallet and a wooden chest" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("a straw-filled <pallet> low on the floor"),
-                KeywordInContext.Parse("a worn <chest> at the foot of the bed"),
-                KeywordInContext.Parse("the rough <wall> showing gaps where the wind seeps in"),
-                KeywordInContext.Parse("a single <tallow> candle stub on a nail"),
-            },
             moods: new[] { "sparse", "cold", "quiet", "small", "close", "still", "dark" }
         );
     }
@@ -235,11 +200,6 @@ public class HouseBuilder
             backArea:  back,
             displayName: name,
             descriptions: new() { $"A low {mat} door set in the wall, iron-hinged and rough-fitted" },
-            keywords: new()
-            {
-                KeywordInContext.Parse($"a low {mat} <door> set into the dividing wall"),
-                KeywordInContext.Parse("the iron <hinge>s dark with old rust"),
-            },
             initialState: initialState
         );
 
@@ -248,12 +208,7 @@ public class HouseBuilder
             bottomArea: bottom,
             topArea:    top,
             displayName: "Wooden Staircase",
-            descriptions: new() { "A steep narrow staircase of rough-cut timber, worn smooth in the middle" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the steep <staircase> rising into the upper floor"),
-                KeywordInContext.Parse("the worn <tread>s groaning under weight"),
-            }
+            descriptions: new() { "A steep narrow staircase of rough-cut timber, worn smooth in the middle" }
         );
 
     // ── Furniture spots ───────────────────────────────────────────────────────
@@ -410,33 +365,18 @@ public class HouseBuilder
     private static PointOfInterest BuildHearthPointOfInterest() => new(
         displayName: "Stone Hearth",
         descriptions: new() { "A wide stone hearth, ash-grey and cold between meals" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the cold <hearth> stacked with grey ash"),
-            KeywordInContext.Parse("the blackened <stone> of the fireplace lintel"),
-        },
         moods: new[] { "cold", "grey", "wide", "sooty", "still" }
     );
 
     private static PointOfInterest BuildTrestleTablePointOfInterest() => new(
         displayName: "Trestle Table",
         descriptions: new() { "A long trestle table of rough wood, benches tucked beneath" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the long <trestle> table scarred by years of use"),
-            KeywordInContext.Parse("the worn <bench>es tucked beneath the table"),
-        },
         moods: new[] { "worn", "scarred", "long", "simple", "communal" }
     );
 
     private static PointOfInterest BuildCookingHearthPointOfInterest() => new(
         displayName: "Cooking Hearth",
         descriptions: new() { "A clay-rimmed cooking hearth with an iron hook and suspended pot" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the clay-rimmed <hearth> glowing faintly with coals"),
-            KeywordInContext.Parse("the iron <hook> from which a pot hangs"),
-        },
         moods: new[] { "warm", "sooty", "smoky", "active", "dim" }
     );
 
@@ -447,11 +387,6 @@ public class HouseBuilder
         return new PointOfInterest(
             displayName: "Kitchen Shelf",
             descriptions: new() { "Rough wooden shelves holding crockery, a salt block, and hanging herbs" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the wooden <shelf> sagging with crockery"),
-                KeywordInContext.Parse("a dried <herb> bundle swinging in the draught"),
-            },
             items: items,
             moods: new[] { "cluttered", "fragrant", "dim", "crammed" }
         );
@@ -462,11 +397,6 @@ public class HouseBuilder
         var poi = new PointOfInterest(
             displayName: "Storage Barrel",
             descriptions: new() { "A wide oak barrel, banded in iron, sealed with a waxed stopper" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("a wide oak <barrel> standing in the corner"),
-                KeywordInContext.Parse("the iron <band> of the storage barrel"),
-            },
             moods: new[] { "heavy", "solid", "dim", "full", "old" }
         );
         poi.Items.AddRange(items);
@@ -478,11 +408,6 @@ public class HouseBuilder
         var poi = new PointOfInterest(
             displayName: "Storage Shelf",
             descriptions: new() { "Sagging wooden shelves stacked with sacks and provisions" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the sagging <shelf> lined with cloth sacks"),
-                KeywordInContext.Parse("a <sack> of dried provisions tied at the neck"),
-            },
             moods: new[] { "cluttered", "low", "dim", "heavy" }
         );
         poi.Items.AddRange(items);
@@ -496,11 +421,6 @@ public class HouseBuilder
         return new PointOfInterest(
             displayName: "Cold Shelf",
             descriptions: new() { "A low stone shelf in the coolest corner, used for perishables" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the cold <shelf> in the corner where food stays fresh"),
-                KeywordInContext.Parse("a cloth-wrapped <wedge> of something on the stone"),
-            },
             items: items,
             moods: new[] { "cool", "dim", "quiet", "still" }
         );
@@ -513,11 +433,6 @@ public class HouseBuilder
         return new PointOfInterest(
             displayName: "Straw Pallet",
             descriptions: new() { "A straw-stuffed pallet on a low wooden frame — the sleeping place" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the lumpen <pallet> smelling of straw and sleep"),
-                KeywordInContext.Parse("a rough <blanket> folded at the foot of the bed"),
-            },
             items: items,
             moods: new[] { "sparse", "low", "quiet", "lumpy", "still" }
         );
@@ -529,11 +444,6 @@ public class HouseBuilder
         var poi   = new PointOfInterest(
             displayName: "Wooden Chest",
             descriptions: new() { "A sturdy chest with a hasp lock, sitting at the foot of the bed" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the battered <chest> at the foot of the bed"),
-                KeywordInContext.Parse("the iron <hasp> of the chest, worn bright with handling"),
-            },
             moods: new[] { "battered", "solid", "quiet", "closed" }
         );
         poi.Items.AddRange(items);
@@ -545,11 +455,6 @@ public class HouseBuilder
     private static PointOfInterest BuildCandleStandPointOfInterest() => new(
         displayName: "Candle Stand",
         descriptions: new() { "A tall wooden post with an iron spike for a candle, black with old wax" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("a tall <stand> topped with a melted iron spike"),
-            KeywordInContext.Parse("the old wax <drip> running down the wooden post"),
-        },
         items: new() { new ItemElement(new Candle()) },
         moods: new[] { "dim", "waxy", "quiet", "old" }
     );
@@ -557,22 +462,12 @@ public class HouseBuilder
     private static PointOfInterest BuildSpinningWheelPointOfInterest() => new(
         displayName: "Spinning Wheel",
         descriptions: new() { "A worn wooden spinning wheel in the corner, the spindle dusty from disuse" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the old wooden <wheel> of the spinning frame"),
-            KeywordInContext.Parse("the dusty <spindle> waiting for thread"),
-        },
         moods: new[] { "quiet", "worn", "still", "dusty", "old" }
     );
 
     private static PointOfInterest BuildRushMatPointOfInterest() => new(
         displayName: "Rush Mat",
         descriptions: new() { "A woven mat of dried rushes by the door, muddy at the edges" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("a woven rush <mat> laid across the threshold"),
-            KeywordInContext.Parse("the dry <crackle> of compressed rushes underfoot"),
-        },
         moods: new[] { "flat", "earthy", "dry", "worn" }
     );
 
@@ -583,11 +478,6 @@ public class HouseBuilder
         return new PointOfInterest(
             displayName: "Hanging Herbs",
             descriptions: new() { "Bundles of dried herbs and roots strung from a rafter, rustling in the draught" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the hanging <bundle>s of dried herbs tied to the rafter"),
-                KeywordInContext.Parse("the sweet dry <smell> of culinary herbs overhead"),
-            },
             items: items,
             moods: new[] { "fragrant", "dim", "rustic", "dry", "dangling" }
         );
@@ -600,11 +490,6 @@ public class HouseBuilder
         return new PointOfInterest(
             displayName: "Salting Barrel",
             descriptions: new() { "A wide barrel of dark brine in which cuts of meat are preserved" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the dark brine <barrel> smelling of salt and fat"),
-                KeywordInContext.Parse("the floating dark <meat> in the salting barrel"),
-            },
             items: items,
             moods: new[] { "pungent", "dim", "dark", "heavy", "close" }
         );
@@ -613,11 +498,6 @@ public class HouseBuilder
     private static PointOfInterest BuildMortarAndPestlePointOfInterest() => new(
         displayName: "Mortar and Pestle",
         descriptions: new() { "A heavy stone mortar and pestle, stained dark with ground herbs and spices" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the heavy stone <mortar> dark with ground herbs"),
-            KeywordInContext.Parse("the smooth worn <pestle> resting in the bowl"),
-        },
         moods: new[] { "heavy", "old", "stained", "solid" }
     );
 
@@ -628,11 +508,6 @@ public class HouseBuilder
         return new PointOfInterest(
             displayName: "Butcher Block",
             descriptions: new() { "A thick scarred chopping block of end-grain wood, stained dark" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the thick scarred <block> of end-grain wood"),
-                KeywordInContext.Parse("the dark <stain> soaked deep into the chopping surface"),
-            },
             items: items,
             moods: new[] { "scarred", "heavy", "dark", "old", "solid" }
         );
@@ -641,33 +516,18 @@ public class HouseBuilder
     private static PointOfInterest BuildWashstandPointOfInterest() => new(
         displayName: "Washstand",
         descriptions: new() { "A low wooden stand holding a clay basin and ewer for washing" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the clay <basin> sitting on the low washing stand"),
-            KeywordInContext.Parse("the rough wooden <stand> beside the bed"),
-        },
         moods: new[] { "low", "plain", "cold", "damp", "sparse" }
     );
 
     private static PointOfInterest BuildChamberPotPointOfInterest() => new(
         displayName: "Chamber Pot",
         descriptions: new() { "A glazed clay chamber pot tucked under the bed" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("a glazed clay <pot> tucked under the bed frame"),
-            KeywordInContext.Parse("the plain <glaze> of a chamber pot catching the dim light"),
-        },
         moods: new[] { "plain", "utilitarian", "dim", "quiet" }
     );
 
     private static PointOfInterest BuildPrayerStoolPointOfInterest() => new(
         displayName: "Prayer Stool",
         descriptions: new() { "A simple kneeling stool worn smooth in the middle from long use" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the simple <stool> worn smooth by years of kneeling"),
-            KeywordInContext.Parse("the worn <wood> of the prayer stool, pale and smooth"),
-        },
         moods: new[] { "quiet", "worn", "plain", "still", "humble" }
     );
 
@@ -679,11 +539,6 @@ public class HouseBuilder
         return new PointOfInterest(
             displayName: "Clothes Pegs",
             descriptions: new() { "A row of wooden pegs hammered into the wall for hanging clothes" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the row of wooden <peg>s hammered into the wall"),
-                KeywordInContext.Parse("a hanging <garment> draped from the wall pegs"),
-            },
             items: items,
             moods: new[] { "plain", "bare", "utilitarian", "dim" }
         );
@@ -692,11 +547,6 @@ public class HouseBuilder
     private static PointOfInterest BuildRushLightPointOfInterest() => new(
         displayName: "Rush Light",
         descriptions: new() { "A tallow rush-light on an iron spike, the wick pinched and black" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the iron <spike> of the rush-light holder on the wall"),
-            KeywordInContext.Parse("the black pinched <wick> of a burned-down rush light"),
-        },
         items: new() { new ItemElement(new Candle()) },
         moods: new[] { "dim", "sooty", "cold", "plain" }
     );

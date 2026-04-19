@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Scene;
@@ -13,7 +12,6 @@ public class SceneNpc : Element
 {
     public override string DisplayName => Entity.DisplayName;
     public override List<string> Descriptions { get; }
-    public override List<KeywordInContext> Keywords { get; }
 
     /// <summary>The underlying NPC entity (anatomy + dialogue for named; anonymous for shallow).</summary>
     public INpcEntity Entity { get; }
@@ -24,10 +22,9 @@ public class SceneNpc : Element
     /// <summary>Whether this NPC is still alive.</summary>
     public bool IsAlive => Entity.IsAlive;
 
-    public SceneNpc(INpcEntity entity, List<KeywordInContext>? keywords = null, List<string>? descriptions = null)
+    public SceneNpc(INpcEntity entity, List<string>? descriptions = null)
     {
         Entity       = entity;
-        Keywords     = keywords ?? new();
         Descriptions = descriptions ?? new() { entity.DisplayName };
     }
 }

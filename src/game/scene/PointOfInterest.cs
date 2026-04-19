@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene;
 
@@ -12,7 +11,6 @@ public class PointOfInterest : Element
 {
     public override string DisplayName { get; }
     public override List<string> Descriptions { get; }
-    public override List<KeywordInContext> Keywords { get; }
 
     /// <summary>Items that can be collected from this point of interest.</summary>
     public List<ItemElement> Items { get; } = new();
@@ -23,13 +21,11 @@ public class PointOfInterest : Element
     public PointOfInterest(
         string displayName,
         List<string> descriptions,
-        List<KeywordInContext> keywords,
         List<ItemElement>? items = null,
         string[]? moods = null)
     {
         DisplayName  = displayName;
         Descriptions = descriptions;
-        Keywords     = keywords;
         Moods        = moods ?? System.Array.Empty<string>();
         if (items != null) Items.AddRange(items);
     }

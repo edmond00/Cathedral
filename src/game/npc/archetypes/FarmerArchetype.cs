@@ -23,15 +23,6 @@ public class FarmerArchetype : NamedNpcArchetype
         "Godwin Furrow", "Mildred Furrow", "Osbert Grain", "Wulfhild Grain",
     };
 
-    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
-        => new[]
-        {
-            KeywordInContext.Parse("a weathered <farmer> squinting across the field"),
-            KeywordInContext.Parse("the rough <hands> of someone who works soil every day"),
-            KeywordInContext.Parse("a worn <smock> stained with mud and animal grease"),
-            KeywordInContext.Parse("the steady <gaze> of someone who trusts work, not words"),
-        };
-
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"a broad-shouldered figure in a mud-stained smock watches you — {name}, who tends this land";
 

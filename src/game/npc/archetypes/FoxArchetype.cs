@@ -17,15 +17,6 @@ public class FoxArchetype : NamedNpcArchetype
         "Old Fox", "Vixen", "Mangy Fox", "Sleek Fox"
     };
 
-    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
-        => new[]
-        {
-            KeywordInContext.Parse("a russet <fox> nosing through the grass"),
-            KeywordInContext.Parse("a <brush> tail flicking behind the hedge"),
-            KeywordInContext.Parse("some sharp <ears> swiveling at a sound"),
-            KeywordInContext.Parse("a pair of amber <eyes> watching from low cover"),
-        };
-
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"a {name.ToLowerInvariant()} freezes mid-step, watching you with cautious amber eyes";
 }

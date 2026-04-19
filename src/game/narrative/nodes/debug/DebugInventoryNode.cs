@@ -17,7 +17,6 @@ public class DebugInventoryNode : NarrationNode
     public override string ContextDescription  => "debugging the inventory system";
     public override string TransitionDescription => "enter the debug inventory";
     public override bool   IsEntryNode         => false;
-    public override List<KeywordInContext> NodeKeywordsInContext  => new();
     public override string GenerateNeutralDescription(int locationId = 0) => "debug inventory node";
 
     // ═══════════════════════════════════════════════════════════════
@@ -94,7 +93,6 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Small;
         public override List<ItemType> Types => new() { ItemType.Headgear };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Headgear;
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a tight-fitting boiled leather <hat> on the head"), KeywordInContext.Parse("the smell of old <leather> from the cap lining"), KeywordInContext.Parse("a plain protective <cap> of hardened hide") };
         public override string[] Info => new[]
         {
             "Smells of tallow and old sweat.",
@@ -112,7 +110,6 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Large;
         public override List<ItemType> Types => new() { ItemType.Outerwear };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Outerwear;
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the heavy drape of an undyed wool <cloak>"), KeywordInContext.Parse("the thick coarse <wool> that holds warmth even damp"), KeywordInContext.Parse("a broad piece of woven <cloth> pinned at the shoulder") };
         public override string[] Info => new[]
         {
             "Warmth: high",
@@ -130,7 +127,6 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Medium;
         public override List<ItemType> Types => new() { ItemType.Bodywear };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Bodywear;
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a loose pale <shirt> mended at the elbows"), KeywordInContext.Parse("the cool breathable <linen> weave against the skin"), KeywordInContext.Parse("a plain undyed <cloth> garment worn beneath the outer layers") };
         public override string[] Info => new[]
         {
             "Breathable in summer heat.",
@@ -147,7 +143,6 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Small;
         public override List<ItemType> Types => new() { ItemType.Legwear };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Legwear;
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a pair of heavy knitted wool <socks> that itch"), KeywordInContext.Parse("the thick coarse <wool> yarn knitted into stockings"), KeywordInContext.Parse("the warmth kept at the <feet> by the heavy knit") };
         public override string[] Info => new[]
         {
             "A small hole near the left heel.",
@@ -164,7 +159,6 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Small;
         public override List<ItemType> Types => new() { ItemType.Footwear };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Footwear;
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a pair of ankle-high <boots> resoled twice over"), KeywordInContext.Parse("the worn <leather> upper of a reliable walking boot"), KeywordInContext.Parse("the right piece of <footwear> for rough and uneven ground") };
         public override string[] Info => new[]
         {
             "Defence: 1",
@@ -186,7 +180,6 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size       => ItemSize.Medium;
         public override List<ItemType> Types => new() { ItemType.Other };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a serviceable straight double-edged <sword> at the hip"), KeywordInContext.Parse("the <blade> catching light along its double edge"), KeywordInContext.Parse("the cold grey weight of <iron> in the hand") };
         public override string[] Info => new[]
         {
             "Damage: 1d6+2",
@@ -205,7 +198,6 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size       => ItemSize.Small;
         public override List<ItemType> Types => new() { ItemType.Other };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a short sturdy fighting <knife> for close quarters"), KeywordInContext.Parse("the short thick <blade> designed for stabbing work"), KeywordInContext.Parse("a keen <edge> honed for use at close range") };
         public override string[] Info => new[]
         {
             "Damage: 1d4+2",
@@ -224,7 +216,6 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Small;
         public override List<ItemType> Types => new() { ItemType.Other };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a short double-edged <blade> with a bone handle"), KeywordInContext.Parse("a plain functional <dagger> chipped but still serviceable"), KeywordInContext.Parse("the cold weight of <iron> in a forgettable but reliable weapon") };
         public override string[] Info => new[]
         {
             "Damage: 1d4+1",
@@ -246,7 +237,6 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Small;
         public override List<ItemType> Types => new() { ItemType.Liquid };
         public override EquipmentAnchor? PreferredAnchor => null;
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("the cold clear <water> drawn from a mountain spring"), KeywordInContext.Parse("a clean odourless <liquid> good for drinking"), KeywordInContext.Parse("a sense of <purity> in the taste of uncontaminated spring water") };
         public override string[] Info => new[]
         {
             "Clean and refreshing.",
@@ -264,7 +254,6 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Small;
         public override List<ItemType> Types => new() { ItemType.Liquid };
         public override EquipmentAnchor? PreferredAnchor => null;
-        public override List<KeywordInContext> OutcomeKeywordsInContext => new() { KeywordInContext.Parse("a rough dark local <wine> sharp enough to keep the cold out"), KeywordInContext.Parse("a faintly astringent red <liquid> that stains the teeth"), KeywordInContext.Parse("the sour tang of <fermentation> in the rough local vintage") };
         public override string[] Info => new[]
         {
             "Faintly astringent.",

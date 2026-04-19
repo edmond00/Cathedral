@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
@@ -16,5 +14,4 @@ public sealed class IgnoreOutcome : ConcreteOutcome
 
     public override string DisplayName => GoalString;
     public override string ToNaturalLanguageString() => GoalString;
-    public override List<KeywordInContext> OutcomeKeywordsInContext => new();
 }

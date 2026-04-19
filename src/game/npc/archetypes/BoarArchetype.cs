@@ -17,15 +17,6 @@ public class BoarArchetype : NamedNpcArchetype
         "Scarred Boar", "Old Boar", "Bristled Boar", "Feral Boar"
     };
 
-    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
-        => new[]
-        {
-            KeywordInContext.Parse("a bristled <boar> rooting in the undergrowth"),
-            KeywordInContext.Parse("some curved <tusks> slick with mud"),
-            KeywordInContext.Parse("a heavy <snorting> as it tosses the earth"),
-            KeywordInContext.Parse("some churned <mud> where its hooves have torn the ground"),
-        };
-
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"a {name.ToLowerInvariant()} roots aggressively in the undergrowth, tusks gleaming";
 }

@@ -18,15 +18,6 @@ public class DruidArchetype : NamedNpcArchetype
         "Daegel Thornhand", "Elowen Rootwalker", "Finbar Ashcloak"
     };
 
-    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
-        => new[]
-        {
-            KeywordInContext.Parse("a robed <druid> leaning on a gnarled staff"),
-            KeywordInContext.Parse("a worn wooden <staff> carved with winding symbols"),
-            KeywordInContext.Parse("some bundled <herbs> hanging from a belt"),
-            KeywordInContext.Parse("a green hooded <cloak> mottled like lichen"),
-        };
-
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"a robed figure leans against a gnarled staff — {name}, a druid of these woods";
 

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene;
 
@@ -17,8 +16,6 @@ public class ItemElement : Element
     public override string DisplayName => Item.DisplayName;
 
     public override List<string> Descriptions => new() { Item.Description };
-
-    public override List<KeywordInContext> Keywords => Item.OutcomeKeywordsInContext;
 
     public ItemElement(Narrative.Item item)
     {

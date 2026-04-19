@@ -10,9 +10,4 @@ public sealed class LeatherBoots : Item
     public override ItemSize Size           => ItemSize.Medium;
     public override List<ItemType> Types    => new() { ItemType.Footwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Footwear;
-    public override List<KeywordInContext> OutcomeKeywordsInContext => new()
-    {
-        KeywordInContext.Parse("a pair of heavy leather <boots> by the door"),
-        KeywordInContext.Parse("the worn pale <toe> of a well-used leather boot"),
-    };
 }

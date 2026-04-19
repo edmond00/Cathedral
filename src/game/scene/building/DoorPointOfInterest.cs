@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene.Building;
 
@@ -42,9 +41,8 @@ public class DoorPointOfInterest : PointOfInterest
         Area backArea,
         string displayName,
         List<string> descriptions,
-        List<KeywordInContext> keywords,
         DoorState initialState = DoorState.Locked)
-        : base(displayName, descriptions, keywords)
+        : base(displayName, descriptions)
     {
         FrontArea = frontArea;
         BackArea  = backArea;

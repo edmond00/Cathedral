@@ -300,7 +300,7 @@ public class NarrativeController
     /// <summary>
     /// Execute thinking phase with selected modusMentis and keyword (async).
     /// </summary>
-    private async Task ExecuteThinkingPhaseAsync(ModusMentis thinkingModusMentis, string keyword, KeywordInContext? keywordInContext = null)
+    private async Task ExecuteThinkingPhaseAsync(ModusMentis thinkingModusMentis, string keyword)
     {
         // Get the source observation block from the hovered keyword (for modusMentis chain tracking)
         var sourceObservationBlock = _narrationState.HoveredKeyword?.SourceBlock;
@@ -309,9 +309,12 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Executing thinking with {thinkingModusMentis.DisplayName} on keyword '{keyword}'");
 
-            // Resolve the single outcome linked to the clicked keyword
-            var targetOutcome = sourceObservationBlock?.LinkedOutcome
-                ?? _currentNode.GetOutcomeOwningKeyword(keyword);
+            // Resolve the outcome linked to the clicked keyword via KeywordOutcomeMap or LinkedOutcome
+            ConcreteOutcome? targetOutcome = null;
+            if (sourceObservationBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var kmo) == true)
+                targetOutcome = kmo;
+            else
+                targetOutcome = sourceObservationBlock?.LinkedOutcome;
 
             if (targetOutcome == null)
             {
@@ -328,7 +331,6 @@ public class NarrativeController
                 thinkingModusMentis,
                 targetOutcome,
                 keyword,
-                keywordInContext,
                 _currentNode,
                 actionModiMentis,
                 _protagonist,
@@ -911,7 +913,7 @@ public class NarrativeController
             if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var ko) == true)
                 linkedOutcome = ko;
             else
-                linkedOutcome = sourceBlock?.LinkedOutcome ?? _currentNode.GetOutcomeOwningKeyword(keyword);
+                linkedOutcome = sourceBlock?.LinkedOutcome;
 
             if (linkedOutcome == null)
             {
@@ -922,7 +924,6 @@ public class NarrativeController
 
             var speakingBlock = await _observationController.GenerateSpeakingTextAsync(
                 keyword,
-                keywordRegion.KeywordInContext,
                 speakingModusMentis,
                 companion.Name,
                 linkedOutcome,
@@ -1195,7 +1196,7 @@ public class NarrativeController
                         if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
                             focusOutcome = fko;
                         else
-                            focusOutcome = sourceBlock?.LinkedOutcome ?? _currentNode.GetOutcomeOwningKeyword(keyword);
+                            focusOutcome = sourceBlock?.LinkedOutcome;
 
                         if (focusOutcome != null)
                             _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
@@ -1207,7 +1208,7 @@ public class NarrativeController
                         // Thinking phase
                         _narrationState.IsLoadingThinking = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword, _narrationState.HoveredKeyword?.KeywordInContext);
+                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
                     }
                 }
             }
@@ -1500,7 +1501,7 @@ public class NarrativeController
                         if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
                             focusOutcome = fko;
                         else
-                            focusOutcome = sourceBlock?.LinkedOutcome ?? _currentNode.GetOutcomeOwningKeyword(keyword);
+                            focusOutcome = sourceBlock?.LinkedOutcome;
 
                         if (focusOutcome != null)
                             _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
@@ -1512,7 +1513,7 @@ public class NarrativeController
                         // Thinking phase
                         _narrationState.IsLoadingThinking = true;
                         _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword, _narrationState.HoveredKeyword?.KeywordInContext);
+                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
                     }
                 }
             }
@@ -1906,7 +1907,7 @@ public class NarrativeController
             Console.WriteLine($"    Display: {node.DisplayName}");
             Console.WriteLine($"    Context: {node.ContextDescription}");
             Console.WriteLine($"    Entry Node: {node.IsEntryNode}");
-            Console.WriteLine($"    Keywords: {string.Join(", ", node.NodeKeywordsInContext.Select(k => k.Keyword))}");
+            Console.WriteLine($"    Outcomes: {node.GetAllDirectConcreteOutcomes().Count}");
             
             // Show items
             var items = node.GetAvailableItems();
@@ -1915,7 +1916,7 @@ public class NarrativeController
                 Console.WriteLine($"    Items ({items.Count}):");
                 foreach (var item in items)
                 {
-                    Console.WriteLine($"      - {item.DisplayName}: {string.Join(", ", item.OutcomeKeywordsInContext.Select(k => k.Keyword))}");
+                    Console.WriteLine($"      - {item.DisplayName}");
                 }
             }
             

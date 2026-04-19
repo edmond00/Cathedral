@@ -576,12 +576,8 @@ public class SceneDebugWindow : Form
             $"Type: {el.GetType().Name}",
             $"Name: {el.DisplayName}",
             "",
-            "─── Observation Keywords ───",
         };
-        foreach (var kic in entry.ObservationKeywords)
-            lines.Add($"  [{kic.Keyword}] {kic.Context}");
 
-        lines.Add("");
         lines.Add($"─── Applicable Verbs ({entry.ApplicableVerbs.Count}) ───");
         foreach (var vv in entry.ApplicableVerbs)
         {
@@ -613,11 +609,6 @@ public class SceneDebugWindow : Form
             "─── Descriptions ───",
         };
         lines.AddRange(element.Descriptions.Select(d => $"  {d}"));
-
-        lines.Add("");
-        lines.Add("─── Keywords ───");
-        foreach (var kic in element.Keywords)
-            lines.Add($"  [{kic.Keyword}] {kic.Context}");
 
         lines.Add("");
         lines.Add("─── State Properties ───");

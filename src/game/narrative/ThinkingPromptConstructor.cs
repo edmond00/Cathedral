@@ -22,13 +22,9 @@ public class ThinkingPromptConstructor
         Protagonist protagonist,
         WorldContext worldContext)
     {
-        var kics = observation.ObservationKeywordsInContext;
-        string keywordHint = kics.Count > 0
-            ? $" You notice things like: {string.Join(", ", kics.Select(k => k.Context))}."
-            : "";
         return BuildReflectPromptCore(
             observation.GenerateNeutralDescription(protagonist.CurrentLocationId),
-            keywordHint, node, thinkingModusMentis, protagonist, worldContext);
+            node, thinkingModusMentis, protagonist, worldContext);
     }
 
     /// <summary>
@@ -41,23 +37,14 @@ public class ThinkingPromptConstructor
         Protagonist protagonist,
         WorldContext worldContext)
     {
-        var kics = outcome.OutcomeKeywordsInContext;
-        string keywordHint = kics.Count > 0
-            ? $" You notice things like: {string.Join(", ", kics.Select(k => k.Context))}."
-            : "";
-        // Use GenerateNeutralDescription for types that have it (NarrationNode, ObservationObject),
-        // so we get e.g. "the alder grove" rather than the transition verb "follow the draining".
         string description = outcome is NarrationNode nn ? nn.GenerateNeutralDescription(0)
             : outcome is ObservationObject ob ? ob.GenerateNeutralDescription(0)
             : outcome.DisplayName;
-        return BuildReflectPromptCore(
-            description,
-            keywordHint, node, thinkingModusMentis, protagonist, worldContext);
+        return BuildReflectPromptCore(description, node, thinkingModusMentis, protagonist, worldContext);
     }
 
     private static string BuildReflectPromptCore(
         string description,
-        string keywordHint,
         NarrationNode node,
         ModusMentis thinkingModusMentis,
         Protagonist protagonist,
@@ -73,14 +60,13 @@ public class ThinkingPromptConstructor
         return $@"{personaToneLine}{WorldContext.EpochContext}
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
-You are observing {WithArticle(description)}.{keywordHint}
+You are observing {WithArticle(description)}.
 {reminderClause}what do you think?
 {Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
     }
 
     /// <summary>
     /// Call 0b (GOAL): follow-up in the same slot after REFLECT — asks which sub-outcome to pursue.
-    /// Short continuation: no full context repeat since the slot already has it from REFLECT.
     /// <paramref name="goalOptions"/> must include the "ignore and move on" sentinel string.
     /// </summary>
     public static string BuildGoalPrompt(
@@ -110,8 +96,7 @@ You are observing {WithArticle(description)}.{keywordHint}
         Protagonist protagonist,
         WorldContext worldContext,
         ConcreteOutcome targetOutcome,
-        string questionText,
-        KeywordInContext? keywordInContext = null)
+        string questionText)
     {
         string personaToneLine = thinkingModusMentis.PersonaTone != null
             ? $"You are a {thinkingModusMentis.PersonaTone}.\n"
@@ -121,14 +106,13 @@ You are observing {WithArticle(description)}.{keywordHint}
             : "";
         string outcomeLabel = targetOutcome is NarrationNode n
             ? n.GenerateNeutralDescription(protagonist.CurrentLocationId)
+            : targetOutcome is ObservationObject obs ? obs.GenerateNeutralDescription(0)
             : targetOutcome.DisplayName;
-        string attentionLine = keywordInContext != null
-            ? $"Your attention is drawn to {keywordInContext.Context} of {WithArticle(outcomeLabel)}."
-            : $"Your attention is drawn to {WithArticle(outcomeLabel)}.";
+
         return $@"{personaToneLine}{WorldContext.EpochContext}
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
-{attentionLine} Now you want to {outcomeDescription}.
+Your attention is drawn to {WithArticle(outcomeLabel)}. Now you want to {outcomeDescription}.
 
 {reminderClause}{questionText}
 {Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
@@ -136,7 +120,6 @@ You are observing {WithArticle(description)}.{keywordHint}
 
     /// <summary>
     /// Call 2 (HOW): asks the thinking modusMentis which skill could help reach the outcome.
-    /// Sent as a follow-up in the same slot context (the WHY reasoning is already in context).
     /// </summary>
     public string BuildHowPrompt(
         string outcomeDescription,
@@ -157,20 +140,11 @@ You could proceed:
 {Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
     }
 
-    /// <summary>
-    /// Call 3 (WHAT): asks the selected action modusMentis what it will concretely try to do.
-    /// Sent to the action modusMentis's own slot (fresh context) — full context is provided
-    /// since this instance has no prior conversation history.
-    /// Includes the action modusMentis's persona tone at the head (first call in this slot).
-    /// </summary>
     private static string WithArticle(string s) =>
         s.Length > 0 && "aeiouAEIOU".Contains(s[0]) ? $"an {s}" : $"a {s}";
 
     /// <summary>
-    /// Builds the prompt asking the action modusMentis to reason about how the item can help
-    /// realise the action / achieve the goal.  First of two item-combination calls; the result
-    /// is displayed as a reasoning block before the reformulated action button.
-    /// Uses the WHY schema ("what_do_i_think") to produce a first-person reasoning sentence.
+    /// Builds the prompt asking the action modusMentis to reason about how the item can help.
     /// </summary>
     public string BuildItemReasoningPrompt(
         string originalActionText,
@@ -198,9 +172,7 @@ You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
     }
 
     /// <summary>
-    /// Builds the prompt asking the action modusMentis to reformulate an existing action text
-    /// to incorporate a combined item.  Sent to the action modusMentis's own slot (fresh context).
-    /// Style mirrors <see cref="BuildWhatPrompt"/>: direct, immersive, first-person.
+    /// Builds the prompt asking the action modusMentis to reformulate an action incorporating an item.
     /// </summary>
     public string BuildItemReformulationPrompt(
         string originalActionText,
@@ -229,7 +201,6 @@ You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
 
     public string BuildWhatPrompt(
         string keyword,
-        KeywordInContext? keywordInContext,
         string outcomeDescription,
         NarrationNode node,
         Protagonist protagonist,
@@ -244,15 +215,17 @@ You are holding: {combinedItem.DisplayName} ({combinedItem.Description}).
         string reminderClause = actionModusMentis.PersonaReminder != null
             ? $"As a {actionModusMentis.PersonaReminder}, "
             : "";
-        string noticedClause = keywordInContext != null ? keywordInContext.Context : keyword;
-        string transition = targetOutcome.GetKeywordToOutcomeTransition(keyword, keywordInContext);
+        string outcomeLabel = targetOutcome is NarrationNode n
+            ? n.GenerateNeutralDescription(protagonist.CurrentLocationId)
+            : targetOutcome is ObservationObject obs ? obs.GenerateNeutralDescription(0)
+            : targetOutcome.DisplayName;
         string formattedQuestion = string.Format(questionText, actionModusMentis.ShortDescription).TrimEnd('.', '?', '!')
             + $" in order to {outcomeDescription}? Write a simple action naturally leading to the goal.";
 
         return $@"{personaToneLine}{WorldContext.EpochContext}
 {node.BuildLocationContext(worldContext, protagonist.CurrentLocationId)}
 
-You noticed {noticedClause}. {transition} Now you want to {outcomeDescription}.
+You noticed {keyword}. It is part of {WithArticle(outcomeLabel)}. Now you want to {outcomeDescription}.
 
 {reminderClause}{formattedQuestion}
 {Config.Narrative.AnswerInstructionFor(actionModusMentis.PersonaReminder2)}";

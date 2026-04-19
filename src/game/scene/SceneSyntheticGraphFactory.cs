@@ -56,7 +56,6 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             area.DisplayName.ToLowerInvariant().Replace(' ', '_'),
             area.ContextDescription,
             area.TransitionDescription,
-            area.Keywords,
             area);
 
         var pov = new PoV(area, TimePeriod.Morning);
@@ -64,7 +63,7 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         // Add points of interest as synthetic ObservationObjects
         foreach (var poi in area.PointsOfInterest)
         {
-            var entry = new SceneViewEntry(poi, poi.Keywords,
+            var entry = new SceneViewEntry(poi,
                 _scene.Verbs
                     .Where(v => v.IsPossible(_scene, pov, poi))
                     .Select(v => new VerbView(v, v.Verbatim(_scene, pov, poi), poi))
@@ -72,7 +71,7 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
 
             // Build item sub-entries so item verbs (e.g. "grab the apple") fold into the PoI SubOutcomes.
             var itemSubEntries = poi.Items
-                .Select(ie => new SceneViewEntry(ie, ie.Keywords,
+                .Select(ie => new SceneViewEntry(ie,
                     _scene.Verbs
                         .Where(v => v.IsPossible(_scene, pov, ie))
                         .Select(v => new VerbView(v, v.Verbatim(_scene, pov, ie), ie))
@@ -85,7 +84,7 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         // Add spots as synthetic enterable sub-locations
         foreach (var spot in area.Spots)
         {
-            var entry = new SceneViewEntry(spot, spot.Keywords,
+            var entry = new SceneViewEntry(spot,
                 _scene.Verbs
                     .Where(v => v.IsPossible(_scene, pov, spot))
                     .Select(v => new VerbView(v, v.Verbatim(_scene, pov, spot), spot))
@@ -97,7 +96,7 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         // Add NPCs as ObservationObjects with verb SubOutcomes (attack, slay, meet, etc.)
         foreach (var npc in _scene.GetNpcsAt(area, pov.When))
         {
-            var entry = new SceneViewEntry(npc, npc.Keywords,
+            var entry = new SceneViewEntry(npc,
                 _scene.Verbs
                     .Where(v => v.IsPossible(_scene, pov, npc))
                     .Select(v => new VerbView(v, v.Verbatim(_scene, pov, npc), npc))

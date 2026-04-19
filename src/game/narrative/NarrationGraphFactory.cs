@@ -157,7 +157,7 @@ public abstract class NarrationGraphFactory
                 writer.WriteLine($"Node: {node.NodeId}");
                 writer.WriteLine($"  Context:    {node.ContextDescription}");
                 writer.WriteLine($"  Transition: {node.TransitionDescription}");
-                writer.WriteLine($"  Keywords:   {string.Join(", ", node.NodeKeywordsInContext.Select(k => k.Keyword))}");
+                writer.WriteLine($"  Outcomes:   {node.GetAllDirectConcreteOutcomes().Count}");
 
                 var items = node.GetAvailableItems();
                 if (items.Count > 0)

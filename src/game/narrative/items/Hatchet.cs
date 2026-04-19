@@ -10,9 +10,4 @@ public sealed class Hatchet : Item
     public override ItemSize Size      => ItemSize.Medium;
     public override float Weight       => 0.9f;
     public override int   UsageLevel   => 4;
-    public override List<KeywordInContext> OutcomeKeywordsInContext => new()
-    {
-        KeywordInContext.Parse("a small iron <hatchet> leaning against the wall"),
-        KeywordInContext.Parse("the smooth worn <haft> of a well-used hatchet"),
-    };
 }

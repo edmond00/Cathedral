@@ -24,6 +24,8 @@
 
   <!-- NuGet Package References -->
   <ItemGroup>
+    <PackageReference Include="Catalyst" Version="26.3.60" />
+    <PackageReference Include="Catalyst.Models.English" Version="1.0.30952" />
     <PackageReference Include="Melanchall.DryWetMidi" Version="8.0.3" />
     <PackageReference Include="OpenTK" Version="4.9.4" />
     <PackageReference Include="SixLabors.Fonts" Version="2.1.3" />

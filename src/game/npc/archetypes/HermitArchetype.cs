@@ -18,15 +18,6 @@ public class HermitArchetype : NamedNpcArchetype
         "Crag-Sitter", "Maelis the Quiet", "Barefoot Herne"
     };
 
-    protected override KeywordInContext[] BuildNarrationKeywordsInContext(string name)
-        => new[]
-        {
-            KeywordInContext.Parse("an old <hermit> seated by a smouldering fire"),
-            KeywordInContext.Parse("a low stone <hut> half-hidden by moss"),
-            KeywordInContext.Parse("a thin <smoke> rising from dying embers"),
-            KeywordInContext.Parse("some frayed <rags> wrapped around bony shoulders"),
-        };
-
     protected override string BuildObservationHint(string name, string nodeContext)
         => $"an old solitary figure sits by a smouldering fire — {name}, a hermit of these heights";
 

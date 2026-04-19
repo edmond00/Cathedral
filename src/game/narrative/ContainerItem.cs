@@ -39,14 +39,6 @@ public abstract class ContainerItem : Item
     /// <summary>Remove <paramref name="item"/> from the container. Returns false when not present.</summary>
     public bool TryRemove(Item item) => Contents.Remove(item);
 
-    /// <summary>Narrative keywords for LLM interaction. Containers use generic terms by default.</summary>
-    public override List<KeywordInContext> OutcomeKeywordsInContext => new()
-    {
-        KeywordInContext.Parse("a worn leather <bag> hanging from the shoulder"),
-        KeywordInContext.Parse("the bulging main <pack> strapped to the back"),
-        KeywordInContext.Parse("the opening flap of a carried <container>"),
-    };
-
     // ContainerItem is BeltGear type (worn on belt / back)
     public override List<ItemType> Types => new() { ItemType.BeltGear };
 }

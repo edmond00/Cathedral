@@ -35,9 +35,6 @@ public class DialogueOutcome : ConcreteOutcome
         Tree   = tree;
     }
 
-    /// <summary>No keywords — selection is driven by the GOAL LLM, not keyword clicking.</summary>
-    public override List<KeywordInContext> OutcomeKeywordsInContext => new();
-
     public override string DisplayName => $"Talk to {Target.DisplayName}";
 
     public override string ToNaturalLanguageString()

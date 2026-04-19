@@ -10,9 +10,4 @@ public sealed class LinenTunic : Item
     public override ItemSize Size           => ItemSize.Medium;
     public override List<ItemType> Types    => new() { ItemType.Bodywear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Bodywear;
-    public override List<KeywordInContext> OutcomeKeywordsInContext => new()
-    {
-        KeywordInContext.Parse("a coarse off-white linen <tunic> folded on the shelf"),
-        KeywordInContext.Parse("the rough <collar> of a well-mended working tunic"),
-    };
 }

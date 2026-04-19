@@ -22,7 +22,7 @@ public class NpcEntity : INpcEntity
     public EnemyCombatant Combatant { get; }
 
     /// <summary>The archetype that spawned this NPC (wolf, druid, etc.).</summary>
-    public new NamedNpcArchetype Archetype { get; }
+    public NamedNpcArchetype Archetype { get; }
 
     NpcArchetype INpcEntity.Archetype => Archetype;
 
@@ -91,9 +91,6 @@ public class NpcEntity : INpcEntity
     public bool IsPersistent { get; }
 
     /// <inheritdoc/>
-    public KeywordInContext[] NarrationKeywordsInContext { get; }
-
-    /// <inheritdoc/>
     public string ObservationHint { get; }
 
     /// <inheritdoc/>
@@ -107,7 +104,6 @@ public class NpcEntity : INpcEntity
         NamedNpcArchetype   archetype,
         bool                isHostile,
         bool                isPersistent,
-        KeywordInContext[]  narrationKeywordsInContext,
         string              observationHint,
         bool                canSpeak                = false,
         string?             wayToSpeakDescription   = null,
@@ -121,7 +117,6 @@ public class NpcEntity : INpcEntity
         Archetype                  = archetype;
         IsHostile                  = isHostile;
         IsPersistent               = isPersistent;
-        NarrationKeywordsInContext = narrationKeywordsInContext;
         ObservationHint            = observationHint;
         CanSpeak                   = canSpeak;
         WayToSpeakDescription      = wayToSpeakDescription;

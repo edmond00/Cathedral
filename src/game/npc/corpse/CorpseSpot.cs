@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Npc.Corpse;
@@ -22,9 +21,8 @@ public class CorpseSpot : Spot
         INpcEntity npcEntity,
         string displayName,
         List<string> descriptions,
-        List<KeywordInContext> keywords,
         List<PointOfInterest> bodyParts)
-        : base(area, displayName, descriptions, keywords)
+        : base(area, displayName, descriptions)
     {
         NpcEntity = npcEntity;
         PointsOfInterest.AddRange(bodyParts);

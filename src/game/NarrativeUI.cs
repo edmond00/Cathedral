@@ -429,8 +429,7 @@ public class NarrativeUI : TerminalPanelUI
                         y,
                         currentX,
                         currentX + segment.Text.Length - 1,
-                        sourceBlock,
-                        sourceBlock?.KeywordContextMap?.GetValueOrDefault(segment.KeywordValue!));
+                        sourceBlock);
                     _keywordRegions.Add(keywordRegion);
                     
                     // Check if this specific region is hovered

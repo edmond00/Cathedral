@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene;
 
@@ -12,7 +11,6 @@ public class Area : Element
 {
     public override string DisplayName { get; }
     public override List<string> Descriptions { get; }
-    public override List<KeywordInContext> Keywords { get; }
 
     /// <summary>Context description for LLM prompts (e.g. "crossing the open grassland").</summary>
     public string ContextDescription { get; }
@@ -34,7 +32,6 @@ public class Area : Element
 
     /// <summary>
     /// When true, entering or taking items from this area without permission is an illegal action.
-    /// Triggers witness detection and the "caught red-handed" dialogue on failure.
     /// </summary>
     public bool IsPrivate { get; set; }
 
@@ -43,7 +40,6 @@ public class Area : Element
         string contextDescription,
         string transitionDescription,
         List<string> descriptions,
-        List<KeywordInContext> keywords,
         string[]? moods = null,
         bool isPrivate = false)
     {
@@ -51,7 +47,6 @@ public class Area : Element
         ContextDescription    = contextDescription;
         TransitionDescription = transitionDescription;
         Descriptions          = descriptions;
-        Keywords              = keywords;
         Moods      = moods ?? System.Array.Empty<string>();
         IsPrivate  = isPrivate;
     }

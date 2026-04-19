@@ -1,4 +1,3 @@
-using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene;
 
@@ -24,9 +23,6 @@ public interface INpcEntity
 
     /// <summary>Whether this NPC is hostile to the player by default.</summary>
     bool IsHostile { get; }
-
-    /// <summary>Keywords injected into the narration node when this NPC is present.</summary>
-    KeywordInContext[] NarrationKeywordsInContext { get; }
 
     /// <summary>Short LLM observation hint (e.g. "a grey wolf watches from the shadows").</summary>
     string ObservationHint { get; }

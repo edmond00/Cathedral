@@ -1,5 +1,4 @@
 using System;
-using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene;
 
@@ -25,15 +24,11 @@ public abstract class ShallowNpcArchetype : NpcArchetype
     public ShallowNpcEntity Spawn(Random rng, string nodeContext = "")
     {
         var npcId    = $"{ArchetypeId}_{rng.Next(100000)}";
-        var keywords = BuildNarrationKeywords();
         var hint     = BuildObservationHint(nodeContext);
-        return new ShallowNpcEntity(npcId, TypeDisplayName, this, DefaultHostile, keywords, hint);
+        return new ShallowNpcEntity(npcId, TypeDisplayName, this, DefaultHostile, hint);
     }
 
     // ── Overridable builders ────────────────────────────────────────────────
-
-    /// <summary>Override to provide narration keywords for instances of this type.</summary>
-    protected abstract KeywordInContext[] BuildNarrationKeywords();
 
     /// <summary>Override to provide the observation hint for the LLM.</summary>
     protected abstract string BuildObservationHint(string nodeContext);

@@ -46,6 +46,10 @@ public sealed class KeywordFallbackService : IDisposable
         try
         {
             Console.WriteLine("KeywordFallbackService: Initialising...");
+
+            var modelPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "catalyst-models");
+            await NounExtractor.InitializeAsync(modelPath);
+
             _slotId = await _llamaServer.CreateInstanceAsync(SystemPrompt);
             _isInitialized = true;
             Console.WriteLine($"KeywordFallbackService: Created slot {_slotId}");

@@ -46,7 +46,6 @@ public class ThinkingExecutor
         ModusMentis thinkingModusMentis,
         ConcreteOutcome targetOutcome,
         string keyword,
-        KeywordInContext? keywordInContext,
         NarrationNode node,
         List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
@@ -82,7 +81,7 @@ public class ThinkingExecutor
             ? sourceObs
             : resolvedOutcome;
         var whyQ = _questionFillerService.GetNext(thinkingModusMentis, QuestionReference.ThinkWhy);
-        string whyPrompt = _promptConstructor.BuildWhyPrompt(outcomeDescription, node, thinkingModusMentis, protagonist, worldContext, whyTargetOutcome, whyQ.PromptText, keywordInContext);
+        string whyPrompt = _promptConstructor.BuildWhyPrompt(outcomeDescription, node, thinkingModusMentis, protagonist, worldContext, whyTargetOutcome, whyQ.PromptText);
         string whyGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema(whyQ.JsonFieldName));
 
         string? whyJson = await RequestFromLLMAsync(thinkingSlot, whyPrompt, whyGbnf, cancellationToken);
@@ -144,7 +143,7 @@ public class ThinkingExecutor
         _llmManager.ResetInstance(actionSlot);
 
         var whatQ = _questionFillerService.GetNext(selectedModusMentis, QuestionReference.ThinkWhat);
-        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, keywordInContext, outcomeDescription, node, protagonist, selectedModusMentis, worldContext, resolvedOutcome, whatQ.PromptText);
+        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, outcomeDescription, node, protagonist, selectedModusMentis, worldContext, resolvedOutcome, whatQ.PromptText);
         string whatGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema(whatQ.JsonFieldName));
 
         string? whatJson = await RequestFromLLMAsync(actionSlot, whatPrompt, whatGbnf, cancellationToken);

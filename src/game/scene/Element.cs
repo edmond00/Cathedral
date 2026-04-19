@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene;
 
@@ -8,7 +7,7 @@ namespace Cathedral.Game.Scene;
 /// Abstract base for any element in a <see cref="Scene"/> that can be the focus of a PoV:
 /// areas, spots, sections, NPCs, etc.
 /// Each element has a unique ID, registers itself to the scene dictionary,
-/// and carries observation data (descriptions, keywords) plus mutable state properties.
+/// and carries observation data (descriptions) plus mutable state properties.
 /// </summary>
 public abstract class Element
 {
@@ -20,9 +19,6 @@ public abstract class Element
 
     /// <summary>Description strings used when this element is observed.</summary>
     public abstract List<string> Descriptions { get; }
-
-    /// <summary>Keywords with context, used for LLM observation hints and UI keyword display.</summary>
-    public abstract List<KeywordInContext> Keywords { get; }
 
     /// <summary>
     /// Current active state values for this element.

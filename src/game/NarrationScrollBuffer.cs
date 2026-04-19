@@ -49,7 +49,7 @@ public class NarrationScrollBuffer
         // Create a new block with cleaned text if it was modified, preserving all properties
         var blockToAdd = cleanedText != block.Text
             ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Keywords, block.Actions, block.ChainOrigin,
-                block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences, block.KeywordContextMap, block.SpeakerName)
+                block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences, block.SpeakerName)
             : block;
         
         _blocks.Add(blockToAdd);

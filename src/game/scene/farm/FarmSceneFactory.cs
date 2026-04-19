@@ -164,7 +164,7 @@ public class FarmSceneFactory : SceneFactory
                     entity.OwnedSectionIds.Add(section.Id.ToString());
             }
 
-            var sceneNpc = new SceneNpc(entity, new List<KeywordInContext>(entity.NarrationKeywordsInContext));
+            var sceneNpc = new SceneNpc(entity);
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);
 
@@ -194,7 +194,7 @@ public class FarmSceneFactory : SceneFactory
         for (int i = 0; i < count; i++)
         {
             var entity   = archetype.Spawn(rng, homeArea.DisplayName.ToLowerInvariant());
-            var sceneNpc = new SceneNpc(entity, new List<KeywordInContext>(entity.NarrationKeywordsInContext));
+            var sceneNpc = new SceneNpc(entity);
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);
             scene.NpcSchedules[sceneNpc.Id] = schedule;
@@ -269,13 +269,6 @@ public class FarmSceneFactory : SceneFactory
         contextDescription: "standing in the farmyard courtyard",
         transitionDescription: "enter the courtyard",
         descriptions: new() { "The muddy central yard of the farm, hemmed by low fences and outbuildings" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the mud-churned <yard> of hard-packed earth and puddles"),
-            KeywordInContext.Parse("the low <fence> of split rails dividing the yard"),
-            KeywordInContext.Parse("the animal <smell> drifting from the enclosures"),
-            KeywordInContext.Parse("a rusted <trough> full of standing water"),
-        },
         moods: new[] { "muddy", "busy", "noisy", "open", "smelly", "functional", "cluttered" }
     );
 
@@ -284,13 +277,6 @@ public class FarmSceneFactory : SceneFactory
         contextDescription: "inside the chicken coop",
         transitionDescription: "step into the chicken coop",
         descriptions: new() { "A low timber coop crowded with hens, smelling of damp feathers and droppings" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the low <coop> of timber and wire netting"),
-            KeywordInContext.Parse("a scattering of <feather>s across the straw floor"),
-            KeywordInContext.Parse("the hollow sound of <clucking> in the dimness"),
-            KeywordInContext.Parse("a row of straw <nest>s along the back wall"),
-        },
         moods: new[] { "low", "smelly", "dim", "crowded", "warm", "clucking", "feathery" }
     );
 
@@ -299,13 +285,6 @@ public class FarmSceneFactory : SceneFactory
         contextDescription: "by the pigsty",
         transitionDescription: "approach the pigsty",
         descriptions: new() { "A walled mud pen containing a sow and her piglets, grunting and rooting" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the low <wall> of the pigsty, patched with old timber"),
-            KeywordInContext.Parse("the deep <mud> chewed to mire by rooting snouts"),
-            KeywordInContext.Parse("the heavy <grunt> of a sow shifting in her pen"),
-            KeywordInContext.Parse("a broken <trough> spilling slops into the mud"),
-        },
         moods: new[] { "muddy", "smelly", "wet", "loud", "enclosed", "rank", "grunting" }
     );
 
@@ -314,13 +293,6 @@ public class FarmSceneFactory : SceneFactory
         contextDescription: "in the kitchen garden",
         transitionDescription: "walk into the vegetable garden",
         descriptions: new() { "Rows of root vegetables and cabbages, stakes and string keeping order" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the neat <row>s of root vegetables staked with string"),
-            KeywordInContext.Parse("the dark turned <soil> between the beds"),
-            KeywordInContext.Parse("some knotted <cabbage> heads crouching close to the ground"),
-            KeywordInContext.Parse("a wooden <stake> trailing frayed string through the plot"),
-        },
         moods: new[] { "ordered", "earthy", "green", "quiet", "neat", "damp", "productive" }
     );
 
@@ -329,13 +301,6 @@ public class FarmSceneFactory : SceneFactory
         contextDescription: "under the orchard trees",
         transitionDescription: "walk into the orchard",
         descriptions: new() { "A half-dozen gnarled apple and pear trees, their branches tangled overhead" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the gnarled <bough>s of old apple trees heavy with fruit"),
-            KeywordInContext.Parse("the fallen <windfall> bruising in the long grass"),
-            KeywordInContext.Parse("the dappled <shadow> under interlocking branches"),
-            KeywordInContext.Parse("the sweet <smell> of fermenting fallen fruit"),
-        },
         moods: new[] { "gnarled", "shaded", "quiet", "sweet", "overgrown", "old", "mossy" }
     );
 
@@ -344,13 +309,6 @@ public class FarmSceneFactory : SceneFactory
         contextDescription: "beside the rabbit enclosure",
         transitionDescription: "approach the rabbit enclosure",
         descriptions: new() { "A fenced hutch of timber and wire holding a dozen grey rabbits" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the low <hutch> built from salvaged timber and wire"),
-            KeywordInContext.Parse("the soft <thump> of rabbits shifting inside"),
-            KeywordInContext.Parse("some <droppings> scattered on the packed earth outside"),
-            KeywordInContext.Parse("a pair of grey <ears> visible through the wire"),
-        },
         moods: new[] { "quiet", "small", "close", "soft", "earthy", "still" }
     );
 
@@ -359,13 +317,6 @@ public class FarmSceneFactory : SceneFactory
         contextDescription: "inside the farm shed",
         transitionDescription: "step into the shed",
         descriptions: new() { "A low-roofed storage shed smelling of hay, rust, and old wood" },
-        keywords: new()
-        {
-            KeywordInContext.Parse("the low <roof> of the shed, beams barely head-high"),
-            KeywordInContext.Parse("a stack of <hay> bales against the back wall"),
-            KeywordInContext.Parse("the <rust> smell of old iron tools hanging from pegs"),
-            KeywordInContext.Parse("a coil of <rope> thick with hay dust"),
-        },
         moods: new[] { "low", "dusty", "dry", "cluttered", "dim", "quiet", "rusty" }
     );
 
@@ -376,11 +327,6 @@ public class FarmSceneFactory : SceneFactory
         var nestBox = new PointOfInterest(
             displayName: "Nest Box",
             descriptions: new() { "A row of straw-lined boxes where hens lay" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("a straw-lined <nest> along the back wall"),
-                KeywordInContext.Parse("the warm <egg> nestled in a curl of straw"),
-            },
             items: new()
             {
                 new ItemElement(new Egg()),
@@ -397,11 +343,6 @@ public class FarmSceneFactory : SceneFactory
         var hayStack = new PointOfInterest(
             displayName: "Hay Stack",
             descriptions: new() { "A compressed stack of hay bales rising to the shed roof" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the towering <stack> of hay bales against the wall"),
-                KeywordInContext.Parse("the dry sweet <smell> of stored hay"),
-            },
             items: new()
             {
                 new ItemElement(new Hay()),
@@ -414,11 +355,6 @@ public class FarmSceneFactory : SceneFactory
         var grainStore = new PointOfInterest(
             displayName: "Grain Sacks",
             descriptions: new() { "Cloth sacks of dried grain stacked along the wall" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the fat <sack>s of grain tied at the neck"),
-                KeywordInContext.Parse("a trickle of loose <grain> on the floor"),
-            },
             items: new()
             {
                 new ItemElement(new Grain()),
@@ -430,11 +366,6 @@ public class FarmSceneFactory : SceneFactory
         var toolRack = new PointOfInterest(
             displayName: "Tool Rack",
             descriptions: new() { "A wooden rack of farm tools hanging from iron pegs on the wall" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the iron <peg>s of the tool rack along the wall"),
-                KeywordInContext.Parse("the dull <gleam> of farm tools hanging in a row"),
-            },
             items: new()
             {
                 new ItemElement(new Sickle()),
@@ -454,11 +385,6 @@ public class FarmSceneFactory : SceneFactory
         var turnipBed = new PointOfInterest(
             displayName: "Turnip Bed",
             descriptions: new() { "A row of swollen turnips half-emerged from the dark earth" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("a row of pale <turnip>s pushing from the soil"),
-                KeywordInContext.Parse("the dark turned <earth> between the roots"),
-            },
             items: new()
             {
                 new ItemElement(new Turnip()),
@@ -470,11 +396,6 @@ public class FarmSceneFactory : SceneFactory
         var carrotBed = new PointOfInterest(
             displayName: "Carrot Bed",
             descriptions: new() { "A bed of carrots, feathery tops waving above the soil" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("the feathery <top>s of carrots nodding in the breeze"),
-                KeywordInContext.Parse("a bright orange <carrot> tip visible at the soil line"),
-            },
             items: new()
             {
                 new ItemElement(new Carrot()),
@@ -492,12 +413,6 @@ public class FarmSceneFactory : SceneFactory
         var appleTree = new PointOfInterest(
             displayName: "Apple Tree",
             descriptions: new() { "A gnarled old apple tree, its boughs heavy with fruit" },
-            keywords: new()
-            {
-                KeywordInContext.Parse("a gnarled <apple> tree heavy with late fruit"),
-                KeywordInContext.Parse("a windfall <apple> bruised and sweet in the grass"),
-                KeywordInContext.Parse("the wide dark <canopy> of an old orchard tree"),
-            },
             items: new()
             {
                 new ItemElement(new Apple()),
@@ -527,11 +442,6 @@ public class FarmSceneFactory : SceneFactory
             backArea:    hall,
             displayName: "Farmhouse Door",
             descriptions: new() { $"A {matWord} door set into the front wall of the farmhouse, iron-banded and weathered" },
-            keywords: new()
-            {
-                KeywordInContext.Parse($"the {matWord} <door> of the farmhouse, iron-banded"),
-                KeywordInContext.Parse("the worn <threshold> of the farmhouse entrance"),
-            },
             initialState: DoorState.Locked
         );
     }

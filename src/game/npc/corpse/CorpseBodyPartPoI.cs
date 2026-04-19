@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Npc.Corpse;
@@ -14,8 +13,7 @@ public class CorpseBodyPartPoI : PointOfInterest
     public CorpseBodyPartPoI(
         string displayName,
         List<string> descriptions,
-        List<KeywordInContext> keywords,
         List<ItemElement>? items = null)
-        : base(displayName, descriptions, keywords, items)
+        : base(displayName, descriptions, items)
     { }
 }
