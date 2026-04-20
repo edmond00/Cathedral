@@ -15,7 +15,7 @@ public class AppeaseVerb : Verb
 {
     public override string VerbId         => "appease";
     public override string DisplayName    => "Appease";
-    public override int    BaseDifficulty => 5;
+    public override int    BaseDifficulty => 3;
 
     /// <summary>Appeasing is a legal, non-violent action.</summary>
     public override bool IsLegal => true;

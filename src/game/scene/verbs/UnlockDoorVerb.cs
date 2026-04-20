@@ -14,7 +14,7 @@ public class UnlockDoorVerb : Verb
 {
     public override string VerbId         => "unlock_door";
     public override string DisplayName    => "Unlock";
-    public override int    BaseDifficulty => 4;
+    public override int    BaseDifficulty => 3;
 
     /// <summary>Forcing open a locked door without a key is illegal.</summary>
     public override bool IsLegal => false;

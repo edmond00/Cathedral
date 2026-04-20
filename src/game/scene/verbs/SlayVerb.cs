@@ -13,7 +13,7 @@ public class SlayVerb : Verb
 {
     public override string VerbId         => "slay";
     public override string DisplayName    => "Slay";
-    public override int    BaseDifficulty => 5;
+    public override int    BaseDifficulty => 3;
 
     /// <summary>Slaying a living person is never a legal action.</summary>
     public override bool IsLegal => false;

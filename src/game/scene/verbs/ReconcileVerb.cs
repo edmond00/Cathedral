@@ -18,7 +18,7 @@ public class ReconcileVerb : Verb
 {
     public override string VerbId         => "reconcile";
     public override string DisplayName    => "Reconcile";
-    public override int    BaseDifficulty => 3;
+    public override int    BaseDifficulty => 2;
 
     /// <summary>Reconciliation is a legal, non-violent action.</summary>
     public override bool IsLegal => true;
