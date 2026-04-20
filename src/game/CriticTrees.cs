@@ -123,20 +123,21 @@ public static class CriticTrees
     #region Difficulty Tree
 
     /// <summary>
-    /// Builds the difficulty tree — a single node asking the LLM to rate situational difficulty in 4 levels.
+    /// Builds the difficulty tree — a single node asking the LLM to judge how well
+    /// the character's chosen approach fits the goal.
     /// The result is used as a modifier (+0..+3) on top of the verb's base difficulty.
     /// </summary>
     public static CriticNode BuildDifficultyTree(string actionText, CriticContext context)
     {
         return new CriticNode(
             name: "Difficulty",
-            question: $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} wants to: \"{actionText}\"\n\nHow difficult is this action to perform?",
+            question: $"{context.BuildPreamble()}\n\nFaced with this situation, {Config.Narrative.PlayerName} thought of the following approach: \"{actionText}\"\n\nHow well does this approach fit the goal?",
             choices: new List<CriticChoice>
             {
-                new("very_easy", "trivial, no risk, anyone could do it"),
-                new("easy",      "simple, low effort, minor skill required"),
-                new("hard",      "difficult, significant risk or skill required"),
-                new("very_hard", "extreme difficulty or serious danger"),
+                new("ingenious",    "a clever, creative solution that fits the goal perfectly"),
+                new("appropriate",  "a sensible, fitting approach to the goal"),
+                new("convoluted",   "an overcomplicated or roundabout method"),
+                new("silly",        "a misguided or nonsensical idea for this goal"),
             });
     }
 
@@ -155,18 +156,18 @@ public static class CriticTrees
 
     /// <summary>
     /// Maps the critic's choice to a situational modifier added on top of the verb base:
-    /// very_easy → +0, easy → +1, hard → +2, very_hard → +3.
+    /// ingenious → +0, appropriate → +1, convoluted → +2, silly → +3.
     /// </summary>
     public static int GetDifficultyModifier(CriticTreeResult result)
     {
         if (result.Trace.Count == 0) return 1;
         return result.FinalChosenId switch
         {
-            "very_easy" => 0,
-            "easy"      => 1,
-            "hard"      => 2,
-            "very_hard" => 3,
-            _           => 1,
+            "ingenious"   => 0,
+            "appropriate" => 1,
+            "convoluted"  => 2,
+            "silly"       => 3,
+            _             => 1,
         };
     }
 

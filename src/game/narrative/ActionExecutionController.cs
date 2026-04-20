@@ -182,13 +182,22 @@ public class ActionExecutionController
 
         Console.WriteLine($"   ✓ Action approved as plausible ({plausibilityResult.Trace.Count} checks passed)\n");
 
-        // === STEP 2: DIFFICULTY TREE ===
-        Console.WriteLine($"🎯 [DIFFICULTY CHECK] Evaluating action difficulty...");
-
-        var difficultyTree = CriticTrees.BuildDifficultyTree(action.ActionText, criticContext);
-        var difficultyResult = await _criticEvaluator.EvaluateTreeAsync(difficultyTree);
-
-        int difficultyLevel = CriticTrees.CalculateFinalDifficulty(action.Verb, difficultyResult);
+        // === STEP 2: DIFFICULTY (reuse pre-computed level from narration menu) ===
+        // Difficulty is already evaluated during the thinking phase; reuse it to avoid a
+        // second LLM call that could produce a different value and cause a mismatch.
+        int difficultyLevel;
+        if (action.DifficultyLevel > 0)
+        {
+            difficultyLevel = action.DifficultyLevel;
+            Console.WriteLine($"🎯 [DIFFICULTY CHECK] Reusing pre-computed difficulty: {difficultyLevel}/10");
+        }
+        else
+        {
+            Console.WriteLine($"🎯 [DIFFICULTY CHECK] No pre-computed difficulty — evaluating now...");
+            var difficultyTree = CriticTrees.BuildDifficultyTree(action.ActionText, criticContext);
+            var difficultyResult = await _criticEvaluator.EvaluateTreeAsync(difficultyTree);
+            difficultyLevel = CriticTrees.CalculateFinalDifficulty(action.Verb, difficultyResult);
+        }
         double difficultyScore = CriticTrees.DifficultyLevelToScore(difficultyLevel);
         
         Console.WriteLine($"   Difficulty: {difficultyScore:F3} (level {difficultyLevel}/10)");
