@@ -13,8 +13,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class AppeaseVerb : Verb
 {
-    public override string VerbId      => "appease";
-    public override string DisplayName => "Appease";
+    public override string VerbId         => "appease";
+    public override string DisplayName    => "Appease";
+    public override int    BaseDifficulty => 5;
 
     /// <summary>Appeasing is a legal, non-violent action.</summary>
     public override bool IsLegal => true;

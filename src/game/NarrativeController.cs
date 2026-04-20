@@ -375,7 +375,7 @@ public class NarrativeController
                         act.PreselectedOutcome?.ToNaturalLanguageString() ?? "");
                     var difficultyTree = CriticTrees.BuildDifficultyTree(act.ActionText, criticContext);
                     var difficultyResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(difficultyTree);
-                    act.DifficultyLevel = CriticTrees.CalculateFinalDifficulty(act.ActionText, difficultyResult);
+                    act.DifficultyLevel = CriticTrees.CalculateFinalDifficulty(act.Verb, difficultyResult);
                     Console.WriteLine($"NarrativeController: Pre-computed difficulty for '{act.DisplayText}': {act.DifficultyLevel}/10");
                 }
             }
@@ -435,9 +435,7 @@ public class NarrativeController
             // === CODED RULES CHECK (before LLM — fast, deterministic, absolute) ===
 
             // Determine if the action is illegal so we know whether to compute witness context.
-            bool isIllegalAction =
-                (action.PreselectedOutcome is VerbOutcome preVo && !preVo.VerbView.Verb.IsLegal)
-                || (_pov?.Where.IsPrivate ?? false);
+            bool isIllegalAction = !action.Verb.IsLegal || (_pov?.Where.IsPrivate ?? false);
 
             // Compute witness context (visual = same area, audio = adjacent area).
             var witnessContext = (isIllegalAction && _scene != null && _pov != null)
@@ -718,8 +716,7 @@ public class NarrativeController
         // If detected, override the normal failure flow with a caught-red-handed dialogue.
         if (!result.Succeeded && result.WitnessDetected && result.DetectedWitness != null && _pov != null)
         {
-            var criminalVerb = (result.Action.PreselectedOutcome as VerbOutcome)?.VerbView.Verb;
-            var crimeType    = DetermineCrimeType(criminalVerb, _pov.Where.IsPrivate);
+            var crimeType = DetermineCrimeType(result.Action.Verb, _pov.Where.IsPrivate);
             Console.WriteLine($"NarrativeController: Witness '{result.DetectedWitness.DisplayName}' detected failed illegal action (crime: {crimeType})");
             var catchTree = CaughtRedHandedTreeFactory.Create(crimeType, result.DetectedWitness.IsBrave);
             _pendingDialogueOutcome = new Cathedral.Game.Narrative.DialogueOutcome(result.DetectedWitness, tree: catchTree);
@@ -757,8 +754,8 @@ public class NarrativeController
         }
         else if (result.ActualOutcome is VerbOutcome verbOutcome && _scene != null && _pov != null)
         {
-            Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.VerbView.Verb.VerbId}' on '{verbOutcome.Target.DisplayName}', executing verb");
-            verbOutcome.VerbView.Verb.Execute(_scene, _pov, _protagonist, verbOutcome.Target);
+            Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.VerbView.Verb.VerbId}' on '{verbOutcome.Target?.DisplayName}', executing verb");
+            verbOutcome.VerbView.Verb.Execute(_scene, _pov, _protagonist, verbOutcome.Target!);
             SceneDebugManager.UpdatePoV(_pov);
 
             // Check if the verb requested a dialogue session
@@ -781,8 +778,19 @@ public class NarrativeController
                 return;
             }
 
-            // Success path (4a): witness confrontation is NOT triggered on success.
-            // Witness detection on failure is handled below via result.WitnessDetected.
+            // MoveToAreaVerb: stay in scene and transition to the target area's node
+            if (verbOutcome.VerbView.Verb is Cathedral.Game.Scene.Verbs.MoveToAreaVerb
+                && verbOutcome.Target is Cathedral.Game.Scene.Area movedArea)
+            {
+                var nodeId = movedArea.DisplayName.ToLowerInvariant().Replace(' ', '_');
+                if (_graph.AllNodes.TryGetValue(nodeId, out var areaNode))
+                {
+                    Console.WriteLine($"NarrativeController: MoveToAreaVerb — transitioning to node '{nodeId}'");
+                    _narrationState.PendingTransitionNode = areaNode;
+                    _narrationState.ShowContinueButton = true;
+                    return;
+                }
+            }
 
             _narrationState.PendingTransitionNode = null;
             _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
@@ -1356,14 +1364,6 @@ public class NarrativeController
                     // Perform the transition
                     _currentNode = _narrationState.PendingTransitionNode;
 
-                    // Sync PoV to the new node's area (scene-backed mode)
-                    if (_pov != null && _currentNode is SyntheticNarrationNode synNode && synNode.Area != null)
-                    {
-                        _pov.Where = synNode.Area;
-                        _pov.Focus = null;
-                        SceneDebugManager.UpdatePoV(_pov);
-                    }
-
                     // Convert current narration to history (grayed out, non-interactive)
                     _scrollBuffer.ConvertToHistory();
                     _narrationState.ResetForNewNode();
@@ -1862,57 +1862,38 @@ public class NarrativeController
         Console.WriteLine("\n=== Current Narration Graph Structure ===");
         Console.WriteLine($"Current Node: {_currentNode.NodeId}");
         Console.WriteLine();
-        
-        // Breadth-first traversal to avoid infinite loops from circular references
-        var visited = new HashSet<string>();
-        var queue = new Queue<NarrationNode>();
-        queue.Enqueue(_currentNode);
-        visited.Add(_currentNode.NodeId);
-        
+
         int nodeCount = 0;
-        while (queue.Count > 0)
+        foreach (var (nodeId, node) in _graph.AllNodes)
         {
-            var node = queue.Dequeue();
             nodeCount++;
-            
-            Console.WriteLine($"[{nodeCount}] Node: {node.NodeId}");
+
+            Console.WriteLine($"[{nodeCount}] Node: {nodeId}");
             Console.WriteLine($"    Display: {node.DisplayName}");
             Console.WriteLine($"    Context: {node.ContextDescription}");
             Console.WriteLine($"    Entry Node: {node.IsEntryNode}");
             Console.WriteLine($"    Outcomes: {node.GetAllDirectConcreteOutcomes().Count}");
-            
-            // Show items
+
             var items = node.GetAvailableItems();
             if (items.Count > 0)
             {
                 Console.WriteLine($"    Items ({items.Count}):");
                 foreach (var item in items)
-                {
                     Console.WriteLine($"      - {item.DisplayName}");
-                }
             }
-            
-            // Show connections
-            var childNodes = node.PossibleOutcomes.OfType<NarrationNode>().ToList();
-            if (childNodes.Count > 0)
+
+            var observations = node.PossibleOutcomes.OfType<ObservationObject>().ToList();
+            if (observations.Count > 0)
             {
-                Console.WriteLine($"    Transitions ({childNodes.Count}):");
-                foreach (var child in childNodes)
-                {
-                    Console.WriteLine($"      -> {child.NodeId}");
-                    
-                    if (!visited.Contains(child.NodeId))
-                    {
-                        visited.Add(child.NodeId);
-                        queue.Enqueue(child);
-                    }
-                }
+                Console.WriteLine($"    Observations ({observations.Count}):");
+                foreach (var obs in observations)
+                    Console.WriteLine($"      -> {obs.ObservationId}");
             }
-            
+
             Console.WriteLine();
         }
-        
-        Console.WriteLine($"=== Total: {nodeCount} nodes, {visited.Count} unique ===\n");
+
+        Console.WriteLine($"=== Total: {nodeCount} nodes ===\n");
     }
 
     // ── Item combination helpers ──────────────────────────────────────────────
@@ -1924,24 +1905,18 @@ public class NarrativeController
     /// <summary>
     /// <summary>
     /// Returns true if the action should exit to world travel after the continue button is clicked.
-    /// Prefers verb-type detection (MoveToAreaVerb) for scene-path actions; falls back to
-    /// action-text parsing for graph-level narrative nodes.
+    /// Uses action-text parsing to detect movement verbs.
     /// </summary>
     private static bool IsMovementAction(ParsedNarrativeAction? action)
     {
         if (action == null) return false;
-        // Scene path: resolved outcome is a VerbOutcome wrapping MoveToAreaVerb.
-        if (action.PreselectedOutcome is VerbOutcome vo && vo.VerbView.Verb is MoveToAreaVerb)
-            return true;
-        // Graph-level fallback: parse action text for movement verbs.
         return CriticTrees.IsMovementVerb(action.ActionText);
     }
 
     /// Determines the <see cref="CriminalAffinityType"/> for a verb that was just executed.
     /// </summary>
-    private static CriminalAffinityType DetermineCrimeType(Cathedral.Game.Scene.Verbs.Verb? verb, bool areaIsPrivate)
+    private static CriminalAffinityType DetermineCrimeType(Cathedral.Game.Scene.Verbs.Verb verb, bool areaIsPrivate)
     {
-        if (verb == null) return areaIsPrivate ? CriminalAffinityType.Intruder : CriminalAffinityType.None;
         return verb.VerbId switch
         {
             "steal"       => CriminalAffinityType.Thief,

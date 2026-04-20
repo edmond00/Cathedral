@@ -114,7 +114,7 @@ public abstract class NarrationGraphFactory
         }
     }
 
-    private static IReadOnlyDictionary<string, NarrationNode> CollectAllNodes(NarrationNode entry)
+    protected virtual IReadOnlyDictionary<string, NarrationNode> CollectAllNodes(NarrationNode entry)
     {
         var dict  = new Dictionary<string, NarrationNode>();
         var queue = new Queue<NarrationNode>();

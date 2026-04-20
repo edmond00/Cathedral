@@ -10,8 +10,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class CutVerb : Verb
 {
-    public override string VerbId      => "cut";
-    public override string DisplayName => "Cut";
+    public override string VerbId         => "cut";
+    public override string DisplayName    => "Cut";
+    public override int    BaseDifficulty => 2;
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {

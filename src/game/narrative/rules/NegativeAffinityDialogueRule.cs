@@ -20,10 +20,10 @@ public class NegativeAffinityDialogueRule : IActionRule
 
     public ActionRuleResult Check(ActionRuleContext ctx)
     {
-        if (ctx.Action.PreselectedOutcome is not VerbOutcome vo) return ActionRuleResult.Pass();
-        if (!SpeakingVerbIds.Contains(vo.VerbView.Verb.VerbId))  return ActionRuleResult.Pass();
-        if (vo.Target is not SceneNpc sceneNpc)                   return ActionRuleResult.Pass();
-        if (sceneNpc.Entity is not NpcEntity npc)                 return ActionRuleResult.Pass();
+        var vo = ctx.Action.PreselectedOutcome;
+        if (!SpeakingVerbIds.Contains(vo.VerbView.Verb.VerbId)) return ActionRuleResult.Pass();
+        if (vo.Target is not SceneNpc sceneNpc)                  return ActionRuleResult.Pass();
+        if (sceneNpc.Entity is not NpcEntity npc)                return ActionRuleResult.Pass();
 
         var verbId = vo.VerbView.Verb.VerbId;
 

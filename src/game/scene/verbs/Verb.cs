@@ -16,6 +16,12 @@ public abstract class Verb
     public abstract string DisplayName { get; }
 
     /// <summary>
+    /// Base difficulty of this verb (1–10). Combined with a situational modifier
+    /// from the LLM critic to produce the final difficulty level.
+    /// </summary>
+    public abstract int BaseDifficulty { get; }
+
+    /// <summary>
     /// Whether executing this verb is a legal action.
     /// Override to false for verbs that constitute crimes (stealing, trespassing, attacking innocents).
     /// Combined with <see cref="Scene.Area.IsPrivate"/> to determine full legality.

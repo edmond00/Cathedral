@@ -12,8 +12,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class StrengthenRelationshipVerb : Verb
 {
-    public override string VerbId      => "strengthen_relationship";
-    public override string DisplayName => "Talk";
+    public override string VerbId         => "strengthen_relationship";
+    public override string DisplayName    => "Talk";
+    public override int    BaseDifficulty => 1;
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {

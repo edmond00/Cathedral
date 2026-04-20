@@ -12,8 +12,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class StealVerb : Verb
 {
-    public override string VerbId      => "steal";
-    public override string DisplayName => "Steal";
+    public override string VerbId         => "steal";
+    public override string DisplayName    => "Steal";
+    public override int    BaseDifficulty => 3;
 
     /// <summary>Stealing is always an illegal action.</summary>
     public override bool IsLegal => false;

@@ -10,8 +10,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class MoveToAreaVerb : Verb
 {
-    public override string VerbId => "move";
-    public override string DisplayName => "Move";
+    public override string VerbId         => "move";
+    public override string DisplayName    => "Move";
+    public override int    BaseDifficulty => 1;
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
@@ -24,6 +25,8 @@ public class MoveToAreaVerb : Verb
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
     {
+        if (target is Area area && !string.IsNullOrWhiteSpace(area.TransitionDescription))
+            return area.TransitionDescription;
         return $"move to the {target.DisplayName.ToLowerInvariant()}";
     }
 

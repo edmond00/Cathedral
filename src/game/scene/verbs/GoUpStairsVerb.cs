@@ -10,8 +10,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class GoUpStairsVerb : Verb
 {
-    public override string VerbId      => "go_up_stairs";
-    public override string DisplayName => "Go Up";
+    public override string VerbId         => "go_up_stairs";
+    public override string DisplayName    => "Go Up";
+    public override int    BaseDifficulty => 1;
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {

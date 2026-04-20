@@ -9,8 +9,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class LeaveSpotVerb : Verb
 {
-    public override string VerbId      => "leave";
-    public override string DisplayName => "Leave";
+    public override string VerbId         => "leave";
+    public override string DisplayName    => "Leave";
+    public override int    BaseDifficulty => 1;
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {

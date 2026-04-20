@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Scene.Verbs;
 
 namespace Cathedral.Game;
 
@@ -153,35 +154,6 @@ public static class CriticTrees
     }
 
     /// <summary>
-    /// Returns the base difficulty (1–10) for the leading verb of an action.
-    /// Unknown verbs default to 3.
-    /// </summary>
-    public static int GetVerbBaseDifficulty(string actionText)
-    {
-        var verb = actionText.Trim()
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .FirstOrDefault()?.ToLowerInvariant() ?? "";
-        return verb switch
-        {
-            "appease"    => 5,
-            "attack"     => 2,
-            "cut"        => 2,
-            "enter"      => 1,
-            "go"         => 1,  // go down / go up
-            "leave"      => 1,
-            "move"       => 1,  // move to area
-            "grab"       => 1,
-            "reconcile"  => 3,
-            "slay"       => 5,
-            "steal"      => 3,
-            "strengthen" => 1,  // strengthen relation
-            "meet"       => 1,  // meet stranger
-            "unlock"     => 4,
-            _            => 3,
-        };
-    }
-
-    /// <summary>
     /// Maps the critic's choice to a situational modifier added on top of the verb base:
     /// very_easy → +0, easy → +1, hard → +2, very_hard → +3.
     /// </summary>
@@ -199,13 +171,12 @@ public static class CriticTrees
     }
 
     /// <summary>
-    /// Combines verb base difficulty and situational modifier into a final 1–10 difficulty level.
+    /// Combines the verb's base difficulty and the situational modifier into a final 1–10 difficulty level.
     /// </summary>
-    public static int CalculateFinalDifficulty(string actionText, CriticTreeResult result)
+    public static int CalculateFinalDifficulty(Verb verb, CriticTreeResult result)
     {
-        int baseDifficulty = GetVerbBaseDifficulty(actionText);
-        int modifier       = GetDifficultyModifier(result);
-        return Math.Clamp(baseDifficulty + modifier, 1, 10);
+        int modifier = GetDifficultyModifier(result);
+        return Math.Clamp(verb.BaseDifficulty + modifier, 1, 10);
     }
 
     /// <summary>

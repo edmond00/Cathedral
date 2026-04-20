@@ -75,8 +75,7 @@ public class ThinkingExecutor
         // ── Call 1: WHY ────────────────────────────────────────────────────────────
         // For the ignore outcome use the source observation as the attention label so
         // the prompt reads naturally ("drawn to [observation]… want to ignore and move on").
-        bool resolvedIsIgnore = resolvedOutcome is IgnoreOutcome
-            || (resolvedOutcome is VerbOutcome vIgn && vIgn.VerbView.Verb is IgnoreVerb);
+        bool resolvedIsIgnore = resolvedOutcome is VerbOutcome vIgn && vIgn.VerbView.Verb is IgnoreVerb;
         ConcreteOutcome whyTargetOutcome = (resolvedIsIgnore && sourceObs != null)
             ? sourceObs
             : resolvedOutcome;
@@ -95,8 +94,7 @@ public class ThinkingExecutor
         Console.WriteLine($"ThinkingExecutor: WHY complete ({whyText.Length} chars)");
 
         // ── Early exit: IGNORE ─────────────────────────────────────────────────────
-        bool isIgnore = resolvedOutcome is IgnoreOutcome
-            || (resolvedOutcome is VerbOutcome vIgnore && vIgnore.VerbView.Verb is IgnoreVerb);
+        bool isIgnore = resolvedOutcome is VerbOutcome vIgnore && vIgnore.VerbView.Verb is IgnoreVerb;
         if (isIgnore)
         {
             Console.WriteLine("ThinkingExecutor: IGNORE selected — skipping HOW/WHAT, returning reasoning only.");
@@ -168,7 +166,7 @@ public class ThinkingExecutor
         {
             ActionModusMentisId = selectedSkillId,
             ActionModusMentis = selectedModusMentis,
-            PreselectedOutcome = resolvedOutcome,
+            PreselectedOutcome = (VerbOutcome)resolvedOutcome,
             ActionText = actionDescription,
             DisplayText = displayText,
             ThinkingModusMentis = thinkingModusMentis,
@@ -217,16 +215,12 @@ public class ThinkingExecutor
         }
 
         // ── Call 0b: GOAL ──────────────────────────────────────────────────────────
-        // Scene-path ObservationObjects already include IgnoreVerb ("move on") as a SubOutcome.
-        // For graph-level nodes that don't have it, append the legacy sentinel as fallback.
-        var goalOptions = subOutcomes
-            .Select(o => o.ToNaturalLanguageString())
-            .ToList();
-        bool hasMoveon = goalOptions.Any(s =>
-            s.Equals("move on", StringComparison.OrdinalIgnoreCase) ||
-            s.Equals(IgnoreOutcome.GoalString, StringComparison.OrdinalIgnoreCase));
-        if (!hasMoveon)
-            goalOptions.Add(IgnoreOutcome.GoalString);
+        // Ensure subOutcomes always contains an IgnoreVerb option (scene ObservationObjects
+        // inject it via MakeIgnoreSubOutcome; legacy graph-level nodes do not).
+        var workingOutcomes = new List<ConcreteOutcome>(subOutcomes);
+        if (!workingOutcomes.Any(o => o is VerbOutcome vo && vo.VerbView.Verb is IgnoreVerb))
+            workingOutcomes.Add(IgnoreVerb.MakeOutcome());
+        var goalOptions = workingOutcomes.Select(o => o.ToNaturalLanguageString()).ToList();
         string goalPrompt = ThinkingPromptConstructor.BuildGoalPrompt(goalOptions, thinkingModusMentis);
         string goalGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateGoalSchema(goalOptions));
 
@@ -242,14 +236,10 @@ public class ThinkingExecutor
             using var doc = JsonDocument.Parse(goalJson);
             string chosen = doc.RootElement.GetProperty("goal").GetString() ?? "";
             Console.WriteLine($"ThinkingExecutor: GOAL selected '{chosen}'");
-            // Match against SubOutcomes first (covers IgnoreVerb "move on" and all verbs).
-            var match = subOutcomes.FirstOrDefault(o =>
+            var match = workingOutcomes.FirstOrDefault(o =>
                 o.ToNaturalLanguageString().Equals(chosen, StringComparison.OrdinalIgnoreCase));
-            // If no match and the LLM chose the legacy sentinel, return ignore.
-            if (match == null && chosen.Equals(IgnoreOutcome.GoalString, StringComparison.OrdinalIgnoreCase))
-                return (IgnoreOutcome.Instance, reflectText);
             // Unknown match → treat as ignore rather than crash.
-            return (match ?? IgnoreOutcome.Instance, reflectText);
+            return (match ?? IgnoreVerb.MakeOutcome(), reflectText);
         }
         catch (JsonException ex)
         {

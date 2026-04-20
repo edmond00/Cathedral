@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Scene.Verbs;
 
 namespace Cathedral.Game.Scene;
 
@@ -14,6 +15,7 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
 {
     private readonly Cathedral.Game.Scene.Scene _scene;
     private readonly int _locationId;
+    private readonly Dictionary<string, NarrationNode> _areaNodes = new();
 
     public SceneSyntheticGraphFactory(Cathedral.Game.Scene.Scene scene, int locationId)
         : base(sessionPath: null)
@@ -22,32 +24,39 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         _locationId = locationId;
     }
 
+    protected override IReadOnlyDictionary<string, NarrationNode> CollectAllNodes(NarrationNode entry)
+        => _areaNodes;
+
     protected override NarrationNode BuildNodes(Random rng, int locationId)
     {
         var firstArea = _scene.AllAreas.FirstOrDefault();
         if (firstArea == null)
             throw new InvalidOperationException("Scene has no areas — cannot build synthetic graph");
 
-        // Create a synthetic NarrationNode for each area
-        var areaNodes = new Dictionary<Guid, SyntheticNarrationNode>();
+        // Create a synthetic NarrationNode for each area, keyed by Guid for graph wiring
+        var byGuid = new Dictionary<Guid, SyntheticNarrationNode>();
         foreach (var area in _scene.AllAreas)
         {
             var node = CreateNodeForArea(area);
-            areaNodes[area.Id] = node;
+            byGuid[area.Id] = node;
+            _areaNodes[node.NodeId] = node;
         }
 
-        // Connect nodes based on scene's AreaGraph
+        // Wire area-to-area transitions via MoveToAreaVerb (no verb bypass)
         foreach (var (fromId, toIds) in _scene.AreaGraph)
         {
-            if (!areaNodes.TryGetValue(fromId, out var fromNode)) continue;
+            if (!byGuid.TryGetValue(fromId, out var fromNode)) continue;
             foreach (var toId in toIds)
             {
-                if (areaNodes.TryGetValue(toId, out var toNode))
-                    fromNode.PossibleOutcomes.Add(toNode);
+                if (!byGuid.TryGetValue(toId, out var toNode) || toNode.Area == null) continue;
+                var toArea   = toNode.Area;
+                var verbView = new VerbView(new MoveToAreaVerb(), toArea.TransitionDescription, toArea);
+                var entry    = new SceneViewEntry(toArea, new List<VerbView> { verbView });
+                fromNode.PossibleOutcomes.Add(new SyntheticAreaObservationObject(toArea, entry));
             }
         }
 
-        return areaNodes[firstArea.Id];
+        return byGuid[firstArea.Id];
     }
 
     private SyntheticNarrationNode CreateNodeForArea(Area area)

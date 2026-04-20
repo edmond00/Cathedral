@@ -11,8 +11,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class GrabVerb : Verb
 {
-    public override string VerbId      => "grab";
-    public override string DisplayName => "Grab";
+    public override string VerbId         => "grab";
+    public override string DisplayName    => "Grab";
+    public override int    BaseDifficulty => 1;
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {

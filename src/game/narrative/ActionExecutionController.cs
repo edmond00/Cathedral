@@ -188,7 +188,7 @@ public class ActionExecutionController
         var difficultyTree = CriticTrees.BuildDifficultyTree(action.ActionText, criticContext);
         var difficultyResult = await _criticEvaluator.EvaluateTreeAsync(difficultyTree);
 
-        int difficultyLevel = CriticTrees.CalculateFinalDifficulty(action.ActionText, difficultyResult);
+        int difficultyLevel = CriticTrees.CalculateFinalDifficulty(action.Verb, difficultyResult);
         double difficultyScore = CriticTrees.DifficultyLevelToScore(difficultyLevel);
         
         Console.WriteLine($"   Difficulty: {difficultyScore:F3} (level {difficultyLevel}/10)");
@@ -224,8 +224,7 @@ public class ActionExecutionController
         var resolvedThreatContext = threatContext ?? Cathedral.Game.Scene.ThreatContext.None;
         if (resolvedThreatContext.Level == Cathedral.Game.Scene.ThreatLevel.Visual)
         {
-            bool canBeUsedUnderThreat = action.PreselectedOutcome is Cathedral.Game.Scene.VerbOutcome vo2
-                && vo2.VerbView.Verb.CanBeUsedUnderThreat;
+            bool canBeUsedUnderThreat = action.Verb.CanBeUsedUnderThreat;
 
             if (!canBeUsedUnderThreat)
             {

@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using Cathedral.Game.Scene;
+using Cathedral.Game.Scene.Verbs;
 
 namespace Cathedral.Game.Narrative;
 
@@ -234,7 +236,8 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public string ActionModusMentisId { get; set; } = "";           // Which action modusMentis to use for check
     public ModusMentis? ActionModusMentis { get; set; }                   // Resolved modusMentis reference
     public ModusMentis ThinkingModusMentis { get; set; } = null!;         // Which thinking modusMentis generated this
-    public OutcomeBase PreselectedOutcome { get; set; } = null!;  // Success outcome chosen by thinking modusMentis
+    public VerbOutcome PreselectedOutcome { get; set; } = null!;  // Success outcome chosen by thinking modusMentis
+    public Verb Verb => PreselectedOutcome.VerbView.Verb;
     public string Keyword { get; set; } = "";                 // Keyword this action relates to
 
     /// <summary>

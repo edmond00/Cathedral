@@ -12,8 +12,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class MeetStrangerVerb : Verb
 {
-    public override string VerbId      => "meet_stranger";
-    public override string DisplayName => "Meet";
+    public override string VerbId         => "meet_stranger";
+    public override string DisplayName    => "Meet";
+    public override int    BaseDifficulty => 1;
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {

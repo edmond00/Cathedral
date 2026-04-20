@@ -87,7 +87,7 @@ public static class SceneViewAdapter
     /// Injected as the last SubOutcome of every synthetic ObservationObject.
     /// </summary>
     public static VerbOutcome MakeIgnoreSubOutcome(Element target)
-        => new VerbOutcome(new VerbView(IgnoreVerb.Instance, "move on", target), target);
+        => new VerbOutcome(new VerbView(IgnoreVerb.Instance, IgnoreVerb.VerbatimText, target), target);
 }
 
 /// <summary>
@@ -280,10 +280,10 @@ public class SyntheticNpcObservationObject : ObservationObject
 /// </summary>
 public class VerbOutcome : ConcreteOutcome
 {
-    public VerbView VerbView { get; }
-    public Element Target { get; }
+    public VerbView  VerbView { get; }
+    public Element?  Target   { get; }
 
-    public VerbOutcome(VerbView verbView, Element target)
+    public VerbOutcome(VerbView verbView, Element? target)
     {
         VerbView = verbView;
         Target   = target;

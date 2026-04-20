@@ -30,13 +30,5 @@ public class IllegalActionVisualWitnessRule : IActionRule
     }
 
     private static bool IsIllegalAction(ActionRuleContext ctx)
-    {
-        if (ctx.Action.PreselectedOutcome is VerbOutcome vo && !vo.VerbView.Verb.IsLegal)
-            return true;
-
-        if (ctx.PoV?.Where.IsPrivate == true)
-            return true;
-
-        return false;
-    }
+        => !ctx.Action.Verb.IsLegal || ctx.PoV?.Where.IsPrivate == true;
 }

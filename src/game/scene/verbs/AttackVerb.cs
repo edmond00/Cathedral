@@ -10,8 +10,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public class AttackVerb : Verb
 {
-    public override string VerbId      => "attack";
-    public override string DisplayName => "Attack";
+    public override string VerbId         => "attack";
+    public override string DisplayName    => "Attack";
+    public override int    BaseDifficulty => 2;
 
     /// <summary>Attacking a person is never a legal action.</summary>
     public override bool IsLegal => false;
