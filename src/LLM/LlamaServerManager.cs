@@ -28,6 +28,8 @@ public class LlamaServerManager : IDisposable
     {
         { "tiny", "qwen2.5-1.5b-instruct-q5_k_m.gguf" },
         { "medium", "qwen2.5-3b-instruct-q4_k_m.gguf" }
+        // { "medium", "gemma-4-E4B-it-Q4_K_M.gguf" }
+        // { "medium", "gemma-4-E2B-it-Q4_K_M.gguf" }
     };
     
     private string _currentModelAlias = "tiny"; // Default model
