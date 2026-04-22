@@ -1,0 +1,24 @@
+- the run start with only one modus mentis : childhood reminescence
+- the childhood reminescence scene elements have different kind of elements/observation object than the normal scene :
+  - no location, "Reminescence" instead
+  - the Point Of Interest of a "Reminescence" are called "fragment" (vague/fuzzy memory fragment that need recollection), this fragment become observation object in the frontend
+- in childhood reminescence scene : observation/thinking/action does not consumme noetic point
+- during childhood reminescence, only one Verb enable : REMEMBER
+- "REMEMBER" a "fragment" will allow to pass to a new Reminescence, it also grant the run first skills, first items, ... (change depending on which fragment is remembered)
+- Add new "Childhood History" object in the protagonist class to store the info of the protagonist childhood as they will be reused for other features. Each REMEMBER fill a childhood history field so the protagonist childhood history start emplty and is only completed and the end of the reminescence scene 
+- During childhood reminescence, interaction are still based on observation/thinking/action (where action is always REMEMBER)
+- However, during childhood reminescence, special prompts/procedure will be use to communicate with LLM instances, to enforce text describing a character remember fuzzy memories rather than acting in a concrete location.
+  - write the new special LLM prompts to enforce the LLM to write description of the character trying to remember fuzzy and vague memory while keeping the same kind of structure and style that the normal narration prompts
+  - context prompt during childhood reminescence scene :
+    - current situation : sitting exhausted at the foot of a tree, remembering what bring him here
+    - currently filled cihldhood history summary
+  - outcome = describe what you remembered ...
+  - no critic calls, action always possible
+  - REMEMBER can only be done with the "childhood reminescence" modus mentis but thinking/observation can be done with any of the other acquired modus mentis (still being prompted so any modus mendis will produce text of the character remembering fuzzy memories)
+  - REMEMBER action have no difficulty, it automatic success, their difficulty prefix should be the sign '○'
+- other kind of special narrations will be implemented in the futur so refactor the code so it is easy to implement this kind of special narration phase in addition to the normal location exploration and interaction narration
+- draft content of the reminescence and fragment in the MD files of the folder "docs/childhood_reminescence", each MD file describing a specific reminescence. This is only a draft, their text can be rewriten to add flavor, coherence, ...
+- the first reminescence is sound_in_the_dark, each fragment then lead to an other reminescence
+- once a childhood info have been decided by a REMEMBER action, store it in the childhood history object then remind this info all the next LLM prompt. For example, once the childhood location has been decided, remind this location in all the next prompts (=> replace normal context during reminescence special narration)
+- create new items, outcomes of the REMEMBER actions, that will be the first items own by the protagonist when the run start after the remembering phase
+- when cloth type is mentioned, several clothing piece item fitting this clothing type need to be created, not just one clothe item. For example, for "noble clothing", don't just a "noble clothing" item but several items (silk stockings, knee-length coat, ...)
