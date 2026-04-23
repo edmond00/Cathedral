@@ -6,15 +6,17 @@
 
 # FRAGMENTS
 
-## the sound of glass breaking in the night -> rascal
+## a small hairpin -> runaway
 
 ### content
 
-- You remember breaking a window of the dormitoy one night to escape
+- You remember finding a lost small hairpin on the floor one day
+- You remember using this haipin to lockpick the door of the dormitory one night
 
 ### outcomes
 
-- new skill : stealth
+- new item : hairpin
+- new skill : lockpicking
 - next reminiscence : runaway
 
 ## chair, table, paper, inkwell -> study

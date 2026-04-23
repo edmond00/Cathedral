@@ -5,6 +5,7 @@
 - in childhood reminescence scene : observation/thinking/action does not consumme noetic point
 - during childhood reminescence, only one Verb enable : REMEMBER
 - "REMEMBER" a "fragment" will allow to pass to a new Reminescence, it also grant the run first skills, first items, ... (change depending on which fragment is remembered)
+- REMEMBER verbatim need to be written to enforce the goal is to try to remember a vague memory, for example, if the fragment name is "a scary sound", the verbatim can be "try to remember what was this scary sound"
 - Add new "Childhood History" object in the protagonist class to store the info of the protagonist childhood as they will be reused for other features. Each REMEMBER fill a childhood history field so the protagonist childhood history start emplty and is only completed and the end of the reminescence scene 
 - During childhood reminescence, interaction are still based on observation/thinking/action (where action is always REMEMBER)
 - However, during childhood reminescence, special prompts/procedure will be use to communicate with LLM instances, to enforce text describing a character remember fuzzy memories rather than acting in a concrete location.

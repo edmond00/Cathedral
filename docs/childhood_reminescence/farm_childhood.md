@@ -19,7 +19,7 @@
 - new skill : dirty labor
 - next reminiscence : work
 
-## apple pie smelt -> work
+## apple pie smelt -> comfort
 
 ### content
 

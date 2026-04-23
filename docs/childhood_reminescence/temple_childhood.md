@@ -16,7 +16,7 @@
 
 ### outcomes
 
-- new skill : stealth
+- new skill : clairvoyance
 - next reminiscence : comfort
 
 ## candlelight -> study
