@@ -14,7 +14,7 @@
 
 ### outcomes
 
-- new skill : infiltration
+- new skill : stealth
 - next reminiscence : runaway
 
 ## chair, table, paper, inkwell -> study
