@@ -28,5 +28,5 @@
 
 ### outcomes
 
-- new skill :  hard work
+- new skill :  hard labor
 - next reminiscence : work

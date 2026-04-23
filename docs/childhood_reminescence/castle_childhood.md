@@ -19,7 +19,7 @@
 - new skill : idleness,gluttony
 - next reminiscence : comfort
 
-## chair, table, paper, inkwell -> study
+## smelt of old books, voice of an old man -> study
 
 ### content
 

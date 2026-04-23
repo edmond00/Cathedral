@@ -34,7 +34,7 @@ you remember the sobs of an unknown lady on the dock of the port city where you 
 - new items : townsman cloths
 - next reminiscence : port_city_childhood
 
-## a voice
+## a voice -> orphanage
 
 ### content
 
