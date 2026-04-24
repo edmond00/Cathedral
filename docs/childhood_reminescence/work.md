@@ -38,5 +38,5 @@
 ### outcomes
 
 - new item : silver coin
-- new skill : patience
+- new skill : avarice
 - next reminiscence : gold_thirst

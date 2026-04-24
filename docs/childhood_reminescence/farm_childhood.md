@@ -23,10 +23,10 @@
 
 ### content
 
-- you remember the smelt of an applie
-- you remember sleeping in the hay
+- you remember the smelt of an apple pie
+- you remember the taste of sausages and stews you eated
 
 ### outcomes
 
-- new skill : idleness,gluttony
+- new skill : gluttony
 - next reminiscence : comfort

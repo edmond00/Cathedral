@@ -16,7 +16,7 @@
 
 ### outcomes
 
-- new skill : idleness,gluttony
+- new skill : sloth
 - next reminiscence : comfort
 
 ## smelt of old books, voice of an old man -> study
