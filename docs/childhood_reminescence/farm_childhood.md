@@ -24,7 +24,7 @@
 ### content
 
 - you remember the smelt of an apple pie
-- you remember the taste of sausages and stews you eated
+- you remember the taste of sausage, leather canteen with waters and stews you eated
 
 ### outcomes
 

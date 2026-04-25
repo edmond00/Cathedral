@@ -14,6 +14,7 @@
 
 ### outcomes
 
+- new items : backpack with bread, cheese, sausage, leather canteen with water
 - new skill : treasure hunting
 - next reminiscence : travel
 
@@ -26,6 +27,7 @@
 
 ### outcomes
 
+- new items : backpack with bread, cheese, sausage, leather canteen with water
 - new skill : High Society Manners
 - next reminiscence : travel
 
@@ -38,5 +40,6 @@
 
 ### outcomes
 
+- new items : backpack with bread, cheese, sausage, leather canteen with water
 - new skill : enterprise
 - next reminiscence : travel

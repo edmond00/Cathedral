@@ -15,7 +15,8 @@
 
 ### outcomes
 
-- new skill : exploration
+- new items : backpack with bread, cheese, sausage, leather canteen with water
+- new skill : archeology
 - next reminiscence : travel
 
 ## dream of scalled wings
@@ -28,6 +29,7 @@
 
 ### outcomes
 
+- new items : backpack with bread, cheese, sausage, leather canteen with water
 - new skill : clairvoyance
 - next reminiscence : travel
 
@@ -41,5 +43,6 @@
 
 ### outcomes
 
+- new items : backpack with bread, cheese, sausage, leather canteen with water
 - new skill : greed
 - next reminiscence : travel

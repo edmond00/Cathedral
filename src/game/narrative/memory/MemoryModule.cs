@@ -146,6 +146,19 @@ public class MemoryModule
     }
 
     /// <summary>
+    /// Closes gaps left by <see cref="Remove"/> calls by shifting all filled items toward
+    /// slot 0. Must be called before <see cref="Prepend"/> to keep FIFO eviction correct —
+    /// without it a mid-queue removal would cause an older item to survive past a newer one.
+    /// </summary>
+    public void Compact()
+    {
+        var active = Slots.Where(s => !s.IsUnusable && !s.IsBlocked).ToList();
+        var filled = active.Where(s => s.IsFilled).Select(s => s.ModusMentis).ToList();
+        for (int i = 0; i < active.Count; i++)
+            active[i].ModusMentis = i < filled.Count ? filled[i] : null;
+    }
+
+    /// <summary>
     /// FIFO push-front: inserts <paramref name="modusMentis"/> at the first active slot,
     /// shifting existing modiMentis one position toward the last slot.
     /// If all active slots are filled, the last modusMentis is silently dropped.

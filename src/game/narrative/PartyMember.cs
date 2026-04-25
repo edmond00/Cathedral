@@ -300,6 +300,53 @@ public abstract class PartyMember
         }
     }
 
+    /// <summary>
+    /// Game-driven entrypoint for acquiring a new modusMentis at runtime.
+    /// The modusMentis is registered in <see cref="ModiMentis"/> and prepended to working memory
+    /// so it is immediately active. If working memory is full, the oldest modusMentis is evicted,
+    /// removed from <see cref="ModiMentis"/>, and returned so the caller can decide its fate
+    /// (e.g. discard, log, or push to Residual).
+    /// </summary>
+    public ModusMentis? LearnModusMentis(ModusMentis modusMentis)
+    {
+        if (MemoryModules.Count == 0) InitializeMemory();
+        var working = GetMemoryModule(MemoryModuleType.Working)
+            ?? throw new InvalidOperationException("Working memory module is missing.");
+
+        working.Compact();
+        var dropped = working.Prepend(modusMentis);
+
+        if (!ModiMentis.Contains(modusMentis))
+            ModiMentis.Add(modusMentis);
+        if (dropped != null)
+            ModiMentis.Remove(dropped);
+
+        return dropped;
+    }
+
+    /// <summary>
+    /// Moves a modusMentis from working memory into a long-term module (Procedural, Semantic, or Sensory).
+    /// Compacts working memory after removal so the FIFO queue stays dense and eviction order is correct.
+    /// Returns false if the modusMentis is not currently in working memory or the target module rejects it
+    /// (incompatible type or full), in which case the modusMentis is put back at the front of working memory.
+    /// </summary>
+    public bool ConsolidateModusMentis(ModusMentis modusMentis, MemoryModuleType targetType)
+    {
+        var working = GetMemoryModule(MemoryModuleType.Working);
+        if (working == null || !working.Remove(modusMentis)) return false;
+
+        var target = GetMemoryModule(targetType);
+        if (target == null || !target.TryAdd(modusMentis))
+        {
+            working.Compact();
+            working.Prepend(modusMentis);
+            return false;
+        }
+
+        working.Compact();
+        return true;
+    }
+
     /// <summary>Get a memory module by type.</summary>
     public MemoryModule? GetMemoryModule(MemoryModuleType type) =>
         MemoryModules.FirstOrDefault(m => m.Type == type);

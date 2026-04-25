@@ -16,6 +16,7 @@
 
 ### outcomes
 
+- new items : backpack with bread, cheese, sausage, leather canteen with water
 - new skill : scientific research
 - next reminiscence : travel
 
@@ -30,7 +31,8 @@
 
 ### outcomes
 
-- new skill : exploration
+- new items : backpack with bread, cheese, sausage, leather canteen with water
+- new skill : voyage
 - next reminiscence : travel
 
 ## a black book with indecipherable symbols
@@ -43,5 +45,6 @@
 
 ### outcomes
 
+- new items : backpack with bread, cheese, sausage, leather canteen with water
 - new skill : linguistic
 - next reminiscence : travel

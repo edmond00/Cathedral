@@ -1,3 +1,5 @@
+I want to add a new phase to the game, the "childhood reminescence" phase, that will be the phase starting a run just after the protagonist creation. This is this phase that will adding the first modus mentis and item of the protagonist. The phase will have the same base that a normal scene exploration narration phase but with special rules and specific content. Here is a draft on how it should works.
+
 - the run start with only one modus mentis : childhood reminescence
 - the childhood reminescence scene elements have different kind of elements/observation object than the normal scene :
   - no location, "Reminescence" instead
@@ -18,8 +20,13 @@
   - REMEMBER can only be done with the "childhood reminescence" modus mentis but thinking/observation can be done with any of the other acquired modus mentis (still being prompted so any modus mendis will produce text of the character remembering fuzzy memories)
   - REMEMBER action have no difficulty, it automatic success, their difficulty prefix should be the sign '○'
 - other kind of special narrations will be implemented in the futur so refactor the code so it is easy to implement this kind of special narration phase in addition to the normal location exploration and interaction narration
-- draft content of the reminescence and fragment in the MD files of the folder "docs/childhood_reminescence", each MD file describing a specific reminescence. This is only a draft, their text can be rewriten to add flavor, coherence, ...
+- draft content of the reminescence and fragment in the MD files of the folder "docs/childhood_reminescence", each MD file describing a specific reminescence. This is only a draft, their texts can be rewriten to add flavor, coherence, ...
 - the first reminescence is sound_in_the_dark, each fragment then lead to an other reminescence
 - once a childhood info have been decided by a REMEMBER action, store it in the childhood history object then remind this info all the next LLM prompt. For example, once the childhood location has been decided, remind this location in all the next prompts (=> replace normal context during reminescence special narration)
 - create new items, outcomes of the REMEMBER actions, that will be the first items own by the protagonist when the run start after the remembering phase
 - when cloth type is mentioned, several clothing piece item fitting this clothing type need to be created, not just one clothe item. For example, for "noble clothing", don't just a "noble clothing" item but several items (silk stockings, knee-length coat, ...)
+- when placing new item in the inventory, follow the procedure : try to wear the item > try to put the item in any container in the inventory > try to hold the item in left/right hold > if an not be put anywhere, skip this item
+- create new modus mentis, following the same format/style than existing modus mentis
+- the modus mentis should be added wollowing this procedure : try to put new MM in priority into the Procedural/Semantic/Sensory memory module > put in the working memory if empty slot in it > if WM full, put last skill of the WM into the residual memory and the new skill in the working memory > if RM also full, remove last skill of the RM
+- remember that the context is a low fantasy medieval world, even if some modus mentis name are modern word, their persona content should still reflects a low fantasy medieval world persona 
+- remove the existing initialization of the character (items, modus mentis, )
