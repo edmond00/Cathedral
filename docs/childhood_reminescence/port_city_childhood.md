@@ -16,7 +16,7 @@
 
 ### outcomes
 
-- new skill : foul play
+- new skill : streetwise
 - next reminiscence : rascal
 
 ## the sound of waves and smelt of sweat -> work
