@@ -10,6 +10,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("Options:");
     Console.WriteLine("  (no args)                          Launch the narrative exploration game");
     Console.WriteLine("  --fight                            Run the fight loop (turn-based combat test)");
+    Console.WriteLine("  --music                            Run the procedural ambient music PoC");
     Console.WriteLine("  --fight-area [options]             Run the fight area generator test");
     Console.WriteLine("    --mode <random|...>              Fight area generation mode (default: random)");
     Console.WriteLine("  --draw <folder>                    Display previously saved layered ASCII art");
@@ -31,6 +32,13 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
 if (args.Length >= 1 && args[0] == "--fight")
 {
     Cathedral.Fight.FightModeLauncher.Launch();
+    return;
+}
+
+// Check for procedural music PoC mode
+if (args.Length >= 1 && args[0] == "--music")
+{
+    Cathedral.Audio.MusicModeLauncher.Launch(args);
     return;
 }
 
