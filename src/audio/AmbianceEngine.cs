@@ -1,3 +1,4 @@
+using System.Threading;
 using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Multimedia;
@@ -40,7 +41,14 @@ public sealed class AmbianceEngine : IDisposable
 
     // Last scale index played by Melody: lets Texture hover near the melody register.
     private volatile int _melodyLastScaleIdx = -1;
+    // Timestamp (TickCount64 ms) when the Melody phrase last finished playing.
+    // Counter reads this to decide whether to wait and "respond" rather than overlap.
+    // Access via Interlocked (volatile long is not allowed in C#).
+    private long _melodyPhraseEndMs = 0;
 
+    // How many drone note cycles to hold the current scale before considering a change.
+    // Reset each time a new scale is chosen. Prevents jarring random modulations.
+    private int _droneScaleHoldCycles  = 0; // counts down
     // Dynamics swell: slow sine wave over 60 s, range 0.70 E.00
     private volatile float _dynamicsLevel = 1.0f;
 
@@ -212,6 +220,8 @@ public sealed class AmbianceEngine : IDisposable
                         lock (_moodLock) _sharedScale = newScale;
                         currentScale = newScale;
                         needNewScale = false;
+                        // Hold this scale for 6-14 drone cycles before considering a new one
+                        _droneScaleHoldCycles = rng.Next(6, 15);
                     }
                 }
                 else
@@ -245,6 +255,19 @@ public sealed class AmbianceEngine : IDisposable
 
                     // Snap to next beat boundary so all phrases start on the global grid
                     await AlignToNextBeatAsync(bpm, ct);
+
+                    // Counter call-and-response: ~55% chance to wait for the Melody phrase
+                    // to land before playing, creating alternating phrase dialogue.
+                    if (role == TrackRole.Counter)
+                    {
+                        long msSinceMelodyEnd = Environment.TickCount64 - Interlocked.Read(ref _melodyPhraseEndMs);
+                        double beatMs2 = 60_000.0 / bpm;
+                        if (msSinceMelodyEnd < (long)(beatMs2 * 3) && rng.NextDouble() < 0.55)
+                        {
+                            long waitMs = (long)(beatMs2 * 3) - msSinceMelodyEnd + (long)(rng.NextDouble() * beatMs2 * 0.5);
+                            if (waitMs > 0) await Task.Delay((int)waitMs, ct);
+                        }
+                    }
 
                     var phrase = role == TrackRole.Melody
                         ? ProceduralMidiComposer.GenerateMelodyPhrase(currentScale, scaleIdx, minIdx, maxIdx, mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour)
@@ -280,15 +303,17 @@ public sealed class AmbianceEngine : IDisposable
                         scaleIdx = noteEvent.ScaleIdx;
                     }
 
-                    // After Melody phrase, store contour for motif replay and broadcast direction
+                    // After Melody phrase, store contour for motif replay, broadcast direction,
+                    // and record end-time for Counter call-and-response timing.
                     if (role == TrackRole.Melody && phrase.Length >= 2)
                     {
-                        _melodyDirection = Math.Sign(phrase[^1].MidiNote - phrase[0].MidiNote);
+                        _melodyDirection    = Math.Sign(phrase[^1].MidiNote - phrase[0].MidiNote);
                         var contour = new int[phrase.Length - 1];
                         for (int ci = 0; ci < contour.Length; ci++)
                             contour[ci] = phrase[ci + 1].ScaleIdx - phrase[ci].ScaleIdx;
-                        _melodyContour = contour;
+                        _melodyContour      = contour;
                         _melodyLastScaleIdx = phrase[^1].ScaleIdx;
+                        _melodyPhraseEndMs  = Environment.TickCount64;
                     }
 
                     // Phrase-level rest between phrases.
@@ -309,6 +334,7 @@ public sealed class AmbianceEngine : IDisposable
                         if (ct.IsCancellationRequested || trackIndex >= _activeTrackCount) break;
                         float trackVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
                         int rawVel = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                        rawVel = Math.Clamp((int)(rawVel * noteEvent.VelocityMult), 0, 127);
                         int vel = Math.Clamp((int)(rawVel * _dynamicsLevel * trackVol), 0, 115);
                         if (vel > 0)
                         {
@@ -358,8 +384,10 @@ public sealed class AmbianceEngine : IDisposable
                     if (restDuration > 0)
                         await Task.Delay(restDuration, ct);
 
-                    // Drone changes scale infrequently  Ekeep it stable as a pedal point
-                    if (rng.NextDouble() < 0.12)
+                    // Scale stability: count down the hold timer; only then consider a change
+                    if (_droneScaleHoldCycles > 0)
+                        _droneScaleHoldCycles--;
+                    else if (rng.NextDouble() < 0.35) // higher rate now — but only fires after hold expires
                         needNewScale = true;
                 }
             }

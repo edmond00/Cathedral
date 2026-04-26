@@ -138,11 +138,15 @@ public static class ProceduralMidiComposer
         }
         else if (cPick < descentW + ascendingW)
         {
-            // Ascending: start near bottom, climb with peak near end
+            // Ascending: start near bottom, climb — cadence stays high (dominant or peak)
+            // so the phrase doesn't crash back down after building tension.
             arcStart   = minIdx + rng.Next(0, rangeSize / 4 + 1);
             peakIdx    = Math.Clamp(arcStart + rng.Next(4, 7), minIdx, maxIdx);
-            cadenceIdx = PickCadenceNote(minIdx, maxIdx, rng);
-            peakPos    = phraseLen - 1;
+            // 60% land on the peak itself, 40% on dominant — both sound like arriving high
+            cadenceIdx = rng.NextDouble() < 0.60
+                ? peakIdx
+                : Math.Clamp(minIdx + 4, minIdx, maxIdx);  // dominant (~5th)
+            peakPos    = phraseLen - 2; // leave room for cadence note after the peak
         }
         else
         {
@@ -154,6 +158,14 @@ public static class ProceduralMidiComposer
             peakPos    = 1 + rng.Next(0, Math.Max(1, phraseLen / 2));
         }
 
+        // Smooth phrase start: clamp arcStart within ~1/4 range of where the voice
+        // left off (startIdx), so consecutive phrases connect rather than teleport.
+        int maxStartJump = Math.Max(2, rangeSize / 4);
+        arcStart = Math.Clamp(arcStart, startIdx - maxStartJump, startIdx + maxStartJump);
+        arcStart = Math.Clamp(arcStart, minIdx, maxIdx);
+        // Ensure peakIdx is still reachable from the adjusted start
+        peakIdx  = Math.Clamp(peakIdx, minIdx, maxIdx);
+
         var noteIndices = new int[phraseLen];
         int cur = arcStart;
         for (int i = 0; i < phraseLen; i++)
@@ -162,7 +174,11 @@ public static class ProceduralMidiComposer
             int dir = Math.Sign(target - cur);
             if (dir != 0)
             {
+                // Clamp step to distance remaining so we never overshoot the target.
+                // Overshooting causes oscillation that sounds shaky near peaks and cadences.
+                int dist = Math.Abs(target - cur);
                 int step = rng.NextDouble() < 0.82 ? 1 : 2;
+                step = Math.Min(step, dist);
                 cur = Math.Clamp(cur + dir * step, minIdx, maxIdx);
             }
             else if (i < phraseLen - 1 && rng.NextDouble() < 0.35)
@@ -185,8 +201,12 @@ public static class ProceduralMidiComposer
                 replayCur = Math.Clamp(replayCur + motifContour[i], minIdx, maxIdx);
                 noteIndices[i + 1] = replayCur;
             }
-            for (int i = replayLen + 1; i < phraseLen; i++)
-                noteIndices[i] = noteIndices[i - 1];
+            // Tail: stepwise neighbor walk instead of flat repetition
+            for (int i = replayLen + 1; i < phraseLen - 1; i++)
+            {
+                int prev = noteIndices[i - 1];
+                noteIndices[i] = Math.Clamp(prev + (rng.NextDouble() < 0.5 ? 1 : -1), minIdx, maxIdx);
+            }
             noteIndices[phraseLen - 1] = cadenceIdx; // always land on cadence
         }
 
@@ -214,6 +234,15 @@ public static class ProceduralMidiComposer
                 VelocityMult = envelope[i],
             };
         }
+        // Fermata on the cadence note (~25% chance): extends it 40–100% longer.
+        // At high sadness the chance rises to ~45%. Creates a sense of phrase arrival.
+        float fermataChance = 0.25f + sadness * 0.20f;
+        if (events.Length > 0 && rng.NextDouble() < fermataChance)
+        {
+            ref var last = ref events[events.Length - 1];
+            last.DurationMs = (int)(last.DurationMs * (1.4 + rng.NextDouble() * 0.6));
+        }
+
         // High fear: chromatic "wrong notes" — inject ±1 semitone dissonance
         if (fear > 0.65f)
         {
