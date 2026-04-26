@@ -202,53 +202,41 @@ public class LlamaServerManager : IDisposable
             Directory.CreateDirectory(_sessionLogDir);
             Console.WriteLine($"LLM logs will be saved to: {_sessionLogDir}");
             
-            // Set the current model alias - auto-select largest if null
+            // Set the current model alias - auto-select largest AVAILABLE ALIASED model if null
             if (modelAlias == null)
             {
-                var largestModel = FindLargestGgufModel();
-                if (largestModel != null)
+                var largestAliasedModel = FindLargestAliasedModel();
+                if (largestAliasedModel != null)
                 {
-                    // Check if this model is in our aliases
-                    var matchingAlias = _modelAliases.FirstOrDefault(kvp => kvp.Value == largestModel).Key;
-                    if (matchingAlias != null)
+                    _currentModelAlias = largestAliasedModel;
+                    // Get file size for display
+                    try
                     {
-                        _currentModelAlias = matchingAlias;
-                        // Get file size for display
-                        try
+                        var projectRoot = AppDomain.CurrentDomain.BaseDirectory;
+                        while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "models")))
                         {
-                            var projectRoot = AppDomain.CurrentDomain.BaseDirectory;
-                            while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "models")))
-                            {
-                                projectRoot = Directory.GetParent(projectRoot)?.FullName;
-                            }
-                            if (projectRoot != null)
-                            {
-                                var fileInfo = new FileInfo(Path.Combine(projectRoot, "models", largestModel));
-                                Console.WriteLine($"Auto-selected largest model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]}) - {fileInfo.Length / (1024.0 * 1024.0):F1} MB");
-                            }
-                            else
-                            {
-                                Console.WriteLine($"Auto-selected largest model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
-                            }
+                            projectRoot = Directory.GetParent(projectRoot)?.FullName;
                         }
-                        catch
+                        if (projectRoot != null)
+                        {
+                            var fileInfo = new FileInfo(Path.Combine(projectRoot, "models", _modelAliases[_currentModelAlias]));
+                            Console.WriteLine($"Auto-selected largest aliased model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]}) - {fileInfo.Length / (1024.0 * 1024.0):F1} MB");
+                        }
+                        else
                         {
                             Console.WriteLine($"Auto-selected largest model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
                         }
                     }
-                    else
+                    catch
                     {
-                        // Model not in aliases - this shouldn't happen with the current logic,
-                        // but handle it gracefully by falling back to tiny
-                        _currentModelAlias = "tiny";
-                        Console.WriteLine($"Auto-selected model not in aliases, using default: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
+                        Console.WriteLine($"Auto-selected largest model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
                     }
                 }
                 else
                 {
-                    // Fallback to tiny if no models found
+                    // Fallback to tiny if no aliased models were found
                     _currentModelAlias = "tiny";
-                    Console.WriteLine($"No models found for auto-selection, using default: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
+                    Console.WriteLine($"No aliased models found for auto-selection, using default: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
                 }
             }
             else
@@ -1221,10 +1209,10 @@ public class LlamaServerManager : IDisposable
     // Private helper methods
     
     /// <summary>
-    /// Finds the largest GGUF model file in the models directory
+    /// Finds the largest available model among configured aliases in the models directory
     /// </summary>
-    /// <returns>The filename of the largest GGUF model, or null if none found</returns>
-    private string? FindLargestGgufModel()
+    /// <returns>The alias of the largest available aliased model, or null if none found</returns>
+    private string? FindLargestAliasedModel()
     {
         try
         {
@@ -1243,24 +1231,35 @@ public class LlamaServerManager : IDisposable
             }
             
             var modelsDir = Path.Combine(projectRoot, "models");
-            var ggufFiles = Directory.GetFiles(modelsDir, "*.gguf", SearchOption.TopDirectoryOnly);
-            
-            if (ggufFiles.Length == 0)
+            var aliasedFiles = _modelAliases
+                .Select(kvp => new
+                {
+                    Alias = kvp.Key,
+                    FilePath = Path.Combine(modelsDir, kvp.Value)
+                })
+                .Where(x => File.Exists(x.FilePath))
+                .Select(x => new
+                {
+                    x.Alias,
+                    FileInfo = new FileInfo(x.FilePath)
+                })
+                .ToList();
+
+            if (aliasedFiles.Count == 0)
             {
                 return null;
             }
-            
-            // Find the largest file by size
-            var largestFile = ggufFiles
-                .Select(f => new FileInfo(f))
-                .OrderByDescending(fi => fi.Length)
+
+            // Find the largest available aliased file by size
+            var largestAliased = aliasedFiles
+                .OrderByDescending(x => x.FileInfo.Length)
                 .First();
-            
-            return largestFile.Name;
+
+            return largestAliased.Alias;
         }
         catch (Exception ex)
         {
-            LogWarning($"Error finding largest GGUF model: {ex.Message}");
+            LogWarning($"Error finding largest aliased model: {ex.Message}");
             return null;
         }
     }
