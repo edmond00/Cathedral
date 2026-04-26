@@ -56,6 +56,14 @@ public enum GameMode
     DialogueDemo,
 
     /// <summary>
+    /// Played once per run, immediately after <see cref="ProtagonistCreation"/>:
+    /// the protagonist sits exhausted at the foot of a tree and recovers their childhood
+    /// in a chain of reminescences. Each REMEMBER fragments grants the run's first skills
+    /// and items; when the chain ends the run drops into <see cref="WorldView"/>.
+    /// </summary>
+    ChildhoodReminescence,
+
+    /// <summary>
     /// Protagonist is engaged in turn-based combat within the narrative.
     /// Fight system runs on the main terminal; narrative resumes when fight ends.
     /// </summary>

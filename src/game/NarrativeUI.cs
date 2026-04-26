@@ -4,6 +4,7 @@ using System.Linq;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game;
 
@@ -526,10 +527,15 @@ public class NarrativeUI : TerminalPanelUI
         
         if (lineIndex == 0)
         {
-            // First line: render difficulty glyph prefix + modusMentis bracket
-            char diffChar = action.DifficultyLevel > 0
+            // First line: render difficulty glyph prefix + modusMentis bracket.
+            // Verbs may override the glyph — REMEMBER, for example, always renders '○'
+            // because it has no normal difficulty.
+            char? verbOverride = action.PreselectedOutcome is VerbOutcome vo
+                ? vo.VerbView.Verb.DifficultyGlyphOverride
+                : null;
+            char diffChar = verbOverride ?? (action.DifficultyLevel > 0
                 ? Config.Symbols.DifficultyGlyphs[Math.Clamp(action.DifficultyLevel, 1, 10) - 1]
-                : '>';
+                : '>');
             string diffPrefix = $"{diffChar} ";
 
             // Build modusMentis bracket with level indicators

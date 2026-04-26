@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Reminescence;
+using Cathedral.Game.Scene.Reminescence;
 using Cathedral.Game.Scene.Verbs;
 
 namespace Cathedral.Game.Scene;
@@ -16,12 +18,14 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
     private readonly Cathedral.Game.Scene.Scene _scene;
     private readonly int _locationId;
     private readonly Dictionary<string, NarrationNode> _areaNodes = new();
+    private readonly Protagonist? _protagonist;
 
-    public SceneSyntheticGraphFactory(Cathedral.Game.Scene.Scene scene, int locationId)
+    public SceneSyntheticGraphFactory(Cathedral.Game.Scene.Scene scene, int locationId, Protagonist? protagonist = null)
         : base(sessionPath: null)
     {
         _scene      = scene;
         _locationId = locationId;
+        _protagonist = protagonist;
     }
 
     protected override IReadOnlyDictionary<string, NarrationNode> CollectAllNodes(NarrationNode entry)
@@ -61,11 +65,28 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
 
     private SyntheticNarrationNode CreateNodeForArea(Area area)
     {
-        var node = new SyntheticNarrationNode(
-            area.DisplayName.ToLowerInvariant().Replace(' ', '_'),
-            area.ContextDescription,
-            area.TransitionDescription,
-            area);
+        SyntheticNarrationNode node;
+        if (_scene.Phase == NarrationPhase.ChildhoodReminescence
+            && _protagonist != null
+            && _scene.CurrentReminescenceId != null
+            && ReminescenceRegistry.Get(_scene.CurrentReminescenceId) is { } data)
+        {
+            node = new ReminescenceNarrationNode(
+                area.DisplayName.ToLowerInvariant().Replace(' ', '_'),
+                area.ContextDescription,
+                area.TransitionDescription,
+                area,
+                _protagonist,
+                data);
+        }
+        else
+        {
+            node = new SyntheticNarrationNode(
+                area.DisplayName.ToLowerInvariant().Replace(' ', '_'),
+                area.ContextDescription,
+                area.TransitionDescription,
+                area);
+        }
 
         var pov = new PoV(area, TimePeriod.Morning);
 

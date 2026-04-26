@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using Cathedral.Game.Narrative.Nodes.Debug;
-// using Cathedral.Game.Narrative.Nodes.Debug;
 
 namespace Cathedral.Game.Narrative;
 
@@ -23,46 +21,21 @@ public class Protagonist : PartyMember
     /// <summary>Current location on the world sphere (used as RNG seed).</summary>
     public int CurrentLocationId { get; set; }
 
+    /// <summary>
+    /// The protagonist's childhood biography, populated during the childhood reminescence
+    /// phase as fragments are remembered. Empty at run start.
+    /// </summary>
+    public ChildhoodHistory ChildhoodHistory { get; } = new();
+
     // ── PartyMember abstract ─────────────────────────────────────
     public override string DisplayName => "Protagonist";
 
     // ── Constructor ──────────────────────────────────────────────
     public Protagonist() : base(SpeciesRegistry.Human)
     {
-        InitializeTestEquipment(); // TEMP TEST ITEMS — remove when real acquiring works
+        // No test equipment, no starter modus mentis: the protagonist starts the run with
+        // only the ChildhoodReminescence MM (granted explicitly when entering the reminescence
+        // phase) and an empty inventory. Items and skills are acquired via REMEMBER actions.
     }
 
-    // ── Test equipment (temporary) ───────────────────────────────
-
-    /// <summary>
-    /// Pre-equips a selection of debug items so the Inventory tab has visible content
-    /// from the first launch. Remove this method and its call when real item acquisition
-    /// is exercised through gameplay.
-    /// </summary>
-    private void InitializeTestEquipment()
-    {
-        // --- Build a flask and fill it with spring water ---
-        var flask = new DebugInventoryNode.GlassFlask();
-        flask.TryAdd(new DebugInventoryNode.SpringWater());
-
-        // --- Build a pouch with red wine bottle inside, then put pouch in the backpack ---
-        var pouch = new DebugInventoryNode.LeatherPouch();
-        var wineBottle = new DebugInventoryNode.GlassFlask();
-        wineBottle.TryAdd(new DebugInventoryNode.RedWine());
-        pouch.TryAdd(wineBottle);
-
-        var backpack = new DebugInventoryNode.TestBackpack();
-        backpack.TryAdd(pouch);
-
-        // --- Equip items directly at their preferred anchors ---
-        Equip(EquipmentAnchor.Headgear,  new DebugInventoryNode.LeatherCap());
-        Equip(EquipmentAnchor.Outerwear, new DebugInventoryNode.WoolenCloak());
-        Equip(EquipmentAnchor.Bodywear,  new DebugInventoryNode.LinenShirt());
-        // Footwear holds both socks (Small=3) and boots (Small=3) → uses full 6-slot capacity
-        Equip(EquipmentAnchor.Footwear,  new DebugInventoryNode.WoolSocks());
-        Equip(EquipmentAnchor.Footwear,  new DebugInventoryNode.LeatherBoots());
-        Equip(EquipmentAnchor.RightHold, new DebugInventoryNode.IronDagger());
-        Equip(EquipmentAnchor.LeftHold,  flask);
-        Equip(EquipmentAnchor.BeltGear,  backpack);
-    }
 }

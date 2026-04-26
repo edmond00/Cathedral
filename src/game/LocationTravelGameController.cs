@@ -265,13 +265,35 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
             
+            // Check if reminescence phase is complete — drop straight into WorldView.
+            if (_currentMode == GameMode.ChildhoodReminescence
+                && _narrativeController.ReminescencePhaseFinished)
+            {
+                Console.WriteLine("LocationTravelGameController: ChildhoodReminescence finished, entering WorldView");
+                _isInNarrativeMode = false;
+                _narrativeController = null;
+                SetMode(GameMode.WorldView);
+                return;
+            }
+
             // Check if player requested exit (clicked Continue button)
             if (_narrativeController.HasRequestedExit())
             {
                 Console.WriteLine("LocationTravelGameController: Phase 6 exit requested");
-                ExitNarrativeMode();
+                if (_currentMode == GameMode.ChildhoodReminescence)
+                {
+                    // RequestedExit was set by the final REMEMBER's <END> — already handled
+                    // above by ReminescencePhaseFinished, but be defensive.
+                    _isInNarrativeMode = false;
+                    _narrativeController = null;
+                    SetMode(GameMode.WorldView);
+                }
+                else
+                {
+                    ExitNarrativeMode();
+                }
             }
-            
+
             return;
         }
         
@@ -640,8 +662,12 @@ public class LocationTravelGameController : IDisposable
             case GameMode.Dialogue:
                 OnEnterDialogue();
                 break;
+
+            case GameMode.ChildhoodReminescence:
+                OnEnterChildhoodReminescence();
+                break;
         }
-        
+
         ModeChanged?.Invoke(oldMode, newMode);
     }
 
@@ -927,15 +953,33 @@ public class LocationTravelGameController : IDisposable
             _protagonistCreationRenderer = new ProtagonistCreationRenderer(_core.Terminal, protagonist, _bodyArtData);
             _protagonistCreationRenderer.OnContinue = () =>
             {
-                Console.WriteLine("LocationTravelGameController: Protagonist creation complete, entering WorldView");
+                Console.WriteLine("LocationTravelGameController: Protagonist creation complete, entering ChildhoodReminescence");
                 // Re-initialize memory with the organ scores the player set during creation.
                 // ResetGameState called InitializeMemory earlier with initial random scores;
                 // now we rebuild modules to reflect the final configured values.
                 protagonist.InitializeMemory();
                 protagonist.ReinitializeHumorQueues();
-                protagonist.AssignModiMentisToMemoryRandom();
+
+                // Grant the only modus mentis the protagonist starts with.
+                var rmm = ModusMentisRegistry.Instance.GetModusMentis("childhood_reminescence");
+                if (rmm == null)
+                    throw new InvalidOperationException("LocationTravelGameController: childhood_reminescence MM is not registered.");
+
+                if (protagonist.LearnedModiMentis.Count > 0)
+                    throw new InvalidOperationException("LocationTravelGameController: Protagonist must have no MM before childhood reminescence starts.");
+
+                var instance = (ModusMentis)Activator.CreateInstance(rmm.GetType())!;
+                instance.Level = 1;
+                protagonist.AcquireModusMentis(instance);
+
+                if (protagonist.LearnedModiMentis.Count == 0
+                    || protagonist.LearnedModiMentis[0].ModusMentisId != "childhood_reminescence")
+                {
+                    throw new InvalidOperationException(
+                        "LocationTravelGameController: The first MM before childhood reminescence must be ChildhoodReminescenceModusMentis.");
+                }
                 _protagonistCreationRenderer = null;
-                SetMode(GameMode.WorldView);
+                SetMode(GameMode.ChildhoodReminescence);
             };
             
             // Render the creation screen
@@ -1153,6 +1197,88 @@ public class LocationTravelGameController : IDisposable
     }
     
     /// <summary>
+    /// Builds and runs the childhood reminescence narrative session immediately after
+    /// protagonist creation. Reuses the same NarrativeController pipeline as exploration but
+    /// with a Reminescence-phase scene.
+    /// </summary>
+    private void OnEnterChildhoodReminescence()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered ChildhoodReminescence mode");
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+        if (_core.Terminal != null) _core.Terminal.Visible = true;
+
+        if (_core.Terminal == null || _core.PopupTerminal == null
+            || _llmActionExecutor == null || _modusMentisSlotManager == null
+            || _thinkingExecutor == null || _criticEvaluator == null
+            || _protagonist == null)
+        {
+            Console.Error.WriteLine("ChildhoodReminescence: missing dependencies — falling back to WorldView");
+            SetMode(GameMode.WorldView);
+            return;
+        }
+
+        var inputHandler = GetTerminalInputHandler();
+        if (inputHandler == null)
+        {
+            Console.Error.WriteLine("ChildhoodReminescence: no terminal input handler — falling back to WorldView");
+            SetMode(GameMode.WorldView);
+            return;
+        }
+
+        try
+        {
+            var entry = Cathedral.Game.Narrative.Reminescence.ReminescenceRegistry.GetEntry();
+            var sceneFactory = new Cathedral.Game.Scene.Reminescence.ReminescenceSceneFactory(entry);
+            var scene = sceneFactory.Build(0);
+
+            var worldContext = new Cathedral.Game.Narrative.PlainBiomeContext();
+            var outcomeApplicator = new OutcomeApplicator();
+            var outcomeNarrator = new OutcomeNarrator(
+                _llmActionExecutor.GetLlamaServerManager(),
+                _modusMentisSlotManager);
+            var actionExecutor = new ActionExecutionController(
+                outcomeNarrator,
+                outcomeApplicator,
+                _protagonist,
+                _criticEvaluator,
+                worldContext,
+                locationId: 0);
+
+            _narrativeController = new NarrativeController(
+                _core.Terminal,
+                _core.PopupTerminal,
+                _core,
+                _llmActionExecutor.GetLlamaServerManager(),
+                _modusMentisSlotManager,
+                inputHandler,
+                _thinkingExecutor,
+                actionExecutor,
+                scene,
+                locationId: 0,
+                worldContext,
+                _keywordFallbackService,
+                _protagonist);
+
+            _isInNarrativeMode = true;
+            _interface.SetWorldInteractionsEnabled(false);
+            _core.SetWorldInteractionsEnabled(false);
+            _narrativeController.StartObservationPhase();
+
+            Console.WriteLine("LocationTravelGameController: Childhood reminescence started");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ChildhoodReminescence: failed to start — {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            _isInNarrativeMode = false;
+            _narrativeController = null;
+            SetMode(GameMode.WorldView);
+        }
+    }
+
+    /// <summary>
     /// Starts Phase 6 Chain-of-Thought narrative interaction.
     /// </summary>
     private void StartNarrativeInteraction(int vertexIndex)
@@ -1193,20 +1319,12 @@ public class LocationTravelGameController : IDisposable
                 _modusMentisSlotManager
             );
             
-            // Use the protagonist from game state (created in ResetGameState, possibly configured in ProtagonistCreation)
+            // Use the protagonist from game state (created in ResetGameState, configured in
+            // ProtagonistCreation, then enriched during the childhood reminescence phase).
             if (_protagonist == null)
             {
                 _protagonist = new Protagonist();
-                _protagonist.InitializeModiMentis(ModusMentisRegistry.Instance, modusMentisCount: 50);
                 _protagonist.InitializeMemory();
-                _protagonist.AssignModiMentisToMemoryRandom();
-                _protagonist.CompanionParty.AddRange(
-                    Companion.GenerateRandom(ModusMentisRegistry.Instance, count: 3));
-                var wolf = new Companion("Greywind", "A grey wolf with amber eyes.", SpeciesRegistry.Wolf);
-                wolf.InitializeModiMentis(ModusMentisRegistry.Instance, modusMentisCount: 20);
-                wolf.InitializeMemory();
-                wolf.AssignModiMentisToMemoryRandom();
-                _protagonist.CompanionParty.Add(wolf);
             }
             var protagonist = _protagonist;
             
@@ -1271,7 +1389,8 @@ public class LocationTravelGameController : IDisposable
                     scene,
                     vertexIndex,
                     worldContext,
-                    _keywordFallbackService
+                    _keywordFallbackService,
+                    _protagonist
                 );
             }
             else
@@ -1289,7 +1408,8 @@ public class LocationTravelGameController : IDisposable
                     graphFactory,
                     vertexIndex,               // Use vertex index as location ID seed
                     worldContext,              // Typed world context for flavor and display
-                    _keywordFallbackService    // LLM-based fallback keyword selection
+                    _keywordFallbackService,   // LLM-based fallback keyword selection
+                    _protagonist               // run-owned protagonist
                 );
             }
             
@@ -1326,35 +1446,29 @@ public class LocationTravelGameController : IDisposable
     public void ResetGameState()
     {
         Console.WriteLine("LocationTravelGameController: Resetting game state");
-        
+
         // Exit narrative mode if active
         if (_isInNarrativeMode)
         {
             ExitNarrativeMode();
         }
-        
+
         // Clear location state
         _currentLocationState = null;
         _currentLocationVertex = -1;
         _destinationVertex = -1;
         _locationStates.Clear();
-        
+
         // Reset protagonist to a new random starting position
         _interface.ResetProtagonistPosition();
-        
-        // Create a fresh protagonist for the new game
+
+        // Create a fresh protagonist for the new game.
+        // No starter modus mentis, no starter items, no companions: the run starts in the
+        // childhood reminescence phase, and the player acquires their first MM and items
+        // via REMEMBER.
         _protagonist = new Protagonist();
-        _protagonist.InitializeModiMentis(ModusMentisRegistry.Instance, modusMentisCount: 50);
         _protagonist.InitializeMemory();
-        _protagonist.AssignModiMentisToMemoryRandom();
-        _protagonist.CompanionParty.AddRange(
-            Companion.GenerateRandom(ModusMentisRegistry.Instance, count: 3));
-        var wolf = new Companion("Greywind", "A grey wolf with amber eyes.", SpeciesRegistry.Wolf);
-        wolf.InitializeModiMentis(ModusMentisRegistry.Instance, modusMentisCount: 20);
-        wolf.InitializeMemory();
-        wolf.AssignModiMentisToMemoryRandom();
-        _protagonist.CompanionParty.Add(wolf);
-        
+
         _hasGameStarted = true;
         Console.WriteLine("LocationTravelGameController: Game state reset complete");
     }

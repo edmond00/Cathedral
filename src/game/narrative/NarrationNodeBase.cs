@@ -77,8 +77,10 @@ public abstract class NarrationNode : ConcreteOutcome, IObservation
 
     /// <summary>
     /// Builds the two-line location context used at the start of every first LLM call.
+    /// Override in special-phase nodes (e.g. childhood reminescence) to substitute a
+    /// non-location prompt frame.
     /// </summary>
-    public string BuildLocationContext(WorldContext worldContext, int locationId)
+    public virtual string BuildLocationContext(WorldContext worldContext, int locationId)
         => $"You are in a {worldContext.GenerateContextDescription(locationId)}. You are currently {GenerateEnrichedContextDescription(locationId)}.";
 
     public override string ToNaturalLanguageString() => TransitionDescription;

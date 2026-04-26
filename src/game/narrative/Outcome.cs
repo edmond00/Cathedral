@@ -39,3 +39,23 @@ public abstract class OutcomeBase
 public abstract class ConcreteOutcome : OutcomeBase
 {
 }
+
+/// <summary>
+/// Lightweight inline outcome whose display name and natural-language string are given at
+/// construction time. Used by the childhood reminescence path so that the concrete memory text
+/// is visible to the outcome narrator's LLM prompt without needing a full registered type.
+/// </summary>
+public sealed class InlineOutcome : ConcreteOutcome
+{
+    private readonly string _displayName;
+    private readonly string _naturalLanguage;
+
+    public InlineOutcome(string displayName, string naturalLanguage)
+    {
+        _displayName    = displayName;
+        _naturalLanguage = naturalLanguage;
+    }
+
+    public override string DisplayName           => _displayName;
+    public override string ToNaturalLanguageString() => _naturalLanguage;
+}

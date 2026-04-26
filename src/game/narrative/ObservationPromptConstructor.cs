@@ -6,15 +6,44 @@ namespace Cathedral.Game.Narrative;
 /// Constructs prompts for observation modiMentis to generate environment perceptions.
 /// Builds the user message that gets sent to the LLM with the cached persona prompt.
 /// Keywords are extracted dynamically from generated text — no keyword hints in prompts.
+///
+/// Subclass and override <see cref="AttentionDrawnTo"/>, <see cref="TransitionTo"/>, and
+/// <see cref="NowFocusingOn"/> to swap the three bridging phrases for special narration
+/// phases (e.g. childhood reminescence).
 /// </summary>
 public class ObservationPromptConstructor
 {
+    // ── Overridable bridging phrases ──────────────────────────────────────────
+
+    /// <summary>
+    /// Opening phrase for the first-sentence prompt when the observation focuses on a specific
+    /// outcome. Example (exploration): "Your attention is drawn to a gnarled apple tree."
+    /// </summary>
+    protected virtual string AttentionDrawnTo(string outcomeLabel)
+        => $"Your attention is drawn to {WithArticle(outcomeLabel)}.";
+
+    /// <summary>
+    /// Opening phrase for the transition sentence that shifts attention from one outcome to
+    /// the next. Example (exploration): "You were observing X but now you notice Y."
+    /// </summary>
+    protected virtual string TransitionTo(string previousLabel, string outcomeLabel)
+        => $"You were observing {WithArticle(previousLabel)} but now you notice {WithArticle(outcomeLabel)}.";
+
+    /// <summary>
+    /// Opening phrase for the continuation sentence already focused on a specific outcome.
+    /// Example (exploration): "You are now looking at a gnarled apple tree."
+    /// </summary>
+    protected virtual string NowFocusingOn(string outcomeLabel)
+        => $"You are now looking at {WithArticle(outcomeLabel)}.";
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
     private static string WithArticle(string s)
     {
         if (s.Length == 0) return s;
         var lower = s.ToLowerInvariant();
         if (lower.StartsWith("a ") || lower.StartsWith("an ") || lower.StartsWith("the "))
-            return lower; // already has article — just lowercase for mid-sentence use
+            return lower;
         return "aeiouAEIOU".Contains(lower[0]) ? $"an {lower}" : $"a {lower}";
     }
 
@@ -45,7 +74,7 @@ public class ObservationPromptConstructor
         return $@"You are a {personaTone}.
 {WorldContext.EpochContext}
 {locationContext}
-Your attention is drawn to {WithArticle(GetOutcomeLabel(outcome))}.
+{AttentionDrawnTo(GetOutcomeLabel(outcome))}
 {reminderClause}{questionText}
 {Config.Narrative.AnswerInstructionFor(personaReminder2)}";
     }
@@ -72,7 +101,7 @@ Your attention is drawn to {WithArticle(GetOutcomeLabel(outcome))}.
     public string BuildTransitionSentencePrompt(ConcreteOutcome outcome, string previousDescription, string questionText, string? personaReminder = null, string? personaReminder2 = null)
     {
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
-        return $@"You were observing {WithArticle(previousDescription)} but now you notice {WithArticle(GetOutcomeLabel(outcome))}.
+        return $@"{TransitionTo(previousDescription, GetOutcomeLabel(outcome))}
 {reminderClause}{questionText}
 {Config.Narrative.AnswerInstructionFor(personaReminder2)}";
     }
@@ -140,7 +169,7 @@ You are thinking about {keyword}. You want to share this with your companion {co
     public string BuildOutcomeDescriptionSentencePrompt(ConcreteOutcome outcome, string questionText, string? personaReminder = null, string? personaReminder2 = null)
     {
         string reminderClause = personaReminder != null ? $"As a {personaReminder}, " : "";
-        return $@"You are now looking at {WithArticle(GetOutcomeLabel(outcome))}.
+        return $@"{NowFocusingOn(GetOutcomeLabel(outcome))}
 {reminderClause}{questionText}
 {Config.Narrative.AnswerInstructionFor(personaReminder2)}";
     }

@@ -36,14 +36,15 @@ public class ObservationPhaseController
         LlamaServerManager llamaServer,
         ModusMentisSlotManager slotManager,
         WorldContext? worldContext = null,
-        KeywordFallbackService? keywordFallback = null)
+        KeywordFallbackService? keywordFallback = null,
+        ObservationPromptConstructor? promptConstructor = null)
     {
         _observationExecutor = new ObservationExecutor(llamaServer, slotManager);
-        _promptConstructor = new ObservationPromptConstructor();
-        _keywordRenderer = new KeywordRenderer();
-        _worldContext = worldContext ?? new PlainBiomeContext();
+        _promptConstructor   = promptConstructor ?? new ObservationPromptConstructor();
+        _keywordRenderer     = new KeywordRenderer();
+        _worldContext        = worldContext ?? new PlainBiomeContext();
         _questionFillerService = QuestionFillerService.Instance;
-        _keywordFallback = keywordFallback;
+        _keywordFallback     = keywordFallback;
     }
 
     /// <summary>
@@ -65,8 +66,8 @@ public class ObservationPhaseController
 
         if (modusMentis == null)
         {
-            Console.WriteLine("ObservationPhaseController: No observation modiMentis available!");
-            return new List<NarrationBlock>();
+            throw new InvalidOperationException(
+                "ObservationPhaseController: No observation modus mentis available for the active party member.");
         }
 
         Console.WriteLine($"ObservationPhaseController: Selected {modusMentis.DisplayName}");

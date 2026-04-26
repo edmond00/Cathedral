@@ -22,6 +22,14 @@ public abstract class Verb
     public abstract int BaseDifficulty { get; }
 
     /// <summary>
+    /// Optional override for the action menu's difficulty glyph. When non-null, takes
+    /// precedence over the difficulty-level derived glyph in <c>NarrativeUI</c>.
+    /// Used by phase-specific verbs whose actions don't have a normal difficulty
+    /// (e.g. REMEMBER in the childhood reminescence phase, which renders '○').
+    /// </summary>
+    public virtual char? DifficultyGlyphOverride => null;
+
+    /// <summary>
     /// Whether executing this verb is a legal action.
     /// Override to false for verbs that constitute crimes (stealing, trespassing, attacking innocents).
     /// Combined with <see cref="Scene.Area.IsPrivate"/> to determine full legality.

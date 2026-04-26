@@ -35,7 +35,9 @@ public class NarrativeController
     // Dependencies
     private readonly Protagonist _protagonist;
     private NarrationNode _currentNode;
-    private readonly ObservationPhaseController _observationController;
+    // Non-readonly so the Scene constructor can swap in a phase-specific variant after calling base().
+    // Treated as effectively-final: set once during construction, never reassigned afterwards.
+    private ObservationPhaseController _observationController;
     private readonly ThinkingExecutor _thinkingExecutor;
     private readonly ActionExecutionController _actionExecutor;
     private readonly GlyphSphereCore _core;
@@ -48,11 +50,13 @@ public class NarrativeController
     // Pending action result (stored while waiting for dice roll continue)
     private ActionExecutionResult? _pendingActionResult = null;
     
-    private readonly NarrationGraph _graph;
+    // _graph and _scene are mutable so the reminescence flow can swap them when transitioning
+    // between consecutive reminescences without rebuilding the controller.
+    private NarrationGraph _graph;
     private readonly int _locationId;
-    
+
     // ── Scene system (new backend, coexists with NarrationGraph) ──
-    private readonly Cathedral.Game.Scene.Scene? _scene;
+    private Cathedral.Game.Scene.Scene? _scene;
     private PoV? _pov;
     
     // Pending fight/dialogue transitions (set by OnDiceRollContinue, consumed by game controller)
@@ -82,7 +86,8 @@ public class NarrativeController
         NarrationGraphFactory? graphFactory = null,
         int locationId = 0,
         WorldContext? worldContext = null,
-        KeywordFallbackService? keywordFallbackService = null)
+        KeywordFallbackService? keywordFallbackService = null,
+        Protagonist? existingProtagonist = null)
     {
         if (terminal == null)
             throw new ArgumentNullException(nameof(terminal));
@@ -120,13 +125,18 @@ public class NarrativeController
         _worldContext = worldContext ?? new PlainBiomeContext();
         _locationId = locationId;
         
-        // Initialize protagonist with random modiMentis and memory
-        _protagonist = new Protagonist();
-        _protagonist.InitializeModiMentis(ModusMentisRegistry.Instance, modusMentisCount: 50);
-        _protagonist.InitializeMemory();
-        _protagonist.AssignModiMentisToMemoryRandom();
-        // Also generate random companions for testing the Speak About mechanic
-        _protagonist.CompanionParty.AddRange(Companion.GenerateRandom(ModusMentisRegistry.Instance, count: 3));
+        // Use the protagonist passed in by the caller (LocationTravelGameController owns the
+        // run's protagonist across phases). Fall back to a fresh one only as a safety net for
+        // legacy call sites.
+        if (existingProtagonist != null)
+        {
+            _protagonist = existingProtagonist;
+        }
+        else
+        {
+            _protagonist = new Protagonist();
+            _protagonist.InitializeMemory();
+        }
         _activePartyMember = _protagonist;
         
         // Generate graph for this location using factory
@@ -164,11 +174,12 @@ public class NarrativeController
         Cathedral.Game.Scene.Scene scene,
         int locationId,
         WorldContext? worldContext = null,
-        KeywordFallbackService? keywordFallbackService = null)
+        KeywordFallbackService? keywordFallbackService = null,
+        Protagonist? existingProtagonist = null)
         : this(terminal, popup, core, llamaServer, slotManager, terminalInputHandler,
                thinkingExecutor, actionExecutor,
-               CreateGraphFactoryForScene(scene, locationId),
-               locationId, worldContext, keywordFallbackService)
+               CreateGraphFactoryForScene(scene, locationId, existingProtagonist),
+               locationId, worldContext, keywordFallbackService, existingProtagonist)
     {
         _scene = scene;
 
@@ -180,6 +191,20 @@ public class NarrativeController
             Console.WriteLine($"NarrativeController [Scene]: PoV at {firstArea.DisplayName}");
         }
 
+        // When the scene is a special narration phase, swap the observation prompt
+        // constructor for the matching phase-specific variant. The base constructor
+        // already created a standard one; we replace it here after the chain returns.
+        if (scene.Phase == NarrationPhase.ChildhoodReminescence)
+        {
+            _observationController = new ObservationPhaseController(
+                llamaServer,
+                slotManager,
+                worldContext ?? new PlainBiomeContext(),
+                keywordFallbackService,
+                new Cathedral.Game.Narrative.Reminescence.ReminescenceObservationPromptConstructor());
+            Console.WriteLine("NarrativeController: swapped to ReminescenceObservationPromptConstructor");
+        }
+
         // Show scene debug viewer alongside graph viewer
         SceneDebugManager.Show(scene, _pov, locationId);
     }
@@ -187,9 +212,9 @@ public class NarrativeController
     /// <summary>
     /// Creates a synthetic NarrationGraphFactory that wraps a Scene for the existing constructor.
     /// </summary>
-    private static NarrationGraphFactory CreateGraphFactoryForScene(Cathedral.Game.Scene.Scene scene, int locationId)
+    private static NarrationGraphFactory CreateGraphFactoryForScene(Cathedral.Game.Scene.Scene scene, int locationId, Protagonist? protagonist = null)
     {
-        return new SceneSyntheticGraphFactory(scene, locationId);
+        return new SceneSyntheticGraphFactory(scene, locationId, protagonist);
     }
 
     /// <summary>
@@ -321,8 +346,16 @@ public class NarrativeController
                 throw new Exception($"No outcome found for keyword '{keyword}'");
             }
 
-            // Get action modiMentis from the active party member
+            // Get action modiMentis from the active party member.
+            // In the childhood reminescence phase REMEMBER may only be performed with the
+            // ChildhoodReminescence modus mentis; thinking/observation can use any acquired MM.
             var actionModiMentis = _activePartyMember.GetActionModiMentis();
+            if (_scene != null && _scene.Phase == NarrationPhase.ChildhoodReminescence)
+            {
+                actionModiMentis = actionModiMentis
+                    .Where(m => m.ModusMentisId == "childhood_reminescence")
+                    .ToList();
+            }
 
             Console.WriteLine($"NarrativeController: Outcome '{targetOutcome.DisplayName}', {actionModiMentis.Count} action modiMentis");
 
@@ -364,19 +397,33 @@ public class NarrativeController
                 action.ChainOrigin = thinkingBlock;
             }
 
-            // Pre-compute difficulty for each action while still in loading state
+            // Pre-compute difficulty for each action while still in loading state.
+            // Reminescence actions (REMEMBER) skip the critic LLM call entirely — they are
+            // automatic-success and rendered with the '○' glyph (no numeric difficulty).
             if (response.Actions.Count > 0)
             {
-                _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingDifficulty;
-                foreach (var act in response.Actions)
+                bool isReminescence = _scene != null && _scene.Phase == NarrationPhase.ChildhoodReminescence;
+                if (!isReminescence)
                 {
-                    var criticContext = new CriticContext(
-                        _currentNode, _worldContext, _locationId,
-                        act.PreselectedOutcome?.ToNaturalLanguageString() ?? "");
-                    var difficultyTree = CriticTrees.BuildDifficultyTree(act.ActionText, criticContext);
-                    var difficultyResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(difficultyTree);
-                    act.DifficultyLevel = CriticTrees.CalculateFinalDifficulty(act.Verb, difficultyResult);
-                    Console.WriteLine($"NarrativeController: Pre-computed difficulty for '{act.DisplayText}': {act.DifficultyLevel}/10");
+                    _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingDifficulty;
+                    foreach (var act in response.Actions)
+                    {
+                        var criticContext = new CriticContext(
+                            _currentNode, _worldContext, _locationId,
+                            act.PreselectedOutcome?.ToNaturalLanguageString() ?? "");
+                        var difficultyTree = CriticTrees.BuildDifficultyTree(act.ActionText, criticContext);
+                        var difficultyResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(difficultyTree);
+                        act.DifficultyLevel = CriticTrees.CalculateFinalDifficulty(act.Verb, difficultyResult);
+                        Console.WriteLine($"NarrativeController: Pre-computed difficulty for '{act.DisplayText}': {act.DifficultyLevel}/10");
+                    }
+                }
+                else
+                {
+                    foreach (var act in response.Actions)
+                    {
+                        act.DifficultyLevel = 0;
+                        Console.WriteLine($"NarrativeController: Reminescence action '{act.DisplayText}' — auto-success, ○ glyph");
+                    }
                 }
             }
             
@@ -422,7 +469,17 @@ public class NarrativeController
         try
         {
             Console.WriteLine($"NarrativeController: Starting action execution for '{action.ActionText}'");
-            
+
+            // === REMINESCENCE-PHASE SHORT-CIRCUIT ===
+            // In the childhood-reminescence phase REMEMBER actions auto-succeed: no critic,
+            // no dice, no noetic-point cost. Run the verb's Execute synchronously and emit
+            // a success outcome block; the pending-transition handler picks it up next frame.
+            if (_scene != null && _scene.Phase == NarrationPhase.ChildhoodReminescence)
+            {
+                await ExecuteReminescenceActionAsync(action);
+                return;
+            }
+
             // In debug mode, prompt overall strategy before executing
             if (DebugMode.IsActive)
             {
@@ -431,7 +488,7 @@ public class NarrativeController
                     : "unknown";
                 DebugMode.PromptActionStrategy(action.ActionText, outcomeSummary);
             }
-            
+
             // === CODED RULES CHECK (before LLM — fast, deterministic, absolute) ===
 
             // Determine if the action is illegal so we know whether to compute witness context.
@@ -604,6 +661,168 @@ public class NarrativeController
         }
     }
     
+    /// <summary>
+    /// True when the most recent REMEMBER ended the childhood reminescence phase
+    /// (the fragment's NextReminescenceId is &lt;END&gt;). Polled by the game controller
+    /// to transition out of <c>GameMode.ChildhoodReminescence</c>.
+    /// </summary>
+    public bool ReminescencePhaseFinished { get; private set; }
+
+    /// <summary>
+    /// Consume a queued <see cref="ReminescenceTransitionRequest"/>: either rebuild the
+    /// scene as the next reminescence (in place) or signal that the reminescence phase has
+    /// ended.
+    /// </summary>
+    private void HandleReminescenceContinue(ReminescenceTransitionRequest req)
+    {
+        Console.WriteLine($"NarrativeController: reminescence continue — '{req.FromReminescenceId}' → '{req.NextReminescenceId}'");
+
+        if (_scene == null) return;
+        _scene.PendingReminescenceTransition = null;
+
+        if (Cathedral.Game.Narrative.Reminescence.ReminescenceRegistry.IsEnd(req.NextReminescenceId))
+        {
+            // Final fragment of the reminescence phase — the game controller transitions us
+            // out on the next frame.
+            ReminescencePhaseFinished = true;
+            _narrationState.ShowContinueButton = false;
+            _narrationState.RequestedExit = true;
+            return;
+        }
+
+        var nextData = Cathedral.Game.Narrative.Reminescence.ReminescenceRegistry.Get(req.NextReminescenceId);
+        if (nextData == null)
+        {
+            Console.Error.WriteLine($"NarrativeController: unknown reminescence id '{req.NextReminescenceId}', ending phase.");
+            ReminescencePhaseFinished = true;
+            _narrationState.RequestedExit = true;
+            return;
+        }
+
+        // Rebuild the scene + graph for the next reminescence using the same controller
+        // (no game-mode change) so the player keeps the existing terminal panel and history.
+        var factory = new Cathedral.Game.Scene.Reminescence.ReminescenceSceneFactory(nextData);
+        var newScene = factory.Build(_locationId);
+        ReplaceScene(newScene);
+
+        // Preserve the prior narration as history and start a fresh observation phase.
+        _scrollBuffer.ConvertToHistory();
+        _narrationState.ResetForNewNode();
+        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+        StartObservationPhaseWithHistory();
+    }
+
+    /// <summary>
+    /// Replaces the active scene/graph in place. Used by the reminescence flow to swap one
+    /// reminescence scene for the next without rebuilding the whole NarrativeController.
+    /// </summary>
+    private void ReplaceScene(Cathedral.Game.Scene.Scene newScene)
+    {
+        _scene = newScene;
+        _pov   = new PoV(newScene.AllAreas[0], TimePeriod.Morning);
+
+        var newFactory = new Cathedral.Game.Scene.SceneSyntheticGraphFactory(newScene, _locationId, _protagonist);
+        _graph         = newFactory.GenerateGraph(_locationId);
+        _currentNode   = _graph.EntryNode;
+
+        Console.WriteLine($"NarrativeController: scene replaced with reminescence '{newScene.CurrentReminescenceId}'");
+    }
+
+    /// <summary>
+    /// Reminescence-phase action path: REMEMBER never fails, never costs noetic, never
+    /// invokes the critic. Like any other action, the outcome narration is generated by
+    /// the LLM through the action modusMentis persona (ChildhoodReminescenceModusMentis)
+    /// so the text is written in the character's own voice rather than being hardcoded.
+    /// </summary>
+    private async Task ExecuteReminescenceActionAsync(ParsedNarrativeAction action)
+    {
+        if (_scene == null || _pov == null)
+        {
+            Console.Error.WriteLine("NarrativeController: ExecuteReminescenceActionAsync called without scene/pov");
+            return;
+        }
+
+        action.DifficultyLevel = 0;
+
+        // Pull the verb target out of the preselected outcome chain.
+        Element? target = null;
+        if (action.PreselectedOutcome is VerbOutcome vo)
+            target = vo.Target;
+
+        if (target == null)
+        {
+            Console.Error.WriteLine("NarrativeController: REMEMBER action has no target — aborting");
+            return;
+        }
+
+        // Execute the verb (grants skills, items, updates childhood history, stamps transition).
+        try
+        {
+            action.Verb.Execute(_scene, _pov, _protagonist, target);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"NarrativeController: REMEMBER verb threw — {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+        }
+
+        // Resolve the action modusMentis (ChildhoodReminescenceModusMentis) from the action.
+        // Fall back to ChainModusMentis if ActionModusMentis is unexpectedly null.
+        var actionMm = action.ActionModusMentis ?? action.ChainModusMentis;
+
+        // Build a lightweight outcome whose ToNaturalLanguageString() feeds the LLM prompt
+        // with the concrete memory text: the narrator will write its own prose around it.
+        var fpoi = target as Cathedral.Game.Scene.Reminescence.FragmentPointOfInterest;
+        var outcomeForPrompt = fpoi != null
+            ? (OutcomeBase)new InlineOutcome(
+                displayName:    fpoi.Fragment.Name,
+                naturalLanguage: $"remember: {fpoi.Fragment.OutcomeText}")
+            : new InlineOutcome("memory", "remember this childhood moment");
+
+        // Generate outcome narration through the LLM exactly as any other action.
+        _narrationState.IsLoadingAction = true;
+        _narrationState.LoadingMessage  = Config.LoadingMessages.EvaluatingAction;
+
+        string narrationText;
+        try
+        {
+            narrationText = await _actionExecutor.OutcomeNarrator.NarrateOutcomeAsync(
+                action,
+                actionMm,
+                outcomeForPrompt,
+                succeeded:  true,
+                difficulty: 0.0,
+                _protagonist,
+                CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"NarrativeController: outcome narration failed — {ex.Message}");
+            // Fallback: show the raw concrete memory text.
+            narrationText = fpoi != null
+                ? fpoi.Fragment.OutcomeText
+                : "You remember.";
+        }
+
+        _narrationState.IsLoadingAction = false;
+
+        var outcomeBlock = new NarrationBlock(
+            Type:        NarrationBlockType.Outcome,
+            ModusMentis: actionMm,
+            Text:        narrationText,
+            Keywords:    null,
+            Actions:     null,
+            ChainOrigin: action);
+        _scrollBuffer.AddBlock(outcomeBlock);
+        _narrationState.AddBlock(outcomeBlock);
+        _scrollBuffer.ScrollToBottom();
+        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
+        _narrationState.PendingTransitionNode = null;
+        _narrationState.ShowContinueButton    = true;
+        Console.WriteLine($"NarrativeController: REMEMBER narrated — pending transition '{_scene.PendingReminescenceTransition?.NextReminescenceId}'");
+    }
+
     /// <summary>
     /// Generate dice values that match the success/failure result.
     /// </summary>
@@ -1356,11 +1575,17 @@ public class NarrativeController
             var buttonRegion = _narrationState.ActionRegions[0];
             if (buttonRegion.Contains(mouseX, mouseY))
             {
+                // Reminescence transition takes priority over normal node transition.
+                if (_scene != null && _scene.PendingReminescenceTransition is { } req)
+                {
+                    HandleReminescenceContinue(req);
+                    return;
+                }
                 // Check if there's a pending transition to a new node
                 if (_narrationState.PendingTransitionNode != null)
                 {
                     Console.WriteLine($"NarrativeController: Continue button clicked, transitioning to {_narrationState.PendingTransitionNode.NodeId}");
-                    
+
                     // Perform the transition
                     _currentNode = _narrationState.PendingTransitionNode;
 
@@ -1594,6 +1819,8 @@ public class NarrativeController
                 _narrationState.IsSelectingObservationModusMentis = false;
                 _narrationState.IsSelectingModusMentisForSpeaking = false;
                 var thinkingModiMentis = _activePartyMember.GetThinkingModiMentis();
+                if (thinkingModiMentis.Count == 0)
+                    throw new InvalidOperationException("NarrativeController: No thinking modus mentis available for selection.");
                 Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
                 _modusMentisPopup.Show(screenPos, thinkingModiMentis, "Select Thinking ModusMentis");
             }
@@ -1603,6 +1830,8 @@ public class NarrativeController
                 _narrationState.IsSelectingObservationModusMentis = true;
                 _narrationState.IsSelectingModusMentisForSpeaking = false;
                 var observationModiMentis = _activePartyMember.GetObservationModiMentis();
+                if (observationModiMentis.Count == 0)
+                    throw new InvalidOperationException("NarrativeController: No observation modus mentis available for selection.");
                 Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
                 _modusMentisPopup.Show(screenPos, observationModiMentis, "Select Observation ModusMentis");
             }

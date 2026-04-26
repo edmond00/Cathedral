@@ -325,6 +325,80 @@ public abstract class PartyMember
     }
 
     /// <summary>
+    /// Acquires a new modusMentis following the placement procedure used by the childhood
+    /// reminescence phase (and any future skill-grant flow):
+    ///   1. Try the long-term module matching <see cref="ModusMentis.MemoryType"/>
+    ///      (Procedural / Semantic / Sensory). If it has free capacity, place there.
+    ///   2. Otherwise try Working memory if it has a free slot.
+    ///   3. Otherwise the last entry of Working is evicted into Residual (which itself
+    ///      drops its last entry if full), and the new MM is placed at the front of Working.
+    /// The new MM is also registered in <see cref="ModiMentis"/>; any MM removed from
+    /// Residual is unlinked. Returns the MM permanently dropped from the protagonist (or null).
+    /// </summary>
+    public ModusMentis? AcquireModusMentis(ModusMentis modusMentis)
+    {
+        if (MemoryModules.Count == 0) InitializeMemory();
+
+        if (!ModiMentis.Contains(modusMentis))
+            ModiMentis.Add(modusMentis);
+        if (modusMentis.Level <= 0) modusMentis.Level = 1;
+
+        // Step 1: try the typed long-term module.
+        var typedType = ToMemoryModuleType(modusMentis.MemoryType);
+        var typedModule = typedType.HasValue ? GetMemoryModule(typedType.Value) : null;
+        if (typedModule != null && typedModule.TryAdd(modusMentis))
+            return null;
+
+        // Step 2: working memory, if it has a free slot.
+        var working = GetMemoryModule(MemoryModuleType.Working);
+        if (working != null && working.TryAdd(modusMentis))
+            return null;
+
+        // Step 3: prepend into Working; the displaced last MM (if any) is moved to Residual.
+        // Working is full (TryAdd returned false), so Prepend will drop its last MM.
+        ModusMentis? permanentlyDropped = null;
+        if (working == null)
+            throw new InvalidOperationException("Working memory module is missing.");
+
+        var displaced = working.Prepend(modusMentis);
+        var residual = GetMemoryModule(MemoryModuleType.Residual);
+
+        if (displaced != null && residual != null)
+        {
+            var droppedFromResidual = residual.Prepend(displaced);
+            if (droppedFromResidual != null)
+            {
+                permanentlyDropped = droppedFromResidual;
+                ModiMentis.Remove(droppedFromResidual);
+            }
+        }
+        else if (displaced != null)
+        {
+            permanentlyDropped = displaced;
+            ModiMentis.Remove(displaced);
+        }
+
+        return permanentlyDropped;
+    }
+
+    private static MemoryModuleType? ToMemoryModuleType(Cathedral.Game.Narrative.Memory.ModusMentisMemoryType t)
+        => t switch
+        {
+            Cathedral.Game.Narrative.Memory.ModusMentisMemoryType.Procedural => MemoryModuleType.Procedural,
+            Cathedral.Game.Narrative.Memory.ModusMentisMemoryType.Semantic   => MemoryModuleType.Semantic,
+            Cathedral.Game.Narrative.Memory.ModusMentisMemoryType.Sensory    => MemoryModuleType.Sensory,
+            _ => null
+        };
+
+    /// <summary>
+    /// Tries to place an item into equipment first (preferred anchor → any compatible anchor),
+    /// then into any equipped container, then as a held item in <see cref="EquipmentAnchor.RightHold"/>
+    /// or <see cref="EquipmentAnchor.LeftHold"/>. Falls back to overflow inventory if all fail.
+    /// Mirrors the childhood-reminescence acquisition procedure (wear &gt; container &gt; hold &gt; skip).
+    /// </summary>
+    public bool AcquireItem(Item item) => TryAcquireItem(item);
+
+    /// <summary>
     /// Moves a modusMentis from working memory into a long-term module (Procedural, Semantic, or Sensory).
     /// Compacts working memory after removal so the FIFO queue stays dense and eviction order is correct.
     /// Returns false if the modusMentis is not currently in working memory or the target module rejects it

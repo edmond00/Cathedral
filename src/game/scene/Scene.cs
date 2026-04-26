@@ -39,6 +39,27 @@ public class Scene
     /// <summary>State changes accumulated since scene creation (delta from factory initial state).</summary>
     public StateChangeSet StateChanges { get; set; } = new();
 
+    /// <summary>
+    /// Which narration phase this scene belongs to. Defaults to <see cref="NarrationPhase.Exploration"/>.
+    /// Special phases (e.g. <see cref="NarrationPhase.ChildhoodReminescence"/>) opt out of critic checks
+    /// and noetic-point consumption and use phase-specific prompt contexts.
+    /// </summary>
+    public Cathedral.Game.Narrative.NarrationPhase Phase { get; set; }
+        = Cathedral.Game.Narrative.NarrationPhase.Exploration;
+
+    /// <summary>
+    /// When <see cref="Phase"/> is <see cref="Cathedral.Game.Narrative.NarrationPhase.ChildhoodReminescence"/>,
+    /// the id of the current reminescence (e.g. "sound_in_the_dark"). Null otherwise.
+    /// Used by REMEMBER to record fragments in <see cref="Cathedral.Game.Narrative.ChildhoodHistory"/>.
+    /// </summary>
+    public string? CurrentReminescenceId { get; set; }
+
+    /// <summary>
+    /// Set by <c>RememberVerb.Execute()</c>; consumed by <see cref="NarrativeController"/>
+    /// on the next frame to either rebuild the scene as the next reminescence or exit the phase.
+    /// </summary>
+    public ReminescenceTransitionRequest? PendingReminescenceTransition { get; set; }
+
     // ── Element registration ──────────────────────────────────────────────────
 
     /// <summary>Registers an element in this scene's dictionary. Called by <see cref="Element.Register"/>.</summary>
@@ -231,3 +252,19 @@ public record DialogueRequest(NpcEntity Npc, string TreeId);
 /// to start a fight against the specified NPC.
 /// </summary>
 public record FightRequest(NpcEntity Npc);
+
+/// <summary>
+/// Set by <c>RememberVerb.Execute()</c>; consumed by <see cref="NarrativeController"/>
+/// on the next frame. When <see cref="NextReminescenceId"/> is "&lt;END&gt;" the controller
+/// transitions out of the childhood-reminescence phase; otherwise it rebuilds the scene
+/// as the next reminescence.
+/// </summary>
+public record ReminescenceTransitionRequest(
+    string OriginReminescenceId,
+    string FromReminescenceId,
+    string NextReminescenceId,
+    string FragmentName)
+{
+    public ReminescenceTransitionRequest(string FromReminescenceId, string NextReminescenceId, string FragmentName)
+        : this(FromReminescenceId, FromReminescenceId, NextReminescenceId, FragmentName) { }
+}
