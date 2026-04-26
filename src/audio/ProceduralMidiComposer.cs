@@ -8,6 +8,11 @@ public struct NoteEvent
     public int DurationMs;
     /// <summary>0 = legato (no gap before next note).</summary>
     public int RestAfterMs;
+    /// <summary>True for the first note of a phrase; triggers a velocity accent in the track loop.</summary>
+    public bool IsAccented;
+    /// <summary>Per-note velocity multiplier from the phrase dynamic arc (crescendo/decrescendo/arch).
+    /// Applied in the track loop: rawVel * VelocityMult.</summary>
+    public float VelocityMult;
 }
 
 /// <summary>
@@ -94,13 +99,16 @@ public static class ProceduralMidiComposer
     // ── Phrase-based generation ─────────────────────────────────────────────
 
     /// <summary>
-    /// Generates a melodic phrase with an arch contour and rhythmic variety.
-    /// <para>Fear: shorter phrases, broken/staccato rhythms, chromatic "wrong notes".</para>
-    /// <para>Sadness: slower rhythms, descending contour preference.</para>
+    /// Generates a melodic phrase with mood-driven contour and rhythmic variety.
+    /// <para>Contours: Arch (balanced), Descent (sadness/lament), Ascending (dance/hope).</para>
+    /// <para>Cadence: 50% tonic, 30% dominant, 20% mediant — avoids always resolving to root.</para>
+    /// <para>Fear: shorter phrases, broken rhythms, chromatic wrong-notes.</para>
+    /// <para>Mystery: occasional within-phrase silences (breath).</para>
     /// </summary>
     public static NoteEvent[] GenerateMelodyPhrase(
         int[] scale, int startIdx, int minIdx, int maxIdx,
-        float sadness, float fear, double bpm, Random rng)
+        float sadness, float fear, float mystery, double bpm, Random rng,
+        int[]? motifContour = null)
     {
         double beatMs = 60_000.0 / bpm;
         // Fear shortens phrases (frantic/broken); sadness also shortens (contemplative)
@@ -109,15 +117,42 @@ public static class ProceduralMidiComposer
         int phraseLen = rng.Next(minLen, maxLen + 1);
         var rhythm = PickRhythmPattern(phraseLen, sadness, fear, rng);
 
-        // Arc starts in lower-mid range so there's room to rise
-        int rangeSize = maxIdx - minIdx;
-        int arcStart  = minIdx + rng.Next(0, Math.Max(1, rangeSize / 3));
-        arcStart = Math.Clamp(arcStart, minIdx, maxIdx);
+        // ── Contour selection ─────────────────────────────────────────────────
+        // Weights are mood-driven: sadness favours Descent, low-sadness favours Ascending.
+        int rangeSize  = maxIdx - minIdx;
+        double descentW   = sadness * 1.5;
+        double ascendingW = (1.0 - sadness) * 1.2 * (1.0 - fear * 0.8);
+        double archW      = 1.0;
+        double totalCW    = archW + descentW + ascendingW;
+        double cPick      = rng.NextDouble() * totalCW;
 
-        // Peak is 2–4 steps above start; cadence resolves near the tonic (minIdx)
-        int peakIdx    = Math.Clamp(arcStart + rng.Next(2, 5), minIdx, maxIdx);
-        int cadenceIdx = Math.Clamp(minIdx + rng.Next(0, 2), minIdx, maxIdx);
-        int peakPos    = 1 + rng.Next(0, Math.Max(1, phraseLen / 2));
+        int arcStart, peakIdx, cadenceIdx, peakPos;
+
+        if (cPick < descentW)
+        {
+            // Descent: start near top, fall all the way to cadence
+            arcStart   = Math.Clamp(maxIdx - rng.Next(0, rangeSize / 4 + 1), minIdx, maxIdx);
+            peakIdx    = arcStart;
+            cadenceIdx = PickCadenceNote(minIdx, maxIdx, rng);
+            peakPos    = 0;
+        }
+        else if (cPick < descentW + ascendingW)
+        {
+            // Ascending: start near bottom, climb with peak near end
+            arcStart   = minIdx + rng.Next(0, rangeSize / 4 + 1);
+            peakIdx    = Math.Clamp(arcStart + rng.Next(4, 7), minIdx, maxIdx);
+            cadenceIdx = PickCadenceNote(minIdx, maxIdx, rng);
+            peakPos    = phraseLen - 1;
+        }
+        else
+        {
+            // Arch: low-mid start, rise to peak, fall to cadence
+            arcStart   = minIdx + rng.Next(0, Math.Max(1, rangeSize / 3));
+            arcStart   = Math.Clamp(arcStart, minIdx, maxIdx);
+            peakIdx    = Math.Clamp(arcStart + rng.Next(2, 5), minIdx, maxIdx);
+            cadenceIdx = PickCadenceNote(minIdx, maxIdx, rng);
+            peakPos    = 1 + rng.Next(0, Math.Max(1, phraseLen / 2));
+        }
 
         var noteIndices = new int[phraseLen];
         int cur = arcStart;
@@ -138,7 +173,25 @@ public static class ProceduralMidiComposer
         }
         noteIndices[phraseLen - 1] = cadenceIdx;
 
-        // Fear shortens note durations (staccato/broken), sadness slows them
+        // Motif replay: ~30% chance to reuse the previous phrase's interval contour
+        // (shifted to the new arcStart). Creates a sense of theme and development.
+        if (motifContour != null && motifContour.Length > 0 && rng.NextDouble() < 0.30)
+        {
+            int replayCur = arcStart;
+            noteIndices[0] = replayCur;
+            int replayLen = Math.Min(phraseLen - 1, motifContour.Length);
+            for (int i = 0; i < replayLen; i++)
+            {
+                replayCur = Math.Clamp(replayCur + motifContour[i], minIdx, maxIdx);
+                noteIndices[i + 1] = replayCur;
+            }
+            for (int i = replayLen + 1; i < phraseLen; i++)
+                noteIndices[i] = noteIndices[i - 1];
+            noteIndices[phraseLen - 1] = cadenceIdx; // always land on cadence
+        }
+
+        // Phrase dynamic arc: crescendo, decrescendo, or arch shape applied per note
+        float[] envelope = PickVelocityEnvelope(phraseLen, sadness, fear, rng);
         float durationFactor = (1.0f + sadness * 0.5f) * (1.0f - fear * 0.55f);
         var events = new NoteEvent[phraseLen];
         for (int i = 0; i < phraseLen; i++)
@@ -148,12 +201,17 @@ public static class ProceduralMidiComposer
             int restMs = (i < phraseLen - 1 && fear > 0.35f)
                 ? (int)(beatMs * fear * 0.22)
                 : (i == phraseLen - 2 && rng.NextDouble() < 0.5 ? (int)(beatMs * 0.12) : 0);
+            // Mystery: occasional within-phrase breath (sudden silence)
+            if (mystery > 0.5f && i > 0 && i < phraseLen - 1 && rng.NextDouble() < (mystery - 0.5f) * 0.6f)
+                restMs = Math.Max(restMs, (int)(beatMs * (0.5 + rng.NextDouble() * (double)mystery)));
             events[i] = new NoteEvent
             {
-                ScaleIdx    = noteIndices[i],
-                MidiNote    = scale[noteIndices[i]],
-                DurationMs  = Math.Max(durMs, 80),
-                RestAfterMs = restMs,
+                ScaleIdx     = noteIndices[i],
+                MidiNote     = scale[noteIndices[i]],
+                DurationMs   = Math.Max(durMs, 80),
+                RestAfterMs  = restMs,
+                IsAccented   = (i == 0),
+                VelocityMult = envelope[i],
             };
         }
         // High fear: chromatic "wrong notes" — inject ±1 semitone dissonance
@@ -184,10 +242,18 @@ public static class ProceduralMidiComposer
         int phraseLen = fear > 0.6f ? rng.Next(3, 7) : rng.Next(5, 10);
         var noteIndices = new int[phraseLen];
         int cur = Math.Clamp(startIdx, minIdx, maxIdx);
+        int rangeSize = maxIdx - minIdx;
+        // Phrase-end target in contrary motion to the melody: adds direction and counterpoint feel
+        int counterCadence = melodyDirection > 0
+            ? minIdx + rng.Next(0, rangeSize / 3 + 1)             // melody went up → counter resolves low
+            : melodyDirection < 0
+                ? maxIdx - rng.Next(0, rangeSize / 3 + 1)         // melody went down → counter resolves high
+                : (minIdx + maxIdx) / 2;                           // neutral → mid-range
+        counterCadence = Math.Clamp(counterCadence, minIdx, maxIdx);
         for (int i = 0; i < phraseLen; i++)
         {
             double r = rng.NextDouble();
-            // Mystery prefers wider leaps; tension prefers fast stepwise runs
+            // Mystery prefers wider leaps; fear prefers fast stepwise runs
             int step = mystery > 0.5f
                 ? (r < 0.3 ? 1 : r < 0.55 ? -1 : r < 0.72 ? 3 : r < 0.88 ? -3 : 5) // wide leaps
                 : (r < 0.4 ? 1 : r < 0.70 ? -1 : r < 0.85 ? 2 : -2);                // stepwise
@@ -195,24 +261,28 @@ public static class ProceduralMidiComposer
             // direction as the melody, pushing the counter in the opposite direction
             if (melodyDirection != 0 && Math.Sign(step) == melodyDirection && rng.NextDouble() < 0.55)
                 step = -step;
+            // Last 2 notes: steer toward counterCadence for a proper phrase landing
+            if (i >= phraseLen - 2)
+                step = Math.Sign(counterCadence - cur);
             cur = Math.Clamp(cur + step, minIdx, maxIdx);
             noteIndices[i] = cur;
         }
         float durationFactor = (1.0f + sadness * 0.4f) * (1.0f - fear * 0.6f);
+        var rhythm = PickRhythmPattern(phraseLen, sadness, fear, rng);
+        float[] envelope = PickVelocityEnvelope(phraseLen, sadness, fear, rng);
         var events = new NoteEvent[phraseLen];
         for (int i = 0; i < phraseLen; i++)
         {
-            float beats = rng.NextDouble() < (fear > 0.5f ? 0.6 : 0.8)
-                ? (float)(0.3 + rng.NextDouble() * 0.3)
-                : (float)(0.7 + rng.NextDouble() * 0.4);
-            int durMs = (int)(beatMs * beats * durationFactor);
+            int durMs = (int)(beatMs * rhythm[i % rhythm.Length] * durationFactor);
             int restMs = fear > 0.4f ? (int)(beatMs * fear * 0.18) : 0;
             events[i] = new NoteEvent
             {
-                ScaleIdx    = noteIndices[i],
-                MidiNote    = scale[noteIndices[i]],
-                DurationMs  = Math.Max(durMs, 55),
-                RestAfterMs = restMs,
+                ScaleIdx     = noteIndices[i],
+                MidiNote     = scale[noteIndices[i]],
+                DurationMs   = Math.Max(durMs, 55),
+                RestAfterMs  = restMs,
+                IsAccented   = (i == 0),
+                VelocityMult = envelope[i],
             };
         }
         return events;
@@ -225,15 +295,24 @@ public static class ProceduralMidiComposer
     /// </summary>
     public static NoteEvent[] GenerateArpeggioPhrase(
         int[] scale, int minIdx, int maxIdx,
-        float sadness, float fear, double bpm, Random rng)
+        float sadness, float fear, float mystery, double bpm, Random rng,
+        int melodyHintIdx = -1)
     {
         double beatMs = 60_000.0 / bpm;
 
-        // Chord tone offsets within scale: root (0), 3rd (+2), 5th (+4)
-        int[] offsets = { 0, 2, 4 };
+        // Chord tone offsets: root (0), 3rd (+2), 5th (+4), optionally 7th (+6) at high mystery
+        int[] offsets = mystery > 0.4f && rng.NextDouble() < mystery
+            ? new[] { 0, 2, 4, 6 }
+            : new[] { 0, 2, 4 };
 
-        // Anchor near the bottom of the texture range
-        int baseIdx = minIdx + rng.Next(0, Math.Max(1, (maxIdx - minIdx) / 3));
+        // Anchor position: tracks melody height loosely when available
+        int rangeSpan = maxIdx - minIdx;
+        int baseIdx;
+        if (melodyHintIdx >= minIdx && melodyHintIdx <= maxIdx)
+            // Texture hovers within 1/3 range of the current melody position
+            baseIdx = Math.Clamp(melodyHintIdx - rng.Next(0, Math.Max(1, rangeSpan / 4)), minIdx, maxIdx - offsets[^1]);
+        else
+            baseIdx = minIdx + rng.Next(0, Math.Max(1, rangeSpan / 3));
 
         // Ascending or descending figure (randomised each phrase)
         bool descend = rng.NextDouble() < 0.5;
@@ -258,6 +337,44 @@ public static class ProceduralMidiComposer
             };
         }
         return events;
+    }
+
+    /// <summary>Picks a melodically varied cadence target.
+    /// 50% tonic, 30% dominant (approx. 5th scale degree), 20% mediant (3rd).
+    /// Avoids always resolving to the bottom root note.</summary>
+    private static int PickCadenceNote(int minIdx, int maxIdx, Random rng)
+    {
+        double r = rng.NextDouble();
+        if (r < 0.50) return minIdx;                                    // tonic
+        if (r < 0.80) return Math.Clamp(minIdx + 4, minIdx, maxIdx);   // dominant (~5th scale degree)
+        return Math.Clamp(minIdx + 2, minIdx, maxIdx);                  // mediant (3rd degree)
+    }
+
+    /// <summary>
+    /// Returns a per-note velocity multiplier array shaping the phrase dynamically.
+    /// Sadness → decrescendo (soft fade); dance/ascending → arch; fear → flat (unpredictable).
+    /// </summary>
+    private static float[] PickVelocityEnvelope(int len, float sadness, float fear, Random rng)
+    {
+        var env = new float[len];
+        // Fear bypasses the arc for unpredictability
+        if (fear > 0.55f || len <= 1)
+        {
+            for (int i = 0; i < len; i++) env[i] = 1.0f;
+            return env;
+        }
+        double crescW  = (1.0 - sadness) * 0.4;
+        double decresW = sadness * 0.5;
+        double archW   = 0.6;
+        double pick    = rng.NextDouble() * (crescW + decresW + archW);
+        if (pick < decresW) // decrescendo: loud start, soft end
+            for (int i = 0; i < len; i++) env[i] = 1.2f - 0.45f * i / (len - 1);
+        else if (pick < decresW + crescW) // crescendo: soft start, loud end
+            for (int i = 0; i < len; i++) env[i] = 0.75f + 0.45f * i / (len - 1);
+        else // arch: soft-loud-soft following the melodic arc
+            for (int i = 0; i < len; i++)
+                env[i] = 0.78f + 0.42f * (float)Math.Sin((float)i / (len - 1) * Math.PI);
+        return env;
     }
 
     // Rhythm patterns in beat units (quarter note = 1.0)

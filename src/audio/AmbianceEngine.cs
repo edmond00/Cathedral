@@ -34,6 +34,13 @@ public sealed class AmbianceEngine : IDisposable
     // Direction of the most recent Melody phrase: +1=ascending, 0=level, -1=descending
     private volatile int _melodyDirection = 0;
 
+    // Pitch-interval contour of the last Melody phrase (scale index deltas).
+    // Passed back into GenerateMelodyPhrase for motif repetition (~30% chance).
+    private int[] _melodyContour = Array.Empty<int>();
+
+    // Last scale index played by Melody: lets Texture hover near the melody register.
+    private volatile int _melodyLastScaleIdx = -1;
+
     // Dynamics swell: slow sine wave over 60 s, range 0.70 E.00
     private volatile float _dynamicsLevel = 1.0f;
 
@@ -240,7 +247,7 @@ public sealed class AmbianceEngine : IDisposable
                     await AlignToNextBeatAsync(bpm, ct);
 
                     var phrase = role == TrackRole.Melody
-                        ? ProceduralMidiComposer.GenerateMelodyPhrase(currentScale, scaleIdx, minIdx, maxIdx, mood.Sadness, mood.Fear, bpm, rng)
+                        ? ProceduralMidiComposer.GenerateMelodyPhrase(currentScale, scaleIdx, minIdx, maxIdx, mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour)
                         : ProceduralMidiComposer.GenerateCounterPhrase(currentScale, scaleIdx, minIdx, maxIdx, mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyDirection);
 
                     foreach (var noteEvent in phrase)
@@ -250,6 +257,8 @@ public sealed class AmbianceEngine : IDisposable
                         lock (_moodLock) mood = _activeMood;
                         float trackVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
                         int rawVel = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                        if (noteEvent.IsAccented) rawVel = Math.Clamp(rawVel + 14, 0, 127);
+                        rawVel = Math.Clamp((int)(rawVel * noteEvent.VelocityMult), 0, 127);
                         int velocity = Math.Clamp((int)(rawVel * _dynamicsLevel * trackVol), 0, 115);
 
                         if (velocity > 0)
@@ -271,9 +280,16 @@ public sealed class AmbianceEngine : IDisposable
                         scaleIdx = noteEvent.ScaleIdx;
                     }
 
-                    // After Melody phrase, broadcast its direction for Counter contrary motion
+                    // After Melody phrase, store contour for motif replay and broadcast direction
                     if (role == TrackRole.Melody && phrase.Length >= 2)
+                    {
                         _melodyDirection = Math.Sign(phrase[^1].MidiNote - phrase[0].MidiNote);
+                        var contour = new int[phrase.Length - 1];
+                        for (int ci = 0; ci < contour.Length; ci++)
+                            contour[ci] = phrase[ci + 1].ScaleIdx - phrase[ci].ScaleIdx;
+                        _melodyContour = contour;
+                        _melodyLastScaleIdx = phrase[^1].ScaleIdx;
+                    }
 
                     // Phrase-level rest between phrases.
                     // Mystery dramatically increases silence; tension shortens it.
@@ -287,7 +303,7 @@ public sealed class AmbianceEngine : IDisposable
                 {
                     // ── Texture: quick arpeggio figure ────────────────────────────────────
                     await AlignToNextBeatAsync(bpm, ct);
-                    var arpPhrase = ProceduralMidiComposer.GenerateArpeggioPhrase(currentScale, minIdx, maxIdx, mood.Sadness, mood.Fear, bpm, rng);
+                    var arpPhrase = ProceduralMidiComposer.GenerateArpeggioPhrase(currentScale, minIdx, maxIdx, mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyLastScaleIdx);
                     foreach (var noteEvent in arpPhrase)
                     {
                         if (ct.IsCancellationRequested || trackIndex >= _activeTrackCount) break;
