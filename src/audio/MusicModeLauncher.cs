@@ -136,6 +136,17 @@ public static class MusicModeLauncher
 
                 case ConsoleKey.H:
                     ShowHelp(); break;
+
+                case ConsoleKey.Z:
+                {
+                    var r = new Random();
+                    engine.SetMood(new MusicMoodState(
+                        (float)r.NextDouble(),
+                        (float)r.NextDouble(),
+                        (float)r.NextDouble(),
+                        (float)r.NextDouble()));
+                    break;
+                }
             }
         }
     }
@@ -205,7 +216,7 @@ public static class MusicModeLauncher
 
         SetCursor(0, top + 10); ClearLine();
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write("  S/s=Sadness  F/f=Fear  M/m=Mystery  I/i=Intensity  1-4=Tracks  T/L/X/B/W=Preset  H=Help  Q=Quit");
+        Console.Write("  S/s=Sadness  F/f=Fear  M/m=Mystery  I/i=Intensity  1-4=Tracks  T/L/X/B/W=Preset  Z=Random All  H=Help  Q=Quit");
         Console.ResetColor();
     }
 
@@ -279,6 +290,7 @@ public static class MusicModeLauncher
         Console.WriteLine("  I                Intensity +0.1  (Drone►0.10, Melody►0.35, Counter►0.60, Texture►0.85)");
         Console.WriteLine("  Shift+I          Intensity -0.1");
         Console.WriteLine("  N                Reset to Neutral mood (1 track)");
+        Console.WriteLine("  Z                Random mood (all four parameters randomised)");
         Console.WriteLine();
         Console.WriteLine("  T                Preset: Tavern       (bright, lively)");
         Console.WriteLine("  L                Preset: Lament       (sad, slow, calm)");

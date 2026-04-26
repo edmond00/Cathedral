@@ -279,9 +279,79 @@ public sealed class AmbianceEngine : IDisposable
                         }
                     }
 
-                    var phrase = role == TrackRole.Melody
-                        ? ProceduralMidiComposer.GenerateMelodyPhrase(currentScale, scaleIdx, minIdx, maxIdx, mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour)
-                        : ProceduralMidiComposer.GenerateCounterPhrase(currentScale, scaleIdx, minIdx, maxIdx, mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyDirection);
+                    NoteEvent[] phrase;
+                    if (role == TrackRole.Melody)
+                    {
+                        phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
+                            currentScale, scaleIdx, minIdx, maxIdx,
+                            mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour);
+                    }
+                    else
+                    {
+                        // ── Counter imitation echo (~30% when melody contour available) ──────
+                        // Replays the Melody's exact contour starting ~4 scale steps higher
+                        // (roughly a 4th/5th), creating Renaissance canonic imitation.
+                        bool doImitate = _melodyContour != null && rng.NextDouble() < 0.30;
+                        if (doImitate)
+                        {
+                            int imitateStart = Math.Clamp(_melodyLastScaleIdx + 4, minIdx, maxIdx);
+                            phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
+                                currentScale, imitateStart, minIdx, maxIdx,
+                                mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour);
+                        }
+                        else
+                        {
+                            phrase = ProceduralMidiComposer.GenerateCounterPhrase(
+                                currentScale, scaleIdx, minIdx, maxIdx,
+                                mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyDirection);
+                        }
+                    }
+
+                    // ── Register shift (~20% chance) ───────────────────────────────────
+                    // Shift all phrase notes up or down one scale-octave for spatial variety.
+                    // Biased: ascending phrases shift up, descending shift down; else random.
+                    if (rng.NextDouble() < 0.20)
+                    {
+                        int scaleLen  = currentScale.Length;
+                        int octaveLen = scaleLen / 3; // each octave span in scale-index units
+                        bool shiftUp  = _melodyDirection >= 0 ? rng.NextDouble() < 0.65 : rng.NextDouble() < 0.35;
+                        int  delta    = shiftUp ? octaveLen : -octaveLen;
+                        for (int pi = 0; pi < phrase.Length; pi++)
+                        {
+                            int shifted = Math.Clamp(phrase[pi].ScaleIdx + delta, 0, scaleLen - 1);
+                            phrase[pi].ScaleIdx = shifted;
+                            phrase[pi].MidiNote = currentScale[shifted];
+                        }
+                    }
+
+                    // ── Half/double-time (~25% chance) ────────────────────────────────
+                    // Multiplies all note and rest durations for a phrase-level rhythmic shift.
+                    // Double-time: frantic urgency. Half-time: heavy contemplative weight.
+                    // Fear slightly favours double-time; sadness favours half-time.
+                    if (rng.NextDouble() < 0.25)
+                    {
+                        double doubleW = 0.5 + mood.Fear * 0.4;
+                        double halfW   = 0.5 + mood.Sadness * 0.4;
+                        float timingMult = rng.NextDouble() * (doubleW + halfW) < doubleW ? 0.5f : 2.0f;
+                        for (int pi = 0; pi < phrase.Length; pi++)
+                        {
+                            phrase[pi].DurationMs  = Math.Max(40,  (int)(phrase[pi].DurationMs  * timingMult));
+                            phrase[pi].RestAfterMs = Math.Max(0,   (int)(phrase[pi].RestAfterMs * timingMult));
+                        }
+                    }
+
+                    // ── Occasional instrument swap (~1-in-8 phrases) ──────────────────
+                    // Picks an alternate patch from within the same mood tier for timbral
+                    // variety without crossing mood boundaries.
+                    if (rng.NextDouble() < 0.125)
+                    {
+                        int altPatch = ProceduralMidiComposer.GetAlternateInstrumentPatch(role, mood.Sadness, mood.Fear, mood.Mystery, rng);
+                        if (altPatch != lastPatch)
+                        {
+                            SendProgramChange(channel, altPatch);
+                            lastPatch = altPatch;
+                        }
+                    }
 
                     foreach (var noteEvent in phrase)
                     {
@@ -296,8 +366,12 @@ public sealed class AmbianceEngine : IDisposable
 
                         if (velocity > 0)
                         {
+                            // Humanize: tiny random pre-note delay (0–28 ms) so phrases breathe
+                            // and notes don't all snap to the exact millisecond grid.
+                            int humanMs = rng.Next(28);
+                            if (humanMs > 0) await Task.Delay(humanMs, ct);
                             SendNoteOn(channel, noteEvent.MidiNote, velocity);
-                            await Task.Delay(noteEvent.DurationMs, ct);
+                            await Task.Delay(Math.Max(1, noteEvent.DurationMs - humanMs), ct);
                             SendNoteOff(channel, noteEvent.MidiNote);
                         }
                         else
@@ -411,11 +485,21 @@ public sealed class AmbianceEngine : IDisposable
 
                     _droneCurrentNote = midiNote; // broadcast for harmonic awareness
 
+                    // ── Organum 5th ───────────────────────────────────────────────────
+                    // Low fear: add a softer parallel 5th above the root — medieval organum.
+                    // Mystery occasionally swaps the 5th for a 4th (more archaic/eerie).
+                    // At high fear the 5th is dropped so dissonance isn't smoothed away.
+                    int organum5th     = Math.Clamp(midiNote + (mood.Mystery > 0.55f && rng.NextDouble() < 0.40 ? 5 : 7), 21, 108);
+                    bool playOrganum   = mood.Fear < 0.55f && velocity > 0;
+                    int  organumVel    = Math.Clamp(velocity - 18, 0, 100); // softer than root
+
                     if (velocity > 0)
                     {
                         SendNoteOn(channel, midiNote, velocity);
+                        if (playOrganum) SendNoteOn(channel, organum5th, organumVel);
                         await Task.Delay(noteDuration, ct);
                         SendNoteOff(channel, midiNote);
+                        if (playOrganum) SendNoteOff(channel, organum5th);
                     }
                     else
                     {

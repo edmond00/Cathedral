@@ -506,14 +506,14 @@ public static class ProceduralMidiComposer
             TrackRole.Melody  => 50, // softened — background ambiance, not soloist
             TrackRole.Counter => 40, // softer obligato — plays beneath melody
             TrackRole.Texture => 45,
-            TrackRole.Noise   => 45, // audible background wash
+            TrackRole.Noise   => 60, // audible background wash
             _                 => 60,
         };
         // Noise: simple gentle variation, no fear bimodal dynamics
         if (role == TrackRole.Noise)
         {
-            int nShift = -(int)(sadness * 10) + (int)(fear * 12);
-            return Math.Clamp(45 + nShift + rng.Next(-6, 7), 18, 70);
+            int nShift = -(int)(sadness * 10) + (int)(fear * 14);
+            return Math.Clamp(60 + nShift + rng.Next(-7, 8), 22, 80);
         }
         // High fear: lurching bimodal dynamics (sudden accent or sudden dropout)
         if (fear > 0.65f && rng.NextDouble() < (fear - 0.65f) * 1.3)
@@ -578,6 +578,40 @@ public static class ProceduralMidiComposer
             TrackRole.Noise   => 4,
             _                 => 0,
         };
+
+    /// <summary>
+    /// Returns an alternate patch within the same mood tier as <see cref="GetInstrumentPatch"/>,
+    /// giving phrases timbral variety without crossing mood boundaries.
+    /// Called ~1-in-8 phrases to swap instrument mid-session.
+    /// </summary>
+    public static int GetAlternateInstrumentPatch(TrackRole role, float sadness, float fear, float mystery, Random rng)
+    {
+        // Build a small candidate pool that fits the current mood tier, then pick randomly.
+        // Always includes the primary patch so swapping back is equally likely.
+        int primary = GetInstrumentPatch(role, sadness, fear, mystery);
+
+        int[] pool = role switch
+        {
+            TrackRole.Melody =>
+                sadness < 0.30f && fear < 0.45f
+                    ? new[] { PatchFlute,    PatchOboe,         PatchViolinStrings }  // bright
+                    : sadness < 0.60f
+                    ? new[] { PatchViolinStrings, PatchOboe,    PatchFlute }          // mid lament
+                    : new[] { PatchOboe,     PatchChoirAahs,    PatchViolinStrings }, // dark
+
+            TrackRole.Counter =>
+                sadness < 0.32f
+                    ? new[] { PatchHarpsichord, PatchFlute,     PatchOboe }           // lively
+                    : mystery >= 0.65f
+                    ? new[] { PatchPadBowed,    PatchFlute,     PatchChoirAahs }      // ethereal
+                    : new[] { PatchFlute,       PatchOboe,      PatchHarpsichord },   // general
+
+            _ => new[] { primary },
+        };
+
+        // Pick any candidate; if it matches primary, that's fine — it's a valid "no-change" outcome.
+        return pool[rng.Next(pool.Length)];
+    }
 
     /// <summary>
     /// Generates a single long sustained note for the ambient noise/pad track.
