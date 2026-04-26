@@ -242,6 +242,7 @@ public static class MusicModeLauncher
             else
                 sb.Append($" {names[i]}  ");
         }
+        sb.Append("[Noise]"); // always-on ambient wash track
         return sb.ToString().TrimEnd();
     }
 

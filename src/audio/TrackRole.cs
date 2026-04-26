@@ -17,4 +17,8 @@ public enum TrackRole
 
     /// <summary>High texture / decoration. Harpsichord. Added at WorldView phase.</summary>
     Texture = 3,
+
+    /// <summary>Ambient noise wash. Long sustained pads or environmental sounds.
+    /// Always active (not gated by SetActiveTrackCount); faded by Intensity only.</summary>
+    Noise = 4,
 }

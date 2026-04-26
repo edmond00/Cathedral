@@ -151,8 +151,17 @@ public sealed class AmbianceEngine : IDisposable
     /// </summary>
     private static float GetTrackIntensityVolume(int trackIndex, float intensity)
     {
-        float start = trackIndex * 0.25f;
-        float end   = start + 0.10f;
+        // Per-track Intensity fade-in windows [start, end] in the 0–1 Intensity range.
+        // Noise (index 4) activates at mid-intensity — between Counter and Texture.
+        var (start, end) = trackIndex switch
+        {
+            0 => (0.00f, 0.10f), // Drone — always on
+            1 => (0.25f, 0.35f), // Melody
+            2 => (0.50f, 0.60f), // Counter
+            3 => (0.75f, 0.85f), // Texture
+            4 => (0.25f, 0.35f), // Noise — fades in alongside Melody, present most of the time
+            _ => (1.00f, 1.10f), // unused: always off
+        };
         return Math.Clamp((intensity - start) / (end - start), 0f, 1f);
     }
 
@@ -186,8 +195,9 @@ public sealed class AmbianceEngine : IDisposable
         {
             while (!ct.IsCancellationRequested && _running)
             {
-                // Wait if this track is not yet active
-                if (trackIndex >= _activeTrackCount)
+                // Wait if this track is not yet active.
+                // Noise bypasses this gate — it's always on, faded only by Intensity.
+                if (role != TrackRole.Noise && trackIndex >= _activeTrackCount)
                 {
                     justActivated = true; // will stagger when re-enabled
                     await Task.Delay(200, ct);
@@ -356,6 +366,37 @@ public sealed class AmbianceEngine : IDisposable
                     double arpBeatMs = 60_000.0 / bpm;
                     int arpRestMs = (int)(arpBeatMs * Math.Max(0.05, mood.Sadness * 0.3 + rng.NextDouble() * (0.4 + mood.Sadness * 0.6) + mood.Mystery * 2.5 - mood.Fear * 0.5));
                     await Task.Delay(arpRestMs, ct);
+                }
+                else if (role == TrackRole.Noise)
+                {
+                    // ── Noise: continuous ambient pad wash, always present ────────────────
+                    // Uses legato: new NoteOn fires before old NoteOff so there is never
+                    // a moment of silence between note transitions.
+                    lock (_moodLock) currentScale = _sharedScale;
+                    var (noiseMin, noiseMax) = ModalScale.GetNoteRange(currentScale.Length, role);
+
+                    int noisePatch = ProceduralMidiComposer.GetInstrumentPatch(role, mood.Sadness, mood.Fear, mood.Mystery);
+                    if (noisePatch != lastPatch)
+                    {
+                        SendProgramChange(channel, noisePatch);
+                        lastPatch = noisePatch;
+                    }
+
+                    var (midiNote, durationMs) = ProceduralMidiComposer.GenerateNoiseNote(
+                        currentScale, noiseMin, noiseMax, mood.Sadness, mood.Fear, mood.Mystery, bpm, rng);
+
+                    int rawVel = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                    float noiseVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
+                    // Noise bypasses most of the dynamics swell — keep it steady, only a 5% swell
+                    float noiseDyn = 0.95f + (_dynamicsLevel - 0.85f) * 0.33f; // range ~0.95–0.98
+                    // Floor at 12 so the wash is always faintly present regardless of Intensity
+                    int vel = Math.Max(12, Math.Clamp((int)(rawVel * noiseDyn * noiseVol), 0, 115));
+
+                    // Legato: start new note, wait for its duration, then release old note.
+                    // The brief overlap prevents any gap between consecutive pad swells.
+                    SendNoteOn(channel, midiNote, vel);
+                    await Task.Delay(durationMs, ct);
+                    SendNoteOff(channel, midiNote);
                 }
                 else
                 {

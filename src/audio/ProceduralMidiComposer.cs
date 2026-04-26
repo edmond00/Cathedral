@@ -30,6 +30,11 @@ public static class ProceduralMidiComposer
     public const int PatchOboe           = 68; // #69 — Oboe — mournful/urgent
     public const int PatchHarpsichord    = 6;  // #7  — Harpsichord — bright/tavern
     public const int PatchPadBowed       = 92; // #93 — Pad 5 (bowed) — ethereal/mystery
+    public const int PatchPadNewAge      = 88; // #89 — Pad 1 (new age) — airy calm wash
+    public const int PatchPadHalo        = 94; // #95 — Pad 7 (halo) — mysterious shimmer
+    public const int PatchPadSweep       = 95; // #96 — Pad 8 (sweep) — dark, heavy wash
+    public const int PatchSeashore       = 122; // #123 — Seashore — wind/waves, outdoor calm
+    public const int PatchBirdTweet      = 123; // #124 — Bird Tweet — light nature ambiance
 
     /// <summary>
     /// Picks the next MIDI note using a weighted random walk within [minIdx, maxIdx].
@@ -498,11 +503,18 @@ public static class ProceduralMidiComposer
         int baseVelocity = role switch
         {
             TrackRole.Drone   => 52,
-            TrackRole.Melody  => 65,
+            TrackRole.Melody  => 50, // softened — background ambiance, not soloist
             TrackRole.Counter => 40, // softer obligato — plays beneath melody
             TrackRole.Texture => 45,
+            TrackRole.Noise   => 45, // audible background wash
             _                 => 60,
         };
+        // Noise: simple gentle variation, no fear bimodal dynamics
+        if (role == TrackRole.Noise)
+        {
+            int nShift = -(int)(sadness * 10) + (int)(fear * 12);
+            return Math.Clamp(45 + nShift + rng.Next(-6, 7), 18, 70);
+        }
         // High fear: lurching bimodal dynamics (sudden accent or sudden dropout)
         if (fear > 0.65f && rng.NextDouble() < (fear - 0.65f) * 1.3)
             return rng.NextDouble() < 0.55
@@ -545,6 +557,13 @@ public static class ProceduralMidiComposer
                 : sadness < 0.40f                 ? PatchHarpsichord     // bright decoration
                 :                                   PatchFlute,           // soft texture
 
+            TrackRole.Noise =>
+                fear >= 0.60f      ? PatchPadSweep    // ominous dark wash
+                : mystery >= 0.65f ? PatchPadHalo     // ethereal shimmer
+                : sadness < 0.30f  ? PatchPadNewAge   // calm airy pad (was Seashore — too wave-like)
+                : sadness < 0.60f  ? PatchPadNewAge   // gentle airy pad
+                :                    PatchPadSweep,   // heavy dark wash
+
             _ => 0,
         };
 
@@ -556,8 +575,33 @@ public static class ProceduralMidiComposer
             TrackRole.Melody  => 1,
             TrackRole.Counter => 2,
             TrackRole.Texture => 3,
+            TrackRole.Noise   => 4,
             _                 => 0,
         };
+
+    /// <summary>
+    /// Generates a single long sustained note for the ambient noise/pad track.
+    /// Returns (midiNote, durationMs, restMs). Not phrase-based — just individual washes.
+    /// Duration: 6–16 beats depending on mood. Mystery and sadness increase duration;
+    /// fear shortens and destabilises it. No rest — caller uses legato overlap for continuous presence.
+    /// </summary>
+    public static (int midiNote, int durationMs) GenerateNoiseNote(
+        int[] scale, int minIdx, int maxIdx,
+        float sadness, float fear, float mystery, double bpm, Random rng)
+    {
+        double beatMs = 60_000.0 / bpm;
+        // Restrict to the lower 45% of the noise range (deep, non-intrusive wash)
+        int noiseCeil = minIdx + (int)((maxIdx - minIdx) * 0.45);
+        int scaleIdx = rng.Next(minIdx, Math.Max(minIdx + 1, noiseCeil + 1));
+        // Occasional slow harmonic shift: small step from current position
+        if (rng.NextDouble() < 0.35)
+            scaleIdx = Math.Clamp(scaleIdx + (rng.NextDouble() < 0.5 ? 1 : -1), minIdx, noiseCeil);
+        int midiNote = scale[scaleIdx];
+        // Duration: long, influenced by sadness/mystery (contemplative) and shortened by fear (anxious)
+        double baseDurBeats = 6.0 + sadness * 4.5 + mystery * 3.5 - fear * 2.5;
+        int durationMs = (int)(beatMs * Math.Clamp(baseDurBeats + rng.NextDouble() * 4.0, 3.0, 22.0));
+        return (midiNote, durationMs);
+    }
 
     /// <summary>Dedicated SFX channel (0-indexed). Uses ch 14 (displayed as ch 15).</summary>
     public const int SfxChannel = 14;

@@ -88,6 +88,7 @@ public static class ModalScale
             TrackRole.Counter => (q / 2,     q + q / 2),  // lower-mid — tenor, below melody
             TrackRole.Melody  => (q + q / 2, q * 3),      // middle-upper — soprano cantus
             TrackRole.Texture => (q * 2 + 1, scaleLen - 1), // high — ornamental decoration
+            TrackRole.Noise   => (0,         q * 2),      // lower half — deep background wash
             _                 => (0, scaleLen - 1),
         };
     }
