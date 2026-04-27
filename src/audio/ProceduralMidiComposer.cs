@@ -124,7 +124,7 @@ public static class ProceduralMidiComposer
     public static NoteEvent[] GenerateMelodyPhrase(
         int[] scale, int startIdx, int minIdx, int maxIdx,
         float sadness, float fear, float mystery, double bpm, Random rng,
-        int[]? motifContour = null, bool forceMotifReplay = false)
+        int[]? motifContour = null, bool forceMotifReplay = false, bool? forceResolution = null)
     {
         double beatMs = 60_000.0 / bpm;
         // Fear shortens phrases (frantic/broken); sadness also shortens (contemplative).
@@ -186,6 +186,12 @@ public static class ProceduralMidiComposer
             cadenceIdx = PickCadenceNote(minIdx, maxIdx, rng);
             peakPos    = 1 + rng.Next(0, Math.Max(1, phraseLen / 2));
         }
+
+        // Q/A phrasing: override cadence when resolution is forced by caller
+        if (forceResolution.HasValue)
+            cadenceIdx = forceResolution.Value
+                ? minIdx                                         // answer: resolve to tonic
+                : Math.Clamp(minIdx + 4, minIdx, maxIdx);       // question: land on dominant
 
         // Smooth phrase start: clamp arcStart within ~1/4 range of where the voice
         // left off (startIdx), so consecutive phrases connect rather than teleport.
@@ -310,6 +316,54 @@ public static class ProceduralMidiComposer
                 for (int gi = 0; gi < groupLen && ni + gi < events.Length; gi++)
                     events[ni + gi].DurationMs = Math.Max(40, (int)(events[ni + gi].DurationMs * jitter));
                 ni += groupLen;
+            }
+        }
+
+        // Grace note (appoggiatura): ~35% chance, very short neighbor note before phrase start.
+        // Reduced at high fear (jitter already provides enough instability).
+        if (phraseLen > 1 && fear < 0.55f && rng.NextDouble() < 0.35)
+        {
+            int graceDir = rng.NextDouble() < 0.60 ? 1 : -1;
+            int graceIdx = Math.Clamp(noteIndices[0] + graceDir, minIdx, maxIdx);
+            var graceNote = new NoteEvent
+            {
+                ScaleIdx     = graceIdx,
+                MidiNote     = scale[graceIdx],
+                DurationMs   = 60 + rng.Next(30),
+                RestAfterMs  = 0,
+                IsAccented   = false,
+                VelocityMult = 0.68f,
+            };
+            var withGrace = new NoteEvent[events.Length + 1];
+            withGrace[0] = graceNote;
+            Array.Copy(events, 0, withGrace, 1, events.Length);
+            events = withGrace;
+        }
+
+        // Trill: when the final note has a long fermata (>500ms), add a rapid trill figure
+        // over the last ~45% of the note's duration. ~40% chance, suppressed at high fear.
+        if (events.Length > 0 && events[events.Length - 1].DurationMs > 500
+            && fear < 0.50f && rng.NextDouble() < 0.40)
+        {
+            var lastEvt       = events[events.Length - 1];
+            int trillSustainMs = (int)(lastEvt.DurationMs * 0.55);
+            int trillBodyMs   = lastEvt.DurationMs - trillSustainMs;
+            int pairMs        = 50;
+            int numPairs      = trillBodyMs / (pairMs * 2);
+            if (numPairs >= 3)
+            {
+                int trillIdx  = Math.Clamp(lastEvt.ScaleIdx + 1, 0, scale.Length - 1);
+                int trillMidi = scale[trillIdx];
+                var trillList = new List<NoteEvent>(events.Length + numPairs * 2);
+                for (int ti = 0; ti < events.Length - 1; ti++) trillList.Add(events[ti]);
+                trillList.Add(lastEvt with { DurationMs = trillSustainMs, RestAfterMs = 0 });
+                for (int t = 0; t < numPairs; t++)
+                {
+                    bool isLastPair = (t == numPairs - 1);
+                    trillList.Add(new NoteEvent { ScaleIdx = trillIdx,         MidiNote = trillMidi,       DurationMs = pairMs, RestAfterMs = 0,                              VelocityMult = 0.62f });
+                    trillList.Add(new NoteEvent { ScaleIdx = lastEvt.ScaleIdx, MidiNote = lastEvt.MidiNote, DurationMs = pairMs, RestAfterMs = isLastPair ? lastEvt.RestAfterMs : 0, VelocityMult = 0.62f });
+                }
+                events = trillList.ToArray();
             }
         }
 
