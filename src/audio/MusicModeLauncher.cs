@@ -80,6 +80,7 @@ public static class MusicModeLauncher
                 case ConsoleKey.Escape:
                     return;
 
+                case ConsoleKey.D0: engine.SetActiveTrackCount(0); break;  // Noise solo
                 case ConsoleKey.D1: engine.SetActiveTrackCount(1); break;
                 case ConsoleKey.D2: engine.SetActiveTrackCount(2); break;
                 case ConsoleKey.D3: engine.SetActiveTrackCount(3); break;
@@ -133,6 +134,18 @@ public static class MusicModeLauncher
                     engine.PlaySoundEffect(SoundEffectType.TransitionUp); break;
                 case ConsoleKey.D when key.Modifiers == ConsoleModifiers.None:
                     engine.PlaySoundEffect(SoundEffectType.TransitionDown); break;
+
+                // Game event tests
+                case ConsoleKey.A:
+                    engine.TriggerGameEvent(GameEventType.SmallInteraction);  break;
+                case ConsoleKey.K:
+                    engine.TriggerGameEvent(GameEventType.StrongInteraction); break;
+                case ConsoleKey.G:
+                    engine.TriggerGameEvent(GameEventType.PositiveOutcome);   break;
+                case ConsoleKey.J:
+                    engine.TriggerGameEvent(GameEventType.NegativeOutcome);   break;
+                case ConsoleKey.O:
+                    engine.TriggerGameEvent(GameEventType.NeutralOutcome);    break;
 
                 case ConsoleKey.H:
                     ShowHelp(); break;
@@ -216,7 +229,7 @@ public static class MusicModeLauncher
 
         SetCursor(0, top + 10); ClearLine();
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write("  S/s=Sadness  F/f=Fear  M/m=Mystery  I/i=Intensity  1-4=Tracks  T/L/X/B/W=Preset  Z=Random All  H=Help  Q=Quit");
+        Console.Write("  S/s=Sadness  F/f=Fear  M/m=Mystery  I/i=Intensity  0=Noise solo  1-4=Tracks  T/L/X/B/W=Preset  Z=Random All  A/K/G/J/O=Events  H=Help  Q=Quit");
         Console.ResetColor();
     }
 
@@ -279,6 +292,7 @@ public static class MusicModeLauncher
         Console.WriteLine("Cathedral — Procedural Music PoC — Key Bindings");
         Console.ResetColor();
         Console.WriteLine();
+        Console.WriteLine("  0                Noise track only (solo)");
         Console.WriteLine("  1 / 2 / 3 / 4    Set number of active tracks");
         Console.WriteLine();
         Console.WriteLine("  S                Sadness  +0.1 (more melancholic)");
@@ -303,6 +317,15 @@ public static class MusicModeLauncher
         Console.WriteLine("  E                SFX: MemoryFragment");
         Console.WriteLine("  U                SFX: TransitionUp");
         Console.WriteLine("  D                SFX: TransitionDown");
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("  Game Events (SFX + temporary music effect):");
+        Console.ResetColor();
+        Console.WriteLine("  A                SmallInteraction  — soft tap + accent next phrase");
+        Console.WriteLine("  K                StrongInteraction — harpsichord sting + replay last phrase contour");
+        Console.WriteLine("  G                PositiveOutcome   — ascending flourish + brighten mood 5 s");
+        Console.WriteLine("  J                NegativeOutcome   — tritone thud + darken mood 5 s, break phrase");
+        Console.WriteLine("  O                NeutralOutcome    — bell tone + triple inter-phrase pause");
         Console.WriteLine();
         Console.WriteLine("  H                This help screen");
         Console.WriteLine("  Q / Escape       Quit");

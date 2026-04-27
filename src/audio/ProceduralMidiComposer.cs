@@ -40,6 +40,12 @@ public static class ProceduralMidiComposer
     public const int PatchPadSweep       = 95; // #96 — Pad 8 (sweep) — dark, heavy wash
     public const int PatchSeashore       = 122; // #123 — Seashore — wind/waves, outdoor calm
     public const int PatchBirdTweet      = 123; // #124 — Bird Tweet — light nature ambiance
+    // Synth leads (digital / glitch SFX)
+    public const int PatchLeadSquare     = 80;  // #81 — Lead 1 Square    — buzzy, harsh
+    public const int PatchLeadSawtooth   = 81;  // #82 — Lead 2 Sawtooth  — electronic buzz
+    // Synth FX (sci-fi / crystal / echo)
+    public const int PatchFxCrystal      = 98;  // #99 — FX 3 Crystal     — bright digital ping
+    public const int PatchFxEchoes       = 102; // #103 — FX 7 Echoes     — decaying digital repeats
 
     /// <summary>
     /// Picks the next MIDI note using a weighted random walk within [minIdx, maxIdx].
@@ -118,7 +124,7 @@ public static class ProceduralMidiComposer
     public static NoteEvent[] GenerateMelodyPhrase(
         int[] scale, int startIdx, int minIdx, int maxIdx,
         float sadness, float fear, float mystery, double bpm, Random rng,
-        int[]? motifContour = null)
+        int[]? motifContour = null, bool forceMotifReplay = false)
     {
         double beatMs = 60_000.0 / bpm;
         // Fear shortens phrases (frantic/broken); sadness also shortens (contemplative).
@@ -211,7 +217,7 @@ public static class ProceduralMidiComposer
 
         // Motif replay: ~30% chance to reuse the previous phrase's interval contour
         // (shifted to the new arcStart). Creates a sense of theme and development.
-        if (motifContour != null && motifContour.Length > 0 && rng.NextDouble() < 0.30)
+        if (motifContour != null && motifContour.Length > 0 && (forceMotifReplay || rng.NextDouble() < 0.30))
         {
             int replayCur = arcStart;
             noteIndices[0] = replayCur;
@@ -537,7 +543,7 @@ public static class ProceduralMidiComposer
         if (role == TrackRole.Noise)
         {
             int nShift = -(int)(sadness * 10) + (int)(fear * 14);
-            return Math.Clamp(60 + nShift + rng.Next(-7, 8), 22, 80);
+            return Math.Clamp(48 + nShift + rng.Next(-5, 6), 18, 65);
         }
         // High fear: lurching bimodal dynamics (sudden accent or sudden dropout)
         if (fear > 0.65f && rng.NextDouble() < (fear - 0.65f) * 1.3)
@@ -582,11 +588,9 @@ public static class ProceduralMidiComposer
                 :                                   PatchFlute,           // soft texture
 
             TrackRole.Noise =>
-                fear >= 0.60f      ? PatchPadSweep    // ominous dark wash
-                : mystery >= 0.65f ? PatchPadHalo     // ethereal shimmer
-                : sadness < 0.30f  ? PatchPadNewAge   // calm airy pad (was Seashore — too wave-like)
-                : sadness < 0.60f  ? PatchPadNewAge   // gentle airy pad
-                :                    PatchPadSweep,   // heavy dark wash
+                // Always PadSweep: heaviest, darkest pad — best approximation of brown-noise rumble.
+                // Mood still affects the melodic/noise layer above, but the base wash stays consistent.
+                PatchPadSweep,
 
             _ => 0,
         };
@@ -648,8 +652,9 @@ public static class ProceduralMidiComposer
         float sadness, float fear, float mystery, double bpm, Random rng)
     {
         double beatMs = 60_000.0 / bpm;
-        // Restrict to the lower 45% of the noise range (deep, non-intrusive wash)
-        int noiseCeil = minIdx + (int)((maxIdx - minIdx) * 0.45);
+        // Lower 32% of the range: very deep bass register for brown-noise character.
+        // The mud at the bottom of GM pads produces the dense low-frequency rumble.
+        int noiseCeil = minIdx + (int)((maxIdx - minIdx) * 0.32);
         int scaleIdx = rng.Next(minIdx, Math.Max(minIdx + 1, noiseCeil + 1));
         // Occasional slow harmonic shift: small step from current position
         if (rng.NextDouble() < 0.35)
