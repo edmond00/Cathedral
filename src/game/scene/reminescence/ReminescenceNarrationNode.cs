@@ -33,7 +33,13 @@ public sealed class ReminescenceNarrationNode : SyntheticNarrationNode
     {
         var history = _protagonist.ChildhoodHistory.ToPromptSummary();
         var historyClause = history.Length == 0 ? string.Empty : $" {history}";
-        var theme = _data.ContentLines.Count > 1 ? $" You are reminded of {_data.ContentLines[^1]}." : string.Empty;
+        const string youRemember = "you remember ";
+        var rawThemeLine = _data.ContentLines.Count > 1 ? _data.ContentLines[^1] : null;
+        var themeFrag = rawThemeLine == null ? null
+            : rawThemeLine.StartsWith(youRemember, StringComparison.OrdinalIgnoreCase)
+                ? rawThemeLine[youRemember.Length..]
+                : rawThemeLine;
+        var theme = themeFrag != null ? $" You are reminded of {themeFrag}." : string.Empty;
         return
             $"You are sitting exhausted at the foot of a tree, remembering what brought you here." +
             $" Half-formed images of your childhood drift through your mind.{theme}{historyClause}";

@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene.Building;
 
@@ -23,13 +23,9 @@ public class GoUpStairsVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"climb up {target.DisplayName.ToLowerInvariant()}";
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not StairPointOfInterest stair)
-            throw new InvalidOperationException("GoUpStairsVerb target must be a StairPointOfInterest");
-
-        pov.Where = stair.TopArea;
-        pov.Focus = null;
-        Console.WriteLine($"GoUpStairsVerb: Climbed to {stair.TopArea.DisplayName}");
+        if (target is not StairPointOfInterest stair) return System.Array.Empty<OutcomeReport>();
+        return new[] { new AreaMoveOutcome(stair.TopArea) };
     }
 }

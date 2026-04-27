@@ -291,4 +291,5 @@ public class VerbOutcome : ConcreteOutcome
 
     public override string DisplayName => VerbView.Verbatim;
     public override string ToNaturalLanguageString() => VerbView.Verbatim;
+
 }

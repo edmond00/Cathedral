@@ -329,8 +329,11 @@ public class ActionExecutionController
             actualOutcome = new WoundOutcome(failureWound);
         }
 
-        // Apply outcome to game state
-        await _outcomeApplicator.ApplyOutcomeAsync(actualOutcome, _protagonist);
+        // Build LLM-decided reports (wound on failure, empty on success).
+        // Verb-specific reports are built later in NarrativeController via SuccessReports()/FailureReports().
+        var llmDecidedReports = new System.Collections.Generic.List<OutcomeReport>();
+        if (!succeeded && failureWound != null)
+            llmDecidedReports.Add(new WoundInflictionOutcome(failureWound));
 
         // === STEP 4: ITEM CONSUMPTION CHECK ===
         if (action.CombinedItem != null)
@@ -425,6 +428,7 @@ public class ActionExecutionController
             DifficultyLevel = difficultyLevel,
             Succeeded = succeeded,
             ActualOutcome = actualOutcome,
+            LlmDecidedReports = llmDecidedReports,
             Narration = narration,
             FailureWound = failureWound,
             IsPlausibilityFailure = false,
@@ -608,6 +612,15 @@ public class ActionExecutionResult
     public int DifficultyLevel { get; set; }
     public bool Succeeded { get; set; }
     public OutcomeBase ActualOutcome { get; set; } = null!;
+
+    /// <summary>
+    /// Reports produced by LLM-decided outcomes (wound on failure).
+    /// Verb-specific reports come from <c>verb.SuccessReports()</c> / <c>verb.FailureReports()</c>
+    /// and are built separately in NarrativeController.
+    /// </summary>
+    public System.Collections.Generic.IReadOnlyList<OutcomeReport> LlmDecidedReports { get; set; }
+        = System.Array.Empty<OutcomeReport>();
+
     public string Narration { get; set; } = "";
     
     /// <summary>

@@ -124,13 +124,12 @@ public class NarrativeUI : TerminalPanelUI
                 var line = visibleLines[i];
                 if (!line.IsHistory && line.BlockType == NarrationBlockType.Outcome)
                 {
-                    // Found an outcome line, now find the start of this block
+                    // Found an outcome line (narrative text or report chip); find the start of this block.
                     lastOutcomeBlockStart = i;
-                    // Go backwards to find the beginning of this block
                     for (int j = i - 1; j >= 0; j--)
                     {
                         var prevLine = visibleLines[j];
-                        if (prevLine.IsHistory || prevLine.BlockType != NarrationBlockType.Outcome || 
+                        if (prevLine.IsHistory || prevLine.BlockType != NarrationBlockType.Outcome ||
                             (prevLine.Type == LineType.Empty && j > 0 && visibleLines[j-1].BlockType != NarrationBlockType.Outcome))
                         {
                             lastOutcomeBlockStart = j + 1;
@@ -349,6 +348,28 @@ public class NarrativeUI : TerminalPanelUI
                     _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text, outcomeColor, Config.NarrativeUI.BackgroundColor);
                     break;
                     
+                case LineType.Report:
+                    if (renderedLine.Report != null)
+                    {
+                        if (shouldDimThisLine)
+                        {
+                            _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
+                                Config.NarrativeUI.DimmedContentColor, Config.NarrativeUI.BackgroundColor);
+                        }
+                        else
+                        {
+                            var bgColor = renderedLine.Report.Severity switch
+                            {
+                                OutcomeReportSeverity.Negative => Config.NarrativeUI.OutcomeReportNegativeBackground,
+                                OutcomeReportSeverity.Positive => Config.NarrativeUI.OutcomeReportPositiveBackground,
+                                _                              => Config.NarrativeUI.OutcomeReportNeutralBackground,
+                            };
+                            _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
+                                Config.NarrativeUI.OutcomeReportTextColor, bgColor);
+                        }
+                    }
+                    break;
+
                 case LineType.Empty:
                 case LineType.Separator:
                     // Just skip (already cleared)
@@ -370,16 +391,18 @@ public class NarrativeUI : TerminalPanelUI
         switch (line.Type)
         {
             case LineType.Separator:
-                // Render separator in slightly brighter color
                 _terminal.Text(_layout.CONTENT_START_X, y, line.Text, Config.NarrativeUI.SeparatorColor, Config.NarrativeUI.BackgroundColor);
                 break;
-                
-            case LineType.Empty:
-                // Nothing to render
+
+            case LineType.Report:
+                // Report chips collapse to plain history grey — no color background in history.
+                _terminal.Text(_layout.CONTENT_START_X, y, line.Text.TrimEnd(), historyColor, Config.NarrativeUI.BackgroundColor);
                 break;
-                
+
+            case LineType.Empty:
+                break;
+
             default:
-                // Render all other history lines in dark gray
                 _terminal.Text(_layout.CONTENT_START_X, y, line.Text, historyColor, Config.NarrativeUI.BackgroundColor);
                 break;
         }

@@ -339,6 +339,12 @@ public static class Config
         public static readonly Vector4 DiceGoldColor = Colors.GoldYellow; // Gold yellow for dice sixes
         public static readonly Vector4 HintTextColor = Colors.MediumGray50; // Medium grey for hint text
         public static readonly Vector4 DimmedContentColor = Colors.DarkGray35; // Dark grey for content when continue button is shown
+
+        // Outcome report chip colors (colored background, black text)
+        public static readonly Vector4 OutcomeReportTextColor        = Colors.Black;
+        public static readonly Vector4 OutcomeReportPositiveBackground = Colors.DarkYellow;   // dark yellow — item / skill gain
+        public static readonly Vector4 OutcomeReportNegativeBackground = Colors.DarkPurple;   // dark purple — wound / combat
+        public static readonly Vector4 OutcomeReportNeutralBackground  = Colors.DarkGray40;   // mid grey — location / conversation
     }
     
     #endregion

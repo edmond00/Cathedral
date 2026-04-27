@@ -437,9 +437,10 @@ public class NarrativeController
             
             // Update state
             _narrationState.IsLoadingThinking = false;
-            _narrationState.ThinkingAttemptsRemaining--;
+            if (_scene?.Phase != NarrationPhase.ChildhoodReminescence)
+                _narrationState.ThinkingAttemptsRemaining--;
             _narrationState.ErrorMessage = null;
-            
+
             Console.WriteLine($"NarrativeController: Thinking phase complete ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)");
             
             // In debug mode, print available actions and their outcomes to console
@@ -527,7 +528,11 @@ public class NarrativeController
 
                 Console.WriteLine($"NarrativeController: Coded rule failure - consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
 
-                if (_narrationState.ThinkingAttemptsRemaining > 0)
+                if (_scene?.Phase == NarrationPhase.ChildhoodReminescence)
+                {
+                    return;
+                }
+                else if (_narrationState.ThinkingAttemptsRemaining > 0)
                 {
                     _narrationState.ThinkingAttemptsRemaining--;
                     return;
@@ -581,9 +586,14 @@ public class NarrativeController
                 _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
                 
                 Console.WriteLine($"NarrativeController: Plausibility failure - consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
-                
+
+                // Reminescence phase never costs noetic — player can retry freely
+                if (_scene?.Phase == NarrationPhase.ChildhoodReminescence)
+                {
+                    return;
+                }
                 // If player still has noetic points, let them try again (no graying, no continue button)
-                if (_narrationState.ThinkingAttemptsRemaining > 0)
+                else if (_narrationState.ThinkingAttemptsRemaining > 0)
                 {
                     Console.WriteLine($"NarrativeController: Player can retry with {_narrationState.ThinkingAttemptsRemaining} noetic points remaining");
                     // Decrement noetic points for attempting an impossible action
@@ -755,15 +765,19 @@ public class NarrativeController
             return;
         }
 
-        // Execute the verb (grants skills, items, updates childhood history, stamps transition).
+        // Collect and apply all verb reports (skills, items, history, transition).
+        System.Collections.Generic.IReadOnlyList<OutcomeReport> reminescenceReportList;
         try
         {
-            action.Verb.Execute(_scene, _pov, _protagonist, target);
+            reminescenceReportList = action.Verb.SuccessReports(_scene, _pov, _protagonist, target);
+            foreach (var report in reminescenceReportList)
+                report.Apply(_protagonist, _scene, _pov);
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: REMEMBER verb threw — {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
+            reminescenceReportList = System.Array.Empty<OutcomeReport>();
         }
 
         // Resolve the action modusMentis (ChildhoodReminescenceModusMentis) from the action.
@@ -806,13 +820,19 @@ public class NarrativeController
 
         _narrationState.IsLoadingAction = false;
 
+        // UI-visible chips come directly from the SuccessReports() list (ShowInUI filter).
+        var uiReminescenceReports = reminescenceReportList
+            .Where(r => r.ShowInUI)
+            .ToList();
+
         var outcomeBlock = new NarrationBlock(
-            Type:        NarrationBlockType.Outcome,
-            ModusMentis: actionMm,
-            Text:        narrationText,
-            Keywords:    null,
-            Actions:     null,
-            ChainOrigin: action);
+            Type:           NarrationBlockType.Outcome,
+            ModusMentis:    actionMm,
+            Text:           narrationText,
+            Keywords:       null,
+            Actions:        null,
+            ChainOrigin:    action,
+            OutcomeReports: uiReminescenceReports.Count > 0 ? uiReminescenceReports : null);
         _scrollBuffer.AddBlock(outcomeBlock);
         _narrationState.AddBlock(outcomeBlock);
         _scrollBuffer.ScrollToBottom();
@@ -912,13 +932,32 @@ public class NarrativeController
         
         Console.WriteLine($"NarrativeController: Dice roll continue - applying result");
         
+        // Collect all outcome reports: verb-specific + LLM-decided (wound).
+        var allReports = new System.Collections.Generic.List<OutcomeReport>();
+        if (result.ActualOutcome is VerbOutcome verbTarget && _scene != null && _pov != null)
+        {
+            var verbReports = result.Succeeded
+                ? verbTarget.VerbView.Verb.SuccessReports(_scene, _pov, _protagonist, verbTarget.Target!)
+                : verbTarget.VerbView.Verb.FailureReports(_scene, _pov, _protagonist, verbTarget.Target!);
+            allReports.AddRange(verbReports);
+        }
+        allReports.AddRange(result.LlmDecidedReports);
+
+        // Apply every report's game-state change in order.
+        foreach (var report in allReports)
+            report.Apply(_protagonist, _scene, _pov);
+
+        // UI-visible chips for the outcome block.
+        var uiReports = allReports.Where(r => r.ShowInUI).ToList();
+
         // Add outcome narration block
         var outcomeBlock = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
             ModusMentis: result.ActionModusMentis ?? throw new InvalidOperationException("Action modusMentis cannot be null"),
             Text: $"[{(result.Succeeded ? "SUCCESS" : "FAILURE")}] {result.Narration}",
             Keywords: null,
-            Actions: null
+            Actions: null,
+            OutcomeReports: uiReports.Count > 0 ? uiReports : null
         );
         _scrollBuffer.AddBlock(outcomeBlock);
         _narrationState.AddBlock(outcomeBlock);
@@ -973,8 +1012,7 @@ public class NarrativeController
         }
         else if (result.ActualOutcome is VerbOutcome verbOutcome && _scene != null && _pov != null)
         {
-            Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.VerbView.Verb.VerbId}' on '{verbOutcome.Target?.DisplayName}', executing verb");
-            verbOutcome.VerbView.Verb.Execute(_scene, _pov, _protagonist, verbOutcome.Target!);
+            Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.VerbView.Verb.VerbId}' on '{verbOutcome.Target?.DisplayName}', reports already applied");
             SceneDebugManager.UpdatePoV(_pov);
 
             // Check if the verb requested a dialogue session
@@ -1058,7 +1096,8 @@ public class NarrativeController
             _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
 
             // Consume a thinking point (same pool as thinking)
-            _narrationState.ThinkingAttemptsRemaining--;
+            if (_scene?.Phase != NarrationPhase.ChildhoodReminescence)
+                _narrationState.ThinkingAttemptsRemaining--;
 
             // Update state
             _narrationState.IsLoadingFocusObservation = false;

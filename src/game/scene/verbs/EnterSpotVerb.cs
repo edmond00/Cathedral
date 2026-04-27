@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene.Verbs;
@@ -23,13 +23,9 @@ public class EnterSpotVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"examine the {target.DisplayName.ToLowerInvariant()}";
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not Spot spot)
-            throw new InvalidOperationException("EnterSpotVerb target must be a Spot");
-
-        pov.InSpot = spot;
-        pov.Focus  = null;
-        Console.WriteLine($"EnterSpotVerb: Entered spot '{spot.DisplayName}'");
+        if (target is not Spot spot) return System.Array.Empty<OutcomeReport>();
+        return new[] { new SpotEnterOutcome(spot) };
     }
 }

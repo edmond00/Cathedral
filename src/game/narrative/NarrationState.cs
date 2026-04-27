@@ -165,6 +165,12 @@ public class NarrationBlock : ModusMentisChainElement
     public string? SpeakerName { get; init; } = null;
 
     /// <summary>
+    /// Short, prewritten outcome chips rendered below the LLM narration.
+    /// Null when there are no concrete outcomes to report.
+    /// </summary>
+    public IReadOnlyList<OutcomeReport>? OutcomeReports { get; init; } = null;
+
+    /// <summary>
     /// Implements ModusMentisChainElement.ChainModusMentis - returns the modusMentis of this block.
     /// </summary>
     public override ModusMentis ChainModusMentis => ModusMentis;
@@ -183,7 +189,8 @@ public class NarrationBlock : ModusMentisChainElement
         ConcreteOutcome? LinkedOutcome = null,
         Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap = null,
         List<NarrationSentence>? Sentences = null,
-        string? SpeakerName = null)
+        string? SpeakerName = null,
+        IReadOnlyList<OutcomeReport>? OutcomeReports = null)
     {
         this.Type = Type;
         this.ModusMentis = ModusMentis;
@@ -196,6 +203,7 @@ public class NarrationBlock : ModusMentisChainElement
         this.KeywordOutcomeMap = KeywordOutcomeMap;
         this.Sentences = Sentences;
         this.SpeakerName = SpeakerName;
+        this.OutcomeReports = OutcomeReports;
     }
 }
 

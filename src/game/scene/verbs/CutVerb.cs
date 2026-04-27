@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc.Corpse;
 
@@ -32,22 +32,9 @@ public class CutVerb : Verb
         return $"cut {article} {name}";
     }
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not ItemElement itemElement)
-            throw new InvalidOperationException("CutVerb target must be an ItemElement");
-
-        // Remove from corpse body part PoI
-        foreach (var poi in pov.InSpot!.PointsOfInterest.OfType<CorpseBodyPartPoI>())
-        {
-            if (poi.Items.Remove(itemElement))
-            {
-                Console.WriteLine($"CutVerb: Cut {itemElement.DisplayName} from {poi.DisplayName}");
-                break;
-            }
-        }
-
-        actor.Inventory.Add(itemElement.Item);
-        Console.WriteLine($"CutVerb: {actor.DisplayName} acquired {itemElement.DisplayName}");
+        if (target is not ItemElement itemElement) return System.Array.Empty<OutcomeReport>();
+        return new[] { new CorpseItemAcquisitionOutcome(itemElement) };
     }
 }

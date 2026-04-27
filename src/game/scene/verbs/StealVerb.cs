@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc.Corpse;
@@ -48,26 +48,9 @@ public class StealVerb : Verb
         return $"steal {article} {name}";
     }
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not ItemElement itemElement)
-            throw new InvalidOperationException("StealVerb target must be an ItemElement");
-
-        var searchPoIs = pov.InSpot != null
-            ? pov.InSpot.PointsOfInterest.Where(p => p is not CorpseBodyPartPoI)
-            : pov.Where.PointsOfInterest.Where(p => p is not CorpseBodyPartPoI);
-
-        foreach (var poi in searchPoIs)
-        {
-            if (poi.Items.Remove(itemElement))
-            {
-                Console.WriteLine($"StealVerb: Removed {itemElement.DisplayName} from {poi.DisplayName}");
-                break;
-            }
-        }
-
-        actor.Inventory.Add(itemElement.Item);
-        scene.StateChanges.Capture(itemElement);
-        Console.WriteLine($"StealVerb: {actor.DisplayName} stole {itemElement.DisplayName}");
+        if (target is not ItemElement itemElement) return System.Array.Empty<OutcomeReport>();
+        return new[] { new ItemAcquisitionOutcome(itemElement) };
     }
 }

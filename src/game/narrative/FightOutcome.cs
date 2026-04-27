@@ -29,4 +29,5 @@ public class FightOutcome : ConcreteOutcome
 
     public override string ToNaturalLanguageString()
         => $"engage in combat with {Target.DisplayName}";
+
 }

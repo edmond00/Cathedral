@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Dialogue.Tree;
 using Cathedral.Game.Narrative;
@@ -45,9 +46,10 @@ public class ReconcileVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"try to reconcile with {target.DisplayName}";
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc) return;
-        scene.PendingDialogueRequest = new DialogueRequest(npc, DialogueTreeRegistry.Instance.Get("reconcile").TreeId);
+        if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc)
+            return System.Array.Empty<OutcomeReport>();
+        return new[] { new DialogueTriggerOutcome(npc, DialogueTreeRegistry.Instance.Get("reconcile").TreeId) };
     }
 }

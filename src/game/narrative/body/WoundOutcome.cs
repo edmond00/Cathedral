@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
@@ -21,4 +23,5 @@ public class WoundOutcome : OutcomeBase
         Wound != null
             ? $"suffered a {Wound.WoundName} to {(Wound.TargetId.Length > 0 ? Wound.TargetId : Wound.WildcardZoneHint ?? "body").Replace('_', ' ')}"
             : "escaped without injury";
+
 }

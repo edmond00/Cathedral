@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene.Verbs;
@@ -24,15 +25,12 @@ public abstract class Verb
     /// <summary>
     /// Optional override for the action menu's difficulty glyph. When non-null, takes
     /// precedence over the difficulty-level derived glyph in <c>NarrativeUI</c>.
-    /// Used by phase-specific verbs whose actions don't have a normal difficulty
-    /// (e.g. REMEMBER in the childhood reminescence phase, which renders '○').
     /// </summary>
     public virtual char? DifficultyGlyphOverride => null;
 
     /// <summary>
     /// Whether executing this verb is a legal action.
     /// Override to false for verbs that constitute crimes (stealing, trespassing, attacking innocents).
-    /// Combined with <see cref="Scene.Area.IsPrivate"/> to determine full legality.
     /// </summary>
     public virtual bool IsLegal => true;
 
@@ -43,21 +41,34 @@ public abstract class Verb
     /// </summary>
     public virtual bool CanBeUsedUnderThreat => false;
 
-    /// <summary>
-    /// Returns whether this verb can be executed right now given the scene state,
-    /// point of view, target element, and (optionally) the acting party member.
-    /// </summary>
+    /// <summary>Returns whether this verb can be executed given the current scene state.</summary>
     public abstract bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null);
 
-    /// <summary>
-    /// Returns a natural-language string describing the action or its outcome.
-    /// This is sent to the thinking LLM instance that needs to choose a goal/outcome.
-    /// Can be dynamically written (e.g. "grab the {item name}").
-    /// </summary>
+    /// <summary>Natural-language string describing the intended action, sent to the LLM.</summary>
     public abstract string Verbatim(Scene scene, PoV pov, Element target);
 
     /// <summary>
-    /// Executes the verb, modifying the scene state, party member, and/or PoV.
+    /// Returns the <see cref="OutcomeReport"/> objects that result from a successful execution
+    /// of this verb. Each report both describes itself for the UI and applies its own
+    /// game-state change via <see cref="OutcomeReport.Apply"/>.
     /// </summary>
-    public abstract void Execute(Scene scene, PoV pov, Protagonist actor, Element target);
+    public virtual IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+        => System.Array.Empty<OutcomeReport>();
+
+    /// <summary>
+    /// Returns the <see cref="OutcomeReport"/> objects that result from a failed execution
+    /// of this verb (verb-specific failure side-effects, excluding LLM-decided wounds).
+    /// </summary>
+    public virtual IReadOnlyList<OutcomeReport> FailureReports(Scene scene, PoV pov, Protagonist actor, Element target)
+        => System.Array.Empty<OutcomeReport>();
+
+    /// <summary>
+    /// Applies all success reports in sequence. Kept for compatibility — prefer calling
+    /// <see cref="SuccessReports"/> and iterating the results directly.
+    /// </summary>
+    public void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    {
+        foreach (var report in SuccessReports(scene, pov, actor, target))
+            report.Apply(actor, scene, pov);
+    }
 }

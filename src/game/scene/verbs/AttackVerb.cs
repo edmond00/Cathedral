@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 
@@ -32,21 +33,13 @@ public class AttackVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"attack {target.DisplayName}";
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not SceneNpc sceneNpc) return;
-
-        // Shallow NPCs have no anatomy — instant kill instead of full combat
+        if (target is not SceneNpc sceneNpc) return System.Array.Empty<OutcomeReport>();
         if (sceneNpc.Entity is ShallowNpcEntity)
-        {
-            sceneNpc.Entity.IsAlive = false;
-            var corpse = sceneNpc.Entity.GenerateCorpse(pov.Where);
-            scene.AddSpotToArea(pov.Where, corpse);
-            pov.Focus = null;
-            return;
-        }
-
-        if (sceneNpc.Entity is not NpcEntity npc) return;
-        scene.PendingFightRequest = new FightRequest(npc);
+            return new[] { new NpcSlaynOutcome(sceneNpc) };
+        if (sceneNpc.Entity is NpcEntity npc)
+            return new[] { new FightTriggerOutcome(npc) };
+        return System.Array.Empty<OutcomeReport>();
     }
 }

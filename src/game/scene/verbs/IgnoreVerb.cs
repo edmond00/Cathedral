@@ -28,8 +28,7 @@ public sealed class IgnoreVerb : Verb
 
     public override string Verbatim(Scene scene, PoV pov, Element target) => VerbatimText;
 
-    /// No-op: IgnoreVerb exits the pipeline before Execute() is ever reached.
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target) { }
+    // No-op: IgnoreVerb exits the pipeline before SuccessReports() is ever called.
 
     /// Creates a VerbOutcome for IgnoreVerb with no specific target.
     public static VerbOutcome MakeOutcome() =>

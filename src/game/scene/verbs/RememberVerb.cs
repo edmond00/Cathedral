@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene.Reminescence;
 
@@ -6,9 +7,8 @@ namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
 /// REMEMBER — the only action available in the childhood reminescence phase.
-/// Targets a <see cref="FragmentPointOfInterest"/>; on Execute it applies the fragment's
-/// outcomes (skill grants, item grants, childhood-history mutations) and queues the
-/// transition to the next reminescence (or the phase exit when the fragment is terminal).
+/// All state changes are expressed as <see cref="OutcomeReport"/> objects returned by
+/// <see cref="SuccessReports"/>, which are applied in sequence by the caller.
 /// </summary>
 public class RememberVerb : Verb
 {
@@ -17,12 +17,10 @@ public class RememberVerb : Verb
     public override int    BaseDifficulty => 0;
     public override char?  DifficultyGlyphOverride => '○';
 
-    /// <summary>Possible only on a <see cref="FragmentPointOfInterest"/> in a reminescence-phase scene.</summary>
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (scene.Phase != NarrationPhase.ChildhoodReminescence) return false;
-        if (target is not FragmentPointOfInterest) return false;
-        return true;
+        return target is FragmentPointOfInterest;
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
@@ -32,54 +30,41 @@ public class RememberVerb : Verb
         return "try to remember";
     }
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
         if (target is not FragmentPointOfInterest fragmentPoi)
             throw new InvalidOperationException("RememberVerb target must be a FragmentPointOfInterest");
 
-        var data = fragmentPoi.Fragment;
+        var data    = fragmentPoi.Fragment;
         var outcome = data.Outcome;
+        var origin  = scene.CurrentReminescenceId ?? "";
+        var reports = new List<OutcomeReport>();
 
-        // 1. Update childhood history (location is set on the very first REMEMBER).
-        if (outcome.SetChildhoodLocation != null)
-            actor.ChildhoodHistory.Location = outcome.SetChildhoodLocation;
-
-        // 2. Grant skills via the standard acquisition procedure (Procedural/Semantic/Sensory > WM > RM).
+        // Skills — visible positive chips; Apply() grants a fresh level-1 instance.
         foreach (var skillId in outcome.SkillIds)
         {
             var template = ModusMentisRegistry.Instance.GetModusMentis(skillId);
             if (template == null)
             {
-                Console.WriteLine($"RememberVerb: skill '{skillId}' is not registered — skipping.");
+                Console.WriteLine($"RememberVerb: skill '{skillId}' not registered — skipping.");
                 continue;
             }
-            // Each protagonist gets a fresh instance with Level=1 so future runs / instances don't share state.
-            var instance = (ModusMentis)Activator.CreateInstance(template.GetType())!;
-            instance.Level = 1;
-            actor.AcquireModusMentis(instance);
-            Console.WriteLine($"RememberVerb: granted modus mentis '{skillId}'");
+            reports.Add(new SkillAcquisitionOutcome(template));
         }
 
-        // 3. Grant items via wear → container → hold → overflow procedure.
+        // Items — visible positive chips; Apply() calls protagonist.AcquireItem().
         foreach (var itemFactory in outcome.Items)
-        {
-            var item = itemFactory();
-            actor.AcquireItem(item);
-            Console.WriteLine($"RememberVerb: acquired item '{item.DisplayName}'");
-        }
+            reports.Add(new ItemGrantOutcome(itemFactory()));
 
-        // 4. Record the fragment in the protagonist's childhood history.
-        var origin = scene.CurrentReminescenceId ?? "";
-        actor.ChildhoodHistory.RecordFragment(origin, data.Name, data.Summary);
+        // Internal: childhood history mutation (location + fragment record).
+        reports.Add(new ChildhoodHistoryOutcome(origin, data.Name, data.Summary, outcome.SetChildhoodLocation));
 
-        // 5. Queue the phase transition: NarrativeController consumes this on the next frame
-        //    to either rebuild the scene with the next reminescence or exit the phase.
-        scene.PendingReminescenceTransition = new ReminescenceTransitionRequest(
-            FromReminescenceId: origin,
-            NextReminescenceId: outcome.NextReminescenceId,
-            FragmentName:       data.Name);
+        // Internal: scene state capture for the consumed fragment.
+        reports.Add(new StateCaptureOutcome(fragmentPoi));
 
-        // 6. Capture state change so the scene log reflects the consumed fragment.
-        scene.StateChanges.Capture(fragmentPoi);
+        // Internal: phase transition request consumed by NarrativeController.
+        reports.Add(new ReminescenceTransitionOutcome(origin, outcome.NextReminescenceId, data.Name));
+
+        return reports;
     }
 }

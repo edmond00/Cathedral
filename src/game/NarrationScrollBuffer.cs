@@ -49,7 +49,8 @@ public class NarrationScrollBuffer
         // Create a new block with cleaned text if it was modified, preserving all properties
         var blockToAdd = cleanedText != block.Text
             ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Keywords, block.Actions, block.ChainOrigin,
-                block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences, block.SpeakerName)
+                block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences, block.SpeakerName,
+                block.OutcomeReports)
             : block;
         
         _blocks.Add(blockToAdd);
@@ -389,6 +390,41 @@ public class NarrationScrollBuffer
                 }
             }
 
+            // Outcome report chips — one line per report, preceded by an empty separator line.
+            if (block.OutcomeReports != null && block.OutcomeReports.Count > 0)
+            {
+                _renderedLines.Add(new RenderedLine(
+                    Text: "",
+                    Type: LineType.Empty,
+                    BlockType: block.Type,
+                    Keywords: null,
+                    Actions: null,
+                    IsHistory: false,
+                    GlobalActionIndex: -1,
+                    SourceBlock: block
+                ));
+
+                foreach (var report in block.OutcomeReports.Where(r => r.ShowInUI))
+                {
+                    // Pad text to fill content width so the background chip spans the full line.
+                    int leftPad  = Math.Max(0, (_maxWidth - report.Text.Length) / 2);
+                    int rightPad = Math.Max(0, _maxWidth - report.Text.Length - leftPad);
+                    string chipText = new string(' ', leftPad) + report.Text + new string(' ', rightPad);
+                    _renderedLines.Add(new RenderedLine(
+                        Text: chipText,
+                        Type: LineType.Report,
+                        BlockType: block.Type,
+                        Keywords: null,
+                        Actions: null,
+                        IsHistory: false,
+                        GlobalActionIndex: -1,
+                        SourceBlock: block,
+                        KeywordOccurrenceIndices: null,
+                        Report: report
+                    ));
+                }
+            }
+
             // Empty line after block
             _renderedLines.Add(new RenderedLine(
                 Text: "",
@@ -669,7 +705,8 @@ public record RenderedLine(
     bool IsHistory = false,  // True if this line is part of history (from previous narration nodes)
     int GlobalActionIndex = -1,  // Global action index (0-based) across all thinking blocks, -1 if not an action line
     NarrationBlock? SourceBlock = null,  // The narration block this line comes from (for modusMentis chain tracking)
-    List<int>? KeywordOccurrenceIndices = null  // Parallel to Keywords: which occurrence (0-based) within this line to highlight
+    List<int>? KeywordOccurrenceIndices = null,  // Parallel to Keywords: which occurrence (0-based) within this line to highlight
+    OutcomeReport? Report = null  // Set only for LineType.Report lines; null for all other types
 );
 
 /// <summary>
@@ -681,6 +718,7 @@ public enum LineType
     Content,    // Narration text
     Action,     // Action line (for Thinking blocks)
     Outcome,    // Outcome narration (for Action/Outcome blocks)
+    Report,     // Prewritten outcome chip (item received, wound, …)
     Empty,      // Spacing
     Separator   // Transition separator between narration nodes
 }

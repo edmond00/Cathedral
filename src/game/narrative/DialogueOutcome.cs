@@ -39,4 +39,5 @@ public class DialogueOutcome : ConcreteOutcome
 
     public override string ToNaturalLanguageString()
         => $"engage in conversation with {Target.DisplayName}";
+
 }

@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene.Verbs;
@@ -34,21 +34,9 @@ public class SlayVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"slay the {target.DisplayName.ToLowerInvariant()}";
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not SceneNpc npc)
-            throw new InvalidOperationException("SlayVerb target must be a SceneNpc");
-
-        Console.WriteLine($"SlayVerb: Slaying {npc.DisplayName}");
-
-        // Kill the NPC
-        npc.Entity.IsAlive = false;
-
-        // Spawn and register a corpse at the current area
-        var corpse = npc.Entity.GenerateCorpse(pov.Where);
-        scene.AddSpotToArea(pov.Where, corpse);
-
-        pov.Focus = null;
-        Console.WriteLine($"SlayVerb: Corpse '{corpse.DisplayName}' placed in '{pov.Where.DisplayName}'");
+        if (target is not SceneNpc npc) return System.Array.Empty<OutcomeReport>();
+        return new[] { new NpcSlaynOutcome(npc) };
     }
 }

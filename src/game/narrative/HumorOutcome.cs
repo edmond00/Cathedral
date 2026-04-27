@@ -26,4 +26,5 @@ public class HumorOutcome : OutcomeBase
     {
         return $"{(Amount > 0 ? "increase" : "decrease")} {HumorName} by {Math.Abs(Amount)}";
     }
+
 }

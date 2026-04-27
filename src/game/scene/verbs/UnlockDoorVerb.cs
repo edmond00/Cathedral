@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene.Building;
 
@@ -28,16 +28,9 @@ public class UnlockDoorVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"unlock and open {target.DisplayName.ToLowerInvariant()}";
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not DoorPointOfInterest door)
-            throw new InvalidOperationException("UnlockDoorVerb target must be a DoorPointOfInterest");
-
-        door.DoorState = DoorState.Unlocked;
-        pov.Where      = door.BackArea;
-        pov.Focus      = null;
-        scene.StateChanges.Capture(door);
-
-        Console.WriteLine($"UnlockDoorVerb: Unlocked {door.DisplayName}, moved to {door.BackArea.DisplayName}");
+        if (target is not DoorPointOfInterest door) return System.Array.Empty<OutcomeReport>();
+        return new[] { new DoorUnlockOutcome(door, door.BackArea) };
     }
 }

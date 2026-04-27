@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene.Building;
 
@@ -40,15 +40,10 @@ public class OpenDoorVerb : Verb
             : $"exit back through {door.DisplayName.ToLowerInvariant()}";
     }
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not DoorPointOfInterest door)
-            throw new InvalidOperationException("OpenDoorVerb target must be a DoorPointOfInterest");
-
+        if (target is not DoorPointOfInterest door) return System.Array.Empty<OutcomeReport>();
         var destination = pov.Where.Id == door.FrontArea.Id ? door.BackArea : door.FrontArea;
-        pov.Where = destination;
-        pov.Focus = null;
-
-        Console.WriteLine($"OpenDoorVerb: Moved through {door.DisplayName} to {destination.DisplayName}");
+        return new[] { new AreaMoveOutcome(destination) };
     }
 }

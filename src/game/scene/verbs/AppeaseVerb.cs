@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
@@ -41,14 +42,10 @@ public class AppeaseVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"try to appease {target.DisplayName}";
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc) return;
-
-        // Direct appeasement: clear enemy flag and set Suspicious affinity
-        npc.AffinityTable.ClearEnemy(actor.DisplayName);
-        npc.AffinityTable.SetLevel(actor.DisplayName, AffinityLevel.Suspicious);
-
-        Console.WriteLine($"AppeaseVerb: {actor.DisplayName} appeased {npc.DisplayName} — enemy cleared, affinity set to Suspicious");
+        if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc)
+            return System.Array.Empty<OutcomeReport>();
+        return new[] { new AffinityChangeOutcome(npc) };
     }
 }

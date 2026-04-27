@@ -1,5 +1,4 @@
-using System;
-using System.Linq;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene.Verbs;
@@ -30,13 +29,9 @@ public class MoveToAreaVerb : Verb
         return $"move to the {target.DisplayName.ToLowerInvariant()}";
     }
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
     {
-        if (target is not Area targetArea)
-            throw new InvalidOperationException("MoveToAreaVerb target must be an Area");
-
-        pov.Where = targetArea;
-        pov.Focus = null;
-        Console.WriteLine($"MoveToAreaVerb: Moved to {targetArea.DisplayName}");
+        if (target is not Area targetArea) return System.Array.Empty<OutcomeReport>();
+        return new[] { new AreaMoveOutcome(targetArea) };
     }
 }

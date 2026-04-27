@@ -2,6 +2,8 @@ using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative;
 
+
+
 /// <summary>
 /// Uniform interface implemented by NarrationNode, Item, and ObservationObject.
 /// Lets the graph be traversed as a list of observations regardless of the concrete type.
@@ -30,6 +32,7 @@ public abstract class OutcomeBase
     /// Converts the outcome to a natural language string for LLM communication.
     /// </summary>
     public abstract string ToNaturalLanguageString();
+
 }
 
 /// <summary>

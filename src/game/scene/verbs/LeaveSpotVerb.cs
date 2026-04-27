@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Scene.Verbs;
@@ -22,13 +22,6 @@ public class LeaveSpotVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"leave the {target.DisplayName.ToLowerInvariant()}";
 
-    public override void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
-    {
-        if (target is not Spot)
-            throw new InvalidOperationException("LeaveSpotVerb target must be a Spot");
-
-        Console.WriteLine($"LeaveSpotVerb: Left spot '{pov.InSpot?.DisplayName}'");
-        pov.InSpot = null;
-        pov.Focus  = null;
-    }
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+        => new[] { new SpotLeaveOutcome() };
 }
