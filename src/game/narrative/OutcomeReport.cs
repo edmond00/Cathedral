@@ -105,23 +105,26 @@ public sealed class ChildhoodHistoryOutcome : OutcomeReport
     private readonly string  _originId;
     private readonly string  _fragmentName;
     private readonly string  _summary;
+    private readonly string  _contextSummary;
     private readonly string? _setLocation;
 
     public override bool ShowInUI => false;
 
-    public ChildhoodHistoryOutcome(string originId, string fragmentName, string summary, string? setLocation = null)
+    public ChildhoodHistoryOutcome(string originId, string fragmentName, string summary,
+        string contextSummary = "", string? setLocation = null)
         : base(string.Empty, OutcomeReportSeverity.Neutral)
     {
-        _originId     = originId;
-        _fragmentName = fragmentName;
-        _summary      = summary;
-        _setLocation  = setLocation;
+        _originId       = originId;
+        _fragmentName   = fragmentName;
+        _summary        = summary;
+        _contextSummary = contextSummary;
+        _setLocation    = setLocation;
     }
 
     public override void Apply(Protagonist protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
     {
         if (_setLocation != null)
             protagonist.ChildhoodHistory.Location = _setLocation;
-        protagonist.ChildhoodHistory.RecordFragment(_originId, _fragmentName, _summary);
+        protagonist.ChildhoodHistory.RecordFragment(_originId, _fragmentName, _summary, _contextSummary);
     }
 }

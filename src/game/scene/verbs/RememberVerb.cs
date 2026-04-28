@@ -57,7 +57,7 @@ public class RememberVerb : Verb
             reports.Add(new ItemGrantOutcome(itemFactory()));
 
         // Internal: childhood history mutation (location + fragment record).
-        reports.Add(new ChildhoodHistoryOutcome(origin, data.Name, data.Summary, outcome.SetChildhoodLocation));
+        reports.Add(new ChildhoodHistoryOutcome(origin, data.Name, data.Summary, data.ContextSummary, outcome.SetChildhoodLocation));
 
         // Internal: scene state capture for the consumed fragment.
         reports.Add(new StateCaptureOutcome(fragmentPoi));
