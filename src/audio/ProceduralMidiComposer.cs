@@ -24,17 +24,28 @@ public static class ProceduralMidiComposer
     // GM patch numbers (0-based, as sent in ProgramChangeEvent)
     public const int PatchChurchOrgan    = 19; // #20 — Pipe Organ
     public const int PatchChoirAahs      = 52; // #53 — Choir Aahs
+    public const int PatchVoiceOohs      = 53; // #54 — Voice Oohs — softer, wordless choir
     public const int PatchViolinStrings  = 48; // #49 — String Ensemble 1
+    public const int PatchSoloViolin     = 40; // #41 — Violin (solo) — intimate, no brass attack
     public const int PatchTremoloStrings = 44; // #45 — Tremolo Strings — creepy/tense
     public const int PatchFlute          = 73; // #74 — Flute
-    public const int PatchOboe           = 68; // #69 — Oboe — mournful/urgent
+    public const int PatchRecorder       = 74; // #75 — Recorder — quintessential medieval woodwind, soft
+    public const int PatchPanFlute       = 75; // #76 — Pan Flute — airy, pastoral, never brassy
+    public const int PatchOboe           = 68; // #69 — Oboe — kept for reference; penetrating/reedy
     public const int PatchHarpsichord    = 6;  // #7  — Harpsichord — bright/tavern
+    public const int PatchDulcimer       = 15; // #16 — Dulcimer — plucked medieval zither sound
     public const int PatchPadBowed       = 92; // #93 — Pad 5 (bowed) — ethereal/mystery
     public const int PatchPadNewAge      = 88; // #89 — Pad 1 (new age) — airy calm wash
     public const int PatchPadHalo        = 94; // #95 — Pad 7 (halo) — mysterious shimmer
     public const int PatchPadSweep       = 95; // #96 — Pad 8 (sweep) — dark, heavy wash
     public const int PatchSeashore       = 122; // #123 — Seashore — wind/waves, outdoor calm
     public const int PatchBirdTweet      = 123; // #124 — Bird Tweet — light nature ambiance
+    // Synth leads (digital / glitch SFX)
+    public const int PatchLeadSquare     = 80;  // #81 — Lead 1 Square    — buzzy, harsh
+    public const int PatchLeadSawtooth   = 81;  // #82 — Lead 2 Sawtooth  — electronic buzz
+    // Synth FX (sci-fi / crystal / echo)
+    public const int PatchFxCrystal      = 98;  // #99 — FX 3 Crystal     — bright digital ping
+    public const int PatchFxEchoes       = 102; // #103 — FX 7 Echoes     — decaying digital repeats
 
     /// <summary>
     /// Picks the next MIDI note using a weighted random walk within [minIdx, maxIdx].
@@ -113,12 +124,22 @@ public static class ProceduralMidiComposer
     public static NoteEvent[] GenerateMelodyPhrase(
         int[] scale, int startIdx, int minIdx, int maxIdx,
         float sadness, float fear, float mystery, double bpm, Random rng,
-        int[]? motifContour = null)
+        int[]? motifContour = null, bool forceMotifReplay = false, bool? forceResolution = null)
     {
         double beatMs = 60_000.0 / bpm;
-        // Fear shortens phrases (frantic/broken); sadness also shortens (contemplative)
-        int maxLen    = fear > 0.6f ? 5 : (sadness > 0.5f ? 6 : 8);
-        int minLen    = fear > 0.6f ? 2 : 4;
+        // Fear shortens phrases (frantic/broken); sadness also shortens (contemplative).
+        // Normal ceiling raised (8→11) so phrases can breathe before ending.
+        // Fear shortens phrases (frantic) but no longer reduces them to fragments —
+        // min 3 notes keeps at least a recognisable melodic gesture, max 7 allows tension to build.
+        int maxLen = fear > 0.6f ? 7 : (sadness > 0.5f ? 8 : 11);
+        int minLen = fear > 0.6f ? 3 : 4;
+        // ~18% chance of an extended flowing phrase — only when not fearful/staccato.
+        // Gives occasional long arcing lines that don't feel abruptly cut off.
+        if (fear < 0.50f && rng.NextDouble() < 0.18)
+        {
+            minLen = 9;
+            maxLen = 15;
+        }
         int phraseLen = rng.Next(minLen, maxLen + 1);
         var rhythm = PickRhythmPattern(phraseLen, sadness, fear, rng);
 
@@ -132,10 +153,12 @@ public static class ProceduralMidiComposer
         double cPick      = rng.NextDouble() * totalCW;
 
         int arcStart, peakIdx, cadenceIdx, peakPos;
+        int contourType = 0; // -1=descent, 0=arch, +1=ascending — used to align velocity envelope
 
         if (cPick < descentW)
         {
             // Descent: start near top, fall all the way to cadence
+            contourType = -1;
             arcStart   = Math.Clamp(maxIdx - rng.Next(0, rangeSize / 4 + 1), minIdx, maxIdx);
             peakIdx    = arcStart;
             cadenceIdx = PickCadenceNote(minIdx, maxIdx, rng);
@@ -145,6 +168,7 @@ public static class ProceduralMidiComposer
         {
             // Ascending: start near bottom, climb — cadence stays high (dominant or peak)
             // so the phrase doesn't crash back down after building tension.
+            contourType = 1;
             arcStart   = minIdx + rng.Next(0, rangeSize / 4 + 1);
             peakIdx    = Math.Clamp(arcStart + rng.Next(4, 7), minIdx, maxIdx);
             // 60% land on the peak itself, 40% on dominant — both sound like arriving high
@@ -162,6 +186,12 @@ public static class ProceduralMidiComposer
             cadenceIdx = PickCadenceNote(minIdx, maxIdx, rng);
             peakPos    = 1 + rng.Next(0, Math.Max(1, phraseLen / 2));
         }
+
+        // Q/A phrasing: override cadence when resolution is forced by caller
+        if (forceResolution.HasValue)
+            cadenceIdx = forceResolution.Value
+                ? minIdx                                         // answer: resolve to tonic
+                : Math.Clamp(minIdx + 4, minIdx, maxIdx);       // question: land on dominant
 
         // Smooth phrase start: clamp arcStart within ~1/4 range of where the voice
         // left off (startIdx), so consecutive phrases connect rather than teleport.
@@ -196,7 +226,7 @@ public static class ProceduralMidiComposer
 
         // Motif replay: ~30% chance to reuse the previous phrase's interval contour
         // (shifted to the new arcStart). Creates a sense of theme and development.
-        if (motifContour != null && motifContour.Length > 0 && rng.NextDouble() < 0.30)
+        if (motifContour != null && motifContour.Length > 0 && (forceMotifReplay || rng.NextDouble() < 0.30))
         {
             int replayCur = arcStart;
             noteIndices[0] = replayCur;
@@ -215,20 +245,24 @@ public static class ProceduralMidiComposer
             noteIndices[phraseLen - 1] = cadenceIdx; // always land on cadence
         }
 
-        // Phrase dynamic arc: crescendo, decrescendo, or arch shape applied per note
-        float[] envelope = PickVelocityEnvelope(phraseLen, sadness, fear, rng);
+        // Phrase dynamic arc: envelope aligned to melodic contour (ascending→crescendo, descent→decrescendo)
+        float[] envelope = PickVelocityEnvelope(phraseLen, sadness, fear, rng, contourType);
         float durationFactor = (1.0f + sadness * 0.5f) * (1.0f - fear * 0.55f);
         var events = new NoteEvent[phraseLen];
         for (int i = 0; i < phraseLen; i++)
         {
             int durMs = (int)(beatMs * rhythm[i % rhythm.Length] * durationFactor);
-            // Fear adds a staccato rest after inner notes
+            // Fear adds a tight staccato rest after inner notes — reduced multiplier so
+            // notes still connect; the urgency comes from BPM and short durations.
             int restMs = (i < phraseLen - 1 && fear > 0.35f)
-                ? (int)(beatMs * fear * 0.22)
+                ? (int)(beatMs * fear * 0.09)
                 : (i == phraseLen - 2 && rng.NextDouble() < 0.5 ? (int)(beatMs * 0.12) : 0);
-            // Mystery: occasional within-phrase breath (sudden silence)
-            if (mystery > 0.5f && i > 0 && i < phraseLen - 1 && rng.NextDouble() < (mystery - 0.5f) * 0.6f)
-                restMs = Math.Max(restMs, (int)(beatMs * (0.5 + rng.NextDouble() * (double)mystery)));
+            // Mystery: early suspension specifically at notes 2-3 for a stutter/hanging feel
+            if (mystery > 0.45f && (i == 2 || i == 3) && rng.NextDouble() < (mystery - 0.45f) * 0.28f)
+                restMs = Math.Max(restMs, (int)(beatMs * (0.25 + rng.NextDouble() * 0.35)));
+            // Later mid-phrase deliberate breath — only fires past note 3 to avoid overlap
+            if (mystery > 0.65f && i > 3 && i < phraseLen - 1 && rng.NextDouble() < (mystery - 0.65f) * 0.35f)
+                restMs = Math.Max(restMs, (int)(beatMs * (0.4 + rng.NextDouble() * 0.5)));
             events[i] = new NoteEvent
             {
                 ScaleIdx     = noteIndices[i],
@@ -248,18 +282,91 @@ public static class ProceduralMidiComposer
             last.DurationMs = (int)(last.DurationMs * (1.4 + rng.NextDouble() * 0.6));
         }
 
-        // High fear: chromatic "wrong notes" — inject ±1 semitone dissonance
+        // High fear: chromatic "wrong notes" — inject ±1 semitone dissonance.
+        // Reduced probability (was 1.1×) so only ~1-2 notes per phrase are displaced
+        // rather than a continuous wall of chromaticism.
         if (fear > 0.65f)
         {
             for (int i = 0; i < events.Length; i++)
             {
-                if (rng.NextDouble() < (fear - 0.65f) * 1.1)
+                if (rng.NextDouble() < (fear - 0.65f) * 0.55)
                 {
                     int displace = rng.NextDouble() < 0.5 ? 1 : -1;
                     events[i].MidiNote = Math.Clamp(events[i].MidiNote + displace, 21, 108);
                 }
             }
         }
+
+        // Ritardando: last 2 notes slow proportionally with sadness (independent of fermata above)
+        if (sadness > 0.3f && events.Length >= 2)
+        {
+            events[events.Length - 2].DurationMs = (int)(events[events.Length - 2].DurationMs * (1.0f + sadness * 0.25f));
+            events[events.Length - 1].DurationMs = (int)(events[events.Length - 1].DurationMs * (1.0f + sadness * 0.50f));
+        }
+
+        // Fear micro-tempo jitter: ±8% duration variation in random groups of 2-4 notes
+        if (fear > 0.5f)
+        {
+            int ni = 0;
+            float jitterRange = (fear - 0.5f) * 0.16f; // 0–0.08 at max fear
+            while (ni < events.Length)
+            {
+                int groupLen = rng.Next(2, 5);
+                float jitter = 1.0f + (float)(rng.NextDouble() * 2.0 - 1.0) * jitterRange;
+                for (int gi = 0; gi < groupLen && ni + gi < events.Length; gi++)
+                    events[ni + gi].DurationMs = Math.Max(40, (int)(events[ni + gi].DurationMs * jitter));
+                ni += groupLen;
+            }
+        }
+
+        // Grace note (appoggiatura): ~35% chance, very short neighbor note before phrase start.
+        // Reduced at high fear (jitter already provides enough instability).
+        if (phraseLen > 1 && fear < 0.55f && rng.NextDouble() < 0.35)
+        {
+            int graceDir = rng.NextDouble() < 0.60 ? 1 : -1;
+            int graceIdx = Math.Clamp(noteIndices[0] + graceDir, minIdx, maxIdx);
+            var graceNote = new NoteEvent
+            {
+                ScaleIdx     = graceIdx,
+                MidiNote     = scale[graceIdx],
+                DurationMs   = 60 + rng.Next(30),
+                RestAfterMs  = 0,
+                IsAccented   = false,
+                VelocityMult = 0.68f,
+            };
+            var withGrace = new NoteEvent[events.Length + 1];
+            withGrace[0] = graceNote;
+            Array.Copy(events, 0, withGrace, 1, events.Length);
+            events = withGrace;
+        }
+
+        // Trill: when the final note has a long fermata (>500ms), add a rapid trill figure
+        // over the last ~45% of the note's duration. ~40% chance, suppressed at high fear.
+        if (events.Length > 0 && events[events.Length - 1].DurationMs > 500
+            && fear < 0.50f && rng.NextDouble() < 0.40)
+        {
+            var lastEvt       = events[events.Length - 1];
+            int trillSustainMs = (int)(lastEvt.DurationMs * 0.55);
+            int trillBodyMs   = lastEvt.DurationMs - trillSustainMs;
+            int pairMs        = 50;
+            int numPairs      = trillBodyMs / (pairMs * 2);
+            if (numPairs >= 3)
+            {
+                int trillIdx  = Math.Clamp(lastEvt.ScaleIdx + 1, 0, scale.Length - 1);
+                int trillMidi = scale[trillIdx];
+                var trillList = new List<NoteEvent>(events.Length + numPairs * 2);
+                for (int ti = 0; ti < events.Length - 1; ti++) trillList.Add(events[ti]);
+                trillList.Add(lastEvt with { DurationMs = trillSustainMs, RestAfterMs = 0 });
+                for (int t = 0; t < numPairs; t++)
+                {
+                    bool isLastPair = (t == numPairs - 1);
+                    trillList.Add(new NoteEvent { ScaleIdx = trillIdx,         MidiNote = trillMidi,       DurationMs = pairMs, RestAfterMs = 0,                              VelocityMult = 0.62f });
+                    trillList.Add(new NoteEvent { ScaleIdx = lastEvt.ScaleIdx, MidiNote = lastEvt.MidiNote, DurationMs = pairMs, RestAfterMs = isLastPair ? lastEvt.RestAfterMs : 0, VelocityMult = 0.62f });
+                }
+                events = trillList.ToArray();
+            }
+        }
+
         return events;
     }
 
@@ -373,6 +480,52 @@ public static class ProceduralMidiComposer
         return events;
     }
 
+    /// <summary>
+    /// Generates a rhythmic ostinato: a 2–4 note cell tiled 2–3 times.
+    /// Creates a locked groove under a free melody — medieval rhythmic pulse.
+    /// </summary>
+    public static NoteEvent[] GenerateOstinatoPhrase(
+        int[] scale, int startIdx, int minIdx, int maxIdx,
+        float sadness, float fear, double bpm, Random rng)
+    {
+        double beatMs = 60_000.0 / bpm;
+        int cellLen = rng.Next(2, 5);
+        int repeats = rng.Next(2, 4);
+
+        // Build a short stepwise cell around startIdx
+        var cell = new int[cellLen];
+        int cur = Math.Clamp(startIdx, minIdx, maxIdx);
+        cell[0] = cur;
+        for (int i = 1; i < cellLen; i++)
+        {
+            int step = rng.NextDouble() < 0.6 ? 1 : (rng.NextDouble() < 0.7 ? -1 : 2);
+            cur = Math.Clamp(cur + step, minIdx, maxIdx);
+            cell[i] = cur;
+        }
+
+        // Short punchy note duration (0.25–0.4 beats)
+        int durMs = Math.Max(40, (int)(beatMs * (0.30f + sadness * 0.10f) * (1.0f - fear * 0.25f)));
+        int restMs = (int)(beatMs * 0.04f);
+
+        var events = new NoteEvent[cellLen * repeats];
+        for (int r = 0; r < repeats; r++)
+        {
+            for (int i = 0; i < cellLen; i++)
+            {
+                events[r * cellLen + i] = new NoteEvent
+                {
+                    ScaleIdx     = cell[i],
+                    MidiNote     = scale[cell[i]],
+                    DurationMs   = durMs,
+                    RestAfterMs  = restMs,
+                    IsAccented   = (i == 0 && r == 0),
+                    VelocityMult = r == 0 ? 1.1f : Math.Max(0.7f, 1.0f - r * 0.08f),
+                };
+            }
+        }
+        return events;
+    }
+
     /// <summary>Picks a melodically varied cadence target.
     /// 50% tonic, 30% dominant (approx. 5th scale degree), 20% mediant (3rd).
     /// Avoids always resolving to the bottom root note.</summary>
@@ -388,7 +541,8 @@ public static class ProceduralMidiComposer
     /// Returns a per-note velocity multiplier array shaping the phrase dynamically.
     /// Sadness → decrescendo (soft fade); dance/ascending → arch; fear → flat (unpredictable).
     /// </summary>
-    private static float[] PickVelocityEnvelope(int len, float sadness, float fear, Random rng)
+    // contourHint: +1 = ascending phrase (bias crescendo), -1 = descending (bias decrescendo), 0 = arch
+    private static float[] PickVelocityEnvelope(int len, float sadness, float fear, Random rng, int contourHint = 0)
     {
         var env = new float[len];
         // Fear bypasses the arc for unpredictability
@@ -397,9 +551,9 @@ public static class ProceduralMidiComposer
             for (int i = 0; i < len; i++) env[i] = 1.0f;
             return env;
         }
-        double crescW  = (1.0 - sadness) * 0.4;
-        double decresW = sadness * 0.5;
-        double archW   = 0.6;
+        double crescW  = contourHint > 0  ? 1.8 : (1.0 - sadness) * 0.4;
+        double decresW = contourHint < 0  ? 1.8 : sadness * 0.5;
+        double archW   = contourHint == 0 ? 1.8 : 0.6;
         double pick    = rng.NextDouble() * (crescW + decresW + archW);
         if (pick < decresW) // decrescendo: loud start, soft end
             for (int i = 0; i < len; i++) env[i] = 1.2f - 0.45f * i / (len - 1);
@@ -439,16 +593,21 @@ public static class ProceduralMidiComposer
         new[] { 0.33f, 0.33f, 0.34f, 0.33f, 0.33f, 0.34f }, // even jig quavers
         new[] { 0.5f, 0.5f, 0.25f, 0.25f, 0.5f, 0.5f },    // reel with skip
     };
-    // Broken/disturbing: stutter then sudden silence
+    // Broken/disturbing: syncopated bursts with a held resolution — all notes are
+    // >= 0.25 beats so they remain audible at any BPM in the game's range.
+    // The tension comes from syncopation and unexpected groupings, not inaudible micro-notes.
     private static readonly float[][] BrokenRhythms = {
-        new[] { 0.12f, 0.12f, 0.12f, 1.2f, 0.04f },
-        new[] { 0.1f, 0.6f, 0.1f, 0.1f, 0.8f },
-        new[] { 0.25f, 0.08f, 0.08f, 0.35f, 0.9f },
-        new[] { 0.05f, 0.05f, 0.05f, 0.05f, 1.4f },
+        new[] { 0.5f, 0.25f, 0.25f, 0.5f, 1.5f },   // cluster + long hold
+        new[] { 0.25f, 0.25f, 0.25f, 0.25f, 1.0f },  // four equal stabs + release
+        new[] { 0.75f, 0.25f, 0.25f, 0.25f, 1.0f },  // dotted lead-in + stabs
+        new[] { 0.5f, 0.5f, 0.25f, 0.25f, 0.5f },    // off-beat entry, tight finish
     };
     private static float[] PickRhythmPattern(int phraseLen, float sadness, float fear, Random rng)
     {
-        if (fear > 0.65f) return BrokenRhythms[rng.Next(BrokenRhythms.Length)];
+        // High fear: 50/50 broken vs staccato — not always broken so there's some variety.
+        if (fear > 0.65f) return rng.NextDouble() < 0.5
+            ? BrokenRhythms[rng.Next(BrokenRhythms.Length)]
+            : StaccatoRhythms[rng.Next(StaccatoRhythms.Length)];
         if (fear > 0.45f) return StaccatoRhythms[rng.Next(StaccatoRhythms.Length)];
         if (sadness < 0.25f) return JigRhythms[rng.Next(JigRhythms.Length)];
         if (sadness > 0.50f) return SlowRhythms[rng.Next(SlowRhythms.Length)];
@@ -513,7 +672,7 @@ public static class ProceduralMidiComposer
         if (role == TrackRole.Noise)
         {
             int nShift = -(int)(sadness * 10) + (int)(fear * 14);
-            return Math.Clamp(60 + nShift + rng.Next(-7, 8), 22, 80);
+            return Math.Clamp(48 + nShift + rng.Next(-5, 6), 18, 65);
         }
         // High fear: lurching bimodal dynamics (sudden accent or sudden dropout)
         if (fear > 0.65f && rng.NextDouble() < (fear - 0.65f) * 1.3)
@@ -543,14 +702,14 @@ public static class ProceduralMidiComposer
 
             TrackRole.Melody =>
                 sadness < 0.28f && fear < 0.45f  ? PatchFlute            // bright tavern melody
-                : sadness < 0.28f                ? PatchOboe             // urgent/chase
-                : sadness < 0.60f                ? PatchViolinStrings    // lament
-                :                                  PatchOboe,             // mournful
+                : sadness < 0.28f                ? PatchRecorder         // urgent/chase — Recorder over Oboe: same urgency, no brass edge
+                : sadness < 0.60f                ? PatchSoloViolin       // lament — intimate solo string, not ensemble attack
+                :                                  PatchRecorder,         // mournful — soft medieval woodwind
 
             TrackRole.Counter =>
                 sadness < 0.32f                  ? PatchHarpsichord      // lively tavern runs
                 : mystery >= 0.65f               ? PatchPadBowed         // ethereal dungeon
-                :                                  PatchFlute,            // general
+                :                                  PatchRecorder,         // general — Recorder softer than Flute on this synth
 
             TrackRole.Texture =>
                 fear >= 0.60f || mystery >= 0.68f ? PatchTremoloStrings  // creepy/tense shimmer
@@ -558,11 +717,9 @@ public static class ProceduralMidiComposer
                 :                                   PatchFlute,           // soft texture
 
             TrackRole.Noise =>
-                fear >= 0.60f      ? PatchPadSweep    // ominous dark wash
-                : mystery >= 0.65f ? PatchPadHalo     // ethereal shimmer
-                : sadness < 0.30f  ? PatchPadNewAge   // calm airy pad (was Seashore — too wave-like)
-                : sadness < 0.60f  ? PatchPadNewAge   // gentle airy pad
-                :                    PatchPadSweep,   // heavy dark wash
+                // Always PadSweep: heaviest, darkest pad — best approximation of brown-noise rumble.
+                // Mood still affects the melodic/noise layer above, but the base wash stays consistent.
+                PatchPadSweep,
 
             _ => 0,
         };
@@ -594,17 +751,17 @@ public static class ProceduralMidiComposer
         {
             TrackRole.Melody =>
                 sadness < 0.30f && fear < 0.45f
-                    ? new[] { PatchFlute,    PatchOboe,         PatchViolinStrings }  // bright
+                    ? new[] { PatchFlute,      PatchRecorder,   PatchSoloViolin  }    // bright
                     : sadness < 0.60f
-                    ? new[] { PatchViolinStrings, PatchOboe,    PatchFlute }          // mid lament
-                    : new[] { PatchOboe,     PatchChoirAahs,    PatchViolinStrings }, // dark
+                    ? new[] { PatchSoloViolin, PatchRecorder,   PatchFlute       }    // mid lament
+                    : new[] { PatchRecorder,   PatchChoirAahs,  PatchSoloViolin  },   // dark
 
             TrackRole.Counter =>
                 sadness < 0.32f
-                    ? new[] { PatchHarpsichord, PatchFlute,     PatchOboe }           // lively
+                    ? new[] { PatchHarpsichord, PatchRecorder,  PatchDulcimer    }    // lively
                     : mystery >= 0.65f
-                    ? new[] { PatchPadBowed,    PatchFlute,     PatchChoirAahs }      // ethereal
-                    : new[] { PatchFlute,       PatchOboe,      PatchHarpsichord },   // general
+                    ? new[] { PatchPadBowed,    PatchPanFlute,  PatchVoiceOohs   }    // ethereal
+                    : new[] { PatchRecorder,    PatchPanFlute,  PatchHarpsichord },   // general
 
             _ => new[] { primary },
         };
@@ -624,8 +781,9 @@ public static class ProceduralMidiComposer
         float sadness, float fear, float mystery, double bpm, Random rng)
     {
         double beatMs = 60_000.0 / bpm;
-        // Restrict to the lower 45% of the noise range (deep, non-intrusive wash)
-        int noiseCeil = minIdx + (int)((maxIdx - minIdx) * 0.45);
+        // Lower 32% of the range: very deep bass register for brown-noise character.
+        // The mud at the bottom of GM pads produces the dense low-frequency rumble.
+        int noiseCeil = minIdx + (int)((maxIdx - minIdx) * 0.32);
         int scaleIdx = rng.Next(minIdx, Math.Max(minIdx + 1, noiseCeil + 1));
         // Occasional slow harmonic shift: small step from current position
         if (rng.NextDouble() < 0.35)

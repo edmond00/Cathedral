@@ -49,8 +49,51 @@ public sealed class AmbianceEngine : IDisposable
     // How many drone note cycles to hold the current scale before considering a change.
     // Reset each time a new scale is chosen. Prevents jarring random modulations.
     private int _droneScaleHoldCycles  = 0; // counts down
-    // Dynamics swell: slow sine wave over 60 s, range 0.70 E.00
+    // Dynamics swell: slow sine wave over 60 s, range 0.70–1.00
     private volatile float _dynamicsLevel = 1.0f;
+
+    // ── Game event system ─────────────────────────────────────────────────────
+    // Signal from TriggerGameEvent to the Melody track. Bitmask flags (combined per event):
+    // Bit 0 (0x01) = ForceAccent    — loud opening note(s)
+    // Bit 1 (0x02) = ForceRepeat    — replay last melody contour
+    // Bit 2 (0x04) = ForceBreak     — abrupt 1-note stab with elevated fear
+    // Bit 3 (0x08) = ForcePause     — multiply inter-phrase rest ×8
+    // Bit 4 (0x10) = ForceHalfTime  — slow phrase to 3× duration
+    // Bit 5 (0x20) = ForceHighReg   — shift phrase up one octave
+    // Bit 6 (0x40) = ForceLowReg    — shift phrase down one octave
+    // Bit 7 (0x80) = ForceDoubleTime — compress phrase to half duration (urgent)
+    // Read+cleared atomically.
+    private int _melodyEventSignal = 0;
+    // Drone and Noise tracks each have their own copy so all three can consume independently.
+    // Same bitmask flags; only a subset is used per track.
+    private int _droneEventSignal = 0;
+    private int _noiseEventSignal  = 0;
+    // Interrupt source pulsed on every TriggerGameEvent so that any interruptible
+    // Task.Delay wakes up immediately and the track loops can apply the new signal
+    // on the very next iteration rather than waiting out a long rest.
+    private TaskCompletionSource<bool> _eventInterrupt =
+        new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    // #8: Phrase paragraph structure — 4-phrase micro-arc (quiet→build→climax→resolve)
+    private int _paragraphPhrase = 0;
+    private volatile float _paragraphGain = 1.0f;
+    // #10: Event cooldown — block signal overwrite within 400 ms of prior event
+    private long _lastEventMs = 0;
+    // #11: Post-NegativeOutcome descending echo (2 phrases after the stab)
+    private int[] _negativeEchoContour = Array.Empty<int>();
+    private volatile int _negativeEchoCount = 0;
+    // #12: Event dynamics boost — brief swell or dip after Positive/Negative events
+    private volatile float _eventDynamicsBoost = 0f;
+
+    // B2: Session theme — first melody contour captured, replayed every ~12 phrases for identity
+    private int[] _sessionTheme = Array.Empty<int>();
+    private volatile bool _sessionThemeCaptured = false;
+    private int _melodyPhraseCount = 0;
+    // B5: Q/A phrasing — track whether last melody cadence was a question (dominant)
+    private volatile bool _lastPhraseWasQuestion = false;
+    // B11: Session tension ramp — slowly climbs over ~10 min, affects tempo + scale darkness
+    private long _sessionStartMs = 0;
+    private volatile float _sessionTension = 0f;
 
     private OutputDevice? _device;
     private readonly List<Task> _trackTasks = new();
@@ -106,6 +149,7 @@ public sealed class AmbianceEngine : IDisposable
         // Background support tasks
         _trackTasks.Add(Task.Run(() => MoodSmootherTask(_cts.Token)));
         _trackTasks.Add(Task.Run(() => DynamicsTask(_cts.Token)));
+        _sessionStartMs = Environment.TickCount64;
 
         return IsDeviceOpen;
     }
@@ -138,10 +182,84 @@ public sealed class AmbianceEngine : IDisposable
         }
     }
 
-    /// <summary>Sets number of active tracks (1–4). Extra tracks fade out on next note.</summary>
+    /// <summary>Sets number of active tracks (0–4). 0 = Noise only; extra tracks fade out on next note.</summary>
     public void SetActiveTrackCount(int count)
     {
-        _activeTrackCount = Math.Clamp(count, 1, 4);
+        _activeTrackCount = Math.Clamp(count, 0, 4);
+    }
+
+    /// <summary>
+    /// Triggers a game event: fires the first SFX note synchronously for zero-latency
+    /// feel, delegates delays/note-offs to a background thread, and sets a music signal
+    /// for the next Melody phrase. Mood gauges are NOT modified — controlled externally.
+    /// Thread-safe.
+    /// </summary>
+    public void TriggerGameEvent(GameEventType evt)
+    {
+        if (_device == null) return;
+
+        // #10: Cooldown — block music signal overwrite if < 400 ms since last event
+        // (SFX and interrupt always fire regardless; only track signal assignment is gated).
+        long nowMs = Environment.TickCount64;
+        bool signalCooldown = (nowMs - Interlocked.Read(ref _lastEventMs)) < 400;
+        if (!signalCooldown)
+            Interlocked.Exchange(ref _lastEventMs, nowMs);
+
+        // Set music signal before starting sound so the melody track can pick it up
+        // as soon as possible.
+        int signal = evt switch
+        {
+            GameEventType.SmallInteraction  => 0x01,        // ForceAccent
+            GameEventType.StrongInteraction => 0x83,        // ForceRepeat | ForceAccent | ForceDoubleTime
+            GameEventType.PositiveOutcome   => 0x21,        // ForceAccent | ForceHighReg
+            GameEventType.NegativeOutcome   => 0x44,        // ForceBreak  | ForceLowReg
+            GameEventType.NeutralOutcome    => 0x18,        // ForcePause  | ForceHalfTime
+            _ => 0,
+        };
+        if (!signalCooldown && signal > 0)
+            Interlocked.Exchange(ref _melodyEventSignal, signal);
+
+        // Drone and Noise each get their own signal (consumed independently).
+        int droneSignal = evt switch
+        {
+            GameEventType.PositiveOutcome   => 0x21,  // ForceAccent + ForceHighReg (leap up)
+            GameEventType.NegativeOutcome   => 0x44,  // ForceLowReg + ForceBreak (dark drop, cut short)
+            GameEventType.NeutralOutcome    => 0x08,  // ForcePause (hold note very long)
+            _ => 0,
+        };
+        if (!signalCooldown && droneSignal > 0)
+            Interlocked.Exchange(ref _droneEventSignal, droneSignal);
+
+        int noiseSignal = evt switch
+        {
+            GameEventType.PositiveOutcome   => 0x01,  // ForceAccent (brief swell)
+            GameEventType.NegativeOutcome   => 0x04,  // ForceBreak (max-velocity noise burst)
+            GameEventType.NeutralOutcome    => 0x08,  // ForcePause (near-silence, one note)
+            _ => 0,
+        };
+        if (!signalCooldown && noiseSignal > 0)
+            Interlocked.Exchange(ref _noiseEventSignal, noiseSignal);
+
+        // #12: Event dynamics swell — PositiveOutcome swells up, NegativeOutcome dips
+        float dynamicsBoost = evt switch
+        {
+            GameEventType.PositiveOutcome  =>  0.35f,
+            GameEventType.NegativeOutcome  => -0.20f,
+            _ => 0f,
+        };
+        if (dynamicsBoost != 0f)
+            _eventDynamicsBoost = dynamicsBoost;
+
+        // Pulse the interrupt: any track sleeping in InterruptibleDelay wakes up now
+        // and will read the new event signal on its very next iteration.
+        var prevInterrupt = Interlocked.Exchange(
+            ref _eventInterrupt,
+            new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously));
+        prevInterrupt.TrySetResult(true);
+
+        // Fire the first note-on synchronously on the calling thread so the sound
+        // starts with zero scheduling latency. Note-offs / sequenced notes run async.
+        PlayGameEventSfxImmediate(evt);
     }
 
     /// <summary>
@@ -220,18 +338,24 @@ public sealed class AmbianceEngine : IDisposable
                 MusicMoodState mood;
                 lock (_moodLock) mood = _activeMood;
 
+                // #9: Scale pivot — track whether the drone just switched scale this iteration
+                bool scaleJustChanged = false;
+                int pivotMidiNote = _droneCurrentNote;
+
                 // Scale management ─────────────────────────────────────────────
                 // Drone picks scale and broadcasts it; all others always follow.
                 if (role == TrackRole.Drone)
                 {
                     if (needNewScale)
                     {
-                        var newScale = ModalScale.GetScaleForMood(mood.Sadness, mood.Mystery, mood.Fear, rng);
+                        pivotMidiNote = _droneCurrentNote; // save current tone before switching
+                        var newScale = ModalScale.GetScaleForMood(mood.Sadness, mood.Mystery, mood.Fear, rng, _sessionTension);
                         lock (_moodLock) _sharedScale = newScale;
                         currentScale = newScale;
                         needNewScale = false;
                         // Hold this scale for 6-14 drone cycles before considering a new one
                         _droneScaleHoldCycles = rng.Next(6, 15);
+                        scaleJustChanged = true;
                     }
                 }
                 else
@@ -243,7 +367,7 @@ public sealed class AmbianceEngine : IDisposable
                 if (role == TrackRole.Drone)
                 {
                     CurrentScaleName = ModalScale.GetScaleName(currentScale);
-                    CurrentBpm = ProceduralMidiComposer.GetTempoBpm(mood.Sadness, mood.Fear);
+                    CurrentBpm = Math.Clamp(ProceduralMidiComposer.GetTempoBpm(mood.Sadness, mood.Fear) + _sessionTension * 12.0, 25.0, 145.0);
                 }
 
                 var (minIdx, maxIdx) = ModalScale.GetNoteRange(currentScale.Length, role);
@@ -258,6 +382,7 @@ public sealed class AmbianceEngine : IDisposable
                 }
 
                 double bpm = ProceduralMidiComposer.GetTempoBpm(mood.Sadness, mood.Fear);
+                bpm = Math.Clamp(bpm + _sessionTension * 12.0, 25.0, 145.0); // B11: tension tightens tempo
 
                 if (role == TrackRole.Melody || role == TrackRole.Counter)
                 {
@@ -279,12 +404,86 @@ public sealed class AmbianceEngine : IDisposable
                         }
                     }
 
+                    // Event signal for this phrase (Melody-only; Counter follows naturally)
+                    bool applyForcePause  = false;
+                    bool forceHighReg     = false;
+                    bool forceLowReg      = false;
+                    bool forceHalfTime    = false;
+                    bool forceDoubleTime  = false;
+
                     NoteEvent[] phrase;
                     if (role == TrackRole.Melody)
                     {
-                        phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
-                            currentScale, scaleIdx, minIdx, maxIdx,
-                            mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour);
+                        // ── Read and clear event signal (atomic) ─────────────────────
+                        int eventSig     = Interlocked.Exchange(ref _melodyEventSignal, 0);
+                        bool forceRepeat   = (eventSig & 0x02) != 0;
+                        bool forceBreak    = (eventSig & 0x04) != 0;
+                        bool forceAccent   = (eventSig & 0x01) != 0;
+                        applyForcePause    = (eventSig & 0x08) != 0;
+                        forceHighReg       = (eventSig & 0x20) != 0;
+                        forceLowReg        = (eventSig & 0x40) != 0;
+                        forceHalfTime      = (eventSig & 0x10) != 0;
+                        forceDoubleTime    = (eventSig & 0x80) != 0;
+
+                        // B5: Q/A phrasing — alternate question (dominant cadence) / answer (tonic)
+                        bool? phraseForceRes = _lastPhraseWasQuestion
+                            ? (bool?)true
+                            : (rng.NextDouble() < 0.55 ? (bool?)false : null);
+
+                        if (forceBreak)
+                        {
+                            // NegativeOutcome: single jagged note stab with maximum fear
+                            phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
+                                currentScale, scaleIdx, minIdx, maxIdx,
+                                Math.Min(1f, mood.Sadness + 0.5f),
+                                Math.Min(1f, mood.Fear    + 0.95f),
+                                mood.Mystery, bpm, rng, null);
+                            // Trim to 1 note: a brutal cut
+                            if (phrase.Length > 1) phrase = phrase[..1];
+                            applyForcePause = true;
+                            // #11: prime 2 descending echo phrases that follow the stab
+                            _negativeEchoContour = new[] { -1, -1, -2, -1 };
+                            _negativeEchoCount = 2;
+                        }
+                        else
+                        {
+                            phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
+                                currentScale, scaleIdx, minIdx, maxIdx,
+                                mood.Sadness, mood.Fear, mood.Mystery, bpm, rng,
+                                _melodyContour, forceMotifReplay: forceRepeat, forceResolution: phraseForceRes);
+                            // #11: negative echo - quieter descending echo for 2 phrases after the stab
+                            if (_negativeEchoCount > 0)
+                            {
+                                _negativeEchoCount--;
+                                float echoDecay = _negativeEchoCount == 1 ? 0.45f : 0.35f;
+                                phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
+                                    currentScale, scaleIdx, minIdx, maxIdx,
+                                    Math.Min(1f, mood.Sadness + 0.3f), mood.Fear, mood.Mystery, bpm, rng,
+                                    _negativeEchoContour, forceMotifReplay: true);
+                                int echoOctave = currentScale.Length / 3;
+                                for (int pi = 0; pi < phrase.Length; pi++)
+                                {
+                                    int shifted = Math.Clamp(phrase[pi].ScaleIdx - echoOctave, 0, currentScale.Length - 1);
+                                    phrase[pi] = phrase[pi] with
+                                    {
+                                        ScaleIdx     = shifted,
+                                        MidiNote     = currentScale[shifted],
+                                        VelocityMult = phrase[pi].VelocityMult * echoDecay,
+                                    };
+                                }
+                            }
+                        }
+
+                        // ForceAccent: strong velocity spike on opening + mid notes
+                        if (forceAccent && phrase.Length > 0)
+                        {
+                            // Accent all notes at diminishing intensity for a surging sweep
+                            for (int ai = 0; ai < phrase.Length; ai++)
+                            {
+                                float mult = ai == 0 ? 3.2f : ai == 1 ? 2.4f : ai == 2 ? 1.9f : 1.5f;
+                                phrase[ai] = phrase[ai] with { VelocityMult = phrase[ai].VelocityMult * mult, IsAccented = true };
+                            }
+                        }
                     }
                     else
                     {
@@ -292,12 +491,43 @@ public sealed class AmbianceEngine : IDisposable
                         // Replays the Melody's exact contour starting ~4 scale steps higher
                         // (roughly a 4th/5th), creating Renaissance canonic imitation.
                         bool doImitate = _melodyContour != null && rng.NextDouble() < 0.30;
+                        // #7: ~15% chance of rhythmic ostinato — locked groove under the melody
+                        bool doOstinato = !doImitate && rng.NextDouble() < 0.15;
+                        // B6: ~15% chance of heterophony — shadow melody with ±1 scale-degree blur per note
+                        bool doHeterophony = !doImitate && !doOstinato
+                            && _melodyContour != null && _melodyContour.Length > 0
+                            && rng.NextDouble() < 0.15;
                         if (doImitate)
                         {
                             int imitateStart = Math.Clamp(_melodyLastScaleIdx + 4, minIdx, maxIdx);
                             phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
                                 currentScale, imitateStart, minIdx, maxIdx,
                                 mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour);
+                        }
+                        else if (doOstinato)
+                        {
+                            phrase = ProceduralMidiComposer.GenerateOstinatoPhrase(
+                                currentScale, scaleIdx, minIdx, maxIdx,
+                                mood.Sadness, mood.Fear, bpm, rng);
+                        }
+                        else if (doHeterophony)
+                        {
+                            // Heterophony: replay melody contour on counter channel, note by note,
+                            // with random ±1 scale-degree blur per note for a "loose unison" feel.
+                            int hetStart = Math.Clamp(_melodyLastScaleIdx >= 0 ? _melodyLastScaleIdx : scaleIdx, minIdx, maxIdx);
+                            phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
+                                currentScale, hetStart, minIdx, maxIdx,
+                                mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour, forceMotifReplay: true);
+                            for (int pi = 0; pi < phrase.Length; pi++)
+                            {
+                                int blur = rng.NextDouble() < 0.55 ? 0 : (rng.NextDouble() < 0.5 ? 1 : -1);
+                                if (blur != 0)
+                                {
+                                    int blurIdx = Math.Clamp(phrase[pi].ScaleIdx + blur, 0, currentScale.Length - 1);
+                                    phrase[pi] = phrase[pi] with { ScaleIdx = blurIdx, MidiNote = currentScale[blurIdx] };
+                                }
+                                phrase[pi] = phrase[pi] with { VelocityMult = phrase[pi].VelocityMult * 0.78f };
+                            }
                         }
                         else
                         {
@@ -307,14 +537,16 @@ public sealed class AmbianceEngine : IDisposable
                         }
                     }
 
-                    // ── Register shift (~20% chance) ───────────────────────────────────
+                    // ── Register shift (~20% chance, or forced by event) ────────────────
                     // Shift all phrase notes up or down one scale-octave for spatial variety.
-                    // Biased: ascending phrases shift up, descending shift down; else random.
-                    if (rng.NextDouble() < 0.20)
+                    // ForceHighReg (Positive): always leap up. ForceLowReg (Negative): always drop.
+                    if (forceHighReg || forceLowReg || rng.NextDouble() < 0.20)
                     {
                         int scaleLen  = currentScale.Length;
                         int octaveLen = scaleLen / 3; // each octave span in scale-index units
-                        bool shiftUp  = _melodyDirection >= 0 ? rng.NextDouble() < 0.65 : rng.NextDouble() < 0.35;
+                        bool shiftUp  = forceHighReg ? true
+                                      : forceLowReg  ? false
+                                      : (_melodyDirection >= 0 ? rng.NextDouble() < 0.65 : rng.NextDouble() < 0.35);
                         int  delta    = shiftUp ? octaveLen : -octaveLen;
                         for (int pi = 0; pi < phrase.Length; pi++)
                         {
@@ -324,15 +556,26 @@ public sealed class AmbianceEngine : IDisposable
                         }
                     }
 
-                    // ── Half/double-time (~25% chance) ────────────────────────────────
-                    // Multiplies all note and rest durations for a phrase-level rhythmic shift.
-                    // Double-time: frantic urgency. Half-time: heavy contemplative weight.
-                    // Fear slightly favours double-time; sadness favours half-time.
-                    if (rng.NextDouble() < 0.25)
+                    // ── Half/double-time (~25% chance, or forced by event) ──
+                    // ForceHalfTime (NeutralOutcome): always 3× duration — heavy weight.
+                    // ForceDoubleTime (StrongInteraction): always ×0.5 — urgent replay.
+                    if (forceHalfTime || forceDoubleTime || rng.NextDouble() < 0.25)
                     {
-                        double doubleW = 0.5 + mood.Fear * 0.4;
-                        double halfW   = 0.5 + mood.Sadness * 0.4;
-                        float timingMult = rng.NextDouble() * (doubleW + halfW) < doubleW ? 0.5f : 2.0f;
+                        float timingMult;
+                        if (forceHalfTime)
+                        {
+                            timingMult = 3.0f;
+                        }
+                        else if (forceDoubleTime)
+                        {
+                            timingMult = 0.5f;
+                        }
+                        else
+                        {
+                            double doubleW = 0.5 + mood.Fear * 0.4;
+                            double halfW   = 0.5 + mood.Sadness * 0.4;
+                            timingMult = rng.NextDouble() * (doubleW + halfW) < doubleW ? 0.5f : 2.0f;
+                        }
                         for (int pi = 0; pi < phrase.Length; pi++)
                         {
                             phrase[pi].DurationMs  = Math.Max(40,  (int)(phrase[pi].DurationMs  * timingMult));
@@ -353,16 +596,24 @@ public sealed class AmbianceEngine : IDisposable
                         }
                     }
 
-                    foreach (var noteEvent in phrase)
+                    for (int ni = 0; ni < phrase.Length; ni++)
                     {
+                        var noteEvent = phrase[ni];
                         if (ct.IsCancellationRequested || trackIndex >= _activeTrackCount) break;
 
                         lock (_moodLock) mood = _activeMood;
                         float trackVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
                         int rawVel = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
                         if (noteEvent.IsAccented) rawVel = Math.Clamp(rawVel + 14, 0, 127);
-                        rawVel = Math.Clamp((int)(rawVel * noteEvent.VelocityMult), 0, 127);
+                        // #8: paragraph gain — velocity shaped by 4-phrase micro-arc
+                        rawVel = Math.Clamp((int)(rawVel * noteEvent.VelocityMult * _paragraphGain), 0, 127);
                         int velocity = Math.Clamp((int)(rawVel * _dynamicsLevel * trackVol), 0, 115);
+
+                        // B4: Parallel 3rd shadow — scale degree 2 below at 75% vel (bright moods only)
+                        int shadowSIdx = noteEvent.ScaleIdx - 2;
+                        int shadowMidi = (role == TrackRole.Melody && mood.Sadness < 0.65f && mood.Fear < 0.55f
+                            && shadowSIdx >= 0 && shadowSIdx < currentScale.Length)
+                            ? currentScale[shadowSIdx] : -1;
 
                         if (velocity > 0)
                         {
@@ -370,9 +621,31 @@ public sealed class AmbianceEngine : IDisposable
                             // and notes don't all snap to the exact millisecond grid.
                             int humanMs = rng.Next(28);
                             if (humanMs > 0) await Task.Delay(humanMs, ct);
+                            if (shadowMidi > 0) SendNoteOn(channel, shadowMidi, Math.Clamp((int)(velocity * 0.75f), 0, 100));
                             SendNoteOn(channel, noteEvent.MidiNote, velocity);
                             await Task.Delay(Math.Max(1, noteEvent.DurationMs - humanMs), ct);
+                            // #5: sadness legato — overlap NoteOff into next NoteOn for a liquid, blurred feel
+                            bool doLegato = mood.Sadness > 0.6f && ni < phrase.Length - 1 && noteEvent.RestAfterMs == 0;
+                            if (doLegato)
+                            {
+                                int overlapMs   = (int)(30 + mood.Sadness * 30);
+                                int deferredNote   = noteEvent.MidiNote;
+                                int deferredShadow = shadowMidi;
+                                _ = Task.Run(() => { Thread.Sleep(overlapMs); SendNoteOff(channel, deferredNote); if (deferredShadow > 0) SendNoteOff(channel, deferredShadow); });
+                                scaleIdx = noteEvent.ScaleIdx;
+                                continue; // skip rest — overlapping into next note
+                            }
                             SendNoteOff(channel, noteEvent.MidiNote);
+                            if (shadowMidi > 0) SendNoteOff(channel, shadowMidi);
+                            // B9: Echo delay — soft copy of this note 1 beat later on SFX channel
+                            if (role == TrackRole.Melody && rng.NextDouble() < 0.22)
+                            {
+                                int echoMidi   = noteEvent.MidiNote;
+                                int echoVel    = Math.Max(0, velocity - 32);
+                                int echoBeatMs = (int)(60_000.0 / bpm);
+                                if (echoVel > 5)
+                                    _ = Task.Run(() => { Thread.Sleep(echoBeatMs); SendNoteOn(ProceduralMidiComposer.SfxChannel, echoMidi, echoVel); Thread.Sleep(95); SendNoteOff(ProceduralMidiComposer.SfxChannel, echoMidi); });
+                            }
                         }
                         else
                         {
@@ -398,48 +671,102 @@ public sealed class AmbianceEngine : IDisposable
                         _melodyContour      = contour;
                         _melodyLastScaleIdx = phrase[^1].ScaleIdx;
                         _melodyPhraseEndMs  = Environment.TickCount64;
+                        // #8: advance paragraph phrase counter (4-phrase micro-arc)
+                        _paragraphPhrase = (_paragraphPhrase + 1) % 4;
+                        _paragraphGain = _paragraphPhrase switch
+                        {
+                            0 => 0.75f,  // opening: quiet
+                            1 => 1.00f,  // building: normal
+                            2 => 1.30f,  // climax: loud
+                            3 => 0.90f,  // resolving: soft
+                            _ => 1.00f,
+                        };
+                        // B5: Q/A — detect whether cadence was question (high/unresolved) or answer (tonic)
+                        _lastPhraseWasQuestion = phrase[^1].ScaleIdx > (minIdx + maxIdx) / 2;
+                        // B3: Session theme — capture first contour; replay every ~12 phrases
+                        _melodyPhraseCount++;
+                        if (!_sessionThemeCaptured && contour.Length >= 3)
+                        {
+                            _sessionTheme = (int[])contour.Clone();
+                            _sessionThemeCaptured = true;
+                        }
+                        else if (_sessionThemeCaptured && _melodyPhraseCount % 12 == 0)
+                            _melodyContour = _sessionTheme; // nudge next phrase to replay the theme
                     }
 
                     // Phrase-level rest between phrases.
                     // Mystery dramatically increases silence; tension shortens it.
+                    // NeutralOutcome (ForcePause): triple the rest for a contemplative breath.
                     double beatMs = 60_000.0 / bpm;
                     double phraseRestBeats = role == TrackRole.Melody
                         ? Math.Max(0.05, mood.Sadness * 0.5 + rng.NextDouble() * (0.5 + mood.Sadness * 1.0) + mood.Mystery * 5.5 - mood.Fear * 1.5)
                         : Math.Max(0.05, mood.Sadness * 0.3 + rng.NextDouble() * (0.3 + mood.Sadness * 0.5) + mood.Mystery * 3.0 - mood.Fear * 0.8);
-                    await Task.Delay((int)(beatMs * phraseRestBeats), ct);
+                    if (applyForcePause) phraseRestBeats *= 8.0;
+                    // Interruptible: a new event wakes this up immediately so the next
+                    // phrase starts with the fresh signal rather than waiting out the rest.
+                    await InterruptibleDelay((int)(beatMs * phraseRestBeats), ct);
+                    // B10: Caesura every ~32 phrases — prolonged melodic silence, breathing room
+                    if (role == TrackRole.Melody && _melodyPhraseCount > 0 && _melodyPhraseCount % 32 == 0)
+                    {
+                        int caesuraMs = (int)(beatMs * (3.5 + rng.NextDouble() * 1.5));
+                        await InterruptibleDelay(caesuraMs, ct);
+                    }
                 }
                 else if (role == TrackRole.Texture)
                 {
                     // ── Texture: quick arpeggio figure ────────────────────────────────────
                     await AlignToNextBeatAsync(bpm, ct);
-                    var arpPhrase = ProceduralMidiComposer.GenerateArpeggioPhrase(currentScale, minIdx, maxIdx, mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyLastScaleIdx);
-                    foreach (var noteEvent in arpPhrase)
+                    // #6: Mystery sparsity - single sustained floating note instead of arpeggio
+                    if (mood.Mystery > 0.55f && rng.NextDouble() < (mood.Mystery - 0.55f) * 2.2f)
                     {
-                        if (ct.IsCancellationRequested || trackIndex >= _activeTrackCount) break;
-                        float trackVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
-                        int rawVel = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
-                        rawVel = Math.Clamp((int)(rawVel * noteEvent.VelocityMult), 0, 127);
-                        int vel = Math.Clamp((int)(rawVel * _dynamicsLevel * trackVol), 0, 115);
-                        if (vel > 0)
+                        int sparseIdx = _melodyLastScaleIdx >= 0
+                            ? Math.Clamp(_melodyLastScaleIdx, minIdx, maxIdx)
+                            : (minIdx + maxIdx) / 2;
+                        int sparseMidi = currentScale[Math.Clamp(sparseIdx, 0, currentScale.Length - 1)];
+                        float sparseVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
+                        int sparseRaw = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                        int sparseVel = Math.Clamp((int)(sparseRaw * _dynamicsLevel * sparseVol * 0.70f), 0, 100);
+                        int holdMs = (int)(60_000.0 / bpm * (2.0 + rng.NextDouble() * 1.5));
+                        if (sparseVel > 0)
                         {
-                            SendNoteOn(channel, noteEvent.MidiNote, vel);
-                            await Task.Delay(noteEvent.DurationMs, ct);
-                            SendNoteOff(channel, noteEvent.MidiNote);
+                            SendNoteOn(channel, sparseMidi, sparseVel);
+                            await Task.Delay(holdMs, ct);
+                            SendNoteOff(channel, sparseMidi);
                         }
                         else
-                        {
-                            await Task.Delay(noteEvent.DurationMs + noteEvent.RestAfterMs, ct);
-                            scaleIdx = noteEvent.ScaleIdx;
-                            continue;
-                        }
-                        if (noteEvent.RestAfterMs > 0)
-                            await Task.Delay(noteEvent.RestAfterMs, ct);
-                        scaleIdx = noteEvent.ScaleIdx;
+                            await Task.Delay(holdMs, ct);
                     }
-                    // Rest between arpeggio figures (mystery = longer silence)
-                    double arpBeatMs = 60_000.0 / bpm;
-                    int arpRestMs = (int)(arpBeatMs * Math.Max(0.05, mood.Sadness * 0.3 + rng.NextDouble() * (0.4 + mood.Sadness * 0.6) + mood.Mystery * 2.5 - mood.Fear * 0.5));
-                    await Task.Delay(arpRestMs, ct);
+                    else
+                    {
+                        var arpPhrase = ProceduralMidiComposer.GenerateArpeggioPhrase(currentScale, minIdx, maxIdx, mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyLastScaleIdx);
+                        foreach (var noteEvent in arpPhrase)
+                        {
+                            if (ct.IsCancellationRequested || trackIndex >= _activeTrackCount) break;
+                            float trackVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
+                            int rawVel = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                            rawVel = Math.Clamp((int)(rawVel * noteEvent.VelocityMult), 0, 127);
+                            int vel = Math.Clamp((int)(rawVel * _dynamicsLevel * trackVol), 0, 115);
+                            if (vel > 0)
+                            {
+                                SendNoteOn(channel, noteEvent.MidiNote, vel);
+                                await Task.Delay(noteEvent.DurationMs, ct);
+                                SendNoteOff(channel, noteEvent.MidiNote);
+                            }
+                            else
+                            {
+                                await Task.Delay(noteEvent.DurationMs + noteEvent.RestAfterMs, ct);
+                                scaleIdx = noteEvent.ScaleIdx;
+                                continue;
+                            }
+                            if (noteEvent.RestAfterMs > 0)
+                                await Task.Delay(noteEvent.RestAfterMs, ct);
+                            scaleIdx = noteEvent.ScaleIdx;
+                        }
+                        // Rest between arpeggio figures (mystery = longer silence)
+                        double arpBeatMs = 60_000.0 / bpm;
+                        int arpRestMs = (int)(arpBeatMs * Math.Max(0.05, mood.Sadness * 0.3 + rng.NextDouble() * (0.4 + mood.Sadness * 0.6) + mood.Mystery * 2.5 - mood.Fear * 0.5));
+                        await Task.Delay(arpRestMs, ct);
+                    }
                 }
                 else if (role == TrackRole.Noise)
                 {
@@ -461,20 +788,54 @@ public sealed class AmbianceEngine : IDisposable
 
                     int rawVel = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
                     float noiseVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
-                    // Noise bypasses most of the dynamics swell — keep it steady, only a 5% swell
-                    float noiseDyn = 0.95f + (_dynamicsLevel - 0.85f) * 0.33f; // range ~0.95–0.98
-                    // Floor at 12 so the wash is always faintly present regardless of Intensity
-                    int vel = Math.Max(12, Math.Clamp((int)(rawVel * noiseDyn * noiseVol), 0, 115));
+                    // Noise dynamics: allow a fuller swell so the pad texture breathes.
+                    float noiseDyn = 0.88f + (_dynamicsLevel - 0.85f) * 1.5f; // range ~0.85–1.07
+                    noiseDyn = Math.Clamp(noiseDyn, 0.70f, 1.10f);
+                    // Floor at 18 so the wash remains audible even at low Intensity.
+                    int vel = Math.Max(14, Math.Clamp((int)(rawVel * noiseDyn * noiseVol), 0, 115));
 
-                    // Legato: start new note, wait for its duration, then release old note.
-                    // The brief overlap prevents any gap between consecutive pad swells.
-                    SendNoteOn(channel, midiNote, vel);
-                    await Task.Delay(durationMs, ct);
+                    // ── Noise event effects ───────────────────────────────────────────
+                    int noiseSig   = Interlocked.Exchange(ref _noiseEventSignal, 0);
+                    bool nAccent   = (noiseSig & 0x01) != 0;
+                    bool nBreak    = (noiseSig & 0x04) != 0;
+                    bool nPause    = (noiseSig & 0x08) != 0;
+
+                    if (nAccent) vel = Math.Clamp(vel + 10, 0, 115);
+                    if (nBreak)  { vel = Math.Clamp(vel + 35, 0, 115); durationMs = Math.Max(durationMs, 900); } // moderate surge
+                    if (nPause)  { vel = 3; durationMs = Math.Max(durationMs, 1800); } // deep near-silence, held long
+
+                    // Brown-noise texture: play two notes a major 2nd apart (2 semitones).
+                    // The slow beating/interference between the two deep pads creates a
+                    // dense low rumble that mimics the character of brown noise.
+                    int clusterNote = Math.Clamp(midiNote + 2, 21, 108);
+                    int clusterVel  = Math.Max(10, vel - 14);
+
+                    // Legato: start both notes together, hold, release together.
+                    SendNoteOn(channel, midiNote,    vel);
+                    SendNoteOn(channel, clusterNote, clusterVel);
+                    await InterruptibleDelay(durationMs, ct);
                     SendNoteOff(channel, midiNote);
+                    SendNoteOff(channel, clusterNote);
                 }
                 else
                 {
                     // ── Drone: sustained pedal tone ───────────────────────────────────────
+                    // #9: Scale pivot - hold previous tonic for 1 beat before new scale begins
+                    if (scaleJustChanged && pivotMidiNote > 0)
+                    {
+                        float pivotVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
+                        int pivotRaw = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                        int pivotVel = Math.Clamp((int)(pivotRaw * _dynamicsLevel * pivotVol), 0, 100);
+                        int pivotDur = Math.Max(350, (int)(60_000.0 / bpm));
+                        if (pivotVel > 0)
+                        {
+                            SendNoteOn(channel, pivotMidiNote, pivotVel);
+                            await InterruptibleDelay(pivotDur, ct);
+                            SendNoteOff(channel, pivotMidiNote);
+                        }
+                        else
+                            await InterruptibleDelay(pivotDur, ct);
+                    }
                     scaleIdx = ProceduralMidiComposer.GetNextNote(currentScale, scaleIdx, rng, mood.Sadness, minIdx, maxIdx);
                     int midiNote     = currentScale[scaleIdx];
                     float droneVol   = GetTrackIntensityVolume(trackIndex, mood.Intensity);
@@ -485,6 +846,20 @@ public sealed class AmbianceEngine : IDisposable
 
                     _droneCurrentNote = midiNote; // broadcast for harmonic awareness
 
+                    // ── Drone event effects ───────────────────────────────────────────
+                    int droneSig    = Interlocked.Exchange(ref _droneEventSignal, 0);
+                    bool dAccent    = (droneSig & 0x01) != 0;
+                    bool dBreak     = (droneSig & 0x04) != 0;
+                    bool dPause     = (droneSig & 0x08) != 0;
+                    bool dHighReg   = (droneSig & 0x20) != 0;
+                    bool dLowReg    = (droneSig & 0x40) != 0;
+
+                    if (dAccent)  velocity     = Math.Clamp(velocity + 8,  0, 115);
+                    if (dBreak)   { noteDuration /= 5; restDuration = (int)(60_000.0 / bpm * 2); } // snap off, short dark silence
+                    if (dPause)   { velocity = Math.Clamp(velocity + 10, 0, 115); noteDuration = (int)(noteDuration * 3.0); } // gentle sustained resonance
+                    if (dHighReg) { midiNote = Math.Clamp(midiNote + 12, 21, 108); }
+                    if (dLowReg)  { midiNote = Math.Clamp(midiNote - 12, 21, 108); }
+
                     // ── Organum 5th ───────────────────────────────────────────────────
                     // Low fear: add a softer parallel 5th above the root — medieval organum.
                     // Mystery occasionally swaps the 5th for a 4th (more archaic/eerie).
@@ -493,21 +868,34 @@ public sealed class AmbianceEngine : IDisposable
                     bool playOrganum   = mood.Fear < 0.55f && velocity > 0;
                     int  organumVel    = Math.Clamp(velocity - 18, 0, 100); // softer than root
 
-                    if (velocity > 0)
+                    if (mood.Fear > 0.70f && velocity > 0)
+                    {
+                        // B8: Tremolo drone — rapid 8th-beat repetitions at high fear
+                        int tremoloIntervalMs = Math.Max(45, (int)(60_000.0 / bpm / 8.0));
+                        int tremoloCount = Math.Max(1, Math.Min(noteDuration / (tremoloIntervalMs * 2), 24));
+                        for (int ti = 0; ti < tremoloCount && !ct.IsCancellationRequested; ti++)
+                        {
+                            SendNoteOn(channel, midiNote, Math.Max(20, velocity - ti));
+                            await Task.Delay((int)(tremoloIntervalMs * 0.60), ct);
+                            SendNoteOff(channel, midiNote);
+                            await Task.Delay((int)(tremoloIntervalMs * 0.40), ct);
+                        }
+                    }
+                    else if (velocity > 0)
                     {
                         SendNoteOn(channel, midiNote, velocity);
                         if (playOrganum) SendNoteOn(channel, organum5th, organumVel);
-                        await Task.Delay(noteDuration, ct);
+                        await InterruptibleDelay(noteDuration, ct);
                         SendNoteOff(channel, midiNote);
                         if (playOrganum) SendNoteOff(channel, organum5th);
                     }
                     else
                     {
-                        await Task.Delay(noteDuration, ct);
+                        await InterruptibleDelay(noteDuration, ct);
                     }
 
                     if (restDuration > 0)
-                        await Task.Delay(restDuration, ct);
+                        await InterruptibleDelay(restDuration, ct);
 
                     // Scale stability: count down the hold timer; only then consider a change
                     if (_droneScaleHoldCycles > 0)
@@ -549,6 +937,8 @@ public sealed class AmbianceEngine : IDisposable
                         _activeMood.Fear       + alpha * (_targetMood.Fear       - _activeMood.Fear),
                         _activeMood.Mystery    + alpha * (_targetMood.Mystery    - _activeMood.Mystery),
                         _activeMood.Intensity  + alpha * (_targetMood.Intensity  - _activeMood.Intensity));
+
+
                 }
             }
         }
@@ -567,7 +957,20 @@ public sealed class AmbianceEngine : IDisposable
             while (!ct.IsCancellationRequested && _running)
             {
                 await Task.Delay(200, ct);
-                _dynamicsLevel = 0.85f + 0.15f * (float)Math.Sin(Environment.TickCount64 * Math.PI / 30_000.0);
+                // B11: Session tension ramp — climbs over ~10 min, resets to 0 at peak
+                long sessionElapsed = Environment.TickCount64 - _sessionStartMs;
+                _sessionTension = Math.Clamp((float)(sessionElapsed / 600_000.0), 0f, 1f);
+                if (_sessionTension >= 0.99f) { _sessionStartMs = Environment.TickCount64; _sessionTension = 0f; }
+                float baseDyn = 0.85f + 0.15f * (float)Math.Sin(Environment.TickCount64 * Math.PI / 30_000.0);
+                // #12: Decay event dynamics boost toward zero (~4 s to clear a ±0.35 boost)
+                float boost = _eventDynamicsBoost;
+                if (boost != 0f)
+                {
+                    boost *= 0.94f;
+                    if (Math.Abs(boost) < 0.005f) boost = 0f;
+                    _eventDynamicsBoost = boost;
+                }
+                _dynamicsLevel = Math.Clamp(baseDyn * (1f + boost), 0.60f, 1.30f);
             }
         }
         catch (OperationCanceledException) { }
@@ -588,6 +991,102 @@ public sealed class AmbianceEngine : IDisposable
     }
 
     // ── SFX ──────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Predetermined SFX for each GameEventType. Designed to be harmonically neutral
+    /// (consistent across all moods) while emotionally matching the event.
+    /// </summary>
+    // Fire initial MIDI events synchronously (zero latency), then schedule
+    // note-offs and remaining notes on a background thread.
+    private void PlayGameEventSfxImmediate(GameEventType evt)
+    {
+        if (_device == null) return;
+        int ch = ProceduralMidiComposer.SfxChannel;
+
+        switch (evt)
+        {
+            case GameEventType.SmallInteraction:
+            {
+                // Closed hi-hat tick — ultra-short, dry, blends with the soundtrack.
+                // Closed hi-hat (GM note 42) naturally decays in <40 ms; no sustain.
+                const int drumCh = 9;
+                SendNoteOn(drumCh, 42, 55); // Closed hi-hat
+                _ = Task.Run(() => { Thread.Sleep(18); SendNoteOff(drumCh, 42); });
+                break;
+            }
+
+            case GameEventType.StrongInteraction:
+            {
+                // Square lead two-note chord: A4 + E5 (fifth) — punchy, digital, not strident.
+                // Square wave is more muted than sawtooth; fifth interval is open/strong.
+                SendProgramChange(ch, ProceduralMidiComposer.PatchLeadSquare);
+                SendNoteOn(ch, 69, 88); // A4
+                SendNoteOn(ch, 76, 82); // E5 — clean fifth
+                _ = Task.Run(() =>
+                {
+                    Thread.Sleep(28); SendNoteOff(ch, 69); SendNoteOff(ch, 76);
+                    Thread.Sleep(25);
+                    SendNoteOn(ch, 71, 80); // B4 — brief echo note
+                    Thread.Sleep(20); SendNoteOff(ch, 71);
+                });
+                break;
+            }
+
+            case GameEventType.PositiveOutcome:
+            {
+                // Crystal patch rapid ascending staccato: C6→D6→E6→G6→C7.
+                // Each ping is tight and digital; top note lingers briefly.
+                SendProgramChange(ch, ProceduralMidiComposer.PatchFxCrystal);
+                SendNoteOn(ch, 84, 80); // C6 — fired synchronously for zero latency
+                _ = Task.Run(() =>
+                {
+                    Thread.Sleep(32); SendNoteOff(ch, 84);
+                    SendNoteOn(ch, 86, 85); Thread.Sleep(32); SendNoteOff(ch, 86); // D6
+                    SendNoteOn(ch, 88, 90); Thread.Sleep(32); SendNoteOff(ch, 88); // E6
+                    SendNoteOn(ch, 91, 93); Thread.Sleep(40); SendNoteOff(ch, 91); // G6
+                    SendNoteOn(ch, 96, 97); Thread.Sleep(220); SendNoteOff(ch, 96); // C7 — held
+                });
+                break;
+            }
+
+            case GameEventType.NegativeOutcome:
+            {
+                // Three-semitone sawtooth cluster: A3+Bb3+B3 simultaneously = maximum digital dissonance.
+                // A low afterbite hits 300 ms later to close the crash.
+                SendProgramChange(ch, ProceduralMidiComposer.PatchLeadSawtooth);
+                SendNoteOn(ch, 57, 95); // A3
+                SendNoteOn(ch, 58, 90); // Bb3 — semitone
+                SendNoteOn(ch, 59, 85); // B3  — semitone cluster = digital screech
+                _ = Task.Run(() =>
+                {
+                    Thread.Sleep(280);
+                    SendNoteOff(ch, 57); SendNoteOff(ch, 58); SendNoteOff(ch, 59);
+                    Thread.Sleep(35);
+                    SendNoteOn(ch, 45, 82); // A2 — low gut-punch afterbite
+                    Thread.Sleep(60); SendNoteOff(ch, 45);
+                });
+                break;
+            }
+
+            case GameEventType.NeutralOutcome:
+            {
+                // Echoes patch open fifth + octave: D4 + A4 + D5.
+                // Three-voice voicing makes it clearly audible; internal echo decay lingers.
+                SendProgramChange(ch, ProceduralMidiComposer.PatchFxEchoes);
+                SendNoteOn(ch, 62, 82); // D4 — louder
+                SendNoteOn(ch, 69, 70); // A4 — fifth
+                SendNoteOn(ch, 74, 58); // D5 — octave above root, soft top
+                _ = Task.Run(() =>
+                {
+                    Thread.Sleep(900);
+                    SendNoteOff(ch, 62);
+                    SendNoteOff(ch, 69);
+                    SendNoteOff(ch, 74);
+                });
+                break;
+            }
+        }
+    }
 
     private void PlaySfxInternal(SoundEffectType sfx)
     {
@@ -659,6 +1158,16 @@ public sealed class AmbianceEngine : IDisposable
         SendNoteOn(ch, note, velocity);
         Thread.Sleep(durationMs);
         SendNoteOff(ch, note);
+    }
+
+    /// <summary>
+    /// Waits for <paramref name="ms"/> ms, or returns early if a game event fires.
+    /// Only throws <see cref="OperationCanceledException"/> on engine shutdown.
+    /// </summary>
+    private async Task InterruptibleDelay(int ms, CancellationToken ct)
+    {
+        await Task.WhenAny(Task.Delay(ms, ct), _eventInterrupt.Task);
+        ct.ThrowIfCancellationRequested();
     }
 
     // ── MIDI send helpers ─────────────────────────────────────────────────────
