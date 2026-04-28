@@ -150,6 +150,22 @@ public static class MusicModeLauncher
                 case ConsoleKey.H:
                     ShowHelp(); break;
 
+                // Filter toggles
+                case ConsoleKey.P:
+                {
+                    var next = engine.ActiveFilter == MusicFilter.Loading
+                        ? MusicFilter.None : MusicFilter.Loading;
+                    engine.SetFilter(next);
+                    break;
+                }
+                case ConsoleKey.V:
+                {
+                    var next = engine.ActiveFilter == MusicFilter.DiceRoll
+                        ? MusicFilter.None : MusicFilter.DiceRoll;
+                    engine.SetFilter(next);
+                    break;
+                }
+
                 case ConsoleKey.Z:
                 {
                     var r = new Random();
@@ -221,15 +237,26 @@ public static class MusicModeLauncher
         WriteBar("  Intensity", mood.Intensity, ConsoleColor.Green);
 
         SetCursor(0, top + 8); ClearLine();
+        string filterLabel = engine.ActiveFilter switch
+        {
+            MusicFilter.Loading  => "Loading  (P to stop)",
+            MusicFilter.DiceRoll => "DiceRoll (V to stop)",
+            _                    => "None",
+        };
+        ConsoleColor filterColor = engine.ActiveFilter == MusicFilter.None
+            ? ConsoleColor.DarkGray : ConsoleColor.Yellow;
+        WriteField("  Filter", filterLabel, filterColor);
+
+        SetCursor(0, top + 9); ClearLine();
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.Write("└");
         Console.Write(new string('─', 57));
         Console.WriteLine('┘');
         Console.ResetColor();
 
-        SetCursor(0, top + 10); ClearLine();
+        SetCursor(0, top + 11); ClearLine();
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write("  S/s=Sadness  F/f=Fear  M/m=Mystery  I/i=Intensity  0=Noise solo  1-4=Tracks  T/L/X/B/W=Preset  Z=Random All  A/K/G/J/O=Events  H=Help  Q=Quit");
+        Console.Write("  S/s=Sadness  F/f=Fear  M/m=Mystery  I/i=Intensity  0=Noise solo  1-4=Tracks  T/L/X/B/W=Preset  Z=Random  A/K/G/J/O=Events  P=Loading  V=DiceRoll  H=Help  Q=Quit");
         Console.ResetColor();
     }
 
@@ -327,7 +354,19 @@ public static class MusicModeLauncher
         Console.WriteLine("  J                NegativeOutcome   — tritone thud + darken mood 5 s, break phrase");
         Console.WriteLine("  O                NeutralOutcome    — bell tone + triple inter-phrase pause");
         Console.WriteLine();
-        Console.WriteLine("  H                This help screen");
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("  Postprocess Filters (toggle on/off):");
+        Console.ResetColor();
+        Console.WriteLine("  P                Loading filter — 2.2x tempo + chaotic sawtooth noise + percussion");
+        Console.WriteLine("  V                Dice-roll filter — irregular wood-block tick clusters");
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("  Postprocess Filters:");
+        Console.ResetColor();
+        Console.WriteLine("  P                Loading filter  — 2.2x tempo + sawtooth noise bursts + percussion");
+        Console.WriteLine("  V                Dice-roll filter — irregular wood-block tick clusters");
+        Console.WriteLine();
+Console.WriteLine("  H                This help screen");
         Console.WriteLine("  Q / Escape       Quit");
         Console.WriteLine();
         Console.ForegroundColor = ConsoleColor.DarkGray;

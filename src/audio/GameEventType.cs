@@ -46,3 +46,29 @@ public enum GameEventType
     /// </summary>
     NeutralOutcome,
 }
+
+/// <summary>
+/// Postprocess audio filters that layer on top of the ambient music.
+/// Designed for UI phases of indeterminate length (loading screens, dice rolls).
+/// Activate with <see cref="AmbianceEngine.SetFilter"/>.
+/// </summary>
+public enum MusicFilter
+{
+    /// <summary>No filter — normal music playback.</summary>
+    None,
+
+    /// <summary>
+    /// Generic loading-screen filter.
+    /// Doubles the music tempo and overlays a chaotic chromatic noise burst
+    /// (sawtooth lead + rapid percussion hits) suggesting fast, anxious activity.
+    /// </summary>
+    Loading,
+
+    /// <summary>
+    /// Dice-roll filter.
+    /// Plays irregular clusters of percussive wood-block ticks that build a
+    /// randomised rhythmic rattle, evoking dice tumbling across a surface.
+    /// The ambient music continues underneath unchanged.
+    /// </summary>
+    DiceRoll,
+}
