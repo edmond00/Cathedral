@@ -26,39 +26,43 @@ public class ChildhoodHistory
     public List<string> VisitedReminescences { get; } = new();
 
     /// <summary>
-    /// Fragments remembered in REMEMBER order, paired with their reminescence id.
-    /// Items are <c>(reminescenceId, fragmentName, fragmentSummary)</c>.
+    /// Fragments remembered in REMEMBER order.
     /// </summary>
-    public List<(string ReminescenceId, string FragmentName, string FragmentSummary)> RememberedFragments { get; } = new();
+    public List<(string ReminescenceId, string FragmentName, string FragmentSummary, string ContextSummary)> RememberedFragments { get; } = new();
 
     /// <summary>
-    /// Records a fragment that was just remembered. The summary is the natural-language
-    /// content the player will recognise (one or two sentences from the fragment definition).
+    /// Records a fragment that was just remembered.
+    /// <paramref name="contextSummary"/> is the short biographical phrase used in history
+    /// prompts ("living by your wits on the street"). Empty for location-setting fragments.
     /// </summary>
-    public void RecordFragment(string reminescenceId, string fragmentName, string fragmentSummary)
+    public void RecordFragment(string reminescenceId, string fragmentName, string fragmentSummary, string contextSummary = "")
     {
-        RememberedFragments.Add((reminescenceId, fragmentName, fragmentSummary));
+        RememberedFragments.Add((reminescenceId, fragmentName, fragmentSummary, contextSummary));
     }
 
     /// <summary>True when nothing has been remembered yet.</summary>
     public bool IsEmpty => RememberedFragments.Count == 0 && Location == null;
 
     /// <summary>
-    /// Renders the currently filled childhood history as a compact prose summary suitable for
-    /// inclusion in LLM prompts. Returns an empty string when nothing has been remembered.
+    /// Renders the childhood history as a single sentence suitable for the top of an LLM
+    /// prompt. Returns an empty string when nothing has been remembered yet.
+    /// Format: "You spent your childhood at {location}, {context phrase 1}, {context phrase 2}."
     /// </summary>
     public string ToPromptSummary()
     {
         if (IsEmpty) return string.Empty;
+        if (Location == null) return string.Empty;
+
+        var outcomes = RememberedFragments
+            .Where(f => !string.IsNullOrWhiteSpace(f.ContextSummary))
+            .Select(f => f.ContextSummary)
+            .ToList();
+
         var sb = new StringBuilder();
-        if (Location != null)
-            sb.Append($"You spent your childhood at {Location}. ");
-        if (RememberedFragments.Count > 0)
-        {
-            sb.Append("So far you have remembered: ");
-            sb.Append(string.Join("; ", RememberedFragments.Select(f => f.FragmentSummary)));
-            sb.Append('.');
-        }
-        return sb.ToString().Trim();
+        sb.Append($"You spent your childhood at {Location}");
+        if (outcomes.Count > 0)
+            sb.Append($", {string.Join(", ", outcomes)}");
+        sb.Append('.');
+        return sb.ToString();
     }
 }

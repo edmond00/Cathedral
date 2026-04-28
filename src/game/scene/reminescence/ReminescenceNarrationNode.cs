@@ -32,7 +32,8 @@ public sealed class ReminescenceNarrationNode : SyntheticNarrationNode
     public override string BuildLocationContext(WorldContext worldContext, int locationId)
     {
         var history = _protagonist.ChildhoodHistory.ToPromptSummary();
-        var historyClause = history.Length == 0 ? string.Empty : $" {history}";
+        var prefix  = history.Length == 0 ? string.Empty : $"{history}\n";
+
         const string youRemember = "you remember ";
         var rawThemeLine = _data.ContentLines.Count > 1 ? _data.ContentLines[^1] : null;
         var themeFrag = rawThemeLine == null ? null
@@ -40,9 +41,9 @@ public sealed class ReminescenceNarrationNode : SyntheticNarrationNode
                 ? rawThemeLine[youRemember.Length..]
                 : rawThemeLine;
         var theme = themeFrag != null ? $" You are reminded of {themeFrag}." : string.Empty;
-        return
-            $"You are sitting exhausted at the foot of a tree, remembering what brought you here." +
-            $" Half-formed images of your childhood drift through your mind.{theme}{historyClause}";
+
+        return $"{prefix}You are now sitting exhausted at the foot of a tree, remembering what brought you here." +
+               $" Half-formed images of your childhood drift through your mind.{theme}";
     }
 
     public override string GenerateNeutralDescription(int locationId = 0)

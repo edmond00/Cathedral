@@ -49,19 +49,19 @@ When acting, you commit to one fragment and fold it gently into yourself. Your l
                          "what_faint_echo_surfaces")),
 
         new(QuestionReference.ObserveContinuation,
-            new Question("what other half-sensed thing might be stirring beneath the first — perhaps just a colour, perhaps just a feeling, perhaps nothing?",
+            new Question("what more might this impression hold — some texture or quality still submerged within it, however uncertain, however possibly imagined?",
                          "what_other_memory_stirs"),
-            new Question("what further impression could be gathering at the edge of recollection — still vague, still possibly shapeless?",
+            new Question("what further detail of this same impression could be rising — something still vague within it, still perhaps without a shape?",
                          "what_further_impression_gathers"),
-            new Question("what else might be rising out of the childhood dark — something that may not yet have a name, or may have no shape at all?",
+            new Question("what else might this impression carry within itself — some quality or feeling not yet surfaced, however faint?",
                          "what_else_rises")),
 
         new(QuestionReference.ObserveTransition,
-            new Question("what other impression might now be calling for attention — still vague, perhaps nameless, perhaps only a trick of fatigue?",
+            new Question("what does this impression feel like as it surfaces — what quality or texture might it have, however uncertain?",
                          "what_other_impression_calls"),
-            new Question("what different fragment could now be drifting into reach — whatever it might turn out to be?",
+            new Question("what might this impression be made of — what feeling or sensation does it carry, however vague, however possibly nothing?",
                          "what_different_fragment_drifts"),
-            new Question("what new half-formed image might be replacing the last — if indeed it is an image at all?",
+            new Question("what does this impression hold — what can you sense of it before it dissolves again, if anything at all?",
                          "what_new_image_replaces")),
 
         // ── Thinking ───────────────────────────────────────────────────────────

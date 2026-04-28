@@ -33,11 +33,20 @@ public sealed class FragmentData
     /// <summary>Alias for <see cref="OutcomeText"/> — used when saving to childhood history.</summary>
     public string Summary => OutcomeText;
 
-    public FragmentData(string name, string observationText, string outcomeText, FragmentOutcome outcome)
+    /// <summary>
+    /// Short biographical phrase appended to the location line in history prompts.
+    /// E.g. "living by your wits on the street". Empty for fragments that only
+    /// establish a location without adding further biographical detail.
+    /// </summary>
+    public string ContextSummary { get; }
+
+    public FragmentData(string name, string observationText, string outcomeText, FragmentOutcome outcome,
+        string contextSummary = "")
     {
         Name            = name;
         ObservationText = observationText;
         OutcomeText     = outcomeText;
         Outcome         = outcome;
+        ContextSummary  = contextSummary;
     }
 }

@@ -19,7 +19,7 @@ public sealed class ReminescenceObservationPromptConstructor : ObservationPrompt
         => $"A memory stirs of {outcomeLabel}.";
 
     protected override string TransitionTo(string previousLabel, string outcomeLabel)
-        => $"As you try to recall {previousLabel}, another impression surfaces: {outcomeLabel}.";
+        => $"As you try to recall {previousLabel}, something else surfaces instead: {outcomeLabel}.";
 
     protected override string NowFocusingOn(string outcomeLabel)
         => $"You find yourself remembering {outcomeLabel}.";

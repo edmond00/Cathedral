@@ -144,7 +144,7 @@ public class ObservationPhaseController
                     keywordOutcomeMap.TryAdd(kw, outcome);
                 }
 
-                previousDescription = outcome is NarrationNode nn2 ? nn2.GenerateNeutralDescription(locationId) : outcome.DisplayName;
+                previousDescription = GetNeutralDescription(outcome, locationId);
 
                 Console.WriteLine($"ObservationPhaseController: Outcome '{outcome.DisplayName}' → {sampledKws.Count} keywords");
             }
@@ -231,7 +231,7 @@ public class ObservationPhaseController
             Console.Error.WriteLine($"ObservationPhaseController: Focus first sentence failed: {ex.Message}");
         }
 
-        string previousDescription = focusOutcome is NarrationNode fn2 ? fn2.GenerateNeutralDescription(locationId) : focusOutcome.DisplayName;
+        string previousDescription = GetNeutralDescription(focusOutcome, locationId);
 
         var otherOutcome = currentNode.GetAllDirectConcreteOutcomes()
             .Where(o => o != focusOutcome)
