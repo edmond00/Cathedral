@@ -45,43 +45,44 @@ public class NarrativeUI : TerminalPanelUI
     }
     
     /// <summary>
-    /// Render the header with location name and thinking attempts.
+    /// Render the header: active agent name (left) and noetic-point counter (right).
+    /// Pass <paramref name="showNoeticPoints"/> as false for phases where noetic points are
+    /// not consumed (childhood reminescence, get-up scene).
     /// </summary>
-    public void RenderHeader(string locationName, int thinkingAttemptsRemaining, WorldContext? worldContext = null, string? activePartyMemberName = null, TimePeriod? timePeriod = null)
+    public void RenderHeader(string activeAgentName, int thinkingAttemptsRemaining, bool showNoeticPoints = true)
     {
-        // Header starts after top padding
         int headerY = _layout.TOP_PADDING;
 
-        // Line 0: Location name with world context display name
-        string formattedLocationName = locationName.Replace("_", " ");
-        string memberSuffix = activePartyMemberName != null ? $"  [{activePartyMemberName.ToUpper()}]" : "";
-        string timeSuffix = timePeriod.HasValue ? $"  | {timePeriod.Value}" : "";
-        string contextPrefix = worldContext != null ? $"{worldContext.DisplayName} - " : "";
-        string title = $"{contextPrefix}{formattedLocationName}{memberSuffix}{timeSuffix}";
-        _terminal.Text(_layout.CONTENT_START_X, headerY, title, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
-        
-        // Thinking attempts indicator (right side)
-        int maxAttempts = GetMaxThinkingAttempts();
-        string attempts = $"Remaining noetic points : [";
-        int attemptsX = _layout.CONTENT_END_X - 40;
-        _terminal.Text(attemptsX, headerY, attempts, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        
-        // Draw individual attempt markers
-        int markerX = attemptsX + attempts.Length;
-        for (int i = 0; i < maxAttempts; i++)
+        // Left: agent name in uppercase brackets
+        string agentLabel = $"[{activeAgentName.ToUpper()}]";
+        _terminal.Text(_layout.CONTENT_START_X, headerY, agentLabel, Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
+
+        // Right: noetic-point counter (only when noetic points are meaningful)
+        if (showNoeticPoints)
         {
-            bool isRemaining = i < thinkingAttemptsRemaining;
-            Vector4 markerColor = isRemaining
-                ? Config.NarrativeUI.LoadingColor // Bright yellow for available
-                : Config.NarrativeUI.HistoryColor; // Dark gray for used
-            _terminal.Text(markerX, headerY, Config.Symbols.NoeticPointMarker.ToString(), markerColor, Config.NarrativeUI.BackgroundColor);
-            markerX++;
+            int maxAttempts = GetMaxThinkingAttempts();
+            string prefix = "[";
+            // Reserve space: maxAttempts markers + prefix "[" + suffix "]"
+            int suffixWidth = 1 + maxAttempts + 1;
+            int prefixX = _layout.CONTENT_END_X - suffixWidth;
+
+            _terminal.Text(prefixX, headerY, prefix, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+
+            int markerX = prefixX + prefix.Length;
+            for (int i = 0; i < maxAttempts; i++)
+            {
+                bool isRemaining = i < thinkingAttemptsRemaining;
+                Vector4 markerColor = isRemaining
+                    ? Config.NarrativeUI.LoadingColor
+                    : Config.NarrativeUI.HistoryColor;
+                _terminal.Text(markerX, headerY, Config.Symbols.NoeticPointMarker.ToString(), markerColor, Config.NarrativeUI.BackgroundColor);
+                markerX++;
+            }
+
+            _terminal.Text(markerX, headerY, "]", Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
         }
-        
-        // Closing bracket
-        _terminal.Text(markerX, headerY, "]", Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        
-        // Separator line (after header)
+
+        // Separator line
         DrawHorizontalLine(_layout.TOP_PADDING + 1);
     }
     
@@ -682,62 +683,22 @@ public class NarrativeUI : TerminalPanelUI
         => CalculateScrollOffsetFromMouseY(mouseY, scrollBuffer.TotalLines);
     
     /// <summary>
-    /// Render the status bar at the bottom.
-    /// When hovering over an action, the dice count portion is highlighted in yellow.
+    /// Render the footer status bar. In normal operation, pass scene-info text (biome, location,
+    /// time). For transient states (loading, dice, error) pass the relevant status message.
     /// </summary>
-    public void RenderStatusBar(string message = "", ParsedNarrativeAction? hoveredAction = null)
+    public void RenderStatusBar(string message = "")
     {
         int statusY = _layout.STATUS_BAR_Y;
         int separatorY = _layout.SEPARATOR_Y;
-        
-        // Draw separator line above status bar
+
         DrawHorizontalLine(separatorY);
-        
-        if (string.IsNullOrEmpty(message))
-        {
-            message = "Hover keywords to highlight • Click keywords to think (3 attempts remaining)";
-        }
-        
-        // Truncate if too long
-        int maxMessageWidth = _layout.CONTENT_WIDTH - 2;
-        if (message.Length > maxMessageWidth)
-        {
-            message = message.Substring(0, maxMessageWidth - 3) + "...";
-        }
-        
-        // If hovering over an action, render with highlighted dice count
-        if (hoveredAction != null)
-        {
-            int totalDice = hoveredAction.GetTotalModusMentisLevel();
-            string diceText = $"{totalDice}{Config.Symbols.ModusMentisLevelIndicator}";
-            
-            // Find where the dice text appears in the message
-            int diceIndex = message.IndexOf(diceText);
-            if (diceIndex >= 0)
-            {
-                // Render before dice text in dark gray
-                string beforeDice = message.Substring(0, diceIndex);
-                _terminal.Text(_layout.CONTENT_START_X, statusY, beforeDice, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-                
-                // Render dice text in yellow (highlighted)
-                int diceX = _layout.CONTENT_START_X + beforeDice.Length;
-                _terminal.Text(diceX, statusY, diceText, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
-                
-                // Render after dice text in dark gray
-                string afterDice = message.Substring(diceIndex + diceText.Length);
-                int afterX = diceX + diceText.Length;
-                _terminal.Text(afterX, statusY, afterDice, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-            }
-            else
-            {
-                // Fallback: render entire message in status bar color
-                _terminal.Text(_layout.CONTENT_START_X, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-            }
-        }
-        else
-        {
-            _terminal.Text(_layout.CONTENT_START_X, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        }
+
+        // Truncate to fit
+        int maxWidth = _layout.CONTENT_WIDTH - 2;
+        if (message.Length > maxWidth)
+            message = message.Substring(0, maxWidth - 3) + "...";
+
+        _terminal.Text(_layout.CONTENT_START_X, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
     }
     
     // ShowLoadingIndicator — inherited from TerminalPanelUI (public virtual)

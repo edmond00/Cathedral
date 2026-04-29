@@ -265,11 +265,45 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
             
-            // Check if reminescence phase is complete — drop straight into WorldView.
+            // Check if reminescence phase is complete — enter Get-Up scene.
             if (_currentMode == GameMode.ChildhoodReminescence
                 && _narrativeController.ReminescencePhaseFinished)
             {
-                Console.WriteLine("LocationTravelGameController: ChildhoodReminescence finished, entering WorldView");
+                Console.WriteLine("LocationTravelGameController: ChildhoodReminescence finished, entering GetUp");
+                _isInNarrativeMode = false;
+                _narrativeController = null;
+
+                // Grant GetUpModusMentis temporarily for the Get-Up scene.
+                var getUpTemplate = ModusMentisRegistry.Instance.GetModusMentis("get_up");
+                if (getUpTemplate != null && _protagonist != null)
+                {
+                    var getUpInstance = (ModusMentis)Activator.CreateInstance(getUpTemplate.GetType())!;
+                    getUpInstance.Level = 1;
+                    _protagonist.AcquireModusMentis(getUpInstance);
+                    Console.WriteLine("LocationTravelGameController: GetUpModusMentis granted to protagonist");
+                }
+                else
+                {
+                    Console.Error.WriteLine("LocationTravelGameController: 'get_up' MM not registered — GetUp scene will use fallback MMs");
+                }
+
+                SetMode(GameMode.GetUp);
+                return;
+            }
+
+            // Check if Get-Up phase is complete — enter WorldView.
+            if (_currentMode == GameMode.GetUp
+                && _narrativeController.GetUpPhaseFinished)
+            {
+                Console.WriteLine("LocationTravelGameController: GetUp finished, entering WorldView");
+                // Remove GetUpModusMentis — it was only needed for this transitional scene.
+                if (_protagonist != null)
+                {
+                    var getUpMm = _protagonist.LearnedModiMentis
+                        .FirstOrDefault(m => m.ModusMentisId == "get_up");
+                    if (getUpMm != null)
+                        _protagonist.LearnedModiMentis.Remove(getUpMm);
+                }
                 _isInNarrativeMode = false;
                 _narrativeController = null;
                 SetMode(GameMode.WorldView);
@@ -280,10 +314,11 @@ public class LocationTravelGameController : IDisposable
             if (_narrativeController.HasRequestedExit())
             {
                 Console.WriteLine("LocationTravelGameController: Phase 6 exit requested");
-                if (_currentMode == GameMode.ChildhoodReminescence)
+                if (_currentMode == GameMode.ChildhoodReminescence
+                    || _currentMode == GameMode.GetUp)
                 {
-                    // RequestedExit was set by the final REMEMBER's <END> — already handled
-                    // above by ReminescencePhaseFinished, but be defensive.
+                    // RequestedExit was set by the final phase transition — already handled
+                    // above by ReminescencePhaseFinished / GetUpPhaseFinished, be defensive.
                     _isInNarrativeMode = false;
                     _narrativeController = null;
                     SetMode(GameMode.WorldView);
@@ -665,6 +700,10 @@ public class LocationTravelGameController : IDisposable
 
             case GameMode.ChildhoodReminescence:
                 OnEnterChildhoodReminescence();
+                break;
+
+            case GameMode.GetUp:
+                OnEnterGetUp();
                 break;
         }
 
@@ -1271,6 +1310,87 @@ public class LocationTravelGameController : IDisposable
         catch (Exception ex)
         {
             Console.Error.WriteLine($"ChildhoodReminescence: failed to start — {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            _isInNarrativeMode = false;
+            _narrativeController = null;
+            SetMode(GameMode.WorldView);
+        }
+    }
+
+    /// <summary>
+    /// Builds and runs the Get-Up narrative scene immediately after childhood reminescence.
+    /// The protagonist sits exhausted under a tree; the only action is GET UP.
+    /// Reuses the same NarrativeController pipeline as exploration but with a GetUp-phase scene.
+    /// </summary>
+    private void OnEnterGetUp()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered GetUp mode");
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+        if (_core.Terminal != null) _core.Terminal.Visible = true;
+
+        if (_core.Terminal == null || _core.PopupTerminal == null
+            || _llmActionExecutor == null || _modusMentisSlotManager == null
+            || _thinkingExecutor == null || _criticEvaluator == null
+            || _protagonist == null)
+        {
+            Console.Error.WriteLine("GetUp: missing dependencies — falling back to WorldView");
+            SetMode(GameMode.WorldView);
+            return;
+        }
+
+        var inputHandler = GetTerminalInputHandler();
+        if (inputHandler == null)
+        {
+            Console.Error.WriteLine("GetUp: no terminal input handler — falling back to WorldView");
+            SetMode(GameMode.WorldView);
+            return;
+        }
+
+        try
+        {
+            var sceneFactory = new Cathedral.Game.Scene.GetUp.GetUpSceneFactory();
+            var scene = sceneFactory.Build(0);
+
+            var worldContext = new Cathedral.Game.Narrative.PlainBiomeContext();
+            var outcomeApplicator = new OutcomeApplicator();
+            var outcomeNarrator = new OutcomeNarrator(
+                _llmActionExecutor.GetLlamaServerManager(),
+                _modusMentisSlotManager);
+            var actionExecutor = new ActionExecutionController(
+                outcomeNarrator,
+                outcomeApplicator,
+                _protagonist,
+                _criticEvaluator,
+                worldContext,
+                locationId: 0);
+
+            _narrativeController = new NarrativeController(
+                _core.Terminal,
+                _core.PopupTerminal,
+                _core,
+                _llmActionExecutor.GetLlamaServerManager(),
+                _modusMentisSlotManager,
+                inputHandler,
+                _thinkingExecutor,
+                actionExecutor,
+                scene,
+                locationId: 0,
+                worldContext,
+                _keywordFallbackService,
+                _protagonist);
+
+            _isInNarrativeMode = true;
+            _interface.SetWorldInteractionsEnabled(false);
+            _core.SetWorldInteractionsEnabled(false);
+            _narrativeController.StartObservationPhase();
+
+            Console.WriteLine("LocationTravelGameController: Get-Up scene started");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"GetUp: failed to start — {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
             _isInNarrativeMode = false;
             _narrativeController = null;

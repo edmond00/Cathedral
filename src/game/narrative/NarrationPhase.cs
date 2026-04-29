@@ -15,5 +15,13 @@ public enum NarrationPhase
     /// recalling fuzzy memories. Fragments are POI-like observations and the only
     /// available action is REMEMBER (auto-success, no critic, no noetic cost).
     /// </summary>
-    ChildhoodReminescence
+    ChildhoodReminescence,
+
+    /// <summary>
+    /// Get Up: the protagonist rests exhausted under a lone tree on a plain, body spent after
+    /// the reminescence. Observations focus on physical and emotional exhaustion. The only
+    /// available action is GET UP (difficulty forced to 1, no critic malus, no noetic cost).
+    /// Failure loops back to the same scene; success transitions to world travel.
+    /// </summary>
+    GetUp
 }

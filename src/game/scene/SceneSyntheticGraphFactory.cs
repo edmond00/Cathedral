@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Reminescence;
+using Cathedral.Game.Scene.GetUp;
 using Cathedral.Game.Scene.Reminescence;
 using Cathedral.Game.Scene.Verbs;
 
@@ -78,6 +79,14 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
                 area,
                 _protagonist,
                 data);
+        }
+        else if (_scene.Phase == NarrationPhase.GetUp)
+        {
+            node = new GetUpNarrationNode(
+                area.DisplayName.ToLowerInvariant().Replace(' ', '_'),
+                area.ContextDescription,
+                area.TransitionDescription,
+                area);
         }
         else
         {

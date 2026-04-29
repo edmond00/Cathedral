@@ -224,6 +224,15 @@ public class Scene
         return new SceneViewEntry(element, verbs);
     }
 
+    // ── Pending get-up transition (set by GetUpVerb on success) ─────────────
+
+    /// <summary>
+    /// Set to <c>true</c> by <see cref="GetUpTransitionOutcome"/>; consumed by
+    /// <see cref="NarrativeController"/> on the next Continue click to signal that the
+    /// Get-Up phase has ended and world travel should begin.
+    /// </summary>
+    public bool PendingGetUpTransition { get; set; }
+
     // ── Pending dialogue request (set by dialogue verbs) ─────────────────────
 
     /// <summary>

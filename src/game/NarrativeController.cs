@@ -204,6 +204,16 @@ public class NarrativeController
                 new Cathedral.Game.Narrative.Reminescence.ReminescenceObservationPromptConstructor());
             Console.WriteLine("NarrativeController: swapped to ReminescenceObservationPromptConstructor");
         }
+        else if (scene.Phase == NarrationPhase.GetUp)
+        {
+            _observationController = new ObservationPhaseController(
+                llamaServer,
+                slotManager,
+                worldContext ?? new PlainBiomeContext(),
+                keywordFallbackService,
+                new Cathedral.Game.Narrative.GetUp.GetUpObservationPromptConstructor());
+            Console.WriteLine("NarrativeController: swapped to GetUpObservationPromptConstructor");
+        }
 
         // Show scene debug viewer alongside graph viewer
         SceneDebugManager.Show(scene, _pov, locationId);
@@ -356,6 +366,12 @@ public class NarrativeController
                     .Where(m => m.ModusMentisId == "childhood_reminescence")
                     .ToList();
             }
+            else if (_scene != null && _scene.Phase == NarrationPhase.GetUp)
+            {
+                actionModiMentis = actionModiMentis
+                    .Where(m => m.ModusMentisId == "get_up")
+                    .ToList();
+            }
 
             Console.WriteLine($"NarrativeController: Outcome '{targetOutcome.DisplayName}', {actionModiMentis.Count} action modiMentis");
 
@@ -402,7 +418,8 @@ public class NarrativeController
             // automatic-success and rendered with the '○' glyph (no numeric difficulty).
             if (response.Actions.Count > 0)
             {
-                bool isReminescence = _scene != null && _scene.Phase == NarrationPhase.ChildhoodReminescence;
+                bool isReminescence = _scene != null &&
+                    (_scene.Phase == NarrationPhase.ChildhoodReminescence || _scene.Phase == NarrationPhase.GetUp);
                 if (!isReminescence)
                 {
                     _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingDifficulty;
@@ -437,7 +454,8 @@ public class NarrativeController
             
             // Update state
             _narrationState.IsLoadingThinking = false;
-            if (_scene?.Phase != NarrationPhase.ChildhoodReminescence)
+            if (_scene?.Phase != NarrationPhase.ChildhoodReminescence
+                && _scene?.Phase != NarrationPhase.GetUp)
                 _narrationState.ThinkingAttemptsRemaining--;
             _narrationState.ErrorMessage = null;
 
@@ -478,6 +496,15 @@ public class NarrativeController
             if (_scene != null && _scene.Phase == NarrationPhase.ChildhoodReminescence)
             {
                 await ExecuteReminescenceActionAsync(action);
+                return;
+            }
+
+            // === GET-UP PHASE SHORT-CIRCUIT ===
+            // GET UP skips the critic entirely and forces difficulty 1. Dice are still rolled.
+            // Failure has no penalty and loops back; success queues a GetUpTransitionOutcome.
+            if (_scene != null && _scene.Phase == NarrationPhase.GetUp)
+            {
+                await ExecuteGetUpActionAsync(action);
                 return;
             }
 
@@ -528,7 +555,8 @@ public class NarrativeController
 
                 Console.WriteLine($"NarrativeController: Coded rule failure - consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
 
-                if (_scene?.Phase == NarrationPhase.ChildhoodReminescence)
+                if (_scene?.Phase == NarrationPhase.ChildhoodReminescence
+                    || _scene?.Phase == NarrationPhase.GetUp)
                 {
                     return;
                 }
@@ -587,8 +615,9 @@ public class NarrativeController
                 
                 Console.WriteLine($"NarrativeController: Plausibility failure - consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
 
-                // Reminescence phase never costs noetic — player can retry freely
-                if (_scene?.Phase == NarrationPhase.ChildhoodReminescence)
+                // Reminescence and GetUp phases never cost noetic — player can retry freely
+                if (_scene?.Phase == NarrationPhase.ChildhoodReminescence
+                    || _scene?.Phase == NarrationPhase.GetUp)
                 {
                     return;
                 }
@@ -679,6 +708,12 @@ public class NarrativeController
     public bool ReminescencePhaseFinished { get; private set; }
 
     /// <summary>
+    /// True when the GET UP action succeeded in the Get-Up scene. Polled by the game
+    /// controller to transition out of <c>GameMode.GetUp</c> into world travel.
+    /// </summary>
+    public bool GetUpPhaseFinished { get; private set; }
+
+    /// <summary>
     /// Consume a queued <see cref="ReminescenceTransitionRequest"/>: either rebuild the
     /// scene as the next reminescence (in place) or signal that the reminescence phase has
     /// ended.
@@ -736,6 +771,103 @@ public class NarrativeController
         _currentNode   = _graph.EntryNode;
 
         Console.WriteLine($"NarrativeController: scene replaced with reminescence '{newScene.CurrentReminescenceId}'");
+    }
+
+    /// <summary>
+    /// Consumes a pending Get-Up success transition: signals to the game controller that the
+    /// protagonist has risen and world travel should begin.
+    /// </summary>
+    private void HandleGetUpContinue()
+    {
+        Console.WriteLine("NarrativeController: Get-Up complete — protagonist risen, transitioning to world travel");
+        if (_scene != null) _scene.PendingGetUpTransition = false;
+        GetUpPhaseFinished = true;
+        _narrationState.ShowContinueButton = false;
+        _narrationState.RequestedExit = true;
+    }
+
+    /// <summary>
+    /// Get-Up phase action path: GET UP rolls dice at forced difficulty 1 with no critic and
+    /// no noetic cost. On success, queues a GetUpTransitionOutcome via normal verb reports.
+    /// On failure, no damage or penalty; the scene loops back when Continue is clicked.
+    /// </summary>
+    private async Task ExecuteGetUpActionAsync(ParsedNarrativeAction action)
+    {
+        if (_scene == null || _pov == null)
+        {
+            Console.Error.WriteLine("NarrativeController: ExecuteGetUpActionAsync called without scene/pov");
+            return;
+        }
+
+        action.DifficultyLevel = 1;
+
+        // Roll dice at forced difficulty 1 (1 six needed to succeed).
+        int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
+        const int getUpDifficulty = 1;
+
+        _narrationState.StartDiceRoll(numberOfDice, getUpDifficulty);
+        _narrationState.LoadingMessage = "Rolling dice...";
+
+        int[] finalDiceValues = new int[numberOfDice];
+        for (int i = 0; i < numberOfDice; i++)
+            finalDiceValues[i] = _diceRandom.Next(1, 7);
+        int sixesCount = finalDiceValues.Count(v => v == 6);
+        bool succeeded = sixesCount >= getUpDifficulty;
+
+        Console.WriteLine(
+            $"NarrativeController: GetUp dice — {sixesCount}/{numberOfDice} sixes (need {getUpDifficulty}) → {(succeeded ? "SUCCESS" : "FAILURE")}");
+
+        // Choose narration hint for the LLM based on success/failure.
+        var actionMm = action.ActionModusMentis ?? action.ChainModusMentis;
+        OutcomeBase outcomeForPrompt = succeeded
+            ? new InlineOutcome("getting up", "with great effort you push yourself to your feet and continue your travel")
+            : new InlineOutcome("the effort", "your exhausted body refuses to rise — you slump back against the tree");
+
+        _narrationState.IsLoadingAction = true;
+        _narrationState.LoadingMessage  = Cathedral.Config.LoadingMessages.EvaluatingAction;
+
+        string narration;
+        try
+        {
+            narration = await _actionExecutor.OutcomeNarrator.NarrateOutcomeAsync(
+                action,
+                actionMm,
+                outcomeForPrompt,
+                succeeded,
+                difficulty: CriticTrees.DifficultyLevelToScore(getUpDifficulty),
+                _protagonist,
+                System.Threading.CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"NarrativeController: GetUp narration failed — {ex.Message}");
+            narration = succeeded
+                ? "With great effort, you force yourself to your feet."
+                : "Your body refuses to cooperate. You slump back against the tree.";
+        }
+
+        _narrationState.IsLoadingAction = false;
+
+        // Store as pending action result — OnDiceRollContinue applies verb reports and shows outcome.
+        // ActualOutcome is always the VerbOutcome so the GetUpVerb's Success/FailureReports are invoked.
+        _pendingActionResult = new ActionExecutionResult
+        {
+            Action              = action,
+            ActionModusMentis   = actionMm,
+            ThinkingModusMentis = action.ThinkingModusMentis ?? actionMm,
+            Difficulty          = CriticTrees.DifficultyLevelToScore(getUpDifficulty),
+            DifficultyLevel     = getUpDifficulty,
+            Succeeded           = succeeded,
+            ActualOutcome       = action.PreselectedOutcome != null
+                                      ? (OutcomeBase)action.PreselectedOutcome
+                                      : new InlineOutcome("get up", "rise"),
+            Narration           = narration,
+        };
+
+        _narrationState.CompleteDiceRoll(finalDiceValues);
+        _narrationState.IsLoadingAction = false;
+
+        Console.WriteLine($"NarrativeController: GetUp action narrated — {(succeeded ? "pending transition" : "failure, will loop")}");
     }
 
     /// <summary>
@@ -1049,6 +1181,18 @@ public class NarrativeController
                 }
             }
 
+            // GetUp phase: failure loops back (no ShouldExitOnContinue); success is handled
+            // via PendingGetUpTransition in the Continue button handler.
+            if (_scene?.Phase == NarrationPhase.GetUp)
+            {
+                _narrationState.PendingTransitionNode = null;
+                _narrationState.ShouldExitOnContinue = false;
+                _narrationState.ShowContinueButton = true;
+                if (_pov != null) SceneDebugManager.UpdatePoV(_pov);
+                Console.WriteLine($"NarrativeController: GetUp action complete ({(result.Succeeded ? "pending transition" : "will loop")})");
+                return;
+            }
+
             _narrationState.PendingTransitionNode = null;
             _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
             _narrationState.ShowContinueButton = true;
@@ -1096,7 +1240,8 @@ public class NarrativeController
             _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
 
             // Consume a thinking point (same pool as thinking)
-            if (_scene?.Phase != NarrationPhase.ChildhoodReminescence)
+            if (_scene?.Phase != NarrationPhase.ChildhoodReminescence
+                && _scene?.Phase != NarrationPhase.GetUp)
                 _narrationState.ThinkingAttemptsRemaining--;
 
             // Update state
@@ -1219,17 +1364,22 @@ public class NarrativeController
         // Clear terminal
         _ui.Clear();
         
-        // Render header
-        _ui.RenderHeader(_currentNode.DisplayName, _narrationState.ThinkingAttemptsRemaining, _worldContext, _activePartyMember.DisplayName, _graph.CurrentPeriod);
-        
+        // Header: agent name (left) + noetic counter (right, hidden in phases without cost)
+        bool showNoetic = _scene?.Phase != NarrationPhase.ChildhoodReminescence
+                       && _scene?.Phase != NarrationPhase.GetUp;
+        _ui.RenderHeader(_activePartyMember.DisplayName, _narrationState.ThinkingAttemptsRemaining, showNoetic);
+
+        // Footer scene info — shown as the default footer in every state
+        string sceneInfo = BuildSceneInfoLine();
+
         // Show error if present
         if (_narrationState.ErrorMessage != null)
         {
             _ui.ShowError(_narrationState.ErrorMessage);
-            _ui.RenderStatusBar("Press ESC to return to world view");
+            _ui.RenderStatusBar(sceneInfo);
             return;
         }
-        
+
         // Show dice roll screen if active (for action execution)
         if (_narrationState.IsDiceRollActive)
         {
@@ -1240,14 +1390,14 @@ public class NarrativeController
                 _narrationState.DiceRollFinalValues,
                 _narrationState.IsDiceRollButtonHovered
             );
-            
-            string diceStatus = _narrationState.IsDiceRolling 
-                ? "Rolling dice..." 
+
+            string diceStatus = _narrationState.IsDiceRolling
+                ? "Rolling dice..."
                 : (_narrationState.DiceRollSucceeded ? "Success! Click Continue to see the outcome" : "Failed! Click Continue to see the outcome");
             _ui.RenderStatusBar(diceStatus);
             return;
         }
-        
+
         // Show loading indicator if generating (for non-action loading, or action evaluation phase before dice roll)
         bool isLoadingNonDice = _narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking ||
                                 _narrationState.IsLoadingFocusObservation || _narrationState.IsLoadingSpeaking ||
@@ -1255,54 +1405,43 @@ public class NarrativeController
         if (isLoadingNonDice)
         {
             _ui.ShowLoadingIndicator(_narrationState.LoadingMessage);
-            string loadingStatus = _narrationState.IsLoadingObservations 
-                ? "Generating observations..." 
-                : _narrationState.IsLoadingThinking
-                    ? "Generating thinking and actions..."
-                    : _narrationState.IsLoadingAction
-                        ? "Evaluating action..."
-                        : "Generating focus observation...";
-            _ui.RenderStatusBar(loadingStatus);
+            _ui.RenderStatusBar(sceneInfo);
             return;
         }
-        
+
         // Show continue button if flagged
         if (_narrationState.ShowContinueButton)
         {
-            // Render narration blocks (non-interactive, dimmed)
             _ui.RenderObservationBlocks(
                 _scrollBuffer,
                 _narrationState.ScrollOffset,
                 _narrationState.ThinkingAttemptsRemaining,
-                null, // No keyword hover
-                null, // No action hover
-                true  // Dim content when continue button is shown
+                null,
+                null,
+                true
             );
-            
-            // Render scrollbar (still visible when continue button shown)
+
             _narrationState.ScrollbarThumb = _ui.RenderScrollbar(
                 _scrollBuffer,
                 _narrationState.ScrollOffset,
                 _narrationState.IsScrollbarThumbHovered
             );
-            
-            // Render continue button
+
             var buttonRegion = _ui.RenderContinueButton(_narrationState.IsContinueButtonHovered);
-            
-            // Track button region for click detection (reuse ActionRegion for simplicity)
+
             _narrationState.ActionRegions.Clear();
             _narrationState.ActionRegions.Add(new ActionRegion(
-                0, 
-                buttonRegion.Y, 
-                buttonRegion.Y, 
-                buttonRegion.X, 
+                0,
+                buttonRegion.Y,
+                buttonRegion.Y,
+                buttonRegion.X,
                 buttonRegion.X + buttonRegion.Width
             ));
-            
-            _ui.RenderStatusBar("Click Continue to return to world view");
+
+            _ui.RenderStatusBar(sceneInfo);
             return;
         }
-        
+
         // Render observation blocks with keywords
         _ui.RenderObservationBlocks(
             _scrollBuffer,
@@ -1311,31 +1450,30 @@ public class NarrativeController
             _narrationState.HoveredKeyword,
             _narrationState.HoveredAction
         );
-        
-        // Render scrollbar and update thumb region
+
         _narrationState.ScrollbarThumb = _ui.RenderScrollbar(
             _scrollBuffer,
             _narrationState.ScrollOffset,
             _narrationState.IsScrollbarThumbHovered
         );
-        
-        // Render status bar - show modusMentis chain dice count when hovering over an action
-        string statusMessage;
-        if (_narrationState.HoveredAction?.Action != null)
-        {
-            // Calculate total modusMentis level from the modusMentis chain
-            int totalDice = _narrationState.HoveredAction.Action.GetTotalModusMentisLevel();
-            statusMessage = $"Click to attempt this action with {totalDice}{Config.Symbols.ModusMentisLevelIndicator} in the modusMentis check";
-        }
-        else if (_narrationState.ThinkingAttemptsRemaining > 0)
-        {
-            statusMessage = $"Hover keywords to highlight • Click keywords to think ({_narrationState.ThinkingAttemptsRemaining} attempts remaining)";
-        }
-        else
-        {
-            statusMessage = "No thinking attempts remaining • Explore keywords to continue";
-        }
-        _ui.RenderStatusBar(statusMessage, _narrationState.HoveredAction?.Action);
+
+        // Footer always shows scene info in the idle observation state
+        _ui.RenderStatusBar(sceneInfo);
+    }
+
+    /// <summary>
+    /// Builds the scene-info line displayed in the footer:
+    /// "BiomeName — location name | Time of day".
+    /// </summary>
+    private string BuildSceneInfoLine()
+    {
+        string location = _currentNode.DisplayName.Replace("_", " ");
+        string biome    = _worldContext?.DisplayName ?? "";
+        string time     = _graph.CurrentPeriod.ToString();
+
+        if (biome.Length > 0)
+            return $"{biome}  —  {location}  |  {time}";
+        return $"{location}  |  {time}";
     }
     
     /// <summary>
@@ -1614,6 +1752,13 @@ public class NarrativeController
             var buttonRegion = _narrationState.ActionRegions[0];
             if (buttonRegion.Contains(mouseX, mouseY))
             {
+                // Get-Up success transition: protagonist risen, world travel begins.
+                if (_scene != null && _scene.PendingGetUpTransition)
+                {
+                    HandleGetUpContinue();
+                    return;
+                }
+
                 // Reminescence transition takes priority over normal node transition.
                 if (_scene != null && _scene.PendingReminescenceTransition is { } req)
                 {

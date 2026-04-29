@@ -64,6 +64,13 @@ public enum GameMode
     ChildhoodReminescence,
 
     /// <summary>
+    /// Short intermediate scene between childhood reminiscence and world exploration.
+    /// The protagonist rests exhausted under a lone tree; the only action is GET UP.
+    /// No noetic cost, no failure penalty (loop back), difficulty forced to 1.
+    /// </summary>
+    GetUp,
+
+    /// <summary>
     /// Protagonist is engaged in turn-based combat within the narrative.
     /// Fight system runs on the main terminal; narrative resumes when fight ends.
     /// </summary>

@@ -255,3 +255,20 @@ public sealed class ReminescenceTransitionOutcome : OutcomeReport
         scene.PendingReminescenceTransition = new ReminescenceTransitionRequest(_fromId, _nextId, _fragmentName);
     }
 }
+
+/// <summary>
+/// Internal: signals successful completion of the Get-Up phase.
+/// Does not appear as a UI chip — consumed by NarrativeController on the next Continue click.
+/// </summary>
+public sealed class GetUpTransitionOutcome : OutcomeReport
+{
+    public override bool ShowInUI => false;
+
+    public GetUpTransitionOutcome() : base(string.Empty, OutcomeReportSeverity.Positive) { }
+
+    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    {
+        if (scene == null) return;
+        scene.PendingGetUpTransition = true;
+    }
+}
