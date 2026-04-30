@@ -366,12 +366,6 @@ public class NarrativeController
                     .Where(m => m.ModusMentisId == "childhood_reminescence")
                     .ToList();
             }
-            else if (_scene != null && _scene.Phase == NarrationPhase.GetUp)
-            {
-                actionModiMentis = actionModiMentis
-                    .Where(m => m.ModusMentisId == "get_up")
-                    .ToList();
-            }
 
             Console.WriteLine($"NarrativeController: Outcome '{targetOutcome.DisplayName}', {actionModiMentis.Count} action modiMentis");
 

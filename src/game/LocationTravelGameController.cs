@@ -272,21 +272,6 @@ public class LocationTravelGameController : IDisposable
                 Console.WriteLine("LocationTravelGameController: ChildhoodReminescence finished, entering GetUp");
                 _isInNarrativeMode = false;
                 _narrativeController = null;
-
-                // Grant GetUpModusMentis temporarily for the Get-Up scene.
-                var getUpTemplate = ModusMentisRegistry.Instance.GetModusMentis("get_up");
-                if (getUpTemplate != null && _protagonist != null)
-                {
-                    var getUpInstance = (ModusMentis)Activator.CreateInstance(getUpTemplate.GetType())!;
-                    getUpInstance.Level = 1;
-                    _protagonist.AcquireModusMentis(getUpInstance);
-                    Console.WriteLine("LocationTravelGameController: GetUpModusMentis granted to protagonist");
-                }
-                else
-                {
-                    Console.Error.WriteLine("LocationTravelGameController: 'get_up' MM not registered — GetUp scene will use fallback MMs");
-                }
-
                 SetMode(GameMode.GetUp);
                 return;
             }
@@ -296,14 +281,6 @@ public class LocationTravelGameController : IDisposable
                 && _narrativeController.GetUpPhaseFinished)
             {
                 Console.WriteLine("LocationTravelGameController: GetUp finished, entering WorldView");
-                // Remove GetUpModusMentis — it was only needed for this transitional scene.
-                if (_protagonist != null)
-                {
-                    var getUpMm = _protagonist.LearnedModiMentis
-                        .FirstOrDefault(m => m.ModusMentisId == "get_up");
-                    if (getUpMm != null)
-                        _protagonist.LearnedModiMentis.Remove(getUpMm);
-                }
                 _isInNarrativeMode = false;
                 _narrativeController = null;
                 SetMode(GameMode.WorldView);

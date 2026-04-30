@@ -164,7 +164,9 @@ namespace Cathedral.Glyph.Microworld
             // Print statistics using the base class utilities
             PrintNoiseStatistics(noiseValues, "Microworld Noise Distribution Statistics");
             PrintGlyphStatistics(glyphCounts, VertexCount, "Microworld Biome-Based Glyph Distribution");
-            
+
+            PostProcessWorld();
+
             // Initialize protagonist at a random suitable location
             InitializeProtagonist();
         }
@@ -232,8 +234,10 @@ namespace Cathedral.Glyph.Microworld
                 return Biomes["mountain"];
 
             // CITY (perlinNoise2) — tightened from -0.4 to -0.58
+            // if (perlinNoise2 < -0.58f)
+            //     return Biomes["city"];
             if (perlinNoise2 < -0.58f)
-                return Biomes["city"];
+                return Biomes["field"]; // TODO: restore city biome
 
             // COAST (perlinNoise1)
             if (perlinNoise1 <= 0.065f)
@@ -470,6 +474,70 @@ namespace Cathedral.Glyph.Microworld
                 if (n == "field")                              return 4.0f;
             }
             return 1.0f;
+        }
+
+        /// <summary>
+        /// Post-processes the generated world to fix coherence issues.
+        /// Currently ensures every field tile is adjacent to at least one farm or village.
+        /// </summary>
+        private void PostProcessWorld()
+        {
+            int placed = 0;
+            LocationType farm    = Locations["farm"];
+            LocationType village = Locations["village"];
+
+            for (int i = 0; i < VertexCount; i++)
+            {
+                if (!vertexData.TryGetValue(i, out var data) || data.Biome.Name != "field")
+                    continue;
+
+                var neighbors = GetNeighboringVertices(i);
+
+                // Already satisfied if any neighbor has a farm or village
+                bool satisfied = neighbors.Any(n =>
+                    vertexData.TryGetValue(n, out var nd) &&
+                    nd.Location.HasValue &&
+                    (nd.Location.Value.Name == "farm" || nd.Location.Value.Name == "village"));
+
+                if (satisfied)
+                    continue;
+
+                // Pick placement candidate: self first (if empty), then an empty field neighbor, then force self
+                int candidate = -1;
+                if (!data.Location.HasValue)
+                {
+                    candidate = i;
+                }
+                else
+                {
+                    foreach (int n in neighbors)
+                    {
+                        if (vertexData.TryGetValue(n, out var nd) &&
+                            nd.Biome.Name == "field" && !nd.Location.HasValue)
+                        {
+                            candidate = n;
+                            break;
+                        }
+                    }
+                    if (candidate == -1)
+                        candidate = i; // force-overwrite self as last resort
+                }
+
+                // Randomly pick farm or village (seeded on vertex index for determinism)
+                LocationType chosen = new Random(i).Next(2) == 0 ? farm : village;
+
+                // Place chosen location on candidate and refresh its visual
+                var cd = vertexData[candidate];
+                cd.Location = chosen;
+                cd.GlyphChar = chosen.Glyph;
+                cd.Color = new System.Numerics.Vector3(chosen.Color.X, chosen.Color.Y, chosen.Color.Z);
+                vertexData[candidate] = cd;
+                SetVertexGlyph(candidate, chosen.Glyph, TileColor(vertexData[candidate]), chosen.Size);
+                placed++;
+            }
+
+            if (placed > 0)
+                Console.WriteLine($"[PostProcess] Placed {placed} farm(s)/village(s) to satisfy field adjacency.");
         }
 
         private static Vector4 TileColor(VertexWorldData data) =>
