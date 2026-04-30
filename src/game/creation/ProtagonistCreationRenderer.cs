@@ -152,4 +152,20 @@ public class ProtagonistCreationRenderer
     {
         return y == ContinueButtonY && x >= ContinueButtonX && x < ContinueButtonX + ContinueButtonW;
     }
+
+    /// <summary>Returns a stable element id for the UI element at (x, y), or null if none.</summary>
+    public string? GetHoveredElementId(int x, int y)
+    {
+        if (IsOnContinueButton(x, y)) return "continue";
+        int arrowDelta = _viewer.GetArrowClickDelta(x, y);
+        if (arrowDelta != 0)
+        {
+            var partId = _viewer.GetOrganPartIdAtRow(y);
+            return partId != null ? $"arrow:{partId}:{arrowDelta}" : null;
+        }
+        return _viewer.GetOrganPartAtPosition(x, y) is { } part ? $"organ:{part}" : null;
+    }
+
+    /// <summary>Returns true if the cell at (x, y) is a clickable/hoverable UI element.</summary>
+    public bool IsInteractiveCell(int x, int y) => GetHoveredElementId(x, y) != null;
 }

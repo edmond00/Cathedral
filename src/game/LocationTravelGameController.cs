@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using Cathedral.Audio;
 using Cathedral.Glyph;
 using Cathedral.Glyph.Microworld;
 using Cathedral.Glyph.Microworld.LocationSystem;
@@ -33,6 +34,8 @@ public class LocationTravelGameController : IDisposable
     private readonly GlyphSphereCore _core;
     private readonly MicroworldInterface _interface;
     private TerminalLocationUI? _terminalUI;
+    private readonly AmbianceEngine? _ambianceEngine;
+    private string? _lastHoveredElementId; // fires hover sound only when element identity changes
     
     // Chain-of-Thought narrative system
     private NarrativeController? _narrativeController = null;
@@ -103,8 +106,10 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public TerminalInputHandler? GetTerminalInputHandler() => _core.Terminal?.InputHandler;
 
-    public LocationTravelGameController(GlyphSphereCore core, MicroworldInterface microworldInterface)
+    public LocationTravelGameController(GlyphSphereCore core, MicroworldInterface microworldInterface,
+        AmbianceEngine? ambianceEngine = null)
     {
+        _ambianceEngine = ambianceEngine;
         _core = core ?? throw new ArgumentNullException(nameof(core));
         _interface = microworldInterface ?? throw new ArgumentNullException(nameof(microworldInterface));
         
@@ -198,6 +203,16 @@ public class LocationTravelGameController : IDisposable
             }
             _llmLoadingRenderer?.Update(progress, status);
             return;
+        }
+
+        // Progressive track activation during childhood reminescence:
+        // each completed REMEMBER fragment unlocks one additional music track.
+        if (_currentMode == GameMode.ChildhoodReminescence
+            && _narrativeController != null
+            && _ambianceEngine != null)
+        {
+            int trackCount = Math.Min(_narrativeController.ReminescenceCompletedCount, 4);
+            _ambianceEngine.SetActiveTrackCount(trackCount);
         }
 
         // Update protagonist creation blink animation
@@ -403,6 +418,7 @@ public class LocationTravelGameController : IDisposable
         // Main menu handles its own clicks
         if (_currentMode == GameMode.MainMenu && _mainMenuRenderer != null)
         {
+            _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
             _mainMenuRenderer.OnMouseClick(x, y);
             return;
         }
@@ -410,6 +426,8 @@ public class LocationTravelGameController : IDisposable
         // Protagonist creation handles its own clicks
         if (_currentMode == GameMode.ProtagonistCreation && _protagonistCreationRenderer != null)
         {
+            if (_protagonistCreationRenderer.IsInteractiveCell(x, y))
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
             _protagonistCreationRenderer.OnMouseClick(x, y);
             return;
         }
@@ -417,6 +435,7 @@ public class LocationTravelGameController : IDisposable
         // Protagonist management handles its own clicks
         if (_currentMode == GameMode.ProtagonistManagement && _managementMenuRenderer != null)
         {
+            _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
             _managementMenuRenderer.OnMouseClick(x, y);
             return;
         }
@@ -427,6 +446,7 @@ public class LocationTravelGameController : IDisposable
             // Route to fight adapter if in fight mode
             if (_currentMode == GameMode.Fighting && _fightAdapter != null)
             {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 _fightAdapter.OnCellClicked(x, y);
                 return;
             }
@@ -434,6 +454,7 @@ public class LocationTravelGameController : IDisposable
             // Route to dialogue adapter if in dialogue mode
             if (_currentMode == GameMode.Dialogue && _dialogueAdapter != null)
             {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 _dialogueAdapter.OnMouseClick(x, y);
                 return;
             }
@@ -450,7 +471,7 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
-        // Note: Legacy non-narrative mode click handling removed - all interactions use NarrativeController
+        // WorldView idle click (no narrative open) — no sound; nothing meaningful here.
     }
     
     /// <summary>
@@ -511,12 +532,39 @@ public class LocationTravelGameController : IDisposable
         
         return false; // Don't consume - let other handlers process
     }
-    
+
+    /// <summary>
+    /// Returns a stable identity string for the UI element under (x, y) in the current mode,
+    /// or null if not over any interactive element. Narrative modes return null because
+    /// NarrativeController fires its own hover sounds internally.
+    /// </summary>
+    private string? GetHoverElementId(int x, int y) => _currentMode switch
+    {
+        GameMode.LocationInteraction or
+        GameMode.Fighting or
+        GameMode.Dialogue or
+        GameMode.ChildhoodReminescence => null, // handled inside NarrativeController
+        GameMode.MainMenu => _mainMenuRenderer?.GetEnabledButtonAtPosition(x, y) is { } i and >= 0
+            ? $"menu:{i}" : null,
+        GameMode.ProtagonistCreation => _protagonistCreationRenderer?.GetHoveredElementId(x, y),
+        _ => $"cell:{x},{y}", // WorldView, ProtagonistManagement, etc. — each cell is its own element
+    };
+
     /// <summary>
     /// Handles terminal cell hover for visual feedback.
     /// </summary>
     private void OnTerminalCellHovered(int x, int y)
     {
+        // Only fire hover tick when entering a NEW interactive element.
+        // Narrative modes (LocationInteraction, Fighting, Dialogue, ChildhoodReminescence) handle
+        // their own hover sounds inside NarrativeController to get per-keyword/action accuracy.
+        if (_currentMode != GameMode.Traveling && _currentMode != GameMode.LLMLoading)
+        {
+            string? elementId = GetHoverElementId(x, y);
+            if (elementId != null && elementId != _lastHoveredElementId)
+                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            _lastHoveredElementId = elementId;
+        }
         // Main menu handles its own hover
         if (_currentMode == GameMode.MainMenu && _mainMenuRenderer != null)
         {
@@ -621,6 +669,7 @@ public class LocationTravelGameController : IDisposable
 
         var oldMode = _currentMode;
         _currentMode = newMode;
+        _lastHoveredElementId = null; // reset so first hover in new mode always sounds
         
         Console.WriteLine($"LocationTravelGameController: Mode changed: {oldMode} ↁE{newMode}");
         
@@ -776,6 +825,9 @@ public class LocationTravelGameController : IDisposable
     private void StartLocationInteraction(int vertexIndex, Cathedral.Glyph.Microworld.LocationType locationType)
     {
         Console.WriteLine($"LocationTravelGameController: Starting Phase 6 interaction for location '{locationType.Name}'");
+        // Sample a deterministic mood for this specific location and play full music
+        _ambianceEngine?.SetMood(LocationMoodProfiles.SampleMood(locationType.Name, vertexIndex));
+        _ambianceEngine?.SetActiveTrackCount(4);
         StartNarrativeInteraction(vertexIndex);
     }
 
@@ -786,6 +838,9 @@ public class LocationTravelGameController : IDisposable
     private void StartBiomeInteraction(int vertexIndex, Cathedral.Glyph.Microworld.BiomeType biomeType)
     {
         Console.WriteLine($"LocationTravelGameController: Starting Phase 6 interaction for biome '{biomeType.Name}'");
+        // Sample a deterministic mood for this biome tile and play full music
+        _ambianceEngine?.SetMood(LocationMoodProfiles.SampleMood(biomeType.Name, vertexIndex));
+        _ambianceEngine?.SetActiveTrackCount(4);
         StartNarrativeInteraction(vertexIndex);
     }
 
@@ -854,6 +909,7 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterLLMLoading()
     {
         Console.WriteLine("LocationTravelGameController: Entered LLMLoading mode");
+        _ambianceEngine?.SetFilter(MusicFilter.Loading);
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
@@ -877,6 +933,9 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterMainMenu()
     {
         Console.WriteLine("LocationTravelGameController: Entered MainMenu mode");
+        _ambianceEngine?.SetFilter(MusicFilter.None);
+        _ambianceEngine?.SetMood(MusicMoodState.Neutral);
+        _ambianceEngine?.SetActiveTrackCount(0);
         // Darken the sphere (visible but dim behind menu)
         _core.SetNarrationMode(true);
         // Disable world vertex interactions
@@ -1029,6 +1088,8 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterWorldView()
     {
         Console.WriteLine("LocationTravelGameController: Entered WorldView mode");
+        _ambianceEngine?.SetFilter(MusicFilter.None);
+        _ambianceEngine?.SetActiveTrackCount(4);
         // Set camera zoom for destination selection
         _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomWorldView);
         // Disable narration mode (world is interactive and in focus)
@@ -1046,6 +1107,8 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterTraveling()
     {
         Console.WriteLine("LocationTravelGameController: Entered Traveling mode");
+        // Keep current location mood but thin out to drone + noise only during travel
+        _ambianceEngine?.SetActiveTrackCount(1);
         // Set camera zoom for travel animation
         _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomTraveling);
         // Disable narration mode (world is visible during travel)
@@ -1204,6 +1267,10 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterChildhoodReminescence()
     {
         Console.WriteLine("LocationTravelGameController: Entered ChildhoodReminescence mode");
+        // Start childhood with noise only; tracks are added progressively as REMEMBERs complete
+        _ambianceEngine?.SetFilter(MusicFilter.None);
+        _ambianceEngine?.SetMood(MusicMoodState.Childhood);
+        _ambianceEngine?.SetActiveTrackCount(0);
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
@@ -1259,7 +1326,8 @@ public class LocationTravelGameController : IDisposable
                 locationId: 0,
                 worldContext,
                 _keywordFallbackService,
-                _protagonist);
+                _protagonist,
+                _ambianceEngine);
 
             _isInNarrativeMode = true;
             _interface.SetWorldInteractionsEnabled(false);
@@ -1390,7 +1458,8 @@ public class LocationTravelGameController : IDisposable
                     vertexIndex,
                     worldContext,
                     _keywordFallbackService,
-                    _protagonist
+                    _protagonist,
+                    _ambianceEngine
                 );
             }
             else
@@ -1409,7 +1478,8 @@ public class LocationTravelGameController : IDisposable
                     vertexIndex,               // Use vertex index as location ID seed
                     worldContext,              // Typed world context for flavor and display
                     _keywordFallbackService,   // LLM-based fallback keyword selection
-                    _protagonist               // run-owned protagonist
+                    _protagonist,              // run-owned protagonist
+                    _ambianceEngine
                 );
             }
             
