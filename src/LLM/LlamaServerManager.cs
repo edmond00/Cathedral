@@ -161,8 +161,8 @@ public class LlamaServerManager : IDisposable
     /// <param name="modelAlias">Model alias to use ("tiny" or "medium"). Defaults to "tiny"</param>
     /// <param name="modelPath">Optional custom model path (overrides alias)</param>
     /// <param name="serverPath">Optional custom server executable path</param>
-    /// <param name="contextSize">Maximum context size in tokens (default: 8192 = 3 slots ÁE2730). Used for both server and all instances.</param>
-    public async Task StartServerAsync(Action<bool>? onServerReady = null, string? modelAlias = null, string? modelPath = null, string? serverPath = null, int contextSize = 8192)
+    /// <param name="contextSize">Maximum context size in tokens. Defaults to <see cref="Config.LLM.ContextSize"/>.</param>
+    public async Task StartServerAsync(Action<bool>? onServerReady = null, string? modelAlias = null, string? modelPath = null, string? serverPath = null, int contextSize = Config.LLM.ContextSize)
     {
         var startTime = DateTime.Now;
         
@@ -1331,10 +1331,11 @@ public class LlamaServerManager : IDisposable
             ? Path.Combine(_sessionLogDir, "llama-server.log")
             : Path.Combine(Environment.CurrentDirectory, "llama-server.log");
         
+        var threadArgs = Config.LLM.CpuThreads > 0 ? $" -t {Config.LLM.CpuThreads}" : string.Empty;
         var startInfo = new ProcessStartInfo
         {
             FileName = serverPath,
-            Arguments = $"-m \"{modelPath}\" -c {contextSize} --port 8080 --cache-type-k f16 --cache-type-v f16 --repeat-penalty 1.1 --frequency-penalty 0.5 --dry-multiplier 0.8 -ngl {Config.LLM.GpuLayers} --verbose",
+            Arguments = $"-m \"{modelPath}\" -c {contextSize} --port 8080 --cache-type-k f16 --cache-type-v f16 --repeat-penalty 1.1 --frequency-penalty 0.5 --dry-multiplier 0.8 -ngl {Config.LLM.GpuLayers}{threadArgs} --verbose",
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
