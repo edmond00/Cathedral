@@ -1056,8 +1056,8 @@ public sealed class AmbianceEngine : IDisposable
 
                     // Velocity: consistent whisper with very rare gentle swell
                     int vel = rng.NextDouble() < 0.08
-                        ? rng.Next(22, 32)   // slight swell
-                        : rng.Next(8, 18);   // default whisper
+                        ? rng.Next(34, 46)   // slight swell
+                        : rng.Next(16, 26);  // default whisper
                     SendNoteOn(arpCh, midiNote, vel);
                     lastArpNote = midiNote;
 

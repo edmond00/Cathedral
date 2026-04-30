@@ -107,7 +107,8 @@ public class ObservationPhaseController
             Console.Error.WriteLine($"ObservationPhaseController: General sentence failed: {ex.Message}");
         }
 
-        // 2-6. For each sampled outcome: transition sentence + focus sentence + keyword extraction
+        // 2-6. For each sampled outcome: generate transition + focus sentences (no keyword extraction yet)
+        var pendingKeywordWork = new List<(string combined, ConcreteOutcome outcome, string transText, string focusText)>();
         foreach (var outcome in sampledOutcomes)
         {
             try
@@ -120,37 +121,41 @@ public class ObservationPhaseController
                 var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(outcome, focusQ.PromptText, modusMentis.PersonaReminder, modusMentis.PersonaReminder2);
                 var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, focusQ, ct: ct);
 
-                // Always use dynamic keyword extraction from the generated text
-                var sampledKws = new List<string>();
-                if (_keywordFallback != null)
-                {
-                    var combined = (transText + " " + focusText).Trim();
-                    var kw = await _keywordFallback.FindBestKeywordAsync(combined, GetNeutralDescription(outcome, locationId));
-                    if (kw != null)
-                    {
-                        sampledKws.Add(kw);
-                        Console.WriteLine($"ObservationPhaseController: Keyword '{kw}' for '{outcome.DisplayName}'");
-                    }
-                }
-
-                var (transKws, focKws) = _observationExecutor.AssignKeywordsToSentences(sampledKws, transText, focusText);
-
-                sentences.Add(new NarrationSentence(transText, transKws));
-                sentences.Add(new NarrationSentence(focusText, focKws));
-
-                foreach (var kw in sampledKws)
-                {
-                    allKeywords.Add(kw);
-                    keywordOutcomeMap.TryAdd(kw, outcome);
-                }
+                // Store sentences as placeholder (keywords assigned after all generation is done)
+                sentences.Add(new NarrationSentence(transText, new List<string>()));
+                sentences.Add(new NarrationSentence(focusText, new List<string>()));
 
                 previousDescription = GetNeutralDescription(outcome, locationId);
 
-                Console.WriteLine($"ObservationPhaseController: Outcome '{outcome.DisplayName}' → {sampledKws.Count} keywords");
+                pendingKeywordWork.Add(((transText + " " + focusText).Trim(), outcome, transText, focusText));
+                Console.WriteLine($"ObservationPhaseController: Sentences generated for '{outcome.DisplayName}'");
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"ObservationPhaseController: Outcome '{outcome.DisplayName}' sentences failed: {ex.Message}");
+            }
+        }
+
+        // Keyword extraction runs after ALL observation text is generated — no slot interleaving
+        if (_keywordFallback != null)
+        {
+            foreach (var (combined, outcome, transText, focusText) in pendingKeywordWork)
+            {
+                var kw = await _keywordFallback.FindBestKeywordAsync(combined, GetNeutralDescription(outcome, locationId));
+                if (kw != null)
+                {
+                    allKeywords.Add(kw);
+                    keywordOutcomeMap.TryAdd(kw, outcome);
+
+                    // Assign keyword to the sentence pair already in the list
+                    var (transKws, focKws) = _observationExecutor.AssignKeywordsToSentences(new List<string> { kw }, transText, focusText);
+                    var transIdx = sentences.FindIndex(s => s.Text == transText);
+                    if (transIdx >= 0) sentences[transIdx] = new NarrationSentence(transText, transKws);
+                    var focIdx = sentences.FindIndex(s => s.Text == focusText);
+                    if (focIdx >= 0) sentences[focIdx] = new NarrationSentence(focusText, focKws);
+
+                    Console.WriteLine($"ObservationPhaseController: Keyword '{kw}' for '{outcome.DisplayName}'");
+                }
             }
         }
 
@@ -201,30 +206,14 @@ public class ObservationPhaseController
         int locationId = protagonist.CurrentLocationId;
 
         // 1. Focus description of the clicked outcome (first sentence -- full context prompt)
+        string? firstText = null;
         try
         {
             var firstQ = _questionFillerService.GetNext(observationModusMentis, QuestionReference.ObserveFirst);
             var firstPrompt = _promptConstructor.BuildFirstSentencePrompt(currentNode, locationId, focusOutcome, observationModusMentis.PersonaTone, _worldContext, firstQ.PromptText, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
-            var firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, firstQ, isFirstInBatch: true, ct: ct);
-
-            var firstKws = new List<string>();
-            if (_keywordFallback != null)
-            {
-                var kw = await _keywordFallback.FindBestKeywordAsync(firstText, GetNeutralDescription(focusOutcome, locationId));
-                if (kw != null)
-                {
-                    firstKws.Add(kw);
-                    Console.WriteLine($"ObservationPhaseController: Focus keyword '{kw}' for '{focusOutcome.DisplayName}'");
-                }
-            }
-
-            sentences.Add(new NarrationSentence(firstText, firstKws));
-            foreach (var kw in firstKws)
-            {
-                allKeywords.Add(kw);
-                keywordOutcomeMap.TryAdd(kw, focusOutcome);
-            }
-            Console.WriteLine($"ObservationPhaseController: Focus first sentence generated, {firstKws.Count} keywords");
+            firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, firstQ, isFirstInBatch: true, ct: ct);
+            sentences.Add(new NarrationSentence(firstText, new List<string>()));
+            Console.WriteLine($"ObservationPhaseController: Focus first sentence generated");
         }
         catch (Exception ex)
         {
@@ -238,46 +227,62 @@ public class ObservationPhaseController
             .OrderBy(_ => _random.Next())
             .FirstOrDefault();
 
+        string? transText2 = null, focusText2 = null;
+        ConcreteOutcome? resolvedOther = null;
         if (otherOutcome != null)
         {
             try
             {
                 var transQ2 = _questionFillerService.GetNext(observationModusMentis, QuestionReference.ObserveTransition);
                 var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(otherOutcome, previousDescription, transQ2.PromptText, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
-                var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, transQ2, isTransition: true, ct: ct);
+                transText2 = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, transQ2, isTransition: true, ct: ct);
 
                 var focusQ2 = _questionFillerService.GetNext(observationModusMentis, QuestionReference.ObserveContinuation);
                 var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(otherOutcome, focusQ2.PromptText, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
-                var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, focusQ2, ct: ct);
+                focusText2 = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, focusQ2, ct: ct);
 
-                var sampledKws = new List<string>();
-                if (_keywordFallback != null)
-                {
-                    var combined = (transText + " " + focusText).Trim();
-                    var kw = await _keywordFallback.FindBestKeywordAsync(combined, GetNeutralDescription(otherOutcome, locationId));
-                    if (kw != null)
-                    {
-                        sampledKws.Add(kw);
-                        Console.WriteLine($"ObservationPhaseController: Focus second keyword '{kw}' for '{otherOutcome.DisplayName}'");
-                    }
-                }
-
-                var (transKws, focKws) = _observationExecutor.AssignKeywordsToSentences(sampledKws, transText, focusText);
-
-                sentences.Add(new NarrationSentence(transText, transKws));
-                sentences.Add(new NarrationSentence(focusText, focKws));
-
-                foreach (var kw in sampledKws)
-                {
-                    allKeywords.Add(kw);
-                    keywordOutcomeMap.TryAdd(kw, otherOutcome);
-                }
-
-                Console.WriteLine($"ObservationPhaseController: Focus second outcome '{otherOutcome.DisplayName}' -> {sampledKws.Count} keywords");
+                sentences.Add(new NarrationSentence(transText2, new List<string>()));
+                sentences.Add(new NarrationSentence(focusText2, new List<string>()));
+                resolvedOther = otherOutcome;
+                Console.WriteLine($"ObservationPhaseController: Focus second sentences generated for '{otherOutcome.DisplayName}'");
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"ObservationPhaseController: Focus second outcome '{otherOutcome.DisplayName}' sentences failed: {ex.Message}");
+            }
+        }
+
+        // Keyword extraction runs after ALL observation text is generated — no slot interleaving
+        if (_keywordFallback != null)
+        {
+            if (firstText != null)
+            {
+                var kw = await _keywordFallback.FindBestKeywordAsync(firstText, GetNeutralDescription(focusOutcome, locationId));
+                if (kw != null)
+                {
+                    allKeywords.Add(kw);
+                    keywordOutcomeMap.TryAdd(kw, focusOutcome);
+                    var idx = sentences.FindIndex(s => s.Text == firstText);
+                    if (idx >= 0) sentences[idx] = new NarrationSentence(firstText, new List<string> { kw });
+                    Console.WriteLine($"ObservationPhaseController: Focus keyword '{kw}' for '{focusOutcome.DisplayName}'");
+                }
+            }
+
+            if (resolvedOther != null && transText2 != null && focusText2 != null)
+            {
+                var combined = (transText2 + " " + focusText2).Trim();
+                var kw = await _keywordFallback.FindBestKeywordAsync(combined, GetNeutralDescription(resolvedOther, locationId));
+                if (kw != null)
+                {
+                    allKeywords.Add(kw);
+                    keywordOutcomeMap.TryAdd(kw, resolvedOther);
+                    var (transKws, focKws) = _observationExecutor.AssignKeywordsToSentences(new List<string> { kw }, transText2, focusText2);
+                    var transIdx = sentences.FindIndex(s => s.Text == transText2);
+                    if (transIdx >= 0) sentences[transIdx] = new NarrationSentence(transText2, transKws);
+                    var focIdx = sentences.FindIndex(s => s.Text == focusText2);
+                    if (focIdx >= 0) sentences[focIdx] = new NarrationSentence(focusText2, focKws);
+                    Console.WriteLine($"ObservationPhaseController: Focus second keyword '{kw}' for '{resolvedOther.DisplayName}'");
+                }
             }
         }
 
