@@ -734,7 +734,10 @@ public static class Config
     public static class LLM
     {
         // Sampling parameters (narrative generation and constrained single-token requests)
-        public const int GenerationMaxTokens = 2048;
+        public const int GenerationMaxTokens = 512;
+
+        // Maximum context window size in tokens passed to the llama.cpp server (-c flag)
+        public const int ContextSize = 2048;
         public const double Temperature = 0.5;
         public const int TopK = 6;
         public const double TopP = 0.9;
@@ -745,6 +748,10 @@ public static class Config
         // GPU layer offloading: 99 = all layers on GPU, 0 = CPU-only
         // Set via --cpu flag at launch
         public static int GpuLayers { get; set; } = 99;
+
+        // Number of CPU threads for inference (-t flag). 0 = use llama.cpp default (all cores).
+        // Reducing this can help on thermally constrained systems by lowering sustained power draw.
+        public static int CpuThreads { get; set; } = 6;
     }
     
     #endregion

@@ -20,7 +20,7 @@ public class LlamaServerManager : IDisposable
     private int _nextSlotId = 0;
     private bool _isServerReady = false;
     private bool _disposed = false;
-    private int _contextSize = 4096; // Default context size for both server and instances
+    private int _contextSize = 4096; // Context size per slot (--parallel 1)
     private string? _sessionLogDir = null; // Directory for this server session's logs
     
     // Model aliases and their corresponding file names
@@ -43,7 +43,7 @@ public class LlamaServerManager : IDisposable
     public event EventHandler<ServerStatusEventArgs>? ServerReady;
     public event EventHandler<TokenStreamedEventArgs>? TokenStreamed;
     public event EventHandler<RequestCompletedEventArgs>? RequestCompleted;
-    /// <summary>Fired periodically while the model is loading. Provides progress 0–1 and a status string.</summary>
+    /// <summary>Fired periodically while the model is loading. Provides progress 0 E and a status string.</summary>
     public event EventHandler<LoadingProgressEventArgs>? LoadingProgressUpdated;
     
     public bool IsServerReady => _isServerReady;
@@ -161,8 +161,8 @@ public class LlamaServerManager : IDisposable
     /// <param name="modelAlias">Model alias to use ("tiny" or "medium"). Defaults to "tiny"</param>
     /// <param name="modelPath">Optional custom model path (overrides alias)</param>
     /// <param name="serverPath">Optional custom server executable path</param>
-    /// <param name="contextSize">Maximum context size in tokens (default: 4096). Used for both server and all instances.</param>
-    public async Task StartServerAsync(Action<bool>? onServerReady = null, string? modelAlias = null, string? modelPath = null, string? serverPath = null, int contextSize = 4096)
+    /// <param name="contextSize">Maximum context size in tokens. Defaults to <see cref="Config.LLM.ContextSize"/>.</param>
+    public async Task StartServerAsync(Action<bool>? onServerReady = null, string? modelAlias = null, string? modelPath = null, string? serverPath = null, int contextSize = Config.LLM.ContextSize)
     {
         var startTime = DateTime.Now;
         
@@ -280,7 +280,7 @@ public class LlamaServerManager : IDisposable
             var message = isReady ? "Server started successfully" : "Server failed to start";
             var duration = (DateTime.Now - startTime).TotalSeconds;
             
-            Console.WriteLine(isReady ? "✓ Llama server and model loaded successfully." : "✗ Failed to start Llama server.");
+            Console.WriteLine(isReady ? "✁ELlama server and model loaded successfully." : "✁EFailed to start Llama server.");
             
             // Log result
             try { LLMLogger.LogServerInitResult(isReady, message, duration); } catch { }
@@ -339,7 +339,7 @@ public class LlamaServerManager : IDisposable
         try
         {
             await PreCacheSystemPromptAsync(instance);
-            Console.WriteLine($"✓ Created instance {slotId} with system prompt cached.");
+            Console.WriteLine($"✁ECreated instance {slotId} with system prompt cached.");
             
             // Log successful creation with system prompt - extract role from system prompt
             var role = ExtractRoleFromSystemPrompt(systemPrompt);
@@ -561,8 +561,9 @@ public class LlamaServerManager : IDisposable
                 {
                     int pt = usageEl.TryGetProperty("prompt_tokens", out var ptEl) ? ptEl.GetInt32() : 0;
                     int ct = usageEl.TryGetProperty("completion_tokens", out var ctEl) ? ctEl.GetInt32() : 0;
-                    double fillPct = _contextSize > 0 ? pt * 100.0 / _contextSize : 0;
-                    var ctxText = $"Prompt Tokens:     {pt}\nCompletion Tokens: {ct}\nContext Size:      {_contextSize}\nContext Fill:      {fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}%\n";
+                    int slotCtx = _contextSize;
+                    double fillPct = slotCtx > 0 ? pt * 100.0 / slotCtx : 0;
+                    var ctxText = $"Prompt Tokens:     {pt}\nCompletion Tokens: {ct}\nContext Size:      {slotCtx} (slot)\nContext Fill:      {fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}%\n";
                     await File.WriteAllTextAsync(Path.Combine(requestLogDir, "context_usage.txt"), ctxText);
                 }
             }
@@ -578,7 +579,7 @@ public class LlamaServerManager : IDisposable
     /// <summary>
     /// Generates a short constrained string using a GBNF grammar.
     /// Unlike GetNextTokenProbabilitiesAsync (which reads only the first token's logprobs),
-    /// this generates the full constrained output — needed for multi-token choices like "very_easy".
+    /// this generates the full constrained output  Eneeded for multi-token choices like "very_easy".
     /// Resets the instance after generation unless <paramref name="skipReset"/> is true,
     /// which allows a follow-up call before the caller resets manually.
     /// </summary>
@@ -669,8 +670,9 @@ public class LlamaServerManager : IDisposable
                 {
                     int pt = usageEl.TryGetProperty("prompt_tokens", out var ptEl) ? ptEl.GetInt32() : 0;
                     int ct = usageEl.TryGetProperty("completion_tokens", out var ctEl) ? ctEl.GetInt32() : 0;
-                    double fillPct = _contextSize > 0 ? pt * 100.0 / _contextSize : 0;
-                    var ctxText = $"Prompt Tokens:     {pt}\nCompletion Tokens: {ct}\nContext Size:      {_contextSize}\nContext Fill:      {fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}%\n";
+                    int slotCtx = _contextSize;
+                    double fillPct = slotCtx > 0 ? pt * 100.0 / slotCtx : 0;
+                    var ctxText = $"Prompt Tokens:     {pt}\nCompletion Tokens: {ct}\nContext Size:      {slotCtx} (slot)\nContext Fill:      {fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}%\n";
                     await File.WriteAllTextAsync(Path.Combine(requestLogDir, "context_usage.txt"), ctxText);
                 }
             }
@@ -902,8 +904,9 @@ public class LlamaServerManager : IDisposable
 
                 int reportedPrompt = promptTokens > 0 ? promptTokens : estimatedTokens;
                 bool isEstimate    = promptTokens == 0;
-                double fillPct     = _contextSize > 0 ? reportedPrompt * 100.0 / _contextSize : 0;
-                var ctxText = $"Prompt Tokens:     {reportedPrompt}{(isEstimate ? " (estimated)" : "")}\nCompletion Tokens: {completionTokens}\nContext Size:      {_contextSize}\nContext Fill:      {fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}%\n";
+                int slotContextSize = _contextSize;
+                double fillPct     = slotContextSize > 0 ? reportedPrompt * 100.0 / slotContextSize : 0;
+                var ctxText = $"Prompt Tokens:     {reportedPrompt}{(isEstimate ? " (estimated)" : "")}\nCompletion Tokens: {completionTokens}\nContext Size:      {slotContextSize} (slot)\nContext Fill:      {fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}%\n";
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "context_usage.txt"), ctxText);
             }
             
@@ -1042,7 +1045,7 @@ public class LlamaServerManager : IDisposable
         }
         
         instance.Reset();
-        Console.WriteLine($"✓ Reset instance {slotId}.");
+        Console.WriteLine($"✁EReset instance {slotId}.");
 
         // Write a marker file so the LLM monitor can show a visible cache-reset separator.
         if (_sessionLogDir != null)
@@ -1080,7 +1083,7 @@ public class LlamaServerManager : IDisposable
         int removedCount = instance.TrimToFitContext(maxTokens);
         int estimatedAfter = instance.EstimateConversationTokens();
         
-        Console.WriteLine($"✓ Trimmed instance {slotId}: removed {removedCount} messages ({estimatedBefore} → {estimatedAfter} tokens).");
+        Console.WriteLine($"✁ETrimmed instance {slotId}: removed {removedCount} messages ({estimatedBefore} ↁE{estimatedAfter} tokens).");
         
         return removedCount;
     }
@@ -1328,10 +1331,11 @@ public class LlamaServerManager : IDisposable
             ? Path.Combine(_sessionLogDir, "llama-server.log")
             : Path.Combine(Environment.CurrentDirectory, "llama-server.log");
         
+        var threadArgs = Config.LLM.CpuThreads > 0 ? $" -t {Config.LLM.CpuThreads}" : string.Empty;
         var startInfo = new ProcessStartInfo
         {
             FileName = serverPath,
-            Arguments = $"-m \"{modelPath}\" -c {contextSize} --port 8080 --cache-type-k f16 --cache-type-v f16 --repeat-penalty 1.1 --frequency-penalty 0.5 --dry-multiplier 0.8 -ngl {Config.LLM.GpuLayers} --slot-save-path cache --verbose",
+            Arguments = $"-m \"{modelPath}\" -c {contextSize} --port 8080 --cache-type-k f16 --cache-type-v f16 --repeat-penalty 1.1 --frequency-penalty 0.5 --dry-multiplier 0.8 -ngl {Config.LLM.GpuLayers}{threadArgs} --verbose",
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,

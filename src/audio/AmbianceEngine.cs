@@ -15,6 +15,10 @@ public sealed class AmbianceEngine : IDisposable
 {
     // ── State ────────────────────────────────────────────────────────────────
 
+    // Low-latency PCM player for UI feedback sounds (hover / click).
+    // Bypasses the MIDI synth so there is no GS Wavetable voice-activation delay.
+    private readonly UiSfxPlayer _uiSfx = new();
+
     private volatile bool _running = false;
     private int _activeTrackCount = 4; // default: all tracks active
     private readonly object _moodLock = new();
@@ -51,6 +55,12 @@ public sealed class AmbianceEngine : IDisposable
     private int _droneScaleHoldCycles  = 0; // counts down
     // Dynamics swell: slow sine wave over 60 s, range 0.70–1.00
     private volatile float _dynamicsLevel = 1.0f;
+
+    // ── Channel patch cache ───────────────────────────────────────────────────
+    // Tracks the last program sent to each MIDI channel so SendProgramChange can
+    // skip redundant sends. Redundant ProgramChange events can cause the Windows
+    // GS synth to re-load the patch and introduce a perceptible sound delay.
+    private readonly int[] _channelPatch = new int[16];
 
     // ── Game event system ─────────────────────────────────────────────────────
     // Signal from TriggerGameEvent to the Melody track. Bitmask flags (combined per event):
@@ -140,6 +150,9 @@ public sealed class AmbianceEngine : IDisposable
     {
         if (_running) return IsDeviceOpen;
 
+        // -1 means "unknown" — the first SendProgramChange to each channel will always send.
+        Array.Fill(_channelPatch, -1);
+
         _device = OpenBestDevice();
         if (_device != null)
         {
@@ -162,6 +175,26 @@ public sealed class AmbianceEngine : IDisposable
         _trackTasks.Add(Task.Run(() => MoodSmootherTask(_cts.Token)));
         _trackTasks.Add(Task.Run(() => DynamicsTask(_cts.Token)));
         _sessionStartMs = Environment.TickCount64;
+
+        // Pre-warm all SFX patches so the Windows GS synth loads them before the first
+        // real interaction.  Sending a zero-velocity NoteOn (effectively silent) forces
+        // the patch into memory; the program-change cache then skips the send at runtime.
+        if (_device != null)
+        {
+            int sfxCh = ProceduralMidiComposer.SfxChannel;
+            foreach (int patch in new[]
+            {
+                ProceduralMidiComposer.PatchLeadSquare,
+                ProceduralMidiComposer.PatchFxCrystal,
+                ProceduralMidiComposer.PatchLeadSawtooth,
+                ProceduralMidiComposer.PatchFxEchoes,
+                ProceduralMidiComposer.PatchChoirAahs,
+            })
+            {
+                SendProgramChange(sfxCh, patch);
+                SendNoteOn(sfxCh, 60, 0); // velocity 0 = silent NoteOn (NoteOff equivalent)
+            }
+        }
 
         return IsDeviceOpen;
     }
@@ -235,6 +268,10 @@ public sealed class AmbianceEngine : IDisposable
     /// </summary>
     public void TriggerGameEvent(GameEventType evt)
     {
+        // Hover sound is PCM-only — return immediately so no melody signal, no interrupt,
+        // and no 400 ms cooldown is consumed. MIDI device doesn't even need to be open.
+        if (evt == GameEventType.SmallInteraction) { _uiSfx.PlayHover(); return; }
+
         if (_device == null) return;
 
         // #10: Cooldown — block music signal overwrite if < 400 ms since last event
@@ -248,7 +285,6 @@ public sealed class AmbianceEngine : IDisposable
         // as soon as possible.
         int signal = evt switch
         {
-            GameEventType.SmallInteraction  => 0x01,        // ForceAccent
             GameEventType.StrongInteraction => 0x83,        // ForceRepeat | ForceAccent | ForceDoubleTime
             GameEventType.PositiveOutcome   => 0x21,        // ForceAccent | ForceHighReg
             GameEventType.NegativeOutcome   => 0x44,        // ForceBreak  | ForceLowReg
@@ -422,7 +458,7 @@ public sealed class AmbianceEngine : IDisposable
 
                 double bpm = ProceduralMidiComposer.GetTempoBpm(mood.Sadness, mood.Fear);
                 bpm = Math.Clamp(bpm + _sessionTension * 12.0, 25.0, 145.0); // B11: tension tightens tempo
-                double filterBpmCap = _activeFilter == MusicFilter.Loading ? 450.0 : 220.0;
+                double filterBpmCap = 220.0;
                 bpm = Math.Clamp(bpm * _filterBpmMult, 25.0, filterBpmCap);    // filter BPM multiplier
 
                 if (role == TrackRole.Melody || role == TrackRole.Counter)
@@ -974,143 +1010,79 @@ public sealed class AmbianceEngine : IDisposable
         {
             if (filter == MusicFilter.Loading)
             {
-                // ── Loading filter ────────────────────────────────────────────────────────────────
-                // The music IS the effect: all tracks play at 7× normal BPM (capped at 450).
-                // But phrase-based tracks have rests and alignment gaps that break continuity.
-                //
-                // Solution: a dedicated continuous fast-arpeggio loop runs on a spare channel,
-                // reading _sharedScale every note — so it always stays in the current key.
-                // This fills every silence with an unbroken stream of rushing scale notes,
-                // creating the "vast data being processed" soundscape.
-                //
-                //   • _filterBpmMult = 7.0f  (BPM cap raised to 450 in TrackLoop)
-                //   • Music at 65/127 — audible but the arpeggio carries the texture
-                //   • Continuous arpeggio on ch 5 (unused spare): PanFlute, 35–85 ms/note,
-                //     direction randomly reverses, no gaps — pure note-to-note stream
-                //   • Quiet PadSweep hum on sfxCh: sub-bass grounding wash
-                //   • Hi-hat tick every 200–350 ms: mechanical pulse
-                _filterBpmMult = 7.0f;
-                SetMusicVolume(65);
+                // ── Loading filter ──────────────────────────────────────────────────────
+                // Neutral "thinking" texture: gentle flowing arpeggio layered on top of
+                // the regular music at a slightly faster tempo. Non-dramatic by design —
+                // just signals that processing is happening without hijacking the mood.
+                //   • _filterBpmMult = 2.5f  (noticeable but not frantic)
+                //   • Music at 78/127  (slight duck, ambient stays present)
+                //   • Very soft PadHalo arpeggio on ch 5 (in key, 60–130 ms/note)
+                _filterBpmMult = 2.5f;
+                SetMusicVolume(78);
 
-                // Sub-bass grounding wash
-                SendProgramChange(sfxCh, ProceduralMidiComposer.PatchPadSweep);
-                int humNote = 36;
-                SendNoteOn(sfxCh, humNote, 20);
-
-                // Grinding TremoloStrings drone on ch 6.
-                // Strong and prominent: this is the mechanical undercurrent of the effect.
-                // Dense semitone clusters in a deep register create audible beating and grind.
-                const int droneCh = 6;
-                SendProgramChange(droneCh, ProceduralMidiComposer.PatchTremoloStrings);
-                SendCC(droneCh, 7, 95); // boost channel volume so drone cuts through clearly
-                var droneNotes   = new List<(int note, long releaseMs)>();
-                long nextDroneMs = Environment.TickCount64;
-
-                // Continuous arpeggio on spare channel 5
-                // Harpsichord: bright, buzzy pluck with harmonic edge
                 const int arpCh = 5;
-                SendProgramChange(arpCh, ProceduralMidiComposer.PatchHarpsichord);
+                SendProgramChange(arpCh, ProceduralMidiComposer.PatchPadNewAge);
 
-                // Hi-hat ticker runs in a parallel fire-and-forget coroutine
-                var hihatTask = Task.Run(async () =>
-                {
-                    var r = new Random();
-                    try
-                    {
-                        while (!ct.IsCancellationRequested)
-                        {
-                            SendNoteOn(drumCh, 42, r.Next(10, 24));
-                            await Task.Delay(r.Next(200, 350), ct);
-                        }
-                    }
-                    catch (OperationCanceledException) { }
-                }, ct);
+                // Brown noise background via waveOut (separate channel from PlaySound —
+                // won't be interrupted by click/hover sounds).
+                using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f);
+                brownNoise.Start();
 
-                // Arpeggio state
-                int[] scale    = Array.Empty<int>();
-                int arpIdx     = 0;
-                int arpDir     = 1;  // +1 = ascending, -1 = descending
+                int[] scale     = Array.Empty<int>();
+                int arpIdx      = 0;
+                int arpDir      = 1;
                 int lastArpNote = -1;
+                int notesSinceJump = 0;
 
                 while (!ct.IsCancellationRequested)
                 {
-                    long now = Environment.TickCount64;
-
-                    // ── Tremolo-strings drone: slowly shifting semitone cluster ─────────────────
-                    for (int i = droneNotes.Count - 1; i >= 0; i--)
-                    {
-                        if (now >= droneNotes[i].releaseMs)
-                        {
-                            SendNoteOff(droneCh, droneNotes[i].note);
-                            droneNotes.RemoveAt(i);
-                        }
-                    }
-                    if (now >= nextDroneMs && droneNotes.Count < 5)
-                    {
-                        int dNote;
-                        if (droneNotes.Count > 0 && rng.NextDouble() < 0.75)
-                        {
-                            // Tight semitone neighbour bias — dense cluster = maximum beating/friction
-                            int anchor = droneNotes[rng.Next(droneNotes.Count)].note;
-                            dNote = Math.Clamp(anchor + (rng.NextDouble() < 0.5 ? 1 : -1), 24, 52);
-                        }
-                        else
-                        {
-                            dNote = rng.Next(24, 53); // C1–E3 — deep grinding register only
-                        }
-                        SendNoteOn(droneCh, dNote, rng.Next(55, 90)); // strong and prominent
-                        droneNotes.Add((dNote, now + rng.Next(800, 2500))); // shorter hold = more churn
-                        nextDroneMs = now + rng.Next(300, 900); // adds new notes more often
-                    }
-
-                    // Refresh scale each note — stays in key as mood shifts
                     lock (_moodLock) scale = _sharedScale;
-                    if (scale.Length == 0) { await Task.Delay(20, ct); continue; }
+                    if (scale.Length == 0) { await Task.Delay(30, ct); continue; }
 
-                    // Clamp index after scale change
                     arpIdx = Math.Clamp(arpIdx, 0, scale.Length - 1);
 
-                    // Release previous note immediately before firing next (legato stream)
                     if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
 
+                    // 6% chance: brief silence gap — irregularity in the stream
+                    if (rng.NextDouble() < 0.06)
+                    {
+                        lastArpNote = -1;
+                        await Task.Delay(rng.Next(80, 220), ct);
+                        continue;
+                    }
+
+                    // Stay strictly in-scale — no chromatic neighbors (removed: were too strident)
                     int midiNote = scale[arpIdx];
-                    // 22% chance: chromatic neighbor note — slightly off-key, adds noise/dirt
-                    if (rng.NextDouble() < 0.22)
-                        midiNote = Math.Clamp(midiNote + (rng.NextDouble() < 0.5 ? 1 : -1), 24, 108);
-                    int vel      = rng.Next(20, 45);  // quieter — sits behind the drone wash
+
+                    // Velocity: consistent whisper with very rare gentle swell
+                    int vel = rng.NextDouble() < 0.08
+                        ? rng.Next(34, 46)   // slight swell
+                        : rng.Next(16, 26);  // default whisper
                     SendNoteOn(arpCh, midiNote, vel);
                     lastArpNote = midiNote;
 
-                    // Advance index — bounce at ends with random direction flips for variety
                     arpIdx += arpDir;
-                    if (arpIdx >= scale.Length)
+                    notesSinceJump++;
+                    if (arpIdx >= scale.Length) { arpIdx = scale.Length - 2; arpDir = -1; }
+                    else if (arpIdx < 0)        { arpIdx = 1;               arpDir =  1; }
+
+                    // Rare direction flip; jumps limited to ±2 scale steps (no large leaps)
+                    if (rng.NextDouble() < 0.06) arpDir = -arpDir;
+                    if (notesSinceJump > 6 && rng.NextDouble() < 0.12)
                     {
-                        arpIdx = scale.Length - 2;
-                        arpDir = -1;
-                        // 30% chance to jump to a random position for chaos
-                        if (rng.NextDouble() < 0.30) arpIdx = rng.Next(0, scale.Length);
-                    }
-                    else if (arpIdx < 0)
-                    {
-                        arpIdx = 1;
-                        arpDir = 1;
-                        if (rng.NextDouble() < 0.30) arpIdx = rng.Next(0, scale.Length);
+                        int step = rng.NextDouble() < 0.5 ? 1 : 2;
+                        arpIdx = Math.Clamp(arpIdx + (rng.NextDouble() < 0.5 ? step : -step), 0, scale.Length - 1);
+                        notesSinceJump = 0;
                     }
 
-                    // Occasionally reverse mid-run for irregularity
-                    if (rng.NextDouble() < 0.08) arpDir = -arpDir;
-
-                    // Note duration: short = fast stream; rare longer note = brief breath
-                    int durMs = rng.NextDouble() < 0.05
-                        ? rng.Next(120, 220)  // rare: slightly longer note (phrasing hint)
-                        : rng.Next(30, 80);   // normal: fast stream
+                    // No fast bursts — keep note length calm and flowing
+                    int durMs = rng.NextDouble() < 0.10
+                        ? rng.Next(180, 320)   // occasional long hold
+                        : rng.Next(80, 160);   // steady gentle pace
                     await Task.Delay(durMs, ct);
                 }
 
-                // Release last arp note and clean up
                 if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
-                SendNoteOff(sfxCh, humNote);
-                await hihatTask.ConfigureAwait(false);
             }
             else if (filter == MusicFilter.DiceRoll)
             {
@@ -1361,38 +1333,16 @@ public sealed class AmbianceEngine : IDisposable
     // note-offs and remaining notes on a background thread.
     private void PlayGameEventSfxImmediate(GameEventType evt)
     {
+        // UI feedback events use PCM via WinMM PlaySound (bypasses MIDI latency).
+        // These return immediately — no MIDI device required.
+        if (evt == GameEventType.SmallInteraction) { _uiSfx.PlayHover(); return; }
+        if (evt == GameEventType.StrongInteraction) { _uiSfx.PlayClick(); return; }
+
         if (_device == null) return;
         int ch = ProceduralMidiComposer.SfxChannel;
 
         switch (evt)
         {
-            case GameEventType.SmallInteraction:
-            {
-                // Closed hi-hat tick — ultra-short, dry, blends with the soundtrack.
-                // Closed hi-hat (GM note 42) naturally decays in <40 ms; no sustain.
-                const int drumCh = 9;
-                SendNoteOn(drumCh, 42, 55); // Closed hi-hat
-                _ = Task.Run(() => { Thread.Sleep(18); SendNoteOff(drumCh, 42); });
-                break;
-            }
-
-            case GameEventType.StrongInteraction:
-            {
-                // Square lead two-note chord: A4 + E5 (fifth) — punchy, digital, not strident.
-                // Square wave is more muted than sawtooth; fifth interval is open/strong.
-                SendProgramChange(ch, ProceduralMidiComposer.PatchLeadSquare);
-                SendNoteOn(ch, 69, 88); // A4
-                SendNoteOn(ch, 76, 82); // E5 — clean fifth
-                _ = Task.Run(() =>
-                {
-                    Thread.Sleep(28); SendNoteOff(ch, 69); SendNoteOff(ch, 76);
-                    Thread.Sleep(25);
-                    SendNoteOn(ch, 71, 80); // B4 — brief echo note
-                    Thread.Sleep(20); SendNoteOff(ch, 71);
-                });
-                break;
-            }
-
             case GameEventType.PositiveOutcome:
             {
                 // Crystal patch rapid ascending staccato: C6→D6→E6→G6→C7.
@@ -1560,6 +1510,10 @@ public sealed class AmbianceEngine : IDisposable
     private void SendProgramChange(int ch, int patch)
     {
         if (_device == null) return;
+        // Skip if the channel already has this patch — avoids the ~5-15 ms Windows GS
+        // re-load delay that would push note-ons to the next audio cycle.
+        if (_channelPatch[ch] == patch) return;
+        _channelPatch[ch] = patch;
         try
         {
             var ev = new ProgramChangeEvent((SevenBitNumber)patch);
@@ -1639,6 +1593,7 @@ public sealed class AmbianceEngine : IDisposable
         _disposed = true;
         Stop();
         _cts.Dispose();
+        _uiSfx.Dispose();
         try { _device?.Dispose(); } catch { /* ignore */ }
     }
 }

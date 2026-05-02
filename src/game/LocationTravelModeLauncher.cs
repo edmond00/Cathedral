@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using Cathedral.Audio;
 using Cathedral.Glyph;
 using Cathedral.Glyph.Microworld;
 using Cathedral.Game;
@@ -40,7 +41,22 @@ public static class LocationTravelModeLauncher
 
         using var core = new GlyphSphereCore(GameWindowSettings.Default, native, camera);
         var microworldInterface = new MicroworldInterface(core);
-        
+
+        // Create and start procedural ambient music engine (gracefully disabled if no MIDI device)
+        var ambianceEngine = new AmbianceEngine();
+        if (!ambianceEngine.Start())
+        {
+            Console.WriteLine("No MIDI output device found — ambient music disabled.");
+            ambianceEngine.Dispose();
+            ambianceEngine = null!;
+        }
+        else
+        {
+            Console.WriteLine($"✓ Ambient music engine started ({ambianceEngine.DeviceName})");
+            ambianceEngine.SetMood(MusicMoodState.Neutral);
+            ambianceEngine.SetActiveTrackCount(1); // Drone only until a mode sets the full track count
+        }
+
         // Create game controller AFTER core is set up
         LocationTravelGameController? gameController = null;
         
@@ -124,7 +140,7 @@ public static class LocationTravelModeLauncher
             microworldInterface.GenerateWorld();
             
             Console.WriteLine("Creating game controller...");
-            gameController = new LocationTravelGameController(core, microworldInterface);
+            gameController = new LocationTravelGameController(core, microworldInterface, ambianceEngine);
 
             // Register scene factories for specific biome types
             gameController.RegisterSceneFactory("farm", new FarmSceneFactory());
@@ -365,6 +381,7 @@ public static class LocationTravelModeLauncher
         // llmExecutor no longer needs Dispose() - simplified to just provide LlamaServerManager access
         gameController?.Dispose();
         llamaServer?.Dispose();
+        ambianceEngine?.Dispose();
         Console.WriteLine("Cleanup complete");
     }
 }

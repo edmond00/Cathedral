@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Cathedral.Audio;
 using Cathedral.Debug;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Dialogue.Tree.Trees;
@@ -66,6 +67,15 @@ public class NarrativeController
     // Random for dice rolls
     private readonly Random _diceRandom = new Random();
 
+    // Ambient music engine (optional — null when MIDI is unavailable)
+    private readonly AmbianceEngine? _ambianceEngine;
+
+    // Fires a click sound through the engine (PCM path, no MIDI latency).
+    private void PlayClickSound() => _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+
+    // Fires a hover sound when the cursor enters a new interactive element.
+    private void PlayHoverSound() => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+
     // Active party member (starts as protagonist, switches to companion after Speak About)
     private PartyMember _activePartyMember = null!;
     // Companion list parallel to the companion selection choice popup choices
@@ -87,7 +97,8 @@ public class NarrativeController
         int locationId = 0,
         WorldContext? worldContext = null,
         KeywordFallbackService? keywordFallbackService = null,
-        Protagonist? existingProtagonist = null)
+        Protagonist? existingProtagonist = null,
+        AmbianceEngine? ambianceEngine = null)
     {
         if (terminal == null)
             throw new ArgumentNullException(nameof(terminal));
@@ -106,6 +117,7 @@ public class NarrativeController
         if (actionExecutor == null)
             throw new ArgumentNullException(nameof(actionExecutor));
         
+        _ambianceEngine = ambianceEngine;
         _ui = new NarrativeUI(terminal);
         // Calculate content width dynamically: terminal width - margins - scrollbar
         var layout = new NarrativeLayout(
@@ -175,11 +187,13 @@ public class NarrativeController
         int locationId,
         WorldContext? worldContext = null,
         KeywordFallbackService? keywordFallbackService = null,
-        Protagonist? existingProtagonist = null)
+        Protagonist? existingProtagonist = null,
+        AmbianceEngine? ambianceEngine = null)
         : this(terminal, popup, core, llamaServer, slotManager, terminalInputHandler,
                thinkingExecutor, actionExecutor,
                CreateGraphFactoryForScene(scene, locationId, existingProtagonist),
-               locationId, worldContext, keywordFallbackService, existingProtagonist)
+               locationId, worldContext, keywordFallbackService, existingProtagonist,
+               ambianceEngine)
     {
         _scene = scene;
 
@@ -311,6 +325,7 @@ public class NarrativeController
                 _scrollBuffer.AddBlock(block);
                 _narrationState.AddBlock(block);
             }
+            _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
             
             // Scroll to show the new observation at the bottom of the view
             _scrollBuffer.ScrollToBottom();
@@ -441,6 +456,7 @@ public class NarrativeController
             // Add to scroll buffer
             _scrollBuffer.AddBlock(thinkingBlock);
             _narrationState.AddBlock(thinkingBlock);
+            _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
             
             // Auto-scroll to bottom to show new thinking block
             _scrollBuffer.ScrollToBottom();
@@ -708,6 +724,13 @@ public class NarrativeController
     public bool GetUpPhaseFinished { get; private set; }
 
     /// <summary>
+    /// Number of REMEMBER fragments successfully resolved so far in the current
+    /// childhood reminescence phase. Used by the game controller to progressively
+    /// unlock music tracks (0 = noise only, 1 = +drone, 2 = +melody, …, 4 = full).
+    /// </summary>
+    public int ReminescenceCompletedCount { get; private set; }
+
+    /// <summary>
     /// Consume a queued <see cref="ReminescenceTransitionRequest"/>: either rebuild the
     /// scene as the next reminescence (in place) or signal that the reminescence phase has
     /// ended.
@@ -718,6 +741,8 @@ public class NarrativeController
 
         if (_scene == null) return;
         _scene.PendingReminescenceTransition = null;
+
+        ReminescenceCompletedCount++;   // each completed REMEMBER unlocks one more music track
 
         if (Cathedral.Game.Narrative.Reminescence.ReminescenceRegistry.IsEnd(req.NextReminescenceId))
         {
@@ -1087,6 +1112,7 @@ public class NarrativeController
         );
         _scrollBuffer.AddBlock(outcomeBlock);
         _narrationState.AddBlock(outcomeBlock);
+        _ambianceEngine?.TriggerGameEvent(result.Succeeded ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
         
         // Auto-scroll to bottom to show outcome
         _scrollBuffer.ScrollToBottom();
@@ -1094,6 +1120,7 @@ public class NarrativeController
         
         // Clear dice roll state
         _narrationState.ClearDiceRoll();
+        _ambianceEngine?.SetFilter(MusicFilter.None);
 
         // === FAILURE-PATH WITNESS CONFRONTATION (step 4b) ===
         // On failure, the executor already asked the LLM whether the witness noticed.
@@ -1357,7 +1384,23 @@ public class NarrativeController
     {
         // Clear terminal
         _ui.Clear();
-        
+
+        // Sync music filter based on current loading/dice state
+        if (_ambianceEngine != null)
+        {
+            bool diceActive    = _narrationState.IsDiceRollActive;
+            bool loadingActive = _narrationState.IsLoadingObservations
+                              || _narrationState.IsLoadingThinking
+                              || _narrationState.IsLoadingFocusObservation
+                              || _narrationState.IsLoadingSpeaking
+                              || _narrationState.IsLoadingAction;
+            var desired = diceActive   ? MusicFilter.DiceRoll
+                        : loadingActive ? MusicFilter.Loading
+                        : MusicFilter.None;
+            if (_ambianceEngine.ActiveFilter != desired)
+                _ambianceEngine.SetFilter(desired);
+        }
+
         // Header: agent name (left) + noetic counter (right, hidden in phases without cost)
         bool showNoetic = _scene?.Phase != NarrationPhase.ChildhoodReminescence
                        && _scene?.Phase != NarrationPhase.GetUp;
@@ -1496,6 +1539,7 @@ public class NarrativeController
     /// </summary>
     public void OnRawMouseClick(Vector2 screenPosition)
     {
+        PlayClickSound();
         var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
         float cellPixelSize = layoutInfo.CellSize.X;
 
@@ -1599,8 +1643,8 @@ public class NarrativeController
         _lastMouseX = mouseX;
         _lastMouseY = mouseY;
         
-        // If any popup is visible, raw mouse events are handled separately
-        if (_modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible)
+        // If any popup is visible, suppress narrative hover sounds entirely.
+        if (_modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible || _choicePopup.IsVisible)
         {
             return;
         }
@@ -1608,11 +1652,11 @@ public class NarrativeController
         // Handle dice roll screen hover
         if (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling)
         {
-            // Check if hovering over continue button on dice roll screen
             bool isOverButton = _ui.IsMouseOverDiceRollButton(mouseX, mouseY);
             if (isOverButton != _narrationState.IsDiceRollButtonHovered)
             {
                 _narrationState.IsDiceRollButtonHovered = isOverButton;
+                if (isOverButton) PlayHoverSound();
             }
             return;
         }
@@ -1677,6 +1721,7 @@ public class NarrativeController
             if (isOverButton != _narrationState.IsContinueButtonHovered)
             {
                 _narrationState.IsContinueButtonHovered = isOverButton;
+                if (isOverButton) PlayHoverSound();
             }
             
             // Don't process keyword/action hover when continue button is shown, 
@@ -1689,6 +1734,7 @@ public class NarrativeController
         
         if (newHoveredKeyword != _narrationState.HoveredKeyword)
         {
+            if (newHoveredKeyword != null) PlayHoverSound();
             _narrationState.HoveredKeyword = newHoveredKeyword;
             // UI will re-render on next Update() call
         }
@@ -1698,6 +1744,7 @@ public class NarrativeController
         
         if (newHoveredAction != _narrationState.HoveredAction)
         {
+            if (newHoveredAction != null) PlayHoverSound();
             _narrationState.HoveredAction = newHoveredAction;
             // UI will re-render on next Update() call
         }
@@ -1715,6 +1762,7 @@ public class NarrativeController
             if (_ui.IsMouseOverDiceRollButton(mouseX, mouseY))
             {
                 Console.WriteLine("NarrativeController: Dice roll continue button clicked");
+                PlayClickSound();
                 OnDiceRollContinue();
             }
             return;
@@ -1746,6 +1794,7 @@ public class NarrativeController
             var buttonRegion = _narrationState.ActionRegions[0];
             if (buttonRegion.Contains(mouseX, mouseY))
             {
+                PlayClickSound();
                 // Get-Up success transition: protagonist risen, world travel begins.
                 if (_scene != null && _scene.PendingGetUpTransition)
                 {
@@ -1905,6 +1954,7 @@ public class NarrativeController
         ActionRegion? clickedAction = _ui.GetHoveredAction(mouseX, mouseY);
         if (clickedAction != null)
         {
+            PlayClickSound();
             // Collect all actions from all thinking blocks (globally indexed)
             var allActions = new List<ParsedNarrativeAction>();
             foreach (var block in _narrationState.Blocks)
@@ -1940,6 +1990,7 @@ public class NarrativeController
 
         if (clickedKeyword != null && _narrationState.ThinkingAttemptsRemaining > 0)
         {
+            PlayClickSound();
             Console.WriteLine($"NarrativeController: Clicked keyword: {clickedKeyword}");
             _narrationState.HoveredKeyword = clickedKeyword;
             _narrationState.IsSelectingInteractionMode = true;

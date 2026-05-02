@@ -158,7 +158,7 @@ public class MainMenuRenderer
         _terminal.Text(labelX, row, label, textColor, bgColor);
     }
 
-    private int GetButtonAtPosition(int x, int y)
+    public int GetButtonAtPosition(int x, int y)
     {
         int terminalWidth = _terminal.Width;
         int startX = (terminalWidth - ButtonWidth) / 2;
@@ -173,6 +173,13 @@ public class MainMenuRenderer
         }
 
         return -1;
+    }
+
+    /// <summary>Returns the button index if enabled and under (x, y), otherwise -1.</summary>
+    public int GetEnabledButtonAtPosition(int x, int y)
+    {
+        int idx = GetButtonAtPosition(x, y);
+        return (idx >= 0 && idx < _buttons.Count && _buttons[idx].Enabled) ? idx : -1;
     }
 
     // ── Data types ───────────────────────────────────────────────
