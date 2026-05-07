@@ -37,12 +37,15 @@ Other :
 
 Works :
 
-apprentice : no salary, have master
-journeyman : salary + master
-laborer : salary, no master
-helper : salary + master
+with master :
+- none : apprentice
+- copper : disciple
+- silver : journeyman
+without master :
+- none : bondman
+- copper : helper
+- silver : laborer
 
-- village : apprentice/journeyman (from master)
-- field : laborer (from reeve)
-- farm :
+- village : apprentice/disciple/journeyman
+- farm/field : bondman/helper/laborer
 
