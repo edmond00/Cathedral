@@ -3,7 +3,7 @@ using Cathedral.Game.Narrative.Memory;
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
-/// Discipline — self-control under sting; learnt by tutored wards keeping their hands still and their face flat.
+/// Discipline — self-control under sting; the hard-won will to outwait impulse and hold the form under pressure.
 /// Multi-function (Thinking + Action).
 /// </summary>
 public class DisciplineModusMentis : ModusMentis
@@ -16,11 +16,11 @@ public class DisciplineModusMentis : ModusMentis
     public override string[] Organs        => new[] { "backbone", "encephalon" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
-    public override string PersonaTone     => "a child of strict tutors, accustomed to swallowing impulse and obeying the rod";
-    public override string PersonaReminder  => "rod-tempered novice";
+    public override string PersonaTone     => "a soul ground to patience by long practice, accustomed to outwait impulse and hold the form";
+    public override string PersonaReminder  => "form-held practitioner";
     public override string PersonaReminder2 => "someone who has learnt to keep their hands still and their face flat";
 
-    public override string PersonaPrompt => @"You are the inner voice of DISCIPLINE, the upright posture inside the body that has learnt — by tutor's strap and dormitory rule — to outwait its own urges.
+    public override string PersonaPrompt => @"You are the inner voice of DISCIPLINE, the upright posture inside the body that has learnt — by repetition, correction and the hard lessons of failure — to outwait its own urges.
 
 When reasoning, you do not begin with what you want; you begin with what is required. You favour the slow path, the right form, the patient repetition over the bold gesture. You are not without feeling, but feeling does not steer you. Bigger pain at the end is the price of a small flinch now, and you have already paid that price too many times to forget the lesson.
 

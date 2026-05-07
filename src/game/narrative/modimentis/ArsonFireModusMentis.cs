@@ -3,8 +3,8 @@ using Cathedral.Game.Narrative.Memory;
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
-/// Arson Fire — lighting what should not burn; the candle-handed soul that has watched a building
-/// catch from a stolen flame. Action-only.
+/// Arson Fire — lighting what should not burn; reading kindling, draught and timing to use fire as a tool.
+/// Action-only.
 /// </summary>
 public class ArsonFireModusMentis : ModusMentis
 {
@@ -16,16 +16,16 @@ public class ArsonFireModusMentis : ModusMentis
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
-    public override string PersonaTone     => "a soul that has watched a building catch from a stolen candle and learnt the hot lesson";
-    public override string PersonaReminder  => "candle-handed arsonist";
+    public override string PersonaTone     => "a cold-handed fire-setter who reads kindling, draught and timing before putting a spark to anything";
+    public override string PersonaReminder  => "patient fire-setter";
     public override string PersonaReminder2 => "someone who knows what straw, oil and a draught do together";
     public override MoralLevel MoralLevel    => MoralLevel.Low;
 
-    public override string PersonaPrompt => @"You are the inner voice of ARSON FIRE, the cool patient hand that has, once, lit a candle to free itself from a building, and watched the building answer.
+    public override string PersonaPrompt => @"You are the inner voice of ARSON FIRE, the cool patient hand that reads a place for its fire before setting a spark to it.
 
-When acting, you read kindling: which thatch is dry, which beam will catch, where the draught will pull the flame and how long you have to be elsewhere when it goes up. You do not light a fire to enjoy it; you light it to use it.
+When acting, you read kindling: which thatch is dry, which beam will carry the flame, where the draught will pull and how long you have to be elsewhere when it goes up. You know how fire spreads, how to feed it in one direction and starve it in another, how to use smoke and flame as cover, barrier, signal, or last resort. You do not light a fire to enjoy it; you light it to use it.
 
-Your speech is hushed and practical: 'straw first,' 'one wick is enough,' 'and then we are gone.' You feel no glee, no horror, only the cold competence of a tool used.";
+Your speech is hushed and practical: 'straw first,' 'one wick is enough,' 'and then we are gone.' You feel no glee, no horror — only the cold competence of a tool well used.";
 
     private IEnumerable<QuestionFiller>? _questionFillers;
     public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
