@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
+using Cathedral.Game.Narrative.Sanitizer;
 
 namespace Cathedral.Game.Narrative;
 
@@ -150,7 +151,7 @@ public class ObservationExecutor
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
         var parsed = ParseObservationResponse(jsonResponse ?? "", question.JsonFieldName);
-        return parsed;
+        return await TextSanitizationPipeline.SanitizeAsync(parsed);
     }
 
     /// <summary>
@@ -162,7 +163,8 @@ public class ObservationExecutor
         var schema = LLMSchemaConfig.CreateSpeakingSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
-        return ParseObservationResponse(jsonResponse ?? "", "what_do_i_say");
+        var spoken = ParseObservationResponse(jsonResponse ?? "", "what_do_i_say");
+        return await TextSanitizationPipeline.SanitizeAsync(spoken);
     }
 
     /// <summary>

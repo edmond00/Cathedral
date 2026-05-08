@@ -12,6 +12,7 @@ using Cathedral.Glyph.Microworld.LocationSystem.Generators;
 using Cathedral.Glyph.Interaction;
 using Cathedral.LLM;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Sanitizer;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Plain;
@@ -388,6 +389,24 @@ public class LocationTravelGameController : IDisposable
             });
         }
         
+        // Initialize text sanitization pipeline (3-layer anachronism/entity filter)
+        if (executor != null)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var modelPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "catalyst-models");
+                    await TextSanitizationPipeline.InitializeAsync(modelPath, executor.GetLlamaServerManager());
+                    Console.WriteLine("LocationTravelGameController: TextSanitizationPipeline initialized");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"LocationTravelGameController: Failed to initialize TextSanitizationPipeline - {ex.Message}");
+                }
+            });
+        }
+
         Console.WriteLine("LocationTravelGameController: LLM action executor enabled");
     }
     

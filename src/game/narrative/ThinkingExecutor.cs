@@ -8,6 +8,7 @@ using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
+using Cathedral.Game.Narrative.Sanitizer;
 
 namespace Cathedral.Game.Narrative;
 
@@ -66,7 +67,7 @@ public class ThinkingExecutor
             thinkingSlot, reflectTarget, subOutcomes, node, thinkingModusMentis, protagonist, worldContext, cancellationToken);
 
         ConcreteOutcome resolvedOutcome = goalOutcome ?? subOutcomes[0];
-        string reflectText = reflect;
+        string reflectText = await TextSanitizationPipeline.SanitizeAsync(reflect);
         ObservationObject? sourceObs = targetOutcome as ObservationObject;
 
         string outcomeDescription = resolvedOutcome.ToNaturalLanguageString();
@@ -90,7 +91,7 @@ public class ThinkingExecutor
             return null;
         }
 
-        string whyText = ParseSingleTextField(whyJson, whyQ.JsonFieldName);
+        string whyText = await TextSanitizationPipeline.SanitizeAsync(ParseSingleTextField(whyJson, whyQ.JsonFieldName));
         Console.WriteLine($"ThinkingExecutor: WHY complete ({whyText.Length} chars)");
 
         // ── Early exit: IGNORE ─────────────────────────────────────────────────────
@@ -119,7 +120,8 @@ public class ThinkingExecutor
             return null;
         }
 
-        var (howText, selectedMeans) = ParseHowResponse(howJson, howQ.JsonFieldName);
+        var (rawHowText, selectedMeans) = ParseHowResponse(howJson, howQ.JsonFieldName);
+        string howText = await TextSanitizationPipeline.SanitizeAsync(rawHowText);
         if (string.IsNullOrEmpty(selectedMeans))
         {
             Console.Error.WriteLine("ThinkingExecutor: HOW call could not parse 'how' field.");
@@ -151,7 +153,7 @@ public class ThinkingExecutor
             return null;
         }
 
-        string actionDescription = ParseSingleTextField(whatJson, whatQ.JsonFieldName);
+        string actionDescription = await TextSanitizationPipeline.SanitizeAsync(ParseSingleTextField(whatJson, whatQ.JsonFieldName));
         string displayText = actionDescription.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
             ? actionDescription.Substring(7)
             : actionDescription;
@@ -206,7 +208,7 @@ public class ThinkingExecutor
         string reflectText = "";
         if (!string.IsNullOrWhiteSpace(reflectJson))
         {
-            reflectText = ParseSingleTextField(reflectJson, "what_do_i_think");
+            reflectText = await TextSanitizationPipeline.SanitizeAsync(ParseSingleTextField(reflectJson, "what_do_i_think"));
             Console.WriteLine($"ThinkingExecutor: REFLECT complete ({reflectText.Length} chars)");
         }
         else
@@ -385,7 +387,7 @@ public class ThinkingExecutor
             return null;
         }
 
-        return ParseSingleTextField(jsonResponse, "what_do_i_think");
+        return await TextSanitizationPipeline.SanitizeAsync(ParseSingleTextField(jsonResponse, "what_do_i_think"));
     }
 
     /// <summary>
@@ -421,7 +423,7 @@ public class ThinkingExecutor
             return null;
         }
 
-        string reformulated = ParseSingleTextField(jsonResponse, "what_should_i_do");
+        string reformulated = await TextSanitizationPipeline.SanitizeAsync(ParseSingleTextField(jsonResponse, "what_should_i_do"));
         if (string.IsNullOrWhiteSpace(reformulated))
             return null;
 
