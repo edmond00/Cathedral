@@ -9,7 +9,7 @@ namespace Cathedral.Game.Narrative;
 public class WorkingMemoryCapacityStat : DerivedStat
 {
     public override string Name => "working_memory_capacity";
-    public override string DisplayName => "Working Capacity";
+    public override string DisplayName => "Working Memory";
     public override string? RelatedBodyPartId => "encephalon";
 
     /// <summary>

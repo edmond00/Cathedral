@@ -15,7 +15,7 @@ public class CineticPointsStat : DerivedStat
 {
     public override string Name         => "cinetic_points";
     public override string DisplayName  => "Cinetic Points";
-    public override string ShortDisplayName => "CP";
+    public override string ShortDisplayName => "Cinetic Points";
     public override string? RelatedOrganId => "backbone";
     public override int CalculateValue(int sourceScore) => sourceScore * 2;
     public override int MinimumValue() => 1;
@@ -31,7 +31,7 @@ public class NaturalDefenseStat : DerivedStat
 {
     public override string Name         => "natural_defense";
     public override string DisplayName  => "Natural Defense";
-    public override string ShortDisplayName => "DEF";
+    public override string ShortDisplayName => "Natural Defense";
     public override string? RelatedBodyPartId => "lower_limbs";
     public override int CalculateValue(int sourceScore) => sourceScore / 2;
 }
@@ -45,7 +45,7 @@ public class MoveSpeedStat : DerivedStat
 {
     public override string Name         => "move_speed";
     public override string DisplayName  => "Move Speed";
-    public override string ShortDisplayName => "SPD";
+    public override string ShortDisplayName => "Move Speed";
     public override string? RelatedOrganId => "legs";
     public override int CalculateValue(int sourceScore) => Math.Max(1, sourceScore);
     public override int MinimumValue() => 1;
@@ -61,7 +61,7 @@ public class RunawayChanceStat : DerivedStat
 {
     public override string Name         => "runaway_chance";
     public override string DisplayName  => "Runaway Chance";
-    public override string ShortDisplayName => "RUN";
+    public override string ShortDisplayName => "Runaway Chance";
     public override string? RelatedOrganId => "feet";
     public override int CalculateValue(int sourceScore) => sourceScore * 10;
     public override string FormatValue(int value) => $"{value}%";
@@ -76,7 +76,7 @@ public class InitiativeStat : DerivedStat
 {
     public override string Name         => "initiative";
     public override string DisplayName  => "Initiative";
-    public override string ShortDisplayName => "INIT";
+    public override string ShortDisplayName => "Initiative";
     public override string? RelatedOrganId => "nose";
     public override int CalculateValue(int sourceScore) => sourceScore;
     public override int MinimumValue() => 1;

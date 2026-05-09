@@ -7,7 +7,7 @@ namespace Cathedral.Game.Narrative;
 public class ResidualMemoryCapacityStat : DerivedStat
 {
     public override string Name => "residual_memory_capacity";
-    public override string DisplayName => "Residual Capacity";
+    public override string DisplayName => "Residual Memory";
     public override string? RelatedOrganId => "anamnesis";
 
     /// <summary>Slot count = organ score × 2 (range 2-20).</summary>

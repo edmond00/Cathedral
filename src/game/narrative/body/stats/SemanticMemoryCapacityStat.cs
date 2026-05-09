@@ -7,7 +7,7 @@ namespace Cathedral.Game.Narrative;
 public class SemanticMemoryCapacityStat : DerivedStat
 {
     public override string Name => "semantic_memory_capacity";
-    public override string DisplayName => "Semantic Capacity";
+    public override string DisplayName => "Semantic Memory";
     public override string? RelatedOrganId => "cerebrum";
 
     /// <summary>Slot count = organ score × 2 (range 2-20).</summary>

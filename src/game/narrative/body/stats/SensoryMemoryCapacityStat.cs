@@ -7,7 +7,7 @@ namespace Cathedral.Game.Narrative;
 public class SensoryMemoryCapacityStat : DerivedStat
 {
     public override string Name => "sensory_memory_capacity";
-    public override string DisplayName => "Sensory Capacity";
+    public override string DisplayName => "Sensory Memory";
     public override string? RelatedOrganId => "hippocampus";
 
     /// <summary>Slot count = organ score × 2 (range 2-20).</summary>

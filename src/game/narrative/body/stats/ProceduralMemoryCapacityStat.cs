@@ -7,7 +7,7 @@ namespace Cathedral.Game.Narrative;
 public class ProceduralMemoryCapacityStat : DerivedStat
 {
     public override string Name => "procedural_memory_capacity";
-    public override string DisplayName => "Procedural Capacity";
+    public override string DisplayName => "Procedural Memory";
     public override string? RelatedOrganId => "cerebellum";
 
     /// <summary>Slot count = organ score × 2 (range 2-20).</summary>
