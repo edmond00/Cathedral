@@ -8,6 +8,14 @@ using Cathedral.Glyph;
 using Cathedral.Glyph.Microworld;
 using Cathedral.Game;
 using Cathedral.Game.Scene.Farm;
+using Cathedral.Game.Scene.Plain;
+using Cathedral.Game.Scene.Field;
+using Cathedral.Game.Scene.Forest;
+using Cathedral.Game.Scene.Village;
+using Cathedral.Game.Scene.Cave;
+using Cathedral.Game.Scene.Mountain;
+using Cathedral.Game.Scene.Peak;
+using Cathedral.Game.Scene.Coast;
 using Cathedral.Engine;
 using Cathedral.LLM;
 
@@ -143,7 +151,15 @@ public static class LocationTravelModeLauncher
             gameController = new LocationTravelGameController(core, microworldInterface, ambianceEngine);
 
             // Register scene factories for specific biome types
-            gameController.RegisterSceneFactory("farm", new FarmSceneFactory());
+            gameController.RegisterSceneFactory("farm",     new FarmSceneFactory());
+            gameController.RegisterSceneFactory("plain",    new PlainSceneFactory());
+            gameController.RegisterSceneFactory("field",    new FieldSceneFactory());
+            gameController.RegisterSceneFactory("forest",   new ForestSceneFactory());
+            gameController.RegisterSceneFactory("village",  new VillageSceneFactory());
+            gameController.RegisterSceneFactory("cave",     new CaveSceneFactory());
+            gameController.RegisterSceneFactory("mountain", new MountainSceneFactory());
+            gameController.RegisterSceneFactory("peak",     new PeakSceneFactory());
+            gameController.RegisterSceneFactory("coast",    new CoastSceneFactory());
             
             // Set up LLM action executor if server is ready
             if (llamaServer != null && llamaServer.IsServerReady)

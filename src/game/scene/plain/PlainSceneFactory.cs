@@ -3,270 +3,291 @@ using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
+using Cathedral.Game.Narrative.World.Items;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
+using Cathedral.Game.Scene.Building;
+using Cathedral.Game.Scene.Shared;
 
 namespace Cathedral.Game.Scene.Plain;
 
 /// <summary>
-/// Builds a procedural plain scene.
+/// Builds a procedural plain scene per the v1 world-content spec (plain.md).
 ///
-/// Structure:
-///   Section "Flatlands" → Grassland, Meadow areas  (if sampled)
-///   Section "Highlands" → Hill, Valley areas        (if sampled)
-///   2-4 areas sampled, connected linearly with bidirectional edges.
-///   Each area gets 1-3 spots (apple tree, boulder, bush, flower patch, pine tree).
+/// Identity: open vs heath vs wetland (drives section pool, area pool, tree species).
+///   • open    → Flatlands + Highlands; oak / hawthorn trees
+///   • heath   → Flatlands + Highlands; elder / hawthorn trees
+///   • wetland → Flatlands + Wetlands; willow / elder trees, reed beds
 ///
-/// NPCs:
-///   Fox (dawn/dusk), Stray Dog (always), Stray Cat (morning/evening), Black Bear (daytime)
+/// Areas: 3–5 sampled from { Grassland, Meadow, Heath, Hill, Valley, Hedgerow, Boggy Ground }.
+/// Connections: <see cref="PathPointOfInterest"/> between adjacent areas.
+/// Plain is uninhabited terrain — only beasts and shallow wildlife spawn.
 /// </summary>
 public class PlainSceneFactory : SceneFactory
 {
     public PlainSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
+    private enum Identity { Open, Heath, Wetland }
+
+    private Identity _identity;
+    private readonly List<Area> _allOutdoorAreas = new();
+
     protected override void BuildSections(Random rng, int locationId, Scene scene)
     {
-        // Step 1: Sample 2-4 areas
-        var allAreaBuilders = new List<Func<Area>>
+        // ── 1. Roll identity ──────────────────────────────────────────────────
+
+        var roll = rng.NextDouble();
+        _identity = roll switch
         {
-            () => BuildGrassland(),
-            () => BuildMeadow(),
-            () => BuildHill(),
-            () => BuildValley(),
-        };
-        // indices 0,1 = flatlands, 2,3 = highlands
-        var flatlandIds  = new HashSet<int> { 0, 1 };
-        var highlandIds  = new HashSet<int> { 2, 3 };
-
-        int areaCount = rng.Next(2, 5); // 2-4
-        var sampledIndices = SampleUniqueIndices(rng, allAreaBuilders.Count, areaCount);
-
-        Console.WriteLine($"PlainSceneFactory: Sampled {areaCount} areas");
-
-        var flatlandAreas  = new List<Area>();
-        var highlandAreas  = new List<Area>();
-
-        foreach (var idx in sampledIndices)
-        {
-            var area = allAreaBuilders[idx]();
-            if (flatlandIds.Contains(idx))
-                flatlandAreas.Add(area);
-            else
-                highlandAreas.Add(area);
-        }
-
-        // Build sections (only if they have areas)
-        if (flatlandAreas.Count > 0)
-        {
-            var flatlands = new Section("Flatlands", new() { "Open, low-lying terrain" });
-            flatlands.Areas.AddRange(flatlandAreas);
-            scene.Sections.Add(flatlands);
-            RegisterAll(scene, flatlands);
-        }
-
-        if (highlandAreas.Count > 0)
-        {
-            var highlands = new Section("Highlands", new() { "Elevated, exposed terrain" });
-            highlands.Areas.AddRange(highlandAreas);
-            scene.Sections.Add(highlands);
-            RegisterAll(scene, highlands);
-        }
-
-        // Step 2: Connect areas linearly (bidirectional) in sampled order
-        var allAreas = scene.AllAreas;
-        for (int i = 0; i < allAreas.Count - 1; i++)
-            scene.ConnectAreasBidirectional(allAreas[i], allAreas[i + 1]);
-
-        // Step 3: Add 1-3 points of interest per area
-        var poiBuilders = new List<Func<PointOfInterest>>
-        {
-            () => BuildAppleTreePointOfInterest(),
-            () => BuildBoulderPointOfInterest(),
-            () => BuildBushPointOfInterest(),
-            () => BuildFlowerPatchPointOfInterest(),
-            () => BuildPineTreePointOfInterest(),
+            < 0.25 => Identity.Wetland,
+            < 0.55 => Identity.Heath,
+            _      => Identity.Open,
         };
 
-        foreach (var area in allAreas)
+        // ── 2. Choose area pool & sample 3–5 areas ────────────────────────────
+
+        var (flatBuilders, highBuilders) = BuildAreaPools(_identity);
+        int areaCount = rng.Next(3, 6);
+
+        int flatTake = Math.Min(areaCount / 2 + 1, flatBuilders.Count);
+        var flatAreas = SampleFromPool(rng, flatBuilders, flatTake);
+        int remaining = areaCount - flatAreas.Count;
+        var highAreas = SampleFromPool(rng, highBuilders, Math.Min(remaining, highBuilders.Count));
+
+        // ── 3. Populate spots in each area BEFORE registration ────────────────
+
+        foreach (var area in flatAreas.Concat(highAreas))
+            PopulateAreaSpots(area, rng);
+
+        // ── 4. Build & register sections ─────────────────────────────────────
+
+        var flatSection = new Section(
+            "Flatlands",
+            new() { "Open, low-lying ground; wide sky and long sightlines" }
+        );
+        flatSection.Areas.AddRange(flatAreas);
+        scene.Sections.Add(flatSection);
+        RegisterAll(scene, flatSection);
+
+        var highSectionName = _identity == Identity.Wetland ? "Wetlands" : "Highlands";
+        var highSectionDesc = _identity == Identity.Wetland
+            ? "Boggy ground, reeds, willows, soft underfoot"
+            : "Gentle rises and shallow valleys";
+        var highSection = new Section(highSectionName, new() { highSectionDesc });
+        highSection.Areas.AddRange(highAreas);
+        scene.Sections.Add(highSection);
+        RegisterAll(scene, highSection);
+
+        _allOutdoorAreas.AddRange(flatAreas);
+        _allOutdoorAreas.AddRange(highAreas);
+
+        // ── 5. Connect areas linearly with PathPoIs (register PoI explicitly) ─
+
+        for (int i = 0; i < _allOutdoorAreas.Count - 1; i++)
         {
-            int poiCount = rng.Next(1, 4);
-            var poiIndices = SampleUniqueIndices(rng, poiBuilders.Count, poiCount);
-            foreach (var idx in poiIndices)
-            {
-                var poi = poiBuilders[idx]();
-                area.PointsOfInterest.Add(poi);
-                poi.Register(scene);
-                foreach (var itemEl in poi.Items)
-                    itemEl.Register(scene);
-            }
+            var a = _allOutdoorAreas[i];
+            var b = _allOutdoorAreas[i + 1];
+            scene.ConnectAreasBidirectional(a, b);
+            var path = BuildPath(a, b, rng);
+            a.PointsOfInterest.Add(path);
+            b.PointsOfInterest.Add(path);
+            path.Register(scene);
         }
 
-        Console.WriteLine($"PlainSceneFactory: Built plain scene (entry '{allAreas.FirstOrDefault()?.DisplayName}')");
+        Console.WriteLine($"PlainSceneFactory: Built '{_identity}' plain — {_allOutdoorAreas.Count} areas");
     }
 
-    protected override void BuildNpcs(Random rng, int locationId, Scene scene)
+    // ── Area-pool selection ──────────────────────────────────────────────────
+
+    private (List<(string id, Func<Area> builder)> flat, List<(string id, Func<Area> builder)> high)
+        BuildAreaPools(Identity identity)
     {
-        var encounters = new List<(NamedNpcArchetype Archetype, float SpawnChance)>
+        var flat = new List<(string, Func<Area>)>
         {
-            (new FoxArchetype(),       0.40f),
-            (new StrayDogArchetype(),  0.30f),
-            (new StrayCatArchetype(),  0.25f),
-            (new BlackBearArchetype(), 0.15f),
+            ("grassland", BuildGrassland),
+            ("meadow",    BuildMeadow),
+            ("hedgerow",  BuildHedgerow),
+        };
+        var high = new List<(string, Func<Area>)>
+        {
+            ("hill",   BuildHill),
+            ("valley", BuildValley),
         };
 
-        var allAreas = scene.AllAreas;
-        if (allAreas.Count == 0) return;
+        if (identity == Identity.Heath)
+            flat.Add(("heath", BuildHeath));
 
-        foreach (var (archetype, spawnChance) in encounters)
+        if (identity == Identity.Wetland)
         {
-            if (rng.NextDouble() > spawnChance) continue;
-
-            var targetArea = allAreas[rng.Next(allAreas.Count)];
-            var entity = archetype.Spawn(rng, targetArea.ContextDescription);
-            var sceneNpc = new SceneNpc(entity);
-            sceneNpc.Register(scene);
-            scene.Npcs.Add(sceneNpc);
-
-            var schedule = BuildPlainSchedule(archetype.ArchetypeId, allAreas, rng);
-            scene.NpcSchedules[sceneNpc.Id] = schedule;
+            high.Clear();
+            high.Add(("boggy_ground", BuildBoggyGround));
+            high.Add(("valley",       BuildValley));
         }
+
+        return (flat, high);
     }
 
-    private static NpcSchedule BuildPlainSchedule(string archetypeId, List<Area> areas, Random rng)
+    private static List<Area> SampleFromPool(Random rng, List<(string id, Func<Area> builder)> pool, int count)
     {
-        // Which periods the NPC can appear at all (archetype-dependent)
-        TimePeriod[] activePeriods = archetypeId switch
-        {
-            "fox"        => new[] { TimePeriod.Dawn, TimePeriod.Evening },
-            "black_bear" => new[] { TimePeriod.Morning, TimePeriod.Noon, TimePeriod.Afternoon },
-            "stray_cat"  => new[] { TimePeriod.Morning, TimePeriod.Evening },
-            _            => (TimePeriod[])Enum.GetValues(typeof(TimePeriod)),
-        };
-
-        var map = new Dictionary<TimePeriod, string?>();
-        foreach (TimePeriod p in Enum.GetValues(typeof(TimePeriod)))
-        {
-            if (Array.IndexOf(activePeriods, p) < 0)
-            {
-                map[p] = null; // absent this period
-                continue;
-            }
-            // 25% chance absent even during an active period
-            if (rng.NextDouble() < 0.25)
-            {
-                map[p] = null;
-                continue;
-            }
-            map[p] = areas[rng.Next(areas.Count)].DisplayName.ToLowerInvariant();
-        }
-
-        // Ensure at least one active period so the NPC isn't completely invisible
-        if (map.Values.All(v => v == null))
-        {
-            var period = activePeriods[rng.Next(activePeriods.Length)];
-            map[period] = areas[rng.Next(areas.Count)].DisplayName.ToLowerInvariant();
-        }
-
-        return NpcSchedule.Roaming(map);
+        if (count <= 0 || pool.Count == 0) return new List<Area>();
+        var indices = SampleUniqueIndices(rng, pool.Count, count);
+        return indices.Select(i => pool[i].builder()).ToList();
     }
 
-    // ── Area builders ─────────────────────────────────────────────────────────
+    // ── Area builders ────────────────────────────────────────────────────────
 
     private static Area BuildGrassland() => new(
         displayName: "Grassland",
         contextDescription: "crossing the open grassland",
         transitionDescription: "move into the grassland",
-        descriptions: new() { "Vast flat terrain of tall grass, sparse trees, wide sky" },
-        moods: new[] { "vast", "flat", "dry", "sweeping", "yellowed", "rustling", "endless", "sparse" }
+        descriptions: new() { "Open wind-swept grassland, the sky vast and unbroken above" },
+        moods: new[] { "vast", "windy", "yellowed", "rustling", "open" }
     );
 
     private static Area BuildMeadow() => new(
         displayName: "Meadow",
-        contextDescription: "wandering through the open meadow",
-        transitionDescription: "move into the open meadow",
-        descriptions: new() { "An open grassy expanse dotted with wildflowers, gentle and exposed" },
-        moods: new[] { "sunlit", "breezy", "quiet", "open", "peaceful", "windswept", "golden", "wide" }
+        contextDescription: "wandering through the meadow",
+        transitionDescription: "move into the meadow",
+        descriptions: new() { "A sheltered meadow speckled with wildflowers and the hum of bees" },
+        moods: new[] { "sunlit", "fragrant", "soft", "quiet", "windless" }
+    );
+
+    private static Area BuildHeath() => new(
+        displayName: "Heath",
+        contextDescription: "crossing the dry heath",
+        transitionDescription: "move into the heath",
+        descriptions: new() { "A dry stretch of scrub and heather, broken by stands of gorse" },
+        moods: new[] { "dry", "scrubby", "purple", "wind-bent", "low" }
     );
 
     private static Area BuildHill() => new(
         displayName: "Hill",
         contextDescription: "climbing the open hill",
         transitionDescription: "move up onto the hill",
-        descriptions: new() { "A gentle rise in the plain, offering a wider view, exposed to wind" },
-        moods: new[] { "windswept", "exposed", "grassy", "bare", "lonely", "rolling", "open", "bleak" }
+        descriptions: new() { "A gentle rise of grass and stone, exposed to the wind" },
+        moods: new[] { "windswept", "exposed", "rolling", "bare", "open" }
     );
 
     private static Area BuildValley() => new(
         displayName: "Valley",
-        contextDescription: "descending into the shallow valley",
+        contextDescription: "descending into the valley",
         transitionDescription: "descend into the valley",
-        descriptions: new() { "A shallow depression sheltered from wind, damp ground, lush growth" },
-        moods: new[] { "sheltered", "damp", "quiet", "lush", "shadowed", "still", "secluded", "overgrown" }
+        descriptions: new() { "A shallow damp depression sheltered from the wind" },
+        moods: new[] { "sheltered", "damp", "lush", "shadowed", "still" }
     );
 
-    // ── PointOfInterest builders ──────────────────────────────────────────────
+    private static Area BuildHedgerow() => new(
+        displayName: "Hedgerow",
+        contextDescription: "walking along the hedgerow",
+        transitionDescription: "move along the hedgerow",
+        descriptions: new() { "A long thorny hedgerow standing between two open stretches" },
+        moods: new[] { "tangled", "thorny", "dense", "narrow", "shaded" }
+    );
 
-    private static PointOfInterest BuildAppleTreePointOfInterest() => new(
-        displayName: "Apple Tree",
-        descriptions: new() { "A gnarled apple tree standing alone" },
-        items: new()
+    private static Area BuildBoggyGround() => new(
+        displayName: "Boggy Ground",
+        contextDescription: "wading through boggy ground",
+        transitionDescription: "step into the boggy ground",
+        descriptions: new() { "Soft wet ground beneath a tangle of reeds and rushes" },
+        moods: new[] { "wet", "soft", "still", "rustling", "treacherous" }
+    );
+
+    // ── Spot population (called BEFORE area is registered) ───────────────────
+
+    private void PopulateAreaSpots(Area area, Random rng)
+    {
+        // 1–2 trees per area
+        int treeCount = rng.Next(1, 3);
+        for (int i = 0; i < treeCount; i++)
+            area.PointsOfInterest.Add(PickTreeForArea(rng));
+
+        if (rng.NextDouble() < 0.5) area.PointsOfInterest.Add(TerrainSubfactory.BuildBoulder());
+        if (rng.NextDouble() < 0.5) area.PointsOfInterest.Add(TerrainSubfactory.BuildFlowerPatch());
+        if (rng.NextDouble() < 0.4) area.PointsOfInterest.Add(PickBerryBush(rng));
+        if (rng.NextDouble() < 0.3) area.PointsOfInterest.Add(TerrainSubfactory.BuildMushroomCluster());
+
+        if (_identity == Identity.Wetland && area.DisplayName == "Boggy Ground")
+            area.PointsOfInterest.Add(TerrainSubfactory.BuildReedBed());
+    }
+
+    private PointOfInterest PickTreeForArea(Random rng)
+    {
+        switch (_identity)
         {
-            new ItemElement(new AppleLeaf()),
-            new ItemElement(new Branch()),
-            new ItemElement(new Apple()),
-            new ItemElement(new Bark()),
-        },
-        moods: new[] { "gnarled", "laden", "solitary", "weathered", "ancient", "spreading", "crooked", "still" }
-    );
+            case Identity.Open:    return rng.NextDouble() < 0.5 ? TerrainSubfactory.BuildOakTree()    : TerrainSubfactory.BuildHawthornTree();
+            case Identity.Heath:   return rng.NextDouble() < 0.5 ? TerrainSubfactory.BuildElderTree()  : TerrainSubfactory.BuildHawthornTree();
+            case Identity.Wetland: return rng.NextDouble() < 0.6 ? TerrainSubfactory.BuildWillowTree() : TerrainSubfactory.BuildElderTree();
+            default:               return TerrainSubfactory.BuildOakTree();
+        }
+    }
 
-    private static PointOfInterest BuildBoulderPointOfInterest() => new(
-        displayName: "Boulder",
-        descriptions: new() { "A large stone half-buried in the ground" },
-        items: new()
-        {
-            new ItemElement(new Rock()),
-            new ItemElement(new Moss()),
-            new ItemElement(new Mushroom()),
-        },
-        moods: new[] { "grey", "weathered", "mossy", "cold", "ancient", "massive", "silent", "half-buried" }
-    );
+    private static PointOfInterest PickBerryBush(Random rng) => rng.Next(3) switch
+    {
+        0 => TerrainSubfactory.BuildBerryBush(),
+        1 => TerrainSubfactory.BuildBilberryBush(),
+        _ => TerrainSubfactory.BuildSloeBush(),
+    };
 
-    private static PointOfInterest BuildBushPointOfInterest() => new(
-        displayName: "Bush",
-        descriptions: new() { "A thorny shrub common across the plain" },
-        items: new()
+    private static PathPointOfInterest BuildPath(Area a, Area b, Random rng)
+    {
+        string name = (a.DisplayName, b.DisplayName) switch
         {
-            new ItemElement(new BushLeaf()),
-            new ItemElement(new Thorn()),
-            new ItemElement(new WildBerry()),
-        },
-        moods: new[] { "thorny", "dense", "tangled", "dark", "overgrown", "low", "wild", "scraggly" }
-    );
+            ("Heath", _)        or (_, "Heath")        => "Heath Track",
+            ("Boggy Ground", _) or (_, "Boggy Ground") => "Bog Track",
+            ("Hedgerow", _)     or (_, "Hedgerow")     => "Hedge Gap",
+            _ => "Open Path",
+        };
+        return new PathPointOfInterest(
+            areaA: a,
+            areaB: b,
+            displayName: name,
+            descriptions: new() { $"A worn track running between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
+            moods: new[] { "worn", "narrow", "winding" }
+        );
+    }
 
-    private static PointOfInterest BuildFlowerPatchPointOfInterest() => new(
-        displayName: "Flower Patch",
-        descriptions: new() { "A colourful patch of wildflowers" },
-        items: new()
-        {
-            new ItemElement(new Daisy()),
-            new ItemElement(new Poppy()),
-            new ItemElement(new Clover()),
-            new ItemElement(new Dandelion()),
-        },
-        moods: new[] { "bright", "fragrant", "colourful", "quiet", "cheerful", "scattered", "wild", "vivid" }
-    );
+    // ── NPC construction ────────────────────────────────────────────────────
 
-    private static PointOfInterest BuildPineTreePointOfInterest() => new(
-        displayName: "Pine Tree",
-        descriptions: new() { "A lone pine standing at the edge of the plain" },
-        items: new()
+    protected override void BuildNpcs(Random rng, int locationId, Scene scene)
+    {
+        if (_allOutdoorAreas.Count == 0) return;
+
+        TrySpawnNamed(rng, scene, new BoarArchetype(), 0.25);
+        TrySpawnNamed(rng, scene, new FoxArchetype(),  0.40);
+        TrySpawnNamed(rng, scene, new WolfArchetype(), 0.10);
+
+        TrySpawnShallow(rng, scene, new DeerArchetype(),    0.50);
+        TrySpawnShallow(rng, scene, new HareArchetype(),    0.50);
+        TrySpawnShallow(rng, scene, new CrowArchetype(),    0.60);
+        TrySpawnShallow(rng, scene, new LarkArchetype(),    0.45);
+        TrySpawnShallow(rng, scene, new SparrowArchetype(), 0.45);
+
+        if (_identity == Identity.Wetland)
         {
-            new ItemElement(new Branch()),
-            new ItemElement(new Bark()),
-            new ItemElement(new PineSap()),
-            new ItemElement(new PineCone()),
-            new ItemElement(new PineNeedle()),
-        },
-        moods: new[] { "tall", "solitary", "resinous", "dark", "wind-bent", "dense", "towering", "scraggly" }
-    );
+            TrySpawnShallow(rng, scene, new FrogArchetype(), 0.6);
+            TrySpawnShallow(rng, scene, new ToadArchetype(), 0.4);
+        }
+    }
+
+    private void TrySpawnNamed(Random rng, Scene scene, NamedNpcArchetype archetype, double chance)
+    {
+        if (rng.NextDouble() > chance) return;
+        var area = _allOutdoorAreas[rng.Next(_allOutdoorAreas.Count)];
+        var entity = archetype.Spawn(rng, area.ContextDescription);
+        var sceneNpc = new SceneNpc(entity);
+        sceneNpc.Register(scene);
+        scene.Npcs.Add(sceneNpc);
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+    }
+
+    private void TrySpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype, double chance)
+    {
+        if (rng.NextDouble() > chance) return;
+        var area = _allOutdoorAreas[rng.Next(_allOutdoorAreas.Count)];
+        var entity = archetype.Spawn(rng, area.DisplayName.ToLowerInvariant());
+        var sceneNpc = new SceneNpc(entity);
+        sceneNpc.Register(scene);
+        scene.Npcs.Add(sceneNpc);
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+    }
 }

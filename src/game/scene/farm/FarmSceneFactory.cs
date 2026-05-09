@@ -4,160 +4,157 @@ using System.Linq;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
+using Cathedral.Game.Narrative.World.Items;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
+using Cathedral.Game.Scene.Shared;
 
 namespace Cathedral.Game.Scene.Farm;
 
 /// <summary>
-/// Builds a complete medieval farm scene.
+/// Builds a complete medieval farm scene per the v1 world-content spec (farm.md).
 ///
-/// Building (via <see cref="HouseBuilder"/>):
-///   Ground floor — Hall, Kitchen, optional Pantry
-///   Upper floor  — Upper Landing, 1-3 Bedrooms  (or ground-floor bedrooms if single-storey)
-///   Inter-room movement via <see cref="DoorSpot"/>; floors via <see cref="StairSpot"/>
-///   Main entrance: locked <see cref="DoorSpot"/> from Courtyard → Hall
+/// Sections:
+///   • Farmyard       — Courtyard (hub), Chicken Coop, Pigsty, Sheep Pen, Storage Shed, Dairy Shed
+///   • Farm Grounds   — Vegetable Garden, Orchard
+///   • Farmhouse      — Hall, Kitchen, optional Pantry, 1–3 Bedrooms (built by <see cref="HouseBuilder"/>)
 ///
-/// Outside sections:
-///   Farmyard  — Courtyard (hub), Chicken Coop, Pigsty
-///   Grounds   — Vegetable Garden, Orchard, Rabbit Enclosure, Shed
+/// Connections: <see cref="PathPointOfInterest"/> (Farmyard Tracks, Garden Paths) between
+/// Courtyard and outdoor areas; locked <see cref="DoorPointOfInterest"/> from Courtyard → Hall.
 ///
-/// Outdoor areas are connected bidirectionally via the area graph with Courtyard as the hub.
-///
-/// NPCs:
-///   One NPC spawned per bedroom.
-///   First NPC: <see cref="FarmerArchetype"/>.
-///   Additional NPCs: <see cref="FarmhandArchetype"/>.
-///   Each NPC receives a day-cycle schedule appropriate to their role.
+/// NPCs (one per bedroom + role-specific): Farmer, Farmhand(s), Shepherd, Dairymaid,
+/// Swineherd, Poultry Keeper. Shallow: Sheep, Pig, Chicken, Cow.
 /// </summary>
 public class FarmSceneFactory : SceneFactory
 {
     public FarmSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
-    // ── Section/area construction ─────────────────────────────────────────────
+    private HouseResult? _houseResult;
+    private Area? _courtyard, _chickenCoop, _pigsty, _sheepPen, _dairyShed, _shed;
+    private Area? _vegetableGarden, _orchard;
+    private bool  _hasSheep, _hasDairy;
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
     {
-        // ── 1. Build outdoor areas first (Courtyard must be scene.AllAreas[0]) ─
+        // ── 1. Decide farm composition ────────────────────────────────────────
 
-        var courtyard   = BuildCourtyard();
-        var chickenCoop = BuildChickenCoop();
-        var pigsty      = BuildPigsty();
+        _hasSheep = rng.NextDouble() < 0.60;
+        _hasDairy = rng.NextDouble() < 0.55;
 
-        var vegetableGarden = BuildVegetableGarden();
-        var orchard         = BuildOrchard();
-        var rabbitEnclosure = BuildRabbitEnclosure();
-        var shed            = BuildShed();
+        // ── 2. Build outdoor areas (all PoIs populated before registration) ──
 
-        // Populate outdoor spots before registration
-        PopulateChickenCoopPointsOfInterest(chickenCoop);
-        PopulateShedPointsOfInterest(shed);
-        PopulateVegetableGardenPointsOfInterest(vegetableGarden, rng);
-        PopulateOrchardPointsOfInterest(orchard, rng);
+        _courtyard       = BuildCourtyard();
+        _chickenCoop     = AnimalPenSubfactory.BuildChickenCoop();
+        _pigsty          = AnimalPenSubfactory.BuildPigsty();
+        _vegetableGarden = BuildVegetableGarden(rng);
+        _orchard         = BuildOrchard(rng);
+        _shed            = BuildStorageShed();
 
-        // Farmyard section — added to scene first so Courtyard is AllAreas[0]
+        if (_hasSheep) _sheepPen  = AnimalPenSubfactory.BuildSheepPen();
+        if (_hasDairy) _dairyShed = AnimalPenSubfactory.BuildDairyShed();
+
+        // ── 3. Build sections in order so Courtyard is AllAreas[0] ────────────
+
         var farmyard = new Section(
             "Farmyard",
             new() { "The central yard of the farm, mud-churned and busy with animal sounds" }
         );
-        farmyard.Areas.AddRange(new[] { courtyard, chickenCoop, pigsty });
-        RegisterAll(scene, farmyard);
+        farmyard.Areas.Add(_courtyard);
+        farmyard.Areas.Add(_chickenCoop);
+        farmyard.Areas.Add(_pigsty);
+        farmyard.Areas.Add(_shed);
+        if (_sheepPen  != null) farmyard.Areas.Add(_sheepPen);
+        if (_dairyShed != null) farmyard.Areas.Add(_dairyShed);
         scene.Sections.Add(farmyard);
+        RegisterAll(scene, farmyard);
 
-        // Grounds section
         var grounds = new Section(
             "Farm Grounds",
             new() { "The working land around the farmhouse: gardens, orchards, and enclosures" }
         );
-        grounds.Areas.AddRange(new[] { vegetableGarden, orchard, rabbitEnclosure, shed });
-        RegisterAll(scene, grounds);
+        grounds.Areas.Add(_vegetableGarden);
+        grounds.Areas.Add(_orchard);
         scene.Sections.Add(grounds);
+        RegisterAll(scene, grounds);
 
-        // ── 2. Connect outdoor areas (Courtyard as hub) ───────────────────────
+        // ── 4. Connect outdoor areas with PathPoIs (Courtyard as hub) ────────
 
-        var outdoorAreas = new[] { chickenCoop, pigsty, vegetableGarden, orchard, rabbitEnclosure, shed };
-        foreach (var area in outdoorAreas)
-            scene.ConnectAreasBidirectional(courtyard, area);
+        var outdoorPaths = new List<(Area, Area, string)>
+        {
+            (_courtyard, _chickenCoop, "Farmyard Track"),
+            (_courtyard, _pigsty,      "Farmyard Track"),
+            (_courtyard, _shed,        "Farmyard Track"),
+            (_courtyard, _vegetableGarden, "Garden Path"),
+            (_courtyard, _orchard,         "Garden Path"),
+            (_vegetableGarden, _orchard,   "Garden Path"),
+        };
+        if (_sheepPen  != null) outdoorPaths.Add((_courtyard, _sheepPen,  "Farmyard Track"));
+        if (_dairyShed != null) outdoorPaths.Add((_courtyard, _dairyShed, "Farmyard Track"));
 
-        scene.ConnectAreasBidirectional(vegetableGarden, orchard);
+        foreach (var (a, b, pathName) in outdoorPaths)
+        {
+            scene.ConnectAreasBidirectional(a, b);
+            var path = new PathPointOfInterest(
+                areaA: a,
+                areaB: b,
+                displayName: pathName,
+                descriptions: new() { $"A worn farmyard track between the {a.DisplayName.ToLowerInvariant()} and the {b.DisplayName.ToLowerInvariant()}" },
+                moods: new[] { "worn", "muddy", "narrow" }
+            );
+            a.PointsOfInterest.Add(path);
+            b.PointsOfInterest.Add(path);
+            path.Register(scene);
+        }
 
-        // ── 3. Build the farmhouse ────────────────────────────────────────────
+        // ── 5. Build the farmhouse ───────────────────────────────────────────
 
         var houseBuilder = new HouseBuilder
         {
             MinBedrooms = 1,
-            MaxBedrooms = rng.Next(1, 4), // 1-3
+            MaxBedrooms = rng.Next(1, 4),
             MaxFloors   = rng.NextDouble() < 0.65 ? 2 : 1,
         };
-
         var house = houseBuilder.Build(rng);
         HouseBuilder.PopulateFurniture(house, rng);
 
         foreach (var section in house.Sections)
         {
-            // Mark all interior house areas as private — entering or stealing here is illegal.
             foreach (var area in section.Areas)
                 area.IsPrivate = true;
 
-            RegisterAll(scene, section);
             scene.Sections.Add(section);
+            RegisterAll(scene, section);
         }
 
-        Console.WriteLine($"FarmSceneFactory: Built farmhouse — {house.Bedrooms.Count} bedroom(s), {house.Sections.Count} section(s)");
+        // ── 6. Main entrance: Courtyard ↔ Hall (locked door) ─────────────────
 
-        // ── 4. Main entrance door: Courtyard (front) → Hall (back) ───────────
-
-        var entranceDoor = BuildMainEntranceDoor(courtyard, house.EntryRoom, house.Material);
-        courtyard.PointsOfInterest.Add(entranceDoor);
+        var entranceDoor = BuildMainEntranceDoor(_courtyard, house.EntryRoom, house.Material);
+        _courtyard.PointsOfInterest.Add(entranceDoor);
         house.EntryRoom.PointsOfInterest.Add(entranceDoor);
         entranceDoor.Register(scene);
 
-        Console.WriteLine($"FarmSceneFactory: Entry is Courtyard, entrance door placed");
+        _houseResult = house;
 
-        // Store house result for NPC phase
-        _houseResult      = house;
-        _courtyard        = courtyard;
-        _chickenCoop      = chickenCoop;
-        _pigsty           = pigsty;
-        _rabbitEnclosure  = rabbitEnclosure;
-        _garden           = vegetableGarden;
-        _orchard          = orchard;
-        _shed             = shed;
+        Console.WriteLine($"FarmSceneFactory: Built farm — sheep={_hasSheep} dairy={_hasDairy}, {house.Bedrooms.Count} bedroom(s)");
     }
 
-    // Fields set during BuildSections for use in BuildNpcs
-    private HouseResult? _houseResult;
-    private Area? _courtyard, _chickenCoop, _pigsty, _rabbitEnclosure, _garden, _orchard, _shed;
-
-    // ── NPC construction ──────────────────────────────────────────────────────
+    // ── NPC construction ────────────────────────────────────────────────────
 
     protected override void BuildNpcs(Random rng, int locationId, Scene scene)
     {
         if (_houseResult is null || _courtyard is null) return;
 
-        // ── Human NPCs (farmer + farmhands, one per bedroom) ─────────────────
-
         var bedrooms = _houseResult.Bedrooms;
+        var npcRoles = AssignBedroomRoles(rng, bedrooms.Count);
+
         for (int i = 0; i < bedrooms.Count; i++)
         {
-            var bedroom  = bedrooms[i];
-            NamedNpcArchetype archetype = i == 0 ? new FarmerArchetype() : new FarmhandArchetype();
+            var bedroom   = bedrooms[i];
+            var archetype = npcRoles[i];
+            var entity    = SpawnNamed(rng, archetype, "a medieval farm");
 
-            // Restore saved affinity for this NPC archetype if available
-            AffinityTable? savedAffinity = null;
-            if (_locationState?.NpcAffinityData.TryGetValue(archetype.ArchetypeId, out var affinityDict) == true)
-                savedAffinity = new AffinityTable(affinityDict);
-            else if (_locationState != null)
-            {
-                var newDict = new Dictionary<string, AffinityLevel>();
-                _locationState.NpcAffinityData[archetype.ArchetypeId] = newDict;
-                savedAffinity = new AffinityTable(newDict);
-            }
-
-            var entity   = archetype.Spawn(rng, "a medieval farm", savedAffinity);
-
-            // The farmer (index 0) owns all house sections.
+            // The first NPC (farmer) owns the house sections
             if (i == 0)
             {
                 foreach (var section in _houseResult.Sections)
@@ -167,182 +164,242 @@ public class FarmSceneFactory : SceneFactory
             var sceneNpc = new SceneNpc(entity);
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);
+            scene.NpcSchedules[sceneNpc.Id] = BuildScheduleForRole(archetype.ArchetypeId, bedroom);
 
-            var schedule = BuildFarmSchedule(i, bedroom, _courtyard, _chickenCoop!, _pigsty!, _garden!, _orchard!, _shed!);
-            scene.NpcSchedules[sceneNpc.Id] = schedule;
-
-            Console.WriteLine($"FarmSceneFactory: Spawned {entity.DisplayName} ({archetype.ArchetypeId}), beds in '{bedroom.DisplayName}'");
+            Console.WriteLine($"FarmSceneFactory: Spawned {entity.DisplayName} ({archetype.ArchetypeId})");
         }
 
-        // ── Shallow NPCs: farm animals ────────────────────────────────────────
+        // ── Shallow animals ─────────────────────────────────────────────────
 
-        SpawnShallowNpcs(rng, scene, new ChickenArchetype(), _chickenCoop!,
-            NpcSchedule.Always(_chickenCoop!.DisplayName.ToLowerInvariant()), count: rng.Next(3, 7));
+        SpawnShallow(rng, scene, new ChickenArchetype(), _chickenCoop!, count: rng.Next(3, 7));
+        SpawnShallow(rng, scene, new PigArchetype(),     _pigsty!,      count: rng.Next(1, 4));
 
-        SpawnShallowNpcs(rng, scene, new RabbitArchetype(), _rabbitEnclosure!,
-            NpcSchedule.Always(_rabbitEnclosure!.DisplayName.ToLowerInvariant()), count: rng.Next(3, 8));
-
-        SpawnShallowNpcs(rng, scene, new PigArchetype(), _pigsty!,
-            NpcSchedule.Always(_pigsty!.DisplayName.ToLowerInvariant()), count: rng.Next(1, 3));
+        if (_sheepPen != null)
+            SpawnShallow(rng, scene, new SheepArchetype(), _sheepPen, count: rng.Next(2, 7));
+        if (_dairyShed != null)
+            SpawnShallow(rng, scene, new CowArchetype(), _dairyShed, count: rng.Next(1, 3));
     }
 
-    private static void SpawnShallowNpcs(
-        Random rng, Scene scene,
-        ShallowNpcArchetype archetype, Area homeArea,
-        NpcSchedule schedule, int count)
+    private List<NamedNpcArchetype> AssignBedroomRoles(Random rng, int count)
+    {
+        // Slot 0 is always the Farmer (owner). Then specialists, then farmhands.
+        var roles = new List<NamedNpcArchetype> { new FarmerArchetype() };
+
+        var specialists = new List<NamedNpcArchetype>();
+        if (_sheepPen  != null) specialists.Add(new ShepherdArchetype());
+        if (_dairyShed != null) specialists.Add(new DairymaidArchetype());
+        specialists.Add(new SwineherdArchetype());
+        specialists.Add(new PoultryKeeperArchetype());
+
+        // Shuffle the specialist order
+        for (int i = specialists.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (specialists[i], specialists[j]) = (specialists[j], specialists[i]);
+        }
+
+        foreach (var s in specialists)
+        {
+            if (roles.Count >= count) break;
+            roles.Add(s);
+        }
+        while (roles.Count < count)
+            roles.Add(new FarmhandArchetype());
+
+        return roles;
+    }
+
+    private NpcEntity SpawnNamed(Random rng, NamedNpcArchetype archetype, string nodeContext)
+    {
+        AffinityTable? saved = null;
+        if (_locationState?.NpcAffinityData.TryGetValue(archetype.ArchetypeId, out var dict) == true)
+            saved = new AffinityTable(dict);
+        else if (_locationState != null)
+        {
+            var newDict = new Dictionary<string, AffinityLevel>();
+            _locationState.NpcAffinityData[archetype.ArchetypeId] = newDict;
+            saved = new AffinityTable(newDict);
+        }
+        return archetype.Spawn(rng, nodeContext, saved);
+    }
+
+    private static void SpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype, Area home, int count)
     {
         for (int i = 0; i < count; i++)
         {
-            var entity   = archetype.Spawn(rng, homeArea.DisplayName.ToLowerInvariant());
+            var entity = archetype.Spawn(rng, home.DisplayName.ToLowerInvariant());
             var sceneNpc = new SceneNpc(entity);
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);
-            scene.NpcSchedules[sceneNpc.Id] = schedule;
+            scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(home.DisplayName.ToLowerInvariant());
         }
-        Console.WriteLine($"FarmSceneFactory: Spawned {count}x {archetype.TypeDisplayName} in '{homeArea.DisplayName}'");
     }
 
-    /// <summary>
-    /// Creates a day-cycle schedule for a farm NPC.
-    /// <paramref name="npcIndex"/> 0 = farmer (owner), 1+ = farmhand.
-    /// </summary>
-    private static NpcSchedule BuildFarmSchedule(
-        int npcIndex, Area bedroom,
-        Area courtyard, Area chickenCoop, Area pigsty,
-        Area garden, Area orchard, Area shed)
+    private NpcSchedule BuildScheduleForRole(string archetypeId, Area bedroom)
     {
-        var bedroomId    = bedroom.DisplayName.ToLowerInvariant();
-        var courtyardId  = courtyard.DisplayName.ToLowerInvariant();
-        var chickenId    = chickenCoop.DisplayName.ToLowerInvariant();
-        var pigstyId     = pigsty.DisplayName.ToLowerInvariant();
-        var gardenId     = garden.DisplayName.ToLowerInvariant();
-        var orchardId    = orchard.DisplayName.ToLowerInvariant();
-        var shedId       = shed.DisplayName.ToLowerInvariant();
-        var hallId       = "hall";
-        var kitchenId    = "kitchen";
+        var bedroomId  = bedroom.DisplayName.ToLowerInvariant();
+        var courtyard  = _courtyard!.DisplayName.ToLowerInvariant();
+        var chickenId  = _chickenCoop!.DisplayName.ToLowerInvariant();
+        var pigstyId   = _pigsty!.DisplayName.ToLowerInvariant();
+        var gardenId   = _vegetableGarden!.DisplayName.ToLowerInvariant();
+        var orchardId  = _orchard!.DisplayName.ToLowerInvariant();
+        var shedId     = _shed!.DisplayName.ToLowerInvariant();
+        var sheepId    = _sheepPen?.DisplayName.ToLowerInvariant();
+        var dairyId    = _dairyShed?.DisplayName.ToLowerInvariant();
+        var hallId     = "hall";
+        var kitchenId  = "kitchen";
 
-        if (npcIndex == 0)
+        return archetypeId switch
         {
-            // Farmer: oversees the whole farm; morning chores → field work → meal → evening rest
-            return NpcSchedule.Roaming(new()
+            "farmer" => NpcSchedule.Roaming(new()
             {
-                [TimePeriod.Dawn]      = courtyardId,   // checks the yard at first light
-                [TimePeriod.Morning]   = gardenId,       // tends vegetable garden
-                [TimePeriod.Noon]      = kitchenId,      // midday meal
-                [TimePeriod.Afternoon] = orchardId,      // fruit trees, general inspection
-                [TimePeriod.Evening]   = hallId,         // supper in the hall
-                [TimePeriod.Night]     = bedroomId,      // sleep
-            });
-        }
-        else if (npcIndex == 1)
-        {
-            // First farmhand: animal morning → general work → evening in hall
-            return NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = chickenId,      // collect eggs, feed chickens
-                [TimePeriod.Morning]   = pigstyId,       // feed pigs, muck out
-                [TimePeriod.Noon]      = hallId,         // midday meal
-                [TimePeriod.Afternoon] = gardenId,       // help in the garden
-                [TimePeriod.Evening]   = hallId,         // evening rest
-                [TimePeriod.Night]     = bedroomId,
-            });
-        }
-        else
-        {
-            // Additional farmhands: shed + yard work
-            return NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = courtyardId,
-                [TimePeriod.Morning]   = shedId,
-                [TimePeriod.Noon]      = hallId,
+                [TimePeriod.Dawn]      = courtyard,
+                [TimePeriod.Morning]   = gardenId,
+                [TimePeriod.Noon]      = kitchenId,
                 [TimePeriod.Afternoon] = orchardId,
                 [TimePeriod.Evening]   = hallId,
                 [TimePeriod.Night]     = bedroomId,
-            });
-        }
-    }
+            }),
 
-    // ── Outdoor area builders ─────────────────────────────────────────────────
-
-    private static Area BuildCourtyard() => new(
-        displayName: "Courtyard",
-        contextDescription: "standing in the farmyard courtyard",
-        transitionDescription: "enter the courtyard",
-        descriptions: new() { "The muddy central yard of the farm, hemmed by low fences and outbuildings" },
-        moods: new[] { "muddy", "busy", "noisy", "open", "smelly", "functional", "cluttered" }
-    );
-
-    private static Area BuildChickenCoop() => new(
-        displayName: "Chicken Coop",
-        contextDescription: "inside the chicken coop",
-        transitionDescription: "step into the chicken coop",
-        descriptions: new() { "A low timber coop crowded with hens, smelling of damp feathers and droppings" },
-        moods: new[] { "low", "smelly", "dim", "crowded", "warm", "clucking", "feathery" }
-    );
-
-    private static Area BuildPigsty() => new(
-        displayName: "Pigsty",
-        contextDescription: "by the pigsty",
-        transitionDescription: "approach the pigsty",
-        descriptions: new() { "A walled mud pen containing a sow and her piglets, grunting and rooting" },
-        moods: new[] { "muddy", "smelly", "wet", "loud", "enclosed", "rank", "grunting" }
-    );
-
-    private static Area BuildVegetableGarden() => new(
-        displayName: "Vegetable Garden",
-        contextDescription: "in the kitchen garden",
-        transitionDescription: "walk into the vegetable garden",
-        descriptions: new() { "Rows of root vegetables and cabbages, stakes and string keeping order" },
-        moods: new[] { "ordered", "earthy", "green", "quiet", "neat", "damp", "productive" }
-    );
-
-    private static Area BuildOrchard() => new(
-        displayName: "Orchard",
-        contextDescription: "under the orchard trees",
-        transitionDescription: "walk into the orchard",
-        descriptions: new() { "A half-dozen gnarled apple and pear trees, their branches tangled overhead" },
-        moods: new[] { "gnarled", "shaded", "quiet", "sweet", "overgrown", "old", "mossy" }
-    );
-
-    private static Area BuildRabbitEnclosure() => new(
-        displayName: "Rabbit Enclosure",
-        contextDescription: "beside the rabbit enclosure",
-        transitionDescription: "approach the rabbit enclosure",
-        descriptions: new() { "A fenced hutch of timber and wire holding a dozen grey rabbits" },
-        moods: new[] { "quiet", "small", "close", "soft", "earthy", "still" }
-    );
-
-    private static Area BuildShed() => new(
-        displayName: "Shed",
-        contextDescription: "inside the farm shed",
-        transitionDescription: "step into the shed",
-        descriptions: new() { "A low-roofed storage shed smelling of hay, rust, and old wood" },
-        moods: new[] { "low", "dusty", "dry", "cluttered", "dim", "quiet", "rusty" }
-    );
-
-    // ── Outdoor point of interest population ─────────────────────────────────
-
-    private static void PopulateChickenCoopPointsOfInterest(Area chickenCoop)
-    {
-        var nestBox = new PointOfInterest(
-            displayName: "Nest Box",
-            descriptions: new() { "A row of straw-lined boxes where hens lay" },
-            items: new()
+            "shepherd" when sheepId != null => NpcSchedule.Roaming(new()
             {
-                new ItemElement(new Egg()),
-                new ItemElement(new Egg()),
-                new ItemElement(new Straw()),
-            },
-            moods: new[] { "warm", "straw-lined", "dim", "fragrant" }
-        );
-        chickenCoop.PointsOfInterest.Add(nestBox);
+                [TimePeriod.Dawn]      = sheepId,
+                [TimePeriod.Morning]   = sheepId,
+                [TimePeriod.Noon]      = courtyard,
+                [TimePeriod.Afternoon] = sheepId,
+                [TimePeriod.Evening]   = hallId,
+                [TimePeriod.Night]     = bedroomId,
+            }),
+
+            "dairymaid" when dairyId != null => NpcSchedule.Roaming(new()
+            {
+                [TimePeriod.Dawn]      = dairyId,
+                [TimePeriod.Morning]   = dairyId,
+                [TimePeriod.Noon]      = kitchenId,
+                [TimePeriod.Afternoon] = dairyId,
+                [TimePeriod.Evening]   = hallId,
+                [TimePeriod.Night]     = bedroomId,
+            }),
+
+            "swineherd" => NpcSchedule.Roaming(new()
+            {
+                [TimePeriod.Dawn]      = pigstyId,
+                [TimePeriod.Morning]   = courtyard,
+                [TimePeriod.Noon]      = courtyard,
+                [TimePeriod.Afternoon] = pigstyId,
+                [TimePeriod.Evening]   = hallId,
+                [TimePeriod.Night]     = bedroomId,
+            }),
+
+            "poultry_keeper" => NpcSchedule.Roaming(new()
+            {
+                [TimePeriod.Dawn]      = chickenId,
+                [TimePeriod.Morning]   = orchardId,
+                [TimePeriod.Noon]      = hallId,
+                [TimePeriod.Afternoon] = chickenId,
+                [TimePeriod.Evening]   = hallId,
+                [TimePeriod.Night]     = bedroomId,
+            }),
+
+            _ /* farmhand */ => NpcSchedule.Roaming(new()
+            {
+                [TimePeriod.Dawn]      = courtyard,
+                [TimePeriod.Morning]   = shedId,
+                [TimePeriod.Noon]      = hallId,
+                [TimePeriod.Afternoon] = gardenId,
+                [TimePeriod.Evening]   = hallId,
+                [TimePeriod.Night]     = bedroomId,
+            }),
+        };
     }
 
-    private static void PopulateShedPointsOfInterest(Area shed)
+    // ── Outdoor area builders ────────────────────────────────────────────────
+
+    private static Area BuildCourtyard()
     {
-        var hayStack = new PointOfInterest(
+        var area = new Area(
+            displayName: "Courtyard",
+            contextDescription: "standing in the farmyard courtyard",
+            transitionDescription: "enter the courtyard",
+            descriptions: new() { "The muddy central yard of the farm, hemmed by low fences and outbuildings" },
+            moods: new[] { "muddy", "busy", "noisy", "open", "cluttered" }
+        );
+        return area;
+    }
+
+    private static Area BuildVegetableGarden(Random rng)
+    {
+        var garden = new Area(
+            displayName: "Vegetable Garden",
+            contextDescription: "in the kitchen garden",
+            transitionDescription: "walk into the vegetable garden",
+            descriptions: new() { "Rows of root vegetables and cabbages, stakes and string keeping order" },
+            moods: new[] { "ordered", "earthy", "green", "damp", "productive" }
+        );
+
+        // 2–3 vegetable beds drawn from the spec list (always at least one root)
+        var rootBeds = new List<Func<PointOfInterest>>
+        {
+            BuildTurnipBed, BuildCarrotBed, BuildRadishBed, BuildBeetrootBed, BuildParsnipBed,
+        };
+        var otherBeds = new List<Func<PointOfInterest>>
+        {
+            BuildOnionBed, BuildLeekBed, BuildCabbageBed, BuildPeaBed,
+        };
+
+        // One guaranteed root bed
+        garden.PointsOfInterest.Add(rootBeds[rng.Next(rootBeds.Count)]());
+
+        // 1–2 more beds
+        int extraCount = rng.Next(1, 3);
+        var rest = new List<Func<PointOfInterest>>(rootBeds);
+        rest.AddRange(otherBeds);
+        var extra = SampleUniqueIndices(rng, rest.Count, extraCount);
+        foreach (var idx in extra)
+            garden.PointsOfInterest.Add(rest[idx]());
+
+        return garden;
+    }
+
+    private static Area BuildOrchard(Random rng)
+    {
+        var orchard = new Area(
+            displayName: "Orchard",
+            contextDescription: "under the orchard trees",
+            transitionDescription: "walk into the orchard",
+            descriptions: new() { "A half-dozen gnarled fruit trees, their branches tangled overhead" },
+            moods: new[] { "gnarled", "shaded", "sweet", "overgrown", "old", "mossy" }
+        );
+
+        // 1–2 fruit-tree species
+        int treeKinds = rng.Next(1, 3);
+        var tools = new List<Func<PointOfInterest>>
+        {
+            TerrainSubfactory.BuildAppleTree, TerrainSubfactory.BuildPearTree,
+            TerrainSubfactory.BuildPlumTree,  TerrainSubfactory.BuildCherryTree,
+        };
+        var picks = SampleUniqueIndices(rng, tools.Count, treeKinds);
+        foreach (var idx in picks)
+        {
+            orchard.PointsOfInterest.Add(tools[idx]());
+            orchard.PointsOfInterest.Add(tools[idx]());
+        }
+        return orchard;
+    }
+
+    private static Area BuildStorageShed()
+    {
+        var shed = new Area(
+            displayName: "Storage Shed",
+            contextDescription: "inside the storage shed",
+            transitionDescription: "step into the storage shed",
+            descriptions: new() { "A low-roofed storage shed smelling of hay, rust, and old wood" },
+            moods: new[] { "low", "dusty", "dry", "cluttered", "dim", "rusty" }
+        );
+
+        shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Hay Stack",
-            descriptions: new() { "A compressed stack of hay bales rising to the shed roof" },
+            descriptions: new() { "A compressed stack of hay rising to the shed roof" },
             items: new()
             {
                 new ItemElement(new Hay()),
@@ -350,9 +407,9 @@ public class FarmSceneFactory : SceneFactory
                 new ItemElement(new Straw()),
             },
             moods: new[] { "tall", "dry", "sweet-smelling", "golden" }
-        );
+        ));
 
-        var grainStore = new PointOfInterest(
+        shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Grain Sacks",
             descriptions: new() { "Cloth sacks of dried grain stacked along the wall" },
             items: new()
@@ -361,11 +418,11 @@ public class FarmSceneFactory : SceneFactory
                 new ItemElement(new Grain()),
             },
             moods: new[] { "heavy", "dim", "dusty", "full" }
-        );
+        ));
 
-        var toolRack = new PointOfInterest(
+        shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Tool Rack",
-            descriptions: new() { "A wooden rack of farm tools hanging from iron pegs on the wall" },
+            descriptions: new() { "A wooden rack of farm tools hanging from iron pegs" },
             items: new()
             {
                 new ItemElement(new Sickle()),
@@ -373,59 +430,87 @@ public class FarmSceneFactory : SceneFactory
                 new ItemElement(new Rope()),
             },
             moods: new[] { "cluttered", "dim", "rusty", "functional" }
-        );
+        ));
 
-        shed.PointsOfInterest.Add(hayStack);
-        shed.PointsOfInterest.Add(grainStore);
-        shed.PointsOfInterest.Add(toolRack);
-    }
-
-    private static void PopulateVegetableGardenPointsOfInterest(Area garden, Random rng)
-    {
-        var turnipBed = new PointOfInterest(
-            displayName: "Turnip Bed",
-            descriptions: new() { "A row of swollen turnips half-emerged from the dark earth" },
+        shed.PointsOfInterest.Add(new PointOfInterest(
+            displayName: "Barrel",
+            descriptions: new() { "A heavy oak barrel, iron-banded and full" },
             items: new()
             {
-                new ItemElement(new Turnip()),
-                new ItemElement(new Turnip()),
+                new ItemElement(new Ale()),
             },
-            moods: new[] { "earthy", "neat", "green", "damp" }
-        );
+            moods: new[] { "heavy", "iron-banded", "dim" }
+        ));
 
-        var carrotBed = new PointOfInterest(
-            displayName: "Carrot Bed",
-            descriptions: new() { "A bed of carrots, feathery tops waving above the soil" },
-            items: new()
-            {
-                new ItemElement(new Carrot()),
-                new ItemElement(new Carrot()),
-            },
-            moods: new[] { "bright", "feathery", "neat", "damp" }
-        );
-
-        garden.PointsOfInterest.Add(turnipBed);
-        garden.PointsOfInterest.Add(carrotBed);
+        return shed;
     }
 
-    private static void PopulateOrchardPointsOfInterest(Area orchard, Random rng)
-    {
-        var appleTree = new PointOfInterest(
-            displayName: "Apple Tree",
-            descriptions: new() { "A gnarled old apple tree, its boughs heavy with fruit" },
-            items: new()
-            {
-                new ItemElement(new Apple()),
-                new ItemElement(new Apple()),
-                new ItemElement(new Branch()),
-            },
-            moods: new[] { "gnarled", "laden", "shaded", "sweet" }
-        );
+    // ── Vegetable-bed PoI builders ───────────────────────────────────────────
 
-        orchard.PointsOfInterest.Add(appleTree);
-    }
+    private static PointOfInterest BuildTurnipBed() => new(
+        displayName: "Turnip Bed",
+        descriptions: new() { "A row of swollen turnips half-emerged from the dark earth" },
+        items: new() { new ItemElement(new Turnip()), new ItemElement(new Turnip()) },
+        moods: new[] { "earthy", "neat", "green", "damp" }
+    );
 
-    // ── Main entrance door ────────────────────────────────────────────────────
+    private static PointOfInterest BuildCarrotBed() => new(
+        displayName: "Carrot Bed",
+        descriptions: new() { "A bed of carrots, feathery tops waving above the soil" },
+        items: new() { new ItemElement(new Carrot()), new ItemElement(new Carrot()) },
+        moods: new[] { "bright", "feathery", "neat", "damp" }
+    );
+
+    private static PointOfInterest BuildRadishBed() => new(
+        displayName: "Radish Bed",
+        descriptions: new() { "A bed of fat-skinned radishes pushing through the soil" },
+        items: new() { new ItemElement(new Radish()), new ItemElement(new Radish()) },
+        moods: new[] { "neat", "earthy", "red-topped" }
+    );
+
+    private static PointOfInterest BuildBeetrootBed() => new(
+        displayName: "Beetroot Bed",
+        descriptions: new() { "A row of beetroots, leaves dark with a wine-stained edge" },
+        items: new() { new ItemElement(new Beetroot()), new ItemElement(new Beetroot()) },
+        moods: new[] { "ordered", "dark-leaved", "earthy" }
+    );
+
+    private static PointOfInterest BuildParsnipBed() => new(
+        displayName: "Parsnip Bed",
+        descriptions: new() { "A row of parsnips, pale tops half-buried in damp soil" },
+        items: new() { new ItemElement(new Parsnip()), new ItemElement(new Parsnip()) },
+        moods: new[] { "ordered", "pale", "earthy" }
+    );
+
+    private static PointOfInterest BuildOnionBed() => new(
+        displayName: "Onion Bed",
+        descriptions: new() { "A row of onions, papery tops yellowing as they ripen" },
+        items: new() { new ItemElement(new Onion()), new ItemElement(new Onion()) },
+        moods: new[] { "papery", "ordered", "yellowing" }
+    );
+
+    private static PointOfInterest BuildLeekBed() => new(
+        displayName: "Leek Bed",
+        descriptions: new() { "A row of leeks, dark-green leaves rising in tidy ranks" },
+        items: new() { new ItemElement(new Leek()), new ItemElement(new Leek()) },
+        moods: new[] { "ordered", "tall", "dark-leaved" }
+    );
+
+    private static PointOfInterest BuildCabbageBed() => new(
+        displayName: "Cabbage Bed",
+        descriptions: new() { "A row of round cabbages, leaves curling tightly around their cores" },
+        items: new() { new ItemElement(new Cabbage()), new ItemElement(new Cabbage()) },
+        moods: new[] { "rounded", "ordered", "green" }
+    );
+
+    private static PointOfInterest BuildPeaBed() => new(
+        displayName: "Pea Bed",
+        descriptions: new() { "A row of pea-vines climbing wooden stakes, pods hanging plump" },
+        items: new() { new ItemElement(new Pea()), new ItemElement(new Pea()) },
+        moods: new[] { "climbing", "tangled", "green", "fresh" }
+    );
+
+    // ── Main entrance door ──────────────────────────────────────────────────
 
     private static DoorPointOfInterest BuildMainEntranceDoor(Area courtyard, Area hall, BuildingMaterial material)
     {
