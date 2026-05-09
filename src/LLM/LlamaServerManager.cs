@@ -372,6 +372,9 @@ public class LlamaServerManager : IDisposable
         string[] constrainedTokens,
         string? gbnfGrammar = null)
     {
+        if (Cathedral.Game.PlaygroundMode.IsActive)
+            return constrainedTokens.ToDictionary(t => t, _ => 0.0);
+
         if (!_instances.TryGetValue(slotId, out var instance))
         {
             throw new ArgumentException($"Instance with slot ID {slotId} not found.");
@@ -590,6 +593,9 @@ public class LlamaServerManager : IDisposable
         int maxTokens = 20,
         bool skipReset = false)
     {
+        if (Cathedral.Game.PlaygroundMode.IsActive)
+            return string.Empty;
+
         if (!_instances.TryGetValue(slotId, out var instance))
             throw new ArgumentException($"Instance with slot ID {slotId} not found.");
 
@@ -703,6 +709,12 @@ public class LlamaServerManager : IDisposable
         Action<int, string, bool>? onCompleted = null,
         string? gbnfGrammar = null)
     {
+        if (Cathedral.Game.PlaygroundMode.IsActive)
+        {
+            onCompleted?.Invoke(slotId, string.Empty, false);
+            return;
+        }
+
         if (!_instances.TryGetValue(slotId, out var instance))
         {
             throw new ArgumentException($"Instance with slot ID {slotId} not found.");
@@ -1011,6 +1023,12 @@ public class LlamaServerManager : IDisposable
     /// <param name="onCancelled">Hook called when request is fully cancelled</param>
     public async Task CancelRequestAsync(int slotId, Action<int>? onCancelled = null)
     {
+        if (Cathedral.Game.PlaygroundMode.IsActive)
+        {
+            onCancelled?.Invoke(slotId);
+            return;
+        }
+
         if (!_instances.TryGetValue(slotId, out var instance))
         {
             throw new ArgumentException($"Instance with slot ID {slotId} not found.");
@@ -1034,6 +1052,9 @@ public class LlamaServerManager : IDisposable
     /// <param name="slotId">The instance slot ID</param>
     public void ResetInstance(int slotId)
     {
+        // Fake slot IDs used by playground mode — nothing to reset.
+        if (Cathedral.Game.PlaygroundMode.IsActive) return;
+
         if (!_instances.TryGetValue(slotId, out var instance))
         {
             throw new ArgumentException($"Instance with slot ID {slotId} not found.");
@@ -1069,6 +1090,8 @@ public class LlamaServerManager : IDisposable
     /// <returns>Number of messages removed</returns>
     public int TrimInstanceContext(int slotId, int? maxTokens = null)
     {
+        if (Cathedral.Game.PlaygroundMode.IsActive) return 0;
+
         if (!_instances.TryGetValue(slotId, out var instance))
         {
             throw new ArgumentException($"Instance with slot ID {slotId} not found.");
@@ -1095,6 +1118,8 @@ public class LlamaServerManager : IDisposable
     /// <returns>Estimated token count</returns>
     public int GetInstanceTokenCount(int slotId)
     {
+        if (Cathedral.Game.PlaygroundMode.IsActive) return 0;
+
         if (!_instances.TryGetValue(slotId, out var instance))
         {
             throw new ArgumentException($"Instance with slot ID {slotId} not found.");

@@ -40,6 +40,9 @@ public class OutcomeNarrator
         CancellationToken cancellationToken = default,
         string? failureHint = null)
     {
+        if (PlaygroundMode.IsActive)
+            return $"<{(succeeded ? "success" : "failure")} narration by {actionModusMentis.DisplayName}>";
+
         // Ensure narrator slot is initialized with action modusMentis's persona
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
 
@@ -102,6 +105,9 @@ public class OutcomeNarrator
         Protagonist protagonist,
         CancellationToken cancellationToken = default)
     {
+        if (PlaygroundMode.IsActive)
+            return $"<plausibility failure narration by {actionModusMentis.DisplayName}>";
+
         // Use the action modusMentis's slot for plausibility failure narration
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
 
@@ -163,6 +169,9 @@ You tried to {action.ActionText} but it could not happen.
         string criticReason = "",
         CancellationToken cancellationToken = default)
     {
+        if (PlaygroundMode.IsActive)
+            return $"<item combination failure narration by {actionModusMentis.DisplayName}: {item.DisplayName} not suitable>";
+
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
 
         string personaToneLine = actionModusMentis.PersonaTone != null

@@ -5,6 +5,8 @@ using Cathedral.LLM;
 
 namespace Cathedral.Game.Narrative;
 
+// PlaygroundMode is in Cathedral.Game — same assembly, no extra using needed.
+
 /// <summary>
 /// Centralized manager for modusMentis-to-slot mappings.
 /// Ensures that each modusMentis reuses the same LLM slot regardless of which function (observation, thinking, action) is being used.
@@ -23,9 +25,13 @@ public class ModusMentisSlotManager
     /// Gets or creates a slot for the given modusMentis.
     /// If the modusMentis already has a slot assigned, returns that slot.
     /// Otherwise creates a new slot with the modusMentis's persona prompt.
+    /// In playground mode, returns a fake slot ID without touching the LLM server.
     /// </summary>
     public async Task<int> GetOrCreateSlotForModusMentisAsync(ModusMentis modusMentis)
     {
+        if (PlaygroundMode.IsActive)
+            return PlaygroundMode.GetOrCreateFakeSlot(modusMentis.ModusMentisId, modusMentis.DisplayName);
+
         if (_modusMentisToSlot.TryGetValue(modusMentis.ModusMentisId, out int existingSlot))
         {
             Console.WriteLine($"ModusMentisSlotManager: Reusing slot {existingSlot} for {modusMentis.DisplayName}");

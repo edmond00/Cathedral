@@ -23,6 +23,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("    --stretch                        Stretch/shrink to exact width/height (ignore aspect ratio)");
     Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console) + viewers");
     Console.WriteLine("  --view                             Show LLM and scene viewers without console decision overriding");
+    Console.WriteLine("  --playground                       Replace all LLM calls with instant placeholders (no server needed)");
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
@@ -116,6 +117,17 @@ if (args.Length >= 2 && args[0] == "--img-to-txt")
     
     Cathedral.Game.ImageToTextModeLauncher.Launch(imagePath, maxImageWidth, maxImageHeight, useNegative, autoContrast, manualContrast, stretchToFit);
     return;
+}
+
+// Check for --playground flag (replace all LLM calls with instant placeholders)
+if (args.Any(a => a == "--playground"))
+{
+    Cathedral.Game.PlaygroundMode.IsActive = true;
+    Console.ForegroundColor = ConsoleColor.Green;
+    Console.WriteLine("*** PLAYGROUND MODE ACTIVE ***");
+    Console.WriteLine("All LLM calls are replaced with placeholder text. No LLM server needed.");
+    Console.ResetColor();
+    Console.WriteLine();
 }
 
 // Check for --debug flag (can be combined with default launch)

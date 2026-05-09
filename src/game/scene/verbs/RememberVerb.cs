@@ -26,7 +26,7 @@ public class RememberVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
     {
         if (target is FragmentPointOfInterest frag)
-            return $"try to remember what was {frag.Fragment.Name}";
+            return $"try to remember what was this {frag.Fragment.Name} from your childhood";
         return "try to remember";
     }
 

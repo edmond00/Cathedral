@@ -75,53 +75,63 @@ public static class LocationTravelModeLauncher
         // Initialize LLM if requested
         if (useLLM)
         {
-            Console.WriteLine("=== Initializing LLM System (Phase 5) ===");
-            
-            // Initialize logging for LLM communications
-            LLMLogger.Initialize();
-            Console.WriteLine("✓ LLM communication logging enabled");
-            
-            try
+            if (PlaygroundMode.IsActive)
             {
+                // Playground: create the server object so components can be constructed,
+                // but do NOT start it — all actual LLM calls are intercepted before reaching it.
+                Console.WriteLine("=== Playground Mode: LLM server not started ===");
                 llamaServer = new LlamaServerManager();
-                
-                // Set up server ready callback
-                bool serverReady = false;
-                llamaServer.ServerReady += (sender, e) =>
-                {
-                    serverReady = e.IsReady;
-                    if (e.IsReady)
-                    {
-                        Console.WriteLine("✓ LLM Server is ready");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"✗ LLM Server failed: {e.Message}");
-                    }
-                };
-                
-                // Start server with "tiny" model (qwen2-0.5b) - faster but less sophisticated
-                // Use "medium" for phi-4 (better quality but slower)
-                Console.WriteLine("Starting LLM server...");
-                var startTask = llamaServer.StartServerAsync(
-                    onServerReady: (ready) =>
-                    {
-                        if (ready)
-                        {
-                            Console.WriteLine("✓ LLM server started successfully");
-                        }
-                    },
-                    modelAlias: null // or "medium" for better quality
-                );
-                
-                // Don't block - server will start in background
-                Console.WriteLine("LLM server starting (this may take 30-60 seconds)...");
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"✗ Failed to initialize LLM: {ex.Message}");
-                Console.WriteLine("  Continuing without LLM (will use fallback executor)");
-                llamaServer = null;
+                Console.WriteLine("=== Initializing LLM System (Phase 5) ===");
+                
+                // Initialize logging for LLM communications
+                LLMLogger.Initialize();
+                Console.WriteLine("✓ LLM communication logging enabled");
+                
+                try
+                {
+                    llamaServer = new LlamaServerManager();
+                    
+                    // Set up server ready callback
+                    bool serverReady = false;
+                    llamaServer.ServerReady += (sender, e) =>
+                    {
+                        serverReady = e.IsReady;
+                        if (e.IsReady)
+                        {
+                            Console.WriteLine("✓ LLM Server is ready");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"✗ LLM Server failed: {e.Message}");
+                        }
+                    };
+                    
+                    // Start server with "tiny" model (qwen2-0.5b) - faster but less sophisticated
+                    // Use "medium" for phi-4 (better quality but slower)
+                    Console.WriteLine("Starting LLM server...");
+                    var startTask = llamaServer.StartServerAsync(
+                        onServerReady: (ready) =>
+                        {
+                            if (ready)
+                            {
+                                Console.WriteLine("✓ LLM server started successfully");
+                            }
+                        },
+                        modelAlias: null // or "medium" for better quality
+                    );
+                    
+                    // Don't block - server will start in background
+                    Console.WriteLine("LLM server starting (this may take 30-60 seconds)...");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"✗ Failed to initialize LLM: {ex.Message}");
+                    Console.WriteLine("  Continuing without LLM (will use fallback executor)");
+                    llamaServer = null;
+                }
             }
         }
         else
@@ -162,7 +172,35 @@ public static class LocationTravelModeLauncher
             gameController.RegisterSceneFactory("coast",    new CoastSceneFactory());
             
             // Set up LLM action executor if server is ready
-            if (llamaServer != null && llamaServer.IsServerReady)
+            if (PlaygroundMode.IsActive && llamaServer != null)
+            {
+                // Playground mode: set up executor immediately — no server required
+                Console.WriteLine("Setting up playground LLM executor (no server)...");
+                try
+                {
+                    var simpleExecutor = new SimpleActionExecutor();
+                    llmExecutor = new LLMActionExecutor(llamaServer, simpleExecutor);
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await llmExecutor.InitializeAsync();
+                            gameController?.SetLLMActionExecutor(llmExecutor);
+                            Console.WriteLine("✓ Playground executor ready");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"✗ Failed to initialize playground executor: {ex.Message}");
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"✗ Failed to create playground executor: {ex.Message}");
+                    llmExecutor = null;
+                }
+            }
+            else if (llamaServer != null && llamaServer.IsServerReady)
             {
                 Console.WriteLine("Setting up LLM action executor...");
                 try

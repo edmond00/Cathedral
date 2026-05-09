@@ -143,6 +143,13 @@ public class ObservationExecutor
         bool isTransition = false,
         CancellationToken ct = default)
     {
+        if (PlaygroundMode.IsActive)
+        {
+            var name = PlaygroundMode.GetDisplayNameForSlot(slotId);
+            var tag  = isFirstInBatch ? "general observation" : isTransition ? "transition" : "focus";
+            return $"<{tag} by {name}>";
+        }
+
         var schema = isFirstInBatch
             ? LLMSchemaConfig.CreateObservationSchema(question.JsonFieldName)
             : isTransition
@@ -160,6 +167,12 @@ public class ObservationExecutor
     /// </summary>
     public async Task<string> GenerateSpeakingTextAsync(int slotId, string prompt, CancellationToken ct = default)
     {
+        if (PlaygroundMode.IsActive)
+        {
+            var name = PlaygroundMode.GetDisplayNameForSlot(slotId);
+            return $"<speech by {name}>";
+        }
+
         var schema = LLMSchemaConfig.CreateSpeakingSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);
         var jsonResponse = await RequestFromLLMAsync(slotId, prompt, gbnf);
@@ -183,6 +196,15 @@ public class ObservationExecutor
         Random rng,
         int maxCount = 3)
     {
+        if (PlaygroundMode.IsActive)
+        {
+            // In playground mode the observation texts are placeholders with no real words,
+            // so pick randomly from the available keyword pools instead of text-scanning.
+            var pool = indirectKeywords.Count > 0 ? indirectKeywords : directKeywords;
+            if (pool.Count == 0) return new List<string>();
+            return pool.OrderBy(_ => PlaygroundMode.Rng.Next()).Take(maxCount).ToList();
+        }
+
         var combined = (transitionText + " " + focusText).Trim();
         var renderer = new KeywordRenderer();
 

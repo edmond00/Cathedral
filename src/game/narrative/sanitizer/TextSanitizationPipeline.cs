@@ -10,6 +10,7 @@ using Catalyst.Models;
 using Mosaik.Core;
 using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
+using Cathedral.Game;
 
 namespace Cathedral.Game.Narrative.Sanitizer;
 
@@ -128,6 +129,10 @@ public static class TextSanitizationPipeline
 
         // Layer 1 — dictionary replacement (always runs, sync)
         text = ForbiddenWordsDictionary.Apply(text);
+
+        // In playground mode, observation text is already a placeholder — skip Catalyst + LLM.
+        if (PlaygroundMode.IsActive)
+            return text;
 
         var detected = new List<string>();
 

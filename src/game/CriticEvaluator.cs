@@ -144,9 +144,13 @@ public class CriticEvaluator : IDisposable
     /// Calls the LLM with the question and a formatted choices list.
     /// GBNF constrains the output to exactly one of the choice ids.
     /// Returns the trimmed chosen id.
+    /// In playground mode, picks randomly from the available choices.
     /// </summary>
     private async Task<string> GetChoiceAsync(string question, List<CriticChoice> choices)
     {
+        if (PlaygroundMode.IsActive)
+            return PlaygroundMode.Pick(choices).Id;
+
         if (!_isInitialized || !_llamaServer.IsServerReady || _criticSlotId < 0)
         {
             Console.Error.WriteLine("CriticEvaluator: Not initialized or server not ready");
@@ -179,6 +183,9 @@ public class CriticEvaluator : IDisposable
     /// </summary>
     private async Task<string> GetFailureReasonAsync()
     {
+        if (PlaygroundMode.IsActive)
+            return "<failure reason placeholder>";
+
         if (!_isInitialized || !_llamaServer.IsServerReady || _criticSlotId < 0)
             return string.Empty;
 

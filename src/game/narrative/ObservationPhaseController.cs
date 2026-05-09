@@ -137,7 +137,28 @@ public class ObservationPhaseController
         }
 
         // Keyword extraction runs after ALL observation text is generated — no slot interleaving
-        if (_keywordFallback != null)
+        if (PlaygroundMode.IsActive)
+        {
+            // No LLM available — derive a keyword from each outcome's display name and embed it
+            // directly into the focus sentence so the renderer can highlight it.
+            foreach (var (combined, outcome, transText, focusText) in pendingKeywordWork)
+            {
+                var kw = PickPlaygroundKeyword(outcome);
+                if (kw != null)
+                {
+                    allKeywords.Add(kw);
+                    keywordOutcomeMap.TryAdd(kw, outcome);
+
+                    // Append the keyword to the focus sentence so the renderer finds it
+                    var newFocusText = focusText + " " + kw;
+                    var focIdx = sentences.FindIndex(s => s.Text == focusText);
+                    if (focIdx >= 0) sentences[focIdx] = new NarrationSentence(newFocusText, new List<string> { kw });
+
+                    Console.WriteLine($"ObservationPhaseController: Playground keyword '{kw}' for '{outcome.DisplayName}'");
+                }
+            }
+        }
+        else if (_keywordFallback != null)
         {
             foreach (var (combined, outcome, transText, focusText) in pendingKeywordWork)
             {
@@ -253,7 +274,37 @@ public class ObservationPhaseController
         }
 
         // Keyword extraction runs after ALL observation text is generated — no slot interleaving
-        if (_keywordFallback != null)
+        if (PlaygroundMode.IsActive)
+        {
+            if (firstText != null)
+            {
+                var kw = PickPlaygroundKeyword(focusOutcome);
+                if (kw != null)
+                {
+                    allKeywords.Add(kw);
+                    keywordOutcomeMap.TryAdd(kw, focusOutcome);
+                    var newFirstText = firstText + " " + kw;
+                    var idx = sentences.FindIndex(s => s.Text == firstText);
+                    if (idx >= 0) sentences[idx] = new NarrationSentence(newFirstText, new List<string> { kw });
+                    Console.WriteLine($"ObservationPhaseController: Playground focus keyword '{kw}' for '{focusOutcome.DisplayName}'");
+                }
+            }
+
+            if (resolvedOther != null && focusText2 != null)
+            {
+                var kw = PickPlaygroundKeyword(resolvedOther);
+                if (kw != null)
+                {
+                    allKeywords.Add(kw);
+                    keywordOutcomeMap.TryAdd(kw, resolvedOther);
+                    var newFocusText2 = focusText2 + " " + kw;
+                    var focIdx = sentences.FindIndex(s => s.Text == focusText2);
+                    if (focIdx >= 0) sentences[focIdx] = new NarrationSentence(newFocusText2, new List<string> { kw });
+                    Console.WriteLine($"ObservationPhaseController: Playground focus second keyword '{kw}' for '{resolvedOther.DisplayName}'");
+                }
+            }
+        }
+        else if (_keywordFallback != null)
         {
             if (firstText != null)
             {
@@ -314,6 +365,18 @@ public class ObservationPhaseController
         => outcome is NarrationNode nn   ? nn.GenerateNeutralDescription(locationId)
          : outcome is ObservationObject obs ? obs.GenerateNeutralDescription(0)
          : outcome.DisplayName;
+
+    /// <summary>
+    /// Picks a short keyword for playground mode from the last meaningful word of the outcome's display name.
+    /// </summary>
+    private static string? PickPlaygroundKeyword(ConcreteOutcome outcome)
+    {
+        var description = GetNeutralDescription(outcome, 0);
+        var words = description.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0) return null;
+        // Use the last word (usually the most specific noun) stripped of punctuation
+        return words[^1].ToLowerInvariant().Trim('.', ',', '!', '?', '"', '\'', '(', ')');
+    }
 
     /// <summary>
     /// Formats narration blocks for terminal display with keyword highlighting.

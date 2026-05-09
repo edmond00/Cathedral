@@ -662,7 +662,7 @@ public class MemoryPanelRenderer
 
     private static string GetModuleSubtitle(MemoryModuleType type) => type switch
     {
-        MemoryModuleType.Working    => "any modus mentis  ▶  short-term",
+        MemoryModuleType.Working    => "learning input queue  ▶ FIFO ▶",
         MemoryModuleType.Procedural => "motor · physical modiMentis",
         MemoryModuleType.Semantic   => "conceptual · factual modiMentis",
         MemoryModuleType.Sensory    => "perceptual · experiential",

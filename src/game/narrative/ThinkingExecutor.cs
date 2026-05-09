@@ -53,6 +53,43 @@ public class ThinkingExecutor
         WorldContext worldContext,
         CancellationToken cancellationToken = default)
     {
+        // ── Playground mode: return a stub response immediately ──────────────────
+        if (PlaygroundMode.IsActive)
+        {
+            var pgSubOutcomes = targetOutcome is ObservationObject pgObs
+                ? pgObs.SubOutcomes
+                : new List<ConcreteOutcome> { targetOutcome };
+
+            // Pick the first non-ignore VerbOutcome (fall back to any VerbOutcome)
+            var pgVerb = pgSubOutcomes.OfType<VerbOutcome>()
+                             .FirstOrDefault(v => v.VerbView.Verb is not IgnoreVerb)
+                         ?? pgSubOutcomes.OfType<VerbOutcome>().FirstOrDefault();
+
+            if (pgVerb == null) return null;
+
+            var pgMM = actionModiMentis.Count > 0
+                ? actionModiMentis[PlaygroundMode.Rng.Next(actionModiMentis.Count)]
+                : null;
+            if (pgMM == null) return null;
+
+            var pgAction = new ParsedNarrativeAction
+            {
+                ActionModusMentisId = pgMM.ModusMentisId,
+                ActionModusMentis   = pgMM,
+                PreselectedOutcome  = pgVerb,
+                ActionText          = $"try to {pgVerb.DisplayName}",
+                DisplayText         = pgVerb.DisplayName,
+                ThinkingModusMentis = thinkingModusMentis,
+                Keyword             = keyword
+            };
+
+            return new ThinkingResponse
+            {
+                ReasoningText = $"<reasoning by {thinkingModusMentis.DisplayName}>",
+                Actions       = new List<ParsedNarrativeAction> { pgAction }
+            };
+        }
+
         // Acquire and reset the thinking slot once at the start of the procedure.
         int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
         _llmManager.ResetInstance(thinkingSlot);
