@@ -75,12 +75,12 @@ public abstract class FightingSkill
 
     // ── Derived calculations ──────────────────────────────────────
 
-    /// <summary>Total dice for a given fighter: BaseDice + ModusMentis level bonus.</summary>
+    /// <summary>Total dice for a given fighter: BaseDice + ModusMentis level + medium level.</summary>
     public int TotalDice(Fighter f)
     {
         var mm = f.Member.LearnedModiMentis.FirstOrDefault(m => m.ModusMentisId == RequiredModusMentisId);
         int mmLevel = mm?.Level ?? 0;
-        return BaseDice + mmLevel;
+        return BaseDice + mmLevel + Medium.GetLevel(f);
     }
 
     /// <summary>

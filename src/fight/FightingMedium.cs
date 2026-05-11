@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight;
 
 /// <summary>
@@ -31,4 +33,26 @@ public record FightingMedium
     /// <summary>True when this medium requires a weapon item (<see cref="IWeaponItem"/>) in a hold slot.</summary>
     public static FightingMedium Weapon =>
         new() { Type = MediumType.WeaponMedium };
+
+    /// <summary>
+    /// Returns the level of this medium for a given fighter.
+    /// For an organ medium, this is the organ's current score.
+    /// For a weapon medium, this is the <see cref="IWeaponItem.Level"/> of the first equipped weapon.
+    /// </summary>
+    public int GetLevel(Fighter f)
+    {
+        if (Type == MediumType.OrganMedium)
+        {
+            if (string.IsNullOrEmpty(OrganId)) return 0;
+            return f.Member.GetOrganById(OrganId)?.Score ?? 0;
+        }
+        else // WeaponMedium
+        {
+            var weapon = f.Member.EquippedItems[EquipmentAnchor.RightHold]
+                .Concat(f.Member.EquippedItems[EquipmentAnchor.LeftHold])
+                .OfType<IWeaponItem>()
+                .FirstOrDefault();
+            return weapon?.Level ?? 0;
+        }
+    }
 }

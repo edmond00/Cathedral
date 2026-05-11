@@ -180,6 +180,7 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size       => ItemSize.Medium;
         public override List<ItemType> Types => new() { ItemType.Other };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
+        public int Level => 2;
         public override string[] Info => new[]
         {
             "Damage: 1d6+2",
@@ -198,6 +199,7 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size       => ItemSize.Small;
         public override List<ItemType> Types => new() { ItemType.Other };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
+        public int Level => 1;
         public override string[] Info => new[]
         {
             "Damage: 1d4+2",

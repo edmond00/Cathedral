@@ -15,10 +15,12 @@
 ### CEREBRUM
 
 - semantic memory capacity
+- chance of self-learning
 
 ### CEREBELLUM
 
 - procedural memory capacity
+- chance to learn by wielding
 
 ### HYPOCAMPUS
 
@@ -34,14 +36,16 @@
 
 ### EARS
 
+- initiative
+- travel ennemies encounter avoidance chance
+
 ### EYES
 
 - field of view (during fighting)
 
 ### NOSE
 
-- initiative
-- travel ennemies encounter avoidance chance
+- consummable chemical composition identification level
 
 ### TEETH
 
@@ -53,11 +57,16 @@
 
 ## UPPER LIMBS
 
+- natural attack
+
 ### ARM
+
+- fighting skill medium level
 
 ### HAND
 
 - item usage dexterity bonus
+- fighting skill medium level
 
 ## LOWER LIMBS
 
@@ -66,10 +75,12 @@
 ### LEG
 
 - move speed
+- fighting skill medium level
 
 ### FOOT
 
 - runaway chance
+- fighting skill medium level
 
 ## TRUNK
 
@@ -109,6 +120,7 @@
 ### VISCERA
 
 - desease resistance
+- fighting skill medium level (skill like rage, cold blodd, ...)
 
 # BEAST
 
