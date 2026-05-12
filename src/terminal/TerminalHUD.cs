@@ -19,6 +19,7 @@ namespace Cathedral.Terminal
         private bool _visible = true;
         private float _opacity = 1.0f;
         private bool _disposed;
+        private bool _transparentClickPassthrough;
 
         // Events for external interaction
         public event Action<int, int>? CellClicked;
@@ -383,12 +384,62 @@ namespace Cathedral.Terminal
         }
 
         /// <summary>
+        /// When enabled, clicks that land on a cell with a fully transparent background
+        /// are not consumed by the terminal (they fall through to the 3D world below).
+        /// Used in WorldView, where most of the terminal is empty.
+        /// </summary>
+        public bool TransparentClickPassthrough
+        {
+            get => _transparentClickPassthrough;
+            set => _transparentClickPassthrough = value;
+        }
+
+        /// <summary>
+        /// Returns true if the terminal logically owns the mouse at the given position
+        /// (visible AND not a transparent passthrough cell). Used by the world hover
+        /// detection so vertex hovers keep firing over transparent areas in WorldView.
+        /// </summary>
+        public bool ConsumesMouseAt(Vector2 mousePosition, Vector2i windowSize)
+        {
+            if (!_visible) return false;
+            if (!_inputHandler.IsPositionInTerminal(mousePosition, windowSize)) return false;
+
+            if (_transparentClickPassthrough)
+            {
+                var cell = _inputHandler.ScreenToCell(mousePosition, windowSize);
+                if (cell.HasValue)
+                {
+                    var c = _view[cell.Value.X, cell.Value.Y];
+                    bool transparent = c.BackgroundColor.W < 0.01f
+                                       && (c.Character == ' ' || c.TextColor.W < 0.01f);
+                    return !transparent;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
         /// Handles mouse button down events
         /// Returns true if the terminal handled the event
         /// </summary>
         public bool HandleMouseDown(Vector2 mousePosition, Vector2i windowSize, MouseButton button)
         {
             if (!_visible) return false;
+
+            // In passthrough mode, peek at the cell under the cursor and refuse to handle
+            // clicks on transparent regions so they reach the world below.
+            if (_transparentClickPassthrough)
+            {
+                var cell = _inputHandler.ScreenToCell(mousePosition, windowSize);
+                if (cell.HasValue)
+                {
+                    var c = _view[cell.Value.X, cell.Value.Y];
+                    bool transparent = c.BackgroundColor.W < 0.01f
+                                       && (c.Character == ' ' || c.TextColor.W < 0.01f);
+                    if (transparent) return false;
+                }
+            }
+
             return _inputHandler.HandleMouseDown(mousePosition, windowSize, button);
         }
 

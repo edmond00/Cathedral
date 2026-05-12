@@ -72,6 +72,17 @@ public class LocationTravelGameController : IDisposable
     private LocationInstanceState? _currentLocationState;
     private int _currentLocationVertex = -1;
     private int _destinationVertex = -1;
+
+    // Travel planning (waypoints + bottom UI)
+    private TravelPlanner? _travelPlanner;
+    private TravelInfoRenderer? _travelInfoRenderer;
+    private Cathedral.Pathfinding.AStar? _travelAStar;
+    // Latest planner state cached for rendering
+    private List<int>? _plannedPath;
+    private TravelEstimate? _plannedEstimate;
+    // Tracks a cell that was flashed as "forbidden" so it can be cleared after a tick.
+    private int _forbiddenFlashVertex = -1;
+    private int _forbiddenFlashFramesLeft = 0;
     
     // Location state storage (keyed by vertex index)
     private readonly Dictionary<int, LocationInstanceState> _locationStates = new();
@@ -140,12 +151,23 @@ public class LocationTravelGameController : IDisposable
         
         // Wire up events from the microworld interface
         _interface.VertexClickEvent += OnVertexClicked;
-        
+
         // Wire up global mouse click handler for popup interactions
         _core.GlobalMouseClicked += OnGlobalMouseClicked;
-        
+
+        // Travel planning: install the land travel constraint (forbids sea/ocean) on
+        // the microworld interface so pathfinding skips impassable cells, and stand up
+        // the waypoint queue + bottom UI.
+        _interface.SetTravelConstraint(
+            TravelConstraints.Land(v => _interface.GetBiomeNameAt(v)));
+        _interface.SetExternalTravelControl(true);
+        _travelPlanner = new TravelPlanner(Config.GlyphSphere.MaxTravelWaypoints);
+        _travelAStar = new Cathedral.Pathfinding.AStar();
+
         // Initialize terminal UI (if terminal is available)
         InitializeTerminalUI();
+        if (_core.Terminal != null)
+            _travelInfoRenderer = new TravelInfoRenderer(_core.Terminal);
         
         // Show main menu on startup
         SetMode(GameMode.MainMenu);
@@ -324,9 +346,47 @@ public class LocationTravelGameController : IDisposable
 
             return;
         }
-        
+
+        // Travel UI: tick the brief "forbidden cell" flash and redraw the bottom box.
+        if (_currentMode == GameMode.WorldView)
+        {
+            if (_forbiddenFlashFramesLeft > 0)
+            {
+                _forbiddenFlashFramesLeft--;
+                if (_forbiddenFlashFramesLeft == 0 && _forbiddenFlashVertex >= 0)
+                {
+                    _interface.RestoreCellGlyph(_forbiddenFlashVertex);
+                    _forbiddenFlashVertex = -1;
+                }
+            }
+            RenderWorldViewUI();
+        }
+
         // Update popup terminal with location info
         UpdatePopupTerminal();
+    }
+
+    /// <summary>
+    /// Draws the bottom travel info box every frame while in WorldView. The world
+    /// sphere itself is drawn by the core renderer; this method only touches the
+    /// terminal overlay cells (everything outside the box stays transparent so clicks
+    /// fall through).
+    /// </summary>
+    private void RenderWorldViewUI()
+    {
+        if (_travelInfoRenderer == null || _travelPlanner == null) return;
+        if (_core.Terminal == null) return;
+
+        string? destinationName = null;
+        if (_travelPlanner.HasWaypoints)
+            destinationName = GetLocationNameAtVertex(_travelPlanner.FinalDestination);
+
+        _travelInfoRenderer.Erase();
+        _travelInfoRenderer.Draw(
+            waypointCount: _travelPlanner.Count,
+            maxWaypoints: _travelPlanner.MaxWaypoints,
+            estimate: _plannedEstimate,
+            destinationName: destinationName);
     }
 
     /// <summary>
@@ -446,6 +506,26 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellClicked(int x, int y)
     {
+        // WorldView: only the TRAVEL and CLEAR buttons on the bottom travel info box
+        // are clickable (everything else is transparent and falls through to the world
+        // sphere via TerminalHUD.TransparentClickPassthrough).
+        if (_currentMode == GameMode.WorldView && _travelInfoRenderer != null)
+        {
+            if (_travelInfoRenderer.IsOverTravelButton(x, y))
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                StartPlannedTravel();
+                return;
+            }
+            if (_travelInfoRenderer.IsOverClearButton(x, y))
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+                ClearTravelPlan();
+                return;
+            }
+            return;
+        }
+
         // Main menu handles its own clicks
         if (_currentMode == GameMode.MainMenu && _mainMenuRenderer != null)
         {
@@ -578,7 +658,11 @@ public class LocationTravelGameController : IDisposable
         GameMode.MainMenu => _mainMenuRenderer?.GetEnabledButtonAtPosition(x, y) is { } i and >= 0
             ? $"menu:{i}" : null,
         GameMode.ProtagonistCreation => _protagonistCreationRenderer?.GetHoveredElementId(x, y),
-        _ => $"cell:{x},{y}", // WorldView, ProtagonistManagement, etc. — each cell is its own element
+        GameMode.WorldView => (_travelInfoRenderer != null && _travelInfoRenderer.IsOverTravelButton(x, y))
+            ? "travel-button"
+            : (_travelInfoRenderer != null && _travelInfoRenderer.IsOverClearButton(x, y))
+                ? "travel-clear-button" : null,
+        _ => $"cell:{x},{y}", // ProtagonistManagement, etc. — each cell is its own element
     };
 
     /// <summary>
@@ -586,6 +670,9 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellHovered(int x, int y)
     {
+        // Track hover for the travel UI so the TRAVEL button highlights.
+        _travelInfoRenderer?.SetHover(x, y);
+
         // Only fire hover tick when entering a NEW interactive element.
         // Narrative modes (LocationInteraction, Fighting, Dialogue, ChildhoodReminescence) handle
         // their own hover sounds inside NarrativeController to get per-keyword/action accuracy.
@@ -701,7 +788,20 @@ public class LocationTravelGameController : IDisposable
         var oldMode = _currentMode;
         _currentMode = newMode;
         _lastHoveredElementId = null; // reset so first hover in new mode always sounds
-        
+
+        // The transparent-click passthrough is only meaningful in WorldView; leaving
+        // it on after a transition would silently swallow clicks elsewhere.
+        if (_core.Terminal != null && newMode != GameMode.WorldView)
+            _core.Terminal.TransparentClickPassthrough = false;
+
+        // Discard any in-flight travel plan when leaving WorldView (e.g. entering a
+        // location): the player is no longer planning a route.
+        if (oldMode == GameMode.WorldView && newMode != GameMode.WorldView
+            && newMode != GameMode.Traveling)
+        {
+            ClearTravelPlan();
+        }
+
         Console.WriteLine($"LocationTravelGameController: Mode changed: {oldMode} ↁE{newMode}");
         
         // Handle mode-specific setup
@@ -786,7 +886,11 @@ public class LocationTravelGameController : IDisposable
         if (protagonistVertex == vertexIndex)
         {
             Console.WriteLine("LocationTravelGameController: Clicked on protagonist's current position");
-            
+
+            // Any pending travel plan should be discarded when the player decides to
+            // interact with the current cell.
+            ClearTravelPlan();
+
             // Enter interaction mode - use location if available, otherwise use biome
             var locationInfo = _interface.GetDetailedBiomeInfoAt(vertexIndex);
             if (locationInfo.location.HasValue)
@@ -804,24 +908,161 @@ public class LocationTravelGameController : IDisposable
         }
         else
         {
-            // Clicked on a different vertex - start travel
-            StartTravel(vertexIndex);
+            // Clicked on a different vertex - toggle it as a travel waypoint.
+            ToggleWaypoint(vertexIndex);
         }
     }
 
     /// <summary>
-    /// Starts travel to a destination vertex.
+    /// Adds the clicked vertex to the waypoint queue (or removes it if already queued),
+    /// then recomputes the planned path and refreshes the bottom travel UI.
     /// </summary>
-    private void StartTravel(int destinationVertex)
+    private void ToggleWaypoint(int vertexIndex)
     {
-        _destinationVertex = destinationVertex;
+        if (_travelPlanner == null) return;
+
+        int protagonistVertex = _interface.GetAvatarVertex();
+        var graph = _interface.GetTravelGraph();
+        var astar = _travelAStar;
+
+        // Reachability probe used by the planner to reject unreachable destinations
+        // (e.g. an island surrounded by sea) instead of silently queueing them.
+        bool Reachable(int from, int to)
+        {
+            if (graph == null || astar == null) return true;
+            return astar.FindPath(graph, from, to) != null;
+        }
+
+        var result = _travelPlanner.Toggle(vertexIndex, protagonistVertex,
+            v => _interface.IsVertexTraversable(v),
+            Reachable);
+
+        switch (result)
+        {
+            case WaypointToggleResult.Forbidden:
+            case WaypointToggleResult.Unreachable:
+                Console.WriteLine($"LocationTravelGameController: Vertex {vertexIndex} rejected ({result})");
+                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+                // Briefly mark the cell with the forbidden glyph; the next Update() tick
+                // restores it. This gives the player a clear "no" feedback without
+                // dirtying the waypoint queue.
+                if (_forbiddenFlashVertex >= 0 && _forbiddenFlashVertex != vertexIndex)
+                    _interface.RestoreCellGlyph(_forbiddenFlashVertex);
+                _interface.FlashForbiddenCell(vertexIndex);
+                _forbiddenFlashVertex = vertexIndex;
+                _forbiddenFlashFramesLeft = 30;
+                return;
+
+            case WaypointToggleResult.IgnoredSelf:
+                return;
+
+            case WaypointToggleResult.Added:
+            case WaypointToggleResult.AddedEvictingFirst:
+            case WaypointToggleResult.Removed:
+                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+                RecomputeTravelPlan();
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Resolves the path through the current waypoint queue and re-renders the planned
+    /// path on the world sphere plus the bottom travel info box.
+    /// </summary>
+    private void RecomputeTravelPlan()
+    {
+        if (_travelPlanner == null || _travelAStar == null) return;
+
+        // Clear any prior planned-path overlay first.
+        _interface.ClearPlannedPath();
+        _plannedPath = null;
+        _plannedEstimate = null;
+
+        int protagonist = _interface.GetAvatarVertex();
+        if (!_travelPlanner.HasWaypoints || protagonist < 0)
+        {
+            // No active plan — hover preview starts from the protagonist again.
+            _interface.SetHoverPathOrigin(-1);
+            return;
+        }
+
+        var graph = _interface.GetTravelGraph();
+        if (graph == null) return;
+
+        var path = _travelPlanner.ResolvePath(protagonist, graph, _travelAStar);
+        if (path == null || path.Count <= 1)
+        {
+            // Destination unreachable — keep the waypoints (player can still remove them)
+            // but show no planned-path overlay and let the UI display the error.
+            _interface.SetHoverPathOrigin(_travelPlanner.FinalDestination);
+            return;
+        }
+
+        _plannedPath = path;
+        _plannedEstimate = TravelPlanner.EstimateForPath(path,
+            v => _interface.GetBiomeNameAt(v));
+
+        _interface.ShowPlannedPath(path, _travelPlanner.Waypoints);
+        // Hover preview now extends from the last waypoint (the "tail" of the plan).
+        _interface.SetHoverPathOrigin(_travelPlanner.FinalDestination);
+    }
+
+    /// <summary>Clears the waypoint queue, planned-path overlay, and bottom UI state.</summary>
+    private void ClearTravelPlan()
+    {
+        _travelPlanner?.Clear();
+        _interface.ClearPlannedPath();
+        _interface.SetHoverPathOrigin(-1);
+        _plannedPath = null;
+        _plannedEstimate = null;
+
+        // Cancel any pending forbidden-cell flash.
+        if (_forbiddenFlashVertex >= 0)
+        {
+            _interface.RestoreCellGlyph(_forbiddenFlashVertex);
+            _forbiddenFlashVertex = -1;
+        }
+        _forbiddenFlashFramesLeft = 0;
+    }
+
+    /// <summary>
+    /// Commits the current waypoint queue and starts movement along the resolved path.
+    /// Invoked by the TRAVEL button on the bottom UI.
+    /// </summary>
+    public void StartPlannedTravel()
+    {
+        if (_travelPlanner == null || _travelAStar == null) return;
+        if (!_travelPlanner.HasWaypoints) return;
+
+        int protagonist = _interface.GetAvatarVertex();
+        var graph = _interface.GetTravelGraph();
+        if (protagonist < 0 || graph == null) return;
+
+        var pathVertices = _travelPlanner.ResolvePath(protagonist, graph, _travelAStar);
+        if (pathVertices == null || pathVertices.Count < 2)
+        {
+            Console.WriteLine("LocationTravelGameController: Cannot start travel — no resolvable path");
+            return;
+        }
+
+        // Build a Cathedral.Pathfinding.Path from the resolved vertex list.
+        var positions = new List<System.Numerics.Vector3>(pathVertices.Count);
+        foreach (int v in pathVertices)
+            positions.Add(graph.GetNodePosition(v));
+        var path = new Cathedral.Pathfinding.Path(pathVertices, positions, 0f);
+
+        _destinationVertex = pathVertices[^1];
+        _interface.ClearPlannedPath();
+        _travelPlanner.Clear();
+        _plannedPath = null;
+        _plannedEstimate = null;
+
         SetMode(GameMode.Traveling);
         TravelStarted?.Invoke();
-        
-        Console.WriteLine($"LocationTravelGameController: Starting travel to vertex {destinationVertex}");
-        
-        // The MicroworldInterface already handles pathfinding and movement
-        // We just need to wait for arrival notification
+        _interface.BeginTravelAlongPath(path);
+
+        Console.WriteLine($"LocationTravelGameController: Starting planned travel "
+            + $"to vertex {_destinationVertex} via {pathVertices.Count - 1} cells");
     }
 
     /// <summary>
@@ -834,7 +1075,10 @@ public class LocationTravelGameController : IDisposable
             return;
 
         Console.WriteLine($"LocationTravelGameController: Protagonist arrived at vertex {vertexIndex}");
-        
+
+        // Travel done — any leftover planning state should be wiped before the player
+        // re-enters WorldView.
+        ClearTravelPlan();
         TravelCompleted?.Invoke();
         
         // Enter interaction mode - use location if available, otherwise use biome
@@ -1132,10 +1376,20 @@ public class LocationTravelGameController : IDisposable
         // Re-enable world interactions
         _core.SetWorldInteractionsEnabled(true);
         _interface.SetWorldInteractionsEnabled(true);
-        // Hide or minimize terminal
+
+        // Show the terminal as a UI overlay for the travel info box, but let clicks
+        // on transparent cells fall through to the 3D world.
         if (_core.Terminal != null)
         {
-            _core.Terminal.Visible = false;
+            _core.Terminal.Visible = true;
+            _core.Terminal.TransparentClickPassthrough = true;
+            _core.Terminal.Clear();
+            // Fill with fully-transparent cells so the world is visible behind us.
+            for (int y = 0; y < _core.Terminal.Height; y++)
+                for (int x = 0; x < _core.Terminal.Width; x++)
+                    _core.Terminal.SetCell(x, y, ' ',
+                        Cathedral.Terminal.Utils.Colors.Transparent,
+                        Cathedral.Terminal.Utils.Colors.Transparent);
         }
     }
 
@@ -1644,6 +1898,9 @@ public class LocationTravelGameController : IDisposable
         _currentLocationVertex = -1;
         _destinationVertex = -1;
         _locationStates.Clear();
+
+        // Discard any pending travel plan from the previous run.
+        ClearTravelPlan();
 
         // Reset protagonist to a new random starting position
         _interface.ResetProtagonistPosition();

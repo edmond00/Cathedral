@@ -855,8 +855,11 @@ namespace Cathedral.Glyph
             debugRayDirection = rayDir;
             debugMousePos = mouse;
 
-            // Find hovered vertex (only if mouse is not over terminal and interactions are enabled)
-            if (_worldInteractionsEnabled && (_terminal == null || !_terminal.IsPositionInTerminal(mouse, ClientSize)))
+            // Find hovered vertex (only if mouse is not over an opaque terminal cell
+            // and world interactions are enabled). In WorldView the terminal stays
+            // visible but most cells are transparent, so we use ConsumesMouseAt() to
+            // let vertex hovers fire over those transparent areas.
+            if (_worldInteractionsEnabled && (_terminal == null || !_terminal.ConsumesMouseAt(mouse, ClientSize)))
             {
                 int newHover = FindVertexByMagentaRayIntersection(mouse);
                 

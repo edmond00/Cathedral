@@ -25,7 +25,8 @@ public static class Config
         {
             // Add characters here that need fallback font
             // Example: '█', '▓', '▒', '░', etc.
-            '♞', '⚓'
+            '♞', '⚓',
+            '⨯', // U+2A2F — vector cross used for the forbidden-travel flash on the world sphere
         };
         
         // Main terminal dimensions
@@ -74,20 +75,37 @@ public static class Config
         public const char ProtagonistChar = '☻'; // Smiling face for protagonist
         public const char PathWaypointChar = '.'; // Dot for waypoints
         public const char PathDestinationChar = '+'; // Plus for destination
-        
+        public const char ForbiddenDestinationChar = '⨯'; // Cross for impassable tiles (sea/ocean on foot)
+
+        // Numbered glyphs used to mark waypoints in click-order on the world map.
+        // Falls back to PathDestinationChar past the array length.
+        public static readonly char[] WaypointNumberChars = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨' };
+
+        // Maximum number of travel waypoints that can be queued at once.
+        public const int MaxTravelWaypoints = 4;
+
         // Protagonist and pathfinding colors (RGB 0-255)
         public static readonly System.Numerics.Vector3 ProtagonistColor = new(255, 255, 255); // Yellow
         public static readonly System.Numerics.Vector3 PathWaypointPreviewColor = new(255, 255, 255); // Light blue
         public static readonly System.Numerics.Vector3 PathDestinationPreviewColor = new(255, 255, 255); // Light red
         public static readonly System.Numerics.Vector3 PathWaypointActiveColor = new(255, 255, 255); // Gold
         public static readonly System.Numerics.Vector3 PathDestinationActiveColor = new(255, 255, 255); // Bright yellow
+        public static readonly System.Numerics.Vector3 PathForbiddenColor = new(200, 60, 60); // Red for impassable cells
         
         // Update timing for interface animations
         public const float UpdateInterval = 0.1f; // Update every 100ms (10 Hz)
         
         // Pathfinding noise
         public const int PathfindingNoiseSeed = 42; // Fixed seed for consistent paths
-        public const float PathfindingNoiseStrength = 0.25f; // 0-1, adds up to 15% variation to edge costs
+        public const float PathfindingNoiseStrength = 0.25f; // 0-1, adds up to 25% terrain-correlated variation to edge costs
+
+        /// <summary>
+        /// Per-edge deterministic jitter applied on top of the terrain-correlated noise.
+        /// Because the jitter is independent across edges (hashed from the edge's two
+        /// vertex ids), even subtle values push A* off the dead-straight great-circle
+        /// and produce visually wandering travel paths. 0.10–0.25 is a good range.
+        /// </summary>
+        public const float PathfindingEdgeJitterStrength = 0.15f;
         
         // Rendering
         public const float NarrationWorldDarkeningFactor = 0.3f; // 0-1, multiplier for world brightness during narration (0.3 = 70% darker)
@@ -397,6 +415,47 @@ public static class Config
     
     #endregion
     
+    #region Travel UI
+
+    /// <summary>
+    /// Compact UI box displayed in WorldView mode while travel waypoints are set.
+    /// Sits a few rows above the bottom of the screen and is centered horizontally.
+    /// </summary>
+    public static class TravelUI
+    {
+        // Layout
+        public const int BoxWidth = 40;
+        public const int BoxHeight = 12;
+        /// <summary>Cells of empty space between the box bottom edge and the screen bottom.</summary>
+        public const int BoxBottomMargin = 8;
+
+        // Colors
+        public static readonly Vector4 BorderColor      = Colors.DarkYellowGrey;
+        public static readonly Vector4 BackgroundColor  = Colors.BlackTransparent;
+        public static readonly Vector4 TitleColor       = Colors.BrightYellow;
+        public static readonly Vector4 LabelColor       = Colors.MediumGray50;
+        public static readonly Vector4 ValueColor       = Colors.White;
+        public static readonly Vector4 ValueAccentColor = Colors.BrightYellow;
+        public static readonly Vector4 WarningColor     = Colors.OrangeYellow;
+        public static readonly Vector4 DangerColor      = Colors.BrightPurple;
+
+        // Primary action button (TRAVEL) — yellow chip.
+        public static readonly Vector4 TravelButtonTextColor             = Colors.Black;
+        public static readonly Vector4 TravelButtonBackgroundColor       = Colors.BrightYellow;
+        public static readonly Vector4 TravelButtonHoverTextColor        = Colors.Black;
+        public static readonly Vector4 TravelButtonHoverBackgroundColor  = Colors.White;
+
+        // Secondary action button (CLEAR) — muted grey chip.
+        public static readonly Vector4 ClearButtonTextColor              = Colors.LightGray85;
+        public static readonly Vector4 ClearButtonBackgroundColor        = Colors.DarkGray35;
+        public static readonly Vector4 ClearButtonHoverTextColor         = Colors.Black;
+        public static readonly Vector4 ClearButtonHoverBackgroundColor   = Colors.LightGray85;
+
+        public static readonly Vector4 HintColor        = Colors.DarkGray40;
+    }
+
+    #endregion
+
     #region Loading Messages
     
     public static class LoadingMessages
