@@ -24,6 +24,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console) + viewers");
     Console.WriteLine("  --view                             Show LLM and scene viewers without console decision overriding");
     Console.WriteLine("  --playground                       Replace all LLM calls with instant placeholders (no server needed)");
+    Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
@@ -149,6 +150,17 @@ if (args.Any(a => a == "--view"))
     Console.ForegroundColor = ConsoleColor.Cyan;
     Console.WriteLine("*** VIEW MODE ACTIVE ***");
     Console.WriteLine("LLM and scene viewers will open. No console decision overriding.");
+    Console.ResetColor();
+    Console.WriteLine();
+}
+
+// Check for --skip-childhood flag (skip ChildhoodReminescence + GetUp, randomly fill outcomes)
+if (args.Any(a => a == "--skip-childhood"))
+{
+    Cathedral.Game.SkipChildhoodMode.IsActive = true;
+    Console.ForegroundColor = ConsoleColor.Magenta;
+    Console.WriteLine("*** SKIP-CHILDHOOD MODE ACTIVE ***");
+    Console.WriteLine("Childhood reminescence + get-up phases will be skipped; starting skills/items are randomized.");
     Console.ResetColor();
     Console.WriteLine();
 }

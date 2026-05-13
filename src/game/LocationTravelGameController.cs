@@ -1556,6 +1556,17 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterChildhoodReminescence()
     {
         Console.WriteLine("LocationTravelGameController: Entered ChildhoodReminescence mode");
+
+        // --skip-childhood: random-walk the reminescence catalog, apply outcomes
+        // directly to the protagonist, then jump straight to WorldView (bypassing
+        // both ChildhoodReminescence and GetUp narrative scenes).
+        if (SkipChildhoodMode.IsActive && _protagonist != null)
+        {
+            SkipChildhoodMode.SimulateAndApply(_protagonist);
+            SetMode(GameMode.WorldView);
+            return;
+        }
+
         // Start childhood with noise only; tracks are added progressively as REMEMBERs complete
         _ambianceEngine?.SetFilter(MusicFilter.None);
         _ambianceEngine?.SetMood(MusicMoodState.Childhood);
