@@ -10,98 +10,126 @@
 
 ### fangs
 
-1.
-2.
-3.
+1. Flesh Tear
+2. Flesh Clamp
+3. Throat Grip
 
 ### claws
 
-1.
-2.
-3.
+1. Scratch
+2. Lacerate
+3. Gut Ripper
 
 ## HUMAN BODY PART
 
 ### hands
 
-1.
-2.
-3.
+1. Punch
+2. Seize
+3. Uppercut
+4. Chokehold
+5. Palm Strike
 
 ### feet
 
-1.
-2.
-3.
+1. high kick
+2. trip
+3. back kick
+
+### viscera
+
+1. Survival Instinct
+2. Cold Blood
+3. Rage
+4. Blood lust
 
 ### teeth
 
-1.
-2.
-3.
+1. Bite
+2. Flesh Tear
+
+### leg
+
+1. run
+2. knee strike
+3. dodge
+4. jump
+5. defensive posture
+
+### arm
+
+1. Push
+2. elbow strike
 
 ## MELLEE WEAPON
 
 ### long blade
 
 1. Cleaving strike
-2. Forward Lunge
-3. Feint
+2. Counter Strike
+3. Forward Lunge
+4. Feint
 
 ### short blade
 
 1. Snap thurst
 2. Needle thurst
 3. Parry
+4. Deep Pierce
 
 ### saber
 
 1. Snap thurst
 2. Feint
 3. Needle thurst
+4. Counter Strike
 
 ### blunt weapon
 
-1. Crushing Blow
-2. Heavy Strike
-3. Mighty Swing
+1. Smash
+2. Crushing Blow
+3. Heavy Strike
+4. Mighty Swing
 
 ### axes
 
 1. Chop
 2. Heavy Strike
 3. Cleaving Strike
+3. Driving Lunge
 
 ### pickaxes
 
 1. Piercing Blow
-2. Crushing Blow
+2. Deep Pierce
 3. Mighty Swing
+4. Crushing Blow
 
 ### spear
 
 1. Forward Lunge
 2. Piercing Blow
 3. Driving Lunge
+4. Deep Pierce
 
 ## LONG-RANGE WEAPON
 
 ### bows
 
-1. Quickshot (normal attack)
-2. Pinpoint Shot (attack with localisation)
-3. Longshot (double FOV range)
+1. Quickshot
+2. Pinpoint Shot
+3. Longshot
 
 ### crossbows
 
-1. Sighted Shot (normal attack)
-2. Pinpoint Shot (attack with localisation)
+1. Sighted Shot
+2. Pinpoint Shot
 3. Deadeye Shot 
 
 ## DEFENSIVE WEAPON
 
 ### shield
 
-1. Cover (increase defense)
-2. Parry (cancel next attack)
-3. Shield Bash (attack)
+1. Cover
+2. Parry
+3. Shield Bash
