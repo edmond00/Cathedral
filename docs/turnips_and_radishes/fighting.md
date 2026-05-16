@@ -4,6 +4,31 @@
 - level -1 : special difficulty
 - if succeed level -1 attack -> learn MM
 
+# MODUS MENTIS
+
+1. Pugilatus
+2. Uppercut
+3. Acrobatics
+4. Athletics
+5. Brute Force
+--- new ---
+6. Swordsmanship
+7. Brawling
+8. Iron Fist
+9. Low Blow
+10. Battlecraft
+11. Incisiveness
+12. Tactics
+13. Marksman
+14. Deadeye
+15. Predator
+16. Ferocity
+17. Survivalism
+18. Cold Blood
+19. Rage
+20. Blood lust
+21. Iron Nerves
+
 # MEDIUM
 
 ## BEAST BODY PART
@@ -42,6 +67,7 @@
 2. Cold Blood
 3. Rage
 4. Blood lust
+5. Iron Nerves
 
 ### teeth
 
@@ -65,7 +91,7 @@
 
 ### long blade
 
-1. Cleaving strike
+1. Cleaving Strike
 2. Counter Strike
 3. Forward Lunge
 4. Feint
