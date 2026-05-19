@@ -1,5 +1,11 @@
 # FEATURES
 
+## fighting rules :
+
+- skill consumme cinetic points
+- can do as many skills as cinetic points allows
+- however, sae skill can only b done once
+
 ## fight skill learning :
 
 - known fighting skill are defined by the known Modus Mentis
@@ -23,6 +29,18 @@
 - if an attack  is localized to a body part/organ that don't exist on the specific ennemy anatomy, attack automatically fail
 - when the localization is a body part, the applied damage can either be a damage of this body part or a damage of he organ in this body part
 
+## bleeding
+
+- special effect of some attack
+- if bleeding, at each turn, vital heat is consummed from body humors queue
+- stop after the fight
+- quantity of vital heat consumed depends of the bleeding level
+
+## pushback
+
+## knockdown
+
+## charge
 
 # MODUS MENTIS
 
@@ -48,6 +66,7 @@
 19. Rage
 20. Blood lust
 21. Iron Nerves
+22. Vigilance
 
 # MEDIUM
 
@@ -185,49 +204,58 @@
 
 1. Flesh Tear
 
-- Cinetic Points : 1
+- Mediums : fangs #1 / teeth #2
+- Cinetic Points : 2
 - Main MM : Ferocity
 - Type : Attack
+- Damage Type : cutting
 - Localization : Trunk / Upper Limbs
 - Medium Level Multiplicator : 1
-- Skill Level Multiplicator : 1
-- Special Effect : Bleeding (light)
+- Skill Level Multiplicator : 2
+- Special Effect : Bleeding (1)
 
 2. Flesh Clamp
 
+- Mediums : fangs #2
 - Cinetic Points : 2
 - Main MM : Predator
 - Type : Attack
+- Damage Type : piercing
 - Localization : Upper Limbs / Trunk
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Immobilize (1 turn)
+- Special Effect : Immobilize
 
 3. Throat Grip
 
+- Mediums : fangs #3
 - Cinetic Points : 4
 - Main MM : Predator
 - Type : Attack
-- Localization : Throat
+- Damage Type : piercing
+- Localization : Pulmones
 - Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 2
-- Special Effect : Suffocation (ongoing until released)
+- Special Effect : Immobilize, bleeding (3)
 
 4. Scratch
 
+- Mediums : claws #1
 - Cinetic Points : 1
 - Main MM : Ferocity
 - Type : Attack
-- Localization : Trunk / Bottom Limbs
+- Damage Type : cutting
+- Localization : Trunk / Lower Limbs
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : None
 
 5. Lacerate
 
+- Mediums : claws #2
 - Cinetic Points : 3
 - Main MM : Ferocity
 - Type : Attack
+- Damage Type : cutting
 - Localization : Trunk
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 2
@@ -235,19 +263,23 @@
 
 6. Gut Ripper
 
+- Mediums : claws #3
 - Cinetic Points : 5
 - Main MM : Ferocity
 - Type : Attack
-- Localization : Abdomen
+- Damage Type : cutting
+- Localization : Viscera
 - Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 3
-- Special Effect : Bleeding (severe), -1 action next turn (target)
+- Special Effect : Bleeding (3)
 
 7. Punch
 
+- Mediums : hands #1
 - Cinetic Points : 1
 - Main MM : Pugilatus
 - Type : Attack
+- Damage Type : contending
 - Localization : CHOOSE
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
@@ -255,359 +287,408 @@
 
 8. Seize
 
+- Mediums : hands #2
 - Cinetic Points : 2
 - Main MM : Brawling
 - Type : Attack
+- Damage Type : contending
 - Localization : CHOOSE
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Immobilize (1 turn)
+- Special Effect : Immobilize
 
 9. Uppercut
 
+- Mediums : hands #3
 - Cinetic Points : 3
 - Main MM : Uppercut
 - Type : Attack
-- Localization : Jaw / Head
+- Damage Type : contending
+- Localization : Visage / Encephalon
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 2
-- Special Effect : Stagger (target loses next action on critical)
 
 10. Chokehold
 
+- Mediums : hands #4
 - Cinetic Points : 4
 - Main MM : Brawling
 - Type : Attack
-- Localization : Throat
+- Damage Type : contending
+- Localization : Pulmones / Visage
 - Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 2
-- Special Effect : Suffocation (ongoing until released)
+- Special Effect : Immobilize
 
 11. Palm Strike
 
+- Mediums : hands #5
 - Cinetic Points : 3
 - Main MM : Iron Fist
 - Type : Attack
-- Localization : Head / Chest
+- Damage Type : contending
+- Localization : Visage / Trunk
 - Medium Level Multiplicator : 1
-- Skill Level Multiplicator : 2
-- Special Effect : Disorientation (target -1 die next check)
+- Skill Level Multiplicator : 3
 
 12. High Kick
 
+- Mediums : feet #1
 - Cinetic Points : 2
 - Main MM : Acrobatics
 - Type : Attack
-- Localization : Head / Neck
+- Damage Type : contending
+- Localization : Visage / Trunk
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 2
-- Special Effect : None
 
 13. Trip
 
+- Mediums : feet #2
 - Cinetic Points : 2
 - Main MM : Low Blow
 - Type : Attack
-- Localization : Lower Leg / Ankle
+- Damage Type : contending
+- Localization : Legs / Feet
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Knockdown (target prone)
+- Special Effect : Knockdown
 
 14. Back Kick
 
+- Mediums : feet #3
 - Cinetic Points : 3
 - Main MM : Athletics
 - Type : Attack
-- Localization : Torso / Hip
+- Damage Type : contending
+- Localization : Trunk / Lower Limbs
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 2
-- Special Effect : Pushback (1 step)
+- Special Effect : Pushback
 
 15. Survival Instinct
 
-- Cinetic Points : 2
+- Mediums : viscera #1
+- Cinetic Points : 1
+- Vital Heat : 2
 - Main MM : Survivalism
 - Type : Other
-- Localization : Self
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : +1 die to next defensive check
+- Special Effect : Add LEVEL dices to runaway dice roll done this turn
 
 16. Cold Blood
 
-- Cinetic Points : 2
+- Mediums : viscera #2
+- Cinetic Points : 1
+- Vital Heat : 4
 - Main MM : Cold Blood
 - Type : Other
-- Localization : Self
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Remove Stagger/Panic, restore 1 action
+- Special Effect :
 
 17. Rage
 
-- Cinetic Points : 2
+- Mediums : viscera #3
+- Cinetic Points : 1
+- Vital Heat : 6
 - Main MM : Rage
 - Type : Other
-- Localization : Self
 - Medium Level Multiplicator : 1
-- Skill Level Multiplicator : 2
-- Special Effect : +2 damage multiplicator for 2 turns, -1 defense die
+- Skill Level Multiplicator : 1
+- Special Effect : Refill cinetic points
 
 18. Blood Lust
 
-- Cinetic Points : 3
+- Mediums : viscera #4
+- Cinetic Points : 1
+- Vital Heat : 8
 - Main MM : Blood Lust
 - Type : Other
-- Localization : Self
 - Medium Level Multiplicator : 1
-- Skill Level Multiplicator : 2
-- Special Effect : Recover 1 HP on successful attack for 3 turns
+- Skill Level Multiplicator : 1
+- Special Effect : Add LEVEL dices to all attack dices roll during this turn
 
 19. Iron Nerves
 
-- Cinetic Points : 2
+- Mediums : viscera #5
+- Cinetic Points : 1
+- Vital Heat : 10
 - Main MM : Iron Nerves
-- Type : Defense
-- Localization : Self
+- Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Immune to Stagger/Fear for 1 turn
+- Special Effect : Allow to redo skill already done this turn
 
 20. Bite
 
+- Mediums : teeth #1
 - Cinetic Points : 1
 - Main MM : Ferocity
 - Type : Attack
-- Localization : CHOOSE
+- Damage Type : piercing
+- Localization : arms
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Bleeding (light)
 
 21. Run
 
+- Mediums : leg #1
 - Cinetic Points : 1
 - Main MM : Athletics
 - Type : Other
 - Localization : Self
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Move 2 steps instead of 1
+- Special Effect : Double move speed this turn
 
 22. Knee Strike
 
+- Mediums : leg #2
 - Cinetic Points : 2
 - Main MM : Pugilatus
 - Type : Attack
-- Localization : Abdomen / Groin / Thigh
+- Damage Type : contending
+- Localization : Viscera / Genitories / Legs
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
 - Special Effect : None
 
 23. Dodge
 
-- Cinetic Points : 1
+- Mediums : leg #3
+- Cinetic Points : 2
 - Main MM : Acrobatics
 - Type : Defense
 - Localization : Self
 - Medium Level Multiplicator : 1
-- Skill Level Multiplicator : 1
-- Special Effect : Avoid attack entirely on success
+- Skill Level Multiplicator : 2
+- Special Effect : Add LEVEL defenses to the next received attack this turn
 
 24. Jump
 
-- Cinetic Points : 2
+- Mediums : leg #4
+- Cinetic Points : 1
 - Main MM : Athletics
 - Type : Other
-- Localization : Self
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Reach elevated position or leap over obstacle
+- Special Effect : Move LEVEL distance ignoring any intermediate obstacles
 
 25. Defensive Posture
 
-- Cinetic Points : 2
-- Main MM : Battlecraft
+- Mediums : leg #5
+- Cinetic Points : 3
+- Main MM : Vigilance
 - Type : Defense
-- Localization : Self
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : +2 defense dice until next action
+- Special Effect : Add LEVEL defenses to the all the next received attacks this turn
 
 26. Push
 
+- Mediums : arm #1
 - Cinetic Points : 1
 - Main MM : Brute Force
 - Type : Attack
-- Localization : Chest / Torso
+- Damage Type : contending
+- Localization : Trunk
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
 - Special Effect : Pushback (1 step)
 
 27. Elbow Strike
 
+- Mediums : arm #2
 - Cinetic Points : 2
 - Main MM : Brawling
 - Type : Attack
-- Localization : Head / Ribs
+- Damage Type : contending
+- Localization : Visage / Trunk
 - Medium Level Multiplicator : 1
-- Skill Level Multiplicator : 2
-- Special Effect : None
+- Skill Level Multiplicator : 1
 
 28. Cleaving Strike
 
-- Cinetic Points : 4
+- Mediums : long blade #1 / axes #3
+- Cinetic Points : 3
 - Main MM : Swordsmanship
 - Type : Attack
-- Localization : CHOOSE
+- Damage Type : cutting
+- Localization : visage / trunk / arms
 - Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 2
-- Special Effect : Can hit two adjacent targets
 
 29. Counter Strike
 
-- Cinetic Points : 3
-- Main MM : Incisiveness
+- Mediums : long blade #2 / saber #4
+- Cinetic Points : 1
+- Main MM : Tactics
 - Type : Attack
-- Localization : CHOOSE
+- Damage Type : cutting
+- Localization : Trunk
 - Medium Level Multiplicator : 1
-- Skill Level Multiplicator : 2
-- Special Effect : Only usable after a successful Parry or Dodge
+- Skill Level Multiplicator : 3
+- Special Effect : attack only executed if a melee attack is successfully defended this turn
 
 30. Forward Lunge
 
+- Mediums : long blade #3 / spear #1
 - Cinetic Points : 2
 - Main MM : Swordsmanship
 - Type : Attack
-- Localization : Trunk / Chest
-- Medium Level Multiplicator : 1
+- Damage Type : piercing
+- Localization : Trunk
+- Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 2
-- Special Effect : +1 reach (close gap)
+- Special Effect : Charge (3)
 
 31. Feint
 
-- Cinetic Points : 2
-- Main MM : Incisiveness
+- Mediums : long blade #4 / saber #2
+- Cinetic Points : 1
+- Main MM : Tactics
 - Type : Other
 - Localization : Self
 - Medium Level Multiplicator : 1
-- Skill Level Multiplicator : 1
-- Special Effect : Force target to waste a defensive action
+- Skill Level Multiplicator : 3
+- Special Effect : Do not damage, but all 6s rolled during a feint are added to the next attack of this turn
 
 32. Snap Thrust
 
+- Mediums : short blade #1 / saber #1
 - Cinetic Points : 1
 - Main MM : Swordsmanship
 - Type : Attack
-- Localization : Trunk / Upper Limbs
+- Damage Type : piercing
+- Localization : Trunk / Upper Limbs / Visage
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
 - Special Effect : None
 
 33. Needle Thrust
 
-- Cinetic Points : 3
+- Mediums : short blade #2 / saber #3
+- Cinetic Points : 2
 - Main MM : Incisiveness
 - Type : Attack
+- Damage Type : piercing
 - Localization : CHOOSE
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 2
-- Special Effect : Ignores light armor on critical
 
 34. Parry
 
+- Mediums : short blade #3 / shield #2
 - Cinetic Points : 1
-- Main MM : Battlecraft
+- Main MM : Vigilance
 - Type : Defense
 - Localization : Self
-- Medium Level Multiplicator : 1
+- Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 1
-- Special Effect : Block incoming attack, enables Counter Strike
+- Special Effect : Add LEVEL defenses to the next received attack this turn
 
 35. Deep Pierce
 
+- Mediums : short blade #4 / spear #4
 - Cinetic Points : 5
 - Main MM : Incisiveness
 - Type : Attack
+- Damage Type : piercing
 - Localization : CHOOSE
 - Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 3
-- Special Effect : Bleeding (severe), ignores medium armor
+- Special Effect : Bleeding (3)
 
 36. Smash
 
+- Mediums : blunt weapon #1
 - Cinetic Points : 1
 - Main MM : Brute Force
 - Type : Attack
-- Localization : CHOOSE
+- Damage Type : contending
+- Localization : Visage / Trunk / Encephalon
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
 - Special Effect : None
 
 37. Crushing Blow
 
+- Mediums : blunt weapon #2 / pickaxes #4
 - Cinetic Points : 3
 - Main MM : Brute Force
 - Type : Attack
-- Localization : CHOOSE
+- Damage Type : contending / piercing
+- Localization : Visage / Trunk / Encephalon
 - Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 2
-- Special Effect : Bone fracture chance on critical
 
 38. Heavy Strike
 
+- Mediums : blunt weapon #3 / axes #2
 - Cinetic Points : 4
 - Main MM : Battlecraft
 - Type : Attack
+- Damage Type : contending / cutting
 - Localization : CHOOSE
 - Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 2
-- Special Effect : Knockdown on critical
+- Special Effect : Pushback
 
 39. Mighty Swing
 
+- Mediums : blunt weapon #4 / pickaxes #3
 - Cinetic Points : 5
-- Main MM : Brute Force
+- Main MM : Battlecraft
 - Type : Attack
+- Damage Type : contending / piercing
 - Localization : CHOOSE
 - Medium Level Multiplicator : 3
-- Skill Level Multiplicator : 3
-- Special Effect : Arc attack, can hit two adjacent targets
+- Skill Level Multiplicator : 2
+- Special Effect : knockdown
 
 40. Chop
 
+- Mediums : axes #1
 - Cinetic Points : 2
 - Main MM : Battlecraft
 - Type : Attack
-- Localization : Upper Limbs / Neck
+- Damage Type : cutting
+- Localization : Upper Limbs / Lower Limbs
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 2
-- Special Effect : Limb damage on critical
 
 41. Driving Lunge
 
+- Mediums : axes #4 / spear #3
 - Cinetic Points : 4
 - Main MM : Battlecraft
 - Type : Attack
-- Localization : Trunk / Chest
+- Damage Type : cutting / piercing
+- Localization : Trunk
 - Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 2
-- Special Effect : Pushback (2 steps), close gap
+- Special Effect : Charge (5)
 
 42. Piercing Blow
 
+- Mediums : pickaxes #1 / spear #2
 - Cinetic Points : 3
 - Main MM : Incisiveness
 - Type : Attack
+- Damage Type : piercing
 - Localization : CHOOSE
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 2
-- Special Effect : Ignores light armor
 
 43. Quickshot
 
+- Mediums : bows #1
 - Cinetic Points : 1
 - Main MM : Marksman
 - Type : Attack
+- Damage Type : piercing
 - Localization : Trunk
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
@@ -615,60 +696,67 @@
 
 44. Pinpoint Shot
 
+- Mediums : bows #2 / crossbows #2
 - Cinetic Points : 3
 - Main MM : Marksman
 - Type : Attack
+- Damage Type : piercing
 - Localization : CHOOSE
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 2
-- Special Effect : Hits specific organ/part, ignores cover on critical
 
 45. Longshot
 
+- Mediums : bows #3
 - Cinetic Points : 4
 - Main MM : Deadeye
 - Type : Attack
-- Localization : Trunk
-- Medium Level Multiplicator : 2
+- Damage Type : piercing
+- Localization : Trunk / limbs / visage
+- Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 2
-- Special Effect : Extended range, -1 die penalty for target's cover
+- Special Effect : double range
 
 46. Sighted Shot
 
+- Mediums : crossbows #1
 - Cinetic Points : 2
 - Main MM : Marksman
 - Type : Attack
-- Localization : CHOOSE
+- Damage Type : piercing
+- Localization : heart
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 2
-- Special Effect : Requires 1 turn aim, +1 die on attack roll
 
 47. Deadeye Shot
 
+- Mediums : crossbows #3
 - Cinetic Points : 5
 - Main MM : Deadeye
 - Type : Attack
-- Localization : CHOOSE
+- Damage Type : piercing
+- Localization : Trunk / limbs / visage
 - Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 3
-- Special Effect : Requires 1 turn aim, ignores all cover, critical on 5+
 
 48. Cover
 
+- Mediums : shield #1
 - Cinetic Points : 2
-- Main MM : Battlecraft
+- Main MM : Vigilance
 - Type : Defense
 - Localization : Self
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : +2 defense dice against ranged attacks
+- Special Effect : Add LEVEL defenses to the all the next received attacks this turn, break if damage received
 
 49. Shield Bash
 
-- Cinetic Points : 3
+- Mediums : shield #3
+- Cinetic Points : 2
 - Main MM : Battlecraft
 - Type : Attack
-- Localization : Head / Chest
+- Damage Type : contending
+- Localization : Visage / Trunk
 - Medium Level Multiplicator : 1
-- Skill Level Multiplicator : 2
-- Special Effect : Stagger (target loses next action on success)
+- Skill Level Multiplicator : 1
