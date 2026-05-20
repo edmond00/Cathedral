@@ -1,0 +1,19 @@
+namespace Cathedral.Fight.Skills;
+
+/// <summary>Chokehold — strangling hold targeting lungs and face. Immobilizes.</summary>
+public sealed class ChokeholdSkill : FightingSkill
+{
+    public override string SkillId                => "chokehold";
+    public override string DisplayName            => "Chokehold";
+    public override string Description            => "Strangling hold targeting lungs and face. Immobilizes.";
+    public override string RequiredModusMentisId  => "brawling";
+    public override string[] SecondaryModusMentisIds => new[] { "brute_force", "predator" };
+    public override FightingMedium Medium         => FightingMedium.Organ("hands");
+    public override int CineticPointsCost         => 4;
+    public override int BaseDice                  => 0;
+    public override int MediumLevelMultiplicator  => 2;
+    public override int SkillLevelMultiplicator   => 2;
+    public override FightStatusEffect[] SpecialEffects => new FightStatusEffect[] { new ImmobilizeEffect() };
+    public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
+    public override WoundTargetMode WoundTargetMode => WoundTargetMode.Random;
+}
