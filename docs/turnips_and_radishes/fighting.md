@@ -4,7 +4,10 @@
 
 - skill consumme cinetic points
 - can do as many skills as cinetic points allows
-- however, sae skill can only b done once
+- however, sae skill can only be done once
+- ATTACK_LEVEL dices and DEFENSE_LEVEL dices are rolled, if the number of attack 6s is greater than the defense 6s, attack touch.
+- if attack touch, wound added to one of the attack possible localization
+- damage resistance (derived stat) check is done by who receive the attack, if fail medium/high wound is added, else if success, low handicap wound is added
 
 ## fight skill learning :
 
@@ -38,9 +41,15 @@
 
 ## pushback
 
+opponent pushback 1d6 cells in the opposite direction of the attack. Subish terrain penalty of the passed cells. If encounter hard obstacle, pushback stop but opponent receive a new backbone contending attack half the level of the original attack
+
 ## knockdown
 
+opponent can not attack at the next turn
+
 ## charge
+
+Normal melee attack only available on neighbor cells opponent but charge attack available on a radius defined by the attack to simluate charge distance before the attack
 
 # MODUS MENTIS
 
@@ -207,6 +216,7 @@
 - Mediums : fangs #1 / teeth #2
 - Cinetic Points : 2
 - Main MM : Ferocity
+- Secondary MM : Predator / Blood Lust
 - Type : Attack
 - Damage Type : cutting
 - Localization : Trunk / Upper Limbs
@@ -219,6 +229,7 @@
 - Mediums : fangs #2
 - Cinetic Points : 2
 - Main MM : Predator
+- Secondary MM : Ferocity / Brawling
 - Type : Attack
 - Damage Type : piercing
 - Localization : Upper Limbs / Trunk
@@ -231,6 +242,7 @@
 - Mediums : fangs #3
 - Cinetic Points : 4
 - Main MM : Predator
+- Secondary MM : Ferocity / Incisiveness
 - Type : Attack
 - Damage Type : piercing
 - Localization : Pulmones
@@ -243,6 +255,7 @@
 - Mediums : claws #1
 - Cinetic Points : 1
 - Main MM : Ferocity
+- Secondary MM : Predator / Brawling
 - Type : Attack
 - Damage Type : cutting
 - Localization : Trunk / Lower Limbs
@@ -254,6 +267,7 @@
 - Mediums : claws #2
 - Cinetic Points : 3
 - Main MM : Ferocity
+- Secondary MM : Incisiveness / Blood Lust
 - Type : Attack
 - Damage Type : cutting
 - Localization : Trunk
@@ -266,6 +280,7 @@
 - Mediums : claws #3
 - Cinetic Points : 5
 - Main MM : Ferocity
+- Secondary MM : Incisiveness / Predator
 - Type : Attack
 - Damage Type : cutting
 - Localization : Viscera
@@ -278,6 +293,7 @@
 - Mediums : hands #1
 - Cinetic Points : 1
 - Main MM : Pugilatus
+- Secondary MM : Brawling / Brute Force
 - Type : Attack
 - Damage Type : contending
 - Localization : CHOOSE
@@ -290,6 +306,7 @@
 - Mediums : hands #2
 - Cinetic Points : 2
 - Main MM : Brawling
+- Secondary MM : Pugilatus / Brute Force
 - Type : Attack
 - Damage Type : contending
 - Localization : CHOOSE
@@ -302,6 +319,7 @@
 - Mediums : hands #3
 - Cinetic Points : 3
 - Main MM : Uppercut
+- Secondary MM : Pugilatus / Iron Fist
 - Type : Attack
 - Damage Type : contending
 - Localization : Visage / Encephalon
@@ -313,6 +331,7 @@
 - Mediums : hands #4
 - Cinetic Points : 4
 - Main MM : Brawling
+- Secondary MM : Brute Force / Predator
 - Type : Attack
 - Damage Type : contending
 - Localization : Pulmones / Visage
@@ -325,6 +344,7 @@
 - Mediums : hands #5
 - Cinetic Points : 3
 - Main MM : Iron Fist
+- Secondary MM : Pugilatus / Battlecraft
 - Type : Attack
 - Damage Type : contending
 - Localization : Visage / Trunk
@@ -336,6 +356,7 @@
 - Mediums : feet #1
 - Cinetic Points : 2
 - Main MM : Acrobatics
+- Secondary MM : Athletics / Low Blow
 - Type : Attack
 - Damage Type : contending
 - Localization : Visage / Trunk
@@ -347,6 +368,7 @@
 - Mediums : feet #2
 - Cinetic Points : 2
 - Main MM : Low Blow
+- Secondary MM : Brawling / Acrobatics
 - Type : Attack
 - Damage Type : contending
 - Localization : Legs / Feet
@@ -359,6 +381,7 @@
 - Mediums : feet #3
 - Cinetic Points : 3
 - Main MM : Athletics
+- Secondary MM : Acrobatics / Battlecraft
 - Type : Attack
 - Damage Type : contending
 - Localization : Trunk / Lower Limbs
@@ -372,6 +395,7 @@
 - Cinetic Points : 1
 - Vital Heat : 2
 - Main MM : Survivalism
+- Secondary MM : Iron Nerves / Vigilance
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
@@ -383,6 +407,7 @@
 - Cinetic Points : 1
 - Vital Heat : 4
 - Main MM : Cold Blood
+- Secondary MM : Tactics / Iron Nerves
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
@@ -394,6 +419,7 @@
 - Cinetic Points : 1
 - Vital Heat : 6
 - Main MM : Rage
+- Secondary MM : Ferocity / Blood Lust
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
@@ -405,6 +431,7 @@
 - Cinetic Points : 1
 - Vital Heat : 8
 - Main MM : Blood Lust
+- Secondary MM : Rage / Ferocity
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
@@ -416,6 +443,7 @@
 - Cinetic Points : 1
 - Vital Heat : 10
 - Main MM : Iron Nerves
+- Secondary MM : Cold Blood / Vigilance
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
@@ -426,6 +454,7 @@
 - Mediums : teeth #1
 - Cinetic Points : 1
 - Main MM : Ferocity
+- Secondary MM : Predator / Blood Lust
 - Type : Attack
 - Damage Type : piercing
 - Localization : arms
@@ -437,6 +466,7 @@
 - Mediums : leg #1
 - Cinetic Points : 1
 - Main MM : Athletics
+- Secondary MM : Acrobatics / Survivalism
 - Type : Other
 - Localization : Self
 - Medium Level Multiplicator : 1
@@ -448,6 +478,7 @@
 - Mediums : leg #2
 - Cinetic Points : 2
 - Main MM : Pugilatus
+- Secondary MM : Brawling / Low Blow
 - Type : Attack
 - Damage Type : contending
 - Localization : Viscera / Genitories / Legs
@@ -460,6 +491,7 @@
 - Mediums : leg #3
 - Cinetic Points : 2
 - Main MM : Acrobatics
+- Secondary MM : Athletics / Vigilance
 - Type : Defense
 - Localization : Self
 - Medium Level Multiplicator : 1
@@ -471,6 +503,7 @@
 - Mediums : leg #4
 - Cinetic Points : 1
 - Main MM : Athletics
+- Secondary MM : Acrobatics / Brute Force
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
@@ -481,6 +514,7 @@
 - Mediums : leg #5
 - Cinetic Points : 3
 - Main MM : Vigilance
+- Secondary MM : Battlecraft / Iron Nerves
 - Type : Defense
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
@@ -491,6 +525,7 @@
 - Mediums : arm #1
 - Cinetic Points : 1
 - Main MM : Brute Force
+- Secondary MM : Brawling / Athletics
 - Type : Attack
 - Damage Type : contending
 - Localization : Trunk
@@ -503,6 +538,7 @@
 - Mediums : arm #2
 - Cinetic Points : 2
 - Main MM : Brawling
+- Secondary MM : Pugilatus / Iron Fist
 - Type : Attack
 - Damage Type : contending
 - Localization : Visage / Trunk
@@ -514,6 +550,7 @@
 - Mediums : long blade #1 / axes #3
 - Cinetic Points : 3
 - Main MM : Swordsmanship
+- Secondary MM : Brute Force / Battlecraft
 - Type : Attack
 - Damage Type : cutting
 - Localization : visage / trunk / arms
@@ -525,6 +562,7 @@
 - Mediums : long blade #2 / saber #4
 - Cinetic Points : 1
 - Main MM : Tactics
+- Secondary MM : Swordsmanship / Incisiveness
 - Type : Attack
 - Damage Type : cutting
 - Localization : Trunk
@@ -537,6 +575,7 @@
 - Mediums : long blade #3 / spear #1
 - Cinetic Points : 2
 - Main MM : Swordsmanship
+- Secondary MM : Athletics / Battlecraft
 - Type : Attack
 - Damage Type : piercing
 - Localization : Trunk
@@ -549,6 +588,7 @@
 - Mediums : long blade #4 / saber #2
 - Cinetic Points : 1
 - Main MM : Tactics
+- Secondary MM : Incisiveness / Swordsmanship
 - Type : Other
 - Localization : Self
 - Medium Level Multiplicator : 1
@@ -560,6 +600,7 @@
 - Mediums : short blade #1 / saber #1
 - Cinetic Points : 1
 - Main MM : Swordsmanship
+- Secondary MM : Incisiveness / Battlecraft
 - Type : Attack
 - Damage Type : piercing
 - Localization : Trunk / Upper Limbs / Visage
@@ -572,6 +613,7 @@
 - Mediums : short blade #2 / saber #3
 - Cinetic Points : 2
 - Main MM : Incisiveness
+- Secondary MM : Swordsmanship / Tactics
 - Type : Attack
 - Damage Type : piercing
 - Localization : CHOOSE
@@ -583,6 +625,7 @@
 - Mediums : short blade #3 / shield #2
 - Cinetic Points : 1
 - Main MM : Vigilance
+- Secondary MM : Battlecraft / Swordsmanship
 - Type : Defense
 - Localization : Self
 - Medium Level Multiplicator : 2
@@ -594,6 +637,7 @@
 - Mediums : short blade #4 / spear #4
 - Cinetic Points : 5
 - Main MM : Incisiveness
+- Secondary MM : Swordsmanship / Predator
 - Type : Attack
 - Damage Type : piercing
 - Localization : CHOOSE
@@ -606,6 +650,7 @@
 - Mediums : blunt weapon #1
 - Cinetic Points : 1
 - Main MM : Brute Force
+- Secondary MM : Battlecraft / Brawling
 - Type : Attack
 - Damage Type : contending
 - Localization : Visage / Trunk / Encephalon
@@ -618,6 +663,7 @@
 - Mediums : blunt weapon #2 / pickaxes #4
 - Cinetic Points : 3
 - Main MM : Brute Force
+- Secondary MM : Battlecraft / Iron Fist
 - Type : Attack
 - Damage Type : contending / piercing
 - Localization : Visage / Trunk / Encephalon
@@ -629,6 +675,7 @@
 - Mediums : blunt weapon #3 / axes #2
 - Cinetic Points : 4
 - Main MM : Battlecraft
+- Secondary MM : Brute Force / Swordsmanship
 - Type : Attack
 - Damage Type : contending / cutting
 - Localization : CHOOSE
@@ -641,6 +688,7 @@
 - Mediums : blunt weapon #4 / pickaxes #3
 - Cinetic Points : 5
 - Main MM : Battlecraft
+- Secondary MM : Brute Force / Ferocity
 - Type : Attack
 - Damage Type : contending / piercing
 - Localization : CHOOSE
@@ -653,6 +701,7 @@
 - Mediums : axes #1
 - Cinetic Points : 2
 - Main MM : Battlecraft
+- Secondary MM : Brute Force / Swordsmanship
 - Type : Attack
 - Damage Type : cutting
 - Localization : Upper Limbs / Lower Limbs
@@ -664,6 +713,7 @@
 - Mediums : axes #4 / spear #3
 - Cinetic Points : 4
 - Main MM : Battlecraft
+- Secondary MM : Brute Force / Swordsmanship
 - Type : Attack
 - Damage Type : cutting / piercing
 - Localization : Trunk
@@ -676,6 +726,7 @@
 - Mediums : pickaxes #1 / spear #2
 - Cinetic Points : 3
 - Main MM : Incisiveness
+- Secondary MM : Battlecraft / Brute Force
 - Type : Attack
 - Damage Type : piercing
 - Localization : CHOOSE
@@ -687,6 +738,7 @@
 - Mediums : bows #1
 - Cinetic Points : 1
 - Main MM : Marksman
+- Secondary MM : Athletics / Battlecraft
 - Type : Attack
 - Damage Type : piercing
 - Localization : Trunk
@@ -699,6 +751,7 @@
 - Mediums : bows #2 / crossbows #2
 - Cinetic Points : 3
 - Main MM : Marksman
+- Secondary MM : Deadeye / Tactics
 - Type : Attack
 - Damage Type : piercing
 - Localization : CHOOSE
@@ -710,6 +763,7 @@
 - Mediums : bows #3
 - Cinetic Points : 4
 - Main MM : Deadeye
+- Secondary MM : Marksman / Tactics
 - Type : Attack
 - Damage Type : piercing
 - Localization : Trunk / limbs / visage
@@ -722,6 +776,7 @@
 - Mediums : crossbows #1
 - Cinetic Points : 2
 - Main MM : Marksman
+- Secondary MM : Deadeye / Tactics
 - Type : Attack
 - Damage Type : piercing
 - Localization : heart
@@ -733,6 +788,7 @@
 - Mediums : crossbows #3
 - Cinetic Points : 5
 - Main MM : Deadeye
+- Secondary MM : Marksman / Incisiveness
 - Type : Attack
 - Damage Type : piercing
 - Localization : Trunk / limbs / visage
@@ -744,6 +800,7 @@
 - Mediums : shield #1
 - Cinetic Points : 2
 - Main MM : Vigilance
+- Secondary MM : Battlecraft / Iron Nerves
 - Type : Defense
 - Localization : Self
 - Medium Level Multiplicator : 1
@@ -755,6 +812,7 @@
 - Mediums : shield #3
 - Cinetic Points : 2
 - Main MM : Battlecraft
+- Secondary MM : Brute Force / Brawling
 - Type : Attack
 - Damage Type : contending
 - Localization : Visage / Trunk
