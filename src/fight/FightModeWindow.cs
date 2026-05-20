@@ -662,11 +662,11 @@ internal class FightModeWindow : GameWindow
         if (result.IsHit && result.Wound != null)
         {
             FightResolver.ApplyWound(_state.PendingTarget, result.Wound);
-            _state.AddLog($"HIT! {result.Wound.WoundName} on {_state.PendingTarget.DisplayName}. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})");
+            _state.AddLog($"HIT! {result.Wound.WoundName} on {_state.PendingTarget.DisplayName}. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})", LogEntryType.Wound);
         }
         else
         {
-            _state.AddLog($"MISS. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})");
+            _state.AddLog($"MISS. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})", LogEntryType.Miss);
         }
 
         _state.CheckFightEnd();
@@ -677,7 +677,7 @@ internal class FightModeWindow : GameWindow
     private void EndTurn(Fighter active)
     {
         active.HasActedThisTurn = true;
-        _state.AdvanceToNextFighter();
+        _state.AdvanceToNextFighter(_rng);
         RefreshSkillList();
 
         var next = _state.ActiveFighter;

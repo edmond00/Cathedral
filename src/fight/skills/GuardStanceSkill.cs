@@ -13,6 +13,8 @@ public sealed class GuardStanceSkill : FightingSkill
     public override FightingMedium Medium         => FightingMedium.Organ("hands");
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
+    public override int MediumLevelMultiplicator  => 1;
+    public override int SkillLevelMultiplicator   => 1;
     public override FightingSkillEffect EffectType => FightingSkillEffect.DefensePosture;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.Random; // Unused for DefensePosture
 }

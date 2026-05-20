@@ -65,6 +65,13 @@ public static class FightModeUI
 
             string mark = isActive ? "▶ " : "  ";
             string label = $"{mark}{f.DisplayChar} {f.DisplayName} HP:{f.CurrentHp}/{f.MaxHp} CP:{f.CurrentCineticPoints}/{f.MaxCineticPoints}";
+            if (f.ActiveEffects.Count > 0)
+            {
+                var sb = new System.Text.StringBuilder(" [");
+                foreach (var fx in f.ActiveEffects) { sb.Append(fx.DisplayLabel); sb.Append(' '); }
+                sb[^1] = ']';
+                label += sb.ToString();
+            }
             if (isDead) label += " [DEAD]";
 
             // Wrap to next row if not enough space
@@ -83,13 +90,16 @@ public static class FightModeUI
     // ── Left panel ────────────────────────────────────────────────────
 
     /// <summary>
-    /// Draw detail for <paramref name="fighter"/>: HP/CP bars plus clickable action buttons.
-    /// <paramref name="isMoveMode"/> highlights the MOVE button; <paramref name="selectedSkillIndex"/> ≥ 0 highlights that skill.
+    /// Draw detail for <paramref name="fighter"/>: HP/CP bars, status effects, plus clickable action buttons.
+    /// Unlocked skills are shown first; learnable (unknown) skills follow with a "?" prefix.
+    /// <paramref name="selectedSkillIndex"/> ≥ 0 = index into unlocked; &lt; 0 = ~selectedLearnableSkillIndex.
     /// </summary>
     public static void RenderLeftPanel(TerminalHUD terminal, Fighter fighter,
                                         IReadOnlyList<FightingSkill> unlockedSkills,
                                         bool isMoveMode, int selectedSkillIndex,
-                                        int hoveredButtonRow = -1)
+                                        int hoveredButtonRow = -1,
+                                        IReadOnlyList<FightingSkill>? learnableSkills = null,
+                                        int selectedLearnableSkillIndex = -1)
     {
         terminal.FillRect(0, TopRows, LeftEnd, BotStart - TopRows, ' ', Config.Colors.White, Config.Colors.Black);
         terminal.DrawBox(0, TopRows, LeftEnd, BotStart - TopRows, BoxStyle.Single, Config.Colors.DarkGray, Config.Colors.Black);
@@ -111,7 +121,23 @@ public static class FightModeUI
         // CP dot bar (row TopRows+4)
         DrawDotBar(terminal, x, y++, fighter.CurrentCineticPoints, fighter.MaxCineticPoints);
 
-        y++; // blank
+        // Status effects row (row TopRows+5)
+        {
+            var effects = fighter.ActiveEffects;
+            if (effects.Count > 0)
+            {
+                var sb = new System.Text.StringBuilder("FX:");
+                foreach (var fx in effects)
+                    sb.Append($" {fx.DisplayLabel}");
+                string fxLine = sb.ToString();
+                if (fxLine.Length > LeftEnd - 2) fxLine = fxLine[..(LeftEnd - 2)];
+                terminal.Text(x, y++, fxLine, Config.Colors.BrightRed, Config.Colors.Black);
+            }
+            else
+            {
+                y++; // keep layout stable
+            }
+        }
 
         // "ACTIONS:" label
         terminal.Text(x, y++, "ACTIONS:", Config.Colors.DarkYellowGrey, Config.Colors.Black);
@@ -145,6 +171,26 @@ public static class FightModeUI
             if (line.Length > LeftEnd - 2) line = line[..(LeftEnd - 2)];
             line = line.PadRight(LeftEnd - 2);
             terminal.Text(x, y++, line, fg, bg); // row SkillButtonsStart + i
+        }
+
+        // Learnable (unknown) skill buttons — shown after unlocked skills with "?" prefix
+        if (learnableSkills != null)
+        {
+            int learnStart = unlockedSkills.Count;
+            for (int i = 0; i < learnableSkills.Count && y < EndTurnButtonRow - 1; i++)
+            {
+                var skill = learnableSkills[i];
+                bool sel = !isMoveMode && i == selectedLearnableSkillIndex;
+                bool hov = !sel && hoveredButtonRow == SkillButtonsStart + learnStart + i;
+                Vector4 fg = sel ? Config.Colors.Black
+                           : hov ? Config.Colors.GoldYellow
+                           : new Vector4(0.6f, 0.6f, 0.9f, 1f);  // dim blue — unknown skill
+                Vector4 bg = sel ? new Vector4(0.4f, 0.4f, 0.9f, 1f) : Config.Colors.Black;
+                string line = $"? {skill.DisplayName} {skill.CineticPointsCost}CP";
+                if (line.Length > LeftEnd - 2) line = line[..(LeftEnd - 2)];
+                line = line.PadRight(LeftEnd - 2);
+                terminal.Text(x, y++, line, fg, bg);
+            }
         }
 
         // Divider before end/run
@@ -209,8 +255,21 @@ public static class FightModeUI
 
     // ── Bottom panel — action log ─────────────────────────────────────
 
+    // Color mapping for log entry types
+    private static Vector4 LogEntryColor(LogEntryType type) => type switch
+    {
+        LogEntryType.Attack        => new Vector4(1.0f, 0.8f, 0.0f, 1.0f), // OrangeYellow
+        LogEntryType.Miss          => Config.Colors.DarkGray,
+        LogEntryType.Wound         => new Vector4(1.0f, 0.15f, 0.15f, 1.0f), // BrightRed
+        LogEntryType.SpecialEffect => new Vector4(1.0f, 0.5f, 0.0f, 1.0f),  // Orange
+        LogEntryType.Learning      => new Vector4(0.0f, 1.0f, 1.0f, 1.0f),  // Cyan
+        LogEntryType.Defense       => new Vector4(0.7f, 0.9f, 1.0f, 1.0f),  // LightCyan
+        _                          => Config.Colors.White,
+    };
+
     /// <summary>Draw the action log in the bottom panel (full width, newest entries at bottom).</summary>
-    public static void RenderBottomPanel(TerminalHUD terminal, IReadOnlyList<string> actionLog, int scrollOffset)
+    public static void RenderBottomPanel(TerminalHUD terminal,
+        IReadOnlyList<(string Text, LogEntryType Type)> actionLog, int scrollOffset)
     {
         int panelH = 100 - BotStart;
         terminal.FillRect(0, BotStart, 100, panelH, ' ', Config.Colors.White, Config.Colors.Black);
@@ -221,25 +280,28 @@ public static class FightModeUI
         int lineWidth = 98;
         int visibleLines = panelH - 3;
 
-        var wrappedLines = new List<string>();
-        foreach (var entry in actionLog)
+        var wrappedLines = new List<(string Text, LogEntryType Type)>();
+        foreach (var (text, type) in actionLog)
         {
-            if (entry.Length <= lineWidth)
+            if (text.Length <= lineWidth)
             {
-                wrappedLines.Add(entry);
+                wrappedLines.Add((text, type));
             }
             else
             {
-                for (int s = 0; s < entry.Length; s += lineWidth)
-                    wrappedLines.Add(entry.Substring(s, Math.Min(lineWidth, entry.Length - s)));
+                for (int s = 0; s < text.Length; s += lineWidth)
+                    wrappedLines.Add((text.Substring(s, Math.Min(lineWidth, text.Length - s)), type));
             }
         }
 
         int total = wrappedLines.Count;
         int firstVisible = Math.Max(0, total - visibleLines - scrollOffset);
         for (int i = 0; i < visibleLines && firstVisible + i < total; i++)
-            terminal.Text(1, BotStart + 3 + i, wrappedLines[firstVisible + i],
-                Config.Colors.White, Config.Colors.Black);
+        {
+            var (text, type) = wrappedLines[firstVisible + i];
+            terminal.Text(1, BotStart + 3 + i, text,
+                LogEntryColor(type), Config.Colors.Black);
+        }
     }
 
     // ── Center panel ─────────────────────────────────────────────────

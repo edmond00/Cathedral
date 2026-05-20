@@ -56,6 +56,8 @@ public class FightModeAdapter
     // ── UI state ────────────────────────────────────────────────────
     private int _actionLogScrollOffset;
     private IReadOnlyList<FightingSkill> _currentUnlockedSkills = Array.Empty<FightingSkill>();
+    private IReadOnlyList<FightingSkill> _currentLearnableSkills = Array.Empty<FightingSkill>();
+    private int _selectedLearnableSkillIndex = -1;
     private IReadOnlyList<string>? _bodyPartMenu;
     private bool _continueHovered;
     private Fighter? _hoveredFighter;
@@ -132,7 +134,7 @@ public class FightModeAdapter
         });
 
         _state = new FightState(area, fighters);
-        _state.AddLog("Fight begins!");
+        _state.AddLog("Fight begins!", LogEntryType.Normal);
 
         // Render initial arena terrain
         FightAreaRenderer.Render(_terminal, area, "fight", 0);
@@ -329,7 +331,12 @@ public class FightModeAdapter
         {
             var region = _dice.ContinueButtonRegion;
             if (y == region.Y && x >= region.X && x < region.X + region.Width)
-                FinishAttackResolution(active);
+            {
+                if (_state.PendingLearnSkill != null && _state.PendingSkill == null)
+                    FinishLearningRoll(active);
+                else
+                    FinishAttackResolution(active);
+            }
             return;
         }
 
@@ -354,6 +361,7 @@ public class FightModeAdapter
         if (x < 20)
         {
             int skillIdx = y - FightModeUI.SkillButtonsStart;
+            int learnIdx = skillIdx - _currentUnlockedSkills.Count;
             if (y == FightModeUI.MoveButtonRow)
             {
                 SetMoveMode();
@@ -361,6 +369,10 @@ public class FightModeAdapter
             else if (skillIdx >= 0 && skillIdx < _currentUnlockedSkills.Count)
             {
                 SetSkillMode(skillIdx);
+            }
+            else if (learnIdx >= 0 && learnIdx < _currentLearnableSkills.Count)
+            {
+                SetLearnableSkillMode(learnIdx);
             }
             else if (y == FightModeUI.EndTurnButtonRow)
             {
@@ -401,6 +413,23 @@ public class FightModeAdapter
                     TryUseSkillOnTarget(active, target, skill);
             }
         }
+        else if (_selectedLearnableSkillIndex >= 0 && _selectedLearnableSkillIndex < _currentLearnableSkills.Count)
+        {
+            var skill = _currentLearnableSkills[_selectedLearnableSkillIndex];
+            // For DefensePosture-type learnable skills, learn without targeting
+            if (skill.EffectType == FightingSkillEffect.DefensePosture)
+            {
+                StartLearningAttempt(active, null, skill);
+            }
+            else
+            {
+                var target = _state.Fighters.FirstOrDefault(
+                    f => f.IsAlive && f.Faction != active.Faction &&
+                         f.X == ax && f.Y == ay);
+                if (target != null)
+                    StartLearningAttempt(active, target, skill);
+            }
+        }
     }
 
     /// <summary>Called by the game loop when a terminal cell is hovered.</summary>
@@ -423,10 +452,12 @@ public class FightModeAdapter
         if (x < 20 && canInteract)
         {
             int skillIdx = y - FightModeUI.SkillButtonsStart;
+            int learnIdx = skillIdx - _currentUnlockedSkills.Count;
             if (y == FightModeUI.MoveButtonRow
                 || y == FightModeUI.EndTurnButtonRow
                 || y == FightModeUI.RunButtonRow
-                || (skillIdx >= 0 && skillIdx < _currentUnlockedSkills.Count))
+                || (skillIdx >= 0 && skillIdx < _currentUnlockedSkills.Count)
+                || (learnIdx >= 0 && learnIdx < _currentLearnableSkills.Count))
                 newButton = y;
         }
         else if (x >= 20 && x < 80 && y >= 20 && y < 80)
@@ -540,6 +571,7 @@ public class FightModeAdapter
     {
         _isMoveMode = true;
         _selectedSkillIndex = -1;
+        _selectedLearnableSkillIndex = -1;
         RecomputeHighlight();
     }
 
@@ -547,6 +579,15 @@ public class FightModeAdapter
     {
         _isMoveMode = false;
         _selectedSkillIndex = skillIndex;
+        _selectedLearnableSkillIndex = -1;
+        RecomputeHighlight();
+    }
+
+    private void SetLearnableSkillMode(int learnIndex)
+    {
+        _isMoveMode = false;
+        _selectedSkillIndex = -1;
+        _selectedLearnableSkillIndex = learnIndex;
         RecomputeHighlight();
     }
 
@@ -569,6 +610,13 @@ public class FightModeAdapter
         {
             _isAttackHighlight = true;
             var skill = _currentUnlockedSkills[_selectedSkillIndex];
+            _highlightCells = ComputeSkillTargetCells(active, skill);
+        }
+        else if (_selectedLearnableSkillIndex >= 0 && _selectedLearnableSkillIndex < _currentLearnableSkills.Count)
+        {
+            // Learnable skill: highlight the same targets as the skill would require (for starting the attempt)
+            _isAttackHighlight = true;
+            var skill = _currentLearnableSkills[_selectedLearnableSkillIndex];
             _highlightCells = ComputeSkillTargetCells(active, skill);
         }
         else
@@ -687,6 +735,61 @@ public class FightModeAdapter
         _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty);
     }
 
+    /// <summary>
+    /// Initiates a skill-learning dice roll.
+    /// Sets up PendingLearnSkill, clears PendingSkill, kicks off the dice animation.
+    /// </summary>
+    private void StartLearningAttempt(Fighter attacker, Fighter? target, FightingSkill skill)
+    {
+        _state.PendingLearnSkill = skill;
+        _state.PendingSkill = null;  // signals "this is a learning roll, not an attack roll"
+        _state.PendingTarget = target;
+        _state.LearningDiceCount = Math.Max(1, attacker.FightLearningStat);
+        _state.LearningDifficulty = Math.Max(0, skill.MediumPosition - 1);
+        _state.DiceNumberOfDice = _state.LearningDiceCount;
+        _state.DiceDifficulty = _state.LearningDifficulty;
+        _state.Phase = TurnPhase.AnimatingDice;
+        BeginDiceRoll();
+        _highlightCells = null;
+        _selectedLearnableSkillIndex = -1;
+    }
+
+    /// <summary>
+    /// Resolves the dice result of a skill-learning attempt.
+    /// On success: adds the skill's ModusMentis to the fighter and refreshes the skill list.
+    /// On failure: ends the turn.
+    /// </summary>
+    private void FinishLearningRoll(Fighter active)
+    {
+        _dice.Hide();
+        var skill = _state.PendingLearnSkill!;
+        var diceValues = _state.DiceFinalValues ?? Array.Empty<int>();
+        int difficulty = _state.LearningDifficulty;
+
+        var result = FightResolver.AttemptSkillLearning(active, difficulty, diceValues);
+
+        if (result.Success)
+        {
+            var mm = ModusMentisRegistry.Instance.GetModusMentis(skill.RequiredModusMentisId);
+            if (mm != null && !active.Member.LearnedModiMentis.Any(m => m.ModusMentisId == mm.ModusMentisId))
+                active.Member.LearnedModiMentis.Add(mm);
+
+            _state.AddLog(
+                $"LEARNED {skill.DisplayName}! ({result.SixesCount}/{result.DiceValues.Length} sixes vs diff {result.Difficulty})",
+                LogEntryType.Learning);
+            _state.PendingLearnSkill = null;
+            RefreshSkillList();
+        }
+        else
+        {
+            _state.AddLog(
+                $"Failed to learn {skill.DisplayName}. ({result.SixesCount}/{result.DiceValues.Length} sixes vs diff {result.Difficulty})",
+                LogEntryType.Learning);
+            _state.PendingLearnSkill = null;
+            EndTurn(active);
+        }
+    }
+
     private void FinishAttackResolution(Fighter active)
     {
         _dice.Hide();
@@ -704,11 +807,11 @@ public class FightModeAdapter
         if (result.IsHit && result.Wound != null)
         {
             FightResolver.ApplyWound(_state.PendingTarget, result.Wound);
-            _state.AddLog($"HIT! {result.Wound.WoundName} on {_state.PendingTarget.DisplayName}. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})");
+            _state.AddLog($"HIT! {result.Wound.WoundName} on {_state.PendingTarget.DisplayName}. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})", LogEntryType.Wound);
         }
         else
         {
-            _state.AddLog($"MISS. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})");
+            _state.AddLog($"MISS. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})", LogEntryType.Miss);
         }
 
         _state.CheckFightEnd();
@@ -719,7 +822,7 @@ public class FightModeAdapter
     private void EndTurn(Fighter active)
     {
         active.HasActedThisTurn = true;
-        _state.AdvanceToNextFighter();
+        _state.AdvanceToNextFighter(_rng);
         RefreshSkillList();
 
         var next = _state.ActiveFighter;
@@ -794,7 +897,8 @@ public class FightModeAdapter
                 bool isMove = _isMoveMode || !active.IsPlayerControlled ||
                               _state.Phase == TurnPhase.AnimatingMovement;
                 FightModeUI.RenderLeftPanel(_terminal, active, _currentUnlockedSkills,
-                    isMove, _selectedSkillIndex, _hoveredButtonRow);
+                    isMove, _selectedSkillIndex, _hoveredButtonRow,
+                    _currentLearnableSkills, _selectedLearnableSkillIndex);
             }
         }
 
@@ -817,9 +921,13 @@ public class FightModeAdapter
         _currentUnlockedSkills = active != null
             ? active.GetUnlockedSkills(_skillRegistry).ToList()
             : new List<FightingSkill>();
+        _currentLearnableSkills = active != null
+            ? active.GetLearnableSkills(_skillRegistry).ToList()
+            : new List<FightingSkill>();
 
         _isMoveMode = true;
         _selectedSkillIndex = -1;
+        _selectedLearnableSkillIndex = -1;
         RecomputeHighlight();
         _actionLogScrollOffset = 0;
         _previewPath = null;

@@ -7,9 +7,12 @@ public sealed class PugilitasCrossSkill : FightingSkill
     public override string DisplayName            => "Cross";
     public override string Description            => "Heavy straight punch. Targets arms.";
     public override string RequiredModusMentisId  => "pugilitas";
+    public override string[] SecondaryModusMentisIds => new[] { "brute_force" };
     public override FightingMedium Medium         => FightingMedium.Organ("hands");
     public override int CineticPointsCost         => 3;
     public override int BaseDice                  => 3;
+    public override int MediumLevelMultiplicator  => 1;
+    public override int SkillLevelMultiplicator   => 1;
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
     public override string? TargetBodyPartId      => "upper_limbs";

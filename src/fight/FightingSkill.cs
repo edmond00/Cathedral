@@ -26,10 +26,14 @@ public enum FightingSkillEffect
     Attack,
     /// <summary>Increases <c>NaturalDefense</c> until the start of the fighter's next turn.</summary>
     DefensePosture,
+    /// <summary>Reactive defense (parry/dodge) — adds defense dice to one or all incoming attacks.</summary>
+    Defense,
     /// <summary>Allows jumping over HardObstacle cells.</summary>
     SpecialMovement,
-    /// <summary>Other utility effects.</summary>
+    /// <summary>Other utility effects (rage, blood lust, run, etc.).</summary>
     Utility,
+    /// <summary>Alias for <see cref="Utility"/> — other utility effects.</summary>
+    Other,
 }
 
 /// <summary>
@@ -49,8 +53,14 @@ public abstract class FightingSkill
     /// <summary>One-line flavour description.</summary>
     public abstract string Description { get; }
 
-    /// <summary>ModusMentis id (must match <c>ModusMentis.ModusMentisId</c>) required to unlock.</summary>
+    /// <summary>Primary ModusMentis id required to unlock this skill.</summary>
     public abstract string RequiredModusMentisId { get; }
+
+    /// <summary>
+    /// Secondary ModusMentis ids whose levels are also added to the skill level bonus.
+    /// All known MMs (main + secondary) sum their levels when computing dice.
+    /// </summary>
+    public virtual string[] SecondaryModusMentisIds => Array.Empty<string>();
 
     /// <summary>Physical medium this skill uses (organ or weapon).</summary>
     public abstract FightingMedium Medium { get; }
@@ -58,8 +68,32 @@ public abstract class FightingSkill
     /// <summary>Cinetic points spent to use this skill.</summary>
     public abstract int CineticPointsCost { get; }
 
-    /// <summary>Base number of dice rolled independently of ModusMentis level.</summary>
-    public abstract int BaseDice { get; }
+    /// <summary>
+    /// Vital heat drained from the attacker's humor queue when using this skill.
+    /// Default 0. Visceral skills (Rage, Blood Lust, etc.) override this.
+    /// </summary>
+    public virtual int VitalHeatCost => 0;
+
+    /// <summary>
+    /// Extra dice independent of ModusMentis and medium level.
+    /// Default 0 — most skills derive all dice from the multiplicator formula.
+    /// Override for legacy skills or skills with a fixed base.
+    /// </summary>
+    public virtual int BaseDice => 0;
+
+    /// <summary>
+    /// Multiplier applied to the medium level when computing total dice.
+    /// Formula: <c>BaseDice + medium_level × MediumLevelMultiplicator + mm_level × SkillLevelMultiplicator</c>
+    /// </summary>
+    public virtual int MediumLevelMultiplicator => 1;
+
+    /// <summary>
+    /// Multiplier applied to the summed ModusMentis level when computing total dice.
+    /// </summary>
+    public virtual int SkillLevelMultiplicator => 1;
+
+    /// <summary>Status effects applied to the target on a successful hit.</summary>
+    public virtual FightStatusEffect[] SpecialEffects => Array.Empty<FightStatusEffect>();
 
     /// <summary>Primary effect type.</summary>
     public abstract FightingSkillEffect EffectType { get; }
@@ -73,23 +107,51 @@ public abstract class FightingSkill
     /// <summary>Maximum Manhattan distance from attacker to a valid target cell. Default 1 (adjacent melee).</summary>
     public virtual int Range => 1;
 
+    /// <summary>
+    /// 1-based position of this skill in its medium's skill list.
+    /// Used to compute learning difficulty: difficulty = MediumPosition - 1.
+    /// Override in each skill to match the fighting design doc ordering.
+    /// </summary>
+    public virtual int MediumPosition => 1;
+
     // ── Derived calculations ──────────────────────────────────────
 
-    /// <summary>Total dice for a given fighter: BaseDice + ModusMentis level + medium level.</summary>
+    /// <summary>
+    /// Sum of levels from all known MMs (main + secondary) for this fighter.
+    /// </summary>
+    private int GetTotalMmLevel(Fighter f)
+    {
+        int total = 0;
+        foreach (var mm in f.Member.LearnedModiMentis)
+        {
+            if (mm.ModusMentisId == RequiredModusMentisId)
+                total += mm.Level;
+            else if (SecondaryModusMentisIds.Contains(mm.ModusMentisId))
+                total += mm.Level;
+        }
+        return total;
+    }
+
+    /// <summary>
+    /// Total dice for a given fighter:
+    /// <c>BaseDice + medium_level × MediumLevelMultiplicator + mm_level × SkillLevelMultiplicator</c>
+    /// where mm_level is the sum of all known MM levels (main + secondary).
+    /// </summary>
     public int TotalDice(Fighter f)
     {
-        var mm = f.Member.LearnedModiMentis.FirstOrDefault(m => m.ModusMentisId == RequiredModusMentisId);
-        int mmLevel = mm?.Level ?? 0;
-        return BaseDice + mmLevel + Medium.GetLevel(f);
+        int mediumLevel = Medium.GetLevel(f);
+        int mmLevel     = GetTotalMmLevel(f);
+        return BaseDice + mediumLevel * MediumLevelMultiplicator + mmLevel * SkillLevelMultiplicator;
     }
 
     /// <summary>
     /// Returns true when the fighter can use this skill in the current combat state.
-    /// Checks: ModusMentis known, medium available, CP sufficient (CP check done separately in GetUnlockedSkills).
+    /// Checks: primary ModusMentis known, medium available, organ not disabled by wounds.
+    /// (CP cost check is handled separately in GetUnlockedSkills.)
     /// </summary>
     public bool IsUnlocked(Fighter f)
     {
-        // Check ModusMentis known
+        // Check primary ModusMentis known
         if (!f.Member.LearnedModiMentis.Any(m => m.ModusMentisId == RequiredModusMentisId))
             return false;
 

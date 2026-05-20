@@ -49,6 +49,9 @@ public sealed class BeastAnatomyFactory : IAnatomyFactory
         new MoveSpeedStat(),
         new RunawayChanceStat(),
         new InitiativeStat(),
+        new DamageResistanceStat(),
+        new FightLearningStat(),
+        new AttackRangeStat(),
     };
 
     public Dictionary<char, Wound> GetWoundClassMap()

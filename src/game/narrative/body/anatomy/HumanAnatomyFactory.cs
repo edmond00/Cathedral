@@ -45,6 +45,9 @@ public sealed class HumanAnatomyFactory : IAnatomyFactory
         new MoveSpeedStat(),
         new RunawayChanceStat(),
         new InitiativeStat(),
+        new DamageResistanceStat(),
+        new FightLearningStat(),
+        new AttackRangeStat(),
         // Dialogue stats
         new BeautyStat(),
         new SpeechFluencyStat(),

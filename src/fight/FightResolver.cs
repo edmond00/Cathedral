@@ -139,19 +139,94 @@ public static class FightResolver
 
     /// <summary>
     /// Count 6s in <paramref name="diceValues"/>; compare to <paramref name="defender"/>
-    /// natural defense (strictly greater-than wins). If hit, select a wound.
+    /// natural defense (strictly greater-than wins). If hit, select a wound and apply
+    /// special effects from the skill. Also consumes the attacker's vital heat cost.
     /// </summary>
     public static AttackResult ResolveAttack(
         Fighter attacker, Fighter defender, FightingSkill skill,
-        int[] diceValues, string? playerChosenBodyPartId, Random rng)
+        int[] diceValues, string? playerChosenBodyPartId, Random rng,
+        FightState? state = null)
     {
         int sixes  = diceValues.Count(v => v == 6);
         int def    = defender.NaturalDefense;
         bool isHit = sixes > def;
-        Wound? wound = isHit
-            ? PickWound(defender, skill, playerChosenBodyPartId, rng)
-            : null;
+
+        Wound? wound = null;
+        if (isHit)
+        {
+            wound = PickWound(defender, skill, playerChosenBodyPartId, rng);
+
+            // Damage resistance check: defender's damage_resistance stat
+            // If defender rolls at least 1 success (1d6 per resistance point >= 4),
+            // downgrade wound severity: High→Medium, Medium→Low
+            int resistance = GetFighterCombatStat(defender, "damage_resistance");
+            if (resistance > 0 && wound != null)
+            {
+                int resistSixes = 0;
+                for (int i = 0; i < resistance; i++)
+                    if (rng.Next(1, 7) >= 4) resistSixes++;
+
+                if (resistSixes > 0)
+                {
+                    var downgraded = DowngradeWound(defender, wound, skill, playerChosenBodyPartId, rng);
+                    if (downgraded != null) wound = downgraded;
+                }
+            }
+
+            // Apply special effects from the skill to the target
+            if (state != null)
+            {
+                foreach (var effect in skill.SpecialEffects)
+                {
+                    // Clone effects so each hit gets a fresh instance
+                    var newEffect = effect;
+                    defender.ActiveEffects.Add(newEffect);
+                    newEffect.OnApply(defender, attacker, state, rng);
+                    if (newEffect.IsExpired)
+                        defender.ActiveEffects.Remove(newEffect);
+                }
+            }
+        }
+
+        // Consume attacker's vital heat cost
+        if (skill.VitalHeatCost > 0)
+        {
+            for (int i = 0; i < skill.VitalHeatCost; i++)
+                attacker.Member.HumorQueues.ConsumeVitalHeatCycled(attacker.Member, rng);
+        }
+
         return new AttackResult(sixes, def, isHit, wound);
+    }
+
+    private static int GetFighterCombatStat(Fighter f, string statName)
+    {
+        var stat = f.Member.DerivedStats.FirstOrDefault(s => s.Name == statName);
+        return stat?.GetValue(f.Member) ?? 0;
+    }
+
+    /// <summary>
+    /// Attempt to downgrade a wound one severity level.
+    /// High → Medium (pick a medium wound from same body part),
+    /// Medium → Low (pick a wildcard wound).
+    /// Returns null if no downgrade is possible.
+    /// </summary>
+    private static Wound? DowngradeWound(Fighter defender, Wound current, FightingSkill skill,
+                                          string? playerChosenBodyPartId, Random rng)
+    {
+        if (current.Handicap == WoundHandicap.Low) return null;
+
+        if (current.Handicap == WoundHandicap.High)
+        {
+            // Downgrade to Medium: find a medium wound for the same body part
+            var mediumWounds = WoundRegistry.All.Values
+                .Where(w => w.Handicap == WoundHandicap.Medium && w.AffectsBodyPart(current.TargetId))
+                .ToList();
+            return mediumWounds.Count > 0 ? mediumWounds[rng.Next(mediumWounds.Count)] : null;
+        }
+
+        // Medium → Low: pick any wildcard
+        var wildcards = WoundRegistry.WildcardTemplates.Cast<Wound>().ToList();
+        return wildcards.Count > 0 ? wildcards[rng.Next(wildcards.Count)] : null;
     }
 
     // ── Wound selection ───────────────────────────────────────────────
@@ -171,38 +246,85 @@ public static class FightResolver
     private static List<Wound> GetWoundPool(Fighter defender, FightingSkill skill,
                                              string? playerChosenBodyPartId, Random rng)
     {
-        var allWounds = WoundRegistry.All.Values.ToList();
+        // Build sets of all valid IDs from the defender's anatomy
+        var validBodyPartIds  = defender.Member.BodyParts.Select(bp => bp.Id).ToHashSet();
+        var allOrgans         = defender.Member.BodyParts.SelectMany(bp => bp.Organs).ToList();
+        var validOrganIds     = allOrgans.Select(o => o.Id).ToHashSet();
+        var validOrganPartIds = allOrgans.SelectMany(o => o.Parts).Select(p => p.Id).ToHashSet();
+
+        var anatomyWounds = WoundRegistry.All.Values
+            .Where(w => w.TargetKind == WoundTargetKind.Wildcard
+                     || (w.TargetKind == WoundTargetKind.BodyPart  && validBodyPartIds.Contains(w.TargetId))
+                     || (w.TargetKind == WoundTargetKind.Organ     && validOrganIds.Contains(w.TargetId))
+                     || (w.TargetKind == WoundTargetKind.OrganPart && validOrganPartIds.Contains(w.TargetId)))
+            .ToList();
+
+        if (anatomyWounds.Count == 0)
+            anatomyWounds = WoundRegistry.All.Values.ToList();
 
         switch (skill.WoundTargetMode)
         {
             case WoundTargetMode.Random:
-                return allWounds;
+                return anatomyWounds;
 
             case WoundTargetMode.FixedBodyPart:
-                if (skill.TargetBodyPartId is null) return allWounds;
+                if (skill.TargetBodyPartId is null) return anatomyWounds;
                 {
-                    var filtered = allWounds
-                        .Where(w => w.AffectsBodyPart(skill.TargetBodyPartId))
-                        .ToList();
-                    return filtered.Count > 0 ? filtered : allWounds;
+                    var filtered = FilterByTarget(anatomyWounds, skill.TargetBodyPartId, defender);
+                    return filtered.Count > 0 ? filtered : anatomyWounds;
                 }
 
             case WoundTargetMode.PlayerChooses:
-                if (playerChosenBodyPartId is null) return allWounds;
+                if (playerChosenBodyPartId is null) return anatomyWounds;
                 {
-                    var filtered = allWounds
-                        .Where(w => w.AffectsBodyPart(playerChosenBodyPartId))
-                        .ToList();
-                    return filtered.Count > 0 ? filtered : allWounds;
+                    var filtered = FilterByTarget(anatomyWounds, playerChosenBodyPartId, defender);
+                    return filtered.Count > 0 ? filtered : anatomyWounds;
                 }
 
             default:
-                return allWounds;
+                return anatomyWounds;
         }
     }
 
-    // ── Wound application ─────────────────────────────────────────────
+    private static List<Wound> FilterByTarget(List<Wound> wounds, string targetId, Fighter defender)
+    {
+        var result = wounds.Where(w => w.AffectsBodyPart(targetId)).ToList();
+        if (result.Count > 0) return result;
+
+        var organ = defender.Member.GetOrganById(targetId);
+        if (organ != null)
+        {
+            var bp = defender.Member.BodyParts.FirstOrDefault(b => b.Organs.Any(o => o.Id == targetId));
+            if (bp != null)
+                result = wounds.Where(w => w.AffectsOrgan(targetId, bp.Id)).ToList();
+        }
+        if (result.Count > 0) return result;
+
+        var bodyPart = defender.Member.GetBodyPartById(targetId);
+        if (bodyPart != null)
+            result = wounds.Where(w => bodyPart.Organs.Any(o => w.AffectsOrgan(o.Id, targetId))).ToList();
+
+        return result;
+    }
+
+    // -- Wound application --
 
     public static void ApplyWound(Fighter target, Wound wound) =>
         target.Member.Wounds.Add(wound);
+
+    // -- Skill learning --
+
+    public record LearningResult(bool Success, int[] DiceValues, int Difficulty, int SixesCount);
+
+    /// <summary>
+    /// Roll to learn an unknown fighting skill in combat.
+    /// Difficulty is the 1-based index of the skill in its medium skill list.
+    /// Succeeds if sixes strictly exceed difficulty.
+    /// </summary>
+    public static LearningResult AttemptSkillLearning(Fighter fighter, int difficulty, int[] diceValues)
+    {
+        int sixes = diceValues.Count(v => v == 6);
+        bool success = sixes > difficulty;
+        return new LearningResult(success, diceValues, difficulty, sixes);
+    }
 }

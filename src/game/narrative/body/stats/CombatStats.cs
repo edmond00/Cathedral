@@ -81,3 +81,51 @@ public class InitiativeStat : DerivedStat
     public override int CalculateValue(int sourceScore) => sourceScore;
     public override int MinimumValue() => 1;
 }
+
+/// <summary>
+/// Damage resistance — number of dice rolled to downgrade incoming wound severity.
+/// One success (4+) downgrades: High → Medium → Low.
+/// Source: viscera organ (torso).
+/// Formula: score / 2 (range 0–5 typical).
+/// </summary>
+public class DamageResistanceStat : DerivedStat
+{
+    public override string Name            => "damage_resistance";
+    public override string DisplayName     => "Damage Resistance";
+    public override string ShortDisplayName => "DR";
+    public override string? RelatedOrganId => "viscera";
+    public override int CalculateValue(int sourceScore) => sourceScore / 2;
+    public override string FormatValue(int value) => $"{value} DR";
+}
+
+/// <summary>
+/// Fight learning — dice used when attempting to learn an unknown fighting skill in combat.
+/// Source: cerebellum organ (head).
+/// Formula: score (range 1–10).
+/// </summary>
+public class FightLearningStat : DerivedStat
+{
+    public override string Name            => "fight_learning";
+    public override string DisplayName     => "Fight Learning";
+    public override string ShortDisplayName => "Learning";
+    public override string? RelatedOrganId => "cerebellum";
+    public override int CalculateValue(int sourceScore) => sourceScore;
+    public override int MinimumValue() => 1;
+    public override string FormatValue(int value) => $"{value} dice";
+}
+
+/// <summary>
+/// Attack range — maximum distance (in tiles) from which the fighter can use ranged skills.
+/// Source: eyes organ (visage).
+/// Formula: score (range 1–10).
+/// </summary>
+public class AttackRangeStat : DerivedStat
+{
+    public override string Name            => "attack_range";
+    public override string DisplayName     => "Attack Range";
+    public override string ShortDisplayName => "Range";
+    public override string? RelatedOrganId => "eyes";
+    public override int CalculateValue(int sourceScore) => sourceScore;
+    public override int MinimumValue() => 1;
+    public override string FormatValue(int value) => $"{value} tiles";
+}

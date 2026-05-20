@@ -5,6 +5,20 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Fight;
 
 /// <summary>
+/// Category for a fight log entry — controls the color in the bottom panel.
+/// </summary>
+public enum LogEntryType
+{
+    Normal,
+    Attack,
+    Miss,
+    Wound,
+    SpecialEffect,
+    Learning,
+    Defense,
+}
+
+/// <summary>
 /// Which player-facing phase the fight is currently in.
 /// Controls which inputs are valid and what the UI highlights.
 /// </summary>
@@ -23,7 +37,11 @@ public enum TurnPhase
     /// <summary>Turn is transitioning to next fighter.</summary>
     TurnEnding,
     /// <summary>Fighter is stepping through a movement path one tile per animation frame.</summary>
-    AnimatingMovement
+    AnimatingMovement,
+    /// <summary>Player is attempting to learn an unknown skill — learning dice roll is playing.</summary>
+    SkillLearningRoll,
+    /// <summary>Learning dice finished; showing result, waiting for "Continue".</summary>
+    WaitingForLearningComplete,
 }
 
 /// <summary>
@@ -70,13 +88,25 @@ public class FightState
 
     // ── Action log ───────────────────────────────────────────────────
     private const int MaxLogLines = 200;
-    public List<string> ActionLog { get; } = new();
-    public void AddLog(string line)
+    public List<(string Text, LogEntryType Type)> ActionLog { get; } = new();
+    public void AddLog(string line, LogEntryType type = LogEntryType.Normal)
     {
-        ActionLog.Add(line);
+        ActionLog.Add((line, type));
         if (ActionLog.Count > MaxLogLines)
             ActionLog.RemoveAt(0);
     }
+
+    // ── Skill learning state ──────────────────────────────────────────
+    /// <summary>The unknown skill the player is attempting to learn this turn.</summary>
+    public FightingSkill? PendingLearnSkill { get; set; }
+    /// <summary>Number of dice for the learning roll (from fight_learning derived stat).</summary>
+    public int LearningDiceCount { get; set; }
+    /// <summary>Difficulty threshold for the learning roll (index of skill in medium list).</summary>
+    public int LearningDifficulty { get; set; }
+    /// <summary>Final dice values from the learning roll animation.</summary>
+    public int[]? LearningDiceValues { get; set; }
+    /// <summary>Result of the learning roll. Null while not yet resolved.</summary>
+    public bool? LearningSucceeded { get; set; }
 
     // ── Constructor ───────────────────────────────────────────────────
     public FightState(FightArea area, List<Fighter> fighters)
@@ -89,14 +119,17 @@ public class FightState
     // ── Turn management ───────────────────────────────────────────────
     /// <summary>
     /// Move to the next living fighter in initiative order.
-    /// Skips dead fighters.  Calls <see cref="Fighter.StartTurn"/> on the new active fighter.
+    /// Skips dead fighters. Calls <see cref="Fighter.StartTurn(FightState, Random)"/> on the new active fighter.
     /// </summary>
-    public void AdvanceToNextFighter()
+    public void AdvanceToNextFighter(Random rng)
     {
         // Clear pending intent
         PendingSkill = null;
         PendingTarget = null;
         PendingBodyPartId = null;
+        PendingLearnSkill = null;
+        LearningDiceValues = null;
+        LearningSucceeded = null;
         IsMovementMode = false;
         Phase = TurnPhase.SelectingAction;
         IsDiceRolling = false;
@@ -113,7 +146,7 @@ public class FightState
             if (Fighters[next].IsAlive)
             {
                 ActiveFighterIndex = next;
-                Fighters[next].StartTurn();
+                Fighters[next].StartTurn(this, rng);
                 return;
             }
         }
