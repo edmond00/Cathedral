@@ -305,11 +305,17 @@ public static class LocationTravelModeLauncher
                 Console.WriteLine($"  Biome: {arrivalInfo.Biome.Name}, Neighbors: {arrivalInfo.NeighboringVertices.Count}");
                 gameController?.OnProtagonistArrived(arrivalInfo.VertexIndex);
             };
+
+            // Wire up per-step notification so vital heat can be consumed at each vertex entered
+            microworldInterface.ProtagonistSteppedToVertex += (vertexIndex) =>
+            {
+                gameController?.OnProtagonistSteppedToVertex(vertexIndex);
+            };
             
             // Wire up update loop for loading animations
             core.UpdateRequested += (deltaTime) =>
             {
-                gameController?.Update();
+                gameController?.Update((float)deltaTime);
             };
             
             // Wire up mouse wheel for scrolling

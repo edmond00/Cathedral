@@ -82,7 +82,7 @@ public abstract class PartyMember
         LearnedModiMentis = ModiMentis; // same reference
         Inventory = new List<Item>();
         MemoryModules = new List<MemoryModule>(); // populated after modiMentis are assigned via InitializeMemory()
-        Wounds = InitializeDebugWounds(factory);
+        Wounds = new List<Wound>();
 
         // Initialise all 13 anchor slots to empty lists
         EquippedItems = new Dictionary<EquipmentAnchor, List<Item>>();
@@ -499,26 +499,4 @@ public abstract class PartyMember
     /// <summary>Current HP = max HP minus total wound count (all severities cost 1 HP).</summary>
     public int CurrentHp => Math.Max(0, MaxHp - Wounds.Count);
 
-    // ── Debug wound initialisation ────────────────────────────────
-    private static List<Wound> InitializeDebugWounds(IAnatomyFactory factory)
-    {
-        var woundMap = factory.GetWoundClassMap();
-        var specific = woundMap.Values
-            .Where(w => w.TargetKind != WoundTargetKind.Wildcard).ToList();
-        var rng = new Random();
-        int count = rng.Next(2, 5);
-        var result = specific.OrderBy(_ => rng.Next()).Take(count).ToList<Wound>();
-        // Add 1-2 wildcard wounds with placeholder positions (will be assigned by viewer)
-        var wildcards = woundMap.Values.OfType<WildcardWound>().ToList();
-        if (wildcards.Count > 0)
-        {
-            int wc = rng.Next(1, 3);
-            foreach (var template in wildcards.OrderBy(_ => rng.Next()).Take(wc))
-            {
-                var instance = (WildcardWound)System.Activator.CreateInstance(template.GetType())!;
-                result.Add(instance);
-            }
-        }
-        return result;
-    }
 }

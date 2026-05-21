@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Glyph.Microworld;
+using Cathedral.Game.Narrative;
 using Cathedral.Pathfinding;
 
 namespace Cathedral.Game
@@ -137,9 +138,12 @@ namespace Cathedral.Game
         /// <summary>
         /// Computes the aggregated travel estimate for a resolved path. The first vertex
         /// (the protagonist's current cell) is treated as already-occupied and not counted.
+        /// Pass <paramref name="protagonist"/> to get a humor-aware starvation estimate;
+        /// omit it (or pass null) to fall back to the legacy linear stub.
         /// </summary>
         public static TravelEstimate EstimateForPath(IReadOnlyList<int> path,
-            Func<int, string?> getBiomeNameForVertex)
+            Func<int, string?> getBiomeNameForVertex,
+            PartyMember? protagonist = null)
         {
             if (path == null || path.Count < 2)
                 return new TravelEstimate { HasPath = false };
@@ -181,9 +185,11 @@ namespace Cathedral.Game
             double anyNoEncounter = breakdown.Aggregate(1.0, (acc, t) => acc * (1.0 - t.Chance));
             float totalChance = (float)(1.0 - anyNoEncounter);
 
-            // Stub starvation curve until protagonist humor integration: linear ramp once
-            // total heat exceeds 20 units, full risk at 60.
-            float starvation = MathClamp01((heat - 20f) / 40f);
+            // Starvation risk: use humor-queue model when protagonist is available,
+            // otherwise fall back to the legacy linear stub.
+            float starvation = protagonist != null
+                ? ComputeStarvationRisk(heat, protagonist)
+                : MathClamp01((heat - 20f) / 40f);
 
             return new TravelEstimate
             {
@@ -199,5 +205,82 @@ namespace Cathedral.Game
         }
 
         private static float MathClamp01(float v) => v < 0f ? 0f : (v > 1f ? 1f : v);
+
+        /// <summary>
+        /// Mean-field starvation risk estimate based on the protagonist's current humor
+        /// queue state and the trip's total vital-heat requirement.
+        ///
+        /// starvation = clamp(deficit / recoveryBudget, 0, 1)
+        ///
+        /// Where deficit = tripVH − vNetCurrent, recoveryBudget = capacity × effectiveMu,
+        /// capacity = Q / p_bb_avg (consumptions before all queues critical), and
+        /// effectiveMu = max(0.05, muAvg) floors recovery so sick organs don't hit 100%
+        /// instantly. Returns 0 when the current queue already covers the trip.
+        /// </summary>
+        private static float ComputeStarvationRisk(float tripVH, PartyMember protagonist)
+        {
+            if (tripVH <= 0f) return 0f;
+
+            var queues = protagonist.HumorQueues;
+
+            // ── 1. Audit current queue contents ──────────────────────────────
+            int   totalConsumable = 0;
+            float vNetCurrent     = 0f;
+
+            foreach (var queue in queues.All)
+            {
+                foreach (var humor in queue.Items)
+                {
+                    if (humor.IsBlackBile) continue;
+                    totalConsumable++;
+                    vNetCurrent += humor.VitalHeat;
+                }
+            }
+
+            if (totalConsumable == 0) return 1f; // all queues already critical
+
+            // If the current queue's net VH already covers the trip, the protagonist
+            // will finish before exhausting all non-black-bile humors → starvation impossible.
+            if (vNetCurrent >= tripVH) return 0f;
+
+            // ── 2. Organ secretion parameters ─────────────────────────────────
+            float pBBSum  = 0f;
+            float muSum   = 0f;
+            int   nOrgans = 0;
+
+            foreach (var queue in queues.All)
+            {
+                var organ = protagonist.GetOrganById(queue.OrganId);
+                float s = organ?.Score ?? 5f;
+
+                float pBlood  = MathClamp01((s * 8f - 3f) / 100f);
+                float pYellow = MathClamp01((40f - s * 3f) / 100f);
+                float pBB     = MathClamp01((50f - s * 5f) / 100f);
+
+                pBBSum += pBB;
+                muSum  += pBlood - pYellow; // μ(s): expected VH per secretion
+                nOrgans++;
+            }
+
+            if (nOrgans == 0) return 1f;
+
+            float pBBAvg = pBBSum / nOrgans;
+            float muAvg  = muSum  / nOrgans;
+
+            if (pBBAvg <= 0f) return 0f; // organs can never secrete black bile → no critical risk
+
+            // ── 3. Queue capacity (expected consumptions before critical) ─────
+            float capacity = totalConsumable / pBBAvg;
+
+            // ── 4. Starvation risk as fraction of recovery budget consumed ────
+            // recoveryBudget = total expected net VH the protagonist can generate
+            // from secretions over the full queue lifetime.  A floor of 0.05
+            // (≈ minimum blood-secretion rate at organ score 1) prevents an instant
+            // jump to 100% for sick organs while still making them very vulnerable.
+            const float MinRecoveryRate = 0.05f;
+            float recoveryBudget = capacity * Math.Max(MinRecoveryRate, muAvg);
+
+            return MathClamp01((tripVH - vNetCurrent) / recoveryBudget);
+        }
     }
 }

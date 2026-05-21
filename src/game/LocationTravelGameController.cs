@@ -83,6 +83,17 @@ public class LocationTravelGameController : IDisposable
     // Tracks a cell that was flashed as "forbidden" so it can be cleared after a tick.
     private int _forbiddenFlashVertex = -1;
     private int _forbiddenFlashFramesLeft = 0;
+
+    // Travel progress — vital heat consumption during Traveling mode
+    private TravelProgressRenderer? _travelProgressRenderer;
+    private readonly Random _travelRng = new Random();
+    private float _tripVhRequired;
+    private float _tripVhConsumedNet;
+    private float _tripVhDebt;
+
+    // Death screen
+    private DeathScreenRenderer? _deathScreenRenderer;
+    private DeathCause _deathCause;
     
     // Location state storage (keyed by vertex index)
     private readonly Dictionary<int, LocationInstanceState> _locationStates = new();
@@ -199,7 +210,7 @@ public class LocationTravelGameController : IDisposable
         }
     }
 
-    public void Update()
+    public void Update(float deltaTime = 0f)
     {
         // If LLM finished loading, transition to main menu (executed on main thread)
         if (_llmBecameReady)
@@ -362,6 +373,13 @@ public class LocationTravelGameController : IDisposable
             RenderWorldViewUI();
         }
 
+        // Render travel progress box and advance flash animation during Traveling.
+        if (_currentMode == GameMode.Traveling && _travelProgressRenderer != null)
+        {
+            _travelProgressRenderer.Update(deltaTime);
+            _travelProgressRenderer.Draw();
+        }
+
         // Update popup terminal with location info
         UpdatePopupTerminal();
     }
@@ -506,6 +524,18 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellClicked(int x, int y)
     {
+        // Death screen: END RUN button
+        if (_currentMode == GameMode.Death && _deathScreenRenderer != null)
+        {
+            if (_deathScreenRenderer.IsOverEndRunButton(x, y))
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                _hasGameStarted = false; // disable Continue
+                SetMode(GameMode.MainMenu);
+            }
+            return;
+        }
+
         // WorldView: only the TRAVEL and CLEAR buttons on the bottom travel info box
         // are clickable (everything else is transparent and falls through to the world
         // sphere via TerminalHUD.TransparentClickPassthrough).
@@ -662,6 +692,7 @@ public class LocationTravelGameController : IDisposable
             ? "travel-button"
             : (_travelInfoRenderer != null && _travelInfoRenderer.IsOverClearButton(x, y))
                 ? "travel-clear-button" : null,
+        GameMode.Death => _deathScreenRenderer?.IsOverEndRunButton(x, y) == true ? "death-end-run" : null,
         _ => $"cell:{x},{y}", // ProtagonistManagement, etc. — each cell is its own element
     };
 
@@ -672,6 +703,7 @@ public class LocationTravelGameController : IDisposable
     {
         // Track hover for the travel UI so the TRAVEL button highlights.
         _travelInfoRenderer?.SetHover(x, y);
+        _deathScreenRenderer?.SetHover(x, y);
 
         // Only fire hover tick when entering a NEW interactive element.
         // Narrative modes (LocationInteraction, Fighting, Dialogue, ChildhoodReminescence) handle
@@ -687,6 +719,13 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode == GameMode.MainMenu && _mainMenuRenderer != null)
         {
             _mainMenuRenderer.OnMouseMove(x, y);
+            return;
+        }
+
+        // Death screen: redraw so END RUN button highlight stays current
+        if (_currentMode == GameMode.Death && _deathScreenRenderer != null)
+        {
+            _deathScreenRenderer.Draw(_deathCause);
             return;
         }
         
@@ -850,6 +889,10 @@ public class LocationTravelGameController : IDisposable
             case GameMode.GetUp:
                 OnEnterGetUp();
                 break;
+
+            case GameMode.Death:
+                OnEnterDeath();
+                break;
         }
 
         ModeChanged?.Invoke(oldMode, newMode);
@@ -1000,7 +1043,8 @@ public class LocationTravelGameController : IDisposable
 
         _plannedPath = path;
         _plannedEstimate = TravelPlanner.EstimateForPath(path,
-            v => _interface.GetBiomeNameAt(v));
+            v => _interface.GetBiomeNameAt(v),
+            _protagonist);
 
         _interface.ShowPlannedPath(path, _travelPlanner.Waypoints);
         // Hover preview now extends from the last waypoint (the "tail" of the plan).
@@ -1055,7 +1099,19 @@ public class LocationTravelGameController : IDisposable
         _interface.ClearPlannedPath();
         _travelPlanner.Clear();
         _plannedPath = null;
+
+        // Initialise trip vital-heat tracking
+        float tripVhRequired = _plannedEstimate?.TotalVitalHeat ?? 1f;
+        _tripVhRequired    = MathF.Max(1f, tripVhRequired);
+        _tripVhConsumedNet = 0f;
+        _tripVhDebt        = 0f;
+
         _plannedEstimate = null;
+
+        // Create the travel progress renderer once and initialise the trip
+        if (_travelProgressRenderer == null)
+            _travelProgressRenderer = new TravelProgressRenderer(_core.Terminal);
+        _travelProgressRenderer.StartTrip(_tripVhRequired);
 
         SetMode(GameMode.Traveling);
         TravelStarted?.Invoke();
@@ -1063,6 +1119,55 @@ public class LocationTravelGameController : IDisposable
 
         Console.WriteLine($"LocationTravelGameController: Starting planned travel "
             + $"to vertex {_destinationVertex} via {pathVertices.Count - 1} cells");
+    }
+
+    /// <summary>
+    /// Called every time the protagonist steps into a new vertex during travel.
+    /// Consumes vital heat from the humor queues based on the biome's travel cost.
+    /// Triggers death by starvation if all humor queues become critical.
+    /// </summary>
+    public void OnProtagonistSteppedToVertex(int vertexIndex)
+    {
+        if (_currentMode != GameMode.Traveling) return;
+        if (_protagonist == null) return;
+
+        // Look up biome travel cost for this vertex
+        string biomeName = _interface.GetBiomeNameAt(vertexIndex) ?? "unknown";
+        var biomeInfo = Cathedral.Glyph.Microworld.BiomeTravelDatabase.GetFor(biomeName);
+        _tripVhDebt += biomeInfo.VitalHeatPerCell;
+
+        // Consume humors until the accumulated VH debt is paid.
+        // Negative-VH humors (Yellow Bile, Melancholia) increase the debt,
+        // so the loop keeps consuming until enough net VH is generated.
+        while (_tripVhDebt >= 1.0f)
+        {
+            var humor = _protagonist.HumorQueues.ConsumeCycled(_protagonist, _travelRng);
+            if (humor == null)
+            {
+                // All queues critical — starvation death
+                _travelProgressRenderer?.Erase();
+                TriggerDeath(DeathCause.Starvation);
+                return;
+            }
+
+            // Subtract the humor's actual VH from the debt.
+            // Positive (Blood +1): pays down debt normally.
+            // Neutral (Phlegm 0): no progress — loop continues.
+            // Negative (Yellow Bile −1, Melancholia −2): increases debt, more humors needed.
+            _tripVhDebt -= humor.VitalHeat;
+            _tripVhConsumedNet += humor.VitalHeat;
+
+            _travelProgressRenderer?.RegisterConsumption(biomeName, humor, _tripVhConsumedNet);
+        }
+    }
+
+    /// <summary>
+    /// Triggers death with the given cause, transitioning to the Death game mode.
+    /// </summary>
+    public void TriggerDeath(DeathCause cause)
+    {
+        _deathCause = cause;
+        SetMode(GameMode.Death);
     }
 
     /// <summary>
@@ -1079,6 +1184,7 @@ public class LocationTravelGameController : IDisposable
         // Travel done — any leftover planning state should be wiped before the player
         // re-enters WorldView.
         ClearTravelPlan();
+        _travelProgressRenderer?.Erase();
         TravelCompleted?.Invoke();
         
         // Enter interaction mode - use location if available, otherwise use biome
@@ -1403,6 +1509,18 @@ public class LocationTravelGameController : IDisposable
         // Disable narration mode (world is visible during travel)
         _core.SetNarrationMode(false);
         // Could show travel info in terminal
+    }
+
+    private void OnEnterDeath()
+    {
+        Console.WriteLine($"LocationTravelGameController: Protagonist died — {_deathCause}");
+        _ambianceEngine?.SetActiveTrackCount(0);
+        _core.SetNarrationMode(true);
+
+        if (_deathScreenRenderer == null)
+            _deathScreenRenderer = new DeathScreenRenderer(_core.Terminal);
+
+        _deathScreenRenderer.Draw(_deathCause);
     }
 
     private void OnEnterLocationInteraction()

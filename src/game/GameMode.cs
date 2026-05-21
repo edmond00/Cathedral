@@ -80,5 +80,11 @@ public enum GameMode
     /// Protagonist is in dialogue with an NPC within the narrative.
     /// Dialogue system runs on the main terminal; narrative resumes when dialogue ends.
     /// </summary>
-    Dialogue
+    Dialogue,
+
+    /// <summary>
+    /// The protagonist has died. Shows a purple death screen with cause of death
+    /// and an "End Run" button that returns to the main menu.
+    /// </summary>
+    Death
 }

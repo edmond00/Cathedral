@@ -107,11 +107,14 @@ public sealed class HumorQueueSet
     /// </summary>
     public void Initialize(PartyMember member, Random rng)
     {
+        var blood = new BloodHumor();
         foreach (var queue in All)
         {
+            queue.FillWith(blood);
             var organ = member.GetOrganById(queue.OrganId);
             int score = organ?.Score ?? 5;
-            queue.FillWithSecretion(score, rng);
+            for (int i = 0; i < 10; i++)
+                queue.Secrete(score, rng);
         }
     }
 

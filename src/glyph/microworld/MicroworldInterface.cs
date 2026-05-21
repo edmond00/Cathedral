@@ -74,6 +74,13 @@ namespace Cathedral.Glyph.Microworld
         public event Action<ProtagonistArrivalInfo>? ProtagonistArrivedAtLocation;
 
         /// <summary>
+        /// Fires every time the protagonist moves to a new vertex during travel,
+        /// including the final step (before <see cref="ProtagonistArrivedAtLocation"/>).
+        /// Carries the vertex index that was just entered.
+        /// </summary>
+        public event Action<int>? ProtagonistSteppedToVertex;
+
+        /// <summary>
         /// Detailed information about protagonist arrival at a vertex
         /// </summary>
         public record ProtagonistArrivalInfo(
@@ -1031,6 +1038,7 @@ namespace Cathedral.Glyph.Microworld
                     }
                     
                     PlaceProtagonist(nextVertex, centerCamera: true); // Focus camera on protagonist with each step
+                    ProtagonistSteppedToVertex?.Invoke(nextVertex);
                     
                     if (_pathIndex >= _currentPath.Length - 1)
                     {

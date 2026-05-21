@@ -104,6 +104,16 @@ public sealed class HumorQueue
     }
 
     /// <summary>
+    /// Fill every slot with the provided humor instance.
+    /// Used during protagonist creation to start with a pure Blood baseline.
+    /// </summary>
+    public void FillWith(BodyHumor humor)
+    {
+        for (int i = 0; i < Capacity; i++)
+            _items[i] = humor;
+    }
+
+    /// <summary>
     /// Organ secretion: generate a new random humor, insert at front, remove from back.
     /// If the queue is critical (all black bile) nothing happens.
     /// Returns the newly secreted humor, or null when critical.
