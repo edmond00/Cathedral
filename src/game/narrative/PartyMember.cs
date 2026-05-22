@@ -199,11 +199,10 @@ public abstract class PartyMember
 
     private void RandomizeOrganScores()
     {
-        var rng = new Random();
         foreach (var bp in _bodyParts)
             foreach (var organ in bp.Organs)
                 foreach (var part in organ.Parts)
-                    part.Score = rng.Next(1, part.MaxScore + 1);
+                    part.Score = 1;
     }
 
     private HumorQueueSet InitializeHumorQueues()

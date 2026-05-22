@@ -122,11 +122,12 @@ public class ProtagonistCreationRenderer
 
     private void RenderFooter()
     {
-        int totalScore = _viewer.GetTotalScore();
+        int remaining = _viewer.GetRemainingPoints();
 
         _terminal.Text(BodyArtViewer.PanelContentX, 92, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
-        string pointsText = $"Total Points: {totalScore}";
-        _terminal.Text(BodyArtViewer.PanelContentX, 94, pointsText, Config.Colors.LightGray75, Config.Colors.Black);
+        Vector4 pointsColor = remaining > 0 ? Config.Colors.BrightYellow : Config.Colors.DarkGray35;
+        string pointsText = $"Points: {remaining}/{BodyArtViewer.PointBudget} remaining";
+        _terminal.Text(BodyArtViewer.PanelContentX, 94, pointsText, pointsColor, Config.Colors.Black);
 
         Vector4 btnText, btnBg;
         if (_continueHovered)

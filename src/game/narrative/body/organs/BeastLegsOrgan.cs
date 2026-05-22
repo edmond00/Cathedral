@@ -30,23 +30,27 @@ public class BeastLegsOrgan : Organ
     {
         public override string Id => "left_foreleg";
         public override string DisplayName => "Left Foreleg";
+        public override int DefaultMaxScore => 4;
     }
 
     public sealed class RightForeleg : OrganPart
     {
         public override string Id => "right_foreleg";
         public override string DisplayName => "Right Foreleg";
+        public override int DefaultMaxScore => 4;
     }
 
     public sealed class LeftHindleg : OrganPart
     {
         public override string Id => "left_hindleg";
         public override string DisplayName => "Left Hindleg";
+        public override int DefaultMaxScore => 4;
     }
 
     public sealed class RightHindleg : OrganPart
     {
         public override string Id => "right_hindleg";
         public override string DisplayName => "Right Hindleg";
+        public override int DefaultMaxScore => 4;
     }
 }

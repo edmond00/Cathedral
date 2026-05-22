@@ -23,5 +23,6 @@ public class PinealGlandOrgan : Organ
     {
         public override string Id => "pineal_gland";
         public override string DisplayName => "Pineal Gland";
+        public override int DefaultMaxScore => 3;
     }
 }

@@ -23,5 +23,6 @@ public class SnoutOrgan : Organ
     {
         public override string Id => "snout";
         public override string DisplayName => "Snout";
+        public override int DefaultMaxScore => 4;
     }
 }

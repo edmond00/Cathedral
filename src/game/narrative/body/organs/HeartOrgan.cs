@@ -23,5 +23,6 @@ public class HeartOrgan : Organ
     {
         public override string Id => "heart";
         public override string DisplayName => "Heart";
+        public override int DefaultMaxScore => 4;
     }
 }

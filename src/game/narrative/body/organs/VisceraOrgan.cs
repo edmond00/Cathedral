@@ -23,5 +23,6 @@ public class VisceraOrgan : Organ
     {
         public override string Id => "viscera";
         public override string DisplayName => "Viscera";
+        public override int DefaultMaxScore => 4;
     }
 }

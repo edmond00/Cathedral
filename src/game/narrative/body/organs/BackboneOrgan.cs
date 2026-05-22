@@ -23,5 +23,6 @@ public class BackboneOrgan : Organ
     {
         public override string Id => "backbone";
         public override string DisplayName => "Backbone";
+        public override int DefaultMaxScore => 4;
     }
 }

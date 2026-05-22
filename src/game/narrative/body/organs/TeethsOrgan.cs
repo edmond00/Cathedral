@@ -23,5 +23,6 @@ public class TeethsOrgan : Organ
     {
         public override string Id => "teeths";
         public override string DisplayName => "Teeths";
+        public override int DefaultMaxScore => 2;
     }
 }

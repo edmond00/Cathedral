@@ -91,6 +91,10 @@ public class LocationTravelGameController : IDisposable
     private float _tripVhConsumedNet;
     private float _tripVhDebt;
 
+    // Per-frame consumption state
+    private bool   _consumptionActive = false;
+    private string _consumptionBiome  = "unknown";
+
     // Death screen
     private DeathScreenRenderer? _deathScreenRenderer;
     private DeathCause _deathCause;
@@ -376,6 +380,35 @@ public class LocationTravelGameController : IDisposable
         // Render travel progress box and advance flash animation during Traveling.
         if (_currentMode == GameMode.Traveling && _travelProgressRenderer != null)
         {
+            // Per-frame humor consumption: drain one humor per frame while debt is owed,
+            // keeping the protagonist paused until the bill is fully paid.
+            if (_consumptionActive && _protagonist != null)
+            {
+                if (_tripVhDebt >= 1.0f)
+                {
+                    var humor = _protagonist.HumorQueues.ConsumeCycled(_protagonist, _travelRng);
+                    if (humor == null)
+                    {
+                        // All queues critical — starvation death
+                        _travelProgressRenderer.Erase();
+                        _consumptionActive        = false;
+                        _interface.MovementPaused = false;
+                        TriggerDeath(DeathCause.Starvation);
+                        return;
+                    }
+
+                    _tripVhDebt        -= humor.VitalHeat;
+                    _tripVhConsumedNet += humor.VitalHeat;
+                    _travelProgressRenderer.RegisterConsumption(_consumptionBiome, humor, _tripVhConsumedNet);
+                }
+                else
+                {
+                    // Debt fully paid — resume protagonist movement
+                    _consumptionActive        = false;
+                    _interface.MovementPaused = false;
+                }
+            }
+
             _travelProgressRenderer.Update(deltaTime);
             _travelProgressRenderer.Draw();
         }
@@ -1131,33 +1164,18 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode != GameMode.Traveling) return;
         if (_protagonist == null) return;
 
-        // Look up biome travel cost for this vertex
+        // Accumulate biome travel cost into the debt.
         string biomeName = _interface.GetBiomeNameAt(vertexIndex) ?? "unknown";
         var biomeInfo = Cathedral.Glyph.Microworld.BiomeTravelDatabase.GetFor(biomeName);
-        _tripVhDebt += biomeInfo.VitalHeatPerCell;
+        _consumptionBiome  = biomeName;
+        _tripVhDebt       += biomeInfo.VitalHeatPerCell;
 
-        // Consume humors until the accumulated VH debt is paid.
-        // Negative-VH humors (Yellow Bile, Melancholia) increase the debt,
-        // so the loop keeps consuming until enough net VH is generated.
-        while (_tripVhDebt >= 1.0f)
+        // If debt has reached a full unit, pause movement so Update() can drain it
+        // one humor per frame before the protagonist takes the next step.
+        if (_tripVhDebt >= 1.0f && !_consumptionActive)
         {
-            var humor = _protagonist.HumorQueues.ConsumeCycled(_protagonist, _travelRng);
-            if (humor == null)
-            {
-                // All queues critical — starvation death
-                _travelProgressRenderer?.Erase();
-                TriggerDeath(DeathCause.Starvation);
-                return;
-            }
-
-            // Subtract the humor's actual VH from the debt.
-            // Positive (Blood +1): pays down debt normally.
-            // Neutral (Phlegm 0): no progress — loop continues.
-            // Negative (Yellow Bile −1, Melancholia −2): increases debt, more humors needed.
-            _tripVhDebt -= humor.VitalHeat;
-            _tripVhConsumedNet += humor.VitalHeat;
-
-            _travelProgressRenderer?.RegisterConsumption(biomeName, humor, _tripVhConsumedNet);
+            _consumptionActive        = true;
+            _interface.MovementPaused = true;
         }
     }
 
@@ -1167,6 +1185,7 @@ public class LocationTravelGameController : IDisposable
     public void TriggerDeath(DeathCause cause)
     {
         _deathCause = cause;
+        _interface.MovementPaused = true;
         SetMode(GameMode.Death);
     }
 

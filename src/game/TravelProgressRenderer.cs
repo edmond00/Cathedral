@@ -24,7 +24,7 @@ public sealed class TravelProgressRenderer
     private float   _totalRequired  = 1f;
     private float   _consumedNet    = 0f;
 
-    // Flash animation for the last consumed humor
+    // Flash animation for the currently consumed humor
     private BodyHumor? _flashHumor  = null;
     private float      _flashTimer  = 0f;
     private const float FlashDuration = 0.35f;
@@ -61,12 +61,16 @@ public sealed class TravelProgressRenderer
     /// Called by the controller on each travel step to update biome and register
     /// a consumed humor for the flash animation.
     /// </summary>
+    /// <summary>
+    /// Called once per frame by the controller when a humor is consumed.
+    /// Each call replaces the current flash so each humor is visible for one frame.
+    /// </summary>
     public void RegisterConsumption(string biomeName, BodyHumor humor, float tripVhConsumedNet)
     {
-        _biomeName     = biomeName;
-        _consumedNet   = tripVhConsumedNet;
-        _flashHumor    = humor;
-        _flashTimer    = FlashDuration;
+        _biomeName   = biomeName;
+        _consumedNet = tripVhConsumedNet;
+        _flashHumor  = humor;
+        _flashTimer  = FlashDuration;
     }
 
     /// <summary>Advance the flash timer each frame.</summary>
@@ -103,11 +107,11 @@ public sealed class TravelProgressRenderer
         // Progress bar (row contentY+4)
         DrawProgressBar(innerL, contentY + 4, innerW);
 
-        // VH counter row (contentY+5)
+        // VH counter row (contentY+6, with an empty line at contentY+5)
         string vhText = $"{_consumedNet:F1} / {_totalRequired:F1} VH";
-        _terminal.Text(innerL, contentY + 5, vhText, ValueColor, BgColor);
+        _terminal.Text(innerL, contentY + 6, vhText, ValueColor, BgColor);
 
-        // Humor flash (right-aligned on the same row, contentY+5)
+        // Humor flash (right-aligned on the same row, contentY+6)
         if (_flashTimer > 0f && _flashHumor != null)
         {
             string sign   = _flashHumor.VitalHeat >= 0 ? "+" : "";
@@ -115,7 +119,7 @@ public sealed class TravelProgressRenderer
             flash = Truncate(flash, innerW - vhText.Length - 1);
             int fx = _boxX + BoxW - 2 - flash.Length;
             if (fx > innerL + vhText.Length + 1)
-                _terminal.Text(fx, contentY + 5, flash, _flashHumor.Color, BgColor);
+                _terminal.Text(fx, contentY + 6, flash, _flashHumor.Color, BgColor);
         }
 
         _painted = true;

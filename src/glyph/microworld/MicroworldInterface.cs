@@ -138,6 +138,12 @@ namespace Cathedral.Glyph.Microworld
         // ── External travel control ─────────────────────────────────────────────────
 
         /// <summary>
+        /// When true, <see cref="UpdateMovement"/> is suspended so the controller can
+        /// process per-frame humor consumption before allowing the next vertex step.
+        /// </summary>
+        public bool MovementPaused { get; set; } = false;
+
+        /// <summary>
         /// When enabled, the interface stops auto-starting movement on world clicks.
         /// The owning controller becomes responsible for queuing waypoints and calling
         /// <see cref="BeginTravelAlongPath"/> once the player commits to a route.
@@ -1008,6 +1014,7 @@ namespace Cathedral.Glyph.Microworld
 
         private void UpdateMovement(float deltaTime)
         {
+            if (MovementPaused) return;
             if (_currentPath == null || _pathIndex >= _currentPath.Length - 1) return;
 
             // Calculate threshold for this frame

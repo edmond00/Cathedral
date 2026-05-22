@@ -24,11 +24,13 @@ public class FeetOrgan : Organ
     {
         public override string Id => "left_foot";
         public override string DisplayName => "Left Foot";
+        public override int DefaultMaxScore => 3;
     }
     
     public sealed class RightFootPart : OrganPart
     {
         public override string Id => "right_foot";
         public override string DisplayName => "Right Foot";
+        public override int DefaultMaxScore => 3;
     }
 }

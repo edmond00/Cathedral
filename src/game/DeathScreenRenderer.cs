@@ -56,8 +56,6 @@ public sealed class DeathScreenRenderer
     /// </summary>
     public void Draw(DeathCause cause)
     {
-        // Fill entire screen with near-black
-        _terminal.Fill(' ', Config.Colors.Black, Config.Colors.Black);
         _terminal.Visible = true;
 
         _boxX = (_terminal.Width  - BoxW) / 2;

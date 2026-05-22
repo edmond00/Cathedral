@@ -8,25 +8,25 @@
 
 - working memory capacity
 
-### ANAMNESIS
+### ANAMNESIS (5)
 
 - residual memory capacity
 
-### CEREBRUM
+### CEREBRUM (5)
 
 - semantic memory capacity
 - chance of self-learning
 
-### CEREBELLUM
+### CEREBELLUM (5)
 
 - procedural memory capacity
 - chance to learn by wielding
 
-### HYPOCAMPUS
+### HYPOCAMPUS (5)
 
 - sensory memory capacity
 
-### PINEAL GLAND
+### PINEAL GLAND (3)
 
 - modus mentis XP factor
 
@@ -34,24 +34,24 @@
 
 - beauty
 
-### EARS
+### EARS (3)
 
 - initiative
 - travel ennemies encounter avoidance chance
 
-### EYES
+### EYES (3)
 
 - field of view (during fighting)
 
-### NOSE
+### NOSE (3)
 
 - consummable chemical composition identification level
 
-### TEETH
+### TEETH (2)
 
 - can eat hard food (bool)
 
-### TONGUE
+### TONGUE (3)
 
 - speech fluency
 
@@ -59,11 +59,11 @@
 
 - natural attack
 
-### ARM
+### ARM (4)
 
 - fighting skill medium level
 
-### HAND
+### HAND (5)
 
 - item usage dexterity bonus
 - fighting skill medium level
@@ -72,12 +72,12 @@
 
 - natural defense
 
-### LEG
+### LEG (4)
 
 - move speed
 - fighting skill medium level
 
-### FOOT
+### FOOT (3)
 
 - runaway chance
 - fighting skill medium level
@@ -86,38 +86,38 @@
 
 - health point
 
-### BACKBONE
+### BACKBONE (4)
 
 - cinetic points
 - max carrying weights
 - body damage resistance
 
-### PAUNCH
+### PAUNCH (5)
 
 - secretions
 
-### PULMONES
+### PULMONES (5)
 
 - secretions
 
-### SPLEEN
+### SPLEEN (5)
 
 - secretions
 
-### GENITORIES
+### GENITORIES (2)
 
 - gender
 
-### HEART
+### HEART (4)
 
 - max companions
 - lifetime
 
-### HEPAR
+### HEPAR (5)
 
 - secretions
 
-### VISCERA
+### VISCERA (4)
 
 - desease resistance
 - fighting skill medium level (skill like rage, cold blodd, ...)
@@ -130,9 +130,9 @@
 
 ## MUZZLE
 
-### SNOUT (no nose)
+### SNOUT (no nose) (4)
 
-### FANGS (no teeth)
+### FANGS (no teeth) (5)
 
 ## LIMBS
 
@@ -147,3 +147,11 @@
 ### no upper limb
 
 ### no lower limb
+
+### LIMB (4)
+
+### CLAW (5)
+
+## ENCEPHALON
+
+same organs but lower max levels (2 for pineal, 3 for other organs)

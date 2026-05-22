@@ -23,11 +23,13 @@ public class EarsOrgan : Organ
     {
         public override string Id => "left_ear";
         public override string DisplayName => "Left Ear";
+        public override int DefaultMaxScore => 3;
     }
     
     public sealed class RightEarPart : OrganPart
     {
         public override string Id => "right_ear";
         public override string DisplayName => "Right Ear";
+        public override int DefaultMaxScore => 3;
     }
 }

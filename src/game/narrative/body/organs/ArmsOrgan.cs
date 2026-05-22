@@ -24,11 +24,13 @@ public class ArmsOrgan : Organ
     {
         public override string Id => "left_arm";
         public override string DisplayName => "Left Arm";
+        public override int DefaultMaxScore => 4;
     }
     
     public sealed class RightArmPart : OrganPart
     {
         public override string Id => "right_arm";
         public override string DisplayName => "Right Arm";
+        public override int DefaultMaxScore => 4;
     }
 }

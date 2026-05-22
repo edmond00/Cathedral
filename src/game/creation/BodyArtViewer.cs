@@ -29,6 +29,10 @@ public class BodyArtViewer
     public const int PanelWidth = 32;
     public const int PanelContentX = 70;
     public const int PanelContentW = 28;
+    public const int MaxBarWidth = 5;
+
+    // ── Creation point budget ─────────────────────────────────────
+    public const int PointBudget = 25;
 
     // ── Configuration ────────────────────────────────────────────
     /// <summary>Horizontal offset for the body art (default 0, increase to shift art right).</summary>
@@ -774,6 +778,10 @@ public class BodyArtViewer
                         }
                     }
 
+                    // ── Padding: align arrows to fixed column ──────────────────────
+                    for (int i = barWidth; i < MaxBarWidth; i++)
+                        _terminal.SetCell(barX + i, row, ' ', Config.Colors.Black, bg);
+
                     // ── Score digit ───────────────────────────────────────────────
                     char scoreDigit = partIsDisabled ? 'X' :
                         (partIsWounded && !isHoveredPart && !isHoveredOrgan)
@@ -790,21 +798,21 @@ public class BodyArtViewer
                         Vector4 incColor = isIncHovered ? Config.Colors.BrightYellow
                                          : isHoveredPart ? Config.Colors.MediumYellow
                                          : Config.Colors.DarkGray35;
-                        _terminal.SetCell(barX + barWidth,     row, ' ',         Config.Colors.Black, bg);
-                        _terminal.SetCell(barX + barWidth + 1, row, '◄',         decColor, bg);
-                        _terminal.SetCell(barX + barWidth + 2, row, scoreDigit,  scoreFg,  bg);
-                        _terminal.SetCell(barX + barWidth + 3, row, '►',         incColor, bg);
-                        _rowToArrowX[row] = (barX + barWidth + 1, barX + barWidth + 3);
+                        _terminal.SetCell(barX + MaxBarWidth,     row, ' ',         Config.Colors.Black, bg);
+                        _terminal.SetCell(barX + MaxBarWidth + 1, row, '◄',         decColor, bg);
+                        _terminal.SetCell(barX + MaxBarWidth + 2, row, scoreDigit,  scoreFg,  bg);
+                        _terminal.SetCell(barX + MaxBarWidth + 3, row, '►',         incColor, bg);
+                        _rowToArrowX[row] = (barX + MaxBarWidth + 1, barX + MaxBarWidth + 3);
 
-                        for (int fx = barX + barWidth + 4; fx < PanelX + PanelWidth; fx++)
+                        for (int fx = barX + MaxBarWidth + 4; fx < PanelX + PanelWidth; fx++)
                             _terminal.SetCell(fx, row, ' ', Config.Colors.Black, bg);
                     }
                     else
                     {
-                        _terminal.SetCell(barX + barWidth,     row, ' ',        Config.Colors.Black, bg);
-                        _terminal.SetCell(barX + barWidth + 1, row, scoreDigit, scoreFg,  bg);
+                        _terminal.SetCell(barX + MaxBarWidth,     row, ' ',        Config.Colors.Black, bg);
+                        _terminal.SetCell(barX + MaxBarWidth + 1, row, scoreDigit, scoreFg,  bg);
 
-                        for (int fx = barX + barWidth + 2; fx < PanelX + PanelWidth; fx++)
+                        for (int fx = barX + MaxBarWidth + 2; fx < PanelX + PanelWidth; fx++)
                             _terminal.SetCell(fx, row, ' ', Config.Colors.Black, bg);
                     }
 
@@ -1058,6 +1066,7 @@ public class BodyArtViewer
 
     /// <summary>
     /// Adjusts the score of an organ part on the protagonist.
+    /// Increases are gated by the remaining creation point budget.
     /// </summary>
     public void AdjustOrganPartScore(string organPartName, int delta)
     {
@@ -1066,12 +1075,14 @@ public class BodyArtViewer
             .SelectMany(o => o.Parts)
             .FirstOrDefault(p => p.Id == organPartName);
 
-        if (organPart != null)
-            organPart.Score = Math.Clamp(organPart.Score + delta, 0, organPart.MaxScore);
+        if (organPart == null) return;
+        if (delta > 0 && GetRemainingPoints() <= 0) return;
+        organPart.Score = Math.Clamp(organPart.Score + delta, 0, organPart.MaxScore);
     }
 
     /// <summary>
-    /// Cycles the score of an organ part: increments by 1, wrapping back to 0 after MaxScore.
+    /// Cycles the score of an organ part: increments by 1, wrapping back to 1 after MaxScore.
+    /// Increments are gated by the remaining creation point budget.
     /// </summary>
     public void CycleOrganPartScore(string organPartName)
     {
@@ -1080,8 +1091,11 @@ public class BodyArtViewer
             .SelectMany(o => o.Parts)
             .FirstOrDefault(p => p.Id == organPartName);
 
-        if (organPart != null)
-            organPart.Score = organPart.Score >= organPart.MaxScore ? 0 : organPart.Score + 1;
+        if (organPart == null) return;
+        if (organPart.Score >= organPart.MaxScore)
+            organPart.Score = 0;           // wrap back to 0, freeing all points
+        else if (GetRemainingPoints() > 0)
+            organPart.Score++;             // spend one point
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1095,6 +1109,18 @@ public class BodyArtViewer
             .SelectMany(bp => bp.Organs)
             .SelectMany(o => o.Parts)
             .Sum(p => p.Score);
+    }
+
+    /// <summary>
+    /// Points remaining in the creation budget (each organ starts at 1; budget covers extras).
+    /// </summary>
+    public int GetRemainingPoints()
+    {
+        int organCount = _protagonist.BodyParts
+            .SelectMany(bp => bp.Organs)
+            .SelectMany(o => o.Parts)
+            .Count();
+        return PointBudget - (GetTotalScore() - organCount);
     }
 
     /// <summary>Finds organ part info by its string id.</summary>

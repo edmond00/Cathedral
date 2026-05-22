@@ -23,5 +23,6 @@ public class GenitoriesOrgan : Organ
     {
         public override string Id => "genitories";
         public override string DisplayName => "Genitories";
+        public override int DefaultMaxScore => 1;
     }
 }
