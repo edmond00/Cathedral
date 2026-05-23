@@ -478,9 +478,9 @@ namespace Cathedral.Glyph.Microworld
 
             if (suitableVertices.Count > 0)
             {
-                _protagonistVertex = suitableVertices[animationRandom.Next(suitableVertices.Count)];
-                PlaceProtagonist(_protagonistVertex, centerCamera: true); // Center camera only during initialization
-                
+                int newVertex = suitableVertices[animationRandom.Next(suitableVertices.Count)];
+                PlaceProtagonist(newVertex, centerCamera: true); // PlaceProtagonist restores the old position first
+
                 Console.WriteLine($"Protagonist initialized at vertex {_protagonistVertex} ({vertexData[_protagonistVertex].Biome.Name})");
             }
         }
@@ -1103,6 +1103,13 @@ namespace Cathedral.Glyph.Microworld
         /// </summary>
         public void ResetProtagonistPosition()
         {
+            // Clear all path visuals before wiping the path references.
+            ClearHoveredPath();
+            _hoveredVertex = -1;
+            ClearPlannedPath();
+            ClearTravelPath();
+            _hoverPathOrigin = -1;
+
             // Cancel any in-progress movement
             _currentPath = null;
             _hoveredPath = null;
@@ -1110,9 +1117,9 @@ namespace Cathedral.Glyph.Microworld
             _pendingMovementPath = null;
             _pathIndex = 0;
             _moveTimer = 0.0f;
-            _hoveredVertex = -1;
             _pendingHoverVertex = -1;
-            
+            MovementPaused = false;
+
             // Re-initialize protagonist at a new random position
             InitializeProtagonist();
             Console.WriteLine($"MicroworldInterface: Protagonist reset to vertex {_protagonistVertex}");

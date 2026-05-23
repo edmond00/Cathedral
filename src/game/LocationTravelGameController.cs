@@ -37,6 +37,8 @@ public class LocationTravelGameController : IDisposable
     private TerminalLocationUI? _terminalUI;
     private readonly AmbianceEngine? _ambianceEngine;
     private string? _lastHoveredElementId; // fires hover sound only when element identity changes
+    private int _mouseCellX = -1;
+    private int _mouseCellY = -1;
     
     // Chain-of-Thought narrative system
     private NarrativeController? _narrativeController = null;
@@ -92,8 +94,13 @@ public class LocationTravelGameController : IDisposable
     private float _tripVhDebt;
 
     // Per-frame consumption state
-    private bool   _consumptionActive = false;
-    private string _consumptionBiome  = "unknown";
+    private bool   _consumptionActive    = false;
+    private bool   _locationBatchNewFrame = false; // true on the first frame of a new batch — delays first consumption by one frame
+    private string _consumptionBiome     = "unknown";
+    private float  _locationVhConsumed   = 0f; // VH consumed within the current location batch (floor 0)
+    private float  _locationVhRequired   = 1f; // VH debt at the moment the current batch started
+    private int    _tripTotalCells       = 0;  // total path cells for the current trip
+    private int    _tripCellsTraveled    = 0;  // cells stepped so far this trip
 
     // Death screen
     private DeathScreenRenderer? _deathScreenRenderer;
@@ -384,7 +391,12 @@ public class LocationTravelGameController : IDisposable
             // keeping the protagonist paused until the bill is fully paid.
             if (_consumptionActive && _protagonist != null)
             {
-                if (_tripVhDebt >= 1.0f)
+                if (_locationBatchNewFrame)
+                {
+                    // Hold for one frame so the VH bar renders empty before filling starts.
+                    _locationBatchNewFrame = false;
+                }
+                else if (_tripVhDebt >= 1.0f)
                 {
                     var humor = _protagonist.HumorQueues.ConsumeCycled(_protagonist, _travelRng);
                     if (humor == null)
@@ -397,8 +409,21 @@ public class LocationTravelGameController : IDisposable
                         return;
                     }
 
-                    _tripVhDebt        -= humor.VitalHeat;
-                    _tripVhConsumedNet += humor.VitalHeat;
+                    if (humor.VitalHeat >= 0)
+                    {
+                        _tripVhDebt         -= humor.VitalHeat;
+                        _tripVhConsumedNet  += humor.VitalHeat;
+                        _locationVhConsumed += humor.VitalHeat;
+                    }
+                    else
+                    {
+                        // Negative VH: only subtracts from the current location's consumed VH
+                        // (floor 0), returning that portion of debt unpaid. The overall trip
+                        // consumed counter is not reduced.
+                        float deduction = MathF.Min(_locationVhConsumed, -humor.VitalHeat);
+                        _locationVhConsumed -= deduction;
+                        _tripVhDebt         += deduction;
+                    }
                     _travelProgressRenderer.RegisterConsumption(_consumptionBiome, humor, _tripVhConsumedNet);
                 }
                 else
@@ -410,7 +435,9 @@ public class LocationTravelGameController : IDisposable
             }
 
             _travelProgressRenderer.Update(deltaTime);
-            _travelProgressRenderer.Draw();
+            _travelProgressRenderer.Draw(
+                _tripCellsTraveled, _tripTotalCells,
+                _locationVhConsumed, _locationVhRequired);
         }
 
         // Update popup terminal with location info
@@ -735,8 +762,17 @@ public class LocationTravelGameController : IDisposable
     private void OnTerminalCellHovered(int x, int y)
     {
         // Track hover for the travel UI so the TRAVEL button highlights.
+        _mouseCellX = x;
+        _mouseCellY = y;
         _travelInfoRenderer?.SetHover(x, y);
         _deathScreenRenderer?.SetHover(x, y);
+
+        // Clear the sphere hover-path preview when the mouse enters the travel box.
+        if (_currentMode == GameMode.WorldView
+            && _travelInfoRenderer != null && _travelInfoRenderer.IsOverBox(x, y))
+        {
+            _interface.HandleVertexUnhovered();
+        }
 
         // Only fire hover tick when entering a NEW interactive element.
         // Narrative modes (LocationInteraction, Fighting, Dialogue, ChildhoodReminescence) handle
@@ -1133,11 +1169,13 @@ public class LocationTravelGameController : IDisposable
         _travelPlanner.Clear();
         _plannedPath = null;
 
-        // Initialise trip vital-heat tracking
+        // Initialise trip vital-heat and distance tracking
         float tripVhRequired = _plannedEstimate?.TotalVitalHeat ?? 1f;
         _tripVhRequired    = MathF.Max(1f, tripVhRequired);
         _tripVhConsumedNet = 0f;
         _tripVhDebt        = 0f;
+        _tripTotalCells    = pathVertices.Count - 1;
+        _tripCellsTraveled = 0;
 
         _plannedEstimate = null;
 
@@ -1164,6 +1202,8 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode != GameMode.Traveling) return;
         if (_protagonist == null) return;
 
+        _tripCellsTraveled++;
+
         // Accumulate biome travel cost into the debt.
         string biomeName = _interface.GetBiomeNameAt(vertexIndex) ?? "unknown";
         var biomeInfo = Cathedral.Glyph.Microworld.BiomeTravelDatabase.GetFor(biomeName);
@@ -1174,8 +1214,11 @@ public class LocationTravelGameController : IDisposable
         // one humor per frame before the protagonist takes the next step.
         if (_tripVhDebt >= 1.0f && !_consumptionActive)
         {
-            _consumptionActive        = true;
-            _interface.MovementPaused = true;
+            _consumptionActive         = true;
+            _locationBatchNewFrame     = true;
+            _locationVhConsumed        = 0f;
+            _locationVhRequired        = _tripVhDebt;
+            _interface.MovementPaused  = true;
         }
     }
 
@@ -1521,6 +1564,7 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterTraveling()
     {
         Console.WriteLine("LocationTravelGameController: Entered Traveling mode");
+        _ambianceEngine?.SetFilter(MusicFilter.DiceRoll);
         // Keep current location mood but thin out to drone + noise only during travel
         _ambianceEngine?.SetActiveTrackCount(1);
         // Set camera zoom for travel animation
@@ -1533,6 +1577,8 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterDeath()
     {
         Console.WriteLine($"LocationTravelGameController: Protagonist died — {_deathCause}");
+        _ambianceEngine?.TriggerGameEvent(GameEventType.NegativeOutcome);
+        _ambianceEngine?.SetFilter(MusicFilter.None);
         _ambianceEngine?.SetActiveTrackCount(0);
         _core.SetNarrationMode(true);
 
@@ -1662,6 +1708,10 @@ public class LocationTravelGameController : IDisposable
         
         // Only show popup during WorldView mode (for travel destination selection)
         if (_currentMode != GameMode.WorldView)
+            return;
+
+        // Hide popup when mouse is over the travel box to avoid overlapping UI
+        if (_travelInfoRenderer != null && _travelInfoRenderer.IsOverBox(_mouseCellX, _mouseCellY))
             return;
         
         // Get hovered vertex from core
@@ -2049,6 +2099,16 @@ public class LocationTravelGameController : IDisposable
 
         // Discard any pending travel plan from the previous run.
         ClearTravelPlan();
+
+        // Reset travel consumption state from the previous run.
+        _consumptionActive  = false;
+        _locationVhConsumed = 0f;
+        _locationVhRequired = 1f;
+        _tripTotalCells     = 0;
+        _tripCellsTraveled  = 0;
+        _tripVhRequired     = 0f;
+        _tripVhConsumedNet  = 0f;
+        _tripVhDebt         = 0f;
 
         // Reset protagonist to a new random starting position
         _interface.ResetProtagonistPosition();

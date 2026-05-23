@@ -7,8 +7,8 @@ namespace Cathedral.Game;
 
 /// <summary>
 /// Bottom-center box displayed during <see cref="GameMode.Traveling"/>.
-/// Shows the current biome, a progress bar for trip vital-heat, and a brief
-/// flash of each humor symbol as it is consumed.
+/// Shows two progress bars: global trip distance and per-location vital-heat,
+/// plus a brief flash of each consumed humor.
 /// </summary>
 public sealed class TravelProgressRenderer
 {
@@ -19,27 +19,33 @@ public sealed class TravelProgressRenderer
     private const int BoxW = Config.TravelUI.BoxWidth;   // 40
     private const int BoxH = Config.TravelUI.BoxHeight;  // 12
 
-    // Trip state (set by controller before/during travel)
-    private string  _biomeName      = "—";
-    private float   _totalRequired  = 1f;
-    private float   _consumedNet    = 0f;
+    // Bar geometry (innerW = BoxW - 4 = 36)
+    private const int LabelW   = 5;   // "Trip " / "VH   "
+    private const int BarW     = 22;  // bar characters
+    private const int CounterW = 8;   // right-aligned numeric counter
+    // LabelW + BarW + 1 (gap) + CounterW = 5+22+1+8 = 36 == innerW ✓
+
+    // Trip state
+    private string   _biomeName     = "—";
+    private float    _totalRequired = 1f;
 
     // Flash animation for the currently consumed humor
-    private BodyHumor? _flashHumor  = null;
-    private float      _flashTimer  = 0f;
+    private BodyHumor? _flashHumor = null;
+    private float      _flashTimer = 0f;
     private const float FlashDuration = 0.35f;
 
     // Track painted area for Erase()
     private bool _painted;
 
     // Colors
-    private static readonly Vector4 BgColor        = Config.TravelUI.BackgroundColor;
-    private static readonly Vector4 BorderColor    = Config.TravelUI.BorderColor;
-    private static readonly Vector4 TitleColor     = Config.TravelUI.TitleColor;
-    private static readonly Vector4 LabelColor     = Config.TravelUI.LabelColor;
-    private static readonly Vector4 ValueColor     = Config.TravelUI.ValueColor;
-    private static readonly Vector4 BarFillColor   = new(0.72f, 0.58f, 0.22f, 1.0f); // blood amber
-    private static readonly Vector4 BarEmptyColor  = Config.Colors.DarkGray35;
+    private static readonly Vector4 BgColor          = Config.TravelUI.BackgroundColor;
+    private static readonly Vector4 BorderColor      = Config.TravelUI.BorderColor;
+    private static readonly Vector4 TitleColor       = Config.TravelUI.TitleColor;
+    private static readonly Vector4 LabelColor       = Config.TravelUI.LabelColor;
+    private static readonly Vector4 ValueColor       = Config.TravelUI.ValueColor;
+    private static readonly Vector4 BarEmptyColor    = Config.Colors.DarkGray35;
+    private static readonly Vector4 GlobalBarColor   = new(0.72f, 0.58f, 0.22f, 1.0f); // amber — distance
+    private static readonly Vector4 LocalBarColor    = new(0.85f, 0.78f, 0.15f, 1.0f); // golden yellow — vital heat
 
     public TravelProgressRenderer(TerminalHUD terminal)
     {
@@ -52,25 +58,16 @@ public sealed class TravelProgressRenderer
     public void StartTrip(float totalVhRequired)
     {
         _totalRequired = MathF.Max(1f, totalVhRequired);
-        _consumedNet   = 0f;
         _flashHumor    = null;
         _flashTimer    = 0f;
     }
 
-    /// <summary>
-    /// Called by the controller on each travel step to update biome and register
-    /// a consumed humor for the flash animation.
-    /// </summary>
-    /// <summary>
-    /// Called once per frame by the controller when a humor is consumed.
-    /// Each call replaces the current flash so each humor is visible for one frame.
-    /// </summary>
+    /// <summary>Called once per frame when a humor is consumed.</summary>
     public void RegisterConsumption(string biomeName, BodyHumor humor, float tripVhConsumedNet)
     {
-        _biomeName   = biomeName;
-        _consumedNet = tripVhConsumedNet;
-        _flashHumor  = humor;
-        _flashTimer  = FlashDuration;
+        _biomeName  = biomeName;
+        _flashHumor = humor;
+        _flashTimer = FlashDuration;
     }
 
     /// <summary>Advance the flash timer each frame.</summary>
@@ -81,45 +78,44 @@ public sealed class TravelProgressRenderer
     }
 
     /// <summary>Render the travel-progress box.</summary>
-    public void Draw()
+    public void Draw(int cellsTraveled, int totalCells, float locationVhConsumed, float locationVhRequired)
     {
         _boxX = (_terminal.Width  - BoxW) / 2;
         _boxY =  _terminal.Height - BoxH - Config.TravelUI.BoxBottomMargin;
 
-        // Background + border
         FillRect(_boxX, _boxY, BoxW, BoxH, BgColor);
         DrawBox(_boxX, _boxY, BoxW, BoxH, BorderColor, BgColor);
 
         int innerL   = _boxX + 2;
-        int innerW   = BoxW - 4;     // usable text width inside border + padding
         int contentY = _boxY + 1;
 
         // Title
         const string title = "── TRAVELING ──";
-        int titleX = _boxX + (BoxW - title.Length) / 2;
-        _terminal.Text(titleX, contentY, title, TitleColor, BgColor);
+        _terminal.Text(_boxX + (BoxW - title.Length) / 2, contentY, title, TitleColor, BgColor);
 
         // Biome row
         _terminal.Text(innerL, contentY + 2, "Biome:", LabelColor, BgColor);
-        string biomeTrunc = Truncate(_biomeName, innerW - 8);
-        _terminal.Text(innerL + 7, contentY + 2, biomeTrunc, ValueColor, BgColor);
+        _terminal.Text(innerL + 7, contentY + 2, Truncate(_biomeName, BoxW - 4 - 8), ValueColor, BgColor);
 
-        // Progress bar (row contentY+4)
-        DrawProgressBar(innerL, contentY + 4, innerW);
+        // Global progress bar — cells traveled / total cells
+        float globalProgress = totalCells > 0 ? (float)cellsTraveled / totalCells : 0f;
+        string globalCounter = $"{cellsTraveled}/{totalCells}".PadLeft(CounterW);
+        DrawBarRow(innerL, contentY + 4, "Trip ", globalProgress, globalCounter, GlobalBarColor);
 
-        // VH counter row (contentY+6, with an empty line at contentY+5)
-        string vhText = $"{_consumedNet:F1} / {_totalRequired:F1} VH";
-        _terminal.Text(innerL, contentY + 6, vhText, ValueColor, BgColor);
+        // Local progress bar — location VH consumed / required (can retreat, clamped 0..1)
+        float localProgress = locationVhRequired > 0f
+            ? Math.Clamp(locationVhConsumed / locationVhRequired, 0f, 1f)
+            : 0f;
+        string localCounter = $"{locationVhConsumed:F1}/{locationVhRequired:F1}".PadLeft(CounterW);
+        DrawBarRow(innerL, contentY + 5, "VH   ", localProgress, localCounter, LocalBarColor, '═', '─');
 
-        // Humor flash (right-aligned on the same row, contentY+6)
+        // Humor flash
         if (_flashTimer > 0f && _flashHumor != null)
         {
-            string sign   = _flashHumor.VitalHeat >= 0 ? "+" : "";
-            string flash  = $"{_flashHumor.Symbol} {_flashHumor.Name} {sign}{_flashHumor.VitalHeat}";
-            flash = Truncate(flash, innerW - vhText.Length - 1);
-            int fx = _boxX + BoxW - 2 - flash.Length;
-            if (fx > innerL + vhText.Length + 1)
-                _terminal.Text(fx, contentY + 6, flash, _flashHumor.Color, BgColor);
+            string sign  = _flashHumor.VitalHeat >= 0 ? "+" : "";
+            string flash = Truncate($"{_flashHumor.Symbol} {_flashHumor.Name} {sign}{_flashHumor.VitalHeat}",
+                                    BoxW - 4);
+            _terminal.Text(innerL, contentY + 7, flash, _flashHumor.Color, BgColor);
         }
 
         _painted = true;
@@ -139,21 +135,29 @@ public sealed class TravelProgressRenderer
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private void DrawProgressBar(int x, int y, int width)
+    /// <summary>
+    /// Draws one labeled progress bar row.
+    /// Layout: [label LabelW][bar BarW][gap 1][counter CounterW]
+    /// </summary>
+    private void DrawBarRow(int x, int y, string label, float progress, string counter,
+        Vector4 fillColor, char filledChar = '█', char emptyChar = '░')
     {
-        float progress = _totalRequired > 0f
-            ? Math.Clamp(_consumedNet / _totalRequired, 0f, 1f)
-            : 0f;
-        int filled = (int)(progress * width);
+        // Label
+        _terminal.Text(x, y, label, LabelColor, BgColor);
 
-        for (int i = 0; i < width; i++)
+        // Bar
+        int filled = (int)(Math.Clamp(progress, 0f, 1f) * BarW);
+        for (int i = 0; i < BarW; i++)
         {
             bool isFilled = i < filled;
-            _terminal.SetCell(x + i, y,
-                isFilled ? '█' : '░',
-                isFilled ? BarFillColor : BarEmptyColor,
+            _terminal.SetCell(x + LabelW + i, y,
+                isFilled ? filledChar : emptyChar,
+                isFilled ? fillColor : BarEmptyColor,
                 BgColor);
         }
+
+        // Counter
+        _terminal.Text(x + LabelW + BarW + 1, y, counter, ValueColor, BgColor);
     }
 
     private void FillRect(int x, int y, int w, int h, Vector4 bg)

@@ -44,9 +44,9 @@ namespace Cathedral.Game
         public IReadOnlyList<(string Creature, float Chance)> EncounterBreakdown { get; init; }
             = Array.Empty<(string, float)>();
         public IReadOnlyList<string> CrossedBiomes { get; init; } = Array.Empty<string>();
-        /// <summary>Coarse starvation risk in 0..1, derived from total vital heat. Stub
-        /// pending humor-system integration.</summary>
-        public float StarvationRisk { get; init; }
+        /// <summary>Whether the protagonist's current humor queues (no secretion) are
+        /// insufficient to cover the full trip vital heat.</summary>
+        public bool StarvationRisk { get; init; }
     }
 
     /// <summary>
@@ -187,9 +187,7 @@ namespace Cathedral.Game
 
             // Starvation risk: use humor-queue model when protagonist is available,
             // otherwise fall back to the legacy linear stub.
-            float starvation = protagonist != null
-                ? ComputeStarvationRisk(heat, protagonist)
-                : MathClamp01((heat - 20f) / 40f);
+            bool starvation = protagonist != null && SimulateStarvation(heat, protagonist);
 
             return new TravelEstimate
             {
@@ -217,70 +215,58 @@ namespace Cathedral.Game
         /// effectiveMu = max(0.05, muAvg) floors recovery so sick organs don't hit 100%
         /// instantly. Returns 0 when the current queue already covers the trip.
         /// </summary>
-        private static float ComputeStarvationRisk(float tripVH, PartyMember protagonist)
+        /// <summary>
+        /// Simulates the trip using only the current humor queues (no secretion).
+        /// Returns true if the protagonist would starve (queues exhausted before trip VH is paid).
+        /// </summary>
+        private static bool SimulateStarvation(float tripVH, PartyMember protagonist)
         {
-            if (tripVH <= 0f) return 0f;
+            if (tripVH <= 0f) return false;
 
-            var queues = protagonist.HumorQueues;
+            // Snapshot non-black-bile humors per queue in consumption order (oldest first).
+            // Items[0] = newest, Items[last] = oldest, so we reverse.
+            var queues = protagonist.HumorQueues.All.ToList();
+            var snapshots = queues
+                .Select(q => q.Items.Where(h => !h.IsBlackBile).Reverse().ToList())
+                .ToList();
+            var indices = new int[snapshots.Count];
 
-            // ── 1. Audit current queue contents ──────────────────────────────
-            int   totalConsumable = 0;
-            float vNetCurrent     = 0f;
+            float vhPaid            = 0f;
+            float locationVhConsumed = 0f; // mirrors the per-location floor-0 rule
+            int   cyclePos          = 0;
 
-            foreach (var queue in queues.All)
+            while (vhPaid < tripVH)
             {
-                foreach (var humor in queue.Items)
+                // Advance cycle to the next queue that still has humors.
+                bool found = false;
+                for (int attempt = 0; attempt < snapshots.Count; attempt++)
                 {
-                    if (humor.IsBlackBile) continue;
-                    totalConsumable++;
-                    vNetCurrent += humor.VitalHeat;
+                    int qi = (cyclePos + attempt) % snapshots.Count;
+                    if (indices[qi] >= snapshots[qi].Count) continue;
+
+                    var humor = snapshots[qi][indices[qi]++];
+                    cyclePos  = (qi + 1) % snapshots.Count;
+
+                    if (humor.VitalHeat >= 0)
+                    {
+                        vhPaid             += humor.VitalHeat;
+                        locationVhConsumed += humor.VitalHeat;
+                    }
+                    else
+                    {
+                        float deduction    = MathF.Min(locationVhConsumed, -humor.VitalHeat);
+                        locationVhConsumed -= deduction;
+                        vhPaid            -= deduction;
+                    }
+
+                    found = true;
+                    break;
                 }
+
+                if (!found) return true; // humors exhausted before paying full VH
             }
 
-            if (totalConsumable == 0) return 1f; // all queues already critical
-
-            // If the current queue's net VH already covers the trip, the protagonist
-            // will finish before exhausting all non-black-bile humors → starvation impossible.
-            if (vNetCurrent >= tripVH) return 0f;
-
-            // ── 2. Organ secretion parameters ─────────────────────────────────
-            float pBBSum  = 0f;
-            float muSum   = 0f;
-            int   nOrgans = 0;
-
-            foreach (var queue in queues.All)
-            {
-                var organ = protagonist.GetOrganById(queue.OrganId);
-                float s = organ?.Score ?? 5f;
-
-                float pBlood  = MathClamp01((s * 8f - 3f) / 100f);
-                float pYellow = MathClamp01((40f - s * 3f) / 100f);
-                float pBB     = MathClamp01((50f - s * 5f) / 100f);
-
-                pBBSum += pBB;
-                muSum  += pBlood - pYellow; // μ(s): expected VH per secretion
-                nOrgans++;
-            }
-
-            if (nOrgans == 0) return 1f;
-
-            float pBBAvg = pBBSum / nOrgans;
-            float muAvg  = muSum  / nOrgans;
-
-            if (pBBAvg <= 0f) return 0f; // organs can never secrete black bile → no critical risk
-
-            // ── 3. Queue capacity (expected consumptions before critical) ─────
-            float capacity = totalConsumable / pBBAvg;
-
-            // ── 4. Starvation risk as fraction of recovery budget consumed ────
-            // recoveryBudget = total expected net VH the protagonist can generate
-            // from secretions over the full queue lifetime.  A floor of 0.05
-            // (≈ minimum blood-secretion rate at organ score 1) prevents an instant
-            // jump to 100% for sick organs while still making them very vulnerable.
-            const float MinRecoveryRate = 0.05f;
-            float recoveryBudget = capacity * Math.Max(MinRecoveryRate, muAvg);
-
-            return MathClamp01((tripVH - vNetCurrent) / recoveryBudget);
+            return false;
         }
     }
 }

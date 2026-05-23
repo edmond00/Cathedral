@@ -40,6 +40,10 @@ namespace Cathedral.Game
             _hoverY = cellY;
         }
 
+        public bool IsOverBox(int cellX, int cellY)
+            => cellX >= _boxX && cellX < _boxX + _boxW
+            && cellY >= _boxY && cellY < _boxY + _boxH;
+
         public bool IsOverTravelButton(int cellX, int cellY)
             => _buttonsEnabled
                && cellY == _travelBtnY
@@ -111,8 +115,8 @@ namespace Cathedral.Game
                 Pct(estimate.TotalEncounterChance),
                 ColorForRisk(estimate.TotalEncounterChance));
             DrawRow(innerLeft, valueCol, contentY + 6, "Starvation risk",
-                Pct(estimate.StarvationRisk),
-                ColorForRisk(estimate.StarvationRisk));
+                estimate.StarvationRisk ? "yes" : "no",
+                estimate.StarvationRisk ? Config.TravelUI.DangerColor : Config.TravelUI.ValueColor);
 
             // Empty row (contentY + 7) — visual padding above the buttons.
             // Empty row (contentY + 9) — visual padding below the buttons.
