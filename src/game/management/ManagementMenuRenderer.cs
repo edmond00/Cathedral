@@ -266,47 +266,81 @@ public class ManagementMenuRenderer
             Render();
     }
 
-    /// <summary>Handle mouse hover at terminal coordinates.</summary>
-    public void OnMouseMove(int x, int y)
+    /// <summary>
+    /// Handle mouse hover at terminal coordinates.
+    /// Returns true when the cursor just entered a new interactive (highlighted) element — caller should play a tick sound.
+    /// </summary>
+    public bool OnMouseMove(int x, int y)
     {
         bool changed = false;
+        bool tick = false;
 
         // Check view tab rows in sidebar
         int newTabHover = GetTabAtPosition(x, y);
-        if (newTabHover != _hoveredTabIndex) { _hoveredTabIndex = newTabHover; changed = true; }
+        if (newTabHover != _hoveredTabIndex)
+        {
+            _hoveredTabIndex = newTabHover;
+            changed = true;
+            if (newTabHover >= 0) tick = true;
+        }
 
         // Check character rows in sidebar
         int newCharHover = GetCharacterAtPosition(x, y);
-        if (newCharHover != _hoveredCharIndex) { _hoveredCharIndex = newCharHover; changed = true; }
+        if (newCharHover != _hoveredCharIndex)
+        {
+            _hoveredCharIndex = newCharHover;
+            changed = true;
+            if (newCharHover >= 0) tick = true;
+        }
 
         // Check back button
         bool newBackHovered = IsOnBackButton(x, y);
-        if (newBackHovered != _backHovered) { _backHovered = newBackHovered; changed = true; }
+        if (newBackHovered != _backHovered)
+        {
+            _backHovered = newBackHovered;
+            changed = true;
+            if (newBackHovered) tick = true;
+        }
 
-        // Delegate to body viewer on Body tab, memory panel on Memory tab, humor menu on Humors tab
+        // Delegate to content-area sub-renderers; tick when entering an interactive element
         if (_activeTab == ManagementTab.Body)
         {
             if (_bodyViewer.ProcessHover(x, y))
+            {
                 changed = true;
+                if (_bodyViewer.HoveredOrganPartName != null || _bodyViewer.HoveredBodyPartId != null)
+                    tick = true;
+            }
         }
         else if (_activeTab == ManagementTab.Memory)
         {
             if (_memoryPanel.ProcessHover(x, y))
+            {
                 changed = true;
+                if (_memoryPanel.IsHovering) tick = true;
+            }
         }
         else if (_activeTab == ManagementTab.Humors)
         {
             if (_humorMenu.ProcessHover(x, y))
+            {
                 changed = true;
+                if (_humorMenu.IsHovering) tick = true;
+            }
         }
         else if (_activeTab == ManagementTab.Inventory)
         {
             if (_inventoryMenu.ProcessHover(x, y))
+            {
                 changed = true;
+                if (_inventoryMenu.IsHovering) tick = true;
+            }
         }
 
         if (changed)
             Render();
+
+        return tick;
     }
 
     /// <summary>Handle left click at terminal coordinates.</summary>

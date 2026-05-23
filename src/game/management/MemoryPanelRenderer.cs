@@ -76,6 +76,8 @@ public class MemoryPanelRenderer
     private (MemoryModuleType mod, int slot)? _selectedSlot  = null;
     private string?                           _hoveredButton = null;
 
+    public bool IsHovering => _hoveredSlot.HasValue || _hoveredButton != null;
+
     // ── Constructor ──────────────────────────────────────────────
     /// <param name="popup">Ignored — detail is shown inline. Kept for API compat.</param>
     public MemoryPanelRenderer(TerminalHUD terminal, PopupTerminalHUD? popup = null)

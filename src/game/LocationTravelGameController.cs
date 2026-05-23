@@ -753,7 +753,8 @@ public class LocationTravelGameController : IDisposable
             : (_travelInfoRenderer != null && _travelInfoRenderer.IsOverClearButton(x, y))
                 ? "travel-clear-button" : null,
         GameMode.Death => _deathScreenRenderer?.IsOverEndRunButton(x, y) == true ? "death-end-run" : null,
-        _ => $"cell:{x},{y}", // ProtagonistManagement, etc. — each cell is its own element
+        GameMode.ProtagonistManagement => null, // management menu fires its own tick via OnMouseMove return value
+        _ => null,
     };
 
     /// <summary>
@@ -808,7 +809,8 @@ public class LocationTravelGameController : IDisposable
         // Protagonist management handles its own hover
         if (_currentMode == GameMode.ProtagonistManagement && _managementMenuRenderer != null)
         {
-            _managementMenuRenderer.OnMouseMove(x, y);
+            if (_managementMenuRenderer.OnMouseMove(x, y))
+                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
             return;
         }
         
@@ -1071,7 +1073,7 @@ public class LocationTravelGameController : IDisposable
             case WaypointToggleResult.Added:
             case WaypointToggleResult.AddedEvictingFirst:
             case WaypointToggleResult.Removed:
-                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 RecomputeTravelPlan();
                 break;
         }

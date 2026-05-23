@@ -79,6 +79,7 @@
 
 ### FOOT (3)
 
+- max travel distance
 - runaway chance
 - fighting skill medium level
 

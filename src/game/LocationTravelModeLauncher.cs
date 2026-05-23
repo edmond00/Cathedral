@@ -140,9 +140,20 @@ public static class LocationTravelModeLauncher
         }
         
         // Set up event handlers for enhanced interaction
+        int lastHoveredVertexTick = -1;
         microworldInterface.VertexHoverEvent += (index, glyph, color) =>
         {
-            // Hover feedback
+            // Play tick when entering a new vertex that would show a path/location preview.
+            // Mirror the guard conditions in HandleVertexHovered: skip protagonist's own cell and
+            // skip while moving (path previews aren't shown in either case).
+            if (index >= 0
+                && index != lastHoveredVertexTick
+                && index != microworldInterface.GetAvatarVertex()
+                && !microworldInterface.IsAvatarMoving())
+            {
+                ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            }
+            lastHoveredVertexTick = index;
         };
         
         microworldInterface.VertexClickEvent += (index, glyph, color, noise) =>

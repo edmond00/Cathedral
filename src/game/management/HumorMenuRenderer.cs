@@ -50,6 +50,8 @@ public sealed class HumorMenuRenderer
     private string? _hoveredOrganId;
     private int     _hoveredQueueIndex = -1;
 
+    public bool IsHovering => _hoveredOrganId != null;
+
     // ── Constructor ───────────────────────────────────────────────
     public HumorMenuRenderer(
         TerminalHUD terminal,

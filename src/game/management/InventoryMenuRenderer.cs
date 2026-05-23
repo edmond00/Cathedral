@@ -118,6 +118,8 @@ public sealed class InventoryMenuRenderer
     // ── State ─────────────────────────────────────────────────────
     private EquipmentAnchor? _hoveredAnchor  = null;
     private int              _hoveredItemIdx = -1;
+
+    public bool IsHovering => _hoveredAnchor.HasValue;
     private EquipmentAnchor? _selectedAnchor = null;
     private int              _selectedItemIdx = -1; // -1 = anchor header selected
     private int              _hoveredContent  = -1;
