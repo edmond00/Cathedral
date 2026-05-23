@@ -38,4 +38,25 @@ namespace Cathedral.Pathfinding
         public bool IsTraversable(int nodeId) => true;
         public float GetCostMultiplier(int fromNode, int toNode) => 1.0f;
     }
+
+    /// <summary>
+    /// Combines two constraints: a node is traversable only if both agree.
+    /// Cost multipliers are multiplied together.
+    /// </summary>
+    public sealed class CompositeTravelConstraint : ITravelConstraint
+    {
+        private readonly ITravelConstraint _a;
+        private readonly ITravelConstraint _b;
+
+        public CompositeTravelConstraint(ITravelConstraint a, ITravelConstraint b)
+        {
+            _a = a;
+            _b = b;
+        }
+
+        public string Name => $"{_a.Name}+{_b.Name}";
+        public bool IsTraversable(int nodeId) => _a.IsTraversable(nodeId) && _b.IsTraversable(nodeId);
+        public float GetCostMultiplier(int fromNode, int toNode)
+            => _a.GetCostMultiplier(fromNode, toNode) * _b.GetCostMultiplier(fromNode, toNode);
+    }
 }

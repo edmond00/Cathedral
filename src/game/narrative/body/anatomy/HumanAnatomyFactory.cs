@@ -22,36 +22,7 @@ public sealed class HumanAnatomyFactory : IAnatomyFactory
         new LowerLimbsBodyPart(),
     };
 
-    public List<DerivedStat> CreateDerivedStats() => new()
-    {
-        // Memory capacity stats
-        new WorkingMemoryCapacityStat(),
-        new ProceduralMemoryCapacityStat(),
-        new SemanticMemoryCapacityStat(),
-        new SensoryMemoryCapacityStat(),
-        new ResidualMemoryCapacityStat(),
-        // Secretion percentage stats
-        new HeparBloodSecretionStat(),        new HeparPhlegmSecretionStat(),
-        new HeparYellowBileSecretionStat(),   new HeparBlackBileSecretionStat(),
-        new PaunchBloodSecretionStat(),       new PaunchPhlegmSecretionStat(),
-        new PaunchYellowBileSecretionStat(),  new PaunchBlackBileSecretionStat(),
-        new PulmonesBloodSecretionStat(),     new PulmonesPhlegmSecretionStat(),
-        new PulmonesYellowBileSecretionStat(),new PulmonesBlackBileSecretionStat(),
-        new SpleenBloodSecretionStat(),       new SpleenPhlegmSecretionStat(),
-        new SpleenYellowBileSecretionStat(),  new SpleenBlackBileSecretionStat(),
-        // Combat stats
-        new CineticPointsStat(),
-        new NaturalDefenseStat(),
-        new MoveSpeedStat(),
-        new RunawayChanceStat(),
-        new InitiativeStat(),
-        new DamageResistanceStat(),
-        new FightLearningStat(),
-        new AttackRangeStat(),
-        // Dialogue stats
-        new BeautyStat(),
-        new SpeechFluencyStat(),
-    };
+    public List<DerivedStat> CreateDerivedStats() => DerivedStat.DiscoverAll();
 
     public Dictionary<char, Wound> GetWoundClassMap()
     {

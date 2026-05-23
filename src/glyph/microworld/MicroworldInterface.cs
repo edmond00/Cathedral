@@ -70,6 +70,10 @@ namespace Cathedral.Glyph.Microworld
         // Flag to disable world interactions (used when UI is in focus)
         private bool _worldInteractionsEnabled = true;
 
+        // Travel range — vertices beyond this radius are darkened and blocked as waypoints.
+        private readonly HashSet<int> _outOfRangeVertices = new();
+        private const float TravelRangeDarkenFactor = 0.35f;
+
         // Events for location travel mode
         public event Action<ProtagonistArrivalInfo>? ProtagonistArrivedAtLocation;
 
@@ -118,9 +122,30 @@ namespace Cathedral.Glyph.Microworld
         public void SetTravelConstraint(ITravelConstraint? constraint)
         {
             _travelConstraint = constraint;
+            RebuildConstrainedGraph();
+        }
+
+        /// <summary>
+        /// Rebuilds the constrained path graph from the current biome constraint and the
+        /// active travel-range set. Must be called whenever either changes.
+        /// </summary>
+        private void RebuildConstrainedGraph()
+        {
             var baseGraph = core.GetGraph();
-            _constrainedGraph = (constraint != null && baseGraph != null)
-                ? new ConstrainedPathGraph(baseGraph, constraint)
+            if (baseGraph == null) { _constrainedGraph = null; return; }
+
+            // Build the effective constraint: biome constraint AND range exclusion (if active).
+            ITravelConstraint? effective = _travelConstraint;
+            if (_outOfRangeVertices.Count > 0)
+            {
+                var rangeConstraint = new RangeExclusionConstraint(_outOfRangeVertices);
+                effective = effective != null
+                    ? new CompositeTravelConstraint(effective, rangeConstraint)
+                    : rangeConstraint;
+            }
+
+            _constrainedGraph = effective != null
+                ? new ConstrainedPathGraph(baseGraph, effective)
                 : null;
         }
 
@@ -130,6 +155,59 @@ namespace Cathedral.Glyph.Microworld
         /// <summary>Returns false if the given vertex is forbidden by the active constraint.</summary>
         public bool IsVertexTraversable(int vertexIndex)
             => _travelConstraint == null || _travelConstraint.IsTraversable(vertexIndex);
+
+        /// <summary>Returns true if the vertex lies outside the current travel range radius.</summary>
+        public bool IsOutOfTravelRange(int vertexIndex)
+            => _outOfRangeVertices.Contains(vertexIndex);
+
+        /// <summary>
+        /// Darkens every vertex beyond <paramref name="radius"/> from <paramref name="protagonistVertex"/>
+        /// and records them so they are blocked as waypoint destinations and restored correctly
+        /// when paths are cleared. Calls <see cref="ClearTravelRange"/> first.
+        /// </summary>
+        public void SetTravelRange(int protagonistVertex, float radius)
+        {
+            ClearTravelRange();
+            if (protagonistVertex < 0 || radius <= 0f) return;
+
+            Vector3 origin = GetVertexPosition(protagonistVertex);
+            for (int i = 0; i < VertexCount; i++)
+            {
+                if (i == protagonistVertex || !vertexData.ContainsKey(i)) continue;
+                if (Vector3.Distance(origin, GetVertexPosition(i)) > radius)
+                {
+                    _outOfRangeVertices.Add(i);
+                    if (i != _protagonistVertex)
+                        ApplyDarkening(i);
+                }
+            }
+
+            RebuildConstrainedGraph();
+        }
+
+        /// <summary>Restores all darkened out-of-range vertices and clears the range set.</summary>
+        public void ClearTravelRange()
+        {
+            foreach (int i in _outOfRangeVertices)
+            {
+                if (i == _protagonistVertex) continue;
+                if (vertexData.TryGetValue(i, out var data))
+                    SetVertexGlyph(i, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
+            }
+            _outOfRangeVertices.Clear();
+            RebuildConstrainedGraph();
+        }
+
+        private void ApplyDarkening(int vertexIndex)
+        {
+            if (!vertexData.TryGetValue(vertexIndex, out var data)) return;
+            var dark = new Vector4(
+                data.Color.X / 255f * TravelRangeDarkenFactor,
+                data.Color.Y / 255f * TravelRangeDarkenFactor,
+                data.Color.Z / 255f * TravelRangeDarkenFactor,
+                GetTileCategory(data));
+            SetVertexGlyph(vertexIndex, data.GlyphChar, dark, data.Location?.Size ?? data.Biome.Size);
+        }
 
         /// <summary>Looks up the biome name at a vertex, or null if unknown.</summary>
         public string? GetBiomeNameAt(int vertexIndex)
@@ -612,8 +690,10 @@ namespace Cathedral.Glyph.Microworld
 
         private void RestoreVertexData(int vertexIndex, VertexWorldData data)
         {
-            float size = data.Location?.Size ?? data.Biome.Size;
-            SetVertexGlyph(vertexIndex, data.GlyphChar, TileColor(data), size);
+            if (_outOfRangeVertices.Contains(vertexIndex))
+                ApplyDarkening(vertexIndex);
+            else
+                SetVertexGlyph(vertexIndex, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
         }
 
         public void HandleVertexHovered(int vertexIndex)
@@ -842,10 +922,7 @@ namespace Cathedral.Glyph.Microworld
                 int nodeId = _plannedPathVertices[i];
                 if (nodeId == _protagonistVertex) continue;
                 if (vertexData.TryGetValue(nodeId, out var d))
-                {
-                    SetVertexGlyph(nodeId, d.GlyphChar, TileColor(d),
-                        d.Location?.Size ?? d.Biome.Size);
-                }
+                    RestoreVertexData(nodeId, d);
             }
             _plannedPathVertices.Clear();
             _plannedWaypointVertices.Clear();
@@ -957,12 +1034,9 @@ namespace Cathedral.Glyph.Microworld
                 return;
             }
 
-            // Otherwise restore original biome/location appearance.
+            // Otherwise restore original biome/location appearance (with darkening if out of range).
             if (vertexData.TryGetValue(nodeId, out var data))
-            {
-                SetVertexGlyph(nodeId, data.GlyphChar, TileColor(data),
-                    data.Location?.Size ?? data.Biome.Size);
-            }
+                RestoreVertexData(nodeId, data);
         }
 
         private void StartMovement(Cathedral.Pathfinding.Path path)
@@ -1000,15 +1074,12 @@ namespace Cathedral.Glyph.Microworld
         private void ClearTravelPath()
         {
             if (_currentPath == null || _currentPath.Length <= 1) return;
-            
-            // Restore original glyphs for the path
-            for (int i = 1; i < _currentPath.Length; i++) // Skip protagonist position
+
+            for (int i = 1; i < _currentPath.Length; i++)
             {
                 int nodeId = _currentPath.GetNode(i);
                 if (nodeId != _protagonistVertex && vertexData.TryGetValue(nodeId, out var data))
-                {
-                    SetVertexGlyph(nodeId, data.GlyphChar, TileColor(data), data.Location?.Size ?? data.Biome.Size);
-                }
+                    RestoreVertexData(nodeId, data);
             }
         }
 
@@ -1038,10 +1109,9 @@ namespace Cathedral.Glyph.Microworld
                     // Restore the previous vertex to its original appearance (no longer on path ahead)
                     if (_pathIndex > 0 && vertexData.TryGetValue(_currentPath.GetNode(_pathIndex - 1), out var prevData))
                     {
-                        if (_currentPath.GetNode(_pathIndex - 1) != _protagonistVertex)
-                        {
-                            SetVertexGlyph(_currentPath.GetNode(_pathIndex - 1), prevData.GlyphChar, TileColor(prevData), prevData.Location?.Size ?? prevData.Biome.Size);
-                        }
+                        int prevNode = _currentPath.GetNode(_pathIndex - 1);
+                        if (prevNode != _protagonistVertex)
+                            RestoreVertexData(prevNode, prevData);
                     }
                     
                     PlaceProtagonist(nextVertex, centerCamera: true); // Focus camera on protagonist with each step
@@ -1186,6 +1256,16 @@ namespace Cathedral.Glyph.Microworld
             public float NoiseValue;
             public char GlyphChar;
             public System.Numerics.Vector3 Color;
+        }
+
+        /// <summary>Travel constraint that blocks every vertex in a fixed exclusion set.</summary>
+        private sealed class RangeExclusionConstraint : Cathedral.Pathfinding.ITravelConstraint
+        {
+            private readonly HashSet<int> _excluded;
+            public RangeExclusionConstraint(HashSet<int> excluded) => _excluded = excluded;
+            public string Name => "range";
+            public bool IsTraversable(int nodeId) => !_excluded.Contains(nodeId);
+            public float GetCostMultiplier(int fromNode, int toNode) => 1.0f;
         }
     }
 }

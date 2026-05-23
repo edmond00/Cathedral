@@ -149,7 +149,8 @@ public static class LocationTravelModeLauncher
             if (index >= 0
                 && index != lastHoveredVertexTick
                 && index != microworldInterface.GetAvatarVertex()
-                && !microworldInterface.IsAvatarMoving())
+                && !microworldInterface.IsAvatarMoving()
+                && !microworldInterface.IsOutOfTravelRange(index))
             {
                 ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
             }

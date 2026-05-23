@@ -1048,7 +1048,7 @@ public class LocationTravelGameController : IDisposable
         }
 
         var result = _travelPlanner.Toggle(vertexIndex, protagonistVertex,
-            v => _interface.IsVertexTraversable(v),
+            v => _interface.IsVertexTraversable(v) && !_interface.IsOutOfTravelRange(v),
             Reachable);
 
         switch (result)
@@ -1547,6 +1547,13 @@ public class LocationTravelGameController : IDisposable
         _core.SetWorldInteractionsEnabled(true);
         _interface.SetWorldInteractionsEnabled(true);
 
+        // Apply travel-range darkening based on feet stat.
+        if (_protagonist != null)
+        {
+            var rangeStat = new MaxTravelDistanceStat();
+            _interface.SetTravelRange(_interface.GetAvatarVertex(), rangeStat.GetRadius(_protagonist));
+        }
+
         // Show the terminal as a UI overlay for the travel info box, but let clicks
         // on transparent cells fall through to the 3D world.
         if (_core.Terminal != null)
@@ -1722,7 +1729,11 @@ public class LocationTravelGameController : IDisposable
         // If no vertex is hovered or hovering over invalid vertex, leave popup empty
         if (hoveredVertex < 0)
             return;
-        
+
+        // Suppress popup for cells outside the travel radius.
+        if (_interface.IsOutOfTravelRange(hoveredVertex))
+            return;
+
         // Get location name at hovered vertex
         string? locationName = GetLocationNameAtVertex(hoveredVertex);
         
@@ -2099,8 +2110,9 @@ public class LocationTravelGameController : IDisposable
         _destinationVertex = -1;
         _locationStates.Clear();
 
-        // Discard any pending travel plan from the previous run.
+        // Discard any pending travel plan and range darkening from the previous run.
         ClearTravelPlan();
+        _interface.ClearTravelRange();
 
         // Reset travel consumption state from the previous run.
         _consumptionActive  = false;

@@ -1,4 +1,9 @@
-﻿namespace Cathedral.Game.Narrative;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+
+namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// Base class for derived stats. A derived stat is computed from a specific organ part,
@@ -188,6 +193,21 @@ public abstract class DerivedStat
         if (effective == int.MinValue) return CalculateValueDisabled();
         if (effective < 0)             return CalculateValueNegative(effective);
         return CalculateValue(effective);
+    }
+
+    /// <summary>
+    /// Discovers and instantiates every concrete <see cref="DerivedStat"/> subclass
+    /// in this assembly. New stats are picked up automatically — no manual registration
+    /// needed in anatomy factories.
+    /// </summary>
+    public static List<DerivedStat> DiscoverAll()
+    {
+        return Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && typeof(DerivedStat).IsAssignableFrom(t))
+            .OrderBy(t => t.FullName)
+            .Select(t => (DerivedStat)Activator.CreateInstance(t)!)
+            .ToList();
     }
 }
 
