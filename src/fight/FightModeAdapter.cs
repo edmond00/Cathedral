@@ -770,9 +770,13 @@ public class FightModeAdapter
 
         if (result.Success)
         {
-            var mm = ModusMentisRegistry.Instance.GetModusMentis(skill.RequiredModusMentisId);
-            if (mm != null && !active.Member.LearnedModiMentis.Any(m => m.ModusMentisId == mm.ModusMentisId))
-                active.Member.LearnedModiMentis.Add(mm);
+            var template = ModusMentisRegistry.Instance.GetModusMentis(skill.RequiredModusMentisId);
+            if (template != null && !active.Member.LearnedModiMentis.Any(m => m.ModusMentisId == template.ModusMentisId))
+            {
+                var instance = (ModusMentis)Activator.CreateInstance(template.GetType())!;
+                instance.Level = 1;
+                active.Member.AcquireModusMentis(instance);
+            }
 
             _state.AddLog(
                 $"LEARNED {skill.DisplayName}! ({result.SixesCount}/{result.DiceValues.Length} sixes vs diff {result.Difficulty})",

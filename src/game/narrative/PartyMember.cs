@@ -236,9 +236,12 @@ public abstract class PartyMember
         var selected = obs.Concat(think).Concat(act).Distinct().Take(modusMentisCount).ToList();
 
         ModiMentis.Clear();
-        ModiMentis.AddRange(selected);
-        foreach (var modusMentis in ModiMentis)
-            modusMentis.Level = rng.Next(1, 11);
+        foreach (var template in selected)
+        {
+            var instance = (ModusMentis)Activator.CreateInstance(template.GetType())!;
+            instance.Level = rng.Next(1, 11);
+            ModiMentis.Add(instance);
+        }
     }
 
     // ── Memory initialisation ─────────────────────────────────────
