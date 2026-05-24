@@ -102,6 +102,22 @@ public class LocationTravelGameController : IDisposable
     private int    _tripTotalCells       = 0;  // total path cells for the current trip
     private int    _tripCellsTraveled    = 0;  // cells stepped so far this trip
 
+    // Travel encounter state
+    private bool _inTravelEncounter = false;
+    private EncounterPromptRenderer? _encounterPromptRenderer;
+    private Cathedral.Game.Npc.NpcEntity? _pendingEncounterNpc;
+    private string? _pendingEncounterCreatureName;
+
+    // Maps BiomeTravelDatabase creature names to the archetype that spawns them.
+    // Creature names without a fight-capable archetype (e.g. "blizzard") are absent and skipped.
+    private static readonly Dictionary<string, Func<Cathedral.Game.Npc.NamedNpcArchetype>> TravelEncounterArchetypes = new()
+    {
+        ["wolf"]    = () => new Cathedral.Game.Npc.Archetypes.WolfArchetype(),
+        ["bear"]    = () => new Cathedral.Game.Npc.Archetypes.BearArchetype(),
+        ["bandit"]  = () => new Cathedral.Game.Npc.Archetypes.SavageArchetype(),
+        ["brigand"] = () => new Cathedral.Game.Npc.Archetypes.SavageArchetype(),
+    };
+
     // Death screen
     private DeathScreenRenderer? _deathScreenRenderer;
     private DeathCause _deathCause;
@@ -273,6 +289,15 @@ public class LocationTravelGameController : IDisposable
             return; // Management mode owns the popup (e.g. inventory drag); skip UpdatePopupTerminal
         }
 
+        // Travel encounter fight update (outside narrative mode)
+        if (_inTravelEncounter && _currentMode == GameMode.Fighting && _fightAdapter != null)
+        {
+            _fightAdapter.Update(1.0 / 60.0);
+            if (_fightAdapter.IsOver)
+                OnFightCompleted();
+            return;
+        }
+
         // Update Phase 6 controller if active
         if (_isInNarrativeMode && _narrativeController != null)
         {
@@ -280,7 +305,7 @@ public class LocationTravelGameController : IDisposable
             if (_currentMode == GameMode.Fighting && _fightAdapter != null)
             {
                 _fightAdapter.Update(1.0 / 60.0); // Approximate delta for 60 FPS
-                
+
                 if (_fightAdapter.IsOver)
                 {
                     OnFightCompleted();
@@ -596,6 +621,34 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // Encounter prompt: ENGAGE button starts the fight
+        if (_currentMode == GameMode.EncounterPrompt && _encounterPromptRenderer != null)
+        {
+            if (_encounterPromptRenderer.IsOverEngageButton(x, y)
+                && _pendingEncounterNpc != null && _core.Terminal != null && _protagonist != null)
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                _fightAdapter = new FightModeAdapter(
+                    _core.Terminal,
+                    _core.PopupTerminal,
+                    _pendingEncounterNpc,
+                    _protagonist,
+                    allies: new List<Cathedral.Game.Npc.NpcEntity>());
+                _pendingEncounterNpc = null;
+                _pendingEncounterCreatureName = null;
+                SetMode(GameMode.Fighting);
+            }
+            return;
+        }
+
+        // Travel encounter fight: route click to fight adapter
+        if (_inTravelEncounter && _currentMode == GameMode.Fighting && _fightAdapter != null)
+        {
+            _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+            _fightAdapter.OnCellClicked(x, y);
+            return;
+        }
+
         // WorldView: only the TRAVEL and CLEAR buttons on the bottom travel info box
         // are clickable (everything else is transparent and falls through to the world
         // sphere via TerminalHUD.TransparentClickPassthrough).
@@ -753,6 +806,7 @@ public class LocationTravelGameController : IDisposable
             : (_travelInfoRenderer != null && _travelInfoRenderer.IsOverClearButton(x, y))
                 ? "travel-clear-button" : null,
         GameMode.Death => _deathScreenRenderer?.IsOverEndRunButton(x, y) == true ? "death-end-run" : null,
+        GameMode.EncounterPrompt => _encounterPromptRenderer?.IsOverEngageButton(x, y) == true ? "encounter-engage" : null,
         GameMode.ProtagonistManagement => null, // management menu fires its own tick via OnMouseMove return value
         _ => null,
     };
@@ -767,6 +821,7 @@ public class LocationTravelGameController : IDisposable
         _mouseCellY = y;
         _travelInfoRenderer?.SetHover(x, y);
         _deathScreenRenderer?.SetHover(x, y);
+        _encounterPromptRenderer?.SetHover(x, y);
 
         // Clear the sphere hover-path preview when the mouse enters the travel box.
         if (_currentMode == GameMode.WorldView
@@ -796,6 +851,24 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode == GameMode.Death && _deathScreenRenderer != null)
         {
             _deathScreenRenderer.Draw(_deathCause);
+            return;
+        }
+
+        // Encounter prompt: redraw so ENGAGE button highlight stays current
+        if (_currentMode == GameMode.EncounterPrompt && _encounterPromptRenderer != null
+            && _pendingEncounterNpc != null)
+        {
+            _encounterPromptRenderer.Draw(
+                _pendingEncounterNpc.DisplayName,
+                _pendingEncounterCreatureName ?? "",
+                _consumptionBiome);
+            return;
+        }
+
+        // Travel encounter fight: route hover to fight adapter
+        if (_inTravelEncounter && _currentMode == GameMode.Fighting && _fightAdapter != null)
+        {
+            _fightAdapter.OnCellHovered(x, y);
             return;
         }
         
@@ -856,6 +929,13 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public void OnMouseWheel(float delta)
     {
+        // Travel encounter fight scroll
+        if (_inTravelEncounter && _currentMode == GameMode.Fighting && _fightAdapter != null)
+        {
+            _fightAdapter.OnMouseWheel(delta);
+            return;
+        }
+
         // Phase 6 mode handles scrolling
         if (_isInNarrativeMode && _narrativeController != null)
         {
@@ -963,6 +1043,10 @@ public class LocationTravelGameController : IDisposable
 
             case GameMode.Death:
                 OnEnterDeath();
+                break;
+
+            case GameMode.EncounterPrompt:
+                OnEnterEncounterPrompt();
                 break;
         }
 
@@ -1221,6 +1305,16 @@ public class LocationTravelGameController : IDisposable
             _locationVhConsumed        = 0f;
             _locationVhRequired        = _tripVhDebt;
             _interface.MovementPaused  = true;
+        }
+
+        // Roll for encounters. First hit wins; remaining entries are skipped.
+        foreach (var enc in biomeInfo.Encounters)
+        {
+            if (_travelRng.NextDouble() < enc.ChancePerCell)
+            {
+                StartTravelEncounter(enc.CreatureName);
+                break;
+            }
         }
     }
 
@@ -1595,6 +1689,26 @@ public class LocationTravelGameController : IDisposable
             _deathScreenRenderer = new DeathScreenRenderer(_core.Terminal);
 
         _deathScreenRenderer.Draw(_deathCause);
+    }
+
+    private void OnEnterEncounterPrompt()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered EncounterPrompt mode");
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+
+        if (_core.Terminal == null || _pendingEncounterNpc == null) return;
+        _core.Terminal.Visible = true;
+
+        if (_encounterPromptRenderer == null)
+            _encounterPromptRenderer = new EncounterPromptRenderer(_core.Terminal);
+
+        _encounterPromptRenderer.SetHover(-1, -1);
+        _encounterPromptRenderer.Draw(
+            _pendingEncounterNpc.DisplayName,
+            _pendingEncounterCreatureName ?? "",
+            _consumptionBiome);
     }
 
     private void OnEnterLocationInteraction()
@@ -2114,6 +2228,11 @@ public class LocationTravelGameController : IDisposable
         ClearTravelPlan();
         _interface.ClearTravelRange();
 
+        // Reset travel encounter state.
+        _inTravelEncounter = false;
+        _pendingEncounterNpc = null;
+        _pendingEncounterCreatureName = null;
+
         // Reset travel consumption state from the previous run.
         _consumptionActive  = false;
         _locationVhConsumed = 0f;
@@ -2168,6 +2287,29 @@ public class LocationTravelGameController : IDisposable
     /// Computes allies (brave NPCs in the same scene section as the player),
     /// sets enemy affinity for all fighters, and passes allies to FightModeAdapter.
     /// </summary>
+    /// <summary>
+    /// Triggers a fight encounter mid-travel. Does not require an active narrative session.
+    /// Movement stays paused; on fight end the travel resumes or death is triggered.
+    /// Creature names with no fight-capable archetype are silently ignored.
+    /// </summary>
+    private void StartTravelEncounter(string creatureName)
+    {
+        if (_core.Terminal == null || _protagonist == null) return;
+        if (!TravelEncounterArchetypes.TryGetValue(creatureName, out var archetypeFactory)) return;
+
+        var archetype = archetypeFactory();
+        var npc = archetype.Spawn(_travelRng, _consumptionBiome);
+        npc.AffinityTable.SetEnemy(_protagonist.DisplayName);
+
+        _interface.MovementPaused = true;
+        _inTravelEncounter = true;
+        _pendingEncounterNpc = npc;
+        _pendingEncounterCreatureName = creatureName;
+
+        Console.WriteLine($"LocationTravelGameController: Travel encounter — {npc.DisplayName} ({creatureName}) in {_consumptionBiome}");
+        SetMode(GameMode.EncounterPrompt);
+    }
+
     private void StartFightMode(FightOutcome fightOutcome)
     {
         if (_core.Terminal == null || _narrativeController == null)
@@ -2246,8 +2388,7 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnFightCompleted()
     {
-        if (_fightAdapter == null || _narrativeController == null)
-            return;
+        if (_fightAdapter == null) return;
 
         var result       = _fightAdapter.Result;
         var npc          = _fightAdapter.TargetNpc;
@@ -2255,26 +2396,46 @@ public class LocationTravelGameController : IDisposable
 
         Console.WriteLine($"LocationTravelGameController: Fight completed - {result}");
 
+        // ── Travel encounter path (no narrative session) ──────────────────────
+        if (_inTravelEncounter)
+        {
+            _inTravelEncounter = false;
+            _fightAdapter = null;
+
+            if (result == FightAdapterResult.Death)
+            {
+                TriggerDeath(DeathCause.Wounds);
+                return;
+            }
+
+            // Victory or runaway: resume travel. If VH consumption is still pending,
+            // Update() will keep movement paused until the debt is cleared.
+            SetMode(GameMode.Traveling);
+            if (!_consumptionActive)
+                _interface.MovementPaused = false;
+            return;
+        }
+
+        // ── Narrative-session fight path ──────────────────────────────────────
+        if (_narrativeController == null) return;
+
         _narrativeController.OnFightCompleted(result, npc, allEnemyNpcs);
         _fightAdapter = null;
-        
+
         if (result == FightAdapterResult.Death)
         {
-            // Player died - exit to world view (force new protagonist)
             Console.WriteLine("LocationTravelGameController: Player died, exiting to world view");
             ExitNarrativeMode();
             return;
         }
-        
+
         if (result == FightAdapterResult.Runaway)
         {
-            // Player ran away - return to world view
             Console.WriteLine("LocationTravelGameController: Player ran away, exiting to world view");
             ExitNarrativeMode();
             return;
         }
-        
-        // Victory - return to narrative mode
+
         SetMode(GameMode.LocationInteraction);
     }
     

@@ -86,5 +86,11 @@ public enum GameMode
     /// The protagonist has died. Shows a purple death screen with cause of death
     /// and an "End Run" button that returns to the main menu.
     /// </summary>
-    Death
+    Death,
+
+    /// <summary>
+    /// A travel encounter has been rolled. Shows a purple message box describing
+    /// the threat with an "Engage" button; clicking it transitions to Fighting.
+    /// </summary>
+    EncounterPrompt
 }
