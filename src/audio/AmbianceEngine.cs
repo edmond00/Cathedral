@@ -1234,6 +1234,150 @@ public sealed class AmbianceEngine : IDisposable
 
                 if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
             }
+            else if (filter == MusicFilter.Fighting)
+            {
+                // ── Fighting filter ───────────────────────────────────────────────────────────────
+                // Tense-suspense overlay during combat. Not action-driven — the dread comes from
+                // withholding melodic motion: a slow tremolo-string heartbeat, a high dissonant
+                // PadBowed drone (minor-2nd clusters) hovering above, and sparse low timpani thuds
+                // that punctuate but never establish a beat. The ambient music ducks but is still
+                // audible underneath, so the location mood bleeds through.
+                //
+                // Layers:
+                //   • Tremolo strings on ch 5 (PatchTremoloStrings): slow two-note throb — tonic
+                //     and fifth of the current scale — pulsing every 700–1100 ms. The native
+                //     tremolo of the patch supplies the "heartbeat" character without us needing
+                //     a fast retrigger loop.
+                //   • PadBowed drone on ch 6: 2–3 sustained notes in the C5–C7 register, with a
+                //     70% bias toward minor-2nd / minor-3rd intervals above an existing note.
+                //   • Low timpani thuds on drum ch 9: GM Low Tom / Low Floor Tom, every
+                //     1200–3200 ms — physical punctuation, not rhythm.
+                //   • _filterBpmMult = 0.85 — slightly drags the ambient music; opposite of
+                //     Loading's 2.5×. Music ducked to 60/127.
+                _filterBpmMult = 0.85f;
+                SetMusicVolume(60);
+
+                const int arpCh = 5;
+                SendProgramChange(arpCh, ProceduralMidiComposer.PatchTremoloStrings);
+
+                const int droneCh = 6;
+                SendProgramChange(droneCh, ProceduralMidiComposer.PatchPadBowed);
+                SendCC(droneCh, 7, 88); // audible as its own layer
+
+                var droneNotes   = new List<(int note, long releaseMs)>();
+                long nextDroneMs = Environment.TickCount64 + rng.Next(200, 800);
+
+                // Tremolo-string heartbeat: two-note tonic + fifth pulse
+                var pulseNotes   = new List<(int note, long releaseMs)>();
+                long nextPulseMs = Environment.TickCount64 + rng.Next(300, 700);
+                bool pulseHigh   = false; // alternate tonic / fifth
+
+                // GM percussion: Bass Drums (35, 36), Low Floor Tom (41), High Floor Tom (43),
+                // Low Tom (45), Low-Mid Tom (47), Hi-Mid Tom (48) — full tom range for variety
+                int[] thudNotes = { 35, 36, 41, 43, 45, 47, 48 };
+                long nextThudMs = Environment.TickCount64 + rng.Next(380, 1000);
+
+                int[] scale = Array.Empty<int>();
+
+                while (!ct.IsCancellationRequested)
+                {
+                    long now = Environment.TickCount64;
+
+                    lock (_moodLock) scale = _sharedScale;
+                    if (scale.Length == 0) { await Task.Delay(30, ct); continue; }
+
+                    // ── Tremolo-string heartbeat: tonic / fifth alternation ──────────
+                    for (int i = pulseNotes.Count - 1; i >= 0; i--)
+                    {
+                        if (now >= pulseNotes[i].releaseMs)
+                        {
+                            SendNoteOff(arpCh, pulseNotes[i].note);
+                            pulseNotes.RemoveAt(i);
+                        }
+                    }
+                    if (now >= nextPulseMs && pulseNotes.Count < 2)
+                    {
+                        // Use scale[0] (tonic) and scale[4] (≈ fifth in a 7-note diatonic scale)
+                        int tonicIdx = 0;
+                        int fifthIdx = Math.Min(4, scale.Length - 1);
+                        int note = pulseHigh ? scale[fifthIdx] : scale[tonicIdx];
+                        // Lower an octave for a heavy chest-heartbeat register
+                        note = Math.Clamp(note - 12, 24, 96);
+                        int vel = rng.Next(32, 52);
+                        int dur = rng.Next(500, 900);
+                        SendNoteOn(arpCh, note, vel);
+                        pulseNotes.Add((note, now + dur));
+                        pulseHigh = !pulseHigh;
+                        nextPulseMs = now + rng.Next(700, 1100);
+                    }
+
+                    // ── High dissonant PadBowed drone ────────────────────────────────
+                    for (int i = droneNotes.Count - 1; i >= 0; i--)
+                    {
+                        if (now >= droneNotes[i].releaseMs)
+                        {
+                            SendNoteOff(droneCh, droneNotes[i].note);
+                            droneNotes.RemoveAt(i);
+                        }
+                    }
+                    if (now >= nextDroneMs && droneNotes.Count < 3)
+                    {
+                        int dNote;
+                        if (droneNotes.Count > 0 && rng.NextDouble() < 0.70)
+                        {
+                            int anchor = droneNotes[rng.Next(droneNotes.Count)].note;
+                            int interval = rng.NextDouble() < 0.6 ? 1 : rng.Next(2, 4);
+                            dNote = Math.Clamp(anchor + (rng.NextDouble() < 0.5 ? interval : -interval), 72, 96);
+                        }
+                        else
+                        {
+                            dNote = rng.Next(72, 96); // C5–C7 high tense register
+                        }
+                        SendNoteOn(droneCh, dNote, rng.Next(38, 58));
+                        droneNotes.Add((dNote, now + rng.Next(4000, 8000)));
+                        nextDroneMs = now + rng.Next(1500, 3500);
+                    }
+
+                    // ── Drum thuds — denser, with frequent double/triple-tap flurries ──
+                    if (now >= nextThudMs)
+                    {
+                        int tNote = thudNotes[rng.Next(thudNotes.Length)];
+                        SendNoteOn(drumCh, tNote, rng.Next(55, 82));
+                        // 45% chance of a quick follow-up — and that follow-up has a 35%
+                        // chance of spawning a third hit (mini tom roll, building dread)
+                        if (rng.NextDouble() < 0.45)
+                        {
+                            int followNote = thudNotes[rng.Next(thudNotes.Length)];
+                            int followDelay = rng.Next(110, 240);
+                            int followVel = rng.Next(45, 70);
+                            bool spawnThird = rng.NextDouble() < 0.35;
+                            int thirdNote = thudNotes[rng.Next(thudNotes.Length)];
+                            int thirdDelay = rng.Next(110, 220);
+                            int thirdVel = rng.Next(40, 62);
+                            _ = Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    await Task.Delay(followDelay, ct);
+                                    SendNoteOn(drumCh, followNote, followVel);
+                                    if (spawnThird)
+                                    {
+                                        await Task.Delay(thirdDelay, ct);
+                                        SendNoteOn(drumCh, thirdNote, thirdVel);
+                                    }
+                                }
+                                catch (OperationCanceledException) { }
+                            });
+                        }
+                        nextThudMs = now + rng.Next(380, 1000);
+                    }
+
+                    await Task.Delay(40, ct);
+                }
+
+                foreach (var (note, _) in pulseNotes) SendNoteOff(arpCh, note);
+                foreach (var (note, _) in droneNotes) SendNoteOff(droneCh, note);
+            }
         }
         catch (OperationCanceledException) { /* normal shutdown */ }
         finally

@@ -71,4 +71,14 @@ public enum MusicFilter
     /// The ambient music continues underneath unchanged.
     /// </summary>
     DiceRoll,
+
+    /// <summary>
+    /// Fight filter.
+    /// Tense-suspense overlay: tremolo strings carry a slow heartbeat pulse,
+    /// a high dissonant PadBowed drone (minor-2nd clusters) hovers above the
+    /// scale, and sparse low timpani thuds mark the rhythm of dread. The
+    /// ambient music is ducked but not silenced, so the location mood still
+    /// bleeds through underneath.
+    /// </summary>
+    Fighting,
 }

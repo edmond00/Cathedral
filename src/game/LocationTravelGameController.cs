@@ -1694,6 +1694,7 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterEncounterPrompt()
     {
         Console.WriteLine("LocationTravelGameController: Entered EncounterPrompt mode");
+        _ambianceEngine?.TriggerGameEvent(GameEventType.NegativeOutcome);
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
@@ -2262,11 +2263,13 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterFighting()
     {
         Console.WriteLine("LocationTravelGameController: Entered Fighting mode");
+        _ambianceEngine?.TriggerGameEvent(GameEventType.NegativeOutcome);
+        _ambianceEngine?.SetFilter(MusicFilter.Fighting);
         // Keep narration mode visuals (darkened sphere, terminal visible)
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
-        
+
         if (_core.Terminal != null)
             _core.Terminal.Visible = true;
     }
@@ -2389,6 +2392,8 @@ public class LocationTravelGameController : IDisposable
     private void OnFightCompleted()
     {
         if (_fightAdapter == null) return;
+
+        _ambianceEngine?.SetFilter(MusicFilter.None);
 
         var result       = _fightAdapter.Result;
         var npc          = _fightAdapter.TargetNpc;
