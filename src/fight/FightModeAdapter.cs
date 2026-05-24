@@ -777,7 +777,7 @@ public class FightModeAdapter
         if (_state.PendingLearnSkill != null && _state.PendingSkill == null)
         {
             var skill = _state.PendingLearnSkill;
-            var accent = new OpenTK.Mathematics.Vector4(0.0f, 0.9f, 1.0f, 1.0f); // cyan — matches LogEntryType.Learning
+            var accent = Config.Colors.BrightPurple; // matches the learnable-skill UI palette
             string subtitle = $"LEARNING CHECK — {skill.RequiredModusMentisId} (cerebellum)";
             _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty,
                 subtitle: subtitle, difficultyVerb: "to learn", accentColor: accent);

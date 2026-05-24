@@ -206,7 +206,7 @@ public class DialogueTreeUI : TerminalPanelUI
                 {
                     string prefix  = entry.Speaker != null ? $"{entry.Speaker}: " : "";
                     foreach (var l in WrapText(prefix + entry.Text, maxW))
-                        lines.Add((l, Config.Colors.LightCyan));
+                        lines.Add((l, Config.Colors.LightPurple));
                     break;
                 }
             }

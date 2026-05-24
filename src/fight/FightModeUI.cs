@@ -289,8 +289,8 @@ public static class FightModeUI
                 {
                     fg = sel ? Config.Colors.Black
                        : hov ? Config.Colors.GoldYellow
-                       : new Vector4(0.6f, 0.6f, 0.9f, 1f);
-                    bg = sel ? new Vector4(0.4f, 0.4f, 0.9f, 1f) : Config.Colors.Black;
+                       : Config.Colors.LightPurple;
+                    bg = sel ? Config.Colors.Purple : Config.Colors.Black;
                 }
                 else
                 {
@@ -356,7 +356,7 @@ public static class FightModeUI
         terminal.FillRect(0, boxY, LeftEnd, boxH, ' ', Config.Colors.White, Config.Colors.Black);
 
         bool isLearn = kind == LeftInfoKind.LearnableSkill;
-        Vector4 border = isLearn ? new Vector4(0.4f, 0.4f, 0.9f, 1f) : Config.Colors.DarkGray;
+        Vector4 border = isLearn ? Config.Colors.Purple : Config.Colors.DarkGray;
         terminal.DrawBox(0, boxY, LeftEnd, boxH, BoxStyle.Single, border, Config.Colors.Black);
 
         const int x = 1;
@@ -412,7 +412,7 @@ public static class FightModeUI
             case LeftInfoKind.Skill:
             case LeftInfoKind.LearnableSkill:
                 if (skill == null || fighter == null) break;
-                Vector4 titleC = isLearn ? new Vector4(0.6f, 0.6f, 0.9f, 1f) : Config.Colors.Yellow;
+                Vector4 titleC = isLearn ? Config.Colors.LightPurple : Config.Colors.Yellow;
                 TextLine(skill.DisplayName, titleC);
                 TextLine($"Medium: {MediumLabelFor(skill)}", Config.Colors.DarkYellowGrey);
                 if (isLearn) TextLine("(unknown — learn first)", titleC);
@@ -443,72 +443,6 @@ public static class FightModeUI
                 TextLine("(hover or select", Config.Colors.DarkGray);
                 TextLine(" an action)", Config.Colors.DarkGray);
                 break;
-        }
-    }
-
-    /// <summary>
-    /// Draw a detailed info card for <paramref name="skill"/> across the full top panel.
-    /// Used when the mouse is hovering a skill row in the left panel.
-    /// </summary>
-    public static void RenderSkillDetailPanel(TerminalHUD terminal, FightingSkill skill,
-                                               Fighter fighter, bool isLearnable)
-    {
-        terminal.FillRect(0, 0, 100, TopRows, ' ', Config.Colors.White, Config.Colors.Black);
-        terminal.DrawBox(0, 0, 100, TopRows, BoxStyle.Single,
-            isLearnable ? new Vector4(0.4f, 0.4f, 0.9f, 1f) : Config.Colors.DarkGray,
-            Config.Colors.Black);
-
-        Vector4 titleColor = isLearnable ? new Vector4(0.6f, 0.6f, 0.9f, 1f) : Config.Colors.Yellow;
-        string headerKind  = isLearnable ? "SKILL (learnable)" : "SKILL";
-        terminal.Text(2, 1, $"{headerKind} — {skill.DisplayName}", titleColor, Config.Colors.Black);
-
-        string mediumLabel = MediumLabelFor(skill);
-        terminal.Text(2, 2, $"Medium: {mediumLabel}",
-            Config.Colors.DarkYellowGrey, Config.Colors.Black);
-
-        // ── Left column: description ──
-        const int leftCol = 2;
-        const int leftW   = 60;
-        int row = 4;
-        string desc = skill.Description ?? "";
-        for (int s = 0; s < desc.Length && row < TopRows - 2; s += leftW)
-        {
-            terminal.Text(leftCol, row,
-                desc.Substring(s, Math.Min(leftW, desc.Length - s)),
-                Config.Colors.White, Config.Colors.Black);
-            row++;
-        }
-
-        // ── Right column: stats ──
-        const int rightCol = 66;
-        int rRow = 3;
-        terminal.Text(rightCol, rRow++, "STATS",
-            Config.Colors.DarkYellowGrey, Config.Colors.Black);
-        rRow++;
-        terminal.Text(rightCol, rRow++, $"Dice  : {skill.TotalDice(fighter)}",
-            Config.Colors.LightGray, Config.Colors.Black);
-        terminal.Text(rightCol, rRow++, $"Cost  : {skill.CineticPointsCost} CP",
-            Config.Colors.LightGray, Config.Colors.Black);
-        terminal.Text(rightCol, rRow++, $"Range : {skill.Range}",
-            Config.Colors.LightGray, Config.Colors.Black);
-        terminal.Text(rightCol, rRow++, $"Effect: {skill.EffectType}",
-            Config.Colors.LightGray, Config.Colors.Black);
-        terminal.Text(rightCol, rRow++, $"Wound : {skill.WoundTargetMode}",
-            Config.Colors.LightGray, Config.Colors.Black);
-
-        if (isLearnable)
-        {
-            int diff = Math.Max(0, skill.MediumPosition - 1);
-            int dice = Math.Max(1, fighter.FightLearningStat);
-            terminal.Text(2, TopRows - 2,
-                $"LEARN: roll {dice} cerebellum dice — need {diff} sixes to learn '{skill.RequiredModusMentisId}'",
-                new Vector4(0.6f, 0.6f, 0.9f, 1f), Config.Colors.Black);
-        }
-        else if (skill.VitalHeatCost > 0)
-        {
-            terminal.Text(2, TopRows - 2,
-                $"Vital heat cost: {skill.VitalHeatCost}",
-                Config.Colors.Orange, Config.Colors.Black);
         }
     }
 
@@ -621,8 +555,8 @@ public static class FightModeUI
         LogEntryType.Miss          => Config.Colors.DarkGray,
         LogEntryType.Wound         => new Vector4(1.0f, 0.15f, 0.15f, 1.0f), // BrightRed
         LogEntryType.SpecialEffect => new Vector4(1.0f, 0.5f, 0.0f, 1.0f),  // Orange
-        LogEntryType.Learning      => new Vector4(0.0f, 1.0f, 1.0f, 1.0f),  // Cyan
-        LogEntryType.Defense       => new Vector4(0.7f, 0.9f, 1.0f, 1.0f),  // LightCyan
+        LogEntryType.Learning      => Config.Colors.LightPurple,
+        LogEntryType.Defense       => Config.Colors.LightPurpleGray,
         _                          => Config.Colors.White,
     };
 
@@ -855,19 +789,6 @@ public static class FightModeUI
     }
 
     // ── Private helpers ───────────────────────────────────────────────
-
-    private static void DrawDotBar(TerminalHUD terminal, int x, int y, int current, int max, Vector4 fullColor)
-    {
-        if (max <= 0) return;
-        terminal.Text(x, y, "CP :", Config.Colors.DarkGray, Config.Colors.Black);
-        int dotX = x + 5;
-        for (int i = 0; i < max; i++)
-        {
-            Vector4 col = i < current ? fullColor : Config.Colors.DarkGray35;
-            terminal.SetCell(dotX, y, Config.Symbols.NoeticPointMarker, col, Config.Colors.Black);
-            dotX += 1;
-        }
-    }
 
     private static void DrawBar(TerminalHUD terminal, int x, int y, int maxWidth,
                                  int current, int max, string label,

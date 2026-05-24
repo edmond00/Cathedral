@@ -139,7 +139,7 @@ public sealed class PushbackEffect : FightStatusEffect
 
     public override string EffectId      => "pushback";
     public override string DisplayLabel  => "P";
-    public override Vector4 DisplayColor => Config.Colors.Cyan;
+    public override Vector4 DisplayColor => Config.Colors.LightPurple;
 
     public override void OnApply(Fighter target, Fighter source, FightState state, Random rng)
     {
