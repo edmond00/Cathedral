@@ -31,17 +31,20 @@ internal class FightModeWindow : GameWindow
     private int  _selectedSkillIndex = -1;
     private HashSet<(int X, int Y)>? _highlightCells;
     private bool _isAttackHighlight;   // red vs green tint on highlighted tiles
+    private HashSet<(int X, int Y)>? _hoverSkillCells; // hover-preview blink on map
 
     // ── UI state ──────────────────────────────────────────────────────
     private int _actionLogScrollOffset;
     private IReadOnlyList<FightingSkill> _currentUnlockedSkills = Array.Empty<FightingSkill>();
+    private string? _expandedMediumKey;
+    private IReadOnlyList<LeftPanelRow> _leftPanelLayout = Array.Empty<LeftPanelRow>();
+    private IReadOnlyList<(int Y, Fighter Fighter)> _rightPanelRows = Array.Empty<(int, Fighter)>();
+    private Fighter? _topPanelFighter;
     private IReadOnlyList<string>? _bodyPartMenu;
     private bool _continueHovered;
     private Fighter? _hoveredFighter;
-    private int  _hoveredButtonRow = -1;      // terminal row of the hovered left-panel button
-    private List<(int X, int Y)>? _previewPath; // arena-coord path preview dots
-    private double _hoverTimer;               // seconds hovering same target
-    private bool   _popupVisible;
+    private int  _hoveredButtonRow = -1;
+    private List<(int X, int Y)>? _previewPath;
 
     // ── Blink ─────────────────────────────────────────────────────────
     private double _blinkTimer;
@@ -49,15 +52,15 @@ internal class FightModeWindow : GameWindow
 
     // ── AI delay ─────────────────────────────────────────────────────
     private int _aiDelayFrames;
-    private const int AiDelay = 40;
+    private const int AiDelay = 15;
 
     // ── Movement animation ────────────────────────────────────────────
     private int _movementFrameTimer;
-    private const int PlayerMoveFramesPerTile = 10;
+    private const int PlayerMoveFramesPerTile = 3;
     private const int AiMoveFramesPerTile     = 1;
 
     // ── Dice timing ──────────────────────────────────────────────────
-    private const float DiceRollDuration = 2.0f;
+    private const float DiceRollDuration = 0.6f;
     private double _diceElapsed;
 
     public FightModeWindow(GameWindowSettings gs, NativeWindowSettings ns, FightState state)
@@ -174,7 +177,7 @@ internal class FightModeWindow : GameWindow
 
         // ── Blink ─────────────────────────────────────────────────
         _blinkTimer += args.Time;
-        bool newBlink = (_blinkTimer % 0.8) < 0.4;
+        bool newBlink = (_blinkTimer % 0.06) < 0.03;
         if (newBlink != _blinkOn)
         {
             _blinkOn = newBlink;
@@ -205,24 +208,6 @@ internal class FightModeWindow : GameWindow
                 ExecuteAiTurn();
         }
 
-        // ── Fighter / button hover popup delay ──────────────────────
-        if (!_popupVisible && (_hoveredFighter != null || _hoveredButtonRow >= 0))
-        {
-            _hoverTimer += args.Time;
-            if (_hoverTimer >= 1.2)
-            {
-                _popupVisible = true;
-                if (_popup != null)
-                {
-                    if (_hoveredButtonRow >= 0)
-                        FightModeUI.RenderActionPopup(_popup, _hoveredButtonRow,
-                            _currentUnlockedSkills, _state.ActiveFighter);
-                    else if (_hoveredFighter != null)
-                        FightModeUI.RenderFighterPopup(_popup, _hoveredFighter);
-                }
-            }
-        }
-
         FullRedraw();
     }
 
@@ -231,8 +216,6 @@ internal class FightModeWindow : GameWindow
         base.OnRenderFrame(args);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         _terminal?.Render(new Vector2i(ClientSize.X, ClientSize.Y));
-        if (_popupVisible)
-            _popup?.Render(new Vector2i(ClientSize.X, ClientSize.Y));
         SwapBuffers();
     }
 
@@ -296,12 +279,10 @@ internal class FightModeWindow : GameWindow
 
         if (x < 20 && canInteract)
         {
-            // Left panel: button hover
-            int skillIdx = y - FightModeUI.SkillButtonsStart;
             if (y == FightModeUI.MoveButtonRow
                 || y == FightModeUI.EndTurnButtonRow
                 || y == FightModeUI.RunButtonRow
-                || (skillIdx >= 0 && skillIdx < _currentUnlockedSkills.Count))
+                || _leftPanelLayout.Any(r => r.Y == y))
                 newButton = y;
         }
         else if (x >= 20 && x < 80 && y >= 20 && y < 80)
@@ -333,22 +314,17 @@ internal class FightModeWindow : GameWindow
                 }
             }
         }
-        else if (y < 20)
+        else if (x >= 80 && y >= 40)
         {
-            newFighter = FindFighterLabelAt(x, y);
+            var hit = _rightPanelRows.FirstOrDefault(r => r.Y == y);
+            if (hit.Fighter != null) newFighter = hit.Fighter;
         }
 
-        // ── Reset timer when target changes ──────────────────────────
-        bool targetChanged = newFighter != _hoveredFighter || newButton != _hoveredButtonRow;
-        if (targetChanged)
-        {
-            _hoverTimer  = 0;
-            _popupVisible = false;
-        }
-
-        _hoveredFighter  = newFighter;
+        _hoveredFighter   = newFighter;
         _hoveredButtonRow = newButton;
-        _previewPath     = newPath;
+        _previewPath      = newPath;
+        // _hoverSkillCells is recomputed each frame inside FullRedraw after _leftPanelLayout is fresh
+        _topPanelFighter  = newFighter;
     }
 
     private void OnCellClicked(int x, int y)
@@ -388,26 +364,43 @@ internal class FightModeWindow : GameWindow
         // ── Left panel buttons ────────────────────────────────────
         if (x < 20)
         {
-            int skillIdx = y - FightModeUI.SkillButtonsStart;
             if (y == FightModeUI.MoveButtonRow)
             {
                 SetMoveMode();
+                return;
             }
-            else if (skillIdx >= 0 && skillIdx < _currentUnlockedSkills.Count)
-            {
-                SetSkillMode(skillIdx);
-            }
-            else if (y == FightModeUI.EndTurnButtonRow)
+            if (y == FightModeUI.EndTurnButtonRow)
             {
                 ExecuteAction(new Actions.EndTurnAction(active));
+                return;
             }
-            else if (y == FightModeUI.RunButtonRow)
+            if (y == FightModeUI.RunButtonRow)
             {
-                // Runaway only allowed from the exit tile
                 if (active.X == FightArea.ExitCol && active.Y == FightArea.ExitRow)
                     ExecuteAction(new Actions.RunawayAction(active));
                 else
                     _state.AddLog("Must reach the exit tile (⎆) to run away.");
+                return;
+            }
+
+            foreach (var row in _leftPanelLayout)
+            {
+                if (row.Y != y) continue;
+                switch (row.Kind)
+                {
+                    case LeftPanelRowKind.Medium:
+                        _expandedMediumKey = _expandedMediumKey == row.MediumKey ? null : row.MediumKey;
+                        SetMoveMode();
+                        break;
+                    case LeftPanelRowKind.UnlockedSkill:
+                        if (row.SkillIndex >= 0 && row.SkillIndex < _currentUnlockedSkills.Count
+                            && _currentUnlockedSkills[row.SkillIndex].IsSelfTargeting)
+                            ExecuteAction(new Actions.SkillAction(active, active, _currentUnlockedSkills[row.SkillIndex]));
+                        else
+                            SetSkillMode(row.SkillIndex);
+                        break;
+                }
+                return;
             }
             return;
         }
@@ -425,18 +418,31 @@ internal class FightModeWindow : GameWindow
         else if (_selectedSkillIndex >= 0 && _selectedSkillIndex < _currentUnlockedSkills.Count)
         {
             var skill = _currentUnlockedSkills[_selectedSkillIndex];
-            if (skill.EffectType == FightingSkillEffect.DefensePosture)
+            if (skill.IsSelfTargeting)
             {
                 ExecuteAction(new Actions.SkillAction(active, active, skill));
             }
             else
             {
-                // Find fighter at the clicked cell
+                // Only act on highlighted cells
+                if (_highlightCells != null && !_highlightCells.Contains((ax, ay))) return;
+
                 var target = _state.Fighters.FirstOrDefault(
                     f => f.IsAlive && f.Faction != active.Faction &&
                          f.X == ax && f.Y == ay);
                 if (target != null)
+                {
                     TryUseSkillOnTarget(active, target, skill);
+                }
+                else
+                {
+                    // Swing at empty air — deduct CP, log miss, end turn
+                    int cost = skill.CineticPointsCost;
+                    active.CurrentCineticPoints = Math.Max(0, active.CurrentCineticPoints - cost);
+                    _state.AddLog($"{active.DisplayName} uses {skill.DisplayName} — nothing there.  [-{cost} CP]", LogEntryType.Miss);
+                    _state.Phase = TurnPhase.TurnEnding;
+                    AfterActionUpdate();
+                }
             }
         }
     }
@@ -534,6 +540,25 @@ internal class FightModeWindow : GameWindow
         }
     }
 
+    private HashSet<(int X, int Y)>? ComputeHoverSkillCells(int buttonRow, Fighter active)
+    {
+        if (buttonRow < 0) return null;
+        if (_state.Phase != TurnPhase.SelectingAction || !active.IsPlayerControlled) return null;
+
+        if (buttonRow == FightModeUI.MoveButtonRow)
+            return ComputeReachableCells(active);
+
+        foreach (var r in _leftPanelLayout)
+        {
+            if (r.Y != buttonRow) continue;
+            if (r.Kind == LeftPanelRowKind.UnlockedSkill
+                && r.SkillIndex >= 0 && r.SkillIndex < _currentUnlockedSkills.Count)
+                return ComputeSkillTargetCells(active, _currentUnlockedSkills[r.SkillIndex]);
+            break;
+        }
+        return null;
+    }
+
     private HashSet<(int X, int Y)> ComputeReachableCells(Fighter fighter)
     {
         var result = new HashSet<(int, int)>();
@@ -577,17 +602,24 @@ internal class FightModeWindow : GameWindow
     private HashSet<(int X, int Y)> ComputeSkillTargetCells(Fighter attacker, FightingSkill skill)
     {
         var result = new HashSet<(int, int)>();
-        if (skill.EffectType == FightingSkillEffect.DefensePosture)
+        if (skill.IsSelfTargeting)
         {
             result.Add((attacker.X, attacker.Y));
             return result;
         }
-        foreach (var f in _state.Fighters)
+        // Include every cell within Manhattan range + LOS (not just enemy positions).
+        // Clicking an empty highlighted cell still uses the turn (logged as a miss).
+        int range = skill.Range;
+        for (int dy = -range; dy <= range; dy++)
+        for (int dx = -range; dx <= range; dx++)
         {
-            if (f.Faction == attacker.Faction || !f.IsAlive) continue;
-            int dist = Math.Abs(f.X - attacker.X) + Math.Abs(f.Y - attacker.Y);
-            if (dist <= skill.Range)
-                result.Add((f.X, f.Y));
+            if (Math.Abs(dx) + Math.Abs(dy) > range) continue;
+            int tx = attacker.X + dx, ty = attacker.Y + dy;
+            if (tx == attacker.X && ty == attacker.Y) continue; // skip self
+            if (!_state.Area.IsInBounds(tx, ty)) continue;
+            if (_state.Area.GetCell(tx, ty).Type == TerrainType.HardObstacle) continue;
+            if (!FightResolver.HasLineOfSight(_state.Area, attacker.X, attacker.Y, tx, ty)) continue;
+            result.Add((tx, ty));
         }
         return result;
     }
@@ -739,7 +771,9 @@ internal class FightModeWindow : GameWindow
         if (_terminal == null) return;
         var active = _state.ActiveFighter;
 
-        FightModeUI.RenderTopPanel(_terminal, _state);
+        var detailFighter = _topPanelFighter ?? active;
+        FightModeUI.RenderDetailPanel(_terminal, detailFighter,
+            isHoverOverride: _topPanelFighter != null && _topPanelFighter != active);
 
         if (active != null)
         {
@@ -752,15 +786,54 @@ internal class FightModeWindow : GameWindow
                 _bodyPartMenu = null;
                 bool isMove = _isMoveMode || !active.IsPlayerControlled ||
                               _state.Phase == TurnPhase.AnimatingMovement;
-                FightModeUI.RenderLeftPanel(_terminal, active, _currentUnlockedSkills,
-                    isMove, _selectedSkillIndex, _hoveredButtonRow);
+                _leftPanelLayout = FightModeUI.RenderLeftPanel(_terminal, active,
+                    _currentUnlockedSkills, Array.Empty<FightingSkill>(),
+                    isMove, _selectedSkillIndex, -1,
+                    _expandedMediumKey, _hoveredButtonRow);
+
+                // Recompute hover-blink cells now that the layout is current
+                _hoverSkillCells = ComputeHoverSkillCells(_hoveredButtonRow, active);
+
+                // Bottom-half info — simple version (no learnable tracking in legacy window)
+                FightModeUI.LeftInfoKind infoKind = FightModeUI.LeftInfoKind.None;
+                FightingSkill? infoSkill = null;
+                if (_hoveredButtonRow == FightModeUI.MoveButtonRow) infoKind = FightModeUI.LeftInfoKind.Move;
+                else if (_hoveredButtonRow == FightModeUI.EndTurnButtonRow) infoKind = FightModeUI.LeftInfoKind.EndTurn;
+                else if (_hoveredButtonRow == FightModeUI.RunButtonRow) infoKind = FightModeUI.LeftInfoKind.Run;
+                else if (_hoveredButtonRow >= 0)
+                {
+                    foreach (var r in _leftPanelLayout)
+                    {
+                        if (r.Y != _hoveredButtonRow) continue;
+                        if (r.Kind == LeftPanelRowKind.UnlockedSkill
+                            && r.SkillIndex >= 0 && r.SkillIndex < _currentUnlockedSkills.Count)
+                        {
+                            infoKind = FightModeUI.LeftInfoKind.Skill;
+                            infoSkill = _currentUnlockedSkills[r.SkillIndex];
+                        }
+                        break;
+                    }
+                }
+                if (infoKind == FightModeUI.LeftInfoKind.None)
+                {
+                    if (_selectedSkillIndex >= 0 && _selectedSkillIndex < _currentUnlockedSkills.Count)
+                    {
+                        infoKind = FightModeUI.LeftInfoKind.Skill;
+                        infoSkill = _currentUnlockedSkills[_selectedSkillIndex];
+                    }
+                    else if (_isMoveMode) infoKind = FightModeUI.LeftInfoKind.Move;
+                }
+                FightModeUI.RenderLeftInfoPanel(_terminal, infoKind, infoSkill, active);
             }
         }
 
         FightModeUI.RenderCenterPanel(_terminal, _state.Area, _state.Fighters,
-            active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath);
+            active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath, _hoverSkillCells);
 
-        FightModeUI.RenderRightPanel(_terminal, _state.Area);
+        int initHoverY = _hoveredFighter != null
+            ? _rightPanelRows.FirstOrDefault(r => r.Fighter == _hoveredFighter).Y
+            : -1;
+        _rightPanelRows = FightModeUI.RenderRightPanel(_terminal, _state.Area, _state, initHoverY);
         FightModeUI.RenderBottomPanel(_terminal, _state.ActionLog, _actionLogScrollOffset);
 
         if (_dice.IsVisible)
@@ -780,35 +853,16 @@ internal class FightModeWindow : GameWindow
         // Default: MOVE mode at start of turn
         _isMoveMode = true;
         _selectedSkillIndex = -1;
+        _expandedMediumKey = null;
         RecomputeHighlight();
         _actionLogScrollOffset = 0;
         _previewPath = null;
+        _hoverSkillCells = null;
         _hoveredButtonRow = -1;
-        _popupVisible = false;
-        _hoverTimer = 0;
+        _topPanelFighter = null;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Mirrors the RenderTopPanel label layout to find which fighter, if any, is under terminal cell (hx, hy).
-    /// </summary>
-    private Fighter? FindFighterLabelAt(int hx, int hy)
-    {
-        const int RightStart = 80;
-        int x = 2, y = 3;
-        foreach (var f in _state.Fighters)
-        {
-            string mark = f == _state.ActiveFighter ? "▶ " : "  ";
-            string label = $"{mark}{f.DisplayChar} {f.DisplayName} HP:{f.CurrentHp}/{f.MaxHp} CP:{f.CurrentCineticPoints}/{f.MaxCineticPoints}";
-            if (!f.IsAlive) label += " [DEAD]";
-            if (x + label.Length + 2 > RightStart) { x = 2; y += 2; }
-            if (hy == y && hx >= x && hx < x + label.Length)
-                return f;
-            x += label.Length + 3;
-        }
-        return null;
-    }
 
     private int[] GenerateDiceValues(int count)
     {

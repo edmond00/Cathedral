@@ -114,6 +114,17 @@ public abstract class FightingSkill
     /// </summary>
     public virtual int MediumPosition => 1;
 
+    /// <summary>
+    /// True when this skill targets only the user — clicking the action button
+    /// executes it immediately without requiring an arena cell click.
+    /// DefensePosture, Utility, Other, and Defense skills are self-targeted by default.
+    /// </summary>
+    public virtual bool IsSelfTargeting =>
+        EffectType == FightingSkillEffect.DefensePosture ||
+        EffectType == FightingSkillEffect.Utility ||
+        EffectType == FightingSkillEffect.Other ||
+        EffectType == FightingSkillEffect.Defense;
+
     // ── Derived calculations ──────────────────────────────────────
 
     /// <summary>

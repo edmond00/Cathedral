@@ -11,6 +11,38 @@ namespace Cathedral.Fight;
 /// </summary>
 public static class FightResolver
 {
+    // ── Line of sight ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns true if there is an unobstructed line of sight between (x0,y0) and (x1,y1).
+    /// Uses Bresenham's line algorithm; only <see cref="TerrainType.HardObstacle"/> cells block sight.
+    /// The start and end cells themselves are never treated as blocking.
+    /// </summary>
+    public static bool HasLineOfSight(FightArea area, int x0, int y0, int x1, int y1)
+    {
+        int dx = Math.Abs(x1 - x0);
+        int dy = Math.Abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx - dy;
+        int cx = x0, cy = y0;
+
+        while (true)
+        {
+            // Reached destination — no blocker found
+            if (cx == x1 && cy == y1) return true;
+
+            // Check intermediate cells (not start, not end)
+            if ((cx != x0 || cy != y0) && area.IsInBounds(cx, cy)
+                && area.GetCell(cx, cy).Type == TerrainType.HardObstacle)
+                return false;
+
+            int e2 = 2 * err;
+            if (e2 > -dy) { err -= dy; cx += sx; }
+            if (e2 <  dx) { err += dx; cy += sy; }
+        }
+    }
+
     // ── Movement ─────────────────────────────────────────────────────
 
     /// <summary>Returns true if the cell is in bounds, not a hard obstacle, and not occupied.</summary>

@@ -45,12 +45,22 @@ public class DiceRollComponent
     /// </summary>
     public (int X, int Y, int Width) ContinueButtonRegion { get; private set; }
 
+    /// <summary>Optional one-line caption shown above the title (e.g. "LEARNING: Pugilatus").</summary>
+    public string? Subtitle { get; private set; }
+    /// <summary>Plain description of what the difficulty represents (e.g. "to learn"). Default "to hit".</summary>
+    public string DifficultyVerb { get; private set; } = "to hit";
+    /// <summary>Optional accent color for the box border + subtitle.</summary>
+    public Vector4? AccentColor { get; private set; }
+
     private int[]? _finalValues;
 
     // ── Lifecycle ─────────────────────────────────────────────────────
 
     /// <summary>Begin a new dice-roll animation.</summary>
-    public void Start(int numberOfDice, int difficulty)
+    public void Start(int numberOfDice, int difficulty,
+                       string? subtitle = null,
+                       string difficultyVerb = "to hit",
+                       Vector4? accentColor = null)
     {
         NumberOfDice = Math.Max(1, numberOfDice);
         Difficulty   = Math.Max(1, difficulty);
@@ -60,6 +70,9 @@ public class DiceRollComponent
         ContinueButtonRegion = default;
         _spinnerFrame = 0;
         _lastFrameUpdate = DateTime.MinValue;
+        Subtitle     = subtitle;
+        DifficultyVerb = difficultyVerb;
+        AccentColor  = accentColor;
         InitDiceArrays();
     }
 
@@ -119,15 +132,24 @@ public class DiceRollComponent
         // ── Black background panel ───────────────────────────────────────
         int dpr = Math.Min(NumberOfDice, 20);
         int bgRows = ((NumberOfDice + dpr - 1) / dpr) * 2;
-        int bgW = 54, bgH = 18 + bgRows;
+        int bgW = 60, bgH = 19 + bgRows;
         int bgX = centerX - bgW / 2;
-        int bgY = centerY - 13;
+        int bgY = centerY - 14;
+        Vector4 borderColor = AccentColor ?? Config.Colors.DarkYellowGrey;
         terminal.FillRect(bgX, bgY, bgW, bgH, ' ', Config.Colors.White, Config.Colors.Black);
-        terminal.DrawBox(bgX, bgY, bgW, bgH, BoxStyle.Single, Config.Colors.DarkYellowGrey, Config.Colors.Black);
+        terminal.DrawBox(bgX, bgY, bgW, bgH, BoxStyle.Single, borderColor, Config.Colors.Black);
 
         bool hasFinal = !IsRolling && _finalValues != null;
         int sixesCount = hasFinal ? _finalValues!.Count(v => v == 6) : 0;
         bool isSuccess = sixesCount >= Difficulty;
+
+        // ── Optional subtitle (e.g. "LEARNING: Pugilatus") ──────────────
+        if (!string.IsNullOrEmpty(Subtitle))
+        {
+            int subY = centerY - 12;
+            int subX = centerX - Subtitle.Length / 2;
+            terminal.Text(subX, subY, Subtitle, borderColor, Config.Colors.Black);
+        }
 
         // ── Title ───────────────────────────────────────────────────────
         string title     = IsRolling ? "Rolling Dice..." : (isSuccess ? "SUCCESS!" : "FAILURE!");
@@ -141,7 +163,7 @@ public class DiceRollComponent
         // ── Difficulty line ─────────────────────────────────────────────
         int diffClamp = Math.Clamp(Difficulty, 1, 10);
         char diffGlyph = Config.Symbols.DifficultyGlyphs[diffClamp - 1];
-        string diffLabel = $"Difficulty: {diffGlyph} ({diffClamp} sixes needed to hit)";
+        string diffLabel = $"Difficulty: {diffGlyph} ({diffClamp} sixes needed {DifficultyVerb})";
         int diffY = centerY - 8;
         int diffX = centerX - diffLabel.Length / 2;
         terminal.Text(diffX, diffY, diffLabel, Config.Colors.DarkYellowGrey, Config.Colors.Black);

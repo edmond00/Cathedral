@@ -34,7 +34,7 @@ public class FightModeAdapter
 {
     // ── Core objects ─────────────────────────────────────────────────
     private readonly TerminalHUD _terminal;
-    private readonly PopupTerminalHUD? _popup;
+    // (popup terminal kept in the constructor signature for caller compatibility; no longer rendered)
     private readonly FightState _state;
     private readonly FightingSkillRegistry _skillRegistry;
     private readonly DiceRollComponent _dice = new();
@@ -52,19 +52,22 @@ public class FightModeAdapter
     private int _selectedSkillIndex = -1;
     private HashSet<(int X, int Y)>? _highlightCells;
     private bool _isAttackHighlight;
+    private HashSet<(int X, int Y)>? _hoverSkillCells; // hover-preview blink on map
 
     // ── UI state ────────────────────────────────────────────────────
     private int _actionLogScrollOffset;
     private IReadOnlyList<FightingSkill> _currentUnlockedSkills = Array.Empty<FightingSkill>();
     private IReadOnlyList<FightingSkill> _currentLearnableSkills = Array.Empty<FightingSkill>();
     private int _selectedLearnableSkillIndex = -1;
+    private string? _expandedMediumKey;
+    private IReadOnlyList<LeftPanelRow> _leftPanelLayout = Array.Empty<LeftPanelRow>();
+    private IReadOnlyList<(int Y, Fighter Fighter)> _rightPanelRows = Array.Empty<(int, Fighter)>();
+    private Fighter? _topPanelFighter;
     private IReadOnlyList<string>? _bodyPartMenu;
     private bool _continueHovered;
     private Fighter? _hoveredFighter;
     private int _hoveredButtonRow = -1;
     private List<(int X, int Y)>? _previewPath;
-    private double _hoverTimer;
-    private bool _popupVisible;
 
     // ── Blink ───────────────────────────────────────────────────────
     private double _blinkTimer;
@@ -72,15 +75,15 @@ public class FightModeAdapter
 
     // ── AI delay ────────────────────────────────────────────────────
     private int _aiDelayFrames;
-    private const int AiDelay = 40;
+    private const int AiDelay = 15;
 
     // ── Movement animation ──────────────────────────────────────────
     private int _movementFrameTimer;
-    private const int PlayerMoveFramesPerTile = 10;
+    private const int PlayerMoveFramesPerTile = 3;
     private const int AiMoveFramesPerTile = 1;
 
     // ── Dice timing ─────────────────────────────────────────────────
-    private const float DiceRollDuration = 2.0f;
+    private const float DiceRollDuration = 0.6f;
     private double _diceElapsed;
 
     // ── Elapsed time tracking (caller must provide delta) ───────────
@@ -105,7 +108,7 @@ public class FightModeAdapter
         IReadOnlyList<NpcEntity>? allies = null)
     {
         _terminal = terminal;
-        _popup = popup;
+        _ = popup; // unused (popups removed; the param is kept for caller compatibility)
         _targetNpc = targetNpc;
         _allies = allies ?? Array.Empty<NpcEntity>();
 
@@ -257,6 +260,13 @@ public class FightModeAdapter
                     RecomputeHighlight();
                     if (!mover.IsPlayerControlled)
                         _aiDelayFrames = 5;
+
+                    // Auto-end turn if the player has no CP left to spend
+                    if (mover.IsPlayerControlled && mover.CurrentCineticPoints <= 0)
+                    {
+                        _state.AddLog($"{mover.DisplayName} has no Cinetic Points left — turn ends.");
+                        EndTurn(mover);
+                    }
                 }
             }
             FullRedraw();
@@ -265,10 +275,11 @@ public class FightModeAdapter
 
         // ── Blink ─────────────────────────────────────────────────
         _blinkTimer += deltaTime;
-        bool newBlink = (_blinkTimer % 0.8) < 0.4;
+        bool newBlink = (_blinkTimer % 0.06) < 0.03;
         if (newBlink != _blinkOn)
         {
             _blinkOn = newBlink;
+            // FullRedraw is called at the end of Update() every frame anyway
             FightAreaRenderer.UpdateBlink(_terminal, _blinkOn);
         }
 
@@ -294,24 +305,6 @@ public class FightModeAdapter
             _aiDelayFrames--;
             if (_aiDelayFrames <= 0)
                 ExecuteAiTurn();
-        }
-
-        // ── Hover popup delay ──────────────────────────────────────
-        if (!_popupVisible && (_hoveredFighter != null || _hoveredButtonRow >= 0))
-        {
-            _hoverTimer += deltaTime;
-            if (_hoverTimer >= 1.2)
-            {
-                _popupVisible = true;
-                if (_popup != null)
-                {
-                    if (_hoveredButtonRow >= 0)
-                        FightModeUI.RenderActionPopup(_popup, _hoveredButtonRow,
-                            _currentUnlockedSkills, _state.ActiveFighter);
-                    else if (_hoveredFighter != null)
-                        FightModeUI.RenderFighterPopup(_popup, _hoveredFighter);
-                }
-            }
         }
 
         FullRedraw();
@@ -360,30 +353,46 @@ public class FightModeAdapter
         // ── Left panel buttons ────────────────────────────────────
         if (x < 20)
         {
-            int skillIdx = y - FightModeUI.SkillButtonsStart;
-            int learnIdx = skillIdx - _currentUnlockedSkills.Count;
             if (y == FightModeUI.MoveButtonRow)
             {
                 SetMoveMode();
+                return;
             }
-            else if (skillIdx >= 0 && skillIdx < _currentUnlockedSkills.Count)
-            {
-                SetSkillMode(skillIdx);
-            }
-            else if (learnIdx >= 0 && learnIdx < _currentLearnableSkills.Count)
-            {
-                SetLearnableSkillMode(learnIdx);
-            }
-            else if (y == FightModeUI.EndTurnButtonRow)
+            if (y == FightModeUI.EndTurnButtonRow)
             {
                 ExecuteAction(new Actions.EndTurnAction(active));
+                return;
             }
-            else if (y == FightModeUI.RunButtonRow)
+            if (y == FightModeUI.RunButtonRow)
             {
                 if (active.X == FightArea.ExitCol && active.Y == FightArea.ExitRow)
                     ExecuteAction(new Actions.RunawayAction(active));
                 else
                     _state.AddLog("Must reach the exit tile (⎆) to run away.");
+                return;
+            }
+
+            foreach (var row in _leftPanelLayout)
+            {
+                if (row.Y != y) continue;
+                switch (row.Kind)
+                {
+                    case LeftPanelRowKind.Medium:
+                        _expandedMediumKey = _expandedMediumKey == row.MediumKey ? null : row.MediumKey;
+                        SetMoveMode();
+                        break;
+                    case LeftPanelRowKind.UnlockedSkill:
+                        if (row.SkillIndex >= 0 && row.SkillIndex < _currentUnlockedSkills.Count
+                            && _currentUnlockedSkills[row.SkillIndex].IsSelfTargeting)
+                            ExecuteAction(new Actions.SkillAction(active, active, _currentUnlockedSkills[row.SkillIndex]));
+                        else
+                            SetSkillMode(row.SkillIndex);
+                        break;
+                    case LeftPanelRowKind.LearnableSkill:
+                        SetLearnableSkillMode(row.SkillIndex);
+                        break;
+                }
+                return;
             }
             return;
         }
@@ -400,17 +409,26 @@ public class FightModeAdapter
         else if (_selectedSkillIndex >= 0 && _selectedSkillIndex < _currentUnlockedSkills.Count)
         {
             var skill = _currentUnlockedSkills[_selectedSkillIndex];
-            if (skill.EffectType == FightingSkillEffect.DefensePosture)
+            if (skill.IsSelfTargeting)
             {
                 ExecuteAction(new Actions.SkillAction(active, active, skill));
             }
             else
             {
+                if (_highlightCells != null && !_highlightCells.Contains((ax, ay))) return;
                 var target = _state.Fighters.FirstOrDefault(
                     f => f.IsAlive && f.Faction != active.Faction &&
                          f.X == ax && f.Y == ay);
                 if (target != null)
                     TryUseSkillOnTarget(active, target, skill);
+                else
+                {
+                    int cost = skill.CineticPointsCost;
+                    active.CurrentCineticPoints = Math.Max(0, active.CurrentCineticPoints - cost);
+                    _state.AddLog($"{active.DisplayName} uses {skill.DisplayName} — nothing there.  [-{cost} CP]", LogEntryType.Miss);
+                    _state.Phase = TurnPhase.TurnEnding;
+                    AfterActionUpdate();
+                }
             }
         }
         else if (_selectedLearnableSkillIndex >= 0 && _selectedLearnableSkillIndex < _currentLearnableSkills.Count)
@@ -451,13 +469,10 @@ public class FightModeAdapter
 
         if (x < 20 && canInteract)
         {
-            int skillIdx = y - FightModeUI.SkillButtonsStart;
-            int learnIdx = skillIdx - _currentUnlockedSkills.Count;
             if (y == FightModeUI.MoveButtonRow
                 || y == FightModeUI.EndTurnButtonRow
                 || y == FightModeUI.RunButtonRow
-                || (skillIdx >= 0 && skillIdx < _currentUnlockedSkills.Count)
-                || (learnIdx >= 0 && learnIdx < _currentLearnableSkills.Count))
+                || _leftPanelLayout.Any(r => r.Y == y))
                 newButton = y;
         }
         else if (x >= 20 && x < 80 && y >= 20 && y < 80)
@@ -487,21 +502,20 @@ public class FightModeAdapter
                 }
             }
         }
-        else if (y < 20)
+        else if (x >= 80 && y >= 40)
         {
-            newFighter = FindFighterLabelAt(x, y);
+            // Right-bottom initiative list — hover a fighter row
+            var hit = _rightPanelRows.FirstOrDefault(r => r.Y == y);
+            if (hit.Fighter != null) newFighter = hit.Fighter;
         }
 
-        bool targetChanged = newFighter != _hoveredFighter || newButton != _hoveredButtonRow;
-        if (targetChanged)
-        {
-            _hoverTimer = 0;
-            _popupVisible = false;
-        }
-
-        _hoveredFighter = newFighter;
+        _hoveredFighter   = newFighter;
         _hoveredButtonRow = newButton;
-        _previewPath = newPath;
+        _previewPath      = newPath;
+        // _hoverSkillCells is recomputed each frame inside FullRedraw after _leftPanelLayout is fresh
+
+        // Detail panel follows the hovered fighter; null falls back to the active fighter in FullRedraw
+        _topPanelFighter = newFighter;
     }
 
     /// <summary>Called by the game loop for keyboard input.</summary>
@@ -625,6 +639,28 @@ public class FightModeAdapter
         }
     }
 
+    private HashSet<(int X, int Y)>? ComputeHoverSkillCells(int buttonRow, Fighter active)
+    {
+        if (buttonRow < 0) return null;
+        if (_state.Phase != TurnPhase.SelectingAction || !active.IsPlayerControlled) return null;
+
+        if (buttonRow == FightModeUI.MoveButtonRow)
+            return ComputeReachableCells(active);
+
+        foreach (var r in _leftPanelLayout)
+        {
+            if (r.Y != buttonRow) continue;
+            if (r.Kind == LeftPanelRowKind.UnlockedSkill
+                && r.SkillIndex >= 0 && r.SkillIndex < _currentUnlockedSkills.Count)
+                return ComputeSkillTargetCells(active, _currentUnlockedSkills[r.SkillIndex]);
+            if (r.Kind == LeftPanelRowKind.LearnableSkill
+                && r.SkillIndex >= 0 && r.SkillIndex < _currentLearnableSkills.Count)
+                return ComputeSkillTargetCells(active, _currentLearnableSkills[r.SkillIndex]);
+            break;
+        }
+        return null;
+    }
+
     private HashSet<(int X, int Y)> ComputeReachableCells(Fighter fighter)
     {
         var result = new HashSet<(int, int)>();
@@ -668,17 +704,23 @@ public class FightModeAdapter
     private HashSet<(int X, int Y)> ComputeSkillTargetCells(Fighter attacker, FightingSkill skill)
     {
         var result = new HashSet<(int, int)>();
-        if (skill.EffectType == FightingSkillEffect.DefensePosture)
+        if (skill.IsSelfTargeting)
         {
             result.Add((attacker.X, attacker.Y));
             return result;
         }
-        foreach (var f in _state.Fighters)
+        // Include every cell within Manhattan range + LOS (not just enemy positions).
+        int range = skill.Range;
+        for (int dy = -range; dy <= range; dy++)
+        for (int dx = -range; dx <= range; dx++)
         {
-            if (f.Faction == attacker.Faction || !f.IsAlive) continue;
-            int dist = Math.Abs(f.X - attacker.X) + Math.Abs(f.Y - attacker.Y);
-            if (dist <= skill.Range)
-                result.Add((f.X, f.Y));
+            if (Math.Abs(dx) + Math.Abs(dy) > range) continue;
+            int tx = attacker.X + dx, ty = attacker.Y + dy;
+            if (tx == attacker.X && ty == attacker.Y) continue;
+            if (!_state.Area.IsInBounds(tx, ty)) continue;
+            if (_state.Area.GetCell(tx, ty).Type == TerrainType.HardObstacle) continue;
+            if (!FightResolver.HasLineOfSight(_state.Area, attacker.X, attacker.Y, tx, ty)) continue;
+            result.Add((tx, ty));
         }
         return result;
     }
@@ -732,7 +774,18 @@ public class FightModeAdapter
     private void BeginDiceRoll()
     {
         _diceElapsed = 0;
-        _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty);
+        if (_state.PendingLearnSkill != null && _state.PendingSkill == null)
+        {
+            var skill = _state.PendingLearnSkill;
+            var accent = new OpenTK.Mathematics.Vector4(0.0f, 0.9f, 1.0f, 1.0f); // cyan — matches LogEntryType.Learning
+            string subtitle = $"LEARNING CHECK — {skill.RequiredModusMentisId} (cerebellum)";
+            _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty,
+                subtitle: subtitle, difficultyVerb: "to learn", accentColor: accent);
+        }
+        else
+        {
+            _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty);
+        }
     }
 
     /// <summary>
@@ -749,6 +802,10 @@ public class FightModeAdapter
         _state.DiceNumberOfDice = _state.LearningDiceCount;
         _state.DiceDifficulty = _state.LearningDifficulty;
         _state.Phase = TurnPhase.AnimatingDice;
+        _state.AddLog(
+            $"{attacker.DisplayName} attempts to learn '{skill.RequiredModusMentisId}' " +
+            $"(cerebellum {_state.LearningDiceCount}d, need {_state.LearningDifficulty} sixes).",
+            LogEntryType.Learning);
         BeginDiceRoll();
         _highlightCells = null;
         _selectedLearnableSkillIndex = -1;
@@ -883,11 +940,56 @@ public class FightModeAdapter
 
     // ── Rendering ─────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Decide what the left-bottom info box should describe: the hovered action
+    /// if the mouse is over one, otherwise the currently selected action.
+    /// </summary>
+    private (FightModeUI.LeftInfoKind, FightingSkill?) ResolveLeftInfo(Fighter active)
+    {
+        if (!active.IsPlayerControlled) return (FightModeUI.LeftInfoKind.None, null);
+
+        // 1. Hovered button (priority)
+        if (_hoveredButtonRow == FightModeUI.MoveButtonRow)
+            return (FightModeUI.LeftInfoKind.Move, null);
+        if (_hoveredButtonRow == FightModeUI.EndTurnButtonRow)
+            return (FightModeUI.LeftInfoKind.EndTurn, null);
+        if (_hoveredButtonRow == FightModeUI.RunButtonRow)
+            return (FightModeUI.LeftInfoKind.Run, null);
+
+        if (_hoveredButtonRow >= 0)
+        {
+            foreach (var r in _leftPanelLayout)
+            {
+                if (r.Y != _hoveredButtonRow) continue;
+                if (r.Kind == LeftPanelRowKind.UnlockedSkill
+                    && r.SkillIndex >= 0 && r.SkillIndex < _currentUnlockedSkills.Count)
+                    return (FightModeUI.LeftInfoKind.Skill, _currentUnlockedSkills[r.SkillIndex]);
+                if (r.Kind == LeftPanelRowKind.LearnableSkill
+                    && r.SkillIndex >= 0 && r.SkillIndex < _currentLearnableSkills.Count)
+                    return (FightModeUI.LeftInfoKind.LearnableSkill, _currentLearnableSkills[r.SkillIndex]);
+                break;
+            }
+        }
+
+        // 2. Selected action (fallback)
+        if (_selectedSkillIndex >= 0 && _selectedSkillIndex < _currentUnlockedSkills.Count)
+            return (FightModeUI.LeftInfoKind.Skill, _currentUnlockedSkills[_selectedSkillIndex]);
+        if (_selectedLearnableSkillIndex >= 0 && _selectedLearnableSkillIndex < _currentLearnableSkills.Count)
+            return (FightModeUI.LeftInfoKind.LearnableSkill, _currentLearnableSkills[_selectedLearnableSkillIndex]);
+        if (_isMoveMode)
+            return (FightModeUI.LeftInfoKind.Move, null);
+
+        return (FightModeUI.LeftInfoKind.None, null);
+    }
+
     private void FullRedraw()
     {
         var active = _state.ActiveFighter;
 
-        FightModeUI.RenderTopPanel(_terminal, _state);
+        // Top panel: hovered fighter if any, otherwise the active fighter
+        var detailFighter = _topPanelFighter ?? active;
+        FightModeUI.RenderDetailPanel(_terminal, detailFighter,
+            isHoverOverride: _topPanelFighter != null && _topPanelFighter != active);
 
         if (active != null)
         {
@@ -900,16 +1002,27 @@ public class FightModeAdapter
                 _bodyPartMenu = null;
                 bool isMove = _isMoveMode || !active.IsPlayerControlled ||
                               _state.Phase == TurnPhase.AnimatingMovement;
-                FightModeUI.RenderLeftPanel(_terminal, active, _currentUnlockedSkills,
-                    isMove, _selectedSkillIndex, _hoveredButtonRow,
-                    _currentLearnableSkills, _selectedLearnableSkillIndex);
+                _leftPanelLayout = FightModeUI.RenderLeftPanel(_terminal, active,
+                    _currentUnlockedSkills, _currentLearnableSkills,
+                    isMove, _selectedSkillIndex, _selectedLearnableSkillIndex,
+                    _expandedMediumKey, _hoveredButtonRow);
+
+                // Recompute hover-blink cells now that the layout is current
+                _hoverSkillCells = ComputeHoverSkillCells(_hoveredButtonRow, active);
+
+                // Bottom-half info panel — hovered action > selected action > none
+                var (infoKind, infoSkill) = ResolveLeftInfo(active);
+                FightModeUI.RenderLeftInfoPanel(_terminal, infoKind, infoSkill, active);
             }
         }
 
         FightModeUI.RenderCenterPanel(_terminal, _state.Area, _state.Fighters,
-            active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath);
+            active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath, _hoverSkillCells);
 
-        FightModeUI.RenderRightPanel(_terminal, _state.Area);
+        int initHoverY = _hoveredFighter != null
+            ? _rightPanelRows.FirstOrDefault(r => r.Fighter == _hoveredFighter).Y
+            : -1;
+        _rightPanelRows = FightModeUI.RenderRightPanel(_terminal, _state.Area, _state, initHoverY);
         FightModeUI.RenderBottomPanel(_terminal, _state.ActionLog, _actionLogScrollOffset);
 
         if (_dice.IsVisible)
@@ -932,29 +1045,13 @@ public class FightModeAdapter
         _isMoveMode = true;
         _selectedSkillIndex = -1;
         _selectedLearnableSkillIndex = -1;
+        _expandedMediumKey = null;
         RecomputeHighlight();
         _actionLogScrollOffset = 0;
         _previewPath = null;
+        _hoverSkillCells = null;
         _hoveredButtonRow = -1;
-        _popupVisible = false;
-        _hoverTimer = 0;
-    }
-
-    private Fighter? FindFighterLabelAt(int hx, int hy)
-    {
-        const int RightStart = 80;
-        int x = 2, y = 3;
-        foreach (var f in _state.Fighters)
-        {
-            string mark = f == _state.ActiveFighter ? "▶ " : "  ";
-            string label = $"{mark}{f.DisplayChar} {f.DisplayName} HP:{f.CurrentHp}/{f.MaxHp} CP:{f.CurrentCineticPoints}/{f.MaxCineticPoints}";
-            if (!f.IsAlive) label += " [DEAD]";
-            if (x + label.Length + 2 > RightStart) { x = 2; y += 2; }
-            if (hy == y && hx >= x && hx < x + label.Length)
-                return f;
-            x += label.Length + 3;
-        }
-        return null;
+        _topPanelFighter = null;
     }
 
     private int[] GenerateDiceValues(int count)
