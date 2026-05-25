@@ -241,23 +241,78 @@ public static class FightModeUI
         // Build groups: key → (label, ordered list of (index, skill, learnable))
         var groups = new List<(string Key, string Label, List<(int Idx, FightingSkill Skill, bool Learnable)> Skills)>();
 
-        void AddSkill(FightingSkill skill, int idx, bool learnable)
+        void AddToGroup(string key, string label, int idx, FightingSkill skill, bool learnable)
         {
-            string key = MediumKeyFor(skill);
             var entry = groups.FirstOrDefault(g => g.Key == key);
             if (entry.Key == null)
             {
-                entry = (key, MediumLabelFor(skill), new List<(int, FightingSkill, bool)>());
+                entry = (key, label, new List<(int, FightingSkill, bool)>());
                 groups.Add(entry);
             }
             entry.Skills.Add((idx, skill, learnable));
         }
-        for (int i = 0; i < unlockedSkills.Count; i++) AddSkill(unlockedSkills[i], i, false);
-        for (int i = 0; i < learnableSkills.Count; i++) AddSkill(learnableSkills[i], i, true);
 
-        // Stable ordering: organ mediums (alphabetical) first, then weapon mediums (alphabetical)
+        // ── Organ-medium groups: built from unlockedSkills / learnableSkills lists ──
+        for (int i = 0; i < unlockedSkills.Count; i++)
+        {
+            var s = unlockedSkills[i];
+            if (s.Medium.Type == MediumType.OrganMedium)
+            {
+                string key   = s.Medium.OrganId ?? s.SkillId;
+                string label = OrganLabel(s.Medium.OrganId);
+                AddToGroup(key, label, i, s, false);
+            }
+        }
+        for (int i = 0; i < learnableSkills.Count; i++)
+        {
+            var s = learnableSkills[i];
+            if (s.Medium.Type == MediumType.OrganMedium)
+            {
+                string key   = s.Medium.OrganId ?? s.SkillId;
+                string label = OrganLabel(s.Medium.OrganId);
+                AddToGroup(key, label, i, s, true);
+            }
+        }
+
+        // ── Weapon-medium groups: one tab per equipped weapon, skills in category order ──
+        // Pre-index unlocked/learnable weapon skills for O(1) lookup.
+        var unlockedWeaponIdx  = new Dictionary<string, int>();
+        var learnableWeaponIdx = new Dictionary<string, int>();
+        for (int i = 0; i < unlockedSkills.Count; i++)
+            if (unlockedSkills[i].Medium.Type == MediumType.WeaponMedium)
+                unlockedWeaponIdx[unlockedSkills[i].SkillId] = i;
+        for (int i = 0; i < learnableSkills.Count; i++)
+            if (learnableSkills[i].Medium.Type == MediumType.WeaponMedium)
+                learnableWeaponIdx[learnableSkills[i].SkillId] = i;
+
+        var seenWeaponCategories = new HashSet<string>();
+        foreach (var item in fighter.Member.EquippedItems[EquipmentAnchor.RightHold]
+                               .Concat(fighter.Member.EquippedItems[EquipmentAnchor.LeftHold])
+                               .OfType<IWeaponItem>())
+        {
+            var category = WeaponMediumRegistry.GetById(item.WeaponCategory);
+            if (category == null || !seenWeaponCategories.Add(category.CategoryId)) continue;
+
+            string groupKey   = category.CategoryId;
+            string groupLabel = (item as Item)?.DisplayName ?? category.DisplayName;
+
+            foreach (var skillId in category.SkillIds)
+            {
+                if (unlockedWeaponIdx.TryGetValue(skillId, out int uIdx))
+                {
+                    AddToGroup(groupKey, groupLabel, uIdx, unlockedSkills[uIdx], false);
+                }
+                else if (learnableWeaponIdx.TryGetValue(skillId, out int lIdx))
+                {
+                    AddToGroup(groupKey, groupLabel, lIdx, learnableSkills[lIdx], true);
+                    break; // only the first unknown per weapon tab is shown as learnable
+                }
+            }
+        }
+
+        // Stable ordering: organ mediums first (alphabetical), then weapon mediums (alphabetical)
         groups = groups
-            .OrderBy(g => g.Skills[0].Skill.Medium.Type == MediumType.OrganMedium ? 0 : 1)
+            .OrderBy(g => g.Skills.Count > 0 && g.Skills[0].Skill.Medium.Type == MediumType.OrganMedium ? 0 : 1)
             .ThenBy(g => g.Label)
             .ToList();
 
@@ -446,20 +501,25 @@ public static class FightModeUI
         }
     }
 
-    /// <summary>Group key for a fighting skill — mirrors Fighter.GetLearnableSkills grouping.</summary>
-    private static string MediumKeyFor(FightingSkill s) =>
-        s.Medium.Type == MediumType.OrganMedium
-            ? s.Medium.OrganId ?? s.SkillId
-            : s.RequiredModusMentisId;
-
-    /// <summary>Display label for a medium group header (e.g. "Hands", "Swordsmanship").</summary>
-    private static string MediumLabelFor(FightingSkill s)
+    /// <summary>Human-readable label for an organ id (e.g. "hands" → "Hands").</summary>
+    private static string OrganLabel(string? organId)
     {
-        string raw = s.Medium.Type == MediumType.OrganMedium
-            ? (s.Medium.OrganId ?? "?")
-            : s.RequiredModusMentisId;
+        string raw = organId ?? "?";
         raw = raw.Replace('_', ' ');
         return raw.Length == 0 ? raw : char.ToUpperInvariant(raw[0]) + raw[1..];
+    }
+
+    /// <summary>Display label for the medium of a skill shown in the info panel.</summary>
+    private static string MediumLabelFor(FightingSkill s)
+    {
+        if (s.Medium.Type == MediumType.OrganMedium)
+            return OrganLabel(s.Medium.OrganId);
+
+        // Weapon: list all categories that contain this skill
+        var cats = WeaponMediumRegistry.GetCategoriesContaining(s.SkillId).ToList();
+        return cats.Count == 0
+            ? "Weapon"
+            : string.Join(", ", cats.Select(c => c.DisplayName));
     }
 
     // ── Right panel — split: terrain legend (top) + initiative (bottom) ──

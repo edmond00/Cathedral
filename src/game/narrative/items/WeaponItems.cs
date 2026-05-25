@@ -16,6 +16,12 @@ public abstract class WeaponItem : Item, IWeaponItem
     public override List<ItemType> Types           => new() { ItemType.Other };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
     public abstract int Level { get; }
+
+    /// <summary>
+    /// Single weapon category key. Matches keys used in <see cref="Cathedral.Fight.FightingMedium.WeaponCategories"/>.
+    /// Each concrete weapon has exactly one category.
+    /// </summary>
+    public abstract string WeaponCategory { get; }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,6 +37,7 @@ public sealed class ArmingSword : WeaponItem
     public override ItemSize Size      => ItemSize.Medium;
     public override float   Weight     => 1.3f;
     public override int     Level      => 2;
+    public override string WeaponCategory => "long_blade";
     public override string[] Info => new[]
     {
         "Type: Long Blade",
@@ -48,6 +55,7 @@ public sealed class Longsword : WeaponItem
     public override ItemSize Size      => ItemSize.Large;
     public override float   Weight     => 1.8f;
     public override int     Level      => 3;
+    public override string WeaponCategory => "long_blade";
     public override string[] Info => new[]
     {
         "Type: Long Blade",
@@ -69,6 +77,7 @@ public sealed class HuntingKnife : WeaponItem
     public override ItemSize Size      => ItemSize.Small;
     public override float   Weight     => 0.4f;
     public override int     Level      => 1;
+    public override string WeaponCategory => "short_blade";
     public override string[] Info => new[]
     {
         "Type: Short Blade",
@@ -86,6 +95,7 @@ public sealed class IronDagger : WeaponItem
     public override ItemSize Size      => ItemSize.Small;
     public override float   Weight     => 0.5f;
     public override int     Level      => 2;
+    public override string WeaponCategory => "short_blade";
     public override string[] Info => new[]
     {
         "Type: Short Blade",
@@ -107,6 +117,7 @@ public sealed class CavalrySaber : WeaponItem
     public override ItemSize Size      => ItemSize.Medium;
     public override float   Weight     => 1.1f;
     public override int     Level      => 2;
+    public override string WeaponCategory => "saber";
     public override string[] Info => new[]
     {
         "Type: Saber",
@@ -124,6 +135,7 @@ public sealed class Cutlass : WeaponItem
     public override ItemSize Size      => ItemSize.Medium;
     public override float   Weight     => 1.4f;
     public override int     Level      => 3;
+    public override string WeaponCategory => "saber";
     public override string[] Info => new[]
     {
         "Type: Saber",
@@ -145,6 +157,7 @@ public sealed class Cudgel : WeaponItem
     public override ItemSize Size      => ItemSize.Medium;
     public override float   Weight     => 1.0f;
     public override int     Level      => 1;
+    public override string WeaponCategory => "blunt";
     public override string[] Info => new[]
     {
         "Type: Blunt Weapon",
@@ -162,6 +175,7 @@ public sealed class Warhammer : WeaponItem
     public override ItemSize Size      => ItemSize.Medium;
     public override float   Weight     => 1.6f;
     public override int     Level      => 2;
+    public override string WeaponCategory => "blunt";
     public override string[] Info => new[]
     {
         "Type: Blunt Weapon",
@@ -183,6 +197,7 @@ public sealed class BattleAxe : WeaponItem
     public override ItemSize Size      => ItemSize.Medium;
     public override float   Weight     => 1.7f;
     public override int     Level      => 2;
+    public override string WeaponCategory => "axe";
     public override string[] Info => new[]
     {
         "Type: Axe",
@@ -200,6 +215,7 @@ public sealed class WarAxe : WeaponItem
     public override ItemSize Size      => ItemSize.Large;
     public override float   Weight     => 2.2f;
     public override int     Level      => 3;
+    public override string WeaponCategory => "axe";
     public override string[] Info => new[]
     {
         "Type: Axe",
@@ -221,6 +237,7 @@ public sealed class WarPick : WeaponItem
     public override ItemSize Size      => ItemSize.Medium;
     public override float   Weight     => 1.5f;
     public override int     Level      => 2;
+    public override string WeaponCategory => "pickaxe";
     public override string[] Info => new[]
     {
         "Type: Pickaxe",
@@ -238,6 +255,7 @@ public sealed class HeavyPick : WeaponItem
     public override ItemSize Size      => ItemSize.Large;
     public override float   Weight     => 2.0f;
     public override int     Level      => 1;
+    public override string WeaponCategory => "pickaxe";
     public override string[] Info => new[]
     {
         "Type: Pickaxe",
@@ -259,6 +277,7 @@ public sealed class HuntingSpear : WeaponItem
     public override ItemSize Size      => ItemSize.Large;
     public override float   Weight     => 1.2f;
     public override int     Level      => 2;
+    public override string WeaponCategory => "spear";
     public override string[] Info => new[]
     {
         "Type: Spear",
@@ -276,6 +295,7 @@ public sealed class WarSpear : WeaponItem
     public override ItemSize Size      => ItemSize.Large;
     public override float   Weight     => 1.8f;
     public override int     Level      => 3;
+    public override string WeaponCategory => "spear";
     public override string[] Info => new[]
     {
         "Type: Spear",
@@ -297,6 +317,7 @@ public sealed class HuntingBow : WeaponItem
     public override ItemSize Size      => ItemSize.Large;
     public override float   Weight     => 0.8f;
     public override int     Level      => 1;
+    public override string WeaponCategory => "bow";
     public override string[] Info => new[]
     {
         "Type: Bow",
@@ -314,6 +335,7 @@ public sealed class Longbow : WeaponItem
     public override ItemSize Size      => ItemSize.Large;
     public override float   Weight     => 1.0f;
     public override int     Level      => 3;
+    public override string WeaponCategory => "bow";
     public override string[] Info => new[]
     {
         "Type: Bow",
@@ -335,6 +357,7 @@ public sealed class LightCrossbow : WeaponItem
     public override ItemSize Size      => ItemSize.Medium;
     public override float   Weight     => 1.4f;
     public override int     Level      => 2;
+    public override string WeaponCategory => "crossbow";
     public override string[] Info => new[]
     {
         "Type: Crossbow",
@@ -352,6 +375,7 @@ public sealed class HeavyCrossbow : WeaponItem
     public override ItemSize Size      => ItemSize.Large;
     public override float   Weight     => 2.5f;
     public override int     Level      => 3;
+    public override string WeaponCategory => "crossbow";
     public override string[] Info => new[]
     {
         "Type: Crossbow",
@@ -373,6 +397,7 @@ public sealed class RoundShield : WeaponItem
     public override ItemSize Size        => ItemSize.Medium;
     public override float   Weight       => 2.0f;
     public override int     Level        => 1;
+    public override string WeaponCategory => "shield";
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.LeftHold;
     public override string[] Info => new[]
     {
@@ -391,6 +416,7 @@ public sealed class TowerShield : WeaponItem
     public override ItemSize Size        => ItemSize.Large;
     public override float   Weight       => 5.5f;
     public override int     Level        => 2;
+    public override string WeaponCategory => "shield";
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.LeftHold;
     public override string[] Info => new[]
     {

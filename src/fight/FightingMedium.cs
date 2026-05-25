@@ -16,6 +16,8 @@ public enum MediumType
 
 /// <summary>
 /// Value-type representing the physical medium required to use a fighting skill.
+/// Weapon skills declare only <see cref="MediumType.WeaponMedium"/>; the categories that
+/// include a skill are defined by <see cref="WeaponMediumRegistry"/>.
 /// </summary>
 public record FightingMedium
 {
@@ -24,13 +26,11 @@ public record FightingMedium
     /// <summary>Organ id required for <see cref="MediumType.OrganMedium"/> (e.g. "hands", "feet", "fangs", "claws").</summary>
     public string? OrganId { get; init; }
 
-    /// <summary>
-    /// True when this medium is an organ medium for <paramref name="organId"/>.
-    /// </summary>
+    /// <summary>Factory for an organ medium.</summary>
     public static FightingMedium Organ(string organId) =>
         new() { Type = MediumType.OrganMedium, OrganId = organId };
 
-    /// <summary>True when this medium requires a weapon item (<see cref="IWeaponItem"/>) in a hold slot.</summary>
+    /// <summary>Factory for a weapon medium. Category membership is defined by <see cref="WeaponMediumRegistry"/>.</summary>
     public static FightingMedium Weapon =>
         new() { Type = MediumType.WeaponMedium };
 

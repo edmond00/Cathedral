@@ -12,6 +12,7 @@ using Cathedral.Glyph.Microworld.LocationSystem.Generators;
 using Cathedral.Glyph.Interaction;
 using Cathedral.LLM;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Items;
 using Cathedral.Game.Narrative.Sanitizer;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
@@ -2089,6 +2090,7 @@ public class LocationTravelGameController : IDisposable
             {
                 _protagonist = new Protagonist();
                 _protagonist.InitializeMemory();
+                WeaponsMode.ApplyIfActive(_protagonist);
             }
             var protagonist = _protagonist;
             
@@ -2253,6 +2255,7 @@ public class LocationTravelGameController : IDisposable
         // via REMEMBER.
         _protagonist = new Protagonist();
         _protagonist.InitializeMemory();
+        WeaponsMode.ApplyIfActive(_protagonist);
 
         _hasGameStarted = true;
         Console.WriteLine("LocationTravelGameController: Game state reset complete");

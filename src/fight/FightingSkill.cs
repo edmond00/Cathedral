@@ -185,12 +185,14 @@ public abstract class FightingSkill
         }
         else // WeaponMedium
         {
-            // Any IWeaponItem in RightHold or LeftHold
-            bool hasWeapon =
+            // The fighter must have an equipped weapon whose category includes this skill
+            var equippedWeapons =
                 f.Member.EquippedItems[EquipmentAnchor.RightHold].Concat(
                 f.Member.EquippedItems[EquipmentAnchor.LeftHold])
-                .Any(item => item is IWeaponItem);
-            if (!hasWeapon) return false;
+                .OfType<IWeaponItem>();
+            bool hasMatchingWeapon = equippedWeapons.Any(w =>
+                WeaponMediumRegistry.GetById(w.WeaponCategory)?.SkillIds.Contains(SkillId) == true);
+            if (!hasMatchingWeapon) return false;
         }
 
         return true;
