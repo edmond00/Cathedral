@@ -36,14 +36,16 @@ public class SkillAction : IFightAction
             return;
         }
 
-        // Set up dice roll for the window to animate
+        // Set up dice roll for the window to animate (two-roll: attack dice vs defense dice)
         state.PendingSkill  = Skill;
         state.PendingTarget = Target;
-        state.DiceNumberOfDice = Skill.TotalDice(Attacker);
-        state.DiceDifficulty   = Target.NaturalDefense;
-        state.IsDiceRolling    = true;
-        state.DiceFinalValues  = null;
-        state.Phase            = TurnPhase.AnimatingDice;
+        state.DiceNumberOfDice          = Skill.TotalDice(Attacker);
+        state.DiceDifficulty            = Target.NaturalDefense; // kept for logging
+        state.DiceSecondaryNumberOfDice = Target.NaturalDefense;
+        state.IsDiceRolling             = true;
+        state.DiceFinalValues           = null;
+        state.DiceSecondaryFinalValues  = null;
+        state.Phase                     = TurnPhase.AnimatingDice;
 
         state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName} on {Target.DisplayName}.  [-{cost} CP]");
     }

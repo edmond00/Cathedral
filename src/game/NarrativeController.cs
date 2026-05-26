@@ -119,6 +119,7 @@ public class NarrativeController
         
         _ambianceEngine = ambianceEngine;
         _ui = new NarrativeUI(terminal);
+        _ui.OnDiceTick = () => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
         // Calculate content width dynamically: terminal width - margins - scrollbar
         var layout = new NarrativeLayout(
             terminal.Width, 

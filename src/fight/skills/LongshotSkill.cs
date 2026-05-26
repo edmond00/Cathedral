@@ -16,4 +16,5 @@ public sealed class LongshotSkill : FightingSkill
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.Random;
     public override int Range                     => 20;
+    public override int MinRange                  => 4;
 }

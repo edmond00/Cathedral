@@ -17,4 +17,5 @@ public sealed class SightedShotSkill : FightingSkill
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
     public override string? TargetBodyPartId      => "viscera";
     public override int Range                     => 8;
+    public override int MinRange                  => 2;
 }

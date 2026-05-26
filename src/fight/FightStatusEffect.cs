@@ -50,7 +50,7 @@ public sealed class BleedingEffect : FightStatusEffect
 
     public override string EffectId      => "bleeding";
     public override string DisplayLabel  => $"B{Level}";
-    public override Vector4 DisplayColor => Config.Colors.BrightRed;
+    public override Vector4 DisplayColor => Config.Colors.BrightPurple;
 
     public override void OnApply(Fighter target, Fighter source, FightState state, Random rng)
     {

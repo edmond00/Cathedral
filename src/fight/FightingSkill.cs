@@ -104,8 +104,15 @@ public abstract class FightingSkill
     /// <summary>Body part id to target when <see cref="WoundTargetMode"/> is <see cref="WoundTargetMode.FixedBodyPart"/>.</summary>
     public virtual string? TargetBodyPartId => null;
 
-    /// <summary>Maximum Manhattan distance from attacker to a valid target cell. Default 1 (adjacent melee).</summary>
+    /// <summary>Maximum Euclidean distance from attacker to a valid target cell. Default 1 (adjacent melee).</summary>
     public virtual int Range => 1;
+
+    /// <summary>
+    /// Minimum Euclidean distance from attacker to a valid target cell.
+    /// Default 1 (any non-self cell). Ranged skills like bow shots override this to forbid
+    /// firing at point-blank range — the targetable area becomes a donut.
+    /// </summary>
+    public virtual int MinRange => 1;
 
     /// <summary>
     /// 1-based position of this skill in its medium's skill list.

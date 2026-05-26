@@ -85,6 +85,11 @@ public class FightState
     public int DiceDifficulty { get; set; }
     public bool IsDiceRolling { get; set; }
     public int[]? DiceFinalValues { get; set; }
+    /// <summary>Secondary (defense) dice count for the two-roll attack flow. 0 = single-roll mode.</summary>
+    public int DiceSecondaryNumberOfDice { get; set; }
+    public int[]? DiceSecondaryFinalValues { get; set; }
+    /// <summary>True while a runaway dice roll is in progress (need at least one six to flee).</summary>
+    public bool PendingRunaway { get; set; }
 
     // ── Action log ───────────────────────────────────────────────────
     private const int MaxLogLines = 200;
@@ -134,6 +139,9 @@ public class FightState
         Phase = TurnPhase.SelectingAction;
         IsDiceRolling = false;
         DiceFinalValues = null;
+        DiceSecondaryFinalValues = null;
+        DiceSecondaryNumberOfDice = 0;
+        PendingRunaway = false;
         MovementPath = null;
         MovingFighter = null;
         MovementPathIndex = 0;

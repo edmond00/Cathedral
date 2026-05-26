@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK.Mathematics;
+using Cathedral.Audio;
 using Cathedral.Game;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
@@ -68,6 +69,11 @@ public class FightModeAdapter
     private Fighter? _hoveredFighter;
     private int _hoveredButtonRow = -1;
     private List<(int X, int Y)>? _previewPath;
+    private (int X, int Y)? _previewAttackCell;
+
+    // ── Sound effects ───────────────────────────────────────────────
+    private readonly Action<GameEventType>? _sfx;
+    private object? _lastHoverKey;
 
     // ── Blink ───────────────────────────────────────────────────────
     private double _blinkTimer;
@@ -105,12 +111,15 @@ public class FightModeAdapter
         PopupTerminalHUD? popup,
         NpcEntity targetNpc,
         Protagonist protagonist,
-        IReadOnlyList<NpcEntity>? allies = null)
+        IReadOnlyList<NpcEntity>? allies = null,
+        Action<GameEventType>? sfxTrigger = null)
     {
         _terminal = terminal;
         _ = popup; // unused (popups removed; the param is kept for caller compatibility)
         _targetNpc = targetNpc;
         _allies = allies ?? Array.Empty<NpcEntity>();
+        _sfx = sfxTrigger;
+        _dice.OnDiceTick = () => _sfx?.Invoke(GameEventType.SmallInteraction);
 
         // Build AllEnemyNpcs: main target + all allies
         var allEnemies = new List<NpcEntity> { targetNpc };
@@ -217,6 +226,13 @@ public class FightModeAdapter
                 FightResult.PartyFled => FightAdapterResult.Runaway,
                 _ => FightAdapterResult.Victory
             };
+            _sfx?.Invoke(Result switch
+            {
+                FightAdapterResult.Victory => GameEventType.PositiveOutcome,
+                FightAdapterResult.Death   => GameEventType.NegativeOutcome,
+                FightAdapterResult.Runaway => GameEventType.NeutralOutcome,
+                _                          => GameEventType.NeutralOutcome,
+            });
             FullRedraw();
             return;
         }
@@ -248,6 +264,9 @@ public class FightModeAdapter
                     var terrCell = _state.Area.GetCell(prevX, prevY);
                     _terminal.SetCell(20 + prevX, 20 + prevY,
                         terrCell.Glyph, terrCell.TextColor, terrCell.BgColor);
+
+                    // Tick on every single-tile step (party or enemy)
+                    _sfx?.Invoke(GameEventType.SmallInteraction);
                 }
                 else
                 {
@@ -291,8 +310,17 @@ public class FightModeAdapter
             if (_diceElapsed >= DiceRollDuration)
             {
                 var finalValues = GenerateDiceValues(_state.DiceNumberOfDice);
-                _dice.Complete(finalValues);
                 _state.DiceFinalValues = finalValues;
+                if (_dice.IsDual)
+                {
+                    var defenseValues = GenerateDiceValues(_state.DiceSecondaryNumberOfDice);
+                    _state.DiceSecondaryFinalValues = defenseValues;
+                    _dice.CompleteDual(finalValues, defenseValues);
+                }
+                else
+                {
+                    _dice.Complete(finalValues);
+                }
                 _state.IsDiceRolling = false;
                 _state.Phase = TurnPhase.WaitingForDiceComplete;
             }
@@ -325,7 +353,9 @@ public class FightModeAdapter
             var region = _dice.ContinueButtonRegion;
             if (y == region.Y && x >= region.X && x < region.X + region.Width)
             {
-                if (_state.PendingLearnSkill != null && _state.PendingSkill == null)
+                if (_state.PendingRunaway)
+                    FinishRunawayRoll(active);
+                else if (_state.PendingLearnSkill != null && _state.PendingSkill == null)
                     FinishLearningRoll(active);
                 else
                     FinishAttackResolution(active);
@@ -350,8 +380,8 @@ public class FightModeAdapter
         if (_state.Phase != TurnPhase.SelectingAction) return;
         if (!active.IsPlayerControlled) return;
 
-        // ── Left panel buttons ────────────────────────────────────
-        if (x < 20)
+        // ── Top-left action menu buttons ──────────────────────────
+        if (x < FightModeUI.ActionMenuRight && y < 20)
         {
             if (y == FightModeUI.MoveButtonRow)
             {
@@ -397,6 +427,10 @@ public class FightModeAdapter
             return;
         }
 
+        // Inert regions: left pan (fighter detail) + top-right (info)
+        if (x < 20 && y >= 20) return;
+        if (x >= FightModeUI.ActionMenuRight && y < 20) return;
+
         // ── Center panel targeting ────────────────────────────────
         int ax = x - 20, ay = y - 20;
         if (ax < 0 || ax >= FightArea.Width || ay < 0 || ay >= FightArea.Height) return;
@@ -426,8 +460,7 @@ public class FightModeAdapter
                     int cost = skill.CineticPointsCost;
                     active.CurrentCineticPoints = Math.Max(0, active.CurrentCineticPoints - cost);
                     _state.AddLog($"{active.DisplayName} uses {skill.DisplayName} — nothing there.  [-{cost} CP]", LogEntryType.Miss);
-                    _state.Phase = TurnPhase.TurnEnding;
-                    AfterActionUpdate();
+                    ContinueTurnOrEnd(active);
                 }
             }
         }
@@ -441,6 +474,7 @@ public class FightModeAdapter
             }
             else
             {
+                if (_highlightCells != null && !_highlightCells.Contains((ax, ay))) return;
                 var target = _state.Fighters.FirstOrDefault(
                     f => f.IsAlive && f.Faction != active.Faction &&
                          f.X == ax && f.Y == ay);
@@ -466,8 +500,9 @@ public class FightModeAdapter
         Fighter? newFighter = null;
         int newButton = -1;
         List<(int X, int Y)>? newPath = null;
+        _previewAttackCell = null;
 
-        if (x < 20 && canInteract)
+        if (x < FightModeUI.ActionMenuRight && y < 20 && canInteract)
         {
             if (y == FightModeUI.MoveButtonRow
                 || y == FightModeUI.EndTurnButtonRow
@@ -501,6 +536,11 @@ public class FightModeAdapter
                         newPath = path.Take(affordable).ToList();
                 }
             }
+            // Attack preview: in skill mode, hovering a valid target inverts that cell's colors
+            if (canInteract && !_isMoveMode && _highlightCells?.Contains((ax, ay)) == true)
+                _previewAttackCell = (ax, ay);
+            else
+                _previewAttackCell = null;
         }
         else if (x >= 80 && y >= 40)
         {
@@ -516,6 +556,16 @@ public class FightModeAdapter
 
         // Detail panel follows the hovered fighter; null falls back to the active fighter in FullRedraw
         _topPanelFighter = newFighter;
+
+        // Hover-tick: play SmallInteraction once when entering a new hoverable target.
+        object? hoverKey =
+            newButton >= 0                          ? (object)("btn:" + newButton) :
+            _previewAttackCell.HasValue              ? (object)("atk:" + _previewAttackCell.Value) :
+            (newPath != null && newPath.Count > 0)   ? (object)("mov:" + newPath[^1]) :
+            newFighter;
+        if (hoverKey != null && !hoverKey.Equals(_lastHoverKey))
+            _sfx?.Invoke(GameEventType.SmallInteraction);
+        _lastHoverKey = hoverKey;
     }
 
     /// <summary>Called by the game loop for keyboard input.</summary>
@@ -709,12 +759,17 @@ public class FightModeAdapter
             result.Add((attacker.X, attacker.Y));
             return result;
         }
-        // Include every cell within Manhattan range + LOS (not just enemy positions).
+        // Include every cell within Euclidean range (donut: MinRange <= dist <= Range) + LOS.
         int range = skill.Range;
+        int minR  = Math.Max(1, skill.MinRange);
+        int rangeSq = range * range;
+        int minSq   = minR * minR;
         for (int dy = -range; dy <= range; dy++)
         for (int dx = -range; dx <= range; dx++)
         {
-            if (Math.Abs(dx) + Math.Abs(dy) > range) continue;
+            int distSq = dx * dx + dy * dy;
+            if (distSq > rangeSq) continue;
+            if (distSq < minSq)   continue;
             int tx = attacker.X + dx, ty = attacker.Y + dy;
             if (tx == attacker.X && ty == attacker.Y) continue;
             if (!_state.Area.IsInBounds(tx, ty)) continue;
@@ -782,6 +837,24 @@ public class FightModeAdapter
             _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty,
                 subtitle: subtitle, difficultyVerb: "to learn", accentColor: accent);
         }
+        else if (_state.PendingRunaway)
+        {
+            _dice.Start(_state.DiceNumberOfDice, 1,
+                subtitle: "RUNAWAY CHECK — feet",
+                difficultyVerb: "to flee");
+        }
+        else if (_state.PendingSkill != null
+                 && _state.PendingSkill.EffectType == FightingSkillEffect.Attack)
+        {
+            // Two-roll attack flow: attack dice vs defense dice
+            string subtitle = $"{_state.PendingSkill.DisplayName} → {_state.PendingTarget?.DisplayName}";
+            _dice.StartDual(
+                primaryDice: _state.DiceNumberOfDice,
+                secondaryDice: _state.DiceSecondaryNumberOfDice,
+                primaryLabel: "Attack",
+                secondaryLabel: "Defense",
+                subtitle: subtitle);
+        }
         else
         {
             _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty);
@@ -816,6 +889,33 @@ public class FightModeAdapter
     /// On success: adds the skill's ModusMentis to the fighter and refreshes the skill list.
     /// On failure: ends the turn.
     /// </summary>
+    /// <summary>
+    /// Resolves a runaway dice roll. Success on at least one six.
+    /// On success, sets <see cref="FightResult.PartyFled"/> so the controller exits the fight.
+    /// On failure, returns to action selection (or auto-ends turn if no CP left).
+    /// </summary>
+    private void FinishRunawayRoll(Fighter active)
+    {
+        _dice.Hide();
+        var diceValues = _state.DiceFinalValues ?? Array.Empty<int>();
+        int sixes = diceValues.Count(v => v == 6);
+        _state.PendingRunaway = false;
+
+        if (sixes >= 1)
+        {
+            _state.AddLog($"{active.DisplayName} escapes the fight! ({sixes}/{diceValues.Length} sixes)");
+            _sfx?.Invoke(GameEventType.PositiveOutcome);
+            _state.Result = FightResult.PartyFled;
+            // Game-end detection in Update() will pick up the new result on the next frame.
+        }
+        else
+        {
+            _state.AddLog($"{active.DisplayName} tries to flee but fails. ({sixes}/{diceValues.Length} sixes)", LogEntryType.Miss);
+            _sfx?.Invoke(GameEventType.NegativeOutcome);
+            ContinueTurnOrEnd(active);
+        }
+    }
+
     private void FinishLearningRoll(Fighter active)
     {
         _dice.Hide();
@@ -838,14 +938,32 @@ public class FightModeAdapter
             _state.AddLog(
                 $"LEARNED {skill.DisplayName}! ({result.SixesCount}/{result.DiceValues.Length} sixes vs diff {result.Difficulty})",
                 LogEntryType.Learning);
+            _sfx?.Invoke(GameEventType.PositiveOutcome);
             _state.PendingLearnSkill = null;
+
+            // Now that the MM is learned, automatically perform the action the player wanted.
+            // For attack skills this fires the attack dice roll; DefensePosture applies immediately.
+            var learnedTarget = _state.PendingTarget;
+            _state.PendingTarget = null;
+            _state.Phase = TurnPhase.SelectingAction;
             RefreshSkillList();
+
+            if (skill.EffectType == FightingSkillEffect.DefensePosture)
+            {
+                ExecuteAction(new Actions.SkillAction(active, active, skill));
+            }
+            else if (learnedTarget != null && learnedTarget.IsAlive)
+            {
+                TryUseSkillOnTarget(active, learnedTarget, skill);
+            }
+            // else: no valid target stored — return to action selection so the player can pick one
         }
         else
         {
             _state.AddLog(
                 $"Failed to learn {skill.DisplayName}. ({result.SixesCount}/{result.DiceValues.Length} sixes vs diff {result.Difficulty})",
                 LogEntryType.Learning);
+            _sfx?.Invoke(GameEventType.NegativeOutcome);
             _state.PendingLearnSkill = null;
             EndTurn(active);
         }
@@ -863,21 +981,58 @@ public class FightModeAdapter
 
         var result = FightResolver.ResolveAttack(
             active, _state.PendingTarget, _state.PendingSkill,
-            _state.DiceFinalValues, _state.PendingBodyPartId, _rng);
+            _state.DiceFinalValues, _state.PendingBodyPartId, _rng,
+            defenseDiceValues: _state.DiceSecondaryFinalValues);
 
         if (result.IsHit && result.Wound != null)
         {
             FightResolver.ApplyWound(_state.PendingTarget, result.Wound);
-            _state.AddLog($"HIT! {result.Wound.WoundName} on {_state.PendingTarget.DisplayName}. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})", LogEntryType.Wound);
+            _state.AddLog($"HIT! {result.Wound.WoundName} on {_state.PendingTarget.DisplayName}. (atk {result.SixesCount} vs def {result.DefenseSixes})", LogEntryType.Wound);
+            _sfx?.Invoke(active.Faction == FighterFaction.Party
+                ? GameEventType.PositiveOutcome
+                : GameEventType.NegativeOutcome);
         }
         else
         {
-            _state.AddLog($"MISS. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})", LogEntryType.Miss);
+            _state.AddLog($"MISS. (atk {result.SixesCount} vs def {result.DefenseSixes})", LogEntryType.Miss);
+            _sfx?.Invoke(active.Faction == FighterFaction.Party
+                ? GameEventType.NegativeOutcome
+                : GameEventType.NeutralOutcome);
         }
 
         _state.CheckFightEnd();
         if (!_state.IsOver)
+            ContinueTurnOrEnd(active);
+    }
+
+    /// <summary>
+    /// After an action completes: if the fighter still has Cinetic Points, return to action
+    /// selection so they can chain another move/skill. Otherwise auto-end the turn (matches
+    /// the behavior already used after movement). Used after attack resolution so a failed
+    /// or low-cost skill doesn't waste the whole turn.
+    /// </summary>
+    private void ContinueTurnOrEnd(Fighter active)
+    {
+        // Clear pending action state so the next selection starts clean
+        _state.PendingSkill = null;
+        _state.PendingTarget = null;
+        _state.PendingBodyPartId = null;
+        _state.DiceFinalValues = null;
+        _state.DiceSecondaryFinalValues = null;
+        _state.DiceNumberOfDice = 0;
+        _state.DiceSecondaryNumberOfDice = 0;
+
+        if (active.CurrentCineticPoints <= 0)
+        {
+            _state.AddLog($"{active.DisplayName} has no Cinetic Points left — turn ends.");
             EndTurn(active);
+            return;
+        }
+
+        _state.Phase = TurnPhase.SelectingAction;
+        RefreshSkillList();
+        if (!active.IsPlayerControlled)
+            _aiDelayFrames = 5; // brief pause then AI continues
     }
 
     private void EndTurn(Fighter active)
@@ -929,6 +1084,8 @@ public class FightModeAdapter
         {
             var finalValues = GenerateDiceValues(_state.DiceNumberOfDice);
             _state.DiceFinalValues = finalValues;
+            if (_state.DiceSecondaryNumberOfDice > 0)
+                _state.DiceSecondaryFinalValues = GenerateDiceValues(_state.DiceSecondaryNumberOfDice);
             _state.IsDiceRolling = false;
             FinishAttackResolution(ai);
             return;
@@ -1017,7 +1174,8 @@ public class FightModeAdapter
         }
 
         FightModeUI.RenderCenterPanel(_terminal, _state.Area, _state.Fighters,
-            active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath, _hoverSkillCells);
+            active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath, _hoverSkillCells,
+            _previewAttackCell);
 
         int initHoverY = _hoveredFighter != null
             ? _rightPanelRows.FirstOrDefault(r => r.Fighter == _hoveredFighter).Y

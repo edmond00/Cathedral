@@ -159,29 +159,25 @@ public static class FightResolver
         return null; // Unreachable
     }
 
-    // ── Runaway ───────────────────────────────────────────────────────
-
-    /// <summary>Roll runaway chance. Returns true on success.</summary>
-    public static bool AttemptRunaway(Fighter fighter, Random rng) =>
-        rng.Next(100) < fighter.RunawayChancePercent;
-
     // ── Attack resolution ─────────────────────────────────────────────
 
-    public record AttackResult(int SixesCount, int NaturalDefense, bool IsHit, Wound? Wound);
+    public record AttackResult(int SixesCount, int NaturalDefense, int DefenseSixes, bool IsHit, Wound? Wound);
 
     /// <summary>
-    /// Count 6s in <paramref name="diceValues"/>; compare to <paramref name="defender"/>
-    /// natural defense (strictly greater-than wins). If hit, select a wound and apply
-    /// special effects from the skill. Also consumes the attacker's vital heat cost.
+    /// Count 6s in <paramref name="diceValues"/> (attack) and in <paramref name="defenseDiceValues"/>
+    /// (defender's defense roll); attacker wins if attack sixes &gt; defense sixes. If hit, select a
+    /// wound and apply special effects from the skill. Also consumes the attacker's vital heat cost.
     /// </summary>
     public static AttackResult ResolveAttack(
         Fighter attacker, Fighter defender, FightingSkill skill,
         int[] diceValues, string? playerChosenBodyPartId, Random rng,
-        FightState? state = null)
+        FightState? state = null,
+        int[]? defenseDiceValues = null)
     {
-        int sixes  = diceValues.Count(v => v == 6);
-        int def    = defender.NaturalDefense;
-        bool isHit = sixes > def;
+        int sixes        = diceValues.Count(v => v == 6);
+        int defenseSixes = defenseDiceValues?.Count(v => v == 6) ?? 0;
+        int def          = defender.NaturalDefense;
+        bool isHit       = sixes > defenseSixes;
 
         Wound? wound = null;
         if (isHit)
@@ -227,7 +223,7 @@ public static class FightResolver
                 attacker.Member.HumorQueues.ConsumeVitalHeatCycled(attacker.Member, rng);
         }
 
-        return new AttackResult(sixes, def, isHit, wound);
+        return new AttackResult(sixes, def, defenseSixes, isHit, wound);
     }
 
     private static int GetFighterCombatStat(Fighter f, string statName)

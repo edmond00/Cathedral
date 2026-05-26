@@ -46,7 +46,8 @@ public class Fighter
     public int BaseNaturalDefense => GetCombatStat("natural_defense");
     /// <summary>Natural defense including active posture bonus.</summary>
     public int NaturalDefense     => BaseNaturalDefense + (IsDefensePostureActive ? 2 : 0);
-    public int RunawayChancePercent => GetCombatStat("runaway_chance");
+    /// <summary>Number of d6 rolled in a runaway check (1 die per foot level). At least one six required to flee.</summary>
+    public int RunawayDiceCount => Math.Max(1, GetCombatStat("runaway_dice"));
     public int InitiativeValue    => GetCombatStat("initiative");
 
     // ── HP delegation ─────────────────────────────────────────────

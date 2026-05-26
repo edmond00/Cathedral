@@ -16,4 +16,5 @@ public sealed class DeadeyeShotSkill : FightingSkill
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.PlayerChooses;
     public override int Range                     => 15;
+    public override int MinRange                  => 3;
 }

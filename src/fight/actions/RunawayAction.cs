@@ -3,9 +3,11 @@ using System;
 namespace Cathedral.Fight.Actions;
 
 /// <summary>
-/// The active party fighter attempts to flee the fight.
-/// Success is governed by <see cref="FightResolver.AttemptRunaway"/>.
-/// On success, sets <see cref="FightState.Result"/> to <see cref="FightResult.PartyFled"/>.
+/// The active fighter attempts to flee the fight.
+/// Costs 1 CP and triggers a dice roll: <see cref="Fighter.RunawayDiceCount"/> d6, need at
+/// least one six to flee. The dice animation runs in the regular dice flow; success
+/// (any six) sets <see cref="FightState.Result"/> to <see cref="FightResult.PartyFled"/>
+/// in <c>FightModeAdapter.FinishRunawayRoll</c>.
 /// </summary>
 public class RunawayAction : IFightAction
 {
@@ -18,15 +20,22 @@ public class RunawayAction : IFightAction
 
     public void Execute(FightState state, Random rng)
     {
-        if (FightResolver.AttemptRunaway(_fighter, rng))
-        {
-            state.AddLog($"{_fighter.DisplayName} escapes the fight!");
-            state.Result = FightResult.PartyFled;
-        }
-        else
-        {
-            state.AddLog($"{_fighter.DisplayName} tries to run but fails! ({_fighter.RunawayChancePercent}%)");
-            state.Phase = TurnPhase.TurnEnding;
-        }
+        // Deduct CP
+        const int cost = 1;
+        _fighter.CurrentCineticPoints = Math.Max(0, _fighter.CurrentCineticPoints - cost);
+        state.AddLog($"{_fighter.DisplayName} attempts to flee (rolling {_fighter.RunawayDiceCount}d, need 1 six).  [-{cost} CP]");
+
+        // Set up the dice roll — single-roll, success on >=1 six
+        state.PendingRunaway        = true;
+        state.PendingSkill          = null;
+        state.PendingTarget         = null;
+        state.PendingLearnSkill     = null;
+        state.DiceNumberOfDice      = _fighter.RunawayDiceCount;
+        state.DiceDifficulty        = 1; // need at least one six
+        state.DiceSecondaryNumberOfDice = 0;
+        state.DiceFinalValues       = null;
+        state.DiceSecondaryFinalValues = null;
+        state.IsDiceRolling         = true;
+        state.Phase                 = TurnPhase.AnimatingDice;
     }
 }

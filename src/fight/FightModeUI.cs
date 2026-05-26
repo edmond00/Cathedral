@@ -48,141 +48,140 @@ public static class FightModeUI
     private const int CenterX    = 20;  // Matches FightAreaRenderer.OffsetX
     private const int CenterY    = 20;  // Matches FightAreaRenderer.OffsetY
 
-    // ── Left-panel split: action menu on top, action info on bottom ──
-    public const int LeftSplitRow      = 50;            // boundary between the two left-panel boxes
-    public const int MoveButtonRow     = TopRows + 3;   // row 23
-    public const int SkillButtonsStart = TopRows + 4;   // row 24, each skill +1 below
-    public const int EndTurnButtonRow  = LeftSplitRow - 3;  // row 47
-    public const int RunButtonRow      = LeftSplitRow - 2;  // row 48
+    // ── Top panel split: action menu on the left half, action info on the right half ──
+    /// <summary>X boundary inside the top panel: cols [0..ActionMenuRight) = action menu, [ActionMenuRight..100) = info.</summary>
+    public const int ActionMenuRight   = 50;
+    public const int MoveButtonRow     = 3;             // top of action menu (just below header + divider)
+    public const int SkillButtonsStart = 4;             // each skill +1 below
+    public const int EndTurnButtonRow  = TopRows - 3;   // row 17
+    public const int RunButtonRow      = TopRows - 2;   // row 18
 
     // ── Highlight \u2014 dim color for out-of-range tiles ─────────────────────
     private static readonly Vector4 ActiveFighterBg = new(0.35f, 0.22f, 0f, 1f); // dark amber
 
-    // ── Top panel — detailed fighter info ─────────────────────────────
+    // ── Left pan — vertical fighter detail (cols 0..LeftEnd, rows TopRows..BotStart) ──
 
     /// <summary>
-    /// Draw a detailed info card for <paramref name="fighter"/> across the full top panel
-    /// (rows 0-19). Used both for the currently active fighter (default) and for whichever
-    /// fighter the mouse is currently hovering over.
+    /// Draw the active or hovered fighter's detail card stacked vertically in the left pan.
     /// </summary>
     public static void RenderDetailPanel(TerminalHUD terminal, Fighter? fighter, bool isHoverOverride)
     {
-        terminal.FillRect(0, 0, 100, TopRows, ' ', Config.Colors.White, Config.Colors.Black);
-        terminal.DrawBox(0, 0, 100, TopRows, BoxStyle.Single, Config.Colors.DarkGray, Config.Colors.Black);
+        int boxH = BotStart - TopRows;
+        terminal.FillRect(0, TopRows, LeftEnd, boxH, ' ', Config.Colors.White, Config.Colors.Black);
+        terminal.DrawBox(0, TopRows, LeftEnd, boxH, BoxStyle.Single, Config.Colors.DarkGray, Config.Colors.Black);
+
+        const int x = 1;
+        int innerW = LeftEnd - 2;
+        int y = TopRows + 1;
 
         if (fighter == null)
         {
-            terminal.Text(2, 1, "DETAIL", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+            terminal.Text(x, y, "DETAIL", Config.Colors.DarkYellowGrey, Config.Colors.Black);
             return;
         }
 
         Vector4 nameColor = fighter.Faction == FighterFaction.Party
             ? Config.Colors.Yellow : Config.Colors.BrightPurple;
-        string factionLabel = fighter.Faction == FighterFaction.Party ? "PARTY" : "ENEMY";
-
-        // Row 1: header
-        terminal.Text(2, 1, $"{factionLabel} — {fighter.DisplayName}",
-            nameColor, Config.Colors.Black);
-        if (isHoverOverride)
-            terminal.Text(2 + factionLabel.Length + 3 + fighter.DisplayName.Length + 1, 1,
-                "(hovered)", Config.Colors.DarkYellowGrey, Config.Colors.Black);
-        if (!fighter.IsAlive)
-            terminal.Text(90, 1, "[DEAD]", Config.Colors.DarkGray, Config.Colors.Black);
-
-        const int leftCol  = 2;
-        const int rightCol = 50;
-        int row = 3;
-
+        string factionTag = fighter.Faction == FighterFaction.Party ? "PARTY" : "ENEMY";
         bool isEnemy = fighter.Faction == FighterFaction.Enemy;
         Vector4 barFull = isEnemy ? Config.Colors.BrightPurple : Config.Colors.Yellow;
-        Vector4 barLow  = isEnemy ? Config.Colors.DarkPurple   : Config.Colors.DarkPurple;
         Vector4 dotFull = isEnemy ? Config.Colors.BrightPurple : Config.Colors.Yellow;
 
-        // ── Left column: bars, FX, combat stats ──
-        DrawBar(terminal, leftCol, row, 40, fighter.CurrentHp, fighter.MaxHp,
-            "HP", barFull, barLow);
-        terminal.Text(leftCol + 41, row, $"{fighter.CurrentHp}/{fighter.MaxHp}",
-            Config.Colors.White, Config.Colors.Black);
-        row++;
+        // Faction tag + name (truncated)
+        terminal.Text(x, y++, factionTag, nameColor, Config.Colors.Black);
+        string name = fighter.DisplayName.Length > innerW
+            ? fighter.DisplayName[..innerW] : fighter.DisplayName;
+        terminal.Text(x, y++, name, nameColor, Config.Colors.Black);
 
-        terminal.Text(leftCol, row, "CP :", Config.Colors.DarkGray, Config.Colors.Black);
-        int dotX = leftCol + 5;
+        if (isHoverOverride)
+            terminal.Text(x, y++, "(hovered)", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+        else
+            y++; // keep spacing stable
+
+        if (!fighter.IsAlive)
+            terminal.Text(x, y++, "[DEAD]", Config.Colors.DarkGray, Config.Colors.Black);
+        else
+            y++;
+
+        // HP bar
+        DrawBar(terminal, x, y++, innerW, fighter.CurrentHp, fighter.MaxHp,
+            "HP", barFull, Config.Colors.DarkPurple);
+        terminal.Text(x, y++, $"  {fighter.CurrentHp}/{fighter.MaxHp}",
+            Config.Colors.White, Config.Colors.Black);
+
+        // CP dots
+        terminal.Text(x, y, "CP:", Config.Colors.DarkGray, Config.Colors.Black);
+        int dotX = x + 4;
         int cpMax = Math.Max(1, fighter.MaxCineticPoints);
-        for (int i = 0; i < cpMax && dotX < leftCol + 40; i++)
+        for (int i = 0; i < cpMax && dotX < x + innerW; i++)
         {
-            Vector4 col = i < fighter.CurrentCineticPoints
-                ? dotFull : Config.Colors.DarkGray35;
-            terminal.SetCell(dotX, row, Config.Symbols.NoeticPointMarker, col, Config.Colors.Black);
+            Vector4 col = i < fighter.CurrentCineticPoints ? dotFull : Config.Colors.DarkGray35;
+            terminal.SetCell(dotX, y, Config.Symbols.NoeticPointMarker, col, Config.Colors.Black);
             dotX++;
         }
-        terminal.Text(leftCol + 41, row, $"{fighter.CurrentCineticPoints}/{fighter.MaxCineticPoints}",
+        y++;
+        terminal.Text(x, y++, $"  {fighter.CurrentCineticPoints}/{fighter.MaxCineticPoints}",
             Config.Colors.White, Config.Colors.Black);
-        row++;
 
+        // FX (status effects)
         if (fighter.ActiveEffects.Count > 0)
         {
-            var sb = new System.Text.StringBuilder("FX :");
+            var sb = new System.Text.StringBuilder("FX:");
             foreach (var fx in fighter.ActiveEffects) sb.Append(' ').Append(fx.DisplayLabel);
             string fxLine = sb.ToString();
-            if (fxLine.Length > 46) fxLine = fxLine[..46];
-            terminal.Text(leftCol, row, fxLine, Config.Colors.BrightRed, Config.Colors.Black);
-            row++;
+            if (fxLine.Length > innerW) fxLine = fxLine[..innerW];
+            terminal.Text(x, y++, fxLine, Config.Colors.BrightPurple, Config.Colors.Black);
         }
 
-        row++; // spacer
+        y++; // spacer
 
-        // Combat stats — 3 per row
+        // Combat stats — one per line
         int damageRes = fighter.Member.DerivedStats
             .FirstOrDefault(s => s.Name == "damage_resistance")?.GetValue(fighter.Member) ?? 0;
-        terminal.Text(leftCol, row,
-            $"INIT:{fighter.InitiativeValue,-3} DEF:{fighter.NaturalDefense,-3} MOV:{fighter.MoveSpeed,-3}",
-            Config.Colors.LightGray, Config.Colors.Black);
-        row++;
-        terminal.Text(leftCol, row,
-            $"DR  :{damageRes,-3} RUN:{fighter.RunawayChancePercent,-2}% MCP:{fighter.MaxCineticPoints,-3}",
-            Config.Colors.LightGray, Config.Colors.Black);
-        row++;
+        terminal.Text(x, y++, $"INIT: {fighter.InitiativeValue}", Config.Colors.LightGray, Config.Colors.Black);
+        terminal.Text(x, y++, $"DEF : {fighter.NaturalDefense}",  Config.Colors.LightGray, Config.Colors.Black);
+        terminal.Text(x, y++, $"MOV : {fighter.MoveSpeed}",        Config.Colors.LightGray, Config.Colors.Black);
+        terminal.Text(x, y++, $"DR  : {damageRes}",                Config.Colors.LightGray, Config.Colors.Black);
+        terminal.Text(x, y++, $"RUN : {fighter.RunawayDiceCount}d",Config.Colors.LightGray, Config.Colors.Black);
+        terminal.Text(x, y++, $"MCP : {fighter.MaxCineticPoints}", Config.Colors.LightGray, Config.Colors.Black);
 
-        // ── Right column: wounds ──
-        int rRow = 3;
-        terminal.Text(rightCol, rRow, "WOUNDS",
-            Config.Colors.DarkYellowGrey, Config.Colors.Black);
-        rRow++;
+        y++; // spacer
+
+        // Wounds list
+        terminal.Text(x, y++, "WOUNDS", Config.Colors.DarkYellowGrey, Config.Colors.Black);
         var wounds = fighter.Member.Wounds;
         if (wounds.Count == 0)
         {
-            terminal.Text(rightCol, rRow, "(none)", Config.Colors.DarkGray, Config.Colors.Black);
+            terminal.Text(x, y, "(none)", Config.Colors.DarkGray, Config.Colors.Black);
+            return;
         }
-        else
+        int rowsLeft = BotStart - y - 1;
+        int shown = Math.Min(wounds.Count, rowsLeft);
+        for (int i = 0; i < shown; i++)
         {
-            int slotMax = TopRows - rRow - 1; // up to bottom border
-            int shown = Math.Min(wounds.Count, slotMax);
-            for (int i = 0; i < shown; i++)
+            var w = wounds[i];
+            string tag = w.Handicap switch
             {
-                var w = wounds[i];
-                string tag = w.Handicap switch
-                {
-                    WoundHandicap.High   => "[H]",
-                    WoundHandicap.Medium => "[M]",
-                    _                    => "[L]",
-                };
-                Vector4 tagColor = w.Handicap switch
-                {
-                    WoundHandicap.High   => Config.Colors.BrightRed,
-                    WoundHandicap.Medium => Config.Colors.Orange,
-                    _                    => Config.Colors.DarkYellowGrey,
-                };
-                terminal.Text(rightCol, rRow + i, tag, tagColor, Config.Colors.Black);
-                string lbl = $" {w.WoundName} ({w.TargetId})";
-                if (lbl.Length > 100 - rightCol - 4) lbl = lbl[..(100 - rightCol - 4)];
-                terminal.Text(rightCol + 3, rRow + i, lbl,
-                    Config.Colors.Purple, Config.Colors.Black);
-            }
-            if (wounds.Count > shown)
-                terminal.Text(rightCol, rRow + shown,
-                    $"+{wounds.Count - shown} more",
-                    Config.Colors.DarkGray, Config.Colors.Black);
+                WoundHandicap.High   => "[H]",
+                WoundHandicap.Medium => "[M]",
+                _                    => "[L]",
+            };
+            Vector4 tagColor = w.Handicap switch
+            {
+                WoundHandicap.High   => Config.Colors.BrightPurple,
+                WoundHandicap.Medium => Config.Colors.Orange,
+                _                    => Config.Colors.DarkYellowGrey,
+            };
+            terminal.Text(x, y + i, tag, tagColor, Config.Colors.Black);
+            string lbl = w.WoundName;
+            int lblMax = innerW - 4;
+            if (lbl.Length > lblMax) lbl = lbl[..lblMax];
+            terminal.Text(x + 4, y + i, lbl, Config.Colors.Purple, Config.Colors.Black);
         }
+        if (wounds.Count > shown)
+            terminal.Text(x, y + shown,
+                $"+{wounds.Count - shown} more",
+                Config.Colors.DarkGray, Config.Colors.Black);
     }
 
     // ── Left panel ────────────────────────────────────────────────────
@@ -202,30 +201,30 @@ public static class FightModeUI
     {
         var layout = new List<LeftPanelRow>();
 
-        // Top half = action menu (rows TopRows..LeftSplitRow-1)
-        int topH = LeftSplitRow - TopRows;
-        terminal.FillRect(0, TopRows, LeftEnd, topH, ' ', Config.Colors.White, Config.Colors.Black);
-        terminal.DrawBox(0, TopRows, LeftEnd, topH, BoxStyle.Single, Config.Colors.DarkGray, Config.Colors.Black);
+        // Top-left = action menu (cols 0..ActionMenuRight, rows 0..TopRows-1)
+        int boxW = ActionMenuRight;
+        int innerW = boxW - 2;
+        terminal.FillRect(0, 0, boxW, TopRows, ' ', Config.Colors.White, Config.Colors.Black);
+        terminal.DrawBox(0, 0, boxW, TopRows, BoxStyle.Single, Config.Colors.DarkGray, Config.Colors.Black);
 
         const int x = 1;
-        int y = TopRows + 1;
+        int y = 1;
 
         // "ACTIONS:" header + divider
-        terminal.Text(x, y++, "ACTIONS:", Config.Colors.DarkYellowGrey, Config.Colors.Black);
-        terminal.Text(x, y++, new string('─', LeftEnd - 2), Config.Colors.DarkGray, Config.Colors.Black);
+        terminal.Text(x, y++, "ACTIONS", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+        terminal.Text(x, y++, new string('─', innerW), Config.Colors.DarkGray, Config.Colors.Black);
 
         // ── Enemy turn: skip action buttons, show a status message instead ──
         if (!fighter.IsPlayerControlled)
         {
             int midRow = (y + (EndTurnButtonRow - 1)) / 2;
             string msg = "── ENEMY TURN ──";
-            int mx = 1 + Math.Max(0, (LeftEnd - 2 - msg.Length) / 2);
+            int mx = 1 + Math.Max(0, (innerW - msg.Length) / 2);
             terminal.Text(mx, midRow, msg, Config.Colors.Purple, Config.Colors.Black);
             return layout;
         }
 
-        // y is now at MoveButtonRow (23)
-        // MOVE button — no grey background, yellow when selected
+        // y is now at MoveButtonRow (3) — MOVE button (yellow when selected)
         {
             bool sel = isMoveMode;
             bool hov = !sel && hoveredButtonRow == MoveButtonRow;
@@ -233,7 +232,7 @@ public static class FightModeUI
                        : hov ? Config.Colors.GoldYellow
                        : Config.Colors.White;
             Vector4 bg = sel ? Config.Colors.Yellow : Config.Colors.Black;
-            string label = (sel ? "* MOVE          " : "  MOVE          ")[..Math.Min(16, LeftEnd - 2)];
+            string label = (sel ? "* MOVE" : "  MOVE").PadRight(innerW);
             terminal.Text(x, y++, label, fg, bg);
         }
 
@@ -325,8 +324,8 @@ public static class FightModeUI
             Vector4 headFg  = hovHeader ? Config.Colors.GoldYellow : Config.Colors.DarkYellowGrey;
             string marker   = isExpanded ? "▼" : "▶";
             string headLine = $"{marker} {grp.Label}";
-            if (headLine.Length > LeftEnd - 2) headLine = headLine[..(LeftEnd - 2)];
-            terminal.Text(x, y, headLine.PadRight(LeftEnd - 2), headFg, Config.Colors.Black);
+            if (headLine.Length > innerW) headLine = headLine[..innerW];
+            terminal.Text(x, y, headLine.PadRight(innerW), headFg, Config.Colors.Black);
             layout.Add(new LeftPanelRow(y, LeftPanelRowKind.Medium, grp.Key, -1));
             y++;
 
@@ -357,8 +356,8 @@ public static class FightModeUI
 
                 string prefix = learnable ? "  ? " : "    ";
                 string line = $"{prefix}{skill.DisplayName} {skill.CineticPointsCost}CP";
-                if (line.Length > LeftEnd - 2) line = line[..(LeftEnd - 2)];
-                terminal.Text(x, y, line.PadRight(LeftEnd - 2), fg, bg);
+                if (line.Length > innerW) line = line[..innerW];
+                terminal.Text(x, y, line.PadRight(innerW), fg, bg);
                 layout.Add(new LeftPanelRow(y,
                     learnable ? LeftPanelRowKind.LearnableSkill : LeftPanelRowKind.UnlockedSkill,
                     grp.Key, idx));
@@ -368,18 +367,18 @@ public static class FightModeUI
 
         // Divider before end/run
         int divY = EndTurnButtonRow - 1;
-        terminal.Text(x, divY, new string('─', LeftEnd - 2), Config.Colors.DarkGray, Config.Colors.Black);
+        terminal.Text(x, divY, new string('─', innerW), Config.Colors.DarkGray, Config.Colors.Black);
 
-        // END TURN button — no grey background
+        // END TURN button
         {
             bool hov = hoveredButtonRow == EndTurnButtonRow;
             terminal.Text(x, EndTurnButtonRow,
-                "END TURN        "[..Math.Min(16, LeftEnd - 2)],
+                "  END TURN".PadRight(innerW),
                 hov ? Config.Colors.GoldYellow : Config.Colors.White,
                 Config.Colors.Black);
         }
 
-        // RUN button — no grey background; visibly dim (not invisible) when disabled
+        // RUN button — dim (not invisible) when not on exit tile
         {
             bool onExit = fighter.X == FightArea.ExitCol && fighter.Y == FightArea.ExitRow;
             bool hov    = hoveredButtonRow == RunButtonRow;
@@ -387,7 +386,7 @@ public static class FightModeUI
                           : hov        ? Config.Colors.Yellow
                           : Config.Colors.Orange;
             terminal.Text(x, RunButtonRow,
-                "RUN             "[..Math.Min(16, LeftEnd - 2)],
+                "  RUN".PadRight(innerW),
                 runFg, Config.Colors.Black);
         }
 
@@ -406,19 +405,21 @@ public static class FightModeUI
     public static void RenderLeftInfoPanel(TerminalHUD terminal,
         LeftInfoKind kind, FightingSkill? skill, Fighter? fighter)
     {
-        int boxY = LeftSplitRow;
-        int boxH = BotStart - LeftSplitRow;
-        terminal.FillRect(0, boxY, LeftEnd, boxH, ' ', Config.Colors.White, Config.Colors.Black);
+        // Top-right box (cols ActionMenuRight..100, rows 0..TopRows-1)
+        int boxX = ActionMenuRight;
+        int boxW = 100 - ActionMenuRight;
+        int boxH = TopRows;
+        terminal.FillRect(boxX, 0, boxW, boxH, ' ', Config.Colors.White, Config.Colors.Black);
 
         bool isLearn = kind == LeftInfoKind.LearnableSkill;
         Vector4 border = isLearn ? Config.Colors.Purple : Config.Colors.DarkGray;
-        terminal.DrawBox(0, boxY, LeftEnd, boxH, BoxStyle.Single, border, Config.Colors.Black);
+        terminal.DrawBox(boxX, 0, boxW, boxH, BoxStyle.Single, border, Config.Colors.Black);
 
-        const int x = 1;
-        int y = boxY + 1;
-        int innerW = LeftEnd - 2;
+        int x = boxX + 1;
+        int y = 1;
+        int innerW = boxW - 2;
 
-        terminal.Text(x, y++, "INFO:", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+        terminal.Text(x, y++, "INFO", Config.Colors.DarkYellowGrey, Config.Colors.Black);
         terminal.Text(x, y++, new string('─', innerW), Config.Colors.DarkGray, Config.Colors.Black);
 
         void TextLine(string s, Vector4 col)
@@ -428,7 +429,7 @@ public static class FightModeUI
         }
         void WrapText(string s, Vector4 col)
         {
-            for (int i = 0; i < s.Length && y < boxY + boxH - 1; i += innerW)
+            for (int i = 0; i < s.Length && y < boxH - 1; i += innerW)
                 TextLine(s.Substring(i, Math.Min(innerW, s.Length - i)), col);
         }
 
@@ -456,11 +457,12 @@ public static class FightModeUI
             case LeftInfoKind.Run:
                 TextLine("RUN", Config.Colors.Orange);
                 y++;
-                WrapText("Flee combat. Requires standing on the exit tile.", Config.Colors.White);
+                WrapText("Flee combat. Requires standing on the exit tile. Need at least one six.", Config.Colors.White);
                 if (fighter != null)
                 {
                     y++;
-                    TextLine($"Chance: {fighter.RunawayChancePercent}%", Config.Colors.LightGray);
+                    TextLine($"Cost: 1 CP", Config.Colors.LightGray);
+                    TextLine($"Dice: {fighter.RunawayDiceCount}", Config.Colors.LightGray);
                 }
                 break;
 
@@ -476,7 +478,9 @@ public static class FightModeUI
                 y++;
                 TextLine($"Dice  : {skill.TotalDice(fighter)}", Config.Colors.LightGray);
                 TextLine($"Cost  : {skill.CineticPointsCost} CP", Config.Colors.LightGray);
-                TextLine($"Range : {skill.Range}", Config.Colors.LightGray);
+                TextLine(skill.MinRange > 1
+                    ? $"Range : {skill.MinRange}-{skill.Range}"
+                    : $"Range : {skill.Range}", Config.Colors.LightGray);
                 TextLine($"Effect: {skill.EffectType}", Config.Colors.LightGray);
                 TextLine($"Wound : {skill.WoundTargetMode}", Config.Colors.LightGray);
                 if (isLearn)
@@ -613,7 +617,7 @@ public static class FightModeUI
     {
         LogEntryType.Attack        => new Vector4(1.0f, 0.8f, 0.0f, 1.0f), // OrangeYellow
         LogEntryType.Miss          => Config.Colors.DarkGray,
-        LogEntryType.Wound         => new Vector4(1.0f, 0.15f, 0.15f, 1.0f), // BrightRed
+        LogEntryType.Wound         => Config.Colors.BrightPurple,
         LogEntryType.SpecialEffect => new Vector4(1.0f, 0.5f, 0.0f, 1.0f),  // Orange
         LogEntryType.Learning      => Config.Colors.LightPurple,
         LogEntryType.Defense       => Config.Colors.LightPurpleGray,
@@ -671,7 +675,8 @@ public static class FightModeUI
                                           HashSet<(int X, int Y)>? highlightCells,
                                           bool isAttackHighlight = false,
                                           IReadOnlyList<(int X, int Y)>? previewPath = null,
-                                          HashSet<(int X, int Y)>? hoverCells = null)
+                                          HashSet<(int X, int Y)>? hoverCells = null,
+                                          (int X, int Y)? attackPreviewCell = null)
     {
         // Always render the full terrain so state changes (hover/selection ending) are
         // properly reflected — without this, dimmed cells would persist after hover ends.
@@ -747,8 +752,15 @@ public static class FightModeUI
             int tx = CenterX + f.X;
             int ty = CenterY + f.Y;
             bool isActive = f == activeFighter;
+            bool isAttackPreview = attackPreviewCell.HasValue
+                && attackPreviewCell.Value.X == f.X && attackPreviewCell.Value.Y == f.Y;
 
-            if (hoverCells != null && hoverCells.Contains((f.X, f.Y)))
+            if (isAttackPreview)
+            {
+                // Inverted colors: swap fg and bg of the fighter glyph
+                terminal.SetCell(tx, ty, f.DisplayChar, Config.Colors.Black, f.DisplayColor);
+            }
+            else if (hoverCells != null && hoverCells.Contains((f.X, f.Y)))
             {
                 var hfg = new Vector4(
                     Math.Min(1f, f.DisplayColor.X + 0.45f),
@@ -763,6 +775,19 @@ public static class FightModeUI
             {
                 Vector4 bg = isActive ? ActiveFighterBg : Config.Colors.Black;
                 terminal.SetCell(tx, ty, f.DisplayChar, f.DisplayColor, bg);
+            }
+        }
+
+        // Attack preview on an empty cell (rare — most skill targets are fighters)
+        if (attackPreviewCell.HasValue)
+        {
+            var (px, py) = attackPreviewCell.Value;
+            bool occupied = fighters.Any(ff => ff.IsAlive && ff.X == px && ff.Y == py);
+            if (!occupied)
+            {
+                var cell = area.GetCell(px, py);
+                terminal.SetCell(CenterX + px, CenterY + py, cell.Glyph,
+                    Config.Colors.Black, cell.TextColor);
             }
         }
     }
@@ -835,7 +860,7 @@ public static class FightModeUI
             FightResult.PartyFled  => "YOU FLED.",
             _                      => "FIGHT OVER"
         };
-        Vector4 color = result == FightResult.PartyWon ? Config.Colors.LightGreen
+        Vector4 color = result == FightResult.PartyWon ? Config.Colors.GoldYellow
                       : result == FightResult.EnemyWon ? Config.Colors.BrightPurple
                       : Config.Colors.Orange;
 

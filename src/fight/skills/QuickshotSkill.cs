@@ -17,4 +17,5 @@ public sealed class QuickshotSkill : FightingSkill
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
     public override string? TargetBodyPartId      => "backbone";
     public override int Range                     => 10;
+    public override int MinRange                  => 2;
 }

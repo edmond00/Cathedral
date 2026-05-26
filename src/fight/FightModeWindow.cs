@@ -192,8 +192,17 @@ internal class FightModeWindow : GameWindow
             if (_diceElapsed >= DiceRollDuration)
             {
                 var finalValues = GenerateDiceValues(_state.DiceNumberOfDice);
-                _dice.Complete(finalValues);
                 _state.DiceFinalValues = finalValues;
+                if (_dice.IsDual)
+                {
+                    var defenseValues = GenerateDiceValues(_state.DiceSecondaryNumberOfDice);
+                    _state.DiceSecondaryFinalValues = defenseValues;
+                    _dice.CompleteDual(finalValues, defenseValues);
+                }
+                else
+                {
+                    _dice.Complete(finalValues);
+                }
                 _state.IsDiceRolling   = false;
                 _state.Phase           = TurnPhase.WaitingForDiceComplete;
             }
@@ -277,7 +286,7 @@ internal class FightModeWindow : GameWindow
         int      newButton   = -1;
         List<(int X, int Y)>? newPath = null;
 
-        if (x < 20 && canInteract)
+        if (x < FightModeUI.ActionMenuRight && y < 20 && canInteract)
         {
             if (y == FightModeUI.MoveButtonRow
                 || y == FightModeUI.EndTurnButtonRow
@@ -361,8 +370,8 @@ internal class FightModeWindow : GameWindow
         if (_state.Phase != TurnPhase.SelectingAction) return;
         if (!active.IsPlayerControlled) return;
 
-        // ── Left panel buttons ────────────────────────────────────
-        if (x < 20)
+        // ── Top-left action menu buttons ──────────────────────────
+        if (x < FightModeUI.ActionMenuRight && y < 20)
         {
             if (y == FightModeUI.MoveButtonRow)
             {
@@ -404,6 +413,10 @@ internal class FightModeWindow : GameWindow
             }
             return;
         }
+
+        // Inert regions: left pan (fighter detail) + top-right (info)
+        if (x < 20 && y >= 20) return;
+        if (x >= FightModeUI.ActionMenuRight && y < 20) return;
 
         // ── Center panel targeting ────────────────────────────────
         int ax = x - 20, ay = y - 20;
@@ -607,15 +620,19 @@ internal class FightModeWindow : GameWindow
             result.Add((attacker.X, attacker.Y));
             return result;
         }
-        // Include every cell within Manhattan range + LOS (not just enemy positions).
-        // Clicking an empty highlighted cell still uses the turn (logged as a miss).
+        // Include every cell within Euclidean range (donut: MinRange <= dist <= Range) + LOS.
         int range = skill.Range;
+        int minR  = Math.Max(1, skill.MinRange);
+        int rangeSq = range * range;
+        int minSq   = minR * minR;
         for (int dy = -range; dy <= range; dy++)
         for (int dx = -range; dx <= range; dx++)
         {
-            if (Math.Abs(dx) + Math.Abs(dy) > range) continue;
+            int distSq = dx * dx + dy * dy;
+            if (distSq > rangeSq) continue;
+            if (distSq < minSq)   continue;
             int tx = attacker.X + dx, ty = attacker.Y + dy;
-            if (tx == attacker.X && ty == attacker.Y) continue; // skip self
+            if (tx == attacker.X && ty == attacker.Y) continue;
             if (!_state.Area.IsInBounds(tx, ty)) continue;
             if (_state.Area.GetCell(tx, ty).Type == TerrainType.HardObstacle) continue;
             if (!FightResolver.HasLineOfSight(_state.Area, attacker.X, attacker.Y, tx, ty)) continue;
@@ -674,7 +691,20 @@ internal class FightModeWindow : GameWindow
     private void BeginDiceRoll()
     {
         _diceElapsed = 0;
-        _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty);
+        if (_state.PendingSkill != null
+            && _state.PendingSkill.EffectType == FightingSkillEffect.Attack)
+        {
+            _dice.StartDual(
+                primaryDice: _state.DiceNumberOfDice,
+                secondaryDice: _state.DiceSecondaryNumberOfDice,
+                primaryLabel: "Attack",
+                secondaryLabel: "Defense",
+                subtitle: $"{_state.PendingSkill.DisplayName} → {_state.PendingTarget?.DisplayName}");
+        }
+        else
+        {
+            _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty);
+        }
     }
 
     private void FinishAttackResolution(Fighter active)
@@ -689,16 +719,17 @@ internal class FightModeWindow : GameWindow
 
         var result = FightResolver.ResolveAttack(
             active, _state.PendingTarget, _state.PendingSkill,
-            _state.DiceFinalValues, _state.PendingBodyPartId, _rng);
+            _state.DiceFinalValues, _state.PendingBodyPartId, _rng,
+            defenseDiceValues: _state.DiceSecondaryFinalValues);
 
         if (result.IsHit && result.Wound != null)
         {
             FightResolver.ApplyWound(_state.PendingTarget, result.Wound);
-            _state.AddLog($"HIT! {result.Wound.WoundName} on {_state.PendingTarget.DisplayName}. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})", LogEntryType.Wound);
+            _state.AddLog($"HIT! {result.Wound.WoundName} on {_state.PendingTarget.DisplayName}. (atk {result.SixesCount} vs def {result.DefenseSixes})", LogEntryType.Wound);
         }
         else
         {
-            _state.AddLog($"MISS. ({result.SixesCount} sixes vs DEF {result.NaturalDefense})", LogEntryType.Miss);
+            _state.AddLog($"MISS. (atk {result.SixesCount} vs def {result.DefenseSixes})", LogEntryType.Miss);
         }
 
         _state.CheckFightEnd();

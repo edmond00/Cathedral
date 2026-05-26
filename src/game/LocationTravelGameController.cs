@@ -634,7 +634,8 @@ public class LocationTravelGameController : IDisposable
                     _core.PopupTerminal,
                     _pendingEncounterNpc,
                     _protagonist,
-                    allies: new List<Cathedral.Game.Npc.NpcEntity>());
+                    allies: new List<Cathedral.Game.Npc.NpcEntity>(),
+                    sfxTrigger: e => _ambianceEngine?.TriggerGameEvent(e));
                 _pendingEncounterNpc = null;
                 _pendingEncounterCreatureName = null;
                 SetMode(GameMode.Fighting);
@@ -2360,7 +2361,8 @@ public class LocationTravelGameController : IDisposable
             _core.PopupTerminal,
             mainEnemy,
             protagonist,
-            allies);
+            allies,
+            sfxTrigger: e => _ambianceEngine?.TriggerGameEvent(e));
 
         SetMode(GameMode.Fighting);
     }
@@ -2409,6 +2411,7 @@ public class LocationTravelGameController : IDisposable
         {
             _inTravelEncounter = false;
             _fightAdapter = null;
+            _core.Terminal?.Clear();
 
             if (result == FightAdapterResult.Death)
             {
@@ -2416,7 +2419,17 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
-            // Victory or runaway: resume travel. If VH consumption is still pending,
+            if (result == FightAdapterResult.Runaway)
+            {
+                // Abandon the in-flight travel and let the player pick a new destination.
+                _interface.MovementPaused = true;
+                _interface.CancelTravel();
+                ClearTravelPlan();
+                SetMode(GameMode.WorldView);
+                return;
+            }
+
+            // Victory: resume travel. If VH consumption is still pending,
             // Update() will keep movement paused until the debt is cleared.
             SetMode(GameMode.Traveling);
             if (!_consumptionActive)
@@ -2429,6 +2442,7 @@ public class LocationTravelGameController : IDisposable
 
         _narrativeController.OnFightCompleted(result, npc, allEnemyNpcs);
         _fightAdapter = null;
+        _core.Terminal?.Clear();
 
         if (result == FightAdapterResult.Death)
         {

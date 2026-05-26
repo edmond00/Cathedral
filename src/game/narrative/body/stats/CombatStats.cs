@@ -53,18 +53,19 @@ public class MoveSpeedStat : DerivedStat
 }
 
 /// <summary>
-/// Runaway chance — percentage chance of successfully fleeing via the arena exit.
+/// Runaway dice — number of dice rolled during a runaway check (need at least one six to flee).
 /// Source: feet organ (lower_limbs).
-/// Formula: score × 10 (range 10–100 %).
+/// Formula: score (1 die per foot level, range 1–10).
 /// </summary>
-public class RunawayChanceStat : DerivedStat
+public class RunawayDiceStat : DerivedStat
 {
-    public override string Name         => "runaway_chance";
-    public override string DisplayName  => "Runaway Chance";
-    public override string ShortDisplayName => "Runaway Chance";
+    public override string Name         => "runaway_dice";
+    public override string DisplayName  => "Runaway Dice";
+    public override string ShortDisplayName => "Runaway";
     public override string? RelatedOrganId => "feet";
-    public override int CalculateValue(int sourceScore) => sourceScore * 10;
-    public override string FormatValue(int value) => $"{value}%";
+    public override int CalculateValue(int sourceScore) => sourceScore;
+    public override int MinimumValue() => 1;
+    public override string FormatValue(int value) => $"{value} dice";
 }
 
 /// <summary>

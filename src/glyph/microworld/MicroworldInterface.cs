@@ -963,6 +963,25 @@ namespace Cathedral.Glyph.Microworld
             _pendingMovementPath = path;
         }
 
+        /// <summary>
+        /// Cancels an in-flight travel without moving the protagonist. Clears the path
+        /// visuals (active path glyphs + planned path) and stops the movement animation
+        /// while leaving the avatar at its current vertex.
+        /// </summary>
+        public void CancelTravel()
+        {
+            ClearTravelPath();
+            ClearPlannedPath();
+            ClearHoveredPath();
+            _currentPath         = null;
+            _pendingMovementPath = null;
+            _hoveredPath         = null;
+            _pendingHoverPath    = null;
+            _pathIndex           = 0;
+            _moveTimer           = 0.0f;
+            MovementPaused       = false;
+        }
+
         private void UpdateHoveredPath(Cathedral.Pathfinding.Path? path)
         {
             ClearHoveredPath();

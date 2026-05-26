@@ -80,7 +80,7 @@ public class DialogueTreeAdapter
         _terminal.CenteredText(
             Config.Terminal.MainHeight / 2,
             _failed ? $"Dialogue failed: {_errorMessage}" : "Starting dialogue…",
-            _failed ? Config.Colors.Red : Config.Colors.LightGray,
+            _failed ? Config.Colors.BrightPurple : Config.Colors.LightGray,
             Config.Colors.Black);
     }
 

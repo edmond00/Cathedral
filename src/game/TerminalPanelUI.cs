@@ -38,6 +38,12 @@ public abstract class TerminalPanelUI
     private readonly Random _diceRandom = new();
     private (int X, int Y, int Width) _diceRollButtonRegion;
 
+    /// <summary>
+    /// Fires every time a die visibly changes face during the rolling animation.
+    /// Hook a short PCM tick to evoke the rattle of tumbling dice.
+    /// </summary>
+    public Action? OnDiceTick { get; set; }
+
     // ── Constructor ──────────────────────────────────────────────────────────
 
     protected TerminalPanelUI(TerminalHUD terminal)
@@ -346,6 +352,7 @@ public abstract class TerminalPanelUI
                     }
                 }
 
+                bool anyChanged = false;
                 for (int i = 0; i < _rollingDiceFrames.Length; i++)
                 {
                     _diceFrameCounters[i]++;
@@ -357,8 +364,10 @@ public abstract class TerminalPanelUI
                         _rollingDiceFrames[i] = _diceShowingFaces[i]
                             ? _diceRandom.Next(Config.Symbols.DiceFaces.Length)
                             : _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
+                        anyChanged = true;
                     }
                 }
+                if (anyChanged) OnDiceTick?.Invoke();
             }
         }
 
