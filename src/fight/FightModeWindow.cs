@@ -29,6 +29,7 @@ internal class FightModeWindow : GameWindow
     // ── Action mode (what happens when the player clicks the center panel) ─
     private bool _isMoveMode = true;   // true = MOVE selected; false = skill selected
     private int  _selectedSkillIndex = -1;
+    private string? _selectedMediumKey;
     private HashSet<(int X, int Y)>? _highlightCells;
     private bool _isAttackHighlight;   // red vs green tint on highlighted tiles
     private HashSet<(int X, int Y)>? _hoverSkillCells; // hover-preview blink on map
@@ -385,10 +386,16 @@ internal class FightModeWindow : GameWindow
             }
             if (y == FightModeUI.RunButtonRow)
             {
+                if (_state.RunUsedThisTurn) return;
                 if (active.X == FightArea.ExitCol && active.Y == FightArea.ExitRow)
+                {
+                    _state.RunUsedThisTurn = true;
                     ExecuteAction(new Actions.RunawayAction(active));
+                }
                 else
+                {
                     _state.AddLog("Must reach the exit tile (⎆) to run away.");
+                }
                 return;
             }
 
@@ -402,12 +409,21 @@ internal class FightModeWindow : GameWindow
                         SetMoveMode();
                         break;
                     case LeftPanelRowKind.UnlockedSkill:
-                        if (row.SkillIndex >= 0 && row.SkillIndex < _currentUnlockedSkills.Count
-                            && _currentUnlockedSkills[row.SkillIndex].IsSelfTargeting)
-                            ExecuteAction(new Actions.SkillAction(active, active, _currentUnlockedSkills[row.SkillIndex]));
+                    {
+                        if (row.SkillIndex < 0 || row.SkillIndex >= _currentUnlockedSkills.Count) break;
+                        var s = _currentUnlockedSkills[row.SkillIndex];
+                        if (_state.UsedActionsThisTurn.Contains((row.MediumKey, s.SkillId))) break;
+                        if (s.IsSelfTargeting)
+                        {
+                            _state.UsedActionsThisTurn.Add((row.MediumKey, s.SkillId));
+                            ExecuteAction(new Actions.SkillAction(active, active, s));
+                        }
                         else
-                            SetSkillMode(row.SkillIndex);
+                        {
+                            SetSkillMode(row.SkillIndex, row.MediumKey);
+                        }
                         break;
+                    }
                 }
                 return;
             }
@@ -431,8 +447,10 @@ internal class FightModeWindow : GameWindow
         else if (_selectedSkillIndex >= 0 && _selectedSkillIndex < _currentUnlockedSkills.Count)
         {
             var skill = _currentUnlockedSkills[_selectedSkillIndex];
+            string mediumKey = _selectedMediumKey ?? DefaultMediumKeyFor(skill);
             if (skill.IsSelfTargeting)
             {
+                _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
                 ExecuteAction(new Actions.SkillAction(active, active, skill));
             }
             else
@@ -445,6 +463,7 @@ internal class FightModeWindow : GameWindow
                          f.X == ax && f.Y == ay);
                 if (target != null)
                 {
+                    _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
                     TryUseSkillOnTarget(active, target, skill);
                 }
                 else
@@ -452,6 +471,7 @@ internal class FightModeWindow : GameWindow
                     // Swing at empty air — deduct CP, log miss, end turn
                     int cost = skill.CineticPointsCost;
                     active.CurrentCineticPoints = Math.Max(0, active.CurrentCineticPoints - cost);
+                    _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
                     _state.AddLog($"{active.DisplayName} uses {skill.DisplayName} — nothing there.  [-{cost} CP]", LogEntryType.Miss);
                     _state.Phase = TurnPhase.TurnEnding;
                     AfterActionUpdate();
@@ -459,6 +479,12 @@ internal class FightModeWindow : GameWindow
             }
         }
     }
+
+    /// <summary>Default medium key for a skill used by the legacy fight window.</summary>
+    private static string DefaultMediumKeyFor(FightingSkill s) =>
+        s.Medium.Type == MediumType.OrganMedium
+            ? $"organ:{s.Medium.OrganId ?? s.SkillId}"
+            : $"mm:{s.RequiredModusMentisId}";
 
     // ── Keyboard shortcuts ────────────────────────────────────────────
 
@@ -474,7 +500,12 @@ internal class FightModeWindow : GameWindow
             if (KeyboardState.IsKeyPressed((Keys)(Keys.D1 + i)))
             {
                 if (i < _currentUnlockedSkills.Count)
-                    SetSkillMode(i);
+                {
+                    var s = _currentUnlockedSkills[i];
+                    string mk = DefaultMediumKeyFor(s);
+                    if (!_state.UsedActionsThisTurn.Contains((mk, s.SkillId)))
+                        SetSkillMode(i, mk);
+                }
                 return;
             }
         }
@@ -516,13 +547,15 @@ internal class FightModeWindow : GameWindow
     {
         _isMoveMode = true;
         _selectedSkillIndex = -1;
+        _selectedMediumKey = null;
         RecomputeHighlight();
     }
 
-    private void SetSkillMode(int skillIndex)
+    private void SetSkillMode(int skillIndex, string? mediumKey = null)
     {
         _isMoveMode = false;
         _selectedSkillIndex = skillIndex;
+        _selectedMediumKey = mediumKey;
         RecomputeHighlight();
     }
 
@@ -820,7 +853,8 @@ internal class FightModeWindow : GameWindow
                 _leftPanelLayout = FightModeUI.RenderLeftPanel(_terminal, active,
                     _currentUnlockedSkills, Array.Empty<FightingSkill>(),
                     isMove, _selectedSkillIndex, -1,
-                    _expandedMediumKey, _hoveredButtonRow);
+                    _expandedMediumKey, _hoveredButtonRow,
+                    _state.UsedActionsThisTurn, _state.RunUsedThisTurn);
 
                 // Recompute hover-blink cells now that the layout is current
                 _hoverSkillCells = ComputeHoverSkillCells(_hoveredButtonRow, active);

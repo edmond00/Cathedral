@@ -197,7 +197,9 @@ public static class FightModeUI
         IReadOnlyList<FightingSkill> learnableSkills,
         bool isMoveMode, int selectedSkillIndex, int selectedLearnableSkillIndex,
         string? expandedMediumKey,
-        int hoveredButtonRow = -1)
+        int hoveredButtonRow = -1,
+        IReadOnlySet<(string MediumKey, string SkillId)>? usedActions = null,
+        bool runUsed = false)
     {
         var layout = new List<LeftPanelRow>();
 
@@ -284,27 +286,36 @@ public static class FightModeUI
             if (learnableSkills[i].Medium.Type == MediumType.WeaponMedium)
                 learnableWeaponIdx[learnableSkills[i].SkillId] = i;
 
-        var seenWeaponCategories = new HashSet<string>();
-        foreach (var item in fighter.Member.EquippedItems[EquipmentAnchor.RightHold]
-                               .Concat(fighter.Member.EquippedItems[EquipmentAnchor.LeftHold])
-                               .OfType<IWeaponItem>())
+        // One tab per equipped weapon (per anchor). With a weapon in each hand, even when
+        // it's the same category, you get TWO independent tabs so the same skill can be
+        // used once per tab per turn.
+        bool hasRight = fighter.Member.EquippedItems[EquipmentAnchor.RightHold].OfType<IWeaponItem>().Any();
+        bool hasLeft  = fighter.Member.EquippedItems[EquipmentAnchor.LeftHold].OfType<IWeaponItem>().Any();
+        bool needHandSuffix = hasRight && hasLeft;
+
+        foreach (var anchor in new[] { EquipmentAnchor.RightHold, EquipmentAnchor.LeftHold })
         {
-            var category = WeaponMediumRegistry.GetById(item.WeaponCategory);
-            if (category == null || !seenWeaponCategories.Add(category.CategoryId)) continue;
-
-            string groupKey   = category.CategoryId;
-            string groupLabel = (item as Item)?.DisplayName ?? category.DisplayName;
-
-            foreach (var skillId in category.SkillIds)
+            foreach (var item in fighter.Member.EquippedItems[anchor].OfType<IWeaponItem>())
             {
-                if (unlockedWeaponIdx.TryGetValue(skillId, out int uIdx))
+                var category = WeaponMediumRegistry.GetById(item.WeaponCategory);
+                if (category == null) continue;
+
+                string groupKey   = $"weapon:{anchor}:{category.CategoryId}";
+                string groupLabel = (item as Item)?.DisplayName ?? category.DisplayName;
+                if (needHandSuffix)
+                    groupLabel += anchor == EquipmentAnchor.RightHold ? " (R)" : " (L)";
+
+                foreach (var skillId in category.SkillIds)
                 {
-                    AddToGroup(groupKey, groupLabel, uIdx, unlockedSkills[uIdx], false);
-                }
-                else if (learnableWeaponIdx.TryGetValue(skillId, out int lIdx))
-                {
-                    AddToGroup(groupKey, groupLabel, lIdx, learnableSkills[lIdx], true);
-                    break; // only the first unknown per weapon tab is shown as learnable
+                    if (unlockedWeaponIdx.TryGetValue(skillId, out int uIdx))
+                    {
+                        AddToGroup(groupKey, groupLabel, uIdx, unlockedSkills[uIdx], false);
+                    }
+                    else if (learnableWeaponIdx.TryGetValue(skillId, out int lIdx))
+                    {
+                        AddToGroup(groupKey, groupLabel, lIdx, learnableSkills[lIdx], true);
+                        break; // only the first unknown per weapon tab is shown as learnable
+                    }
                 }
             }
         }
@@ -334,12 +345,18 @@ public static class FightModeUI
             foreach (var (idx, skill, learnable) in grp.Skills)
             {
                 if (y >= EndTurnButtonRow - 1) break;
-                bool sel = !isMoveMode
+                bool used = usedActions?.Contains((grp.Key, skill.SkillId)) == true;
+                bool sel = !isMoveMode && !used
                     && (learnable ? idx == selectedLearnableSkillIndex : idx == selectedSkillIndex);
-                bool hov = !sel && hoveredButtonRow == y;
+                bool hov = !sel && !used && hoveredButtonRow == y;
 
                 Vector4 fg, bg;
-                if (learnable)
+                if (used)
+                {
+                    fg = Config.Colors.DarkGray35;
+                    bg = Config.Colors.Black;
+                }
+                else if (learnable)
                 {
                     fg = sel ? Config.Colors.Black
                        : hov ? Config.Colors.GoldYellow
@@ -378,12 +395,12 @@ public static class FightModeUI
                 Config.Colors.Black);
         }
 
-        // RUN button — dim (not invisible) when not on exit tile
+        // RUN button — dim (not invisible) when not on exit tile, or after one attempt
         {
             bool onExit = fighter.X == FightArea.ExitCol && fighter.Y == FightArea.ExitRow;
-            bool hov    = hoveredButtonRow == RunButtonRow;
-            Vector4 runFg = !onExit    ? Config.Colors.DarkGray35
-                          : hov        ? Config.Colors.Yellow
+            bool hov    = !runUsed && hoveredButtonRow == RunButtonRow;
+            Vector4 runFg = runUsed || !onExit ? Config.Colors.DarkGray35
+                          : hov                ? Config.Colors.Yellow
                           : Config.Colors.Orange;
             terminal.Text(x, RunButtonRow,
                 "  RUN".PadRight(innerW),

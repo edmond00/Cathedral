@@ -76,6 +76,29 @@ public class NarrativeController
     // Fires a hover sound when the cursor enters a new interactive element.
     private void PlayHoverSound() => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
 
+    // ── Dice-roll lifecycle helpers — wrap NarrationState calls + SFX cues. ───────
+    // Open: neutral sound. Resolve: positive/negative depending on success. Close: neutral.
+    private void NarrationDiceStart(int numberOfDice, int difficulty)
+    {
+        _narrationState.StartDiceRoll(numberOfDice, difficulty);
+        _ambianceEngine?.TriggerGameEvent(GameEventType.NeutralOutcome);
+    }
+
+    private void NarrationDiceComplete(int[] finalValues)
+    {
+        _narrationState.CompleteDiceRoll(finalValues);
+        _ambianceEngine?.TriggerGameEvent(_narrationState.DiceRollSucceeded
+            ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
+    }
+
+    private void NarrationDiceClear()
+    {
+        bool wasActive = _narrationState.IsDiceRollActive;
+        _narrationState.ClearDiceRoll();
+        if (wasActive)
+            _ambianceEngine?.TriggerGameEvent(GameEventType.NeutralOutcome);
+    }
+
     // Active party member (starts as protagonist, switches to companion after Speak About)
     private PartyMember _activePartyMember = null!;
     // Companion list parallel to the companion selection choice popup choices
@@ -660,7 +683,7 @@ public class NarrativeController
             int actualDifficulty = evalResult.DifficultyLevel;
 
             // Start dice roll animation
-            _narrationState.StartDiceRoll(numberOfDice, actualDifficulty);
+            NarrationDiceStart(numberOfDice, actualDifficulty);
             _narrationState.LoadingMessage = "Rolling dice...";
 
             // Roll each die independently (1–6) and count sixes
@@ -695,7 +718,7 @@ public class NarrativeController
             _pendingActionResult = result;
 
             // Complete the dice roll (stops animation, shows final values and continue button)
-            _narrationState.CompleteDiceRoll(finalDiceValues);
+            NarrationDiceComplete(finalDiceValues);
             _narrationState.IsLoadingAction = false;
 
             Console.WriteLine($"NarrativeController: Dice roll complete - {finalDiceValues.Count(v => v == 6)} sixes rolled, difficulty {actualDifficulty}");
@@ -704,9 +727,9 @@ public class NarrativeController
         {
             Console.Error.WriteLine($"NarrativeController: Error during action execution: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
-            
+
             _narrationState.IsLoadingAction = false;
-            _narrationState.ClearDiceRoll();
+            NarrationDiceClear();
             _narrationState.ErrorMessage = $"Action execution failed: {ex.Message}";
         }
     }
@@ -825,7 +848,7 @@ public class NarrativeController
         int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
         const int getUpDifficulty = 1;
 
-        _narrationState.StartDiceRoll(numberOfDice, getUpDifficulty);
+        NarrationDiceStart(numberOfDice, getUpDifficulty);
         _narrationState.LoadingMessage = "Rolling dice...";
 
         int[] finalDiceValues = new int[numberOfDice];
@@ -884,7 +907,7 @@ public class NarrativeController
             Narration           = narration,
         };
 
-        _narrationState.CompleteDiceRoll(finalDiceValues);
+        NarrationDiceComplete(finalDiceValues);
         _narrationState.IsLoadingAction = false;
 
         Console.WriteLine($"NarrativeController: GetUp action narrated — {(succeeded ? "pending transition" : "failure, will loop")}");
@@ -1075,7 +1098,7 @@ public class NarrativeController
         if (_pendingActionResult == null)
         {
             Console.WriteLine("NarrativeController: No pending action result for dice roll continue");
-            _narrationState.ClearDiceRoll();
+            NarrationDiceClear();
             return;
         }
         
@@ -1118,9 +1141,9 @@ public class NarrativeController
         // Auto-scroll to bottom to show outcome
         _scrollBuffer.ScrollToBottom();
         _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-        
+
         // Clear dice roll state
-        _narrationState.ClearDiceRoll();
+        NarrationDiceClear();
         _ambianceEngine?.SetFilter(MusicFilter.None);
 
         // === FAILURE-PATH WITNESS CONFRONTATION (step 4b) ===

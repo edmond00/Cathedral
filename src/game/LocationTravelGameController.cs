@@ -635,7 +635,8 @@ public class LocationTravelGameController : IDisposable
                     _pendingEncounterNpc,
                     _protagonist,
                     allies: new List<Cathedral.Game.Npc.NpcEntity>(),
-                    sfxTrigger: e => _ambianceEngine?.TriggerGameEvent(e));
+                    sfxTrigger: e => _ambianceEngine?.TriggerGameEvent(e),
+                    setMusicFilter: f => _ambianceEngine?.SetFilter(f));
                 _pendingEncounterNpc = null;
                 _pendingEncounterCreatureName = null;
                 SetMode(GameMode.Fighting);
@@ -2362,7 +2363,8 @@ public class LocationTravelGameController : IDisposable
             mainEnemy,
             protagonist,
             allies,
-            sfxTrigger: e => _ambianceEngine?.TriggerGameEvent(e));
+            sfxTrigger: e => _ambianceEngine?.TriggerGameEvent(e),
+            setMusicFilter: f => _ambianceEngine?.SetFilter(f));
 
         SetMode(GameMode.Fighting);
     }

@@ -62,6 +62,14 @@ public class DiceRollComponent
     /// </summary>
     public Action? OnDiceTick { get; set; }
 
+    /// <summary>
+    /// Fires once when the rolling animation ends and the result is locked in (via
+    /// <see cref="Complete"/> or <see cref="CompleteDual"/>). The bool is <c>true</c> when
+    /// the roll succeeded (single-roll: sixes ≥ Difficulty; dual-roll: primary sixes &gt; secondary sixes).
+    /// Reassign before every roll so the callback reflects the current context.
+    /// </summary>
+    public Action<bool>? OnResultRevealed { get; set; }
+
     private int[]? _finalPrimary;
     private int[]? _finalSecondary;
 
@@ -133,6 +141,8 @@ public class DiceRollComponent
         _finalPrimary   = finalValues;
         _finalSecondary = null;
         IsRolling       = false;
+        int sixes = finalValues.Count(v => v == 6);
+        OnResultRevealed?.Invoke(sixes >= Difficulty);
     }
 
     /// <summary>Stop the rolling animation and lock in both dice groups (dual mode).</summary>
@@ -141,6 +151,9 @@ public class DiceRollComponent
         _finalPrimary   = primaryValues;
         _finalSecondary = secondaryValues;
         IsRolling       = false;
+        int primarySixes   = primaryValues.Count(v => v == 6);
+        int secondarySixes = secondaryValues.Count(v => v == 6);
+        OnResultRevealed?.Invoke(primarySixes > secondarySixes);
     }
 
     public void Hide()

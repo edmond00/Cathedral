@@ -30,12 +30,15 @@ public static class FightAI
         if (adjacentEnemy != null)
         {
             var attackSkills = registry.GetAttackSkills()
-                .Where(s => s.IsUnlocked(ai) && ai.CurrentCineticPoints >= s.CineticPointsCost)
+                .Where(s => s.IsUnlocked(ai)
+                         && ai.CurrentCineticPoints >= s.CineticPointsCost
+                         && !state.UsedActionsThisTurn.Contains((DefaultMediumKey(s), s.SkillId)))
                 .ToList();
 
             if (attackSkills.Count > 0)
             {
                 var chosen = attackSkills[rng.Next(attackSkills.Count)];
+                state.UsedActionsThisTurn.Add((DefaultMediumKey(chosen), chosen.SkillId));
                 return new SkillAction(ai, adjacentEnemy, chosen);
             }
         }
@@ -83,4 +86,10 @@ public static class FightAI
 
     private static bool IsAdjacent(Fighter a, Fighter b) =>
         ManhattanDistance(a, b) == 1;
+
+    /// <summary>Default medium key for usage tracking (organ:<id> or mm:<id>).</summary>
+    private static string DefaultMediumKey(FightingSkill s) =>
+        s.Medium.Type == MediumType.OrganMedium
+            ? $"organ:{s.Medium.OrganId ?? s.SkillId}"
+            : $"mm:{s.RequiredModusMentisId}";
 }

@@ -91,6 +91,18 @@ public class FightState
     /// <summary>True while a runaway dice roll is in progress (need at least one six to flee).</summary>
     public bool PendingRunaway { get; set; }
 
+    /// <summary>
+    /// (medium-key, skill-id) pairs the active fighter has already committed to this turn.
+    /// Reset by <see cref="AdvanceToNextFighter"/>. Used to enforce the once-per-turn rule
+    /// for every action except MOVE; a skill that appears under two medium tabs (e.g. the
+    /// same weapon in both hands) tracks each tab independently because the medium key
+    /// includes the equipment anchor.
+    /// </summary>
+    public HashSet<(string MediumKey, string SkillId)> UsedActionsThisTurn { get; } = new();
+
+    /// <summary>True once the active fighter has attempted to flee this turn.</summary>
+    public bool RunUsedThisTurn { get; set; }
+
     // ── Action log ───────────────────────────────────────────────────
     private const int MaxLogLines = 200;
     public List<(string Text, LogEntryType Type)> ActionLog { get; } = new();
@@ -142,6 +154,8 @@ public class FightState
         DiceSecondaryFinalValues = null;
         DiceSecondaryNumberOfDice = 0;
         PendingRunaway = false;
+        UsedActionsThisTurn.Clear();
+        RunUsedThisTurn = false;
         MovementPath = null;
         MovingFighter = null;
         MovementPathIndex = 0;
