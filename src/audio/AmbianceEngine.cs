@@ -285,7 +285,7 @@ public sealed class AmbianceEngine : IDisposable
         // as soon as possible.
         int signal = evt switch
         {
-            GameEventType.StrongInteraction => 0x83,        // ForceRepeat | ForceAccent | ForceDoubleTime
+            GameEventType.StrongInteraction => 0x82,        // ForceRepeat | ForceDoubleTime (no accent)
             GameEventType.PositiveOutcome   => 0x21,        // ForceAccent | ForceHighReg
             GameEventType.NegativeOutcome   => 0x44,        // ForceBreak  | ForceLowReg
             GameEventType.NeutralOutcome    => 0x18,        // ForcePause  | ForceHalfTime
@@ -402,7 +402,7 @@ public sealed class AmbianceEngine : IDisposable
                 {
                     justActivated = false;
                     MusicMoodState sm; lock (_moodLock) sm = _activeMood;
-                    double sBpm = ProceduralMidiComposer.GetTempoBpm(sm.Sadness, sm.Fear);
+                    double sBpm = ProceduralMidiComposer.GetTempoBpm(sm.Sadness, sm.Fear, sm.Intensity);
                     // Melody: ~0.75 beat, Counter: ~1.5 beats, Texture: ~2.25 beats
                     double offsetBeats = trackIndex * 0.75 + rng.NextDouble() * 0.5;
                     await Task.Delay((int)(60_000.0 / sBpm * offsetBeats), ct);
@@ -442,7 +442,7 @@ public sealed class AmbianceEngine : IDisposable
                 if (role == TrackRole.Drone)
                 {
                     CurrentScaleName = ModalScale.GetScaleName(currentScale);
-                    CurrentBpm = Math.Clamp(ProceduralMidiComposer.GetTempoBpm(mood.Sadness, mood.Fear) + _sessionTension * 12.0, 25.0, 145.0);
+                    CurrentBpm = Math.Clamp(ProceduralMidiComposer.GetTempoBpm(mood.Sadness, mood.Fear, mood.Intensity) + _sessionTension * 12.0, 25.0, 145.0);
                 }
 
                 var (minIdx, maxIdx) = ModalScale.GetNoteRange(currentScale.Length, role);
@@ -456,9 +456,9 @@ public sealed class AmbianceEngine : IDisposable
                     lastPatch = patch;
                 }
 
-                double bpm = ProceduralMidiComposer.GetTempoBpm(mood.Sadness, mood.Fear);
+                double bpm = ProceduralMidiComposer.GetTempoBpm(mood.Sadness, mood.Fear, mood.Intensity);
                 bpm = Math.Clamp(bpm + _sessionTension * 12.0, 25.0, 145.0); // B11: tension tightens tempo
-                double filterBpmCap = 220.0;
+                double filterBpmCap = _filterBpmMult > 4.0f ? 340.0 : 220.0;
                 bpm = Math.Clamp(bpm * _filterBpmMult, 25.0, filterBpmCap);    // filter BPM multiplier
 
                 if (role == TrackRole.Melody || role == TrackRole.Counter)
@@ -527,7 +527,8 @@ public sealed class AmbianceEngine : IDisposable
                             phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
                                 currentScale, scaleIdx, minIdx, maxIdx,
                                 mood.Sadness, mood.Fear, mood.Mystery, bpm, rng,
-                                _melodyContour, forceMotifReplay: forceRepeat, forceResolution: phraseForceRes);
+                                _melodyContour, forceMotifReplay: forceRepeat, forceResolution: phraseForceRes,
+                                intensity: mood.Intensity);
                             // #11: negative echo - quieter descending echo for 2 phrases after the stab
                             if (_negativeEchoCount > 0)
                             {
@@ -579,7 +580,8 @@ public sealed class AmbianceEngine : IDisposable
                             int imitateStart = Math.Clamp(_melodyLastScaleIdx + 4, minIdx, maxIdx);
                             phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
                                 currentScale, imitateStart, minIdx, maxIdx,
-                                mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour);
+                                mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour,
+                                intensity: mood.Intensity);
                         }
                         else if (doOstinato)
                         {
@@ -684,7 +686,7 @@ public sealed class AmbianceEngine : IDisposable
                         if (noteEvent.IsAccented) rawVel = Math.Clamp(rawVel + 14, 0, 127);
                         // #8: paragraph gain — velocity shaped by 4-phrase micro-arc
                         rawVel = Math.Clamp((int)(rawVel * noteEvent.VelocityMult * _paragraphGain), 0, 127);
-                        int velocity = Math.Clamp((int)(rawVel * _dynamicsLevel * trackVol), 0, 115);
+                        int velocity = Math.Clamp((int)(rawVel * _dynamicsLevel * trackVol), 0, 90);
 
                         // B4: Parallel 3rd shadow — scale degree 2 below at 75% vel (bright moods only)
                         int shadowSIdx = noteEvent.ScaleIdx - 2;
@@ -776,8 +778,8 @@ public sealed class AmbianceEngine : IDisposable
                     // NeutralOutcome (ForcePause): triple the rest for a contemplative breath.
                     double beatMs = 60_000.0 / bpm;
                     double phraseRestBeats = role == TrackRole.Melody
-                        ? Math.Max(0.05, mood.Sadness * 0.5 + rng.NextDouble() * (0.5 + mood.Sadness * 1.0) + mood.Mystery * 5.5 - mood.Fear * 1.5)
-                        : Math.Max(0.05, mood.Sadness * 0.3 + rng.NextDouble() * (0.3 + mood.Sadness * 0.5) + mood.Mystery * 3.0 - mood.Fear * 0.8);
+                        ? Math.Max(0.05, mood.Sadness * 0.5 + rng.NextDouble() * (0.5 + mood.Sadness * 1.0) + mood.Mystery * mood.Mystery * 6.0 - mood.Fear * 1.5)
+                        : Math.Max(0.05, mood.Sadness * 0.3 + rng.NextDouble() * (0.3 + mood.Sadness * 0.5) + mood.Mystery * mood.Mystery * 3.5 - mood.Fear * 0.8);
                     if (applyForcePause) phraseRestBeats *= 8.0;
                     // Interruptible: a new event wakes this up immediately so the next
                     // phrase starts with the fresh signal rather than waiting out the rest.
@@ -822,7 +824,7 @@ public sealed class AmbianceEngine : IDisposable
                             float trackVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
                             int rawVel = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
                             rawVel = Math.Clamp((int)(rawVel * noteEvent.VelocityMult), 0, 127);
-                            int vel = Math.Clamp((int)(rawVel * _dynamicsLevel * trackVol), 0, 115);
+                            int vel = Math.Clamp((int)(rawVel * _dynamicsLevel * trackVol), 0, 90);
                             if (vel > 0)
                             {
                                 SendNoteOn(channel, noteEvent.MidiNote, vel);
@@ -917,7 +919,7 @@ public sealed class AmbianceEngine : IDisposable
                     int midiNote     = currentScale[scaleIdx];
                     float droneVol   = GetTrackIntensityVolume(trackIndex, mood.Intensity);
                     int rawVelocity  = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
-                    int velocity     = Math.Clamp((int)(rawVelocity * _dynamicsLevel * droneVol), 0, 115);
+                    int velocity     = Math.Clamp((int)(rawVelocity * _dynamicsLevel * droneVol), 0, 90);
                     int noteDuration = ProceduralMidiComposer.GetNoteDurationMs(mood.Sadness, mood.Fear, bpm, role);
                     int restDuration = ProceduralMidiComposer.GetRestMs(mood.Sadness, mood.Fear, bpm, role, rng);
 
@@ -1014,14 +1016,20 @@ public sealed class AmbianceEngine : IDisposable
                 // Neutral "thinking" texture: gentle flowing arpeggio layered on top of
                 // the regular music at a slightly faster tempo. Non-dramatic by design —
                 // just signals that processing is happening without hijacking the mood.
-                //   • _filterBpmMult = 2.5f  (noticeable but not frantic)
+                //   • _filterBpmMult = 6.0f  (very frantic, saturates at 340 BPM cap)
                 //   • Music at 78/127  (slight duck, ambient stays present)
                 //   • Very soft PadHalo arpeggio on ch 5 (in key, 60–130 ms/note)
-                _filterBpmMult = 2.5f;
+                _filterBpmMult = 6.0f;
                 SetMusicVolume(78);
 
                 const int arpCh = 5;
                 SendProgramChange(arpCh, ProceduralMidiComposer.PatchPadNewAge);
+                // Noise post-processing on the loading channel: dark + resonant + drenched
+                SendCC(arpCh, 74,   8);   // brightness → near zero  (very dark, lo-fi)
+                SendCC(arpCh, 71,  80);   // resonance  → high       (harsh buzzy edge)
+                SendCC(arpCh, 91, 115);   // reverb     → max wet    (cavernous wash)
+                SendCC(arpCh, 93,  80);   // chorus     → deep       (detuned warble)
+                SendCC(arpCh,  1,  42);   // modulation → moderate   (unstable wobble)
 
                 // Brown noise background via waveOut (separate channel from PlaySound —
                 // won't be interrupted by click/hover sounds).
@@ -1083,6 +1091,12 @@ public sealed class AmbianceEngine : IDisposable
                 }
 
                 if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
+                // Reset loading channel CCs to GS defaults
+                SendCC(arpCh, 74, 64);  // brightness default
+                SendCC(arpCh, 71,  0);  // resonance off
+                SendCC(arpCh, 91,  0);  // reverb off
+                SendCC(arpCh, 93,  0);  // chorus off
+                SendCC(arpCh,  1,  0);  // modulation off
             }
             else if (filter == MusicFilter.DiceRoll)
             {
@@ -1101,21 +1115,33 @@ public sealed class AmbianceEngine : IDisposable
                 //     a physical punctuation, not the main event.
                 //   • Music ducked to 50/127 — present as distant backdrop.
                 SetMusicVolume(50);
+                _filterBpmMult = 6.0f;
 
-                // Background shimmer wash
-                SendProgramChange(sfxCh, ProceduralMidiComposer.PatchPadHalo);
+                // Dark atmospheric shimmer
+                SendProgramChange(sfxCh, ProceduralMidiComposer.PatchFxSciFi);
 
-                // Continuous tick arpeggio — Dulcimer: plucked zither attack, natural wooden
-                // resonance. Physical and bright without the arcade buzz of a square wave.
+                // Continuous tick arpeggio — Sawtooth: harsh industrial rattle.
                 const int arpCh = 5;
-                SendProgramChange(arpCh, ProceduralMidiComposer.PatchDulcimer);
+                SendProgramChange(arpCh, ProceduralMidiComposer.PatchLeadSawtooth);
 
-                // Ethereal PadBowed drone on ch 6 — slow-attack wash in a HIGH register.
-                // Deliberately opposite to Loading's low grinding cluster:
-                // this floats above the dulcimer arpeggio like an ominous celestial haze.
+                // Atmosphere drone on ch 6 — heavy dark cloud hovering above the arpeggio.
                 const int droneCh = 6;
-                SendProgramChange(droneCh, ProceduralMidiComposer.PatchPadBowed);
+                SendProgramChange(droneCh, ProceduralMidiComposer.PatchFxAtmosphere);
                 SendCC(droneCh, 7, 90); // boost so it's clearly audible as its own layer
+
+                // Noise post-processing: dark + resonant + drenched — same treatment as Loading
+                foreach (int noiseCh in new[] { sfxCh, arpCh, droneCh })
+                {
+                    SendCC(noiseCh, 74,   8);   // brightness → near zero  (dark, lo-fi)
+                    SendCC(noiseCh, 71,  80);   // resonance  → high       (harsh buzz)
+                    SendCC(noiseCh, 91, 115);   // reverb     → max wet    (cavernous)
+                    SendCC(noiseCh, 93,  80);   // chorus     → deep       (detuned warble)
+                    SendCC(noiseCh,  1,  42);   // modulation → moderate   (unstable wobble)
+                }
+
+                // Brown noise background — same industrial static as Loading
+                using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f);
+                brownNoise.Start();
                 var droneNotes   = new List<(int note, long releaseMs)>();
                 long nextDroneMs = Environment.TickCount64 + rng.Next(200, 800);
 
@@ -1233,6 +1259,139 @@ public sealed class AmbianceEngine : IDisposable
                 }
 
                 if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
+                // Reset DiceRoll channel CCs to GS defaults
+                foreach (int noiseCh in new[] { sfxCh, arpCh, droneCh })
+                {
+                    SendCC(noiseCh, 74, 64);  // brightness default
+                    SendCC(noiseCh, 71,  0);  // resonance off
+                    SendCC(noiseCh, 91,  0);  // reverb off
+                    SendCC(noiseCh, 93,  0);  // chorus off
+                    SendCC(noiseCh,  1,  0);  // modulation off
+                }
+            }
+            else if (filter == MusicFilter.Traveling)
+            {
+                // ── Traveling filter ──────────────────────────────────────────────────────────────
+                // Open-road mood: purposeful forward motion through a landscape.  Not tense, not
+                // industrial — atmospheric and solitary.  Three layers add the sensation of moving
+                // through outdoor space while the ambient music stays largely intact:
+                //
+                //   • PanFlute arpeggio on ch 5: airy pastoral steps through the current scale,
+                //     mostly ascending ("walking forward"), 180–400 ms/note.  8 % silence gap
+                //     to suggest scanning the horizon.
+                //   • PadSweep landscape drone on ch 6: very slow-shifting sustained low notes
+                //     (5–10 s holds) — the terrain rolling past underfoot.
+                //   • Quiet footstep percussion on ch 9: Bass Drum / Low Tom at low velocity,
+                //     irregularly spaced (500–1200 ms) — uneven ground.
+                //   • _filterBpmMult = 6.0  — ambient music races forward like a time-lapse,
+                //     suggesting time passing during the journey (same cap as Loading: 340 BPM).
+                //     The PanFlute arpeggio is unaffected (it uses its own delay timings).
+                //   • Music at 72/127 — present, gently recessed.
+                _filterBpmMult = 6.0f;
+                SetMusicVolume(72);
+
+                const int arpCh = 5;
+                SendProgramChange(arpCh, ProceduralMidiComposer.PatchPanFlute);
+                // Outdoor CC treatment: warm + spacious + clean — contrasts Loading's dark industrial noise
+                SendCC(arpCh, 74, 52);   // brightness → moderately warm
+                SendCC(arpCh, 71,  8);   // resonance  → subtle hint
+                SendCC(arpCh, 91, 72);   // reverb     → outdoor open space
+                SendCC(arpCh, 93, 22);   // chorus     → gentle warmth
+                SendCC(arpCh,  1, 12);   // modulation → light vibrato
+
+                const int droneCh = 6;
+                SendProgramChange(droneCh, ProceduralMidiComposer.PatchPadSweep);
+                SendCC(droneCh, 7, 55);  // quiet — landscape backdrop, not prominent
+                SendCC(droneCh, 91, 80); // reverb → merges into background wash
+
+                var droneNotes   = new List<(int note, long releaseMs)>();
+                long nextDroneMs = Environment.TickCount64 + rng.Next(500, 1500);
+
+                // Footstep notes: Acoustic Bass Drum, Low Floor Tom, Low Tom
+                int[] footNotes = { 35, 41, 45 };
+                long nextFootMs = Environment.TickCount64 + rng.Next(400, 900);
+
+                int[] scale      = Array.Empty<int>();
+                int arpIdx       = 0;
+                int arpDir       = 1;   // default: ascending (walking forward)
+                int lastArpNote  = -1;
+                int stepCount    = 0;
+
+                while (!ct.IsCancellationRequested)
+                {
+                    long now = Environment.TickCount64;
+
+                    // ── Landscape drone: slow low sustained pads ─────────────────────
+                    for (int i = droneNotes.Count - 1; i >= 0; i--)
+                    {
+                        if (now >= droneNotes[i].releaseMs)
+                        {
+                            SendNoteOff(droneCh, droneNotes[i].note);
+                            droneNotes.RemoveAt(i);
+                        }
+                    }
+                    if (now >= nextDroneMs && droneNotes.Count < 2)
+                    {
+                        int dNote = rng.Next(36, 55); // low register — rumble of the land
+                        SendNoteOn(droneCh, dNote, rng.Next(18, 35));
+                        droneNotes.Add((dNote, now + rng.Next(2000, 4500)));
+                        nextDroneMs = now + rng.Next(1200, 3000);
+                    }
+
+                    // ── Quiet footstep percussion ─────────────────────────────────────
+                    if (now >= nextFootMs)
+                    {
+                        SendNoteOn(drumCh, footNotes[rng.Next(footNotes.Length)], rng.Next(12, 30));
+                        nextFootMs = now + rng.Next(180, 450);
+                    }
+
+                    // ── PanFlute arpeggio ─────────────────────────────────────────────
+                    lock (_moodLock) scale = _sharedScale;
+                    if (scale.Length == 0) { await Task.Delay(40, ct); continue; }
+                    arpIdx = Math.Clamp(arpIdx, 0, scale.Length - 1);
+
+                    if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
+
+                    // 8 % chance: brief rest — pausing to scan the horizon
+                    if (rng.NextDouble() < 0.08)
+                    {
+                        lastArpNote = -1;
+                        await Task.Delay(rng.Next(80, 200), ct);
+                        continue;
+                    }
+
+                    int midiNote = scale[arpIdx];
+                    int vel = rng.NextDouble() < 0.12
+                        ? rng.Next(38, 54)   // occasional gentle swell (cresting a hill)
+                        : rng.Next(22, 36);  // default airy whisper
+                    SendNoteOn(arpCh, midiNote, vel);
+                    lastArpNote = midiNote;
+
+                    // Mostly ascending ("walking forward"), reverse at extremes
+                    arpIdx += arpDir;
+                    stepCount++;
+                    if (arpIdx >= scale.Length)  { arpIdx = scale.Length - 2; arpDir = -1; stepCount = 0; }
+                    else if (arpIdx < 0)         { arpIdx = 1;                arpDir =  1; stepCount = 0; }
+                    // Occasional winding reversal — like a path changing direction
+                    if (stepCount >= rng.Next(4, 9) && rng.NextDouble() < 0.25)
+                    { arpDir = -arpDir; stepCount = 0; }
+
+                    // Fast travel pace: 60–140 ms/note; rare short pause (200–400 ms) = catching breath
+                    int durMs = rng.NextDouble() < 0.07
+                        ? rng.Next(200, 400)   // rest — catching breath
+                        : rng.Next(60, 140);   // fast travel pace
+                    await Task.Delay(durMs, ct);
+                }
+
+                if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
+                foreach (var (note, _) in droneNotes) SendNoteOff(droneCh, note);
+                // Reset Traveling channel CCs to GS defaults
+                SendCC(arpCh, 74, 64);  // brightness default
+                SendCC(arpCh, 71,  0);  // resonance off
+                SendCC(arpCh, 91,  0);  // reverb off
+                SendCC(arpCh, 93,  0);  // chorus off
+                SendCC(arpCh,  1,  0);  // modulation off
+                SendCC(droneCh, 91, 0); // reverb off
             }
             else if (filter == MusicFilter.Fighting)
             {
@@ -1258,10 +1417,10 @@ public sealed class AmbianceEngine : IDisposable
                 SetMusicVolume(60);
 
                 const int arpCh = 5;
-                SendProgramChange(arpCh, ProceduralMidiComposer.PatchTremoloStrings);
+                SendProgramChange(arpCh, ProceduralMidiComposer.PatchLeadSawtooth); // buzzing saw throb — retro tense pulse
 
                 const int droneCh = 6;
-                SendProgramChange(droneCh, ProceduralMidiComposer.PatchPadBowed);
+                SendProgramChange(droneCh, ProceduralMidiComposer.PatchFxEchoes); // decaying digital echoes — eerie hover
                 SendCC(droneCh, 7, 88); // audible as its own layer
 
                 var droneNotes   = new List<(int note, long releaseMs)>();
@@ -1406,6 +1565,7 @@ public sealed class AmbianceEngine : IDisposable
             while (!ct.IsCancellationRequested && _running)
             {
                 await Task.Delay(150, ct);
+                MusicMoodState snapped;
                 lock (_moodLock)
                 {
                     const float alpha = 0.08f;
@@ -1414,9 +1574,9 @@ public sealed class AmbianceEngine : IDisposable
                         _activeMood.Fear       + alpha * (_targetMood.Fear       - _activeMood.Fear),
                         _activeMood.Mystery    + alpha * (_targetMood.Mystery    - _activeMood.Mystery),
                         _activeMood.Intensity  + alpha * (_targetMood.Intensity  - _activeMood.Intensity));
-
-
+                    snapped = _activeMood;
                 }
+                ApplyGlobalAmbience(snapped.Mystery, snapped.Fear, snapped.Sadness);
             }
         }
         catch (OperationCanceledException) { }
@@ -1548,7 +1708,7 @@ public sealed class AmbianceEngine : IDisposable
         if (_device == null) return;
 
         int ch = ProceduralMidiComposer.SfxChannel;
-        SendProgramChange(ch, ProceduralMidiComposer.PatchHarpsichord);
+        SendProgramChange(ch, ProceduralMidiComposer.PatchLeadSawtooth);
 
         MusicMoodState mood;
         lock (_moodLock) mood = _activeMood;
@@ -1703,6 +1863,55 @@ public sealed class AmbianceEngine : IDisposable
 
     // Channels carrying melodic/tonal content (not drums or SFX)
     private static readonly int[] MusicChannels = { 0, 1, 2, 3, 4 };
+
+    // Throttle ambience CC sends — only update when value changes by >2 to avoid MIDI flood.
+    private int _lastReverbValue     = -1;
+    private int _lastChorusValue     = -1;
+    private int _lastBrightnessValue = -1;
+    private int _lastResonanceValue  = -1;
+
+    /// <summary>
+    /// Sends CC 91 (reverb send) and CC 93 (chorus depth) to all music channels,
+    /// driven by the current mood's Mystery and Fear axes.
+    /// Reverb: mystery*90 + fear*30 — fully dry at zero, cavernous at high mystery.
+    ///   Plain/field: ~10–20.  Forest: ~45–65.  Dungeon/cave: ~85–110.
+    /// Chorus: melody+counter only, mystery*65 — inaudible at zero, strongly detuned at high mystery.
+    ///   Plain: ~10.  Forest: ~35.  Dungeon: ~60+.
+    /// Only sends if value drifted by more than 2 to avoid MIDI event floods.
+    /// </summary>
+    private void ApplyGlobalAmbience(float mystery, float fear, float sadness)
+    {
+        float fearCurve = MathF.Sqrt(fear);
+        int reverb     = Math.Clamp((int)(mystery * 90 + fearCurve * 30), 0, 115);
+        int chorus     = Math.Clamp((int)(mystery * 65),                   0,  70);
+        // CC 74: brightness — high sadness darkens the timbre (muffles high frequencies)
+        int brightness = Math.Clamp((int)(64 - sadness * 50),             14,  64);
+        // CC 71: resonance — sqrt curve so effect is audible from low fear, not just threshold
+        int resonance  = Math.Clamp((int)(fearCurve * 55),                 0,  55);
+
+        if (Math.Abs(reverb - _lastReverbValue) > 2)
+        {
+            foreach (int ch in MusicChannels) SendCC(ch, 91, reverb);
+            _lastReverbValue = reverb;
+        }
+        if (Math.Abs(chorus - _lastChorusValue) > 2)
+        {
+            // Chorus only on melody (ch 1) and counter (ch 2) — keeps drone/bass tight
+            SendCC(1, 93, chorus);
+            SendCC(2, 93, chorus);
+            _lastChorusValue = chorus;
+        }
+        if (Math.Abs(brightness - _lastBrightnessValue) > 2)
+        {
+            foreach (int ch in MusicChannels) SendCC(ch, 74, brightness);
+            _lastBrightnessValue = brightness;
+        }
+        if (Math.Abs(resonance - _lastResonanceValue) > 2)
+        {
+            foreach (int ch in MusicChannels) SendCC(ch, 71, resonance);
+            _lastResonanceValue = resonance;
+        }
+    }
 
     private void SetMusicVolume(int volume)
     {

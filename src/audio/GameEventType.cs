@@ -73,6 +73,17 @@ public enum MusicFilter
     DiceRoll,
 
     /// <summary>
+    /// Travel filter.
+    /// Open-road mood: purposeful forward motion through an outdoor landscape.
+    /// A PanFlute arpeggio steps through the current scale at walking pace
+    /// (mostly ascending, occasional rests to scan the horizon), a low PadSweep
+    /// drone shifts slowly beneath it like passing terrain, and sparse quiet
+    /// footstep-percussion (Bass Drum / Low Tom) marks the walking rhythm.
+    /// The ambient music quickens slightly (×1.5 BPM) and is gently ducked.
+    /// </summary>
+    Traveling,
+
+    /// <summary>
     /// Fight filter.
     /// Tense-suspense overlay: tremolo strings carry a slow heartbeat pulse,
     /// a high dissonant PadBowed drone (minor-2nd clusters) hovers above the

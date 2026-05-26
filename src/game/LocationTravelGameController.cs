@@ -1669,7 +1669,7 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterTraveling()
     {
         Console.WriteLine("LocationTravelGameController: Entered Traveling mode");
-        _ambianceEngine?.SetFilter(MusicFilter.DiceRoll);
+        _ambianceEngine?.SetFilter(MusicFilter.Traveling);
         // Keep current location mood but thin out to drone + noise only during travel
         _ambianceEngine?.SetActiveTrackCount(1);
         // Set camera zoom for travel animation

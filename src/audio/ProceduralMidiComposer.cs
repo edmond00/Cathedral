@@ -40,12 +40,18 @@ public static class ProceduralMidiComposer
     public const int PatchPadSweep       = 95; // #96 — Pad 8 (sweep) — dark, heavy wash
     public const int PatchSeashore       = 122; // #123 — Seashore — wind/waves, outdoor calm
     public const int PatchBirdTweet      = 123; // #124 — Bird Tweet — light nature ambiance
-    // Synth leads (digital / glitch SFX)
-    public const int PatchLeadSquare     = 80;  // #81 — Lead 1 Square    — buzzy, harsh
+    // Synth leads (digital / chiptune)
+    public const int PatchLeadSquare     = 80;  // #81 — Lead 1 Square    — NES-style buzz
     public const int PatchLeadSawtooth   = 81;  // #82 — Lead 2 Sawtooth  — electronic buzz
-    // Synth FX (sci-fi / crystal / echo)
-    public const int PatchFxCrystal      = 98;  // #99 — FX 3 Crystal     — bright digital ping
-    public const int PatchFxEchoes       = 102; // #103 — FX 7 Echoes     — decaying digital repeats
+    public const int PatchCalliope       = 82;  // #83 — Lead 3 Calliope  — round mellow synth flute
+    // Synth bass / strings
+    public const int PatchSynthBass1     = 38;  // #39 — Synth Bass 1     — punchy digital bass
+    public const int PatchSynthStrings   = 50;  // #51 — Synth Strings 1  — retro string-pad
+    // Synth FX (industrial / atmospheric)
+    public const int PatchFxCrystal      = 98;  // #99  — FX 3 Crystal     — bright digital ping (kept for reference)
+    public const int PatchFxAtmosphere   = 99;  // #100 — FX 4 Atmosphere  — dense cloudy wash, heavy industrial
+    public const int PatchFxEchoes       = 102; // #103 — FX 7 Echoes     — decaying digital repeats, eerie
+    public const int PatchFxSciFi        = 103; // #104 — FX 8 Sci-fi     — harsh industrial noise burst
 
     /// <summary>
     /// Picks the next MIDI note using a weighted random walk within [minIdx, maxIdx].
@@ -124,7 +130,8 @@ public static class ProceduralMidiComposer
     public static NoteEvent[] GenerateMelodyPhrase(
         int[] scale, int startIdx, int minIdx, int maxIdx,
         float sadness, float fear, float mystery, double bpm, Random rng,
-        int[]? motifContour = null, bool forceMotifReplay = false, bool? forceResolution = null)
+        int[]? motifContour = null, bool forceMotifReplay = false, bool? forceResolution = null,
+        float intensity = 0.5f)
     {
         double beatMs = 60_000.0 / bpm;
         // Fear shortens phrases (frantic/broken); sadness also shortens (contemplative).
@@ -133,9 +140,11 @@ public static class ProceduralMidiComposer
         // min 3 notes keeps at least a recognisable melodic gesture, max 7 allows tension to build.
         int maxLen = fear > 0.6f ? 7 : (sadness > 0.5f ? 8 : 11);
         int minLen = fear > 0.6f ? 3 : 4;
-        // ~18% chance of an extended flowing phrase — only when not fearful/staccato.
+        // Low intensity: very few notes, each held very long — sparse sustained figures, not runs.
+        if (intensity < 0.4f) { maxLen = Math.Min(maxLen, 5); minLen = Math.Min(minLen, 3); }
+        // ~18% chance of an extended flowing phrase — only when not fearful/staccato and not low-intensity.
         // Gives occasional long arcing lines that don't feel abruptly cut off.
-        if (fear < 0.50f && rng.NextDouble() < 0.18)
+        if (intensity >= 0.4f && fear < 0.50f && rng.NextDouble() < 0.18)
         {
             minLen = 9;
             maxLen = 15;
@@ -245,9 +254,22 @@ public static class ProceduralMidiComposer
             noteIndices[phraseLen - 1] = cadenceIdx; // always land on cadence
         }
 
+        // Smooth cadence approach: work backwards through the last 3 notes and clamp any
+        // jump > 2 scale steps to exactly ±2. This prevents the melody from "teleporting"
+        // to the cadence note when the peak was far from the tonic/dominant.
+        for (int back = 1; back <= Math.Min(3, phraseLen - 1); back++)
+        {
+            int i = phraseLen - 1 - back;
+            int nextNote = noteIndices[i + 1];
+            int jump     = noteIndices[i] - nextNote;
+            if (Math.Abs(jump) > 2)
+                noteIndices[i] = Math.Clamp(nextNote + Math.Sign(jump) * 2, minIdx, maxIdx);
+        }
+
         // Phrase dynamic arc: envelope aligned to melodic contour (ascending→crescendo, descent→decrescendo)
         float[] envelope = PickVelocityEnvelope(phraseLen, sadness, fear, rng, contourType);
-        float durationFactor = (1.0f + sadness * 0.5f) * (1.0f - fear * 0.55f);
+        // Low intensity: dramatically stretch note durations so the fast pulse carries long, held tones.
+        float durationFactor = (1.45f + sadness * 0.5f + (1.0f - intensity) * 5.5f) * (1.0f - fear * 0.55f);
         var events = new NoteEvent[phraseLen];
         for (int i = 0; i < phraseLen; i++)
         {
@@ -619,10 +641,11 @@ public static class ProceduralMidiComposer
     /// <summary>
     /// Maps sadness/fear → BPM.
     /// Sadness slows (108→30), Fear speeds (+0 to +37).
-    /// sadness=0 produces jig/reel tempos (~108–145 BPM); sadness=1 produces slow lament (~25–67 BPM).
+    /// sadness=0 produces walking/ambient tempos (~72–122 BPM); sadness=1 produces slow lament (~25–72 BPM).
+    /// Low intensity raises the clock speed (fast pulse with long notes); high intensity uses current pacing.
     /// </summary>
-    public static double GetTempoBpm(float sadness, float fear) =>
-        Math.Clamp(108.0 - sadness * 78.0 + fear * 37.0, 25.0, 145.0);
+    public static double GetTempoBpm(float sadness, float fear, float intensity = 0.5f) =>
+        Math.Clamp(72.0 - sadness * 55.0 + fear * 37.0 + (1.0 - intensity) * 50.0, 25.0, 145.0);
 
     /// <summary>Returns note duration in milliseconds based on mood, BPM, and track role.
     /// Fear makes Texture staccato; Drone always sustains.</summary>
@@ -659,29 +682,31 @@ public static class ProceduralMidiComposer
     /// Sadness softens. High fear creates lurching bimodal dynamics — sudden ff or pp accents.</summary>
     public static int GetVelocity(float sadness, float fear, TrackRole role, Random rng)
     {
+        // Synth patches are perceptually louder than acoustic ones at the same velocity —
+        // base values are kept lower to compensate for the richer harmonic content.
         int baseVelocity = role switch
         {
-            TrackRole.Drone   => 52,
-            TrackRole.Melody  => 50, // softened — background ambiance, not soloist
-            TrackRole.Counter => 40, // softer obligato — plays beneath melody
-            TrackRole.Texture => 45,
-            TrackRole.Noise   => 60, // audible background wash
-            _                 => 60,
+            TrackRole.Drone   => 38,
+            TrackRole.Melody  => 36, // background ambiance, not soloist
+            TrackRole.Counter => 26, // softer obligato — plays beneath melody
+            TrackRole.Texture => 30,
+            TrackRole.Noise   => 44, // audible background wash
+            _                 => 44,
         };
         // Noise: simple gentle variation, no fear bimodal dynamics
         if (role == TrackRole.Noise)
         {
-            int nShift = -(int)(sadness * 10) + (int)(fear * 14);
-            return Math.Clamp(48 + nShift + rng.Next(-5, 6), 18, 65);
+            int nShift = -(int)(sadness * 8) + (int)(fear * 12);
+            return Math.Clamp(34 + nShift + rng.Next(-5, 6), 10, 50);
         }
         // High fear: lurching bimodal dynamics (sudden accent or sudden dropout)
         if (fear > 0.65f && rng.NextDouble() < (fear - 0.65f) * 1.3)
             return rng.NextDouble() < 0.55
-                ? Math.Clamp(baseVelocity + 35, 15, 115)
-                : Math.Clamp(baseVelocity - 28,  8, 115);
-        int moodShift = -(int)(sadness * 18) + (int)(fear * 25);
-        int swing     = (int)(4 + fear * 20);
-        return Math.Clamp(baseVelocity + moodShift + rng.Next(-swing, swing + 1), 8, 115);
+                ? Math.Clamp(baseVelocity + 26, 12, 90)
+                : Math.Clamp(baseVelocity - 22,  5, 90);
+        int moodShift = -(int)(sadness * 14) + (int)(fear * 20);
+        int swing     = (int)(4 + fear * 16);
+        return Math.Clamp(baseVelocity + moodShift + rng.Next(-swing, swing + 1), 5, 90);
     }
 
     /// <summary>
@@ -694,31 +719,38 @@ public static class ProceduralMidiComposer
     public static int GetInstrumentPatch(TrackRole role, float sadness, float fear, float mystery) =>
         role switch
         {
+            // Drone: low grinding bass layer.
+            // Sawtooth anchors bright moments; PadSweep and FxSciFi sink into heavy darkness.
             TrackRole.Drone =>
-                fear >= 0.60f && sadness < 0.50f ? PatchTremoloStrings  // tense
-                : sadness < 0.35f                ? PatchViolinStrings    // bright tavern bass
-                : sadness < 0.70f                ? PatchChurchOrgan      // mid
-                :                                  PatchChoirAahs,        // dark/haunting
+                fear >= 0.60f && sadness < 0.50f ? PatchLeadSawtooth    // tense — harsh buzzing grind
+                : sadness < 0.35f                ? PatchLeadSawtooth     // low sadness — still industrial, never warm
+                : sadness < 0.70f                ? PatchPadSweep         // mid — heavy dark sweeping wash
+                :                                  PatchFxSciFi,          // deep dark — harsh noise underlayer
 
+            // Melody: sparse industrial lead voice.
+            // Sawtooth for raw edge, FxSciFi for eerie mid, FxAtmosphere for dense mournful cloud.
             TrackRole.Melody =>
-                sadness < 0.28f && fear < 0.45f  ? PatchFlute            // bright tavern melody
-                : sadness < 0.28f                ? PatchRecorder         // urgent/chase — Recorder over Oboe: same urgency, no brass edge
-                : sadness < 0.60f                ? PatchSoloViolin       // lament — intimate solo string, not ensemble attack
-                :                                  PatchRecorder,         // mournful — soft medieval woodwind
+                sadness < 0.28f && fear < 0.45f  ? PatchLeadSawtooth     // bright-ish — harsh industrial lead
+                : sadness < 0.28f                ? PatchLeadSawtooth     // urgent — max saw aggression
+                : sadness < 0.60f                ? PatchFxSciFi          // lament — eerie industrial noise
+                :                                  PatchFxAtmosphere,     // mournful — dense atmospheric cloud
 
+            // Counter: mid-layer dissonance and texture.
+            // Echoes for sparse metallic pings, SciFi for dark mystery, Sawtooth for raw edge.
             TrackRole.Counter =>
-                sadness < 0.32f                  ? PatchHarpsichord      // lively tavern runs
-                : mystery >= 0.65f               ? PatchPadBowed         // ethereal dungeon
-                :                                  PatchRecorder,         // general — Recorder softer than Flute on this synth
+                sadness < 0.32f                  ? PatchFxEchoes         // sparse — echoing metallic drips
+                : mystery >= 0.65f               ? PatchFxSciFi          // high mystery — dark industrial noise
+                :                                  PatchLeadSawtooth,     // general — raw saw buzz layer
 
+            // Texture: high shimmer and atmosphere.
+            // Sawtooth for tense harshness, Echoes for digital grit, Atmosphere for heavy dark wash.
             TrackRole.Texture =>
-                fear >= 0.60f || mystery >= 0.68f ? PatchTremoloStrings  // creepy/tense shimmer
-                : sadness < 0.40f                 ? PatchHarpsichord     // bright decoration
-                :                                   PatchFlute,           // soft texture
+                fear >= 0.60f || mystery >= 0.68f ? PatchLeadSawtooth    // tense/mysterious — saw shimmer
+                : sadness < 0.40f                 ? PatchFxEchoes        // sparse — dry echoing pings
+                :                                   PatchFxAtmosphere,    // dark — dense atmospheric cloud
 
             TrackRole.Noise =>
-                // Always PadSweep: heaviest, darkest pad — best approximation of brown-noise rumble.
-                // Mood still affects the melodic/noise layer above, but the base wash stays consistent.
+                // PadSweep: heaviest, darkest pad — industrial low-frequency rumble base.
                 PatchPadSweep,
 
             _ => 0,
@@ -751,17 +783,17 @@ public static class ProceduralMidiComposer
         {
             TrackRole.Melody =>
                 sadness < 0.30f && fear < 0.45f
-                    ? new[] { PatchFlute,      PatchRecorder,   PatchSoloViolin  }    // bright
+                    ? new[] { PatchLeadSawtooth, PatchFxEchoes,    PatchFxSciFi     }    // raw industrial lead
                     : sadness < 0.60f
-                    ? new[] { PatchSoloViolin, PatchRecorder,   PatchFlute       }    // mid lament
-                    : new[] { PatchRecorder,   PatchChoirAahs,  PatchSoloViolin  },   // dark
+                    ? new[] { PatchFxSciFi,      PatchLeadSawtooth,PatchFxAtmosphere}    // mid dark noise
+                    : new[] { PatchFxAtmosphere, PatchFxSciFi,     PatchLeadSawtooth},   // heavy dark cloud
 
             TrackRole.Counter =>
                 sadness < 0.32f
-                    ? new[] { PatchHarpsichord, PatchRecorder,  PatchDulcimer    }    // lively
+                    ? new[] { PatchFxEchoes,     PatchLeadSawtooth,PatchFxSciFi     }    // sparse metallic
                     : mystery >= 0.65f
-                    ? new[] { PatchPadBowed,    PatchPanFlute,  PatchVoiceOohs   }    // ethereal
-                    : new[] { PatchRecorder,    PatchPanFlute,  PatchHarpsichord },   // general
+                    ? new[] { PatchFxSciFi,      PatchFxAtmosphere,PatchFxEchoes    }    // dark industrial
+                    : new[] { PatchLeadSawtooth, PatchFxEchoes,    PatchFxSciFi     },   // raw edge
 
             _ => new[] { primary },
         };
