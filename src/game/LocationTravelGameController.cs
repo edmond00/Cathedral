@@ -1000,6 +1000,10 @@ public class LocationTravelGameController : IDisposable
             ClearTravelPlan();
         }
 
+        // Reset cloud speed back to normal whenever travel ends.
+        if (oldMode == GameMode.Traveling && newMode != GameMode.Traveling)
+            _core.SetCloudSpeedMultiplier(1.0f);
+
         Console.WriteLine($"LocationTravelGameController: Mode changed: {oldMode} ↁE{newMode}");
         
         // Handle mode-specific setup
@@ -1639,7 +1643,6 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterWorldView()
     {
         Console.WriteLine("LocationTravelGameController: Entered WorldView mode");
-        _core.SetCloudSpeedMultiplier(1.0f);
         _ambianceEngine?.SetMood(MusicMoodState.WorldView);
         _ambianceEngine?.SetFilter(MusicFilter.None);
         _ambianceEngine?.SetActiveTrackCount(4);
@@ -1656,6 +1659,16 @@ public class LocationTravelGameController : IDisposable
         {
             var rangeStat = new MaxTravelDistanceStat();
             _interface.SetTravelRange(_interface.GetAvatarVertex(), rangeStat.GetRadius(_protagonist));
+        }
+
+        // Re-assert the protagonist glyph and re-center the camera on it.
+        // SetTravelRange / path cleanup can occasionally overwrite the protagonist cell;
+        // doing this last guarantees the '@' is always visible when WorldView opens.
+        int avatarVertex = _interface.GetAvatarVertex();
+        if (avatarVertex >= 0)
+        {
+            _interface.RefreshProtagonistGlyph();
+            _core.CenterCameraOnGlyph(avatarVertex);
         }
 
         // Show the terminal as a UI overlay for the travel info box, but let clicks
@@ -1678,7 +1691,7 @@ public class LocationTravelGameController : IDisposable
     {
         Console.WriteLine("LocationTravelGameController: Entered Traveling mode");
         _ambianceEngine?.SetFilter(MusicFilter.Traveling);
-        _core.SetCloudSpeedMultiplier(5.0f);
+        _core.SetCloudSpeedMultiplier(50.0f);
         // Keep current location mood but thin out to drone + noise only during travel
         _ambianceEngine?.SetActiveTrackCount(1);
         // Set camera zoom for travel animation

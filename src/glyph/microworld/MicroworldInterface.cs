@@ -1187,6 +1187,20 @@ namespace Cathedral.Glyph.Microworld
         public int GetAvatarVertex() => _protagonistVertex;
 
         /// <summary>
+        /// Re-asserts the protagonist glyph on the current vertex.
+        /// Call when returning to WorldView to recover from any glyph overwrite that
+        /// may have occurred during path cleanup or travel-range recalculation.
+        /// </summary>
+        public void RefreshProtagonistGlyph()
+        {
+            if (_protagonistVertex >= 0)
+                SetVertexGlyph(_protagonistVertex,
+                    Config.GlyphSphere.ProtagonistChar,
+                    Config.GlyphSphere.ProtagonistColor,
+                    true);
+        }
+
+        /// <summary>
         /// Resets the protagonist to a new random starting position.
         /// Used when starting a new game from the main menu.
         /// </summary>

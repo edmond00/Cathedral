@@ -1229,33 +1229,37 @@ public class FightModeAdapter
 
         if (active != null)
         {
-            if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _state.PendingTarget != null)
-            {
-                _bodyPartMenu = FightModeUI.RenderBodyPartMenu(_terminal, _state.PendingTarget);
-            }
-            else
-            {
-                _bodyPartMenu = null;
-                bool isMove = _isMoveMode || !active.IsPlayerControlled ||
-                              _state.Phase == TurnPhase.AnimatingMovement;
-                _leftPanelLayout = FightModeUI.RenderLeftPanel(_terminal, active,
-                    _currentUnlockedSkills, _currentLearnableSkills,
-                    isMove, _selectedSkillIndex, _selectedLearnableSkillIndex,
-                    _expandedMediumKey, _hoveredButtonRow,
-                    _state.UsedActionsThisTurn, _state.RunUsedThisTurn);
+            bool isMove = _isMoveMode || !active.IsPlayerControlled ||
+                          _state.Phase == TurnPhase.AnimatingMovement;
+            _leftPanelLayout = FightModeUI.RenderLeftPanel(_terminal, active,
+                _currentUnlockedSkills, _currentLearnableSkills,
+                isMove, _selectedSkillIndex, _selectedLearnableSkillIndex,
+                _expandedMediumKey, _hoveredButtonRow,
+                _state.UsedActionsThisTurn, _state.RunUsedThisTurn);
 
-                // Recompute hover-blink cells now that the layout is current
-                _hoverSkillCells = ComputeHoverSkillCells(_hoveredButtonRow, active);
+            // Recompute hover-blink cells now that the layout is current
+            _hoverSkillCells = ComputeHoverSkillCells(_hoveredButtonRow, active);
 
-                // Bottom-half info panel — hovered action > selected action > none
-                var (infoKind, infoSkill) = ResolveLeftInfo(active);
-                FightModeUI.RenderLeftInfoPanel(_terminal, infoKind, infoSkill, active);
-            }
+            // Bottom-half info panel — hovered action > selected action > none
+            var (infoKind, infoSkill) = ResolveLeftInfo(active);
+            FightModeUI.RenderLeftInfoPanel(_terminal, infoKind, infoSkill, active);
         }
 
         FightModeUI.RenderCenterPanel(_terminal, _state.Area, _state.Fighters,
             active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath, _hoverSkillCells,
             _previewAttackCell);
+
+        // Body-part selection menu — must render AFTER the center panel so the arena
+        // doesn't paint over it (the menu is positioned inside the arena bounds).
+        if (active != null && _state.Phase == TurnPhase.WaitingForBodyPartChoice
+            && _state.PendingTarget != null)
+        {
+            _bodyPartMenu = FightModeUI.RenderBodyPartMenu(_terminal, _state.PendingTarget);
+        }
+        else
+        {
+            _bodyPartMenu = null;
+        }
 
         int initHoverY = _hoveredFighter != null
             ? _rightPanelRows.FirstOrDefault(r => r.Fighter == _hoveredFighter).Y

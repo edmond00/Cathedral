@@ -841,59 +841,63 @@ internal class FightModeWindow : GameWindow
 
         if (active != null)
         {
-            if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _state.PendingTarget != null)
-            {
-                _bodyPartMenu = FightModeUI.RenderBodyPartMenu(_terminal, _state.PendingTarget);
-            }
-            else
-            {
-                _bodyPartMenu = null;
-                bool isMove = _isMoveMode || !active.IsPlayerControlled ||
-                              _state.Phase == TurnPhase.AnimatingMovement;
-                _leftPanelLayout = FightModeUI.RenderLeftPanel(_terminal, active,
-                    _currentUnlockedSkills, Array.Empty<FightingSkill>(),
-                    isMove, _selectedSkillIndex, -1,
-                    _expandedMediumKey, _hoveredButtonRow,
-                    _state.UsedActionsThisTurn, _state.RunUsedThisTurn);
+            bool isMove = _isMoveMode || !active.IsPlayerControlled ||
+                          _state.Phase == TurnPhase.AnimatingMovement;
+            _leftPanelLayout = FightModeUI.RenderLeftPanel(_terminal, active,
+                _currentUnlockedSkills, Array.Empty<FightingSkill>(),
+                isMove, _selectedSkillIndex, -1,
+                _expandedMediumKey, _hoveredButtonRow,
+                _state.UsedActionsThisTurn, _state.RunUsedThisTurn);
 
-                // Recompute hover-blink cells now that the layout is current
-                _hoverSkillCells = ComputeHoverSkillCells(_hoveredButtonRow, active);
+            // Recompute hover-blink cells now that the layout is current
+            _hoverSkillCells = ComputeHoverSkillCells(_hoveredButtonRow, active);
 
-                // Bottom-half info — simple version (no learnable tracking in legacy window)
-                FightModeUI.LeftInfoKind infoKind = FightModeUI.LeftInfoKind.None;
-                FightingSkill? infoSkill = null;
-                if (_hoveredButtonRow == FightModeUI.MoveButtonRow) infoKind = FightModeUI.LeftInfoKind.Move;
-                else if (_hoveredButtonRow == FightModeUI.EndTurnButtonRow) infoKind = FightModeUI.LeftInfoKind.EndTurn;
-                else if (_hoveredButtonRow == FightModeUI.RunButtonRow) infoKind = FightModeUI.LeftInfoKind.Run;
-                else if (_hoveredButtonRow >= 0)
+            // Bottom-half info — simple version (no learnable tracking in legacy window)
+            FightModeUI.LeftInfoKind infoKind = FightModeUI.LeftInfoKind.None;
+            FightingSkill? infoSkill = null;
+            if (_hoveredButtonRow == FightModeUI.MoveButtonRow) infoKind = FightModeUI.LeftInfoKind.Move;
+            else if (_hoveredButtonRow == FightModeUI.EndTurnButtonRow) infoKind = FightModeUI.LeftInfoKind.EndTurn;
+            else if (_hoveredButtonRow == FightModeUI.RunButtonRow) infoKind = FightModeUI.LeftInfoKind.Run;
+            else if (_hoveredButtonRow >= 0)
+            {
+                foreach (var r in _leftPanelLayout)
                 {
-                    foreach (var r in _leftPanelLayout)
-                    {
-                        if (r.Y != _hoveredButtonRow) continue;
-                        if (r.Kind == LeftPanelRowKind.UnlockedSkill
-                            && r.SkillIndex >= 0 && r.SkillIndex < _currentUnlockedSkills.Count)
-                        {
-                            infoKind = FightModeUI.LeftInfoKind.Skill;
-                            infoSkill = _currentUnlockedSkills[r.SkillIndex];
-                        }
-                        break;
-                    }
-                }
-                if (infoKind == FightModeUI.LeftInfoKind.None)
-                {
-                    if (_selectedSkillIndex >= 0 && _selectedSkillIndex < _currentUnlockedSkills.Count)
+                    if (r.Y != _hoveredButtonRow) continue;
+                    if (r.Kind == LeftPanelRowKind.UnlockedSkill
+                        && r.SkillIndex >= 0 && r.SkillIndex < _currentUnlockedSkills.Count)
                     {
                         infoKind = FightModeUI.LeftInfoKind.Skill;
-                        infoSkill = _currentUnlockedSkills[_selectedSkillIndex];
+                        infoSkill = _currentUnlockedSkills[r.SkillIndex];
                     }
-                    else if (_isMoveMode) infoKind = FightModeUI.LeftInfoKind.Move;
+                    break;
                 }
-                FightModeUI.RenderLeftInfoPanel(_terminal, infoKind, infoSkill, active);
             }
+            if (infoKind == FightModeUI.LeftInfoKind.None)
+            {
+                if (_selectedSkillIndex >= 0 && _selectedSkillIndex < _currentUnlockedSkills.Count)
+                {
+                    infoKind = FightModeUI.LeftInfoKind.Skill;
+                    infoSkill = _currentUnlockedSkills[_selectedSkillIndex];
+                }
+                else if (_isMoveMode) infoKind = FightModeUI.LeftInfoKind.Move;
+            }
+            FightModeUI.RenderLeftInfoPanel(_terminal, infoKind, infoSkill, active);
         }
 
         FightModeUI.RenderCenterPanel(_terminal, _state.Area, _state.Fighters,
             active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath, _hoverSkillCells);
+
+        // Body-part selection menu — render AFTER the center panel so the arena
+        // doesn't paint over it.
+        if (active != null && _state.Phase == TurnPhase.WaitingForBodyPartChoice
+            && _state.PendingTarget != null)
+        {
+            _bodyPartMenu = FightModeUI.RenderBodyPartMenu(_terminal, _state.PendingTarget);
+        }
+        else
+        {
+            _bodyPartMenu = null;
+        }
 
         int initHoverY = _hoveredFighter != null
             ? _rightPanelRows.FirstOrDefault(r => r.Fighter == _hoveredFighter).Y
