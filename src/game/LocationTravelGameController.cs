@@ -1634,6 +1634,7 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterWorldView()
     {
         Console.WriteLine("LocationTravelGameController: Entered WorldView mode");
+        _ambianceEngine?.SetMood(MusicMoodState.WorldView);
         _ambianceEngine?.SetFilter(MusicFilter.None);
         _ambianceEngine?.SetActiveTrackCount(4);
         // Set camera zoom for destination selection

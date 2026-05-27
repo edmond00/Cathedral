@@ -40,7 +40,7 @@ public struct MusicMoodState
     public static readonly MusicMoodState Childhood = new(0.65f, 0.05f, 0.6f);
 
     /// <summary>World exploration: alert, mysterious.</summary>
-    public static readonly MusicMoodState WorldView = new(0.3f, 0.25f, 0.45f);
+    public static readonly MusicMoodState WorldView = new(0.6f, 0.6f, 0.0f, 0.35f);
 
     // ── Archetype presets (for PoC demonstration) ─────────────────────────────
     /// <summary>Lively tavern: major scale, lively rhythms, bright instruments.</summary>
