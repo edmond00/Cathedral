@@ -119,7 +119,7 @@ public sealed class InventoryMenuRenderer
     private EquipmentAnchor? _hoveredAnchor  = null;
     private int              _hoveredItemIdx = -1;
 
-    public bool IsHovering => _hoveredAnchor.HasValue;
+    public bool IsHovering => _hoveredAnchor.HasValue || _hoveredContent >= 0;
     private EquipmentAnchor? _selectedAnchor = null;
     private int              _selectedItemIdx = -1; // -1 = anchor header selected
     private int              _hoveredContent  = -1;
@@ -230,7 +230,7 @@ public sealed class InventoryMenuRenderer
         var hit        = HitTestItem(x, y);
         var newAnchor  = hit?.Anchor;
         var newIdx     = hit?.ItemIdx ?? -1;
-        var newContent = HitTestContent(y);
+        var newContent = HitTestContent(x, y);
         bool onRight   = x >= RightPanelX;
 
         bool changed = newAnchor != _hoveredAnchor || newIdx != _hoveredItemIdx
@@ -314,7 +314,7 @@ public sealed class InventoryMenuRenderer
         // Clear any deferred header selection from a previous mouse-down.
         _pendingDragAnchor = null;
 
-        int contentIdx = HitTestContent(y);
+        int contentIdx = HitTestContent(x, y);
         if (contentIdx >= 0)
         {
             if (_isDragging) { CancelDrag(); return true; }
@@ -430,7 +430,7 @@ public sealed class InventoryMenuRenderer
                 GoBackContent();
                 return true;
             }
-            int contentIdx = HitTestContent(y);
+            int contentIdx = HitTestContent(x, y);
             if (contentIdx >= 0)
             {
                 SelectContent(contentIdx);
@@ -1133,8 +1133,9 @@ public sealed class InventoryMenuRenderer
         return null;
     }
 
-    private int HitTestContent(int y)
+    private int HitTestContent(int x, int y)
     {
+        if (x < RightPanelX) return -1;
         foreach (var hit in _contentHits)
             if (y >= hit.Y0 && y <= hit.Y1)
                 return hit.Index;
