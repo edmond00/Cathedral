@@ -8,6 +8,7 @@ using Cathedral.Game.Narrative.World.Items;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Field;
 
@@ -51,7 +52,8 @@ public class FieldSceneFactory : SceneFactory
 
         var tilled = new Section(
             "Tilled Strips",
-            new() { "Cultivated rows of crop running long across the worked ground" }
+            new() { "Cultivated rows of crop running long across the worked ground" },
+            seed => new NoisyGenerator { Seed = seed, Density = 0.88f }
         );
         tilled.Areas.Add(_grainStrip);
         tilled.Areas.Add(_vegBeds);
@@ -61,7 +63,8 @@ public class FieldSceneFactory : SceneFactory
 
         var margin = new Section(
             "Field Margin",
-            new() { "The boundary strip between cultivation and wild ground" }
+            new() { "The boundary strip between cultivation and wild ground" },
+            seed => new NoisyGenerator { Seed = seed, Density = 0.82f }
         );
         margin.Areas.Add(_ditch);
         if (_fallow != null) margin.Areas.Add(_fallow);

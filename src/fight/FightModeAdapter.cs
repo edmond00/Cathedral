@@ -113,6 +113,7 @@ public class FightModeAdapter
         PopupTerminalHUD? popup,
         NpcEntity targetNpc,
         Protagonist protagonist,
+        IFightAreaGenerator arenaGenerator,
         IReadOnlyList<NpcEntity>? allies = null,
         Action<GameEventType>? sfxTrigger = null,
         Action<MusicFilter>? setMusicFilter = null)
@@ -132,9 +133,8 @@ public class FightModeAdapter
 
         _skillRegistry = FightingSkillRegistry.Instance;
 
-        // Generate arena
-        var generator = new ArenaGenerator { Seed = Environment.TickCount };
-        var area = generator.Generate();
+        // Generate arena (caller supplies the generator, already seeded)
+        var area = arenaGenerator.Generate();
 
         // Build fighters
         var fighters = BuildFighters(protagonist, targetNpc, _allies);

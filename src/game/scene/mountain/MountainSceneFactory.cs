@@ -8,6 +8,7 @@ using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Scene.Shared;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Mountain;
 
@@ -81,7 +82,8 @@ public class MountainSceneFactory : SceneFactory
 
         var lower = new Section(
             "Lower Slope",
-            new() { "Transitioning terrain — forest gives way to open rock" }
+            new() { "Transitioning terrain — forest gives way to open rock" },
+            seed => new NoisyGenerator { Seed = seed, Density = 0.7f }
         );
         lower.Areas.AddRange(lowerAreas);
         scene.Sections.Add(lower);
@@ -89,7 +91,8 @@ public class MountainSceneFactory : SceneFactory
 
         var mid = new Section(
             "Rocky Midslope",
-            new() { "Exposed and windy — scree, outcrops, sparse vegetation" }
+            new() { "Exposed and windy — scree, outcrops, sparse vegetation" },
+            seed => new WaveGenerator { Seed = seed }
         );
         mid.Areas.AddRange(midAreas);
         scene.Sections.Add(mid);

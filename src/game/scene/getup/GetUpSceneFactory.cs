@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene.Verbs;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.GetUp;
 
@@ -44,7 +45,8 @@ public sealed class GetUpSceneFactory : SceneFactory
             "Something inside you has gone quiet, not broken but close — " +
             "the distance ahead feels unreasonable, the effort of rising almost pointless."));
 
-        var section = new Section("The Plain", new List<string> { "a lone tree on an open plain" });
+        var section = new Section("The Plain", new List<string> { "a lone tree on an open plain" },
+            seed => new NoisyGenerator { Seed = seed, Density = 0.85f });
         section.Areas.Add(area);
         scene.Sections.Add(section);
         RegisterAll(scene, section);

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTK.Mathematics;
+using Cathedral.Fight;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Glyph.Microworld
 {
@@ -13,13 +15,23 @@ namespace Cathedral.Glyph.Microworld
         public float Size { get; set; }
         public float Density { get; set; } // Ratio for location spawning
 
-        public BiomeType(string name, char glyph, Vector3 color, float size, float density)
+        /// <summary>
+        /// Factory that produces the fight-arena generator used when a travel encounter
+        /// happens in this biome. The caller passes a seed (e.g. Environment.TickCount)
+        /// and gets a fully-configured generator back. Mandatory.
+        /// </summary>
+        public Func<int, IFightAreaGenerator> ArenaGeneratorFactory { get; set; }
+
+        public BiomeType(string name, char glyph, Vector3 color, float size, float density,
+                          Func<int, IFightAreaGenerator> arenaGeneratorFactory)
         {
             Name = name;
             Glyph = glyph;
             Color = color;
             Size = size;
             Density = density;
+            ArenaGeneratorFactory = arenaGeneratorFactory
+                ?? throw new ArgumentNullException(nameof(arenaGeneratorFactory));
         }
     }
 
@@ -45,15 +57,15 @@ namespace Cathedral.Glyph.Microworld
     {
         public static readonly Dictionary<string, BiomeType> Biomes = new Dictionary<string, BiomeType>
         {
-            ["plain"] = new BiomeType("plain", '"', new Vector3(0, 255, 0), 1.3f, 0.06f),
-            ["forest"] = new BiomeType("forest", '⬤', new Vector3(0, 85, 0), 1.3f, 0.03f),
-            ["mountain"] = new BiomeType("mountain", '◭', new Vector3(130, 130, 130), 1.3f, 0.05f),
-            ["peak"] = new BiomeType("peak", '⋀', new Vector3(255, 255, 255), 1.3f, 0.2f),
-            ["coast"] = new BiomeType("coast", ':', new Vector3(255, 255, 0), 1.3f, 0.2f),
-            ["city"] = new BiomeType("city", '☷', new Vector3(150, 100, 100), 1.3f, 0.4f),
-            ["sea"] = new BiomeType("sea", '~', new Vector3(30, 30, 225), 1f, 0.01f),
-            ["ocean"] = new BiomeType("ocean", '≈', new Vector3(10, 10, 200), 1f, 0.02f),
-            ["field"] = new BiomeType("field", '⣿', new Vector3(80, 200, 0), 1.2f, 0.1f),
+            ["plain"]    = new BiomeType("plain",    '"', new Vector3(0,   255, 0  ), 1.3f, 0.06f, seed => new NoisyGenerator    { Seed = seed, Density = 0.85f }),
+            ["forest"]   = new BiomeType("forest",   '⬤', new Vector3(0,   85,  0  ), 1.3f, 0.03f, seed => new NoisyGenerator    { Seed = seed, Density = 0.62f }),
+            ["mountain"] = new BiomeType("mountain", '◭', new Vector3(130, 130, 130), 1.3f, 0.05f, seed => new WaveGenerator     { Seed = seed }),
+            ["peak"]     = new BiomeType("peak",     '⋀', new Vector3(255, 255, 255), 1.3f, 0.2f,  seed => new WaveGenerator     { Seed = seed }),
+            ["coast"]    = new BiomeType("coast",    ':', new Vector3(255, 255, 0  ), 1.3f, 0.2f,  seed => new RadiantGenerator  { Seed = seed }),
+            ["city"]     = new BiomeType("city",     '☷', new Vector3(150, 100, 100), 1.3f, 0.4f,  seed => new GeometricGenerator{ Seed = seed }),
+            ["sea"]      = new BiomeType("sea",      '~', new Vector3(30,  30,  225), 1f,   0.01f, seed => new WaveGenerator     { Seed = seed }),
+            ["ocean"]    = new BiomeType("ocean",    '≈', new Vector3(10,  10,  200), 1f,   0.02f, seed => new WaveGenerator     { Seed = seed }),
+            ["field"]    = new BiomeType("field",    '⣿', new Vector3(80,  200, 0  ), 1.2f, 0.1f,  seed => new NoisyGenerator    { Seed = seed, Density = 0.88f }),
         };
 
         public static readonly Dictionary<string, LocationType> Locations = new Dictionary<string, LocationType>

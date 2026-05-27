@@ -629,11 +629,16 @@ public class LocationTravelGameController : IDisposable
                 && _pendingEncounterNpc != null && _core.Terminal != null && _protagonist != null)
             {
                 _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                // Pick the arena generator for the current biome (travel encounters are
+                // wall-clock-random — fresh seed per fight).
+                var biome = Cathedral.Glyph.Microworld.BiomeDatabase.Biomes[_consumptionBiome];
+                var arena = biome.ArenaGeneratorFactory(Environment.TickCount);
                 _fightAdapter = new FightModeAdapter(
                     _core.Terminal,
                     _core.PopupTerminal,
                     _pendingEncounterNpc,
                     _protagonist,
+                    arena,
                     allies: new List<Cathedral.Game.Npc.NpcEntity>(),
                     sfxTrigger: e => _ambianceEngine?.TriggerGameEvent(e),
                     setMusicFilter: f => _ambianceEngine?.SetFilter(f));
@@ -2358,11 +2363,23 @@ public class LocationTravelGameController : IDisposable
             }
         }
 
+        // Narration fights: the section the PoV stands in supplies the generator,
+        // and the current area's Id is the seed so the same area always rolls the same arena.
+        var fightSection = scene?.Sections.FirstOrDefault(s => s.Areas.Contains(pov!.Where));
+        if (fightSection == null)
+        {
+            Console.Error.WriteLine("LocationTravelGameController: cannot start fight — no section found for current area");
+            return;
+        }
+        int areaSeed = pov!.Where.Id.GetHashCode();
+        var arena2 = fightSection.ArenaGeneratorFactory(areaSeed);
+
         _fightAdapter = new FightModeAdapter(
             _core.Terminal,
             _core.PopupTerminal,
             mainEnemy,
             protagonist,
+            arena2,
             allies,
             sfxTrigger: e => _ambianceEngine?.TriggerGameEvent(e),
             setMusicFilter: f => _ambianceEngine?.SetFilter(f));

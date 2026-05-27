@@ -9,6 +9,7 @@ using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Scene.Shared;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Forest;
 
@@ -97,7 +98,8 @@ public class ForestSceneFactory : SceneFactory
 
         var edge = new Section(
             "Forest Edge",
-            new() { "Lighter canopy, more undergrowth, sky visible between trunks" }
+            new() { "Lighter canopy, more undergrowth, sky visible between trunks" },
+            seed => new NoisyGenerator { Seed = seed, Density = 0.7f }
         );
         edge.Areas.AddRange(edgeAreas);
         scene.Sections.Add(edge);
@@ -105,7 +107,8 @@ public class ForestSceneFactory : SceneFactory
 
         var deep = new Section(
             "Deep Wood",
-            new() { "Dense canopy, darker, quieter; the great trees stand close together" }
+            new() { "Dense canopy, darker, quieter; the great trees stand close together" },
+            seed => new NoisyGenerator { Seed = seed, Density = 0.55f }
         );
         deep.Areas.AddRange(deepAreas);
         scene.Sections.Add(deep);

@@ -8,6 +8,7 @@ using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Scene.Shared;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Peak;
 
@@ -58,7 +59,8 @@ public class PeakSceneFactory : SceneFactory
 
         var approach = new Section(
             "Summit Approach",
-            new() { "Steep, exposed terrain rising toward the peak" }
+            new() { "Steep, exposed terrain rising toward the peak" },
+            seed => new WaveGenerator { Seed = seed }
         );
         approach.Areas.AddRange(approachAreas);
         scene.Sections.Add(approach);
@@ -66,7 +68,8 @@ public class PeakSceneFactory : SceneFactory
 
         var summit = new Section(
             "Exposed Summit",
-            new() { "Wind-scoured open sky, extreme conditions" }
+            new() { "Wind-scoured open sky, extreme conditions" },
+            seed => new RadiantGenerator { Seed = seed }
         );
         summit.Areas.AddRange(summitAreas);
         scene.Sections.Add(summit);

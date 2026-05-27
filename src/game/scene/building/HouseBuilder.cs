@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Building;
 
@@ -101,7 +102,8 @@ public class HouseBuilder
 
         var groundSection = new Section(
             $"{MaterialSectionName(material)} Farmhouse",
-            new() { $"The ground floor of a {matWord} farmhouse, low-ceilinged and smoky" }
+            new() { $"The ground floor of a {matWord} farmhouse, low-ceilinged and smoky" },
+            seed => new RoomsGenerator { Seed = seed }
         );
         groundSection.Areas.Add(hall);
         groundSection.Areas.Add(kitchen);
@@ -134,7 +136,8 @@ public class HouseBuilder
 
             var upperSection = new Section(
                 $"{MaterialSectionName(material)} Farmhouse Upper Floor",
-                new() { $"The upper storey of the farmhouse, reached by a narrow wooden staircase" }
+                new() { $"The upper storey of the farmhouse, reached by a narrow wooden staircase" },
+                seed => new RoomsGenerator { Seed = seed }
             );
             upperSection.Areas.Add(landing);
             upperSection.Areas.AddRange(bedrooms);

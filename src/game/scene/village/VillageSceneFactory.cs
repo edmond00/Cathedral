@@ -9,6 +9,7 @@ using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Scene.Shared;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Village;
 
@@ -74,7 +75,8 @@ public class VillageSceneFactory : SceneFactory
 
         var squareSection = new Section(
             "Village Square",
-            new() { "An open central space where village life converges" }
+            new() { "An open central space where village life converges" },
+            seed => new GeometricGenerator { Seed = seed }
         );
         squareSection.Areas.Add(_square);
         scene.Sections.Add(squareSection);
@@ -82,7 +84,8 @@ public class VillageSceneFactory : SceneFactory
 
         var craftRow = new Section(
             "Craft Row",
-            new() { "Workshops clustered along a lane, living quarters above or behind" }
+            new() { "Workshops clustered along a lane, living quarters above or behind" },
+            seed => new CorridorGenerator { Seed = seed }
         );
         if (_carpenter != null) craftRow.Areas.Add(_carpenter);
         if (_cooper    != null) craftRow.Areas.Add(_cooper);
@@ -95,7 +98,8 @@ public class VillageSceneFactory : SceneFactory
 
         var marketEnd = new Section(
             "Market End",
-            new() { "Miller, baker, and brewer occupying the working end of the village" }
+            new() { "Miller, baker, and brewer occupying the working end of the village" },
+            seed => new GeometricGenerator { Seed = seed }
         );
         marketEnd.Areas.Add(_mill);
         if (_bakery   != null) marketEnd.Areas.Add(_bakery);

@@ -8,6 +8,7 @@ using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Scene.Shared;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Plain;
 
@@ -63,7 +64,8 @@ public class PlainSceneFactory : SceneFactory
 
         var flatSection = new Section(
             "Flatlands",
-            new() { "Open, low-lying ground; wide sky and long sightlines" }
+            new() { "Open, low-lying ground; wide sky and long sightlines" },
+            seed => new NoisyGenerator { Seed = seed, Density = 0.9f }
         );
         flatSection.Areas.AddRange(flatAreas);
         scene.Sections.Add(flatSection);
@@ -73,7 +75,8 @@ public class PlainSceneFactory : SceneFactory
         var highSectionDesc = _identity == Identity.Wetland
             ? "Boggy ground, reeds, willows, soft underfoot"
             : "Gentle rises and shallow valleys";
-        var highSection = new Section(highSectionName, new() { highSectionDesc });
+        var highSection = new Section(highSectionName, new() { highSectionDesc },
+            seed => new NoisyGenerator { Seed = seed, Density = 0.78f });
         highSection.Areas.AddRange(highAreas);
         scene.Sections.Add(highSection);
         RegisterAll(scene, highSection);

@@ -14,6 +14,12 @@ namespace Cathedral.Fight
         protected CharMapping Mapping { get; }
         protected Random Rng { get; set; } = new Random();
 
+        /// <summary>
+        /// Deterministic seed. All RNG inside this generator derives from it.
+        /// Same seed produces the same arena.
+        /// </summary>
+        public int Seed { get; set; }
+
         protected FightAreaGeneratorBase(CharMapping? mapping = null)
         {
             Mapping = mapping ?? CharMapping.Default;
@@ -26,7 +32,7 @@ namespace Cathedral.Fight
 
         public FightArea Generate()
         {
-            Rng = new Random(Environment.TickCount);
+            Rng = new Random(Seed);
             var area = new FightArea();
             GenerateInternal(area);
             area.ClearReservedZones(Mapping, Rng);

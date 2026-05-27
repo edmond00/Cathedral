@@ -569,22 +569,27 @@ public static class FightModeUI
         terminal.Text(RightStart + 1, TopRows + 1, "TERRAIN",
             Config.Colors.DarkYellowGrey, Config.Colors.Black);
 
-        var entries = new (char Glyph, Vector4 Color, string Label)[]
+        // Build the legend directly from CharMapping.Default so the swatch always
+        // matches what the arena renderer actually paints on each tile.
+        var mapping = CharMapping.Default;
+        var entries = new (TerrainType Type, string Label)[]
         {
-            ('⎆', Config.Colors.GoldYellow,      "Exit"),
-            ('.', Config.Colors.DarkGray35,      "Free space"),
-            ('·', Config.Colors.DarkYellowGrey,  "Soft (slow)"),
-            ('~', Config.Colors.MediumYellow,    "Treacherous"),
-            ('∴', Config.Colors.Purple,          "Dangerous"),
-            ('#', Config.Colors.LightGray75,     "Hard obstacle"),
+            (TerrainType.Exit,                "Exit"),
+            (TerrainType.FreeSpace,           "Free space"),
+            (TerrainType.SoftObstacle,        "Soft (slow)"),
+            (TerrainType.TreacherousTerrain,  "Treacherous"),
+            (TerrainType.DangerousTerrain,    "Dangerous"),
+            (TerrainType.HardObstacle,        "Hard obstacle"),
         };
 
         int maxLabel = panelW - 4;
         int y = TopRows + 3;
-        foreach (var (glyph, color, label) in entries)
+        foreach (var (type, label) in entries)
         {
             if (y >= RightSplitRow - 1) break;
-            terminal.SetCell(RightStart + 1, y, glyph, color, Config.Colors.Black);
+            var appearance = mapping[type];
+            char glyph = appearance.Chars.Length > 0 ? appearance.Chars[0] : '?';
+            terminal.SetCell(RightStart + 1, y, glyph, appearance.TextColor, appearance.BgColor);
             string lbl = label.Length > maxLabel ? label[..maxLabel] : label;
             terminal.Text(RightStart + 3, y, lbl, Config.Colors.LightGray, Config.Colors.Black);
             y += 2;
@@ -716,25 +721,41 @@ public static class FightModeUI
                 continue;
             }
 
-            Vector4 fg;
             if (highlightCells != null)
             {
-                // Boost toward white so in-range tiles are clearly readable
-                fg = highlightCells.Contains((ax, ay))
-                    ? new Vector4(
-                        Math.Min(1f, cell.TextColor.X + 0.45f),
-                        Math.Min(1f, cell.TextColor.Y + 0.45f),
-                        Math.Min(1f, cell.TextColor.Z + 0.45f), 1f)
-                    : new Vector4(cell.TextColor.X * 0.25f, cell.TextColor.Y * 0.25f,
-                                  cell.TextColor.Z * 0.25f, 1f);
-                terminal.SetCell(CenterX + ax, CenterY + ay, cell.Glyph, fg, Config.Colors.Black);
+                if (highlightCells.Contains((ax, ay)))
+                {
+                    // In-range: keep natural colors with a very subtle luminosity pulse
+                    // tied to the global blink so the playable zone breathes faintly.
+                    float pulse = blinkOn ? 0.02f : -0.02f;
+                    var fg = new Vector4(
+                        Math.Clamp(cell.TextColor.X + pulse, 0f, 1f),
+                        Math.Clamp(cell.TextColor.Y + pulse, 0f, 1f),
+                        Math.Clamp(cell.TextColor.Z + pulse, 0f, 1f), 1f);
+                    var bg = new Vector4(
+                        Math.Clamp(cell.BgColor.X + pulse, 0f, 1f),
+                        Math.Clamp(cell.BgColor.Y + pulse, 0f, 1f),
+                        Math.Clamp(cell.BgColor.Z + pulse, 0f, 1f), 1f);
+                    terminal.SetCell(CenterX + ax, CenterY + ay, cell.Glyph, fg, bg);
+                }
+                else
+                {
+                    // Out-of-range: darken both foreground and background.
+                    var fg = new Vector4(cell.TextColor.X * 0.25f, cell.TextColor.Y * 0.25f,
+                                         cell.TextColor.Z * 0.25f, 1f);
+                    var bg = new Vector4(cell.BgColor.X   * 0.25f, cell.BgColor.Y   * 0.25f,
+                                         cell.BgColor.Z   * 0.25f, 1f);
+                    terminal.SetCell(CenterX + ax, CenterY + ay, cell.Glyph, fg, bg);
+                }
             }
             else if (hoverCells != null)
             {
-                // Hover active but this cell is not a target — dim it
-                fg = new Vector4(cell.TextColor.X * 0.25f, cell.TextColor.Y * 0.25f,
-                                 cell.TextColor.Z * 0.25f, 1f);
-                terminal.SetCell(CenterX + ax, CenterY + ay, cell.Glyph, fg, Config.Colors.Black);
+                // Hover active but this cell is not a target — darken both fg and bg
+                var fg = new Vector4(cell.TextColor.X * 0.25f, cell.TextColor.Y * 0.25f,
+                                     cell.TextColor.Z * 0.25f, 1f);
+                var bg = new Vector4(cell.BgColor.X   * 0.25f, cell.BgColor.Y   * 0.25f,
+                                     cell.BgColor.Z   * 0.25f, 1f);
+                terminal.SetCell(CenterX + ax, CenterY + ay, cell.Glyph, fg, bg);
             }
             else
             {

@@ -9,6 +9,7 @@ using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Scene.Shared;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Cave;
 
@@ -81,7 +82,8 @@ public class CaveSceneFactory : SceneFactory
 
         var mouth = new Section(
             "Cave Mouth",
-            new() { "Entrance zone where daylight reaches; relatively safe" }
+            new() { "Entrance zone where daylight reaches; relatively safe" },
+            seed => new RoomsGenerator { Seed = seed }
         );
         mouth.Areas.AddRange(mouthAreas);
         scene.Sections.Add(mouth);
@@ -89,7 +91,8 @@ public class CaveSceneFactory : SceneFactory
 
         var tunnels = new Section(
             "Tunnel Network",
-            new() { "Deeper passages, dark and uneven; only the lantern's light reaches" }
+            new() { "Deeper passages, dark and uneven; only the lantern's light reaches" },
+            seed => new CorridorGenerator { Seed = seed }
         );
         tunnels.Areas.AddRange(deepAreas);
         scene.Sections.Add(tunnels);

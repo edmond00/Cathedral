@@ -9,6 +9,7 @@ using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Scene.Shared;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Coast;
 
@@ -94,7 +95,8 @@ public class CoastSceneFactory : SceneFactory
         var shoreAreas = allAreas.Where(a => a != _cliffTop).ToList();
         var shoreSection = new Section(
             _isEstuary ? "Estuary" : "Shore",
-            new() { _isEstuary ? "Where river meets sea, brackish and muddy" : "Where land meets the sea — beach, rocks, tide-line" }
+            new() { _isEstuary ? "Where river meets sea, brackish and muddy" : "Where land meets the sea — beach, rocks, tide-line" },
+            seed => new RadiantGenerator { Seed = seed }
         );
         shoreSection.Areas.AddRange(shoreAreas);
         scene.Sections.Add(shoreSection);
@@ -104,7 +106,8 @@ public class CoastSceneFactory : SceneFactory
         {
             var cliftopSection = new Section(
                 "Clifftop",
-                new() { "Elevated edge above the water, exposed to wind" }
+                new() { "Elevated edge above the water, exposed to wind" },
+                seed => new WaveGenerator { Seed = seed }
             );
             cliftopSection.Areas.Add(_cliffTop);
             scene.Sections.Add(cliftopSection);

@@ -9,6 +9,7 @@ using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Scene.Shared;
+using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Farm;
 
@@ -58,7 +59,8 @@ public class FarmSceneFactory : SceneFactory
 
         var farmyard = new Section(
             "Farmyard",
-            new() { "The central yard of the farm, mud-churned and busy with animal sounds" }
+            new() { "The central yard of the farm, mud-churned and busy with animal sounds" },
+            seed => new GeometricGenerator { Seed = seed }
         );
         farmyard.Areas.Add(_courtyard);
         farmyard.Areas.Add(_chickenCoop);
@@ -71,7 +73,8 @@ public class FarmSceneFactory : SceneFactory
 
         var grounds = new Section(
             "Farm Grounds",
-            new() { "The working land around the farmhouse: gardens, orchards, and enclosures" }
+            new() { "The working land around the farmhouse: gardens, orchards, and enclosures" },
+            seed => new NoisyGenerator { Seed = seed, Density = 0.85f }
         );
         grounds.Areas.Add(_vegetableGarden);
         grounds.Areas.Add(_orchard);
