@@ -110,12 +110,18 @@ namespace Cathedral.Glyph
         }
 
         /// <summary>
+        /// Multiplier applied to cloud rotation speed. Set to 1.0 for normal speed.
+        /// </summary>
+        public float SpeedMultiplier { get; set; } = 1.0f;
+
+        /// <summary>
         /// Updates cloud rotation animation. Call once per frame.
         /// </summary>
         public void Update(float deltaTime)
         {
-            _rotAngle1 += _rotSpeed1 * deltaTime;
-            _rotAngle2 += _rotSpeed2 * deltaTime;
+            float dt = deltaTime * SpeedMultiplier;
+            _rotAngle1 += _rotSpeed1 * dt;
+            _rotAngle2 += _rotSpeed2 * dt;
             UpdateCloudInstanceBuffer();
         }
 

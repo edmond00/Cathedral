@@ -1639,6 +1639,7 @@ public class LocationTravelGameController : IDisposable
     private void OnEnterWorldView()
     {
         Console.WriteLine("LocationTravelGameController: Entered WorldView mode");
+        _core.SetCloudSpeedMultiplier(1.0f);
         _ambianceEngine?.SetMood(MusicMoodState.WorldView);
         _ambianceEngine?.SetFilter(MusicFilter.None);
         _ambianceEngine?.SetActiveTrackCount(4);
@@ -1677,6 +1678,7 @@ public class LocationTravelGameController : IDisposable
     {
         Console.WriteLine("LocationTravelGameController: Entered Traveling mode");
         _ambianceEngine?.SetFilter(MusicFilter.Traveling);
+        _core.SetCloudSpeedMultiplier(5.0f);
         // Keep current location mood but thin out to drone + noise only during travel
         _ambianceEngine?.SetActiveTrackCount(1);
         // Set camera zoom for travel animation

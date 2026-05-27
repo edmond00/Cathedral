@@ -90,6 +90,15 @@ namespace Cathedral.Glyph
         // Decorative sky and cloud layers
         private SkyCloudRenderer? _skyCloudRenderer;
 
+        /// <summary>
+        /// Sets the cloud rotation speed multiplier (1.0 = normal, 5.0 = 5x faster).
+        /// </summary>
+        public void SetCloudSpeedMultiplier(float multiplier)
+        {
+            if (_skyCloudRenderer != null)
+                _skyCloudRenderer.SpeedMultiplier = multiplier;
+        }
+
         // Events for interface interaction
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexHovered;
         public event Action<int, OpenTK.Mathematics.Vector2>? VertexClicked;
