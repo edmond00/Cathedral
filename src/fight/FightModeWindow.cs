@@ -36,7 +36,8 @@ internal class FightModeWindow : GameWindow
 
     // ── UI state ──────────────────────────────────────────────────────
     private int _actionLogScrollOffset;
-    private IReadOnlyList<FightingSkill> _currentUnlockedSkills = Array.Empty<FightingSkill>();
+    private IReadOnlyList<FightingSkill> _currentUnlockedSkills    = Array.Empty<FightingSkill>();
+    private IReadOnlyList<FightingSkill> _currentUnaffordableSkills = Array.Empty<FightingSkill>();
     private string? _expandedMediumKey;
     private IReadOnlyList<LeftPanelRow> _leftPanelLayout = Array.Empty<LeftPanelRow>();
     private IReadOnlyList<(int Y, Fighter Fighter)> _rightPanelRows = Array.Empty<(int, Fighter)>();
@@ -844,7 +845,7 @@ internal class FightModeWindow : GameWindow
             bool isMove = _isMoveMode || !active.IsPlayerControlled ||
                           _state.Phase == TurnPhase.AnimatingMovement;
             _leftPanelLayout = FightModeUI.RenderLeftPanel(_terminal, active,
-                _currentUnlockedSkills, Array.Empty<FightingSkill>(),
+                _currentUnlockedSkills, Array.Empty<FightingSkill>(), _currentUnaffordableSkills,
                 isMove, _selectedSkillIndex, -1,
                 _expandedMediumKey, _hoveredButtonRow,
                 _state.UsedActionsThisTurn, _state.RunUsedThisTurn);
@@ -868,6 +869,12 @@ internal class FightModeWindow : GameWindow
                     {
                         infoKind = FightModeUI.LeftInfoKind.Skill;
                         infoSkill = _currentUnlockedSkills[r.SkillIndex];
+                    }
+                    else if (r.Kind == LeftPanelRowKind.UnaffordableSkill
+                        && r.SkillIndex >= 0 && r.SkillIndex < _currentUnaffordableSkills.Count)
+                    {
+                        infoKind = FightModeUI.LeftInfoKind.Skill;
+                        infoSkill = _currentUnaffordableSkills[r.SkillIndex];
                     }
                     break;
                 }
@@ -917,6 +924,9 @@ internal class FightModeWindow : GameWindow
         var active = _state.ActiveFighter;
         _currentUnlockedSkills = active != null
             ? active.GetUnlockedSkills(_skillRegistry).ToList()
+            : new List<FightingSkill>();
+        _currentUnaffordableSkills = active != null
+            ? active.GetUnaffordableKnownSkills(_skillRegistry).ToList()
             : new List<FightingSkill>();
 
         // Default: MOVE mode at start of turn

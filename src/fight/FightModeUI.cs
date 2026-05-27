@@ -15,6 +15,7 @@ public enum LeftPanelRowKind
     Medium,
     UnlockedSkill,
     LearnableSkill,
+    UnaffordableSkill,
 }
 
 /// <summary>
@@ -195,6 +196,7 @@ public static class FightModeUI
         TerminalHUD terminal, Fighter fighter,
         IReadOnlyList<FightingSkill> unlockedSkills,
         IReadOnlyList<FightingSkill> learnableSkills,
+        IReadOnlyList<FightingSkill> unaffordableSkills,
         bool isMoveMode, int selectedSkillIndex, int selectedLearnableSkillIndex,
         string? expandedMediumKey,
         int hoveredButtonRow = -1,
@@ -240,17 +242,17 @@ public static class FightModeUI
 
         // ── Grouped skill list ──
         // Build groups: key → (label, ordered list of (index, skill, learnable))
-        var groups = new List<(string Key, string Label, List<(int Idx, FightingSkill Skill, bool Learnable)> Skills)>();
+        var groups = new List<(string Key, string Label, List<(int Idx, FightingSkill Skill, bool Learnable, bool Unaffordable)> Skills)>();
 
-        void AddToGroup(string key, string label, int idx, FightingSkill skill, bool learnable)
+        void AddToGroup(string key, string label, int idx, FightingSkill skill, bool learnable, bool unaffordable = false)
         {
             var entry = groups.FirstOrDefault(g => g.Key == key);
             if (entry.Key == null)
             {
-                entry = (key, label, new List<(int, FightingSkill, bool)>());
+                entry = (key, label, new List<(int, FightingSkill, bool, bool)>());
                 groups.Add(entry);
             }
-            entry.Skills.Add((idx, skill, learnable));
+            entry.Skills.Add((idx, skill, learnable, unaffordable));
         }
 
         // ── Organ-medium groups: built from unlockedSkills / learnableSkills lists ──
@@ -274,17 +276,31 @@ public static class FightModeUI
                 AddToGroup(key, label, i, s, true);
             }
         }
+        for (int i = 0; i < unaffordableSkills.Count; i++)
+        {
+            var s = unaffordableSkills[i];
+            if (s.Medium.Type == MediumType.OrganMedium)
+            {
+                string key   = s.Medium.OrganId ?? s.SkillId;
+                string label = OrganLabel(s.Medium.OrganId);
+                AddToGroup(key, label, i, s, false, unaffordable: true);
+            }
+        }
 
         // ── Weapon-medium groups: one tab per equipped weapon, skills in category order ──
         // Pre-index unlocked/learnable weapon skills for O(1) lookup.
-        var unlockedWeaponIdx  = new Dictionary<string, int>();
-        var learnableWeaponIdx = new Dictionary<string, int>();
+        var unlockedWeaponIdx    = new Dictionary<string, int>();
+        var learnableWeaponIdx   = new Dictionary<string, int>();
+        var unaffordableWeaponIdx = new Dictionary<string, int>();
         for (int i = 0; i < unlockedSkills.Count; i++)
             if (unlockedSkills[i].Medium.Type == MediumType.WeaponMedium)
                 unlockedWeaponIdx[unlockedSkills[i].SkillId] = i;
         for (int i = 0; i < learnableSkills.Count; i++)
             if (learnableSkills[i].Medium.Type == MediumType.WeaponMedium)
                 learnableWeaponIdx[learnableSkills[i].SkillId] = i;
+        for (int i = 0; i < unaffordableSkills.Count; i++)
+            if (unaffordableSkills[i].Medium.Type == MediumType.WeaponMedium)
+                unaffordableWeaponIdx[unaffordableSkills[i].SkillId] = i;
 
         // One tab per equipped weapon (per anchor). With a weapon in each hand, even when
         // it's the same category, you get TWO independent tabs so the same skill can be
@@ -310,6 +326,10 @@ public static class FightModeUI
                     if (unlockedWeaponIdx.TryGetValue(skillId, out int uIdx))
                     {
                         AddToGroup(groupKey, groupLabel, uIdx, unlockedSkills[uIdx], false);
+                    }
+                    else if (unaffordableWeaponIdx.TryGetValue(skillId, out int aIdx))
+                    {
+                        AddToGroup(groupKey, groupLabel, aIdx, unaffordableSkills[aIdx], false, unaffordable: true);
                     }
                     else if (learnableWeaponIdx.TryGetValue(skillId, out int lIdx))
                     {
@@ -342,11 +362,11 @@ public static class FightModeUI
 
             if (!isExpanded) continue;
 
-            foreach (var (idx, skill, learnable) in grp.Skills)
+            foreach (var (idx, skill, learnable, unaffordable) in grp.Skills)
             {
                 if (y >= EndTurnButtonRow - 1) break;
                 bool used = usedActions?.Contains((grp.Key, skill.SkillId)) == true;
-                bool sel = !isMoveMode && !used
+                bool sel = !isMoveMode && !used && !unaffordable
                     && (learnable ? idx == selectedLearnableSkillIndex : idx == selectedSkillIndex);
                 bool hov = !sel && !used && hoveredButtonRow == y;
 
@@ -354,6 +374,11 @@ public static class FightModeUI
                 if (used)
                 {
                     fg = Config.Colors.DarkGray35;
+                    bg = Config.Colors.Black;
+                }
+                else if (unaffordable)
+                {
+                    fg = Config.Colors.DarkGray40;
                     bg = Config.Colors.Black;
                 }
                 else if (learnable)
@@ -376,7 +401,9 @@ public static class FightModeUI
                 if (line.Length > innerW) line = line[..innerW];
                 terminal.Text(x, y, line.PadRight(innerW), fg, bg);
                 layout.Add(new LeftPanelRow(y,
-                    learnable ? LeftPanelRowKind.LearnableSkill : LeftPanelRowKind.UnlockedSkill,
+                    unaffordable ? LeftPanelRowKind.UnaffordableSkill :
+                    learnable    ? LeftPanelRowKind.LearnableSkill :
+                                   LeftPanelRowKind.UnlockedSkill,
                     grp.Key, idx));
                 y++;
             }

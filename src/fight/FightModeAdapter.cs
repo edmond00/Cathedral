@@ -58,8 +58,9 @@ public class FightModeAdapter
 
     // ── UI state ────────────────────────────────────────────────────
     private int _actionLogScrollOffset;
-    private IReadOnlyList<FightingSkill> _currentUnlockedSkills = Array.Empty<FightingSkill>();
-    private IReadOnlyList<FightingSkill> _currentLearnableSkills = Array.Empty<FightingSkill>();
+    private IReadOnlyList<FightingSkill> _currentUnlockedSkills    = Array.Empty<FightingSkill>();
+    private IReadOnlyList<FightingSkill> _currentLearnableSkills   = Array.Empty<FightingSkill>();
+    private IReadOnlyList<FightingSkill> _currentUnaffordableSkills = Array.Empty<FightingSkill>();
     private int _selectedLearnableSkillIndex = -1;
     private string? _expandedMediumKey;
     private IReadOnlyList<LeftPanelRow> _leftPanelLayout = Array.Empty<LeftPanelRow>();
@@ -1203,6 +1204,9 @@ public class FightModeAdapter
                 if (r.Kind == LeftPanelRowKind.LearnableSkill
                     && r.SkillIndex >= 0 && r.SkillIndex < _currentLearnableSkills.Count)
                     return (FightModeUI.LeftInfoKind.LearnableSkill, _currentLearnableSkills[r.SkillIndex]);
+                if (r.Kind == LeftPanelRowKind.UnaffordableSkill
+                    && r.SkillIndex >= 0 && r.SkillIndex < _currentUnaffordableSkills.Count)
+                    return (FightModeUI.LeftInfoKind.Skill, _currentUnaffordableSkills[r.SkillIndex]);
                 break;
             }
         }
@@ -1232,7 +1236,7 @@ public class FightModeAdapter
             bool isMove = _isMoveMode || !active.IsPlayerControlled ||
                           _state.Phase == TurnPhase.AnimatingMovement;
             _leftPanelLayout = FightModeUI.RenderLeftPanel(_terminal, active,
-                _currentUnlockedSkills, _currentLearnableSkills,
+                _currentUnlockedSkills, _currentLearnableSkills, _currentUnaffordableSkills,
                 isMove, _selectedSkillIndex, _selectedLearnableSkillIndex,
                 _expandedMediumKey, _hoveredButtonRow,
                 _state.UsedActionsThisTurn, _state.RunUsedThisTurn);
@@ -1282,6 +1286,9 @@ public class FightModeAdapter
             : new List<FightingSkill>();
         _currentLearnableSkills = active != null
             ? active.GetLearnableSkills(_skillRegistry).ToList()
+            : new List<FightingSkill>();
+        _currentUnaffordableSkills = active != null
+            ? active.GetUnaffordableKnownSkills(_skillRegistry).ToList()
             : new List<FightingSkill>();
 
         _isMoveMode = true;

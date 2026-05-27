@@ -106,6 +106,10 @@ public class Fighter
     public IEnumerable<FightingSkill> GetUnlockedSkills(FightingSkillRegistry registry) =>
         registry.GetAll().Where(s => s.IsUnlocked(this) && CurrentCineticPoints >= s.CineticPointsCost);
 
+    /// <summary>Fighting skills this fighter knows but cannot currently afford (IsUnlocked but CP cost exceeds CurrentCineticPoints).</summary>
+    public IEnumerable<FightingSkill> GetUnaffordableKnownSkills(FightingSkillRegistry registry) =>
+        registry.GetAll().Where(s => s.IsUnlocked(this) && CurrentCineticPoints < s.CineticPointsCost);
+
     /// <summary>
     /// Returns one learnable skill per available medium group:
     /// - For organ mediums: the lowest-MediumPosition unknown skill per organ.
