@@ -118,23 +118,13 @@ public class Fighter
     public IEnumerable<FightingSkill> GetLearnableSkills(FightingSkillRegistry registry)
     {
         // ── Organ-medium learnable skills ─────────────────────────────
-        // Walk each organ category in registry order; take the first skill whose
-        // required ModusMentis is not yet known (mirrors weapon-medium logic).
-        var organLearnables = new List<FightingSkill>();
-        foreach (var category in OrganMediumRegistry.GetAll())
-        {
-            if (Member.GetOrganById(category.OrganId) == null) continue;
-
-            foreach (var skillId in category.SkillIds)
-            {
-                var skill = registry.GetById(skillId);
-                if (skill == null) continue;
-                if (Member.LearnedModiMentis.Any(m => m.ModusMentisId == skill.RequiredModusMentisId)) continue;
-                if (CurrentCineticPoints < skill.CineticPointsCost) continue;
-                organLearnables.Add(skill);
-                break; // one learnable per organ category
-            }
-        }
+        var organLearnables = registry.GetAll()
+            .Where(s => s.Medium.Type == MediumType.OrganMedium)
+            .Where(s => !Member.LearnedModiMentis.Any(m => m.ModusMentisId == s.RequiredModusMentisId))
+            .Where(s => IsMediumAvailable(s))
+            .Where(s => CurrentCineticPoints >= s.CineticPointsCost)
+            .GroupBy(s => s.Medium.OrganId ?? s.SkillId)
+            .Select(g => g.OrderBy(s => s.MediumPosition).First());
 
         // ── Weapon-medium learnable skills ────────────────────────────
         // One learnable per equipped weapon's category; skill is the first
