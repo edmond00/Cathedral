@@ -69,6 +69,22 @@ public class RunawayDiceStat : DerivedStat
 }
 
 /// <summary>
+/// Equilibrium — resistance to losing footing on treacherous/dangerous terrain during
+/// fight movement. Higher value = lower chance to slip and lose the turn.
+/// Source: feet organ (lower_limbs).
+/// Formula: score (range 1–10).
+/// </summary>
+public class EquilibriumStat : DerivedStat
+{
+    public override string Name         => "equilibrium";
+    public override string DisplayName  => "Equilibrium";
+    public override string ShortDisplayName => "Equilibrium";
+    public override string? RelatedOrganId => "feet";
+    public override int CalculateValue(int sourceScore) => sourceScore;
+    public override int MinimumValue() => 1;
+}
+
+/// <summary>
 /// Initiative — base score added to a 1d6 roll at combat start to determine turn order.
 /// Source: nose organ (visage).
 /// Formula: score (range 1–10).

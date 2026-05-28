@@ -48,6 +48,8 @@ public class Fighter
     public int NaturalDefense     => BaseNaturalDefense + (IsDefensePostureActive ? 2 : 0);
     /// <summary>Number of d6 rolled in a runaway check (1 die per foot level). At least one six required to flee.</summary>
     public int RunawayDiceCount => Math.Max(1, GetCombatStat("runaway_dice"));
+    /// <summary>Equilibrium — feet stat. Higher = lower terrain-slip risk during movement.</summary>
+    public int EquilibriumValue => Math.Max(1, GetCombatStat("equilibrium"));
     public int InitiativeValue    => GetCombatStat("initiative");
 
     // ── HP delegation ─────────────────────────────────────────────

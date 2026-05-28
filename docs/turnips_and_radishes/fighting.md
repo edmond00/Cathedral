@@ -45,7 +45,8 @@ opponent pushback 1d6 cells in the opposite direction of the attack. Subish terr
 
 ## knockdown
 
-opponent can not attack at the next turn
+opponent can not attack this turn unless it succeed a knockdown recovery
+
 
 ## charge
 

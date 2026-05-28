@@ -65,7 +65,9 @@ public static class FightModeUI
     /// <summary>
     /// Draw the active or hovered fighter's detail card stacked vertically in the left pan.
     /// </summary>
-    public static void RenderDetailPanel(TerminalHUD terminal, Fighter? fighter, bool isHoverOverride)
+    public static IReadOnlyList<(int Y, FightStatusEffect Effect)> RenderDetailPanel(
+        TerminalHUD terminal, Fighter? fighter, bool isHoverOverride,
+        int hoveredStateY = -1)
     {
         int boxH = BotStart - TopRows;
         terminal.FillRect(0, TopRows, LeftEnd, boxH, ' ', Config.Colors.White, Config.Colors.Black);
@@ -78,7 +80,7 @@ public static class FightModeUI
         if (fighter == null)
         {
             terminal.Text(x, y, "DETAIL", Config.Colors.DarkYellowGrey, Config.Colors.Black);
-            return;
+            return Array.Empty<(int Y, FightStatusEffect Effect)>();
         }
 
         Vector4 nameColor = fighter.Faction == FighterFaction.Party
@@ -148,41 +150,56 @@ public static class FightModeUI
 
         y++; // spacer
 
-        // Wounds list
-        terminal.Text(x, y++, "WOUNDS", Config.Colors.DarkYellowGrey, Config.Colors.Black);
-        var wounds = fighter.Member.Wounds;
-        if (wounds.Count == 0)
+        // STATE — active status effects with hover-to-describe
+        terminal.Text(x, y++, "STATE", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+
+        var stateLayout = new List<(int Y, FightStatusEffect Effect)>();
+        var effects = fighter.ActiveEffects;
+        if (effects.Count == 0)
         {
-            terminal.Text(x, y, "(none)", Config.Colors.DarkGray, Config.Colors.Black);
-            return;
+            terminal.Text(x, y++, "(none)", Config.Colors.DarkGray, Config.Colors.Black);
         }
-        int rowsLeft = BotStart - y - 1;
-        int shown = Math.Min(wounds.Count, rowsLeft);
-        for (int i = 0; i < shown; i++)
+        else
         {
-            var w = wounds[i];
-            string tag = w.Handicap switch
+            // Reserve at least 5 lines at the bottom for the hovered effect's description.
+            int rowsForList = Math.Max(1, BotStart - y - 6);
+            int shown = Math.Min(effects.Count, rowsForList);
+            for (int i = 0; i < shown; i++)
             {
-                WoundHandicap.High   => "[H]",
-                WoundHandicap.Medium => "[M]",
-                _                    => "[L]",
-            };
-            Vector4 tagColor = w.Handicap switch
-            {
-                WoundHandicap.High   => Config.Colors.BrightPurple,
-                WoundHandicap.Medium => Config.Colors.Orange,
-                _                    => Config.Colors.DarkYellowGrey,
-            };
-            terminal.Text(x, y + i, tag, tagColor, Config.Colors.Black);
-            string lbl = w.WoundName;
-            int lblMax = innerW - 4;
-            if (lbl.Length > lblMax) lbl = lbl[..lblMax];
-            terminal.Text(x + 4, y + i, lbl, Config.Colors.Purple, Config.Colors.Black);
+                var fx = effects[i];
+                bool isHov = hoveredStateY == y;
+                terminal.Text(x, y, fx.DisplayLabel, fx.DisplayColor, Config.Colors.Black);
+                string nm = fx.DisplayName;
+                int nmMax = innerW - 4;
+                if (nm.Length > nmMax) nm = nm[..nmMax];
+                terminal.Text(x + 4, y, nm,
+                    isHov ? Config.Colors.GoldYellow : Config.Colors.White,
+                    Config.Colors.Black);
+                stateLayout.Add((y, fx));
+                y++;
+            }
+            if (effects.Count > shown)
+                terminal.Text(x, y++, $"+{effects.Count - shown} more",
+                    Config.Colors.DarkGray, Config.Colors.Black);
         }
-        if (wounds.Count > shown)
-            terminal.Text(x, y + shown,
-                $"+{wounds.Count - shown} more",
-                Config.Colors.DarkGray, Config.Colors.Black);
+
+        // Hovered effect's description in the remaining vertical space.
+        var hovered = stateLayout.FirstOrDefault(r => r.Y == hoveredStateY);
+        if (hovered.Effect != null)
+        {
+            y++; // blank
+            terminal.Text(x, y++, "── INFO ──", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+            string desc = hovered.Effect.Description ?? "";
+            int linesAvail = BotStart - y - 1;
+            for (int s = 0, line = 0; s < desc.Length && line < linesAvail; s += innerW, line++)
+            {
+                terminal.Text(x, y++,
+                    desc.Substring(s, Math.Min(innerW, desc.Length - s)),
+                    Config.Colors.LightGray, Config.Colors.Black);
+            }
+        }
+
+        return stateLayout;
     }
 
     // ── Left panel ────────────────────────────────────────────────────
@@ -878,6 +895,38 @@ public static class FightModeUI
     private const int BodyMenuH  = 14;
     private const int BodyMenuX  = CenterX + (FightArea.Width  - BodyMenuW)  / 2; // centered in arena
     private const int BodyMenuY  = CenterY + (FightArea.Height - BodyMenuH) / 2;
+
+    // ── Terrain interrupt popup overlay (purplish) ───────────────────
+    private const int InterruptW = 50;
+    private const int InterruptH = 8;
+    private const int InterruptX = CenterX + (FightArea.Width  - InterruptW) / 2;
+    private const int InterruptY = CenterY + (FightArea.Height - InterruptH) / 2;
+
+    /// <summary>
+    /// Draws a purplish overlay box describing a mid-move terrain interrupt.
+    /// The caller is responsible for dismissing it (click anywhere → end turn).
+    /// </summary>
+    public static void RenderTerrainInterruptPopup(TerminalHUD terminal, string message)
+    {
+        terminal.FillRect(InterruptX, InterruptY, InterruptW, InterruptH,
+            ' ', Config.Colors.White, Config.Colors.Black);
+        terminal.DrawBox(InterruptX, InterruptY, InterruptW, InterruptH,
+            BoxStyle.Double, Config.Colors.BrightPurple, Config.Colors.Black);
+
+        terminal.Text(InterruptX + 2, InterruptY + 1,
+            "── INTERRUPT ──", Config.Colors.BrightPurple, Config.Colors.Black);
+
+        int innerW = InterruptW - 4;
+        int row = InterruptY + 3;
+        string msg = message ?? "";
+        for (int s = 0; s < msg.Length && row < InterruptY + InterruptH - 2; s += innerW)
+            terminal.Text(InterruptX + 2, row++,
+                msg.Substring(s, Math.Min(innerW, msg.Length - s)),
+                Config.Colors.LightPurple, Config.Colors.Black);
+
+        terminal.Text(InterruptX + 2, InterruptY + InterruptH - 2,
+            "(click anywhere to continue)", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+    }
 
     /// <summary>
     /// Render a numbered body-part selection overlay, centered in the arena.

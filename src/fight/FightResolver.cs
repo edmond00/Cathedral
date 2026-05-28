@@ -11,6 +11,19 @@ namespace Cathedral.Fight;
 /// </summary>
 public static class FightResolver
 {
+    /// <summary>
+    /// Movement cost of stepping from (fromX,fromY) to (toX,toY). Cardinal = 1, diagonal = 1.5,
+    /// further multiplied by 3 when entering Soft terrain so heavy ground really slows you down.
+    /// Shared by Dijkstra, the reachable-set calculator and the click-time affordability check
+    /// so a previewed path always matches what's actually paid.
+    /// </summary>
+    public static double MovementStepCost(FightArea area, int fromX, int fromY, int toX, int toY)
+    {
+        double basis = (fromX != toX && fromY != toY) ? 1.5 : 1.0;
+        if (area.GetCell(toX, toY).Type == TerrainType.SoftObstacle) basis *= 3.0;
+        return basis;
+    }
+
     // ── Line of sight ─────────────────────────────────────────────────
 
     /// <summary>
@@ -143,7 +156,7 @@ public static class FightResolver
                 bool isDestination = nx == tx && ny == ty;
                 if (!isDestination && !CanMoveTo(area, nx, ny, fighters, mover)) continue;
 
-                double stepCost = (nx != cx && ny != cy) ? 1.5 : 1.0;
+                double stepCost = MovementStepCost(area, cx, cy, nx, ny);
                 double newCost  = curCost + stepCost;
                 var neighbor    = (nx, ny);
 

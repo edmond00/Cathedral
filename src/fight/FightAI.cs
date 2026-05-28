@@ -85,7 +85,8 @@ public static class FightAI
         Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
 
     private static bool IsAdjacent(Fighter a, Fighter b) =>
-        ManhattanDistance(a, b) == 1;
+        Math.Abs(a.X - b.X) <= 1 && Math.Abs(a.Y - b.Y) <= 1 &&
+        !(a.X == b.X && a.Y == b.Y);
 
     /// <summary>Default medium key for usage tracking (organ:<id> or mm:<id>).</summary>
     private static string DefaultMediumKey(FightingSkill s) =>

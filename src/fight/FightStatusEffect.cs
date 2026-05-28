@@ -31,6 +31,12 @@ public abstract class FightStatusEffect
 
     /// <summary>Color for the display label.</summary>
     public abstract Vector4 DisplayColor { get; }
+
+    /// <summary>Human-readable name shown in the STATE list on the fighter info pan.</summary>
+    public abstract string DisplayName { get; }
+
+    /// <summary>One-paragraph explanation rendered when this effect's STATE row is hovered.</summary>
+    public abstract string Description { get; }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -51,6 +57,8 @@ public sealed class BleedingEffect : FightStatusEffect
     public override string EffectId      => "bleeding";
     public override string DisplayLabel  => $"B{Level}";
     public override Vector4 DisplayColor => Config.Colors.BrightPurple;
+    public override string DisplayName   => $"Bleeding ({Level})";
+    public override string Description   => "Drains Level humors from the body's vital heat queue at the start of every turn. Stops when the fight ends or all humor queues are critical.";
 
     public override void OnApply(Fighter target, Fighter source, FightState state, Random rng)
     {
@@ -86,6 +94,8 @@ public sealed class KnockdownEffect : FightStatusEffect
     public override string EffectId      => "knockdown";
     public override string DisplayLabel  => "K";
     public override Vector4 DisplayColor => Config.Colors.Orange;
+    public override string DisplayName   => "Knockdown";
+    public override string Description   => "Cannot use attack skills next turn. Expires at the start of the affected turn.";
 
     public override void OnApply(Fighter target, Fighter source, FightState state, Random rng)
     {
@@ -111,6 +121,8 @@ public sealed class ImmobilizeEffect : FightStatusEffect
     public override string EffectId      => "immobilize";
     public override string DisplayLabel  => "I";
     public override Vector4 DisplayColor => Config.Colors.Yellow;
+    public override string DisplayName   => "Immobilized";
+    public override string Description   => "Cannot take movement actions next turn. Expires at the start of the affected turn.";
 
     public override void OnApply(Fighter target, Fighter source, FightState state, Random rng)
     {
@@ -123,6 +135,33 @@ public sealed class ImmobilizeEffect : FightStatusEffect
         owner.IsImmobilized = false;
         IsExpired = true;
         state.AddLog($"{owner.DisplayName} breaks free.", LogEntryType.SpecialEffect);
+    }
+}
+
+/// <summary>
+/// Fall-over: applied when a fighter slips on Treacherous or Dangerous terrain mid-move.
+/// Acts like a one-turn knockdown — blocks attacks and signals the player "you're getting up".
+/// Auto-clears at the start of the affected fighter's next turn.
+/// </summary>
+public sealed class FallOverEffect : FightStatusEffect
+{
+    public override string EffectId      => "fall_over";
+    public override string DisplayLabel  => "F";
+    public override Vector4 DisplayColor => Config.Colors.LightPurple;
+    public override string DisplayName   => "Fallen over";
+    public override string Description   => "Lost footing on unstable terrain mid-move. The current turn was cut short. Effect clears at the start of the next turn.";
+
+    public override void OnApply(Fighter target, Fighter source, FightState state, Random rng)
+    {
+        target.IsKnockedDown = true; // reuse no-attack flag
+        state.AddLog($"{target.DisplayName} loses footing!", LogEntryType.SpecialEffect);
+    }
+
+    public override void OnTurnStart(Fighter owner, FightState state, Random rng)
+    {
+        owner.IsKnockedDown = false;
+        IsExpired = true;
+        state.AddLog($"{owner.DisplayName} gets back up.", LogEntryType.SpecialEffect);
     }
 }
 
@@ -140,6 +179,8 @@ public sealed class PushbackEffect : FightStatusEffect
     public override string EffectId      => "pushback";
     public override string DisplayLabel  => "P";
     public override Vector4 DisplayColor => Config.Colors.LightPurple;
+    public override string DisplayName   => "Pushback";
+    public override string Description   => "Shoved back along the attack vector. If stopped by a hard obstacle, adds a backbone wound.";
 
     public override void OnApply(Fighter target, Fighter source, FightState state, Random rng)
     {

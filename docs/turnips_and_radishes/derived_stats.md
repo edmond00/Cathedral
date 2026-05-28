@@ -113,6 +113,7 @@
 
 - max companions
 - lifetime
+- knockdown recovery
 
 ### HEPAR (5)
 

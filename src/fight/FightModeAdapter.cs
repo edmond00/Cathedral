@@ -66,6 +66,10 @@ public class FightModeAdapter
     private IReadOnlyList<LeftPanelRow> _leftPanelLayout = Array.Empty<LeftPanelRow>();
     private IReadOnlyList<(int Y, Fighter Fighter)> _rightPanelRows = Array.Empty<(int, Fighter)>();
     private Fighter? _topPanelFighter;
+    private int _hoveredStateY = -1;
+    private IReadOnlyList<(int Y, FightStatusEffect Effect)> _stateRows = Array.Empty<(int, FightStatusEffect)>();
+    private string? _terrainInterruptMsg;
+    private Fighter? _terrainInterruptMover;
     private IReadOnlyList<string>? _bodyPartMenu;
     private bool _continueHovered;
     private Fighter? _hoveredFighter;
@@ -278,6 +282,9 @@ public class FightModeAdapter
 
                     // Tick on every single-tile step (party or enemy)
                     _sfx?.Invoke(GameEventType.SmallInteraction);
+
+                    // Terrain slip check on the newly-entered cell
+                    CheckTerrainInterrupt(_state.MovingFighter, nx, ny);
                 }
                 else
                 {
@@ -326,7 +333,13 @@ public class FightModeAdapter
                 {
                     var defenseValues = GenerateDiceValues(_state.DiceSecondaryNumberOfDice);
                     _state.DiceSecondaryFinalValues = defenseValues;
-                    _dice.CompleteDual(finalValues, defenseValues);
+                    // Enemy attack: display is swapped (defense=primary), so pass defense first.
+                    bool isEnemyAttack = _state.ActiveFighter?.IsPlayerControlled == false
+                                     && _state.PendingSkill?.EffectType == FightingSkillEffect.Attack;
+                    if (isEnemyAttack)
+                        _dice.CompleteDual(defenseValues, finalValues);
+                    else
+                        _dice.CompleteDual(finalValues, defenseValues);
                 }
                 else
                 {
@@ -354,6 +367,16 @@ public class FightModeAdapter
     {
         if (_state.IsOver) return;
         if (_state.Phase == TurnPhase.AnimatingMovement) return;
+
+        // Terrain-interrupt popup is modal — any click dismisses it and ends the turn.
+        if (_terrainInterruptMsg != null)
+        {
+            var mover = _terrainInterruptMover;
+            _terrainInterruptMsg = null;
+            _terrainInterruptMover = null;
+            if (mover != null) EndTurn(mover);
+            return;
+        }
 
         var active = _state.ActiveFighter;
         if (active == null) return;
@@ -576,7 +599,7 @@ public class FightModeAdapter
                     int affordable = 0;
                     foreach (var (nx, ny) in path)
                     {
-                        double step = (nx != px && ny != py) ? 1.5 : 1.0;
+                        double step = FightResolver.MovementStepCost(_state.Area, px, py, nx, ny);
                         if (acc + step > budget + 1e-9) break;
                         acc += step; affordable++; px = nx; py = ny;
                     }
@@ -596,6 +619,12 @@ public class FightModeAdapter
             var hit = _rightPanelRows.FirstOrDefault(r => r.Y == y);
             if (hit.Fighter != null) newFighter = hit.Fighter;
         }
+
+        // Left-pan fighter detail: STATE row hover sets the description target
+        if (x < 20 && y >= 20 && _stateRows.Any(r => r.Y == y))
+            _hoveredStateY = y;
+        else
+            _hoveredStateY = -1;
 
         _hoveredFighter   = newFighter;
         _hoveredButtonRow = newButton;
@@ -793,7 +822,7 @@ public class FightModeAdapter
             })
             {
                 if (!FightResolver.CanMoveTo(_state.Area, nx, ny, _state.Fighters, fighter)) continue;
-                double stepCost = (nx != cx && ny != cy) ? 1.5 : 1.0;
+                double stepCost = FightResolver.MovementStepCost(_state.Area, cx, cy, nx, ny);
                 double newCost = curCost + stepCost;
                 if (newCost > budget) continue;
                 var neighbor = (nx, ny);
@@ -857,7 +886,7 @@ public class FightModeAdapter
         int affordable = 0;
         foreach (var (nx, ny) in path)
         {
-            double step = (nx != px && ny != py) ? 1.5 : 1.0;
+            double step = FightResolver.MovementStepCost(_state.Area, px, py, nx, ny);
             if (accCost + step > budget + 1e-9) break;
             accCost += step; affordable++; px = nx; py = ny;
         }
@@ -906,14 +935,30 @@ public class FightModeAdapter
         else if (_state.PendingSkill != null
                  && _state.PendingSkill.EffectType == FightingSkillEffect.Attack)
         {
-            // Two-roll attack flow: attack dice vs defense dice
-            string subtitle = $"{_state.PendingSkill.DisplayName} → {_state.PendingTarget?.DisplayName}";
-            _dice.StartDual(
-                primaryDice: _state.DiceNumberOfDice,
-                secondaryDice: _state.DiceSecondaryNumberOfDice,
-                primaryLabel: "Attack",
-                secondaryLabel: "Defense",
-                subtitle: subtitle);
+            bool isEnemyAttack = _state.ActiveFighter?.IsPlayerControlled == false;
+            if (isEnemyAttack)
+            {
+                // Enemy attacking: show Defense (player) as primary so the player focuses on their own roll.
+                // Attack dice are secondary — more enemy sixes = bad for player.
+                string subtitle = $"{_state.PendingSkill.DisplayName} → {_state.PendingTarget?.DisplayName}";
+                _dice.StartDual(
+                    primaryDice: _state.DiceSecondaryNumberOfDice,
+                    secondaryDice: _state.DiceNumberOfDice,
+                    primaryLabel: "Defense",
+                    secondaryLabel: "Attack",
+                    subtitle: subtitle);
+            }
+            else
+            {
+                // Player attacking: Attack is primary (player wants sixes here).
+                string subtitle = $"{_state.PendingSkill.DisplayName} → {_state.PendingTarget?.DisplayName}";
+                _dice.StartDual(
+                    primaryDice: _state.DiceNumberOfDice,
+                    secondaryDice: _state.DiceSecondaryNumberOfDice,
+                    primaryLabel: "Attack",
+                    secondaryLabel: "Defense",
+                    subtitle: subtitle);
+            }
         }
         else
         {
@@ -941,9 +986,16 @@ public class FightModeAdapter
         if (_state.PendingSkill != null && _state.PendingSkill.EffectType == FightingSkillEffect.Attack && active != null)
         {
             bool partyAttacking = active.Faction == FighterFaction.Party;
-            return isSuccess => _sfx(partyAttacking
-                ? (isSuccess ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome)
-                : (isSuccess ? GameEventType.NegativeOutcome : GameEventType.NeutralOutcome));
+            if (partyAttacking)
+            {
+                // Player attacks: primary=Attack, isSuccess = attack wins = good.
+                return isSuccess => _sfx(isSuccess ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
+            }
+            else
+            {
+                // Enemy attacks: primary=Defense (swapped), isSuccess = defense wins = good for player.
+                return isSuccess => _sfx(isSuccess ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
+            }
         }
         return null;
     }
@@ -1117,6 +1169,66 @@ public class FightModeAdapter
             _aiDelayFrames = 5; // brief pause then AI continues
     }
 
+    /// <summary>
+    /// Roll an equilibrium check when the mover lands on Treacherous/Dangerous terrain.
+    /// On failure: apply FallOver, optionally add a low lower_limbs wound, stop the path,
+    /// and either pop the interrupt overlay (party) or end the turn directly (enemy).
+    /// </summary>
+    private void CheckTerrainInterrupt(Fighter mover, int x, int y)
+    {
+        var terrain = _state.Area.GetCell(x, y).Type;
+        if (terrain != TerrainType.TreacherousTerrain && terrain != TerrainType.DangerousTerrain)
+            return;
+
+        int eq = mover.EquilibriumValue;
+        int slipRiskPct = terrain == TerrainType.DangerousTerrain
+            ? Math.Max(10, 80 - eq * 8)
+            : Math.Max(5,  50 - eq * 5);
+        if (_rng.Next(100) >= slipRiskPct) return; // kept footing
+
+        // Apply fall-over status (clears at start of next turn)
+        var fallOver = new FallOverEffect();
+        mover.ActiveEffects.Add(fallOver);
+        fallOver.OnApply(mover, mover, _state, _rng);
+
+        string popupMsg;
+        if (terrain == TerrainType.DangerousTerrain)
+        {
+            var lowWounds = WoundRegistry.All.Values
+                .Where(w => w.Handicap == WoundHandicap.Low)
+                .ToList();
+            if (lowWounds.Count > 0)
+            {
+                var w = lowWounds[_rng.Next(lowWounds.Count)];
+                FightResolver.ApplyWound(mover, w);
+                _state.AddLog($"{mover.DisplayName} stumbles on dangerous ground — {w.WoundName}.", LogEntryType.Wound);
+            }
+            popupMsg = $"{mover.DisplayName} stumbles on dangerous ground and suffers a wound. The turn is cut short.";
+        }
+        else
+        {
+            _state.AddLog($"{mover.DisplayName} slips on treacherous ground — turn cut short.", LogEntryType.SpecialEffect);
+            popupMsg = $"{mover.DisplayName} slips on treacherous ground. The turn is cut short.";
+        }
+
+        // Stop the in-flight movement
+        _state.MovementPath = null;
+        _state.MovingFighter = null;
+        _state.MovementPathIndex = 0;
+        _state.Phase = TurnPhase.SelectingAction;
+
+        if (mover.IsPlayerControlled)
+        {
+            // Show popup; click anywhere → dismiss → EndTurn.
+            _terrainInterruptMsg = popupMsg;
+            _terrainInterruptMover = mover;
+        }
+        else
+        {
+            EndTurn(mover);
+        }
+    }
+
     private void EndTurn(Fighter active)
     {
         active.HasActedThisTurn = true;
@@ -1164,12 +1276,7 @@ public class FightModeAdapter
 
         if (_state.Phase == TurnPhase.AnimatingDice)
         {
-            var finalValues = GenerateDiceValues(_state.DiceNumberOfDice);
-            _state.DiceFinalValues = finalValues;
-            if (_state.DiceSecondaryNumberOfDice > 0)
-                _state.DiceSecondaryFinalValues = GenerateDiceValues(_state.DiceSecondaryNumberOfDice);
-            _state.IsDiceRolling = false;
-            FinishAttackResolution(ai);
+            BeginDiceRoll();
             return;
         }
 
@@ -1230,8 +1337,9 @@ public class FightModeAdapter
 
         // Top panel: hovered fighter if any, otherwise the active fighter
         var detailFighter = _topPanelFighter ?? active;
-        FightModeUI.RenderDetailPanel(_terminal, detailFighter,
-            isHoverOverride: _topPanelFighter != null && _topPanelFighter != active);
+        _stateRows = FightModeUI.RenderDetailPanel(_terminal, detailFighter,
+            isHoverOverride: _topPanelFighter != null && _topPanelFighter != active,
+            hoveredStateY: _hoveredStateY);
 
         if (active != null)
         {
@@ -1266,6 +1374,10 @@ public class FightModeAdapter
         {
             _bodyPartMenu = null;
         }
+
+        // Terrain-interrupt purple overlay — sits on top of everything until dismissed
+        if (_terrainInterruptMsg != null)
+            FightModeUI.RenderTerrainInterruptPopup(_terminal, _terrainInterruptMsg);
 
         int initHoverY = _hoveredFighter != null
             ? _rightPanelRows.FirstOrDefault(r => r.Fighter == _hoveredFighter).Y
