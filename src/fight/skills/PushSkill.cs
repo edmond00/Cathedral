@@ -8,7 +8,7 @@ public sealed class PushSkill : FightingSkill
     public override string Description            => "Shove the opponent back one step.";
     public override string RequiredModusMentisId  => "brute_force";
     public override string[] SecondaryModusMentisIds => new[] { "brawling", "athletics" };
-    public override FightingMedium Medium         => FightingMedium.Organ("arms");
+    public override FightingMedium Medium         => FightingMedium.Organ("arm");
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

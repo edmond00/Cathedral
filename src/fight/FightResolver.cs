@@ -314,25 +314,58 @@ public static class FightResolver
         }
     }
 
-    private static List<Wound> FilterByTarget(List<Wound> wounds, string targetId, Fighter defender)
+    /// <summary>
+    /// Filter the wound pool by one or more target IDs.
+    /// <paramref name="targetIds"/> may be a single id ("trunk") or a comma-separated list
+    /// ("left_eye,visage") combining an organ-part and its enclosing body part. Each id is
+    /// resolved against the defender's anatomy as a body-part, organ, or organ-part id;
+    /// matching wounds are unioned into the result pool.
+    /// </summary>
+    private static List<Wound> FilterByTarget(List<Wound> wounds, string targetIds, Fighter defender)
     {
-        var result = wounds.Where(w => w.AffectsBodyPart(targetId)).ToList();
-        if (result.Count > 0) return result;
+        var ids = targetIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                           .Select(s => s.Trim())
+                           .Where(s => s.Length > 0)
+                           .ToList();
+        if (ids.Count == 0) return new List<Wound>();
 
-        var organ = defender.Member.GetOrganById(targetId);
-        if (organ != null)
-        {
-            var bp = defender.Member.BodyParts.FirstOrDefault(b => b.Organs.Any(o => o.Id == targetId));
-            if (bp != null)
-                result = wounds.Where(w => w.AffectsOrgan(targetId, bp.Id)).ToList();
-        }
-        if (result.Count > 0) return result;
+        var seen = new HashSet<Wound>();
+        var combined = new List<Wound>();
+        foreach (var id in ids)
+            foreach (var w in FilterByTargetSingle(wounds, id, defender))
+                if (seen.Add(w)) combined.Add(w);
+        return combined;
+    }
 
+    /// <summary>
+    /// Find wounds in <paramref name="wounds"/> that match the single anatomy id
+    /// <paramref name="targetId"/> — resolved as body-part, then organ, then organ-part.
+    /// </summary>
+    private static List<Wound> FilterByTargetSingle(List<Wound> wounds, string targetId, Fighter defender)
+    {
+        // body part: direct body-part wounds + any organ wounds inside it
         var bodyPart = defender.Member.GetBodyPartById(targetId);
         if (bodyPart != null)
-            result = wounds.Where(w => bodyPart.Organs.Any(o => w.AffectsOrgan(o.Id, targetId))).ToList();
+        {
+            var result = wounds.Where(w => w.AffectsBodyPart(targetId)).ToList();
+            foreach (var w in wounds.Where(w => bodyPart.Organs.Any(o => w.AffectsOrgan(o.Id, targetId))))
+                if (!result.Contains(w)) result.Add(w);
+            return result;
+        }
 
-        return result;
+        // organ: organ-level wounds for the organ in its parent body part
+        var organParent = defender.Member.BodyParts.FirstOrDefault(b => b.Organs.Any(o => o.Id == targetId));
+        if (organParent != null)
+            return wounds.Where(w => w.AffectsOrgan(targetId, organParent.Id)).ToList();
+
+        // organ part: organ-part-level wounds for the specific part
+        foreach (var bp in defender.Member.BodyParts)
+            foreach (var org in bp.Organs)
+                foreach (var part in org.Parts)
+                    if (part.Id == targetId)
+                        return wounds.Where(w => w.AffectsOrganPart(part.Id, org.Id, bp.Id)).ToList();
+
+        return new List<Wound>();
     }
 
     // -- Wound application --

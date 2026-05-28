@@ -8,7 +8,7 @@ public sealed class DodgeSkill : FightingSkill
     public override string Description            => "Evasive step — add defense dice to next incoming attack.";
     public override string RequiredModusMentisId  => "acrobatics";
     public override string[] SecondaryModusMentisIds => new[] { "athletics", "vigilance" };
-    public override FightingMedium Medium         => FightingMedium.Organ("legs");
+    public override FightingMedium Medium         => FightingMedium.Organ("leg");
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

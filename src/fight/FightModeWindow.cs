@@ -42,7 +42,7 @@ internal class FightModeWindow : GameWindow
     private IReadOnlyList<LeftPanelRow> _leftPanelLayout = Array.Empty<LeftPanelRow>();
     private IReadOnlyList<(int Y, Fighter Fighter)> _rightPanelRows = Array.Empty<(int, Fighter)>();
     private Fighter? _topPanelFighter;
-    private IReadOnlyList<string>? _bodyPartMenu;
+    private FightLocalizationOverlay? _localizationOverlay;
     private bool _continueHovered;
     private Fighter? _hoveredFighter;
     private int  _hoveredButtonRow = -1;
@@ -178,12 +178,14 @@ internal class FightModeWindow : GameWindow
         HandleKeyboard();
 
         // ── Blink ─────────────────────────────────────────────────
+        // Skip the arena exit-cell blink when the localization overlay covers the screen.
         _blinkTimer += args.Time;
         bool newBlink = (_blinkTimer % 0.06) < 0.03;
         if (newBlink != _blinkOn)
         {
             _blinkOn = newBlink;
-            FightAreaRenderer.UpdateBlink(_terminal, _blinkOn);
+            if (_state.Phase != TurnPhase.WaitingForBodyPartChoice)
+                FightAreaRenderer.UpdateBlink(_terminal, _blinkOn);
         }
 
         // ── Dice animation ────────────────────────────────────────
@@ -273,6 +275,13 @@ internal class FightModeWindow : GameWindow
 
     private void OnCellHovered(int x, int y)
     {
+        // ── Localization picker overlay owns the entire cursor area ──
+        if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _localizationOverlay != null)
+        {
+            _localizationOverlay.OnMouseMove(x, y);
+            return;
+        }
+
         // ── Dice continue button ─────────────────────────────────────
         if (_state.Phase == TurnPhase.WaitingForDiceComplete)
         {
@@ -355,17 +364,10 @@ internal class FightModeWindow : GameWindow
             return;
         }
 
-        // ── Body part menu ────────────────────────────────────────
-        if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _bodyPartMenu != null)
+        // ── Localization picker overlay ──────────────────────────
+        if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _localizationOverlay != null)
         {
-            var (startRow, _) = FightModeUI.BodyPartMenuItemOrigin();
-            int menuRow = y - startRow;
-            if (menuRow >= 0 && menuRow < _bodyPartMenu.Count)
-            {
-                _state.PendingBodyPartId = _bodyPartMenu[menuRow];
-                _bodyPartMenu = null;
-                BeginDiceRoll();
-            }
+            _localizationOverlay.OnMouseClick(x, y);
             return;
         }
 
@@ -715,6 +717,23 @@ internal class FightModeWindow : GameWindow
             _state.PendingTarget = target;
             _state.Phase = TurnPhase.WaitingForBodyPartChoice;
             _highlightCells = null;
+            _localizationOverlay = new FightLocalizationOverlay(
+                _terminal!, target, skill.DisplayName,
+                onSelected: localization =>
+                {
+                    _state.PendingBodyPartId = localization;
+                    _localizationOverlay = null;
+                    ExecuteAction(new Actions.SkillAction(attacker, target, skill));
+                },
+                onCancel: () =>
+                {
+                    _localizationOverlay = null;
+                    _state.PendingSkill = null;
+                    _state.PendingTarget = null;
+                    _state.Phase = TurnPhase.SelectingAction;
+                    RecomputeHighlight();
+                });
+            _localizationOverlay.Render();
             return;
         }
 
@@ -834,6 +853,7 @@ internal class FightModeWindow : GameWindow
     private void FullRedraw()
     {
         if (_terminal == null) return;
+
         var active = _state.ActiveFighter;
 
         var detailFighter = _topPanelFighter ?? active;
@@ -894,17 +914,7 @@ internal class FightModeWindow : GameWindow
         FightModeUI.RenderCenterPanel(_terminal, _state.Area, _state.Fighters,
             active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath, _hoverSkillCells);
 
-        // Body-part selection menu — render AFTER the center panel so the arena
-        // doesn't paint over it.
-        if (active != null && _state.Phase == TurnPhase.WaitingForBodyPartChoice
-            && _state.PendingTarget != null)
-        {
-            _bodyPartMenu = FightModeUI.RenderBodyPartMenu(_terminal, _state.PendingTarget);
-        }
-        else
-        {
-            _bodyPartMenu = null;
-        }
+        // Localization picker is rendered through the overlay path; nothing to do here.
 
         int initHoverY = _hoveredFighter != null
             ? _rightPanelRows.FirstOrDefault(r => r.Fighter == _hoveredFighter).Y
@@ -914,6 +924,10 @@ internal class FightModeWindow : GameWindow
 
         if (_dice.IsVisible)
             FightModeUI.RenderDiceOverlay(_terminal, _dice, _continueHovered);
+
+        // Localization picker box — drawn last so it sits on top of the fight UI.
+        if (_localizationOverlay != null && _state.Phase == TurnPhase.WaitingForBodyPartChoice)
+            _localizationOverlay.Render();
 
         if (_state.IsOver)
             FightModeUI.RenderFightEnd(_terminal, _state.Result);

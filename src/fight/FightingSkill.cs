@@ -115,11 +115,33 @@ public abstract class FightingSkill
     public virtual int MinRange => 1;
 
     /// <summary>
-    /// 1-based position of this skill in its medium's skill list.
-    /// Used to compute learning difficulty: difficulty = MediumPosition - 1.
-    /// Override in each skill to match the fighting design doc ordering.
+    /// 1-based position of this skill in its medium's ordered skill list,
+    /// derived from <see cref="OrganMediumRegistry"/> or <see cref="WeaponMediumRegistry"/>.
+    /// Learning difficulty = MediumPosition - 1 (0-based index).
+    /// For skills that appear in multiple categories the lowest position is used.
     /// </summary>
-    public virtual int MediumPosition => 1;
+    public int MediumPosition
+    {
+        get
+        {
+            int best = int.MaxValue;
+
+            if (Medium.Type == MediumType.OrganMedium)
+            {
+                foreach (var cat in OrganMediumRegistry.GetAll())
+                    for (int i = 0; i < cat.SkillIds.Count; i++)
+                        if (cat.SkillIds[i] == SkillId) { best = Math.Min(best, i + 1); break; }
+            }
+            else
+            {
+                foreach (var cat in WeaponMediumRegistry.GetAll())
+                    for (int i = 0; i < cat.SkillIds.Count; i++)
+                        if (cat.SkillIds[i] == SkillId) { best = Math.Min(best, i + 1); break; }
+            }
+
+            return best == int.MaxValue ? 1 : best;
+        }
+    }
 
     /// <summary>
     /// True when this skill targets only the user — clicking the action button
