@@ -66,7 +66,7 @@ public class FightModeAdapter
     private IReadOnlyList<LeftPanelRow> _leftPanelLayout = Array.Empty<LeftPanelRow>();
     private IReadOnlyList<(int Y, Fighter Fighter)> _rightPanelRows = Array.Empty<(int, Fighter)>();
     private Fighter? _topPanelFighter;
-    private FightLocalizationOverlay? _localizationOverlay;
+    private IReadOnlyList<string>? _bodyPartMenu;
     private bool _continueHovered;
     private Fighter? _hoveredFighter;
     private int _hoveredButtonRow = -1;
@@ -304,15 +304,13 @@ public class FightModeAdapter
         }
 
         // ── Blink ─────────────────────────────────────────────────
-        // The localization overlay covers the arena, so skip the in-arena exit blink to
-        // avoid the SetCell punching through the body art at row 30/col 50.
         _blinkTimer += deltaTime;
         bool newBlink = (_blinkTimer % 0.06) < 0.03;
         if (newBlink != _blinkOn)
         {
             _blinkOn = newBlink;
-            if (_state.Phase != TurnPhase.WaitingForBodyPartChoice)
-                FightAreaRenderer.UpdateBlink(_terminal, _blinkOn);
+            // FullRedraw is called at the end of Update() every frame anyway
+            FightAreaRenderer.UpdateBlink(_terminal, _blinkOn);
         }
 
         // ── Dice animation ────────────────────────────────────────
@@ -376,10 +374,17 @@ public class FightModeAdapter
             return;
         }
 
-        // ── Localization picker overlay ──────────────────────────
-        if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _localizationOverlay != null)
+        // ── Body part menu ────────────────────────────────────────
+        if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _bodyPartMenu != null)
         {
-            _localizationOverlay.OnMouseClick(x, y);
+            var (startRow, _) = FightModeUI.BodyPartMenuItemOrigin();
+            int menuRow = y - startRow;
+            if (menuRow >= 0 && menuRow < _bodyPartMenu.Count)
+            {
+                _state.PendingBodyPartId = _bodyPartMenu[menuRow];
+                _bodyPartMenu = null;
+                BeginDiceRoll();
+            }
             return;
         }
 
@@ -484,7 +489,7 @@ public class FightModeAdapter
                 if (target != null)
                 {
                     _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
-                    TryUseSkillOnTarget(active, target, skill, mediumKey);
+                    TryUseSkillOnTarget(active, target, skill);
                 }
                 else
                 {
@@ -530,13 +535,6 @@ public class FightModeAdapter
     /// <summary>Called by the game loop when a terminal cell is hovered.</summary>
     public void OnCellHovered(int x, int y)
     {
-        // ── Localization picker overlay owns the entire cursor area ──
-        if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _localizationOverlay != null)
-        {
-            _localizationOverlay.OnMouseMove(x, y);
-            return;
-        }
-
         // ── Dice continue button ─────────────────────────────────────
         if (_state.Phase == TurnPhase.WaitingForDiceComplete)
         {
@@ -869,37 +867,14 @@ public class FightModeAdapter
         _highlightCells = null;
     }
 
-    private void TryUseSkillOnTarget(Fighter attacker, Fighter target, FightingSkill skill, string? mediumKey = null)
+    private void TryUseSkillOnTarget(Fighter attacker, Fighter target, FightingSkill skill)
     {
         if (skill.WoundTargetMode == WoundTargetMode.PlayerChooses)
         {
-            string usedKey = mediumKey ?? DefaultMediumKeyFor(skill);
             _state.PendingSkill = skill;
             _state.PendingTarget = target;
             _state.Phase = TurnPhase.WaitingForBodyPartChoice;
             _highlightCells = null;
-            _localizationOverlay = new FightLocalizationOverlay(
-                _terminal, target, skill.DisplayName,
-                onSelected: localization =>
-                {
-                    _state.PendingBodyPartId = localization;
-                    _localizationOverlay = null;
-                    // Same path normal attacks take: deducts CP, configures dice, starts the roll.
-                    ExecuteAction(new Actions.SkillAction(attacker, target, skill));
-                },
-                onCancel: () =>
-                {
-                    _localizationOverlay = null;
-                    // Cancelling frees the once-per-turn lock so the player may pick again.
-                    _state.UsedActionsThisTurn.Remove((usedKey, skill.SkillId));
-                    _state.PendingSkill = null;
-                    _state.PendingTarget = null;
-                    _state.PendingBodyPartId = null;
-                    _state.Phase = TurnPhase.SelectingAction;
-                    RecomputeHighlight();
-                },
-                sfx: _sfx);
-            _localizationOverlay.Render();
             return;
         }
 
@@ -1075,7 +1050,9 @@ public class FightModeAdapter
                 $"Failed to learn {skill.DisplayName}. ({result.SixesCount}/{result.DiceValues.Length} sixes vs diff {result.Difficulty})",
                 LogEntryType.Learning);
             _state.PendingLearnSkill = null;
-            EndTurn(active);
+            // Spend the skill's CP cost and continue — player may still have CP left
+            active.CurrentCineticPoints = Math.Max(0, active.CurrentCineticPoints - skill.CineticPointsCost);
+            ContinueTurnOrEnd(active);
         }
     }
 
@@ -1278,7 +1255,17 @@ public class FightModeAdapter
             active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath, _hoverSkillCells,
             _previewAttackCell);
 
-        // Localization picker is rendered separately via the overlay path; nothing to do here.
+        // Body-part selection menu — must render AFTER the center panel so the arena
+        // doesn't paint over it (the menu is positioned inside the arena bounds).
+        if (active != null && _state.Phase == TurnPhase.WaitingForBodyPartChoice
+            && _state.PendingTarget != null)
+        {
+            _bodyPartMenu = FightModeUI.RenderBodyPartMenu(_terminal, _state.PendingTarget);
+        }
+        else
+        {
+            _bodyPartMenu = null;
+        }
 
         int initHoverY = _hoveredFighter != null
             ? _rightPanelRows.FirstOrDefault(r => r.Fighter == _hoveredFighter).Y
@@ -1288,10 +1275,6 @@ public class FightModeAdapter
 
         if (_dice.IsVisible)
             FightModeUI.RenderDiceOverlay(_terminal, _dice, _continueHovered);
-
-        // Localization picker box — drawn last so it sits on top of the fight UI.
-        if (_localizationOverlay != null && _state.Phase == TurnPhase.WaitingForBodyPartChoice)
-            _localizationOverlay.Render();
 
         if (_state.IsOver)
             FightModeUI.RenderFightEnd(_terminal, _state.Result);
