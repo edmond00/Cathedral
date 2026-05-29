@@ -50,12 +50,16 @@ public class Fighter
     public int RunawayDiceCount => Math.Max(1, GetCombatStat("runaway_dice"));
     /// <summary>Equilibrium — feet stat. Higher = lower terrain-slip risk during movement.</summary>
     public int EquilibriumValue => Math.Max(1, GetCombatStat("equilibrium"));
+    /// <summary>Knockdown recovery dice count — heart stat. Need at least one 6 to recover.</summary>
+    public int KnockdownRecoveryDiceCount => Math.Max(1, GetCombatStat("knockdown_recovery"));
     public int InitiativeValue    => GetCombatStat("initiative");
 
     // ── HP delegation ─────────────────────────────────────────────
     public int MaxHp     => Member.MaxHp;
     public int CurrentHp => Member.CurrentHp;
-    public bool IsAlive  => CurrentHp > 0;
+    /// <summary>True once humor queues fully collapsed (e.g. terminal bleed) — fighter counts as dead.</summary>
+    public bool IsHumorDepleted { get; set; }
+    public bool IsAlive  => CurrentHp > 0 && !IsHumorDepleted;
 
     // ── Display ───────────────────────────────────────────────────
     public string DisplayName => Member.DisplayName;

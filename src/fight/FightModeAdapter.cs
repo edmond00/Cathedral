@@ -70,6 +70,13 @@ public class FightModeAdapter
     private IReadOnlyList<(int Y, FightStatusEffect Effect)> _stateRows = Array.Empty<(int, FightStatusEffect)>();
     private string? _terrainInterruptMsg;
     private Fighter? _terrainInterruptMover;
+    // Bleed turn-start popup state
+    private bool _bleedPopupActive;
+    private Fighter? _bleedPopupFighter;
+    private int _bleedPopupLevel;
+    private int _bleedPopupHumors;
+    private int _bleedPopupVH;
+    private bool _bleedPopupCollapsed;
     private IReadOnlyList<string>? _bodyPartMenu;
     private bool _continueHovered;
     private Fighter? _hoveredFighter;
@@ -378,6 +385,14 @@ public class FightModeAdapter
             return;
         }
 
+        // Bleeding turn-start popup is modal — any click dismisses it; turn continues.
+        if (_bleedPopupActive)
+        {
+            _bleedPopupActive = false;
+            _bleedPopupFighter = null;
+            return;
+        }
+
         var active = _state.ActiveFighter;
         if (active == null) return;
 
@@ -387,7 +402,9 @@ public class FightModeAdapter
             var region = _dice.ContinueButtonRegion;
             if (y == region.Y && x >= region.X && x < region.X + region.Width)
             {
-                if (_state.PendingRunaway)
+                if (_state.PendingKnockdownRecovery)
+                    FinishKnockdownRecoveryRoll(active);
+                else if (_state.PendingRunaway)
                     FinishRunawayRoll(active);
                 else if (_state.PendingLearnSkill != null && _state.PendingSkill == null)
                     FinishLearningRoll(active);
@@ -932,6 +949,12 @@ public class FightModeAdapter
                 subtitle: "RUNAWAY CHECK — feet",
                 difficultyVerb: "to flee");
         }
+        else if (_state.PendingKnockdownRecovery)
+        {
+            _dice.Start(_state.DiceNumberOfDice, 1,
+                subtitle: "KNOCKDOWN RECOVERY — heart",
+                difficultyVerb: "to recover");
+        }
         else if (_state.PendingSkill != null
                  && _state.PendingSkill.EffectType == FightingSkillEffect.Attack)
         {
@@ -1051,6 +1074,37 @@ public class FightModeAdapter
         {
             _state.AddLog($"{active.DisplayName} tries to flee but fails. ({sixes}/{diceValues.Length} sixes)", LogEntryType.Miss);
             ContinueTurnOrEnd(active);
+        }
+    }
+
+    /// <summary>
+    /// Resolves a knockdown-recovery dice roll for a player-controlled fighter. ≥1 six clears
+    /// the knockdown so the turn can proceed; failure skips the turn (knockdown persists).
+    /// </summary>
+    private void FinishKnockdownRecoveryRoll(Fighter active)
+    {
+        _dice.Hide();
+        _sfx?.Invoke(GameEventType.NeutralOutcome); // box closes
+        var diceValues = _state.DiceFinalValues ?? Array.Empty<int>();
+        int sixes = diceValues.Count(v => v == 6);
+        _state.PendingKnockdownRecovery = false;
+        _state.DiceFinalValues = null;
+
+        if (sixes >= 1)
+        {
+            var knock = active.ActiveEffects.OfType<KnockdownEffect>().FirstOrDefault();
+            if (knock != null) active.ActiveEffects.Remove(knock);
+            active.IsKnockedDown = false;
+            _state.AddLog($"{active.DisplayName} recovers from knockdown ({sixes}/{diceValues.Length} sixes).",
+                LogEntryType.SpecialEffect);
+            _state.Phase = TurnPhase.SelectingAction;
+            RefreshSkillList();
+        }
+        else
+        {
+            _state.AddLog($"{active.DisplayName} fails to recover from knockdown ({sixes}/{diceValues.Length} sixes) — turn skipped.",
+                LogEntryType.SpecialEffect);
+            EndTurn(active);
         }
     }
 
@@ -1235,11 +1289,84 @@ public class FightModeAdapter
         _state.AdvanceToNextFighter(_rng);
         RefreshSkillList();
 
+        // Check fight end immediately (bleeding-induced collapse during the new fighter's
+        // StartTurn() may have set HP to 0 — let CheckFightEnd surface it before we route input).
+        _state.CheckFightEnd();
+
         var next = _state.ActiveFighter;
         if (next != null && !next.IsPlayerControlled)
             _aiDelayFrames = AiDelay;
 
+        // Bleeding popup — only for party fighters who actually lost humors this turn.
+        if (next != null && next.Faction == FighterFaction.Party)
+        {
+            var bleed = next.ActiveEffects.OfType<BleedingEffect>().FirstOrDefault();
+            if (bleed != null && bleed.LastDrainedHumors > 0)
+            {
+                _bleedPopupActive    = true;
+                _bleedPopupFighter   = next;
+                _bleedPopupLevel     = bleed.Level;
+                _bleedPopupHumors    = bleed.LastDrainedHumors;
+                _bleedPopupVH        = bleed.LastDrainedVitalHeat;
+                _bleedPopupCollapsed = bleed.LastDrainPushedToCritical;
+            }
+        }
+
         _actionLogScrollOffset = 0;
+
+        // Knockdown recovery — runs after bleed-popup capture so its dice flow takes priority.
+        MaybeStartKnockdownRecovery(next);
+    }
+
+    /// <summary>
+    /// If <paramref name="fighter"/> is knocked down at turn start, roll the recovery check.
+    /// Protagonist sees the dice overlay; companions and enemies roll silently. On success the
+    /// knockdown clears and the turn proceeds; on failure the turn is skipped.
+    /// </summary>
+    private void MaybeStartKnockdownRecovery(Fighter? fighter)
+    {
+        if (fighter == null || !fighter.IsKnockedDown) return;
+        var knock = fighter.ActiveEffects.OfType<KnockdownEffect>().FirstOrDefault();
+        if (knock == null) return;
+
+        int dice = fighter.KnockdownRecoveryDiceCount;
+
+        // Protagonist (player-controlled): show dice overlay, wait for Continue.
+        if (fighter.IsPlayerControlled)
+        {
+            _state.PendingKnockdownRecovery = true;
+            _state.PendingSkill = null;
+            _state.PendingTarget = null;
+            _state.PendingLearnSkill = null;
+            _state.DiceNumberOfDice = dice;
+            _state.DiceDifficulty = 1;
+            _state.DiceSecondaryNumberOfDice = 0;
+            _state.DiceFinalValues = null;
+            _state.DiceSecondaryFinalValues = null;
+            _state.IsDiceRolling = true;
+            _state.Phase = TurnPhase.AnimatingDice;
+            BeginDiceRoll();
+            return;
+        }
+
+        // Non-player (companions and enemies): roll silently, log, skip the turn on failure.
+        int sixes = 0;
+        for (int i = 0; i < dice; i++)
+            if (_rng.Next(1, 7) == 6) sixes++;
+        if (sixes >= 1)
+        {
+            fighter.IsKnockedDown = false;
+            knock.GetType(); // (keep reference to ensure we resolve below)
+            // Mark expired by removing from the list — there's no public setter, so re-create the
+            // status entry via Remove. Looping over ActiveEffects is safe here since we exit after.
+            fighter.ActiveEffects.Remove(knock);
+            _state.AddLog($"{fighter.DisplayName} recovers from knockdown ({sixes}/{dice} sixes).", LogEntryType.SpecialEffect);
+        }
+        else
+        {
+            _state.AddLog($"{fighter.DisplayName} fails to recover from knockdown ({sixes}/{dice} sixes) — turn skipped.", LogEntryType.SpecialEffect);
+            EndTurn(fighter);
+        }
     }
 
     private void AfterActionUpdate()
@@ -1378,6 +1505,11 @@ public class FightModeAdapter
         // Terrain-interrupt purple overlay — sits on top of everything until dismissed
         if (_terrainInterruptMsg != null)
             FightModeUI.RenderTerrainInterruptPopup(_terminal, _terrainInterruptMsg);
+
+        // Bleeding turn-start popup (party only) — gates input until dismissed
+        if (_bleedPopupActive && _bleedPopupFighter != null)
+            FightModeUI.RenderBleedingDrainPopup(_terminal, _bleedPopupFighter.DisplayName,
+                _bleedPopupLevel, _bleedPopupHumors, _bleedPopupVH, _bleedPopupCollapsed);
 
         int initHoverY = _hoveredFighter != null
             ? _rightPanelRows.FirstOrDefault(r => r.Fighter == _hoveredFighter).Y

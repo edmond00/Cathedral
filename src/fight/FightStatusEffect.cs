@@ -60,6 +60,22 @@ public sealed class BleedingEffect : FightStatusEffect
     public override string DisplayName   => $"Bleeding ({Level})";
     public override string Description   => "Drains Level humors from the body's vital heat queue at the start of every turn. Stops when the fight ends or all humor queues are critical.";
 
+    /// <summary>Cap on stacked bleed level — multiple cuts can't bleed faster than this.</summary>
+    private const int MaxLevel = 9;
+
+    /// <summary>Increase the level (e.g. another bleeding-causing hit lands). Clamped to <see cref="MaxLevel"/>.</summary>
+    public void AddLevel(int extra)
+    {
+        Level = Math.Min(MaxLevel, Level + Math.Max(0, extra));
+    }
+
+    /// <summary>Humors actually drained on the last turn start (0 if queues were empty).</summary>
+    public int LastDrainedHumors { get; private set; }
+    /// <summary>Vital heat actually drained on the last turn start.</summary>
+    public int LastDrainedVitalHeat { get; private set; }
+    /// <summary>True when the most recent drain pushed the fighter's humor queues to fully critical.</summary>
+    public bool LastDrainPushedToCritical { get; private set; }
+
     public override void OnApply(Fighter target, Fighter source, FightState state, Random rng)
     {
         state.AddLog($"{target.DisplayName} is bleeding! (level {Level})", LogEntryType.SpecialEffect);
@@ -68,20 +84,35 @@ public sealed class BleedingEffect : FightStatusEffect
     public override void OnTurnStart(Fighter owner, FightState state, Random rng)
     {
         var humors = owner.Member.HumorQueues;
+        bool wasCritical = humors.IsFullyCritical;
+
         int drained = 0;
+        int humorCount = 0;
         for (int i = 0; i < Level; i++)
         {
+            if (humors.IsFullyCritical) break;
             int heat = humors.ConsumeVitalHeatCycled(owner.Member, rng);
             drained += heat;
+            humorCount++;
         }
 
-        if (drained > 0)
-            state.AddLog($"{owner.DisplayName} bleeds — {Level} humor(s) drained (vital heat: -{drained}).", LogEntryType.SpecialEffect);
+        LastDrainedHumors    = humorCount;
+        LastDrainedVitalHeat = drained;
+        LastDrainPushedToCritical = !wasCritical && humors.IsFullyCritical;
+
+        if (humorCount > 0)
+            state.AddLog($"{owner.DisplayName} bleeds — {humorCount} humor(s) drained (vital heat: -{drained}).", LogEntryType.SpecialEffect);
         else
             state.AddLog($"{owner.DisplayName}'s bleeding slows — humor queues depleted.", LogEntryType.SpecialEffect);
 
-        if (humors.IsFullyCritical)
+        // Death from black-bile depletion: mark the fighter humor-depleted so IsAlive flips
+        // to false. CheckFightEnd in the resolver will pick it up.
+        if (humors.IsFullyCritical && !owner.IsHumorDepleted)
+        {
+            owner.IsHumorDepleted = true;
+            state.AddLog($"{owner.DisplayName} collapses — humors fully depleted.", LogEntryType.Wound);
             IsExpired = true;
+        }
     }
 }
 
@@ -95,7 +126,7 @@ public sealed class KnockdownEffect : FightStatusEffect
     public override string DisplayLabel  => "K";
     public override Vector4 DisplayColor => Config.Colors.Orange;
     public override string DisplayName   => "Knockdown";
-    public override string Description   => "Cannot use attack skills next turn. Expires at the start of the affected turn.";
+    public override string Description   => "Down on the ground. At the start of every turn, roll <heart> d6 — need at least one six to recover and act this turn. Otherwise the turn is skipped and the knockdown persists.";
 
     public override void OnApply(Fighter target, Fighter source, FightState state, Random rng)
     {
@@ -105,10 +136,8 @@ public sealed class KnockdownEffect : FightStatusEffect
 
     public override void OnTurnStart(Fighter owner, FightState state, Random rng)
     {
-        // The knockdown was applied last turn; now it clears
-        owner.IsKnockedDown = false;
-        IsExpired = true;
-        state.AddLog($"{owner.DisplayName} recovers from knockdown.", LogEntryType.SpecialEffect);
+        // No auto-expire. The fight controller handles the recovery roll at turn start
+        // — see FightModeAdapter.MaybeStartKnockdownRecovery.
     }
 }
 

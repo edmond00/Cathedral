@@ -903,6 +903,42 @@ public static class FightModeUI
     private const int InterruptY = CenterY + (FightArea.Height - InterruptH) / 2;
 
     /// <summary>
+    /// Purplish overlay summarising a bleeding-drain event at the party fighter's turn start.
+    /// Click anywhere → dismiss → the turn proceeds. Same geometry as the interrupt popup.
+    /// </summary>
+    public static void RenderBleedingDrainPopup(TerminalHUD terminal, string fighterName,
+        int bleedingLevel, int humorsDrained, int vitalHeatDrained, bool collapsed)
+    {
+        terminal.FillRect(InterruptX, InterruptY, InterruptW, InterruptH + 2,
+            ' ', Config.Colors.White, Config.Colors.Black);
+        terminal.DrawBox(InterruptX, InterruptY, InterruptW, InterruptH + 2,
+            BoxStyle.Double, Config.Colors.BrightPurple, Config.Colors.Black);
+
+        terminal.Text(InterruptX + 2, InterruptY + 1,
+            $"── BLEEDING (level {bleedingLevel}) ──",
+            Config.Colors.BrightPurple, Config.Colors.Black);
+
+        terminal.Text(InterruptX + 2, InterruptY + 3,
+            $"{fighterName} bleeds at the start of the turn.",
+            Config.Colors.LightPurple, Config.Colors.Black);
+        terminal.Text(InterruptX + 2, InterruptY + 4,
+            $"  Humors drained : {humorsDrained}",
+            Config.Colors.LightPurple, Config.Colors.Black);
+        terminal.Text(InterruptX + 2, InterruptY + 5,
+            $"  Vital heat lost: {vitalHeatDrained}",
+            Config.Colors.LightPurple, Config.Colors.Black);
+
+        if (collapsed)
+            terminal.Text(InterruptX + 2, InterruptY + 7,
+                "Body humors fully depleted — collapse!",
+                Config.Colors.BrightPurple, Config.Colors.Black);
+
+        terminal.Text(InterruptX + 2, InterruptY + InterruptH,
+            "(click anywhere to continue)",
+            Config.Colors.DarkYellowGrey, Config.Colors.Black);
+    }
+
+    /// <summary>
     /// Draws a purplish overlay box describing a mid-move terrain interrupt.
     /// The caller is responsible for dismissing it (click anywhere → end turn).
     /// </summary>

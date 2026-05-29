@@ -219,7 +219,18 @@ public static class FightResolver
             {
                 foreach (var effect in skill.SpecialEffects)
                 {
-                    // Clone effects so each hit gets a fresh instance
+                    // Bleeding stacks — bump the existing instance's level instead of adding a parallel one.
+                    if (effect is BleedingEffect newBleed)
+                    {
+                        var existing = defender.ActiveEffects.OfType<BleedingEffect>().FirstOrDefault();
+                        if (existing != null)
+                        {
+                            existing.AddLevel(newBleed.Level);
+                            state.AddLog($"{defender.DisplayName}'s bleeding intensifies (level {existing.Level}).",
+                                LogEntryType.SpecialEffect);
+                            continue;
+                        }
+                    }
                     var newEffect = effect;
                     defender.ActiveEffects.Add(newEffect);
                     newEffect.OnApply(defender, attacker, state, rng);

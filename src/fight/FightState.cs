@@ -91,6 +91,9 @@ public class FightState
     /// <summary>True while a runaway dice roll is in progress (need at least one six to flee).</summary>
     public bool PendingRunaway { get; set; }
 
+    /// <summary>True while a knockdown-recovery dice roll is in progress (need at least one six to act this turn).</summary>
+    public bool PendingKnockdownRecovery { get; set; }
+
     /// <summary>
     /// (medium-key, skill-id) pairs the active fighter has already committed to this turn.
     /// Reset by <see cref="AdvanceToNextFighter"/>. Used to enforce the once-per-turn rule
@@ -154,6 +157,7 @@ public class FightState
         DiceSecondaryFinalValues = null;
         DiceSecondaryNumberOfDice = 0;
         PendingRunaway = false;
+        PendingKnockdownRecovery = false;
         UsedActionsThisTurn.Clear();
         RunUsedThisTurn = false;
         MovementPath = null;
