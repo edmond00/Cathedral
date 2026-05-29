@@ -14,6 +14,15 @@ public abstract class TransmutingVirtue
 }
 
 /// <summary>
+/// A transmuting virtue that leaves the dice roll unchanged (N → N).
+/// Used by humors that are present but exert no transmuting influence.
+/// </summary>
+public sealed class NullVirtue : TransmutingVirtue
+{
+    public override string Description => "N \u2192 N";
+}
+
+/// <summary>
 /// Adds or subtracts a fixed amount from a dice-roll result.
 /// Displayed as "N → N + X" or "N → N - X".
 /// </summary>
@@ -54,4 +63,22 @@ public sealed class DigitConversionVirtue : TransmutingVirtue
         SourceDigit == -1
             ? $"N \u2192 {TargetDigit}"
             : $"{SourceDigit} \u2192 {TargetDigit}";
+}
+
+/// <summary>
+/// Rerolls a specific die face to a new random value (1–6).
+/// When <see cref="SourceDigit"/> is -1 the reroll applies to ANY face.
+/// Displayed as "{Source} → ?" or "N → ?" for the wildcard case.
+/// </summary>
+public sealed class RerollVirtue : TransmutingVirtue
+{
+    /// <summary>Die face to reroll. -1 means "any face" (wildcard).</summary>
+    public int SourceDigit { get; }
+
+    public RerollVirtue(int sourceDigit) => SourceDigit = sourceDigit;
+
+    public override string Description =>
+        SourceDigit == -1
+            ? "N \u2192 ?"
+            : $"{SourceDigit} \u2192 ?";
 }

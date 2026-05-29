@@ -114,6 +114,12 @@ public sealed class HumorQueue
     }
 
     /// <summary>
+    /// TEMPORARY: Directly set a slot by index, bypassing queue logic.
+    /// Use only for testing humor display. Remove after verification.
+    /// </summary>
+    public void ForceSet(int index, BodyHumor humor) => _items[index] = humor;
+
+    /// <summary>
     /// Organ secretion: generate a new random humor, insert at front, remove from back.
     /// If the queue is critical (all black bile) nothing happens.
     /// Returns the newly secreted humor, or null when critical.

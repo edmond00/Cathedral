@@ -107,14 +107,40 @@ public sealed class HumorQueueSet
     /// </summary>
     public void Initialize(PartyMember member, Random rng)
     {
-        var blood = new BloodHumor();
+        // TODO: TEMP — replace with normal initialization after humor display verification
+        FillWithAllHumorsForTesting();
+    }
+
+    /// <summary>
+    /// TEMPORARY: Fills each queue with one instance of every humor type in round-robin order
+    /// so that all humors are visible for testing. Remove after verification.
+    /// </summary>
+    private void FillWithAllHumorsForTesting()
+    {
+        BodyHumor[] allHumors =
+        [
+            // Secretion
+            new BloodHumor(), new PhlegmHumor(), new YellowBileHumor(), new BlackBileHumor(),
+            // Mind State (positive)
+            new VoluptasHumor(), new LaetitiaHumor(), new ZenHumor(),
+            // Mind State (negative)
+            new MelancholiaHumor(), new CholerHumor(), new NervusHumor(),
+            // Inhale
+            new EtherHumor(), new OpiumHumor(), new VaporHumor(),
+            new FumeHumor(), new SulfurHumor(), new EuphoraHumor(),
+            // Eat
+            new FatHumor(), new FiberHumor(), new SaltHumor(),
+            new FungiHumor(), new PulpHumor(), new CalxHumor(),
+            // Drink
+            new VenomHumor(), new SerumHumor(), new AquaHumor(),
+            new SugarHumor(), new AlcoholHumor(), new MiasmaHumor(),
+        ];
+
         foreach (var queue in All)
         {
-            queue.FillWith(blood);
-            var organ = member.GetOrganById(queue.OrganId);
-            int score = organ?.Score ?? 5;
-            for (int i = 0; i < 10; i++)
-                queue.Secrete(score, rng);
+            int capacity = HumorQueue.Capacity;
+            for (int i = 0; i < capacity; i++)
+                queue.ForceSet(i, allHumors[i % allHumors.Length]);
         }
     }
 

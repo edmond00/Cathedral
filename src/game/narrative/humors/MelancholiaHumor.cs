@@ -9,7 +9,7 @@ namespace Cathedral.Game.Narrative;
 /// derived stats. It is injected into the queue via <see cref="HumorQueue.Produce"/> by
 /// gameplay event handlers.
 ///
-/// Severely drains vital heat and imposes a -2 penalty on dice results.
+/// Severely drains vital heat and converts a peak 6 result to a near-success 5.
 /// </summary>
 public sealed class MelancholiaHumor : BodyHumor
 {
@@ -17,5 +17,5 @@ public sealed class MelancholiaHumor : BodyHumor
     public override char Symbol => '\u263d'; // ☽
     public override Vector4 Color => new(0.50f, 0.50f, 0.50f, 1.0f);  // MediumGray50
     public override int VitalHeat => -2;
-    public override TransmutingVirtue? TransmutingVirtue => new NumericModVirtue(-2);
+    public override TransmutingVirtue? TransmutingVirtue => new DigitConversionVirtue(6, 5);
 }
