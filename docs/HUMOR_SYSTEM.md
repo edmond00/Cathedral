@@ -8,17 +8,18 @@ Cathedral models the four classical humors as FIFO slot queues, one queue per hu
 
 | Name          | Symbol | Color       | Vital Heat | Transmuting Virtue          | Source          |
 |---------------|--------|-------------|------------|-----------------------------|-----------------|
-| Blood         | ♉      | Deep red    | +1         | Convert face **5 → 6**      | High organ score |
-| Phlegm        | ♓      | Pale blue   | 0          | Subtract **1** from result  | Always ~13%     |
-| Yellow Bile   | ꤁      | Yellow      | −1         | Convert **any face → 1**    | Low organ score  |
-| Black Bile    | ☩      | Dark red    | 0          | *(none)*                    | Medium-low score |
-| Melancholia   | ☽      | Purple      | −2         | Subtract **2** from result  | Event-only       |
+| Blood         | ♉      | Warm amber  | +1         | Add **+1** to result (N→N+1) | High organ score |
+| Phlegm        | ♓      | Light gray  | 0          | *(none)*                    | Always ~13%     |
+| Yellow Bile   | ♌      | Yellow      | −1         | Subtract **1** from result (N→N−1) | Low organ score |
+| Black Bile    | ☩      | Dark gray   | 0          | *(none)*                    | Medium-low score |
+| Melancholia   | ☽      | Medium gray | −2         | Convert face **6 → 5**      | Event-only       |
 
 **Vital Heat** is an integer modifier applied to dice rolls when a humor is consumed. Positive values raise the result; negative values lower it.
 
 **Transmuting Virtue** is the dice-face modification applied when the humor is consumed:
 - `NumericModVirtue(n)` — adds `n` to the rolled value.
 - `DigitConversionVirtue(src, tgt)` — converts face `src` to `tgt`; `src == -1` means "any face".
+- `RerollVirtue(src)` — rerolls face `src` to a new random value (1–6); `src == -1` means "any face".
 
 ---
 

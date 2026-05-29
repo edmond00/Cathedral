@@ -21,6 +21,9 @@ public abstract class BodyHumor
     /// <summary>Color used to render this humor's symbol in the terminal UI.</summary>
     public abstract Vector4 Color { get; }
 
+    /// <summary>Background color used to render this humor's cell in the terminal UI.</summary>
+    public virtual Vector4 BackgroundColor => new(0f, 0f, 0f, 1f);
+
     /// <summary>
     /// Energy delta when this humor provides vital heat.
     /// Positive = energy gain, Negative = energy drain.
