@@ -51,4 +51,14 @@ public class FightingSkillRegistry
 
     public IEnumerable<FightingSkill> GetAttackSkills() =>
         _byId.Values.Where(s => s.EffectType == FightingSkillEffect.Attack);
+
+    /// <summary>Defensive skills — Parry, Dodge, Cover, DefensePosture.</summary>
+    public IEnumerable<FightingSkill> GetDefensiveSkills() =>
+        _byId.Values.Where(s => s.EffectType == FightingSkillEffect.Defense
+                              || s.EffectType == FightingSkillEffect.DefensePosture);
+
+    /// <summary>Utility skills — viscera VH skills (Rage, BloodLust, ColdBlood, IronNerves), Feint, Run, Jump…</summary>
+    public IEnumerable<FightingSkill> GetUtilitySkills() =>
+        _byId.Values.Where(s => s.EffectType == FightingSkillEffect.Utility
+                              || s.EffectType == FightingSkillEffect.Other);
 }

@@ -884,18 +884,6 @@ public static class FightModeUI
         return dice.Render(terminal, cx, cy, continueHovered);
     }
 
-    // ── Body-part selection menu ──────────────────────────────────────
-
-    /// <summary>
-    /// Render a numbered menu over the left panel for PlayerChooses wound targeting.
-    /// Returns the list of body-part ids in display order (index = key 1-9).
-    /// </summary>
-    // ── Body-part menu overlay geometry ────────────────────────────────
-    private const int BodyMenuW  = 30;
-    private const int BodyMenuH  = 14;
-    private const int BodyMenuX  = CenterX + (FightArea.Width  - BodyMenuW)  / 2; // centered in arena
-    private const int BodyMenuY  = CenterY + (FightArea.Height - BodyMenuH) / 2;
-
     // ── Terrain interrupt popup overlay (purplish) ───────────────────
     private const int InterruptW = 50;
     private const int InterruptH = 8;
@@ -963,41 +951,6 @@ public static class FightModeUI
         terminal.Text(InterruptX + 2, InterruptY + InterruptH - 2,
             "(click anywhere to continue)", Config.Colors.DarkYellowGrey, Config.Colors.Black);
     }
-
-    /// <summary>
-    /// Render a numbered body-part selection overlay, centered in the arena.
-    /// Returns the list of body-part ids in display order (index = key 1-9).
-    /// </summary>
-    public static IReadOnlyList<string> RenderBodyPartMenu(TerminalHUD terminal, Fighter target)
-    {
-        var parts = target.Member.BodyParts
-            .Select(bp => bp.Id)
-            .Distinct()
-            .Take(9)
-            .ToList();
-
-        // Black background fill + double border over the arena
-        terminal.FillRect(BodyMenuX, BodyMenuY, BodyMenuW, BodyMenuH,
-            ' ', Config.Colors.White, Config.Colors.Black);
-        terminal.DrawBox(BodyMenuX, BodyMenuY, BodyMenuW, BodyMenuH,
-            BoxStyle.Double, Config.Colors.Orange, Config.Colors.Black);
-
-        int x = BodyMenuX + 1;
-        int y = BodyMenuY + 1;
-        terminal.Text(x, y++, $"AIM AT: {target.DisplayName}", Config.Colors.Orange, Config.Colors.Black);
-        terminal.Text(x, y++, new string('─', BodyMenuW - 2), Config.Colors.DarkGray, Config.Colors.Black);
-
-        for (int i = 0; i < parts.Count; i++)
-        {
-            terminal.Text(x, y++, $"{i + 1}: {parts[i]}", Config.Colors.White, Config.Colors.Black);
-        }
-
-        return parts;
-    }
-
-    /// <summary>Returns the arena-relative row offset for body-part menu items (for click dispatch).</summary>
-    public static (int StartRow, int StartCol) BodyPartMenuItemOrigin()
-        => (BodyMenuY + 3, BodyMenuX + 1); // 2 header rows
 
     // ── Fight-end overlay ─────────────────────────────────────────────
 

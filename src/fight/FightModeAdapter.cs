@@ -77,7 +77,7 @@ public class FightModeAdapter
     private int _bleedPopupHumors;
     private int _bleedPopupVH;
     private bool _bleedPopupCollapsed;
-    private IReadOnlyList<string>? _bodyPartMenu;
+    private FightLocalizationOverlay? _localizationOverlay;
     private bool _continueHovered;
     private Fighter? _hoveredFighter;
     private int _hoveredButtonRow = -1;
@@ -207,6 +207,7 @@ public class FightModeAdapter
         var enemyFighter = new Fighter(npc.Combatant,
             FightArea.ZoneColStart + 2, FightArea.EnemyRowStart + 1,
             isPlayerControlled: false, FighterFaction.Enemy);
+        enemyFighter.Personality = ResolvePersonality(npc);
         fighters.Add(enemyFighter);
 
         // Ally NPCs — spread horizontally in the top half (rows 0–29, near EnemyRowStart)
@@ -219,11 +220,20 @@ public class FightModeAdapter
             var allyFighter = new Fighter(ally.Combatant,
                 allyCol, allyRow,
                 isPlayerControlled: false, FighterFaction.Enemy);
+            allyFighter.Personality = ResolvePersonality(ally);
             fighters.Add(allyFighter);
         }
 
         return fighters;
     }
+
+    /// <summary>
+    /// Resolve the combat personality for an enemy NPC: an archetype override wins,
+    /// otherwise the personality is derived from its IsBrave / AuthorityLevel flags.
+    /// </summary>
+    private static AiPersonality ResolvePersonality(NpcEntity npc) =>
+        npc.Archetype.AiPersonalityOverride
+        ?? AiPersonality.FromArchetypeFlags(npc.IsBrave, npc.AuthorityLevel);
 
     /// <summary>
     /// Called every frame. Pass the frame delta time for animations.
@@ -318,13 +328,15 @@ public class FightModeAdapter
         }
 
         // ── Blink ─────────────────────────────────────────────────
+        // Skip the in-arena exit blink while the localization overlay is up so the
+        // SetCell doesn't punch through the body art.
         _blinkTimer += deltaTime;
         bool newBlink = (_blinkTimer % 0.06) < 0.03;
         if (newBlink != _blinkOn)
         {
             _blinkOn = newBlink;
-            // FullRedraw is called at the end of Update() every frame anyway
-            FightAreaRenderer.UpdateBlink(_terminal, _blinkOn);
+            if (_state.Phase != TurnPhase.WaitingForBodyPartChoice)
+                FightAreaRenderer.UpdateBlink(_terminal, _blinkOn);
         }
 
         // ── Dice animation ────────────────────────────────────────
@@ -414,17 +426,10 @@ public class FightModeAdapter
             return;
         }
 
-        // ── Body part menu ────────────────────────────────────────
-        if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _bodyPartMenu != null)
+        // ── Localization picker overlay ──────────────────────────
+        if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _localizationOverlay != null)
         {
-            var (startRow, _) = FightModeUI.BodyPartMenuItemOrigin();
-            int menuRow = y - startRow;
-            if (menuRow >= 0 && menuRow < _bodyPartMenu.Count)
-            {
-                _state.PendingBodyPartId = _bodyPartMenu[menuRow];
-                _bodyPartMenu = null;
-                BeginDiceRoll();
-            }
+            _localizationOverlay.OnMouseClick(x, y);
             return;
         }
 
@@ -529,7 +534,7 @@ public class FightModeAdapter
                 if (target != null)
                 {
                     _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
-                    TryUseSkillOnTarget(active, target, skill);
+                    TryUseSkillOnTarget(active, target, skill, mediumKey);
                 }
                 else
                 {
@@ -575,6 +580,13 @@ public class FightModeAdapter
     /// <summary>Called by the game loop when a terminal cell is hovered.</summary>
     public void OnCellHovered(int x, int y)
     {
+        // ── Localization picker overlay owns the entire cursor area ──
+        if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _localizationOverlay != null)
+        {
+            _localizationOverlay.OnMouseMove(x, y);
+            return;
+        }
+
         // ── Dice continue button ─────────────────────────────────────
         if (_state.Phase == TurnPhase.WaitingForDiceComplete)
         {
@@ -913,14 +925,38 @@ public class FightModeAdapter
         _highlightCells = null;
     }
 
-    private void TryUseSkillOnTarget(Fighter attacker, Fighter target, FightingSkill skill)
+    private void TryUseSkillOnTarget(Fighter attacker, Fighter target, FightingSkill skill,
+                                      string? mediumKey = null)
     {
         if (skill.WoundTargetMode == WoundTargetMode.PlayerChooses)
         {
+            string usedKey = mediumKey ?? DefaultMediumKeyFor(skill);
             _state.PendingSkill = skill;
             _state.PendingTarget = target;
             _state.Phase = TurnPhase.WaitingForBodyPartChoice;
             _highlightCells = null;
+            _localizationOverlay = new FightLocalizationOverlay(
+                _terminal, target, skill.DisplayName,
+                onSelected: localization =>
+                {
+                    _state.PendingBodyPartId = localization;
+                    _localizationOverlay = null;
+                    // Same path normal attacks take: deducts CP, configures dice, starts the roll.
+                    ExecuteAction(new Actions.SkillAction(attacker, target, skill));
+                },
+                onCancel: () =>
+                {
+                    _localizationOverlay = null;
+                    // Cancelling frees the once-per-turn lock so the player may pick again.
+                    _state.UsedActionsThisTurn.Remove((usedKey, skill.SkillId));
+                    _state.PendingSkill = null;
+                    _state.PendingTarget = null;
+                    _state.PendingBodyPartId = null;
+                    _state.Phase = TurnPhase.SelectingAction;
+                    RecomputeHighlight();
+                },
+                sfx: _sfx);
+            _localizationOverlay.Render();
             return;
         }
 
@@ -1234,10 +1270,8 @@ public class FightModeAdapter
         if (terrain != TerrainType.TreacherousTerrain && terrain != TerrainType.DangerousTerrain)
             return;
 
-        int eq = mover.EquilibriumValue;
-        int slipRiskPct = terrain == TerrainType.DangerousTerrain
-            ? Math.Max(10, 80 - eq * 8)
-            : Math.Max(5,  50 - eq * 5);
+        int slipRiskPct = FightResolver.EstimateSlipRiskPct(terrain, mover.EquilibriumValue);
+        if (slipRiskPct <= 0) return;
         if (_rng.Next(100) >= slipRiskPct) return; // kept footing
 
         // Apply fall-over status (clears at start of next turn)
@@ -1398,6 +1432,12 @@ public class FightModeAdapter
         _state.CheckFightEnd();
         if (_state.IsOver) return;
 
+        // After an AI action completes (or when continuing the same turn), re-jitter the
+        // next-action delay so brutes (low cunning) act briskly and cunning archetypes pause
+        // as though deliberating. ±5 frames scaled by (1 - Cunning).
+        int jitter = (int)Math.Round((_rng.NextDouble() * 10 - 5) * (1.0 - ai.Personality.Cunning));
+        _aiDelayFrames = Math.Max(1, AiDelay + jitter);
+
         if (_state.Phase == TurnPhase.AnimatingMovement)
             return;
 
@@ -1490,17 +1530,7 @@ public class FightModeAdapter
             active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath, _hoverSkillCells,
             _previewAttackCell);
 
-        // Body-part selection menu — must render AFTER the center panel so the arena
-        // doesn't paint over it (the menu is positioned inside the arena bounds).
-        if (active != null && _state.Phase == TurnPhase.WaitingForBodyPartChoice
-            && _state.PendingTarget != null)
-        {
-            _bodyPartMenu = FightModeUI.RenderBodyPartMenu(_terminal, _state.PendingTarget);
-        }
-        else
-        {
-            _bodyPartMenu = null;
-        }
+        // Localization picker is rendered via the overlay path below; nothing to do here.
 
         // Terrain-interrupt purple overlay — sits on top of everything until dismissed
         if (_terrainInterruptMsg != null)
@@ -1519,6 +1549,10 @@ public class FightModeAdapter
 
         if (_dice.IsVisible)
             FightModeUI.RenderDiceOverlay(_terminal, _dice, _continueHovered);
+
+        // Localization picker box — drawn last so it sits on top of the fight UI.
+        if (_localizationOverlay != null && _state.Phase == TurnPhase.WaitingForBodyPartChoice)
+            _localizationOverlay.Render();
 
         if (_state.IsOver)
             FightModeUI.RenderFightEnd(_terminal, _state.Result);

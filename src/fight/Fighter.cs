@@ -61,6 +61,14 @@ public class Fighter
     public bool IsHumorDepleted { get; set; }
     public bool IsAlive  => CurrentHp > 0 && !IsHumorDepleted;
 
+    // ── AI bookkeeping ────────────────────────────────────────────
+    /// <summary>Combat personality consulted by <see cref="FightAI"/>. Defaults to balanced;
+    /// the fight builder assigns archetype-derived values for enemy fighters.</summary>
+    public AiPersonality Personality { get; set; } = AiPersonality.Default;
+    /// <summary>Initiative-list index of the fighter we attacked most recently. Used by
+    /// the AI for short-term target focus so an enemy doesn't reshuffle priorities every turn.</summary>
+    public int? LastAttackTargetIdx { get; set; }
+
     // ── Display ───────────────────────────────────────────────────
     public string DisplayName => Member.DisplayName;
     public char DisplayChar  => Faction == FighterFaction.Party ? '☻' : '☹';

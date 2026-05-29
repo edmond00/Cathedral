@@ -51,6 +51,14 @@ public abstract class NamedNpcArchetype : NpcArchetype
     public virtual int AuthorityLevel => 0;
 
     /// <summary>
+    /// Optional combat-personality override consulted by the fight builder. When non-null
+    /// this is used directly as the fighter's <c>AiPersonality</c>; when null the personality
+    /// is derived from <see cref="IsBrave"/> and <see cref="AuthorityLevel"/>. Override on
+    /// archetypes that want to hand-tune their feel (wolf vs bear vs brigand).
+    /// </summary>
+    public virtual Cathedral.Fight.AiPersonality? AiPersonalityOverride => null;
+
+    /// <summary>
     /// Section ids that spawned NPCs own by default.
     /// Override to list section ids this archetype has authority over (e.g. farmhouse interior).
     /// </summary>

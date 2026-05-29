@@ -24,6 +24,23 @@ public static class FightResolver
         return basis;
     }
 
+    /// <summary>
+    /// Probability (in percent, 0..100) that a fighter with the given equilibrium loses
+    /// footing when entering a Treacherous or Dangerous cell. Returns 0 for any other
+    /// terrain. Shared by the actual slip-roll in <c>CheckTerrainInterrupt</c> and by
+    /// the AI planner that prefers safer routes.
+    /// </summary>
+    public static int EstimateSlipRiskPct(TerrainType terrain, int equilibrium)
+    {
+        int eq = System.Math.Max(1, equilibrium);
+        return terrain switch
+        {
+            TerrainType.DangerousTerrain   => System.Math.Max(10, 80 - eq * 8),
+            TerrainType.TreacherousTerrain => System.Math.Max(5,  50 - eq * 5),
+            _                              => 0,
+        };
+    }
+
     // ── Line of sight ─────────────────────────────────────────────────
 
     /// <summary>
