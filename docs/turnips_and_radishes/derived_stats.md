@@ -20,7 +20,7 @@
 ### CEREBELLUM (5)
 
 - procedural memory capacity
-- chance to learn by wielding
+- chance to learn unknown fighting skill
 
 ### HYPOCAMPUS (5)
 
@@ -36,7 +36,6 @@
 
 ### EARS (3)
 
-- initiative
 - travel ennemies encounter avoidance chance
 
 ### EYES (3)
@@ -45,6 +44,7 @@
 
 ### NOSE (3)
 
+- initiative
 - consummable chemical composition identification level
 
 ### TEETH (2)

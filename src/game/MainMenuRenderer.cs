@@ -16,11 +16,16 @@ public class MainMenuRenderer
     private readonly List<MenuButton> _buttons = new();
     private int _hoveredIndex = -1;
 
-    // Layout constants
-    private const int TitleRow = 35;
+    // Layout constants — title block
+    private const int TitleOrnamentTopRow    = 28;
+    private const int TitleMainRow           = 30;
+    private const int TitleChapterRow        = 33;
+    private const int TitleSubtitleRow       = 35;
+    private const int TitleOrnamentBottomRow = 37;
+
     private const int FirstButtonRow = 42;
-    private const int ButtonSpacing = 3;
-    private const int ButtonWidth = 20;
+    private const int ButtonSpacing  = 3;
+    private const int ButtonWidth    = 20;
 
     /// <summary>
     /// Whether a game session has been started (New or Continue clicked at least once).
@@ -75,15 +80,41 @@ public class MainMenuRenderer
         _terminal.Fill(' ', Config.Colors.Black, Config.Colors.Black);
         _terminal.Visible = true;
 
-        // Draw title
-        _terminal.CenteredText(TitleRow, "C A T H E D R A L", Config.Colors.BrightYellow, Config.Colors.Black);
-        _terminal.CenteredText(TitleRow + 2, "─────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
+        // ── Title block ──────────────────────────────────────────
+        const string ornament = "─ · ─ · ─ · ─ · ─ · ─ · ─ · ─";
+        _terminal.CenteredText(TitleOrnamentTopRow,    ornament,
+            Config.Colors.DarkGray35,   Config.Colors.Black);
+        _terminal.CenteredText(TitleMainRow,           Config.Name.GameTitle,
+            Config.Colors.BrightYellow, Config.Colors.Black);
+        _terminal.CenteredText(TitleChapterRow,        Spaced(Config.Name.Chapter.ToUpper()),
+            Config.Colors.MediumGray50, Config.Colors.Black);
+        _terminal.CenteredText(TitleSubtitleRow,       $"·  {Config.Name.ChapterSubtitle}  ·",
+            Config.Colors.MediumGray60, Config.Colors.Black);
+        _terminal.CenteredText(TitleOrnamentBottomRow, ornament,
+            Config.Colors.DarkGray35,   Config.Colors.Black);
 
         // Draw buttons
         for (int i = 0; i < _buttons.Count; i++)
         {
             DrawButton(i);
         }
+    }
+
+    /// <summary>Spreads characters within each word with single spaces, and separates words with triple spaces.</summary>
+    private static string Spaced(string s)
+    {
+        var parts = s.Split(' ');
+        var sb = new System.Text.StringBuilder();
+        for (int w = 0; w < parts.Length; w++)
+        {
+            if (w > 0) sb.Append("   ");
+            for (int c = 0; c < parts[w].Length; c++)
+            {
+                if (c > 0) sb.Append(' ');
+                sb.Append(parts[w][c]);
+            }
+        }
+        return sb.ToString();
     }
 
     /// <summary>

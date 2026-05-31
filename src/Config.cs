@@ -10,6 +10,11 @@ namespace Cathedral;
 public static class Config
 {
     #region Terminal Configuration
+    public static class Name {
+        public const string GameTitle = "Anatomia Cogitationis et Cosmi";
+        public const string Chapter = "Chapter 1";
+        public const string ChapterSubtitle = "Turnips and Radishes";
+    }
     
     public static class Terminal
     {

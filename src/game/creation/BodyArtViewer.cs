@@ -6,6 +6,7 @@ using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Terminal.Utils;
 using Cathedral.Game.Narrative;
+using Cathedral.Fight;
 
 namespace Cathedral.Game.Creation;
 
@@ -1008,10 +1009,39 @@ public class BodyArtViewer
                 row++;
             }
 
-            if (ShowClickHints)
+            // ── Section 5: Fighting medium ────────────────────────────────────
+            var organCategory = OrganMediumRegistry.GetById(organId);
+            if (organCategory != null)
             {
-                _terminal.Text(PanelContentX, row, "Click: cycle score", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+                // Medium level is the hovered organ part's score (per-hand, per-foot, etc.),
+                // not the sum across both parts of the organ.
+                int partScore = _protagonist.GetOrganPartById(organPartId)?.Score ?? 0;
+                string header = $"Fighting Medium      lv.{partScore}";
+                _terminal.Text(PanelContentX, row, header, Config.Colors.DarkYellowGrey, Config.Colors.Black);
+                row++;
+
+                bool nextLearnable = false;
+                foreach (var skillId in organCategory.SkillIds)
+                {
+                    var skill = FightingSkillRegistry.Instance.GetById(skillId);
+                    if (skill == null) continue;
+                    bool isLearned = _protagonist.LearnedModiMentis
+                        .Any(m => m.ModusMentisId == skill.RequiredModusMentisId);
+                    if (isLearned)
+                    {
+                        _terminal.Text(PanelContentX, row, $"  · {skill.DisplayName}", Config.Colors.LightGray75, Config.Colors.Black);
+                        row++;
+                    }
+                    else if (!nextLearnable)
+                    {
+                        _terminal.Text(PanelContentX, row, $"  · {skill.DisplayName}", Config.Colors.DarkGray35, Config.Colors.Black);
+                        row++;
+                        nextLearnable = true;
+                    }
+                }
+                row++;
             }
+
         }
     }
 
@@ -1092,9 +1122,8 @@ public class BodyArtViewer
             .FirstOrDefault(p => p.Id == organPartName);
 
         if (organPart == null) return;
-        if (organPart.Score >= organPart.MaxScore)
-            organPart.Score = 0;           // wrap back to 0, freeing all points
-        else if (GetRemainingPoints() > 0)
+        if (organPart.Score >= organPart.MaxScore) return;  // already at max, do nothing
+        if (GetRemainingPoints() > 0)
             organPart.Score++;             // spend one point
     }
 
