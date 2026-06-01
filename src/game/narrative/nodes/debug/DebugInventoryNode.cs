@@ -33,7 +33,7 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Large;
         public override int    ContentSlots  => 20;
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.BeltGear;
-        public override List<ItemType> Types => new() { ItemType.BeltGear };
+        public override List<ItemType> Types => new List<ItemType> { ItemType.BeltGear };
         public override string[] Info => new[]
         {
             "Worn leather, still sturdy.",
@@ -52,7 +52,7 @@ public class DebugInventoryNode : NarrationNode
         public override ItemSize Size        => ItemSize.Small;
         public override int    ContentSlots  => 9;
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.BeltGear;
-        public override List<ItemType> Types => new() { ItemType.BeltGear };
+        public override List<ItemType> Types => new List<ItemType> { ItemType.BeltGear };
         public override string[] Info => new[]
         {
             "The drawstring is fraying.",
@@ -82,7 +82,7 @@ public class DebugInventoryNode : NarrationNode
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Hard leather cap.</summary>
-    public override List<Item> GetItems() => new() { new LeatherCap(), new WoolenCloak(), new LinenShirt(), new WoolSocks(), new LeatherBoots(), new IronSword(), new FightKnife(), new IronDagger(), new SpringWater(), new RedWine() };
+    public override List<Item> GetItems() => new List<Item> { new LeatherCap(), new WoolenCloak(), new LinenShirt(), new WoolSocks(), new LeatherBoots(), new IronSword(), new FightKnife(), new IronDagger(), new SpringWater(), new RedWine() };
 
     public sealed class LeatherCap : Item
     {
@@ -91,7 +91,7 @@ public class DebugInventoryNode : NarrationNode
         public override string Description   => "A tight-fitting cap of boiled leather. Minimal protection, maximum discretion.";
         public override float  Weight        => 0.4f;
         public override ItemSize Size        => ItemSize.Small;
-        public override List<ItemType> Types => new() { ItemType.Headgear };
+        public override List<ItemType> Types => new List<ItemType> { ItemType.Headgear };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Headgear;
         public override string[] Info => new[]
         {
@@ -108,7 +108,7 @@ public class DebugInventoryNode : NarrationNode
         public override string Description   => "A broad cloak of undyed wool. Heavy in rain, warm in wind.";
         public override float  Weight        => 2.1f;
         public override ItemSize Size        => ItemSize.Large;
-        public override List<ItemType> Types => new() { ItemType.Outerwear };
+        public override List<ItemType> Types => new List<ItemType> { ItemType.Outerwear };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Outerwear;
         public override string[] Info => new[]
         {
@@ -125,7 +125,7 @@ public class DebugInventoryNode : NarrationNode
         public override string Description   => "A loose-fitting shirt of pale linen, mended at both elbows.";
         public override float  Weight        => 0.3f;
         public override ItemSize Size        => ItemSize.Medium;
-        public override List<ItemType> Types => new() { ItemType.Bodywear };
+        public override List<ItemType> Types => new List<ItemType> { ItemType.Bodywear };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Bodywear;
         public override string[] Info => new[]
         {
@@ -141,7 +141,7 @@ public class DebugInventoryNode : NarrationNode
         public override string Description   => "Heavy knitted socks that itch but keep the feet dry.";
         public override float  Weight        => 0.15f;
         public override ItemSize Size        => ItemSize.Small;
-        public override List<ItemType> Types => new() { ItemType.Legwear };
+        public override List<ItemType> Types => new List<ItemType> { ItemType.Legwear };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Legwear;
         public override string[] Info => new[]
         {
@@ -157,7 +157,7 @@ public class DebugInventoryNode : NarrationNode
         public override string Description   => "Ankle-high boots resoled twice. Reliable on rough ground.";
         public override float  Weight        => 1.0f;
         public override ItemSize Size        => ItemSize.Small;
-        public override List<ItemType> Types => new() { ItemType.Footwear };
+        public override List<ItemType> Types => new List<ItemType> { ItemType.Footwear };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Footwear;
         public override string[] Info => new[]
         {
@@ -178,7 +178,7 @@ public class DebugInventoryNode : NarrationNode
         public override string Description  => "A serviceable iron blade, straight and double-edged.";
         public override float  Weight       => 1.4f;
         public override ItemSize Size       => ItemSize.Medium;
-        public override List<ItemType> Types => new() { ItemType.Other };
+        public override List<ItemType> Types => new List<ItemType> { ItemType.Other };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
         public int Level => 2;
         public string WeaponCategory => "long_blade";
@@ -198,7 +198,7 @@ public class DebugInventoryNode : NarrationNode
         public override string Description  => "A short sturdy blade designed for close quarters.";
         public override float  Weight       => 0.35f;
         public override ItemSize Size       => ItemSize.Small;
-        public override List<ItemType> Types => new() { ItemType.Other };
+        public override List<ItemType> Types => new List<ItemType> { ItemType.Other };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
         public int Level => 1;
         public string WeaponCategory => "short_blade";
@@ -218,7 +218,7 @@ public class DebugInventoryNode : NarrationNode
         public override string Description   => "A plain double-edged dagger with a bone handle. Functional and forgettable.";
         public override float  Weight        => 0.6f;
         public override ItemSize Size        => ItemSize.Small;
-        public override List<ItemType> Types => new() { ItemType.Other };
+        public override List<ItemType> Types => new List<ItemType> { ItemType.Other };
         public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
         public override string[] Info => new[]
         {
@@ -232,36 +232,42 @@ public class DebugInventoryNode : NarrationNode
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Clear spring water — liquid type.</summary>
-    public sealed class SpringWater : Item
+    public sealed class SpringWater : ConsumableItem
     {
         public override string ItemId        => "debug_spring_water";
         public override string DisplayName   => "Spring Water";
         public override string Description   => "Cold, clear water drawn from a mountain spring.";
         public override float  Weight        => 0.5f;
         public override ItemSize Size        => ItemSize.Small;
-        public override List<ItemType> Types => new() { ItemType.Liquid };
+        public override ConsumableType ConsumableType => ConsumableType.Drink;
         public override EquipmentAnchor? PreferredAnchor => null;
         public override string[] Info => new[]
         {
             "Clean and refreshing.",
             "Cannot be placed in bare hands.",
         };
+        protected override List<BodyHumor> GenerateComposition(Random rng) =>
+            new List<BodyHumor> { new AquaHumor(), new SerumHumor() }
+            .GetRange(0, PickHumorCount(rng));
     }
 
     /// <summary>Red wine — liquid type.</summary>
-    public sealed class RedWine : Item
+    public sealed class RedWine : ConsumableItem
     {
         public override string ItemId        => "debug_red_wine";
         public override string DisplayName   => "Red Wine";
         public override string Description   => "A rough local wine, dark and sharp. Keeps the cold out.";
         public override float  Weight        => 0.5f;
         public override ItemSize Size        => ItemSize.Small;
-        public override List<ItemType> Types => new() { ItemType.Liquid };
+        public override ConsumableType ConsumableType => ConsumableType.Drink;
         public override EquipmentAnchor? PreferredAnchor => null;
         public override string[] Info => new[]
         {
             "Faintly astringent.",
             "Cannot be mixed with other liquids in the same bottle.",
         };
+        protected override List<BodyHumor> GenerateComposition(Random rng) =>
+            new List<BodyHumor> { new AlcoholHumor(), new SugarHumor(), new MiasmaHumor() }
+            .GetRange(0, PickHumorCount(rng));
     }
 }

@@ -6,27 +6,27 @@ namespace Cathedral.Game.Narrative.World.Items;
 // ── Foraged / produce ───────────────────────────────────────────────────────
 
 /// <summary>Edible orchard or wild fruit. Small, light, perishable.</summary>
-public abstract class FruitItem : Item
+public abstract class FruitItem : ConsumableItem
 {
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.1f;
-    public override List<ItemType> Types => new() { ItemType.Other };
+    public override ConsumableType ConsumableType => ConsumableType.Food;
 }
 
 /// <summary>Edible root vegetable or pod. Small, light, edible raw.</summary>
-public abstract class VegetableItem : Item
+public abstract class VegetableItem : ConsumableItem
 {
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.2f;
-    public override List<ItemType> Types => new() { ItemType.Other };
+    public override ConsumableType ConsumableType => ConsumableType.Food;
 }
 
 /// <summary>Foraged herb sprig. Very light, used for flavour/medicine.</summary>
-public abstract class HerbItem : Item
+public abstract class HerbItem : ConsumableItem
 {
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.05f;
-    public override List<ItemType> Types => new() { ItemType.Other };
+    public override ConsumableType ConsumableType => ConsumableType.Inhalant;
 }
 
 // ── Raw materials ───────────────────────────────────────────────────────────
@@ -81,9 +81,9 @@ public abstract class AnimalProductItem : Item
 }
 
 /// <summary>Fish, shellfish, seaweed and other sea-edge yields.</summary>
-public abstract class SeaFoodItem : Item
+public abstract class SeaFoodItem : ConsumableItem
 {
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.3f;
-    public override List<ItemType> Types => new() { ItemType.Other };
+    public override ConsumableType ConsumableType => ConsumableType.Food;
 }

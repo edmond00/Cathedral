@@ -32,6 +32,9 @@ public enum ItemType
     Footwear,
     Other,
     Liquid,
+    Food,
+    Drink,
+    Inhalant,
 }
 
 public static class ItemSizeExtensions

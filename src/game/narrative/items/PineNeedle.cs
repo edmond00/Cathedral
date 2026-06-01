@@ -1,10 +1,15 @@
+using System;
 using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
-public sealed class PineNeedle : Item
+public sealed class PineNeedle : ConsumableItem
 {
     public override string ItemId => "pine_needle";
     public override string DisplayName => "Pine Needles";
     public override string Description => "A small cluster of stiff, sharp pine needles";
+    public override ConsumableType ConsumableType => ConsumableType.Inhalant;
+    protected override List<BodyHumor> GenerateComposition(Random rng) =>
+        new List<BodyHumor> { new VaporHumor(), new EtherHumor(), new EuphoraHumor() }
+        .GetRange(0, PickHumorCount(rng));
 }

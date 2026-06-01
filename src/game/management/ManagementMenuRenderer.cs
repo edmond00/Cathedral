@@ -105,6 +105,9 @@ public class ManagementMenuRenderer
     /// <summary>Callback for when the player clicks Back.</summary>
     public Action? OnBack { get; set; }
 
+    /// <summary>Callback invoked when the player successfully consumes an item (for audio feedback).</summary>
+    public Action? OnItemConsumed { get; set; }
+
     public ManagementMenuRenderer(TerminalHUD terminal, Protagonist protagonist, BodyArtData artData,
                                    PopupTerminalHUD? popup = null)
     {
@@ -129,6 +132,7 @@ public class ManagementMenuRenderer
         _memoryPanel = new MemoryPanelRenderer(terminal, popup);
 
         _inventoryMenu = new InventoryMenuRenderer(terminal, _bodyViewer, _humanGearData, popup);
+        _inventoryMenu.OnItemConsumed = () => { Render(); OnItemConsumed?.Invoke(); };
 
         var humorArtData = HumorArtData.Load("assets/art/humors");
         var heparMap     = HumorQueuePositionMap.Load("assets/art/humors/hepar.txt",    "hepar");

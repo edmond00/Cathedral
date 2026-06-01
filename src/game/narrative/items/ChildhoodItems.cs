@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
@@ -16,7 +17,7 @@ public sealed class StableChildSmock : Item
     public override string DisplayName      => "Stable Child Smock";
     public override string Description      => "A coarse linen smock stained with hay-dust and oat husks";
     public override ItemSize Size           => ItemSize.Medium;
-    public override List<ItemType> Types    => new() { ItemType.Bodywear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Bodywear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Bodywear;
 }
 
@@ -25,7 +26,7 @@ public sealed class StableChildBreeches : Item
     public override string ItemId           => "stable_child_breeches";
     public override string DisplayName      => "Stable Child Breeches";
     public override string Description      => "Knee-length wool breeches patched at the seat";
-    public override List<ItemType> Types    => new() { ItemType.Legwear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Legwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Legwear;
 }
 
@@ -34,7 +35,7 @@ public sealed class StableChildClogs : Item
     public override string ItemId           => "stable_child_clogs";
     public override string DisplayName      => "Wooden Clogs";
     public override string Description      => "Heavy wooden clogs, soled with old straw padding";
-    public override List<ItemType> Types    => new() { ItemType.Footwear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Footwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Footwear;
 }
 
@@ -45,7 +46,7 @@ public sealed class TownsmanCloak : Item
     public override string DisplayName      => "Townsman Cloak";
     public override string Description      => "A serviceable hooded cloak of plain dark wool";
     public override ItemSize Size           => ItemSize.Medium;
-    public override List<ItemType> Types    => new() { ItemType.Outerwear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Outerwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Outerwear;
 }
 
@@ -55,7 +56,7 @@ public sealed class TownsmanTunic : Item
     public override string DisplayName      => "Townsman Tunic";
     public override string Description      => "A plain belted tunic of undyed linen";
     public override ItemSize Size           => ItemSize.Medium;
-    public override List<ItemType> Types    => new() { ItemType.Bodywear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Bodywear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Bodywear;
 }
 
@@ -64,7 +65,7 @@ public sealed class TownsmanBreeches : Item
     public override string ItemId           => "townsman_breeches";
     public override string DisplayName      => "Townsman Breeches";
     public override string Description      => "Knee-length grey breeches of close-woven wool";
-    public override List<ItemType> Types    => new() { ItemType.Legwear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Legwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Legwear;
 }
 
@@ -73,7 +74,7 @@ public sealed class TownsmanCap : Item
     public override string ItemId           => "townsman_cap";
     public override string DisplayName      => "Townsman Cap";
     public override string Description      => "A felt cap with a turned-up brim";
-    public override List<ItemType> Types    => new() { ItemType.Headgear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Headgear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Headgear;
 }
 
@@ -84,7 +85,7 @@ public sealed class PlainRobe : Item
     public override string DisplayName      => "Plain Robe";
     public override string Description      => "A long undyed wool robe with a knotted cord at the waist";
     public override ItemSize Size           => ItemSize.Large;
-    public override List<ItemType> Types    => new() { ItemType.Outerwear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Outerwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Outerwear;
 }
 
@@ -95,7 +96,7 @@ public sealed class FarmerSmock : Item
     public override string DisplayName      => "Farmer Smock";
     public override string Description      => "A heavy linen smock smelling faintly of grain and barn";
     public override ItemSize Size           => ItemSize.Medium;
-    public override List<ItemType> Types    => new() { ItemType.Bodywear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Bodywear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Bodywear;
 }
 
@@ -104,7 +105,7 @@ public sealed class FarmerBreeches : Item
     public override string ItemId           => "farmer_breeches";
     public override string DisplayName      => "Farmer Breeches";
     public override string Description      => "Sturdy wool breeches, knee-tied with leather thongs";
-    public override List<ItemType> Types    => new() { ItemType.Legwear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Legwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Legwear;
 }
 
@@ -113,7 +114,7 @@ public sealed class FarmerStrawHat : Item
     public override string ItemId           => "farmer_straw_hat";
     public override string DisplayName      => "Straw Hat";
     public override string Description      => "A wide-brimmed straw hat, bleached pale by sun";
-    public override List<ItemType> Types    => new() { ItemType.Headgear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Headgear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Headgear;
 }
 
@@ -122,7 +123,7 @@ public sealed class FarmerClogs : Item
     public override string ItemId           => "farmer_clogs";
     public override string DisplayName      => "Farmer Clogs";
     public override string Description      => "Caked wooden clogs, heavy and serviceable";
-    public override List<ItemType> Types    => new() { ItemType.Footwear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Footwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Footwear;
 }
 
@@ -132,7 +133,7 @@ public sealed class SilkStockings : Item
     public override string ItemId           => "silk_stockings";
     public override string DisplayName      => "Silk Stockings";
     public override string Description      => "A pair of pale-grey silk stockings, finely knitted";
-    public override List<ItemType> Types    => new() { ItemType.Legwear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Legwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Legwear;
 }
 
@@ -142,7 +143,7 @@ public sealed class KneeLengthCoat : Item
     public override string DisplayName      => "Knee-length Coat";
     public override string Description      => "A panelled coat of dark wool trimmed in velvet";
     public override ItemSize Size           => ItemSize.Large;
-    public override List<ItemType> Types    => new() { ItemType.Outerwear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Outerwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Outerwear;
 }
 
@@ -152,7 +153,7 @@ public sealed class NobleUndertunic : Item
     public override string DisplayName      => "Noble Undertunic";
     public override string Description      => "A fine ivory linen undertunic with embroidered cuffs";
     public override ItemSize Size           => ItemSize.Medium;
-    public override List<ItemType> Types    => new() { ItemType.Bodywear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Bodywear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Bodywear;
 }
 
@@ -161,7 +162,7 @@ public sealed class SoftLeatherShoes : Item
     public override string ItemId           => "soft_leather_shoes";
     public override string DisplayName      => "Soft Leather Shoes";
     public override string Description      => "Thin-soled shoes of supple dyed leather, not made for rough roads";
-    public override List<ItemType> Types    => new() { ItemType.Footwear };
+    public override List<ItemType> Types    => new List<ItemType> { ItemType.Footwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Footwear;
 }
 
@@ -176,11 +177,15 @@ public sealed class TravelersBackpack : ContainerItem
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.BeltGear;
 }
 
-public sealed class Sausage : Item
+public sealed class Sausage : ConsumableItem
 {
     public override string ItemId      => "sausage";
     public override string DisplayName => "Sausage";
     public override string Description => "A coil of cured pork sausage, dark and pungent";
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override List<BodyHumor> GenerateComposition(Random rng) =>
+        new List<BodyHumor> { new BloodHumor(), new FatHumor(), new SaltHumor() }
+        .GetRange(0, PickHumorCount(rng));
 }
 
 public sealed class LeatherCanteen : BottleItem
@@ -193,12 +198,14 @@ public sealed class LeatherCanteen : BottleItem
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.BeltGear;
 }
 
-public sealed class WaterDraught : Item
+public sealed class WaterDraught : ConsumableItem
 {
     public override string ItemId      => "water_draught";
     public override string DisplayName => "Water";
     public override string Description => "Cool fresh water";
-    public override List<ItemType> Types => new() { ItemType.Liquid };
+    public override ConsumableType ConsumableType => ConsumableType.Drink;
+    protected override List<BodyHumor> GenerateComposition(Random rng) =>
+        new List<BodyHumor> { new AquaHumor() };
 }
 
 // ── Sundries ──────────────────────────────────────────────────────────
@@ -249,23 +256,35 @@ public sealed class WoodenDoll : Item
     public override string Description => "A small, lovingly worn doll of carved oak — a sleeping princess once";
 }
 
-public sealed class Worm : Item
+public sealed class Worm : ConsumableItem
 {
     public override string ItemId      => "worm";
     public override string DisplayName => "Worm";
     public override string Description => "A long pale earthworm, still squirming";
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override List<BodyHumor> GenerateComposition(Random rng) =>
+        new List<BodyHumor> { new YellowBileHumor(), new FiberHumor(), new FungiHumor() }
+        .GetRange(0, PickHumorCount(rng));
 }
 
-public sealed class MouseMeat : Item
+public sealed class MouseMeat : ConsumableItem
 {
     public override string ItemId      => "mouse_meat";
     public override string DisplayName => "Mouse Meat";
     public override string Description => "A scrap of stringy mouse flesh, scarcely a mouthful";
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override List<BodyHumor> GenerateComposition(Random rng) =>
+        new List<BodyHumor> { new BloodHumor(), new FiberHumor() }
+        .GetRange(0, PickHumorCount(rng));
 }
 
-public sealed class SquirrelMeat : Item
+public sealed class SquirrelMeat : ConsumableItem
 {
     public override string ItemId      => "squirrel_meat";
     public override string DisplayName => "Squirrel Meat";
     public override string Description => "A small dressed haunch of squirrel meat";
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override List<BodyHumor> GenerateComposition(Random rng) =>
+        new List<BodyHumor> { new BloodHumor(), new SaltHumor(), new FatHumor() }
+        .GetRange(0, PickHumorCount(rng));
 }

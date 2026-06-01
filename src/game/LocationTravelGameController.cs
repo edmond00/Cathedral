@@ -1635,6 +1635,8 @@ public class LocationTravelGameController : IDisposable
                 _managementMenuRenderer = null;
                 SetMode(GameMode.MainMenu);
             };
+            _managementMenuRenderer.OnItemConsumed = () =>
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
             
             _managementMenuRenderer.Render();
         }

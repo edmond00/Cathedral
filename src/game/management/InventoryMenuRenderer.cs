@@ -172,6 +172,15 @@ public sealed class InventoryMenuRenderer
     // Cached member reference for event handlers
     private PartyMember? _member;
 
+    // Consume button hit region (row of the button label, or -1 if not shown)
+    private int _consumeButtonRow = -1;
+
+    /// <summary>
+    /// Invoked when the player successfully consumes an item.
+    /// Wire this up in the parent renderer to play a sound or update other state.
+    /// </summary>
+    public Action? OnItemConsumed { get; set; }
+
     // ── Constructor ───────────────────────────────────────────────
     public InventoryMenuRenderer(TerminalHUD terminal, BodyArtViewer bodyViewer, GearAnchorData gearData,
                                   PopupTerminalHUD? popup = null)
@@ -376,6 +385,25 @@ public sealed class InventoryMenuRenderer
         }
 
         if (_isDragging) { CancelDrag(); return true; }
+
+        // Right-panel consume button click (right panel, not dragging, button visible)
+        if (x >= RightContentX && _consumeButtonRow >= 0 && y == _consumeButtonRow
+            && _member != null && _selectedAnchor.HasValue && _selectedItemIdx >= 0)
+        {
+            var items = _member.EquippedItems[_selectedAnchor.Value];
+            if (_selectedItemIdx < items.Count
+                && items[_selectedItemIdx] is ConsumableItem consumable
+                && consumable.CanConsume(_member))
+            {
+                consumable.Consume(_member);
+                _selectedAnchor  = null;
+                _selectedItemIdx = -1;
+                _selectedContentPath.Clear();
+                _consumeButtonRow = -1;
+                OnItemConsumed?.Invoke();
+                return true;
+            }
+        }
 
         _selectedAnchor  = null;
         _selectedItemIdx = -1;
@@ -982,6 +1010,62 @@ public sealed class InventoryMenuRenderer
                 }
             }
             y++;
+        }
+
+        // ── Consumable composition + button ───────────────────────
+        _consumeButtonRow = -1;
+        if (item is ConsumableItem consumable && _member != null)
+        {
+            if (y <= InfoEndRow) { DrawSep(y); y++; }
+            if (y <= InfoEndRow)
+            {
+                _terminal.Text(RightContentX, y, "— Composition —", InfoLabelColor, RightPanelBg);
+                y++;
+            }
+
+            var nosestat   = new NoseRecognitionStat();
+            int recognized = nosestat.IsUsable(_member) ? nosestat.GetValue(_member) : 0;
+            var composition = consumable.Composition;
+
+            for (int ci = 0; ci < composition.Count; ci++)
+            {
+                if (y > InfoEndRow) break;
+                if (ci < recognized || recognized >= 99)
+                {
+                    var h = composition[ci];
+                    // Symbol in humor color, then name
+                    _terminal.SetCell(RightContentX, y, h.Symbol, h.Color, RightPanelBg);
+                    _terminal.Text(RightContentX + 2, y, TruncRight(h.Name, RightContentW - 2), InfoValueColor, RightPanelBg);
+                }
+                else
+                {
+                    _terminal.Text(RightContentX, y, "? unknown", InfoLabelColor, RightPanelBg);
+                }
+                y++;
+            }
+            y++;
+
+            // Consume button
+            if (y <= InfoEndRow)
+            {
+                string reason = consumable.GetCannotConsumeReason(_member);
+                bool canConsume = reason == null;
+
+                string btnLabel = consumable.ConsumeButtonLabel;
+                Vector4 btnFg  = canConsume ? InfoTitleColor : InfoLabelColor;
+                _terminal.Text(RightContentX, y, $"[ {btnLabel} ]", btnFg, RightPanelBg);
+                if (!canConsume && y + 1 <= InfoEndRow)
+                {
+                    _terminal.Text(RightContentX, y + 1,
+                        TruncRight(reason ?? string.Empty, RightContentW),
+                        InfoLabelColor, RightPanelBg);
+                }
+
+                if (canConsume)
+                    _consumeButtonRow = y;
+
+                y += canConsume ? 1 : 2;
+            }
         }
 
         return y;

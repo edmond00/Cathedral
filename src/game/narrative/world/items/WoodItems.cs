@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Narrative.World.Items;
@@ -29,11 +31,15 @@ public sealed class Twig : WoodRawItem
     public override float    Weight => 0.05f;
 }
 
-public sealed class BirchSap : WoodRawItem
+public sealed class BirchSap : ConsumableItem
 {
     public override string ItemId      => "birch_sap";
     public override string DisplayName => "Birch Sap";
     public override string Description => "A small flask of clear birch sap, faintly sweet";
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.3f;
+    public override ConsumableType ConsumableType => ConsumableType.Drink;
+    protected override List<BodyHumor> GenerateComposition(Random rng) =>
+        new List<BodyHumor> { new AquaHumor(), new SugarHumor() }
+        .GetRange(0, PickHumorCount(rng));
 }

@@ -1,25 +1,33 @@
+using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Narrative.World.Items;
 
-public sealed class Flour : Item
+public sealed class Flour : ConsumableItem
 {
     public override string ItemId      => "flour";
     public override string DisplayName => "Flour";
     public override string Description => "A cloth sack of stone-ground flour, dust pale on its outside";
     public override ItemSize Size => ItemSize.Medium;
     public override float    Weight => 1.5f;
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override List<BodyHumor> GenerateComposition(Random rng) =>
+        new List<BodyHumor> { new FiberHumor(), new PulpHumor(), new SaltHumor() }
+        .GetRange(0, PickHumorCount(rng));
 }
 
-public sealed class Ale : Item
+public sealed class Ale : ConsumableItem
 {
     public override string ItemId      => "ale";
     public override string DisplayName => "Ale";
     public override string Description => "A clay jug of dark, yeasty ale";
     public override ItemSize Size => ItemSize.Medium;
     public override float    Weight => 1.2f;
-    public override List<ItemType> Types => new() { ItemType.Liquid };
+    public override ConsumableType ConsumableType => ConsumableType.Drink;
+    protected override List<BodyHumor> GenerateComposition(Random rng) =>
+        new List<BodyHumor> { new AlcoholHumor(), new SugarHumor(), new FumeHumor() }
+        .GetRange(0, PickHumorCount(rng));
 }
 
 public sealed class Mug : Item
