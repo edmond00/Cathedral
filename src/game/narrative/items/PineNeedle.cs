@@ -9,7 +9,7 @@ public sealed class PineNeedle : ConsumableItem
     public override string DisplayName => "Pine Needles";
     public override string Description => "A small cluster of stiff, sharp pine needles";
     public override ConsumableType ConsumableType => ConsumableType.Inhalant;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new VaporHumor(), new EtherHumor(), new EuphoraHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<VaporHumor>(45).Add<EuphoraHumor>(30).Add<EtherHumor>(25);
 }

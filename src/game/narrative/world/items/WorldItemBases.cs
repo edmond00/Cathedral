@@ -11,6 +11,8 @@ public abstract class FruitItem : ConsumableItem
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.1f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
+    // Small wild fruit and berries default to a light composition; tree fruit overrides to Hearty.
+    protected override HumorRichness Richness => HumorRichness.Modest;
 }
 
 /// <summary>Edible root vegetable or pod. Small, light, edible raw.</summary>
@@ -19,6 +21,8 @@ public abstract class VegetableItem : ConsumableItem
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.2f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
+    // Cultivated vegetables are proper food.
+    protected override HumorRichness Richness => HumorRichness.Hearty;
 }
 
 /// <summary>Foraged herb sprig. Very light, used for flavour/medicine.</summary>
@@ -27,6 +31,8 @@ public abstract class HerbItem : ConsumableItem
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.05f;
     public override ConsumableType ConsumableType => ConsumableType.Inhalant;
+    // Inhaled sprigs carry only a wisp of humor.
+    protected override HumorRichness Richness => HumorRichness.Sparse;
 }
 
 // ── Raw materials ───────────────────────────────────────────────────────────
@@ -86,4 +92,6 @@ public abstract class SeaFoodItem : ConsumableItem
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.3f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
+    // Fresh-caught fish and shellfish are nourishing.
+    protected override HumorRichness Richness => HumorRichness.Hearty;
 }

@@ -9,7 +9,6 @@ public sealed class Mushroom : ConsumableItem
     public override string DisplayName => "Mushroom";
     public override string Description => "A pale mushroom growing in shade at the base of a rock";
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new FungiHumor(), new FiberHumor(), new EtherHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FungiHumor>(60).Add<FiberHumor>(25).Add<PhlegmHumor>(15);
 }

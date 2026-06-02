@@ -9,7 +9,7 @@ public sealed class Poppy : ConsumableItem
     public override string DisplayName => "Poppy";
     public override string Description => "A vivid red poppy, its petals paper-thin";
     public override ConsumableType ConsumableType => ConsumableType.Inhalant;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new OpiumHumor(), new EuphoraHumor(), new FumeHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<OpiumHumor>(60).Add<EuphoraHumor>(25).Add<FumeHumor>(15);
 }

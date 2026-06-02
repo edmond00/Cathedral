@@ -173,7 +173,8 @@ public sealed class InventoryMenuRenderer
     private PartyMember? _member;
 
     // Consume button hit region (row of the button label, or -1 if not shown)
-    private int _consumeButtonRow = -1;
+    private int  _consumeButtonRow     = -1;
+    private bool _consumeButtonHovered = false;
 
     /// <summary>
     /// Invoked when the player successfully consumes an item.
@@ -248,6 +249,9 @@ public sealed class InventoryMenuRenderer
         _hoveredItemIdx     = newIdx;
         _hoveredContent     = newContent;
         _hoveringRightPanel = onRight;
+
+        bool newConsumeHovered = _consumeButtonRow >= 0 && x >= RightContentX && y == _consumeButtonRow;
+        if (newConsumeHovered != _consumeButtonHovered) { _consumeButtonHovered = newConsumeHovered; changed = true; }
 
         // During drag: update sticky hover-item when the cursor enters a real item.
         // When the cursor moves to a placeholder / header / empty space the previous
@@ -386,29 +390,17 @@ public sealed class InventoryMenuRenderer
 
         if (_isDragging) { CancelDrag(); return true; }
 
-        // Right-panel consume button click (right panel, not dragging, button visible)
-        if (x >= RightContentX && _consumeButtonRow >= 0 && y == _consumeButtonRow
-            && _member != null && _selectedAnchor.HasValue && _selectedItemIdx >= 0)
-        {
-            var items = _member.EquippedItems[_selectedAnchor.Value];
-            if (_selectedItemIdx < items.Count
-                && items[_selectedItemIdx] is ConsumableItem consumable
-                && consumable.CanConsume(_member))
-            {
-                consumable.Consume(_member);
-                _selectedAnchor  = null;
-                _selectedItemIdx = -1;
-                _selectedContentPath.Clear();
-                _consumeButtonRow = -1;
-                OnItemConsumed?.Invoke();
-                return true;
-            }
-        }
+        // Mouse-down on the consume button: keep the current selection so the
+        // mouse-up handler can resolve the displayed item and consume it.
+        // (Clearing the selection here would reset _consumeButtonRow on the
+        // re-render and the consume click would never register.)
+        if (_consumeButtonRow >= 0 && x >= RightContentX && y == _consumeButtonRow)
+            return true;
 
         _selectedAnchor  = null;
         _selectedItemIdx = -1;
         _selectedContentPath.Clear();
-        return false;
+        return true;
     }
 
     /// <summary>
@@ -464,6 +456,24 @@ public sealed class InventoryMenuRenderer
                 SelectContent(contentIdx);
                 return true;
             }
+
+            // Consume button click (mouse-up on the consume button row).
+            if (_consumeButtonRow >= 0 && x >= RightContentX && y == _consumeButtonRow && _member != null)
+            {
+                var displayedItem = ResolveDisplayedItem();
+                if (displayedItem is ConsumableItem consumable && consumable.CanConsume(_member))
+                {
+                    consumable.Consume(_member);
+                    _selectedAnchor       = null;
+                    _selectedItemIdx      = -1;
+                    _selectedContentPath.Clear();
+                    _consumeButtonRow     = -1;
+                    _consumeButtonHovered = false;
+                    OnItemConsumed?.Invoke();
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -653,6 +663,24 @@ public sealed class InventoryMenuRenderer
                 return current;  // non-container selected; parent is the viewed container
         }
         return current;
+    }
+
+    private Item? ResolveDisplayedItem()
+    {
+        if (_member == null || !_selectedAnchor.HasValue || _selectedItemIdx < 0) return null;
+        var items = _member.EquippedItems[_selectedAnchor.Value];
+        if (_selectedItemIdx >= items.Count) return null;
+        Item displayed = items[_selectedItemIdx];
+        foreach (int ci in _selectedContentPath)
+        {
+            if (displayed is ContainerItem container)
+            {
+                if (ci >= container.Contents.Count) break;
+                displayed = container.Contents[ci];
+            }
+            else break;
+        }
+        return displayed;
     }
 
     private void ResetDragState()
@@ -1052,8 +1080,24 @@ public sealed class InventoryMenuRenderer
                 bool canConsume = reason == null;
 
                 string btnLabel = consumable.ConsumeButtonLabel;
-                Vector4 btnFg  = canConsume ? InfoTitleColor : InfoLabelColor;
-                _terminal.Text(RightContentX, y, $"[ {btnLabel} ]", btnFg, RightPanelBg);
+                // Match the CLEAR button styling from the travel box UI.
+                Vector4 btnFg, btnBg;
+                if (!canConsume)
+                {
+                    btnFg = InfoLabelColor;
+                    btnBg = RightPanelBg;
+                }
+                else if (_consumeButtonHovered)
+                {
+                    btnFg = Config.TravelUI.ClearButtonHoverTextColor;
+                    btnBg = Config.TravelUI.ClearButtonHoverBackgroundColor;
+                }
+                else
+                {
+                    btnFg = Config.TravelUI.ClearButtonTextColor;
+                    btnBg = Config.TravelUI.ClearButtonBackgroundColor;
+                }
+                _terminal.Text(RightContentX, y, $"[ {btnLabel} ]", btnFg, btnBg);
                 if (!canConsume && y + 1 <= InfoEndRow)
                 {
                     _terminal.Text(RightContentX, y + 1,

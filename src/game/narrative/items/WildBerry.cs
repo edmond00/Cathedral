@@ -9,7 +9,7 @@ public sealed class WildBerry : ConsumableItem
     public override string DisplayName => "Wild Berry";
     public override string Description => "A small dark berry of uncertain edibility";
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new SugarHumor(), new FumeHumor(), new FungiHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<SugarHumor>(50).Add<PulpHumor>(30).Add<FungiHumor>(20);
 }

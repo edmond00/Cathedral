@@ -39,7 +39,6 @@ public sealed class BirchSap : ConsumableItem
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.3f;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new AquaHumor(), new SugarHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<AquaHumor>(55).Add<SugarHumor>(45);
 }

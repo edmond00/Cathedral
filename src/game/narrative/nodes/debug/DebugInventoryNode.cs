@@ -246,9 +246,9 @@ public class DebugInventoryNode : NarrationNode
             "Clean and refreshing.",
             "Cannot be placed in bare hands.",
         };
-        protected override List<BodyHumor> GenerateComposition(Random rng) =>
-            new List<BodyHumor> { new AquaHumor(), new SerumHumor() }
-            .GetRange(0, PickHumorCount(rng));
+        protected override HumorRichness Richness => HumorRichness.Sparse;
+        protected override HumorRecipe Recipe => new HumorRecipe()
+            .Add<AquaHumor>(70).Add<SerumHumor>(30);
     }
 
     /// <summary>Red wine — liquid type.</summary>
@@ -266,8 +266,7 @@ public class DebugInventoryNode : NarrationNode
             "Faintly astringent.",
             "Cannot be mixed with other liquids in the same bottle.",
         };
-        protected override List<BodyHumor> GenerateComposition(Random rng) =>
-            new List<BodyHumor> { new AlcoholHumor(), new SugarHumor(), new MiasmaHumor() }
-            .GetRange(0, PickHumorCount(rng));
+        protected override HumorRecipe Recipe => new HumorRecipe()
+            .Add<AlcoholHumor>(50).Add<SugarHumor>(25).Add<MiasmaHumor>(25);
     }
 }

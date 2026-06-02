@@ -9,7 +9,7 @@ public sealed class Daisy : ConsumableItem
     public override string DisplayName => "Daisy";
     public override string Description => "A common white daisy with a yellow centre";
     public override ConsumableType ConsumableType => ConsumableType.Inhalant;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new EtherHumor(), new VaporHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<EtherHumor>(60).Add<VaporHumor>(40);
 }

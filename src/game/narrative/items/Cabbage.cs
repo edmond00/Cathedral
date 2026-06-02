@@ -10,7 +10,7 @@ public sealed class Cabbage : ConsumableItem
     public override string Description => "A firm pale-green head of cabbage, its outer leaves limp";
     public override ItemSize Size => ItemSize.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new FiberHumor(), new VaporHumor(), new PhlegmHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Hearty;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FiberHumor>(55).Add<PulpHumor>(25).Add<VaporHumor>(20);
 }

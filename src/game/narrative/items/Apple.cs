@@ -9,7 +9,7 @@ public sealed class Apple : ConsumableItem
     public override string DisplayName => "Apple";
     public override string Description => "A ripe apple, red-green and faintly bruised";
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new SugarHumor(), new FiberHumor(), new PulpHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Hearty;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<PulpHumor>(70).Add<SugarHumor>(25).Add<FiberHumor>(5);
 }

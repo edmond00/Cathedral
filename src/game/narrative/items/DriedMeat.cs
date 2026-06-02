@@ -10,7 +10,7 @@ public sealed class DriedMeat : ConsumableItem
     public override string Description => "A strip of salted dark meat, hard and leathery, smelling of brine";
     public override ConsumableType ConsumableType => ConsumableType.Food;
     public override bool IsHard => true;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new BloodHumor(), new SaltHumor(), new FatHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Rich;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<BloodHumor>(40).Add<SaltHumor>(35).Add<FatHumor>(25);
 }

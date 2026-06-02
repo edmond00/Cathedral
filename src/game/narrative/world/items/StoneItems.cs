@@ -11,9 +11,9 @@ public sealed class Clay : ConsumableItem
     public override string Description => "A wet lump of grey-brown clay, cool and dense in the hand";
     public override float Weight => 0.6f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new SaltHumor(), new PhlegmHumor(), new BlackBileHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<BlackBileHumor>(50).Add<PhlegmHumor>(30).Add<SaltHumor>(20);
 }
 
 public sealed class Lichen : ConsumableItem
@@ -23,7 +23,7 @@ public sealed class Lichen : ConsumableItem
     public override string Description => "A papery crust of grey-green lichen prised from rock";
     public override float Weight => 0.05f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new FiberHumor(), new YellowBileHumor(), new PhlegmHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FiberHumor>(45).Add<FungiHumor>(30).Add<YellowBileHumor>(25);
 }

@@ -11,7 +11,7 @@ public sealed class Grain : ConsumableItem
     public override ItemSize Size      => ItemSize.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     public override bool IsHard => true;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new FiberHumor(), new PulpHumor(), new SaltHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Hearty;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FiberHumor>(55).Add<CalxHumor>(25).Add<PulpHumor>(20);
 }

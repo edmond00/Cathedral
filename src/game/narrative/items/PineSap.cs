@@ -9,7 +9,7 @@ public sealed class PineSap : ConsumableItem
     public override string DisplayName => "Pine Sap";
     public override string Description => "A sticky bead of amber-coloured pine resin";
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new SaltHumor(), new CalxHumor(), new PhlegmHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<SugarHumor>(45).Add<PhlegmHumor>(35).Add<CalxHumor>(20);
 }

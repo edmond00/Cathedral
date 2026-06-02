@@ -12,9 +12,9 @@ public sealed class Nettle : ConsumableItem
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.05f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new FiberHumor(), new YellowBileHumor(), new PhlegmHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FiberHumor>(50).Add<YellowBileHumor>(30).Add<VaporHumor>(20);
 }
 
 public sealed class Fern : ConsumableItem
@@ -25,9 +25,9 @@ public sealed class Fern : ConsumableItem
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.05f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new PulpHumor(), new FungiHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<PulpHumor>(45).Add<FungiHumor>(30).Add<FiberHumor>(25);
 }
 
 public sealed class Ivy : Item
@@ -47,9 +47,9 @@ public sealed class Bramble : ConsumableItem
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.1f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new PulpHumor(), new FumeHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<PulpHumor>(45).Add<FumeHumor>(30).Add<FiberHumor>(25);
 }
 
 public sealed class Reed : ConsumableItem
@@ -60,9 +60,9 @@ public sealed class Reed : ConsumableItem
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.1f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new FiberHumor(), new SaltHumor(), new PhlegmHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FiberHumor>(55).Add<SaltHumor>(25).Add<PhlegmHumor>(20);
 }
 
 public sealed class Watercress : ConsumableItem
@@ -73,7 +73,7 @@ public sealed class Watercress : ConsumableItem
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.1f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new FiberHumor(), new VaporHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FiberHumor>(45).Add<VaporHumor>(35).Add<PulpHumor>(20);
 }

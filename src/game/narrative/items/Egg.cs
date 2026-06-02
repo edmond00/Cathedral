@@ -9,7 +9,7 @@ public sealed class Egg : ConsumableItem
     public override string DisplayName => "Egg";
     public override string Description => "A brown hen's egg, warm and faintly spotted";
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new FatHumor(), new SerumHumor(), new FiberHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Hearty;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FatHumor>(40).Add<SerumHumor>(40).Add<CalxHumor>(20);
 }

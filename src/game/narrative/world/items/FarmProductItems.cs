@@ -11,9 +11,9 @@ public sealed class Milk : ConsumableItem
     public override string Description => "A wooden pail of fresh, faintly warm milk";
     public override float Weight => 1.0f;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new SerumHumor(), new AquaHumor(), new SaltHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Hearty;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<SerumHumor>(45).Add<FatHumor>(30).Add<AquaHumor>(25);
 }
 
 public sealed class Butter : Item

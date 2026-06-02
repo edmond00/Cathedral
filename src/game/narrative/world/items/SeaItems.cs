@@ -9,9 +9,8 @@ public sealed class Herring : SeaFoodItem
     public override string ItemId      => "herring";
     public override string DisplayName => "Herring";
     public override string Description => "A silver-flanked herring, eyes still bright";
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new BloodHumor(), new SaltHumor(), new FiberHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<BloodHumor>(40).Add<SaltHumor>(35).Add<FatHumor>(25);
 }
 
 public sealed class Cod : SeaFoodItem
@@ -21,9 +20,9 @@ public sealed class Cod : SeaFoodItem
     public override string Description => "A fat cod, mottled grey-green along its back";
     public override ItemSize Size => ItemSize.Medium;
     public override float    Weight => 1.0f;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new BloodHumor(), new SaltHumor(), new FiberHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Rich;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<BloodHumor>(45).Add<FatHumor>(30).Add<SaltHumor>(25);
 }
 
 public sealed class Mackerel : SeaFoodItem
@@ -31,9 +30,8 @@ public sealed class Mackerel : SeaFoodItem
     public override string ItemId      => "mackerel";
     public override string DisplayName => "Mackerel";
     public override string Description => "A streamlined mackerel banded with iridescent green-blue";
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new BloodHumor(), new SaltHumor(), new FiberHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<BloodHumor>(40).Add<FatHumor>(30).Add<SaltHumor>(30);
 }
 
 public sealed class Crab : SeaFoodItem
@@ -41,9 +39,8 @@ public sealed class Crab : SeaFoodItem
     public override string ItemId      => "crab";
     public override string DisplayName => "Crab";
     public override string Description => "A scuttling brown crab, claws still snapping";
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new SaltHumor(), new CalxHumor(), new FungiHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<SaltHumor>(35).Add<CalxHumor>(30).Add<FatHumor>(20).Add<BloodHumor>(15);
 }
 
 public sealed class Mussel : SeaFoodItem
@@ -51,9 +48,9 @@ public sealed class Mussel : SeaFoodItem
     public override string ItemId      => "mussel";
     public override string DisplayName => "Mussel";
     public override string Description => "A fistful of black-shelled mussels clamped tight";
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new BloodHumor(), new SaltHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Modest;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<SaltHumor>(40).Add<BloodHumor>(30).Add<CalxHumor>(30);
 }
 
 public sealed class Shell : Item
@@ -73,9 +70,9 @@ public sealed class Seaweed : ConsumableItem
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.2f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new SaltHumor(), new FiberHumor(), new PhlegmHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<SaltHumor>(50).Add<FiberHumor>(35).Add<PhlegmHumor>(15);
 }
 
 public sealed class Driftwood : Item

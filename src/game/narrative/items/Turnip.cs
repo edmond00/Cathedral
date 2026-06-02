@@ -9,7 +9,7 @@ public sealed class Turnip : ConsumableItem
     public override string DisplayName => "Turnip";
     public override string Description => "A knobbed purple-white root, still clodded with earth";
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new FiberHumor(), new PulpHumor(), new SaltHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Hearty;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FiberHumor>(50).Add<PulpHumor>(30).Add<VaporHumor>(20);
 }

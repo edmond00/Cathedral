@@ -12,9 +12,9 @@ public sealed class Flour : ConsumableItem
     public override ItemSize Size => ItemSize.Medium;
     public override float    Weight => 1.5f;
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new FiberHumor(), new PulpHumor(), new SaltHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Hearty;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FiberHumor>(60).Add<CalxHumor>(25).Add<PulpHumor>(15);
 }
 
 public sealed class Ale : ConsumableItem
@@ -25,9 +25,9 @@ public sealed class Ale : ConsumableItem
     public override ItemSize Size => ItemSize.Medium;
     public override float    Weight => 1.2f;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new AlcoholHumor(), new SugarHumor(), new FumeHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Hearty;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<AlcoholHumor>(50).Add<SugarHumor>(25).Add<FumeHumor>(25);
 }
 
 public sealed class Mug : Item

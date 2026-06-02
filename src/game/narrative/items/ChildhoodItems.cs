@@ -183,9 +183,9 @@ public sealed class Sausage : ConsumableItem
     public override string DisplayName => "Sausage";
     public override string Description => "A coil of cured pork sausage, dark and pungent";
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new BloodHumor(), new FatHumor(), new SaltHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Rich;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<BloodHumor>(40).Add<FatHumor>(35).Add<SaltHumor>(25);
 }
 
 public sealed class LeatherCanteen : BottleItem
@@ -204,8 +204,9 @@ public sealed class WaterDraught : ConsumableItem
     public override string DisplayName => "Water";
     public override string Description => "Cool fresh water";
     public override ConsumableType ConsumableType => ConsumableType.Drink;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new AquaHumor() };
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<AquaHumor>(100);
 }
 
 // ── Sundries ──────────────────────────────────────────────────────────
@@ -262,9 +263,9 @@ public sealed class Worm : ConsumableItem
     public override string DisplayName => "Worm";
     public override string Description => "A long pale earthworm, still squirming";
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new YellowBileHumor(), new FiberHumor(), new FungiHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FiberHumor>(40).Add<FungiHumor>(35).Add<YellowBileHumor>(25);
 }
 
 public sealed class MouseMeat : ConsumableItem
@@ -273,9 +274,9 @@ public sealed class MouseMeat : ConsumableItem
     public override string DisplayName => "Mouse Meat";
     public override string Description => "A scrap of stringy mouse flesh, scarcely a mouthful";
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new BloodHumor(), new FiberHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<BloodHumor>(55).Add<FiberHumor>(25).Add<FatHumor>(20);
 }
 
 public sealed class SquirrelMeat : ConsumableItem
@@ -284,7 +285,6 @@ public sealed class SquirrelMeat : ConsumableItem
     public override string DisplayName => "Squirrel Meat";
     public override string Description => "A small dressed haunch of squirrel meat";
     public override ConsumableType ConsumableType => ConsumableType.Food;
-    protected override List<BodyHumor> GenerateComposition(Random rng) =>
-        new List<BodyHumor> { new BloodHumor(), new SaltHumor(), new FatHumor() }
-        .GetRange(0, PickHumorCount(rng));
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<BloodHumor>(45).Add<FatHumor>(30).Add<SaltHumor>(25);
 }
