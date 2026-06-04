@@ -36,7 +36,7 @@
 
 ### EARS (3)
 
-- travel ennemies encounter avoidance chance
+- initiative
 
 ### EYES (3)
 
@@ -44,7 +44,7 @@
 
 ### NOSE (3)
 
-- initiative
+- travel ennemies encounter avoidance chance
 - consummable chemical composition identification level
 
 ### TEETH (2)

@@ -522,9 +522,21 @@ public abstract class PartyMember
         Wounds.Any(w => w.AffectsOrganPart(organPartId, organId, bodyPartId)
                      && w.Handicap == WoundHandicap.High);
 
-    /// <summary>Maximum HP = trunk body part score.</summary>
-    public int MaxHp =>
-        _bodyParts.FirstOrDefault(bp => bp.Id == "trunk")?.Score ?? 0;
+    /// <summary>
+    /// Maximum HP = trunk body part score, defined by <see cref="HealthPointStat"/>.
+    /// Uses the raw source score (not <c>GetValue</c>) so wounds are not double-counted —
+    /// they are subtracted once in <see cref="CurrentHp"/>.
+    /// </summary>
+    public int MaxHp
+    {
+        get
+        {
+            var stat = DerivedStats.FirstOrDefault(s => s.Name == "health_point");
+            return stat != null
+                ? stat.CalculateValue(stat.GetSourceScore(this))
+                : _bodyParts.FirstOrDefault(bp => bp.Id == "trunk")?.Score ?? 0;
+        }
+    }
 
     /// <summary>Current HP = max HP minus total wound count (all severities cost 1 HP).</summary>
     public int CurrentHp => Math.Max(0, MaxHp - Wounds.Count);

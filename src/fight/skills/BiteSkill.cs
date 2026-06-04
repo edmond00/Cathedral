@@ -8,7 +8,7 @@ public sealed class BiteSkill : FightingSkill
     public override string Description            => "Bite the opponent's arm.";
     public override string RequiredModusMentisId  => "ferocity";
     public override string[] SecondaryModusMentisIds => new[] { "predator", "blood_lust" };
-    public override FightingMedium Medium         => FightingMedium.Organ("teeth");
+    public override FightingMedium Medium         => FightingMedium.Organ("teeths");
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

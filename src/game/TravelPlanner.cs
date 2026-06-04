@@ -155,6 +155,18 @@ namespace Cathedral.Game
             var biomes = new List<string>();
             string? lastBiome = null;
 
+            // Nose-derived encounter avoidance: scales down each biome's per-cell chance.
+            // 0 at level 0, up to 0.30 at level 3. Falls back to no reduction when the
+            // protagonist is unavailable or lacks a usable nose.
+            float avoidance = 0f;
+            if (protagonist != null)
+            {
+                var avoidanceStat = new EncounterAvoidanceStat();
+                if (avoidanceStat.IsUsable(protagonist))
+                    avoidance = avoidanceStat.GetValue(protagonist) / 100f;
+            }
+            float encounterFactor = MathClamp01(1f - avoidance);
+
             for (int i = 1; i < path.Count; i++)
             {
                 string biomeName = getBiomeNameForVertex(path[i]) ?? "unknown";
@@ -168,7 +180,7 @@ namespace Cathedral.Game
                 heat += info.VitalHeatPerCell;
                 foreach (var enc in info.Encounters)
                 {
-                    double clamped = Math.Clamp(enc.ChancePerCell, 0f, 0.999f);
+                    double clamped = Math.Clamp(enc.ChancePerCell * encounterFactor, 0f, 0.999f);
                     double logTerm = Math.Log(1.0 - clamped);
                     if (!noEncounterLog.ContainsKey(enc.CreatureName))
                         noEncounterLog[enc.CreatureName] = 0.0;

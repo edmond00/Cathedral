@@ -1,7 +1,7 @@
 namespace Cathedral.Fight;
 
 /// <summary>
-/// Describes a body-part organ medium (e.g. "hands", "fangs", "leg") and owns the ordered list of
+/// Describes a body-part organ medium (e.g. "hands", "fangs", "legs") and owns the ordered list of
 /// fighting skill IDs available when that organ is present and undisabled.
 /// The skill order reflects increasing learning difficulty: index 0 is the easiest to learn.
 /// </summary>

@@ -103,7 +103,7 @@ public class KnockdownRecoveryStat : DerivedStat
 
 /// <summary>
 /// Initiative — base score added to a 1d6 roll at combat start to determine turn order.
-/// Source: nose organ (visage).
+/// Source: ears organ (visage).
 /// Formula: score (range 1–10).
 /// </summary>
 public class InitiativeStat : DerivedStat
@@ -111,7 +111,7 @@ public class InitiativeStat : DerivedStat
     public override string Name         => "initiative";
     public override string DisplayName  => "Initiative";
     public override string ShortDisplayName => "Initiative";
-    public override string? RelatedOrganId => "nose";
+    public override string? RelatedOrganId => "ears";
     public override int CalculateValue(int sourceScore) => sourceScore;
     public override int MinimumValue() => 1;
 }

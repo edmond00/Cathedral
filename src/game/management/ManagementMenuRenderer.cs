@@ -83,11 +83,8 @@ public class ManagementMenuRenderer
     private const int MenuFirstItemRow = 5;
     // Items at rows 5, 6, 7 (one per tab)
 
-    // Party section (bottom of panel, always visible)
-    private const int PartyTitleRow = 86;
-    private const int PartyDividerRow = 87;
-    private const int PartyFirstItemRow = 89;
-    // Items start at row 89
+    // Party section: bottom-anchored just above the back button and sized to the party,
+    // so it never overlaps BACK regardless of companion count (see RenderPartySection).
 
     // Back button (very bottom)
     private const int BackRow = 96;
@@ -521,26 +518,34 @@ public class ManagementMenuRenderer
 
     private void RenderPartySection()
     {
-        // Section title
-        string title = "P A R T Y";
-        int titleX = ContentX + (ContentW - title.Length) / 2;
-        _terminal.Text(titleX, PartyTitleRow, title, Config.Colors.DarkYellowGrey, PanelBg);
-
-        // Thin divider
-        for (int tx = ContentX; tx < ContentX + ContentW; tx++)
-            _terminal.SetCell(tx, PartyDividerRow, '─', Config.Colors.DarkGray35, PanelBg);
-
         // Build the visible character list for this tab
         var visibleIndices = new List<int>();
         for (int i = 0; i < PartyCount; i++)
             if (IsCharacterVisibleForTab(i, _activeTab))
                 visibleIndices.Add(i);
 
+        // Bottom-anchor the block just above BACK so it never overlaps, whatever the party
+        // size. Items end one row above BACK; the divider/title sit above (with a blank gap
+        // between divider and the first item, matching the menu section's spacing).
+        int lastItemRow  = BackRow - 2;
+        int firstItemRow = lastItemRow - Math.Max(0, visibleIndices.Count - 1);
+        int dividerRow   = firstItemRow - 2;
+        int titleRow     = dividerRow - 1;
+
+        // Section title
+        string title = "P A R T Y";
+        int titleX = ContentX + (ContentW - title.Length) / 2;
+        _terminal.Text(titleX, titleRow, title, Config.Colors.DarkYellowGrey, PanelBg);
+
+        // Thin divider
+        for (int tx = ContentX; tx < ContentX + ContentW; tx++)
+            _terminal.SetCell(tx, dividerRow, '─', Config.Colors.DarkGray35, PanelBg);
+
         // Character items
         for (int vi = 0; vi < visibleIndices.Count; vi++)
         {
             int charIdx = visibleIndices[vi];
-            int row = PartyFirstItemRow + vi;
+            int row = firstItemRow + vi;
             bool isSelected = charIdx == _selectedCharacterIndex;
             bool isHovered = charIdx == _hoveredCharIndex;
 

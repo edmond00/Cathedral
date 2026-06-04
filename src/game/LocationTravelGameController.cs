@@ -69,7 +69,10 @@ public class LocationTravelGameController : IDisposable
     
     // Protagonist management
     private ManagementMenuRenderer? _managementMenuRenderer;
-    
+
+    // Companion-capacity gate shown at the start of WorldView (over max companions).
+    private CompanionRemovalRenderer? _companionRemovalRenderer;
+
     // Game state
     private GameMode _currentMode;
     private LocationInstanceState? _currentLocationState;
@@ -395,6 +398,15 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // Companion-removal overlay owns the screen until confirmed — redraw it and
+        // skip the travel UI underneath.
+        if (_currentMode == GameMode.WorldView && _companionRemovalRenderer != null)
+        {
+            _companionRemovalRenderer.Render();
+            UpdatePopupTerminal();
+            return;
+        }
+
         // Travel UI: tick the brief "forbidden cell" flash and redraw the bottom box.
         if (_currentMode == GameMode.WorldView)
         {
@@ -610,6 +622,17 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellClicked(int x, int y)
     {
+        // Companion-removal overlay is modal: it captures every click while shown.
+        if (_currentMode == GameMode.WorldView && _companionRemovalRenderer != null)
+        {
+            var result = _companionRemovalRenderer.OnMouseClick(x, y);
+            if (result != CompanionRemovalRenderer.ClickResult.None)
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+            if (result == CompanionRemovalRenderer.ClickResult.Confirmed)
+                ConfirmCompanionRemoval();
+            return;
+        }
+
         // Death screen: END RUN button
         if (_currentMode == GameMode.Death && _deathScreenRenderer != null)
         {
@@ -824,6 +847,14 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellHovered(int x, int y)
     {
+        // Companion-removal overlay is modal: route hover to it and play a tick on change.
+        if (_currentMode == GameMode.WorldView && _companionRemovalRenderer != null)
+        {
+            if (_companionRemovalRenderer.OnMouseMove(x, y))
+                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            return;
+        }
+
         // Track hover for the travel UI so the TRAVEL button highlights.
         _mouseCellX = x;
         _mouseCellY = y;
@@ -1652,6 +1683,71 @@ public class LocationTravelGameController : IDisposable
         _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomWorldView);
         // Disable narration mode (world is interactive and in focus)
         _core.SetNarrationMode(false);
+
+        // Companion-capacity gate: if the party exceeds what the heart can sustain, show the
+        // dismissal overlay and keep the world non-interactive until the player confirms.
+        if (TryShowCompanionRemoval())
+        {
+            _core.SetWorldInteractionsEnabled(false);
+            _interface.SetWorldInteractionsEnabled(false);
+            return;
+        }
+
+        EnterWorldViewInteractive();
+    }
+
+    /// <summary>
+    /// Shows the companion-removal overlay when the party holds more companions than the
+    /// protagonist's heart can sustain (<see cref="MaxCompanionsStat"/>). Returns true when
+    /// the overlay was shown (and the travel phase should wait for confirmation).
+    /// </summary>
+    private bool TryShowCompanionRemoval()
+    {
+        if (_protagonist == null || _core.Terminal == null) return false;
+
+        int max = new MaxCompanionsStat().GetValue(_protagonist);
+        if (_protagonist.CompanionParty.Count <= max) return false;
+
+        var companions = _protagonist.CompanionParty.ToList();
+        _companionRemovalRenderer = new CompanionRemovalRenderer(_core.Terminal, companions, max);
+
+        // Modal overlay: transparent backdrop (world visible behind) but clicks are captured.
+        _core.Terminal.Visible = true;
+        _core.Terminal.TransparentClickPassthrough = false;
+        _core.Terminal.Clear();
+        for (int yy = 0; yy < _core.Terminal.Height; yy++)
+            for (int xx = 0; xx < _core.Terminal.Width; xx++)
+                _core.Terminal.SetCell(xx, yy, ' ',
+                    Cathedral.Terminal.Utils.Colors.Transparent,
+                    Cathedral.Terminal.Utils.Colors.Transparent);
+        _companionRemovalRenderer.Render();
+        return true;
+    }
+
+    /// <summary>
+    /// Dismisses the ticked companions, closes the overlay, and proceeds into the normal
+    /// interactive WorldView phase.
+    /// </summary>
+    private void ConfirmCompanionRemoval()
+    {
+        if (_companionRemovalRenderer == null || _protagonist == null) return;
+
+        foreach (var companion in _companionRemovalRenderer.SelectedForRemoval)
+            _protagonist.CompanionParty.Remove(companion);
+
+        _companionRemovalRenderer = null;
+        EnterWorldViewInteractive();
+    }
+
+    /// <summary>
+    /// Enables world interactions and draws the transparent travel overlay — the normal
+    /// WorldView state once any companion-capacity gate has been cleared.
+    /// </summary>
+    private void EnterWorldViewInteractive()
+    {
+        // Ensure no companion-capacity overlay lingers over the interactive view.
+        _companionRemovalRenderer = null;
+
         // Re-enable world interactions
         _core.SetWorldInteractionsEnabled(true);
         _interface.SetWorldInteractionsEnabled(true);

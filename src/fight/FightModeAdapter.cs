@@ -192,14 +192,15 @@ public class FightModeAdapter
             isPlayerControlled: true, FighterFaction.Party);
         fighters.Add(partyFighter);
 
-        // Add companions as party fighters
+        // Add companions as party fighters. Like the protagonist, they are player-controlled:
+        // the player takes each companion's turn when it comes up in the initiative order.
         int companionOffset = 0;
         foreach (var companion in protagonist.CompanionParty)
         {
             companionOffset++;
             var cf = new Fighter(companion,
                 FightArea.ZoneColStart + 2 + companionOffset * 2, FightArea.PlayerRowStart + 1,
-                isPlayerControlled: false, FighterFaction.Party);
+                isPlayerControlled: true, FighterFaction.Party);
             fighters.Add(cf);
         }
 

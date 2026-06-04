@@ -35,13 +35,13 @@ public static class OrganMediumRegistry
             new OrganMediumCategory("viscera", "Viscera",
                 new[] { "survival_instinct", "cold_blood_skill", "rage_skill", "blood_lust_skill", "iron_nerves_skill" }),
 
-            new OrganMediumCategory("teeth", "Teeth",
+            new OrganMediumCategory("teeths", "Teeth",
                 new[] { "bite", "flesh_tear" }),
 
-            new OrganMediumCategory("leg", "Leg",
+            new OrganMediumCategory("legs", "Leg",
                 new[] { "run", "knee_strike", "dodge", "jump", "defensive_posture" }),
 
-            new OrganMediumCategory("arm", "Arm",
+            new OrganMediumCategory("arms", "Arm",
                 new[] { "push", "elbow_strike" }),
         };
 
