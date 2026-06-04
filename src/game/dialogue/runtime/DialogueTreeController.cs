@@ -273,6 +273,14 @@ public class DialogueTreeController
         bool succeeded = _pendingSucceeded;
         _selectedOption = null;
 
+        // Award +1 XP to the player's learned speaking MM on a successful replica.
+        // option.Skill is a registry template; map it to the protagonist's own instance by id.
+        if (succeeded)
+        {
+            var learnedSkill = _protagonist.GetModusMentisById(option.Skill.ModusMentisId);
+            if (learnedSkill != null) _protagonist.AwardModusMentisXp(learnedSkill);
+        }
+
         _ = Task.Run(() =>
         {
             _state.Log.Add(new DialogueLogEntry(

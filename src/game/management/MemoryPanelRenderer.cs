@@ -297,7 +297,8 @@ public class MemoryPanelRenderer
         for (int ix = x + 1; ix < x + slotW - 1; ix++)
             _terminal.SetCell(ix, y + 1, ' ', textCol, slotBg);
 
-        string lvl      = $"L{slot.ModusMentis!.Level}";
+        int    slotMax  = _member?.GetMaxLevelForModusMentis(slot.ModusMentis!) ?? slot.ModusMentis!.Level;
+        string lvl      = $"L{slot.ModusMentis!.Level}/{slotMax}";
         int    maxNameW = slotW - 2 - lvl.Length - 1;
         string name     = slot.ModusMentis.DisplayName;
         if (name.Length > maxNameW) name = name.Length > 0 ? name[..Math.Max(0, maxNameW)] : "";
@@ -442,7 +443,10 @@ public class MemoryPanelRenderer
         for (int x = StartX; x <= EndX; x++)
             _terminal.SetCell(x, row, ' ', TitleColor, DetailTitle);
         _terminal.Text(StartX + 2, row, modusMentis.DisplayName, Config.Colors.BrightYellow, DetailTitle);
-        string lvlStr = $"Level {modusMentis.Level}";
+        int    maxLevel  = _member?.GetMaxLevelForModusMentis(modusMentis) ?? modusMentis.Level;
+        int    xpNeeded  = _member?.GetModusMentisXpThreshold() ?? 0;
+        bool   atMaxLvl  = modusMentis.Level >= maxLevel;
+        string lvlStr = $"Level {modusMentis.Level} / {maxLevel}";
         _terminal.Text(EndX - lvlStr.Length, row, lvlStr, Config.Colors.GoldYellow, DetailTitle);
         row++;
 
@@ -464,6 +468,8 @@ public class MemoryPanelRenderer
             ("Primary organ", modusMentis.Organs.Length > 0 ? modusMentis.Organs[0] : "—",         Config.Colors.LightGray75),
             ("Organ score",   _member != null ? _member.GetOrganScoreForModusMentis(modusMentis).ToString() : "—",
              Config.Colors.LightGray75),
+            ("XP",            atMaxLvl ? "MAX" : $"{modusMentis.CurrentXp} / {xpNeeded}",
+             atMaxLvl ? Config.Colors.GoldYellow : Config.Colors.LightGray75),
         };
         int metaRow = row;
         foreach (var (lbl, val, vc) in metaLines)
@@ -471,6 +477,20 @@ public class MemoryPanelRenderer
             _terminal.Text(StartX + 2, metaRow, lbl, Config.Colors.DarkGray40, DetailBg);
             _terminal.Text(StartX + 2 + lbl.Length + 1, metaRow, val, vc, DetailBg);
             metaRow++;
+        }
+
+        // XP progress bar (left column, in the gap row below the meta block)
+        {
+            const int barW = 30;
+            int barRow = metaRow;
+            int filled = atMaxLvl
+                ? barW
+                : (xpNeeded > 0 ? Math.Clamp((int)Math.Round(barW * modusMentis.CurrentXp / (double)xpNeeded), 0, barW) : 0);
+            Vector4 fillCol = atMaxLvl ? Config.Colors.GoldYellow : Config.Colors.BrightYellow;
+            for (int i = 0; i < barW; i++)
+                _terminal.SetCell(StartX + 2 + i, barRow,
+                    i < filled ? '█' : '░',
+                    i < filled ? fillCol : Config.Colors.DarkGray35, DetailBg);
         }
 
         // Vertical divider
@@ -496,8 +516,8 @@ public class MemoryPanelRenderer
         if (dline.Length > 0 && descRow < DetailPanelRow + panelH - 1)
             _terminal.Text(rightX, descRow, dline, Config.Colors.LightGray75, DetailBg);
 
-        // Action button (left column, row after meta + 1 gap)
-        int btnRow = row + metaLines.Length + 1;
+        // Action button (left column, after meta + XP bar + 1 empty line)
+        int btnRow = row + metaLines.Length + 2;
         if (btnRow < DetailPanelRow + panelH - 2)
         {
             if (selectedModType == MemoryModuleType.Working)

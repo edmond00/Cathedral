@@ -239,7 +239,8 @@ public abstract class PartyMember
         foreach (var template in selected)
         {
             var instance = (ModusMentis)Activator.CreateInstance(template.GetType())!;
-            instance.Level = rng.Next(1, 11);
+            instance.Level = 1;
+            instance.CurrentXp = 0;
             ModiMentis.Add(instance);
         }
     }
@@ -452,6 +453,33 @@ public abstract class PartyMember
     {
         if (modusMentis.Organs.Length == 0) return 0;
         return GetOrganById(modusMentis.Organs[0])?.Score ?? 0;
+    }
+
+    // ── ModusMentis XP / leveling ──────────────────────────────────────
+
+    /// <summary>Maximum level a modusMentis can reach = sum of its related organ scores (never below 1).</summary>
+    public int GetMaxLevelForModusMentis(ModusMentis modusMentis) =>
+        Math.Max(1, modusMentis.Organs.Sum(id => GetOrganById(id)?.Score ?? 0));
+
+    /// <summary>XP a modusMentis needs to gain one level (pineal-gland-derived stat, 6-12).</summary>
+    public int GetModusMentisXpThreshold() =>
+        DerivedStats.FirstOrDefault(s => s.Name == "modus_mentis_xp_threshold")?.GetValue(this) ?? 12;
+
+    /// <summary>
+    /// Awards XP to a modusMentis. When CurrentXp reaches the pineal threshold the bar resets to 0
+    /// and the level increments. No-op once the modusMentis has reached its max level.
+    /// </summary>
+    public void AwardModusMentisXp(ModusMentis modusMentis, int amount = 1)
+    {
+        int maxLevel = GetMaxLevelForModusMentis(modusMentis);
+        if (modusMentis.Level >= maxLevel) return;          // capped — no XP
+        modusMentis.CurrentXp += amount;
+        if (modusMentis.CurrentXp >= GetModusMentisXpThreshold())
+        {
+            modusMentis.CurrentXp = 0;                       // reset bar
+            modusMentis.Level++;
+            if (modusMentis.Level >= maxLevel) modusMentis.CurrentXp = 0;
+        }
     }
 
     // ── Wound helpers ─────────────────────────────────────────────

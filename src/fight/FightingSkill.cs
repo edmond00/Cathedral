@@ -157,6 +157,14 @@ public abstract class FightingSkill
     // ── Derived calculations ──────────────────────────────────────
 
     /// <summary>
+    /// All known MMs (main + secondary) this fighter brings to the skill — used to award XP on a hit.
+    /// </summary>
+    public IEnumerable<ModusMentis> GetContributingModiMentis(Fighter f) =>
+        f.Member.LearnedModiMentis.Where(mm =>
+            mm.ModusMentisId == RequiredModusMentisId ||
+            SecondaryModusMentisIds.Contains(mm.ModusMentisId));
+
+    /// <summary>
     /// Sum of levels from all known MMs (main + secondary) for this fighter.
     /// </summary>
     private int GetTotalMmLevel(Fighter f)

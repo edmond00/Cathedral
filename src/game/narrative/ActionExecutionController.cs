@@ -304,6 +304,10 @@ public class ActionExecutionController
         if (succeeded)
         {
             actualOutcome = action.PreselectedOutcome;
+
+            // Award +1 XP to every modusMentis in the action chain (observation → thinking → action).
+            foreach (var chainModusMentis in action.GetModusMentisChain())
+                _protagonist.AwardModusMentisXp(chainModusMentis);
         }
         else
         {

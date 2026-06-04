@@ -20,6 +20,7 @@ public abstract class ModusMentis
     public abstract ModusMentisFunction[] Functions { get; } // Can have multiple functions (1-3)
     public abstract string[] Organs { get; }          // Associated organ ids (1-2)
     public int Level { get; set; }                    // 1-10, used for modusMentis checks (random initial)
+    public int CurrentXp { get; set; }                // progress toward next level; reset to 0 on level-up
 
     /// <summary>
     /// Which long-term memory module this modusMentis belongs to.

@@ -212,6 +212,11 @@ public static class FightResolver
         Wound? wound = null;
         if (isHit)
         {
+            // Award +1 XP to each MM contributing to this skill (player attacks only).
+            if (attacker.IsPlayerControlled)
+                foreach (var mm in skill.GetContributingModiMentis(attacker))
+                    attacker.Member.AwardModusMentisXp(mm);
+
             wound = PickWound(defender, skill, playerChosenBodyPartId, rng);
 
             // Damage resistance check: defender's damage_resistance stat
