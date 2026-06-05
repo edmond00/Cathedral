@@ -893,13 +893,6 @@ public class BodyArtViewer
         var opInfo = FindOrganPartByName(_hoveredOrganPartName);
         if (opInfo != null)
         {
-            _terminal.Text(PanelContentX, row, opInfo.Value.partDisplayName, Config.Colors.BrightYellow, Config.Colors.Black);
-            row++;
-            _terminal.Text(PanelContentX, row, $"Organ: {opInfo.Value.organDisplayName}", Config.Colors.MediumGray60, Config.Colors.Black);
-            row++;
-            _terminal.Text(PanelContentX, row, $"Region: {opInfo.Value.bodyPartDisplayName}", Config.Colors.MediumGray60, Config.Colors.Black);
-            row += 2;
-
             string organPartId      = opInfo.Value.partId;
             string organId          = opInfo.Value.organName;
             string organDisplayName = opInfo.Value.organDisplayName;
@@ -907,119 +900,51 @@ public class BodyArtViewer
             string bodyPartDisplay  = opInfo.Value.bodyPartDisplayName;
             bool singlePartOrgan    = organPartId == organId;
 
-            // ── Section 1+2 merged (single-part organs) or split (multi-part) ─
-            if (singlePartOrgan)
-            {
-                // Organ part and organ are the same — collect stats from both relations
-                var combined = _protagonist.DerivedStats
-                    .Where(s => s.RelatedOrganPartId == organPartId || s.RelatedOrganId == organId)
-                    .Distinct()
-                    .ToList();
-                if (combined.Count > 0)
-                {
-                    bool isSecretion = HumoralOrganIds.Contains(organId);
-                    string header = isSecretion ? $"{organDisplayName} Secretion" : organDisplayName;
-                    _terminal.Text(PanelContentX, row, header, Config.Colors.DarkYellowGrey, Config.Colors.Black);
-                    row++;
-                    foreach (var stat in combined)
-                    {
-                        int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
-                        string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
-                        _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
-                        row++;
-                    }
-                    row++;
-                }
-            }
-            else
-            {
-                // Section 1: Organ Part stats
-                var organPartStats = _protagonist.DerivedStats
-                    .Where(s => s.RelatedOrganPartId == organPartId)
-                    .ToList();
-                if (organPartStats.Count > 0)
-                {
-                    _terminal.Text(PanelContentX, row, opInfo.Value.partDisplayName, Config.Colors.DarkYellowGrey, Config.Colors.Black);
-                    row++;
-                    foreach (var stat in organPartStats)
-                    {
-                        int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
-                        string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
-                        _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
-                        row++;
-                    }
-                    row++;
-                }
+            // Colour scheme (foreground only — no background chips):
+            //   organ part      → yellow (the focused entity: title + its own stats)
+            //   belonging lines → grey ("Organ: …", "Region: …")
+            //   scope headers   → dark-yellow text ("Legs (organ)", "Lower Limbs (region)");
+            //                     the part's own header stays bright-yellow
+            //   fighting medium → white text
+            Vector4 partColor      = Config.Colors.BrightYellow;
+            Vector4 belongGrey     = Config.Colors.MediumGray60;
+            Vector4 statGrey       = Config.Colors.LightGray75;
+            Vector4 scopeHeadColor = Config.Colors.DarkYellow;
 
-                // Section 2: Organ stats
-                var organStats = _protagonist.DerivedStats
-                    .Where(s => s.RelatedOrganId == organId)
-                    .ToList();
-                if (organStats.Count > 0)
-                {
-                    bool isSecretion = HumoralOrganIds.Contains(organId);
-                    string header = isSecretion ? $"{organDisplayName} Secretion" : organDisplayName;
-                    _terminal.Text(PanelContentX, row, header, Config.Colors.DarkYellowGrey, Config.Colors.Black);
-                    row++;
-                    foreach (var stat in organStats)
-                    {
-                        int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
-                        string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
-                        _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
-                        row++;
-                    }
-                    row++;
-                }
-            }
+            var organObj = _protagonist.GetOrganById(organId);
+            // Whether each part is its own fighting medium (e.g. hands) decides where the
+            // Fighting Medium block hangs and which level it shows.
+            bool perPartMedium = organObj is { PartsAreIndependentMediums: true } && organObj.Parts.Count > 1;
+            int organScore = organObj?.Score ?? 0;
+            int partScore  = _protagonist.GetOrganPartById(organPartId)?.Score ?? 0;
 
-            // ── Section 3: Body Part stats ───────────────────────────────
-            var bodyPartStats = _protagonist.DerivedStats
-                .Where(s => s.RelatedBodyPartId == bodyPartId)
-                .ToList();
-            if (bodyPartStats.Count > 0)
+            // ── Title + belonging ──
+            _terminal.Text(PanelContentX, row, opInfo.Value.partDisplayName, partColor, Config.Colors.Black);
+            row++;
+            _terminal.Text(PanelContentX, row, $"Organ: {organDisplayName}", belongGrey, Config.Colors.Black);
+            row++;
+            _terminal.Text(PanelContentX, row, $"Region: {bodyPartDisplay}", belongGrey, Config.Colors.Black);
+            row += 2;
+
+            // ── Local renderers (share `row`) ──
+            void RenderScopeHeader(string title, string scope, Vector4 fg, Vector4 bg)
             {
-                _terminal.Text(PanelContentX, row, bodyPartDisplay, Config.Colors.DarkYellowGrey, Config.Colors.Black);
-                row++;
-                foreach (var stat in bodyPartStats)
-                {
-                    int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
-                    string line = $"  {stat.ShortDisplayName,-16} {stat.FormatValue(val)}";
-                    _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
-                    row++;
-                }
+                _terminal.Text(PanelContentX, row, $"{title}  ({scope})", fg, bg);
                 row++;
             }
-
-            // ── Section 4: Wounds on this organ part / organ / body part ──
-            var wounds = _protagonist.GetWoundsForOrganPart(organPartId, organId, bodyPartId);
-            if (wounds.Count > 0)
+            void RenderStat(DerivedStat stat, Vector4 color)
             {
-                _terminal.Text(PanelContentX, row, "Wounds", Config.Colors.BrightPurple, Config.Colors.Black);
-                row++;
-                foreach (var wound in wounds)
-                {
-                    string sev = wound.Handicap == Cathedral.Game.Narrative.WoundHandicap.High ? "●" : "◌";
-                    string line = $"  {sev} {wound.WoundName}";
-                    Vector4 wc = wound.Handicap == Cathedral.Game.Narrative.WoundHandicap.High
-                        ? (_blinkOn ? Config.Colors.BrightPurple : Config.Colors.DarkGray35)
-                        : Config.Colors.MediumGray60;
-                    _terminal.Text(PanelContentX, row, line, wc, Config.Colors.Black);
-                    row++;
-                }
+                int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
+                _terminal.Text(PanelContentX, row, $"  {stat.ShortDisplayName,-16}", color, Config.Colors.Black);
+                _terminal.Text(PanelContentX + 19, row, stat.FormatValue(val), color, Config.Colors.Black);
                 row++;
             }
-
-            // ── Section 5: Fighting medium ────────────────────────────────────
-            var organCategory = OrganMediumRegistry.GetById(organId);
-            if (organCategory != null)
+            void RenderFightingMedium(int level)
             {
-                // Medium level is the hovered organ part's score (per-hand, per-foot, etc.),
-                // not the sum across both parts of the organ.
-                int partScore = _protagonist.GetOrganPartById(organPartId)?.Score ?? 0;
-                string header = $"Fighting Medium      lv.{partScore}";
-                _terminal.Text(PanelContentX, row, header, Config.Colors.DarkYellowGrey, Config.Colors.Black);
+                var organCategory = OrganMediumRegistry.GetById(organId);
+                if (organCategory == null) return;
+                _terminal.Text(PanelContentX, row, $"Fighting Medium  lv.{level}", Config.Colors.White, Config.Colors.Black);
                 row++;
-
                 bool nextLearnable = false;
                 foreach (var skillId in organCategory.SkillIds)
                 {
@@ -1038,6 +963,88 @@ public class BodyArtViewer
                         row++;
                         nextLearnable = true;
                     }
+                }
+                row++;
+            }
+
+            // ── Organ-part / organ stats, with the fighting medium hung off its owner ──
+            if (singlePartOrgan)
+            {
+                // Part and organ coincide — one combined block owned by the organ.
+                var combined = _protagonist.DerivedStats
+                    .Where(s => s.RelatedOrganPartId == organPartId || s.RelatedOrganId == organId)
+                    .Distinct()
+                    .ToList();
+                if (combined.Count > 0)
+                {
+                    bool isSecretion = HumoralOrganIds.Contains(organId);
+                    // Secretion headers read like the Fighting Medium header (white), with their
+                    // rates listed in grey beneath; ordinary organ headers stay dark-yellow.
+                    RenderScopeHeader(isSecretion ? $"{organDisplayName} Secretion" : organDisplayName,
+                        "organ", isSecretion ? Config.Colors.White : scopeHeadColor, Config.Colors.Black);
+                    foreach (var stat in combined) RenderStat(stat, statGrey);
+                    row++;
+                }
+                // Single-part organs are whole-organ mediums → owned by the organ.
+                RenderFightingMedium(organScore);
+            }
+            else
+            {
+                // Organ-part stats
+                var organPartStats = _protagonist.DerivedStats
+                    .Where(s => s.RelatedOrganPartId == organPartId)
+                    .ToList();
+                if (organPartStats.Count > 0)
+                {
+                    RenderScopeHeader(opInfo.Value.partDisplayName, "part", partColor, Config.Colors.Black);
+                    foreach (var stat in organPartStats) RenderStat(stat, partColor);
+                    row++;
+                }
+                // Per-part medium (e.g. hands) → owned by THIS part, level = this part's score.
+                if (perPartMedium) RenderFightingMedium(partScore);
+
+                // Organ stats
+                var organStats = _protagonist.DerivedStats
+                    .Where(s => s.RelatedOrganId == organId)
+                    .ToList();
+                if (organStats.Count > 0)
+                {
+                    bool isSecretion = HumoralOrganIds.Contains(organId);
+                    RenderScopeHeader(isSecretion ? $"{organDisplayName} Secretion" : organDisplayName,
+                        "organ", isSecretion ? Config.Colors.White : scopeHeadColor, Config.Colors.Black);
+                    foreach (var stat in organStats) RenderStat(stat, statGrey);
+                    row++;
+                }
+                // Whole-organ medium (e.g. legs) → owned by the organ, level = organ total.
+                if (!perPartMedium) RenderFightingMedium(organScore);
+            }
+
+            // ── Body-part (region) stats ──
+            var bodyPartStats = _protagonist.DerivedStats
+                .Where(s => s.RelatedBodyPartId == bodyPartId)
+                .ToList();
+            if (bodyPartStats.Count > 0)
+            {
+                RenderScopeHeader(bodyPartDisplay, "region", scopeHeadColor, Config.Colors.Black);
+                foreach (var stat in bodyPartStats) RenderStat(stat, statGrey);
+                row++;
+            }
+
+            // ── Wounds on this organ part / organ / body part ──
+            var wounds = _protagonist.GetWoundsForOrganPart(organPartId, organId, bodyPartId);
+            if (wounds.Count > 0)
+            {
+                _terminal.Text(PanelContentX, row, "Wounds", Config.Colors.BrightPurple, Config.Colors.Black);
+                row++;
+                foreach (var wound in wounds)
+                {
+                    string sev = wound.Handicap == Cathedral.Game.Narrative.WoundHandicap.High ? "●" : "◌";
+                    string line = $"  {sev} {wound.WoundName}";
+                    Vector4 wc = wound.Handicap == Cathedral.Game.Narrative.WoundHandicap.High
+                        ? (_blinkOn ? Config.Colors.BrightPurple : Config.Colors.DarkGray35)
+                        : Config.Colors.MediumGray60;
+                    _terminal.Text(PanelContentX, row, line, wc, Config.Colors.Black);
+                    row++;
                 }
                 row++;
             }

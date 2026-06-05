@@ -10,6 +10,7 @@ public class ArmsOrgan : Organ
     public override string Id => "arms";
     public override string DisplayName => "Arms";
     public override bool AcceptsWildcardWounds => true;
+    public override bool PartsAreIndependentMediums => true; // left & right arm strike independently
     public override string BodyPartId => "upper_limbs";
     
     private readonly List<OrganPart> _parts;

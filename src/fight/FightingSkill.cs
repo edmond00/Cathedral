@@ -184,10 +184,12 @@ public abstract class FightingSkill
     /// Total dice for a given fighter:
     /// <c>BaseDice + medium_level × MediumLevelMultiplicator + mm_level × SkillLevelMultiplicator</c>
     /// where mm_level is the sum of all known MM levels (main + secondary).
+    /// When <paramref name="organPartId"/> is supplied, the medium level is that organ part's
+    /// score (e.g. a left-hand punch uses only the left hand's level) instead of the whole organ.
     /// </summary>
-    public int TotalDice(Fighter f)
+    public int TotalDice(Fighter f, string? organPartId = null)
     {
-        int mediumLevel = Medium.GetLevel(f);
+        int mediumLevel = Medium.GetLevel(f, organPartId);
         int mmLevel     = GetTotalMmLevel(f);
         return BaseDice + mediumLevel * MediumLevelMultiplicator + mmLevel * SkillLevelMultiplicator;
     }

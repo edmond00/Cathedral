@@ -22,6 +22,23 @@ public abstract class Organ
     public virtual bool AcceptsWildcardWounds => false;
 
     /// <summary>
+    /// Combat granularity: does each organ part act as its OWN independent fighting medium?
+    ///
+    /// <para>When <c>true</c> (and the organ has more than one part), the fight menu shows one
+    /// tab per part and each part strikes independently — e.g. hands yield a Left Hand and a
+    /// Right Hand tab, so Punch can be thrown once with each hand in a single turn, and each
+    /// punch rolls dice from that hand's own score.</para>
+    ///
+    /// <para>When <c>false</c> (the default), the whole organ is a single fighting medium: the
+    /// fight menu shows one tab for the organ, each action is usable once per turn, and the
+    /// dice level is the organ's total score (the sum of its parts). This suits organs whose
+    /// parts act together — e.g. legs (you run/jump/dodge with both legs at once).</para>
+    ///
+    /// Single-part organs are always whole-organ mediums regardless of this flag.
+    /// </summary>
+    public virtual bool PartsAreIndependentMediums => false;
+
+    /// <summary>
     /// Score is the sum of all organ part scores.
     /// </summary>
     public int Score => Parts.Sum(p => p.Score);

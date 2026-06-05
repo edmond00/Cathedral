@@ -10,6 +10,7 @@ public class FeetOrgan : Organ
     public override string Id => "feet";
     public override string DisplayName => "Feet";
     public override bool AcceptsWildcardWounds => true;
+    public override bool PartsAreIndependentMediums => true; // left & right foot strike independently
     public override string BodyPartId => "lower_limbs";
     
     private readonly List<OrganPart> _parts;

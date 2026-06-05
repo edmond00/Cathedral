@@ -272,37 +272,36 @@ public static class FightModeUI
             entry.Skills.Add((idx, skill, learnable, unaffordable));
         }
 
-        // ── Organ-medium groups: built from unlockedSkills / learnableSkills lists ──
+        // ── Organ-medium groups ──
+        // Organs whose parts strike independently (Organ.PartsAreIndependentMediums, e.g. hands)
+        // yield one tab per part, each with the full skill list; because the once-per-turn lock
+        // is keyed on (tab, skill), the same skill (e.g. Punch) is usable once per part. All other
+        // organs (legs, single-part organs) yield a single whole-organ tab.
+        void AddOrganSkillToGroups(int idx, FightingSkill s, bool learnable, bool unaffordable)
+        {
+            string organId = s.Medium.OrganId ?? s.SkillId;
+            var organ = fighter.Member.GetOrganById(organId);
+            if (organ != null && organ.PartsAreIndependentMediums && organ.Parts.Count > 1)
+            {
+                foreach (var part in organ.Parts)
+                    AddToGroup(OrganPartKey(part.Id), part.DisplayName, idx, s, learnable, unaffordable);
+            }
+            else
+            {
+                AddToGroup(OrganKey(organId), organ?.DisplayName ?? OrganLabel(organId),
+                    idx, s, learnable, unaffordable);
+            }
+        }
+
         for (int i = 0; i < unlockedSkills.Count; i++)
-        {
-            var s = unlockedSkills[i];
-            if (s.Medium.Type == MediumType.OrganMedium)
-            {
-                string key   = s.Medium.OrganId ?? s.SkillId;
-                string label = OrganLabel(s.Medium.OrganId);
-                AddToGroup(key, label, i, s, false);
-            }
-        }
+            if (unlockedSkills[i].Medium.Type == MediumType.OrganMedium)
+                AddOrganSkillToGroups(i, unlockedSkills[i], learnable: false, unaffordable: false);
         for (int i = 0; i < learnableSkills.Count; i++)
-        {
-            var s = learnableSkills[i];
-            if (s.Medium.Type == MediumType.OrganMedium)
-            {
-                string key   = s.Medium.OrganId ?? s.SkillId;
-                string label = OrganLabel(s.Medium.OrganId);
-                AddToGroup(key, label, i, s, true);
-            }
-        }
+            if (learnableSkills[i].Medium.Type == MediumType.OrganMedium)
+                AddOrganSkillToGroups(i, learnableSkills[i], learnable: true, unaffordable: false);
         for (int i = 0; i < unaffordableSkills.Count; i++)
-        {
-            var s = unaffordableSkills[i];
-            if (s.Medium.Type == MediumType.OrganMedium)
-            {
-                string key   = s.Medium.OrganId ?? s.SkillId;
-                string label = OrganLabel(s.Medium.OrganId);
-                AddToGroup(key, label, i, s, false, unaffordable: true);
-            }
-        }
+            if (unaffordableSkills[i].Medium.Type == MediumType.OrganMedium)
+                AddOrganSkillToGroups(i, unaffordableSkills[i], learnable: false, unaffordable: true);
 
         // ── Weapon-medium groups: one tab per equipped weapon, skills in category order ──
         // Pre-index unlocked/learnable weapon skills for O(1) lookup.
@@ -357,10 +356,15 @@ public static class FightModeUI
             }
         }
 
-        // Stable ordering: organ mediums first (alphabetical), then weapon mediums (alphabetical)
+        // Stable ordering: organ mediums first, then weapon mediums. Organ parts of the same
+        // organ stay adjacent (grouped by organ id) and sort Left-before-Right by label.
+        static bool IsOrganGroup((string Key, string Label, List<(int, FightingSkill, bool, bool)> Skills) g) =>
+            g.Skills.Count > 0 && g.Skills[0].Item2.Medium.Type == MediumType.OrganMedium;
         groups = groups
-            .OrderBy(g => g.Skills.Count > 0 && g.Skills[0].Skill.Medium.Type == MediumType.OrganMedium ? 0 : 1)
-            .ThenBy(g => g.Label)
+            .OrderBy(g => IsOrganGroup(g) ? 0 : 1)
+            .ThenBy(g => IsOrganGroup(g)
+                ? (g.Skills[0].Skill.Medium.OrganId ?? "") + "/" + g.Label
+                : g.Label)
             .ToList();
 
         foreach (var grp in groups)
@@ -464,7 +468,7 @@ public static class FightModeUI
     /// Shows details for the hovered/selected action.
     /// </summary>
     public static void RenderLeftInfoPanel(TerminalHUD terminal,
-        LeftInfoKind kind, FightingSkill? skill, Fighter? fighter)
+        LeftInfoKind kind, FightingSkill? skill, Fighter? fighter, string? organPartId = null)
     {
         // Top-right box (cols ActionMenuRight..100, rows 0..TopRows-1)
         int boxX = ActionMenuRight;
@@ -532,12 +536,12 @@ public static class FightModeUI
                 if (skill == null || fighter == null) break;
                 Vector4 titleC = isLearn ? Config.Colors.LightPurple : Config.Colors.Yellow;
                 TextLine(skill.DisplayName, titleC);
-                TextLine($"Medium: {MediumLabelFor(skill)}", Config.Colors.DarkYellowGrey);
+                TextLine($"Medium: {MediumLabelFor(skill, fighter, organPartId)}", Config.Colors.DarkYellowGrey);
                 if (isLearn) TextLine("(unknown — learn first)", titleC);
                 y++;
                 WrapText(skill.Description ?? "", Config.Colors.White);
                 y++;
-                TextLine($"Dice  : {skill.TotalDice(fighter)}", Config.Colors.LightGray);
+                TextLine($"Dice  : {skill.TotalDice(fighter, organPartId)}", Config.Colors.LightGray);
                 TextLine($"Cost  : {skill.CineticPointsCost} CP", Config.Colors.LightGray);
                 TextLine(skill.MinRange > 1
                     ? $"Range : {skill.MinRange}-{skill.Range}"
@@ -566,6 +570,32 @@ public static class FightModeUI
         }
     }
 
+    // ── Organ medium keys ─────────────────────────────────────────────
+    // Two flavours of organ fighting-medium tab, distinguished by prefix:
+    //   "organ:<organId>"      → the whole organ is one medium (level = organ total score)
+    //   "organpart:<partId>"   → one part is its own medium (level = that part's score)
+    // Which one an organ uses is decided by Organ.PartsAreIndependentMediums.
+
+    /// <summary>Prefix marking a left-panel group key as a whole-organ medium.</summary>
+    public const string OrganKeyPrefix = "organ:";
+    /// <summary>Prefix marking a left-panel group key as a single-organ-part medium.</summary>
+    public const string OrganPartKeyPrefix = "organpart:";
+
+    /// <summary>Build the left-panel group key for a whole organ (e.g. "organ:legs").</summary>
+    public static string OrganKey(string organId) => OrganKeyPrefix + organId;
+
+    /// <summary>Build the left-panel group key for an organ part (e.g. "organpart:left_hand").</summary>
+    public static string OrganPartKey(string partId) => OrganPartKeyPrefix + partId;
+
+    /// <summary>
+    /// Extract the organ-part id from a group key, or null when the key is not a part key
+    /// (i.e. a whole-organ medium, whose level is computed from the organ's total score).
+    /// </summary>
+    public static string? OrganPartIdFromKey(string? key) =>
+        key != null && key.StartsWith(OrganPartKeyPrefix, StringComparison.Ordinal)
+            ? key[OrganPartKeyPrefix.Length..]
+            : null;
+
     /// <summary>Human-readable label for an organ id (e.g. "hands" → "Hands").</summary>
     private static string OrganLabel(string? organId)
     {
@@ -575,10 +605,22 @@ public static class FightModeUI
     }
 
     /// <summary>Display label for the medium of a skill shown in the info panel.</summary>
-    private static string MediumLabelFor(FightingSkill s)
+    private static string MediumLabelFor(FightingSkill s, Fighter? fighter = null, string? organPartId = null)
     {
         if (s.Medium.Type == MediumType.OrganMedium)
+        {
+            // For a multi-part organ, name the specific part being used (e.g. "Left Hand").
+            if (organPartId != null && fighter != null)
+            {
+                var organ = fighter.Member.GetOrganById(s.Medium.OrganId ?? "");
+                if (organ != null && organ.Parts.Count > 1)
+                {
+                    var part = organ.Parts.FirstOrDefault(p => p.Id == organPartId);
+                    if (part != null) return part.DisplayName;
+                }
+            }
             return OrganLabel(s.Medium.OrganId);
+        }
 
         // Weapon: list all categories that contain this skill
         var cats = WeaponMediumRegistry.GetCategoriesContaining(s.SkillId).ToList();

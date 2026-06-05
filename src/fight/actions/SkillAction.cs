@@ -14,11 +14,18 @@ public class SkillAction : IFightAction
     public Fighter Target   { get; }
     public FightingSkill Skill { get; }
 
-    public SkillAction(Fighter attacker, Fighter target, FightingSkill skill)
+    /// <summary>
+    /// Organ part this skill is performed with (e.g. "left_hand"), or null to use the whole
+    /// organ. Determines which part's level feeds the dice count for organ-medium skills.
+    /// </summary>
+    public string? OrganPartId { get; }
+
+    public SkillAction(Fighter attacker, Fighter target, FightingSkill skill, string? organPartId = null)
     {
-        Attacker = attacker;
-        Target   = target;
-        Skill    = skill;
+        Attacker    = attacker;
+        Target      = target;
+        Skill       = skill;
+        OrganPartId = organPartId;
     }
 
     public void Execute(FightState state, Random rng)
@@ -39,7 +46,7 @@ public class SkillAction : IFightAction
         // Set up dice roll for the window to animate (two-roll: attack dice vs defense dice)
         state.PendingSkill  = Skill;
         state.PendingTarget = Target;
-        state.DiceNumberOfDice          = Skill.TotalDice(Attacker);
+        state.DiceNumberOfDice          = Skill.TotalDice(Attacker, OrganPartId);
         state.DiceDifficulty            = Target.NaturalDefense; // kept for logging
         state.DiceSecondaryNumberOfDice = Target.NaturalDefense;
         state.IsDiceRolling             = true;
