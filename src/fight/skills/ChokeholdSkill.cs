@@ -8,7 +8,7 @@ public sealed class ChokeholdSkill : FightingSkill
     public override string Description            => "Strangling hold targeting lungs and face. Immobilizes.";
     public override string RequiredModusMentisId  => "brawling";
     public override string[] SecondaryModusMentisIds => new[] { "brute_force", "predator" };
-    public override FightingMedium Medium         => FightingMedium.Organ("hands");
+    public override FightingMedium Medium         => FightingMedium.BodyPart("upper_limbs");
     public override int CineticPointsCost         => 4;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 2;

@@ -452,6 +452,9 @@ namespace Cathedral.Terminal
             _inputHandler.HandleMouseUp(button);
         }
 
+        /// <summary>True while the left mouse button is held down (used for drag interactions).</summary>
+        public bool IsLeftMouseDown => _inputHandler.IsLeftMouseDown;
+
         /// <summary>
         /// Checks if a screen position is within the terminal area
         /// </summary>

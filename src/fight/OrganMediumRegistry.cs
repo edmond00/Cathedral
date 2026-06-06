@@ -26,8 +26,9 @@ public static class OrganMediumRegistry
                 new[] { "scratch", "lacerate", "gut_ripper" }),
 
             // ── Human body parts ─────────────────────────────────────────────────────
+            // seize + chokehold are upper-limbs (body-part) mediums — see BodyPartMediumRegistry.
             new OrganMediumCategory("hands", "Hands",
-                new[] { "punch", "seize", "uppercut", "chokehold", "palm_strike" }),
+                new[] { "punch", "uppercut", "palm_strike" }),
 
             new OrganMediumCategory("feet", "Feet",
                 new[] { "high_kick", "trip", "back_kick" }),

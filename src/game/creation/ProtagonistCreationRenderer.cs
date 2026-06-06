@@ -113,7 +113,7 @@ public class ProtagonistCreationRenderer
 
     private void RenderPanelHeader()
     {
-        _terminal.Text(BodyArtViewer.PanelContentX, 1, "A V A T A R", Config.Colors.BrightYellow, Config.Colors.Black);
+        _terminal.Text(BodyArtViewer.PanelContentX, 1, "P R O T A G O N I S T", Config.Colors.BrightYellow, Config.Colors.Black);
         _terminal.Text(BodyArtViewer.PanelContentX, 2, "C R E A T I O N", Config.Colors.DarkYellowGrey, Config.Colors.Black);
         _terminal.Text(BodyArtViewer.PanelContentX, 4, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
     }

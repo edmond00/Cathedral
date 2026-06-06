@@ -381,9 +381,11 @@ public static class FightAI
     private static double ChebyshevDist(int ax, int ay, int bx, int by) =>
         Math.Max(Math.Abs(ax - bx), Math.Abs(ay - by));
 
-    /// <summary>Default medium key for usage tracking (organ:&lt;id&gt; or mm:&lt;id&gt;).</summary>
+    /// <summary>Default medium key for usage tracking (organ:&lt;id&gt;, bodypart:&lt;id&gt; or mm:&lt;id&gt;).</summary>
     private static string DefaultMediumKey(FightingSkill s) =>
         s.Medium.Type == MediumType.OrganMedium
             ? $"organ:{s.Medium.OrganId ?? s.SkillId}"
-            : $"mm:{s.RequiredModusMentisId}";
+            : s.Medium.Type == MediumType.BodyPartMedium
+                ? $"bodypart:{s.Medium.BodyPartId ?? s.SkillId}"
+                : $"mm:{s.RequiredModusMentisId}";
 }

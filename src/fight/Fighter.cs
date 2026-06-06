@@ -140,6 +140,16 @@ public class Fighter
             .GroupBy(s => s.Medium.OrganId ?? s.SkillId)
             .Select(g => g.OrderBy(s => s.MediumPosition).First());
 
+        // ── Body-part-medium learnable skills ─────────────────────────
+        // One learnable per available body-part region: the lowest-MediumPosition unknown skill.
+        var bodyPartLearnables = registry.GetAll()
+            .Where(s => s.Medium.Type == MediumType.BodyPartMedium)
+            .Where(s => !Member.LearnedModiMentis.Any(m => m.ModusMentisId == s.RequiredModusMentisId))
+            .Where(s => IsMediumAvailable(s))
+            .Where(s => CurrentCineticPoints >= s.CineticPointsCost)
+            .GroupBy(s => s.Medium.BodyPartId ?? s.SkillId)
+            .Select(g => g.OrderBy(s => s.MediumPosition).First());
+
         // ── Weapon-medium learnable skills ────────────────────────────
         // One learnable per equipped weapon's category; skill is the first
         // unknown entry in that category's ordered skill list.
@@ -167,7 +177,7 @@ public class Fighter
             }
         }
 
-        return organLearnables.Concat(weaponLearnables);
+        return organLearnables.Concat(bodyPartLearnables).Concat(weaponLearnables);
     }
 
     private bool IsMediumAvailable(FightingSkill skill)
@@ -177,6 +187,12 @@ public class Fighter
             var organId = skill.Medium.OrganId;
             if (string.IsNullOrEmpty(organId)) return false;
             return Member.GetOrganById(organId) != null;
+        }
+        if (skill.Medium.Type == MediumType.BodyPartMedium)
+        {
+            var bodyPartId = skill.Medium.BodyPartId;
+            if (string.IsNullOrEmpty(bodyPartId)) return false;
+            return Member.GetBodyPartById(bodyPartId) != null;
         }
         // Weapon: at least one equipped weapon whose category contains this skill
         return Member.EquippedItems[EquipmentAnchor.RightHold]

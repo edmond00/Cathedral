@@ -36,6 +36,10 @@ internal class FightModeWindow : GameWindow
 
     // ── UI state ──────────────────────────────────────────────────────
     private int _actionLogScrollOffset;
+    private int _actionMenuScrollOffset;          // vertical scroll of the top-left action menu
+    private int _actionMenuMaxScroll;             // max scroll for the action menu (set each redraw)
+    private bool _draggingMenuScrollbar;          // true while the user drags the action-menu scrollbar
+    private int _hoverX = -1, _hoverY = -1;       // last hovered terminal cell (for wheel routing)
     private IReadOnlyList<FightingSkill> _currentUnlockedSkills    = Array.Empty<FightingSkill>();
     private IReadOnlyList<FightingSkill> _currentUnaffordableSkills = Array.Empty<FightingSkill>();
     private string? _expandedMediumKey;
@@ -255,12 +259,40 @@ internal class FightModeWindow : GameWindow
     {
         base.OnMouseUp(e);
         _terminal?.HandleMouseUp(e.Button);
+        if (e.Button == MouseButton.Left) _draggingMenuScrollbar = false;
     }
 
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
         base.OnMouseWheel(e);
-        _actionLogScrollOffset = Math.Max(0, _actionLogScrollOffset - (int)e.OffsetY);
+        // Over the top-left action menu during action selection → scroll the menu; else the log.
+        bool overActionMenu = _hoverX >= 0 && _hoverX < FightModeUI.ActionMenuRight
+                           && _hoverY >= 0 && _hoverY < 20
+                           && _state.Phase == TurnPhase.SelectingAction
+                           && _state.ActiveFighter?.IsPlayerControlled == true;
+        if (overActionMenu)
+            _actionMenuScrollOffset = Math.Clamp(_actionMenuScrollOffset - (int)e.OffsetY, 0, _actionMenuMaxScroll);
+        else
+            _actionLogScrollOffset = Math.Max(0, _actionLogScrollOffset - (int)e.OffsetY);
+    }
+
+    // ── Action-menu scrollbar geometry / drag helpers ─────────────────
+    private static int ActionScrollbarX => FightModeUI.ActionMenuRight - 2;
+    private static int ActionScrollbarTop => FightModeUI.SkillButtonsStart;
+    private static int ActionScrollbarRows => (FightModeUI.EndTurnButtonRow - 1) - FightModeUI.SkillButtonsStart;
+
+    private bool IsOnActionScrollbar(int x, int y) =>
+        _actionMenuMaxScroll > 0
+        && x == ActionScrollbarX
+        && y >= ActionScrollbarTop
+        && y < ActionScrollbarTop + ActionScrollbarRows;
+
+    private void SetMenuScrollFromRow(int y)
+    {
+        if (_actionMenuMaxScroll <= 0) return;
+        int rel = Math.Clamp(y - ActionScrollbarTop, 0, ActionScrollbarRows - 1);
+        double frac = ActionScrollbarRows > 1 ? (double)rel / (ActionScrollbarRows - 1) : 0;
+        _actionMenuScrollOffset = Math.Clamp((int)Math.Round(frac * _actionMenuMaxScroll), 0, _actionMenuMaxScroll);
     }
 
     protected override void OnResize(ResizeEventArgs e)
@@ -281,6 +313,17 @@ internal class FightModeWindow : GameWindow
 
     private void OnCellHovered(int x, int y)
     {
+        _hoverX = x;
+        _hoverY = y;
+
+        // ── Dragging the action-menu scrollbar: follow the cursor's row ──
+        if (_draggingMenuScrollbar)
+        {
+            SetMenuScrollFromRow(y);
+            _hoveredButtonRow = -1; // suppress row highlight while dragging
+            return;
+        }
+
         // ── Localization picker overlay owns the entire cursor area ──
         if (_state.Phase == TurnPhase.WaitingForBodyPartChoice && _localizationOverlay != null)
         {
@@ -383,6 +426,14 @@ internal class FightModeWindow : GameWindow
         // ── Top-left action menu buttons ──────────────────────────
         if (x < FightModeUI.ActionMenuRight && y < 20)
         {
+            // Scrollbar: clicking/dragging the bar scrolls the menu instead of selecting a row.
+            if (IsOnActionScrollbar(x, y))
+            {
+                _draggingMenuScrollbar = true;
+                SetMenuScrollFromRow(y);
+                return;
+            }
+
             if (y == FightModeUI.MoveButtonRow)
             {
                 SetMoveMode();
@@ -493,7 +544,9 @@ internal class FightModeWindow : GameWindow
     private static string DefaultMediumKeyFor(FightingSkill s) =>
         s.Medium.Type == MediumType.OrganMedium
             ? $"organ:{s.Medium.OrganId ?? s.SkillId}"
-            : $"mm:{s.RequiredModusMentisId}";
+            : s.Medium.Type == MediumType.BodyPartMedium
+                ? $"bodypart:{s.Medium.BodyPartId ?? s.SkillId}"
+                : $"mm:{s.RequiredModusMentisId}";
 
     // ── Keyboard shortcuts ────────────────────────────────────────────
 
@@ -883,7 +936,11 @@ internal class FightModeWindow : GameWindow
                 _currentUnlockedSkills, Array.Empty<FightingSkill>(), _currentUnaffordableSkills,
                 isMove, _selectedSkillIndex, -1,
                 _expandedMediumKey, _hoveredButtonRow,
-                _state.UsedActionsThisTurn, _state.RunUsedThisTurn);
+                _state.UsedActionsThisTurn, _state.RunUsedThisTurn,
+                _actionMenuScrollOffset,
+                _draggingMenuScrollbar || IsOnActionScrollbar(_hoverX, _hoverY),
+                out _actionMenuMaxScroll);
+            _actionMenuScrollOffset = Math.Min(_actionMenuScrollOffset, _actionMenuMaxScroll);
 
             // Recompute hover-blink cells now that the layout is current
             _hoverSkillCells = ComputeHoverSkillCells(_hoveredButtonRow, active);
@@ -962,6 +1019,7 @@ internal class FightModeWindow : GameWindow
         _isMoveMode = true;
         _selectedSkillIndex = -1;
         _expandedMediumKey = null;
+        _actionMenuScrollOffset = 0;
         RecomputeHighlight();
         _actionLogScrollOffset = 0;
         _previewPath = null;

@@ -216,11 +216,15 @@ public static class FightModeUI
         IReadOnlyList<FightingSkill> unaffordableSkills,
         bool isMoveMode, int selectedSkillIndex, int selectedLearnableSkillIndex,
         string? expandedMediumKey,
-        int hoveredButtonRow = -1,
-        IReadOnlySet<(string MediumKey, string SkillId)>? usedActions = null,
-        bool runUsed = false)
+        int hoveredButtonRow,
+        IReadOnlySet<(string MediumKey, string SkillId)>? usedActions,
+        bool runUsed,
+        int scrollOffset,
+        bool scrollbarHot,
+        out int maxScrollOffset)
     {
         var layout = new List<LeftPanelRow>();
+        maxScrollOffset = 0;
 
         // Top-left = action menu (cols 0..ActionMenuRight, rows 0..TopRows-1)
         int boxW = ActionMenuRight;
@@ -303,6 +307,29 @@ public static class FightModeUI
             if (unaffordableSkills[i].Medium.Type == MediumType.OrganMedium)
                 AddOrganSkillToGroups(i, unaffordableSkills[i], learnable: false, unaffordable: true);
 
+        // ── Body-part-medium groups ──
+        // A body-part region (e.g. upper_limbs) is always a single whole-region tab; its
+        // dice level is the region's total score (sum of its organs).
+        void AddBodyPartSkillToGroups(int idx, FightingSkill s, bool learnable, bool unaffordable)
+        {
+            string bodyPartId = s.Medium.BodyPartId ?? s.SkillId;
+            var bodyPart = fighter.Member.GetBodyPartById(bodyPartId);
+            string label = bodyPart?.DisplayName
+                ?? BodyPartMediumRegistry.GetById(bodyPartId)?.DisplayName
+                ?? OrganLabel(bodyPartId);
+            AddToGroup(BodyPartKey(bodyPartId), label, idx, s, learnable, unaffordable);
+        }
+
+        for (int i = 0; i < unlockedSkills.Count; i++)
+            if (unlockedSkills[i].Medium.Type == MediumType.BodyPartMedium)
+                AddBodyPartSkillToGroups(i, unlockedSkills[i], learnable: false, unaffordable: false);
+        for (int i = 0; i < learnableSkills.Count; i++)
+            if (learnableSkills[i].Medium.Type == MediumType.BodyPartMedium)
+                AddBodyPartSkillToGroups(i, learnableSkills[i], learnable: true, unaffordable: false);
+        for (int i = 0; i < unaffordableSkills.Count; i++)
+            if (unaffordableSkills[i].Medium.Type == MediumType.BodyPartMedium)
+                AddBodyPartSkillToGroups(i, unaffordableSkills[i], learnable: false, unaffordable: true);
+
         // ── Weapon-medium groups: one tab per equipped weapon, skills in category order ──
         // Pre-index unlocked/learnable weapon skills for O(1) lookup.
         var unlockedWeaponIdx    = new Dictionary<string, int>();
@@ -356,79 +383,111 @@ public static class FightModeUI
             }
         }
 
-        // Stable ordering: organ mediums first, then weapon mediums. Organ parts of the same
-        // organ stay adjacent (grouped by organ id) and sort Left-before-Right by label.
-        static bool IsOrganGroup((string Key, string Label, List<(int, FightingSkill, bool, bool)> Skills) g) =>
-            g.Skills.Count > 0 && g.Skills[0].Item2.Medium.Type == MediumType.OrganMedium;
+        // Stable ordering: body mediums (organ + body-part) first, then weapon mediums. Organ
+        // parts of the same organ stay adjacent (grouped by organ id) and sort Left-before-Right
+        // by label.
+        static bool IsBodyGroup((string Key, string Label, List<(int, FightingSkill, bool, bool)> Skills) g) =>
+            g.Skills.Count > 0 && g.Skills[0].Item2.Medium.Type != MediumType.WeaponMedium;
         groups = groups
-            .OrderBy(g => IsOrganGroup(g) ? 0 : 1)
-            .ThenBy(g => IsOrganGroup(g)
-                ? (g.Skills[0].Skill.Medium.OrganId ?? "") + "/" + g.Label
+            .OrderBy(g => IsBodyGroup(g) ? 0 : 1)
+            .ThenBy(g => IsBodyGroup(g)
+                ? (g.Skills[0].Skill.Medium.OrganId ?? g.Skills[0].Skill.Medium.BodyPartId ?? "") + "/" + g.Label
                 : g.Label)
             .ToList();
 
+        // Build the full ordered list of row renderers (medium headers + expanded skills) so the
+        // panel can render only the slice that fits and show a scrollbar when content overflows.
+        // `textW` is captured by the closures and reduced by 1 once we know a scrollbar is needed.
+        int textW = innerW;
+        var renderers = new List<Action<int>>();
+
         foreach (var grp in groups)
         {
-            if (y >= EndTurnButtonRow - 1) break;
+            string headerKey   = grp.Key;
+            string headerLabel = grp.Label;
+            bool   isExpanded  = grp.Key == expandedMediumKey;
 
-            bool isExpanded = grp.Key == expandedMediumKey;
-            bool hovHeader  = hoveredButtonRow == y;
-            Vector4 headFg  = hovHeader ? Config.Colors.GoldYellow : Config.Colors.DarkYellowGrey;
-            string marker   = isExpanded ? "▼" : "▶";
-            string headLine = $"{marker} {grp.Label}";
-            if (headLine.Length > innerW) headLine = headLine[..innerW];
-            terminal.Text(x, y, headLine.PadRight(innerW), headFg, Config.Colors.Black);
-            layout.Add(new LeftPanelRow(y, LeftPanelRowKind.Medium, grp.Key, -1));
-            y++;
+            renderers.Add(rowY =>
+            {
+                bool hovHeader  = hoveredButtonRow == rowY;
+                Vector4 headFg  = hovHeader ? Config.Colors.GoldYellow : Config.Colors.DarkYellowGrey;
+                string marker   = isExpanded ? "▼" : "▶";
+                string headLine = $"{marker} {headerLabel}";
+                if (headLine.Length > textW) headLine = headLine[..textW];
+                terminal.Text(x, rowY, headLine.PadRight(textW), headFg, Config.Colors.Black);
+                layout.Add(new LeftPanelRow(rowY, LeftPanelRowKind.Medium, headerKey, -1));
+            });
 
             if (!isExpanded) continue;
 
             foreach (var (idx, skill, learnable, unaffordable) in grp.Skills)
             {
-                if (y >= EndTurnButtonRow - 1) break;
-                bool used = usedActions?.Contains((grp.Key, skill.SkillId)) == true;
-                bool sel = !isMoveMode && !used && !unaffordable
-                    && (learnable ? idx == selectedLearnableSkillIndex : idx == selectedSkillIndex);
-                bool hov = !sel && !used && hoveredButtonRow == y;
+                int    sIdx   = idx;
+                var    sSkill = skill;
+                bool   sLearn = learnable;
+                bool   sUnaff = unaffordable;
+                string sKey   = grp.Key;
 
-                Vector4 fg, bg;
-                if (used)
+                renderers.Add(rowY =>
                 {
-                    fg = Config.Colors.DarkGray35;
-                    bg = Config.Colors.Black;
-                }
-                else if (unaffordable)
-                {
-                    fg = Config.Colors.DarkGray40;
-                    bg = Config.Colors.Black;
-                }
-                else if (learnable)
-                {
-                    fg = sel ? Config.Colors.Black
-                       : hov ? Config.Colors.GoldYellow
-                       : Config.Colors.LightPurple;
-                    bg = sel ? Config.Colors.Purple : Config.Colors.Black;
-                }
-                else
-                {
-                    fg = sel ? Config.Colors.Black
-                       : hov ? Config.Colors.GoldYellow
-                       : Config.Colors.White;
-                    bg = sel ? Config.Colors.GoldYellow : Config.Colors.Black;
-                }
+                    bool used = usedActions?.Contains((sKey, sSkill.SkillId)) == true;
+                    bool sel = !isMoveMode && !used && !sUnaff
+                        && (sLearn ? sIdx == selectedLearnableSkillIndex : sIdx == selectedSkillIndex);
+                    bool hov = !sel && !used && hoveredButtonRow == rowY;
 
-                string prefix = learnable ? "  ? " : "    ";
-                string line = $"{prefix}{skill.DisplayName} {skill.CineticPointsCost}CP";
-                if (line.Length > innerW) line = line[..innerW];
-                terminal.Text(x, y, line.PadRight(innerW), fg, bg);
-                layout.Add(new LeftPanelRow(y,
-                    unaffordable ? LeftPanelRowKind.UnaffordableSkill :
-                    learnable    ? LeftPanelRowKind.LearnableSkill :
-                                   LeftPanelRowKind.UnlockedSkill,
-                    grp.Key, idx));
-                y++;
+                    Vector4 fg, bg;
+                    if (used)
+                    {
+                        fg = Config.Colors.DarkGray35;
+                        bg = Config.Colors.Black;
+                    }
+                    else if (sUnaff)
+                    {
+                        fg = Config.Colors.DarkGray40;
+                        bg = Config.Colors.Black;
+                    }
+                    else if (sLearn)
+                    {
+                        fg = sel ? Config.Colors.Black
+                           : hov ? Config.Colors.GoldYellow
+                           : Config.Colors.LightPurple;
+                        bg = sel ? Config.Colors.Purple : Config.Colors.Black;
+                    }
+                    else
+                    {
+                        fg = sel ? Config.Colors.Black
+                           : hov ? Config.Colors.GoldYellow
+                           : Config.Colors.White;
+                        bg = sel ? Config.Colors.GoldYellow : Config.Colors.Black;
+                    }
+
+                    string prefix = sLearn ? "  ? " : "    ";
+                    string line = $"{prefix}{sSkill.DisplayName} {sSkill.CineticPointsCost}CP";
+                    if (line.Length > textW) line = line[..textW];
+                    terminal.Text(x, rowY, line.PadRight(textW), fg, bg);
+                    layout.Add(new LeftPanelRow(rowY,
+                        sUnaff ? LeftPanelRowKind.UnaffordableSkill :
+                        sLearn ? LeftPanelRowKind.LearnableSkill :
+                                 LeftPanelRowKind.UnlockedSkill,
+                        sKey, sIdx));
+                });
             }
         }
+
+        // Visible window: rows [SkillButtonsStart .. EndTurnButtonRow-1) — the divider sits below.
+        int listTop     = SkillButtonsStart;
+        int visibleRows = (EndTurnButtonRow - 1) - listTop;
+        int total       = renderers.Count;
+        maxScrollOffset = Math.Max(0, total - visibleRows);
+        int scroll      = Math.Clamp(scrollOffset, 0, maxScrollOffset);
+        bool hasScroll  = total > visibleRows;
+        if (hasScroll) textW = innerW - 1; // reserve the rightmost inner column for the scrollbar
+
+        for (int i = 0; i < visibleRows && scroll + i < total; i++)
+            renderers[scroll + i](listTop + i);
+
+        if (hasScroll)
+            DrawActionScrollbar(terminal, x + innerW - 1, listTop, visibleRows, total, scroll, maxScrollOffset, scrollbarHot);
 
         // Divider before end/run
         int divY = EndTurnButtonRow - 1;
@@ -456,6 +515,30 @@ public static class FightModeUI
         }
 
         return layout;
+    }
+
+    /// <summary>
+    /// Draws a vertical scrollbar (track + proportional thumb) for the action menu at column
+    /// <paramref name="barX"/>, spanning <paramref name="visibleRows"/> rows from <paramref name="top"/>.
+    /// </summary>
+    private static void DrawActionScrollbar(TerminalHUD terminal, int barX, int top,
+        int visibleRows, int total, int scroll, int maxScroll, bool hot)
+    {
+        // Gray scrollbar; the thumb brightens a little when hovered or being dragged.
+        Vector4 trackColor = Config.Colors.DarkGray;
+        Vector4 thumbColor = hot ? Config.Colors.LightGray75 : Config.Colors.MediumGray60;
+
+        for (int r = 0; r < visibleRows; r++)
+            terminal.SetCell(barX, top + r, '│', trackColor, Config.Colors.Black);
+
+        int thumbH = Math.Max(1, (int)Math.Round((double)visibleRows * visibleRows / total));
+        thumbH = Math.Min(thumbH, visibleRows);
+        int travel = visibleRows - thumbH;
+        int thumbPos = maxScroll <= 0 ? 0 : (int)Math.Round((double)scroll / maxScroll * travel);
+        thumbPos = Math.Clamp(thumbPos, 0, travel);
+
+        for (int r = 0; r < thumbH; r++)
+            terminal.SetCell(barX, top + thumbPos + r, '█', thumbColor, Config.Colors.Black);
     }
 
     // ── Left-panel info box (bottom half) ─────────────────────────────
@@ -580,6 +663,11 @@ public static class FightModeUI
     public const string OrganKeyPrefix = "organ:";
     /// <summary>Prefix marking a left-panel group key as a single-organ-part medium.</summary>
     public const string OrganPartKeyPrefix = "organpart:";
+    /// <summary>Prefix marking a left-panel group key as a whole body-part-region medium.</summary>
+    public const string BodyPartKeyPrefix = "bodypart:";
+
+    /// <summary>Build the left-panel group key for a body-part region (e.g. "bodypart:upper_limbs").</summary>
+    public static string BodyPartKey(string bodyPartId) => BodyPartKeyPrefix + bodyPartId;
 
     /// <summary>Build the left-panel group key for a whole organ (e.g. "organ:legs").</summary>
     public static string OrganKey(string organId) => OrganKeyPrefix + organId;
@@ -620,6 +708,14 @@ public static class FightModeUI
                 }
             }
             return OrganLabel(s.Medium.OrganId);
+        }
+
+        if (s.Medium.Type == MediumType.BodyPartMedium)
+        {
+            string bodyPartId = s.Medium.BodyPartId ?? "";
+            return fighter?.Member.GetBodyPartById(bodyPartId)?.DisplayName
+                ?? BodyPartMediumRegistry.GetById(bodyPartId)?.DisplayName
+                ?? OrganLabel(s.Medium.BodyPartId);
         }
 
         // Weapon: list all categories that contain this skill

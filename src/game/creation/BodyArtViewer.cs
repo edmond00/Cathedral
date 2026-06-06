@@ -830,10 +830,6 @@ public class BodyArtViewer
         return row;
     }
 
-    // ── Humoral organ IDs ────────────────────────────────────────
-    private static readonly System.Collections.Generic.HashSet<string> HumoralOrganIds =
-        new() { "hepar", "paunch", "pulmones", "spleen" };
-
     /// <summary>
     /// Renders the hovered organ detail section below the stats.
     /// Split into three sections: organ-part stats, organ stats, body-part stats.
@@ -903,8 +899,8 @@ public class BodyArtViewer
             // Colour scheme (foreground only — no background chips):
             //   organ part      → yellow (the focused entity: title + its own stats)
             //   belonging lines → grey ("Organ: …", "Region: …")
-            //   scope headers   → dark-yellow text ("Legs (organ)", "Lower Limbs (region)");
-            //                     the part's own header stays bright-yellow
+            //   scope headers   → dark-yellow text for every scope ("Left Foot (part)",
+            //                     "Legs (organ)", "Lower Limbs (region)")
             //   fighting medium → white text
             Vector4 partColor      = Config.Colors.BrightYellow;
             Vector4 belongGrey     = Config.Colors.MediumGray60;
@@ -929,8 +925,10 @@ public class BodyArtViewer
             // ── Local renderers (share `row`) ──
             void RenderScopeHeader(string title, string scope, Vector4 fg, Vector4 bg)
             {
-                _terminal.Text(PanelContentX, row, $"{title}  ({scope})", fg, bg);
-                row++;
+                // "▸" prefix makes scope headers stand out; a blank line always separates the
+                // header from its first info line.
+                _terminal.Text(PanelContentX, row, $"▸ {title}  ({scope})", fg, bg);
+                row += 2;
             }
             void RenderStat(DerivedStat stat, Vector4 color)
             {
@@ -939,14 +937,14 @@ public class BodyArtViewer
                 _terminal.Text(PanelContentX + 19, row, stat.FormatValue(val), color, Config.Colors.Black);
                 row++;
             }
-            void RenderFightingMedium(int level)
+            // Renders a "Fighting Medium lv.X" block followed by its skill list (learned skills
+            // bright, the next learnable one dim). Shared by organ and body-part mediums.
+            void RenderFightingMediumSkills(IReadOnlyList<string> skillIds, int level)
             {
-                var organCategory = OrganMediumRegistry.GetById(organId);
-                if (organCategory == null) return;
                 _terminal.Text(PanelContentX, row, $"Fighting Medium  lv.{level}", Config.Colors.White, Config.Colors.Black);
                 row++;
                 bool nextLearnable = false;
-                foreach (var skillId in organCategory.SkillIds)
+                foreach (var skillId in skillIds)
                 {
                     var skill = FightingSkillRegistry.Instance.GetById(skillId);
                     if (skill == null) continue;
@@ -966,8 +964,38 @@ public class BodyArtViewer
                 }
                 row++;
             }
+            // White "Secretion" sub-label shown beneath a humoral organ's scope header,
+            // mirroring how the white "Fighting Medium" label sits beneath its scope header.
+            void RenderSecretionLabel()
+            {
+                _terminal.Text(PanelContentX, row, "Secretion", Config.Colors.White, Config.Colors.Black);
+                row++;
+            }
+
+            // Renders a scope's derived stats: ordinary stats first, then the humoral "Secretion"
+            // group as special info (white label) separated by a blank line. Returns true if any
+            // stat row was emitted (so the caller can blank-line before a following medium block).
+            bool RenderScopeStats(List<DerivedStat> stats, Vector4 normalColor)
+            {
+                var secretionStats = stats.Where(s => s is HumoralSecretionStat).ToList();
+                var normalStats    = stats.Where(s => s is not HumoralSecretionStat).ToList();
+                foreach (var stat in normalStats) RenderStat(stat, normalColor);
+                if (secretionStats.Count > 0)
+                {
+                    if (normalStats.Count > 0) row++; // blank line between normal stats and secretion info
+                    RenderSecretionLabel();
+                    foreach (var stat in secretionStats) RenderStat(stat, statGrey);
+                }
+                return stats.Count > 0;
+            }
+
+            // Organ fighting-medium category (null if this organ has no combat skills).
+            var organCategory = OrganMediumRegistry.GetById(organId);
 
             // ── Organ-part / organ stats, with the fighting medium hung off its owner ──
+            // Every scope that has content (stats and/or a fighting medium) renders its scope
+            // header first, so a header always precedes the info regardless of scope. The white
+            // Secretion / Fighting Medium labels sit beneath the (dark-yellow) scope header.
             if (singlePartOrgan)
             {
                 // Part and organ coincide — one combined block owned by the organ.
@@ -975,58 +1003,73 @@ public class BodyArtViewer
                     .Where(s => s.RelatedOrganPartId == organPartId || s.RelatedOrganId == organId)
                     .Distinct()
                     .ToList();
-                if (combined.Count > 0)
+                if (combined.Count > 0 || organCategory != null)
                 {
-                    bool isSecretion = HumoralOrganIds.Contains(organId);
-                    // Secretion headers read like the Fighting Medium header (white), with their
-                    // rates listed in grey beneath; ordinary organ headers stay dark-yellow.
-                    RenderScopeHeader(isSecretion ? $"{organDisplayName} Secretion" : organDisplayName,
-                        "organ", isSecretion ? Config.Colors.White : scopeHeadColor, Config.Colors.Black);
-                    foreach (var stat in combined) RenderStat(stat, statGrey);
+                    RenderScopeHeader(organDisplayName, "organ", scopeHeadColor, Config.Colors.Black);
+                    bool anyStat = RenderScopeStats(combined, statGrey);
+                    // Single-part organs are whole-organ mediums → owned by the organ.
+                    if (organCategory != null)
+                    {
+                        if (anyStat) row++; // blank line between stats and special info
+                        RenderFightingMediumSkills(organCategory.SkillIds, organScore);
+                    }
                     row++;
                 }
-                // Single-part organs are whole-organ mediums → owned by the organ.
-                RenderFightingMedium(organScore);
             }
             else
             {
-                // Organ-part stats
+                // ── Part scope: part stats and/or the per-part medium (e.g. hands, feet) ──
                 var organPartStats = _protagonist.DerivedStats
                     .Where(s => s.RelatedOrganPartId == organPartId)
                     .ToList();
-                if (organPartStats.Count > 0)
+                bool partOwnsMedium = perPartMedium && organCategory != null;
+                if (organPartStats.Count > 0 || partOwnsMedium)
                 {
-                    RenderScopeHeader(opInfo.Value.partDisplayName, "part", partColor, Config.Colors.Black);
-                    foreach (var stat in organPartStats) RenderStat(stat, partColor);
+                    RenderScopeHeader(opInfo.Value.partDisplayName, "part", scopeHeadColor, Config.Colors.Black);
+                    bool anyStat = RenderScopeStats(organPartStats, partColor);
+                    // Per-part medium → owned by THIS part, level = this part's score.
+                    if (partOwnsMedium)
+                    {
+                        if (anyStat) row++; // blank line between stats and special info
+                        RenderFightingMediumSkills(organCategory!.SkillIds, partScore);
+                    }
                     row++;
                 }
-                // Per-part medium (e.g. hands) → owned by THIS part, level = this part's score.
-                if (perPartMedium) RenderFightingMedium(partScore);
 
-                // Organ stats
+                // ── Organ scope: organ stats and/or the whole-organ medium (e.g. legs) ──
                 var organStats = _protagonist.DerivedStats
                     .Where(s => s.RelatedOrganId == organId)
                     .ToList();
-                if (organStats.Count > 0)
+                bool organOwnsMedium = !perPartMedium && organCategory != null;
+                if (organStats.Count > 0 || organOwnsMedium)
                 {
-                    bool isSecretion = HumoralOrganIds.Contains(organId);
-                    RenderScopeHeader(isSecretion ? $"{organDisplayName} Secretion" : organDisplayName,
-                        "organ", isSecretion ? Config.Colors.White : scopeHeadColor, Config.Colors.Black);
-                    foreach (var stat in organStats) RenderStat(stat, statGrey);
+                    RenderScopeHeader(organDisplayName, "organ", scopeHeadColor, Config.Colors.Black);
+                    bool anyStat = RenderScopeStats(organStats, statGrey);
+                    if (organOwnsMedium)
+                    {
+                        if (anyStat) row++; // blank line between stats and special info
+                        RenderFightingMediumSkills(organCategory!.SkillIds, organScore);
+                    }
                     row++;
                 }
-                // Whole-organ medium (e.g. legs) → owned by the organ, level = organ total.
-                if (!perPartMedium) RenderFightingMedium(organScore);
             }
 
-            // ── Body-part (region) stats ──
+            // ── Body-part (region) stats + region fighting medium (e.g. upper limbs) ──
             var bodyPartStats = _protagonist.DerivedStats
                 .Where(s => s.RelatedBodyPartId == bodyPartId)
                 .ToList();
-            if (bodyPartStats.Count > 0)
+            var bodyPartCategory = BodyPartMediumRegistry.GetById(bodyPartId);
+            if (bodyPartStats.Count > 0 || bodyPartCategory != null)
             {
                 RenderScopeHeader(bodyPartDisplay, "region", scopeHeadColor, Config.Colors.Black);
-                foreach (var stat in bodyPartStats) RenderStat(stat, statGrey);
+                bool anyStat = RenderScopeStats(bodyPartStats, statGrey);
+                // A body part that is itself a fighting medium (level = region total score).
+                if (bodyPartCategory != null)
+                {
+                    if (anyStat) row++; // blank line between stats and special info
+                    RenderFightingMediumSkills(bodyPartCategory.SkillIds,
+                        _protagonist.GetBodyPartById(bodyPartId)?.Score ?? 0);
+                }
                 row++;
             }
 

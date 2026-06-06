@@ -8,7 +8,7 @@ public sealed class SeizeSkill : FightingSkill
     public override string Description            => "Grab and restrain. Immobilizes the target.";
     public override string RequiredModusMentisId  => "brawling";
     public override string[] SecondaryModusMentisIds => new[] { "pugilitas", "brute_force" };
-    public override FightingMedium Medium         => FightingMedium.Organ("hands");
+    public override FightingMedium Medium         => FightingMedium.BodyPart("upper_limbs");
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

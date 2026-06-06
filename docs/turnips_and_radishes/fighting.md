@@ -99,10 +99,15 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 ### hands
 
 1. Punch
-2. Seize
-3. Uppercut
-4. Chokehold
-5. Palm Strike
+2. Uppercut
+3. Palm Strike
+
+### upper limbs
+
+(body-part medium — level is the whole region's total score: hands + arms)
+
+1. Seize
+2. Chokehold
 
 ### feet
 
@@ -304,7 +309,7 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 
 8. Seize
 
-- Mediums : hands #2
+- Mediums : upper limbs #1
 - Cinetic Points : 2
 - Main MM : Brawling
 - Secondary MM : Pugilatus / Brute Force
@@ -329,7 +334,7 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 
 10. Chokehold
 
-- Mediums : hands #4
+- Mediums : upper limbs #2
 - Cinetic Points : 4
 - Main MM : Brawling
 - Secondary MM : Brute Force / Predator

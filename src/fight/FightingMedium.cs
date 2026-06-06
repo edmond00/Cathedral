@@ -12,6 +12,8 @@ public enum MediumType
     OrganMedium,
     /// <summary>Uses a weapon held in RightHold or LeftHold equipment slot.</summary>
     WeaponMedium,
+    /// <summary>Uses a whole body-part region directly (e.g. upper_limbs); level is the region's total score.</summary>
+    BodyPartMedium,
 }
 
 /// <summary>
@@ -26,9 +28,19 @@ public record FightingMedium
     /// <summary>Organ id required for <see cref="MediumType.OrganMedium"/> (e.g. "hands", "feet", "fangs", "claws").</summary>
     public string? OrganId { get; init; }
 
+    /// <summary>Body-part id required for <see cref="MediumType.BodyPartMedium"/> (e.g. "upper_limbs").</summary>
+    public string? BodyPartId { get; init; }
+
     /// <summary>Factory for an organ medium.</summary>
     public static FightingMedium Organ(string organId) =>
         new() { Type = MediumType.OrganMedium, OrganId = organId };
+
+    /// <summary>
+    /// Factory for a body-part medium. The medium level is the body part's total score
+    /// (the sum of its organs' scores). Category membership is defined by <see cref="BodyPartMediumRegistry"/>.
+    /// </summary>
+    public static FightingMedium BodyPart(string bodyPartId) =>
+        new() { Type = MediumType.BodyPartMedium, BodyPartId = bodyPartId };
 
     /// <summary>Factory for a weapon medium. Category membership is defined by <see cref="WeaponMediumRegistry"/>.</summary>
     public static FightingMedium Weapon =>
@@ -54,6 +66,13 @@ public record FightingMedium
                 if (part != null) return part.Score;
             }
             return organ.Score;
+        }
+        else if (Type == MediumType.BodyPartMedium)
+        {
+            // Whole body-part region: level is the region's total score (sum of its organs).
+            // organPartId is ignored — a body-part medium has no independent sub-parts.
+            if (string.IsNullOrEmpty(BodyPartId)) return 0;
+            return f.Member.GetBodyPartById(BodyPartId)?.Score ?? 0;
         }
         else // WeaponMedium
         {

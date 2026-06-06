@@ -132,6 +132,12 @@ public abstract class FightingSkill
                     for (int i = 0; i < cat.SkillIds.Count; i++)
                         if (cat.SkillIds[i] == SkillId) { best = Math.Min(best, i + 1); break; }
             }
+            else if (Medium.Type == MediumType.BodyPartMedium)
+            {
+                foreach (var cat in BodyPartMediumRegistry.GetAll())
+                    for (int i = 0; i < cat.SkillIds.Count; i++)
+                        if (cat.SkillIds[i] == SkillId) { best = Math.Min(best, i + 1); break; }
+            }
             else
             {
                 foreach (var cat in WeaponMediumRegistry.GetAll())
@@ -220,6 +226,21 @@ public abstract class FightingSkill
                 w.Handicap == WoundHandicap.High &&
                 (w.TargetKind == WoundTargetKind.Organ && w.TargetId == organId ||
                  w.TargetKind == WoundTargetKind.BodyPart && w.TargetId == organ.BodyPartId));
+            if (disabled) return false;
+        }
+        else if (Medium.Type == MediumType.BodyPartMedium)
+        {
+            // Body part must exist and must not be fully disabled by a High-handicap wound
+            // targeting the whole region.
+            var bodyPartId = Medium.BodyPartId;
+            if (string.IsNullOrEmpty(bodyPartId)) return false;
+
+            var bodyPart = f.Member.GetBodyPartById(bodyPartId);
+            if (bodyPart == null) return false;
+
+            bool disabled = f.Member.Wounds.Any(w =>
+                w.Handicap == WoundHandicap.High &&
+                w.TargetKind == WoundTargetKind.BodyPart && w.TargetId == bodyPartId);
             if (disabled) return false;
         }
         else // WeaponMedium
