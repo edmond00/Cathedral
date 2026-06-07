@@ -2281,14 +2281,17 @@ public class NarrativeController
         }
         else if (result == Fight.FightAdapterResult.Runaway)
         {
-            // Every alive fighter who participated now considers the protagonist an enemy
+            // The whole party fights together, so every alive enemy now considers each party
+            // member (protagonist + companions) an enemy after the party fled.
+            var partyNames = new List<string> { _protagonist.DisplayName };
+            partyNames.AddRange(_protagonist.CompanionParty.Select(c => c.DisplayName));
+
             foreach (var enemy in enemies)
             {
-                if (enemy.IsAlive)
-                {
-                    enemy.AffinityTable.SetEnemy(_protagonist.DisplayName);
-                    Console.WriteLine($"NarrativeController: {enemy.DisplayName} flagged as enemy after runaway");
-                }
+                if (!enemy.IsAlive) continue;
+                foreach (var name in partyNames)
+                    enemy.AffinityTable.SetEnemy(name);
+                Console.WriteLine($"NarrativeController: {enemy.DisplayName} flagged the whole party ({partyNames.Count} member(s)) as enemies after runaway");
             }
         }
 
