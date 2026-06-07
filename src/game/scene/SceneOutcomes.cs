@@ -22,7 +22,7 @@ public sealed class ItemAcquisitionOutcome : OutcomeReport
         _itemElement = itemElement;
     }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null || pov == null) return;
 
@@ -50,7 +50,7 @@ public sealed class CorpseItemAcquisitionOutcome : OutcomeReport
         _itemElement = itemElement;
     }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (pov?.InSpot == null) return;
 
@@ -72,7 +72,7 @@ public sealed class AreaMoveOutcome : OutcomeReport
         _destination = destination;
     }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (pov == null) return;
         pov.Where = _destination;
@@ -91,7 +91,7 @@ public sealed class SpotEnterOutcome : OutcomeReport
         _spot = spot;
     }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (pov == null) return;
         pov.InSpot = _spot;
@@ -105,7 +105,7 @@ public sealed class SpotLeaveOutcome : OutcomeReport
     public SpotLeaveOutcome()
         : base("Left the spot", OutcomeReportSeverity.Neutral) { }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (pov == null) return;
         pov.InSpot = null;
@@ -126,7 +126,7 @@ public sealed class DoorUnlockOutcome : OutcomeReport
         _destination = destination;
     }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null || pov == null) return;
         _door.DoorState = DoorState.Unlocked;
@@ -147,7 +147,7 @@ public sealed class NpcSlaynOutcome : OutcomeReport
         _sceneNpc = sceneNpc;
     }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null || pov == null) return;
         _sceneNpc.Entity.IsAlive = false;
@@ -168,7 +168,7 @@ public sealed class FightTriggerOutcome : OutcomeReport
         _npc = npc;
     }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null) return;
         scene.PendingFightRequest = new FightRequest(_npc);
@@ -188,7 +188,7 @@ public sealed class DialogueTriggerOutcome : OutcomeReport
         _treeId = treeId;
     }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null) return;
         scene.PendingDialogueRequest = new DialogueRequest(_npc, _treeId);
@@ -206,7 +206,7 @@ public sealed class AffinityChangeOutcome : OutcomeReport
         _npc = npc;
     }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         _npc.AffinityTable.ClearEnemy(protagonist.DisplayName);
         _npc.AffinityTable.SetLevel(protagonist.DisplayName, Cathedral.Game.Dialogue.Affinity.AffinityLevel.Suspicious);
@@ -225,7 +225,7 @@ public sealed class StateCaptureOutcome : OutcomeReport
         _element = element;
     }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
         => scene?.StateChanges.Capture(_element);
 }
 
@@ -249,7 +249,7 @@ public sealed class ReminescenceTransitionOutcome : OutcomeReport
         _fragmentName = fragmentName;
     }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null) return;
         scene.PendingReminescenceTransition = new ReminescenceTransitionRequest(_fromId, _nextId, _fragmentName);
@@ -266,7 +266,7 @@ public sealed class GetUpTransitionOutcome : OutcomeReport
 
     public GetUpTransitionOutcome() : base(string.Empty, OutcomeReportSeverity.Positive) { }
 
-    public override void Apply(Protagonist protagonist, Scene? scene, PoV? pov)
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null) return;
         scene.PendingGetUpTransition = true;

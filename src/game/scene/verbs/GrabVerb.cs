@@ -46,7 +46,7 @@ public class GrabVerb : Verb
         return $"grab {article} {name}";
     }
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not ItemElement itemElement) return System.Array.Empty<OutcomeReport>();
         return new[] { new ItemAcquisitionOutcome(itemElement) };

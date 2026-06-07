@@ -40,7 +40,7 @@ public class OpenDoorVerb : Verb
             : $"exit back through {door.DisplayName.ToLowerInvariant()}";
     }
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not DoorPointOfInterest door) return System.Array.Empty<OutcomeReport>();
         var destination = pov.Where.Id == door.FrontArea.Id ? door.BackArea : door.FrontArea;

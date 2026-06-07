@@ -46,7 +46,7 @@ public class ReconcileVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"try to reconcile with {target.DisplayName}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc)
             return System.Array.Empty<OutcomeReport>();

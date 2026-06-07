@@ -252,7 +252,7 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     /// Item combined with this action via right-click item selection.
     /// Null when no item is combined. When set, the action text has been reformulated
     /// by the action modusMentis to incorporate the item, and dice rolls receive a bonus
-    /// equal to the item's UsageLevel.
+    /// equal to the item's UsageLevel capped by the hands-derived "item_usage_cap" stat.
     /// </summary>
     public Item? CombinedItem { get; set; } = null;
 

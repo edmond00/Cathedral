@@ -29,7 +29,7 @@ public class MoveToAreaVerb : Verb
         return $"move to the {target.DisplayName.ToLowerInvariant()}";
     }
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not Area targetArea) return System.Array.Empty<OutcomeReport>();
         return new[] { new AreaMoveOutcome(targetArea) };

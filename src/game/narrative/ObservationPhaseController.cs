@@ -55,12 +55,13 @@ public class ObservationPhaseController
     /// </summary>
     public async Task<List<NarrationBlock>> ExecuteObservationPhaseAsync(
         NarrationNode currentNode,
-        Protagonist protagonist,
+        PartyMember actingMember,
+        int locationId,
         CancellationToken ct = default)
     {
         Console.WriteLine($"ObservationPhaseController: Starting overall observation for {currentNode.NodeId}");
 
-        var modusMentis = protagonist.GetObservationModiMentis()
+        var modusMentis = actingMember.GetObservationModiMentis()
             .OrderBy(_ => _random.Next())
             .FirstOrDefault();
 
@@ -89,7 +90,6 @@ public class ObservationPhaseController
         var allKeywords = new List<string>();
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
-        int locationId = protagonist.CurrentLocationId;
 
         string previousDescription = currentNode.GenerateNeutralDescription(locationId);
 
@@ -212,7 +212,7 @@ public class ObservationPhaseController
         ConcreteOutcome focusOutcome,
         ModusMentis observationModusMentis,
         NarrationNode currentNode,
-        Protagonist protagonist,
+        int locationId,
         CancellationToken ct = default)
     {
         Console.WriteLine($"ObservationPhaseController: Starting focus observation on '{focusOutcome.DisplayName}'");
@@ -224,7 +224,6 @@ public class ObservationPhaseController
         var allKeywords = new List<string>();
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
-        int locationId = protagonist.CurrentLocationId;
 
         // 1. Focus description of the clicked outcome (first sentence -- full context prompt)
         string? firstText = null;
@@ -413,7 +412,8 @@ public class ObservationPhaseController
         string companionName,
         ConcreteOutcome linkedOutcome,
         NarrationNode currentNode,
-        Protagonist protagonist,
+        PartyMember actingMember,
+        int locationId,
         WorldContext worldContext,
         CancellationToken ct = default)
     {
@@ -422,8 +422,6 @@ public class ObservationPhaseController
         // Acquire slot once and reset — all 3 requests run on this slot without further resets.
         var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(speakingModusMentis);
         _observationExecutor.ResetSlot(slotId);
-
-        int locationId = protagonist.CurrentLocationId;
 
         try
         {
@@ -507,7 +505,7 @@ public class ObservationPhaseController
                 LinkedOutcome: linkedOutcome,
                 KeywordOutcomeMap: speakingKeywordOutcomeMap.Count > 0 ? speakingKeywordOutcomeMap : null,
                 Sentences: speakingSentences,
-                SpeakerName: protagonist.DisplayName
+                SpeakerName: actingMember.DisplayName
             );
 
             Console.WriteLine($"ObservationPhaseController: Speaking generation complete ({allExtractedKeywords.Count} keywords)");

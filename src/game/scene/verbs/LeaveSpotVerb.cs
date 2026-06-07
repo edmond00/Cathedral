@@ -22,6 +22,6 @@ public class LeaveSpotVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"leave the {target.DisplayName.ToLowerInvariant()}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => new[] { new SpotLeaveOutcome() };
 }

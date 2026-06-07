@@ -25,7 +25,7 @@ public abstract class OutcomeReport
     }
 
     /// <summary>Apply the concrete game-state change carried by this report.</summary>
-    public virtual void Apply(Protagonist protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov) { }
+    public virtual void Apply(PartyMember protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov) { }
 }
 
 // ── Narrative-only concrete types (no scene dependency) ──────────────────────
@@ -41,7 +41,7 @@ public sealed class SkillAcquisitionOutcome : OutcomeReport
         _template = template;
     }
 
-    public override void Apply(Protagonist protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
+    public override void Apply(PartyMember protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
     {
         var instance = (ModusMentis)Activator.CreateInstance(_template.GetType())!;
         instance.Level = 1;
@@ -60,7 +60,7 @@ public sealed class ItemGrantOutcome : OutcomeReport
         _item = item;
     }
 
-    public override void Apply(Protagonist protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
+    public override void Apply(PartyMember protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
         => protagonist.AcquireItem(_item);
 }
 
@@ -81,7 +81,7 @@ public sealed class WoundInflictionOutcome : OutcomeReport
         return $"Wound: {w.WoundName} — {loc}";
     }
 
-    public override void Apply(Protagonist protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
+    public override void Apply(PartyMember protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
         => protagonist.Wounds.Add(Wound);
 }
 
@@ -121,10 +121,13 @@ public sealed class ChildhoodHistoryOutcome : OutcomeReport
         _setLocation    = setLocation;
     }
 
-    public override void Apply(Protagonist protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
+    public override void Apply(PartyMember protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
     {
+        // Childhood history is protagonist-only and only produced during the (solo) reminescence
+        // phase, so the acting member is always the protagonist here.
+        if (protagonist is not Protagonist proto) return;
         if (_setLocation != null)
-            protagonist.ChildhoodHistory.Location = _setLocation;
-        protagonist.ChildhoodHistory.RecordFragment(_originId, _fragmentName, _summary, _contextSummary);
+            proto.ChildhoodHistory.Location = _setLocation;
+        proto.ChildhoodHistory.RecordFragment(_originId, _fragmentName, _summary, _contextSummary);
     }
 }

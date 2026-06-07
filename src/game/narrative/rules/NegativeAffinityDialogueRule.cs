@@ -28,7 +28,7 @@ public class NegativeAffinityDialogueRule : IActionRule
         var verbId = vo.VerbView.Verb.VerbId;
 
         // ── Enemy: only reconcile / appease are allowed ───────────────────────
-        if (npc.AffinityTable.IsEnemy(ctx.Protagonist.DisplayName))
+        if (npc.AffinityTable.IsEnemy(ctx.Actor.DisplayName))
         {
             if (verbId is "reconcile" or "appease") return ActionRuleResult.Pass();
             return ActionRuleResult.Fail(
@@ -36,7 +36,7 @@ public class NegativeAffinityDialogueRule : IActionRule
         }
 
         // ── AnnoyingAcquaintance: only reconcile is allowed ───────────────────
-        var affinity = npc.AffinityTable.GetLevel(ctx.Protagonist.DisplayName);
+        var affinity = npc.AffinityTable.GetLevel(ctx.Actor.DisplayName);
         if (affinity == AffinityLevel.AnnoyingAcquaintance)
         {
             if (verbId == "reconcile") return ActionRuleResult.Pass();

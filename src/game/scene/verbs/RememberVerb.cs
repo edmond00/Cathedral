@@ -30,7 +30,7 @@ public class RememberVerb : Verb
         return "try to remember";
     }
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not FragmentPointOfInterest fragmentPoi)
             throw new InvalidOperationException("RememberVerb target must be a FragmentPointOfInterest");

@@ -24,7 +24,7 @@ public class ClimbDownVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"climb down {target.DisplayName.ToLowerInvariant()}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not CliffPointOfInterest cliff) return System.Array.Empty<OutcomeReport>();
         return new[] { new AreaMoveOutcome(cliff.BottomArea) };

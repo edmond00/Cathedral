@@ -22,9 +22,9 @@ public sealed class GetUpVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => "get up and continue your travel";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => new List<OutcomeReport> { new GetUpTransitionOutcome() };
 
-    public override IReadOnlyList<OutcomeReport> FailureReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> FailureReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => System.Array.Empty<OutcomeReport>();
 }

@@ -34,7 +34,7 @@ public class SlayVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"slay the {target.DisplayName.ToLowerInvariant()}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc npc) return System.Array.Empty<OutcomeReport>();
         return new[] { new NpcSlaynOutcome(npc) };

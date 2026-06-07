@@ -36,7 +36,7 @@ public class OutcomeNarrator
         OutcomeBase outcome,
         bool succeeded,
         double difficulty,
-        Protagonist protagonist,
+        PartyMember protagonist,
         CancellationToken cancellationToken = default,
         string? failureHint = null)
     {
@@ -102,7 +102,7 @@ public class OutcomeNarrator
         ParsedNarrativeAction action,
         ModusMentis actionModusMentis,
         string plausibilityError,
-        Protagonist protagonist,
+        PartyMember protagonist,
         CancellationToken cancellationToken = default)
     {
         if (PlaygroundMode.IsActive)
@@ -234,7 +234,7 @@ You want to use this item to realize this action but it is not suitable.
         OutcomeBase outcome,
         bool succeeded,
         double difficulty,
-        Protagonist protagonist,
+        PartyMember protagonist,
         string questionText,
         string? failureHint = null)
     {

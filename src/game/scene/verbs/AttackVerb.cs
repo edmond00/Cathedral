@@ -33,7 +33,7 @@ public class AttackVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"attack {target.DisplayName}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc sceneNpc) return System.Array.Empty<OutcomeReport>();
         if (sceneNpc.Entity is ShallowNpcEntity)

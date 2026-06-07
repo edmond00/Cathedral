@@ -23,7 +23,7 @@ public class FollowPathVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"follow {target.DisplayName.ToLowerInvariant()}";
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not PathPointOfInterest path) return System.Array.Empty<OutcomeReport>();
         var destination = path.Other(pov.Where);

@@ -65,7 +65,7 @@
 
 ### HAND (5)
 
-- item usage dexterity bonus
+- item usage level cap (max item UsageLevel that grants bonus dice when combining an item with an action)
 - fighting skill medium level
 
 ## LOWER LIMBS

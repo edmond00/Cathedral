@@ -52,21 +52,21 @@ public abstract class Verb
     /// of this verb. Each report both describes itself for the UI and applies its own
     /// game-state change via <see cref="OutcomeReport.Apply"/>.
     /// </summary>
-    public virtual IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public virtual IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => System.Array.Empty<OutcomeReport>();
 
     /// <summary>
     /// Returns the <see cref="OutcomeReport"/> objects that result from a failed execution
     /// of this verb (verb-specific failure side-effects, excluding LLM-decided wounds).
     /// </summary>
-    public virtual IReadOnlyList<OutcomeReport> FailureReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public virtual IReadOnlyList<OutcomeReport> FailureReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => System.Array.Empty<OutcomeReport>();
 
     /// <summary>
     /// Applies all success reports in sequence. Kept for compatibility — prefer calling
     /// <see cref="SuccessReports"/> and iterating the results directly.
     /// </summary>
-    public void Execute(Scene scene, PoV pov, Protagonist actor, Element target)
+    public void Execute(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         foreach (var report in SuccessReports(scene, pov, actor, target))
             report.Apply(actor, scene, pov);

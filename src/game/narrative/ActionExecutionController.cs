@@ -66,7 +66,14 @@ public class ActionExecutionController
 {
     private readonly OutcomeNarrator _outcomeNarrator;
     private readonly OutcomeApplicator _outcomeApplicator;
-    private readonly Protagonist _protagonist;
+
+    /// <summary>
+    /// The party member currently performing actions. Defaults to the protagonist but is
+    /// reassigned by <see cref="NarrativeController"/> whenever a companion becomes the active
+    /// party member (after a "Speak About"), so skill resolution, organ scores, XP, wounds, and
+    /// item consumption all operate on whoever is actually acting.
+    /// </summary>
+    public PartyMember ActingMember { get; set; }
     private readonly CriticEvaluator _criticEvaluator;
     private readonly WorldContext _worldContext;
     private readonly int _locationId;
@@ -87,7 +94,7 @@ public class ActionExecutionController
     {
         _outcomeNarrator = outcomeNarrator;
         _outcomeApplicator = outcomeApplicator;
-        _protagonist = protagonist;
+        ActingMember = protagonist;
         _criticEvaluator = criticEvaluator;
         _worldContext = worldContext;
         _locationId = locationId;
@@ -112,14 +119,14 @@ public class ActionExecutionController
     {
         // Debug: Show what we're searching for and what we have
         Console.WriteLine($"DEBUG: Looking for action modusMentis ID: '{action.ActionModusMentisId}'");
-        Console.WriteLine($"DEBUG: Protagonist has {_protagonist.ModiMentis.Count} modiMentis:");
-        foreach (var modusMentis in _protagonist.ModiMentis)
+        Console.WriteLine($"DEBUG: Protagonist has {ActingMember.ModiMentis.Count} modiMentis:");
+        foreach (var modusMentis in ActingMember.ModiMentis)
         {
             Console.WriteLine($"  - {modusMentis.ModusMentisId} ({modusMentis.DisplayName})");
         }
         
         // Resolve action modusMentis
-        var actionModusMentis = _protagonist.ModiMentis.FirstOrDefault(s => s.ModusMentisId == action.ActionModusMentisId);
+        var actionModusMentis = ActingMember.ModiMentis.FirstOrDefault(s => s.ModusMentisId == action.ActionModusMentisId);
         if (actionModusMentis == null)
         {
             Console.WriteLine($"DEBUG: ModusMentis '{action.ActionModusMentisId}' NOT FOUND in protagonist's modiMentis!");
@@ -209,7 +216,7 @@ public class ActionExecutionController
         
         // Adjust for organ score
         string organId = actionModusMentis.Organs.Length > 0 ? actionModusMentis.Organs[0] : "hands";
-        int organScore = _protagonist.GetOrganById(organId)?.Score ?? 5;
+        int organScore = ActingMember.GetOrganById(organId)?.Score ?? 5;
         
         // Organ score adds up to 10% success chance
         successProbability += (organScore - 5) * 0.02;
@@ -307,7 +314,7 @@ public class ActionExecutionController
 
             // Award +1 XP to every modusMentis in the action chain (observation → thinking → action).
             foreach (var chainModusMentis in action.GetModusMentisChain())
-                _protagonist.AwardModusMentisXp(chainModusMentis);
+                ActingMember.AwardModusMentisXp(chainModusMentis);
         }
         else
         {
@@ -350,7 +357,7 @@ public class ActionExecutionController
             var consumptionResult = await _criticEvaluator.EvaluateTreeAsync(consumptionTree);
             if (CriticTrees.IsItemConsumedFromResult(consumptionResult))
             {
-                _protagonist.RemoveItem(action.CombinedItem);
+                ActingMember.RemoveItem(action.CombinedItem);
                 Console.WriteLine($"   Item consumed and removed: {action.CombinedItem.ItemId}");
             }
             else
@@ -419,7 +426,7 @@ public class ActionExecutionController
             actualOutcome,
             succeeded,
             difficultyScore,
-            _protagonist,
+            ActingMember,
             cancellationToken,
             failureHint);
 
@@ -483,7 +490,7 @@ public class ActionExecutionController
     {
         var candidates = new List<WildcardCandidate>();
 
-        foreach (var bp in _protagonist.BodyParts)
+        foreach (var bp in ActingMember.BodyParts)
         {
             if (bp.AcceptsWildcardWounds)
                 candidates.Add(new WildcardCandidate(bp.Id, bp.DisplayName, bp.Id));
@@ -585,7 +592,7 @@ public class ActionExecutionController
             action,
             actionModusMentis,
             plausibilityError,
-            _protagonist,
+            ActingMember,
             cancellationToken);
         
         return new ActionExecutionResult

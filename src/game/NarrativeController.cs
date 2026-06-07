@@ -338,7 +338,8 @@ public class NarrativeController
             // Generate ONE overall observation (one sentence per sampled outcome)
             var blocks = await _observationController.ExecuteObservationPhaseAsync(
                 _currentNode,
-                _protagonist
+                _activePartyMember,
+                _protagonist.CurrentLocationId
             );
             
             Console.WriteLine($"NarrativeController: Generated {blocks.Count} observation blocks");
@@ -523,6 +524,10 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Starting action execution for '{action.ActionText}'");
 
+            // Whoever is the active party member performs this action: their skills, organ scores,
+            // XP, wounds, and item consumption all apply (not necessarily the protagonist's).
+            _actionExecutor.ActingMember = _activePartyMember;
+
             // === REMINESCENCE-PHASE SHORT-CIRCUIT ===
             // In the childhood-reminescence phase REMEMBER actions auto-succeed: no critic,
             // no dice, no noetic-point cost. Run the verb's Execute synchronously and emit
@@ -568,7 +573,7 @@ public class NarrativeController
 
             // Run all coded rules; a failure here is absolute — no LLM retry, no noetic cost.
             var ruleCtx = new Narrative.Rules.ActionRuleContext(
-                action, _protagonist!, _scene, _pov, witnessContext, threatContext);
+                action, _activePartyMember, _scene, _pov, witnessContext, threatContext);
             var ruleResult = Narrative.Rules.ActionRulesChecker.Check(ruleCtx);
             if (!ruleResult.Passed)
             {
@@ -1112,15 +1117,16 @@ public class NarrativeController
         if (result.ActualOutcome is VerbOutcome verbTarget && _scene != null && _pov != null)
         {
             var verbReports = result.Succeeded
-                ? verbTarget.VerbView.Verb.SuccessReports(_scene, _pov, _protagonist, verbTarget.Target!)
-                : verbTarget.VerbView.Verb.FailureReports(_scene, _pov, _protagonist, verbTarget.Target!);
+                ? verbTarget.VerbView.Verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target!)
+                : verbTarget.VerbView.Verb.FailureReports(_scene, _pov, _activePartyMember, verbTarget.Target!);
             allReports.AddRange(verbReports);
         }
         allReports.AddRange(result.LlmDecidedReports);
 
-        // Apply every report's game-state change in order.
+        // Apply every report's game-state change in order — to the acting member, so a companion's
+        // loot, learned skills, and suffered wounds land on the companion, not the protagonist.
         foreach (var report in allReports)
-            report.Apply(_protagonist, _scene, _pov);
+            report.Apply(_activePartyMember, _scene, _pov);
 
         // UI-visible chips for the outcome block.
         var uiReports = allReports.Where(r => r.ShowInUI).ToList();
@@ -1271,7 +1277,7 @@ public class NarrativeController
                 focusOutcome,
                 observationModusMentis,
                 _currentNode,
-                _protagonist
+                _protagonist.CurrentLocationId
             );
 
             foreach (var block in blocks)
@@ -1356,7 +1362,8 @@ public class NarrativeController
                 companion.Name,
                 linkedOutcome,
                 _currentNode,
-                _protagonist,
+                _activePartyMember,
+                _protagonist.CurrentLocationId,
                 _worldContext
             );
 
@@ -2411,7 +2418,7 @@ public class NarrativeController
 
     private List<Item> GetCombinableItems()
     {
-        return _protagonist.GetAllItems()
+        return _activePartyMember.GetAllItems()
             .Where(i => i is not ContainerItem c || c.Contents.Count == 0)
             .ToList();
     }
@@ -2447,7 +2454,7 @@ public class NarrativeController
         {
             // Resolve action modusMentis
             var actionModusMentis = action.ActionModusMentis
-                ?? _protagonist.ModiMentis.FirstOrDefault(m => m.ModusMentisId == action.ActionModusMentisId);
+                ?? _activePartyMember.ModiMentis.FirstOrDefault(m => m.ModusMentisId == action.ActionModusMentisId);
 
             if (actionModusMentis == null)
             {
@@ -2502,10 +2509,17 @@ public class NarrativeController
                     reformulatedText = action.DisplayText;
 
                 // ── Step 3: build the combined action ────────────────────────────
-                // Chain leaf: a synthetic ModusMentis carrying item name + UsageLevel so that:
+                // Chain leaf: a synthetic ModusMentis carrying item name + effective usage level so that:
                 //   - the action button shows [ItemName ◼◼] instead of [ActionSkill ◼◼◼]
-                //   - GetTotalModusMentisLevel() = obs.Level + thinking.Level + action.Level + item.UsageLevel (no repetition)
-                var itemModusMentis = new SyntheticItemModusMentis(item.ItemId, item.DisplayName, item.UsageLevel);
+                //   - GetTotalModusMentisLevel() = obs.Level + thinking.Level + action.Level + effectiveUsage (no repetition)
+                // The item's UsageLevel is capped by the hands-derived "item_usage_cap" stat so that
+                // characters with stronger (or unwounded) hands extract more bonus from potent tools.
+                int usageCap = _activePartyMember.DerivedStats
+                    .FirstOrDefault(s => s.Name == "item_usage_cap")?.GetValue(_activePartyMember)
+                    ?? item.UsageLevel;
+                int effectiveUsageLevel = System.Math.Min(item.UsageLevel, usageCap);
+                Console.WriteLine($"NarrativeController: Item usage level {item.UsageLevel} capped to {effectiveUsageLevel} (hands cap {usageCap}).");
+                var itemModusMentis = new SyntheticItemModusMentis(item.ItemId, item.DisplayName, effectiveUsageLevel);
 
                 var combinedAction = new ParsedNarrativeAction
                 {

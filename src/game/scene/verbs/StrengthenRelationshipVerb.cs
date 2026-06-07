@@ -48,7 +48,7 @@ public class StrengthenRelationshipVerb : Verb
         return $"talk to {target.DisplayName}";
     }
 
-    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, Protagonist actor, Element target)
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc)
             return System.Array.Empty<OutcomeReport>();
