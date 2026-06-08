@@ -930,18 +930,27 @@ public class BodyArtViewer
                 _terminal.Text(PanelContentX, row, $"▸ {title}  ({scope})", fg, bg);
                 row += 2;
             }
-            void RenderStat(DerivedStat stat, Vector4 color)
+            // Each derived stat is rendered on two lines: the label on the first line and the
+            // value (with its unit) on the second, indented one extra space and drawn in a
+            // slightly darker grey so the number reads as secondary detail. Because the label
+            // no longer shares a row with the value it may use the full width of the right panel.
+            // extraIndent shifts both lines further right so a stat can nest under a group
+            // sub-header (e.g. secretion percentages beneath the "Secretion" label).
+            void RenderStat(DerivedStat stat, Vector4 labelColor, int extraIndent = 0)
             {
                 int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
-                _terminal.Text(PanelContentX, row, $"  {stat.ShortDisplayName,-16}", color, Config.Colors.Black);
-                _terminal.Text(PanelContentX + 19, row, stat.FormatValue(val), color, Config.Colors.Black);
+                Vector4 valueColor = AdjustLuminosity(labelColor, 0.65f);
+                string pad = new string(' ', extraIndent);
+                _terminal.Text(PanelContentX, row, $"{pad}  {stat.ShortDisplayName}", labelColor, Config.Colors.Black);
+                row++;
+                _terminal.Text(PanelContentX, row, $"{pad}    {stat.FormatValue(val)}", valueColor, Config.Colors.Black);
                 row++;
             }
             // Renders a "Fighting Medium lv.X" block followed by its skill list (learned skills
             // bright, the next learnable one dim). Shared by organ and body-part mediums.
             void RenderFightingMediumSkills(IReadOnlyList<string> skillIds, int level)
             {
-                _terminal.Text(PanelContentX, row, $"Fighting Medium  lv.{level}", Config.Colors.White, Config.Colors.Black);
+                _terminal.Text(PanelContentX, row, $"  Fighting Medium  lv.{level}", Config.Colors.White, Config.Colors.Black);
                 row++;
                 bool nextLearnable = false;
                 foreach (var skillId in skillIds)
@@ -952,12 +961,12 @@ public class BodyArtViewer
                         .Any(m => m.ModusMentisId == skill.RequiredModusMentisId);
                     if (isLearned)
                     {
-                        _terminal.Text(PanelContentX, row, $"  · {skill.DisplayName}", Config.Colors.LightGray75, Config.Colors.Black);
+                        _terminal.Text(PanelContentX, row, $"    · {skill.DisplayName}", Config.Colors.LightGray75, Config.Colors.Black);
                         row++;
                     }
                     else if (!nextLearnable)
                     {
-                        _terminal.Text(PanelContentX, row, $"  · {skill.DisplayName}", Config.Colors.DarkGray35, Config.Colors.Black);
+                        _terminal.Text(PanelContentX, row, $"    · {skill.DisplayName}", Config.Colors.DarkGray35, Config.Colors.Black);
                         row++;
                         nextLearnable = true;
                     }
@@ -968,7 +977,7 @@ public class BodyArtViewer
             // mirroring how the white "Fighting Medium" label sits beneath its scope header.
             void RenderSecretionLabel()
             {
-                _terminal.Text(PanelContentX, row, "Secretion", Config.Colors.White, Config.Colors.Black);
+                _terminal.Text(PanelContentX, row, "  Secretion", Config.Colors.White, Config.Colors.Black);
                 row++;
             }
 
@@ -984,7 +993,7 @@ public class BodyArtViewer
                 {
                     if (normalStats.Count > 0) row++; // blank line between normal stats and secretion info
                     RenderSecretionLabel();
-                    foreach (var stat in secretionStats) RenderStat(stat, statGrey);
+                    foreach (var stat in secretionStats) RenderStat(stat, statGrey, extraIndent: 2);
                 }
                 return stats.Count > 0;
             }
