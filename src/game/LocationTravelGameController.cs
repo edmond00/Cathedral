@@ -60,6 +60,7 @@ public class LocationTravelGameController : IDisposable
 
     // Main menu
     private MainMenuRenderer? _mainMenuRenderer;
+    private SettingsMenuRenderer? _settingsMenuRenderer;
     private bool _hasGameStarted = false;
     
     // Protagonist creation
@@ -164,6 +165,10 @@ public class LocationTravelGameController : IDisposable
         AmbianceEngine? ambianceEngine = null)
     {
         _ambianceEngine = ambianceEngine;
+        // Load persisted audio settings and apply them so saved levels take effect on launch.
+        AudioSettings.Load();
+        _ambianceEngine?.SetMasterMusicVolume(AudioSettings.MusicVolume01);
+        _ambianceEngine?.SetMasterSfxVolume(AudioSettings.SfxVolume01);
         _core = core ?? throw new ArgumentNullException(nameof(core));
         _interface = microworldInterface ?? throw new ArgumentNullException(nameof(microworldInterface));
         
@@ -707,6 +712,14 @@ public class LocationTravelGameController : IDisposable
             _mainMenuRenderer.OnMouseClick(x, y);
             return;
         }
+
+        // Settings screen handles its own clicks
+        if (_currentMode == GameMode.Settings && _settingsMenuRenderer != null)
+        {
+            _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+            _settingsMenuRenderer.OnMouseClick(x, y);
+            return;
+        }
         
         // Protagonist creation handles its own clicks
         if (_currentMode == GameMode.ProtagonistCreation && _protagonistCreationRenderer != null)
@@ -831,6 +844,7 @@ public class LocationTravelGameController : IDisposable
         GameMode.ChildhoodReminescence => null, // handled inside NarrativeController
         GameMode.MainMenu => _mainMenuRenderer?.GetEnabledButtonAtPosition(x, y) is { } i and >= 0
             ? $"menu:{i}" : null,
+        GameMode.Settings => _settingsMenuRenderer?.GetHoveredControlId(x, y),
         GameMode.ProtagonistCreation => _protagonistCreationRenderer?.GetHoveredElementId(x, y),
         GameMode.WorldView => (_travelInfoRenderer != null && _travelInfoRenderer.IsOverTravelButton(x, y))
             ? "travel-button"
@@ -883,6 +897,13 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode == GameMode.MainMenu && _mainMenuRenderer != null)
         {
             _mainMenuRenderer.OnMouseMove(x, y);
+            return;
+        }
+
+        // Settings screen handles its own hover
+        if (_currentMode == GameMode.Settings && _settingsMenuRenderer != null)
+        {
+            _settingsMenuRenderer.OnMouseMove(x, y);
             return;
         }
 
@@ -1046,6 +1067,10 @@ public class LocationTravelGameController : IDisposable
 
             case GameMode.MainMenu:
                 OnEnterMainMenu();
+                break;
+
+            case GameMode.Settings:
+                OnEnterSettings();
                 break;
                 
             case GameMode.WorldView:
@@ -1554,6 +1579,10 @@ public class LocationTravelGameController : IDisposable
                 {
                     SetMode(GameMode.ProtagonistManagement);
                 },
+                onSettings: () =>
+                {
+                    SetMode(GameMode.Settings);
+                },
                 onExit: () =>
                 {
                     _core.Close();
@@ -1564,7 +1593,44 @@ public class LocationTravelGameController : IDisposable
             _mainMenuRenderer.Render();
         }
     }
-    
+
+    private void OnEnterSettings()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered Settings mode");
+        // Darken the sphere and disable world interactions, like the main menu.
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+
+        if (_core.Terminal != null)
+        {
+            if (_settingsMenuRenderer == null)
+            {
+                _settingsMenuRenderer = new SettingsMenuRenderer(_core.Terminal)
+                {
+                    OnMusicVolumeChanged = v =>
+                    {
+                        AudioSettings.MusicVolume = v;
+                        _ambianceEngine?.SetMasterMusicVolume(AudioSettings.MusicVolume01);
+                        AudioSettings.Save();
+                    },
+                    OnSfxVolumeChanged = v =>
+                    {
+                        AudioSettings.SfxVolume = v;
+                        _ambianceEngine?.SetMasterSfxVolume(AudioSettings.SfxVolume01);
+                        AudioSettings.Save();
+                    },
+                    OnBack = () => SetMode(GameMode.MainMenu),
+                };
+            }
+
+            // Sync controls with the current persisted values each time we enter.
+            _settingsMenuRenderer.MusicVolume = AudioSettings.MusicVolume;
+            _settingsMenuRenderer.SfxVolume   = AudioSettings.SfxVolume;
+            _settingsMenuRenderer.Render();
+        }
+    }
+
     private void OnEnterProtagonistCreation()
     {
         Console.WriteLine("LocationTravelGameController: Entered ProtagonistCreation mode");
@@ -2145,7 +2211,8 @@ public class LocationTravelGameController : IDisposable
                 locationId: 0,
                 worldContext,
                 _keywordFallbackService,
-                _protagonist);
+                _protagonist,
+                _ambianceEngine);
 
             _isInNarrativeMode = true;
             _interface.SetWorldInteractionsEnabled(false);

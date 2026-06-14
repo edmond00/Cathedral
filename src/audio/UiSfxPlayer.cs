@@ -25,16 +25,39 @@ internal sealed class UiSfxPlayer : IDisposable
     private const uint SND_MEMORY   = 0x0004;
 
     // ── Pinned WAV buffers ────────────────────────────────────────────────────
-    private readonly GCHandle _hoverHandle;
-    private readonly GCHandle _clickHandle;
-    private readonly nint _hoverPtr;
-    private readonly nint _clickPtr;
+    private GCHandle _hoverHandle;
+    private GCHandle _clickHandle;
+    private nint _hoverPtr;
+    private nint _clickPtr;
+    private float _volume = 1f;
     private bool _disposed;
 
     public UiSfxPlayer()
     {
-        var hoverWav = BuildHoverWav();
-        var clickWav = BuildClickWav();
+        RebuildBuffers();
+    }
+
+    /// <summary>
+    /// Sets the playback volume (0..1) by rebuilding the PCM buffers at a scaled amplitude.
+    /// PlaySound has no per-call volume, so the waveform amplitude is baked into the buffer.
+    /// </summary>
+    public void SetVolume(float v01)
+    {
+        float v = Math.Clamp(v01, 0f, 1f);
+        if (v == _volume) return;
+        _volume = v;
+        RebuildBuffers();
+    }
+
+    private void RebuildBuffers()
+    {
+        // Stop any in-flight async playback before freeing the buffers it may still read.
+        PlaySound(nint.Zero, nint.Zero, 0);
+        if (_hoverHandle.IsAllocated) _hoverHandle.Free();
+        if (_clickHandle.IsAllocated) _clickHandle.Free();
+
+        var hoverWav = BuildHoverWav(_volume);
+        var clickWav = BuildClickWav(_volume);
         _hoverHandle = GCHandle.Alloc(hoverWav, GCHandleType.Pinned);
         _clickHandle = GCHandle.Alloc(clickWav, GCHandleType.Pinned);
         _hoverPtr    = _hoverHandle.AddrOfPinnedObject();
@@ -52,7 +75,7 @@ internal sealed class UiSfxPlayer : IDisposable
     // ── PCM generation ────────────────────────────────────────────────────────
 
     /// <summary>25 ms high-pass filtered noise burst — hi-hat simulation.</summary>
-    private static byte[] BuildHoverWav()
+    private static byte[] BuildHoverWav(float amplitude = 1f)
     {
         const int sampleRate = 22050;
         const int durationMs = 25;
@@ -67,13 +90,13 @@ internal sealed class UiSfxPlayer : IDisposable
             float noise = (float)(rng.NextDouble() * 2.0 - 1.0);
             float hp    = noise - prev * 0.7f;   // 1-pole high-pass → airy hi-hat character
             prev = noise;
-            samples[i]  = (short)Math.Clamp(hp * decay * 14000f, short.MinValue, short.MaxValue);
+            samples[i]  = (short)Math.Clamp(hp * decay * 14000f * amplitude, short.MinValue, short.MaxValue);
         }
         return BuildWav(samples, sampleRate);
     }
 
     /// <summary>80 ms decaying harmonic tone (520 + 1040 + 1560 Hz) — digital click.</summary>
-    private static byte[] BuildClickWav()
+    private static byte[] BuildClickWav(float amplitude = 1f)
     {
         const int sampleRate = 22050;
         const int durationMs = 80;
@@ -86,7 +109,7 @@ internal sealed class UiSfxPlayer : IDisposable
             float tone  = MathF.Sin(2f * MathF.PI * 520f  * i / sampleRate)
                         + 0.6f * MathF.Sin(2f * MathF.PI * 1040f * i / sampleRate)
                         + 0.3f * MathF.Sin(2f * MathF.PI * 1560f * i / sampleRate);
-            samples[i]  = (short)Math.Clamp(tone * decay * 11000f, short.MinValue, short.MaxValue);
+            samples[i]  = (short)Math.Clamp(tone * decay * 11000f * amplitude, short.MinValue, short.MaxValue);
         }
         return BuildWav(samples, sampleRate);
     }

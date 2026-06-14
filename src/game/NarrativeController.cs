@@ -1015,6 +1015,9 @@ public class NarrativeController
             OutcomeReports: uiReminescenceReports.Count > 0 ? uiReminescenceReports : null);
         _scrollBuffer.AddBlock(outcomeBlock);
         _narrationState.AddBlock(outcomeBlock);
+        // REMEMBER always succeeds (and often grants a skill/item) — cue the positive
+        // outcome sting, matching the normal action-resolution path.
+        _ambianceEngine?.TriggerGameEvent(GameEventType.PositiveOutcome);
         _scrollBuffer.ScrollToBottom();
         _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
 
@@ -1554,14 +1557,19 @@ public class NarrativeController
         var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
         float cellPixelSize = layoutInfo.CellSize.X;
 
+        // UpdateHover returns true when the highlighted option changed — play a tick then,
+        // so hovering options inside a popup gives the same feedback as elsewhere.
+        bool hoverChanged = false;
         if (_modusMentisPopup.IsVisible)
-            _modusMentisPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+            hoverChanged |= _modusMentisPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
 
         if (_itemSelectionPopup.IsVisible)
-            _itemSelectionPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+            hoverChanged |= _itemSelectionPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
 
         if (_choicePopup.IsVisible)
-            _choicePopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+            hoverChanged |= _choicePopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
+
+        if (hoverChanged) PlayHoverSound();
     }
     
     /// <summary>

@@ -92,5 +92,11 @@ public enum GameMode
     /// A travel encounter has been rolled. Shows a purple message box describing
     /// the threat with an "Engage" button; clicking it transitions to Fighting.
     /// </summary>
-    EncounterPrompt
+    EncounterPrompt,
+
+    /// <summary>
+    /// Settings screen reached from the main menu. Shows music and sound-effects
+    /// volume controls; a Back button returns to <see cref="MainMenu"/>.
+    /// </summary>
+    Settings
 }

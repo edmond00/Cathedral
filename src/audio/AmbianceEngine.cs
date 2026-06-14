@@ -56,6 +56,12 @@ public sealed class AmbianceEngine : IDisposable
     // Dynamics swell: slow sine wave over 60 s, range 0.70–1.00
     private volatile float _dynamicsLevel = 1.0f;
 
+    // User master volumes (0..1). Applied as a final scale on every NoteOn velocity:
+    // music channels by _musicVolume, the dedicated SFX channel by _sfxVolume.
+    // _sfxVolume also drives the PCM UI ticks via _uiSfx.SetVolume.
+    private volatile float _musicVolume = 1.0f;
+    private volatile float _sfxVolume   = 1.0f;
+
     // ── Channel patch cache ───────────────────────────────────────────────────
     // Tracks the last program sent to each MIDI channel so SendProgramChange can
     // skip redundant sends. Redundant ProgramChange events can cause the Windows
@@ -1033,7 +1039,7 @@ public sealed class AmbianceEngine : IDisposable
 
                 // Brown noise background via waveOut (separate channel from PlaySound —
                 // won't be interrupted by click/hover sounds).
-                using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f);
+                using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f * _sfxVolume);
                 brownNoise.Start();
 
                 int[] scale     = Array.Empty<int>();
@@ -1140,7 +1146,7 @@ public sealed class AmbianceEngine : IDisposable
                 }
 
                 // Brown noise background — same industrial static as Loading
-                using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f);
+                using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f * _sfxVolume);
                 brownNoise.Start();
                 var droneNotes   = new List<(int note, long releaseMs)>();
                 long nextDroneMs = Environment.TickCount64 + rng.Next(200, 800);
@@ -1303,6 +1309,12 @@ public sealed class AmbianceEngine : IDisposable
                 SendProgramChange(droneCh, ProceduralMidiComposer.PatchPadSweep);
                 SendCC(droneCh, 7, 55);  // quiet — landscape backdrop, not prominent
                 SendCC(droneCh, 91, 80); // reverb → merges into background wash
+
+                // Brown noise background via waveOut — same wind-like static as Loading/DiceRoll.
+                // Scaled by the SFX volume (read at filter start), so it follows the SFX slider
+                // independently of the music volume.
+                using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f * _sfxVolume);
+                brownNoise.Start();
 
                 var droneNotes   = new List<(int note, long releaseMs)>();
                 long nextDroneMs = Environment.TickCount64 + rng.Next(500, 1500);
@@ -1790,6 +1802,13 @@ public sealed class AmbianceEngine : IDisposable
     private void SendNoteOn(int ch, int note, int velocity)
     {
         if (_device == null) return;
+        // Apply the user master volume. Velocity 0 is used as a silent NoteOff
+        // equivalent, so leave it untouched; only scale audible notes.
+        if (velocity > 0)
+        {
+            float scale = (ch == ProceduralMidiComposer.SfxChannel) ? _sfxVolume : _musicVolume;
+            velocity = Math.Clamp((int)MathF.Round(velocity * scale), 0, 127);
+        }
         try
         {
             var ev = new NoteOnEvent((SevenBitNumber)note, (SevenBitNumber)velocity);
@@ -1916,6 +1935,24 @@ public sealed class AmbianceEngine : IDisposable
     private void SetMusicVolume(int volume)
     {
         foreach (int ch in MusicChannels) SendCC(ch, 7, volume);
+    }
+
+    /// <summary>
+    /// Sets the user master music volume (0..1). Scales every music-channel NoteOn velocity.
+    /// Thread-safe; may be called from the UI thread.
+    /// </summary>
+    public void SetMasterMusicVolume(float v01)
+        => _musicVolume = Math.Clamp(v01, 0f, 1f);
+
+    /// <summary>
+    /// Sets the user master sound-effects volume (0..1). Scales the MIDI SFX channel and the
+    /// PCM UI ticks (hover/click). Thread-safe; may be called from the UI thread.
+    /// </summary>
+    public void SetMasterSfxVolume(float v01)
+    {
+        float v = Math.Clamp(v01, 0f, 1f);
+        _sfxVolume = v;
+        _uiSfx.SetVolume(v);
     }
 
     private static OutputDevice? OpenBestDevice()
