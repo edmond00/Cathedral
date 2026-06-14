@@ -16,8 +16,8 @@ public class ItemUsageCapStat : DerivedStat
 {
     public override string Name         => "item_usage_cap";
     public override string DisplayName  => "Item Usage Cap";
-    public override string ShortDisplayName => "Item Cap";
     public override string? RelatedOrganId => "hands";
 
     public override int CalculateValue(int sourceScore) => sourceScore;
+    public override string FormatValue(int value) => $"lv. {value}";
 }

@@ -14,7 +14,6 @@ public class HealthPointStat : DerivedStat
 {
     public override string Name         => "health_point";
     public override string DisplayName  => "Health Points";
-    public override string ShortDisplayName => "HP";
     public override string? RelatedBodyPartId => "trunk";
     public override int CalculateValue(int sourceScore) => sourceScore;
     public override string FormatValue(int value) => $"{value} HP";

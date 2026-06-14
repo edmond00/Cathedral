@@ -20,5 +20,5 @@ public class NoseRecognitionStat : DerivedStat
         2 => 3,
         _ => 99,
     };
-    public override string FormatValue(int value) => value >= 99 ? "all" : value.ToString();
+    public override string FormatValue(int value) => value >= 99 ? "all humors" : $"{value} humors";
 }
