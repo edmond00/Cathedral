@@ -331,11 +331,12 @@ internal class FightModeWindow : GameWindow
             return;
         }
 
-        // ── Dice continue button ─────────────────────────────────────
+        // ── Dice continue button + humor modifier layer ──────────────
         if (_state.Phase == TurnPhase.WaitingForDiceComplete)
         {
             var region = _dice.ContinueButtonRegion;
             _continueHovered = (y == region.Y && x >= region.X && x < region.X + region.Width);
+            _dice.HandleHumorHover(x, y);
         }
 
         bool canInteract = _state.Phase == TurnPhase.SelectingAction
@@ -409,7 +410,11 @@ internal class FightModeWindow : GameWindow
         {
             var region = _dice.ContinueButtonRegion;
             if (y == region.Y && x >= region.X && x < region.X + region.Width)
+            {
                 FinishAttackResolution(active);
+                return;
+            }
+            _dice.HandleHumorClick(x, y);
             return;
         }
 
@@ -803,6 +808,7 @@ internal class FightModeWindow : GameWindow
     private void BeginDiceRoll()
     {
         _diceElapsed = 0;
+        Fighter? primaryOwner;
         if (_state.PendingSkill != null
             && _state.PendingSkill.EffectType == FightingSkillEffect.Attack)
         {
@@ -815,6 +821,7 @@ internal class FightModeWindow : GameWindow
                     primaryLabel: "Defense",
                     secondaryLabel: "Attack",
                     subtitle: $"{_state.PendingSkill.DisplayName} → {_state.PendingTarget?.DisplayName}");
+                primaryOwner = _state.PendingTarget; // the defender is the player
             }
             else
             {
@@ -824,12 +831,28 @@ internal class FightModeWindow : GameWindow
                     primaryLabel: "Attack",
                     secondaryLabel: "Defense",
                     subtitle: $"{_state.PendingSkill.DisplayName} → {_state.PendingTarget?.DisplayName}");
+                primaryOwner = _state.ActiveFighter;
             }
         }
         else
         {
             _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty);
+            primaryOwner = _state.ActiveFighter;
         }
+
+        EnableHumorIfPlayer(primaryOwner);
+    }
+
+    /// <summary>
+    /// Enable the humor-modifier layer for the player's primary dice group. No-op when the owner
+    /// is null, AI-controlled, or has no viscera modifier budget.
+    /// </summary>
+    private void EnableHumorIfPlayer(Fighter? owner)
+    {
+        if (owner == null || !owner.IsPlayerControlled) return;
+        var member = owner.Member;
+        int limit = member.DerivedStats.FirstOrDefault(s => s.Name == "humor_modifier_limit")?.GetValue(member) ?? 0;
+        if (limit > 0) _dice.EnableHumorModifiers(member.HumorQueues, limit);
     }
 
     private void FinishAttackResolution(Fighter active)

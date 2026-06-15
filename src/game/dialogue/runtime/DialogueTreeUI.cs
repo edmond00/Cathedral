@@ -48,13 +48,9 @@ public class DialogueTreeUI : TerminalPanelUI
     public int GetOptionIndexAt(int mx, int my)
         => _optionRowToIndex.TryGetValue(my, out int idx) ? idx : -1;
 
-    /// <summary>True when the mouse is over the dice-roll "[ Continue ]" button.</summary>
-    public bool IsMouseOverContinue(int mx, int my)
-        => IsMouseOverDiceRollButton(mx, my);
-
     // ── Main render entry ──────────────────────────────────────────────────────
 
-    public void Render(DialogueSessionState state)
+    public void Render(DialogueSessionState state, DiceRollComponent dice)
     {
         Clear();
         _optionRowToIndex.Clear();
@@ -71,15 +67,17 @@ public class DialogueTreeUI : TerminalPanelUI
 
         if (state.IsDiceRollActive)
         {
-            ShowDiceRollIndicator(
-                state.DiceCount,
-                state.DiceDifficulty,
-                state.IsDiceRolling,
-                state.DiceFinalValues,
-                state.IsContinueHovered);
+            RenderDiceComponent(dice, state.IsContinueHovered);
             DrawStatusBar(state.IsDiceRolling
                 ? "Rolling..."
-                : (state.DiceSucceeded ? "SUCCESS — click to continue." : "FAILURE — click to continue."));
+                : (dice.IsCurrentlySuccess ? "SUCCESS — click to continue." : "FAILURE — click to continue."));
+            return;
+        }
+
+        if (state.IsLoadingReaction)
+        {
+            ShowLoadingIndicator($"{_npc.DisplayName} reacts…");
+            DrawStatusBar("Waiting…");
             return;
         }
 

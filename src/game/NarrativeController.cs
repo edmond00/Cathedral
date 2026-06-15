@@ -67,6 +67,18 @@ public class NarrativeController
     // Random for dice rolls
     private readonly Random _diceRandom = new Random();
 
+    // Unified dice-roll overlay (animation + humor modifiers + hit-testing).
+    private readonly DiceRollComponent _dice = new();
+
+    // Pre-generated success/failure outcome candidates for the in-flight roll (Part E).
+    // OnDiceRollContinue commits whichever matches the final (humor-modified) result.
+    private ActionExecutionResult? _pendingSuccessResult;
+    private ActionExecutionResult? _pendingFailureResult;
+    // True when the pending result came from PrepareDualOutcomesAsync and therefore needs its
+    // side-effects (XP, item consumption) committed at Continue. False for the Get-Up path,
+    // which commits its own side-effects via reports only.
+    private bool _pendingDeferredCommit;
+
     // Ambient music engine (optional — null when MIDI is unavailable)
     private readonly AmbianceEngine? _ambianceEngine;
 
@@ -78,16 +90,23 @@ public class NarrativeController
 
     // ── Dice-roll lifecycle helpers — wrap NarrationState calls + SFX cues. ───────
     // Open: neutral sound. Resolve: positive/negative depending on success. Close: neutral.
-    private void NarrationDiceStart(int numberOfDice, int difficulty)
+    private void NarrationDiceStart(int numberOfDice, int difficulty, PartyMember? humorMember = null)
     {
         _narrationState.StartDiceRoll(numberOfDice, difficulty);
+        _dice.Start(numberOfDice, difficulty);
+        if (humorMember != null)
+        {
+            int limit = HumorModifierLimit(humorMember);
+            if (limit > 0) _dice.EnableHumorModifiers(humorMember.HumorQueues, limit);
+        }
         _ambianceEngine?.TriggerGameEvent(GameEventType.NeutralOutcome);
     }
 
     private void NarrationDiceComplete(int[] finalValues)
     {
         _narrationState.CompleteDiceRoll(finalValues);
-        _ambianceEngine?.TriggerGameEvent(_narrationState.DiceRollSucceeded
+        _dice.Complete(finalValues);
+        _ambianceEngine?.TriggerGameEvent(_dice.IsCurrentlySuccess
             ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
     }
 
@@ -95,8 +114,24 @@ public class NarrativeController
     {
         bool wasActive = _narrationState.IsDiceRollActive;
         _narrationState.ClearDiceRoll();
+        _dice.Hide();
         if (wasActive)
             _ambianceEngine?.TriggerGameEvent(GameEventType.NeutralOutcome);
+    }
+
+    /// <summary>Per-roll humor modifier budget from the viscera <c>humor_modifier_limit</c> stat.</summary>
+    private static int HumorModifierLimit(PartyMember member)
+        => member.DerivedStats.FirstOrDefault(s => s.Name == "humor_modifier_limit")?.GetValue(member) ?? 0;
+
+    /// <summary>
+    /// Fired by the dice component when a humor modifier flips success↔failure. Swaps the active
+    /// pending outcome candidate (pre-generated during the roll) and replays the outcome cue.
+    /// </summary>
+    private void OnDiceOutcomeFlipped(bool nowSuccess)
+    {
+        _pendingActionResult = nowSuccess ? _pendingSuccessResult : _pendingFailureResult;
+        _ambianceEngine?.TriggerGameEvent(nowSuccess
+            ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
     }
 
     // Active party member (starts as protagonist, switches to companion after Speak About)
@@ -142,7 +177,10 @@ public class NarrativeController
         
         _ambianceEngine = ambianceEngine;
         _ui = new NarrativeUI(terminal);
-        _ui.OnDiceTick = () => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        _dice.OnDiceTick      = () => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        _dice.OnButtonHover   = PlayHoverSound;
+        _dice.OnButtonClick   = PlayClickSound;
+        _dice.OnResultChanged = OnDiceOutcomeFlipped;
         // Calculate content width dynamically: terminal width - margins - scrollbar
         var layout = new NarrativeLayout(
             terminal.Width, 
@@ -687,8 +725,8 @@ public class NarrativeController
             // Difficulty = number of 6s needed to succeed (1-10, from LLM evaluation)
             int actualDifficulty = evalResult.DifficultyLevel;
 
-            // Start dice roll animation
-            NarrationDiceStart(numberOfDice, actualDifficulty);
+            // Start dice roll animation (with humor modifiers for the acting member)
+            NarrationDiceStart(numberOfDice, actualDifficulty, _activePartyMember);
             _narrationState.LoadingMessage = "Rolling dice...";
 
             // Roll each die independently (1–6) and count sixes
@@ -710,17 +748,20 @@ public class NarrativeController
 
             Console.WriteLine($"NarrativeController: Rolled {finalDiceValues.Count(v => v == 6)} sixes out of {numberOfDice} dice (need {actualDifficulty}) → {(succeeded ? "SUCCESS" : "FAILURE")}");
 
-            // Execute dice roll phase (failure outcome evaluation + narration generation)
-            var result = await _actionExecutor.ExecuteDiceRollAsync(
+            // Pre-generate BOTH outcomes (success + failure) during the animation so the player
+            // can flip the result with humor modifiers instantly. Side-effects are committed
+            // later in OnDiceRollContinue for whichever outcome is final.
+            var (successResult, failureResult) = await _actionExecutor.PrepareDualOutcomesAsync(
                 evalResult,
-                succeeded,
                 CancellationToken.None
             );
 
-            Console.WriteLine($"NarrativeController: Action {(result.Succeeded ? "SUCCEEDED" : "FAILED")}");
+            _pendingSuccessResult = successResult;
+            _pendingFailureResult = failureResult;
+            _pendingActionResult  = succeeded ? successResult : failureResult;
+            _pendingDeferredCommit = true;
 
-            // Store the action result for later (when player clicks continue on dice screen)
-            _pendingActionResult = result;
+            Console.WriteLine($"NarrativeController: Action prepared — rolled {(succeeded ? "SUCCESS" : "FAILURE")} (humor may change this)");
 
             // Complete the dice roll (stops animation, shows final values and continue button)
             NarrationDiceComplete(finalDiceValues);
@@ -1112,9 +1153,30 @@ public class NarrativeController
         
         var result = _pendingActionResult;
         _pendingActionResult = null;
-        
-        Console.WriteLine($"NarrativeController: Dice roll continue - applying result");
-        
+        _pendingSuccessResult = null;
+        _pendingFailureResult = null;
+        bool deferredCommit = _pendingDeferredCommit;
+        _pendingDeferredCommit = false;
+
+        Console.WriteLine($"NarrativeController: Dice roll continue - committing {(result.Succeeded ? "SUCCESS" : "FAILURE")} outcome");
+
+        if (deferredCommit)
+        {
+            // Keep only the chosen branch's narration in the narrator slot history (discard the
+            // speculative other branch that was generated during the roll).
+            _actionExecutor.OutcomeNarrator.CommitNarrationHistory(result.Succeeded);
+
+            // Commit deferred side-effects for the FINAL (possibly humor-modified) outcome.
+            if (result.Succeeded)
+                foreach (var chainModusMentis in result.Action.GetModusMentisChain())
+                    _activePartyMember.AwardModusMentisXp(chainModusMentis);
+            if (result.ItemConsumed && result.Action.CombinedItem != null)
+            {
+                _activePartyMember.RemoveItem(result.Action.CombinedItem);
+                Console.WriteLine($"NarrativeController: Item consumed — {result.Action.CombinedItem.ItemId}");
+            }
+        }
+
         // Collect all outcome reports: verb-specific + LLM-decided (wound).
         var allReports = new System.Collections.Generic.List<OutcomeReport>();
         if (result.ActualOutcome is VerbOutcome verbTarget && _scene != null && _pov != null)
@@ -1454,17 +1516,12 @@ public class NarrativeController
         // Show dice roll screen if active (for action execution)
         if (_narrationState.IsDiceRollActive)
         {
-            bool hasContinueButton = _ui.ShowDiceRollIndicator(
-                _narrationState.DiceRollNumberOfDice,
-                _narrationState.DiceRollDifficulty,
-                _narrationState.IsDiceRolling,
-                _narrationState.DiceRollFinalValues,
-                _narrationState.IsDiceRollButtonHovered
-            );
+            _dice.Advance();
+            _ui.RenderDiceComponent(_dice, _narrationState.IsDiceRollButtonHovered);
 
             string diceStatus = _narrationState.IsDiceRolling
                 ? "Rolling dice..."
-                : (_narrationState.DiceRollSucceeded ? "Success! Click Continue to see the outcome" : "Failed! Click Continue to see the outcome");
+                : (_dice.IsCurrentlySuccess ? "Success! Click Continue to see the outcome" : "Failed! Click Continue to see the outcome");
             _ui.RenderStatusBar(diceStatus);
             return;
         }
@@ -1691,12 +1748,14 @@ public class NarrativeController
         // Handle dice roll screen hover
         if (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling)
         {
-            bool isOverButton = _ui.IsMouseOverDiceRollButton(mouseX, mouseY);
+            var region = _dice.ContinueButtonRegion;
+            bool isOverButton = mouseY == region.Y && mouseX >= region.X && mouseX < region.X + region.Width;
             if (isOverButton != _narrationState.IsDiceRollButtonHovered)
             {
                 _narrationState.IsDiceRollButtonHovered = isOverButton;
                 if (isOverButton) PlayHoverSound();
             }
+            _dice.HandleHumorHover(mouseX, mouseY);
             return;
         }
         
@@ -1797,13 +1856,17 @@ public class NarrativeController
         // Handle dice roll screen click
         if (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling)
         {
-            // Check if clicked on continue button
-            if (_ui.IsMouseOverDiceRollButton(mouseX, mouseY))
+            // Continue button takes priority over the humor layer.
+            var region = _dice.ContinueButtonRegion;
+            bool overContinue = mouseY == region.Y && mouseX >= region.X && mouseX < region.X + region.Width;
+            if (overContinue)
             {
                 Console.WriteLine("NarrativeController: Dice roll continue button clicked");
                 PlayClickSound();
                 OnDiceRollContinue();
+                return;
             }
+            _dice.HandleHumorClick(mouseX, mouseY);
             return;
         }
         

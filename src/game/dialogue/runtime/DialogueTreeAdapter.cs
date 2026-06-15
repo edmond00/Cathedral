@@ -27,6 +27,7 @@ public class DialogueTreeAdapter
     private readonly LlamaServerManager     _llmManager;
     private readonly ModusMentisSlotManager _slotManager;
     private readonly TerminalHUD            _terminal;
+    private readonly Cathedral.Audio.AmbianceEngine? _ambianceEngine;
 
     private DialogueTreeController? _controller;
     private int                     _npcSlotId  = -1;
@@ -50,7 +51,8 @@ public class DialogueTreeAdapter
         LlamaServerManager     llmManager,
         ModusMentisSlotManager slotManager,
         TerminalHUD            terminal,
-        DialogueTree?          prebuiltTree = null)
+        DialogueTree?          prebuiltTree = null,
+        Cathedral.Audio.AmbianceEngine? ambianceEngine = null)
     {
         _npc          = npc;
         _protagonist  = protagonist;
@@ -59,6 +61,7 @@ public class DialogueTreeAdapter
         _llmManager   = llmManager;
         _slotManager  = slotManager;
         _terminal     = terminal;
+        _ambianceEngine = ambianceEngine;
     }
 
     // ── Public API ──────────────────────────────────────────────────────────────
@@ -109,7 +112,8 @@ public class DialogueTreeAdapter
                 npcSlotId:   _npcSlotId,
                 llmManager:  _llmManager,
                 slotManager: _slotManager,
-                terminal:    _terminal);
+                terminal:    _terminal,
+                ambianceEngine: _ambianceEngine);
 
             _ready = true;
             _controller.Start();

@@ -451,6 +451,125 @@ public class ActionExecutionController
     }
 
     /// <summary>
+    /// PHASE 2 (humor-modifier variant): pre-compute BOTH the success and failure outcomes for an
+    /// action during the dice animation, generating both narration texts and the failure wound /
+    /// witness / threat data, but applying NO game-state side-effects. The caller commits the
+    /// chosen branch's side-effects at the dice-roll Continue step (XP, wound reports, item
+    /// consumption, witness/threat) based on the final (possibly humor-modified) result.
+    /// Item consumption is decided once (it does not depend on success/failure).
+    /// </summary>
+    public async Task<(ActionExecutionResult success, ActionExecutionResult failure)>
+        PrepareDualOutcomesAsync(ActionEvaluationResult evalResult, CancellationToken cancellationToken = default)
+    {
+        var action = evalResult.Action;
+        var actionModusMentis = evalResult.ActionModusMentis;
+        var thinkingModusMentisUsed = evalResult.ThinkingModusMentis;
+        double difficultyScore = evalResult.DifficultyScore;
+        int difficultyLevel = evalResult.DifficultyLevel;
+        var currentNode = evalResult.CurrentNode;
+
+        // ── Item consumption decision (independent of the dice outcome) ──
+        bool itemConsumed = false;
+        if (action.CombinedItem != null)
+        {
+            string itemContext = $"{action.CombinedItem.DisplayName} ({action.CombinedItem.Description})";
+            var goalDesc = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
+            var consumptionCtx = new CriticContext(currentNode, _worldContext, _locationId, goalDesc);
+            var consumptionTree = CriticTrees.BuildItemConsumptionTree(action.ActionText, itemContext, consumptionCtx);
+            var consumptionResult = await _criticEvaluator.EvaluateTreeAsync(consumptionTree);
+            itemConsumed = CriticTrees.IsItemConsumedFromResult(consumptionResult);
+        }
+
+        // ── Failure branch data: wound, witness re-ask, threat re-ask ──
+        var goalDescription2 = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
+        var failureCriticContext = new CriticContext(currentNode, _worldContext, _locationId, goalDescription2);
+        var wildcardCandidates = BuildWildcardCandidates();
+        var failureTree = CriticTrees.BuildFailureOutcomeTree(action.ActionText, failureCriticContext, wildcardCandidates);
+        DebugMode.InFailureOutcomeTree = true;
+        var failureResult = await _criticEvaluator.EvaluateTreeAsync(failureTree);
+        DebugMode.InFailureOutcomeTree = false;
+        Wound? failureWound = CriticTrees.GetWoundFromResult(failureResult, wildcardCandidates);
+        OutcomeBase failureOutcome = new WoundOutcome(failureWound);
+
+        var llmDecidedReports = new List<OutcomeReport>();
+        if (failureWound != null)
+            llmDecidedReports.Add(new WoundInflictionOutcome(failureWound));
+
+        bool witnessDetected = false;
+        Cathedral.Game.Npc.NpcEntity? detectedWitness = null;
+        if (evalResult.WitnessContext.Type != Cathedral.Game.Scene.WitnessType.None)
+        {
+            var witnessCtx = new CriticContext(currentNode, _worldContext, _locationId, goalDescription2);
+            var witnessTree = CriticTrees.BuildWitnessDetectionTree(
+                action.ActionText, evalResult.WitnessContext, witnessCtx, actionFailed: true);
+            var witnessRes = await _criticEvaluator.EvaluateTreeAsync(witnessTree);
+            witnessDetected = CriticTrees.IsWitnessDetectedFromResult(witnessRes);
+            if (witnessDetected) detectedWitness = evalResult.WitnessContext.Witness;
+        }
+
+        bool fightTriggered = false;
+        Cathedral.Game.Npc.NpcEntity? fightEnemy = null;
+        if (evalResult.ThreatContext.Level != Cathedral.Game.Scene.ThreatLevel.None)
+        {
+            var threatCtx = new CriticContext(currentNode, _worldContext, _locationId, goalDescription2);
+            var threatTree = CriticTrees.BuildUnderThreatTree(
+                action.ActionText, evalResult.ThreatContext, threatCtx, actionFailed: true);
+            var threatRes = await _criticEvaluator.EvaluateTreeAsync(threatTree);
+            fightTriggered = CriticTrees.IsOpportunityFromResult(threatRes);
+            if (fightTriggered) fightEnemy = evalResult.ThreatContext.Threat;
+        }
+
+        string? failureHint = failureWound != null
+            ? $"The character suffered a wound: {failureWound.WoundName} to their {WoundLocationLabel(failureWound)}"
+            : null;
+
+        OutcomeBase successOutcome = action.PreselectedOutcome;
+
+        // ── Generate both narration texts (snapshot/restore keeps the slot history clean) ──
+        var (successNarration, failureNarration) = await _outcomeNarrator.NarrateBothOutcomesAsync(
+            action, actionModusMentis, successOutcome, failureOutcome,
+            difficultyScore, ActingMember, failureHint, cancellationToken);
+
+        var success = new ActionExecutionResult
+        {
+            Action = action,
+            ActionModusMentis = actionModusMentis,
+            ThinkingModusMentis = thinkingModusMentisUsed,
+            Difficulty = difficultyScore,
+            DifficultyLevel = difficultyLevel,
+            Succeeded = true,
+            ActualOutcome = successOutcome,
+            LlmDecidedReports = System.Array.Empty<OutcomeReport>(),
+            Narration = successNarration,
+            FailureWound = null,
+            IsPlausibilityFailure = false,
+            ItemConsumed = itemConsumed,
+        };
+
+        var failure = new ActionExecutionResult
+        {
+            Action = action,
+            ActionModusMentis = actionModusMentis,
+            ThinkingModusMentis = thinkingModusMentisUsed,
+            Difficulty = difficultyScore,
+            DifficultyLevel = difficultyLevel,
+            Succeeded = false,
+            ActualOutcome = failureOutcome,
+            LlmDecidedReports = llmDecidedReports,
+            Narration = failureNarration,
+            FailureWound = failureWound,
+            IsPlausibilityFailure = false,
+            WitnessDetected = witnessDetected,
+            DetectedWitness = detectedWitness,
+            FightTriggered = fightTriggered,
+            FightEnemy = fightEnemy,
+            ItemConsumed = itemConsumed,
+        };
+
+        return (success, failure);
+    }
+
+    /// <summary>
     /// Legacy method for backwards compatibility.
     /// Executes a player-selected action with modusMentis check and outcome application.
     /// Returns the execution result with narration and final outcome.
@@ -649,6 +768,12 @@ public class ActionExecutionResult
     /// Used to determine if player can retry with remaining noetic points.
     /// </summary>
     public bool IsPlausibilityFailure { get; set; }
+
+    /// <summary>
+    /// When a combined item was used, whether the LLM decided it should be consumed.
+    /// Applied lazily at the dice-roll Continue step (so it commits only for the chosen outcome).
+    /// </summary>
+    public bool ItemConsumed { get; set; }
 
     /// <summary>
     /// True when a witness detected the failed action (step 4b).

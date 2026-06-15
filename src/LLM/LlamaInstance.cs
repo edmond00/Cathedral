@@ -135,6 +135,25 @@ public class LlamaInstance
     }
     
     /// <summary>
+    /// Returns a shallow copy of the current conversation history. Pair with
+    /// <see cref="RestoreHistory"/> to speculatively generate then discard turns
+    /// (e.g. pre-generating both success and failure outcome narration on one slot).
+    /// </summary>
+    public List<object> SnapshotHistory() => new List<object>(ConversationHistory);
+
+    /// <summary>
+    /// Replaces the conversation history with a previously captured snapshot, dropping any
+    /// turns appended since. The server-side KV cache is keyed by the shared prefix, so the
+    /// next request reuses the cache up to the restore point.
+    /// </summary>
+    public void RestoreHistory(List<object> snapshot)
+    {
+        ConversationHistory.Clear();
+        ConversationHistory.AddRange(snapshot);
+        LastUsed = DateTime.Now;
+    }
+
+    /// <summary>
     /// Gets the current conversation as an array suitable for the API
     /// </summary>
     public object[] GetMessages()

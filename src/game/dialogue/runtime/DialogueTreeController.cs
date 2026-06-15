@@ -34,13 +34,19 @@ public class DialogueTreeController
     private readonly DialogueSessionState    _state = new();
     private readonly DialogueTreeUI          _ui;
 
+    // Unified dice-roll overlay (animation + humor modifiers + hit-testing).
+    private readonly DiceRollComponent       _dice = new();
+
     private DialogueTreeNode                 _currentNode;
     private readonly Random                  _rng = new();
 
-    // Pending succeeded result stored between dice animation and reaction generation
-    private bool _pendingSucceeded;
+    /// <summary>Per-roll humor modifier budget from the viscera <c>humor_modifier_limit</c> stat.</summary>
+    private static int HumorModifierLimit(PartyMember member)
+        => member.DerivedStats.FirstOrDefault(s => s.Name == "humor_modifier_limit")?.GetValue(member) ?? 0;
 
     public bool HasRequestedExit => _state.RequestedExit;
+
+    private readonly Cathedral.Audio.AmbianceEngine? _ambianceEngine;
 
     public DialogueTreeController(
         DialogueTree           tree,
@@ -49,7 +55,8 @@ public class DialogueTreeController
         int                    npcSlotId,
         LlamaServerManager     llmManager,
         ModusMentisSlotManager slotManager,
-        TerminalHUD            terminal)
+        TerminalHUD            terminal,
+        Cathedral.Audio.AmbianceEngine? ambianceEngine = null)
     {
         _tree          = tree;
         _npc           = npc;
@@ -57,6 +64,7 @@ public class DialogueTreeController
         _partyMemberId = protagonist.DisplayName;
         _npcSlotId     = npcSlotId;
         _slotManager   = slotManager;
+        _ambianceEngine = ambianceEngine;
 
         _npcReplicaExec = new NpcNodeReplicaExecutor(llmManager);
         _branchSelExec  = new MmBranchSelectorExecutor(llmManager);
@@ -65,6 +73,12 @@ public class DialogueTreeController
 
         _currentNode = tree.EntryNode;
         _ui          = new DialogueTreeUI(terminal, npc, tree, _partyMemberId);
+
+        _dice.OnDiceTick      = () => _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.SmallInteraction);
+        _dice.OnButtonHover   = () => _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.SmallInteraction);
+        _dice.OnButtonClick   = () => _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.StrongInteraction);
+        _dice.OnResultChanged = success => _ambianceEngine?.TriggerGameEvent(
+            success ? Cathedral.Audio.GameEventType.PositiveOutcome : Cathedral.Audio.GameEventType.NegativeOutcome);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -75,13 +89,19 @@ public class DialogueTreeController
         BeginNpcSpeakPhase();
     }
 
-    public void Update() => _ui.Render(_state);
+    public void Update()
+    {
+        if (_state.IsDiceRollActive) _dice.Advance();
+        _ui.Render(_state, _dice);
+    }
 
     public void OnMouseMove(int mx, int my)
     {
         if (_state.IsDiceRollActive && !_state.IsDiceRolling)
         {
-            _state.IsContinueHovered = _ui.IsMouseOverContinue(mx, my);
+            var r = _dice.ContinueButtonRegion;
+            _state.IsContinueHovered = my == r.Y && mx >= r.X && mx < r.X + r.Width;
+            _dice.HandleHumorHover(mx, my);
             return;
         }
         if (!_state.IsLoadingOptions && !_state.IsDiceRollActive && !_state.ConversationEnded)
@@ -96,11 +116,15 @@ public class DialogueTreeController
 
         if (_state.IsDiceRollActive && !_state.IsDiceRolling)
         {
-            if (_ui.IsMouseOverContinue(mx, my))
+            var r = _dice.ContinueButtonRegion;
+            if (my == r.Y && mx >= r.X && mx < r.X + r.Width)
             {
                 _state.ClearDiceRoll();
+                _dice.Hide();
                 BeginReactionPhase();
+                return;
             }
+            _dice.HandleHumorClick(mx, my);
             return;
         }
         if (_state.IsDiceRollActive || _state.IsLoadingNpcReplica
@@ -231,31 +255,17 @@ public class DialogueTreeController
         int difficulty    = Math.Max(1, (int)Math.Ceiling(diceCount * 0.4)); // ~40% base difficulty
 
         _state.StartDiceRoll(diceCount, difficulty);
+        _dice.Start(diceCount, difficulty);
+        int limit = HumorModifierLimit(_protagonist);
+        if (limit > 0) _dice.EnableHumorModifiers(_protagonist.HumorQueues, limit);
+        _selectedOption = option;
 
         _ = Task.Run(async () =>
         {
             await Task.Delay(700); // Let animation play
-            int[] values    = Enumerable.Range(0, diceCount).Select(_ => _rng.Next(1, 7)).ToArray();
-            bool  succeeded = values.Count(v => v == 6) >= difficulty;
-            _pendingSucceeded = succeeded;
-
-            // Pre-generate NPC reaction in parallel with dice animation
-            try
-            {
-                string reaction = await _reactionExec.ExecuteAsync(
-                    _npc, _npcSlotId, option.ReplicaText, succeeded, option.TargetNode);
-                _state.PendingNpcReaction = reaction;
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"DialogueTreeController: Reaction gen failed: {ex.Message}");
-                _state.PendingNpcReaction = succeeded
-                    ? $"{_npc.DisplayName} nods."
-                    : $"{_npc.DisplayName} doesn't react.";
-            }
-
+            int[] values = Enumerable.Range(0, diceCount).Select(_ => _rng.Next(1, 7)).ToArray();
             _state.CompleteDiceRoll(values);
-            _selectedOption = option;
+            _dice.Complete(values);
         });
     }
 
@@ -265,24 +275,40 @@ public class DialogueTreeController
 
     private void BeginReactionPhase()
     {
-        if (_selectedOption == null || _state.PendingNpcReaction == null) return;
+        if (_selectedOption == null) return;
+
+        var option = _selectedOption!;
+        _selectedOption = null;
+        // Final outcome reflects any humor modifiers the player applied during the roll.
+        bool succeeded = _dice.IsCurrentlySuccess;
 
         _state.IsLoadingReaction = true;
-        var option    = _selectedOption!;
-        var reaction  = _state.PendingNpcReaction!;
-        bool succeeded = _pendingSucceeded;
-        _selectedOption = null;
 
-        // Award +1 XP to the player's learned speaking MM on a successful replica.
-        // option.Skill is a registry template; map it to the protagonist's own instance by id.
-        if (succeeded)
+        _ = Task.Run(async () =>
         {
-            var learnedSkill = _protagonist.GetModusMentisById(option.Skill.ModusMentisId);
-            if (learnedSkill != null) _protagonist.AwardModusMentisXp(learnedSkill);
-        }
+            // Generate the reaction lazily for the FINAL outcome (so a humor flip is honoured).
+            string reaction;
+            try
+            {
+                reaction = await _reactionExec.ExecuteAsync(
+                    _npc, _npcSlotId, option.ReplicaText, succeeded, option.TargetNode);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"DialogueTreeController: Reaction gen failed: {ex.Message}");
+                reaction = succeeded
+                    ? $"{_npc.DisplayName} nods."
+                    : $"{_npc.DisplayName} doesn't react.";
+            }
 
-        _ = Task.Run(() =>
-        {
+            // Award +1 XP to the player's learned speaking MM on a successful replica.
+            // option.Skill is a registry template; map it to the protagonist's own instance by id.
+            if (succeeded)
+            {
+                var learnedSkill = _protagonist.GetModusMentisById(option.Skill.ModusMentisId);
+                if (learnedSkill != null) _protagonist.AwardModusMentisXp(learnedSkill);
+            }
+
             _state.Log.Add(new DialogueLogEntry(
                 DialogueLogEntryType.NpcSpeaking, _npc.DisplayName, reaction));
 

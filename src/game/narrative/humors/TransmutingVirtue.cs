@@ -11,6 +11,18 @@ public abstract class TransmutingVirtue
 {
     /// <summary>Human-readable description of the effect shown in the UI.</summary>
     public abstract string Description { get; }
+
+    /// <summary>
+    /// True when this virtue can legally modify a die currently showing <paramref name="dieValue"/>.
+    /// Drives which dice become clickable once the humor is selected during a roll.
+    /// </summary>
+    public abstract bool CanApplyTo(int dieValue);
+
+    /// <summary>
+    /// Returns the new face value after applying this virtue to a die currently showing
+    /// <paramref name="dieValue"/>. Callers must guard with <see cref="CanApplyTo"/> first.
+    /// </summary>
+    public abstract int Apply(int dieValue, Random rng);
 }
 
 /// <summary>
@@ -20,6 +32,11 @@ public abstract class TransmutingVirtue
 public sealed class NullVirtue : TransmutingVirtue
 {
     public override string Description => "N \u2192 N";
+
+    /// <summary>A null virtue exerts no influence, so no die is ever clickable.</summary>
+    public override bool CanApplyTo(int dieValue) => false;
+
+    public override int Apply(int dieValue, Random rng) => dieValue;
 }
 
 /// <summary>
@@ -37,6 +54,11 @@ public sealed class NumericModVirtue : TransmutingVirtue
         Modifier >= 0
             ? $"N \u2192 N + {Modifier}"
             : $"N \u2192 N - {Math.Abs(Modifier)}";
+
+    /// <summary>A numeric shift applies to any die.</summary>
+    public override bool CanApplyTo(int dieValue) => true;
+
+    public override int Apply(int dieValue, Random rng) => Math.Clamp(dieValue + Modifier, 1, 6);
 }
 
 /// <summary>
@@ -63,6 +85,11 @@ public sealed class DigitConversionVirtue : TransmutingVirtue
         SourceDigit == -1
             ? $"N \u2192 {TargetDigit}"
             : $"{SourceDigit} \u2192 {TargetDigit}";
+
+    /// <summary>Applies to any die when wildcard (-1), otherwise only to the matching source face.</summary>
+    public override bool CanApplyTo(int dieValue) => SourceDigit == -1 || dieValue == SourceDigit;
+
+    public override int Apply(int dieValue, Random rng) => TargetDigit;
 }
 
 /// <summary>
@@ -81,4 +108,9 @@ public sealed class RerollVirtue : TransmutingVirtue
         SourceDigit == -1
             ? "N \u2192 ?"
             : $"{SourceDigit} \u2192 ?";
+
+    /// <summary>Applies to any die when wildcard (-1), otherwise only to the matching source face.</summary>
+    public override bool CanApplyTo(int dieValue) => SourceDigit == -1 || dieValue == SourceDigit;
+
+    public override int Apply(int dieValue, Random rng) => rng.Next(1, 7);
 }

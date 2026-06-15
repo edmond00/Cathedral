@@ -95,6 +95,76 @@ public class OutcomeNarrator
             : $"{narrationText} {feeling}";
     }
 
+    // ── Dual outcome pre-generation (for humor dice modifiers) ─────────────────
+    // Both success and failure narration are generated up-front during the dice animation so
+    // the player can flip the result via humor modifiers with no further loading. Each branch is
+    // generated on a clean copy of the narrator slot history (snapshot/restore) so they don't
+    // pollute each other; CommitNarrationHistory keeps only the chosen branch's turns.
+    private int _pendingNarratorSlot = -1;
+    private List<object>? _pendingSuccessHistory;
+    private List<object>? _pendingFailureHistory;
+
+    /// <summary>
+    /// Generate BOTH the success and failure narration for an action in one pass. Neither result
+    /// is committed to the slot's permanent history yet — call <see cref="CommitNarrationHistory"/>
+    /// once the final (possibly humor-modified) outcome is known.
+    /// </summary>
+    public async Task<(string success, string failure)> NarrateBothOutcomesAsync(
+        ParsedNarrativeAction action,
+        ModusMentis actionModusMentis,
+        OutcomeBase successOutcome,
+        OutcomeBase failureOutcome,
+        double difficulty,
+        PartyMember protagonist,
+        string? failureHint,
+        CancellationToken cancellationToken = default)
+    {
+        if (PlaygroundMode.IsActive)
+        {
+            _pendingNarratorSlot = -1;
+            return ($"<success narration by {actionModusMentis.DisplayName}>",
+                    $"<failure narration by {actionModusMentis.DisplayName}>");
+        }
+
+        int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
+        var instance = _llmManager.GetInstance(slotId);
+        var baseline = instance?.SnapshotHistory();
+
+        string success = await NarrateOutcomeAsync(
+            action, actionModusMentis, successOutcome, true, difficulty, protagonist, cancellationToken);
+        var afterSuccess = instance?.SnapshotHistory();
+
+        // Reset to the pre-narration baseline so the failure branch generates without seeing the
+        // success turns, then snapshot the failure branch state.
+        if (instance != null && baseline != null) instance.RestoreHistory(baseline);
+
+        string failure = await NarrateOutcomeAsync(
+            action, actionModusMentis, failureOutcome, false, difficulty, protagonist, cancellationToken, failureHint);
+        var afterFailure = instance?.SnapshotHistory();
+
+        _pendingNarratorSlot   = (instance != null) ? slotId : -1;
+        _pendingSuccessHistory = afterSuccess;
+        _pendingFailureHistory = afterFailure;
+
+        return (success, failure);
+    }
+
+    /// <summary>
+    /// After the final outcome is chosen, keep only that branch's narration turns in the slot's
+    /// conversation history (discarding the speculative other branch). No-op if no dual generation
+    /// is pending.
+    /// </summary>
+    public void CommitNarrationHistory(bool success)
+    {
+        if (_pendingNarratorSlot < 0) return;
+        var instance = _llmManager.GetInstance(_pendingNarratorSlot);
+        var chosen = success ? _pendingSuccessHistory : _pendingFailureHistory;
+        if (instance != null && chosen != null) instance.RestoreHistory(chosen);
+        _pendingNarratorSlot = -1;
+        _pendingSuccessHistory = null;
+        _pendingFailureHistory = null;
+    }
+
     /// <summary>
     /// Generates narration explaining why an action failed plausibility checks.
     /// </summary>

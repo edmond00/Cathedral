@@ -163,6 +163,30 @@ public sealed class HumorQueue
         return consumed;
     }
 
+    /// <summary>
+    /// Spend the tail humor as a dice-roll modifier: remove the oldest non-black-bile item
+    /// (the same one <see cref="PeekConsumable"/> exposes) and shift the rest toward the back,
+    /// leaving a phlegm placeholder at the front. Unlike <see cref="Consume"/> the organ does
+    /// NOT secrete a replacement — the queue simply loses the spent humor and the next
+    /// non-black-bile item becomes the new usable tail.
+    /// Returns the removed humor, or null when the queue is critical (all black bile).
+    /// </summary>
+    public BodyHumor? ConsumeTailModifier()
+    {
+        int removeIdx = FindRemoveIndex();
+        if (removeIdx < 0) return null; // critical — nothing usable
+
+        BodyHumor consumed = _items[removeIdx];
+        RemoveAtIndex(removeIdx);
+
+        // RemoveAtIndex shifted everything from removeIdx+1 left and parked phlegm at the back.
+        // Open a fresh slot at the front (no secretion) so capacity stays full.
+        Array.Copy(_items, 0, _items, 1, Capacity - 1);
+        _items[0] = new PhlegmHumor();
+
+        return consumed;
+    }
+
     // ── Private helpers ───────────────────────────────────────────
 
     /// <summary>

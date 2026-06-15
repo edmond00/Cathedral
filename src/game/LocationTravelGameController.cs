@@ -2585,7 +2585,8 @@ public class LocationTravelGameController : IDisposable
             llmManager:   _llmActionExecutor.GetLlamaServerManager(),
             slotManager:  _modusMentisSlotManager,
             terminal:     _core.Terminal,
-            prebuiltTree: dialogueOutcome.Tree);
+            prebuiltTree: dialogueOutcome.Tree,
+            ambianceEngine: _ambianceEngine);
 
         _dialogueAdapter.Start();
         SetMode(GameMode.Dialogue);

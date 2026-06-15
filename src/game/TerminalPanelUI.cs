@@ -30,20 +30,6 @@ public abstract class TerminalPanelUI
     protected int      _loadingFrameIndex;
     protected DateTime _lastFrameUpdate = DateTime.Now;
 
-    // ── Dice-roll animation fields ────────────────────────────────────────────
-    private int[]  _rollingDiceFrames = Array.Empty<int>();
-    private bool[] _diceShowingFaces  = Array.Empty<bool>();
-    private int[]  _diceFrameCounters = Array.Empty<int>();
-    private int[]  _diceWaitTimes     = Array.Empty<int>();
-    private readonly Random _diceRandom = new();
-    private (int X, int Y, int Width) _diceRollButtonRegion;
-
-    /// <summary>
-    /// Fires every time a die visibly changes face during the rolling animation.
-    /// Hook a short PCM tick to evoke the rattle of tumbling dice.
-    /// </summary>
-    public Action? OnDiceTick { get; set; }
-
     // ── Constructor ──────────────────────────────────────────────────────────
 
     protected TerminalPanelUI(TerminalHUD terminal)
@@ -312,187 +298,21 @@ public abstract class TerminalPanelUI
         return bar.ToString();
     }
 
-    // ── Dice-roll indicator (shared with NarrativeUI and DialogueUI) ──────────
+    // ── Dice-roll overlay (shared with NarrativeUI and DialogueUI) ────────────
 
     /// <summary>
-    /// Renders the full N-dice roll screen. Animates while rolling; shows final values
-    /// with a [ Continue ] button once complete. Returns true when the continue button
-    /// is visible so the caller knows clicks should be tested with
-    /// <see cref="IsMouseOverDiceRollButton"/>.
+    /// Render a <see cref="DiceRollComponent"/> centered in this panel's content area.
+    /// Clears the content first, then delegates animation, dice, humor buttons, and the
+    /// [ Continue ] button to the component. Returns true once the continue button is visible.
+    /// Hit-test clicks against <see cref="DiceRollComponent.ContinueButtonRegion"/> and route
+    /// hover/click to <see cref="DiceRollComponent.HandleHumorHover"/> /
+    /// <see cref="DiceRollComponent.HandleHumorClick"/>.
     /// </summary>
-    public bool ShowDiceRollIndicator(
-        int numberOfDice,
-        int difficulty,
-        bool isRolling,
-        int[]? finalDiceValues = null,
-        bool isContinueButtonHovered = false)
+    public bool RenderDiceComponent(DiceRollComponent dice, bool continueHovered)
     {
-        // Advance animation every 80 ms
-        if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds > 80)
-        {
-            _loadingFrameIndex = (_loadingFrameIndex + 1) % Config.Symbols.DiceRollingFrames.Length;
-            _lastFrameUpdate   = DateTime.Now;
-
-            if (isRolling)
-            {
-                if (_rollingDiceFrames.Length != numberOfDice)
-                {
-                    _rollingDiceFrames = new int[numberOfDice];
-                    _diceShowingFaces  = new bool[numberOfDice];
-                    _diceFrameCounters = new int[numberOfDice];
-                    _diceWaitTimes     = new int[numberOfDice];
-                    for (int i = 0; i < numberOfDice; i++)
-                    {
-                        _diceShowingFaces[i]  = _diceRandom.Next(2) == 0;
-                        _diceFrameCounters[i] = 0;
-                        _diceWaitTimes[i]     = _diceRandom.Next(1, 4);
-                        _rollingDiceFrames[i] = _diceShowingFaces[i]
-                            ? _diceRandom.Next(Config.Symbols.DiceFaces.Length)
-                            : _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
-                    }
-                }
-
-                bool anyChanged = false;
-                for (int i = 0; i < _rollingDiceFrames.Length; i++)
-                {
-                    _diceFrameCounters[i]++;
-                    if (_diceFrameCounters[i] >= _diceWaitTimes[i])
-                    {
-                        _diceFrameCounters[i] = 0;
-                        _diceWaitTimes[i]     = _diceRandom.Next(1, 6);
-                        _diceShowingFaces[i]  = !_diceShowingFaces[i];
-                        _rollingDiceFrames[i] = _diceShowingFaces[i]
-                            ? _diceRandom.Next(Config.Symbols.DiceFaces.Length)
-                            : _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
-                        anyChanged = true;
-                    }
-                }
-                if (anyChanged) OnDiceTick?.Invoke();
-            }
-        }
-
-        // Initialise frames if not yet sized (first call before first tick)
-        if (_rollingDiceFrames.Length != numberOfDice)
-        {
-            _rollingDiceFrames = new int[numberOfDice];
-            _diceShowingFaces  = new bool[numberOfDice];
-            _diceFrameCounters = new int[numberOfDice];
-            _diceWaitTimes     = new int[numberOfDice];
-            for (int i = 0; i < numberOfDice; i++)
-            {
-                _diceShowingFaces[i]  = _diceRandom.Next(2) == 0;
-                _diceFrameCounters[i] = 0;
-                _diceWaitTimes[i]     = _diceRandom.Next(1, 6);
-                _rollingDiceFrames[i] = _diceShowingFaces[i]
-                    ? _diceRandom.Next(Config.Symbols.DiceFaces.Length)
-                    : _diceRandom.Next(Config.Symbols.DiceSideViews.Length);
-            }
-        }
-
-        // Clear content area
         ClearContent();
-
+        int centerX = _layout.TERMINAL_WIDTH / 2;
         int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
-
-        // Results (used in multiple places below)
-        int  numberOfSixes = 0;
-        bool isSuccess     = false;
-        if (!isRolling && finalDiceValues != null)
-        {
-            numberOfSixes = finalDiceValues.Count(v => v == 6);
-            isSuccess     = numberOfSixes >= difficulty;
-        }
-
-        // Title
-        string  title      = isRolling ? "Rolling Dice..." : (isSuccess ? "SUCCESS!" : "FAILURE!");
-        Vector4 titleColor = isRolling
-            ? Config.NarrativeUI.LoadingColor
-            : (isSuccess ? Config.NarrativeUI.SuccessColor : Config.NarrativeUI.FailureColor);
-        _terminal.Text((_layout.TERMINAL_WIDTH - title.Length) / 2, centerY - 10,
-            title, titleColor, Config.NarrativeUI.BackgroundColor);
-
-        // Difficulty indicator
-        int  diffClamp   = Math.Clamp(difficulty, 1, 10);
-        char diffGlyph   = Config.Symbols.DifficultyGlyphs[diffClamp - 1];
-        var  diffColor   = Config.Symbols.DifficultyLevelColor(diffClamp);
-        string diffLabel  = $"Difficulty: {diffGlyph} ({diffClamp} {(diffClamp == 1 ? "six" : "sixes")} needed)";
-        int    diffLabelX = (_layout.TERMINAL_WIDTH - diffLabel.Length) / 2;
-        int    diffLabelY = centerY - 8;
-        _terminal.Text(diffLabelX,      diffLabelY, "Difficulty: ",             Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-        _terminal.Text(diffLabelX + 12, diffLabelY, diffGlyph.ToString(),       diffColor,                         Config.NarrativeUI.BackgroundColor);
-        string diffSuffix = $" ({diffClamp} {(diffClamp == 1 ? "six" : "sixes")} needed)";
-        _terminal.Text(diffLabelX + 13, diffLabelY, diffSuffix,                 Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-
-        // Dice grid
-        int dicePerRow    = Math.Min(numberOfDice, 20);
-        int startX        = (_layout.TERMINAL_WIDTH - dicePerRow * 2) / 2;
-        int startY        = centerY - 5;
-
-        for (int i = 0; i < numberOfDice; i++)
-        {
-            int row   = (i / dicePerRow) * 2;
-            int col   = i % dicePerRow;
-            int diceX = startX + col * 2 + (row % 2);
-            int diceY = startY + row;
-
-            char    diceChar;
-            Vector4 diceColor;
-
-            if (isRolling)
-            {
-                diceChar  = _diceShowingFaces[i]
-                    ? Config.Symbols.DiceFaces[_rollingDiceFrames[i]]
-                    : Config.Symbols.DiceSideViews[_rollingDiceFrames[i]];
-                diceColor = Config.NarrativeUI.LoadingColor;
-            }
-            else if (finalDiceValues != null && i < finalDiceValues.Length)
-            {
-                int value = Math.Clamp(finalDiceValues[i], 1, 6);
-                diceChar  = Config.Symbols.DiceFaces[value - 1];
-                diceColor = value == 6 ? Config.NarrativeUI.DiceGoldColor : Config.NarrativeUI.NarrativeColor;
-            }
-            else
-            {
-                diceChar  = Config.Symbols.DiceFaces[0];
-                diceColor = Config.NarrativeUI.NarrativeColor;
-            }
-
-            _terminal.SetCell(diceX, diceY, diceChar, diceColor, Config.NarrativeUI.BackgroundColor);
-        }
-
-        int rows   = ((numberOfDice + dicePerRow - 1) / dicePerRow) * 2;
-        int afterY = startY + rows + 2;
-
-        if (!isRolling && finalDiceValues != null)
-        {
-            // Summary
-            string  summary  = $"Rolled {numberOfSixes} {(numberOfSixes == 1 ? "six" : "sixes")} out of {numberOfDice} dice";
-            Vector4 summCol  = isSuccess ? Config.NarrativeUI.SuccessColor : Config.NarrativeUI.FailureColor;
-            _terminal.Text((_layout.TERMINAL_WIDTH - summary.Length) / 2, afterY, summary, summCol, Config.NarrativeUI.BackgroundColor);
-
-            // Continue button
-            string  btn    = "[ Continue ]";
-            int     btnX   = (_layout.TERMINAL_WIDTH - btn.Length) / 2;
-            int     btnY   = afterY + 3;
-            Vector4 btnFg  = isContinueButtonHovered ? Config.NarrativeUI.ContinueButtonHoverColor      : Config.NarrativeUI.ContinueButtonColor;
-            Vector4 btnBg  = isContinueButtonHovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;
-            _terminal.Text(btnX, btnY, btn, btnFg, btnBg);
-            _diceRollButtonRegion = (btnX, btnY, btn.Length);
-            return true;
-        }
-        else
-        {
-            string spinner = Config.Symbols.LoadingSpinner[_loadingFrameIndex % Config.Symbols.LoadingSpinner.Length];
-            string wait    = $"{spinner}  Please wait...  {spinner}";
-            _terminal.Text((_layout.TERMINAL_WIDTH - wait.Length) / 2, afterY, wait,
-                Config.Colors.DarkYellowGrey, Config.NarrativeUI.BackgroundColor);
-            return false;
-        }
+        return dice.Render(_terminal, centerX, centerY, continueHovered);
     }
-
-    /// <summary>Returns true if the mouse is over the dice-roll continue button.</summary>
-    public bool IsMouseOverDiceRollButton(int mouseX, int mouseY)
-        => mouseY == _diceRollButtonRegion.Y
-        && mouseX >= _diceRollButtonRegion.X
-        && mouseX <  _diceRollButtonRegion.X + _diceRollButtonRegion.Width;
 }

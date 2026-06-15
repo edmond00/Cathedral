@@ -144,6 +144,9 @@ public class FightModeAdapter
         _sfx = sfxTrigger;
         _setMusicFilter = setMusicFilter;
         _dice.OnDiceTick = () => _sfx?.Invoke(GameEventType.SmallInteraction);
+        _dice.OnButtonHover = () => _sfx?.Invoke(GameEventType.SmallInteraction);
+        _dice.OnButtonClick = () => _sfx?.Invoke(GameEventType.StrongInteraction);
+        _dice.OnResultChanged = success => _sfx?.Invoke(success ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
 
         // Build AllEnemyNpcs: main target + all allies
         var allEnemies = new List<NpcEntity> { targetNpc };
@@ -434,7 +437,11 @@ public class FightModeAdapter
                     FinishLearningRoll(active);
                 else
                     FinishAttackResolution(active);
+                return;
             }
+            // Not the Continue button — let the humor layer handle selection / die clicks.
+            // Modifiers mutate the shared dice arrays in place, so resolution picks them up.
+            _dice.HandleHumorClick(x, y);
             return;
         }
 
@@ -635,11 +642,12 @@ public class FightModeAdapter
             return;
         }
 
-        // ── Dice continue button ─────────────────────────────────────
+        // ── Dice continue button + humor modifier layer ──────────────
         if (_state.Phase == TurnPhase.WaitingForDiceComplete)
         {
             var region = _dice.ContinueButtonRegion;
             _continueHovered = (y == region.Y && x >= region.X && x < region.X + region.Width);
+            _dice.HandleHumorHover(x, y);
         }
 
         bool canInteract = _state.Phase == TurnPhase.SelectingAction
@@ -1051,6 +1059,8 @@ public class FightModeAdapter
         // Install the per-roll outcome callback (fires when dice settle, before player clicks Continue).
         _dice.OnResultRevealed = MakeDiceOutcomeMapping();
 
+        // Which fighter owns the PRIMARY dice group (the only group humor may modify)?
+        Fighter? primaryOwner;
         if (_state.PendingLearnSkill != null && _state.PendingSkill == null)
         {
             var skill = _state.PendingLearnSkill;
@@ -1058,18 +1068,21 @@ public class FightModeAdapter
             string subtitle = $"LEARNING CHECK — {skill.RequiredModusMentisId} (cerebellum)";
             _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty,
                 subtitle: subtitle, difficultyVerb: "to learn", accentColor: accent);
+            primaryOwner = _state.ActiveFighter;
         }
         else if (_state.PendingRunaway)
         {
             _dice.Start(_state.DiceNumberOfDice, 1,
                 subtitle: "RUNAWAY CHECK — feet",
                 difficultyVerb: "to flee");
+            primaryOwner = _state.ActiveFighter;
         }
         else if (_state.PendingKnockdownRecovery)
         {
             _dice.Start(_state.DiceNumberOfDice, 1,
                 subtitle: "KNOCKDOWN RECOVERY — heart",
                 difficultyVerb: "to recover");
+            primaryOwner = _state.ActiveFighter;
         }
         else if (_state.PendingSkill != null
                  && _state.PendingSkill.EffectType == FightingSkillEffect.Attack)
@@ -1086,6 +1099,7 @@ public class FightModeAdapter
                     primaryLabel: "Defense",
                     secondaryLabel: "Attack",
                     subtitle: subtitle);
+                primaryOwner = _state.PendingTarget; // the defender is the player
             }
             else
             {
@@ -1097,15 +1111,32 @@ public class FightModeAdapter
                     primaryLabel: "Attack",
                     secondaryLabel: "Defense",
                     subtitle: subtitle);
+                primaryOwner = _state.ActiveFighter;
             }
         }
         else
         {
             _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty);
+            primaryOwner = _state.ActiveFighter;
         }
+
+        // Humor modifiers are only ever available on the player's own (primary) dice.
+        EnableHumorIfPlayer(primaryOwner);
 
         // Neutral "box opened" cue — every dice roll greets the player with the same sound.
         _sfx?.Invoke(GameEventType.NeutralOutcome);
+    }
+
+    /// <summary>
+    /// Enable the humor-modifier layer for the player's primary dice group. No-op when the owner
+    /// is null, AI-controlled, or has no viscera modifier budget. Enemies never get humor buttons.
+    /// </summary>
+    private void EnableHumorIfPlayer(Fighter? owner)
+    {
+        if (owner == null || !owner.IsPlayerControlled) return;
+        var member = owner.Member;
+        int limit = member.DerivedStats.FirstOrDefault(s => s.Name == "humor_modifier_limit")?.GetValue(member) ?? 0;
+        if (limit > 0) _dice.EnableHumorModifiers(member.HumorQueues, limit);
     }
 
     /// <summary>
