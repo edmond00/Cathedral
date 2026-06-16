@@ -141,14 +141,11 @@ public class ObservationExecutor
         Question question,
         bool isFirstInBatch = false,
         bool isTransition = false,
+        string? playgroundSubject = null,
         CancellationToken ct = default)
     {
         if (PlaygroundMode.IsActive)
-        {
-            var name = PlaygroundMode.GetDisplayNameForSlot(slotId);
-            var tag  = isFirstInBatch ? "general observation" : isTransition ? "transition" : "focus";
-            return $"<{tag} by {name}>";
-        }
+            return PlaygroundNarration.Observation(isFirstInBatch, isTransition, playgroundSubject ?? "the surroundings");
 
         var schema = isFirstInBatch
             ? LLMSchemaConfig.CreateObservationSchema(question.JsonFieldName)
@@ -165,13 +162,10 @@ public class ObservationExecutor
     /// Generates speaking text (party member addressing a companion directly).
     /// Uses the speaking schema to enforce quoted dialogue output.
     /// </summary>
-    public async Task<string> GenerateSpeakingTextAsync(int slotId, string prompt, CancellationToken ct = default)
+    public async Task<string> GenerateSpeakingTextAsync(int slotId, string prompt, string? playgroundLine = null, CancellationToken ct = default)
     {
         if (PlaygroundMode.IsActive)
-        {
-            var name = PlaygroundMode.GetDisplayNameForSlot(slotId);
-            return $"<speech by {name}>";
-        }
+            return playgroundLine ?? "I want to show you something.";
 
         var schema = LLMSchemaConfig.CreateSpeakingSchema();
         var gbnf = JsonConstraintGenerator.GenerateGBNF(schema);

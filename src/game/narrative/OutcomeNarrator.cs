@@ -41,7 +41,10 @@ public class OutcomeNarrator
         string? failureHint = null)
     {
         if (PlaygroundMode.IsActive)
-            return $"<{(succeeded ? "success" : "failure")} narration by {actionModusMentis.DisplayName}>";
+        {
+            var d = PlaygroundActionDisplay(action);
+            return succeeded ? PlaygroundNarration.OutcomeSuccess(d) : PlaygroundNarration.OutcomeFailure(d);
+        }
 
         // Ensure narrator slot is initialized with action modusMentis's persona
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
@@ -122,8 +125,8 @@ public class OutcomeNarrator
         if (PlaygroundMode.IsActive)
         {
             _pendingNarratorSlot = -1;
-            return ($"<success narration by {actionModusMentis.DisplayName}>",
-                    $"<failure narration by {actionModusMentis.DisplayName}>");
+            var d = PlaygroundActionDisplay(action);
+            return (PlaygroundNarration.OutcomeSuccess(d), PlaygroundNarration.OutcomeFailure(d));
         }
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
@@ -176,7 +179,7 @@ public class OutcomeNarrator
         CancellationToken cancellationToken = default)
     {
         if (PlaygroundMode.IsActive)
-            return $"<plausibility failure narration by {actionModusMentis.DisplayName}>";
+            return PlaygroundNarration.PlausibilityFailure(PlaygroundActionDisplay(action));
 
         // Use the action modusMentis's slot for plausibility failure narration
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
@@ -240,7 +243,7 @@ You tried to {action.ActionText} but it could not happen.
         CancellationToken cancellationToken = default)
     {
         if (PlaygroundMode.IsActive)
-            return $"<item combination failure narration by {actionModusMentis.DisplayName}: {item.DisplayName} not suitable>";
+            return PlaygroundNarration.ItemCombinationFailure(PlaygroundActionDisplay(action), item.WithArticle());
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
 
@@ -283,6 +286,17 @@ You want to use this item to realize this action but it is not suitable.
         {
             return $"Using {item.DisplayName} here does not help.";
         }
+    }
+
+    /// <summary>
+    /// Resolves the clean action phrase for playground templates: prefers DisplayText
+    /// ("climb the tree"), falling back to ActionText with any leading "try to " stripped.
+    /// </summary>
+    private static string PlaygroundActionDisplay(ParsedNarrativeAction action)
+    {
+        if (!string.IsNullOrWhiteSpace(action.DisplayText)) return action.DisplayText;
+        var text = action.ActionText ?? "";
+        return text.StartsWith("try to ", StringComparison.OrdinalIgnoreCase) ? text.Substring(7) : text;
     }
 
     /// <summary>

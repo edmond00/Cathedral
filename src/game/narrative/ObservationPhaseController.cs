@@ -98,7 +98,7 @@ public class ObservationPhaseController
         {
             var generalQ = _questionFillerService.GetNext(modusMentis, QuestionReference.ObserveFirst);
             var generalPrompt = _promptConstructor.BuildGeneralDescriptionPrompt(currentNode, locationId, modusMentis.PersonaTone, _worldContext, generalQ.PromptText, modusMentis.PersonaReminder, modusMentis.PersonaReminder2);
-            var generalText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, generalPrompt, generalQ, isFirstInBatch: true, ct: ct);
+            var generalText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, generalPrompt, generalQ, isFirstInBatch: true, playgroundSubject: currentNode.GenerateNeutralDescription(locationId), ct: ct);
             sentences.Add(new NarrationSentence(generalText, new List<string>()));
             Console.WriteLine($"ObservationPhaseController: General sentence generated");
         }
@@ -113,19 +113,21 @@ public class ObservationPhaseController
         {
             try
             {
+                var desc = GetNeutralDescription(outcome, locationId);
+
                 var transQ = _questionFillerService.GetNext(modusMentis, QuestionReference.ObserveTransition);
                 var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(outcome, previousDescription, transQ.PromptText, modusMentis.PersonaReminder, modusMentis.PersonaReminder2);
-                var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, transQ, isTransition: true, ct: ct);
+                var transText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, transQ, isTransition: true, playgroundSubject: desc, ct: ct);
 
                 var focusQ = _questionFillerService.GetNext(modusMentis, QuestionReference.ObserveContinuation);
                 var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(outcome, focusQ.PromptText, modusMentis.PersonaReminder, modusMentis.PersonaReminder2);
-                var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, focusQ, ct: ct);
+                var focusText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, focusQ, playgroundSubject: desc, ct: ct);
 
                 // Store sentences as placeholder (keywords assigned after all generation is done)
                 sentences.Add(new NarrationSentence(transText, new List<string>()));
                 sentences.Add(new NarrationSentence(focusText, new List<string>()));
 
-                previousDescription = GetNeutralDescription(outcome, locationId);
+                previousDescription = desc;
 
                 pendingKeywordWork.Add(((transText + " " + focusText).Trim(), outcome, transText, focusText));
                 Console.WriteLine($"ObservationPhaseController: Sentences generated for '{outcome.DisplayName}'");
@@ -139,20 +141,19 @@ public class ObservationPhaseController
         // Keyword extraction runs after ALL observation text is generated — no slot interleaving
         if (PlaygroundMode.IsActive)
         {
-            // No LLM available — derive a keyword from each outcome's display name and embed it
-            // directly into the focus sentence so the renderer can highlight it.
+            // No LLM available — derive a keyword from each outcome's neutral description. The focus
+            // template embedded that same description verbatim, so the keyword word is already present
+            // in the focus sentence; we just tag it for highlighting (no text modification).
             foreach (var (combined, outcome, transText, focusText) in pendingKeywordWork)
             {
-                var kw = PickPlaygroundKeyword(outcome);
+                var kw = PlaygroundNarration.KeywordFromPhrase(GetNeutralDescription(outcome, locationId));
                 if (kw != null)
                 {
                     allKeywords.Add(kw);
                     keywordOutcomeMap.TryAdd(kw, outcome);
 
-                    // Append the keyword to the focus sentence so the renderer finds it
-                    var newFocusText = focusText + " " + kw;
                     var focIdx = sentences.FindIndex(s => s.Text == focusText);
-                    if (focIdx >= 0) sentences[focIdx] = new NarrationSentence(newFocusText, new List<string> { kw });
+                    if (focIdx >= 0) sentences[focIdx] = new NarrationSentence(focusText, new List<string> { kw });
 
                     Console.WriteLine($"ObservationPhaseController: Playground keyword '{kw}' for '{outcome.DisplayName}'");
                 }
@@ -231,7 +232,7 @@ public class ObservationPhaseController
         {
             var firstQ = _questionFillerService.GetNext(observationModusMentis, QuestionReference.ObserveFirst);
             var firstPrompt = _promptConstructor.BuildFirstSentencePrompt(currentNode, locationId, focusOutcome, observationModusMentis.PersonaTone, _worldContext, firstQ.PromptText, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
-            firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, firstQ, isFirstInBatch: true, ct: ct);
+            firstText = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, firstPrompt, firstQ, isFirstInBatch: true, playgroundSubject: GetNeutralDescription(focusOutcome, locationId), ct: ct);
             sentences.Add(new NarrationSentence(firstText, new List<string>()));
             Console.WriteLine($"ObservationPhaseController: Focus first sentence generated");
         }
@@ -253,13 +254,15 @@ public class ObservationPhaseController
         {
             try
             {
+                var otherDesc = GetNeutralDescription(otherOutcome, locationId);
+
                 var transQ2 = _questionFillerService.GetNext(observationModusMentis, QuestionReference.ObserveTransition);
                 var transPrompt = _promptConstructor.BuildTransitionSentencePrompt(otherOutcome, previousDescription, transQ2.PromptText, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
-                transText2 = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, transQ2, isTransition: true, ct: ct);
+                transText2 = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, transPrompt, transQ2, isTransition: true, playgroundSubject: otherDesc, ct: ct);
 
                 var focusQ2 = _questionFillerService.GetNext(observationModusMentis, QuestionReference.ObserveContinuation);
                 var focusPrompt = _promptConstructor.BuildOutcomeDescriptionSentencePrompt(otherOutcome, focusQ2.PromptText, observationModusMentis.PersonaReminder, observationModusMentis.PersonaReminder2);
-                focusText2 = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, focusQ2, ct: ct);
+                focusText2 = await _observationExecutor.GenerateSentenceFromPromptAsync(slotId, focusPrompt, focusQ2, playgroundSubject: otherDesc, ct: ct);
 
                 sentences.Add(new NarrationSentence(transText2, new List<string>()));
                 sentences.Add(new NarrationSentence(focusText2, new List<string>()));
@@ -275,30 +278,30 @@ public class ObservationPhaseController
         // Keyword extraction runs after ALL observation text is generated — no slot interleaving
         if (PlaygroundMode.IsActive)
         {
+            // Keyword word is already present in the sentence (the template embedded the outcome's
+            // neutral description verbatim), so we only tag it for highlighting.
             if (firstText != null)
             {
-                var kw = PickPlaygroundKeyword(focusOutcome);
+                var kw = PlaygroundNarration.KeywordFromPhrase(GetNeutralDescription(focusOutcome, locationId));
                 if (kw != null)
                 {
                     allKeywords.Add(kw);
                     keywordOutcomeMap.TryAdd(kw, focusOutcome);
-                    var newFirstText = firstText + " " + kw;
                     var idx = sentences.FindIndex(s => s.Text == firstText);
-                    if (idx >= 0) sentences[idx] = new NarrationSentence(newFirstText, new List<string> { kw });
+                    if (idx >= 0) sentences[idx] = new NarrationSentence(firstText, new List<string> { kw });
                     Console.WriteLine($"ObservationPhaseController: Playground focus keyword '{kw}' for '{focusOutcome.DisplayName}'");
                 }
             }
 
             if (resolvedOther != null && focusText2 != null)
             {
-                var kw = PickPlaygroundKeyword(resolvedOther);
+                var kw = PlaygroundNarration.KeywordFromPhrase(GetNeutralDescription(resolvedOther, locationId));
                 if (kw != null)
                 {
                     allKeywords.Add(kw);
                     keywordOutcomeMap.TryAdd(kw, resolvedOther);
-                    var newFocusText2 = focusText2 + " " + kw;
                     var focIdx = sentences.FindIndex(s => s.Text == focusText2);
-                    if (focIdx >= 0) sentences[focIdx] = new NarrationSentence(newFocusText2, new List<string> { kw });
+                    if (focIdx >= 0) sentences[focIdx] = new NarrationSentence(focusText2, new List<string> { kw });
                     Console.WriteLine($"ObservationPhaseController: Playground focus second keyword '{kw}' for '{resolvedOther.DisplayName}'");
                 }
             }
@@ -366,18 +369,6 @@ public class ObservationPhaseController
          : outcome.DisplayName;
 
     /// <summary>
-    /// Picks a short keyword for playground mode from the last meaningful word of the outcome's display name.
-    /// </summary>
-    private static string? PickPlaygroundKeyword(ConcreteOutcome outcome)
-    {
-        var description = GetNeutralDescription(outcome, 0);
-        var words = description.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (words.Length == 0) return null;
-        // Use the last word (usually the most specific noun) stripped of punctuation
-        return words[^1].ToLowerInvariant().Trim('.', ',', '!', '?', '"', '\'', '(', ')');
-    }
-
-    /// <summary>
     /// Formats narration blocks for terminal display with keyword highlighting.
     /// </summary>
     public string FormatNarrationBlockForDisplay(NarrationBlock block, bool keywordsEnabled = true)
@@ -432,7 +423,7 @@ public class ObservationPhaseController
                 speakingModusMentis.PersonaTone, worldContext,
                 speakingModusMentis.PersonaReminder, speakingModusMentis.PersonaReminder2);
 
-            var raw1 = await _observationExecutor.GenerateSpeakingTextAsync(slotId, prompt1, ct);
+            var raw1 = await _observationExecutor.GenerateSpeakingTextAsync(slotId, prompt1, PlaygroundNarration.Attention(companionName), ct);
             var sentence1 = raw1.Trim().Trim('"');
             Console.WriteLine($"ObservationPhaseController: Speaking sentence 1: {sentence1}");
 
@@ -441,7 +432,7 @@ public class ObservationPhaseController
                 linkedOutcome, companionName,
                 speakingModusMentis.PersonaReminder, speakingModusMentis.PersonaReminder2);
 
-            var raw2 = await _observationExecutor.GenerateSpeakingTextAsync(slotId, prompt2, ct);
+            var raw2 = await _observationExecutor.GenerateSpeakingTextAsync(slotId, prompt2, PlaygroundNarration.Description(GetNeutralDescription(linkedOutcome, locationId)), ct);
             var sentence2 = raw2.Trim().Trim('"');
             Console.WriteLine($"ObservationPhaseController: Speaking sentence 2: {sentence2}");
 
@@ -450,7 +441,7 @@ public class ObservationPhaseController
                 companionName,
                 speakingModusMentis.PersonaReminder, speakingModusMentis.PersonaReminder2);
 
-            var raw3 = await _observationExecutor.GenerateSpeakingTextAsync(slotId, prompt3, ct);
+            var raw3 = await _observationExecutor.GenerateSpeakingTextAsync(slotId, prompt3, PlaygroundNarration.Question(), ct);
             var sentence3 = raw3.Trim().Trim('"');
             Console.WriteLine($"ObservationPhaseController: Speaking sentence 3: {sentence3}");
 
@@ -473,7 +464,17 @@ public class ObservationPhaseController
             var allExtractedKeywords = new List<string>();
             var speakingKeywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
 
-            if (_keywordFallback != null)
+            if (PlaygroundMode.IsActive)
+            {
+                // No LLM — the keyword word is embedded in the Description line (sentence2).
+                var kw = PlaygroundNarration.KeywordFromPhrase(GetNeutralDescription(linkedOutcome, locationId));
+                if (kw != null)
+                {
+                    allExtractedKeywords.Add(kw);
+                    speakingKeywordOutcomeMap[kw] = linkedOutcome;
+                }
+            }
+            else if (_keywordFallback != null)
             {
                 var fullText = (sentence1 + " " + sentence2 + " " + sentence3).Trim();
                 var descr = GetNeutralDescription(linkedOutcome, locationId);
@@ -485,15 +486,17 @@ public class ObservationPhaseController
                 }
             }
 
-            // Per-sentence keyword assignment for scroll buffer highlighting
+            // Per-sentence keyword assignment for scroll buffer highlighting. The keyword list is
+            // attached to every sentence; the renderer only highlights the sentence that actually
+            // contains the word (the call-to-attention line in LLM mode, the description line in playground).
             var speakingKws = allExtractedKeywords;
             var speakingSentences = new List<NarrationSentence>();
             if (!string.IsNullOrWhiteSpace(sentence1))
                 speakingSentences.Add(new NarrationSentence(sentence1, speakingKws));
             if (!string.IsNullOrWhiteSpace(sentence2))
-                speakingSentences.Add(new NarrationSentence(sentence2, new List<string>()));
+                speakingSentences.Add(new NarrationSentence(sentence2, speakingKws));
             if (!string.IsNullOrWhiteSpace(sentence3))
-                speakingSentences.Add(new NarrationSentence(sentence3, new List<string>()));
+                speakingSentences.Add(new NarrationSentence(sentence3, speakingKws));
 
             var block = new NarrationBlock(
                 Type: NarrationBlockType.Speaking,

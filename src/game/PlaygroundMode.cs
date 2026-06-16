@@ -19,13 +19,11 @@ public static class PlaygroundMode
     private static readonly Random _rng = new();
     private static int _nextFakeSlotId = 1000;
     private static readonly Dictionary<string, int> _modusMentisIdToFakeSlot = new();
-    private static readonly Dictionary<int, string> _fakeSlotToDisplayName = new();
 
     // ── Fake slot management ───────────────────────────────────────────────────
 
     /// <summary>
     /// Returns a fake slot ID for <paramref name="modusMentisId"/>, creating one on first call.
-    /// Stores <paramref name="displayName"/> for use in placeholder strings.
     /// </summary>
     public static int GetOrCreateFakeSlot(string modusMentisId, string displayName)
     {
@@ -34,17 +32,9 @@ public static class PlaygroundMode
 
         int slotId = _nextFakeSlotId++;
         _modusMentisIdToFakeSlot[modusMentisId] = slotId;
-        _fakeSlotToDisplayName[slotId] = displayName;
         Console.WriteLine($"PlaygroundMode: Created fake slot {slotId} for '{displayName}'");
         return slotId;
     }
-
-    /// <summary>
-    /// Returns the display name associated with <paramref name="fakeSlotId"/>,
-    /// or a generic label if the slot is unknown.
-    /// </summary>
-    public static string GetDisplayNameForSlot(int fakeSlotId)
-        => _fakeSlotToDisplayName.TryGetValue(fakeSlotId, out var name) ? name : $"slot-{fakeSlotId}";
 
     // ── Random helpers ─────────────────────────────────────────────────────────
 

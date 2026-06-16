@@ -184,7 +184,7 @@ public class CriticEvaluator : IDisposable
     private async Task<string> GetFailureReasonAsync()
     {
         if (PlaygroundMode.IsActive)
-            return "<failure reason placeholder>";
+            return PlaygroundNarration.CriticFailureReason();
 
         if (!_isInitialized || !_llamaServer.IsServerReady || _criticSlotId < 0)
             return string.Empty;

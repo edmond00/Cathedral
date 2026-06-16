@@ -85,7 +85,7 @@ public class ThinkingExecutor
 
             return new ThinkingResponse
             {
-                ReasoningText = $"<reasoning by {thinkingModusMentis.DisplayName}>",
+                ReasoningText = PlaygroundNarration.Reasoning(targetOutcome.ToNaturalLanguageString(), pgVerb.DisplayName),
                 Actions       = new List<ParsedNarrativeAction> { pgAction }
             };
         }
