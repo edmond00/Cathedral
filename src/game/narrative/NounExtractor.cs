@@ -20,7 +20,7 @@ public static class NounExtractor
     // ── Initialisation ─────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Loads the Catalyst English model. Call once from KeywordFallbackService.InitializeAsync.
+    /// Loads the Catalyst English model. Call once from TextSanitizationPipeline initialization.
     /// Subsequent calls to ExtractNouns will use POS tagging instead of heuristics.
     /// </summary>
     public static async Task InitializeAsync(string modelStoragePath)

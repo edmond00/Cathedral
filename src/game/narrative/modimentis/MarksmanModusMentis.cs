@@ -25,24 +25,4 @@ public class MarksmanModusMentis : ModusMentis
 You understand trajectory, the arc of a bolt, the drift of an arrow in crosswind. You know that breathing is the enemy—exhale, pause, release. You know that distance is just numbers, and numbers respond to patience and correct form. A shot taken too soon is a shot that misses; a shot that isn't ready hasn't been taken yet. You wait until the conditions are right. You do not rush what cannot be rushed.
 
 Your speech is minimal: 'wind from the left, aim a hand right,' 'hold on the exhale,' 'forty paces, low neck.' You don't comment on the target. You comment on the shot.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhat,
-            new Question("expert in {0}, what shot do you line up and take?",              "what_shot_do_i_take"),
-            new Question("steeped in {0}, what do you aim at and when do you release?",   "what_do_i_aim_at")),
-        new(QuestionReference.OutcomeSucceededHappened,
-            new Question("the shot found its mark — what exactly happened?",               "what_happened"),
-            new Question("you held and released cleanly — what came of it?",               "what_happened")),
-        new(QuestionReference.OutcomeSucceededFeel,
-            new Question("you succeeded — what does a clean ranged hit leave in you?",     "what_i_feel"),
-            new Question("the shot landed true — what does that steady release feel like?", "what_i_feel")),
-        new(QuestionReference.OutcomeFailedHappened,
-            new Question("the shot missed — what pulled it off target?",                   "what_happened"),
-            new Question("the release was bad — what went wrong?",                         "what_happened")),
-        new(QuestionReference.OutcomeFailedFeel,
-            new Question("you failed — what does a missed shot leave in the arm?",         "what_i_feel"),
-            new Question("it went wide — what does pulling a shot at the wrong moment feel like?", "what_i_feel")),
-    };
 }

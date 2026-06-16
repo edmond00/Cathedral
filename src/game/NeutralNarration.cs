@@ -6,15 +6,17 @@ using System.Text.RegularExpressions;
 namespace Cathedral.Game;
 
 /// <summary>
-/// Fixed, neutral, first-person sentence templates used by playground mode in place of
-/// LLM-generated narration. No persona, no Modus Mentis name — just properly-formed English
-/// built from the structured data already available at each call site.
+/// Builds neutral, first-person English describing the *meaning* of a piece of narration, from
+/// structured game data. This is the single source of meaning for both narration paths:
+///   • in playground mode it is shown verbatim (no LLM);
+///   • otherwise it is handed to <see cref="Cathedral.Game.Narrative.PersonaRewriter"/>, which asks
+///     the speaker's Modus Mentis / NPC LLM slot to re-express it in persona voice while keeping
+///     the meaning.
 ///
-/// The raw neutral descriptions these draw on are free-form (bare names without articles,
-/// fully-capitalized phrases, mood-prefixed sentences, proper nouns), so <see cref="NounPhrase"/>
-/// cleans them into an embeddable noun phrase before they go into a template.
+/// Free-form descriptions are messy (bare names, capitalised phrases, mood prefixes, proper nouns),
+/// so <see cref="NounPhrase"/> cleans them into an embeddable noun phrase before templating.
 /// </summary>
-public static class PlaygroundNarration
+public static class NeutralNarration
 {
     // ── Observation ────────────────────────────────────────────────────────────
 
@@ -29,6 +31,28 @@ public static class PlaygroundNarration
              : isTransition ? $"My attention shifts to {s}."
                             : $"I look more closely at {s}.";
     }
+
+    // ── Thinking ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Neutral chain-of-thought once the goal and skill have been chosen: what is noticed, what is
+    /// intended, and the means that will be used. <paramref name="goalPhrase"/> is a verb phrase
+    /// ("climb the tree"); <paramref name="skillMeans"/> is a Modus Mentis means description.
+    /// </summary>
+    public static string ReasoningChain(string targetPhrase, string goalPhrase, string skillMeans)
+    {
+        var parts = new List<string> { $"I notice {NounPhrase(targetPhrase)}." };
+        if (!string.IsNullOrWhiteSpace(goalPhrase)) parts.Add($"I want to {goalPhrase}.");
+        if (!string.IsNullOrWhiteSpace(skillMeans)) parts.Add($"I will rely on {skillMeans}.");
+        return string.Join(" ", parts);
+    }
+
+    /// <summary>Neutral reasoning for the "ignore and move on" path.</summary>
+    public static string ReasoningIgnore(string targetPhrase)
+        => $"I notice {NounPhrase(targetPhrase)}, but I let it be and move on.";
+
+    /// <summary>The bare intended action verb phrase (e.g. "climb the tree"), used verbatim.</summary>
+    public static string ActionIntent(string verbVerbatim) => verbVerbatim;
 
     // ── Action outcomes ────────────────────────────────────────────────────────
     // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.
@@ -45,11 +69,6 @@ public static class PlaygroundNarration
     public static string ItemCombinationFailure(string actionDisplay, string itemWithArticle)
         => $"Using {itemWithArticle} to {actionDisplay} does not work.";
 
-    // ── Thinking ───────────────────────────────────────────────────────────────
-
-    public static string Reasoning(string targetPhrase, string actionDisplay)
-        => $"I weigh up {NounPhrase(targetPhrase)}, and resolve to {actionDisplay}.";
-
     // ── Speaking (3-part address to a companion) ───────────────────────────────
 
     public static string Attention(string companionName)
@@ -60,6 +79,22 @@ public static class PlaygroundNarration
 
     public static string Question()
         => "What do you make of it?";
+
+    // ── Dialogue ───────────────────────────────────────────────────────────────
+
+    /// <summary>Neutral player line for a chosen dialogue node (its intent, as direct speech).</summary>
+    public static string DialoguePlayerReplica(string nodeDescription)
+        => $"I want to {LowerFirst(nodeDescription.Trim().TrimEnd('.'))}.";
+
+    /// <summary>Neutral NPC opening line for a dialogue node (the step's intent stated plainly).</summary>
+    public static string NpcOpening(string treeDescription, string nodeDescription)
+        => $"{Capitalize(nodeDescription.Trim().TrimEnd('.'))}.";
+
+    /// <summary>Neutral NPC reaction after the player's replica and skill check.</summary>
+    public static string NpcReaction(bool succeeded, string nodeDescription)
+        => succeeded
+            ? $"Very well — {LowerFirst(nodeDescription.Trim().TrimEnd('.'))}."
+            : "That does not move me.";
 
     // ── Critic ─────────────────────────────────────────────────────────────────
 
@@ -72,9 +107,7 @@ public static class PlaygroundNarration
     /// <summary>
     /// Picks a keyword from a neutral description: the last whitespace-delimited word,
     /// lower-cased and stripped of surrounding punctuation. Returns null for empty input.
-    /// Because observation templates embed the description (via <see cref="NounPhrase"/>, which
-    /// preserves the final word), this keyword is guaranteed to appear in the rendered sentence
-    /// so the case-insensitive keyword renderer can highlight it.
+    /// Used as the playground/fallback keyword when the LLM does not supply one.
     /// </summary>
     public static string? KeywordFromPhrase(string? phrase)
     {
@@ -139,4 +172,10 @@ public static class PlaygroundNarration
 
     private static bool IsCapitalizedWord(string w)
         => w.Length > 0 && char.IsUpper(w[0]) && w.All(c => char.IsLetter(c) || c == '-' || c == '\'');
+
+    private static string Capitalize(string s)
+        => string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
+
+    private static string LowerFirst(string s)
+        => string.IsNullOrEmpty(s) ? s : char.ToLowerInvariant(s[0]) + s.Substring(1);
 }

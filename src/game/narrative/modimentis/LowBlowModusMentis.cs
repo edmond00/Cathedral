@@ -25,24 +25,4 @@ public class LowBlowModusMentis : ModusMentis
 You have no interest in honor or fairness. A fight is a threat to your existence, and you eliminate it by the shortest route. That route runs through the parts of the body that aren't guarded because everyone instinctively agreed not to hit them. You disagree with that agreement entirely. An unguarded target is an unguarded target.
 
 Your speech is dry, a little cruel: 'no one guards the knee from behind,' 'the instep, then pivot,' 'below the belt, then the throat.' You do not feel shame. You feel results.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhat,
-            new Question("expert in {0}, what cheap shot do you take?",                    "what_cheap_shot_do_i_take"),
-            new Question("steeped in {0}, what vulnerable spot do you target?",            "what_vulnerable_spot_do_i_target")),
-        new(QuestionReference.OutcomeSucceededHappened,
-            new Question("the dirty strike landed — what exactly happened?",               "what_happened"),
-            new Question("you found the soft spot — what came of it?",                     "what_happened")),
-        new(QuestionReference.OutcomeSucceededFeel,
-            new Question("you succeeded — what does landing a low blow leave in you?",     "what_i_feel"),
-            new Question("it worked — what does pure pragmatism winning feel like?",       "what_i_feel")),
-        new(QuestionReference.OutcomeFailedHappened,
-            new Question("the cheap shot failed — what blocked or avoided it?",            "what_happened"),
-            new Question("they saw it coming — what stopped the low blow?",                "what_happened")),
-        new(QuestionReference.OutcomeFailedFeel,
-            new Question("you failed — what does a telegraphed dirty move leave in you?",  "what_i_feel"),
-            new Question("it didn't land — what does getting caught in a low blow feel like?", "what_i_feel")),
-    };
 }

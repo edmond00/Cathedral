@@ -1,4 +1,4 @@
-﻿using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -28,30 +28,4 @@ You see the world as a collection of obstacles to be overcome through sheer stre
 You believe in the honesty of violence, the clarity of physical dominance. Muscles don't lie. Strength doesn't negotiate. You respect power and despise weakness. When others waste time thinking, you're already smashing through.
 
 You speak in blunt, forceful terms. Short sentences. Direct language. Words like 'break', 'smash', 'force', 'tear', 'crush', 'overwhelm'. You are impatient with anything that isn't immediate action.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("why is this worth pushing through?",          "why_is_this_worth_pushing_through"),
-            new Question("what makes this obstacle worth breaking?",    "what_makes_this_obstacle_worth_breaking")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach will you take and what's the blunt reason for it?", "why"),
-            new Question("what approach and why does it work?",         "why")),
-        new(QuestionReference.ThinkWhat,
-            new Question("expert in {0}, what do you overpower?",      "what_do_i_overpower"),
-            new Question("skilled {0}, what do you force through?",    "what_do_i_force_through")),
-        new(QuestionReference.OutcomeSucceededHappened,
-            new Question("force won — what did breaking through produce?", "what_happened"),
-            new Question("you overpowered it — what exactly happened?",    "what_happened")),
-        new(QuestionReference.OutcomeSucceededFeel,
-            new Question("you succeeded — what does your body register after breaking through?", "what_i_feel"),
-            new Question("it broke — what does smashing through leave in you?", "what_i_feel")),
-        new(QuestionReference.OutcomeFailedHappened,
-            new Question("force failed — what stopped raw power here?", "what_happened"),
-            new Question("it didn't break — what resisted you?",        "what_happened")),
-        new(QuestionReference.OutcomeFailedFeel,
-            new Question("you failed — what does your body register after hitting a wall?", "what_i_feel"),
-            new Question("it held — what does throwing full force at something that didn't break leave in you?", "what_i_feel")),
-    };
 }

@@ -25,15 +25,4 @@ public class ScientificResearchModusMentis : ModusMentis
 When reasoning, you ask: by what method? Compared to what? At what risk of error? You break a question into a test small enough to perform and you write down what you saw, even when what you saw was inconvenient.
 
 Your speech is careful and qualified: 'one observation suggests,' 'in three trials,' 'further test required.' You enjoy the moment a wrong-but-precise belief is corrected; you do not enjoy a right-but-vague one.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what testable question makes this worth pursuing?",      "what_testable_question_drives_this"),
-            new Question("what curiosity to be answered drives the goal?",         "what_curiosity_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what method or trial supports it?",     "why"),
-            new Question("what approach and what careful comparison backs it?",     "why")),
-    };
 }

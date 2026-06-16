@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -8,40 +8,40 @@ using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
-using Cathedral.Game.Narrative.Sanitizer;
 
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Manages thinking modusMentis LLM requests using slots 10-29.
-/// Handles instance creation, caching, and JSON-constrained action generation.
+/// Drives the thinking Chain-of-Thought. The two LLM *decisions* are preserved as constrained
+/// choices (which goal/sub-outcome to pursue, which action skill to use); the *flavor* — the
+/// reasoning block and the concrete action text — is produced by building neutral meaning text
+/// (<see cref="NeutralNarration"/>) and re-expressing it in persona voice via
+/// <see cref="PersonaRewriter"/>. In playground mode the decisions are made heuristically and the
+/// flavor falls back to the neutral text.
 /// </summary>
 public class ThinkingExecutor
 {
     private readonly LlamaServerManager _llmManager;
     private readonly ThinkingPromptConstructor _promptConstructor;
     private readonly ModusMentisSlotManager _slotManager;
-    private readonly QuestionFillerService _questionFillerService;
+    private readonly PersonaRewriter _rewriter;
 
     public ThinkingExecutor(
         LlamaServerManager llmManager,
         ThinkingPromptConstructor promptConstructor,
-        ModusMentisSlotManager slotManager,
-        QuestionFillerService? questionFillerService = null)
+        ModusMentisSlotManager slotManager)
     {
         _llmManager = llmManager;
         _promptConstructor = promptConstructor;
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
-        _questionFillerService = questionFillerService ?? QuestionFillerService.Instance;
+        _rewriter = new PersonaRewriter(llmManager);
     }
 
-/// <summary>
-    /// CoT pipeline: REFLECT+GOAL → WHY → (HOW → WHAT, or early exit if IGNORE).
-    /// For ObservationObject targets the thinking modusMentis first reflects and picks a
-    /// goal (including the "ignore and move on" option). If it chooses to ignore, only the
-    /// WHY reasoning is returned and no action is generated. Otherwise the full
-    /// HOW → WHAT pipeline runs and one action is returned.
-    /// Returns null if any required LLM call fails.
+    private readonly Random _rng = new();
+
+    /// <summary>
+    /// GOAL (decision) → optional IGNORE early-exit → HOW (decision) → reasoning rewrite →
+    /// action rewrite. Returns null only if no usable action skill is available.
     /// </summary>
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
         ModusMentis thinkingModusMentis,
@@ -53,91 +53,29 @@ public class ThinkingExecutor
         WorldContext worldContext,
         CancellationToken cancellationToken = default)
     {
-        // ── Playground mode: return a stub response immediately ──────────────────
-        if (PlaygroundMode.IsActive)
-        {
-            var pgSubOutcomes = targetOutcome is ObservationObject pgObs
-                ? pgObs.SubOutcomes
-                : new List<ConcreteOutcome> { targetOutcome };
-
-            // Pick the first non-ignore VerbOutcome (fall back to any VerbOutcome)
-            var pgVerb = pgSubOutcomes.OfType<VerbOutcome>()
-                             .FirstOrDefault(v => v.VerbView.Verb is not IgnoreVerb)
-                         ?? pgSubOutcomes.OfType<VerbOutcome>().FirstOrDefault();
-
-            if (pgVerb == null) return null;
-
-            var pgMM = actionModiMentis.Count > 0
-                ? actionModiMentis[PlaygroundMode.Rng.Next(actionModiMentis.Count)]
-                : null;
-            if (pgMM == null) return null;
-
-            var pgAction = new ParsedNarrativeAction
-            {
-                ActionModusMentisId = pgMM.ModusMentisId,
-                ActionModusMentis   = pgMM,
-                PreselectedOutcome  = pgVerb,
-                ActionText          = $"try to {pgVerb.DisplayName}",
-                DisplayText         = pgVerb.DisplayName,
-                ThinkingModusMentis = thinkingModusMentis,
-                Keyword             = keyword
-            };
-
-            return new ThinkingResponse
-            {
-                ReasoningText = PlaygroundNarration.Reasoning(targetOutcome.ToNaturalLanguageString(), pgVerb.DisplayName),
-                Actions       = new List<ParsedNarrativeAction> { pgAction }
-            };
-        }
-
-        // Acquire and reset the thinking slot once at the start of the procedure.
         int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
         _llmManager.ResetInstance(thinkingSlot);
 
-        // ── Call 0: REFLECT + GOAL (always) ─────────────────────────────────────────
-        // For ObservationObjects use their sub-outcomes; for plain outcomes wrap in a list.
-        var (reflectTarget, subOutcomes) = targetOutcome is ObservationObject obs
-            ? (obs as ConcreteOutcome, obs.SubOutcomes)
-            : (targetOutcome, new List<ConcreteOutcome> { targetOutcome });
+        // Sub-outcomes to choose between, always including an "ignore and move on" option.
+        var sourceObs = targetOutcome as ObservationObject;
+        var subOutcomes = sourceObs != null
+            ? new List<ConcreteOutcome>(sourceObs.SubOutcomes)
+            : new List<ConcreteOutcome> { targetOutcome };
+        if (!subOutcomes.Any(o => o is VerbOutcome vo && vo.VerbView.Verb is IgnoreVerb))
+            subOutcomes.Add(IgnoreVerb.MakeOutcome());
 
-        var (goalOutcome, reflect) = await GenerateGoalAsync(
-            thinkingSlot, reflectTarget, subOutcomes, node, thinkingModusMentis, protagonist, worldContext, cancellationToken);
+        string targetDescription = targetOutcome.ToNaturalLanguageString();
 
-        ConcreteOutcome resolvedOutcome = goalOutcome ?? subOutcomes[0];
-        string reflectText = await TextSanitizationPipeline.SanitizeAsync(reflect);
-        ObservationObject? sourceObs = targetOutcome as ObservationObject;
+        // ── Decision 1: GOAL ────────────────────────────────────────────────────
+        ConcreteOutcome resolved = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, cancellationToken);
+        bool isIgnore = resolved is VerbOutcome vIgnore && vIgnore.VerbView.Verb is IgnoreVerb;
 
-        string outcomeDescription = resolvedOutcome.ToNaturalLanguageString();
-        var skillMeans = actionModiMentis.Select(s => $"with {s.SkillMeans}").ToList();
-
-        // ── Call 1: WHY ────────────────────────────────────────────────────────────
-        // For the ignore outcome use the source observation as the attention label so
-        // the prompt reads naturally ("drawn to [observation]… want to ignore and move on").
-        bool resolvedIsIgnore = resolvedOutcome is VerbOutcome vIgn && vIgn.VerbView.Verb is IgnoreVerb;
-        ConcreteOutcome whyTargetOutcome = (resolvedIsIgnore && sourceObs != null)
-            ? sourceObs
-            : resolvedOutcome;
-        var whyQ = _questionFillerService.GetNext(thinkingModusMentis, QuestionReference.ThinkWhy);
-        string whyPrompt = _promptConstructor.BuildWhyPrompt(outcomeDescription, node, thinkingModusMentis, protagonist, worldContext, whyTargetOutcome, whyQ.PromptText);
-        string whyGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema(whyQ.JsonFieldName));
-
-        string? whyJson = await RequestFromLLMAsync(thinkingSlot, whyPrompt, whyGbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(whyJson))
-        {
-            Console.Error.WriteLine("ThinkingExecutor: WHY call returned empty response.");
-            return null;
-        }
-
-        string whyText = await TextSanitizationPipeline.SanitizeAsync(ParseSingleTextField(whyJson, whyQ.JsonFieldName));
-        Console.WriteLine($"ThinkingExecutor: WHY complete ({whyText.Length} chars)");
-
-        // ── Early exit: IGNORE ─────────────────────────────────────────────────────
-        bool isIgnore = resolvedOutcome is VerbOutcome vIgnore && vIgnore.VerbView.Verb is IgnoreVerb;
+        // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
         if (isIgnore)
         {
-            Console.WriteLine("ThinkingExecutor: IGNORE selected — skipping HOW/WHAT, returning reasoning only.");
-            string ignoreReasoning = string.Join(" ", new[] { reflectText, whyText }
-                .Where(s => !string.IsNullOrWhiteSpace(s)));
+            string ignoreNeutral = NeutralNarration.ReasoningIgnore(targetDescription);
+            string ignoreReasoning = await _rewriter.RewriteAsync(
+                thinkingSlot, ignoreNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, ct: cancellationToken);
             return new ThinkingResponse
             {
                 ReasoningText = ignoreReasoning,
@@ -145,71 +83,37 @@ public class ThinkingExecutor
             };
         }
 
-        // ── Call 2: HOW ────────────────────────────────────────────────────────────
-        var howQ = _questionFillerService.GetNext(thinkingModusMentis, QuestionReference.ThinkHowReason);
-        string howPrompt = _promptConstructor.BuildHowPrompt(outcomeDescription, actionModiMentis, thinkingModusMentis, howQ.PromptText);
-        string howGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateHowSchema(skillMeans, howQ.JsonFieldName));
+        string goalPhrase = resolved.ToNaturalLanguageString();
 
-        string? howJson = await RequestFromLLMAsync(thinkingSlot, howPrompt, howGbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(howJson))
+        // ── Decision 2: HOW (which action skill) ────────────────────────────────
+        ModusMentis? skill = await ChooseSkillAsync(thinkingSlot, goalPhrase, actionModiMentis, thinkingModusMentis, cancellationToken);
+        if (skill == null)
         {
-            Console.Error.WriteLine("ThinkingExecutor: HOW call returned empty response.");
+            Console.Error.WriteLine("ThinkingExecutor: no usable action skill for the chosen goal.");
             return null;
         }
 
-        var (rawHowText, selectedMeans) = ParseHowResponse(howJson, howQ.JsonFieldName);
-        string howText = await TextSanitizationPipeline.SanitizeAsync(rawHowText);
-        if (string.IsNullOrEmpty(selectedMeans))
-        {
-            Console.Error.WriteLine("ThinkingExecutor: HOW call could not parse 'how' field.");
-            return null;
-        }
+        // ── Flavor: reasoning (thinking slot) ───────────────────────────────────
+        string reasoningNeutral = NeutralNarration.ReasoningChain(targetDescription, goalPhrase, skill.SkillMeans);
+        string reasoningText = await _rewriter.RewriteAsync(
+            thinkingSlot, reasoningNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, ct: cancellationToken);
 
-        Console.WriteLine($"ThinkingExecutor: HOW complete — selected approach: '{selectedMeans}'");
-
-        var selectedModusMentis = MapMeansToModusMentis(selectedMeans, actionModiMentis);
-        if (selectedModusMentis == null)
-        {
-            Console.Error.WriteLine($"ThinkingExecutor: Could not map approach '{selectedMeans}' to any action modusMentis.");
-            return null;
-        }
-        string selectedSkillId = selectedModusMentis.ModusMentisId;
-
-        // ── Call 3: WHAT (action modusMentis slot) ─────────────────────────────────
-        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(selectedModusMentis);
+        // ── Flavor: action text (action skill slot) ─────────────────────────────
+        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(skill);
         _llmManager.ResetInstance(actionSlot);
-
-        var whatQ = _questionFillerService.GetNext(selectedModusMentis, QuestionReference.ThinkWhat);
-        string whatPrompt = _promptConstructor.BuildWhatPrompt(keyword, outcomeDescription, node, protagonist, selectedModusMentis, worldContext, whatQ.PromptText);
-        string whatGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema(whatQ.JsonFieldName));
-
-        string? whatJson = await RequestFromLLMAsync(actionSlot, whatPrompt, whatGbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(whatJson))
-        {
-            Console.Error.WriteLine("ThinkingExecutor: WHAT call returned empty response.");
-            return null;
-        }
-
-        string actionDescription = await TextSanitizationPipeline.SanitizeAsync(ParseSingleTextField(whatJson, whatQ.JsonFieldName));
-        string displayText = actionDescription.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
-            ? actionDescription.Substring(7)
-            : actionDescription;
-
-        Console.WriteLine($"ThinkingExecutor: WHAT complete — action: '{displayText}'");
-
-        // Combine REFLECT (if any) + WHY + HOW reasoning into one block
-        string reasoningText = string.Join(" ", new[] { reflectText, whyText, howText }
-            .Where(s => !string.IsNullOrWhiteSpace(s)));
+        string styledAction = await _rewriter.RewriteAsync(
+            actionSlot, NeutralNarration.ActionIntent(goalPhrase), NarrationKind.Action, skill.PersonaReminder2, ct: cancellationToken);
+        if (string.IsNullOrWhiteSpace(styledAction)) styledAction = goalPhrase;
 
         var action = new ParsedNarrativeAction
         {
-            ActionModusMentisId = selectedSkillId,
-            ActionModusMentis = selectedModusMentis,
-            PreselectedOutcome = (VerbOutcome)resolvedOutcome,
-            ActionText = actionDescription,
-            DisplayText = displayText,
+            ActionModusMentisId = skill.ModusMentisId,
+            ActionModusMentis   = skill,
+            PreselectedOutcome  = (VerbOutcome)resolved,
+            ActionText          = $"try to {styledAction}",
+            DisplayText         = styledAction,
             ThinkingModusMentis = thinkingModusMentis,
-            Keyword = keyword
+            Keyword             = keyword
         };
 
         return new ThinkingResponse
@@ -219,181 +123,76 @@ public class ThinkingExecutor
         };
     }
 
-    /// <summary>
-    /// REFLECT + GOAL batch: two calls in the same slot.
-    /// Call 0a (REFLECT): full context, asks what the thinker makes of <paramref name="reflectTarget"/> → reasoning text.
-    /// Call 0b (GOAL): short continuation, picks from <paramref name="subOutcomes"/> or "ignore and move on".
-    /// Returns (chosen sub-outcome or IgnoreOutcome, reflect text). Outcome is null on LLM failure.
-    /// </summary>
-    private async Task<(ConcreteOutcome? Outcome, string ReflectText)> GenerateGoalAsync(
+    // ── Decision: GOAL ─────────────────────────────────────────────────────────
+
+    private async Task<ConcreteOutcome> ChooseGoalAsync(
         int thinkingSlot,
-        ConcreteOutcome reflectTarget,
         List<ConcreteOutcome> subOutcomes,
-        NarrationNode node,
         ModusMentis thinkingModusMentis,
-        Protagonist protagonist,
-        WorldContext worldContext,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
-        // ── Call 0a: REFLECT ───────────────────────────────────────────────────────
-        string reflectPrompt = reflectTarget is ObservationObject obsTarget
-            ? ThinkingPromptConstructor.BuildReflectPrompt(obsTarget, node, thinkingModusMentis, protagonist, worldContext)
-            : ThinkingPromptConstructor.BuildReflectPrompt(reflectTarget, node, thinkingModusMentis, protagonist, worldContext);
-        string reflectGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
-
-        string? reflectJson = await RequestFromLLMAsync(thinkingSlot, reflectPrompt, reflectGbnf, cancellationToken);
-        string reflectText = "";
-        if (!string.IsNullOrWhiteSpace(reflectJson))
+        if (PlaygroundMode.IsActive)
         {
-            reflectText = await TextSanitizationPipeline.SanitizeAsync(ParseSingleTextField(reflectJson, "what_do_i_think"));
-            Console.WriteLine($"ThinkingExecutor: REFLECT complete ({reflectText.Length} chars)");
-        }
-        else
-        {
-            Console.Error.WriteLine("ThinkingExecutor: REFLECT call returned empty response — continuing to GOAL.");
+            var pick = subOutcomes.OfType<VerbOutcome>().FirstOrDefault(v => v.VerbView.Verb is not IgnoreVerb)
+                       ?? subOutcomes.OfType<VerbOutcome>().FirstOrDefault();
+            return (ConcreteOutcome?)pick ?? subOutcomes[0];
         }
 
-        // ── Call 0b: GOAL ──────────────────────────────────────────────────────────
-        // Ensure subOutcomes always contains an IgnoreVerb option (scene ObservationObjects
-        // inject it via MakeIgnoreSubOutcome; legacy graph-level nodes do not).
-        var workingOutcomes = new List<ConcreteOutcome>(subOutcomes);
-        if (!workingOutcomes.Any(o => o is VerbOutcome vo && vo.VerbView.Verb is IgnoreVerb))
-            workingOutcomes.Add(IgnoreVerb.MakeOutcome());
-        var goalOptions = workingOutcomes.Select(o => o.ToNaturalLanguageString()).ToList();
-        string goalPrompt = ThinkingPromptConstructor.BuildGoalPrompt(goalOptions, thinkingModusMentis);
-        string goalGbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateGoalSchema(goalOptions));
+        var options = subOutcomes.Select(o => o.ToNaturalLanguageString()).ToList();
+        string prompt = ThinkingPromptConstructor.BuildGoalPrompt(options, thinkingModusMentis);
+        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateChoiceSchema("goal", options));
+        string json = await _llmManager.GenerateConstrainedStringAsync(thinkingSlot, prompt, gbnf, maxTokens: 64, skipReset: true);
 
-        string? goalJson = await RequestFromLLMAsync(thinkingSlot, goalPrompt, goalGbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(goalJson))
-        {
-            Console.Error.WriteLine("ThinkingExecutor: GOAL call returned empty response.");
-            return (null, reflectText);
-        }
-
-        try
-        {
-            using var doc = JsonDocument.Parse(goalJson);
-            string chosen = doc.RootElement.GetProperty("goal").GetString() ?? "";
-            Console.WriteLine($"ThinkingExecutor: GOAL selected '{chosen}'");
-            var match = workingOutcomes.FirstOrDefault(o =>
-                o.ToNaturalLanguageString().Equals(chosen, StringComparison.OrdinalIgnoreCase));
-            // Unknown match → treat as ignore rather than crash.
-            return (match ?? IgnoreVerb.MakeOutcome(), reflectText);
-        }
-        catch (JsonException ex)
-        {
-            Console.Error.WriteLine($"ThinkingExecutor: Failed to parse GOAL response: {ex.Message}");
-            return (null, reflectText);
-        }
+        string chosen = ParseChoice(json, "goal");
+        return subOutcomes.FirstOrDefault(o =>
+                   o.ToNaturalLanguageString().Equals(chosen, StringComparison.OrdinalIgnoreCase))
+               ?? IgnoreVerb.MakeOutcome();
     }
 
-    /// <summary>
-    /// Sends request to LLM and returns the complete response text.
-    /// Uses event-based async pattern with TaskCompletionSource.
-    /// </summary>
-    private async Task<string?> RequestFromLLMAsync(
-        int slot,
-        string prompt,
-        string grammar,
-        CancellationToken cancellationToken)
+    // ── Decision: HOW (skill) ──────────────────────────────────────────────────
+
+    private async Task<ModusMentis?> ChooseSkillAsync(
+        int thinkingSlot,
+        string goalPhrase,
+        List<ModusMentis> actionModiMentis,
+        ModusMentis thinkingModusMentis,
+        CancellationToken ct)
     {
-        var tcs = new TaskCompletionSource<string>();
-        var responseText = string.Empty;
+        if (actionModiMentis.Count == 0) return null;
+        if (PlaygroundMode.IsActive)
+            return actionModiMentis[_rng.Next(actionModiMentis.Count)];
 
-        void OnTokenStreamed(object? sender, TokenStreamedEventArgs e)
-        {
-            if (e.SlotId == slot)
-            {
-                responseText += e.Token;
-            }
-        }
+        var means = actionModiMentis.Select(s => $"with {s.SkillMeans}").ToList();
+        string prompt = _promptConstructor.BuildHowPrompt(goalPhrase, actionModiMentis, thinkingModusMentis);
+        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateChoiceSchema("how", means));
+        string json = await _llmManager.GenerateConstrainedStringAsync(thinkingSlot, prompt, gbnf, maxTokens: 48, skipReset: true);
 
-        void OnRequestCompleted(object? sender, RequestCompletedEventArgs e)
-        {
-            if (e.SlotId == slot)
-            {
-                _llmManager.TokenStreamed -= OnTokenStreamed;
-                _llmManager.RequestCompleted -= OnRequestCompleted;
-
-                if (!e.WasCancelled)
-                {
-                    tcs.SetResult(responseText);
-                }
-                else
-                {
-                    tcs.SetResult(string.Empty);
-                }
-            }
-        }
-
-        _llmManager.TokenStreamed += OnTokenStreamed;
-        _llmManager.RequestCompleted += OnRequestCompleted;
-
-        await _llmManager.ContinueRequestAsync(
-            slot,
-            prompt,
-            null, // onTokenStreamed - using events instead
-            null, // onCompleted - using events instead
-            grammar);
-
-        var result = await tcs.Task;
-        
-        // Small delay to ensure LlamaServerManager's finally block completes cleanup
-        await Task.Delay(100);
-        
-        return result;
+        string chosen = ParseChoice(json, "how");
+        return MapMeansToModusMentis(chosen, actionModiMentis)
+               ?? actionModiMentis[0];
     }
 
-
-
-    /// <summary>
-    /// Parses a single named text field from a JSON response. Returns "" on failure.
-    /// </summary>
-    private string ParseSingleTextField(string json, string fieldName)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            return TextTruncationUtils.TrimToLastSentence(doc.RootElement.GetProperty(fieldName).GetString() ?? "");
-        }
-        catch (JsonException ex)
-        {
-            Console.Error.WriteLine($"ThinkingExecutor: Failed to parse '{fieldName}' from JSON: {ex.Message}");
-            return "";
-        }
-    }
-
-    /// <summary>
-    /// Parses the HOW call response. Returns (howText, selectedMeans) where selectedMeans is "with X".
-    /// </summary>
-    private (string HowText, string SelectedMeans) ParseHowResponse(string json, string whyFieldName = "why")
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-            string means = root.GetProperty("how").GetString() ?? "";
-            string howText = root.GetProperty(whyFieldName).GetString() ?? "";
-            return (howText, means);
-        }
-        catch (JsonException ex)
-        {
-            Console.Error.WriteLine($"ThinkingExecutor: Failed to parse HOW response: {ex.Message}");
-            return ("", "");
-        }
-    }
-
-    /// <summary>
-    /// Maps a "with X" means string back to the matching ModusMentis, or null if no match.
-    /// </summary>
     private static ModusMentis? MapMeansToModusMentis(string means, List<ModusMentis> actionModiMentis)
         => actionModiMentis.FirstOrDefault(s => $"with {s.SkillMeans}" == means);
 
+    private static string ParseChoice(string? json, string field)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return string.Empty;
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty(field, out var p) ? (p.GetString() ?? string.Empty) : string.Empty;
+        }
+        catch (JsonException)
+        {
+            return string.Empty;
+        }
+    }
+
+    // ── Item combination (reasoning + reformulated action) ──────────────────────
+
     /// <summary>
-    /// Asks the action modusMentis to reason about how the combined item helps realise the action.
-    /// Uses the WHY schema ("what_do_i_think"). Returns the reasoning text, or null on LLM failure.
-    /// Called before <see cref="ExecuteItemReformulationAsync"/>; the result is displayed as a
-    /// reasoning block before the reformulated action button.
+    /// Reasons (in the action Modus Mentis's voice) about how a combined item helps the action.
     /// </summary>
     public async Task<string?> ExecuteItemReasoningAsync(
         ParsedNarrativeAction originalAction,
@@ -403,33 +202,18 @@ public class ThinkingExecutor
         WorldContext worldContext,
         CancellationToken cancellationToken = default)
     {
-        var actionModusMentis = originalAction.ActionModusMentis;
-        if (actionModusMentis == null)
-        {
-            Console.Error.WriteLine("ThinkingExecutor: Item reasoning skipped — action has no resolved modusMentis.");
-            return null;
-        }
+        var mm = originalAction.ActionModusMentis;
+        if (mm == null) return null;
 
-        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(actionModusMentis);
-        _llmManager.ResetInstance(actionSlot);
-
-        string prompt = _promptConstructor.BuildItemReasoningPrompt(
-            originalAction.ActionText, item, actionModusMentis, node, protagonist, worldContext);
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhySchema());
-
-        string? jsonResponse = await RequestFromLLMAsync(actionSlot, prompt, gbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(jsonResponse))
-        {
-            Console.Error.WriteLine("ThinkingExecutor: Item reasoning LLM call returned empty response.");
-            return null;
-        }
-
-        return await TextSanitizationPipeline.SanitizeAsync(ParseSingleTextField(jsonResponse, "what_do_i_think"));
+        int slot = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
+        _llmManager.ResetInstance(slot);
+        string neutral = $"I could use {item.WithArticle()} to help me {ActionDisplay(originalAction)}.";
+        return await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Reasoning, mm.PersonaReminder2, ct: cancellationToken);
     }
 
     /// <summary>
-    /// Asks the action modusMentis to reformulate an existing action text to incorporate a combined item.
-    /// Uses the WHAT-style prompt. Returns the reformulated display text, or null on LLM failure.
+    /// Reformulates an action to incorporate a combined item, in the action Modus Mentis's voice.
+    /// Returns the styled display text (no "try to " prefix).
     /// </summary>
     public async Task<string?> ExecuteItemReformulationAsync(
         ParsedNarrativeAction originalAction,
@@ -439,37 +223,23 @@ public class ThinkingExecutor
         WorldContext worldContext,
         CancellationToken cancellationToken = default)
     {
-        var actionModusMentis = originalAction.ActionModusMentis;
-        if (actionModusMentis == null)
-        {
-            Console.Error.WriteLine("ThinkingExecutor: Item reformulation skipped — action has no resolved modusMentis.");
-            return null;
-        }
+        var mm = originalAction.ActionModusMentis;
+        if (mm == null) return null;
 
-        int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(actionModusMentis);
-        _llmManager.ResetInstance(actionSlot);
-
-        string prompt = _promptConstructor.BuildItemReformulationPrompt(
-            originalAction.ActionText, item, actionModusMentis, node, protagonist, worldContext);
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateWhatSchema());
-
-        string? jsonResponse = await RequestFromLLMAsync(actionSlot, prompt, gbnf, cancellationToken);
-        if (string.IsNullOrWhiteSpace(jsonResponse))
-        {
-            Console.Error.WriteLine("ThinkingExecutor: Item reformulation LLM call returned empty response.");
-            return null;
-        }
-
-        string reformulated = await TextSanitizationPipeline.SanitizeAsync(ParseSingleTextField(jsonResponse, "what_should_i_do"));
-        if (string.IsNullOrWhiteSpace(reformulated))
-            return null;
-
-        // Strip "try to " prefix like the WHAT pipeline does
-        return reformulated.StartsWith("try to ", StringComparison.OrdinalIgnoreCase)
-            ? reformulated.Substring(7)
-            : reformulated;
+        int slot = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
+        _llmManager.ResetInstance(slot);
+        string neutral = $"{ActionDisplay(originalAction)} using {item.WithArticle()}";
+        string styled = await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Action, mm.PersonaReminder2, ct: cancellationToken);
+        if (string.IsNullOrWhiteSpace(styled)) return null;
+        return styled.StartsWith("try to ", StringComparison.OrdinalIgnoreCase) ? styled.Substring(7) : styled;
     }
 
+    private static string ActionDisplay(ParsedNarrativeAction action)
+    {
+        if (!string.IsNullOrWhiteSpace(action.DisplayText)) return action.DisplayText;
+        var text = action.ActionText ?? "";
+        return text.StartsWith("try to ", StringComparison.OrdinalIgnoreCase) ? text.Substring(7) : text;
+    }
 }
 
 /// <summary>

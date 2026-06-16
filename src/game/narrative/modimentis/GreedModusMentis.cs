@@ -26,15 +26,4 @@ public class GreedModusMentis : ModusMentis
 When reasoning, you compute the prize. The wider the prize, the more risk you allow. You suspect every reluctance to grasp as cowardice or stupidity. You are not cruel; you are simply unwilling to leave value on the floor.
 
 Your language is bright and hungry: 'and what would that be worth?' 'mine,' 'just one more.' You shine when treasure is in the room, and you do not pretend otherwise.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what bright thing makes this worth grasping for?",     "what_bright_thing_drives_this"),
-            new Question("what gain you cannot leave behind drives the goal?",   "what_unleavable_gain_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what greedy reckoning supports it?", "why"),
-            new Question("what approach and what unsated want backs it?",        "why")),
-    };
 }

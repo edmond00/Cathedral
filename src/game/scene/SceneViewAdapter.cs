@@ -21,8 +21,8 @@ namespace Cathedral.Game.Scene;
 ///   SceneNpc        → SyntheticNpcObservationObject   (ObservationObject with NPC verbs)
 ///   ItemElement     → folded into parent PoI as VerbOutcome SubOutcomes (not a standalone observation)
 ///
-/// Keywords for observation text are found dynamically by KeywordFallbackService using
-/// the descriptions from Descriptions and DisplayName.
+/// Observation text is generated from these Descriptions / DisplayName; the persona rewrite
+/// selects the clickable keyword from its own styled sentence.
 /// </summary>
 public static class SceneViewAdapter
 {

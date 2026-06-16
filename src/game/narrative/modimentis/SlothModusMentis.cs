@@ -25,15 +25,4 @@ public class SlothModusMentis : ModusMentis
 When reasoning, you weigh the cost of acting against the chance the trouble dissolves on its own. You favour delay, the comfortable chair, the slow approach. You suspect that half the world's exertions are unnecessary and the other half can be done by someone else. You prefer warm rooms, soft beds and short tasks.
 
 Your language is unhurried, indulgent and amused: 'tomorrow,' 'who insists?' 'no rush.' You are not slow of mind; you simply refuse to be hurried.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what excuse to do less makes this still worth doing?",  "what_excuse_drives_this"),
-            new Question("what comfort at the end of this drives the goal?",       "what_comfort_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what shortcut supports it?",            "why"),
-            new Question("what approach and what easeful trick backs it?",          "why")),
-    };
 }

@@ -154,7 +154,6 @@ public class NarrativeController
         NarrationGraphFactory? graphFactory = null,
         int locationId = 0,
         WorldContext? worldContext = null,
-        KeywordFallbackService? keywordFallbackService = null,
         Protagonist? existingProtagonist = null,
         AmbianceEngine? ambianceEngine = null)
     {
@@ -223,7 +222,7 @@ public class NarrativeController
         LlmMonitorDebugManager.Show();
         
         // Initialize controllers
-        _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext, keywordFallbackService);
+        _observationController = new ObservationPhaseController(llamaServer, slotManager, _worldContext);
         _thinkingExecutor = thinkingExecutor;
         _actionExecutor = actionExecutor;
         
@@ -248,13 +247,12 @@ public class NarrativeController
         Cathedral.Game.Scene.Scene scene,
         int locationId,
         WorldContext? worldContext = null,
-        KeywordFallbackService? keywordFallbackService = null,
         Protagonist? existingProtagonist = null,
         AmbianceEngine? ambianceEngine = null)
         : this(terminal, popup, core, llamaServer, slotManager, terminalInputHandler,
                thinkingExecutor, actionExecutor,
                CreateGraphFactoryForScene(scene, locationId, existingProtagonist),
-               locationId, worldContext, keywordFallbackService, existingProtagonist,
+               locationId, worldContext, existingProtagonist,
                ambianceEngine)
     {
         _scene = scene;
@@ -265,30 +263,6 @@ public class NarrativeController
         {
             _pov = new PoV(firstArea, TimePeriod.Morning);
             Console.WriteLine($"NarrativeController [Scene]: PoV at {firstArea.DisplayName}");
-        }
-
-        // When the scene is a special narration phase, swap the observation prompt
-        // constructor for the matching phase-specific variant. The base constructor
-        // already created a standard one; we replace it here after the chain returns.
-        if (scene.Phase == NarrationPhase.ChildhoodReminescence)
-        {
-            _observationController = new ObservationPhaseController(
-                llamaServer,
-                slotManager,
-                worldContext ?? new PlainBiomeContext(),
-                keywordFallbackService,
-                new Cathedral.Game.Narrative.Reminescence.ReminescenceObservationPromptConstructor());
-            Console.WriteLine("NarrativeController: swapped to ReminescenceObservationPromptConstructor");
-        }
-        else if (scene.Phase == NarrationPhase.GetUp)
-        {
-            _observationController = new ObservationPhaseController(
-                llamaServer,
-                slotManager,
-                worldContext ?? new PlainBiomeContext(),
-                keywordFallbackService,
-                new Cathedral.Game.Narrative.GetUp.GetUpObservationPromptConstructor());
-            Console.WriteLine("NarrativeController: swapped to GetUpObservationPromptConstructor");
         }
 
         // Show scene debug viewer alongside graph viewer

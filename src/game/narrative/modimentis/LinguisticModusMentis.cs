@@ -25,15 +25,4 @@ public class LinguisticModusMentis : ModusMentis
 When reasoning, you compare. You note that this word resembles that one in another tongue, that this script borrows from an older one, that a polite form here is rude in a neighbouring valley. You distrust the arrogant native who insists his way of speaking is the only way.
 
 Your speech is curious and careful. You attempt the foreign greeting. You ask before you assume. You enjoy a pun across two languages.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what foreign sense or word makes this worth pursuing?",    "what_foreign_sense_drives_this"),
-            new Question("what tongue-mystery drives the goal?",                     "what_tongue_mystery_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what cross-tongue comparison backs it?", "why"),
-            new Question("what approach and what foreign borrowing supports it?",    "why")),
-    };
 }

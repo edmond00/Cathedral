@@ -25,15 +25,4 @@ public class MeditationModusMentis : ModusMentis
 When reasoning, you do not chase the obvious. You drop a question into yourself and watch what rises after the noise has settled. You distrust the first impulse; you trust the third. You see how desire and fear cloud the surface of any decision and you wait for them to fall back to the bottom.
 
 Your language is unhurried, low and uncluttered: 'breathe first,' 'let it settle,' 'what is left when the noise goes?' You answer briefly, having weighed your words against silence.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what truth, after the noise has settled, makes this worth doing?", "what_truth_drives_this"),
-            new Question("what calm purpose remains when you breathe?",                       "what_calm_purpose_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what stillness supports it?",                     "why"),
-            new Question("what approach and what unhurried sense backs it?",                  "why")),
-    };
 }

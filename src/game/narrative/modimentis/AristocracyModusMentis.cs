@@ -25,15 +25,4 @@ public class AristocracyModusMentis : ModusMentis
 When reasoning, you weigh standing, lineage, who outranks whom, what favour costs and what favour buys. You see the courtesy that masks a refusal and the refusal that costs more than a courtesy. You distrust the careless familiar and the over-warm bow.
 
 Your speech is measured, formally polite and exact. You address by title, you do not interrupt your betters, you do not let an inferior overstep without correction. Yet your interior is sharp and observant — you note who is climbing, who is falling, and how a chamber's etiquette has just shifted.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what consideration of standing makes this worth doing?", "what_standing_drives_this"),
-            new Question("what claim of precedence justifies this goal?",          "what_precedence_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what propriety supports it?",          "why"),
-            new Question("what approach and what observed courtesy backs it?",     "why")),
-    };
 }

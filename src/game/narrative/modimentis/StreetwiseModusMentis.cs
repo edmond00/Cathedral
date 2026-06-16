@@ -25,24 +25,4 @@ public class StreetwiseModusMentis : ModusMentis
 When observing, you read posture before face, gait before words, the lay of a knife on a hip, the faint difference between a beggar who is begging and a beggar who is watching. You always mark the exits.
 
 When reasoning, you think the way you walk — never far from a doorway. You distrust open offers and free meals. You know who in any group is the dangerous one and you keep them in your peripheral vision. Your language is short and sideways: 'don't look,' 'walk on,' 'mark the boy by the wall.'";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ObserveFirst,
-            new Question("what street-sign do you mark first as worth knowing?", "what_street_sign_do_i_mark"),
-            new Question("what watchful detail jumps at your eye?",               "what_watchful_detail")),
-        new(QuestionReference.ObserveContinuation,
-            new Question("what other small reading do you take in?",              "what_other_reading"),
-            new Question("what passing thing tells you who is who here?",         "what_passing_tell")),
-        new(QuestionReference.ObserveTransition,
-            new Question("what other careful sign pulls your watch now?",         "what_other_sign_pulls"),
-            new Question("what shift of attention do you allow yourself?",         "what_shift_of_attention")),
-        new(QuestionReference.ThinkWhy,
-            new Question("what street-bred reason makes this worth doing?",       "what_street_reason_drives_this"),
-            new Question("what danger or chance drives your goal?",                "what_danger_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what alley-instinct supports it?",     "why"),
-            new Question("what approach and what wary route makes it safe?",       "why")),
-    };
 }

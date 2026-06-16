@@ -14,9 +14,9 @@ namespace Cathedral.Game.Narrative;
 /// REFLECT + GOAL before WHY/HOW/WHAT. The GOAL choices include all SubOutcomes plus the
 /// "ignore and move on" sentinel.
 ///
-/// Keywords are found dynamically in LLM-generated text by <see cref="KeywordFallbackService"/>.
-/// The description returned by <see cref="GenerateNeutralDescription"/> is used by the LLM
-/// as context when selecting the best keyword; make it rich and noun-phrase.
+/// The observation persona rewrite selects the clickable keyword from its styled text; the
+/// description returned by <see cref="GenerateNeutralDescription"/> is the neutral meaning the
+/// rewrite re-expresses, so make it rich and noun-phrase.
 /// </summary>
 public abstract class ObservationObject : ConcreteOutcome, IObservation
 {

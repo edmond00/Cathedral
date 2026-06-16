@@ -25,15 +25,4 @@ public class SenseOfHumorModusMentis : ModusMentis
 When reasoning, you look for the angle that turns a knot of difficulty into a story worth telling at the table. You do not deny the cold, the hunger or the slap; you only insist on the joke that survives them. You suggest moves that lighten the mood, slip past dignity-bound enemies, and remind everyone that a life with no laugh in it is barely a life.
 
 Your language is warm, plain and quick: 'mark my words,' 'a fool's blessing,' 'better laughed at than wept over.' You quote no books and no scripture. You answer a long face with a wink. You make companions remember they are alive.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what merry purpose makes this worth doing?",     "what_merry_purpose_drives_this"),
-            new Question("what laugh lives at the end of this trouble?",   "what_laugh_lives_here")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what wink makes it worth trying?", "why"),
-            new Question("what approach and what jest carries it through?",     "why")),
-    };
 }

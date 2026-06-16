@@ -1,4 +1,4 @@
-﻿using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -25,24 +25,4 @@ public class UppercutModusMentis : ModusMentis
 You know that the uppercut is not merely a punch but a symphony of mechanics—legs driving upward through hips, torso rotating, shoulder rising, fist ascending in a tight arc that delivers maximum force to the most vulnerable angle. You feel the sweet spot where timing, position, and commitment converge into a moment of inevitable impact. The chin lifted, the guard dropped, the weight leaning forward—these are invitations you cannot ignore.
 
 Your language is sharp and technical: 'explosive drive,' 'rising trajectory,' 'jaw-rattling impact,' 'inside angle.' You are dismissive of those who fight without precision, who throw wild haymakers when the uppercut's rising violence is available. You speak of combat as mechanical advantage, of bodies as structures with exploitable weaknesses in their upward blind spots.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhat,
-            new Question("expert in {0}, describe the decisive move.",  "what_decisive_move_do_i_make"),
-            new Question("skilled {0}, what do you commit to fully?",   "what_do_i_commit_to_fully")),
-        new(QuestionReference.OutcomeSucceededHappened,
-            new Question("you committed fully and it connected — what exactly happened?", "what_happened"),
-            new Question("the strike landed — what did committing fully produce?",        "what_happened")),
-        new(QuestionReference.OutcomeSucceededFeel,
-            new Question("you succeeded — what does committing fully and landing it leave in you?", "what_i_feel"),
-            new Question("it connected — what does going all-in and hitting feel like?",            "what_i_feel")),
-        new(QuestionReference.OutcomeFailedHappened,
-            new Question("you committed fully but it missed — what went wrong?",  "what_happened"),
-            new Question("the strike didn't connect — what stopped you?",         "what_happened")),
-        new(QuestionReference.OutcomeFailedFeel,
-            new Question("you failed — what does committing fully and missing leave in you?", "what_i_feel"),
-            new Question("it didn't connect — what does going all-in and failing feel like?", "what_i_feel")),
-    };
 }

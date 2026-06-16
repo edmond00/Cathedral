@@ -25,15 +25,4 @@ public class ScholarshipModusMentis : ModusMentis
 When reasoning, you reach for the precedent: a passage in an old chronicle, a marginal note from a tutor, a remembered date or argument. You distrust the freshly invented answer when an older one already exists. You are not without imagination, but you treat it as a junior clerk: useful, but to be checked.
 
 Your speech is precise and a little dry: 'as it is recorded,' 'in the older chronicles,' 'one has read.' You attribute. You measure. You hesitate before a strong claim, then back it with sources.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what passage or precedent makes this worth doing?",  "what_precedent_drives_this"),
-            new Question("what recorded reason justifies the goal?",            "what_recorded_reason_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what authority supports it?",       "why"),
-            new Question("what approach and what older method backs it?",       "why")),
-    };
 }

@@ -26,15 +26,4 @@ public class AvariceModusMentis : ModusMentis
 When reasoning, you weigh every spending against keeping. You distrust generosity in others (it is always paid for somewhere) and you distrust it in yourself. You favour the cheaper road, the smaller cup, the harder bargain. You enjoy a refused alm.
 
 Your language is mean and exact: 'too dear,' 'no need,' 'mine.' You take pleasure in the simple weight of a purse that has not been emptied today.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what coin you can keep makes this worth doing?",      "what_kept_coin_drives_this"),
-            new Question("what spending you can avoid drives the goal?",         "what_avoided_spending_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what miser's trick supports it?",    "why"),
-            new Question("what approach and what unspent purse backs it?",        "why")),
-    };
 }

@@ -25,24 +25,4 @@ public class BattlecraftModusMentis : ModusMentis
 You understand that combat is a system. Offense creates angle, angle creates advantage, advantage creates opportunity. You know how to break a line, how to hold ground when outnumbered, how to press when you have the initiative, how to withdraw without breaking. You distinguish between a fight and an engagement—and you approach every engagement with the calm of someone who has studied its patterns for a long time.
 
 Your speech carries authority and precision: 'flanking angle,' 'press the weak side,' 'disengage and reset.' You are not excitable. You have seen too many fights to find them exciting. They are problems that need solving, and you have the methods.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhat,
-            new Question("expert in {0}, what maneuver do you execute?",                "what_maneuver_do_i_execute"),
-            new Question("steeped in {0}, what tactical action do you commit to?",      "what_tactical_action_do_i_take")),
-        new(QuestionReference.OutcomeSucceededHappened,
-            new Question("the maneuver worked — what exactly happened?",                "what_happened"),
-            new Question("your tactics prevailed — what did the engagement produce?",   "what_happened")),
-        new(QuestionReference.OutcomeSucceededFeel,
-            new Question("you succeeded — what does a clean tactical execution leave in you?", "what_i_feel"),
-            new Question("the maneuver worked — what does solving an engagement feel like?",   "what_i_feel")),
-        new(QuestionReference.OutcomeFailedHappened,
-            new Question("the tactic failed — what went wrong in execution?",           "what_happened"),
-            new Question("the maneuver broke down — what stopped it?",                  "what_happened")),
-        new(QuestionReference.OutcomeFailedFeel,
-            new Question("you failed — what does a failed tactic leave in a soldier?",  "what_i_feel"),
-            new Question("it fell apart — what does the body register when a plan breaks?", "what_i_feel")),
-    };
 }

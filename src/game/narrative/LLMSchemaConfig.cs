@@ -1,175 +1,79 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Cathedral.LLM.JsonConstraints;
 
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Centralized configuration for all LLM JSON constraint schemas.
-/// Makes it easier to review and edit schema definitions for different LLM response types.
+/// Centralized configuration for the LLM JSON constraint schemas used by the narration pipeline.
 /// </summary>
 public static class LLMSchemaConfig
 {
-    #region Observation Schemas
-    
-    /// <summary>
-    /// Basic observation schema with natural narration.
-    /// Used for initial observation attempts without keyword constraints.
-    /// </summary>
-    public static CompositeField CreateObservationSchema(string fieldName = "what_do_i_feel_and_observe")
-    {
-        return new CompositeField("ObservationResponse",
-            new TemplateStringField(fieldName,
-                Template: "I <generated>",
-                MinGenLength: 20,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 120)
-        );
-    }
+    #region Persona Rewrite Schemas
 
     /// <summary>
-    /// Continuation observation schema — no forced 'I ' prefix.
-    /// Used for focus sentences after the first sentence in a batch.
+    /// Generic persona-rewrite schema: a single styled-text field. Used for every neutral→persona
+    /// rewrite (reasoning, action, outcome, speaking, dialogue) that does not surface a keyword.
     /// </summary>
-    public static CompositeField CreateContinuationObservationSchema(string fieldName = "what_do_i_feel_and_observe")
+    public static CompositeField CreateRewriteSchema(string fieldName = "text")
     {
-        return new CompositeField("ObservationResponse",
+        return new CompositeField("Rewrite",
             new TemplateStringField(fieldName,
                 Template: "<generated>",
-                MinGenLength: 20,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 120)
-        );
-    }
-
-    /// <summary>
-    /// Transition observation schema — used when shifting attention from one outcome to another.
-    /// Field name mirrors the question: "what catches your attention?"
-    /// </summary>
-    public static CompositeField CreateTransitionObservationSchema(string fieldName = "what_catches_my_attention")
-    {
-        return new CompositeField("TransitionObservationResponse",
-            new TemplateStringField(fieldName,
-                Template: "<generated>",
-                MinGenLength: 20,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 120)
-        );
-    }
-    
-    #endregion
-    
-    #region Thinking Schemas
-
-    /// <summary>
-    /// Call 0 (GOAL): thinking modusMentis picks which sub-outcome of an ObservationObject to pursue.
-    /// Fires only when the observation has more than one sub-outcome.
-    /// </summary>
-    /// <param name="validGoals">List of natural-language goal strings from SubOutcomes.ToNaturalLanguageString()</param>
-    public static CompositeField CreateGoalSchema(List<string> validGoals)
-    {
-        return new CompositeField("GoalResponse",
-            new ChoiceField<string>("goal", validGoals.ToArray())
-        );
-    }
-
-    /// <summary>
-    /// Call 1 (WHY): thinking modusMentis explains why observing the keyword makes it want the outcome.
-    /// </summary>
-    public static CompositeField CreateWhySchema(string fieldName = "what_do_i_think")
-    {
-        return new CompositeField("WhyResponse",
-            new TemplateStringField(fieldName,
-                Template: "I <generated>",
-                MinGenLength: 20,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 120)
-        );
-    }
-
-    /// <summary>
-    /// Call 2 (HOW): thinking modusMentis picks which action skill to use and briefly explains.
-    /// </summary>
-    /// <param name="validMeans">List of "with X" approach strings the LLM can choose from</param>
-    public static CompositeField CreateHowSchema(List<string> validMeans, string whyFieldName = "why")
-    {
-        return new CompositeField("HowResponse",
-            new ChoiceField<string>("how", validMeans.ToArray()),
-            new TemplateStringField(whyFieldName,
-                Template: "I <generated>",
-                MinGenLength: 20,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 100)
-        );
-    }
-
-    /// <summary>
-    /// Call 3 (WHAT): action modusMentis describes concretely what it will attempt.
-    /// </summary>
-    public static CompositeField CreateWhatSchema(string fieldName = "what_should_i_do")
-    {
-        return new CompositeField("WhatResponse",
-            new TemplateStringField(fieldName,
-                Template: "try to <generated>.",
-                MinGenLength: 10,
-                MaxGenLength: 300,
-                Hint: "In a few words, what exactly will you try to do?")
-        );
-    }
-
-    #endregion
-    
-    #region Speaking Schemas
-
-    /// <summary>
-    /// Schema for speaking modusMentis output.
-    /// The template enforces that the generated text is wrapped in double-quotes,
-    /// producing dialogue-style output addressed to the selected companion.
-    /// </summary>
-    public static CompositeField CreateSpeakingSchema()
-    {
-        return new CompositeField("SpeakingResponse",
-            new TemplateStringField("what_do_i_say",
-                Template: "<generated>",
-                MinGenLength: 10,
+                MinGenLength: 15,
                 MaxGenLength: 400,
-                FirstSentenceMaxLength: 400)
+                FirstSentenceMaxLength: 200)
+        );
+    }
+
+    /// <summary>
+    /// Observation rewrite schema: the styled sentence plus the single most evocative noun the
+    /// persona used, which becomes the clickable keyword mapped back to the source outcome.
+    /// </summary>
+    public static CompositeField CreateObservationRewriteSchema()
+    {
+        return new CompositeField("ObservationRewrite",
+            new TemplateStringField("text",
+                Template: "<generated>",
+                MinGenLength: 15,
+                MaxGenLength: 300,
+                FirstSentenceMaxLength: 200),
+            new StringField("keyword", MinLength: 2, MaxLength: 40,
+                Hint: "the single most evocative noun appearing in your sentence above")
         );
     }
 
     #endregion
 
-    #region Outcome Narration Schemas
+    #region Decision Schemas
 
     /// <summary>
-    /// Schema for outcome narration text.
-    /// Simple narration describing the result of an action.
+    /// Constrained single-choice schema (the surviving thinking decisions: goal and skill).
     /// </summary>
-    public static CompositeField CreateOutcomeNarrationSchema(string fieldName = "what_happened")
+    public static CompositeField CreateChoiceSchema(string fieldName, List<string> options)
     {
-        return new CompositeField("OutcomeNarration",
+        return new CompositeField("Choice",
+            new ChoiceField<string>(fieldName, options.ToArray())
+        );
+    }
+
+    #endregion
+
+    #region Sanitizer Schema
+
+    /// <summary>
+    /// Single free-text field used by <see cref="Sanitizer.TextSanitizationPipeline"/> when it
+    /// rewrites text to scrub forbidden/anachronistic words.
+    /// </summary>
+    public static CompositeField CreateContinuationObservationSchema(string fieldName = "rewritten_text")
+    {
+        return new CompositeField("ObservationResponse",
             new TemplateStringField(fieldName,
-                Template: "I <generated>",
-                MinGenLength: 30,
+                Template: "<generated>",
+                MinGenLength: 20,
                 MaxGenLength: 300,
                 FirstSentenceMaxLength: 120)
         );
     }
 
-    /// <summary>
-    /// Schema for the feeling follow-up after outcome narration.
-    /// One short sentence of sensory/emotional flavor from the modusMentis's perspective.
-    /// </summary>
-    public static CompositeField CreateFeelingSchema(string fieldName = "what_i_feel")
-    {
-        return new CompositeField("FeelingResponse",
-            new TemplateStringField(fieldName,
-                Template: "I <generated>",
-                MinGenLength: 10,
-                MaxGenLength: 150,
-                FirstSentenceMaxLength: 150)
-        );
-    }
-
     #endregion
-    
 }

@@ -60,16 +60,6 @@ public abstract class ModusMentis
     /// Example: "someone who never misses a detail", "a mind that measures everything it touches".
     /// </summary>
     public virtual string? PersonaReminder2 => null;
-
-    /// <summary>
-    /// Override to provide per-QuestionReference cycling question variants for the Narrative CoT pipeline.
-    /// Observation MMs should override ObserveFirst, ObserveContinuation, ObserveTransition.
-    /// Thinking MMs should override ThinkWhy and ThinkHowReason.
-    /// Action MMs should override ThinkWhat, OutcomeSucceededHappened, OutcomeSucceededFeel, OutcomeFailedHappened, and OutcomeFailedFeel.
-    /// Returns null to use default (legacy hardcoded) fillers for all slots.
-    /// Instances must be lazily cached in a private field so cursor state persists across the session.
-    /// </summary>
-    public virtual IEnumerable<QuestionFiller>? QuestionFillers => null;
 }
 
 /// <summary>

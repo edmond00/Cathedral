@@ -25,15 +25,4 @@ public class FablesAndTalesModusMentis : ModusMentis
 When reasoning, you reach for the right fable. The greedy hare. The kind miller. The boy who cried wolf. The trick that the youngest sister played on the giant. You see the moral first, the present situation second, and you bring them together.
 
 Your speech is warm and slow: 'as it is told,' 'you'll know the one about,' 'the old folk used to say.' You use stories the way a smith uses a hammer.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what old fable lights this up and makes it worth doing?", "what_fable_drives_this"),
-            new Question("what story-moral justifies the goal?",                    "what_moral_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what story-shape supports it?",          "why"),
-            new Question("what approach and what well-told tale backs it?",           "why")),
-    };
 }

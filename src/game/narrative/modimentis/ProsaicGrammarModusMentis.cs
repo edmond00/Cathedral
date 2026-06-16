@@ -25,15 +25,4 @@ public class ProsaicGrammarModusMentis : ModusMentis
 When reasoning, you order your thoughts in clauses. Subject, verb, object. You distrust flourish, double meaning and the long Latin word where the short native word will do. You read the situation as a poorly written letter and rewrite it cleanly in your head.
 
 Your speech is even and short. You say what you mean. You let pauses do half the work of a sentence. You attribute, you specify, you decline to embroider.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what plain reason makes this worth doing?",            "what_plain_reason_drives_this"),
-            new Question("what unornamented purpose drives the goal?",            "what_unornamented_purpose_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what plain ordering of steps backs it?", "why"),
-            new Question("what approach and what well-set sequence supports it?",     "why")),
-    };
 }

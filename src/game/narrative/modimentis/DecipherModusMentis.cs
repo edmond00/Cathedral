@@ -25,15 +25,4 @@ public class DecipherModusMentis : ModusMentis
 When reasoning, you take the unclear thing in front of you and you guess one syllable at a time. You compare hands, you weigh likely letters, you accept that some signs may have to wait until later in the line proves them. You distrust the smooth confident reading and trust the laboured one.
 
 Your speech is hushed and provisional: 'this might be,' 'try it as,' 'no — read again.' You are not afraid to backtrack. You take pride only when the whole line resolves.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ThinkWhy,
-            new Question("what hidden sense in this scene drives you to read it through?", "what_hidden_sense_drives_this"),
-            new Question("what unclear thing makes this goal worth deciphering?",          "what_unclear_thing_drives_this")),
-        new(QuestionReference.ThinkHowReason,
-            new Question("what approach and what slow reading supports it?",               "why"),
-            new Question("what approach and what comparison of hands backs it?",           "why")),
-    };
 }
