@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -30,6 +31,11 @@ public class PersonaRewriter
 
     private const int RewriteMaxTokens = 280;
 
+    // JSON field-layout hints shown in the "Respond in JSON format (...)" instruction so the model
+    // writes each value in the right field.
+    private const string TextHint        = "{\"text\": \"...\"}";
+    private const string ObservationHint = "{\"text\": \"...\", \"keyword\": \"...\"}";
+
     /// <summary>
     /// Rewrites <paramref name="neutralText"/> in the persona of <paramref name="slotId"/>.
     /// <paramref name="keepHistory"/> preserves the slot's conversation for stylistic continuity
@@ -46,7 +52,7 @@ public class PersonaRewriter
     {
         if (PlaygroundMode.IsActive) return neutralText;
 
-        string prompt = BuildPrompt(neutralText, InstructionFor(kind, addressee), FooterFor(kind, personaReminder2));
+        string prompt = BuildPrompt(neutralText, InstructionFor(kind, addressee), FooterFor(kind, personaReminder2, TextHint));
         string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateRewriteSchema());
         string json = await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
 
@@ -71,8 +77,9 @@ public class PersonaRewriter
             return (neutralText, NeutralNarration.KeywordFromPhrase(neutralText));
 
         string instruction = InstructionFor(NarrationKind.Observation, null) +
-            " Then choose the single most evocative noun from your sentence as the keyword.";
-        string prompt = BuildPrompt(neutralText, instruction, FooterFor(NarrationKind.Observation, personaReminder2));
+            " The \"text\" field must contain ONLY the observation itself — never mention, name, quote, or refer to a keyword inside it." +
+            " Separately, in the \"keyword\" field, put the single most evocative noun that already appears in your text.";
+        string prompt = BuildPrompt(neutralText, instruction, FooterFor(NarrationKind.Observation, personaReminder2, ObservationHint));
         string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateObservationRewriteSchema());
         string json = await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
 
@@ -85,6 +92,25 @@ public class PersonaRewriter
         if (string.IsNullOrWhiteSpace(keyword) || !ContainsWord(text, keyword))
             keyword = NeutralNarration.KeywordFromPhrase(text);
         return (text, keyword);
+    }
+
+    /// <summary>
+    /// Asks the persona slot to pick one of <paramref name="options"/> (constrained choice).
+    /// Returns the chosen option string, or empty on failure. Caller handles the playground case
+    /// (this returns empty there, since the LLM is not consulted).
+    /// </summary>
+    public async Task<string> ChooseAsync(
+        int slotId,
+        string prompt,
+        List<string> options,
+        string fieldName = "choice",
+        bool keepHistory = false,
+        CancellationToken ct = default)
+    {
+        if (PlaygroundMode.IsActive || options.Count == 0) return string.Empty;
+        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateChoiceSchema(fieldName, options));
+        string json = await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, maxTokens: 64, skipReset: keepHistory);
+        return ParseField(json, fieldName);
     }
 
     // ── Prompt construction ────────────────────────────────────────────────────
@@ -111,10 +137,10 @@ Neutral meaning: ""{neutralText}""
         _ => "Re-express this in your own voice, keeping the same meaning.",
     };
 
-    private static string FooterFor(NarrationKind kind, string? personaReminder2) =>
+    private static string FooterFor(NarrationKind kind, string? personaReminder2, string? jsonHint) =>
         kind == NarrationKind.Speaking
-            ? Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2)
-            : Config.Narrative.AnswerInstructionFor(personaReminder2);
+            ? Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2, jsonHint)
+            : Config.Narrative.AnswerInstructionFor(personaReminder2, jsonHint);
 
     // ── Parsing helpers ────────────────────────────────────────────────────────
 

@@ -29,7 +29,7 @@ public class ThinkingPromptConstructor
 {optionsList}
 
 {reminderClause}what do you want to do?
-{Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
+{Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2, "{\"goal\": \"...\"}")}";
     }
 
     /// <summary>
@@ -50,6 +50,6 @@ You could proceed:
 {string.Join("\n", actionModiMentis.Select(s => $"- with {s.SkillMeans}"))}
 
 {reminderClause}which approach do you take?
-{Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2)}";
+{Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2, "{\"how\": \"...\"}")}";
     }
 }

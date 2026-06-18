@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Cathedral;
 using Cathedral.LLM;
 
 namespace Cathedral.Game.Narrative;
@@ -13,18 +14,18 @@ namespace Cathedral.Game.Narrative;
 ///
 /// Each sentence is built as neutral meaning text by <see cref="NeutralNarration"/> and then
 /// re-expressed in the active Modus Mentis's voice by <see cref="PersonaRewriter"/> (or shown
-/// verbatim in playground mode). The persona-styled focus sentences also return the single noun
-/// the persona chose, which becomes the clickable keyword mapped back to its outcome.
+/// verbatim in playground mode). Observation sentences also return the single noun the persona
+/// chose, which becomes the clickable keyword mapped back to its observation object.
 ///
-/// Overall observation structure (7 sentences max):
-///   [0]   General description of the node (no keyword)
-///   [1-2] Transition + focus for outcome 1   (focus yields a keyword)
-///   [3-4] Transition + focus for outcome 2
-///   [5-6] Transition + focus for outcome 3
+/// Which observation objects are described is an LLM decision: the Modus Mentis picks the object
+/// matching its persona interest (by NeutralName). There is no overall-area opener.
 ///
-/// Focus observation structure (3 sentences max):
-///   [0]   Focus description of the clicked outcome
-///   [1-2] Transition + focus for one other outcome from the node
+/// Overall / focus observation structure:
+///   [0]   Observation of the first object (no transition)
+///   [1]   Transition to a second object (only if a second object exists)
+///   [2]   Observation of the second object
+/// For the focus phase (clicking "observe" on a keyword) the first object is the clicked one;
+/// the second is LLM-chosen from the remaining objects.
 /// </summary>
 public class ObservationPhaseController
 {
@@ -44,8 +45,9 @@ public class ObservationPhaseController
     }
 
     /// <summary>
-    /// Executes the overall observation phase: 1 general sentence then (transition + focus) for up
-    /// to 3 sampled outcomes. Each focus sentence yields one clickable keyword linked to its outcome.
+    /// Executes the overall observation phase: the Modus Mentis chooses a first object to observe,
+    /// then (if another object exists) chooses a second and bridges to it with one transition.
+    /// Each observation sentence yields one clickable keyword linked to its object.
     /// </summary>
     public async Task<List<NarrationBlock>> ExecuteObservationPhaseAsync(
         NarrationNode currentNode,
@@ -68,9 +70,7 @@ public class ObservationPhaseController
         Console.WriteLine($"ObservationPhaseController: Selected {modusMentis.DisplayName}");
 
         var allOutcomes = currentNode.GetAllDirectConcreteOutcomes();
-        var sampledOutcomes = allOutcomes.OrderBy(_ => _random.Next()).Take(3).ToList();
-
-        if (sampledOutcomes.Count == 0)
+        if (allOutcomes.Count == 0)
         {
             Console.WriteLine("ObservationPhaseController: No concrete outcomes found at node.");
             return new List<NarrationBlock>();
@@ -83,45 +83,16 @@ public class ObservationPhaseController
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
-        // 1. General description sentence (no keyword).
-        try
+        // First object: chosen by the Modus Mentis, observed without a transition.
+        var first = await ChooseObservationObjectAsync(slotId, allOutcomes, modusMentis, ct);
+        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct);
+
+        // Second object (if any): chosen from the remaining objects, reached via one transition.
+        var remaining = allOutcomes.Where(o => o != first).ToList();
+        if (remaining.Count > 0)
         {
-            var neutral = NeutralNarration.Observation(isFirst: true, isTransition: false, currentNode.GenerateNeutralDescription(locationId));
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, ct: ct);
-            sentences.Add(new NarrationSentence(text, new List<string>()));
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"ObservationPhaseController: General sentence failed: {ex.Message}");
-        }
-
-        // 2-6. For each sampled outcome: transition (no keyword) + focus (keyword).
-        foreach (var outcome in sampledOutcomes)
-        {
-            try
-            {
-                var desc = GetNeutralDescription(outcome, locationId);
-
-                var transNeutral = NeutralNarration.Observation(isFirst: false, isTransition: true, desc);
-                var transText = await _rewriter.RewriteAsync(slotId, transNeutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, ct: ct);
-                sentences.Add(new NarrationSentence(transText, new List<string>()));
-
-                var focusNeutral = NeutralNarration.Observation(isFirst: false, isTransition: false, desc);
-                var (focusText, kw) = await _rewriter.RewriteObservationAsync(slotId, focusNeutral, modusMentis.PersonaReminder2, keepHistory: true, ct: ct);
-                var focusKws = kw != null ? new List<string> { kw } : new List<string>();
-                sentences.Add(new NarrationSentence(focusText, focusKws));
-
-                if (kw != null)
-                {
-                    allKeywords.Add(kw);
-                    keywordOutcomeMap.TryAdd(kw, outcome);
-                }
-                Console.WriteLine($"ObservationPhaseController: Sentences generated for '{outcome.DisplayName}' (keyword '{kw}')");
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"ObservationPhaseController: Outcome '{outcome.DisplayName}' sentences failed: {ex.Message}");
-            }
+            var second = await ChooseObservationObjectAsync(slotId, remaining, modusMentis, ct);
+            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ct);
         }
 
         if (sentences.Count == 0)
@@ -146,8 +117,9 @@ public class ObservationPhaseController
     }
 
     /// <summary>
-    /// Generates a focus observation for a specific outcome (right-click on a keyword):
-    /// a focus sentence on the clicked outcome, then transition + focus for one other outcome.
+    /// Generates a focus observation for a specific outcome (clicking "observe" on a keyword):
+    /// observe the clicked object, then the Modus Mentis chooses one other object and bridges to it
+    /// with a transition before observing it.
     /// </summary>
     public async Task<List<NarrationBlock>> GenerateFocusObservationAsync(
         ConcreteOutcome focusOutcome,
@@ -165,46 +137,17 @@ public class ObservationPhaseController
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
-        // 1. Focus on the clicked outcome (first sentence, yields a keyword).
-        try
-        {
-            var neutral = NeutralNarration.Observation(isFirst: true, isTransition: false, GetNeutralDescription(focusOutcome, locationId));
-            var (text, kw) = await _rewriter.RewriteObservationAsync(slotId, neutral, observationModusMentis.PersonaReminder2, keepHistory: true, ct: ct);
-            var kws = kw != null ? new List<string> { kw } : new List<string>();
-            sentences.Add(new NarrationSentence(text, kws));
-            if (kw != null) { allKeywords.Add(kw); keywordOutcomeMap.TryAdd(kw, focusOutcome); }
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"ObservationPhaseController: Focus first sentence failed: {ex.Message}");
-        }
+        // 1. Observe the clicked object (no transition).
+        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct);
 
-        // 2-3. Transition + focus for one other outcome at the node.
-        var otherOutcome = currentNode.GetAllDirectConcreteOutcomes()
+        // 2. A second object chosen by the Modus Mentis from the remaining objects, reached via a transition.
+        var remaining = currentNode.GetAllDirectConcreteOutcomes()
             .Where(o => o != focusOutcome)
-            .OrderBy(_ => _random.Next())
-            .FirstOrDefault();
-
-        if (otherOutcome != null)
+            .ToList();
+        if (remaining.Count > 0)
         {
-            try
-            {
-                var desc = GetNeutralDescription(otherOutcome, locationId);
-
-                var transNeutral = NeutralNarration.Observation(isFirst: false, isTransition: true, desc);
-                var transText = await _rewriter.RewriteAsync(slotId, transNeutral, NarrationKind.Observation, observationModusMentis.PersonaReminder2, keepHistory: true, ct: ct);
-                sentences.Add(new NarrationSentence(transText, new List<string>()));
-
-                var focusNeutral = NeutralNarration.Observation(isFirst: false, isTransition: false, desc);
-                var (focusText, kw) = await _rewriter.RewriteObservationAsync(slotId, focusNeutral, observationModusMentis.PersonaReminder2, keepHistory: true, ct: ct);
-                var focusKws = kw != null ? new List<string> { kw } : new List<string>();
-                sentences.Add(new NarrationSentence(focusText, focusKws));
-                if (kw != null) { allKeywords.Add(kw); keywordOutcomeMap.TryAdd(kw, otherOutcome); }
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"ObservationPhaseController: Focus second outcome '{otherOutcome.DisplayName}' sentences failed: {ex.Message}");
-            }
+            var second = await ChooseObservationObjectAsync(slotId, remaining, observationModusMentis, ct);
+            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, second, withTransition: true, locationId, ct);
         }
 
         if (sentences.Count == 0)
@@ -228,8 +171,95 @@ public class ObservationPhaseController
         return new List<NarrationBlock> { block };
     }
 
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
     /// <summary>
-    /// Returns a concise noun-phrase description of an outcome for neutral narration.
+    /// Appends one object's observation to <paramref name="sentences"/>: an optional bridging
+    /// transition (by NeutralName) followed by the observation sentence (by NeutralDescription),
+    /// which yields the clickable keyword mapped to <paramref name="outcome"/>.
+    /// </summary>
+    private async Task AppendObservationAsync(
+        List<NarrationSentence> sentences,
+        List<string> allKeywords,
+        Dictionary<string, ConcreteOutcome> keywordOutcomeMap,
+        int slotId,
+        ModusMentis modusMentis,
+        ConcreteOutcome outcome,
+        bool withTransition,
+        int locationId,
+        CancellationToken ct)
+    {
+        try
+        {
+            if (withTransition)
+            {
+                var transNeutral = NeutralNarration.Observation(isFirst: false, isTransition: true, GetNeutralPhrase(outcome, locationId));
+                var transText = await _rewriter.RewriteAsync(slotId, transNeutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, ct: ct);
+                sentences.Add(new NarrationSentence(transText, new List<string>()));
+            }
+
+            var obsNeutral = NeutralNarration.Observation(isFirst: !withTransition, isTransition: false, GetNeutralDescription(outcome, locationId));
+            var (obsText, kw) = await _rewriter.RewriteObservationAsync(slotId, obsNeutral, modusMentis.PersonaReminder2, keepHistory: true, ct: ct);
+            var kws = kw != null ? new List<string> { kw } : new List<string>();
+            sentences.Add(new NarrationSentence(obsText, kws));
+            if (kw != null)
+            {
+                allKeywords.Add(kw);
+                keywordOutcomeMap.TryAdd(kw, outcome);
+            }
+            Console.WriteLine($"ObservationPhaseController: Observed '{outcome.DisplayName}' (keyword '{kw}')");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ObservationPhaseController: Observation of '{outcome.DisplayName}' failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Asks the Modus Mentis to choose which object (by NeutralName) to observe — the one that best
+    /// matches its persona interest. Returns the single candidate when there is only one, and a
+    /// random candidate in playground mode (no LLM).
+    /// </summary>
+    private async Task<ConcreteOutcome> ChooseObservationObjectAsync(
+        int slotId,
+        List<ConcreteOutcome> candidates,
+        ModusMentis modusMentis,
+        CancellationToken ct)
+    {
+        if (candidates.Count == 1) return candidates[0];
+        if (PlaygroundMode.IsActive) return candidates[_random.Next(candidates.Count)];
+
+        var names = candidates.Select(GetNeutralName).ToList();
+        var prompt = BuildObservationChoicePrompt(names, modusMentis);
+        var chosen = await _rewriter.ChooseAsync(slotId, prompt, names, "observation", keepHistory: true, ct);
+
+        var idx = names.FindIndex(n => n.Equals(chosen, StringComparison.OrdinalIgnoreCase));
+        return idx >= 0 ? candidates[idx] : candidates[0];
+    }
+
+    private static string BuildObservationChoicePrompt(List<string> names, ModusMentis modusMentis)
+    {
+        string reminderClause = modusMentis.PersonaReminder != null ? $"As a {modusMentis.PersonaReminder}, " : "";
+        string list = string.Join("\n", names.Select(n => $"- {n}"));
+        return $@"Around you, you notice:
+{list}
+
+{reminderClause}which one draws your attention first?
+{Config.Narrative.AnswerInstructionFor(modusMentis.PersonaReminder2, "{\"observation\": \"...\"}")}";
+    }
+
+    /// <summary>Short name of an outcome, used for the observation-choice enum.</summary>
+    private static string GetNeutralName(ConcreteOutcome outcome)
+        => outcome is ObservationObject obs ? obs.NeutralName
+         : outcome.DisplayName;
+
+    /// <summary>Articled noun phrase of an outcome, used to fill the transition sentence template.</summary>
+    private static string GetNeutralPhrase(ConcreteOutcome outcome, int locationId)
+        => outcome is ObservationObject obs ? obs.NeutralPhrase
+         : GetNeutralDescription(outcome, locationId);
+
+    /// <summary>
+    /// Returns a rich noun-phrase description of an outcome for the observation sentence.
     /// </summary>
     private static string GetNeutralDescription(ConcreteOutcome outcome, int locationId)
         => outcome is NarrationNode nn   ? nn.GenerateNeutralDescription(locationId)

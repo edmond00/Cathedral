@@ -164,6 +164,8 @@ public class SyntheticObservationObject : ObservationObject
 
     public override string ObservationId => _poi.DisplayName.ToLowerInvariant().Replace(' ', '_');
 
+    public override string NeutralName => _poi.DisplayName;
+
     public override string GenerateNeutralDescription(int locationId = 0)
     {
         // Use a random description from the PoI's Descriptions list if available, then mood prefix
@@ -202,6 +204,8 @@ public class SyntheticSpotObject : ObservationObject
 
     public override string ObservationId => _spot.DisplayName.ToLowerInvariant().Replace(' ', '_');
 
+    public override string NeutralName => _spot.DisplayName;
+
     public override string GenerateNeutralDescription(int locationId = 0)
     {
         if (_spot.Descriptions.Count > 0)
@@ -233,6 +237,8 @@ public class SyntheticAreaObservationObject : ObservationObject
 
     public override string ObservationId => _area.DisplayName.ToLowerInvariant().Replace(' ', '_');
 
+    public override string NeutralName => _area.DisplayName;
+
     public override string GenerateNeutralDescription(int locationId = 0)
     {
         if (_area.Descriptions.Count > 0)
@@ -263,6 +269,10 @@ public class SyntheticNpcObservationObject : ObservationObject
     }
 
     public override string ObservationId => _npc.DisplayName.ToLowerInvariant().Replace(' ', '_');
+
+    public override string NeutralName => _npc.DisplayName;
+
+    public override string NeutralPhrase => _npc.DisplayName;   // proper name — no article
 
     public override string GenerateNeutralDescription(int locationId = 0)
     {

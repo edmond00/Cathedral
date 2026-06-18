@@ -363,6 +363,7 @@ public class LocationTravelGameController : IDisposable
                 && _narrativeController.ReminescencePhaseFinished)
             {
                 Console.WriteLine("LocationTravelGameController: ChildhoodReminescence finished, entering GetUp");
+                if (_protagonist != null) MemoryModusMentisMode.FillIfActive(_protagonist);
                 _isInNarrativeMode = false;
                 _narrativeController = null;
                 SetMode(GameMode.GetUp);
@@ -2046,6 +2047,7 @@ public class LocationTravelGameController : IDisposable
         if (SkipChildhoodMode.IsActive && _protagonist != null)
         {
             SkipChildhoodMode.SimulateAndApply(_protagonist);
+            MemoryModusMentisMode.FillIfActive(_protagonist);
             SetMode(GameMode.WorldView);
             return;
         }

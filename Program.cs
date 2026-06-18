@@ -26,6 +26,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --playground                       Replace all LLM calls with instant placeholders (no server needed)");
     Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
     Console.WriteLine("  --weapons                          Give the protagonist a starter weapon loadout (Arming Sword, Hunting Bow, Round Shield)");
+    Console.WriteLine("  --mm                               After childhood (or --skip-childhood), fill every empty memory slot with a random, not-yet-memorized modusMentis the module accepts");
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
@@ -173,6 +174,17 @@ if (args.Any(a => a == "--weapons"))
     Console.ForegroundColor = ConsoleColor.Yellow;
     Console.WriteLine("*** WEAPONS MODE ACTIVE ***");
     Console.WriteLine("Protagonist will start with an Arming Sword, a Hunting Bow, and a Round Shield.");
+    Console.ResetColor();
+    Console.WriteLine();
+}
+
+// Check for --mm flag (fill empty memory slots with random modiMentis after childhood)
+if (args.Any(a => a == "--mm"))
+{
+    Cathedral.Game.MemoryModusMentisMode.IsActive = true;
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine("*** MEMORY-FILL MODE ACTIVE ***");
+    Console.WriteLine("After the childhood phase, empty memory slots are filled with random modiMentis.");
     Console.ResetColor();
     Console.WriteLine();
 }

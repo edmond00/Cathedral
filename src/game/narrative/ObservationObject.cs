@@ -26,6 +26,22 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     public abstract string ObservationId { get; }
 
     /// <summary>
+    /// Short, human-readable name in a few words (e.g. "fox den", "old well", "Hugh Furrow").
+    /// Used to build the choice enum when the observation Modus Mentis picks which object to observe.
+    /// Distinct from <see cref="GenerateNeutralDescription"/>, which is the longer description.
+    /// </summary>
+    public abstract string NeutralName { get; }
+
+    /// <summary>
+    /// Natural, articled noun phrase used to fill neutral sentence templates — e.g. "a beech tree",
+    /// "an old well". Distinct from <see cref="NeutralName"/> ("Beech Tree"), which is a title and
+    /// would read unnaturally mid-sentence ("...shifts to Beech Tree"). The default lower-cases
+    /// <see cref="NeutralName"/> and prepends an article; NPC observation objects override this to
+    /// keep the proper name verbatim ("Hugh Furrow").
+    /// </summary>
+    public virtual string NeutralPhrase => NeutralNarration.NounPhrase(NeutralName.ToLowerInvariant());
+
+    /// <summary>
     /// All concrete sub-outcomes reachable through this observation (items, node transitions).
     /// Populated in the subclass constructor.
     /// </summary>
