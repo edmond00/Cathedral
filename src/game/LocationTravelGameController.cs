@@ -561,6 +561,8 @@ public class LocationTravelGameController : IDisposable
                     var modelPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "catalyst-models");
                     await TextSanitizationPipeline.InitializeAsync(modelPath, executor.GetLlamaServerManager());
                     Console.WriteLine("LocationTravelGameController: TextSanitizationPipeline initialized");
+                    await Cathedral.Game.Narrative.KeywordExtractor.InitializeAsync(modelPath);
+                    Console.WriteLine("LocationTravelGameController: KeywordExtractor initialized");
                 }
                 catch (Exception ex)
                 {

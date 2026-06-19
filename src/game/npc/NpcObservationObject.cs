@@ -42,6 +42,9 @@ public class NpcObservationObject : ObservationObject
     /// <summary>Proper name — used verbatim in sentences (no article).</summary>
     public override string NeutralPhrase => Npc.DisplayName;
 
+    /// <summary>Names aren't in the embedding vocab — anchor on a generic noun.</summary>
+    public override string ReferenceLemma => "person";
+
     /// <summary>Uses the NPC's observation hint as the neutral scene description.</summary>
     public override string GenerateNeutralDescription(int locationId = 0)
         => Npc.ObservationHint;

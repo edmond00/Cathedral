@@ -199,7 +199,10 @@ public class ObservationPhaseController
             }
 
             var obsNeutral = NeutralNarration.Observation(isFirst: !withTransition, isTransition: false, GetNeutralDescription(outcome, locationId));
-            var (obsText, kw) = await _rewriter.RewriteObservationAsync(slotId, obsNeutral, modusMentis.PersonaReminder2, keepHistory: true, ct: ct);
+            var obsText = await _rewriter.RewriteAsync(slotId, obsNeutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, ct: ct);
+
+            // Keyword is chosen by rule from the final (sanitized) text — the noun most related to the object.
+            var kw = KeywordExtractor.ExtractKeyword(obsText, GetReferenceLemma(outcome));
             var kws = kw != null ? new List<string> { kw } : new List<string>();
             sentences.Add(new NarrationSentence(obsText, kws));
             if (kw != null)
@@ -251,6 +254,11 @@ public class ObservationPhaseController
     /// <summary>Short name of an outcome, used for the observation-choice enum.</summary>
     private static string GetNeutralName(ConcreteOutcome outcome)
         => outcome is ObservationObject obs ? obs.NeutralName
+         : outcome.DisplayName;
+
+    /// <summary>The outcome's core noun, used as the keyword-similarity anchor.</summary>
+    private static string GetReferenceLemma(ConcreteOutcome outcome)
+        => outcome is ObservationObject obs ? obs.ReferenceLemma
          : outcome.DisplayName;
 
     /// <summary>Articled noun phrase of an outcome, used to fill the transition sentence template.</summary>

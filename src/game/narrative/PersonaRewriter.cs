@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Cathedral;
@@ -31,10 +30,8 @@ public class PersonaRewriter
 
     private const int RewriteMaxTokens = 280;
 
-    // JSON field-layout hints shown in the "Respond in JSON format (...)" instruction so the model
-    // writes each value in the right field.
-    private const string TextHint        = "{\"text\": \"...\"}";
-    private const string ObservationHint = "{\"text\": \"...\", \"keyword\": \"...\"}";
+    // JSON field-layout hint shown in the "Respond in JSON format (...)" instruction.
+    private const string TextHint = "{\"text\": \"...\"}";
 
     /// <summary>
     /// Rewrites <paramref name="neutralText"/> in the persona of <paramref name="slotId"/>.
@@ -59,39 +56,6 @@ public class PersonaRewriter
         string text = ParseField(json, "text");
         if (string.IsNullOrWhiteSpace(text)) return neutralText;
         return await TextSanitizationPipeline.SanitizeAsync(TextTruncationUtils.TrimToLastSentence(text));
-    }
-
-    /// <summary>
-    /// Observation rewrite that also returns the single noun the persona chose as the clickable
-    /// keyword. The keyword is validated to appear in the styled text; otherwise it falls back to
-    /// the last meaningful word of the styled text so highlighting always has an anchor.
-    /// </summary>
-    public async Task<(string Text, string? Keyword)> RewriteObservationAsync(
-        int slotId,
-        string neutralText,
-        string? personaReminder2,
-        bool keepHistory,
-        CancellationToken ct = default)
-    {
-        if (PlaygroundMode.IsActive)
-            return (neutralText, NeutralNarration.KeywordFromPhrase(neutralText));
-
-        string instruction = InstructionFor(NarrationKind.Observation, null) +
-            " The \"text\" field must contain ONLY the observation itself — never mention, name, quote, or refer to a keyword inside it." +
-            " Separately, in the \"keyword\" field, put the single most evocative noun that already appears in your text.";
-        string prompt = BuildPrompt(neutralText, instruction, FooterFor(NarrationKind.Observation, personaReminder2, ObservationHint));
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateObservationRewriteSchema());
-        string json = await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
-
-        string text = ParseField(json, "text");
-        if (string.IsNullOrWhiteSpace(text)) return (neutralText, NeutralNarration.KeywordFromPhrase(neutralText));
-        text = await TextSanitizationPipeline.SanitizeAsync(TextTruncationUtils.TrimToLastSentence(text));
-
-        string? keyword = ParseField(json, "keyword");
-        keyword = keyword?.ToLowerInvariant().Trim('.', ',', '!', '?', '"', '\'', '(', ')', ' ');
-        if (string.IsNullOrWhiteSpace(keyword) || !ContainsWord(text, keyword))
-            keyword = NeutralNarration.KeywordFromPhrase(text);
-        return (text, keyword);
     }
 
     /// <summary>
@@ -157,7 +121,4 @@ Neutral meaning: ""{neutralText}""
             return string.Empty;
         }
     }
-
-    private static bool ContainsWord(string text, string word)
-        => Regex.IsMatch(text, $@"\b{Regex.Escape(word)}\b", RegexOptions.IgnoreCase);
 }

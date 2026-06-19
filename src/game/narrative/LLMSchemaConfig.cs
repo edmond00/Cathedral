@@ -25,23 +25,6 @@ public static class LLMSchemaConfig
         );
     }
 
-    /// <summary>
-    /// Observation rewrite schema: the styled sentence plus the single most evocative noun the
-    /// persona used, which becomes the clickable keyword mapped back to the source outcome.
-    /// </summary>
-    public static CompositeField CreateObservationRewriteSchema()
-    {
-        return new CompositeField("ObservationRewrite",
-            new TemplateStringField("text",
-                Template: "<generated>",
-                MinGenLength: 15,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 200),
-            new StringField("keyword", MinLength: 2, MaxLength: 40,
-                Hint: "the single most evocative noun appearing in your sentence above")
-        );
-    }
-
     #endregion
 
     #region Decision Schemas
