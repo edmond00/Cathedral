@@ -166,7 +166,7 @@ public class SyntheticObservationObject : ObservationObject
 
     public override string NeutralName => _poi.DisplayName;
 
-    public override string ReferenceLemma => HeadWord(_poi.DisplayName);
+    public override string ReferenceLemma => _poi.ReferenceLemma;
 
     public override string GenerateNeutralDescription(int locationId = 0)
     {
@@ -208,7 +208,7 @@ public class SyntheticSpotObject : ObservationObject
 
     public override string NeutralName => _spot.DisplayName;
 
-    public override string ReferenceLemma => HeadWord(_spot.DisplayName);
+    public override string ReferenceLemma => _spot.ReferenceLemma;
 
     public override string GenerateNeutralDescription(int locationId = 0)
     {
@@ -243,7 +243,7 @@ public class SyntheticAreaObservationObject : ObservationObject
 
     public override string NeutralName => _area.DisplayName;
 
-    public override string ReferenceLemma => HeadWord(_area.DisplayName);
+    public override string ReferenceLemma => _area.ReferenceLemma;
 
     public override string GenerateNeutralDescription(int locationId = 0)
     {

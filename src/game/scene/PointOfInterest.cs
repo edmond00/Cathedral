@@ -12,6 +12,12 @@ public class PointOfInterest : Element
     public override string DisplayName { get; }
     public override List<string> Descriptions { get; }
 
+    /// <summary>
+    /// Core noun used as the keyword-similarity anchor when this PoI becomes an observation.
+    /// Defined explicitly at every construction site (no inference) — e.g. "tree" for an oak.
+    /// </summary>
+    public string ReferenceLemma { get; }
+
     /// <summary>Items that can be collected from this point of interest.</summary>
     public List<ItemElement> Items { get; } = new();
 
@@ -20,13 +26,15 @@ public class PointOfInterest : Element
 
     public PointOfInterest(
         string displayName,
+        string referenceLemma,
         List<string> descriptions,
         List<ItemElement>? items = null,
         string[]? moods = null)
     {
-        DisplayName  = displayName;
-        Descriptions = descriptions;
-        Moods        = moods ?? System.Array.Empty<string>();
+        DisplayName    = displayName;
+        ReferenceLemma = referenceLemma;
+        Descriptions   = descriptions;
+        Moods          = moods ?? System.Array.Empty<string>();
         if (items != null) Items.AddRange(items);
     }
 }

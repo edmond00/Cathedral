@@ -16,6 +16,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildOakTree() => new(
         displayName: "Oak Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A broad-crowned oak with deep-fissured bark and heavy boughs" },
         items: new()
         {
@@ -29,6 +30,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildBeechTree() => new(
         displayName: "Beech Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A tall pale beech, smooth-trunked and deep-rooted" },
         items: new()
         {
@@ -42,6 +44,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildAshTree() => new(
         displayName: "Ash Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A grey-trunked ash with feather-leaved branches" },
         items: new()
         {
@@ -54,6 +57,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildBirchTree() => new(
         displayName: "Birch Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A slender silver-skinned birch, papery bark peeling in strips" },
         items: new()
         {
@@ -66,6 +70,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildPineTree() => new(
         displayName: "Pine Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A tall dark pine, resinous and heavy-needled" },
         items: new()
         {
@@ -80,6 +85,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildYewTree() => new(
         displayName: "Yew Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A squat dark yew with reddish bark and a heavy, low canopy" },
         items: new()
         {
@@ -91,6 +97,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildHawthornTree() => new(
         displayName: "Hawthorn Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A thorny hawthorn standing alone, branches red with berries" },
         items: new()
         {
@@ -104,6 +111,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildWillowTree() => new(
         displayName: "Willow Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A weeping willow, long fronds trailing toward the wet ground" },
         items: new()
         {
@@ -115,6 +123,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildElderTree() => new(
         displayName: "Elder Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A spreading elder, dark umbels of berries weighing the branches" },
         items: new()
         {
@@ -127,6 +136,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildAppleTree() => new(
         displayName: "Apple Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A gnarled old apple tree, branches heavy with fruit" },
         items: new()
         {
@@ -140,6 +150,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildPearTree() => new(
         displayName: "Pear Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A pear tree with narrow leaves and pale-green hanging fruit" },
         items: new()
         {
@@ -152,6 +163,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildPlumTree() => new(
         displayName: "Plum Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A plum tree, branches crowded with dusty-bloomed fruit" },
         items: new()
         {
@@ -164,6 +176,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildCherryTree() => new(
         displayName: "Cherry Tree",
+        referenceLemma: "tree",
         descriptions: new() { "A cherry tree, leaves dark, branches studded with glossy red fruit" },
         items: new()
         {
@@ -178,6 +191,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildFelledLog() => new(
         displayName: "Felled Log",
+        referenceLemma: "log",
         descriptions: new() { "A heavy log lying on its side, axe-marks fresh at one end" },
         items: new()
         {
@@ -190,6 +204,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildTreeStump() => new(
         displayName: "Tree Stump",
+        referenceLemma: "stump",
         descriptions: new() { "A weathered stump where a tree once stood, moss creeping over the bark" },
         items: new()
         {
@@ -201,6 +216,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildDeadfall() => new(
         displayName: "Deadfall Pile",
+        referenceLemma: "deadfall",
         descriptions: new() { "A heap of broken branches and fallen wood at the base of a hollow" },
         items: new()
         {
@@ -215,6 +231,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildBoulder() => new(
         displayName: "Boulder",
+        referenceLemma: "boulder",
         descriptions: new() { "A great half-buried boulder, the stone pitted and ringed with lichen" },
         items: new()
         {
@@ -227,6 +244,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildRockOutcrop() => new(
         displayName: "Rock Outcrop",
+        referenceLemma: "rock",
         descriptions: new() { "A jut of bedrock breaking through the slope, edges sharp" },
         items: new()
         {
@@ -240,6 +258,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildRockFace() => new(
         displayName: "Rock Face",
+        referenceLemma: "rock",
         descriptions: new() { "A sheer face of bedrock, fissured and wet in places" },
         items: new()
         {
@@ -252,6 +271,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildFallenRocks() => new(
         displayName: "Fallen Rocks",
+        referenceLemma: "rock",
         descriptions: new() { "A scatter of broken stone tumbled down from above" },
         items: new()
         {
@@ -263,6 +283,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildCrevice() => new(
         displayName: "Crevice",
+        referenceLemma: "crevice",
         descriptions: new() { "A narrow crevice between rocks, dark and deep" },
         items: new()
         {
@@ -273,6 +294,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildCairn() => new(
         displayName: "Cairn",
+        referenceLemma: "cairn",
         descriptions: new() { "A pile of stones left by past travellers, carefully balanced" },
         items: new()
         {
@@ -286,6 +308,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildStreamBank() => new(
         displayName: "Stream Bank",
+        referenceLemma: "stream",
         descriptions: new() { "A muddy bank where the stream cuts the earth, watercress in the slow eddy" },
         items: new()
         {
@@ -298,6 +321,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildGorgePool() => new(
         displayName: "Gorge Pool",
+        referenceLemma: "pool",
         descriptions: new() { "A still dark pool at the base of a gorge, edged with wet stone" },
         items: new()
         {
@@ -311,6 +335,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildFlowerPatch() => new(
         displayName: "Flower Patch",
+        referenceLemma: "flower",
         descriptions: new() { "A sprawl of wildflowers in colour-clusters, bees moving between them" },
         items: new()
         {
@@ -324,6 +349,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildBerryBush() => new(
         displayName: "Berry Bush",
+        referenceLemma: "bush",
         descriptions: new() { "A thorny bush heavy with dark drupelets" },
         items: new()
         {
@@ -336,6 +362,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildBilberryBush() => new(
         displayName: "Bilberry Bush",
+        referenceLemma: "bush",
         descriptions: new() { "A low bilberry bush studded with small dark fruit" },
         items: new()
         {
@@ -347,6 +374,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildSloeBush() => new(
         displayName: "Sloe Bush",
+        referenceLemma: "bush",
         descriptions: new() { "A blackthorn covered with hard blue-black sloes" },
         items: new()
         {
@@ -358,6 +386,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildMushroomCluster() => new(
         displayName: "Mushroom Cluster",
+        referenceLemma: "mushroom",
         descriptions: new() { "A cluster of cap-and-stem mushrooms half-hidden in leaf-litter" },
         items: new()
         {
@@ -369,6 +398,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildUndergrowthPatch() => new(
         displayName: "Undergrowth Patch",
+        referenceLemma: "undergrowth",
         descriptions: new() { "A snarled patch of low growth, ferns and brambles tangled together" },
         items: new()
         {
@@ -382,6 +412,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildReedBed() => new(
         displayName: "Reed Bed",
+        referenceLemma: "reed",
         descriptions: new() { "A stand of tall reeds growing out of the soft wet ground" },
         items: new()
         {
@@ -394,6 +425,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildMossBank() => new(
         displayName: "Moss Bank",
+        referenceLemma: "moss",
         descriptions: new() { "A thick cushion of moss spread over rock and root" },
         items: new()
         {
@@ -405,6 +437,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildAlpineHerbPatch() => new(
         displayName: "Alpine Herb Patch",
+        referenceLemma: "herb",
         descriptions: new() { "A small clutch of fragrant herbs sheltered in a hollow" },
         items: new()
         {
@@ -417,6 +450,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildLichenCrust() => new(
         displayName: "Lichen Crust",
+        referenceLemma: "lichen",
         descriptions: new() { "A papery crust of grey-green lichen spread across the stone" },
         items: new()
         {
@@ -428,6 +462,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildShelteredHollow() => new(
         displayName: "Sheltered Hollow",
+        referenceLemma: "hollow",
         descriptions: new() { "A small hollow out of the wind, rare alpine herbs growing in the lee" },
         items: new()
         {
@@ -439,6 +474,7 @@ public static class TerrainSubfactory
 
     public static PointOfInterest BuildIceFormation() => new(
         displayName: "Ice Formation",
+        referenceLemma: "ice",
         descriptions: new() { "A wind-carved sculpture of ice glittering in the cold light" },
         items: new(),
         moods: new[] { "glittering", "wind-carved", "frozen", "still" }

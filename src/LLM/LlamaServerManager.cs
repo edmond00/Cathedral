@@ -22,17 +22,6 @@ public class LlamaServerManager : IDisposable
     private bool _disposed = false;
     private int _contextSize = 4096; // Context size per slot (--parallel 1)
     private string? _sessionLogDir = null; // Directory for this server session's logs
-    
-    // Model aliases and their corresponding file names
-    private readonly Dictionary<string, string> _modelAliases = new()
-    {
-        { "tiny", "qwen2.5-1.5b-instruct-q5_k_m.gguf" },
-        { "medium", "qwen2.5-3b-instruct-q4_k_m.gguf" }
-        // { "medium", "gemma-4-E4B-it-Q4_K_M.gguf" }
-        // { "medium", "gemma-4-E2B-it-Q4_K_M.gguf" }
-    };
-    
-    private string _currentModelAlias = "tiny"; // Default model
 
     // Loading progress tracking
     private DateTime _loadingStartTime = DateTime.MinValue;
@@ -158,11 +147,8 @@ public class LlamaServerManager : IDisposable
     /// Starts the Llama server and calls the provided hook when ready
     /// </summary>
     /// <param name="onServerReady">Hook called when server is ready (true) or failed (false)</param>
-    /// <param name="modelAlias">Model alias to use ("tiny" or "medium"). Defaults to "tiny"</param>
-    /// <param name="modelPath">Optional custom model path (overrides alias)</param>
-    /// <param name="serverPath">Optional custom server executable path</param>
     /// <param name="contextSize">Maximum context size in tokens. Defaults to <see cref="Config.LLM.ContextSize"/>.</param>
-    public async Task StartServerAsync(Action<bool>? onServerReady = null, string? modelAlias = null, string? modelPath = null, string? serverPath = null, int contextSize = Config.LLM.ContextSize)
+    public async Task StartServerAsync(Action<bool>? onServerReady = null, int contextSize = Config.LLM.ContextSize)
     {
         var startTime = DateTime.Now;
         
@@ -202,74 +188,29 @@ public class LlamaServerManager : IDisposable
             Directory.CreateDirectory(_sessionLogDir);
             Console.WriteLine($"LLM logs will be saved to: {_sessionLogDir}");
             
-            // Set the current model alias - auto-select largest AVAILABLE ALIASED model if null
-            if (modelAlias == null)
-            {
-                var largestAliasedModel = FindLargestAliasedModel();
-                if (largestAliasedModel != null)
-                {
-                    _currentModelAlias = largestAliasedModel;
-                    // Get file size for display
-                    try
-                    {
-                        var projectRoot = AppDomain.CurrentDomain.BaseDirectory;
-                        while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "models")))
-                        {
-                            projectRoot = Directory.GetParent(projectRoot)?.FullName;
-                        }
-                        if (projectRoot != null)
-                        {
-                            var fileInfo = new FileInfo(Path.Combine(projectRoot, "models", _modelAliases[_currentModelAlias]));
-                            Console.WriteLine($"Auto-selected largest aliased model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]}) - {fileInfo.Length / (1024.0 * 1024.0):F1} MB");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Auto-selected largest model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
-                        }
-                    }
-                    catch
-                    {
-                        Console.WriteLine($"Auto-selected largest model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
-                    }
-                }
-                else
-                {
-                    // Fallback to tiny if no aliased models were found
-                    _currentModelAlias = "tiny";
-                    Console.WriteLine($"No aliased models found for auto-selection, using default: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
-                }
-            }
-            else
-            {
-                _currentModelAlias = modelAlias;
-                Console.WriteLine($"Using model: {_currentModelAlias} ({_modelAliases[_currentModelAlias]})");
-            }
-            
+            Console.WriteLine($"Using model: {Config.LLM.ModelFileName}");
+
             // Find paths
-            var (resolvedServerPath, resolvedModelPath) = ResolvePaths(serverPath, modelPath, _currentModelAlias);
-            
+            var (resolvedServerPath, resolvedModelPath) = ResolvePaths();
+
             // Log initialization start
-            try { LLMLogger.LogServerInitStart(_currentModelAlias, resolvedServerPath, resolvedModelPath); } catch { }
-            
-            // Validate paths
+            try { LLMLogger.LogServerInitStart(Config.LLM.ModelFileName, resolvedServerPath, resolvedModelPath); } catch { }
+
+            // Validate paths — both files are required; without them the game cannot run, so exit.
             if (!File.Exists(resolvedServerPath))
             {
-                var errorMsg = $"Llama server not found at: {resolvedServerPath}";
-                LogError(errorMsg);
-                ServerReady?.Invoke(this, new ServerStatusEventArgs(false, errorMsg));
-                onServerReady?.Invoke(false);
-                return;
+                LogError($"Llama server executable not found at: {resolvedServerPath}");
+                LogError("Download a llama.cpp release and place llama-server.exe in the models/llama/ directory, then restart.");
+                Environment.Exit(1);
             }
-            
+
             if (!File.Exists(resolvedModelPath))
             {
-                var errorMsg = $"Model file not found at: {resolvedModelPath}";
-                LogError(errorMsg);
-                ServerReady?.Invoke(this, new ServerStatusEventArgs(false, errorMsg));
-                onServerReady?.Invoke(false);
-                return;
+                LogError($"Model file '{Config.LLM.ModelFileName}' not found at: {resolvedModelPath}");
+                LogError($"Download the GGUF model and place it in the models/ directory as '{Config.LLM.ModelFileName}', then restart.");
+                Environment.Exit(1);
             }
-            
+
             // Start the server process
             await StartServerProcessAsync(resolvedServerPath, resolvedModelPath, _contextSize);
             
@@ -1145,29 +1086,13 @@ public class LlamaServerManager : IDisposable
     }
     
     /// <summary>
-    /// Gets all available model aliases
-    /// </summary>
-    public IReadOnlyDictionary<string, string> GetAvailableModels()
-    {
-        return _modelAliases.AsReadOnly();
-    }
-    
-    /// <summary>
-    /// Gets the current model alias
-    /// </summary>
-    public string GetCurrentModelAlias()
-    {
-        return _currentModelAlias;
-    }
-    
-    /// <summary>
-    /// Gets the current model file name
+    /// Gets the configured model file name (see <see cref="Config.LLM.ModelFileName"/>).
     /// </summary>
     public string GetCurrentModelFileName()
     {
-        return _modelAliases.TryGetValue(_currentModelAlias, out var fileName) ? fileName : "Unknown";
+        return Config.LLM.ModelFileName;
     }
-    
+
     /// <summary>
     /// Stops the Llama server
     /// </summary>
@@ -1236,62 +1161,6 @@ public class LlamaServerManager : IDisposable
     
     // Private helper methods
     
-    /// <summary>
-    /// Finds the largest available model among configured aliases in the models directory
-    /// </summary>
-    /// <returns>The alias of the largest available aliased model, or null if none found</returns>
-    private string? FindLargestAliasedModel()
-    {
-        try
-        {
-            var currentDir = AppDomain.CurrentDomain.BaseDirectory;
-            var projectRoot = currentDir;
-            
-            // Navigate up to find the directory containing the models folder
-            while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "models")))
-            {
-                projectRoot = Directory.GetParent(projectRoot)?.FullName;
-            }
-            
-            if (projectRoot == null)
-            {
-                return null;
-            }
-            
-            var modelsDir = Path.Combine(projectRoot, "models");
-            var aliasedFiles = _modelAliases
-                .Select(kvp => new
-                {
-                    Alias = kvp.Key,
-                    FilePath = Path.Combine(modelsDir, kvp.Value)
-                })
-                .Where(x => File.Exists(x.FilePath))
-                .Select(x => new
-                {
-                    x.Alias,
-                    FileInfo = new FileInfo(x.FilePath)
-                })
-                .ToList();
-
-            if (aliasedFiles.Count == 0)
-            {
-                return null;
-            }
-
-            // Find the largest available aliased file by size
-            var largestAliased = aliasedFiles
-                .OrderByDescending(x => x.FileInfo.Length)
-                .First();
-
-            return largestAliased.Alias;
-        }
-        catch (Exception ex)
-        {
-            LogWarning($"Error finding largest aliased model: {ex.Message}");
-            return null;
-        }
-    }
-    
     private async Task<bool> IsServerRunningAsync()
     {
         try
@@ -1305,48 +1174,28 @@ public class LlamaServerManager : IDisposable
         }
     }
     
-    private (string serverPath, string modelPath) ResolvePaths(string? serverPath, string? modelPath, string modelAlias)
+    /// <summary>
+    /// Resolves the llama-server executable and the single configured model file, both located
+    /// under the project's <c>models</c> directory (found by walking up from the app base dir).
+    /// </summary>
+    private (string serverPath, string modelPath) ResolvePaths()
     {
-        var currentDir = AppDomain.CurrentDomain.BaseDirectory;
-        var projectRoot = currentDir;
-        
+        var projectRoot = AppDomain.CurrentDomain.BaseDirectory;
+
         // Navigate up to find the directory containing the models folder
         while (projectRoot != null && !Directory.Exists(Path.Combine(projectRoot, "models")))
         {
             projectRoot = Directory.GetParent(projectRoot)?.FullName;
         }
-        
+
         if (projectRoot == null)
         {
             throw new DirectoryNotFoundException("Could not find models directory.");
         }
-        
-        var resolvedServerPath = serverPath ?? Path.Combine(projectRoot, "models", "llama", "llama-server.exe");
-        
-        // Resolve model path using alias if no custom path is provided
-        string resolvedModelPath;
-        if (modelPath != null)
-        {
-            // If modelPath is just a filename (not a full path), resolve it relative to models directory
-            if (!Path.IsPathRooted(modelPath) && !modelPath.Contains(Path.DirectorySeparatorChar) && !modelPath.Contains(Path.AltDirectorySeparatorChar))
-            {
-                resolvedModelPath = Path.Combine(projectRoot, "models", modelPath);
-            }
-            else
-            {
-                resolvedModelPath = modelPath;
-            }
-        }
-        else if (_modelAliases.TryGetValue(modelAlias, out var modelFileName))
-        {
-            resolvedModelPath = Path.Combine(projectRoot, "models", modelFileName);
-        }
-        else
-        {
-            throw new ArgumentException($"Unknown model alias '{modelAlias}'. Available aliases: {string.Join(", ", _modelAliases.Keys)}");
-        }
-        
-        return (resolvedServerPath, resolvedModelPath);
+
+        var serverPath = Path.Combine(projectRoot, "models", "llama", "llama-server.exe");
+        var modelPath = Path.Combine(projectRoot, "models", Config.LLM.ModelFileName);
+        return (serverPath, modelPath);
     }
     
     private async Task StartServerProcessAsync(string serverPath, string modelPath, int contextSize)

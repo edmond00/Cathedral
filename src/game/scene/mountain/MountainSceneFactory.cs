@@ -143,6 +143,7 @@ public class MountainSceneFactory : SceneFactory
 
     private static Area BuildScreeField() => new(
         displayName: "Scree Field",
+        referenceLemma: "scree",
         contextDescription: "crossing the scree field",
         transitionDescription: "step onto the scree field",
         descriptions: new() { "A long slope of loose broken stone, treacherous underfoot" },
@@ -151,6 +152,7 @@ public class MountainSceneFactory : SceneFactory
 
     private static Area BuildRockLedge() => new(
         displayName: "Rock Ledge",
+        referenceLemma: "ledge",
         contextDescription: "on the rock ledge",
         transitionDescription: "step onto the rock ledge",
         descriptions: new() { "A flat shelf of rock with a wide view across the country below" },
@@ -159,6 +161,7 @@ public class MountainSceneFactory : SceneFactory
 
     private static Area BuildAlpineMeadow() => new(
         displayName: "Alpine Meadow",
+        referenceLemma: "meadow",
         contextDescription: "in the alpine meadow",
         transitionDescription: "step into the alpine meadow",
         descriptions: new() { "A sheltered hollow of unexpected greenery, herbs growing in soft drifts" },
@@ -167,6 +170,7 @@ public class MountainSceneFactory : SceneFactory
 
     private static Area BuildGorge() => new(
         displayName: "Gorge",
+        referenceLemma: "gorge",
         contextDescription: "in the narrow gorge",
         transitionDescription: "enter the narrow gorge",
         descriptions: new() { "A narrow cut between rock walls, a stream running at its base" },
@@ -175,6 +179,7 @@ public class MountainSceneFactory : SceneFactory
 
     private static Area BuildBoulderField() => new(
         displayName: "Boulder Field",
+        referenceLemma: "boulder",
         contextDescription: "in the boulder field",
         transitionDescription: "pick a way through the boulder field",
         descriptions: new() { "A jumble of massive rocks the size of houses, paths winding between" },
@@ -183,6 +188,7 @@ public class MountainSceneFactory : SceneFactory
 
     private static Area BuildStreamSource() => new(
         displayName: "Stream Source",
+        referenceLemma: "stream",
         contextDescription: "at the stream source",
         transitionDescription: "approach the stream source",
         descriptions: new() { "A spring breaks from the rock, water cold and bright" },
@@ -191,6 +197,7 @@ public class MountainSceneFactory : SceneFactory
 
     private static Area BuildSlopeForest() => new(
         displayName: "Slope Forest",
+        referenceLemma: "forest",
         contextDescription: "in the slope forest",
         transitionDescription: "step into the slope forest",
         descriptions: new() { "Dense wood climbs the lower slope, pine giving way to scrub above" },

@@ -18,6 +18,7 @@ public static class WorkshopSubfactory
     {
         var forge = new Area(
             displayName: "Forge",
+            referenceLemma: "forge",
             contextDescription: "in the village forge",
             transitionDescription: "step into the forge",
             descriptions: new() { "A low-roofed forge thick with the smell of coal-smoke and hot iron" },
@@ -26,18 +27,21 @@ public static class WorkshopSubfactory
 
         forge.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Anvil",
+            referenceLemma: "anvil",
             descriptions: new() { "A great iron anvil bedded into a worn oak stump, the surface dented from a thousand strikes" },
             moods: new[] { "heavy", "scarred", "polished", "central" }
         ));
 
         forge.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Bellows",
+            referenceLemma: "bellows",
             descriptions: new() { "A pair of long bellows hanging beside the hearth, leather creased and patched" },
             moods: new[] { "leather-creased", "tall", "smoke-stained" }
         ));
 
         forge.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Tool Rack",
+            referenceLemma: "tool",
             descriptions: new() { "An iron-pegged rack of forge tools" },
             items: new()
             {
@@ -50,6 +54,7 @@ public static class WorkshopSubfactory
 
         forge.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Stock Shelf",
+            referenceLemma: "shelf",
             descriptions: new() { "Shelves stacked with raw materials waiting their turn at the fire" },
             items: new()
             {
@@ -64,6 +69,7 @@ public static class WorkshopSubfactory
 
         forge.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Finished Goods Rack",
+            referenceLemma: "rack",
             descriptions: new() { "A rack of finished tools awaiting collection or sale" },
             items: new()
             {
@@ -85,6 +91,7 @@ public static class WorkshopSubfactory
     {
         var shop = new Area(
             displayName: "Carpenter's Workshop",
+            referenceLemma: "workshop",
             contextDescription: "in the carpenter's workshop",
             transitionDescription: "step into the carpenter's workshop",
             descriptions: new() { "A long timbered workshop heaped with shavings and the clean smell of fresh-cut wood" },
@@ -93,6 +100,7 @@ public static class WorkshopSubfactory
 
         shop.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Workbench",
+            referenceLemma: "workbench",
             descriptions: new() { "A long heavy workbench scored with cut-marks, vice fitted at one end" },
             items: new()
             {
@@ -106,6 +114,7 @@ public static class WorkshopSubfactory
 
         shop.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Wood Pile",
+            referenceLemma: "wood",
             descriptions: new() { "A neat pile of seasoned planks and beams stacked along the wall" },
             items: new()
             {
@@ -118,6 +127,7 @@ public static class WorkshopSubfactory
 
         shop.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Shaving Pile",
+            referenceLemma: "shaving",
             descriptions: new() { "A heap of curled shavings and sawdust against the back wall" },
             items: new()
             {
@@ -135,6 +145,7 @@ public static class WorkshopSubfactory
     {
         var shop = new Area(
             displayName: "Cooper's Workshop",
+            referenceLemma: "workshop",
             contextDescription: "in the cooper's workshop",
             transitionDescription: "step into the cooper's workshop",
             descriptions: new() { "A workshop laid out with half-built barrels and stave-piles" },
@@ -143,6 +154,7 @@ public static class WorkshopSubfactory
 
         shop.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Stave Pile",
+            referenceLemma: "stave",
             descriptions: new() { "A bundle of curved oak staves bound with cord, ready for the next barrel" },
             items: new()
             {
@@ -154,6 +166,7 @@ public static class WorkshopSubfactory
 
         shop.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Barrel Stack",
+            referenceLemma: "barrel",
             descriptions: new() { "A stack of finished barrels waiting for the brewer or the miller" },
             items: new()
             {
@@ -165,6 +178,7 @@ public static class WorkshopSubfactory
 
         shop.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Hoop Bin",
+            referenceLemma: "hoop",
             descriptions: new() { "A tall bin filled with iron hoops of varied size" },
             items: new()
             {
@@ -183,6 +197,7 @@ public static class WorkshopSubfactory
     {
         var shop = new Area(
             displayName: "Weaver's Workshop",
+            referenceLemma: "workshop",
             contextDescription: "in the weaver's workshop",
             transitionDescription: "step into the weaver's workshop",
             descriptions: new() { "A bright room filled with the rhythmic clatter of a great loom" },
@@ -191,12 +206,14 @@ public static class WorkshopSubfactory
 
         shop.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Loom",
+            referenceLemma: "loom",
             descriptions: new() { "A tall floor loom strung with warp threads, a half-finished bolt of cloth on the beam" },
             moods: new[] { "tall", "stretched", "threaded", "central" }
         ));
 
         shop.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Wool Basket",
+            referenceLemma: "wool",
             descriptions: new() { "A wide woven basket heaped with carded wool and spools of thread" },
             items: new()
             {
@@ -209,6 +226,7 @@ public static class WorkshopSubfactory
 
         shop.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Cloth Bolt",
+            referenceLemma: "cloth",
             descriptions: new() { "A bolt of finished cloth standing against the wall" },
             items: new()
             {
@@ -220,6 +238,7 @@ public static class WorkshopSubfactory
 
         shop.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Flax Bundle",
+            referenceLemma: "flax",
             descriptions: new() { "A bundle of flax stems leaning in the corner, paler than the wool" },
             items: new()
             {
@@ -238,6 +257,7 @@ public static class WorkshopSubfactory
     {
         var mill = new Area(
             displayName: "Mill",
+            referenceLemma: "mill",
             contextDescription: "in the village mill",
             transitionDescription: "step into the mill",
             descriptions: new() { "A high-roofed mill, the millstone groaning at the centre, dust thick in the air" },
@@ -246,12 +266,14 @@ public static class WorkshopSubfactory
 
         mill.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Millstone",
+            referenceLemma: "millstone",
             descriptions: new() { "A great round stone turning slowly, grain crunching between its faces" },
             moods: new[] { "great", "turning", "white-dusted", "central" }
         ));
 
         mill.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Grain Sacks",
+            referenceLemma: "grain",
             descriptions: new() { "A row of bulging grain sacks waiting to be milled" },
             items: new()
             {
@@ -263,6 +285,7 @@ public static class WorkshopSubfactory
 
         mill.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Flour Sacks",
+            referenceLemma: "flour",
             descriptions: new() { "Fresh-tied sacks of flour, dust pale on the outside" },
             items: new()
             {
@@ -281,6 +304,7 @@ public static class WorkshopSubfactory
     {
         var bakery = new Area(
             displayName: "Bakery",
+            referenceLemma: "bakery",
             contextDescription: "in the bakery",
             transitionDescription: "step into the bakery",
             descriptions: new() { "A close room thick with the smell of bread and the heat of the great oven" },
@@ -289,12 +313,14 @@ public static class WorkshopSubfactory
 
         bakery.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Oven",
+            referenceLemma: "oven",
             descriptions: new() { "A domed brick oven, the iron door open and breathing heat" },
             moods: new[] { "domed", "hot", "soot-blackened", "open" }
         ));
 
         bakery.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Flour Sack",
+            referenceLemma: "flour",
             descriptions: new() { "A floury sack leaning against the kneading-bench" },
             items: new()
             {
@@ -305,6 +331,7 @@ public static class WorkshopSubfactory
 
         bakery.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Bread Shelf",
+            referenceLemma: "bread",
             descriptions: new() { "A wooden shelf set with row upon row of fresh-baked loaves" },
             items: new()
             {
@@ -324,6 +351,7 @@ public static class WorkshopSubfactory
     {
         var alehouse = new Area(
             displayName: "Alehouse",
+            referenceLemma: "alehouse",
             contextDescription: "in the village alehouse",
             transitionDescription: "step into the alehouse",
             descriptions: new() { "A low room with long benches and a rich brewing-malt smell" },
@@ -332,6 +360,7 @@ public static class WorkshopSubfactory
 
         alehouse.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Brew Barrel",
+            referenceLemma: "barrel",
             descriptions: new() { "A great barrel set on a stand, dark spigot at its base" },
             items: new()
             {
@@ -343,6 +372,7 @@ public static class WorkshopSubfactory
 
         alehouse.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Mug Rack",
+            referenceLemma: "mug",
             descriptions: new() { "A wooden rack of clay mugs, well-handled and chip-rimmed" },
             items: new()
             {
@@ -355,6 +385,7 @@ public static class WorkshopSubfactory
 
         alehouse.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Grain Sack",
+            referenceLemma: "grain",
             descriptions: new() { "A stout sack of barley standing by the brewing-floor" },
             items: new()
             {
@@ -372,6 +403,7 @@ public static class WorkshopSubfactory
     {
         var hall = new Area(
             displayName: "Craftsmen Hall",
+            referenceLemma: "hall",
             contextDescription: "in the craftsmen's hall",
             transitionDescription: "step into the craftsmen's hall",
             descriptions: new() { "A long communal hall where the village craftsmen take their meals" },
@@ -380,12 +412,14 @@ public static class WorkshopSubfactory
 
         hall.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Hearth",
+            referenceLemma: "hearth",
             descriptions: new() { "A wide stone hearth with a slow-burning fire and a black kettle hanging above" },
             moods: new[] { "warm", "central", "soot-stained" }
         ));
 
         hall.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Long Table",
+            referenceLemma: "table",
             descriptions: new() { "A long oak table set with bread and mugs for the next meal" },
             items: new()
             {
@@ -406,6 +440,7 @@ public static class WorkshopSubfactory
     {
         var quarters = new Area(
             displayName: "Sleeping Quarters",
+            referenceLemma: "quarters",
             contextDescription: "in the sleeping quarters",
             transitionDescription: "climb into the sleeping quarters",
             descriptions: new() { "A long low room laid out with straw pallets and a few wooden chests" },
@@ -414,6 +449,7 @@ public static class WorkshopSubfactory
 
         quarters.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Straw Pallets",
+            referenceLemma: "pallet",
             descriptions: new() { "A row of straw pallets along the wall, blankets piled at the foot of each" },
             items: new()
             {
@@ -425,6 +461,7 @@ public static class WorkshopSubfactory
 
         quarters.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Chest",
+            referenceLemma: "chest",
             descriptions: new() { "A small iron-banded chest, lid scarred with use" },
             items: new()
             {

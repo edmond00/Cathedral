@@ -12,6 +12,7 @@ public sealed class GetUpPointOfInterest : PointOfInterest
     public GetUpPointOfInterest(string displayName, string description)
         : base(
             displayName: displayName,
+            referenceLemma: "weariness",
             descriptions: new List<string> { description },
             items: null,
             moods: new[] { "heavy", "aching", "spent", "hollow", "leaden", "still", "quiet" })

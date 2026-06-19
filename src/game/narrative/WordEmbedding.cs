@@ -12,12 +12,16 @@ namespace Cathedral.Game.Narrative;
 /// keyword as the noun most semantically related to the observation object's reference word.
 ///
 /// The vectors file ships in <c>models/embeddings/</c> and is resolved by walking up from the app
-/// base directory to the project's <c>models</c> folder (same pattern as the llama models). If the
-/// file is absent or fails to load, <see cref="IsReady"/> stays false and callers fall back to a
-/// heuristic — the feature degrades gracefully and never blocks startup.
+/// base directory to the project's <c>models</c> folder (same pattern as the llama models). The
+/// file is required: if it is missing the game prints download instructions and exits.
 /// </summary>
 public static class WordEmbedding
 {
+    /// <summary>Vectors file name expected in <c>models/embeddings/</c>.</summary>
+    private const string VectorsFileName = "glove.6B.100d.txt";
+    /// <summary>Where to obtain the vectors file when it is missing.</summary>
+    private const string GloveDownloadUrl = "https://nlp.stanford.edu/data/glove.6B.zip";
+
     private static Dictionary<string, float[]>? _vectors;
     private static bool _initialized;
 
@@ -32,16 +36,17 @@ public static class WordEmbedding
             var path = ResolveVectorsPath();
             if (path == null)
             {
-                Console.WriteLine("WordEmbedding: no vectors file in models/embeddings — keyword similarity disabled.");
-                return;
+                Console.Error.WriteLine($"WordEmbedding: required vectors file '{VectorsFileName}' not found in models/embeddings/.");
+                Console.Error.WriteLine($"Download GloVe vectors from {GloveDownloadUrl}, extract '{VectorsFileName}', and place it in models/embeddings/, then restart.");
+                Environment.Exit(1);
             }
             await Task.Run(() => Load(path));
             Console.WriteLine($"WordEmbedding: loaded {_vectors?.Count ?? 0} vectors from {Path.GetFileName(path)}.");
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"WordEmbedding: load failed, similarity disabled. {ex.Message}");
-            _vectors = null;
+            Console.Error.WriteLine($"WordEmbedding: failed to load '{VectorsFileName}'. {ex.Message}");
+            Environment.Exit(1);
         }
     }
 
@@ -97,7 +102,7 @@ public static class WordEmbedding
         while (dir != null && !Directory.Exists(Path.Combine(dir, "models")))
             dir = Directory.GetParent(dir)?.FullName;
         if (dir == null) return null;
-        var candidate = Path.Combine(dir, "models", "embeddings", "glove.6B.100d.txt");
+        var candidate = Path.Combine(dir, "models", "embeddings", VectorsFileName);
         return File.Exists(candidate) ? candidate : null;
     }
 }

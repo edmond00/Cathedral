@@ -23,7 +23,7 @@ public class CliffPointOfInterest : PointOfInterest
         List<string> descriptions,
         bool icyCliff = false,
         string[]? moods = null)
-        : base(displayName, descriptions, items: null, moods: moods)
+        : base(displayName, "cliff", descriptions, items: null, moods: moods)
     {
         BottomArea = bottomArea;
         TopArea    = topArea;

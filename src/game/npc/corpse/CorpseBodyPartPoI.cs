@@ -14,6 +14,6 @@ public class CorpseBodyPartPoI : PointOfInterest
         string displayName,
         List<string> descriptions,
         List<ItemElement>? items = null)
-        : base(displayName, descriptions, items)
+        : base(displayName, "carcass", descriptions, items)
     { }
 }

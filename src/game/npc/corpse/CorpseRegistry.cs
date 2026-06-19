@@ -196,6 +196,7 @@ public static class CorpseRegistry
         var itemElements = items.Select(i => new ItemElement(i)).ToList();
         return new PointOfInterest(
             "Wearing",
+            "clothing",
             new() { $"The clothing and belongings {entity.DisplayName} was carrying" },
             itemElements);
     }

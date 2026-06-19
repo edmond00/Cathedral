@@ -32,6 +32,7 @@ public sealed class ReminescenceSceneFactory : SceneFactory
         // to the player as "Reminescence" and POIs are read as fragments.
         var area = new Area(
             displayName:           "Reminescence",
+            referenceLemma:        "memory",
             contextDescription:    "remembering fragments of your childhood",
             transitionDescription: "drift back into the memory",
             descriptions:          new List<string>(_data.ContentLines),

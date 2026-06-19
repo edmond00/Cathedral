@@ -22,6 +22,12 @@ public class Spot : Element
     public override string DisplayName { get; }
     public override List<string> Descriptions { get; }
 
+    /// <summary>
+    /// Core noun used as the keyword-similarity anchor when this spot becomes an observation.
+    /// Defined explicitly at every construction site (no inference) — e.g. "stall" for a market stall.
+    /// </summary>
+    public string ReferenceLemma { get; }
+
     /// <summary>The area this spot belongs to.</summary>
     public Area ParentArea { get; }
 
@@ -31,10 +37,12 @@ public class Spot : Element
     public Spot(
         Area parentArea,
         string displayName,
+        string referenceLemma,
         List<string> descriptions)
     {
-        ParentArea   = parentArea;
-        DisplayName  = displayName;
-        Descriptions = descriptions;
+        ParentArea     = parentArea;
+        DisplayName    = displayName;
+        ReferenceLemma = referenceLemma;
+        Descriptions   = descriptions;
     }
 }

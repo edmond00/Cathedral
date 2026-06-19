@@ -116,6 +116,7 @@ public class PeakSceneFactory : SceneFactory
 
     private static Area BuildSummitApproach() => new(
         displayName: "Summit Approach",
+        referenceLemma: "summit",
         contextDescription: "on the summit approach",
         transitionDescription: "begin the summit approach",
         descriptions: new() { "A steep, exposed run of rock and scree leading toward the high places" },
@@ -124,6 +125,7 @@ public class PeakSceneFactory : SceneFactory
 
     private static Area BuildRidge() => new(
         displayName: "Ridge",
+        referenceLemma: "ridge",
         contextDescription: "on the narrow ridge",
         transitionDescription: "step onto the ridge",
         descriptions: new() { "A narrow exposed spine of rock with steep falls on either side" },
@@ -132,6 +134,7 @@ public class PeakSceneFactory : SceneFactory
 
     private static Area BuildSummitPlateau() => new(
         displayName: "Summit Plateau",
+        referenceLemma: "plateau",
         contextDescription: "on the summit plateau",
         transitionDescription: "step onto the summit plateau",
         descriptions: new() { "A flat-topped summit, exposed to the sky on every side" },
@@ -140,6 +143,7 @@ public class PeakSceneFactory : SceneFactory
 
     private static Area BuildWindsweptLedge() => new(
         displayName: "Windswept Ledge",
+        referenceLemma: "ledge",
         contextDescription: "on the windswept ledge",
         transitionDescription: "step onto the windswept ledge",
         descriptions: new() { "A jutting shelf of rock overlooking the world below" },
@@ -148,6 +152,7 @@ public class PeakSceneFactory : SceneFactory
 
     private static Area BuildIceShelf() => new(
         displayName: "Ice Shelf",
+        referenceLemma: "ice",
         contextDescription: "on the ice shelf",
         transitionDescription: "step onto the ice shelf",
         descriptions: new() { "A frozen shelf of ice glittering against rock and sky" },
@@ -156,6 +161,7 @@ public class PeakSceneFactory : SceneFactory
 
     private static Area BuildScreeGully() => new(
         displayName: "Scree Gully",
+        referenceLemma: "gully",
         contextDescription: "in the scree gully",
         transitionDescription: "descend into the scree gully",
         descriptions: new() { "A steep loose-rock channel cutting down the side of the peak" },

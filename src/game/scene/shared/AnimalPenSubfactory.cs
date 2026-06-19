@@ -16,6 +16,7 @@ public static class AnimalPenSubfactory
     {
         var pen = new Area(
             displayName: "Sheep Pen",
+            referenceLemma: "pen",
             contextDescription: "in the sheep pen",
             transitionDescription: "step into the sheep pen",
             descriptions: new() { "A timber-fenced sheep pen, sheep crowding around the trough" },
@@ -24,6 +25,7 @@ public static class AnimalPenSubfactory
 
         pen.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Trough",
+            referenceLemma: "trough",
             descriptions: new() { "A long wooden trough heaped with hay and trampled scraps" },
             items: new()
             {
@@ -35,6 +37,7 @@ public static class AnimalPenSubfactory
 
         pen.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Shearing Post",
+            referenceLemma: "post",
             descriptions: new() { "A worn post for tying sheep, wool-tufts caught in its splinters" },
             items: new()
             {
@@ -53,6 +56,7 @@ public static class AnimalPenSubfactory
     {
         var pigsty = new Area(
             displayName: "Pigsty",
+            referenceLemma: "pigsty",
             contextDescription: "by the pigsty",
             transitionDescription: "approach the pigsty",
             descriptions: new() { "A walled mud pen with grunting pigs and a heavy smell of mire" },
@@ -61,6 +65,7 @@ public static class AnimalPenSubfactory
 
         pigsty.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Trough",
+            referenceLemma: "trough",
             descriptions: new() { "A trough heaped with kitchen scraps and damp slop" },
             moods: new[] { "low", "dirty", "mucky" }
         ));
@@ -74,6 +79,7 @@ public static class AnimalPenSubfactory
     {
         var shed = new Area(
             displayName: "Dairy Shed",
+            referenceLemma: "shed",
             contextDescription: "in the dairy shed",
             transitionDescription: "step into the dairy shed",
             descriptions: new() { "A cool stone-floored shed where milk is churned and cheese is pressed" },
@@ -82,6 +88,7 @@ public static class AnimalPenSubfactory
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Churn",
+            referenceLemma: "churn",
             descriptions: new() { "A tall wooden churn with its dasher leaning against the side" },
             items: new()
             {
@@ -92,6 +99,7 @@ public static class AnimalPenSubfactory
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Mold Rack",
+            referenceLemma: "rack",
             descriptions: new() { "A timber rack of cheese molds in various stages of pressing" },
             items: new()
             {
@@ -102,6 +110,7 @@ public static class AnimalPenSubfactory
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Pail",
+            referenceLemma: "pail",
             descriptions: new() { "A wooden pail of fresh milk, foam still rising at its rim" },
             items: new()
             {
@@ -119,6 +128,7 @@ public static class AnimalPenSubfactory
     {
         var coop = new Area(
             displayName: "Chicken Coop",
+            referenceLemma: "coop",
             contextDescription: "inside the chicken coop",
             transitionDescription: "step into the chicken coop",
             descriptions: new() { "A low timber coop crowded with hens, smelling of damp feathers and droppings" },
@@ -127,6 +137,7 @@ public static class AnimalPenSubfactory
 
         coop.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Nest Box",
+            referenceLemma: "nest",
             descriptions: new() { "A row of straw-lined boxes where the hens lay" },
             items: new()
             {

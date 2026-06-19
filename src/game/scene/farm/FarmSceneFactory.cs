@@ -322,6 +322,7 @@ public class FarmSceneFactory : SceneFactory
     {
         var area = new Area(
             displayName: "Courtyard",
+            referenceLemma: "courtyard",
             contextDescription: "standing in the farmyard courtyard",
             transitionDescription: "enter the courtyard",
             descriptions: new() { "The muddy central yard of the farm, hemmed by low fences and outbuildings" },
@@ -334,6 +335,7 @@ public class FarmSceneFactory : SceneFactory
     {
         var garden = new Area(
             displayName: "Vegetable Garden",
+            referenceLemma: "garden",
             contextDescription: "in the kitchen garden",
             transitionDescription: "walk into the vegetable garden",
             descriptions: new() { "Rows of root vegetables and cabbages, stakes and string keeping order" },
@@ -368,6 +370,7 @@ public class FarmSceneFactory : SceneFactory
     {
         var orchard = new Area(
             displayName: "Orchard",
+            referenceLemma: "orchard",
             contextDescription: "under the orchard trees",
             transitionDescription: "walk into the orchard",
             descriptions: new() { "A half-dozen gnarled fruit trees, their branches tangled overhead" },
@@ -394,6 +397,7 @@ public class FarmSceneFactory : SceneFactory
     {
         var shed = new Area(
             displayName: "Storage Shed",
+            referenceLemma: "shed",
             contextDescription: "inside the storage shed",
             transitionDescription: "step into the storage shed",
             descriptions: new() { "A low-roofed storage shed smelling of hay, rust, and old wood" },
@@ -402,6 +406,7 @@ public class FarmSceneFactory : SceneFactory
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Hay Stack",
+            referenceLemma: "hay",
             descriptions: new() { "A compressed stack of hay rising to the shed roof" },
             items: new()
             {
@@ -414,6 +419,7 @@ public class FarmSceneFactory : SceneFactory
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Grain Sacks",
+            referenceLemma: "grain",
             descriptions: new() { "Cloth sacks of dried grain stacked along the wall" },
             items: new()
             {
@@ -425,6 +431,7 @@ public class FarmSceneFactory : SceneFactory
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Tool Rack",
+            referenceLemma: "tool",
             descriptions: new() { "A wooden rack of farm tools hanging from iron pegs" },
             items: new()
             {
@@ -437,6 +444,7 @@ public class FarmSceneFactory : SceneFactory
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Barrel",
+            referenceLemma: "barrel",
             descriptions: new() { "A heavy oak barrel, iron-banded and full" },
             items: new()
             {
@@ -452,6 +460,7 @@ public class FarmSceneFactory : SceneFactory
 
     private static PointOfInterest BuildTurnipBed() => new(
         displayName: "Turnip Bed",
+        referenceLemma: "turnip",
         descriptions: new() { "A row of swollen turnips half-emerged from the dark earth" },
         items: new() { new ItemElement(new Turnip()), new ItemElement(new Turnip()) },
         moods: new[] { "earthy", "neat", "green", "damp" }
@@ -459,6 +468,7 @@ public class FarmSceneFactory : SceneFactory
 
     private static PointOfInterest BuildCarrotBed() => new(
         displayName: "Carrot Bed",
+        referenceLemma: "carrot",
         descriptions: new() { "A bed of carrots, feathery tops waving above the soil" },
         items: new() { new ItemElement(new Carrot()), new ItemElement(new Carrot()) },
         moods: new[] { "bright", "feathery", "neat", "damp" }
@@ -466,6 +476,7 @@ public class FarmSceneFactory : SceneFactory
 
     private static PointOfInterest BuildRadishBed() => new(
         displayName: "Radish Bed",
+        referenceLemma: "radish",
         descriptions: new() { "A bed of fat-skinned radishes pushing through the soil" },
         items: new() { new ItemElement(new Radish()), new ItemElement(new Radish()) },
         moods: new[] { "neat", "earthy", "red-topped" }
@@ -473,6 +484,7 @@ public class FarmSceneFactory : SceneFactory
 
     private static PointOfInterest BuildBeetrootBed() => new(
         displayName: "Beetroot Bed",
+        referenceLemma: "beetroot",
         descriptions: new() { "A row of beetroots, leaves dark with a wine-stained edge" },
         items: new() { new ItemElement(new Beetroot()), new ItemElement(new Beetroot()) },
         moods: new[] { "ordered", "dark-leaved", "earthy" }
@@ -480,6 +492,7 @@ public class FarmSceneFactory : SceneFactory
 
     private static PointOfInterest BuildParsnipBed() => new(
         displayName: "Parsnip Bed",
+        referenceLemma: "parsnip",
         descriptions: new() { "A row of parsnips, pale tops half-buried in damp soil" },
         items: new() { new ItemElement(new Parsnip()), new ItemElement(new Parsnip()) },
         moods: new[] { "ordered", "pale", "earthy" }
@@ -487,6 +500,7 @@ public class FarmSceneFactory : SceneFactory
 
     private static PointOfInterest BuildOnionBed() => new(
         displayName: "Onion Bed",
+        referenceLemma: "onion",
         descriptions: new() { "A row of onions, papery tops yellowing as they ripen" },
         items: new() { new ItemElement(new Onion()), new ItemElement(new Onion()) },
         moods: new[] { "papery", "ordered", "yellowing" }
@@ -494,6 +508,7 @@ public class FarmSceneFactory : SceneFactory
 
     private static PointOfInterest BuildLeekBed() => new(
         displayName: "Leek Bed",
+        referenceLemma: "leek",
         descriptions: new() { "A row of leeks, dark-green leaves rising in tidy ranks" },
         items: new() { new ItemElement(new Leek()), new ItemElement(new Leek()) },
         moods: new[] { "ordered", "tall", "dark-leaved" }
@@ -501,6 +516,7 @@ public class FarmSceneFactory : SceneFactory
 
     private static PointOfInterest BuildCabbageBed() => new(
         displayName: "Cabbage Bed",
+        referenceLemma: "cabbage",
         descriptions: new() { "A row of round cabbages, leaves curling tightly around their cores" },
         items: new() { new ItemElement(new Cabbage()), new ItemElement(new Cabbage()) },
         moods: new[] { "rounded", "ordered", "green" }
@@ -508,6 +524,7 @@ public class FarmSceneFactory : SceneFactory
 
     private static PointOfInterest BuildPeaBed() => new(
         displayName: "Pea Bed",
+        referenceLemma: "pea",
         descriptions: new() { "A row of pea-vines climbing wooden stakes, pods hanging plump" },
         items: new() { new ItemElement(new Pea()), new ItemElement(new Pea()) },
         moods: new[] { "climbing", "tangled", "green", "fresh" }

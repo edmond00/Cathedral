@@ -151,6 +151,7 @@ public class HouseBuilder
 
     private static Area BuildHall(string mat) => new(
         displayName: "Hall",
+        referenceLemma: "hall",
         contextDescription: "standing in the farmhouse hall",
         transitionDescription: "enter the hall",
         descriptions: new() { $"The main room of the farmhouse — {mat} beams overhead, a hearthstone at one end, the smell of woodsmoke and tallow" },
@@ -159,6 +160,7 @@ public class HouseBuilder
 
     private static Area BuildKitchen(string mat) => new(
         displayName: "Kitchen",
+        referenceLemma: "kitchen",
         contextDescription: "in the farmhouse kitchen",
         transitionDescription: "step into the kitchen",
         descriptions: new() { $"A cramped kitchen with a clay hearth, a roughhewn table, and shelves of crockery and hanging herbs" },
@@ -167,6 +169,7 @@ public class HouseBuilder
 
     private static Area BuildPantry(string mat) => new(
         displayName: "Pantry",
+        referenceLemma: "pantry",
         contextDescription: "in the farmhouse pantry",
         transitionDescription: "step into the pantry",
         descriptions: new() { "A cool storage room with shelves and barrels, smelling of grain, salt, and dried meat" },
@@ -175,6 +178,7 @@ public class HouseBuilder
 
     private static Area BuildUpperLanding(string mat) => new(
         displayName: "Upper Landing",
+        referenceLemma: "landing",
         contextDescription: "on the upper landing of the farmhouse",
         transitionDescription: "reach the upper landing",
         descriptions: new() { "A narrow landing at the top of the stairs, planked floor creaking with every step" },
@@ -187,6 +191,7 @@ public class HouseBuilder
         var name  = index < names.Length ? names[index] : $"Bedroom {index + 1}";
         return new(
             displayName: name,
+            referenceLemma: "bedroom",
             contextDescription: $"inside the {name.ToLowerInvariant()}",
             transitionDescription: $"enter the {name.ToLowerInvariant()}",
             descriptions: new() { "A sparse sleeping room with a straw pallet and a wooden chest" },
@@ -367,18 +372,21 @@ public class HouseBuilder
 
     private static PointOfInterest BuildHearthPointOfInterest() => new(
         displayName: "Stone Hearth",
+        referenceLemma: "hearth",
         descriptions: new() { "A wide stone hearth, ash-grey and cold between meals" },
         moods: new[] { "cold", "grey", "wide", "sooty", "still" }
     );
 
     private static PointOfInterest BuildTrestleTablePointOfInterest() => new(
         displayName: "Trestle Table",
+        referenceLemma: "table",
         descriptions: new() { "A long trestle table of rough wood, benches tucked beneath" },
         moods: new[] { "worn", "scarred", "long", "simple", "communal" }
     );
 
     private static PointOfInterest BuildCookingHearthPointOfInterest() => new(
         displayName: "Cooking Hearth",
+        referenceLemma: "hearth",
         descriptions: new() { "A clay-rimmed cooking hearth with an iron hook and suspended pot" },
         moods: new[] { "warm", "sooty", "smoky", "active", "dim" }
     );
@@ -389,6 +397,7 @@ public class HouseBuilder
         if (rng.NextDouble() < 0.60) items.Add(new(new WoodenBowl()));
         return new PointOfInterest(
             displayName: "Kitchen Shelf",
+            referenceLemma: "shelf",
             descriptions: new() { "Rough wooden shelves holding crockery, a salt block, and hanging herbs" },
             items: items,
             moods: new[] { "cluttered", "fragrant", "dim", "crammed" }
@@ -399,6 +408,7 @@ public class HouseBuilder
     {
         var poi = new PointOfInterest(
             displayName: "Storage Barrel",
+            referenceLemma: "barrel",
             descriptions: new() { "A wide oak barrel, banded in iron, sealed with a waxed stopper" },
             moods: new[] { "heavy", "solid", "dim", "full", "old" }
         );
@@ -410,6 +420,7 @@ public class HouseBuilder
     {
         var poi = new PointOfInterest(
             displayName: "Storage Shelf",
+            referenceLemma: "shelf",
             descriptions: new() { "Sagging wooden shelves stacked with sacks and provisions" },
             moods: new[] { "cluttered", "low", "dim", "heavy" }
         );
@@ -423,6 +434,7 @@ public class HouseBuilder
         var items = new List<ItemElement> { new(pool[rng.Next(pool.Length)]()) };
         return new PointOfInterest(
             displayName: "Cold Shelf",
+            referenceLemma: "shelf",
             descriptions: new() { "A low stone shelf in the coolest corner, used for perishables" },
             items: items,
             moods: new[] { "cool", "dim", "quiet", "still" }
@@ -435,6 +447,7 @@ public class HouseBuilder
         if (rng.NextDouble() < 0.40) items.Add(new(new WoolCap()));
         return new PointOfInterest(
             displayName: "Straw Pallet",
+            referenceLemma: "pallet",
             descriptions: new() { "A straw-stuffed pallet on a low wooden frame — the sleeping place" },
             items: items,
             moods: new[] { "sparse", "low", "quiet", "lumpy", "still" }
@@ -446,6 +459,7 @@ public class HouseBuilder
         var items = PickFromPool(rng, ChestPool(), 0, 2);
         var poi   = new PointOfInterest(
             displayName: "Wooden Chest",
+            referenceLemma: "chest",
             descriptions: new() { "A sturdy chest with a hasp lock, sitting at the foot of the bed" },
             moods: new[] { "battered", "solid", "quiet", "closed" }
         );
@@ -457,6 +471,7 @@ public class HouseBuilder
 
     private static PointOfInterest BuildCandleStandPointOfInterest() => new(
         displayName: "Candle Stand",
+        referenceLemma: "candle",
         descriptions: new() { "A tall wooden post with an iron spike for a candle, black with old wax" },
         items: new() { new ItemElement(new Candle()) },
         moods: new[] { "dim", "waxy", "quiet", "old" }
@@ -464,12 +479,14 @@ public class HouseBuilder
 
     private static PointOfInterest BuildSpinningWheelPointOfInterest() => new(
         displayName: "Spinning Wheel",
+        referenceLemma: "wheel",
         descriptions: new() { "A worn wooden spinning wheel in the corner, the spindle dusty from disuse" },
         moods: new[] { "quiet", "worn", "still", "dusty", "old" }
     );
 
     private static PointOfInterest BuildRushMatPointOfInterest() => new(
         displayName: "Rush Mat",
+        referenceLemma: "mat",
         descriptions: new() { "A woven mat of dried rushes by the door, muddy at the edges" },
         moods: new[] { "flat", "earthy", "dry", "worn" }
     );
@@ -480,6 +497,7 @@ public class HouseBuilder
         if (rng.NextDouble() < 0.50) items.Add(new(new Onion()));
         return new PointOfInterest(
             displayName: "Hanging Herbs",
+            referenceLemma: "herb",
             descriptions: new() { "Bundles of dried herbs and roots strung from a rafter, rustling in the draught" },
             items: items,
             moods: new[] { "fragrant", "dim", "rustic", "dry", "dangling" }
@@ -492,6 +510,7 @@ public class HouseBuilder
         if (rng.NextDouble() < 0.50) items.Add(new(new Tallow()));
         return new PointOfInterest(
             displayName: "Salting Barrel",
+            referenceLemma: "barrel",
             descriptions: new() { "A wide barrel of dark brine in which cuts of meat are preserved" },
             items: items,
             moods: new[] { "pungent", "dim", "dark", "heavy", "close" }
@@ -500,6 +519,7 @@ public class HouseBuilder
 
     private static PointOfInterest BuildMortarAndPestlePointOfInterest() => new(
         displayName: "Mortar and Pestle",
+        referenceLemma: "mortar",
         descriptions: new() { "A heavy stone mortar and pestle, stained dark with ground herbs and spices" },
         moods: new[] { "heavy", "old", "stained", "solid" }
     );
@@ -510,6 +530,7 @@ public class HouseBuilder
         if (rng.NextDouble() < 0.40) items.Add(new(new Knife()));
         return new PointOfInterest(
             displayName: "Butcher Block",
+            referenceLemma: "block",
             descriptions: new() { "A thick scarred chopping block of end-grain wood, stained dark" },
             items: items,
             moods: new[] { "scarred", "heavy", "dark", "old", "solid" }
@@ -518,18 +539,21 @@ public class HouseBuilder
 
     private static PointOfInterest BuildWashstandPointOfInterest() => new(
         displayName: "Washstand",
+        referenceLemma: "washstand",
         descriptions: new() { "A low wooden stand holding a clay basin and ewer for washing" },
         moods: new[] { "low", "plain", "cold", "damp", "sparse" }
     );
 
     private static PointOfInterest BuildChamberPotPointOfInterest() => new(
         displayName: "Chamber Pot",
+        referenceLemma: "pot",
         descriptions: new() { "A glazed clay chamber pot tucked under the bed" },
         moods: new[] { "plain", "utilitarian", "dim", "quiet" }
     );
 
     private static PointOfInterest BuildPrayerStoolPointOfInterest() => new(
         displayName: "Prayer Stool",
+        referenceLemma: "stool",
         descriptions: new() { "A simple kneeling stool worn smooth in the middle from long use" },
         moods: new[] { "quiet", "worn", "plain", "still", "humble" }
     );
@@ -541,6 +565,7 @@ public class HouseBuilder
         if (rng.NextDouble() < 0.50) items.Add(new(new LinenTunic()));
         return new PointOfInterest(
             displayName: "Clothes Pegs",
+            referenceLemma: "peg",
             descriptions: new() { "A row of wooden pegs hammered into the wall for hanging clothes" },
             items: items,
             moods: new[] { "plain", "bare", "utilitarian", "dim" }
@@ -549,6 +574,7 @@ public class HouseBuilder
 
     private static PointOfInterest BuildRushLightPointOfInterest() => new(
         displayName: "Rush Light",
+        referenceLemma: "light",
         descriptions: new() { "A tallow rush-light on an iron spike, the wick pinched and black" },
         items: new() { new ItemElement(new Candle()) },
         moods: new[] { "dim", "sooty", "cold", "plain" }

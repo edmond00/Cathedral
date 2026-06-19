@@ -803,6 +803,13 @@ public static class Config
     /// </summary>
     public static class LLM
     {
+        /// <summary>
+        /// File name of the single GGUF model to load, located directly in the <c>models</c>
+        /// directory. There is no size selection — this exact file is always used. If it is
+        /// missing the game prints an error naming this file and exits.
+        /// </summary>
+        public const string ModelFileName = "qwen2.5-3b-instruct-q4_k_m.gguf";
+
         // Sampling parameters (narrative generation and constrained single-token requests)
         public const int GenerationMaxTokens = 512;
 

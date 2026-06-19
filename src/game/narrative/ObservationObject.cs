@@ -45,16 +45,10 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     /// One word naming the object's core noun (e.g. "tree", "well", "scarecrow"), used as the
     /// anchor when picking the clickable keyword: the noun in the generated text most semantically
     /// related to this word becomes the keyword. The keyword extractor lemmatizes this value, so a
-    /// plural head word ("stones") still anchors on its lemma ("stone").
+    /// plural head word ("stones") still anchors on its lemma ("stone"). Defined explicitly by every
+    /// concrete observation object — never inferred from the display name.
     /// </summary>
     public abstract string ReferenceLemma { get; }
-
-    /// <summary>Last whitespace-delimited word of a display name, lower-cased — a reasonable core noun.</summary>
-    protected static string HeadWord(string name)
-    {
-        var parts = (name ?? "").Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length == 0 ? "" : parts[^1].ToLowerInvariant();
-    }
 
     /// <summary>
     /// All concrete sub-outcomes reachable through this observation (items, node transitions).
