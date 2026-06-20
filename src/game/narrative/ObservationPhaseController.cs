@@ -85,7 +85,7 @@ public class ObservationPhaseController
 
         // First object: chosen by the Modus Mentis, observed without a transition.
         var first = await ChooseObservationObjectAsync(slotId, allOutcomes, modusMentis, ct);
-        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct);
+        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isPhaseOpener: true);
 
         // Second object (if any): chosen from the remaining objects, reached via one transition.
         var remaining = allOutcomes.Where(o => o != first).ToList();
@@ -138,7 +138,7 @@ public class ObservationPhaseController
         var sentences = new List<NarrationSentence>();
 
         // 1. Observe the clicked object (no transition).
-        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct);
+        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct, isPhaseOpener: true);
 
         // 2. A second object chosen by the Modus Mentis from the remaining objects, reached via a transition.
         var remaining = currentNode.GetAllDirectConcreteOutcomes()
@@ -174,9 +174,12 @@ public class ObservationPhaseController
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Appends one object's observation to <paramref name="sentences"/>: an optional bridging
-    /// transition (by NeutralName) followed by the observation sentence (by NeutralDescription),
-    /// which yields the clickable keyword mapped to <paramref name="outcome"/>.
+    /// Appends one object's observation to <paramref name="sentences"/> as two sentences: an
+    /// attention line naming the object by its simple phrase ("drawn to" for the first object,
+    /// "shifts to" for a later one), followed by a detail line giving its richer description, which
+    /// yields the clickable keyword mapped to <paramref name="outcome"/>.
+    /// When <paramref name="isPhaseOpener"/> is set (the very first sentence of the phase), the
+    /// attention line is GBNF-constrained to start with "I " so the whole block opens in first person.
     /// </summary>
     private async Task AppendObservationAsync(
         List<NarrationSentence> sentences,
@@ -187,24 +190,25 @@ public class ObservationPhaseController
         ConcreteOutcome outcome,
         bool withTransition,
         int locationId,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool isPhaseOpener = false)
     {
         try
         {
-            if (withTransition)
-            {
-                var transNeutral = NeutralNarration.Observation(isFirst: false, isTransition: true, GetNeutralPhrase(outcome, locationId));
-                var transText = await _rewriter.RewriteAsync(slotId, transNeutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, ct: ct);
-                sentences.Add(new NarrationSentence(transText, new List<string>()));
-            }
+            // Attention line: name the object by its simple phrase ("drawn to" / "shifts to").
+            // The phase opener is forced into first person ("I ...") to anchor the PoV of the block.
+            var attnNeutral = NeutralNarration.ObservationAttention(isFirst: !withTransition, GetNeutralPhrase(outcome, locationId));
+            var attnText = await _rewriter.RewriteAsync(slotId, attnNeutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: isPhaseOpener ? "I " : null, ct: ct);
+            sentences.Add(new NarrationSentence(attnText, new List<string>()));
 
-            var obsNeutral = NeutralNarration.Observation(isFirst: !withTransition, isTransition: false, GetNeutralDescription(outcome, locationId));
-            var obsText = await _rewriter.RewriteAsync(slotId, obsNeutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, ct: ct);
+            // Detail line: the object's richer description; this is the sentence that yields the keyword.
+            var detailNeutral = NeutralNarration.ObservationDetail(GetNeutralDescription(outcome, locationId));
+            var detailText = await _rewriter.RewriteAsync(slotId, detailNeutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, ct: ct);
 
             // Keyword is chosen by rule from the final (sanitized) text — the noun most related to the object.
-            var kw = KeywordExtractor.ExtractKeyword(obsText, GetReferenceLemma(outcome));
+            var kw = KeywordExtractor.ExtractKeyword(detailText, GetReferenceLemma(outcome));
             var kws = kw != null ? new List<string> { kw } : new List<string>();
-            sentences.Add(new NarrationSentence(obsText, kws));
+            sentences.Add(new NarrationSentence(detailText, kws));
             if (kw != null)
             {
                 allKeywords.Add(kw);
@@ -325,9 +329,9 @@ public class ObservationPhaseController
             var r2 = speakingModusMentis.PersonaReminder2;
             var descr = GetNeutralDescription(linkedOutcome, locationId);
 
-            var sentence1 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Attention(companionName), NarrationKind.Speaking, r2, companionName, keepHistory: true, ct)).Trim().Trim('"');
-            var sentence2 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Description(descr), NarrationKind.Speaking, r2, companionName, keepHistory: true, ct)).Trim().Trim('"');
-            var sentence3 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Question(), NarrationKind.Speaking, r2, companionName, keepHistory: true, ct)).Trim().Trim('"');
+            var sentence1 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Attention(companionName), NarrationKind.Speaking, r2, companionName, keepHistory: true, ct: ct)).Trim().Trim('"');
+            var sentence2 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Description(descr), NarrationKind.Speaking, r2, companionName, keepHistory: true, ct: ct)).Trim().Trim('"');
+            var sentence3 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Question(), NarrationKind.Speaking, r2, companionName, keepHistory: true, ct: ct)).Trim().Trim('"');
 
             var parts = new[] { sentence1, sentence2, sentence3 }
                 .Where(s => !string.IsNullOrWhiteSpace(s))

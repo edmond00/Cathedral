@@ -13,12 +13,14 @@ public static class LLMSchemaConfig
     /// <summary>
     /// Generic persona-rewrite schema: a single styled-text field. Used for every neutral→persona
     /// rewrite (reasoning, action, outcome, speaking, dialogue) that does not surface a keyword.
+    /// <paramref name="forcedPrefix"/>, when set, becomes a literal prefix the generated value must
+    /// start with (e.g. <c>"I "</c> to force a first-person opening) — encoded straight into the GBNF.
     /// </summary>
-    public static CompositeField CreateRewriteSchema(string fieldName = "text")
+    public static CompositeField CreateRewriteSchema(string fieldName = "text", string? forcedPrefix = null)
     {
         return new CompositeField("Rewrite",
             new TemplateStringField(fieldName,
-                Template: "<generated>",
+                Template: string.IsNullOrEmpty(forcedPrefix) ? "<generated>" : $"{forcedPrefix}<generated>",
                 MinGenLength: 15,
                 MaxGenLength: 400,
                 FirstSentenceMaxLength: 200)

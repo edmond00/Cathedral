@@ -38,6 +38,8 @@ public class PersonaRewriter
     /// <paramref name="keepHistory"/> preserves the slot's conversation for stylistic continuity
     /// across a multi-sentence batch (the caller resets the slot at the batch boundary).
     /// </summary>
+    /// <param name="forcedPrefix">When set (e.g. <c>"I "</c>), the rewritten text is constrained by
+    /// GBNF to start with this literal — used to force a first-person opening on the observation opener.</param>
     public async Task<string> RewriteAsync(
         int slotId,
         string neutralText,
@@ -45,12 +47,13 @@ public class PersonaRewriter
         string? personaReminder2 = null,
         string? addressee = null,
         bool keepHistory = false,
+        string? forcedPrefix = null,
         CancellationToken ct = default)
     {
         if (PlaygroundMode.IsActive) return neutralText;
 
         string prompt = BuildPrompt(neutralText, InstructionFor(kind, addressee), FooterFor(kind, personaReminder2, TextHint));
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateRewriteSchema());
+        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateRewriteSchema(forcedPrefix: forcedPrefix));
         string json = await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
 
         string text = ParseField(json, "text");

@@ -21,16 +21,23 @@ public static class NeutralNarration
     // ── Observation ────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Builds an observation sentence around a neutral description (e.g. "wind-blown A
-    /// straw-stuffed figure", "wheat strip", "Hugh Furrow"), normalised to a clean noun phrase.
+    /// Builds the attention sentence that opens an observation, naming the object by a simple noun
+    /// phrase (e.g. "a straw figure", "Hugh Furrow"). The first object of a phase is "drawn to";
+    /// any later object is "shifts to". The richer detail follows in <see cref="ObservationDetail"/>.
     /// </summary>
-    public static string Observation(bool isFirst, bool isTransition, string subject)
+    public static string ObservationAttention(bool isFirst, string simpleName)
     {
-        var s = NounPhrase(subject);
-        return isFirst      ? $"My attention is drawn to {s}."
-             : isTransition ? $"My attention shifts to {s}."
-                            : $"I look more closely at {s}.";
+        var s = NounPhrase(simpleName);
+        return isFirst ? $"My attention is drawn to {s}."
+                       : $"My attention shifts to {s}.";
     }
+
+    /// <summary>
+    /// Builds the detail sentence that follows the attention line, giving the object's richer
+    /// description (e.g. "a wind-blown straw-stuffed figure"), normalised to a clean noun phrase.
+    /// </summary>
+    public static string ObservationDetail(string description)
+        => $"This is {NounPhrase(description)}.";
 
     // ── Thinking ───────────────────────────────────────────────────────────────
 

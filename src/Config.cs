@@ -503,7 +503,7 @@ public static class Config
         public const int TargetKeywordCount = 10;
 
         /// <summary>Tail appended after the JSON-format clause to enforce concise, grounded responses.</summary>
-        private const string AnswerInstructionTail = "Answer in one short sentence and stop. Use only the given information; no invention.";
+        private const string AnswerInstructionTail = "Answer in one short sentence and stop. Keep every literal fact from the given information and invent no new facts, names, objects or events — but figures of speech (metaphor, comparison, imagery) and inner feelings (hope, regret, dread) that fit your character are welcome.";
 
         /// <summary>
         /// Builds the "Respond in JSON format" clause. When <paramref name="jsonHint"/> is given
