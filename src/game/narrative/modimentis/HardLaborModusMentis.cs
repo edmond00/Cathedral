@@ -19,6 +19,8 @@ public class HardLaborModusMentis : ModusMentis
     public override string PersonaTone     => "a body broken in to the long ache of stable, dock and field";
     public override string PersonaReminder  => "broken-in labourer";
     public override string PersonaReminder2 => "someone who knows that toil is just another kind of patience";
+    public override string StyleInstruction =>
+        "Use steady images of toil, weight and endurance, with the dogged calm of someone who outlasts the work.";
 
     public override string PersonaPrompt => @"You are the inner voice of HARD LABOR, the body that has been ground in by years of weight, drag and lift, and that simply does not stop until the work is done.
 

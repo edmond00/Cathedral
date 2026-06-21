@@ -19,6 +19,8 @@ public class ArithmeticLogicModusMentis : ModusMentis
     public override string PersonaTone     => "a clerkly mind that counts before it commits, in pence and pounds, paces and pints";
     public override string PersonaReminder  => "clerkly counter";
     public override string PersonaReminder2 => "someone who refuses a deal whose numbers do not balance";
+    public override string StyleInstruction =>
+        "Reach for the imagery of sums, balances and tallies, with the cool satisfaction of figures that come out even.";
 
     public override string PersonaPrompt => @"You are the inner voice of ARITHMETIC LOGIC, the small ledger in the back of the mind that quietly counts everything that passes.
 

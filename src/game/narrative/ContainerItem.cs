@@ -39,6 +39,6 @@ public abstract class ContainerItem : Item
     /// <summary>Remove <paramref name="item"/> from the container. Returns false when not present.</summary>
     public bool TryRemove(Item item) => Contents.Remove(item);
 
-    // ContainerItem is BeltGear type (worn on belt / back)
-    public override List<ItemType> Types => new() { ItemType.BeltGear };
+    // ContainerItem is Outerwear type (worn on the back, like a backpack)
+    public override List<ItemType> Types => new() { ItemType.Outerwear };
 }

@@ -75,7 +75,7 @@ public class ThinkingExecutor
         {
             string ignoreNeutral = NeutralNarration.ReasoningIgnore(targetDescription);
             string ignoreReasoning = await _rewriter.RewriteAsync(
-                thinkingSlot, ignoreNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, ct: cancellationToken);
+                thinkingSlot, ignoreNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, ct: cancellationToken);
             return new ThinkingResponse
             {
                 ReasoningText = ignoreReasoning,
@@ -96,13 +96,13 @@ public class ThinkingExecutor
         // ── Flavor: reasoning (thinking slot) ───────────────────────────────────
         string reasoningNeutral = NeutralNarration.ReasoningChain(targetDescription, goalPhrase, skill.SkillMeans);
         string reasoningText = await _rewriter.RewriteAsync(
-            thinkingSlot, reasoningNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, ct: cancellationToken);
+            thinkingSlot, reasoningNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, ct: cancellationToken);
 
         // ── Flavor: action text (action skill slot) ─────────────────────────────
         int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(skill);
         _llmManager.ResetInstance(actionSlot);
         string styledAction = await _rewriter.RewriteAsync(
-            actionSlot, NeutralNarration.ActionIntent(goalPhrase), NarrationKind.Action, skill.PersonaReminder2, ct: cancellationToken);
+            actionSlot, NeutralNarration.ActionIntent(goalPhrase), NarrationKind.Action, skill.PersonaReminder2, styleInstruction: skill.StyleInstruction, ct: cancellationToken);
         if (string.IsNullOrWhiteSpace(styledAction)) styledAction = goalPhrase;
 
         var action = new ParsedNarrativeAction
@@ -208,7 +208,7 @@ public class ThinkingExecutor
         int slot = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
         _llmManager.ResetInstance(slot);
         string neutral = $"I could use {item.WithArticle()} to help me {ActionDisplay(originalAction)}.";
-        return await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Reasoning, mm.PersonaReminder2, ct: cancellationToken);
+        return await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Reasoning, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, ct: cancellationToken);
     }
 
     /// <summary>
@@ -229,7 +229,7 @@ public class ThinkingExecutor
         int slot = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
         _llmManager.ResetInstance(slot);
         string neutral = $"{ActionDisplay(originalAction)} using {item.WithArticle()}";
-        string styled = await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Action, mm.PersonaReminder2, ct: cancellationToken);
+        string styled = await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Action, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, ct: cancellationToken);
         if (string.IsNullOrWhiteSpace(styled)) return null;
         return styled.StartsWith("try to ", StringComparison.OrdinalIgnoreCase) ? styled.Substring(7) : styled;
     }

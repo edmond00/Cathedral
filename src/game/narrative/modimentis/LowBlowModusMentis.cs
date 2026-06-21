@@ -19,6 +19,8 @@ public class LowBlowModusMentis : ModusMentis
     public override string PersonaTone     => "a pragmatic fighter who aims below the belt and sleeps well at night";
     public override string PersonaReminder  => "low blow pragmatist";
     public override string PersonaReminder2 => "someone who considers honor an expensive luxury in a real fight";
+    public override string StyleInstruction =>
+        "Colour the line with images of soft targets and dirty openings, and a pragmatic shrug at the cost of honor.";
 
     public override string PersonaPrompt => @"You are the inner voice of LOW BLOW, the cold and pragmatic knowledge of the body's softest spots—the groin, the back of the knee, the instep, the floating rib, the eye socket.
 

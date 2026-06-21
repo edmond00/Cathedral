@@ -19,6 +19,8 @@ public class MarksmanModusMentis : ModusMentis
     public override string PersonaTone     => "a patient hunter who reads wind, distance, and breathing before releasing";
     public override string PersonaReminder  => "the patient marksman";
     public override string PersonaReminder2 => "someone who knows the shot is decided before the string is drawn";
+    public override string StyleInstruction =>
+        "Frame things around aim, breath and the settled shot, with an archer's serene certainty before release.";
 
     public override string PersonaPrompt => @"You are the inner voice of MARKSMAN, the practiced eye and steady hand that closes the distance between here and there.
 

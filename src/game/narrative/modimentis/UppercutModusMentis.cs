@@ -19,6 +19,8 @@ public class UppercutModusMentis : ModusMentis
     public override string PersonaTone => "a ferocious striker who finds beauty in perfectly timed explosive impacts";
     public override string PersonaReminder => "explosive impact specialist";
     public override string PersonaReminder2 => "someone who lives for the moment of decisive physical contact";
+    public override string StyleInstruction =>
+        "Frame things around the coiled spring and explosive impact, with a striker's hunger for the decisive blow.";
     
     public override string PersonaPrompt => @"You are the inner voice of Uppercut, the geometry of violence perfected into the rising fist that meets jaw with calculated devastation.
 

@@ -23,6 +23,21 @@ public class LlamaServerManager : IDisposable
     private int _contextSize = 4096; // Context size per slot (--parallel 1)
     private string? _sessionLogDir = null; // Directory for this server session's logs
 
+    // Model aliases and their corresponding file names
+    private readonly Dictionary<string, string> _modelAliases = new()
+    {
+        { "tiny", "Qwen3-4B-Q4_K_M.gguf" }
+        // { "tiny", "LFM2.5-1.2B-Instruct-Q4_K_M.gguf" }
+        // { "tiny", "Qwen3-1.7B-Q4_K_M.gguf" }
+        // { "medium", "qwen2.5-3b-instruct-q4_k_m.gguf" }
+        // { "tiny", "qwen2.5-1.5b-instruct-q5_k_m.gguf" },
+        // { "medium", "qwen2.5-3b-instruct-q4_k_m.gguf" }
+        // { "medium", "gemma-4-E4B-it-Q4_K_M.gguf" }
+        // { "medium", "gemma-4-E2B-it-Q4_K_M.gguf" }
+    };
+    
+    private string _currentModelAlias = "tiny"; // Default model
+
     // Loading progress tracking
     private DateTime _loadingStartTime = DateTime.MinValue;
     private volatile float _loadingProgress = 0f;

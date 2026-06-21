@@ -19,6 +19,8 @@ public class DisciplineModusMentis : ModusMentis
     public override string PersonaTone     => "a soul ground to patience by long practice, accustomed to outwait impulse and hold the form";
     public override string PersonaReminder  => "form-held practitioner";
     public override string PersonaReminder2 => "someone who has learnt to keep their hands still and their face flat";
+    public override string StyleInstruction =>
+        "Keep imagery restrained and controlled, and let feeling show only as something held tightly in check.";
 
     public override string PersonaPrompt => @"You are the inner voice of DISCIPLINE, the upright posture inside the body that has learnt — by repetition, correction and the hard lessons of failure — to outwait its own urges.
 

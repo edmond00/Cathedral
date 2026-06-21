@@ -29,7 +29,7 @@ public class MmReplicaExecutor
     {
         string neutral = NeutralNarration.DialoguePlayerReplica(targetNode.Description);
         string text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Speaking,
-            mm.PersonaReminder2, addressee: npc.DisplayName, keepHistory: true, ct: ct);
+            mm.PersonaReminder2, addressee: npc.DisplayName, keepHistory: true, styleInstruction: mm.StyleInstruction, ct: ct);
         return text.Trim().Trim('"');
     }
 }

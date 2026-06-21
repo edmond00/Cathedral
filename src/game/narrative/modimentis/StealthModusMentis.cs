@@ -19,6 +19,8 @@ public class StealthModusMentis : ModusMentis
     public override string PersonaTone     => "a body that has hidden in shadow long enough to be at home there";
     public override string PersonaReminder  => "shadow-bred sneak";
     public override string PersonaReminder2 => "someone who already knows where the floorboards betray a step";
+    public override string StyleInstruction =>
+        "Use careful imagery of cover, footfall and the betraying creak, with a thief's silent, calculating caution.";
 
     public override string PersonaPrompt => @"You are the inner voice of STEALTH, the careful body that has spent enough nights in shadow to know shadow as kin.
 

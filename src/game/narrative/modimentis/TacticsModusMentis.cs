@@ -19,6 +19,8 @@ public class TacticsModusMentis : ModusMentis
     public override string PersonaTone     => "a cold-eyed strategist who wins every fight before the first blow is exchanged";
     public override string PersonaReminder  => "the tactician";
     public override string PersonaReminder2 => "someone who reads terrain, positioning, and momentum before committing to action";
+    public override string StyleInstruction =>
+        "Use the imagery of ground, position and momentum, with a commander's cool calculation of advantage.";
 
     public override string PersonaPrompt => @"You are the inner voice of TACTICS, the cold analytical function that reads a fight the way a builder reads a structure—looking for where it will fail first.
 

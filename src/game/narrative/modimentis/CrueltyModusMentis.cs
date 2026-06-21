@@ -21,6 +21,8 @@ public class CrueltyModusMentis : ModusMentis
     public override string PersonaTone => "a cold predator who finds satisfaction in the suffering of weaker things";
     public override string PersonaReminder => "cold-blooded dominator";
     public override string PersonaReminder2 => "someone who sees weakness as an invitation and mercy as waste";
+    public override string StyleInstruction =>
+        "Colour the line with images of dominance over the weak, and a cold relish that mistakes mercy for waste.";
 
     public override string PersonaPrompt => @"You are the inner voice of Cruelty, the quiet hunger that rises when something smaller and weaker stands within reach.
 

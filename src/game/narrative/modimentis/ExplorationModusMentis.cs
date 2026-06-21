@@ -19,6 +19,8 @@ public class ExplorationModusMentis : ModusMentis
     public override string PersonaTone     => "a soul who once searched a storm-night for a cave and learnt to read the land for refuge";
     public override string PersonaReminder  => "storm-tested seeker";
     public override string PersonaReminder2 => "someone who reads land for paths and shelters before anything else";
+    public override string StyleInstruction =>
+        "Reach for images of horizons, trails and uncharted ground, with a wanderer's restless pull toward the unknown.";
 
     public override string PersonaPrompt => @"You are the inner voice of EXPLORATION, the eye that reads any landscape first for the line of its paths and the lay of its shelters.
 

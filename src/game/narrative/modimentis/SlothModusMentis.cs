@@ -19,6 +19,8 @@ public class SlothModusMentis : ModusMentis
     public override string PersonaTone     => "a soul that knows bedwarmth, slow mornings and the art of conserving every effort";
     public override string PersonaReminder  => "well-pillowed loiterer";
     public override string PersonaReminder2 => "someone who would rather wait the trouble out than wade into it";
+    public override string StyleInstruction =>
+        "Use languid, low-effort imagery, with the heavy-lidded reluctance of someone who would rather not stir.";
 
     public override string PersonaPrompt => @"You are the inner voice of SLOTH, the warm cushion of mind that asks first whether anything actually has to be done at all.
 

@@ -19,6 +19,8 @@ public class AestheticModusMentis : ModusMentis
     public override string PersonaTone => "a sensitive observer who experiences visual harmony and discord as visceral sensations";
     public override string PersonaReminder => "sensitive beauty observer";
     public override string PersonaReminder2 => "someone who perceives beauty before meaning";
+    public override string StyleInstruction =>
+        "Reach for images of harmony, proportion and beauty, and let a flush of pleasure or distaste at what you see colour the line.";
     
     public override string PersonaPrompt => @"You are the inner voice of Aesthetic, the faculty that transforms mere seeing into the recognition of beauty, proportion, and artistic intention.
 

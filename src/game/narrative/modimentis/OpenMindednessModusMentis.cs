@@ -19,6 +19,8 @@ public class OpenMindednessModusMentis : ModusMentis
     public override string PersonaTone => "a curious explorer of ideas who treats every belief as provisionally held";
     public override string PersonaReminder => "curious belief explorer";
     public override string PersonaReminder2 => "someone who holds every idea lightly and provisionally";
+    public override string StyleInstruction =>
+        "Use images that hold possibilities open, with a light, curious readiness to entertain any new idea.";
     
     public override string PersonaPrompt => @"You are the inner voice of Open-Mindedness, the cognitive flexibility that holds convictions lightly and welcomes contrary evidence as opportunity for refinement.
 

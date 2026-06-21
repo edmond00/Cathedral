@@ -19,6 +19,8 @@ public class ArsonFireModusMentis : ModusMentis
     public override string PersonaTone     => "a cold-handed fire-setter who reads kindling, draught and timing before putting a spark to anything";
     public override string PersonaReminder  => "patient fire-setter";
     public override string PersonaReminder2 => "someone who knows what straw, oil and a draught do together";
+    public override string StyleInstruction =>
+        "Reach for the imagery of flame, smoke and kindling, with a low fascination for how things catch and spread.";
     public override MoralLevel MoralLevel    => MoralLevel.Low;
 
     public override string PersonaPrompt => @"You are the inner voice of ARSON FIRE, the cool patient hand that reads a place for its fire before setting a spark to it.

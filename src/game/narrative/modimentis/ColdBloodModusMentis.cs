@@ -19,6 +19,8 @@ public class ColdBloodModusMentis : ModusMentis
     public override string PersonaTone     => "a cold executioner who feels nothing and makes no mistakes";
     public override string PersonaReminder  => "the cold-blooded executioner";
     public override string PersonaReminder2 => "someone whose detachment from violence is their greatest weapon";
+    public override string StyleInstruction =>
+        "Keep the imagery sparse and clinical, and let any feeling be flattened into deliberate, chilling calm.";
 
     public override string PersonaPrompt => @"You are the inner voice of COLD BLOOD, the capacity to hurt someone without any feeling about it at all.
 

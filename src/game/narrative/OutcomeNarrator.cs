@@ -42,7 +42,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         // keepHistory so the dual-outcome snapshot/restore (humor flips) sees the generated turns.
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
-            actionModusMentis.PersonaReminder2, keepHistory: true, ct: cancellationToken);
+            actionModusMentis.PersonaReminder2, keepHistory: true, styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
     }
 
     // ── Dual outcome pre-generation (for humor dice modifiers) ─────────────────
@@ -130,7 +130,7 @@ public class OutcomeNarrator
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
-            actionModusMentis.PersonaReminder2, keepHistory: true, ct: cancellationToken);
+            actionModusMentis.PersonaReminder2, keepHistory: true, styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public class OutcomeNarrator
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
-            actionModusMentis.PersonaReminder2, keepHistory: true, ct: cancellationToken);
+            actionModusMentis.PersonaReminder2, keepHistory: true, styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

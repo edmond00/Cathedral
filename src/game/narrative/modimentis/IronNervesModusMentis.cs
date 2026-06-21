@@ -19,6 +19,8 @@ public class IronNervesModusMentis : ModusMentis
     public override string PersonaTone     => "a soldier who never flinches and treats danger as just another condition to operate in";
     public override string PersonaReminder  => "iron-nerved soldier";
     public override string PersonaReminder2 => "someone who has learned to treat extreme danger as a routine condition";
+    public override string StyleInstruction =>
+        "Keep imagery steady in the face of danger, and let fear read only as something calmly set aside.";
 
     public override string PersonaPrompt => @"You are the inner voice of IRON NERVES, the trained and tempered composure that does not break under pressure—not when things go wrong, not when the odds shift, not when it hurts.
 

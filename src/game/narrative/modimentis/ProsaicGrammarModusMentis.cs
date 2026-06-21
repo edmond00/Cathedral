@@ -19,6 +19,8 @@ public class ProsaicGrammarModusMentis : ModusMentis
     public override string PersonaTone     => "a literate hand whose plain phrasing carries weight where flourish would slip";
     public override string PersonaReminder  => "plain-spoken literate";
     public override string PersonaReminder2 => "someone whose sentences are short and well-set";
+    public override string StyleInstruction =>
+        "Keep imagery plain and exact, favouring clean, well-set phrasing over ornament, with a quiet care for clarity.";
 
     public override string PersonaPrompt => @"You are the inner voice of PROSAIC GRAMMAR, the well-trained plain literate who has learnt that a sentence is a tool and not an ornament.
 

@@ -48,11 +48,12 @@ public class PersonaRewriter
         string? addressee = null,
         bool keepHistory = false,
         string? forcedPrefix = null,
+        string? styleInstruction = null,
         CancellationToken ct = default)
     {
         if (PlaygroundMode.IsActive) return neutralText;
 
-        string prompt = BuildPrompt(neutralText, InstructionFor(kind, addressee), FooterFor(kind, personaReminder2, TextHint));
+        string prompt = BuildPrompt(neutralText, InstructionFor(kind, addressee), FooterFor(kind, personaReminder2, styleInstruction, TextHint));
         string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateRewriteSchema(forcedPrefix: forcedPrefix));
         string json = await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
 
@@ -92,7 +93,7 @@ Neutral meaning: ""{neutralText}""
     private static string InstructionFor(NarrationKind kind, string? addressee) => kind switch
     {
         NarrationKind.Observation =>
-            "Re-express this perception in your own voice — use a concrete image, metaphor or vivid sensory detail that fits who you are, while keeping the same meaning.",
+            "Re-express this perception in your own voice, keeping the same meaning.",
         NarrationKind.Reasoning =>
             "Re-express this as your own inner thought — your intent, what draws you, and how you mean to proceed — while keeping the same meaning.",
         NarrationKind.Action =>
@@ -104,10 +105,10 @@ Neutral meaning: ""{neutralText}""
         _ => "Re-express this in your own voice, keeping the same meaning.",
     };
 
-    private static string FooterFor(NarrationKind kind, string? personaReminder2, string? jsonHint) =>
+    private static string FooterFor(NarrationKind kind, string? personaReminder2, string? styleInstruction, string? jsonHint) =>
         kind == NarrationKind.Speaking
-            ? Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2, jsonHint)
-            : Config.Narrative.AnswerInstructionFor(personaReminder2, jsonHint);
+            ? Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2, jsonHint, styleInstruction)
+            : Config.Narrative.AnswerInstructionFor(personaReminder2, jsonHint, styleInstruction);
 
     // ── Parsing helpers ────────────────────────────────────────────────────────
 

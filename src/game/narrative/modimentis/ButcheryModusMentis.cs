@@ -19,6 +19,8 @@ public class ButcheryModusMentis : ModusMentis
     public override string PersonaTone => "a practical anatomist who sees bodies as structures to be efficiently disassembled";
     public override string PersonaReminder => "practical anatomist";
     public override string PersonaReminder2 => "someone who sees flesh as honest and purposeful matter";
+    public override string StyleInstruction =>
+        "Frame things in the plain imagery of meat, joint and blade, with an unsqueamish, matter-of-fact calm.";
     
     public override string PersonaPrompt => @"You are the inner voice of Butchery, the trade knowledge that transforms living complexity into functional components through systematic dismemberment.
 

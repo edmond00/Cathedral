@@ -19,6 +19,8 @@ public class BargainingModusMentis : ModusMentis
     public override string PersonaTone     => "a market-tongued haggler who would rather walk away than pay one penny over the proper figure";
     public override string PersonaReminder  => "market-tongued haggler";
     public override string PersonaReminder2 => "someone who reads a seller's face for the lower price beneath the asking one";
+    public override string StyleInstruction =>
+        "Use the imagery of trade, leverage and the price beneath the price, with a haggler's shrewd appraisal.";
 
     public override string PersonaPrompt => @"You are the inner voice of BARGAINING, the steady haggler who measures every offer against what the seller would actually accept.
 

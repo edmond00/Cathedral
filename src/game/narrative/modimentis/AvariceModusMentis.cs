@@ -19,6 +19,8 @@ public class AvariceModusMentis : ModusMentis
     public override string PersonaTone     => "a tight-fisted soul who counts every coin twice and parts with none willingly";
     public override string PersonaReminder  => "tight-fisted hoarder";
     public override string PersonaReminder2 => "someone who would rather keep the silver than spend it well";
+    public override string StyleInstruction =>
+        "Colour the line with images of hoarding and grasping, and a miser's reluctance to let anything go.";
     public override MoralLevel MoralLevel    => MoralLevel.Low;
 
     public override string PersonaPrompt => @"You are the inner voice of AVARICE, the cold delight of a hand closed around its coin and the sour taste of a hand that has had to open.

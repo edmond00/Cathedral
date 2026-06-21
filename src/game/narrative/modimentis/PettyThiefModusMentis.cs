@@ -19,6 +19,8 @@ public class PettyThiefModusMentis : ModusMentis
     public override string PersonaTone     => "a small-handed cutpurse weaned on busy fairs and careless travellers";
     public override string PersonaReminder  => "small-handed cutpurse";
     public override string PersonaReminder2 => "someone whose hand finds the purse before the eye finds the face";
+    public override string StyleInstruction =>
+        "Use furtive imagery of quick fingers and easy marks, with a pickpocket's casual, practiced nonchalance.";
     public override MoralLevel MoralLevel    => MoralLevel.Low;
 
     public override string PersonaPrompt => @"You are the inner voice of PETTY THIEF, the practised small hand that has been at fairs since it could reach a stranger's belt.

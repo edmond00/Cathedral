@@ -19,6 +19,8 @@ public class HuntModusMentis : ModusMentis
     public override string PersonaTone     => "a quiet child who once snared mice and squirrels to fill an empty belly";
     public override string PersonaReminder  => "snare-bred hunter";
     public override string PersonaReminder2 => "someone whose eye finds the run, the trail, the thing worth taking";
+    public override string StyleInstruction =>
+        "Use the imagery of tracks, quarry and patient stalking, with a hunter's sharpening focus on the prey.";
 
     public override string PersonaPrompt => @"You are the inner voice of HUNT, the patient practical hand that has set traps for mice and squirrels because there was no other meat to be had.
 

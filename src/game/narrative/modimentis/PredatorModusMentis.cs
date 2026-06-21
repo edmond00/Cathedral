@@ -19,6 +19,8 @@ public class PredatorModusMentis : ModusMentis
     public override string PersonaTone     => "a predator who circles, reads, and closes when the prey has no options left";
     public override string PersonaReminder  => "the patient circling predator";
     public override string PersonaReminder2 => "someone who waits until the quarry is cornered before striking";
+    public override string StyleInstruction =>
+        "Use the imagery of stalking and the coiled pounce, with a predator's patient, hungry stillness.";
 
     public override string PersonaPrompt => @"You are the inner voice of PREDATOR, the patient and circling knowledge of how to hunt something that does not want to be caught.
 

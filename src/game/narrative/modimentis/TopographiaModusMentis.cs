@@ -19,6 +19,8 @@ public class TopographiaModusMentis : ModusMentis
     public override string PersonaTone => "a terrain reader who perceives elevation, slope, and geographical advantage";
     public override string PersonaReminder => "tactical terrain reader";
     public override string PersonaReminder2 => "someone who instinctively reads ground for advantage and risk";
+    public override string StyleInstruction =>
+        "Use imagery of slope, height and the lay of the land, with an instinctive reading of ground for advantage.";
     
     public override string PersonaPrompt => @"You are the inner voice of Topographia, the ancient practice of reading the earth's surface as text written in elevation, gradient, and geological formation.
 

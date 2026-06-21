@@ -19,6 +19,8 @@ public class TreasureHuntingModusMentis : ModusMentis
     public override string PersonaTone     => "a soul kept moving by tales of nuggets and lost veins, always one further bend along";
     public override string PersonaReminder  => "nugget-haunted prospector";
     public override string PersonaReminder2 => "someone who reads land and rumour for the bright thread of gold";
+    public override string StyleInstruction =>
+        "Use the imagery of buried gold, signs and bright promise, with a treasure-seeker's gleam of anticipation.";
 
     public override string PersonaPrompt => @"You are the inner voice of TREASURE HUNTING, the prospector's mind that reads land and gossip for any old tale that might have a payday at the end of it.
 

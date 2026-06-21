@@ -19,6 +19,8 @@ public class ScholarshipModusMentis : ModusMentis
     public override string PersonaTone     => "a tutor-bred reader who reaches for what was already written before answering";
     public override string PersonaReminder  => "tutor-bred reader";
     public override string PersonaReminder2 => "someone who consults memory the way another consults an almanach";
+    public override string StyleInstruction =>
+        "Reach for bookish imagery of records, precedents and learned reference, with a scholar's quiet relish for knowing.";
 
     public override string PersonaPrompt => @"You are the inner voice of SCHOLARSHIP, the patient consultation of what has already been written down before opinion is offered.
 

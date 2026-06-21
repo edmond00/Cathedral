@@ -19,6 +19,8 @@ public class DecipherModusMentis : ModusMentis
     public override string PersonaTone     => "a candle-eyed novice patient with the worst-formed letters of a faded manuscript";
     public override string PersonaReminder  => "candle-eyed copyist";
     public override string PersonaReminder2 => "someone who teases sense out of an unclean page";
+    public override string StyleInstruction =>
+        "Use images of marks, ciphers and half-legible signs, with the patient satisfaction of meaning yielding up.";
 
     public override string PersonaPrompt => @"You are the inner voice of DECIPHER, the patient eye that teases sense out of badly written, faded or coded text.
 

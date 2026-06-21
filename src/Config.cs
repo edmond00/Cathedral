@@ -503,7 +503,14 @@ public static class Config
         public const int TargetKeywordCount = 10;
 
         /// <summary>Tail appended after the JSON-format clause to enforce concise, grounded responses.</summary>
-        private const string AnswerInstructionTail = "Answer in one short sentence and stop. Keep every literal fact from the given information and invent no new facts, names, objects or events — but figures of speech (metaphor, comparison, imagery) and inner feelings (hope, regret, dread) that fit your character are welcome.";
+        private const string AnswerInstructionTail = "Answer in one short sentence and stop. Keep every literal fact from the given information and invent no new facts, names, objects or events.";
+
+        /// <summary>
+        /// Fallback styling clause used when no per-modusMentis <c>StyleInstruction</c> is supplied
+        /// (e.g. NPC speaking, which carries an NPC persona rather than a modusMentis). Per-modusMentis
+        /// callers pass their own <c>ModusMentis.StyleInstruction</c> instead.
+        /// </summary>
+        private const string DefaultStyleInstruction = "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
 
         /// <summary>
         /// Builds the "Respond in JSON format" clause. When <paramref name="jsonHint"/> is given
@@ -518,19 +525,25 @@ public static class Config
         /// Falls back to "Stay in character." when no reminder is provided.
         /// <paramref name="jsonHint"/> optionally shows the expected JSON field layout.
         /// </summary>
-        public static string AnswerInstructionFor(string? personaReminder2, string? jsonHint = null) =>
-            personaReminder2 != null
-                ? $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} Stay in the character of {personaReminder2}."
-                : $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} Stay in character.";
+        public static string AnswerInstructionFor(string? personaReminder2, string? jsonHint = null, string? styleInstruction = null)
+        {
+            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
+            return personaReminder2 != null
+                ? $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} {style} Stay in the character of {personaReminder2}."
+                : $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} {style} Stay in character.";
+        }
 
         /// <summary>
         /// Like <see cref="AnswerInstructionFor"/> but adds a 2nd-person dialogue reminder
         /// for speaking prompts where the character is directly addressing a companion.
         /// </summary>
-        public static string SpeakingAnswerInstructionFor(string? personaReminder2, string? jsonHint = null) =>
-            personaReminder2 != null
-                ? $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} Stay in the character of {personaReminder2}. Address your companion using \"you\". No narration, no third-person phrasing."
-                : $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} Stay in character. Adress your companion using \"you\". No narration, no third-person phrasing.";
+        public static string SpeakingAnswerInstructionFor(string? personaReminder2, string? jsonHint = null, string? styleInstruction = null)
+        {
+            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
+            return personaReminder2 != null
+                ? $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} {style} Stay in the character of {personaReminder2}. Address your companion using \"you\". No narration, no third-person phrasing."
+                : $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} {style} Stay in character. Adress your companion using \"you\". No narration, no third-person phrasing.";
+        }
     }
 
     /// <summary>

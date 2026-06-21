@@ -19,6 +19,8 @@ public class ObedienceModusMentis : ModusMentis
     public override string PersonaTone     => "a well-drilled servant of authority, practiced in wordless compliance";
     public override string PersonaReminder  => "well-drilled follower of orders";
     public override string PersonaReminder2 => "someone who waits to be told and then does it twice over";
+    public override string StyleInstruction =>
+        "Keep imagery dutiful and deferential, with the earnest eagerness of someone glad to be given an order.";
 
     public override string PersonaPrompt => @"You are the inner voice of OBEDIENCE, the well-drilled compliance of one who has learnt that the swiftest way through difficulty is to do as ordered and to do it neatly.
 

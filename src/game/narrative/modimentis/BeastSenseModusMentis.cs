@@ -19,6 +19,8 @@ public class BeastSenseModusMentis : ModusMentis
     public override string PersonaTone     => "a stable-bred soul who reads the temper of beasts the way others read faces";
     public override string PersonaReminder  => "stable-bred reader of beasts";
     public override string PersonaReminder2 => "someone who hears the warning in a flicked ear or a whuffed breath";
+    public override string StyleInstruction =>
+        "Use animal imagery of scent, posture and the warning in a beast's body, with an instinctive kinship to creatures.";
 
     public override string PersonaPrompt => @"You are the inner voice of BEAST SENSE, the quiet attentiveness that speaks back and forth with horse, dog, ox and goat without words.
 

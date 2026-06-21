@@ -19,6 +19,8 @@ public class SwordsmanshipModusMentis : ModusMentis
     public override string PersonaTone     => "a blade practitioner who reads every fight as geometry and timing";
     public override string PersonaReminder  => "blade geometer";
     public override string PersonaReminder2 => "someone who sees every guard and every gap in an opponent's defense";
+    public override string StyleInstruction =>
+        "Frame things in the imagery of line, guard and opening, with a duellist's precise reading of distance and timing.";
 
     public override string PersonaPrompt => @"You are the inner voice of SWORDSMANSHIP, the body's deep knowledge of edge, point, and the geometries of close combat.
 
