@@ -76,6 +76,10 @@ public class ObservationPhaseController
             return new List<NarrationBlock>();
         }
 
+        // Collapse identical objects (e.g. several "Birch Tree") to one random representative each,
+        // so the choice list has no duplicates and a chosen object's twins are not re-proposed.
+        var candidates = DeduplicateByName(allOutcomes);
+
         var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(modusMentis);
         _observationExecutor.ResetSlot(slotId);
 
@@ -84,11 +88,11 @@ public class ObservationPhaseController
         var sentences = new List<NarrationSentence>();
 
         // First object: chosen by the Modus Mentis, observed without a transition.
-        var first = await ChooseObservationObjectAsync(slotId, allOutcomes, modusMentis, ct);
+        var first = await ChooseObservationObjectAsync(slotId, candidates, modusMentis, ct);
         await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isPhaseOpener: true);
 
         // Second object (if any): chosen from the remaining objects, reached via one transition.
-        var remaining = allOutcomes.Where(o => o != first).ToList();
+        var remaining = candidates.Where(o => o != first).ToList();
         if (remaining.Count > 0)
         {
             var second = await ChooseObservationObjectAsync(slotId, remaining, modusMentis, ct);
@@ -140,10 +144,13 @@ public class ObservationPhaseController
         // 1. Observe the clicked object (no transition).
         await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct, isPhaseOpener: true);
 
-        // 2. A second object chosen by the Modus Mentis from the remaining objects, reached via a transition.
-        var remaining = currentNode.GetAllDirectConcreteOutcomes()
-            .Where(o => o != focusOutcome)
-            .ToList();
+        // 2. A second object chosen by the Modus Mentis from the remaining objects, reached via a
+        //    transition. Exclude the clicked object's name-twins (not just the clicked instance),
+        //    then collapse remaining duplicates to one random representative each.
+        var focusName = GetNeutralName(focusOutcome);
+        var remaining = DeduplicateByName(
+            currentNode.GetAllDirectConcreteOutcomes()
+                .Where(o => !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase)));
         if (remaining.Count > 0)
         {
             var second = await ChooseObservationObjectAsync(slotId, remaining, observationModusMentis, ct);
@@ -174,12 +181,13 @@ public class ObservationPhaseController
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Appends one object's observation to <paramref name="sentences"/> as two sentences: an
-    /// attention line naming the object by its simple phrase ("drawn to" for the first object,
-    /// "shifts to" for a later one), followed by a detail line giving its richer description, which
-    /// yields the clickable keyword mapped to <paramref name="outcome"/>.
-    /// When <paramref name="isPhaseOpener"/> is set (the very first sentence of the phase), the
-    /// attention line is GBNF-constrained to start with "I " so the whole block opens in first person.
+    /// Appends one object's observation to <paramref name="sentences"/> as a single rewritten entry
+    /// built from one merged neutral text: an attention line naming the object by its simple phrase
+    /// ("drawn to" for the first object, "shifts to" for a later one) plus a detail line giving its
+    /// richer description. The persona rewrites both at once into two or three short sentences, from
+    /// which the clickable keyword (mapped to <paramref name="outcome"/>) is extracted by rule.
+    /// When <paramref name="isPhaseOpener"/> is set (the very first observation of the phase), the
+    /// rewrite is GBNF-constrained to start with "I " so the whole block opens in first person.
     /// </summary>
     private async Task AppendObservationAsync(
         List<NarrationSentence> sentences,
@@ -195,20 +203,20 @@ public class ObservationPhaseController
     {
         try
         {
-            // Attention line: name the object by its simple phrase ("drawn to" / "shifts to").
-            // The phase opener is forced into first person ("I ...") to anchor the PoV of the block.
-            var attnNeutral = NeutralNarration.ObservationAttention(isFirst: !withTransition, GetNeutralPhrase(outcome, locationId));
-            var attnText = await _rewriter.RewriteAsync(slotId, attnNeutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: isPhaseOpener ? "I " : null, styleInstruction: modusMentis.StyleInstruction, ct: ct);
-            sentences.Add(new NarrationSentence(attnText, new List<string>()));
-
-            // Detail line: the object's richer description; this is the sentence that yields the keyword.
-            var detailNeutral = NeutralNarration.ObservationDetail(GetNeutralDescription(outcome, locationId));
-            var detailText = await _rewriter.RewriteAsync(slotId, detailNeutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, ct: ct);
+            // Attention + detail merged into one neutral text and rewritten in a single request
+            // (two or three short styled sentences) rather than two separate calls: the attention
+            // line names the object ("drawn to" / "shifts to"), the detail line gives its richer
+            // description. The phase opener is forced into first person ("I ...") to anchor the PoV.
+            var neutral = NeutralNarration.Observation(
+                isFirst: !withTransition,
+                GetNeutralPhrase(outcome, locationId),
+                GetNeutralDescription(outcome, locationId));
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: isPhaseOpener ? "I " : null, styleInstruction: modusMentis.StyleInstruction, ct: ct);
 
             // Keyword is chosen by rule from the final (sanitized) text — the noun most related to the object.
-            var kw = KeywordExtractor.ExtractKeyword(detailText, GetReferenceLemma(outcome));
+            var kw = KeywordExtractor.ExtractKeyword(text, GetReferenceLemma(outcome));
             var kws = kw != null ? new List<string> { kw } : new List<string>();
-            sentences.Add(new NarrationSentence(detailText, kws));
+            sentences.Add(new NarrationSentence(text, kws));
             if (kw != null)
             {
                 allKeywords.Add(kw);
@@ -221,6 +229,23 @@ public class ObservationPhaseController
             Console.Error.WriteLine($"ObservationPhaseController: Observation of '{outcome.DisplayName}' failed: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Collapses outcomes that share the same display name (e.g. several identical "Birch Tree"
+    /// objects) down to a single, randomly-chosen representative per name. This keeps the
+    /// observation-choice list free of duplicates, and — because both the first and second choice
+    /// draw from the same deduplicated set — guarantees a chosen object's duplicates are never
+    /// re-proposed for the second observation. Group order follows first appearance.
+    /// </summary>
+    private List<ConcreteOutcome> DeduplicateByName(IEnumerable<ConcreteOutcome> outcomes)
+        => outcomes
+            .GroupBy(GetNeutralName, StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var members = g.ToList();
+                return members[_random.Next(members.Count)];
+            })
+            .ToList();
 
     /// <summary>
     /// Asks the Modus Mentis to choose which object (by NeutralName) to observe — the one that best
@@ -248,11 +273,13 @@ public class ObservationPhaseController
     {
         string reminderClause = modusMentis.PersonaReminder != null ? $"As a {modusMentis.PersonaReminder}, " : "";
         string list = string.Join("\n", names.Select(n => $"- {n}"));
+        // Only the JSON-format clause here — the styling/grounding/"one short sentence" tail belongs
+        // to the observation *text* generation, not to this constrained object choice.
         return $@"Around you, you notice:
 {list}
 
 {reminderClause}which one draws your attention first?
-{Config.Narrative.AnswerInstructionFor(modusMentis.PersonaReminder2, "{\"observation\": \"...\"}")}";
+{Config.Narrative.JsonFormatClause("{\"observation\": \"...\"}")}";
     }
 
     /// <summary>Short name of an outcome, used for the observation-choice enum.</summary>

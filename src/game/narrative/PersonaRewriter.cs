@@ -83,9 +83,7 @@ public class PersonaRewriter
 
     // ── Prompt construction ────────────────────────────────────────────────────
 
-    private static string BuildPrompt(string neutralText, string instruction, string footer) => $@"Re-express this in your own voice.
-
-Neutral meaning: ""{neutralText}""
+    private static string BuildPrompt(string neutralText, string instruction, string footer) => $@"Re-express the following sentence in your own voice: ""{neutralText}""
 
 {instruction}
 {footer}";
@@ -106,9 +104,18 @@ Neutral meaning: ""{neutralText}""
     };
 
     private static string FooterFor(NarrationKind kind, string? personaReminder2, string? styleInstruction, string? jsonHint) =>
-        kind == NarrationKind.Speaking
-            ? Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2, jsonHint, styleInstruction)
-            : Config.Narrative.AnswerInstructionFor(personaReminder2, jsonHint, styleInstruction);
+        kind switch
+        {
+            // Speaking carries its own 2nd-person dialogue reminder (single sentence per line).
+            NarrationKind.Speaking =>
+                Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2, jsonHint, styleInstruction),
+            // Observation (merged attention + detail) and Reasoning (inner thought) both omit the
+            // length clause entirely to give the persona freedom over how far it unfolds.
+            NarrationKind.Observation or NarrationKind.Reasoning =>
+                Config.Narrative.AnswerInstructionFor(personaReminder2, jsonHint, styleInstruction, includeLengthClause: false),
+            _ =>
+                Config.Narrative.AnswerInstructionFor(personaReminder2, jsonHint, styleInstruction),
+        };
 
     // ── Parsing helpers ────────────────────────────────────────────────────────
 

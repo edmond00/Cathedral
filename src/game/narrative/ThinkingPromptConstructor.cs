@@ -14,22 +14,28 @@ public class ThinkingPromptConstructor
 {
     /// <summary>
     /// GOAL: pick which sub-outcome to pursue. <paramref name="goalOptions"/> must include the
-    /// "ignore and move on" sentinel.
+    /// "ignore and move on" sentinel. <paramref name="observedPhrase"/> names the object being
+    /// observed (e.g. "a beech tree"), shown as context before the options when supplied.
+    /// Only the JSON-format clause is appended — this is a constrained choice, not styled prose.
     /// </summary>
     public static string BuildGoalPrompt(
         IEnumerable<string> goalOptions,
-        ModusMentis thinkingModusMentis)
+        ModusMentis thinkingModusMentis,
+        string? observedPhrase = null)
     {
         string reminderClause = thinkingModusMentis.PersonaReminder != null
             ? $"As a {thinkingModusMentis.PersonaReminder}, "
             : "";
+        string contextClause = string.IsNullOrWhiteSpace(observedPhrase)
+            ? ""
+            : $"You are observing {observedPhrase}. ";
         string optionsList = string.Join("\n", goalOptions.Select(o => $"- {o}"));
 
-        return $@"You could:
+        return $@"{contextClause}You could:
 {optionsList}
 
 {reminderClause}what do you want to do?
-{Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2, "{\"goal\": \"...\"}")}";
+{Config.Narrative.JsonFormatClause("{\"goal\": \"...\"}")}";
     }
 
     /// <summary>
@@ -50,6 +56,6 @@ You could proceed:
 {string.Join("\n", actionModiMentis.Select(s => $"- with {s.SkillMeans}"))}
 
 {reminderClause}which approach do you take?
-{Config.Narrative.AnswerInstructionFor(thinkingModusMentis.PersonaReminder2, "{\"how\": \"...\"}")}";
+{Config.Narrative.JsonFormatClause("{\"how\": \"...\"}")}";
     }
 }

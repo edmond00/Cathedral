@@ -67,7 +67,7 @@ public class ThinkingExecutor
         string targetDescription = targetOutcome.ToNaturalLanguageString();
 
         // ── Decision 1: GOAL ────────────────────────────────────────────────────
-        ConcreteOutcome resolved = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, cancellationToken);
+        ConcreteOutcome resolved = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, sourceObs?.NeutralPhrase, cancellationToken);
         bool isIgnore = resolved is VerbOutcome vIgnore && vIgnore.VerbView.Verb is IgnoreVerb;
 
         // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
@@ -101,17 +101,24 @@ public class ThinkingExecutor
         // ── Flavor: action text (action skill slot) ─────────────────────────────
         int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(skill);
         _llmManager.ResetInstance(actionSlot);
+        // The neutral sentence still opens with "Let me try to …", but the GBNF prefix constraint is
+        // TEMPORARILY DISABLED to let the persona phrase the opening freely. The button label
+        // (DisplayText) is whatever remains after the prefix when the persona keeps it; ActionText
+        // keeps the canonical "try to …" form the critics expect.
+        // To restore the constraint, pass `forcedPrefix: actionPrefix` to RewriteAsync below.
+        const string actionPrefix = "Let me try to ";
         string styledAction = await _rewriter.RewriteAsync(
             actionSlot, NeutralNarration.ActionIntent(goalPhrase), NarrationKind.Action, skill.PersonaReminder2, styleInstruction: skill.StyleInstruction, ct: cancellationToken);
-        if (string.IsNullOrWhiteSpace(styledAction)) styledAction = goalPhrase;
+        if (string.IsNullOrWhiteSpace(styledAction)) styledAction = actionPrefix + goalPhrase;
+        string bareAction = StripPrefix(styledAction, actionPrefix);
 
         var action = new ParsedNarrativeAction
         {
             ActionModusMentisId = skill.ModusMentisId,
             ActionModusMentis   = skill,
             PreselectedOutcome  = (VerbOutcome)resolved,
-            ActionText          = $"try to {styledAction}",
-            DisplayText         = styledAction,
+            ActionText          = $"try to {bareAction}",
+            DisplayText         = bareAction,
             ThinkingModusMentis = thinkingModusMentis,
             Keyword             = keyword
         };
@@ -129,6 +136,7 @@ public class ThinkingExecutor
         int thinkingSlot,
         List<ConcreteOutcome> subOutcomes,
         ModusMentis thinkingModusMentis,
+        string? observedPhrase,
         CancellationToken ct)
     {
         if (PlaygroundMode.IsActive)
@@ -138,8 +146,12 @@ public class ThinkingExecutor
             return (ConcreteOutcome?)pick ?? subOutcomes[0];
         }
 
-        var options = subOutcomes.Select(o => o.ToNaturalLanguageString()).ToList();
-        string prompt = ThinkingPromptConstructor.BuildGoalPrompt(options, thinkingModusMentis);
+        // Collapse identical phrasings (e.g. two "grab a beechnut") to one option; the chosen string
+        // maps back to the first matching sub-outcome below, so dropping duplicates is safe.
+        var options = subOutcomes.Select(o => o.ToNaturalLanguageString())
+                                 .Distinct(StringComparer.OrdinalIgnoreCase)
+                                 .ToList();
+        string prompt = ThinkingPromptConstructor.BuildGoalPrompt(options, thinkingModusMentis, observedPhrase);
         string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateChoiceSchema("goal", options));
         string json = await _llmManager.GenerateConstrainedStringAsync(thinkingSlot, prompt, gbnf, maxTokens: 64, skipReset: true);
 
@@ -231,15 +243,20 @@ public class ThinkingExecutor
         string neutral = $"{ActionDisplay(originalAction)} using {item.WithArticle()}";
         string styled = await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Action, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, ct: cancellationToken);
         if (string.IsNullOrWhiteSpace(styled)) return null;
-        return styled.StartsWith("try to ", StringComparison.OrdinalIgnoreCase) ? styled.Substring(7) : styled;
+        return StripTryToPrefix(styled);
     }
 
     private static string ActionDisplay(ParsedNarrativeAction action)
-    {
-        if (!string.IsNullOrWhiteSpace(action.DisplayText)) return action.DisplayText;
-        var text = action.ActionText ?? "";
-        return text.StartsWith("try to ", StringComparison.OrdinalIgnoreCase) ? text.Substring(7) : text;
-    }
+        => !string.IsNullOrWhiteSpace(action.DisplayText)
+            ? action.DisplayText
+            : StripTryToPrefix(action.ActionText ?? "");
+
+    /// <summary>Drops a leading "try to " so an attempt phrase becomes the bare action used as a label.</summary>
+    private static string StripTryToPrefix(string text) => StripPrefix(text, "try to ");
+
+    /// <summary>Drops <paramref name="prefix"/> (case-insensitive) and surrounding whitespace if present.</summary>
+    private static string StripPrefix(string text, string prefix)
+        => text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? text.Substring(prefix.Length).Trim() : text.Trim();
 }
 
 /// <summary>

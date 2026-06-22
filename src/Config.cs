@@ -502,8 +502,11 @@ public static class Config
         /// </summary>
         public const int TargetKeywordCount = 10;
 
-        /// <summary>Tail appended after the JSON-format clause to enforce concise, grounded responses.</summary>
-        private const string AnswerInstructionTail = "Answer in one short sentence and stop. Keep every literal fact from the given information and invent no new facts, names, objects or events.";
+        /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
+        private const string OneSentenceClause = "Answer in one short sentence and stop.";
+
+        /// <summary>Grounding clause appended after the length clause; keeps the rewrite faithful.</summary>
+        private const string GroundingClause = "Keep every literal fact from the given information and invent no new facts, names, objects or events.";
 
         /// <summary>
         /// Fallback styling clause used when no per-modusMentis <c>StyleInstruction</c> is supplied
@@ -525,12 +528,19 @@ public static class Config
         /// Falls back to "Stay in character." when no reminder is provided.
         /// <paramref name="jsonHint"/> optionally shows the expected JSON field layout.
         /// </summary>
-        public static string AnswerInstructionFor(string? personaReminder2, string? jsonHint = null, string? styleInstruction = null)
+        public static string AnswerInstructionFor(string? personaReminder2, string? jsonHint = null, string? styleInstruction = null, bool includeLengthClause = true)
         {
             string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
-            return personaReminder2 != null
-                ? $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} {style} Stay in the character of {personaReminder2}."
-                : $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} {style} Stay in character.";
+            string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
+            var parts = new[]
+            {
+                JsonFormatClause(jsonHint),
+                includeLengthClause ? OneSentenceClause : null,
+                GroundingClause,
+                style,
+                character,
+            };
+            return string.Join(" ", parts.Where(p => !string.IsNullOrEmpty(p)));
         }
 
         /// <summary>
@@ -541,8 +551,8 @@ public static class Config
         {
             string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
             return personaReminder2 != null
-                ? $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} {style} Stay in the character of {personaReminder2}. Address your companion using \"you\". No narration, no third-person phrasing."
-                : $"{JsonFormatClause(jsonHint)} {AnswerInstructionTail} {style} Stay in character. Adress your companion using \"you\". No narration, no third-person phrasing.";
+                ? $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in the character of {personaReminder2}. Address your companion using \"you\". No narration, no third-person phrasing."
+                : $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in character. Adress your companion using \"you\". No narration, no third-person phrasing.";
         }
     }
 

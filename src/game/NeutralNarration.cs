@@ -39,6 +39,15 @@ public static class NeutralNarration
     public static string ObservationDetail(string description)
         => $"This is {NounPhrase(description)}.";
 
+    /// <summary>
+    /// Builds the full neutral meaning of an observation as one text: the attention line naming the
+    /// object (<see cref="ObservationAttention"/>) followed by the richer detail line
+    /// (<see cref="ObservationDetail"/>). Merged so the persona rewrite can be done in a single
+    /// request that yields two or three short styled sentences.
+    /// </summary>
+    public static string Observation(bool isFirst, string simpleName, string description)
+        => $"{ObservationAttention(isFirst, simpleName)} {ObservationDetail(description)}";
+
     // ── Thinking ───────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -58,8 +67,12 @@ public static class NeutralNarration
     public static string ReasoningIgnore(string targetPhrase)
         => $"I notice {NounPhrase(targetPhrase)}, but I let it be and move on.";
 
-    /// <summary>The bare intended action verb phrase (e.g. "climb the tree"), used verbatim.</summary>
-    public static string ActionIntent(string verbVerbatim) => verbVerbatim;
+    /// <summary>
+    /// The intended action as a first-person "Let me try to …" attempt (e.g. "Let me try to climb
+    /// the tree"). The styled rewrite is GBNF-forced to open with the same prefix, which is then
+    /// stripped to form the button label.
+    /// </summary>
+    public static string ActionIntent(string verbVerbatim) => $"Let me try to {verbVerbatim}";
 
     // ── Action outcomes ────────────────────────────────────────────────────────
     // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.

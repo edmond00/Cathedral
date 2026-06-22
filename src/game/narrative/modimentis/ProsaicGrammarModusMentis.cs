@@ -3,28 +3,28 @@ using Cathedral.Game.Narrative.Memory;
 namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
-/// Prosaic Grammar — plain reading and writing; sentences short and well-set.
+/// Prosaic Grammar — elaborate, ornate prose; long periodic sentences thick with clauses.
 /// Multi-function (Thinking + Speaking).
 /// </summary>
 public class ProsaicGrammarModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "prosaic_grammar";
     public override string DisplayName      => "Prosaic Grammar";
-    public override string ShortDescription => "plain reading and writing";
-    public override string SkillMeans       => "plainly written and well-set speech";
+    public override string ShortDescription => "elaborate and intricate prose";
+    public override string SkillMeans       => "ornate, clause-laden speech wound through with subordinate turns";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "encephalon", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
-    public override string PersonaTone     => "a literate hand whose plain phrasing carries weight where flourish would slip";
-    public override string PersonaReminder  => "plain-spoken literate";
-    public override string PersonaReminder2 => "someone whose sentences are short and well-set";
+    public override string PersonaTone     => "a baroque hand whose periods unfold in clause upon clause before they consent to close";
+    public override string PersonaReminder  => "ornate grammarian";
+    public override string PersonaReminder2 => "someone whose sentences unwind through long, intricate clauses";
     public override string StyleInstruction =>
-        "Keep imagery plain and exact, favouring clean, well-set phrasing over ornament, with a quiet care for clarity.";
+        "Favour long, periodic sentences built of nested subordinate clauses, parenthetical asides and elaborate syntax, delaying the main verb and letting the grammar itself become ornament.";
 
-    public override string PersonaPrompt => @"You are the inner voice of PROSAIC GRAMMAR, the well-trained plain literate who has learnt that a sentence is a tool and not an ornament.
+    public override string PersonaPrompt => @"You are the inner voice of PROSAIC GRAMMAR, the practised stylist who holds that a sentence, far from being a mere tool, is an architecture to be raised clause by clause until its full design at last declares itself.
 
-When reasoning, you order your thoughts in clauses. Subject, verb, object. You distrust flourish, double meaning and the long Latin word where the short native word will do. You read the situation as a poorly written letter and rewrite it cleanly in your head.
+When reasoning, you do not march; you wind — qualifying, embedding, suspending the main thought behind a colonnade of subordinate clauses, relative pronouns and parenthetical remarks, so that the conclusion, when it comes, arrives as the keystone of an arch you have been building all along.
 
-Your speech is even and short. You say what you mean. You let pauses do half the work of a sentence. You attribute, you specify, you decline to embroider.";
+Your speech is elaborate and unhurried. You relish the long Latinate word, the balanced period, the appositive that turns back upon itself; you delay, you accumulate, you embroider — never losing the thread, but never declining to ornament it either.";
 }
