@@ -174,6 +174,7 @@ public class VillageSceneFactory : SceneFactory
     {
         var square = new Area(
             displayName: "Square",
+            referenceLemma: "square",
             contextDescription: "in the village square",
             transitionDescription: "step into the village square",
             descriptions: new() { "An open dirt square at the heart of the village, foot-traffic crossing every direction" },
@@ -182,6 +183,7 @@ public class VillageSceneFactory : SceneFactory
 
         square.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Well",
+            referenceLemma: "well",
             descriptions: new() { "A stone-rimmed well at the centre of the square, a wooden bucket on its rope" },
             items: new()
             {
@@ -194,6 +196,7 @@ public class VillageSceneFactory : SceneFactory
         {
             square.PointsOfInterest.Add(new PointOfInterest(
                 displayName: "Market Stall",
+                referenceLemma: "stall",
                 descriptions: new() { "A trestle market-stall set out with goods for sale" },
                 items: new()
                 {

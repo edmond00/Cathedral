@@ -18,6 +18,7 @@ public static class CampSubfactory
         {
             new PointOfInterest(
                 displayName: "Bedroll",
+                referenceLemma: "bedroll",
                 descriptions: new() { "A rolled bedroll of coarse cloth, half-unrolled by a tree-root" },
                 items: new()
                 {
@@ -27,6 +28,7 @@ public static class CampSubfactory
             ),
             new PointOfInterest(
                 displayName: "Fire Pit",
+                referenceLemma: "fire",
                 descriptions: new() { "A blackened ring of stones with the cooled remains of a small fire" },
                 items: new()
                 {
@@ -37,6 +39,7 @@ public static class CampSubfactory
             ),
             new PointOfInterest(
                 displayName: "Sack",
+                referenceLemma: "sack",
                 descriptions: new() { "A heavy sack leaning against a stump, holding the day's gathered wood" },
                 items: new()
                 {
@@ -55,6 +58,7 @@ public static class CampSubfactory
         {
             new PointOfInterest(
                 displayName: "Bedroll",
+                referenceLemma: "bedroll",
                 descriptions: new() { "A bedroll spread on the cave floor near the entrance light" },
                 items: new()
                 {
@@ -64,6 +68,7 @@ public static class CampSubfactory
             ),
             new PointOfInterest(
                 displayName: "Lantern Hook",
+                referenceLemma: "lantern",
                 descriptions: new() { "An iron hook driven into the rock, a lantern hanging from it" },
                 items: new()
                 {
@@ -73,6 +78,7 @@ public static class CampSubfactory
             ),
             new PointOfInterest(
                 displayName: "Ore Pile",
+                referenceLemma: "ore",
                 descriptions: new() { "A small heap of iron ore staged for hauling out to the village" },
                 items: new()
                 {
@@ -91,6 +97,7 @@ public static class CampSubfactory
         {
             new PointOfInterest(
                 displayName: "Bedroll",
+                referenceLemma: "bedroll",
                 descriptions: new() { "A salt-stiff bedroll laid above the tide-line, cloth still damp" },
                 items: new()
                 {
@@ -100,6 +107,7 @@ public static class CampSubfactory
             ),
             new PointOfInterest(
                 displayName: "Drying Frame",
+                referenceLemma: "frame",
                 descriptions: new() { "A wooden frame strung with split fish drying in the wind" },
                 items: new()
                 {
@@ -110,6 +118,7 @@ public static class CampSubfactory
             ),
             new PointOfInterest(
                 displayName: "Net Pile",
+                referenceLemma: "net",
                 descriptions: new() { "A bundle of mended net heaped at the edge of the camp" },
                 items: new()
                 {

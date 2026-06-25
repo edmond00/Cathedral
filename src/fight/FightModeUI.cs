@@ -510,7 +510,7 @@ public static class FightModeUI
                           : hov                ? Config.Colors.Yellow
                           : Config.Colors.Orange;
             terminal.Text(x, RunButtonRow,
-                "  RUN".PadRight(innerW),
+                "  RUN AWAY".PadRight(innerW),
                 runFg, Config.Colors.Black);
         }
 

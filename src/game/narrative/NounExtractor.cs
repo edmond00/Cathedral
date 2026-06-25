@@ -20,7 +20,7 @@ public static class NounExtractor
     // ── Initialisation ─────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Loads the Catalyst English model. Call once from KeywordFallbackService.InitializeAsync.
+    /// Loads the Catalyst English model. Call once from TextSanitizationPipeline initialization.
     /// Subsequent calls to ExtractNouns will use POS tagging instead of heuristics.
     /// </summary>
     public static async Task InitializeAsync(string modelStoragePath)
@@ -56,6 +56,59 @@ public static class NounExtractor
             return ExtractNounsCatalyst(text);
 
         return ExtractNounsRuleBased(text);
+    }
+
+    /// <summary>
+    /// Extracts candidate nouns paired with their lemma. Uses Catalyst POS + lemmatizer when
+    /// initialized (the English model bundles a lemma lookup), falling back to rule-based nouns with
+    /// a simple singularizer. Surfaces are distinct, lower-cased, and filtered like <see cref="ExtractNouns"/>.
+    /// </summary>
+    public static List<(string Surface, string Lemma)> ExtractNounsWithLemmas(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return new List<(string, string)>();
+
+        if (_initialized && _pipeline != null)
+        {
+            try
+            {
+                var doc = new Document(text, Language.English);
+                _pipeline!.ProcessSingle(doc);
+
+                var result = new List<(string, string)>();
+                var seen   = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var span in doc)
+                    foreach (var token in span)
+                    {
+                        if (token.POS is not (PartOfSpeech.NOUN or PartOfSpeech.PROPN)) continue;
+                        var surface = token.Value.ToLowerInvariant();
+                        if (surface.Length < 3 || StopWords.Contains(surface) || !seen.Add(surface)) continue;
+
+                        var lemma = token.Lemma;
+                        lemma = string.IsNullOrWhiteSpace(lemma) ? Singularize(surface) : lemma.ToLowerInvariant();
+                        result.Add((surface, lemma));
+                    }
+
+                if (result.Count > 0) return result;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"NounExtractor: Catalyst lemma extraction failed: {ex.Message}");
+            }
+        }
+
+        return ExtractNounsRuleBased(text).Select(w => (w, Singularize(w))).ToList();
+    }
+
+    /// <summary>Crude English singularizer used when Catalyst lemmas are unavailable.</summary>
+    private static string Singularize(string w)
+    {
+        if (w.Length > 4 && w.EndsWith("ies")) return w[..^3] + "y";
+        if (w.Length > 4 && (w.EndsWith("ches") || w.EndsWith("shes") || w.EndsWith("ses") || w.EndsWith("xes") || w.EndsWith("zes")))
+            return w[..^2];
+        if (w.Length > 3 && w.EndsWith("s") && !w.EndsWith("ss")) return w[..^1];
+        return w;
     }
 
     // ── Catalyst path ──────────────────────────────────────────────────────────

@@ -502,29 +502,58 @@ public static class Config
         /// </summary>
         public const int TargetKeywordCount = 10;
 
+        /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
+        private const string OneSentenceClause = "Answer in one short sentence and stop.";
+
+        /// <summary>Grounding clause appended after the length clause; keeps the rewrite faithful.</summary>
+        private const string GroundingClause = "Keep every literal fact from the given information and invent no new facts, names, objects or events.";
+
         /// <summary>
-        /// Base instruction appended to every LLM prompt to enforce concise, grounded JSON responses.
-        /// Does not include the character reminder — use <see cref="AnswerInstructionFor"/> to get the full instruction.
+        /// Fallback styling clause used when no per-modusMentis <c>StyleInstruction</c> is supplied
+        /// (e.g. NPC speaking, which carries an NPC persona rather than a modusMentis). Per-modusMentis
+        /// callers pass their own <c>ModusMentis.StyleInstruction</c> instead.
         /// </summary>
-        public const string AnswerInstruction = "Respond in JSON format. Answer in one short sentence and stop. Use only the given information; no invention.";
+        private const string DefaultStyleInstruction = "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
+
+        /// <summary>
+        /// Builds the "Respond in JSON format" clause. When <paramref name="jsonHint"/> is given
+        /// (e.g. <c>{"text": "...", "keyword": "..."}</c>) it is shown so the model knows which value
+        /// goes in which field — preventing it from, say, writing the keyword inside the text field.
+        /// </summary>
+        public static string JsonFormatClause(string? jsonHint) =>
+            string.IsNullOrEmpty(jsonHint) ? "Respond in JSON format." : $"Respond in JSON format ({jsonHint}).";
 
         /// <summary>
         /// Returns the full answer instruction, appending a character reminder from PersonaReminder2 when available.
         /// Falls back to "Stay in character." when no reminder is provided.
+        /// <paramref name="jsonHint"/> optionally shows the expected JSON field layout.
         /// </summary>
-        public static string AnswerInstructionFor(string? personaReminder2) =>
-            personaReminder2 != null
-                ? $"{AnswerInstruction} Stay in the character of {personaReminder2}."
-                : $"{AnswerInstruction} Stay in character.";
+        public static string AnswerInstructionFor(string? personaReminder2, string? jsonHint = null, string? styleInstruction = null, bool includeLengthClause = true)
+        {
+            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
+            string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
+            var parts = new[]
+            {
+                JsonFormatClause(jsonHint),
+                includeLengthClause ? OneSentenceClause : null,
+                GroundingClause,
+                style,
+                character,
+            };
+            return string.Join(" ", parts.Where(p => !string.IsNullOrEmpty(p)));
+        }
 
         /// <summary>
         /// Like <see cref="AnswerInstructionFor"/> but adds a 2nd-person dialogue reminder
         /// for speaking prompts where the character is directly addressing a companion.
         /// </summary>
-        public static string SpeakingAnswerInstructionFor(string? personaReminder2) =>
-            personaReminder2 != null
-                ? $"{AnswerInstruction} Stay in the character of {personaReminder2}. Address your companion using \"you\". No narration, no third-person phrasing."
-                : $"{AnswerInstruction} Stay in character. Adress your companion using \"you\". No narration, no third-person phrasing.";
+        public static string SpeakingAnswerInstructionFor(string? personaReminder2, string? jsonHint = null, string? styleInstruction = null)
+        {
+            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
+            return personaReminder2 != null
+                ? $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in the character of {personaReminder2}. Address your companion using \"you\". No narration, no third-person phrasing."
+                : $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in character. Adress your companion using \"you\". No narration, no third-person phrasing.";
+        }
     }
 
     /// <summary>
@@ -797,6 +826,13 @@ public static class Config
     /// </summary>
     public static class LLM
     {
+        /// <summary>
+        /// File name of the single GGUF model to load, located directly in the <c>models</c>
+        /// directory. There is no size selection — this exact file is always used. If it is
+        /// missing the game prints an error naming this file and exits.
+        /// </summary>
+        public const string ModelFileName = "qwen2.5-3b-instruct-q4_k_m.gguf";
+
         // Sampling parameters (narrative generation and constrained single-token requests)
         public const int GenerationMaxTokens = 512;
 

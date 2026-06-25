@@ -21,8 +21,8 @@ namespace Cathedral.Game.Scene;
 ///   SceneNpc        → SyntheticNpcObservationObject   (ObservationObject with NPC verbs)
 ///   ItemElement     → folded into parent PoI as VerbOutcome SubOutcomes (not a standalone observation)
 ///
-/// Keywords for observation text are found dynamically by KeywordFallbackService using
-/// the descriptions from Descriptions and DisplayName.
+/// Observation text is generated from these Descriptions / DisplayName; the persona rewrite
+/// selects the clickable keyword from its own styled sentence.
 /// </summary>
 public static class SceneViewAdapter
 {
@@ -164,6 +164,10 @@ public class SyntheticObservationObject : ObservationObject
 
     public override string ObservationId => _poi.DisplayName.ToLowerInvariant().Replace(' ', '_');
 
+    public override string NeutralName => _poi.DisplayName;
+
+    public override string ReferenceLemma => _poi.ReferenceLemma;
+
     public override string GenerateNeutralDescription(int locationId = 0)
     {
         // Use a random description from the PoI's Descriptions list if available, then mood prefix
@@ -202,6 +206,10 @@ public class SyntheticSpotObject : ObservationObject
 
     public override string ObservationId => _spot.DisplayName.ToLowerInvariant().Replace(' ', '_');
 
+    public override string NeutralName => _spot.DisplayName;
+
+    public override string ReferenceLemma => _spot.ReferenceLemma;
+
     public override string GenerateNeutralDescription(int locationId = 0)
     {
         if (_spot.Descriptions.Count > 0)
@@ -233,6 +241,10 @@ public class SyntheticAreaObservationObject : ObservationObject
 
     public override string ObservationId => _area.DisplayName.ToLowerInvariant().Replace(' ', '_');
 
+    public override string NeutralName => _area.DisplayName;
+
+    public override string ReferenceLemma => _area.ReferenceLemma;
+
     public override string GenerateNeutralDescription(int locationId = 0)
     {
         if (_area.Descriptions.Count > 0)
@@ -263,6 +275,12 @@ public class SyntheticNpcObservationObject : ObservationObject
     }
 
     public override string ObservationId => _npc.DisplayName.ToLowerInvariant().Replace(' ', '_');
+
+    public override string NeutralName => _npc.DisplayName;
+
+    public override string NeutralPhrase => _npc.DisplayName;   // proper name — no article
+
+    public override string ReferenceLemma => "person";          // names aren't in the embedding vocab
 
     public override string GenerateNeutralDescription(int locationId = 0)
     {

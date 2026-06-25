@@ -158,6 +158,7 @@ public class CoastSceneFactory : SceneFactory
 
     private static Area BuildSandyBeach() => new(
         displayName: "Sandy Beach",
+        referenceLemma: "beach",
         contextDescription: "on the sandy beach",
         transitionDescription: "step onto the sandy beach",
         descriptions: new() { "A wide sweep of pale sand running down to the surf-line" },
@@ -166,6 +167,7 @@ public class CoastSceneFactory : SceneFactory
 
     private static Area BuildRockyShore() => new(
         displayName: "Rocky Shore",
+        referenceLemma: "shore",
         contextDescription: "on the rocky shore",
         transitionDescription: "pick a way along the rocky shore",
         descriptions: new() { "A foreshore of black stones and barnacled boulders, slick with weed" },
@@ -174,6 +176,7 @@ public class CoastSceneFactory : SceneFactory
 
     private static Area BuildCliffBase() => new(
         displayName: "Cliff Base",
+        referenceLemma: "cliff",
         contextDescription: "at the cliff base",
         transitionDescription: "approach the cliff base",
         descriptions: new() { "The sea breaks against towering cliffs, spray reaching where you stand" },
@@ -182,6 +185,7 @@ public class CoastSceneFactory : SceneFactory
 
     private static Area BuildCliffTop() => new(
         displayName: "Cliff Top",
+        referenceLemma: "cliff",
         contextDescription: "on the cliff top",
         transitionDescription: "step onto the cliff top",
         descriptions: new() { "An exposed grassy edge above a long fall, the sea wrinkling far below" },
@@ -190,6 +194,7 @@ public class CoastSceneFactory : SceneFactory
 
     private static Area BuildTidePoolZone() => new(
         displayName: "Tide Pool Zone",
+        referenceLemma: "pool",
         contextDescription: "among the tide pools",
         transitionDescription: "step among the tide pools",
         descriptions: new() { "A scatter of tide pools cupped in the rocks, full of small life" },
@@ -198,6 +203,7 @@ public class CoastSceneFactory : SceneFactory
 
     private static Area BuildEstuaryFlat() => new(
         displayName: "Estuary Flat",
+        referenceLemma: "estuary",
         contextDescription: "on the estuary flat",
         transitionDescription: "wade onto the estuary flat",
         descriptions: new() { "A wide muddy flat where the river spreads into the sea, wading birds at work" },
@@ -220,6 +226,7 @@ public class CoastSceneFactory : SceneFactory
                 area.PointsOfInterest.Add(BuildTidePool());
                 area.PointsOfInterest.Add(new PointOfInterest(
                     displayName: "Rock Crevice",
+                    referenceLemma: "crevice",
                     descriptions: new() { "A narrow crevice between rocks, weed-fringed and damp" },
                     items: new()
                     {
@@ -236,6 +243,7 @@ public class CoastSceneFactory : SceneFactory
             case "Cliff Top":
                 area.PointsOfInterest.Add(new PointOfInterest(
                     displayName: "Seabird Nest",
+                    referenceLemma: "nest",
                     descriptions: new() { "A jumble of stick and weed lodged on a ledge, eggs glinting in the cup" },
                     items: new()
                     {
@@ -254,6 +262,7 @@ public class CoastSceneFactory : SceneFactory
             case "Estuary Flat":
                 area.PointsOfInterest.Add(new PointOfInterest(
                     displayName: "Mud Flat",
+                    referenceLemma: "mud",
                     descriptions: new() { "A glistening mud flat marked with wading-bird tracks" },
                     items: new()
                     {
@@ -265,6 +274,7 @@ public class CoastSceneFactory : SceneFactory
                 ));
                 area.PointsOfInterest.Add(new PointOfInterest(
                     displayName: "Willow Bank",
+                    referenceLemma: "willow",
                     descriptions: new() { "A willow leans over the muddy bank, its branches trailing the water" },
                     items: new()
                     {
@@ -279,6 +289,7 @@ public class CoastSceneFactory : SceneFactory
 
     private PointOfInterest BuildDriftwoodPile() => new(
         displayName: "Driftwood Pile",
+        referenceLemma: "driftwood",
         descriptions: new() { "A heap of bleached driftwood pushed up by storm and tide" },
         items: new()
         {
@@ -291,6 +302,7 @@ public class CoastSceneFactory : SceneFactory
 
     private PointOfInterest BuildKelpBed() => new(
         displayName: "Kelp Bed",
+        referenceLemma: "kelp",
         descriptions: new() { "A heap of dark kelp washed up on the stones" },
         items: new()
         {
@@ -302,6 +314,7 @@ public class CoastSceneFactory : SceneFactory
 
     private PointOfInterest BuildTidePool() => new(
         displayName: "Tide Pool",
+        referenceLemma: "pool",
         descriptions: new() { "A small still pool cupped in the rock, anemones at the bottom" },
         items: new()
         {
@@ -324,6 +337,7 @@ public class CoastSceneFactory : SceneFactory
         };
         return new PointOfInterest(
             displayName: "Stranded Net",
+            referenceLemma: "net",
             descriptions: new() { "A torn fishing net half-buried in sand, a dead fish still tangled in its mesh" },
             items: new()
             {

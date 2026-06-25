@@ -109,8 +109,7 @@ public static class LocationTravelModeLauncher
                         }
                     };
                     
-                    // Start server with "tiny" model (qwen2-0.5b) - faster but less sophisticated
-                    // Use "medium" for phi-4 (better quality but slower)
+                    // Start server with the single configured model (see Config.LLM.ModelFileName).
                     Console.WriteLine("Starting LLM server...");
                     var startTask = llamaServer.StartServerAsync(
                         onServerReady: (ready) =>
@@ -119,8 +118,7 @@ public static class LocationTravelModeLauncher
                             {
                                 Console.WriteLine("✓ LLM server started successfully");
                             }
-                        },
-                        modelAlias: null // or "medium" for better quality
+                        }
                     );
                     
                     // Don't block - server will start in background

@@ -21,7 +21,7 @@ public class StairPointOfInterest : PointOfInterest
         Area topArea,
         string displayName,
         List<string> descriptions)
-        : base(displayName, descriptions)
+        : base(displayName, "staircase", descriptions)
     {
         BottomArea = bottomArea;
         TopArea    = topArea;

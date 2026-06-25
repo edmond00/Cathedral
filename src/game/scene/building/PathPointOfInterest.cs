@@ -20,7 +20,7 @@ public class PathPointOfInterest : PointOfInterest
         string displayName,
         List<string> descriptions,
         string[]? moods = null)
-        : base(displayName, descriptions, items: null, moods: moods)
+        : base(displayName, "path", descriptions, items: null, moods: moods)
     {
         AreaA = areaA;
         AreaB = areaB;

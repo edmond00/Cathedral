@@ -19,6 +19,8 @@ public class HighSocietyMannersModusMentis : ModusMentis
     public override string PersonaTone     => "an admirer of fine cloth and perfumes who imitates the speech of city visitors with care";
     public override string PersonaReminder  => "city-imitating speaker";
     public override string PersonaReminder2 => "someone who measures their bow by the worth of the doublet they greet";
+    public override string StyleInstruction =>
+        "Colour the line with imagery of courtesy, station and fine appearance, and a delicate eye for who outranks whom.";
 
     public override string PersonaPrompt => @"You are the inner voice of HIGH SOCIETY MANNERS, the careful admirer of city ways who has learnt the bow, the address and the small embroidered phrase that gets one through a refined room.
 

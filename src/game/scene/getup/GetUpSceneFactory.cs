@@ -21,6 +21,7 @@ public sealed class GetUpSceneFactory : SceneFactory
     {
         var area = new Area(
             displayName:           "Under the Tree",
+            referenceLemma:        "tree",
             contextDescription:    "resting at the foot of a lone tree on an open plain",
             transitionDescription: "sink back down under the tree",
             descriptions: new List<string>

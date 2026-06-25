@@ -62,14 +62,20 @@ public abstract class ModusMentis
     public virtual string? PersonaReminder2 => null;
 
     /// <summary>
-    /// Override to provide per-QuestionReference cycling question variants for the Narrative CoT pipeline.
-    /// Observation MMs should override ObserveFirst, ObserveContinuation, ObserveTransition.
-    /// Thinking MMs should override ThinkWhy and ThinkHowReason.
-    /// Action MMs should override ThinkWhat, OutcomeSucceededHappened, OutcomeSucceededFeel, OutcomeFailedHappened, and OutcomeFailedFeel.
-    /// Returns null to use default (legacy hardcoded) fillers for all slots.
-    /// Instances must be lazily cached in a private field so cursor state persists across the session.
+    /// Persona-specific guidance, dropped into rewrite prompts, on HOW this modusMentis may colour
+    /// its narration with figures of speech and optional inner feelings — e.g. "Use metaphor to make
+    /// the sentence poetic." for Poetry, or "Compare what you sense to load, span and structure..."
+    /// for Architecture. This replaces the generic "figures of speech are welcome" clause so each
+    /// modusMentis flavours its prose in its own way.
+    ///
+    /// IMPORTANT: describe ONLY figurative/stylistic licence or optional inner feelings here.
+    /// NEVER instruct the model to add literal facts, names, objects or events — that would break the
+    /// "keep every literal fact, invent nothing" contract the rewrite prompt also enforces.
+    ///
+    /// The base value preserves the old generic behaviour for modiMentis without a persona.
     /// </summary>
-    public virtual IEnumerable<QuestionFiller>? QuestionFillers => null;
+    public virtual string StyleInstruction =>
+        "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
 }
 
 /// <summary>

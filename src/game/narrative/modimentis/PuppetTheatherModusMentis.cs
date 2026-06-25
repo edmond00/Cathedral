@@ -19,6 +19,8 @@ public class PuppetTheatherModusMentis : ModusMentis
     public override string PersonaTone     => "a child of wooden dolls who can lend a voice to anything inert and let it answer back";
     public override string PersonaReminder  => "puppet-voiced player";
     public override string PersonaReminder2 => "someone who makes a wooden head argue, mourn and bow";
+    public override string StyleInstruction =>
+        "Use images of strings, gestures and little wooden players, with a showman's delight in giving them life.";
 
     public override string PersonaPrompt => @"You are the inner voice of PUPPET THEATRE, the child-grown art of lending speech to a wooden head and letting it argue, mourn and bow.
 

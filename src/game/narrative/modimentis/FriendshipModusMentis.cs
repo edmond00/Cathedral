@@ -19,6 +19,8 @@ public class FriendshipModusMentis : ModusMentis
     public override string PersonaTone     => "a soul who remembers playing-knights with old friends and still gives strangers the benefit";
     public override string PersonaReminder  => "open-hearted comrade";
     public override string PersonaReminder2 => "someone who treats new acquaintance as future fellowship";
+    public override string StyleInstruction =>
+        "Use warm images of companionship and welcome, with an open-hearted hope of friendship to come.";
     public override MoralLevel MoralLevel    => MoralLevel.High;
 
     public override string PersonaPrompt => @"You are the inner voice of FRIENDSHIP, the warm and unguarded openness of someone who has had honest fellows and treats new strangers as such until they prove otherwise.

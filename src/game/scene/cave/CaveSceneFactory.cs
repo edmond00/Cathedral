@@ -139,6 +139,7 @@ public class CaveSceneFactory : SceneFactory
 
     private static Area BuildEntranceHall() => new(
         displayName: "Entrance Hall",
+        referenceLemma: "entrance",
         contextDescription: "in the cave's entrance hall",
         transitionDescription: "step into the cave entrance",
         descriptions: new() { "The cave mouth opens into a wide low chamber lit by daylight from outside" },
@@ -147,6 +148,7 @@ public class CaveSceneFactory : SceneFactory
 
     private static Area BuildMainShaft() => new(
         displayName: "Main Shaft",
+        referenceLemma: "shaft",
         contextDescription: "in the main shaft",
         transitionDescription: "descend into the main shaft",
         descriptions: new() { "A long passage cut deep into the rock, the air close and damp" },
@@ -155,6 +157,7 @@ public class CaveSceneFactory : SceneFactory
 
     private static Area BuildOreChamber() => new(
         displayName: "Ore Chamber",
+        referenceLemma: "chamber",
         contextDescription: "in the ore chamber",
         transitionDescription: "step into the ore chamber",
         descriptions: new() { "A wider chamber where a vein of iron ore breaks through the rock" },
@@ -163,6 +166,7 @@ public class CaveSceneFactory : SceneFactory
 
     private static Area BuildCoalSeam() => new(
         displayName: "Coal Seam",
+        referenceLemma: "seam",
         contextDescription: "at the coal seam",
         transitionDescription: "step to the coal seam",
         descriptions: new() { "A glittering black seam of coal cuts across the chamber wall" },
@@ -171,6 +175,7 @@ public class CaveSceneFactory : SceneFactory
 
     private static Area BuildUndergroundPool() => new(
         displayName: "Underground Pool",
+        referenceLemma: "pool",
         contextDescription: "by the underground pool",
         transitionDescription: "approach the underground pool",
         descriptions: new() { "A still dark pool fed by water seeping through the rock" },
@@ -179,6 +184,7 @@ public class CaveSceneFactory : SceneFactory
 
     private static Area BuildCollapsedTunnel() => new(
         displayName: "Collapsed Tunnel",
+        referenceLemma: "tunnel",
         contextDescription: "at the collapsed tunnel",
         transitionDescription: "approach the collapsed tunnel",
         descriptions: new() { "A dead-end of fallen rock and rubble, the way blocked" },
@@ -187,6 +193,7 @@ public class CaveSceneFactory : SceneFactory
 
     private static Area BuildSideAlcove() => new(
         displayName: "Side Alcove",
+        referenceLemma: "alcove",
         contextDescription: "in the side alcove",
         transitionDescription: "step into the side alcove",
         descriptions: new() { "A small offshoot from the main shaft, the air still and silent" },
@@ -203,6 +210,7 @@ public class CaveSceneFactory : SceneFactory
                 area.PointsOfInterest.Add(TerrainSubfactory.BuildRockFace());
                 area.PointsOfInterest.Add(new PointOfInterest(
                     displayName: "Tool Cache",
+                    referenceLemma: "tool",
                     descriptions: new() { "A cache of mining tools propped in the rock" },
                     items: new()
                     {
@@ -219,6 +227,7 @@ public class CaveSceneFactory : SceneFactory
                 if (rng.NextDouble() < 0.5)
                     area.PointsOfInterest.Add(new PointOfInterest(
                         displayName: "Bat Roost",
+                        referenceLemma: "roost",
                         descriptions: new() { "A high hollow in the rock alive with the wing-flutter of bats" },
                         moods: new[] { "high", "rustling", "fetid" }
                     ));
@@ -227,6 +236,7 @@ public class CaveSceneFactory : SceneFactory
             case "Ore Chamber":
                 area.PointsOfInterest.Add(new PointOfInterest(
                     displayName: "Ore Vein",
+                    referenceLemma: "ore",
                     descriptions: new() { "A bright streak of iron ore exposed by recent picking" },
                     items: new()
                     {
@@ -241,6 +251,7 @@ public class CaveSceneFactory : SceneFactory
             case "Coal Seam":
                 area.PointsOfInterest.Add(new PointOfInterest(
                     displayName: "Coal Seam Deposit",
+                    referenceLemma: "coal",
                     descriptions: new() { "A dense seam of coal, freshly worked at one end" },
                     items: new()
                     {
@@ -258,6 +269,7 @@ public class CaveSceneFactory : SceneFactory
             case "Collapsed Tunnel":
                 area.PointsOfInterest.Add(new PointOfInterest(
                     displayName: "Rubble Pile",
+                    referenceLemma: "rubble",
                     descriptions: new() { "A heap of broken stone where the tunnel collapsed" },
                     items: new()
                     {

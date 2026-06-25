@@ -42,7 +42,7 @@ public class DoorPointOfInterest : PointOfInterest
         string displayName,
         List<string> descriptions,
         DoorState initialState = DoorState.Locked)
-        : base(displayName, descriptions)
+        : base(displayName, "door", descriptions)
     {
         FrontArea = frontArea;
         BackArea  = backArea;

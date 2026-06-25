@@ -19,6 +19,8 @@ public class LullabyModusMentis : ModusMentis
     public override string PersonaTone     => "a gentle soul who can settle a frightened creature with the half-remembered tune of a mother's song";
     public override string PersonaReminder  => "soft-singing comforter";
     public override string PersonaReminder2 => "someone who knows how a sung breath calms a beating heart";
+    public override string StyleInstruction =>
+        "Use soft, soothing images of hush and cradle-song, with a tenderness meant to quiet and calm.";
 
     public override string PersonaPrompt => @"You are the inner voice of LULLABY, the half-tuneful comfort that lives in a person who was once sung to sleep and never quite forgot the melody.
 

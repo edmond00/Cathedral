@@ -1272,7 +1272,9 @@ public class FightModeAdapter
             {
                 var instance = (ModusMentis)Activator.CreateInstance(template.GetType())!;
                 instance.Level = 1;
-                active.Member.AcquireModusMentis(instance);
+                // Fight-learned modiMentis enter working memory (FIFO input module), not the
+                // long-term procedural/sensory/semantic modules — they must be consolidated later.
+                active.Member.LearnModusMentis(instance);
             }
 
             _state.AddLog(

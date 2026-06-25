@@ -25,6 +25,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --view                             Show LLM and scene viewers without console decision overriding");
     Console.WriteLine("  --playground                       Replace all LLM calls with instant placeholders (no server needed)");
     Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
+    Console.WriteLine("  --mm                               After the childhood reminescence phase, fill every empty memory slot with random unheld modiMentis");
     Console.WriteLine("  --weapons                          Give the protagonist a starter weapon loadout (Arming Sword, Hunting Bow, Round Shield)");
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
     Console.WriteLine("  --help, -h                         Show this help message");
@@ -162,6 +163,17 @@ if (args.Any(a => a == "--skip-childhood"))
     Console.ForegroundColor = ConsoleColor.Magenta;
     Console.WriteLine("*** SKIP-CHILDHOOD MODE ACTIVE ***");
     Console.WriteLine("Childhood reminescence + get-up phases will be skipped; starting skills/items are randomized.");
+    Console.ResetColor();
+    Console.WriteLine();
+}
+
+// Check for --mm flag (fill empty memory slots with random unheld modiMentis after childhood)
+if (args.Any(a => a == "--mm"))
+{
+    Cathedral.Game.FillMemoryMode.IsActive = true;
+    Console.ForegroundColor = ConsoleColor.Magenta;
+    Console.WriteLine("*** FILL-MEMORY MODE ACTIVE ***");
+    Console.WriteLine("After the childhood reminescence phase, empty memory slots are filled with random unheld modiMentis.");
     Console.ResetColor();
     Console.WriteLine();
 }

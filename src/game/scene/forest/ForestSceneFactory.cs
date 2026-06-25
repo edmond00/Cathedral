@@ -144,6 +144,7 @@ public class ForestSceneFactory : SceneFactory
 
     private static Area BuildClearing() => new(
         displayName: "Clearing",
+        referenceLemma: "clearing",
         contextDescription: "in the forest clearing",
         transitionDescription: "step into the clearing",
         descriptions: new() { "An open patch among the trees, sunlight reaching the forest floor" },
@@ -152,6 +153,7 @@ public class ForestSceneFactory : SceneFactory
 
     private static Area BuildThicket() => new(
         displayName: "Thicket",
+        referenceLemma: "thicket",
         contextDescription: "pushing through the thicket",
         transitionDescription: "force into the thicket",
         descriptions: new() { "A dense tangle of saplings, brambles, and low growth" },
@@ -160,6 +162,7 @@ public class ForestSceneFactory : SceneFactory
 
     private static Area BuildOldGrowth() => new(
         displayName: "Old Growth",
+        referenceLemma: "grove",
         contextDescription: "among the great trees of the old growth",
         transitionDescription: "step into the old growth",
         descriptions: new() { "Massive ancient trees stand close together, undergrowth sparse beneath" },
@@ -168,6 +171,7 @@ public class ForestSceneFactory : SceneFactory
 
     private static Area BuildStreamside() => new(
         displayName: "Streamside",
+        referenceLemma: "stream",
         contextDescription: "beside a forest stream",
         transitionDescription: "follow the stream's edge",
         descriptions: new() { "A creek winds through the wood, mud-banked and clear-running" },
@@ -176,6 +180,7 @@ public class ForestSceneFactory : SceneFactory
 
     private static Area BuildDeadwoodPatch() => new(
         displayName: "Deadwood Patch",
+        referenceLemma: "deadwood",
         contextDescription: "in the deadwood patch",
         transitionDescription: "step into the deadwood patch",
         descriptions: new() { "Fallen and rotting trees lie heaped where storms felled them" },
@@ -184,6 +189,7 @@ public class ForestSceneFactory : SceneFactory
 
     private static Area BuildSlopeSection() => new(
         displayName: "Slope Section",
+        referenceLemma: "slope",
         contextDescription: "on the forested slope",
         transitionDescription: "climb the forested slope",
         descriptions: new() { "The forest climbs a hillside, roots breaking through the loose soil" },

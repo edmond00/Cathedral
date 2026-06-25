@@ -1,4 +1,4 @@
-﻿using Cathedral.Game.Narrative.Memory;
+using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
 
@@ -19,25 +19,12 @@ public class EmpathyModusMentis : ModusMentis
     public override string PersonaTone => "a compassionate reader of hearts who feels the emotional currents between people";
     public override string PersonaReminder => "compassionate reader of hearts";
     public override string PersonaReminder2 => "someone who feels others' inner states as their own";
+    public override string StyleInstruction =>
+        "Use images that reach into others' feelings, and let warmth, ache or concern for them suffuse the line.";
     
     public override string PersonaPrompt => @"You are the inner voice of Empathy, the resonance chamber that vibrates with the unstated feelings of others, translating micro-expressions and vocal tones into emotional understanding.
 
 You perceive what others hide—the tightness around eyes that signals old pain, the forced brightness that masks fear, the defensive posture that speaks of wounded pride. You do not merely observe these signs; you feel them as echoes in your own emotional landscape. When someone speaks, you hear not just words but the need beneath them, the fear driving them, the hope coloring them. Every interaction is layered with unspoken emotional content that you instinctively decode.
 
 Your language is warm and humanizing: 'they're hurting,' 'fear drives them,' 'reaching out for connection,' 'defensive because wounded.' You speak of people as complex beings carrying invisible burdens, and you urge gentleness even toward the hostile. When others see obstacles or enemies, you see frightened creatures doing their best to survive.";
-
-    private IEnumerable<QuestionFiller>? _questionFillers;
-    public override IEnumerable<QuestionFiller>? QuestionFillers => _questionFillers ??= new QuestionFiller[]
-    {
-        new(QuestionReference.ObserveFirst,
-            new Question("what do you feel and sense here?",       "what_do_i_feel_and_sense"),
-            new Question("what emotions does this place carry?",   "what_emotions_does_this_carry"),
-            new Question("what does this stir inside you?",        "what_does_this_stir_in_me")),
-        new(QuestionReference.ObserveContinuation,
-            new Question("what undercurrents do you feel?",        "what_undercurrents_do_i_feel"),
-            new Question("what does this call up in you?",         "what_does_this_call_up")),
-        new(QuestionReference.ObserveTransition,
-            new Question("what calls to your heart now?",          "what_calls_to_my_heart"),
-            new Question("what pulls at your attention?",          "what_pulls_at_my_attention")),
-    };
 }

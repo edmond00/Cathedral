@@ -141,6 +141,7 @@ public class PlainSceneFactory : SceneFactory
 
     private static Area BuildGrassland() => new(
         displayName: "Grassland",
+        referenceLemma: "grassland",
         contextDescription: "crossing the open grassland",
         transitionDescription: "move into the grassland",
         descriptions: new() { "Open wind-swept grassland, the sky vast and unbroken above" },
@@ -149,6 +150,7 @@ public class PlainSceneFactory : SceneFactory
 
     private static Area BuildMeadow() => new(
         displayName: "Meadow",
+        referenceLemma: "meadow",
         contextDescription: "wandering through the meadow",
         transitionDescription: "move into the meadow",
         descriptions: new() { "A sheltered meadow speckled with wildflowers and the hum of bees" },
@@ -157,6 +159,7 @@ public class PlainSceneFactory : SceneFactory
 
     private static Area BuildHeath() => new(
         displayName: "Heath",
+        referenceLemma: "heath",
         contextDescription: "crossing the dry heath",
         transitionDescription: "move into the heath",
         descriptions: new() { "A dry stretch of scrub and heather, broken by stands of gorse" },
@@ -165,6 +168,7 @@ public class PlainSceneFactory : SceneFactory
 
     private static Area BuildHill() => new(
         displayName: "Hill",
+        referenceLemma: "hill",
         contextDescription: "climbing the open hill",
         transitionDescription: "move up onto the hill",
         descriptions: new() { "A gentle rise of grass and stone, exposed to the wind" },
@@ -173,6 +177,7 @@ public class PlainSceneFactory : SceneFactory
 
     private static Area BuildValley() => new(
         displayName: "Valley",
+        referenceLemma: "valley",
         contextDescription: "descending into the valley",
         transitionDescription: "descend into the valley",
         descriptions: new() { "A shallow damp depression sheltered from the wind" },
@@ -181,6 +186,7 @@ public class PlainSceneFactory : SceneFactory
 
     private static Area BuildHedgerow() => new(
         displayName: "Hedgerow",
+        referenceLemma: "hedgerow",
         contextDescription: "walking along the hedgerow",
         transitionDescription: "move along the hedgerow",
         descriptions: new() { "A long thorny hedgerow standing between two open stretches" },
@@ -189,6 +195,7 @@ public class PlainSceneFactory : SceneFactory
 
     private static Area BuildBoggyGround() => new(
         displayName: "Boggy Ground",
+        referenceLemma: "bog",
         contextDescription: "wading through boggy ground",
         transitionDescription: "step into the boggy ground",
         descriptions: new() { "Soft wet ground beneath a tangle of reeds and rushes" },

@@ -36,6 +36,15 @@ public class NpcObservationObject : ObservationObject
     /// <summary>Stable id derived from the NPC's own id.</summary>
     public override string ObservationId => $"npc_{Npc.NpcId}";
 
+    /// <summary>The NPC's display name (e.g. "Hugh Furrow").</summary>
+    public override string NeutralName => Npc.DisplayName;
+
+    /// <summary>Proper name — used verbatim in sentences (no article).</summary>
+    public override string NeutralPhrase => Npc.DisplayName;
+
+    /// <summary>Names aren't in the embedding vocab — anchor on a generic noun.</summary>
+    public override string ReferenceLemma => "person";
+
     /// <summary>Uses the NPC's observation hint as the neutral scene description.</summary>
     public override string GenerateNeutralDescription(int locationId = 0)
         => Npc.ObservationHint;

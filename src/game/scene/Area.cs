@@ -12,6 +12,12 @@ public class Area : Element
     public override string DisplayName { get; }
     public override List<string> Descriptions { get; }
 
+    /// <summary>
+    /// Core noun used as the keyword-similarity anchor when this area becomes an observation.
+    /// Defined explicitly at every construction site (no inference) — e.g. "grassland".
+    /// </summary>
+    public string ReferenceLemma { get; }
+
     /// <summary>Context description for LLM prompts (e.g. "crossing the open grassland").</summary>
     public string ContextDescription { get; }
 
@@ -37,6 +43,7 @@ public class Area : Element
 
     public Area(
         string displayName,
+        string referenceLemma,
         string contextDescription,
         string transitionDescription,
         List<string> descriptions,
@@ -44,6 +51,7 @@ public class Area : Element
         bool isPrivate = false)
     {
         DisplayName           = displayName;
+        ReferenceLemma        = referenceLemma;
         ContextDescription    = contextDescription;
         TransitionDescription = transitionDescription;
         Descriptions          = descriptions;

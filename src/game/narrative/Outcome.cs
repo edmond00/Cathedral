@@ -37,7 +37,7 @@ public abstract class OutcomeBase
 
 /// <summary>
 /// Base class for outcomes that are concrete narrative anchors players can interact with.
-/// Keywords are extracted dynamically from generated observation text by KeywordFallbackService.
+/// The observation persona rewrite selects the clickable keyword from its styled text.
 /// </summary>
 public abstract class ConcreteOutcome : OutcomeBase
 {

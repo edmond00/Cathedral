@@ -22,7 +22,7 @@ public class CorpseSpot : Spot
         string displayName,
         List<string> descriptions,
         List<PointOfInterest> bodyParts)
-        : base(area, displayName, descriptions)
+        : base(area, displayName, "corpse", descriptions)
     {
         NpcEntity = npcEntity;
         PointsOfInterest.AddRange(bodyParts);
