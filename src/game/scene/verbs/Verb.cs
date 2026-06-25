@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Routines;
 
 namespace Cathedral.Game.Scene.Verbs;
 
@@ -71,4 +72,30 @@ public abstract class Verb
         foreach (var report in SuccessReports(scene, pov, actor, target))
             report.Apply(actor, scene, pov);
     }
+
+    // ── Routine recording hooks ───────────────────────────────────────────────
+    // A successful verb may be recorded as a step in a learned routine that is later replayed
+    // without narration or skill checks. By default no verb is recordable; recordable verbs
+    // override these. The contract is dynamic: a verb may inspect scene/pov/target and decline
+    // to be recorded in special situations.
+
+    /// <summary>
+    /// Whether a successful execution of this verb on <paramref name="target"/> can be recorded as
+    /// a routine step. Default: false (no verb is recordable until it opts in).
+    /// </summary>
+    public virtual bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
+        => false;
+
+    /// <summary>
+    /// Builds the stable, rebuild-independent reference to this verb's target for routine recording.
+    /// Only meaningful when <see cref="CanRecordAsRoutine"/> returns true.
+    /// </summary>
+    public virtual RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target) => null;
+
+    /// <summary>
+    /// The phase this verb transitions into on success, used to decide where a recorded routine
+    /// stops and what happens after replay. Default: <see cref="RoutinePhaseKind.None"/>.
+    /// </summary>
+    public virtual RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
+        => RoutinePhaseKind.None;
 }

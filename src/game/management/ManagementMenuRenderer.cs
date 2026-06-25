@@ -17,7 +17,8 @@ public enum ManagementTab
     Inventory,
     Journal,
     Memory,
-    Humors
+    Humors,
+    Routines
 }
 
 /// <summary>
@@ -39,6 +40,7 @@ public class ManagementMenuRenderer
     private readonly MemoryPanelRenderer _memoryPanel;
     private readonly HumorMenuRenderer _humorMenu;
     private readonly InventoryMenuRenderer _inventoryMenu;
+    private readonly RoutinesPanelRenderer _routinesPanel;
 
     // ── Cached art data per anatomy type ─────────────────────────
     private readonly BodyArtData _humanArtData;
@@ -60,6 +62,7 @@ public class ManagementMenuRenderer
         new TabDefinition("Journal",   ManagementTab.Journal,    AllCharacters: false), // protagonist only
         new TabDefinition("Memory",    ManagementTab.Memory,    AllCharacters: true),
         new TabDefinition("Humors",    ManagementTab.Humors,    AllCharacters: true),
+        new TabDefinition("Routines",  ManagementTab.Routines,   AllCharacters: false), // protagonist only
     };
 
     // ── Hover state ──────────────────────────────────────────────
@@ -127,6 +130,7 @@ public class ManagementMenuRenderer
         _bodyViewer.ArtOffsetY = 0;
 
         _memoryPanel = new MemoryPanelRenderer(terminal, popup);
+        _routinesPanel = new RoutinesPanelRenderer(terminal);
 
         _inventoryMenu = new InventoryMenuRenderer(terminal, _bodyViewer, _humanGearData, popup);
         _inventoryMenu.OnItemConsumed = () => { Render(); OnItemConsumed?.Invoke(); };
@@ -208,17 +212,19 @@ public class ManagementMenuRenderer
             _bodyViewer.ShowWounds = true;
             _bodyViewer.RenderBodyArt();
         }
-        else if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
+        else if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
+                 && _activeTab != ManagementTab.Routines)
         {
             _bodyViewer.ShowWounds = false;
-            // Draw separator on non-body, non-memory, non-humors tabs
+            // Draw separator on non-body, non-memory, non-humors, non-routines tabs
             int sepX = BodyArtViewer.PanelX - 1;
             for (int y = 0; y < 100; y++)
                 _terminal.SetCell(sepX, y, '│', Config.Colors.DarkGray35, Config.Colors.Black);
         }
 
         // Right panel
-        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
+        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
+            && _activeTab != ManagementTab.Routines)
             RenderPanelHeader();
 
         switch (_activeTab)
@@ -241,12 +247,16 @@ public class ManagementMenuRenderer
             case ManagementTab.Humors:
                 _humorMenu.Render(GetPartyMember(_selectedCharacterIndex));
                 break;
+            case ManagementTab.Routines:
+                _routinesPanel.Render(_protagonist);
+                break;
         }
 
         // Left panel (rendered AFTER all tab content so it overlays cleanly)
         RenderLeftPanel();
 
-        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors)
+        if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
+            && _activeTab != ManagementTab.Routines)
             RenderFooter();
     }
 
@@ -337,6 +347,14 @@ public class ManagementMenuRenderer
                 if (_inventoryMenu.IsHovering) tick = true;
             }
         }
+        else if (_activeTab == ManagementTab.Routines)
+        {
+            if (_routinesPanel.ProcessHover(x, y))
+            {
+                changed = true;
+                if (_routinesPanel.IsHovering) tick = true;
+            }
+        }
 
         if (changed)
             Render();
@@ -378,6 +396,8 @@ public class ManagementMenuRenderer
                     _humorMenu.ClearHover();
                 if (_activeTab != ManagementTab.Inventory)
                     _inventoryMenu.ClearHover();
+                if (_activeTab != ManagementTab.Routines)
+                    _routinesPanel.ClearHover();
 
                 Render();
                 return;
@@ -411,6 +431,16 @@ public class ManagementMenuRenderer
         {
             if (_inventoryMenu.ProcessClick(x, y))
                 Render();
+        }
+
+        // Routines tab: toggle a routine's lock state
+        if (_activeTab == ManagementTab.Routines)
+        {
+            if (_routinesPanel.ProcessClick(x, y, _protagonist))
+            {
+                OnItemConsumed?.Invoke(); // reuse the click-SFX callback
+                Render();
+            }
         }
     }
 

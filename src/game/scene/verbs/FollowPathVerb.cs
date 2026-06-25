@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Scene.Building;
 
 namespace Cathedral.Game.Scene.Verbs;
@@ -29,4 +30,19 @@ public class FollowPathVerb : Verb
         var destination = path.Other(pov.Where);
         return new[] { new AreaMoveOutcome(destination) };
     }
+
+    // ── Routine recording ─────────────────────────────────────────────────────
+    // Following a path is habitual navigation; the destination is direction-dependent on the
+    // current area, which the replay engine reproduces by threading the PoV through steps.
+
+    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
+        => target is PathPointOfInterest;
+
+    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
+        => target is PointOfInterest poi
+            ? new RoutineTargetRef(RoutineTargetKind.PointOfInterest, poi.ReferenceLemma, poi.DisplayName)
+            : null;
+
+    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
+        => RoutinePhaseKind.Narration;
 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Routines;
 
 namespace Cathedral.Game.Scene.Verbs;
 
@@ -24,4 +25,16 @@ public class LeaveSpotVerb : Verb
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => new[] { new SpotLeaveOutcome() };
+
+    // ── Routine recording ─────────────────────────────────────────────────────
+    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
+        => target is Spot;
+
+    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
+        => target is Spot spot
+            ? new RoutineTargetRef(RoutineTargetKind.Spot, spot.ReferenceLemma, spot.DisplayName)
+            : null;
+
+    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
+        => RoutinePhaseKind.Narration;
 }

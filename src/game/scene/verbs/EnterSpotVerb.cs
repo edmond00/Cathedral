@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Routines;
 
 namespace Cathedral.Game.Scene.Verbs;
 
@@ -28,4 +29,18 @@ public class EnterSpotVerb : Verb
         if (target is not Spot spot) return System.Array.Empty<OutcomeReport>();
         return new[] { new SpotEnterOutcome(spot) };
     }
+
+    // ── Routine recording ─────────────────────────────────────────────────────
+    // Usually a mid-chain step (enter → grab → leave → move). As a terminal step the replay
+    // continuation restores the area level (InSpot is not re-entered).
+    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
+        => target is Spot;
+
+    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
+        => target is Spot spot
+            ? new RoutineTargetRef(RoutineTargetKind.Spot, spot.ReferenceLemma, spot.DisplayName)
+            : null;
+
+    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
+        => RoutinePhaseKind.Narration;
 }

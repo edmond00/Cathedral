@@ -8,6 +8,7 @@ using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Dialogue.Tree.Trees;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Nodes;
+using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
@@ -63,6 +64,10 @@ public class NarrativeController
     // Pending fight/dialogue transitions (set by OnDiceRollContinue, consumed by game controller)
     private FightOutcome? _pendingFightOutcome = null;
     private DialogueOutcome? _pendingDialogueOutcome = null;
+
+    // Records recordable successful verbs into a learned routine for this narration session.
+    // Non-null only for scene-backed Exploration narration.
+    private RoutineRecorder? _recorder = null;
     
     // Random for dice rolls
     private readonly Random _diceRandom = new Random();
@@ -292,17 +297,21 @@ public class NarrativeController
     /// Start the observation phase (generates observations asynchronously).
     /// This clears all history - use for initial start only.
     /// </summary>
-    public void StartObservationPhase()
+    public void StartObservationPhase(TimePeriod? forcedPeriod = null)
     {
         _narrationState.Clear();
         _scrollBuffer.Clear();
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear();
-        
-        // Place NPCs into nodes based on a randomly selected time period
-        var period = TimePeriodExtensions.Random(_diceRandom);
+
+        // Place NPCs into nodes based on the supplied time period, or a random one when none is given.
+        var period = forcedPeriod ?? TimePeriodExtensions.Random(_diceRandom);
         _graph.TimeUpdate(period);
         Console.WriteLine($"NarrativeController: Time period is {period}");
+
+        // Begin recording a routine for scene-backed Exploration sessions (other phases opt out).
+        if (_scene != null && _scene.Phase == NarrationPhase.Exploration)
+            _recorder = new RoutineRecorder(_protagonist, _locationId, period);
 
         _narrationState.IsLoadingObservations = true;
         _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
@@ -1162,6 +1171,18 @@ public class NarrativeController
         }
         allReports.AddRange(result.LlmDecidedReports);
 
+        // Record this verb into the in-progress routine BEFORE applying reports, so the recorder
+        // evaluates the verb against the pre-move PoV. Only successful recordable verbs are captured.
+        if (result.Succeeded && _recorder != null && _scene != null && _pov != null
+            && result.ActualOutcome is VerbOutcome)
+        {
+            _recorder.OnVerbSucceeded(result.Action, _scene, _pov, _activePartyMember, result.ItemConsumed);
+        }
+
+        // Remember the area before reports apply, so we can detect any area-moving verb (move, follow
+        // path, stairs, climb, door) and continue narration at the destination node — not just MoveToArea.
+        var areaBefore = _pov?.Where;
+
         // Apply every report's game-state change in order — to the acting member, so a companion's
         // loot, learned skills, and suffered wounds land on the companion, not the protagonist.
         foreach (var report in allReports)
@@ -1257,14 +1278,16 @@ public class NarrativeController
                 return;
             }
 
-            // MoveToAreaVerb: stay in scene and transition to the target area's node
-            if (verbOutcome.VerbView.Verb is Cathedral.Game.Scene.Verbs.MoveToAreaVerb
-                && verbOutcome.Target is Cathedral.Game.Scene.Area movedArea)
+            // Any area-moving verb (move, follow path, stairs, climb, open door): stay in scene and
+            // transition to the destination area's node. Detected generically by the PoV's area
+            // changing, so all connector verbs behave like MoveToAreaVerb (consistent PoV/node and a
+            // live session that survives across connectors — required for multi-step routine chains).
+            if (_pov != null && areaBefore != null && _pov.Where.Id != areaBefore.Id)
             {
-                var nodeId = movedArea.DisplayName.ToLowerInvariant().Replace(' ', '_');
+                var nodeId = _pov.Where.DisplayName.ToLowerInvariant().Replace(' ', '_');
                 if (_graph.AllNodes.TryGetValue(nodeId, out var areaNode))
                 {
-                    Console.WriteLine($"NarrativeController: MoveToAreaVerb — transitioning to node '{nodeId}'");
+                    Console.WriteLine($"NarrativeController: area changed to '{_pov.Where.DisplayName}' — transitioning to node '{nodeId}'");
                     _narrationState.PendingTransitionNode = areaNode;
                     _narrationState.ShowContinueButton = true;
                     return;
@@ -2275,7 +2298,64 @@ public class NarrativeController
     /// The protagonist used by this narrative controller.
     /// </summary>
     public Protagonist Protagonist => _protagonist;
-    
+
+    /// <summary>
+    /// Unified next-phase request. Maps the legacy pending fight/dialogue outcomes onto the
+    /// <see cref="PhaseTransition"/> abstraction so the game controller can consume one channel.
+    /// </summary>
+    public PhaseTransition? PendingPhaseTransition
+    {
+        get
+        {
+            if (_pendingFightOutcome != null)
+                return new StartFightTransition(_pendingFightOutcome.Target, _pendingFightOutcome.CombatContext);
+            if (_pendingDialogueOutcome != null)
+                return new StartDialogueTransition(_pendingDialogueOutcome.Target,
+                    _pendingDialogueOutcome.TreeId, _pendingDialogueOutcome.Tree);
+            return null;
+        }
+    }
+
+    /// <summary>Clears whichever pending transition was just consumed.</summary>
+    public void ClearPendingPhaseTransition()
+    {
+        _pendingFightOutcome    = null;
+        _pendingDialogueOutcome = null;
+    }
+
+    /// <summary>
+    /// Saves any routine still being recorded for this session. Called by the game controller when
+    /// the narration phase ends (returns to world travel).
+    /// </summary>
+    public void FinalizeRoutineRecording()
+    {
+        _recorder?.FinalizeAtNarrationEnd();
+        _recorder = null;
+    }
+
+    /// <summary>
+    /// Starts narration positioned at a specific area and time period (used when continuing into
+    /// narration after a routine replay ends at a moved-to area). Falls back to a normal start when
+    /// the area cannot be resolved.
+    /// </summary>
+    public void StartAtArea(string areaLemma, TimePeriod time)
+    {
+        if (_scene != null && _pov != null)
+        {
+            var area = _scene.AllAreas.FirstOrDefault(a =>
+                string.Equals(a.ReferenceLemma, areaLemma, StringComparison.OrdinalIgnoreCase));
+            if (area != null)
+            {
+                _pov.Where = area;
+                _pov.When  = time;
+                var nodeId = area.DisplayName.ToLowerInvariant().Replace(' ', '_');
+                if (_graph.AllNodes.TryGetValue(nodeId, out var node))
+                    _currentNode = node;
+            }
+        }
+        StartObservationPhase(time);
+    }
+
     /// <summary>
     /// Clear the pending fight outcome after the game controller has handled it.
     /// </summary>

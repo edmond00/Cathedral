@@ -23,7 +23,10 @@ namespace Cathedral.Game
         private int _boxX, _boxY, _boxW, _boxH;
         private int _travelBtnX, _travelBtnY, _travelBtnW;
         private int _clearBtnX, _clearBtnY, _clearBtnW;
+        private int _routinesBtnX, _routinesBtnY, _routinesBtnW;
         private bool _buttonsEnabled;
+        // Whether the ROUTINES button is clickable (routines exist for this destination).
+        private bool _routinesEnabled;
 
         // Track the area we actually painted so Erase() can wipe only those cells.
         private int _paintedX, _paintedY, _paintedW, _paintedH;
@@ -56,13 +59,23 @@ namespace Cathedral.Game
                && cellX >= _clearBtnX
                && cellX < _clearBtnX + _clearBtnW;
 
+        /// <summary>True when the (enabled) ROUTINES button is under the given cell.</summary>
+        public bool IsOverRoutinesButton(int cellX, int cellY)
+            => _buttonsEnabled
+               && _routinesEnabled
+               && cellY == _routinesBtnY
+               && cellX >= _routinesBtnX
+               && cellX < _routinesBtnX + _routinesBtnW;
+
         /// <summary>
         /// Renders the box if there is a viable plan, otherwise erases anything left
         /// from a previous frame.
         /// </summary>
         public void Draw(int waypointCount, int maxWaypoints, TravelEstimate? estimate,
-            string? destinationName)
+            string? destinationName, bool routinesAvailable = false)
         {
+            _routinesEnabled = routinesAvailable;
+
             // Nothing to show when no waypoints are set — keep the world view clean.
             if (waypointCount == 0)
             {
@@ -126,23 +139,39 @@ namespace Cathedral.Game
 
         private void DrawButtons(TravelEstimate? estimate)
         {
-            // Place buttons on the same row, CLEAR on the left, TRAVEL on the right,
-            // with an empty padding row both above and below for readability.
-            const string clearLabel  = "[ CLEAR ]";
-            const string travelLabel = "[ TRAVEL ]";
+            // Three buttons on one row: ROUTINES | CLEAR | TRAVEL, each centered within a third of the box.
+            const string routinesLabel = "[ROUTINES]";
+            const string clearLabel    = "[ CLEAR ]";
+            const string travelLabel   = "[ TRAVEL ]";
 
-            _clearBtnW  = clearLabel.Length;
-            _travelBtnW = travelLabel.Length;
+            _routinesBtnW = routinesLabel.Length;
+            _clearBtnW    = clearLabel.Length;
+            _travelBtnW   = travelLabel.Length;
             int row = _boxY + _boxH - 3; // one empty row above the bottom border
 
-            // Split the box width into two halves and center one button in each half.
-            int halfWidth = _boxW / 2;
-            _clearBtnX  = _boxX + (halfWidth - _clearBtnW) / 2;
-            _travelBtnX = _boxX + halfWidth + ((_boxW - halfWidth) - _travelBtnW) / 2;
+            int third = _boxW / 3;
+            _routinesBtnX = _boxX + (third - _routinesBtnW) / 2;
+            _clearBtnX    = _boxX + third + (third - _clearBtnW) / 2;
+            _travelBtnX   = _boxX + 2 * third + ((_boxW - 2 * third) - _travelBtnW) / 2;
 
-            _clearBtnY  = row;
-            _travelBtnY = row;
+            _routinesBtnY = row;
+            _clearBtnY    = row;
+            _travelBtnY   = row;
             _buttonsEnabled = true;
+
+            // ROUTINES button — greyed out when no routine exists for this destination.
+            if (_routinesEnabled)
+            {
+                bool routinesHover = IsOverRoutinesButton(_hoverX, _hoverY);
+                _terminal.Text(_routinesBtnX, _routinesBtnY, routinesLabel,
+                    routinesHover ? Config.TravelUI.TravelButtonHoverTextColor       : Config.TravelUI.TravelButtonTextColor,
+                    routinesHover ? Config.TravelUI.TravelButtonHoverBackgroundColor : Config.TravelUI.TravelButtonBackgroundColor);
+            }
+            else
+            {
+                _terminal.Text(_routinesBtnX, _routinesBtnY, routinesLabel,
+                    Colors.DarkGray, Config.TravelUI.BackgroundColor);
+            }
 
             // CLEAR button (always enabled when there are waypoints).
             bool clearHover = IsOverClearButton(_hoverX, _hoverY);

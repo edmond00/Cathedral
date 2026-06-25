@@ -74,6 +74,13 @@ public class LocationTravelGameController : IDisposable
     // Companion-capacity gate shown at the start of WorldView (over max companions).
     private CompanionRemovalRenderer? _companionRemovalRenderer;
 
+    // Routine replay: list box (travel UI), outcome box (after replay), engine and pending state.
+    private TravelRoutinesBox? _travelRoutinesBox;
+    private RoutineOutcomeBox? _routineOutcomeBox;
+    private readonly Cathedral.Game.Narrative.Routines.RoutineReplayEngine _routineReplayEngine = new();
+    private Cathedral.Game.Narrative.Routines.Routine? _pendingReplayRoutine;
+    private Cathedral.Game.Narrative.PhaseTransition? _replayFinalTransition;
+
     // Game state
     private GameMode _currentMode;
     private LocationInstanceState? _currentLocationState;
@@ -341,23 +348,16 @@ public class LocationTravelGameController : IDisposable
             }
             
             _narrativeController.Update();
-            
-            // Check if narrative controller wants to enter fight mode
-            if (_narrativeController.PendingFightOutcome != null)
+
+            // Check if narrative controller wants to switch phase (fight/dialogue/…) — unified channel.
+            var pendingTransition = _narrativeController.PendingPhaseTransition;
+            if (pendingTransition != null)
             {
-                StartFightMode(_narrativeController.PendingFightOutcome);
-                _narrativeController.ClearPendingFight();
+                _narrativeController.ClearPendingPhaseTransition();
+                ApplyPhaseTransition(pendingTransition);
                 return;
             }
-            
-            // Check if narrative controller wants to enter dialogue mode
-            if (_narrativeController.PendingDialogueOutcome != null)
-            {
-                StartDialogueMode(_narrativeController.PendingDialogueOutcome);
-                _narrativeController.ClearPendingDialogue();
-                return;
-            }
-            
+
             // Check if reminescence phase is complete — enter Get-Up scene.
             if (_currentMode == GameMode.ChildhoodReminescence
                 && _narrativeController.ReminescencePhaseFinished)
@@ -409,6 +409,20 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode == GameMode.WorldView && _companionRemovalRenderer != null)
         {
             _companionRemovalRenderer.Render();
+            UpdatePopupTerminal();
+            return;
+        }
+
+        // Routine outcome box (after a replay) and routine list box (from travel UI) are modal.
+        if (_currentMode == GameMode.WorldView && _routineOutcomeBox != null)
+        {
+            _routineOutcomeBox.Render();
+            UpdatePopupTerminal();
+            return;
+        }
+        if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
+        {
+            _travelRoutinesBox.Render();
             UpdatePopupTerminal();
             return;
         }
@@ -500,15 +514,22 @@ public class LocationTravelGameController : IDisposable
         if (_core.Terminal == null) return;
 
         string? destinationName = null;
+        bool routinesAvailable = false;
         if (_travelPlanner.HasWaypoints)
-            destinationName = GetLocationNameAtVertex(_travelPlanner.FinalDestination);
+        {
+            int destVertex = _travelPlanner.FinalDestination;
+            destinationName = GetLocationNameAtVertex(destVertex);
+            routinesAvailable = _protagonist != null
+                && _protagonist.RecordedRoutines.Any(r => r.LocationId == destVertex);
+        }
 
         _travelInfoRenderer.Erase();
         _travelInfoRenderer.Draw(
             waypointCount: _travelPlanner.Count,
             maxWaypoints: _travelPlanner.MaxWaypoints,
             estimate: _plannedEstimate,
-            destinationName: destinationName);
+            destinationName: destinationName,
+            routinesAvailable: routinesAvailable);
     }
 
     /// <summary>
@@ -622,6 +643,44 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // Routine outcome box is modal: CONTINUE applies the replay's final phase transition.
+        if (_currentMode == GameMode.WorldView && _routineOutcomeBox != null)
+        {
+            if (_routineOutcomeBox.OnMouseClick(x, y))
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                var transition = _replayFinalTransition ?? Cathedral.Game.Narrative.ReturnToTravelTransition.Instance;
+                _routineOutcomeBox    = null;
+                _replayFinalTransition = null;
+                _core.Terminal?.Clear(); // wipe the modal box before the next phase paints
+                ApplyPhaseTransition(transition);
+            }
+            return;
+        }
+
+        // Routine list box is modal: select a replayable routine, or RETURN to the travel plan.
+        if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
+        {
+            var (kind, routine) = _travelRoutinesBox.OnMouseClick(x, y);
+            if (kind == TravelRoutinesBox.ResultKind.Selected && routine != null)
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                _travelRoutinesBox    = null;
+                _pendingReplayRoutine = routine;
+                _core.Terminal?.Clear(); // wipe the modal box before travel begins
+                StartPlannedTravel();
+            }
+            else if (kind == TravelRoutinesBox.ResultKind.Return)
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+                _travelRoutinesBox = null;
+                _core.Terminal?.Clear();
+                _core.SetWorldInteractionsEnabled(true);
+                _interface.SetWorldInteractionsEnabled(true);
+            }
+            return;
+        }
+
         // Death screen: END RUN button
         if (_currentMode == GameMode.Death && _deathScreenRenderer != null)
         {
@@ -684,6 +743,12 @@ public class LocationTravelGameController : IDisposable
             {
                 _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
                 ClearTravelPlan();
+                return;
+            }
+            if (_travelInfoRenderer.IsOverRoutinesButton(x, y))
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                OpenRoutinesBox();
                 return;
             }
             return;
@@ -849,6 +914,20 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode == GameMode.WorldView && _companionRemovalRenderer != null)
         {
             if (_companionRemovalRenderer.OnMouseMove(x, y))
+                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            return;
+        }
+
+        // Routine boxes are modal: route hover to whichever is shown.
+        if (_currentMode == GameMode.WorldView && _routineOutcomeBox != null)
+        {
+            if (_routineOutcomeBox.OnMouseMove(x, y))
+                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            return;
+        }
+        if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
+        {
+            if (_travelRoutinesBox.OnMouseMove(x, y))
                 _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
             return;
         }
@@ -1396,7 +1475,19 @@ public class LocationTravelGameController : IDisposable
         ClearTravelPlan();
         _travelProgressRenderer?.Erase();
         TravelCompleted?.Invoke();
-        
+
+        // Routine replay: if the player launched travel from the routine box and the routine belongs
+        // to this destination, replay it instead of starting a fresh narration phase.
+        if (_pendingReplayRoutine != null && _pendingReplayRoutine.LocationId == vertexIndex)
+        {
+            var routine = _pendingReplayRoutine;
+            _pendingReplayRoutine  = null;
+            _currentLocationVertex = vertexIndex;
+            StartRoutineReplay(vertexIndex, routine);
+            return;
+        }
+        _pendingReplayRoutine = null;
+
         // Enter interaction mode - use location if available, otherwise use biome
         var locationInfo = _interface.GetDetailedBiomeInfoAt(vertexIndex);
         if (locationInfo.location.HasValue)
@@ -2218,7 +2309,7 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// Starts Phase 6 Chain-of-Thought narrative interaction.
     /// </summary>
-    private void StartNarrativeInteraction(int vertexIndex)
+    private void StartNarrativeInteraction(int vertexIndex, string? startAreaLemma = null, Cathedral.Game.Narrative.TimePeriod? startTime = null)
     {
         if (_core.Terminal == null || _core.PopupTerminal == null || _llmActionExecutor == null || _modusMentisSlotManager == null)
         {
@@ -2361,10 +2452,14 @@ public class LocationTravelGameController : IDisposable
             
             // Set mode to LocationInteraction
             SetMode(GameMode.LocationInteraction);
-            
-            // Start observation phase (async)
-            _narrativeController.StartObservationPhase();
-            
+
+            // Start observation phase (async). When continuing after a routine replay, position the
+            // session at the area the routine ended in, at its recorded time period.
+            if (startAreaLemma != null && startTime != null)
+                _narrativeController.StartAtArea(startAreaLemma, startTime.Value);
+            else
+                _narrativeController.StartObservationPhase();
+
             Console.WriteLine("LocationTravelGameController: Phase 6 narrative interaction started");
         }
         catch (Exception ex)
@@ -2484,6 +2579,171 @@ public class LocationTravelGameController : IDisposable
 
         Console.WriteLine($"LocationTravelGameController: Travel encounter — {npc.DisplayName} ({creatureName}) in {_consumptionBiome}");
         SetMode(GameMode.EncounterPrompt);
+    }
+
+    /// <summary>
+    /// The single place that switches game mode in response to a <see cref="PhaseTransition"/>.
+    /// Both the narration flow and routine replay produce transitions; future phase kinds add a
+    /// subclass and one arm here.
+    /// </summary>
+    public void ApplyPhaseTransition(PhaseTransition transition)
+    {
+        switch (transition)
+        {
+            case StartFightTransition f:
+                if (_narrativeController != null)
+                    StartFightMode(new FightOutcome(f.Enemy, f.Reason));
+                else
+                {
+                    Console.Error.WriteLine("ApplyPhaseTransition: fight requested with no narrative context — returning to travel");
+                    ReturnToWorldView();
+                }
+                break;
+
+            case StartDialogueTransition d:
+                if (_narrativeController != null)
+                    StartDialogueMode(new DialogueOutcome(d.Npc, d.TreeId, d.Tree));
+                else
+                {
+                    Console.Error.WriteLine("ApplyPhaseTransition: dialogue requested with no narrative context — returning to travel");
+                    ReturnToWorldView();
+                }
+                break;
+
+            case StartNarrationTransition n:
+                StartNarrativeInteraction(n.Vertex, n.StartArea?.ReferenceLemma, n.Time);
+                break;
+
+            case ReturnToTravelTransition:
+            default:
+                ReturnToWorldView();
+                break;
+        }
+    }
+
+    /// <summary>Tears down any narrative context and returns to the world-travel view.</summary>
+    private void ReturnToWorldView()
+    {
+        _isInNarrativeMode     = false;
+        _narrativeController   = null;
+        _currentLocationVertex = -1;
+        _interface.SetWorldInteractionsEnabled(true);
+        _core.SetWorldInteractionsEnabled(true);
+        SetMode(GameMode.WorldView);
+    }
+
+    /// <summary>
+    /// Opens the routine list box for the current travel destination. Each routine is virtually
+    /// replayed to determine whether it can still be replayed (greyed out otherwise).
+    /// </summary>
+    private void OpenRoutinesBox()
+    {
+        if (_core.Terminal == null || _protagonist == null || _travelPlanner == null) return;
+        if (!_travelPlanner.HasWaypoints) return;
+
+        int destVertex = _travelPlanner.FinalDestination;
+        var routines = _protagonist.RecordedRoutines.Where(r => r.LocationId == destVertex).ToList();
+
+        var entries = new List<TravelRoutinesBox.Entry>();
+        foreach (var r in routines)
+        {
+            var vr = _routineReplayEngine.VirtualReplay(r, _protagonist, () => BuildSceneForVertexOrThrow(destVertex));
+            entries.Add(new TravelRoutinesBox.Entry
+            {
+                Routine    = r,
+                Replayable = vr.Replayable,
+                Reason     = vr.Replayable ? null : vr.FailReason,
+            });
+        }
+
+        // Keep the world non-interactive while the modal box is shown.
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+
+        _travelRoutinesBox = new TravelRoutinesBox(_core.Terminal, entries);
+        _travelRoutinesBox.Render();
+    }
+
+    /// <summary>
+    /// Fully replays a routine on arrival and shows the outcome box. The final phase transition is
+    /// applied when the player clicks CONTINUE.
+    /// </summary>
+    private void StartRoutineReplay(int vertexIndex, Cathedral.Game.Narrative.Routines.Routine routine)
+    {
+        if (_core.Terminal == null || _protagonist == null) { ReturnToWorldView(); return; }
+
+        Console.WriteLine($"LocationTravelGameController: replaying routine '{routine.Name}' at vertex {vertexIndex}");
+
+        var result = _routineReplayEngine.FullReplay(routine, _protagonist,
+            () => BuildSceneForVertexOrThrow(vertexIndex));
+
+        if (!result.Replayable)
+        {
+            Console.Error.WriteLine($"LocationTravelGameController: routine no longer replayable on arrival — {result.FailReason}");
+            ReturnToWorldView();
+            return;
+        }
+
+        var lines = new List<string>();
+        foreach (var o in result.Outcomes) lines.Add(o.Text);
+        lines.AddRange(result.ExtraLines);
+        lines.Add(PhaseNote(result.FinalTransition));
+
+        _replayFinalTransition = result.FinalTransition;
+
+        // Enter WorldView first (OnEnterWorldView re-enables interactions), THEN show the modal box
+        // and disable interactions so world clicks can't fall through underneath it.
+        SetMode(GameMode.WorldView);
+        _routineOutcomeBox = new RoutineOutcomeBox(_core.Terminal, routine.Name, lines);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+        _core.Terminal.Clear();
+        _routineOutcomeBox.Render();
+    }
+
+    private static string PhaseNote(Cathedral.Game.Narrative.PhaseTransition t) => t switch
+    {
+        Cathedral.Game.Narrative.StartNarrationTransition n => $"You explore {n.StartArea?.DisplayName ?? "the area"}.",
+        Cathedral.Game.Narrative.StartFightTransition f     => $"A fight breaks out with {f.Enemy.DisplayName}!",
+        Cathedral.Game.Narrative.StartDialogueTransition d  => $"You begin speaking with {d.Npc.DisplayName}.",
+        _ => "You return to your journey.",
+    };
+
+    private Cathedral.Game.Scene.Scene BuildSceneForVertexOrThrow(int vertexIndex)
+    {
+        var scene = BuildSceneForVertex(vertexIndex);
+        if (scene == null) throw new InvalidOperationException("Scene factory is unavailable for routine replay.");
+        return scene;
+    }
+
+    /// <summary>
+    /// Builds a fresh scene for a vertex exactly as a narration start would (factory choice, existing
+    /// location state, default-enemy flags). Used for routine virtual/full replay. Returns null when
+    /// LLM dependencies are not yet available.
+    /// </summary>
+    private Cathedral.Game.Scene.Scene? BuildSceneForVertex(int vertexIndex)
+    {
+        if (_llmActionExecutor == null || _protagonist == null) return null;
+
+        var biomeInfo    = _interface.GetDetailedBiomeInfoAt(vertexIndex);
+        var biomeName    = biomeInfo.biome.Name.ToLowerInvariant();
+        var locationName = biomeInfo.location?.Name.ToLowerInvariant();
+        var sessionPath  = _llmActionExecutor.GetLlamaServerManager().SessionLogDir;
+
+        if ((locationName == null || !_sceneFactories.TryGetValue(locationName, out var sceneFactory)) &&
+            !_sceneFactories.TryGetValue(biomeName, out sceneFactory))
+        {
+            sceneFactory = new PlainSceneFactory(sessionPath);
+        }
+
+        _locationStates.TryGetValue(vertexIndex, out var existingState);
+        var scene = sceneFactory.Build(vertexIndex, existingState);
+
+        foreach (var sceneNpc in scene.Npcs)
+            if (sceneNpc.Entity is Cathedral.Game.Npc.NpcEntity npcEnt && npcEnt.Archetype.DefaultEnemy)
+                npcEnt.AffinityTable.SetEnemy(_protagonist.DisplayName);
+
+        return scene;
     }
 
     private void StartFightMode(FightOutcome fightOutcome)
@@ -2685,11 +2945,14 @@ public class LocationTravelGameController : IDisposable
             return;
         
         Console.WriteLine("LocationTravelGameController: Exiting Phase 6 mode");
-        
+
+        // Save any routine recorded during this narration session before tearing it down.
+        _narrativeController?.FinalizeRoutineRecording();
+
         // Re-enable world map and 3D interactions
         _interface.SetWorldInteractionsEnabled(true);
         _core.SetWorldInteractionsEnabled(true);
-        
+
         _isInNarrativeMode = false;
         _narrativeController = null;
         _currentLocationVertex = -1;
