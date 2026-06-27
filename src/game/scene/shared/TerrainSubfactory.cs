@@ -25,7 +25,8 @@ public static class TerrainSubfactory
             new ItemElement(new Branch()),
             new ItemElement(new Bark()),
         },
-        moods: new[] { "ancient", "broad-crowned", "spreading", "weathered", "rough-barked" }
+        moods: new[] { "ancient", "broad-crowned", "spreading", "weathered", "rough-barked" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildBeechTree() => new(
@@ -39,7 +40,8 @@ public static class TerrainSubfactory
             new ItemElement(new Branch()),
             new ItemElement(new Bark()),
         },
-        moods: new[] { "tall", "smooth", "pale", "still", "shaded" }
+        moods: new[] { "tall", "smooth", "pale", "still", "shaded" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildAshTree() => new(
@@ -52,7 +54,8 @@ public static class TerrainSubfactory
             new ItemElement(new Branch()),
             new ItemElement(new Bark()),
         },
-        moods: new[] { "tall", "grey", "fluttering", "open-canopied" }
+        moods: new[] { "tall", "grey", "fluttering", "open-canopied" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildBirchTree() => new(
@@ -65,7 +68,8 @@ public static class TerrainSubfactory
             new ItemElement(new Bark()),
             new ItemElement(new BirchSap()),
         },
-        moods: new[] { "slender", "silver-barked", "papery", "trembling", "pale" }
+        moods: new[] { "slender", "silver-barked", "papery", "trembling", "pale" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildPineTree() => new(
@@ -80,7 +84,8 @@ public static class TerrainSubfactory
             new ItemElement(new PineCone()),
             new ItemElement(new PineNeedle()),
         },
-        moods: new[] { "tall", "resinous", "dark", "wind-bent", "dense" }
+        moods: new[] { "tall", "resinous", "dark", "wind-bent", "dense" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildYewTree() => new(
@@ -92,7 +97,8 @@ public static class TerrainSubfactory
             new ItemElement(new Branch()),
             new ItemElement(new Bark()),
         },
-        moods: new[] { "squat", "dark", "watchful", "ancient", "shadowed" }
+        moods: new[] { "squat", "dark", "watchful", "ancient", "shadowed" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildHawthornTree() => new(
@@ -106,7 +112,8 @@ public static class TerrainSubfactory
             new ItemElement(new Branch()),
             new ItemElement(new Thorn()),
         },
-        moods: new[] { "thorny", "wind-bent", "small", "tangled", "lonely" }
+        moods: new[] { "thorny", "wind-bent", "small", "tangled", "lonely" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildWillowTree() => new(
@@ -118,7 +125,8 @@ public static class TerrainSubfactory
             new ItemElement(new Branch()),
             new ItemElement(new Bark()),
         },
-        moods: new[] { "weeping", "trailing", "soft", "damp", "shaded" }
+        moods: new[] { "weeping", "trailing", "soft", "damp", "shaded" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildElderTree() => new(
@@ -131,7 +139,8 @@ public static class TerrainSubfactory
             new ItemElement(new Elderberry()),
             new ItemElement(new Branch()),
         },
-        moods: new[] { "shrubby", "fragrant", "spreading", "old" }
+        moods: new[] { "shrubby", "fragrant", "spreading", "old" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildAppleTree() => new(
@@ -145,7 +154,8 @@ public static class TerrainSubfactory
             new ItemElement(new AppleLeaf()),
             new ItemElement(new Branch()),
         },
-        moods: new[] { "gnarled", "laden", "shaded", "sweet", "old" }
+        moods: new[] { "gnarled", "laden", "shaded", "sweet", "old" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildPearTree() => new(
@@ -158,7 +168,8 @@ public static class TerrainSubfactory
             new ItemElement(new Pear()),
             new ItemElement(new Branch()),
         },
-        moods: new[] { "narrow-leaved", "laden", "tall", "ordered" }
+        moods: new[] { "narrow-leaved", "laden", "tall", "ordered" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildPlumTree() => new(
@@ -171,7 +182,8 @@ public static class TerrainSubfactory
             new ItemElement(new Plum()),
             new ItemElement(new Branch()),
         },
-        moods: new[] { "crowded", "fruited", "low", "spreading" }
+        moods: new[] { "crowded", "fruited", "low", "spreading" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildCherryTree() => new(
@@ -184,7 +196,8 @@ public static class TerrainSubfactory
             new ItemElement(new Cherry()),
             new ItemElement(new Branch()),
         },
-        moods: new[] { "dark-leaved", "laden", "modest", "tidy" }
+        moods: new[] { "dark-leaved", "laden", "modest", "tidy" },
+        isNatural: true
     );
 
     // ── Cut / fallen wood ────────────────────────────────────────────────────
@@ -199,7 +212,8 @@ public static class TerrainSubfactory
             new ItemElement(new Log()),
             new ItemElement(new Bark()),
         },
-        moods: new[] { "fresh-cut", "heavy", "split", "wood-scented" }
+        moods: new[] { "fresh-cut", "heavy", "split", "wood-scented" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildTreeStump() => new(
@@ -211,7 +225,8 @@ public static class TerrainSubfactory
             new ItemElement(new Mushroom()),
             new ItemElement(new Moss()),
         },
-        moods: new[] { "weathered", "low", "damp", "mossy" }
+        moods: new[] { "weathered", "low", "damp", "mossy" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildDeadfall() => new(
@@ -224,7 +239,8 @@ public static class TerrainSubfactory
             new ItemElement(new Branch()),
             new ItemElement(new Twig()),
         },
-        moods: new[] { "tangled", "dry", "weathered", "splintered" }
+        moods: new[] { "tangled", "dry", "weathered", "splintered" },
+        isNatural: true
     );
 
     // ── Rock features ────────────────────────────────────────────────────────
@@ -239,7 +255,8 @@ public static class TerrainSubfactory
             new ItemElement(new Flint()),
             new ItemElement(new Lichen()),
         },
-        moods: new[] { "grey", "weathered", "massive", "silent", "half-buried" }
+        moods: new[] { "grey", "weathered", "massive", "silent", "half-buried" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildRockOutcrop() => new(
@@ -253,7 +270,8 @@ public static class TerrainSubfactory
             new ItemElement(new Flint()),
             new ItemElement(new Lichen()),
         },
-        moods: new[] { "sharp-edged", "exposed", "wind-scoured", "grey" }
+        moods: new[] { "sharp-edged", "exposed", "wind-scoured", "grey" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildRockFace() => new(
@@ -266,7 +284,8 @@ public static class TerrainSubfactory
             new ItemElement(new Rock()),
             new ItemElement(new Flint()),
         },
-        moods: new[] { "sheer", "looming", "wet", "fissured" }
+        moods: new[] { "sheer", "looming", "wet", "fissured" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildFallenRocks() => new(
@@ -278,7 +297,8 @@ public static class TerrainSubfactory
             new ItemElement(new Rock()),
             new ItemElement(new Rock()),
         },
-        moods: new[] { "scattered", "loose", "treacherous", "grey" }
+        moods: new[] { "scattered", "loose", "treacherous", "grey" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildCrevice() => new(
@@ -289,7 +309,8 @@ public static class TerrainSubfactory
         {
             new ItemElement(new Flint()),
         },
-        moods: new[] { "narrow", "dark", "deep", "echoing" }
+        moods: new[] { "narrow", "dark", "deep", "echoing" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildCairn() => new(
@@ -301,7 +322,8 @@ public static class TerrainSubfactory
             new ItemElement(new Rock()),
             new ItemElement(new Flint()),
         },
-        moods: new[] { "balanced", "weathered", "lonely", "deliberate" }
+        moods: new[] { "balanced", "weathered", "lonely", "deliberate" },
+        isNatural: true
     );
 
     // ── Water ────────────────────────────────────────────────────────────────
@@ -316,7 +338,8 @@ public static class TerrainSubfactory
             new ItemElement(new Watercress()),
             new ItemElement(new Rock()),
         },
-        moods: new[] { "muddy", "wet", "cool", "slick" }
+        moods: new[] { "muddy", "wet", "cool", "slick" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildGorgePool() => new(
@@ -328,7 +351,8 @@ public static class TerrainSubfactory
             new ItemElement(new Rock()),
             new ItemElement(new Clay()),
         },
-        moods: new[] { "still", "dark", "cold", "wet" }
+        moods: new[] { "still", "dark", "cold", "wet" },
+        isNatural: true
     );
 
     // ── Vegetation patches ───────────────────────────────────────────────────
@@ -344,7 +368,8 @@ public static class TerrainSubfactory
             new ItemElement(new Clover()),
             new ItemElement(new Dandelion()),
         },
-        moods: new[] { "bright", "fragrant", "scattered", "vivid" }
+        moods: new[] { "bright", "fragrant", "scattered", "vivid" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildBerryBush() => new(
@@ -357,7 +382,8 @@ public static class TerrainSubfactory
             new ItemElement(new BushLeaf()),
             new ItemElement(new Thorn()),
         },
-        moods: new[] { "thorny", "dense", "fruited", "tangled" }
+        moods: new[] { "thorny", "dense", "fruited", "tangled" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildBilberryBush() => new(
@@ -369,7 +395,8 @@ public static class TerrainSubfactory
             new ItemElement(new Bilberry()),
             new ItemElement(new BushLeaf()),
         },
-        moods: new[] { "low", "tangled", "fruited", "dusky" }
+        moods: new[] { "low", "tangled", "fruited", "dusky" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildSloeBush() => new(
@@ -381,7 +408,8 @@ public static class TerrainSubfactory
             new ItemElement(new Sloe()),
             new ItemElement(new Thorn()),
         },
-        moods: new[] { "thorny", "blue-black", "wind-bent", "wild" }
+        moods: new[] { "thorny", "blue-black", "wind-bent", "wild" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildMushroomCluster() => new(
@@ -393,7 +421,8 @@ public static class TerrainSubfactory
             new ItemElement(new Mushroom()),
             new ItemElement(new Mushroom()),
         },
-        moods: new[] { "earthy", "damp", "hidden", "small" }
+        moods: new[] { "earthy", "damp", "hidden", "small" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildUndergrowthPatch() => new(
@@ -407,7 +436,8 @@ public static class TerrainSubfactory
             new ItemElement(new Nettle()),
             new ItemElement(new Ivy()),
         },
-        moods: new[] { "tangled", "low", "shaded", "snarled" }
+        moods: new[] { "tangled", "low", "shaded", "snarled" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildReedBed() => new(
@@ -420,7 +450,8 @@ public static class TerrainSubfactory
             new ItemElement(new Reed()),
             new ItemElement(new Clay()),
         },
-        moods: new[] { "tall", "rustling", "wet", "papery" }
+        moods: new[] { "tall", "rustling", "wet", "papery" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildMossBank() => new(
@@ -432,7 +463,8 @@ public static class TerrainSubfactory
             new ItemElement(new Moss()),
             new ItemElement(new Moss()),
         },
-        moods: new[] { "soft", "damp", "green", "thick" }
+        moods: new[] { "soft", "damp", "green", "thick" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildAlpineHerbPatch() => new(
@@ -445,7 +477,8 @@ public static class TerrainSubfactory
             new ItemElement(new WildMint()),
             new ItemElement(new Valerian()),
         },
-        moods: new[] { "fragrant", "small", "sheltered", "rare" }
+        moods: new[] { "fragrant", "small", "sheltered", "rare" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildLichenCrust() => new(
@@ -457,7 +490,8 @@ public static class TerrainSubfactory
             new ItemElement(new Lichen()),
             new ItemElement(new Lichen()),
         },
-        moods: new[] { "papery", "grey-green", "weathered", "thin" }
+        moods: new[] { "papery", "grey-green", "weathered", "thin" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildShelteredHollow() => new(
@@ -469,7 +503,8 @@ public static class TerrainSubfactory
             new ItemElement(new Gentian()),
             new ItemElement(new Valerian()),
         },
-        moods: new[] { "sheltered", "rare", "small", "still" }
+        moods: new[] { "sheltered", "rare", "small", "still" },
+        isNatural: true
     );
 
     public static PointOfInterest BuildIceFormation() => new(
@@ -477,6 +512,7 @@ public static class TerrainSubfactory
         referenceLemma: "ice",
         descriptions: new() { "A wind-carved sculpture of ice glittering in the cold light" },
         items: new(),
-        moods: new[] { "glittering", "wind-carved", "frozen", "still" }
+        moods: new[] { "glittering", "wind-carved", "frozen", "still" },
+        isNatural: true
     );
 }

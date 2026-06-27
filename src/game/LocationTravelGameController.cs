@@ -94,6 +94,8 @@ public class LocationTravelGameController : IDisposable
     // Latest planner state cached for rendering
     private List<int>? _plannedPath;
     private TravelEstimate? _plannedEstimate;
+    // In-game hours for the in-flight trip, captured at travel start, applied to the clock on arrival.
+    private float _committedTravelHours;
     // Tracks a cell that was flashed as "forbidden" so it can be cleared after a tick.
     private int _forbiddenFlashVertex = -1;
     private int _forbiddenFlashFramesLeft = 0;
@@ -1394,6 +1396,10 @@ public class LocationTravelGameController : IDisposable
         _tripTotalCells    = pathVertices.Count - 1;
         _tripCellsTraveled = 0;
 
+        // Capture the trip's in-game duration before the estimate is cleared; added to the global
+        // clock when the protagonist arrives (the estimate is gone by then).
+        _committedTravelHours = _plannedEstimate?.TotalDurationHours ?? 0f;
+
         _plannedEstimate = null;
 
         // Create the travel progress renderer once and initialise the trip
@@ -1475,6 +1481,12 @@ public class LocationTravelGameController : IDisposable
         ClearTravelPlan();
         _travelProgressRenderer?.Erase();
         TravelCompleted?.Invoke();
+
+        // Advance the global in-game clock by the trip's duration before any scene is built (so
+        // depletion timestamps and regen checks use the post-travel time).
+        if (_protagonist != null)
+            _protagonist.GameTimeHours += _committedTravelHours;
+        _committedTravelHours = 0f;
 
         // Routine replay: if the player launched travel from the routine box and the routine belongs
         // to this destination, replay it instead of starting a fresh narration phase.
@@ -2378,33 +2390,17 @@ public class LocationTravelGameController : IDisposable
             if (!_narrationFactories.TryGetValue(lookupKey, out var graphFactory) &&
                 !_narrationFactories.TryGetValue(biomeName, out graphFactory))
             {
-                // Scene system path: use a registered SceneFactory, checking location name then biome name
-                var sessionPath = _llmActionExecutor.GetLlamaServerManager().SessionLogDir;
-                if ((locationName == null || !_sceneFactories.TryGetValue(locationName, out var sceneFactory)) &&
-                    !_sceneFactories.TryGetValue(biomeName, out sceneFactory))
+                // Scene system path: build via the shared helper (factory selection + per-location
+                // state get-or-create + item-depletion application).
+                var scene = BuildSceneForLocation(vertexIndex, out var locState);
+                if (scene == null)
                 {
-                    Console.WriteLine($"LocationTravelGameController: No scene factory for '{locationName ?? biomeName}', using PlainSceneFactory");
-                    sceneFactory = new PlainSceneFactory(sessionPath);
+                    Console.Error.WriteLine("LocationTravelGameController: scene build failed - aborting Phase 6");
+                    _isInNarrativeMode = false;
+                    _narrativeController = null;
+                    return;
                 }
-                else
-                {
-                    Console.WriteLine($"LocationTravelGameController: Using scene factory for '{locationName ?? biomeName}'");
-                }
-                _locationStates.TryGetValue(vertexIndex, out var existingState);
-                var scene = sceneFactory.Build(vertexIndex, existingState);
-
-                // Apply DefaultEnemy flag for hostile archetypes
-                if (_protagonist != null)
-                {
-                    foreach (var sceneNpc in scene.Npcs)
-                    {
-                        if (sceneNpc.Entity is Cathedral.Game.Npc.NpcEntity npcEnt &&
-                            npcEnt.Archetype.DefaultEnemy)
-                        {
-                            npcEnt.AffinityTable.SetEnemy(_protagonist.DisplayName);
-                        }
-                    }
-                }
+                _currentLocationState = locState;
 
                 _narrativeController = new NarrativeController(
                     _core.Terminal,
@@ -2716,13 +2712,18 @@ public class LocationTravelGameController : IDisposable
         return scene;
     }
 
-    /// <summary>
-    /// Builds a fresh scene for a vertex exactly as a narration start would (factory choice, existing
-    /// location state, default-enemy flags). Used for routine virtual/full replay. Returns null when
-    /// LLM dependencies are not yet available.
-    /// </summary>
+    /// <summary>Builds a fresh scene for routine replay (same as a narration start).</summary>
     private Cathedral.Game.Scene.Scene? BuildSceneForVertex(int vertexIndex)
+        => BuildSceneForLocation(vertexIndex, out _);
+
+    /// <summary>
+    /// Builds a fresh scene for a vertex exactly as a narration start would: scene-factory selection,
+    /// per-location state (NPC affinity + item depletion) get-or-create, default-enemy flags, and the
+    /// shared depletion store + current-depletion application. Returns null when LLM deps aren't ready.
+    /// </summary>
+    private Cathedral.Game.Scene.Scene? BuildSceneForLocation(int vertexIndex, out LocationInstanceState? lis)
     {
+        lis = null;
         if (_llmActionExecutor == null || _protagonist == null) return null;
 
         var biomeInfo    = _interface.GetDetailedBiomeInfoAt(vertexIndex);
@@ -2736,14 +2737,57 @@ public class LocationTravelGameController : IDisposable
             sceneFactory = new PlainSceneFactory(sessionPath);
         }
 
-        _locationStates.TryGetValue(vertexIndex, out var existingState);
-        var scene = sceneFactory.Build(vertexIndex, existingState);
+        // Get-or-create the persistent per-location state, then build the scene from it.
+        if (!_locationStates.TryGetValue(vertexIndex, out var state))
+        {
+            state = LocationInstanceState.ForScene(vertexIndex, locationName ?? biomeName);
+            _locationStates[vertexIndex] = state;
+        }
+        lis = state;
+
+        var scene = sceneFactory.Build(vertexIndex, state);
 
         foreach (var sceneNpc in scene.Npcs)
             if (sceneNpc.Entity is Cathedral.Game.Npc.NpcEntity npcEnt && npcEnt.Archetype.DefaultEnemy)
                 npcEnt.AffinityTable.SetEnemy(_protagonist.DisplayName);
 
+        // Share the depletion store with the persistent state, then apply current depletion (regen).
+        scene.ItemDepletions = state.ItemDepletions;
+        ApplyDepletion(scene, _protagonist.GameTimeHours);
+
         return scene;
+    }
+
+    /// <summary>
+    /// Removes still-depleted items from the freshly built scene. An item slot is depleted while
+    /// <c>now − lastPicked &lt; poi.RegenHours</c>; once that elapses it is simply present again
+    /// (regeneration requires no state write). Lazily prunes entries whose regen has elapsed.
+    /// </summary>
+    private static void ApplyDepletion(Cathedral.Game.Scene.Scene scene, double nowHours)
+    {
+        foreach (var area in scene.AllAreas)
+        {
+            ApplyToPois(area.PointsOfInterest);
+            foreach (var spot in area.Spots)
+                ApplyToPois(spot.PointsOfInterest);
+        }
+
+        void ApplyToPois(List<Cathedral.Game.Scene.PointOfInterest> pois)
+        {
+            foreach (var poi in pois)
+            {
+                for (int i = poi.Items.Count - 1; i >= 0; i--)
+                {
+                    var key = poi.Items[i].DepletionKey;
+                    if (!scene.ItemDepletions.TryGetValue(key, out var pickedAt)) continue;
+
+                    if (nowHours - pickedAt < poi.RegenHours)
+                        poi.Items.RemoveAt(i);          // still depleted
+                    else
+                        scene.ItemDepletions.Remove(key); // regenerated — prune the stale entry
+                }
+            }
+        }
     }
 
     private void StartFightMode(FightOutcome fightOutcome)

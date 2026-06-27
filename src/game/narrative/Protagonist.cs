@@ -24,6 +24,12 @@ public class Protagonist : PartyMember
     public int CurrentLocationId { get; set; }
 
     /// <summary>
+    /// Accumulated in-game time in hours, advanced by travel. Serves as the global clock used to
+    /// timestamp item depletion and decide when depleted resources have regenerated.
+    /// </summary>
+    public double GameTimeHours { get; set; }
+
+    /// <summary>
     /// The protagonist's childhood biography, populated during the childhood reminescence
     /// phase as fragments are remembered. Empty at run start.
     /// </summary>

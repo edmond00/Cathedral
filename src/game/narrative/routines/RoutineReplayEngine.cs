@@ -41,6 +41,10 @@ public class RoutineReplayEngine
             return result;
         }
 
+        // In virtual replay, picking verbs must validate without mutating real state (inventory,
+        // depletion timestamps). Full replay leaves this false so picks consume for real.
+        scene.IsVirtualReplay = dryRun;
+
         var firstArea = scene.AllAreas.FirstOrDefault();
         if (firstArea == null)
         {
@@ -57,7 +61,7 @@ public class RoutineReplayEngine
             var step = routine.Steps[i];
 
             // 1. Resolve the live target in the fresh scene.
-            var target = RoutineTargetResolver.Resolve(scene, step.Target);
+            var target = RoutineTargetResolver.Resolve(scene, pov, step.Target);
             if (target == null)
             {
                 Fail(result, i, $"'{step.Target.DisplayName}' is no longer present.");

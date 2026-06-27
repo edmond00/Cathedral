@@ -12,6 +12,7 @@ public enum RoutineTargetKind
     PointOfInterest,
     Spot,
     Npc,
+    Item,
 }
 
 /// <summary>

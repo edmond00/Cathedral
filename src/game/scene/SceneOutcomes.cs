@@ -25,17 +25,8 @@ public sealed class ItemAcquisitionOutcome : OutcomeReport
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null || pov == null) return;
-
-        // Remove from the first PoI that holds it (area or current spot)
-        var allPoIs = pov.InSpot != null
-            ? pov.InSpot.PointsOfInterest.AsEnumerable()
-            : pov.Where.PointsOfInterest.AsEnumerable();
-
-        foreach (var poi in allPoIs)
-            if (poi.Items.Remove(_itemElement)) break;
-
-        protagonist.Inventory.Add(_itemElement.Item);
-        scene.StateChanges.Capture(_itemElement);
+        // Shared pickup: removes from the holding PoI, adds to inventory, and stamps depletion.
+        ItemPickup.Pick(scene, pov, protagonist, _itemElement);
     }
 }
 

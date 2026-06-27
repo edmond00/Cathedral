@@ -40,6 +40,20 @@ public class Scene
     public StateChangeSet StateChanges { get; set; } = new();
 
     /// <summary>
+    /// Item-depletion timestamps for this location: <see cref="ItemElement.DepletionKey"/> → the
+    /// <c>Protagonist.GameTimeHours</c> at which that slot was last picked. Pointed at the owning
+    /// <c>LocationInstanceState.ItemDepletions</c> (shared backing store) so picks persist across
+    /// visits without an explicit save step. An item is depleted while <c>now − pickedAt &lt; RegenHours</c>.
+    /// </summary>
+    public Dictionary<string, double> ItemDepletions { get; set; } = new();
+
+    /// <summary>
+    /// True while this scene is a throwaway used for routine <i>virtual</i> replay. Picking verbs must
+    /// not mutate real state (inventory, depletion timestamps) when set.
+    /// </summary>
+    public bool IsVirtualReplay { get; set; }
+
+    /// <summary>
     /// Which narration phase this scene belongs to. Defaults to <see cref="NarrationPhase.Exploration"/>.
     /// Special phases (e.g. <see cref="NarrationPhase.ChildhoodReminescence"/>) opt out of critic checks
     /// and noetic-point consumption and use phase-specific prompt contexts.

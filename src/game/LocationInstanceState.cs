@@ -70,6 +70,14 @@ public record LocationInstanceState
     public Dictionary<string, Dictionary<string, AffinityLevel>> NpcAffinityData { get; init; }
 
     /// <summary>
+    /// Item-depletion timestamps: <see cref="Cathedral.Game.Scene.ItemElement.DepletionKey"/> → the
+    /// <c>Protagonist.GameTimeHours</c> at which that slot was last picked. Mutated in place during a
+    /// visit (the scene shares this dictionary), so depletion persists across visits with no explicit
+    /// save step. A slot is depleted while <c>now − pickedAt &lt; PoI.RegenHours</c>.
+    /// </summary>
+    public Dictionary<string, double> ItemDepletions { get; init; } = new();
+
+    /// <summary>
     /// Creates a new location instance state with default values.
     /// </summary>
     public LocationInstanceState(
@@ -88,6 +96,20 @@ public record LocationInstanceState
         TotalTurnCount = 0;
         VisitCount = 1;
         NpcAffinityData = new Dictionary<string, Dictionary<string, AffinityLevel>>();
+    }
+
+    /// <summary>
+    /// Creates a minimal location state for the scene backend, keyed by world vertex. The legacy
+    /// graph-system fields (sublocation, state categories, action history) are left empty; the
+    /// scene system only uses <see cref="NpcAffinityData"/> and <see cref="ItemDepletions"/>.
+    /// </summary>
+    public static LocationInstanceState ForScene(int vertex, string locationType)
+    {
+        return new LocationInstanceState(
+            locationId: vertex.ToString(),
+            locationType: locationType,
+            currentSublocation: string.Empty,
+            currentStates: new Dictionary<string, string>());
     }
 
     /// <summary>

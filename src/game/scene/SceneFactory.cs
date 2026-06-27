@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Cathedral.Game.Scene.Verbs;
@@ -35,9 +36,38 @@ public abstract class SceneFactory
         BuildSections(rng, locationId, scene);
         BuildNpcs(rng, locationId, scene);
         AssignVerbs(scene);
+        AssignDepletionKeys(scene);
         WriteSceneToLog(scene, locationId);
 
         return scene;
+    }
+
+    /// <summary>
+    /// Assigns each item a stable <see cref="ItemElement.DepletionKey"/> in deterministic build order
+    /// (areas → their spots → PoIs → items). Because factories are seeded by locationId, the same
+    /// physical slot maps to the same key on every rebuild, so depletion/regeneration can be tracked
+    /// across visits without persisting element GUIDs.
+    /// </summary>
+    private static void AssignDepletionKeys(Scene scene)
+    {
+        foreach (var area in scene.AllAreas)
+        {
+            KeyContainer(area.DisplayName, "", area.PointsOfInterest);
+            foreach (var spot in area.Spots)
+                KeyContainer(area.DisplayName, spot.ReferenceLemma, spot.PointsOfInterest);
+        }
+
+        static void KeyContainer(string areaName, string spotName, List<PointOfInterest> pois)
+        {
+            var lemmaCounts = new Dictionary<string, int>();
+            foreach (var poi in pois)
+            {
+                lemmaCounts.TryGetValue(poi.ReferenceLemma, out int ordinal);
+                lemmaCounts[poi.ReferenceLemma] = ordinal + 1;
+                for (int i = 0; i < poi.Items.Count; i++)
+                    poi.Items[i].DepletionKey = $"{areaName}|{spotName}|{poi.ReferenceLemma}#{ordinal}|{i}";
+            }
+        }
     }
 
     /// <summary>
