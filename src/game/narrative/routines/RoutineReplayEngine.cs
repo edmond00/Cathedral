@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Rules;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
@@ -94,6 +96,15 @@ public class RoutineReplayEngine
                 return result;
             }
 
+            // 4b. Coded rules (legality, witnesses, inventory capacity, …) — the same deterministic
+            //     gate narration applies. A failure here marks the routine unreplayable (greyed out).
+            var ruleResult = CheckCodedRules(scene, pov, ctx, verb, target, step);
+            if (!ruleResult.Passed)
+            {
+                Fail(result, i, ruleResult.ErrorMessage ?? "Action is not allowed here.");
+                return result;
+            }
+
             // 5. Commit the step. Constraints consume (real or ledger-only); verb reports advance the
             //    disposable scene/pov. NOTE: today's only recordable verb (move) confines its reports to
             //    the PoV. When recordable verbs that mutate the acting member are added, virtual replay
@@ -125,6 +136,29 @@ public class RoutineReplayEngine
         result.Replayable      = false;
         result.FailedStepIndex = stepIndex;
         result.FailReason      = reason;
+    }
+
+    /// <summary>
+    /// Runs the same coded action rules narration applies, by reconstructing a minimal action context
+    /// from the routine step (verb + target + recorded modus mentis) and the live scene/pov.
+    /// </summary>
+    private static ActionRuleResult CheckCodedRules(Scene.Scene scene, PoV pov, RoutineReplayContext ctx,
+        Verb verb, Element target, RoutineStep step)
+    {
+        var verbView = new VerbView(verb, verb.Verbatim(scene, pov, target), target);
+        var action = new ParsedNarrativeAction
+        {
+            PreselectedOutcome  = new VerbOutcome(verbView, target),
+            ActionModusMentisId = step.Constraints.OfType<ModusMentisConstraint>()
+                                      .FirstOrDefault()?.ModusMentisId ?? string.Empty,
+        };
+
+        bool illegal = !verb.IsLegal || pov.Where.IsPrivate;
+        var witness  = illegal ? WitnessSelector.ComputeContext(scene, pov) : WitnessContext.None;
+        var threat   = ThreatSelector.ComputeContext(scene, pov, ctx.Protagonist);
+
+        var ruleCtx = new ActionRuleContext(action, ctx.ActingMember, scene, pov, witness, threat);
+        return ActionRulesChecker.Check(ruleCtx);
     }
 
     private static string ConstraintFailReason(RoutineConstraint c) => c switch

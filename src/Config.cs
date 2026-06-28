@@ -70,6 +70,7 @@ public static class Config
         public const float CameraZoomWorldView = 100.0f; // Destination selection phase (starting value)
         public const float CameraZoomTraveling = 85.0f; // Travel animation phase
         public const float CameraZoomNarration = 65.0f; // Location interaction/narration phase
+        public const float CameraZoomRoutineMinimap = 50.0f; // Routines-tab minimap porthole (closer = focused minimap)
         
         // Default glyph settings
         public const char DefaultGlyph = '.';

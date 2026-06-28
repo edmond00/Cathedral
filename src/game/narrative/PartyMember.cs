@@ -111,8 +111,9 @@ public abstract class PartyMember
     ///   1. Preferred anchor (if the item declares one and it is free).
     ///   2. Any free anchor that CanAccept the item.
     ///   3. Any equipped ContainerItem that CanContain + has space.
-    ///   4. Falls back to <see cref="Inventory"/> overflow list.
-    /// Returns true when placement succeeds (includes overflow).
+    /// Returns true when the item was placed, false when there is no room anywhere — in which case
+    /// the item is NOT taken (it is dropped/ignored, never forced into a bottomless overflow). Pickup
+    /// is normally gated earlier by <c>InventoryCapacityRule</c>, so a false here is a last-resort guard.
     /// </summary>
     public bool TryAcquireItem(Item item)
     {
@@ -147,10 +148,36 @@ public abstract class PartyMember
             }
         }
 
-        // 4. Overflow
-        Console.WriteLine($"PartyMember: No free anchor/container for '{item.DisplayName}' — placed in overflow inventory.");
-        Inventory.Add(item);
-        return true; // acquisition itself always succeeds; caller is informed via log
+        // No room: drop the item rather than overflow.
+        Console.WriteLine($"PartyMember: No free anchor/container for '{item.DisplayName}' — item dropped (inventory full).");
+        return false;
+    }
+
+    /// <summary>
+    /// Non-mutating check mirroring <see cref="TryAcquireItem"/>: returns true when this item could be
+    /// placed in a preferred/compatible anchor or an equipped container. Used by the coded
+    /// inventory-capacity rule to block a pickup before it executes.
+    /// </summary>
+    public bool CanAcquireItem(Item item)
+    {
+        if (item.PreferredAnchor.HasValue)
+        {
+            var preferred = item.PreferredAnchor.Value;
+            if (preferred.CanAccept(item) && AvailableSlots(preferred) >= item.SlotCount)
+                return true;
+        }
+
+        foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
+            if (anchor.CanAccept(item) && AvailableSlots(anchor) >= item.SlotCount)
+                return true;
+
+        foreach (var kvp in EquippedItems)
+            foreach (var equipped in kvp.Value)
+                if (equipped is ContainerItem container
+                    && container.CanContain(item) && item.SlotCount <= container.AvailableSlots)
+                    return true;
+
+        return false;
     }
 
     /// <summary>

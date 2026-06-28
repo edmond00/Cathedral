@@ -98,4 +98,11 @@ public abstract class Verb
     /// </summary>
     public virtual RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
         => RoutinePhaseKind.None;
+
+    /// <summary>
+    /// The item this verb would add to the actor's inventory on success, or null for verbs that do not
+    /// pick anything up. Pickup verbs (grab/gather/steal/cut) override this so the coded
+    /// inventory-capacity rule can block the action when there is no room to carry it.
+    /// </summary>
+    public virtual Item? AcquiredItem(Element? target) => null;
 }

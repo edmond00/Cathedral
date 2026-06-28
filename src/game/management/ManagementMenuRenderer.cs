@@ -108,6 +108,15 @@ public class ManagementMenuRenderer
     /// <summary>Callback invoked when the player successfully consumes an item (for audio feedback).</summary>
     public Action? OnItemConsumed { get; set; }
 
+    /// <summary>
+    /// Fired with a routine's LocationId when the Routines tab focuses one (selection change or tab
+    /// activation). The host centers the world camera so the minimap porthole shows that location.
+    /// </summary>
+    public Action<int>? OnRoutineLocationFocused { get; set; }
+
+    /// <summary>Fired when the Routines tab is left (tab switch or Back) so the host can restore camera/world state.</summary>
+    public Action? OnRoutinesPortholeClosed { get; set; }
+
     public ManagementMenuRenderer(TerminalHUD terminal, Protagonist protagonist, BodyArtData artData,
                                    PopupTerminalHUD? popup = null)
     {
@@ -131,6 +140,7 @@ public class ManagementMenuRenderer
 
         _memoryPanel = new MemoryPanelRenderer(terminal, popup);
         _routinesPanel = new RoutinesPanelRenderer(terminal);
+        _routinesPanel.OnRoutineFocused = locId => OnRoutineLocationFocused?.Invoke(locId);
 
         _inventoryMenu = new InventoryMenuRenderer(terminal, _bodyViewer, _humanGearData, popup);
         _inventoryMenu.OnItemConsumed = () => { Render(); OnItemConsumed?.Invoke(); };
@@ -368,6 +378,8 @@ public class ManagementMenuRenderer
         // Back button
         if (IsOnBackButton(x, y))
         {
+            if (_activeTab == ManagementTab.Routines)
+                OnRoutinesPortholeClosed?.Invoke();
             OnBack?.Invoke();
             return;
         }
@@ -379,7 +391,14 @@ public class ManagementMenuRenderer
             var tabDef = AllTabs[tabIdx];
             if (tabDef.Enabled)
             {
+                var previousTab = _activeTab;
                 _activeTab = tabDef.Tab;
+
+                // Routines tab owns a transparent minimap porthole + a focused world camera.
+                if (previousTab == ManagementTab.Routines && _activeTab != ManagementTab.Routines)
+                    OnRoutinesPortholeClosed?.Invoke();
+                if (_activeTab == ManagementTab.Routines && previousTab != ManagementTab.Routines)
+                    _routinesPanel.OnActivated(_protagonist);
 
                 if (!IsCharacterVisibleForTab(_selectedCharacterIndex, _activeTab))
                     _selectedCharacterIndex = 0;

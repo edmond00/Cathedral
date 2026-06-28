@@ -38,6 +38,8 @@ public class GatherVerb : Verb
         return new[] { new ItemAcquisitionOutcome(itemElement) };
     }
 
+    public override Item? AcquiredItem(Element? target) => (target as ItemElement)?.Item;
+
     // ── Routine recording ─────────────────────────────────────────────────────
     // Gathering is habitual foraging; the routine target is the item type (by ItemId), re-resolved in
     // a freshly built scene at replay. A depleted resource resolves to null → routine greys out.

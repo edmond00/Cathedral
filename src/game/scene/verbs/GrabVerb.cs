@@ -35,4 +35,6 @@ public class GrabVerb : Verb
         if (target is not ItemElement itemElement) return System.Array.Empty<OutcomeReport>();
         return new[] { new ItemAcquisitionOutcome(itemElement) };
     }
+
+    public override Item? AcquiredItem(Element? target) => (target as ItemElement)?.Item;
 }

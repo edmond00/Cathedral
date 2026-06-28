@@ -1816,11 +1816,24 @@ public class LocationTravelGameController : IDisposable
             _managementMenuRenderer.OnBack = () =>
             {
                 Console.WriteLine("LocationTravelGameController: Management menu closed, returning to main menu");
+                _core.SetNarrationMode(true); // restore management-mode world shading
                 _managementMenuRenderer = null;
                 SetMode(GameMode.MainMenu);
             };
             _managementMenuRenderer.OnItemConsumed = () =>
                 _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+
+            // Routines tab: focus the world camera on the selected routine's location and switch the
+            // world to full-colour shading so it shows through the tab's transparent minimap porthole.
+            _managementMenuRenderer.OnRoutineLocationFocused = locId =>
+            {
+                if (locId < 0) return;
+                _core.SetNarrationMode(false);
+                _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomRoutineMinimap);
+                _core.CenterCameraOnGlyph(locId);
+            };
+            _managementMenuRenderer.OnRoutinesPortholeClosed = () =>
+                _core.SetNarrationMode(true); // restore dark world shading for the other tabs
             
             _managementMenuRenderer.Render();
         }

@@ -13,37 +13,44 @@ namespace Cathedral.Game.Scene;
 public static class ItemPickup
 {
     /// <summary>
-    /// Returns the non-corpse PoI (in the current spot, or the current area) that holds the given item,
-    /// or null if none. Mirrors the search used by the pickup verbs' <c>IsPossible</c>.
+    /// Returns the PoI (in the current spot, or the current area) that holds the given item, or null if
+    /// none. Corpse PoIs are excluded unless <paramref name="includeCorpse"/> is set (Cut harvesting).
+    /// Mirrors the search used by the pickup verbs' <c>IsPossible</c>.
     /// </summary>
-    public static PointOfInterest? FindHoldingPoI(PoV pov, ItemElement item)
+    public static PointOfInterest? FindHoldingPoI(PoV pov, ItemElement item, bool includeCorpse = false)
     {
         var pois = pov.InSpot != null
             ? pov.InSpot.PointsOfInterest
             : pov.Where.PointsOfInterest;
 
         return pois
-            .Where(poi => poi is not CorpseBodyPartPoI)
+            .Where(poi => includeCorpse || poi is not CorpseBodyPartPoI)
             .FirstOrDefault(poi => poi.Items.Any(ie => ie.Id == item.Id));
     }
 
     /// <summary>
-    /// Picks <paramref name="item"/>: removes it from its holding PoI, adds it to the acting member's
-    /// inventory, and records the depletion timestamp (the protagonist's current game time). During
-    /// routine virtual replay (<see cref="Scene.IsVirtualReplay"/>) nothing is mutated — the call only
-    /// has to be reachable for the replay validation to succeed.
+    /// Picks <paramref name="item"/>: places it in the acting member's inventory, removes it from its
+    /// holding PoI, and records the depletion timestamp (the protagonist's current game time). If the
+    /// inventory is full the item is left in the world untouched (pickup is normally pre-gated by the
+    /// coded inventory-capacity rule). During routine virtual replay (<see cref="Scene.IsVirtualReplay"/>)
+    /// nothing real is mutated — the item is only removed from the disposable scene so multi-pick
+    /// routines can validate.
     /// </summary>
-    public static void Pick(Scene scene, PoV pov, PartyMember actor, ItemElement item)
+    public static void Pick(Scene scene, PoV pov, PartyMember actor, ItemElement item, bool includeCorpse = false)
     {
-        // Remove from the holding PoI. Safe even on a disposable virtual-replay scene, and lets a
-        // multi-pick routine validate that enough instances exist.
-        var poi = FindHoldingPoI(pov, item);
+        var poi = FindHoldingPoI(pov, item, includeCorpse);
+
+        // Validation-only during virtual replay: advance the disposable scene, touch nothing real.
+        if (scene.IsVirtualReplay)
+        {
+            poi?.Items.Remove(item);
+            return;
+        }
+
+        // Acquire first; if there is no room, drop the item (leave it in the world) rather than lose it.
+        if (!actor.AcquireItem(item.Item)) return;
+
         poi?.Items.Remove(item);
-
-        // Validation-only during routine virtual replay: don't touch real inventory or depletion.
-        if (scene.IsVirtualReplay) return;
-
-        actor.AcquireItem(item.Item);
 
         // Stamp depletion against the global clock so this slot stays empty until it regenerates.
         if (!string.IsNullOrEmpty(item.DepletionKey))

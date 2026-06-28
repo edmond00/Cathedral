@@ -37,4 +37,6 @@ public class CutVerb : Verb
         if (target is not ItemElement itemElement) return System.Array.Empty<OutcomeReport>();
         return new[] { new CorpseItemAcquisitionOutcome(itemElement) };
     }
+
+    public override Item? AcquiredItem(Element? target) => (target as ItemElement)?.Item;
 }

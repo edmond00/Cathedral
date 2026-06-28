@@ -43,12 +43,9 @@ public sealed class CorpseItemAcquisitionOutcome : OutcomeReport
 
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
-        if (pov?.InSpot == null) return;
-
-        foreach (var poi in pov.InSpot.PointsOfInterest.OfType<CorpseBodyPartPoI>())
-            if (poi.Items.Remove(_itemElement)) break;
-
-        protagonist.Inventory.Add(_itemElement.Item);
+        if (scene == null || pov?.InSpot == null) return;
+        // Shared pickup (corpse PoIs included): proper inventory placement + full-inventory handling.
+        ItemPickup.Pick(scene, pov, protagonist, _itemElement, includeCorpse: true);
     }
 }
 
