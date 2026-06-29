@@ -6,5 +6,6 @@ public sealed class Straw : Item
 {
     public override string ItemId      => "straw";
     public override string DisplayName => "Straw";
+    public override string Article     => "some";
     public override string Description => "A handful of dry golden straw stalks, hollow and brittle";
 }

@@ -6,6 +6,7 @@ public sealed class Wool : Item
 {
     public override string ItemId      => "wool";
     public override string DisplayName => "Wool";
+    public override string Article     => "some";
     public override string Description => "A loose fleece of raw sheep's wool, greasy with lanolin";
     public override ItemSize Size      => ItemSize.Medium;
 }

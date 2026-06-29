@@ -6,6 +6,7 @@ public sealed class PorkMeat : Item
 {
     public override string ItemId      => "pork_meat";
     public override string DisplayName => "Pork Meat";
+    public override string Article     => "some";
     public override string Description => "A heavy cut of raw pork, marbled with fat and still bleeding";
     public override float Weight       => 0.8f;
 }

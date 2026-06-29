@@ -37,8 +37,8 @@ public class OpenDoorVerb : Verb
         if (target is not DoorPointOfInterest door) return "open the door";
 
         return pov.Where.Id == door.FrontArea.Id
-            ? $"open {door.DisplayName.ToLowerInvariant()} and step through"
-            : $"exit back through {door.DisplayName.ToLowerInvariant()}";
+            ? $"open {DefiniteTarget(door)} and step through"
+            : $"exit back through {DefiniteTarget(door)}";
     }
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)

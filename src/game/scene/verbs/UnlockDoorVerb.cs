@@ -26,7 +26,7 @@ public class UnlockDoorVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"unlock and open {target.DisplayName.ToLowerInvariant()}";
+        => $"unlock and open {DefiniteTarget(target)}";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

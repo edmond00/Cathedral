@@ -27,7 +27,7 @@ public class MoveToAreaVerb : Verb
     {
         if (target is Area area && !string.IsNullOrWhiteSpace(area.TransitionDescription))
             return area.TransitionDescription;
-        return $"move to the {target.DisplayName.ToLowerInvariant()}";
+        return $"move to {DefiniteTarget(target)}";
     }
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)

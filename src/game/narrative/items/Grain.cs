@@ -7,6 +7,7 @@ public sealed class Grain : ConsumableItem
 {
     public override string ItemId      => "grain";
     public override string DisplayName => "Grain";
+    public override string Article     => "some";
     public override string Description => "A small cloth sack of dried wheat grain, heavy and husked";
     public override ItemSize Size      => ItemSize.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Food;

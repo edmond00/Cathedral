@@ -26,11 +26,7 @@ public class GatherVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-    {
-        var name    = target.DisplayName.ToLowerInvariant();
-        var article = "aeiou".Contains(name[0]) ? "an" : "a";
-        return $"gather {article} {name}";
-    }
+        => PickupVerbatim("gather", target);
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

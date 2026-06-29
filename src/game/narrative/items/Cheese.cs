@@ -7,6 +7,7 @@ public sealed class Cheese : ConsumableItem
 {
     public override string ItemId      => "cheese";
     public override string DisplayName => "Cheese";
+    public override string Article     => "some";
     public override string Description => "A wedge of aged yellow cheese, firm-rinded and sharp-smelling";
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Rich;

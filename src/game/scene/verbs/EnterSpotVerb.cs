@@ -22,7 +22,7 @@ public class EnterSpotVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"examine the {target.DisplayName.ToLowerInvariant()}";
+        => $"examine {DefiniteTarget(target)}";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

@@ -101,14 +101,13 @@ public class ThinkingExecutor
         // ── Flavor: action text (action skill slot) ─────────────────────────────
         int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(skill);
         _llmManager.ResetInstance(actionSlot);
-        // The neutral sentence still opens with "Let me try to …", but the GBNF prefix constraint is
-        // TEMPORARILY DISABLED to let the persona phrase the opening freely. The button label
-        // (DisplayText) is whatever remains after the prefix when the persona keeps it; ActionText
-        // keeps the canonical "try to …" form the critics expect.
-        // To restore the constraint, pass `forcedPrefix: actionPrefix` to RewriteAsync below.
-        const string actionPrefix = "Let me try to ";
+        // The neutral sentence opens with "I will …", and the GBNF prefix constraint forces the
+        // styled rewrite to open with the same literal. This guarantees the prefix can be stripped
+        // cleanly to form the button label (DisplayText); ActionText keeps the canonical "try to …"
+        // form the critics expect.
+        const string actionPrefix = "I will ";
         string styledAction = await _rewriter.RewriteAsync(
-            actionSlot, NeutralNarration.ActionIntent(goalPhrase), NarrationKind.Action, skill.PersonaReminder2, styleInstruction: skill.StyleInstruction, ct: cancellationToken);
+            actionSlot, NeutralNarration.ActionIntent(goalPhrase), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: actionPrefix, styleInstruction: skill.StyleInstruction, ct: cancellationToken);
         if (string.IsNullOrWhiteSpace(styledAction)) styledAction = actionPrefix + goalPhrase;
         string bareAction = StripPrefix(styledAction, actionPrefix);
 

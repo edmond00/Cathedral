@@ -95,7 +95,7 @@ public class PersonaRewriter
         NarrationKind.Reasoning =>
             "Re-express this as your own inner thought — your intent, what draws you, and how you mean to proceed — while keeping the same meaning.",
         NarrationKind.Action =>
-            "Re-express this intended action in your own voice, concretely and naturally, keeping the same action and its target.",
+            "Re-express this intended action in your own voice, concretely and naturally. The action you intend and its target are literal facts that must be preserved exactly: state plainly what you will do, never drop, blur, or replace the action itself — restyle only how it is told, not what is done.",
         NarrationKind.Outcome =>
             "Re-express this result in your own voice — what happens and how it feels to you — while keeping the same meaning and whether it succeeded or failed.",
         NarrationKind.Speaking =>

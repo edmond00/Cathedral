@@ -7,6 +7,7 @@ public sealed class DriedMeat : ConsumableItem
 {
     public override string ItemId      => "dried_meat";
     public override string DisplayName => "Dried Meat";
+    public override string Article     => "some";
     public override string Description => "A strip of salted dark meat, hard and leathery, smelling of brine";
     public override ConsumableType ConsumableType => ConsumableType.Food;
     public override bool IsHard => true;

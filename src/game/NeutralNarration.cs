@@ -68,11 +68,11 @@ public static class NeutralNarration
         => $"I notice {NounPhrase(targetPhrase)}, but I let it be and move on.";
 
     /// <summary>
-    /// The intended action as a first-person "Let me try to …" attempt (e.g. "Let me try to climb
-    /// the tree"). The styled rewrite is GBNF-forced to open with the same prefix, which is then
-    /// stripped to form the button label.
+    /// The intended action as a first-person "I will …" statement (e.g. "I will climb the tree").
+    /// The styled rewrite is GBNF-forced to open with the same prefix, which is then stripped to
+    /// form the button label.
     /// </summary>
-    public static string ActionIntent(string verbVerbatim) => $"Let me try to {verbVerbatim}";
+    public static string ActionIntent(string verbVerbatim) => $"I will {verbVerbatim}";
 
     // ── Action outcomes ────────────────────────────────────────────────────────
     // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.

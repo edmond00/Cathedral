@@ -22,7 +22,7 @@ public class FollowPathVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"follow {target.DisplayName.ToLowerInvariant()}";
+        => $"follow {DefiniteTarget(target)}";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

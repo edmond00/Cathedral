@@ -150,7 +150,7 @@ namespace Cathedral.Game
             int row = _boxY + _boxH - 3; // one empty row above the bottom border
 
             int third = _boxW / 3;
-            _routinesBtnX = _boxX + (third - _routinesBtnW) / 2;
+            _routinesBtnX = _boxX + 1 + (third - _routinesBtnW) / 2;
             _clearBtnX    = _boxX + third + (third - _clearBtnW) / 2;
             _travelBtnX   = _boxX + 2 * third + ((_boxW - 2 * third) - _travelBtnW) / 2;
 

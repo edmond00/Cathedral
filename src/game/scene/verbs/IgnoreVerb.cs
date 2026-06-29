@@ -15,7 +15,7 @@ public sealed class IgnoreVerb : Verb
     public static readonly IgnoreVerb Instance = new();
 
     /// Canonical text shown in the GOAL prompt and used for matching.
-    public const string VerbatimText = "move on and find something else to focus on";
+    public const string VerbatimText = "move on and find something else to do";
 
     private IgnoreVerb() { }
 

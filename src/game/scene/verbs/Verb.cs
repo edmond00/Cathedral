@@ -49,6 +49,44 @@ public abstract class Verb
     public abstract string Verbatim(Scene scene, PoV pov, Element target);
 
     /// <summary>
+    /// Builds the verbatim for an item-pickup verb (grab/gather/steal/cut), e.g. "gather some moss",
+    /// "grab an apple", "steal a wool cloak". The item name is routed through
+    /// <see cref="Item.WithArticle"/> so mass nouns ("moss", "bread") and plurals get "some" rather
+    /// than an ungrammatical "a moss". Falls back to a plain a/an article for non-item targets.
+    /// </summary>
+    protected static string PickupVerbatim(string verb, Element target)
+    {
+        if (target is ItemElement itemEl)
+            return $"{verb} {itemEl.Item.WithArticle()}";
+
+        var name    = target.DisplayName.ToLowerInvariant();
+        var article = name.Length > 0 && "aeiou".Contains(name[0]) ? "an" : "a";
+        return $"{verb} {article} {name}";
+    }
+
+    /// <summary>
+    /// A definite noun phrase for a specific scene feature (a point of interest, spot or area), e.g.
+    /// "the hedge gap", "the wooden door", "the stairs". Such features are named with bare nouns by
+    /// their builders, so this lower-cases the name and prepends "the" (unless it already opens with a
+    /// determiner). Use it whenever a verb embeds a fixed scene target in its verbatim, so the neutral
+    /// sentence reads grammatically ("follow the hedge gap", not "follow hedge gap").
+    /// </summary>
+    protected static string DefiniteTarget(Element target)
+    {
+        string lower = (target.DisplayName ?? string.Empty).Trim().ToLowerInvariant();
+        if (lower.Length == 0) return "it";
+        int sp = lower.IndexOf(' ');
+        string first = sp < 0 ? lower : lower.Substring(0, sp);
+        return System.Array.IndexOf(Determiners, first) >= 0 ? lower : $"the {lower}";
+    }
+
+    private static readonly string[] Determiners =
+    {
+        "the", "a", "an", "some", "this", "that", "these", "those",
+        "his", "her", "its", "their", "your", "my", "our",
+    };
+
+    /// <summary>
     /// Returns the <see cref="OutcomeReport"/> objects that result from a successful execution
     /// of this verb. Each report both describes itself for the UI and applies its own
     /// game-state change via <see cref="OutcomeReport.Apply"/>.

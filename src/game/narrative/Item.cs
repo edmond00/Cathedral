@@ -50,32 +50,32 @@ public abstract class Item : ConcreteOutcome, IObservation
     public override string ToNaturalLanguageString() => $"acquire {DisplayName}";
 
     /// <summary>
-    /// Returns the item name with the appropriate indefinite article, all lowercase.
-    /// e.g. "a wool cloak", "an egg", "some grain", "some leather boots".
+    /// The article/determiner that precedes this item's lowercased name when it is mentioned
+    /// mid-sentence (e.g. "a", "an", "some"). The default is derived from <see cref="DisplayName"/>:
+    /// "some" for plurals (ending in -s but not -ss), "an" before a vowel, otherwise "a".
+    /// Override for mass/uncountable nouns ("some moss", "some bread") or irregular phonetics
+    /// ("an hour"). Keeping the choice on the item makes it discoverable when adding new items,
+    /// rather than living in a central list that is easy to miss.
     /// </summary>
-    public string WithArticle()
+    public virtual string Article
     {
-        string lower = DisplayName.ToLowerInvariant();
-        string[] words = lower.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        string last = words[^1];
+        get
+        {
+            string lower = DisplayName.ToLowerInvariant();
+            string[] words = lower.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            string last = words.Length > 0 ? words[^1] : lower;
 
-        // Plural form (ends in -s but not -ss) → "some"
-        if (last.Length > 1 && last.EndsWith('s') && !last.EndsWith("ss"))
-            return $"some {lower}";
-
-        // Mass / uncountable nouns → "some"
-        string[] massNouns = { "bark", "bread", "cheese", "clover", "grain",
-                                "hay", "lard", "meat", "moss", "sap", "salt",
-                                "straw", "tallow", "wool" };
-        if (System.Array.IndexOf(massNouns, last) >= 0)
-            return $"some {lower}";
-
-        // Vowel-initial → "an"
-        if ("aeiou".Contains(lower[0]))
-            return $"an {lower}";
-
-        return $"a {lower}";
+            if (last.Length > 1 && last.EndsWith('s') && !last.EndsWith("ss")) return "some";
+            if (lower.Length > 0 && "aeiou".Contains(lower[0])) return "an";
+            return "a";
+        }
     }
+
+    /// <summary>
+    /// Returns the item name with its <see cref="Article"/>, all lowercase.
+    /// e.g. "a wool cloak", "an egg", "some grain", "some moss", "some leather boots".
+    /// </summary>
+    public string WithArticle() => $"{Article} {DisplayName.ToLowerInvariant()}";
 
     /// <summary>Returns the description with its first letter lowercased.</summary>
     public string DescriptionLower() =>

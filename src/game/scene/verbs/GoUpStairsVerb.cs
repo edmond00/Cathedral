@@ -22,7 +22,7 @@ public class GoUpStairsVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"climb up {target.DisplayName.ToLowerInvariant()}";
+        => $"climb up {DefiniteTarget(target)}";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

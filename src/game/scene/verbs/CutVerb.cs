@@ -26,11 +26,7 @@ public class CutVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-    {
-        var name    = target.DisplayName.ToLowerInvariant();
-        var article = "aeiou".Contains(name[0]) ? "an" : "a";
-        return $"cut {article} {name}";
-    }
+        => PickupVerbatim("cut", target);
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

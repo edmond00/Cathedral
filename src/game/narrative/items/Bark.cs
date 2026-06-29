@@ -7,5 +7,6 @@ public sealed class Bark : Item
 {
     public override string ItemId => "bark";
     public override string DisplayName => "Bark";
+    public override string Article => "some";
     public override string Description => "A rough flake of bark from a tree trunk";
 }

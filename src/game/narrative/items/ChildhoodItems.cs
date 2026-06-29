@@ -272,6 +272,7 @@ public sealed class MouseMeat : ConsumableItem
 {
     public override string ItemId      => "mouse_meat";
     public override string DisplayName => "Mouse Meat";
+    public override string Article => "some";
     public override string Description => "A scrap of stringy mouse flesh, scarcely a mouthful";
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;
@@ -283,6 +284,7 @@ public sealed class SquirrelMeat : ConsumableItem
 {
     public override string ItemId      => "squirrel_meat";
     public override string DisplayName => "Squirrel Meat";
+    public override string Article => "some";
     public override string Description => "A small dressed haunch of squirrel meat";
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRecipe Recipe => new HumorRecipe()
