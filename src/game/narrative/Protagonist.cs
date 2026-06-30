@@ -20,6 +20,12 @@ public class Protagonist : PartyMember
     /// <summary>Named companions travelling with the protagonist.</summary>
     public List<Companion> CompanionParty { get; set; } = new();
 
+    /// <summary>
+    /// Global party-wide state not tied to a single member — currently the shared coin wallet
+    /// used by the buy/sell economy. Coins are global (not per-member) and weightless.
+    /// </summary>
+    public Party Party { get; } = new();
+
     /// <summary>Current location on the world sphere (used as RNG seed).</summary>
     public int CurrentLocationId { get; set; }
 

@@ -6,6 +6,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class BakerArchetype : CraftsmanArchetype
 {
     public override string ArchetypeId => "baker";
+    public override ItemTag? SellTag => ItemTag.Foodstuff;
+    public override ItemTag? BuyTag  => ItemTag.Crop;
     public override int    ModiMentisCount => 8;
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;

@@ -8,6 +8,8 @@ public sealed class Carrot : ConsumableItem
     public override string ItemId      => "carrot";
     public override string DisplayName => "Carrot";
     public override string Description => "A long orange root with feathery green tops, fresh-pulled";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop };
+    public override int PriceReference => 3;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;
     protected override HumorRecipe Recipe => new HumorRecipe()

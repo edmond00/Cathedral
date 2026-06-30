@@ -9,6 +9,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class WoodcutterArchetype : WildernessNpcArchetype
 {
     public override string ArchetypeId => "woodcutter";
+    public override ItemTag? SellTag => ItemTag.Wood;
+    public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 8;
     public override bool   IsBrave      => true;
 

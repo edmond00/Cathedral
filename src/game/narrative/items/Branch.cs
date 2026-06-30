@@ -8,4 +8,6 @@ public sealed class Branch : Item
     public override string ItemId => "branch";
     public override string DisplayName => "Branch";
     public override string Description => "A sturdy branch snapped from a tree";
+    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override int PriceReference => 3;
 }

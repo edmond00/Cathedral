@@ -6,6 +6,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class WeaverArchetype : CraftsmanArchetype
 {
     public override string ArchetypeId => "weaver";
+    public override ItemTag? SellTag => ItemTag.Clothing;
+    public override ItemTag? BuyTag  => ItemTag.Textile;
     public override int    ModiMentisCount => 8;
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;

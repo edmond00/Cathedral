@@ -6,6 +6,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class DairymaidArchetype : PeasantArchetype
 {
     public override string ArchetypeId => "dairymaid";
+    public override ItemTag? SellTag => ItemTag.Foodstuff;
+    public override ItemTag? BuyTag  => ItemTag.Craftware;
     public override int    ModiMentisCount => 7;
 
     public override string[] NamePool => new[]

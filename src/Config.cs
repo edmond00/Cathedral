@@ -32,6 +32,7 @@ public static class Config
             // Example: '█', '▓', '▒', '░', etc.
             '♞', '⚓',
             '⨯', // U+2A2F — vector cross used for the forbidden-travel flash on the world sphere
+            '⎊', '◉', '⊚', // coin denomination glyphs (gold / silver / copper)
         };
         
         // Main terminal dimensions
@@ -200,6 +201,11 @@ public static class Config
         public static readonly Vector4 LightYellow = new(1.0f, 1.0f, 0.6f, 1.0f);      // Light yellow for gradients
         public static readonly Vector4 DarkYellowGrey = new(0.6f, 0.6f, 0.2f, 1.0f);   // Dark yellow-grey for important non-gameplay elements
         public static readonly Vector4 GoldYellow = new(1.0f, 0.85f, 0.2f, 1.0f);      // Gold yellow for special highlights (dice sixes)
+
+        // Coin denomination colors (gold = yellow, silver = grey, copper = dark yellow)
+        public static readonly Vector4 CoinGold   = new(1.0f, 0.85f, 0.2f, 1.0f);      // bright gold yellow
+        public static readonly Vector4 CoinSilver = new(0.75f, 0.75f, 0.78f, 1.0f);    // cool grey
+        public static readonly Vector4 CoinCopper = new(0.72f, 0.52f, 0.18f, 1.0f);    // dark yellow / bronze
         
         // Purple variants (for negative elements, wounds, danger)
         public static readonly Vector4 DarkPurple = new(0.3f, 0.0f, 0.45f, 1.0f);     // Dark purple for depleted HP, subtle negatives
@@ -259,6 +265,11 @@ public static class Config
         
         // Difficulty level glyphs (1-10)
         public static readonly char[] DifficultyGlyphs = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩' };
+
+        // Coin denomination glyphs (gold ≈ horse, silver ≈ sword, copper ≈ egg)
+        public const char GoldCoinSymbol   = '⎊'; // yellow
+        public const char SilverCoinSymbol = '◉'; // grey
+        public const char CopperCoinSymbol = '⊚'; // dark yellow
 
         /// <summary>
         /// Color for a difficulty level on the 1-10 scale:

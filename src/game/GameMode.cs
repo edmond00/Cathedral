@@ -83,6 +83,13 @@ public enum GameMode
     Dialogue,
 
     /// <summary>
+    /// Protagonist is in a buy/sell menu with an NPC merchant, reached by succeeding a
+    /// propose-to-buy/sell dialogue. Trade UI runs on the main terminal; narrative resumes
+    /// when the menu is closed.
+    /// </summary>
+    Trading,
+
+    /// <summary>
     /// The protagonist has died. Shows a purple death screen with cause of death
     /// and an "End Run" button that returns to the main menu.
     /// </summary>

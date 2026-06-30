@@ -8,4 +8,6 @@ public sealed class Moss : Item
     public override string DisplayName => "Moss";
     public override string Article => "some";
     public override string Description => "A damp clump of dark green moss";
+    public override List<ItemTag> Tags => new() { ItemTag.Forage };
+    public override int PriceReference => 1;
 }

@@ -17,6 +17,11 @@ public abstract class WeaponItem : Item, IWeaponItem
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
     public abstract int Level { get; }
 
+    // Weapons are sold as part of the blacksmith's Ironwork, priced in silver by their level.
+    public override List<ItemTag> Tags    => new() { ItemTag.Ironwork };
+    public override CoinType      PriceCoin    => CoinType.Silver;
+    public override int           PriceReference => Level < 1 ? 1 : Level;
+
     /// <summary>
     /// Single weapon category key. Matches keys used in <see cref="Cathedral.Fight.FightingMedium.WeaponCategories"/>.
     /// Each concrete weapon has exactly one category.

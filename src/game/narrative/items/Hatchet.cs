@@ -10,4 +10,7 @@ public sealed class Hatchet : Item
     public override ItemSize Size      => ItemSize.Medium;
     public override float Weight       => 0.9f;
     public override int   UsageLevel   => 4;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+    public override CoinType PriceCoin => CoinType.Silver;
+    public override int PriceReference => 1;
 }

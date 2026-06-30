@@ -90,6 +90,7 @@ public sealed class Acorn : FruitItem
     public override string DisplayName => "Acorn";
     public override string Description => "A smooth oak acorn cupped in a rough scaly hat";
     public override bool IsHard => true;
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Forage };
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(35).Add<FiberHumor>(30).Add<YellowBileHumor>(20).Add<CalxHumor>(15);
 }
@@ -100,6 +101,7 @@ public sealed class Beechnut : FruitItem
     public override string DisplayName => "Beechnut";
     public override string Description => "A small triangular beech-mast, oily and slightly bitter";
     public override bool IsHard => true;
+    public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Forage };
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(45).Add<FiberHumor>(30).Add<YellowBileHumor>(25);
 }

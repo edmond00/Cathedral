@@ -67,6 +67,9 @@ public sealed class Seaweed : ConsumableItem
     public override string ItemId      => "seaweed";
     public override string DisplayName => "Seaweed";
     public override string Description => "A heavy strand of brown seaweed, cool and slick";
+    public override List<ItemTag> Tags => new() { ItemTag.Fish };
+    public override CoinType PriceCoin => CoinType.Copper;
+    public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.2f;
     public override ConsumableType ConsumableType => ConsumableType.Food;

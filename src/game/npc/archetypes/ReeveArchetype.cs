@@ -6,6 +6,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class ReeveArchetype : PeasantArchetype
 {
     public override string ArchetypeId => "reeve";
+    public override ItemTag? SellTag => ItemTag.Crop;
+    public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 9;
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;

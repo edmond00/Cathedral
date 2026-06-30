@@ -182,6 +182,12 @@ public sealed class InventoryMenuRenderer
     /// </summary>
     public Action? OnItemConsumed { get; set; }
 
+    /// <summary>
+    /// The party's shared coin wallet. When set, a compact "X⎊ Y◉ Z⊚" box is drawn in the
+    /// top-right corner of the body-art panel. Null hides it.
+    /// </summary>
+    public Party? Wallet { get; set; }
+
     // ── Constructor ───────────────────────────────────────────────
     public InventoryMenuRenderer(TerminalHUD terminal, BodyArtViewer bodyViewer, GearAnchorData gearData,
                                   PopupTerminalHUD? popup = null)
@@ -219,7 +225,47 @@ public sealed class InventoryMenuRenderer
         foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
             RenderAnchor(member, anchor);
 
+        RenderWallet();
         RenderRightPanel(member);
+    }
+
+    /// <summary>
+    /// Draws a compact coin box ("X⎊ Y◉ Z⊚") in the top-right corner of the body-art panel,
+    /// just left of the separator. Each count is shown in its denomination color.
+    /// </summary>
+    private void RenderWallet()
+    {
+        if (Wallet == null) return;
+
+        // Build the three "<count><symbol>" segments and lay them out right-aligned so the
+        // box hugs the separator at RightPanelX-1.
+        (string text, Vector4 color)[] segments =
+        {
+            ($"{Wallet.Gold}{Config.Symbols.GoldCoinSymbol}",   Config.Colors.CoinGold),
+            ($"{Wallet.Silver}{Config.Symbols.SilverCoinSymbol}", Config.Colors.CoinSilver),
+            ($"{Wallet.Copper}{Config.Symbols.CopperCoinSymbol}", Config.Colors.CoinCopper),
+        };
+
+        const int gap = 1;
+        int contentLen = segments.Sum(s => s.text.Length) + gap * (segments.Length - 1);
+        int boxW = contentLen + 2;                 // 1 cell padding each side
+        int boxRight = RightPanelX - 1;            // column of the separator
+        int x0 = Math.Max(ArtOffsetX, boxRight - boxW);
+        int y0 = 0;
+
+        // Background strip + single-line border.
+        for (int dy = 0; dy < 3; dy++)
+            for (int x = x0; x < x0 + boxW; x++)
+                _terminal.SetCell(x, y0 + dy, ' ', NormalTextColor, NormalBoxBg);
+        _terminal.DrawBox(x0, y0, boxW, 3, BoxStyle.Single, NormalBoxBorder, NormalBoxBg);
+
+        int cx = x0 + 1;
+        int cy = y0 + 1;
+        for (int i = 0; i < segments.Length; i++)
+        {
+            _terminal.Text(cx, cy, segments[i].text, segments[i].color, NormalBoxBg);
+            cx += segments[i].text.Length + gap;
+        }
     }
 
     /// <summary>Process a mouse hover. Returns true when displayed state changed.</summary>

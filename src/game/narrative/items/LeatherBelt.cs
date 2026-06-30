@@ -9,4 +9,7 @@ public sealed class LeatherBelt : Item
     public override string Description      => "A thick leather belt with a plain iron buckle, creased and darkened";
     public override List<ItemType> Types    => new() { ItemType.BeltGear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.BeltGear;
+    public override List<ItemTag> Tags => new() { ItemTag.Clothing };
+    public override CoinType PriceCoin => CoinType.Silver;
+    public override int PriceReference => 1;
 }

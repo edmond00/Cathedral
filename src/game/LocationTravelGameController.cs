@@ -50,6 +50,7 @@ public class LocationTravelGameController : IDisposable
     // Embedded fight/dialogue adapters
     private FightModeAdapter? _fightAdapter = null;
     private DialogueTreeAdapter? _dialogueAdapter = null;
+    private TradeMenuAdapter? _tradeAdapter = null;
     
     // LLM loading screen
     private LLMLoadingRenderer? _llmLoadingRenderer;
@@ -333,14 +334,25 @@ public class LocationTravelGameController : IDisposable
             if (_currentMode == GameMode.Dialogue && _dialogueAdapter != null)
             {
                 _dialogueAdapter.Update();
-                
+
                 if (_dialogueAdapter.HasRequestedExit)
                 {
                     OnDialogueCompleted();
                 }
                 return;
             }
-            
+
+            if (_currentMode == GameMode.Trading && _tradeAdapter != null)
+            {
+                _tradeAdapter.Update();
+
+                if (_tradeAdapter.HasRequestedExit)
+                {
+                    OnTradeCompleted();
+                }
+                return;
+            }
+
             // If popup is visible, handle all mouse updates here for consistent frame-rate timing
             // This ensures uniform refresh rate across the entire popup (both inside and outside terminal bounds)
             if (_narrativeController.IsPopupVisible && _core.Terminal != null)
@@ -807,7 +819,15 @@ public class LocationTravelGameController : IDisposable
                 _dialogueAdapter.OnMouseClick(x, y);
                 return;
             }
-            
+
+            // Route to trade adapter if in trading mode
+            if (_currentMode == GameMode.Trading && _tradeAdapter != null)
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                _tradeAdapter.OnMouseClick(x, y);
+                return;
+            }
+
             // If popup is visible, use raw mouse coordinates
             if (_narrativeController.IsPopupVisible)
             {
@@ -892,6 +912,7 @@ public class LocationTravelGameController : IDisposable
         GameMode.LocationInteraction or
         GameMode.Fighting or
         GameMode.Dialogue or
+        GameMode.Trading or
         GameMode.ChildhoodReminescence => null, // handled inside NarrativeController
         GameMode.MainMenu => _mainMenuRenderer?.GetEnabledButtonAtPosition(x, y) is { } i and >= 0
             ? $"menu:{i}" : null,
@@ -1028,7 +1049,14 @@ public class LocationTravelGameController : IDisposable
                 _dialogueAdapter.OnMouseMove(x, y);
                 return;
             }
-            
+
+            // Route to trade adapter if in trading mode
+            if (_currentMode == GameMode.Trading && _tradeAdapter != null)
+            {
+                _tradeAdapter.OnMouseMove(x, y);
+                return;
+            }
+
             // When popup is visible, mouse updates are handled in Update() loop for consistent timing
             // Only handle non-popup interactions here
             if (!_narrativeController.IsPopupVisible)
@@ -1075,7 +1103,13 @@ public class LocationTravelGameController : IDisposable
                 _dialogueAdapter.OnMouseWheel(delta);
                 return;
             }
-            
+
+            if (_currentMode == GameMode.Trading && _tradeAdapter != null)
+            {
+                _tradeAdapter.OnMouseWheel(delta);
+                return;
+            }
+
             _narrativeController.OnMouseWheel(delta);
             return;
         }
@@ -1164,6 +1198,10 @@ public class LocationTravelGameController : IDisposable
                 
             case GameMode.Dialogue:
                 OnEnterDialogue();
+                break;
+
+            case GameMode.Trading:
+                OnEnterTrading();
                 break;
 
             case GameMode.ChildhoodReminescence:
@@ -2557,7 +2595,18 @@ public class LocationTravelGameController : IDisposable
         _core.SetNarrationMode(true);
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
-        
+
+        if (_core.Terminal != null)
+            _core.Terminal.Visible = true;
+    }
+
+    private void OnEnterTrading()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered Trading mode");
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+
         if (_core.Terminal != null)
             _core.Terminal.Visible = true;
     }
@@ -2987,9 +3036,51 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // If a propose-to-buy/sell dialogue succeeded, open the trade menu instead of returning.
+        if (npc.TradeRequest != Cathedral.Game.Npc.Trade.TradeMode.None)
+        {
+            var tradeMode = npc.TradeRequest;
+            npc.TradeRequest = Cathedral.Game.Npc.Trade.TradeMode.None;   // consume the flag
+            _dialogueAdapter = null;
+            Console.WriteLine($"LocationTravelGameController: {npc.DisplayName} agreed to trade ({tradeMode}) — opening trade menu");
+            StartTradeMode(npc, tradeMode);
+            return;
+        }
+
         _dialogueAdapter = null;
 
         // Return to narrative mode
+        SetMode(GameMode.LocationInteraction);
+    }
+
+    /// <summary>
+    /// Transitions from narrative mode into the embedded buy/sell trade menu.
+    /// </summary>
+    private void StartTradeMode(Cathedral.Game.Npc.NpcEntity npc, Cathedral.Game.Npc.Trade.TradeMode mode)
+    {
+        if (_core.Terminal == null || _narrativeController == null)
+            return;
+
+        _tradeAdapter = new TradeMenuAdapter(
+            protagonist: _narrativeController.Protagonist,
+            npc:         npc,
+            mode:        mode,
+            terminal:    _core.Terminal);
+
+        _tradeAdapter.Start();
+        SetMode(GameMode.Trading);
+    }
+
+    /// <summary>
+    /// Called when the trade menu reports completion. Returns to narrative mode.
+    /// </summary>
+    private void OnTradeCompleted()
+    {
+        if (_tradeAdapter == null) return;
+
+        Console.WriteLine($"LocationTravelGameController: Trade completed with {_tradeAdapter.TargetNpc.DisplayName}");
+        _tradeAdapter = null;
+        _core.Terminal?.Clear();
         SetMode(GameMode.LocationInteraction);
     }
     
@@ -3043,6 +3134,10 @@ public class LocationTravelGameController : IDisposable
         else if (_currentMode == GameMode.Dialogue && _dialogueAdapter != null)
         {
             _dialogueAdapter.OnKeyPress(key);
+        }
+        else if (_currentMode == GameMode.Trading && _tradeAdapter != null)
+        {
+            _tradeAdapter.OnKeyPress(key);
         }
     }
 

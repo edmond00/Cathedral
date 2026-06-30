@@ -9,4 +9,6 @@ public sealed class ClayPot : Item
     public override string Description => "A squat clay cooking pot, fire-blackened and sealed with a plug of wax";
     public override ItemSize Size      => ItemSize.Medium;
     public override float Weight       => 0.6f;
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override int PriceReference => 8;
 }

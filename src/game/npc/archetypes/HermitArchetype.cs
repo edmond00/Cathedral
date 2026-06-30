@@ -6,6 +6,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class HermitArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "hermit";
+    public override ItemTag? SellTag => ItemTag.Forage;
+    public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override Species Species => SpeciesRegistry.Human;
     public override bool DefaultHostile => false;
     public override bool DefaultPersistent => true;

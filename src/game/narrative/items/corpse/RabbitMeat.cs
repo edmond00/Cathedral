@@ -9,4 +9,6 @@ public sealed class RabbitMeat : Item
     public override string Article     => "some";
     public override string Description => "A lean cut of raw rabbit, the flesh pale and finely grained";
     public override float Weight       => 0.2f;
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override int PriceReference => 6;
 }

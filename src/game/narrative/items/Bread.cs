@@ -9,6 +9,8 @@ public sealed class Bread : ConsumableItem
     public override string DisplayName => "Bread";
     public override string Article     => "some";
     public override string Description => "A round dark-rye loaf, heavy and cracked on top";
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override int PriceReference => 5;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Rich;
     protected override HumorRecipe Recipe => new HumorRecipe()

@@ -8,4 +8,6 @@ public sealed class AnimalFang : Item
     public override string DisplayName => "Animal Fang";
     public override string Description => "A curved ivory fang, still slick with blood at the root";
     public override float Weight       => 0.05f;
+    public override List<ItemTag> Tags => new() { ItemTag.Pelt };
+    public override int PriceReference => 3;
 }

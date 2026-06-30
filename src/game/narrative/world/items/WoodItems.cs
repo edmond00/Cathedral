@@ -37,6 +37,9 @@ public sealed class BirchSap : ConsumableItem
     public override string DisplayName => "Birch Sap";
     public override string Article     => "some";
     public override string Description => "A small flask of clear birch sap, faintly sweet";
+    public override List<ItemTag> Tags => new() { ItemTag.Wood };
+    public override CoinType PriceCoin => CoinType.Copper;
+    public override int PriceReference => 3;
     public override ItemSize Size => ItemSize.Small;
     public override float    Weight => 0.3f;
     public override ConsumableType ConsumableType => ConsumableType.Drink;

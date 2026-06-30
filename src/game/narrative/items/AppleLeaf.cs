@@ -7,4 +7,6 @@ public sealed class AppleLeaf : Item
     public override string ItemId => "apple_leaf";
     public override string DisplayName => "Apple Leaf";
     public override string Description => "A broad waxy leaf from an apple tree";
+    public override List<ItemTag> Tags => new() { ItemTag.Forage };
+    public override int PriceReference => 1;
 }

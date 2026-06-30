@@ -29,6 +29,23 @@ public abstract class Item : ConcreteOutcome, IObservation
     /// <summary>Category tags for this item.</summary>
     public virtual List<ItemType> Types => new() { ItemType.Other };
 
+    // ── Trade ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Trade category tags (see <see cref="ItemTag"/>). Empty means the item is not part of
+    /// any NPC's buy/sell catalogue. Distinct from <see cref="Types"/> (which mirror anchors).
+    /// </summary>
+    public virtual List<ItemTag> Tags => new();
+
+    /// <summary>The single coin denomination this item is priced in. Denominations are never mixed.</summary>
+    public virtual CoinType PriceCoin => CoinType.Copper;
+
+    /// <summary>
+    /// Reference price of one unit, expressed in <see cref="PriceCoin"/>. Must be in the
+    /// range 1..90 — NPC catalogues apply a small variation on top, clamped to [1, 100].
+    /// </summary>
+    public virtual int PriceReference => 1;
+
     /// <summary>
     /// Lines of text shown in the inventory info panel.
     /// Override to provide item-specific details beyond the description.

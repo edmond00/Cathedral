@@ -9,6 +9,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class FarmerArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId      => "farmer";
+    public override ItemTag? SellTag        => ItemTag.Crop;
+    public override ItemTag? BuyTag         => ItemTag.Tool;
     public override Species Species         => SpeciesRegistry.Human;
     public override bool DefaultHostile     => false;
     public override bool DefaultPersistent  => true;

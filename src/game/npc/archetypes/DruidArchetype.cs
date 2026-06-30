@@ -6,6 +6,7 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class DruidArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "druid";
+    public override ItemTag? SellTag => ItemTag.Herb;
     public override Species Species => SpeciesRegistry.Human;
     public override bool DefaultHostile => false;
     public override bool DefaultPersistent => true;

@@ -9,6 +9,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class FishermanArchetype : WildernessNpcArchetype
 {
     public override string ArchetypeId => "fisherman";
+    public override ItemTag? SellTag => ItemTag.Fish;
+    public override ItemTag? BuyTag  => ItemTag.Craftware;
     public override int    ModiMentisCount => 8;
     public override bool   IsBrave      => true;
 

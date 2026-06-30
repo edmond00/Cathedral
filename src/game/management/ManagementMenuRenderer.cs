@@ -144,6 +144,7 @@ public class ManagementMenuRenderer
 
         _inventoryMenu = new InventoryMenuRenderer(terminal, _bodyViewer, _humanGearData, popup);
         _inventoryMenu.OnItemConsumed = () => { Render(); OnItemConsumed?.Invoke(); };
+        _inventoryMenu.Wallet = _protagonist.Party;   // shared (global) coin wallet
 
         var humorArtData = HumorArtData.Load("assets/art/humors");
         var heparMap     = HumorQueuePositionMap.Load("assets/art/humors/hepar.txt",    "hepar");

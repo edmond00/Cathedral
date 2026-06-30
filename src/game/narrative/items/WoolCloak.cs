@@ -10,4 +10,7 @@ public sealed class WoolCloak : Item
     public override ItemSize Size           => ItemSize.Large;
     public override List<ItemType> Types    => new() { ItemType.Outerwear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Outerwear;
+    public override List<ItemTag> Tags => new() { ItemTag.Clothing };
+    public override CoinType PriceCoin => CoinType.Silver;
+    public override int PriceReference => 2;
 }

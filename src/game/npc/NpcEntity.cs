@@ -76,6 +76,31 @@ public class NpcEntity : INpcEntity
     /// </summary>
     public bool FightRequestedByDialogue { get; set; }
 
+    // ── Trade ───────────────────────────────────────────────────────────────────
+
+    /// <summary>Tag of the goods this NPC sells (player can buy). Null = sells nothing.</summary>
+    public Narrative.ItemTag? SellTag => Archetype.SellTag;
+
+    /// <summary>Tag of the goods this NPC buys (player can sell). Null = buys nothing.</summary>
+    public Narrative.ItemTag? BuyTag => Archetype.BuyTag;
+
+    /// <summary>
+    /// Set by a successful propose-to-buy / propose-to-sell dialogue. Checked by the game
+    /// controller after dialogue ends to open the trade menu (mirrors <see cref="FightRequestedByDialogue"/>).
+    /// </summary>
+    public Trade.TradeMode TradeRequest { get; set; } = Trade.TradeMode.None;
+
+    private Trade.NpcTradeCatalog? _buyCatalog;
+    private Trade.NpcTradeCatalog? _sellCatalog;
+
+    /// <summary>The catalogue of goods this NPC sells to the player (lazy, cached, seeded by id).</summary>
+    public Trade.NpcTradeCatalog? BuyCatalog =>
+        SellTag is { } tag ? _buyCatalog ??= Trade.NpcTradeCatalog.Build(NpcId, Trade.TradeMode.Buy, tag) : null;
+
+    /// <summary>The catalogue of goods this NPC buys from the player (lazy, cached, seeded by id).</summary>
+    public Trade.NpcTradeCatalog? SellCatalog =>
+        BuyTag is { } tag ? _sellCatalog ??= Trade.NpcTradeCatalog.Build(NpcId, Trade.TradeMode.Sell, tag) : null;
+
     // ── IsAlive ───────────────────────────────────────────────────────────────
 
     private bool _isSlain = false;

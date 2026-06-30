@@ -7,4 +7,6 @@ public sealed class WoodenBowl : Item
     public override string ItemId      => "wooden_bowl";
     public override string DisplayName => "Wooden Bowl";
     public override string Description => "A turned wooden bowl, smooth inside and darkened with years of use";
+    public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override int PriceReference => 6;
 }

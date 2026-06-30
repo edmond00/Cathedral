@@ -6,6 +6,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class ReaperArchetype : PeasantArchetype
 {
     public override string ArchetypeId => "reaper";
+    public override ItemTag? SellTag => ItemTag.Crop;
+    public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 7;
 
     public override string[] NamePool => new[]

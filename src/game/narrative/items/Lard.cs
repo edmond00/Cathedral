@@ -9,6 +9,8 @@ public sealed class Lard : ConsumableItem
     public override string DisplayName => "Lard";
     public override string Article     => "some";
     public override string Description => "A clay crock of rendered pork fat, sealed with a cloth and tied at the neck";
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override int PriceReference => 6;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;
     protected override HumorRecipe Recipe => new HumorRecipe()

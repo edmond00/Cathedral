@@ -64,6 +64,20 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// </summary>
     public virtual IReadOnlyList<string> DefaultOwnedSectionIds => [];
 
+    // ── Trade ─────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Tag of the goods this NPC <b>sells</b> (the player can buy these from them).
+    /// Null means the NPC sells nothing. See the trade-system plan, Part A.
+    /// </summary>
+    public virtual Narrative.ItemTag? SellTag => null;
+
+    /// <summary>
+    /// Tag of the goods this NPC <b>buys</b> (the player can sell these to them).
+    /// Null means the NPC buys nothing.
+    /// </summary>
+    public virtual Narrative.ItemTag? BuyTag => null;
+
     // ── Spawn ─────────────────────────────────────────────────────────────────
 
     /// <summary>Spawns a new <see cref="NpcEntity"/> from this archetype.</summary>

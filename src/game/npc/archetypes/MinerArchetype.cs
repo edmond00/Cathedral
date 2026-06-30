@@ -9,6 +9,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class MinerArchetype : WildernessNpcArchetype
 {
     public override string ArchetypeId => "miner";
+    public override ItemTag? SellTag => ItemTag.Mineral;
+    public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 8;
     public override bool   IsBrave      => true;
 

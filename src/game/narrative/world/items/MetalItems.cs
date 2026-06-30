@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Narrative.World.Items;
@@ -33,6 +34,8 @@ public sealed class Nail : MetalItem
     public override string DisplayName => "Nail";
     public override string Description => "A handful of square-cut iron nails";
     public override float Weight => 0.05f;
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork };
+    public override int PriceReference => 3;
 }
 
 public sealed class IronHoop : MetalItem
@@ -42,4 +45,6 @@ public sealed class IronHoop : MetalItem
     public override string Description => "A flat iron band shaped to bind a barrel";
     public override ItemSize Size => ItemSize.Medium;
     public override float    Weight => 0.6f;
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork };
+    public override int PriceReference => 5;
 }

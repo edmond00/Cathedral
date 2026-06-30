@@ -6,6 +6,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class ShepherdArchetype : PeasantArchetype
 {
     public override string ArchetypeId => "shepherd";
+    public override ItemTag? SellTag => ItemTag.Textile;
+    public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 7;
 
     public override string[] NamePool => new[]

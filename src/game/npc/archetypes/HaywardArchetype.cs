@@ -6,6 +6,8 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class HaywardArchetype : PeasantArchetype
 {
     public override string ArchetypeId => "hayward";
+    public override ItemTag? SellTag => ItemTag.Crop;
+    public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 7;
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;

@@ -10,4 +10,7 @@ public sealed class LinenTunic : Item
     public override ItemSize Size           => ItemSize.Medium;
     public override List<ItemType> Types    => new() { ItemType.Bodywear };
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.Bodywear;
+    public override List<ItemTag> Tags => new() { ItemTag.Clothing };
+    public override CoinType PriceCoin => CoinType.Silver;
+    public override int PriceReference => 1;
 }

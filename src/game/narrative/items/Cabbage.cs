@@ -8,6 +8,8 @@ public sealed class Cabbage : ConsumableItem
     public override string ItemId      => "cabbage";
     public override string DisplayName => "Cabbage";
     public override string Description => "A firm pale-green head of cabbage, its outer leaves limp";
+    public override List<ItemTag> Tags => new() { ItemTag.Crop };
+    public override int PriceReference => 4;
     public override ItemSize Size => ItemSize.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;

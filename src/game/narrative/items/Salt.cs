@@ -8,4 +8,6 @@ public sealed class Salt : Item
     public override string DisplayName => "Salt";
     public override string Article     => "some";
     public override string Description => "A small cloth parcel of coarse grey salt, damp at the edges";
+    public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
+    public override int PriceReference => 10;
 }
