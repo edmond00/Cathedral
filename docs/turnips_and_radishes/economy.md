@@ -79,3 +79,48 @@
 - village : various workshop, which one under master control with apprentice/disciple/journeyman working for him
 - farm/field : manages by reeve with bondman/helper/laborer workforce
 
+# jobs on offer
+
+Jobs are an abstract exchange of the player's time for coins and experience — not specific tasks or quests. Each master or reeve can hire the player into one of the roles below, drawn from the work of their location.
+
+## village masters (workshop labour)
+
+- **blacksmith** : bellows-hand, coal-breaker, quench-hand, scrap-sorter
+- **carpenter** : sawyer, plank-stacker, peg-whittler, shaving-sweeper
+- **cooper** : stave-shaver, hoop-holder, barrel-hauler
+- **weaver** : wool-carder, spindle-hand, warp-threader, fleece-picker
+- **miller** : sack-carrier, grist-sifter, hopper-feeder, toll-tallier
+- **baker** : oven-firer, dough-kneader, bread-runner, wood-fetcher
+- **brewer** : malt-turner, mash-stirrer, ale-pourer, cask-roller
+
+## field reeve (crop & tillage labour)
+
+- plowman — breaking/turning the tilled strips
+- sower — casting seed (seasonal)
+- reaper — grain harvest (grain bundle, straw)
+- thresher / binder — straw & grain handling
+- weed-puller — vegetable beds
+- root-digger — harvesting vegetable mounds
+- herb-gatherer — herb patch (if present)
+- ditch-clearer — irrigation ditch (clay, reed)
+- reed-cutter — ditch bank
+- stone-picker — clearing the strips
+- margin-watch / hedge-mender — field margin (hayward's beat)
+
+## farm reeve (livestock, dairy & yard labour)
+
+- farmhand / yard-hand — general chores, maintenance
+- shepherd / fold-hand — sheep pen (if present)
+- shearer — shearing post (wool)
+- swineherd — pigsty
+- poultry-hand — chicken coop (egg, feather)
+- milker / cowherd — dairy shed (if cow present)
+- churn-hand / dairymaid — butter & cheese
+- orchard-picker — orchard fruit
+- garden-hand — vegetable garden
+- hay-hauler / store-hand — storage shed
+
+## independents (no workforce)
+
+Miners, woodcutters, charcoal burners and fishermen work alone and post no jobs — though each could take on a single helper (pit-hand, log-hauler, kiln-tender, net-hand) if desired.
+
