@@ -51,6 +51,7 @@ public class LocationTravelGameController : IDisposable
     private FightModeAdapter? _fightAdapter = null;
     private DialogueTreeAdapter? _dialogueAdapter = null;
     private TradeMenuAdapter? _tradeAdapter = null;
+    private WorkMenuAdapter?  _workAdapter  = null;
     
     // LLM loading screen
     private LLMLoadingRenderer? _llmLoadingRenderer;
@@ -349,6 +350,17 @@ public class LocationTravelGameController : IDisposable
                 if (_tradeAdapter.HasRequestedExit)
                 {
                     OnTradeCompleted();
+                }
+                return;
+            }
+
+            if (_currentMode == GameMode.Working && _workAdapter != null)
+            {
+                _workAdapter.Update();
+
+                if (_workAdapter.HasRequestedExit)
+                {
+                    OnWorkCompleted();
                 }
                 return;
             }
@@ -828,6 +840,14 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
+            // Route to work adapter if in working mode
+            if (_currentMode == GameMode.Working && _workAdapter != null)
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                _workAdapter.OnMouseClick(x, y);
+                return;
+            }
+
             // If popup is visible, use raw mouse coordinates
             if (_narrativeController.IsPopupVisible)
             {
@@ -913,6 +933,7 @@ public class LocationTravelGameController : IDisposable
         GameMode.Fighting or
         GameMode.Dialogue or
         GameMode.Trading or
+        GameMode.Working or
         GameMode.ChildhoodReminescence => null, // handled inside NarrativeController
         GameMode.MainMenu => _mainMenuRenderer?.GetEnabledButtonAtPosition(x, y) is { } i and >= 0
             ? $"menu:{i}" : null,
@@ -1057,6 +1078,13 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
+            // Route to work adapter if in working mode
+            if (_currentMode == GameMode.Working && _workAdapter != null)
+            {
+                _workAdapter.OnMouseMove(x, y);
+                return;
+            }
+
             // When popup is visible, mouse updates are handled in Update() loop for consistent timing
             // Only handle non-popup interactions here
             if (!_narrativeController.IsPopupVisible)
@@ -1107,6 +1135,12 @@ public class LocationTravelGameController : IDisposable
             if (_currentMode == GameMode.Trading && _tradeAdapter != null)
             {
                 _tradeAdapter.OnMouseWheel(delta);
+                return;
+            }
+
+            if (_currentMode == GameMode.Working && _workAdapter != null)
+            {
+                _workAdapter.OnMouseWheel(delta);
                 return;
             }
 
@@ -1202,6 +1236,10 @@ public class LocationTravelGameController : IDisposable
 
             case GameMode.Trading:
                 OnEnterTrading();
+                break;
+
+            case GameMode.Working:
+                OnEnterWorking();
                 break;
 
             case GameMode.ChildhoodReminescence:
@@ -2610,6 +2648,17 @@ public class LocationTravelGameController : IDisposable
         if (_core.Terminal != null)
             _core.Terminal.Visible = true;
     }
+
+    private void OnEnterWorking()
+    {
+        Console.WriteLine("LocationTravelGameController: Entered Working mode");
+        _core.SetNarrationMode(true);
+        _core.SetWorldInteractionsEnabled(false);
+        _interface.SetWorldInteractionsEnabled(false);
+
+        if (_core.Terminal != null)
+            _core.Terminal.Visible = true;
+    }
     
     /// <summary>
     /// Transitions from narrative mode into embedded fight mode.
@@ -3047,6 +3096,17 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // If a request-job dialogue succeeded, open the work menu instead of returning.
+        if (npc.JobRequest is { } job)
+        {
+            npc.JobRequest       = null;   // consume the flag
+            npc.PendingJobOffer  = null;
+            _dialogueAdapter     = null;
+            Console.WriteLine($"LocationTravelGameController: {npc.DisplayName} agreed to hire ({job.Id}) — opening work menu");
+            StartWorkMode(npc, job);
+            return;
+        }
+
         _dialogueAdapter = null;
 
         // Return to narrative mode
@@ -3080,6 +3140,37 @@ public class LocationTravelGameController : IDisposable
 
         Console.WriteLine($"LocationTravelGameController: Trade completed with {_tradeAdapter.TargetNpc.DisplayName}");
         _tradeAdapter = null;
+        _core.Terminal?.Clear();
+        SetMode(GameMode.LocationInteraction);
+    }
+
+    /// <summary>
+    /// Transitions from narrative mode into the embedded work menu.
+    /// </summary>
+    private void StartWorkMode(Cathedral.Game.Npc.NpcEntity npc, Cathedral.Game.Narrative.Work.Job job)
+    {
+        if (_core.Terminal == null || _narrativeController == null)
+            return;
+
+        _workAdapter = new WorkMenuAdapter(
+            protagonist: _narrativeController.Protagonist,
+            npc:         npc,
+            job:         job,
+            terminal:    _core.Terminal);
+
+        _workAdapter.Start();
+        SetMode(GameMode.Working);
+    }
+
+    /// <summary>
+    /// Called when the work menu reports completion. Returns to narrative mode.
+    /// </summary>
+    private void OnWorkCompleted()
+    {
+        if (_workAdapter == null) return;
+
+        Console.WriteLine($"LocationTravelGameController: Work completed with {_workAdapter.TargetNpc.DisplayName}");
+        _workAdapter = null;
         _core.Terminal?.Clear();
         SetMode(GameMode.LocationInteraction);
     }
@@ -3138,6 +3229,10 @@ public class LocationTravelGameController : IDisposable
         else if (_currentMode == GameMode.Trading && _tradeAdapter != null)
         {
             _tradeAdapter.OnKeyPress(key);
+        }
+        else if (_currentMode == GameMode.Working && _workAdapter != null)
+        {
+            _workAdapter.OnKeyPress(key);
         }
     }
 

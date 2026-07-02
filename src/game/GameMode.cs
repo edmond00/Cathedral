@@ -90,6 +90,12 @@ public enum GameMode
     Trading,
 
     /// <summary>
+    /// Protagonist is in a work menu with a master or reeve, reached by succeeding a request-job
+    /// dialogue. Work UI runs on the main terminal; narrative resumes when the menu is closed.
+    /// </summary>
+    Working,
+
+    /// <summary>
     /// The protagonist has died. Shows a purple death screen with cause of death
     /// and an "End Run" button that returns to the main menu.
     /// </summary>

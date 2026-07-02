@@ -230,10 +230,7 @@ public class Scene
         var verbs    = new List<VerbView>();
 
         foreach (var verb in Verbs)
-        {
-            if (verb.IsPossible(this, pov, element, actor))
-                verbs.Add(new VerbView(verb, verb.Verbatim(this, pov, element), element));
-        }
+            verbs.AddRange(verb.ExpandViews(this, pov, element, actor));
 
         return new SceneViewEntry(element, verbs);
     }

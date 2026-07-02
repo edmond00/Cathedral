@@ -49,6 +49,26 @@ public abstract class Verb
     public abstract string Verbatim(Scene scene, PoV pov, Element target);
 
     /// <summary>
+    /// Expands this verb into the concrete action views it offers for <paramref name="target"/>.
+    /// The default is one view when <see cref="IsPossible"/> holds — the same behaviour as the old
+    /// per-verb enumeration. Verbs that turn a single target into several actions (like GRAB across
+    /// items, or <c>RequestJobVerb</c> across offered jobs) override this to yield several views,
+    /// carrying a per-view payload in <see cref="VerbView.Variant"/>.
+    /// </summary>
+    public virtual IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+    {
+        if (IsPossible(scene, pov, target, actor))
+            yield return new VerbView(this, Verbatim(scene, pov, target), target);
+    }
+
+    /// <summary>
+    /// The base difficulty for this verb against a specific target. Defaults to
+    /// <see cref="BaseDifficulty"/>; override to make difficulty depend on the target
+    /// (e.g. requesting work from a master is harder than from a reeve).
+    /// </summary>
+    public virtual int DifficultyFor(Element? target) => BaseDifficulty;
+
+    /// <summary>
     /// Builds the verbatim for an item-pickup verb (grab/gather/steal/cut), e.g. "gather some moss",
     /// "grab an apple", "steal a wool cloak". The item name is routed through
     /// <see cref="Item.WithArticle"/> so mass nouns ("moss", "bread") and plurals get "some" rather
@@ -93,6 +113,15 @@ public abstract class Verb
     /// </summary>
     public virtual IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => System.Array.Empty<OutcomeReport>();
+
+    /// <summary>
+    /// View-aware success reports. Called by the execution pipeline with the exact
+    /// <see cref="VerbView"/> the player chose, so verbs that expanded into several actions can
+    /// read <see cref="VerbView.Variant"/> (e.g. which job was requested). Defaults to the
+    /// target-only overload.
+    /// </summary>
+    public virtual IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbView view)
+        => SuccessReports(scene, pov, actor, target);
 
     /// <summary>
     /// Returns the <see cref="OutcomeReport"/> objects that result from a failed execution

@@ -485,7 +485,7 @@ public class NarrativeController
                             act.PreselectedOutcome?.ToNaturalLanguageString() ?? "");
                         var difficultyTree = CriticTrees.BuildDifficultyTree(act.ActionText, criticContext);
                         var difficultyResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(difficultyTree);
-                        act.DifficultyLevel = CriticTrees.CalculateFinalDifficulty(act.Verb, difficultyResult);
+                        act.DifficultyLevel = CriticTrees.CalculateFinalDifficulty(act.Verb, difficultyResult, act.PreselectedOutcome.VerbView.Target);
                         Console.WriteLine($"NarrativeController: Pre-computed difficulty for '{act.DisplayText}': {act.DifficultyLevel}/10");
                     }
                 }
@@ -1165,7 +1165,7 @@ public class NarrativeController
         if (result.ActualOutcome is VerbOutcome verbTarget && _scene != null && _pov != null)
         {
             var verbReports = result.Succeeded
-                ? verbTarget.VerbView.Verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target!)
+                ? verbTarget.VerbView.Verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target!, verbTarget.VerbView)
                 : verbTarget.VerbView.Verb.FailureReports(_scene, _pov, _activePartyMember, verbTarget.Target!);
             allReports.AddRange(verbReports);
         }

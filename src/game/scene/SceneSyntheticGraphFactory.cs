@@ -104,16 +104,14 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         {
             var entry = new SceneViewEntry(poi,
                 _scene.Verbs
-                    .Where(v => v.IsPossible(_scene, pov, poi))
-                    .Select(v => new VerbView(v, v.Verbatim(_scene, pov, poi), poi))
+                    .SelectMany(v => v.ExpandViews(_scene, pov, poi))
                     .ToList());
 
             // Build item sub-entries so item verbs (e.g. "grab the apple") fold into the PoI SubOutcomes.
             var itemSubEntries = poi.Items
                 .Select(ie => new SceneViewEntry(ie,
                     _scene.Verbs
-                        .Where(v => v.IsPossible(_scene, pov, ie))
-                        .Select(v => new VerbView(v, v.Verbatim(_scene, pov, ie), ie))
+                        .SelectMany(v => v.ExpandViews(_scene, pov, ie))
                         .ToList()))
                 .ToList();
 
@@ -125,8 +123,7 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         {
             var entry = new SceneViewEntry(spot,
                 _scene.Verbs
-                    .Where(v => v.IsPossible(_scene, pov, spot))
-                    .Select(v => new VerbView(v, v.Verbatim(_scene, pov, spot), spot))
+                    .SelectMany(v => v.ExpandViews(_scene, pov, spot))
                     .ToList());
 
             node.PossibleOutcomes.Add(new SyntheticSpotObject(spot, entry));
@@ -137,8 +134,7 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         {
             var entry = new SceneViewEntry(npc,
                 _scene.Verbs
-                    .Where(v => v.IsPossible(_scene, pov, npc))
-                    .Select(v => new VerbView(v, v.Verbatim(_scene, pov, npc), npc))
+                    .SelectMany(v => v.ExpandViews(_scene, pov, npc))
                     .ToList());
 
             node.PossibleOutcomes.Add(new SyntheticNpcObservationObject(npc, entry));

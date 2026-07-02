@@ -22,6 +22,7 @@ public class DialogueTreeRegistry
         Register(new ReconcileTree());
         Register(new ProposeToBuyTree());
         Register(new ProposeToSellTree());
+        Register(new RequestJobTree());
     }
 
     private void Register(DialogueTree tree) => _trees[tree.TreeId] = tree;

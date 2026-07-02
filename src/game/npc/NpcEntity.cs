@@ -90,6 +90,20 @@ public class NpcEntity : INpcEntity
     /// </summary>
     public Trade.TradeMode TradeRequest { get; set; } = Trade.TradeMode.None;
 
+    // ── Work ─────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The job the player asked to work, set when the REQUEST_JOB verb succeeds and read by the
+    /// request-job dialogue's terminal outcome. Cleared once consumed.
+    /// </summary>
+    public Narrative.Work.Job? PendingJobOffer { get; set; }
+
+    /// <summary>
+    /// Set by a successful request-job dialogue to <see cref="PendingJobOffer"/>. Checked by the game
+    /// controller after dialogue ends to open the work menu (mirrors <see cref="TradeRequest"/>).
+    /// </summary>
+    public Narrative.Work.Job? JobRequest { get; set; }
+
     private Trade.NpcTradeCatalog? _buyCatalog;
     private Trade.NpcTradeCatalog? _sellCatalog;
 

@@ -174,10 +174,10 @@ public static class CriticTrees
     /// <summary>
     /// Combines the verb's base difficulty and the situational modifier into a final 1–10 difficulty level.
     /// </summary>
-    public static int CalculateFinalDifficulty(Verb verb, CriticTreeResult result)
+    public static int CalculateFinalDifficulty(Verb verb, CriticTreeResult result, Cathedral.Game.Scene.Element? target = null)
     {
         int modifier = GetDifficultyModifier(result);
-        return Math.Clamp(verb.BaseDifficulty + modifier, 1, 10);
+        return Math.Clamp(verb.DifficultyFor(target) + modifier, 1, 10);
     }
 
     /// <summary>

@@ -38,11 +38,19 @@ public class VerbView
     /// <summary>The element this verb targets (may differ from the SceneViewEntry source).</summary>
     public Element? Target { get; }
 
-    public VerbView(Verb verb, string verbatim, Element? target = null)
+    /// <summary>
+    /// Optional per-view payload for verbs that expand a single target into several actions
+    /// (e.g. <c>RequestJobVerb</c> emits one view per offered job, each carrying its <c>Job</c> here).
+    /// Null for ordinary single-action verbs.
+    /// </summary>
+    public object? Variant { get; }
+
+    public VerbView(Verb verb, string verbatim, Element? target = null, object? variant = null)
     {
         Verb     = verb;
         Verbatim = verbatim;
         Target   = target;
+        Variant  = variant;
     }
 }
 
