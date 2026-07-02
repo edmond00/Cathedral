@@ -83,42 +83,108 @@
 
 Jobs are an abstract exchange of the player's time for coins and experience — not specific tasks or quests. Each master or reeve can hire the player into one of the roles below, drawn from the work of their location.
 
+Every job trains **3 modi mentis** (skills), listed in order of importance (the first is the most defining of the job). Working a job levels these up. Most modi mentis are shared across several jobs; a few are near-unique. No two jobs share the same exact trio.
+
+## modi mentis trained by jobs
+
+**Reused (already in the game):** Hard Labor, Dirty Labor, Peasantry, Obedience, Patience, Beast Sense, Bargaining, Vigilance, Athletics, Bushcraft, Scrutiny, Enterprise, Finesse.
+
+**New (proposed for these jobs):**
+
+- **Metalcraft** — working iron at the forge; heat, hammer, temper
+- **Woodcraft** — sawing, shaping and joining timber
+- **Whittlecraft** — fine carving and paring of small wood
+- **Firecraft** — feeding, banking and judging a working fire
+- **Haulage** — loading, carrying and balancing heavy loads
+- **Threadwork** — carding, spinning and warping fibre
+- **Doughcraft** — kneading, proving and shaping bread
+- **Brewcraft** — malting, mashing and fermenting ale
+- **Millcraft** — grinding grain and judging flour
+- **Tillage** — ploughing, breaking and turning soil
+- **Harvestry** — reaping and cutting ripe crop
+- **Seed-Lore** — sowing, spacing and the timing of planting
+- **Husbandry** — tending, feeding and handling livestock
+- **Herblore** — herbs and garden greens, their uses and gathering
+- **Forage-Lore** — finding and picking fruit and produce
+- **Dairycraft** — milking, churning butter, pressing cheese
+- **Fieldcraft** — the general feel for outdoor land-work
+- **Hedgecraft** — mending fences, hedges and boundaries
+- **Drainage** — clearing ditches, channels and reed
+- **Tallycraft** — folk counting, tallying and measuring
+- **Threshery** — threshing, sifting and separating grain from chaff
+- **Stonework** — lifting, clearing and setting stone
+- **Cellarcraft** — storing, casking and preserving goods
+- **Steady Hand** — controlled bracing and balance under load
+
 ## village masters (workshop labour)
 
-- **blacksmith** : bellows-hand, coal-breaker, quench-hand, scrap-sorter
-- **carpenter** : sawyer, plank-stacker, peg-whittler, shaving-sweeper
-- **cooper** : stave-shaver, hoop-holder, barrel-hauler
-- **weaver** : wool-carder, spindle-hand, warp-threader, fleece-picker
-- **miller** : sack-carrier, grist-sifter, hopper-feeder, toll-tallier
-- **baker** : oven-firer, dough-kneader, bread-runner, wood-fetcher
-- **brewer** : malt-turner, mash-stirrer, ale-pourer, cask-roller
+**blacksmith**
+- bellows-hand — Firecraft, Hard Labor, Patience
+- coal-breaker — Hard Labor, Firecraft, Dirty Labor
+- quench-hand — Metalcraft, Firecraft, Steady Hand
+- scrap-sorter — Metalcraft, Scrutiny, Tallycraft
+
+**carpenter**
+- sawyer — Woodcraft, Hard Labor, Steady Hand
+- plank-stacker — Haulage, Woodcraft, Hard Labor
+- peg-whittler — Whittlecraft, Woodcraft, Finesse
+- shaving-sweeper — Dirty Labor, Woodcraft, Obedience
+
+**cooper**
+- stave-shaver — Woodcraft, Whittlecraft, Steady Hand
+- hoop-holder — Steady Hand, Metalcraft, Patience
+- barrel-hauler — Haulage, Cellarcraft, Woodcraft
+
+**weaver**
+- wool-carder — Threadwork, Patience, Dirty Labor
+- spindle-hand — Threadwork, Finesse, Patience
+- warp-threader — Threadwork, Finesse, Steady Hand
+- fleece-picker — Threadwork, Scrutiny, Dirty Labor
+
+**miller**
+- sack-carrier — Haulage, Hard Labor, Peasantry
+- grist-sifter — Threshery, Millcraft, Scrutiny
+- hopper-feeder — Millcraft, Haulage, Patience
+- toll-tallier — Tallycraft, Bargaining, Scrutiny
+
+**baker**
+- oven-firer — Firecraft, Doughcraft, Patience
+- dough-kneader — Doughcraft, Hard Labor, Patience
+- bread-runner — Haulage, Peasantry, Obedience
+- wood-fetcher — Haulage, Hard Labor, Obedience
+
+**brewer**
+- malt-turner — Brewcraft, Patience, Hard Labor
+- mash-stirrer — Brewcraft, Firecraft, Hard Labor
+- ale-pourer — Enterprise, Bargaining, Brewcraft
+- cask-roller — Haulage, Steady Hand, Cellarcraft
 
 ## field reeve (crop & tillage labour)
 
-- plowman — breaking/turning the tilled strips
-- sower — casting seed (seasonal)
-- reaper — grain harvest (grain bundle, straw)
-- thresher / binder — straw & grain handling
-- weed-puller — vegetable beds
-- root-digger — harvesting vegetable mounds
-- herb-gatherer — herb patch (if present)
-- ditch-clearer — irrigation ditch (clay, reed)
-- reed-cutter — ditch bank
-- stone-picker — clearing the strips
-- margin-watch / hedge-mender — field margin (hayward's beat)
+- plowman — Tillage, Hard Labor, Beast Sense
+- sower — Seed-Lore, Fieldcraft, Peasantry
+- reaper — Harvestry, Hard Labor, Patience
+- thresher / binder — Threshery, Hard Labor, Harvestry
+- weed-puller — Fieldcraft, Peasantry, Patience
+- root-digger — Harvestry, Hard Labor, Dirty Labor
+- herb-gatherer — Herblore, Forage-Lore, Scrutiny
+- ditch-clearer — Drainage, Dirty Labor, Hard Labor
+- reed-cutter — Drainage, Bushcraft, Harvestry
+- stone-picker — Stonework, Hard Labor, Obedience
+- margin-watch / hedge-mender — Hedgecraft, Vigilance, Fieldcraft
 
 ## farm reeve (livestock, dairy & yard labour)
 
-- farmhand / yard-hand — general chores, maintenance
-- shepherd / fold-hand — sheep pen (if present)
-- shearer — shearing post (wool)
-- swineherd — pigsty
-- poultry-hand — chicken coop (egg, feather)
-- milker / cowherd — dairy shed (if cow present)
-- churn-hand / dairymaid — butter & cheese
-- orchard-picker — orchard fruit
-- garden-hand — vegetable garden
-- hay-hauler / store-hand — storage shed
+- farmhand / yard-hand — Peasantry, Hard Labor, Husbandry
+- shepherd / fold-hand — Husbandry, Beast Sense, Fieldcraft
+- shearer — Husbandry, Threadwork, Steady Hand
+- swineherd — Husbandry, Dirty Labor, Beast Sense
+- poultry-hand — Husbandry, Forage-Lore, Peasantry
+- milker / cowherd — Dairycraft, Husbandry, Patience
+- churn-hand / dairymaid — Dairycraft, Hard Labor, Patience
+- orchard-picker — Forage-Lore, Athletics, Herblore
+- garden-hand — Herblore, Fieldcraft, Peasantry
+- hay-hauler / store-hand — Haulage, Cellarcraft, Hard Labor
 
 ## independents (no workforce)
 
