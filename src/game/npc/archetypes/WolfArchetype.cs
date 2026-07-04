@@ -7,7 +7,7 @@ public class WolfArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "wolf";
     public override Species Species => SpeciesRegistry.Wolf;
-    public override bool DefaultHostile => true;
+    public override bool DefaultEnemy => true;
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 6;
 

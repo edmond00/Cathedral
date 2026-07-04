@@ -7,7 +7,6 @@ public class FoxArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "fox";
     public override Species Species => SpeciesRegistry.Fox;
-    public override bool DefaultHostile => false;
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 4;
 

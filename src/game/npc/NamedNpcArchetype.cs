@@ -14,12 +14,10 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// <summary>Species used for anatomy and combat.</summary>
     public abstract Species Species { get; }
 
-    /// <summary>Whether spawned NPCs are hostile by default.</summary>
-    public abstract bool DefaultHostile { get; }
-
     /// <summary>
-    /// Whether spawned NPCs start as enemies of the protagonist (e.g. bears, wolves, bandits).
-    /// When true, the enemy flag is set in AffinityTable at scene initialization.
+    /// Whether spawned NPCs start as enemies of the protagonist (e.g. bears, wolves, boars).
+    /// When true, the enemy flag is set in each spawned NPC's AffinityTable at scene
+    /// initialization (see the scene-build loop in the game controller).
     /// </summary>
     public virtual bool DefaultEnemy => false;
 
@@ -97,7 +95,7 @@ public abstract class NamedNpcArchetype : NpcArchetype
 
         return new NpcEntity(
             npcId, combatant, this,
-            DefaultHostile, DefaultPersistent,
+            DefaultPersistent,
             hint,
             canSpeak:              CanSpeak,
             wayToSpeakDescription: wayToSpeak,

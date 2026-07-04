@@ -84,6 +84,21 @@ public class NarrativeController
     // which commits its own side-effects via reports only.
     private bool _pendingDeferredCommit;
 
+    // ── Narration footer button (single button, three values) ────────────────────
+    // The one bottom button in narration. In normal exploration it is LEAVE (or RUNAWAY when a
+    // visible enemy/witness makes leaving risky) while idle, and CONTINUE while a succeeded action
+    // is pending progression (node/area transition). In the childhood-reminescence and get-up
+    // phases early exit is impossible, so it is only ever CONTINUE.
+    private enum ExitButtonKind { Leave, RunawayEnemy, RunawayWitness, Continue }
+    // Click region of the footer exit button as last rendered (Width == 0 ⇒ not shown this frame).
+    private (int X, int Y, int Width) _exitButtonRegion;
+    private bool _exitButtonHovered;
+    // Set while an exit-runaway dice roll is in flight, so the dice Continue click resolves the exit
+    // (via FinishExitRunaway) instead of the normal thinking-action OnDiceRollContinue.
+    private bool _exitRunawayPending;
+    private NpcEntity? _exitRunawayTarget;
+    private bool _exitRunawayIsEnemy;
+
     // Ambient music engine (optional — null when MIDI is unavailable)
     private readonly AmbianceEngine? _ambianceEngine;
 
@@ -95,10 +110,11 @@ public class NarrativeController
 
     // ── Dice-roll lifecycle helpers — wrap NarrationState calls + SFX cues. ───────
     // Open: neutral sound. Resolve: positive/negative depending on success. Close: neutral.
-    private void NarrationDiceStart(int numberOfDice, int difficulty, PartyMember? humorMember = null)
+    private void NarrationDiceStart(int numberOfDice, int difficulty, PartyMember? humorMember = null,
+        string? subtitle = null, string difficultyVerb = "to hit")
     {
         _narrationState.StartDiceRoll(numberOfDice, difficulty);
-        _dice.Start(numberOfDice, difficulty);
+        _dice.Start(numberOfDice, difficulty, subtitle, difficultyVerb);
         if (humorMember != null)
         {
             int limit = HumorModifierLimit(humorMember);
@@ -1499,6 +1515,10 @@ public class NarrativeController
                        && _scene?.Phase != NarrationPhase.GetUp;
         _ui.RenderHeader(_activePartyMember.DisplayName, _narrationState.ThinkingAttemptsRemaining, showNoetic);
 
+        // The footer exit button is only (re)rendered in the interactive states below. Clear its
+        // click region each frame so stale zones don't linger during dice/loading/error states.
+        _exitButtonRegion = default;
+
         // Footer scene info — shown as the default footer in every state
         string sceneInfo = BuildSceneInfoLine();
 
@@ -1552,17 +1572,8 @@ public class NarrativeController
                 _narrationState.IsScrollbarThumbHovered
             );
 
-            var buttonRegion = _ui.RenderContinueButton(_narrationState.IsContinueButtonHovered);
-
-            _narrationState.ActionRegions.Clear();
-            _narrationState.ActionRegions.Add(new ActionRegion(
-                0,
-                buttonRegion.Y,
-                buttonRegion.Y,
-                buttonRegion.X,
-                buttonRegion.X + buttonRegion.Width
-            ));
-
+            // Post-action progression uses the single footer button, shown here as CONTINUE.
+            RenderFooterButton(showNoetic);
             _ui.RenderStatusBar(sceneInfo);
             return;
         }
@@ -1582,6 +1593,10 @@ public class NarrativeController
             _narrationState.IsScrollbarThumbHovered
         );
 
+        // Single footer button — LEAVE/RUNAWAY while idle in exploration (the only interactive
+        // control once noetic points are exhausted, since keyword regions render inert then).
+        RenderFooterButton(showNoetic);
+
         // Footer always shows scene info in the idle observation state
         _ui.RenderStatusBar(sceneInfo);
     }
@@ -1599,6 +1614,36 @@ public class NarrativeController
         if (biome.Length > 0)
             return $"{biome}  —  {location}  |  {time}";
         return $"{location}  |  {time}";
+    }
+
+    /// <summary>
+    /// Renders the single narration footer button (CONTINUE / LEAVE / RUNAWAY) and records its
+    /// click region for <see cref="OnMouseMove"/>/<see cref="OnMouseClick"/>.
+    /// <para>
+    /// CONTINUE shows while a succeeded action awaits progression (<see cref="NarrativeState.ShowContinueButton"/>)
+    /// and throughout the no-early-exit phases; otherwise the idle exploration state shows LEAVE/RUNAWAY.
+    /// In a no-early-exit phase's idle state (nothing pending) no button is drawn — matching the old flow.
+    /// </para>
+    /// </summary>
+    private void RenderFooterButton(bool showNoetic)
+    {
+        bool postAction = _narrationState.ShowContinueButton;
+
+        // Reminescence / get-up: only surface the button (as CONTINUE) while progression is pending.
+        if (!showNoetic && !postAction)
+        {
+            _exitButtonRegion = default;
+            return;
+        }
+
+        ExitButtonKind kind = postAction ? ExitButtonKind.Continue : ComputeExitContext().kind;
+        string label = kind switch
+        {
+            ExitButtonKind.Continue => "CONTINUE",
+            ExitButtonKind.Leave    => "LEAVE",
+            _                       => "RUNAWAY",
+        };
+        _exitButtonRegion = _ui.RenderExitButton(label, _exitButtonHovered);
     }
     
     /// <summary>
@@ -1806,23 +1851,24 @@ public class NarrativeController
         {
             _narrationState.IsScrollbarThumbHovered = isOverThumb;
         }
-        
-        // If continue button is shown, check if mouse is over it
-        if (_narrationState.ShowContinueButton && _narrationState.ActionRegions.Count > 0)
+
+        // Footer button (CONTINUE / LEAVE / RUNAWAY) hover — present in idle and post-action states.
+        if (_exitButtonRegion.Width > 0)
         {
-            var buttonRegion = _narrationState.ActionRegions[0];
-            bool isOverButton = buttonRegion.Contains(mouseX, mouseY);
-            
-            if (isOverButton != _narrationState.IsContinueButtonHovered)
+            bool overExit = mouseY == _exitButtonRegion.Y
+                         && mouseX >= _exitButtonRegion.X
+                         && mouseX <  _exitButtonRegion.X + _exitButtonRegion.Width;
+            if (overExit != _exitButtonHovered)
             {
-                _narrationState.IsContinueButtonHovered = isOverButton;
-                if (isOverButton) PlayHoverSound();
+                _exitButtonHovered = overExit;
+                if (overExit) PlayHoverSound();
             }
-            
-            // Don't process keyword/action hover when continue button is shown, 
-            // but scrollbar interactions are still allowed (processed above)
-            return;
         }
+
+        // In the post-action (CONTINUE) state, content is inert — skip keyword/action hover
+        // (scrollbar interactions above are still allowed).
+        if (_narrationState.ShowContinueButton)
+            return;
         
         // Update hovered keyword region
         KeywordRegion? newHoveredKeyword = _ui.GetHoveredKeyword(mouseX, mouseY);
@@ -1860,7 +1906,11 @@ public class NarrativeController
             {
                 Console.WriteLine("NarrativeController: Dice roll continue button clicked");
                 PlayClickSound();
-                OnDiceRollContinue();
+                // An exit-runaway roll resolves the exit instead of committing a thinking outcome.
+                if (_exitRunawayPending)
+                    FinishExitRunaway();
+                else
+                    OnDiceRollContinue();
                 return;
             }
             _dice.HandleHumorClick(mouseX, mouseY);
@@ -1886,61 +1936,22 @@ public class NarrativeController
             Console.WriteLine($"NarrativeController: Jump scrolled to offset {newOffset}");
             return;
         }
-        
-        // If continue button is shown, check if clicked
-        if (_narrationState.ShowContinueButton && _narrationState.ActionRegions.Count > 0)
+
+        // Single footer button (CONTINUE / LEAVE / RUNAWAY) — clickable in idle and post-action states.
+        if (_exitButtonRegion.Width > 0
+            && mouseY == _exitButtonRegion.Y
+            && mouseX >= _exitButtonRegion.X
+            && mouseX <  _exitButtonRegion.X + _exitButtonRegion.Width)
         {
-            var buttonRegion = _narrationState.ActionRegions[0];
-            if (buttonRegion.Contains(mouseX, mouseY))
-            {
-                PlayClickSound();
-                // Get-Up success transition: protagonist risen, world travel begins.
-                if (_scene != null && _scene.PendingGetUpTransition)
-                {
-                    HandleGetUpContinue();
-                    return;
-                }
-
-                // Reminescence transition takes priority over normal node transition.
-                if (_scene != null && _scene.PendingReminescenceTransition is { } req)
-                {
-                    HandleReminescenceContinue(req);
-                    return;
-                }
-                // Check if there's a pending transition to a new node
-                if (_narrationState.PendingTransitionNode != null)
-                {
-                    Console.WriteLine($"NarrativeController: Continue button clicked, transitioning to {_narrationState.PendingTransitionNode.NodeId}");
-
-                    // Perform the transition
-                    _currentNode = _narrationState.PendingTransitionNode;
-
-                    // Convert current narration to history (grayed out, non-interactive)
-                    _scrollBuffer.ConvertToHistory();
-                    _narrationState.ResetForNewNode();
-                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-
-                    // Start new observation phase WITHOUT clearing history
-                    StartObservationPhaseWithHistory();
-                }
-                else if (_narrationState.ShouldExitOnContinue)
-                {
-                    Console.WriteLine("NarrativeController: Continue button clicked — movement action, exiting to world view");
-                    _narrationState.RequestedExit = true;
-                }
-                else
-                {
-                    Console.WriteLine("NarrativeController: Continue button clicked — staying in scene, restarting observation");
-                    _scrollBuffer.ConvertToHistory();
-                    _narrationState.ResetForNewNode();
-                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-                    StartObservationPhaseWithHistory();
-                }
-            }
-            // When continue button is shown, don't process other clicks (keywords/actions)
-            // but scrollbar clicks are allowed (processed above)
+            PlayClickSound();
+            HandleFooterButtonClicked();
             return;
         }
+
+        // In the post-action (CONTINUE) state the content is inert — swallow other clicks
+        // (scrollbar clicks were already handled above).
+        if (_narrationState.ShowContinueButton)
+            return;
 
         // If choice popup is visible, handle it first
         if (_choicePopup.IsVisible)
@@ -2365,6 +2376,203 @@ public class NarrativeController
     /// Clear the pending dialogue outcome after the game controller has handled it.
     /// </summary>
     public void ClearPendingDialogue() => _pendingDialogueOutcome = null;
+
+    // ── Narration-exit (LEAVE / RUNAWAY) ─────────────────────────────────────────
+
+    /// <summary>
+    /// Decides what the footer exit button should offer given the current location:
+    /// <list type="bullet">
+    /// <item><b>RunawayEnemy</b> — a visual enemy is present in the current area (highest priority).</item>
+    /// <item><b>RunawayWitness</b> — the current area is private (illegal) with a visual witness present.</item>
+    /// <item><b>Leave</b> — otherwise; exiting is free.</item>
+    /// </list>
+    /// Only same-area (visual) threats/witnesses count — leaving is about the location you stand in.
+    /// </summary>
+    private (ExitButtonKind kind, NpcEntity? target) ComputeExitContext()
+    {
+        if (_scene == null || _pov == null || _protagonist == null)
+            return (ExitButtonKind.Leave, null);
+
+        // Enemy in the current location takes precedence over a witness confrontation.
+        var threat = ThreatSelector.ComputeContext(_scene, _pov, _protagonist);
+        if (threat.Level == ThreatLevel.Visual && threat.Threat != null)
+            return (ExitButtonKind.RunawayEnemy, threat.Threat);
+
+        // Illegal (private) location with a bystander who could see you leave.
+        if (_pov.Where.IsPrivate)
+        {
+            var witness = WitnessSelector.ComputeContext(_scene, _pov);
+            if (witness.Type == WitnessType.Visual && witness.Witness != null)
+                return (ExitButtonKind.RunawayWitness, witness.Witness);
+        }
+
+        return (ExitButtonKind.Leave, null);
+    }
+
+    /// <summary>Number of d6 rolled in an exit-runaway check — the protagonist's feet stat, min 1.</summary>
+    private int ProtagonistRunawayDiceCount()
+    {
+        var stat = _protagonist.DerivedStats.FirstOrDefault(s => s.Name == "runaway_dice");
+        return Math.Max(1, stat?.GetValue(_protagonist) ?? 1);
+    }
+
+    /// <summary>
+    /// Invoked when the single footer button is clicked. In the post-action state it acts as CONTINUE
+    /// (<see cref="HandleContinueClicked"/>); otherwise LEAVE exits immediately and the RUNAWAY variants
+    /// begin a runaway dice roll against the enemy/witness (resolved in <see cref="FinishExitRunaway"/>).
+    /// </summary>
+    private void HandleFooterButtonClicked()
+    {
+        // Post-action progression (and every press in the no-early-exit phases) is a CONTINUE.
+        if (_narrationState.ShowContinueButton)
+        {
+            HandleContinueClicked();
+            return;
+        }
+
+        var (kind, target) = ComputeExitContext();
+        switch (kind)
+        {
+            case ExitButtonKind.Leave:
+                Console.WriteLine("NarrativeController: LEAVE clicked — exiting narration");
+                _narrationState.RequestedExit = true;
+                break;
+            case ExitButtonKind.RunawayEnemy when target != null:
+                Console.WriteLine($"NarrativeController: RUNAWAY clicked — enemy '{target.DisplayName}' present");
+                _ = BeginExitRunawayAsync(target, isEnemy: true);
+                break;
+            case ExitButtonKind.RunawayWitness when target != null:
+                Console.WriteLine($"NarrativeController: RUNAWAY clicked — witness '{target.DisplayName}' present");
+                _ = BeginExitRunawayAsync(target, isEnemy: false);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Handles a CONTINUE press: drives the get-up / reminescence terminal transitions and node/area
+    /// transitions. With nothing pending, the no-early-exit phases restart observations (as the old
+    /// Continue button did) while normal exploration simply returns to the interactive observation
+    /// state without regenerating observations.
+    /// </summary>
+    private void HandleContinueClicked()
+    {
+        // Get-Up success transition: protagonist risen, world travel begins.
+        if (_scene != null && _scene.PendingGetUpTransition)
+        {
+            HandleGetUpContinue();
+            return;
+        }
+
+        // Reminescence transition takes priority over a normal node transition.
+        if (_scene != null && _scene.PendingReminescenceTransition is { } req)
+        {
+            HandleReminescenceContinue(req);
+            return;
+        }
+
+        // Transition to a new node (e.g. an action moved the player to a different area).
+        if (_narrationState.PendingTransitionNode != null)
+        {
+            Console.WriteLine($"NarrativeController: CONTINUE — transitioning to node {_narrationState.PendingTransitionNode.NodeId}");
+            _currentNode = _narrationState.PendingTransitionNode;
+            _scrollBuffer.ConvertToHistory();
+            _narrationState.ResetForNewNode();
+            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            StartObservationPhaseWithHistory();
+            return;
+        }
+
+        // A movement/leave action requested exit-on-continue (the LEAVE button is the primary exit
+        // now, but honor an explicit movement-exit action too).
+        if (_narrationState.ShouldExitOnContinue)
+        {
+            Console.WriteLine("NarrativeController: CONTINUE — movement action, exiting to world view");
+            _narrationState.RequestedExit = true;
+            return;
+        }
+
+        // Nothing pending. No-early-exit phases regenerate observations (as before); normal
+        // exploration returns to the interactive state without restarting observations.
+        bool noEarlyExit = _scene?.Phase == NarrationPhase.ChildhoodReminescence
+                        || _scene?.Phase == NarrationPhase.GetUp;
+        if (noEarlyExit)
+        {
+            Console.WriteLine("NarrativeController: CONTINUE — restarting observations (no-early-exit phase)");
+            _scrollBuffer.ConvertToHistory();
+            _narrationState.ResetForNewNode();
+            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            StartObservationPhaseWithHistory();
+        }
+        else
+        {
+            Console.WriteLine("NarrativeController: CONTINUE — returning to interactive observation (no restart)");
+            _narrationState.ShowContinueButton = false;
+        }
+    }
+
+    /// <summary>
+    /// Plays the runaway dice-roll overlay (single roll, ≥1 six to flee — same rule as combat).
+    /// Resolution happens on the dice Continue click in <see cref="FinishExitRunaway"/>.
+    /// </summary>
+    private async Task BeginExitRunawayAsync(NpcEntity target, bool isEnemy)
+    {
+        _exitRunawayPending  = true;
+        _exitRunawayTarget   = target;
+        _exitRunawayIsEnemy  = isEnemy;
+
+        int diceCount = ProtagonistRunawayDiceCount();
+        NarrationDiceStart(diceCount, 1, subtitle: "RUNAWAY CHECK — feet", difficultyVerb: "to flee");
+        _narrationState.LoadingMessage = "Rolling dice...";
+
+        // Brief animation window (no async work backs this roll, unlike thinking checks).
+        await Task.Delay(900);
+
+        var values = new int[diceCount];
+        for (int i = 0; i < diceCount; i++) values[i] = _diceRandom.Next(1, 7);
+        NarrationDiceComplete(values);
+    }
+
+    /// <summary>
+    /// Resolves an exit-runaway roll after the player clicks Continue on the dice overlay.
+    /// Success → exit narration. Failure → start a fight (enemy) or the caught-red-handed
+    /// trespass dialogue (witness). Enemy precedence is already baked into <c>isEnemy</c>.
+    /// </summary>
+    private void FinishExitRunaway()
+    {
+        bool success   = _dice.IsCurrentlySuccess;
+        var  target    = _exitRunawayTarget;
+        bool isEnemy   = _exitRunawayIsEnemy;
+
+        _exitRunawayPending = false;
+        _exitRunawayTarget  = null;
+        NarrationDiceClear();
+
+        if (success)
+        {
+            Console.WriteLine("NarrativeController: RUNAWAY succeeded — exiting narration");
+            _narrationState.RequestedExit = true;
+            return;
+        }
+
+        if (target == null)
+        {
+            // Defensive: nothing to escalate to, just leave.
+            _narrationState.RequestedExit = true;
+            return;
+        }
+
+        if (isEnemy)
+        {
+            Console.WriteLine($"NarrativeController: RUNAWAY failed — fight starts vs '{target.DisplayName}'");
+            _pendingFightOutcome = new FightOutcome(target, $"failed to run away from {target.DisplayName}");
+        }
+        else
+        {
+            Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts trespass");
+            var catchTree = CaughtRedHandedTreeFactory.Create(CriminalAffinityType.Intruder, target.IsBrave);
+            _pendingDialogueOutcome = new DialogueOutcome(target, tree: catchTree);
+        }
+    }
     
     /// <summary>
     /// Called by the game controller when returning from fight mode.

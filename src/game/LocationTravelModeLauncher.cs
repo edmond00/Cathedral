@@ -371,11 +371,12 @@ public static class LocationTravelModeLauncher
                 }
                 else if (gameController?.CurrentMode == GameMode.MainMenu)
                 {
-                    // ESC in main menu: return to world if game has started, otherwise do nothing
+                    // ESC in main menu: resume where the menu was opened from (pause-overlay return —
+                    // narration or world). Do nothing before the game has started.
                     if (gameController is LocationTravelGameController ltgc && ltgc.HasGameStarted)
                     {
-                        Console.WriteLine("ESC pressed - closing main menu");
-                        gameController.SetMode(GameMode.WorldView);
+                        Console.WriteLine($"ESC pressed - closing main menu, resuming {ltgc.MenuReturnMode}");
+                        gameController.SetMode(ltgc.MenuReturnMode);
                     }
                 }
                 else if (gameController?.CurrentMode == GameMode.ProtagonistManagement)
@@ -395,13 +396,12 @@ public static class LocationTravelModeLauncher
                             Console.WriteLine("ESC pressed - closed thinking modusMentis popup");
                             return; // Don't exit location, just close popup
                         }
-                        
-                        // No popup open, exit Phase 6 mode
-                        Console.WriteLine("ESC pressed - exiting location");
-                        ltgc.ExitNarrativeMode();
+
+                        // No popup open: open the main menu as a pause overlay WITHOUT tearing down
+                        // narration. Leaving the scene is done via the in-narration LEAVE/RUNAWAY button.
+                        Console.WriteLine("ESC pressed - opening pause menu over narration");
+                        gameController.SetMode(GameMode.MainMenu);
                     }
-                    
-                    gameController.EndLocationInteraction();
                 }
                 else if (gameController?.CurrentMode == GameMode.WorldView)
                 {

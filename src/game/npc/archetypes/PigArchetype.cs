@@ -14,7 +14,6 @@ public class PigArchetype : ShallowNpcArchetype
 {
     public override string ArchetypeId     => "pig";
     public override string TypeDisplayName => "Pig";
-    public override bool   DefaultHostile  => false;
 
     protected override string BuildObservationHint(string nodeContext)
         => "a fat sow looks up from the mire, snout twitching, then returns to rooting";

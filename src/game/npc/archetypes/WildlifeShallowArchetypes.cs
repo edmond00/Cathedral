@@ -308,7 +308,6 @@ public class AdderArchetype : GenericShallowArchetype
 {
     public override string ArchetypeId     => "adder";
     public override string TypeDisplayName => "Adder";
-    public override bool   DefaultHostile  => true;
     protected override string BuildObservationHint(string nodeContext)
         => "an adder coils on a sun-warmed rock, zigzag pattern dark along its back";
     protected override string CorpseBodyDescription => "the limp coiled body of an adder";
@@ -332,7 +331,6 @@ public class CaveSpiderArchetype : GenericShallowArchetype
 {
     public override string ArchetypeId     => "cave_spider";
     public override string TypeDisplayName => "Cave Spider";
-    public override bool   DefaultHostile  => true;
     protected override string BuildObservationHint(string nodeContext)
         => "a long-legged cave spider rears in the lantern-light, palps working";
     protected override string CorpseBodyDescription => "the curled-leg body of a cave spider";
@@ -402,7 +400,6 @@ public class LynxArchetype : GenericShallowArchetype
 {
     public override string ArchetypeId     => "lynx";
     public override string TypeDisplayName => "Lynx";
-    public override bool   DefaultHostile  => true;
     protected override string BuildObservationHint(string nodeContext)
         => "a spotted lynx crouches on a high rock, tufted ears pricked forward";
     protected override string CorpseBodyDescription => "the spotted body of a lynx";

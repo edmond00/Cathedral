@@ -15,9 +15,6 @@ public abstract class ShallowNpcArchetype : NpcArchetype
     /// <summary>Display name used for all instances of this type (e.g. "Chicken", "Rabbit").</summary>
     public abstract string TypeDisplayName { get; }
 
-    /// <summary>Whether instances are hostile by default. Almost always false for farm animals.</summary>
-    public virtual bool DefaultHostile => false;
-
     // ── Spawn ────────────────────────────────────────────────────────────────
 
     /// <summary>Spawns a new <see cref="ShallowNpcEntity"/> from this archetype.</summary>
@@ -25,7 +22,7 @@ public abstract class ShallowNpcArchetype : NpcArchetype
     {
         var npcId    = $"{ArchetypeId}_{rng.Next(100000)}";
         var hint     = BuildObservationHint(nodeContext);
-        return new ShallowNpcEntity(npcId, TypeDisplayName, this, DefaultHostile, hint);
+        return new ShallowNpcEntity(npcId, TypeDisplayName, this, hint);
     }
 
     // ── Overridable builders ────────────────────────────────────────────────

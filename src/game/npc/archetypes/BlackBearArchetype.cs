@@ -7,7 +7,7 @@ public class BlackBearArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "black_bear";
     public override Species Species => SpeciesRegistry.Bear;
-    public override bool DefaultHostile => true;
+    public override bool DefaultEnemy => true;
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 7;
 

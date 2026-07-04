@@ -10,7 +10,6 @@ public class FarmhandArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId      => "farmhand";
     public override Species Species         => SpeciesRegistry.Human;
-    public override bool DefaultHostile     => false;
     public override bool DefaultPersistent  => true;
     public override int  ModiMentisCount    => 8;
     public override bool CanSpeak           => true;

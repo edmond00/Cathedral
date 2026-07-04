@@ -12,7 +12,6 @@ public class FarmerArchetype : NamedNpcArchetype
     public override ItemTag? SellTag        => ItemTag.Crop;
     public override ItemTag? BuyTag         => ItemTag.Tool;
     public override Species Species         => SpeciesRegistry.Human;
-    public override bool DefaultHostile     => false;
     public override bool DefaultPersistent  => true;
     public override int  ModiMentisCount    => 10;
     public override bool CanSpeak           => true;

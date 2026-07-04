@@ -7,7 +7,7 @@ public class SavageArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "savage";
     public override Species Species => SpeciesRegistry.Human;
-    public override bool DefaultHostile => true;
+    public override bool DefaultEnemy => true;
     public override bool DefaultPersistent => true;
     public override int ModiMentisCount => 10;
     public override bool CanSpeak => true;

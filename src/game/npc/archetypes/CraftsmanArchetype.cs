@@ -11,7 +11,6 @@ namespace Cathedral.Game.Npc.Archetypes;
 public abstract class CraftsmanArchetype : NamedNpcArchetype
 {
     public override Species Species         => SpeciesRegistry.Human;
-    public override bool DefaultHostile     => false;
     public override bool DefaultPersistent  => true;
     public override int  ModiMentisCount    => 9;
     public override bool CanSpeak           => true;

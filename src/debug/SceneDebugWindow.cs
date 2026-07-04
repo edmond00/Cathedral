@@ -662,7 +662,7 @@ public class SceneDebugWindow : Form
             lines.Add("─── NPC Info ───");
             lines.Add($"  Species: {npc.Entity.SpeciesName}");
             lines.Add($"  Archetype: {npc.Entity.Archetype.ArchetypeId}");
-            lines.Add($"  Hostile: {npc.IsHostile}");
+            lines.Add($"  Enemy (default): {(npc.Entity.Archetype is Cathedral.Game.Npc.NamedNpcArchetype na && na.DefaultEnemy)}");
             lines.Add($"  Alive: {npc.IsAlive}");
             if (_scene.NpcSchedules.TryGetValue(npc.Id, out var schedule))
             {

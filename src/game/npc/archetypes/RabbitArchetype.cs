@@ -14,7 +14,6 @@ public class RabbitArchetype : ShallowNpcArchetype
 {
     public override string ArchetypeId     => "rabbit";
     public override string TypeDisplayName => "Rabbit";
-    public override bool   DefaultHostile  => false;
 
     protected override string BuildObservationHint(string nodeContext)
         => "a grey rabbit freezes as you approach, nose twitching, eyes wide";

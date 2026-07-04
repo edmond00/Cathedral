@@ -13,7 +13,6 @@ namespace Cathedral.Game.Npc.Archetypes;
 public abstract class WildernessNpcArchetype : NamedNpcArchetype
 {
     public override Species Species         => SpeciesRegistry.Human;
-    public override bool DefaultHostile     => false;
     public override bool DefaultPersistent  => true;
     public override int  ModiMentisCount    => 8;
     public override bool CanSpeak           => true;

@@ -7,7 +7,7 @@ public class StrayDogArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "stray_dog";
     public override Species Species => SpeciesRegistry.Dog;
-    public override bool DefaultHostile => true;
+    public override bool DefaultEnemy => true;
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 5;
 

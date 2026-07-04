@@ -7,7 +7,6 @@ public class StrayCatArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "stray_cat";
     public override Species Species => SpeciesRegistry.Cat;
-    public override bool DefaultHostile => false;
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 4;
 

@@ -712,33 +712,23 @@ public class NarrativeUI : TerminalPanelUI
 
     
     // DrawHorizontalLine, GenerateProgressBar, WrapText — inherited from TerminalPanelUI
-    
+
     /// <summary>
-    /// Render the "Continue" button at the bottom of the screen.
-    /// Returns the button region for click detection.
+    /// Renders the single narration footer button (e.g. "CONTINUE", "LEAVE" or "RUNAWAY") at the
+    /// bottom-left, above the separator, and returns its click region.
     /// </summary>
-    public (int X, int Y, int Width) RenderContinueButton(bool isHovered = false)
+    public (int X, int Y, int Width) RenderExitButton(string label, bool isHovered = false)
     {
-        string buttonText = "[ Continue ]";
+        string buttonText = $"[ {label} ]";
         int buttonWidth = buttonText.Length;
-        int buttonX = (_layout.TERMINAL_WIDTH - buttonWidth) / 2;
-        int buttonY = _layout.SEPARATOR_Y - 2; // Place near bottom, above separator
-        
+        int buttonX = _layout.CONTENT_START_X;   // bottom-left
+        int buttonY = _layout.SEPARATOR_Y - 2;
+
         Vector4 buttonColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverColor : Config.NarrativeUI.ContinueButtonColor;
         Vector4 buttonBackgroundColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;
-        
+
         _terminal.Text(buttonX, buttonY, buttonText, buttonColor, buttonBackgroundColor);
-        
+
         return (buttonX, buttonY, buttonWidth);
-    }
-    
-    /// <summary>
-    /// Check if mouse is over the continue button.
-    /// </summary>
-    public bool IsMouseOverContinueButton(int mouseX, int mouseY, (int X, int Y, int Width) buttonRegion)
-    {
-        return mouseY == buttonRegion.Y && 
-               mouseX >= buttonRegion.X && 
-               mouseX < buttonRegion.X + buttonRegion.Width;
     }
 }

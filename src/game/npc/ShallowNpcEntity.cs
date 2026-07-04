@@ -11,7 +11,6 @@ public class ShallowNpcEntity : INpcEntity
 {
     public string NpcId    { get; }
     public string DisplayName { get; }
-    public bool   IsHostile   { get; }
     public bool   IsAlive     { get; set; } = true;
 
     public string             ObservationHint            { get; }
@@ -23,13 +22,11 @@ public class ShallowNpcEntity : INpcEntity
         string npcId,
         string displayName,
         ShallowNpcArchetype archetype,
-        bool isHostile,
         string observationHint)
     {
         NpcId                      = npcId;
         DisplayName                = displayName;
         Archetype                  = archetype;
-        IsHostile                  = isHostile;
         ObservationHint            = observationHint;
     }
 

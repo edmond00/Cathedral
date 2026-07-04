@@ -14,7 +14,6 @@ public class ChickenArchetype : ShallowNpcArchetype
 {
     public override string ArchetypeId     => "chicken";
     public override string TypeDisplayName => "Chicken";
-    public override bool   DefaultHostile  => false;
 
     protected override string BuildObservationHint(string nodeContext)
         => "a speckled hen clucks and scratches in the yard, paying you no mind";

@@ -165,6 +165,12 @@ public class LocationTravelGameController : IDisposable
     public LocationInstanceState? CurrentLocationState => _currentLocationState;
     public bool IsAtLocation => _currentMode == GameMode.LocationInteraction && _currentLocationState != null;
     public bool HasGameStarted => _hasGameStarted;
+    /// <summary>
+    /// Mode to resume when the main menu is dismissed. When narration is still alive underneath
+    /// (the menu was opened as a pause overlay), resume into it; otherwise fall back to the world.
+    /// Derived from <see cref="_isInNarrativeMode"/> so intermediate menu navigation can't clobber it.
+    /// </summary>
+    public GameMode MenuReturnMode => _isInNarrativeMode ? GameMode.LocationInteraction : GameMode.WorldView;
     
     /// <summary>
     /// Gets the terminal input handler for coordinate conversion (null if no terminal).
@@ -320,6 +326,12 @@ public class LocationTravelGameController : IDisposable
         // Update Phase 6 controller if active
         if (_isInNarrativeMode && _narrativeController != null)
         {
+            // Main menu / settings opened as a pause overlay over narration: the menu renderer owns
+            // the screen and is event-driven (rendered on enter/hover/click). Skip the narration
+            // Update entirely so it doesn't redraw over the menu every frame.
+            if (_currentMode == GameMode.MainMenu || _currentMode == GameMode.Settings)
+                return;
+
             // Check if fight/dialogue mode is active (sub-modes within narrative)
             if (_currentMode == GameMode.Fighting && _fightAdapter != null)
             {
@@ -1736,7 +1748,8 @@ public class LocationTravelGameController : IDisposable
                 {
                     if (!_hasGameStarted)
                         ResetGameState(); // First time: treat as new game
-                    SetMode(GameMode.WorldView);
+                    // Resume the paused narration when opened as an overlay; otherwise enter the world.
+                    SetMode(MenuReturnMode);
                 },
                 onProtagonist: () =>
                 {
@@ -2858,8 +2871,13 @@ public class LocationTravelGameController : IDisposable
 
         var scene = sceneFactory.Build(vertexIndex, state);
 
+        // Seed default-enemy archetypes (wolves, bears, boars, …) as enemies of the protagonist,
+        // but only on first contact: a persistent NPC the player has already met (e.g. reconciled)
+        // keeps its recorded relationship instead of being re-flagged hostile on every revisit.
+        // Non-persistent beasts spawn fresh as strangers each visit, so they are always re-flagged.
         foreach (var sceneNpc in scene.Npcs)
-            if (sceneNpc.Entity is Cathedral.Game.Npc.NpcEntity npcEnt && npcEnt.Archetype.DefaultEnemy)
+            if (sceneNpc.Entity is Cathedral.Game.Npc.NpcEntity npcEnt && npcEnt.Archetype.DefaultEnemy
+                && npcEnt.AffinityTable.IsStranger(_protagonist.DisplayName))
                 npcEnt.AffinityTable.SetEnemy(_protagonist.DisplayName);
 
         // Share the depletion store with the persistent state, then apply current depletion (regen).

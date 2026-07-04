@@ -21,9 +21,6 @@ public interface INpcEntity
     /// </summary>
     bool IsAlive { get; set; }
 
-    /// <summary>Whether this NPC is hostile to the player by default.</summary>
-    bool IsHostile { get; }
-
     /// <summary>Short LLM observation hint (e.g. "a grey wolf watches from the shadows").</summary>
     string ObservationHint { get; }
 

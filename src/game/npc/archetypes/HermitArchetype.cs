@@ -9,7 +9,6 @@ public class HermitArchetype : NamedNpcArchetype
     public override ItemTag? SellTag => ItemTag.Forage;
     public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override Species Species => SpeciesRegistry.Human;
-    public override bool DefaultHostile => false;
     public override bool DefaultPersistent => true;
     public override int ModiMentisCount => 12;
     public override bool CanSpeak => true;

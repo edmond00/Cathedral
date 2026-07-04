@@ -26,9 +26,6 @@ public class NpcEntity : INpcEntity
 
     NpcArchetype INpcEntity.Archetype => Archetype;
 
-    /// <inheritdoc/>
-    public bool IsHostile { get; set; }
-
     // ── Dialogue ──────────────────────────────────────────────────────────────
 
     /// <summary>Whether this NPC can be spoken to (has a way-to-speak description).</summary>
@@ -141,7 +138,6 @@ public class NpcEntity : INpcEntity
         string              npcId,
         EnemyCombatant      combatant,
         NamedNpcArchetype   archetype,
-        bool                isHostile,
         bool                isPersistent,
         string              observationHint,
         bool                canSpeak                = false,
@@ -154,7 +150,6 @@ public class NpcEntity : INpcEntity
         NpcId                      = npcId;
         Combatant                  = combatant;
         Archetype                  = archetype;
-        IsHostile                  = isHostile;
         IsPersistent               = isPersistent;
         ObservationHint            = observationHint;
         CanSpeak                   = canSpeak;
