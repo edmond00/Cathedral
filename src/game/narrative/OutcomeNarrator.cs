@@ -36,9 +36,12 @@ public class OutcomeNarrator
         double difficulty,
         PartyMember protagonist,
         CancellationToken cancellationToken = default,
-        string? failureHint = null)
+        string? failureHint = null,
+        string? neutralOverride = null)
     {
-        string neutral = BuildNeutralOutcome(action, succeeded, failureHint);
+        // The reminescence path supplies its own neutral meaning (a plain "I try to remember …"
+        // framing that embeds the concrete recovered memory); everything else templates it here.
+        string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, failureHint);
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         // keepHistory so the dual-outcome snapshot/restore (humor flips) sees the generated turns.
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,

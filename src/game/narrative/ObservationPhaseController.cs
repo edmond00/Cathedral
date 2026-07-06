@@ -53,6 +53,7 @@ public class ObservationPhaseController
         NarrationNode currentNode,
         PartyMember actingMember,
         int locationId,
+        bool isReminescence = false,
         CancellationToken ct = default)
     {
         Console.WriteLine($"ObservationPhaseController: Starting overall observation for {currentNode.NodeId}");
@@ -89,14 +90,14 @@ public class ObservationPhaseController
 
         // First object: chosen by the Modus Mentis, observed without a transition.
         var first = await ChooseObservationObjectAsync(slotId, candidates, modusMentis, ct);
-        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isPhaseOpener: true);
+        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence);
 
         // Second object (if any): chosen from the remaining objects, reached via one transition.
         var remaining = candidates.Where(o => o != first).ToList();
         if (remaining.Count > 0)
         {
             var second = await ChooseObservationObjectAsync(slotId, remaining, modusMentis, ct);
-            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ct);
+            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence);
         }
 
         if (sentences.Count == 0)
@@ -130,6 +131,7 @@ public class ObservationPhaseController
         ModusMentis observationModusMentis,
         NarrationNode currentNode,
         int locationId,
+        bool isReminescence = false,
         CancellationToken ct = default)
     {
         Console.WriteLine($"ObservationPhaseController: Starting focus observation on '{focusOutcome.DisplayName}'");
@@ -142,7 +144,7 @@ public class ObservationPhaseController
         var sentences = new List<NarrationSentence>();
 
         // 1. Observe the clicked object (no transition).
-        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct, isPhaseOpener: true);
+        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence);
 
         // 2. A second object chosen by the Modus Mentis from the remaining objects, reached via a
         //    transition. Exclude the clicked object's name-twins (not just the clicked instance),
@@ -154,7 +156,7 @@ public class ObservationPhaseController
         if (remaining.Count > 0)
         {
             var second = await ChooseObservationObjectAsync(slotId, remaining, observationModusMentis, ct);
-            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, second, withTransition: true, locationId, ct);
+            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence);
         }
 
         if (sentences.Count == 0)
@@ -199,7 +201,8 @@ public class ObservationPhaseController
         bool withTransition,
         int locationId,
         CancellationToken ct,
-        bool isPhaseOpener = false)
+        bool isPhaseOpener = false,
+        bool isReminescence = false)
     {
         try
         {
@@ -210,7 +213,8 @@ public class ObservationPhaseController
             var neutral = NeutralNarration.Observation(
                 isFirst: !withTransition,
                 GetNeutralPhrase(outcome, locationId),
-                GetNeutralDescription(outcome, locationId));
+                GetNeutralDescription(outcome, locationId),
+                isReminescence: isReminescence);
             var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: isPhaseOpener ? "I " : null, styleInstruction: modusMentis.StyleInstruction, ct: ct);
 
             // Keyword is chosen by rule from the final (sanitized) text — the noun most related to the object.

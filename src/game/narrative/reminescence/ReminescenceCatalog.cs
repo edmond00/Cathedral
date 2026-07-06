@@ -436,7 +436,7 @@ internal static class ReminescenceCatalog
 
                 new("an old magician",
                     observationText:  "an old face in dim light and a storytelling voice, slow and warm, always one more tale",
-                    outcomeText:      "your grandfather telling you stories to fall asleep — always one more, always one more",
+                    outcomeText:      "your grandfather's bedtime stories at nightfall — always one more, always one more",
                     outcome: To("pillage", skills: new[] { "fables_and_tales" }),
                     contextSummary:   "listening to your grandfather's tales"),
             });

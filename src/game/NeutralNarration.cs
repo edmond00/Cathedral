@@ -23,21 +23,30 @@ public static class NeutralNarration
     /// <summary>
     /// Builds the attention sentence that opens an observation, naming the object by a simple noun
     /// phrase (e.g. "a straw figure", "Hugh Furrow"). The first object of a phase is "drawn to";
-    /// any later object is "shifts to". The richer detail follows in <see cref="ObservationDetail"/>.
+    /// any later object is "shifts to". During the childhood reminescence phase
+    /// (<paramref name="isReminescence"/>) both are reworded as memory surfacing/drifting rather
+    /// than attention being drawn/shifted. The richer detail follows in
+    /// <see cref="ObservationDetail"/>.
     /// </summary>
-    public static string ObservationAttention(bool isFirst, string simpleName)
+    public static string ObservationAttention(bool isFirst, string simpleName, bool isReminescence = false)
     {
         var s = NounPhrase(simpleName);
-        return isFirst ? $"My attention is drawn to {s}."
-                       : $"My attention shifts to {s}.";
+        if (isFirst)
+            return isReminescence ? $"A memory surfaces: {s}."
+                                  : $"My attention is drawn to {s}.";
+        return isReminescence ? $"My memory drifts to {s}."
+                              : $"My attention shifts to {s}.";
     }
 
     /// <summary>
     /// Builds the detail sentence that follows the attention line, giving the object's richer
     /// description (e.g. "a wind-blown straw-stuffed figure"), normalised to a clean noun phrase.
+    /// During the childhood reminescence phase (<paramref name="isReminescence"/>) the fragment is
+    /// a recollection, so the sentence is put in the past tense ("This was …").
     /// </summary>
-    public static string ObservationDetail(string description)
-        => $"This is {NounPhrase(description)}.";
+    public static string ObservationDetail(string description, bool isReminescence = false)
+        => isReminescence ? $"This was {NounPhrase(description)}."
+                          : $"This is {NounPhrase(description)}.";
 
     /// <summary>
     /// Builds the full neutral meaning of an observation as one text: the attention line naming the
@@ -45,8 +54,8 @@ public static class NeutralNarration
     /// (<see cref="ObservationDetail"/>). Merged so the persona rewrite can be done in a single
     /// request that yields two or three short styled sentences.
     /// </summary>
-    public static string Observation(bool isFirst, string simpleName, string description)
-        => $"{ObservationAttention(isFirst, simpleName)} {ObservationDetail(description)}";
+    public static string Observation(bool isFirst, string simpleName, string description, bool isReminescence = false)
+        => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence)}";
 
     // ── Thinking ───────────────────────────────────────────────────────────────
 
@@ -88,6 +97,36 @@ public static class NeutralNarration
 
     public static string ItemCombinationFailure(string actionDisplay, string itemWithArticle)
         => $"Using {itemWithArticle} to {actionDisplay} does not work.";
+
+    // ── Reminescence outcome ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Neutral success sentence for the childhood reminescence REMEMBER action. Unlike a normal
+    /// action outcome (which templates the styled action label), this uses a plain "I try to
+    /// remember …, and succeed." framing and then states the concrete memory that surfaces —
+    /// <paramref name="memoryEvent"/> is the fragment's <c>OutcomeText</c>, converted to first
+    /// person so the whole recollection reads in the protagonist's own voice.
+    /// </summary>
+    public static string ReminescenceOutcome(string fragmentName, string memoryEvent)
+    {
+        var name   = (fragmentName ?? "").Trim();
+        var memory = ToFirstPerson((memoryEvent ?? "").Trim().TrimEnd('.'));
+        return $"I try to remember {name} from my childhood, and succeed. It comes back to me: {memory}.";
+    }
+
+    /// <summary>
+    /// Rewrites a second-person memory description ("you spent your childhood …") into first person
+    /// ("I spent my childhood …"). The reminescence catalog is authored in second person, but the
+    /// recollection is narrated in the protagonist's own voice.
+    /// </summary>
+    private static string ToFirstPerson(string s)
+    {
+        s = Regex.Replace(s, @"\byourself\b", "myself", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\byours\b",    "mine",   RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\byour\b",     "my",     RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\byou\b",      "I",      RegexOptions.IgnoreCase);
+        return s;
+    }
 
     // ── Speaking (3-part address to a companion) ───────────────────────────────
 

@@ -376,7 +376,8 @@ public class NarrativeController
             var blocks = await _observationController.ExecuteObservationPhaseAsync(
                 _currentNode,
                 _activePartyMember,
-                _protagonist.CurrentLocationId
+                _protagonist.CurrentLocationId,
+                isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence
             );
             
             Console.WriteLine($"NarrativeController: Generated {blocks.Count} observation blocks");
@@ -1004,9 +1005,14 @@ public class NarrativeController
         // Fall back to ChainModusMentis if ActionModusMentis is unexpectedly null.
         var actionMm = action.ActionModusMentis ?? action.ChainModusMentis;
 
-        // Build a lightweight outcome whose ToNaturalLanguageString() feeds the LLM prompt
-        // with the concrete memory text: the narrator will write its own prose around it.
+        // Build the neutral outcome sentence directly from the fragment: a plain "I try to
+        // remember …, and succeed." framing plus the concrete recovered memory (OutcomeText).
+        // This is handed to the narrator as an override so the persona rewrite styles the actual
+        // memory rather than the flowery thinking-phase action label.
         var fpoi = target as Cathedral.Game.Scene.Reminescence.FragmentPointOfInterest;
+        var reminescenceNeutral = fpoi != null
+            ? NeutralNarration.ReminescenceOutcome(fpoi.Fragment.Name, fpoi.Fragment.OutcomeText)
+            : null;
         var outcomeForPrompt = fpoi != null
             ? (OutcomeBase)new InlineOutcome(
                 displayName:    fpoi.Fragment.Name,
@@ -1027,7 +1033,8 @@ public class NarrativeController
                 succeeded:  true,
                 difficulty: 0.0,
                 _protagonist,
-                CancellationToken.None);
+                CancellationToken.None,
+                neutralOverride: reminescenceNeutral);
         }
         catch (Exception ex)
         {
@@ -1355,7 +1362,8 @@ public class NarrativeController
                 focusOutcome,
                 observationModusMentis,
                 _currentNode,
-                _protagonist.CurrentLocationId
+                _protagonist.CurrentLocationId,
+                isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence
             );
 
             foreach (var block in blocks)

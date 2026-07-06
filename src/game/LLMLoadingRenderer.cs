@@ -63,9 +63,10 @@ public class LLMLoadingRenderer
         // ── Title block (centred vertically slightly above middle) ──────────
         int titleY = termH / 2 - 10;
 
-        _terminal.CenteredText(titleY,     "C A T H E D R A L",
+        string title = Config.Name.GameTitle;
+        _terminal.CenteredText(titleY,     title,
             Config.Colors.BrightYellow, Config.Colors.Black);
-        _terminal.CenteredText(titleY + 1, "─────────────────────",
+        _terminal.CenteredText(titleY + 1, new string('─', title.Length),
             Config.Colors.DarkGray35, Config.Colors.Black);
 
         // ── "Loading model" row with spinner ────────────────────────────────
