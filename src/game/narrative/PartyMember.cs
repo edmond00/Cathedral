@@ -411,6 +411,20 @@ public abstract class PartyMember
         return permanentlyDropped;
     }
 
+    /// <summary>
+    /// Removes a modusMentis from the member entirely: unlinks it from <see cref="ModiMentis"/> and
+    /// from every memory module it may occupy. Used when one MM is swapped out for another (e.g. the
+    /// childhood reminescence MM being replaced once the childhood phase ends). Returns true if it
+    /// was present in <see cref="ModiMentis"/>.
+    /// </summary>
+    public bool RemoveModusMentis(ModusMentis modusMentis)
+    {
+        bool removed = ModiMentis.Remove(modusMentis);
+        foreach (var module in MemoryModules)
+            module.Remove(modusMentis);
+        return removed;
+    }
+
     private static MemoryModuleType? ToMemoryModuleType(Cathedral.Game.Narrative.Memory.ModusMentisMemoryType t)
         => t switch
         {

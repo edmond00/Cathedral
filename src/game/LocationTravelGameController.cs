@@ -13,6 +13,7 @@ using Cathedral.Glyph.Interaction;
 using Cathedral.LLM;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
+using Cathedral.Game.Narrative.ModiMentis;
 using Cathedral.Game.Narrative.Sanitizer;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
@@ -401,6 +402,8 @@ public class LocationTravelGameController : IDisposable
                 && _narrativeController.ReminescencePhaseFinished)
             {
                 Console.WriteLine("LocationTravelGameController: ChildhoodReminescence finished, entering GetUp");
+                if (_protagonist != null)
+                    SwapReminescenceForChildhoodMemory(_protagonist);
                 if (FillMemoryMode.IsActive && _protagonist != null)
                     FillMemoryMode.FillEmptySlots(_protagonist);
                 _isInNarrativeMode = false;
@@ -3213,10 +3216,31 @@ public class LocationTravelGameController : IDisposable
         _isInNarrativeMode = false;
         _narrativeController = null;
         _currentLocationVertex = -1;
-        
+
         SetMode(GameMode.WorldView);
     }
-    
+
+    /// <summary>
+    /// Once the childhood reminescence phase ends, replaces the protagonist's
+    /// <c>childhood_reminescence</c> MM (a "recollect a fuzzy memory" persona that no longer fits
+    /// ordinary exploration) with a <see cref="ChildhoodMemoryModusMentis"/> whose prompt is built
+    /// from the childhood life-experiences just recorded — a "reuse your childhood experience"
+    /// persona. No-op if the reminescence MM is absent (e.g. the --skip-childhood path).
+    /// </summary>
+    private static void SwapReminescenceForChildhoodMemory(Protagonist protagonist)
+    {
+        var oldMm = protagonist.GetModusMentisById("childhood_reminescence");
+        if (oldMm == null)
+            return;
+
+        var experiences = protagonist.ChildhoodHistory.ToExperienceSummary();
+        var newMm = new ChildhoodMemoryModusMentis(experiences) { Level = oldMm.Level };
+
+        protagonist.RemoveModusMentis(oldMm);
+        protagonist.AcquireModusMentis(newMm);
+        Console.WriteLine("LocationTravelGameController: swapped childhood_reminescence MM → childhood_memory (reuse-experience persona)");
+    }
+
     /// <summary>
     /// Closes the Phase 6 thinking modusMentis popup if it's open.
     /// Returns true if popup was closed, false otherwise.

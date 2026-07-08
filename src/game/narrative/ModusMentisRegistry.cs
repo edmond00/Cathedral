@@ -28,8 +28,13 @@ public class ModusMentisRegistry
         var modusMentisType = typeof(ModusMentis);
         var assembly = Assembly.GetExecutingAssembly();
         
+        // Only auto-register templates that can be created with a parameterless constructor.
+        // MMs built from runtime state (e.g. ChildhoodMemoryModusMentis, SyntheticItemModusMentis)
+        // take constructor arguments and are constructed manually — skip them silently here rather
+        // than letting Activator.CreateInstance throw and log a spurious failure.
         var modusMentisTypes = assembly.GetTypes()
-            .Where(t => t.IsClass && !t.IsAbstract && modusMentisType.IsAssignableFrom(t))
+            .Where(t => t.IsClass && !t.IsAbstract && modusMentisType.IsAssignableFrom(t)
+                        && t.GetConstructor(Type.EmptyTypes) != null)
             .ToList();
         
         foreach (var type in modusMentisTypes)
