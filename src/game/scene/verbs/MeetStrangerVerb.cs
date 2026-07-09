@@ -35,7 +35,7 @@ public class MeetStrangerVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"introduce yourself to {target.DisplayName}";
+        => $"introduce myself to {target.DisplayName}";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

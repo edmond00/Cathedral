@@ -51,6 +51,7 @@ public class ThinkingExecutor
         List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
         WorldContext worldContext,
+        bool isReminescence = false,
         CancellationToken cancellationToken = default)
     {
         int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
@@ -73,7 +74,7 @@ public class ThinkingExecutor
         // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
         if (isIgnore)
         {
-            string ignoreNeutral = NeutralNarration.ReasoningIgnore(targetDescription);
+            string ignoreNeutral = NeutralNarration.ReasoningIgnore(targetDescription, isReminescence);
             string ignoreReasoning = await _rewriter.RewriteAsync(
                 thinkingSlot, ignoreNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, ct: cancellationToken);
             return new ThinkingResponse
@@ -94,7 +95,7 @@ public class ThinkingExecutor
         }
 
         // ── Flavor: reasoning (thinking slot) ───────────────────────────────────
-        string reasoningNeutral = NeutralNarration.ReasoningChain(targetDescription, goalPhrase, skill.SkillMeans);
+        string reasoningNeutral = NeutralNarration.ReasoningChain(targetDescription, goalPhrase, skill.SkillMeans, isReminescence);
         string reasoningText = await _rewriter.RewriteAsync(
             thinkingSlot, reasoningNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, ct: cancellationToken);
 

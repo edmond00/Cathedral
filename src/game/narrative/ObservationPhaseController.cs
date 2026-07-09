@@ -89,14 +89,14 @@ public class ObservationPhaseController
         var sentences = new List<NarrationSentence>();
 
         // First object: chosen by the Modus Mentis, observed without a transition.
-        var first = await ChooseObservationObjectAsync(slotId, candidates, modusMentis, ct);
+        var first = await ChooseObservationObjectAsync(slotId, candidates, modusMentis, ct, isReminescence);
         await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence);
 
         // Second object (if any): chosen from the remaining objects, reached via one transition.
         var remaining = candidates.Where(o => o != first).ToList();
         if (remaining.Count > 0)
         {
-            var second = await ChooseObservationObjectAsync(slotId, remaining, modusMentis, ct);
+            var second = await ChooseObservationObjectAsync(slotId, remaining, modusMentis, ct, isReminescence);
             await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence);
         }
 
@@ -155,7 +155,7 @@ public class ObservationPhaseController
                 .Where(o => !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase)));
         if (remaining.Count > 0)
         {
-            var second = await ChooseObservationObjectAsync(slotId, remaining, observationModusMentis, ct);
+            var second = await ChooseObservationObjectAsync(slotId, remaining, observationModusMentis, ct, isReminescence);
             await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence);
         }
 
@@ -255,15 +255,24 @@ public class ObservationPhaseController
     /// Asks the Modus Mentis to choose which object (by NeutralName) to observe — the one that best
     /// matches its persona interest. Returns the single candidate when there is only one, and a
     /// random candidate in playground mode (no LLM).
+    ///
+    /// Exception: during the childhood reminescence phase the <c>childhood_reminescence</c> MM picks
+    /// at random (no LLM), so that across playthroughs every childhood memory fragment is reachable
+    /// rather than the model always gravitating to the same few. Deliberately narrow — it does NOT
+    /// apply to the post-childhood <c>childhood_memory</c> MM, to any other MM used during the phase,
+    /// or to any observation outside the reminescence phase.
     /// </summary>
     private async Task<ConcreteOutcome> ChooseObservationObjectAsync(
         int slotId,
         List<ConcreteOutcome> candidates,
         ModusMentis modusMentis,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool isReminescence = false)
     {
         if (candidates.Count == 1) return candidates[0];
         if (PlaygroundMode.IsActive) return candidates[_random.Next(candidates.Count)];
+        if (isReminescence && modusMentis.ModusMentisId == "childhood_reminescence")
+            return candidates[_random.Next(candidates.Count)];
 
         var names = candidates.Select(GetNeutralName).ToList();
         var prompt = BuildObservationChoicePrompt(names, modusMentis);

@@ -23,7 +23,7 @@ public static class SpottedTerms
 
         // ── Modern technology ───────────────────────────────────────────────────
         "telegraph", "telephone", "radio", "television", "satellite",
-        "photograph", "photography", "camera", "radar", "sonar",
+        "radar", "sonar",
         "microphone", "loudspeaker", "battery", "generator", "turbine",
         "piston", "cylinder", "boiler", "steam engine", "steam power",
         "printing press", "newspaper", "magazine",

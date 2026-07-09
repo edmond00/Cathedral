@@ -456,7 +456,8 @@ public class NarrativeController
                 actionModiMentis,
                 _protagonist,
                 _worldContext,
-                CancellationToken.None);
+                isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
+                cancellationToken: CancellationToken.None);
 
             if (response == null)
             {
@@ -1005,8 +1006,8 @@ public class NarrativeController
         // Fall back to ChainModusMentis if ActionModusMentis is unexpectedly null.
         var actionMm = action.ActionModusMentis ?? action.ChainModusMentis;
 
-        // Build the neutral outcome sentence directly from the fragment: a plain "I try to
-        // remember …, and succeed." framing plus the concrete recovered memory (OutcomeText).
+        // Build the neutral outcome sentence directly from the fragment: a plain "I tried to
+        // remember …, and succeeded." framing plus the concrete recovered memory (OutcomeText).
         // This is handed to the narrator as an override so the persona rewrite styles the actual
         // memory rather than the flowery thinking-phase action label.
         var fpoi = target as Cathedral.Game.Scene.Reminescence.FragmentPointOfInterest;

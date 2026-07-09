@@ -30,7 +30,7 @@ public static class NeutralNarration
     /// </summary>
     public static string ObservationAttention(bool isFirst, string simpleName, bool isReminescence = false)
     {
-        var s = NounPhrase(simpleName);
+        var s = NounPhrase(FirstPerson(simpleName));
         if (isFirst)
             return isReminescence ? $"A memory surfaces: {s}."
                                   : $"My attention is drawn to {s}.";
@@ -45,8 +45,8 @@ public static class NeutralNarration
     /// a recollection, so the sentence is put in the past tense ("This was …").
     /// </summary>
     public static string ObservationDetail(string description, bool isReminescence = false)
-        => isReminescence ? $"This was {NounPhrase(description)}."
-                          : $"This is {NounPhrase(description)}.";
+        => isReminescence ? $"This was {NounPhrase(FirstPerson(description))}."
+                          : $"This is {NounPhrase(FirstPerson(description))}.";
 
     /// <summary>
     /// Builds the full neutral meaning of an observation as one text: the attention line naming the
@@ -63,68 +63,106 @@ public static class NeutralNarration
     /// Neutral chain-of-thought once the goal and skill have been chosen: what is noticed, what is
     /// intended, and the means that will be used. <paramref name="goalPhrase"/> is a verb phrase
     /// ("climb the tree"); <paramref name="skillMeans"/> is a Modus Mentis means description.
+    /// During the childhood reminescence phase (<paramref name="isReminescence"/>) the opener is
+    /// "I remember …" rather than "I notice …", since the object is a surfacing memory.
     /// </summary>
-    public static string ReasoningChain(string targetPhrase, string goalPhrase, string skillMeans)
+    public static string ReasoningChain(string targetPhrase, string goalPhrase, string skillMeans, bool isReminescence = false)
     {
-        var parts = new List<string> { $"I notice {NounPhrase(targetPhrase)}." };
-        if (!string.IsNullOrWhiteSpace(goalPhrase)) parts.Add($"I want to {goalPhrase}.");
-        if (!string.IsNullOrWhiteSpace(skillMeans)) parts.Add($"I will rely on {skillMeans}.");
+        var opener = isReminescence ? "I remember" : "I notice";
+        var parts = new List<string> { $"{opener} {NounPhrase(FirstPerson(targetPhrase))}." };
+        if (!string.IsNullOrWhiteSpace(goalPhrase)) parts.Add($"I want to {FirstPerson(goalPhrase)}.");
+        if (!string.IsNullOrWhiteSpace(skillMeans)) parts.Add($"I will rely on {FirstPerson(skillMeans)}.");
         return string.Join(" ", parts);
     }
 
     /// <summary>Neutral reasoning for the "ignore and move on" path.</summary>
-    public static string ReasoningIgnore(string targetPhrase)
-        => $"I notice {NounPhrase(targetPhrase)}, but I let it be and move on.";
+    public static string ReasoningIgnore(string targetPhrase, bool isReminescence = false)
+        => isReminescence
+            ? $"I remember {NounPhrase(FirstPerson(targetPhrase))}, but I let it be and move on."
+            : $"I notice {NounPhrase(FirstPerson(targetPhrase))}, but I let it be and move on.";
 
     /// <summary>
     /// The intended action as a first-person "I will …" statement (e.g. "I will climb the tree").
     /// The styled rewrite is GBNF-forced to open with the same prefix, which is then stripped to
     /// form the button label.
     /// </summary>
-    public static string ActionIntent(string verbVerbatim) => $"I will {verbVerbatim}";
+    public static string ActionIntent(string verbVerbatim) => $"I will {FirstPerson(verbVerbatim)}";
 
     // ── Action outcomes ────────────────────────────────────────────────────────
     // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.
 
     public static string OutcomeSuccess(string actionDisplay)
-        => $"I try to {actionDisplay}, and succeed.";
+        => $"I tried to {FirstPerson(actionDisplay)}, and succeeded.";
 
     public static string OutcomeFailure(string actionDisplay)
-        => $"I try to {actionDisplay}, but fail.";
+        => $"I tried to {FirstPerson(actionDisplay)}, but failed.";
 
     public static string PlausibilityFailure(string actionDisplay)
-        => $"I try to {actionDisplay}, but it cannot happen here.";
+        => $"I tried to {FirstPerson(actionDisplay)}, but it could not happen here.";
 
     public static string ItemCombinationFailure(string actionDisplay, string itemWithArticle)
-        => $"Using {itemWithArticle} to {actionDisplay} does not work.";
+        => $"Using {FirstPerson(itemWithArticle)} to {FirstPerson(actionDisplay)} did not work.";
 
     // ── Reminescence outcome ───────────────────────────────────────────────────
 
     /// <summary>
     /// Neutral success sentence for the childhood reminescence REMEMBER action. Unlike a normal
-    /// action outcome (which templates the styled action label), this uses a plain "I try to
-    /// remember …, and succeed." framing and then states the concrete memory that surfaces —
+    /// action outcome (which templates the styled action label), this uses a plain "I tried to
+    /// remember …, and succeeded." framing and then states the concrete memory that surfaces —
     /// <paramref name="memoryEvent"/> is the fragment's <c>OutcomeText</c>, converted to first
     /// person so the whole recollection reads in the protagonist's own voice.
     /// </summary>
     public static string ReminescenceOutcome(string fragmentName, string memoryEvent)
     {
-        var name   = (fragmentName ?? "").Trim();
-        var memory = ToFirstPerson((memoryEvent ?? "").Trim().TrimEnd('.'));
-        return $"I try to remember {name} from my childhood, and succeed. It comes back to me: {memory}.";
+        var name   = FirstPerson((fragmentName ?? "").Trim());
+        var memory = FirstPerson((memoryEvent ?? "").Trim().TrimEnd('.'));
+        return $"I tried to remember {name} from my childhood, and succeeded. It came back to me: {memory}.";
     }
 
-    /// <summary>
-    /// Rewrites a second-person memory description ("you spent your childhood …") into first person
-    /// ("I spent my childhood …"). The reminescence catalog is authored in second person, but the
-    /// recollection is narrated in the protagonist's own voice.
-    /// </summary>
-    private static string ToFirstPerson(string s)
+    // ── First-person normalisation ─────────────────────────────────────────────
+
+    /// <summary>Prepositions/particles that mark a following-or-preceding "you" as an object ("me").</summary>
+    private static readonly string[] ObjectMarkers =
     {
+        "to", "toward", "towards", "with", "into", "onto", "for", "from", "at", "of", "on",
+        "upon", "around", "near", "behind", "below", "beneath", "beside", "against", "through",
+        "over", "under", "about", "before", "after", "past", "beyond",
+    };
+
+    /// <summary>
+    /// Rewrites second-person content into the protagonist's first-person voice
+    /// ("you spent your childhood" → "I spent my childhood", "pulling you toward sleep" →
+    /// "pulling me toward sleep"). Much of the authored content that fills neutral self-narration
+    /// templates — most of all the childhood reminescence catalog — is written in the second person
+    /// for prompt-framing, so every self-POV neutral sentence is normalised through here before it is
+    /// shown or handed to the persona rewriter. It is deliberately NOT applied to dialogue/speaking
+    /// templates, where "you" correctly addresses another character.
+    ///
+    /// The subject/object distinction is heuristic: a "you" adjacent to a preposition (either "below
+    /// you" or "you toward …") is treated as an object ("me"); any other "you" is a subject ("I").
+    /// </summary>
+    public static string FirstPerson(string? s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return s ?? "";
+
+        // Be-verb agreement must run before the generic you→I so we don't produce "I are".
+        s = Regex.Replace(s, @"\byou['’]re\b", "I'm",  RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\byou are\b",   "I am",  RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\byou were\b",  "I was", RegexOptions.IgnoreCase);
+
+        // Possessives / reflexive first (leaves subject/object "you" for the passes below).
         s = Regex.Replace(s, @"\byourself\b", "myself", RegexOptions.IgnoreCase);
         s = Regex.Replace(s, @"\byours\b",    "mine",   RegexOptions.IgnoreCase);
         s = Regex.Replace(s, @"\byour\b",     "my",     RegexOptions.IgnoreCase);
-        s = Regex.Replace(s, @"\byou\b",      "I",      RegexOptions.IgnoreCase);
+
+        // Object "you" → "me": trailing ("below you") or immediately before a preposition
+        // ("you toward sleep", "watching you with suspicion").
+        var markers = string.Join("|", ObjectMarkers);
+        s = Regex.Replace(s, @"\byou\b(?=\s*(?:[.,;:!?)\]—-]|$))",         "me", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, $@"\byou\b(?=\s+(?:{markers})\b)",            "me", RegexOptions.IgnoreCase);
+
+        // Any remaining "you" is a subject → "I".
+        s = Regex.Replace(s, @"\byou\b", "I", RegexOptions.IgnoreCase);
         return s;
     }
 
@@ -134,7 +172,7 @@ public static class NeutralNarration
         => $"{companionName}, come and look at this.";
 
     public static string Description(string subject)
-        => $"I noticed {NounPhrase(subject)}.";
+        => $"I noticed {NounPhrase(FirstPerson(subject))}.";
 
     public static string Question()
         => "What do you make of it?";

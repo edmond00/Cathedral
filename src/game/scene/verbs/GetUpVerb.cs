@@ -20,7 +20,7 @@ public sealed class GetUpVerb : Verb
         => scene.Phase == NarrationPhase.GetUp;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => "get up and continue your travel";
+        => "get up and continue my journey";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
         => new List<OutcomeReport> { new GetUpTransitionOutcome() };

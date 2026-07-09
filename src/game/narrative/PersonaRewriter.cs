@@ -109,9 +109,10 @@ public class PersonaRewriter
             // Speaking carries its own 2nd-person dialogue reminder (single sentence per line).
             NarrationKind.Speaking =>
                 Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2, jsonHint, styleInstruction),
-            // Observation (merged attention + detail) and Reasoning (inner thought) both omit the
-            // length clause entirely to give the persona freedom over how far it unfolds.
-            NarrationKind.Observation or NarrationKind.Reasoning =>
+            // Observation (merged attention + detail), Reasoning (inner thought), and Outcome
+            // (success/failure of a tried action) all omit the length clause entirely to give the
+            // persona freedom over how far it unfolds.
+            NarrationKind.Observation or NarrationKind.Reasoning or NarrationKind.Outcome =>
                 Config.Narrative.AnswerInstructionFor(personaReminder2, jsonHint, styleInstruction, includeLengthClause: false),
             _ =>
                 Config.Narrative.AnswerInstructionFor(personaReminder2, jsonHint, styleInstruction),

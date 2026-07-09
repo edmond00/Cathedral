@@ -850,7 +850,7 @@ public static class Config
 
         // Maximum context window size in tokens passed to the llama.cpp server (-c flag)
         public const int ContextSize = 2048;
-        public const double Temperature = 0.7;
+        public const double Temperature = 0.8;
         public const int TopK = 12;
         public const double TopP = 0.95;
 

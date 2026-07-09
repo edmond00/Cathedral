@@ -39,7 +39,7 @@ public class OutcomeNarrator
         string? failureHint = null,
         string? neutralOverride = null)
     {
-        // The reminescence path supplies its own neutral meaning (a plain "I try to remember …"
+        // The reminescence path supplies its own neutral meaning (a plain "I tried to remember …"
         // framing that embeds the concrete recovered memory); everything else templates it here.
         string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, failureHint);
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);

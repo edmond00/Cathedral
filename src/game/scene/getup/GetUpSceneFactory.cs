@@ -31,20 +31,23 @@ public sealed class GetUpSceneFactory : SceneFactory
             },
             moods: new[] { "still", "heavy", "silent", "desolate", "open", "vast", "grey" });
 
+        // Descriptions are authored in the first person as noun phrases: they fill the neutral
+        // narration templates ("I notice X.", "This is X.") directly, so they must read as things
+        // the protagonist notices about their own body — not as second-person sentences.
         area.PointsOfInterest.Add(new GetUpPointOfInterest(
             "aching legs",
-            "Your legs and feet throb with a deep, grinding soreness — " +
-            "every step of the road has gathered there, pressing into the bones."));
+            "a deep, grinding soreness in my legs and feet, where every step of the road " +
+            "has gathered and pressed into the bone"));
 
         area.PointsOfInterest.Add(new GetUpPointOfInterest(
             "bone-deep exhaustion",
-            "A heaviness settles through your whole body, not just tired but spent — " +
-            "as if the road has drained something more than muscle."));
+            "a heaviness settled through my whole body — not merely tired but spent, " +
+            "as if the road has drained something more than muscle"));
 
         area.PointsOfInterest.Add(new GetUpPointOfInterest(
             "discouraged spirit",
-            "Something inside you has gone quiet, not broken but close — " +
-            "the distance ahead feels unreasonable, the effort of rising almost pointless."));
+            "a quiet gone through me, not broken but close to it — the distance ahead " +
+            "unreasonable, the effort of rising almost pointless"));
 
         var section = new Section("The Plain", new List<string> { "a lone tree on an open plain" },
             seed => new NoisyGenerator { Seed = seed, Density = 0.85f });
