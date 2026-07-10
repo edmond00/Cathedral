@@ -10,7 +10,8 @@ public class UppercutModusMentis : ModusMentis
 {
     public override string ModusMentisId => "uppercut";
     public override string DisplayName => "Uppercut";
-    public override string ShortDescription => "explosive upward strike";
+    public override string MenuDescription =>
+        "Drives an explosive upward blow from the legs through the fist. Sets a close strike to lift and stun, and inclines toward the rising hit placed under a guard.";
     public override string SkillMeans => "an explosive upward strike";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs => new[] { "arms", "cerebellum" };

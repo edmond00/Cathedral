@@ -10,7 +10,8 @@ public class RhetoricModusMentis : ModusMentis
 {
     public override string ModusMentisId => "rhetoric";
     public override string DisplayName => "Rhetoric";
-    public override string ShortDescription => "persuasion, argumentation";
+    public override string MenuDescription =>
+        "Builds an argument from marshalled reasons and works to sway an audience. Attends to the structure of a case, and inclines toward winning a point by ordered, deliberate speech.";
     public override string SkillMeans => "persuasion and argumentation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs => new[] { "tongue", "cerebrum" };

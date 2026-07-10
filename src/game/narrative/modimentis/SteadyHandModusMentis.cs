@@ -10,7 +10,8 @@ public class SteadyHandModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "steady_hand";
     public override string DisplayName      => "Steady Hand";
-    public override string ShortDescription => "balance, bracing, control";
+    public override string MenuDescription =>
+        "Keeps a hand or footing braced and balanced where weight or strain would tip it. Holds the body controlled against force, and favours the firm, deliberate hold over the quick move.";
     public override string SkillMeans       => "steady bracing and balance under load";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };

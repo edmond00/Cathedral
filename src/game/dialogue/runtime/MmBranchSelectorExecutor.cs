@@ -39,7 +39,7 @@ public class MmBranchSelectorExecutor
         string prompt = $"""
             Dialogue subject: {treeDescription}.
             You are currently at: {node.Description}.
-            Your perspective: {mm.PersonaTone ?? mm.ShortDescription}.
+            Your perspective: {mm.PersonaTone}.
 
             Available next steps:
             {branchList}

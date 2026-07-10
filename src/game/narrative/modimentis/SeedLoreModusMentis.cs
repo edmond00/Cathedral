@@ -10,7 +10,8 @@ public class SeedLoreModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "seed_lore";
     public override string DisplayName      => "Seed-Lore";
-    public override string ShortDescription => "sowing, spacing, timing";
+    public override string MenuDescription =>
+        "Judges when and how to sow, reading soil and season for spacing and depth. Sets the hands to planting, and inclines toward starting a crop at the moment it will take.";
     public override string SkillMeans       => "the sowing and timing of seed";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };

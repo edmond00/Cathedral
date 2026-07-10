@@ -10,7 +10,8 @@ public class DairycraftModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "dairycraft";
     public override string DisplayName      => "Dairycraft";
-    public override string ShortDescription => "milk, butter, cheese";
+    public override string MenuDescription =>
+        "Attends to the turning of milk into butter and cheese, tracking warmth, souring, and the press. Sets the hands to milking and churning, and reads curd and cream for the moment each is ready.";
     public override string SkillMeans       => "the milking, churning and pressing of dairy";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "hands", "arms" };

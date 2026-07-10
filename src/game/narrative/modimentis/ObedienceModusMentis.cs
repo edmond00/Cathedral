@@ -10,7 +10,8 @@ public class ObedienceModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "obedience";
     public override string DisplayName      => "Obedience";
-    public override string ShortDescription => "doing as told without quarrel";
+    public override string MenuDescription =>
+        "Carries out an order promptly and without quarrel, deferring judgement to instruction. Inclines toward compliance, and takes a command as a thing to be done rather than weighed.";
     public override string SkillMeans       => "doing as told without quarrel";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "ears", "hands" };

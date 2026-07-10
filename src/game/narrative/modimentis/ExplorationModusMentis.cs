@@ -10,7 +10,8 @@ public class ExplorationModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "exploration";
     public override string DisplayName      => "Exploration";
-    public override string ShortDescription => "finding the way, finding shelter";
+    public override string MenuDescription =>
+        "Reads unknown country for a path, for water, and for shelter, keeping a sense of the way ahead. Inclines toward scouting and traversal, and works out unfamiliar ground step by step.";
     public override string SkillMeans       => "the reading of land for path and shelter";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "feet" };

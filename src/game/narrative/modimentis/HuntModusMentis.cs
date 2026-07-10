@@ -10,7 +10,8 @@ public class HuntModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "hunt";
     public override string DisplayName      => "Hunt";
-    public override string ShortDescription => "snare, stalk, kill small game";
+    public override string MenuDescription =>
+        "Reads sign and cover for small game, setting snares and closing the distance on a quarry. Keeps the senses tuned to track and trap, favouring patience over noise.";
     public override string SkillMeans       => "snare and stalk for small game";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };

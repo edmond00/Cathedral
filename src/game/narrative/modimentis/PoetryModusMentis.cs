@@ -10,7 +10,8 @@ public class PoetryModusMentis : ModusMentis
 {
     public override string ModusMentisId => "poetry";
     public override string DisplayName => "Poetry";
-    public override string ShortDescription => "metaphor, lyrical expression";
+    public override string MenuDescription =>
+        "Reaches for metaphor and image, shaping words for beauty and feeling. Inclines toward the lyrical turn, and treats language as a way to move others rather than merely inform them.";
     public override string SkillMeans => "metaphor and lyrical expression";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Observation };
     public override string[] Organs => new[] { "tongue", "hippocampus" };

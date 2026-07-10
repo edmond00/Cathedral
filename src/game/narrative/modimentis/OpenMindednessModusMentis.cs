@@ -10,7 +10,8 @@ public class OpenMindednessModusMentis : ModusMentis
 {
     public override string ModusMentisId => "open_mindedness";
     public override string DisplayName => "Open-Mindedness";
-    public override string ShortDescription => "flexibility, alternative views";
+    public override string MenuDescription =>
+        "Holds several possibilities open at once, weighing alternative views without settling early. Inclines toward reconsidering and adapting, and gives an unexpected answer a hearing.";
     public override string SkillMeans => "flexible, open-ended thinking";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "hippocampus", "heart" };

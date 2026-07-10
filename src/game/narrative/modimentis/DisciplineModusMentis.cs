@@ -10,7 +10,8 @@ public class DisciplineModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "discipline";
     public override string DisplayName      => "Discipline";
-    public override string ShortDescription => "self-control under sting";
+    public override string MenuDescription =>
+        "Holds a steady line against pain, insult, and temptation, refusing the reaction they invite. Keeps conduct fixed on the chosen course, and treats provocation as something to be outlasted rather than answered.";
     public override string SkillMeans       => "self-control kept under pressure";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "backbone", "encephalon" };

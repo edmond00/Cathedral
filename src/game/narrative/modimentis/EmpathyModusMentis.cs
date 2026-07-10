@@ -10,7 +10,8 @@ public class EmpathyModusMentis : ModusMentis
 {
     public override string ModusMentisId => "empathy";
     public override string DisplayName => "Empathy";
-    public override string ShortDescription => "emotional reading, compassion";
+    public override string MenuDescription =>
+        "Reads the feeling beneath another's words: pain, need, and the emotion they do not name. Inclines toward comfort and connection, and shapes response around what a person is actually feeling.";
     public override string SkillMeans => "emotional reading and compassion";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
     public override string[] Organs => new[] { "heart", "ears" };

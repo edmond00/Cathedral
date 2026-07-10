@@ -54,6 +54,26 @@ public class ModusMentisRegistry
         }
         
         Console.WriteLine($"ModusMentisRegistry: Registered {_modiMentisById.Count} modiMentis automatically via reflection");
+
+        ValidateDialogueModiMentis();
+    }
+
+    /// <summary>
+    /// Every modusMentis that can speak in dialogue must supply a <see cref="ModusMentis.PersonaTone"/>:
+    /// the branch selector uses it as the character's perspective, with no fallback. Fail fast at
+    /// startup rather than surfacing an empty perspective mid-conversation.
+    /// </summary>
+    private void ValidateDialogueModiMentis()
+    {
+        var missing = _modiMentisById.Values
+            .Where(m => m.Functions.Contains(ModusMentisFunction.Speaking)
+                        && string.IsNullOrWhiteSpace(m.PersonaTone))
+            .Select(m => m.ModusMentisId)
+            .ToList();
+
+        if (missing.Count > 0)
+            throw new InvalidOperationException(
+                "Dialogue modiMentis missing a PersonaTone: " + string.Join(", ", missing));
     }
     
     private void RegisterModusMentis(ModusMentis modusMentis)

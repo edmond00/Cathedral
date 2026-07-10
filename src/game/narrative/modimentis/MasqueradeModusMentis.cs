@@ -10,7 +10,8 @@ public class MasqueradeModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "masquerade";
     public override string DisplayName      => "Masquerade";
-    public override string ShortDescription => "disguise, impersonation, false faces";
+    public override string MenuDescription =>
+        "Wears a borrowed posture, name, and manner, presenting the look of belonging where one does not. Attends to the small tells of a role, and inclines toward passing unremarked rather than standing out.";
     public override string SkillMeans       => "the wearing of a false face — a borrowed posture, a stolen name, a look of belonging";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "encephalon", "trunk" };

@@ -10,7 +10,8 @@ public class MythomaniaModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "mythomania";
     public override string DisplayName      => "Mythomania";
-    public override string ShortDescription => "smooth, brazen lying";
+    public override string MenuDescription =>
+        "Produces smooth, brazen falsehood without a flicker of doubt. Inclines toward invented truth told with full conviction, shaping a story to convince rather than to record.";
     public override string SkillMeans       => "smooth and brazen lying";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "tongue", "encephalon" };

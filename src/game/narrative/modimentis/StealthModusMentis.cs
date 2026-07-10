@@ -10,7 +10,8 @@ public class StealthModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "stealth";
     public override string DisplayName      => "Stealth";
-    public override string ShortDescription => "moving unheard, unseen";
+    public override string MenuDescription =>
+        "Moves to stay unheard and unseen, keeping to shadow and quiet. Attends to noise and sightline, and inclines toward concealment, shadowing, and going undetected.";
     public override string SkillMeans       => "moving unheard and unseen";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "feet", "ears" };

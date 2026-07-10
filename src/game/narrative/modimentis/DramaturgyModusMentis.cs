@@ -10,7 +10,8 @@ public class DramaturgyModusMentis : ModusMentis
 {
     public override string ModusMentisId => "dramaturgy";
     public override string DisplayName => "Dramaturgy";
-    public override string ShortDescription => "theater, social performance";
+    public override string MenuDescription =>
+        "Treats a social moment as a scene to be staged and played to an audience. Attends to presentation, timing, and effect, shaping how one is perceived rather than merely how one acts.";
     public override string SkillMeans => "theatrical social performance";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs => new[] { "eyes", "heart" };

@@ -10,7 +10,8 @@ public class SurvivalismModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "survivalism";
     public override string DisplayName      => "Survivalism";
-    public override string ShortDescription => "eating worms to last another day";
+    public override string MenuDescription =>
+        "Keeps a constant tally of what the body needs to last: water within reach, warmth before nightfall, food that will not poison. Rates every option by whether it buys another day rather than whether it pleases, and treats no source as beneath use.";
     public override string SkillMeans       => "the unfussy keeping-of-oneself-alive";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "viscera", "hands" };

@@ -10,7 +10,8 @@ public class HarvestryModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "harvestry";
     public override string DisplayName      => "Harvestry";
-    public override string ShortDescription => "reaping, cutting crop";
+    public override string MenuDescription =>
+        "Judges a crop for ripeness and reaps it at the right moment, cutting and gathering before it spoils. Sets the body to the steady rhythm of bringing in a field.";
     public override string SkillMeans       => "the reaping of ripe crop";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "arms", "hands" };

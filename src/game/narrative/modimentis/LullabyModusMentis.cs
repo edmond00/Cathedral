@@ -10,7 +10,8 @@ public class LullabyModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "lullaby";
     public override string DisplayName      => "Lullaby";
-    public override string ShortDescription => "soothing wordless song";
+    public override string MenuDescription =>
+        "Reaches for a soft, wordless melody that calms and settles. Inclines toward quieting a person or beast, using a steady, gentle sound to ease unrest rather than command it.";
     public override string SkillMeans       => "a soft soothing song";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "heart" };

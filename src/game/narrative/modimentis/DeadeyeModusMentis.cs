@@ -10,7 +10,8 @@ public class DeadeyeModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "deadeye";
     public override string DisplayName      => "Deadeye";
-    public override string ShortDescription => "exceptional long-range precision";
+    public override string MenuDescription =>
+        "Treats distance as arithmetic: trajectory, drop, and wind reduced to accountable figures. Holds the body still and the breath waiting, releasing only once the correction is made rather than trusting the shot to chance.";
     public override string SkillMeans       => "legendary accuracy at ranges that others consider impossible";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "eyes", "hands" };

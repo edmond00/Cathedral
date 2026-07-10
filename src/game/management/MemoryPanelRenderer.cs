@@ -498,7 +498,7 @@ public class MemoryPanelRenderer
             _terminal.SetCell(StartX + leftW, y, '│', Config.Colors.DarkGray35, DetailBg);
 
         // Right column: description word-wrap
-        string desc  = modusMentis.ShortDescription ?? "(no description)";
+        string desc  = modusMentis.MenuDescription ?? "(no description)";
         var    words = desc.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         string dline = "";
         int descRow  = row;

@@ -10,7 +10,8 @@ public class FerocityModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "ferocity";
     public override string DisplayName      => "Ferocity";
-    public override string ShortDescription => "savage overwhelming attack";
+    public override string MenuDescription =>
+        "Presses an attack so hard the enemy is given no room to answer. Trades defence for momentum and keeps the body driving forward, favouring relentless assault over measured exchange.";
     public override string SkillMeans       => "the savage and overwhelming attack that leaves no room for defense";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "viscera", "arms" };

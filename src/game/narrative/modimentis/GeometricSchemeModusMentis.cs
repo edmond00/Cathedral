@@ -10,7 +10,8 @@ public class GeometricSchemeModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "geometric_scheme";
     public override string DisplayName      => "Geometric Scheme";
-    public override string ShortDescription => "lines, angles, proportion";
+    public override string MenuDescription =>
+        "Lays a problem out as lines, angles, and proportion, planning and measuring by construction. Attends to shape and ratio, and reasons through figures where another would guess.";
     public override string SkillMeans       => "the careful drawing of lines and angles";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "encephalon", "eyes" };

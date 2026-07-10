@@ -10,7 +10,8 @@ public class SolfegeModusMentis : ModusMentis
 {
     public override string ModusMentisId => "solfege";
     public override string DisplayName => "Solfege";
-    public override string ShortDescription => "pitch, rhythm, harmony";
+    public override string MenuDescription =>
+        "Reads music by pitch, rhythm, and harmony, holding a tune true. Attends to interval and beat, and inclines toward singing or playing in time rather than by guess.";
     public override string SkillMeans => "pitch, rhythm, and harmony";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "ears", "cerebellum" };

@@ -28,7 +28,7 @@ public class ChildhoodMemoryModusMentis : ModusMentis
 
     public override string ModusMentisId    => "childhood_memory";
     public override string DisplayName      => "Childhood Reminescence";
-    public override string ShortDescription => "childhood experience";
+    public override string MenuDescription  => BuildMenuDescription();
     public override string SkillMeans       => "the reuse of hard-won childhood experience";
     public override ModusMentisFunction[] Functions => new[]
     {
@@ -47,6 +47,21 @@ public class ChildhoodMemoryModusMentis : ModusMentis
         "Where it fits, let a brief childhood memory surface as an inner thought, drawing a quiet parallel between the present and what you once lived.";
 
     public override string PersonaPrompt => BuildPersonaPrompt();
+
+    /// <summary>
+    /// Player-facing manual entry. Unlike the fixed-text modiMentis, this folds the protagonist's
+    /// carried <see cref="_experiences"/> into the description so the menu shows what childhood
+    /// actually shaped. Newlines in the experience block are flattened so the box word-wrap handles it.
+    /// </summary>
+    private string BuildMenuDescription()
+    {
+        const string baseText =
+            "Carries the settled residue of a childhood now behind, its instincts, reflexes, and hard-won lessons surfacing as brief parallels between past and present. Draws on what was already lived when the present echoes it, rather than labouring to recall.";
+        if (string.IsNullOrWhiteSpace(_experiences))
+            return baseText;
+        string flat = System.Text.RegularExpressions.Regex.Replace(_experiences, @"\s+", " ").Trim();
+        return baseText + " Carried experiences: " + flat;
+    }
 
     private string BuildPersonaPrompt()
     {

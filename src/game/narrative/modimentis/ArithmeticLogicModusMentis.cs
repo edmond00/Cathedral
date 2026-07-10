@@ -10,7 +10,8 @@ public class ArithmeticLogicModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "arithmetic_logic";
     public override string DisplayName      => "Arithmetic Logic";
-    public override string ShortDescription => "ledgering, sums, weights";
+    public override string MenuDescription =>
+        "Tallies whatever passes through, in coin, weight, or paces, and fixes on the figure that fails to balance. Distrusts the round answer and the unshown column, and settles only once the numbers come out even.";
     public override string SkillMeans       => "the careful counting of pence and weight";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "encephalon" };

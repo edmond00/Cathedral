@@ -10,7 +10,8 @@ public class PredatorModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "predator";
     public override string DisplayName      => "Predator";
-    public override string ShortDescription => "hunting and cornering prey";
+    public override string MenuDescription =>
+        "Reads a larger quarry for its line of escape and works to close it, stalking and cornering until space runs out. Keeps a patient pressure on the pursuit rather than a hasty rush.";
     public override string SkillMeans       => "the patient hunt that ends when the prey runs out of space";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "eyes", "legs" };

@@ -10,7 +10,8 @@ public class DirtyLaborModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "dirty_labor";
     public override string DisplayName      => "Dirty Labor";
-    public override string ShortDescription => "muck-handling, foul work";
+    public override string MenuDescription =>
+        "Takes on filth others refuse, handling muck, gut, and stink without flinching. Sets the body to grim, unpleasant labour, and treats the foulness of a task as no reason to leave it undone.";
     public override string SkillMeans       => "the handling of muck, gut and stink";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "pulmones" };

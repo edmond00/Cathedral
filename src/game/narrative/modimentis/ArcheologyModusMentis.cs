@@ -10,7 +10,8 @@ public class ArcheologyModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "archeology";
     public override string DisplayName      => "Archeology";
-    public override string ShortDescription => "old stones, lost places";
+    public override string MenuDescription =>
+        "Reads the present landscape as the worn draft of an older one, flagging cut stone in a rough wall or a hill too flat to be natural. Holds attention on what a place once was and on what its remains imply.";
     public override string SkillMeans       => "the reading of old stones";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "encephalon" };

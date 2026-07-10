@@ -10,7 +10,8 @@ public class SneakArtModusMentis : ModusMentis
 {
     public override string ModusMentisId => "sneak_art";
     public override string DisplayName => "Sneak Art";
-    public override string ShortDescription => "stealth, silent movement";
+    public override string MenuDescription =>
+        "Holds part of the attention permanently tuned to going unnoticed: sightlines, footfall noise, the nearest cover. Weights perception toward the risk of being seen or heard, and inclines judgement toward slipping around an obstacle rather than passing through it.";
     public override string SkillMeans => "stealth and silent movement";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override MoralLevel MoralLevel => MoralLevel.Low;

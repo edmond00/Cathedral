@@ -10,7 +10,8 @@ public class ThreadworkModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "threadwork";
     public override string DisplayName      => "Threadwork";
-    public override string ShortDescription => "fibre, spindle, warp";
+    public override string MenuDescription =>
+        "Works fibre into thread and cloth through carding, spinning, and warping. Judges twist and tension by feel, and sets the hands to the making of textile.";
     public override string SkillMeans       => "the carding, spinning and warping of fibre";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };

@@ -10,7 +10,8 @@ public class ThresheryModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "threshery";
     public override string DisplayName      => "Threshery";
-    public override string ShortDescription => "threshing, sifting grain";
+    public override string MenuDescription =>
+        "Beats and sifts harvested grain to part seed from chaff. Sets the body to threshing and winnowing, and reads the work by how clean the grain comes.";
     public override string SkillMeans       => "the threshing and sifting of grain";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "arms", "hands" };

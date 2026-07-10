@@ -10,7 +10,8 @@ public class ColdBloodModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "cold_blood";
     public override string DisplayName      => "Cold Blood";
-    public override string ShortDescription => "calculated ruthless calm in violence";
+    public override string MenuDescription =>
+        "Carries out harm without heat, hesitation, or mercy when it is required. Keeps feeling out of the act, and treats violence as a task to be done cleanly and then set down again.";
     public override string SkillMeans       => "the calm execution of violence without emotion or hesitation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "viscera", "cerebellum" };

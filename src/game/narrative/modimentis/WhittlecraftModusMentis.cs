@@ -10,7 +10,8 @@ public class WhittlecraftModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "whittlecraft";
     public override string DisplayName      => "Whittlecraft";
-    public override string ShortDescription => "fine carving, paring";
+    public override string MenuDescription =>
+        "Pares and shapes small wood with careful, patient cuts. Keeps the knife-work fine and controlled, inclining toward detail and finish over rough removal.";
     public override string SkillMeans       => "the fine carving and paring of small wood";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };

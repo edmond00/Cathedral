@@ -10,7 +10,8 @@ public class ThermodynamicsModusMentis : ModusMentis
 {
     public override string ModusMentisId => "thermodynamics";
     public override string DisplayName => "Thermodynamics";
-    public override string ShortDescription => "energy, entropy, physics";
+    public override string MenuDescription =>
+        "Reads a physical process through heat, work, and entropy, following how energy moves and dissipates. Inclines reasoning toward the flow of warmth and power rather than surface appearance.";
     public override string SkillMeans => "energy and physics principles";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "cerebrum", "anamnesis" };

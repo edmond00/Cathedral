@@ -10,7 +10,8 @@ public class TopographiaModusMentis : ModusMentis
 {
     public override string ModusMentisId => "topographia";
     public override string DisplayName => "Topographia";
-    public override string ShortDescription => "terrain, elevation, landscape";
+    public override string MenuDescription =>
+        "Reads terrain by elevation, slope, and the lie of the land. Holds attention on ground and high places, and inclines toward understanding a landscape by its form.";
     public override string SkillMeans => "terrain and landscape reading";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs => new[] { "eyes", "feet" };

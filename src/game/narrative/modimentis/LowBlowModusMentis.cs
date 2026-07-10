@@ -10,7 +10,8 @@ public class LowBlowModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "low_blow";
     public override string DisplayName      => "Low Blow";
-    public override string ShortDescription => "targeting vulnerable spots below the belt";
+    public override string MenuDescription =>
+        "Marks the softest, least-guarded points on a body and aims for them. Inclines toward underhanded strikes that disable through pain, choosing effect over fairness.";
     public override string SkillMeans       => "underhanded strikes aimed at the body's softest and least-guarded points";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "legs", "feet" };

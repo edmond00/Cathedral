@@ -10,7 +10,8 @@ public class HerbloreModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "herblore";
     public override string DisplayName      => "Herblore";
-    public override string ShortDescription => "herbs and their uses";
+    public override string MenuDescription =>
+        "Recognizes plants by leaf and habit and holds their uses in mind, for remedy, seasoning, or harm. Inclines toward gathering and preparing herbs, and reads a hedgerow for what it can yield.";
     public override string SkillMeans       => "the knowing and gathering of herbs";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "nose", "hands" };

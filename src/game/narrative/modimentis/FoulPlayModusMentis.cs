@@ -10,7 +10,8 @@ public class FoulPlayModusMentis : ModusMentis
 {
     public override string ModusMentisId => "foul_play";
     public override string DisplayName => "Foul Play";
-    public override string ShortDescription => "dirty tricks, deception";
+    public override string MenuDescription =>
+        "Looks for the unfair edge in any contest: the cheat, the distraction, the rule that can be broken unseen. Inclines toward deception and sabotage, and treats scruple as a handicap.";
     public override string SkillMeans => "dirty tricks and deception";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override MoralLevel MoralLevel => MoralLevel.Low;

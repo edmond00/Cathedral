@@ -10,7 +10,8 @@ public class WoodcraftModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "woodcraft";
     public override string DisplayName      => "Woodcraft";
-    public override string ShortDescription => "grain, joint and timber";
+    public override string MenuDescription =>
+        "Reads timber by its grain and works it through shaping and joining. Judges how wood will split or hold, and sets the hands to building, carving, or fitting it.";
     public override string SkillMeans       => "the shaping and joining of timber";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "hands", "eyes" };

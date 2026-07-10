@@ -10,7 +10,8 @@ public class DrainageModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "drainage";
     public override string DisplayName      => "Drainage";
-    public override string ShortDescription => "ditch, channel, reed";
+    public override string MenuDescription =>
+        "Reads the fall of the land by where water pools, then works to send it running the way it should. Attends to silt, reed, and choke points, and takes cold, mucky labour as a matter of course.";
     public override string SkillMeans       => "the clearing of ditches and channels";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "arms", "legs" };

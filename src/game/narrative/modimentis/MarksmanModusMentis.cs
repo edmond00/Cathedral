@@ -10,7 +10,8 @@ public class MarksmanModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "marksman";
     public override string DisplayName      => "Marksman";
-    public override string ShortDescription => "ranged weapon accuracy through patience";
+    public override string MenuDescription =>
+        "Reads range and wind, steadies the breath, and places an aimed shot with a ranged weapon. Favours patience and composure over haste, releasing only once the aim has settled.";
     public override string SkillMeans       => "accurate ranged weapon fire through breath control and distance reading";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "eyes", "hands" };

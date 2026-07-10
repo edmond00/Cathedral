@@ -10,7 +10,8 @@ public class BushcraftModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "bushcraft";
     public override string DisplayName      => "Bushcraft";
-    public override string ShortDescription => "fire, shelter, the wet wood";
+    public override string MenuDescription =>
+        "Reads wild country for what it offers: dry tinder inside wet wood, ground that will shelter, the line that leads out. Keeps the hands ready to make fire and cover from little, and takes rough terrain as workable rather than hostile.";
     public override string SkillMeans       => "fire-making, shelter and woodcraft";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "hands", "eyes" };

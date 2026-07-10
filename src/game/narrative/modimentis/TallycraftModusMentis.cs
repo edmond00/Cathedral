@@ -10,7 +10,8 @@ public class TallycraftModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "tallycraft";
     public override string DisplayName      => "Tallycraft";
-    public override string ShortDescription => "counting, tally, measure";
+    public override string MenuDescription =>
+        "Keeps a count of goods and numbers, tallying and measuring what passes. Attends to the record, and inclines toward tracking quantity where another would lose the thread.";
     public override string SkillMeans       => "the counting and tallying of goods";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "cerebrum" };

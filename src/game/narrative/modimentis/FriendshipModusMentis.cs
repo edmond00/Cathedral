@@ -10,7 +10,8 @@ public class FriendshipModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "friendship";
     public override string DisplayName      => "Friendship";
-    public override string ShortDescription => "warm fellowship, loyalty";
+    public override string MenuDescription =>
+        "Reaches for trust and easy companionship, reading how a bond might be built or deepened. Inclines toward warmth and loyalty, and takes another as a possible ally rather than an obstacle.";
     public override string SkillMeans       => "open-hearted fellowship";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "heart", "tongue" };

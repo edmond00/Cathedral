@@ -10,7 +10,8 @@ public class MycologyModusMentis : ModusMentis
 {
     public override string ModusMentisId => "mycology";
     public override string DisplayName => "Mycology";
-    public override string ShortDescription => "fungi, decomposition";
+    public override string MenuDescription =>
+        "Holds the knowledge of fungi and decay, reading what rot breaks down and what it feeds. Attends to mushroom and mould, and inclines toward identifying and gathering what grows in decomposition.";
     public override string SkillMeans => "knowledge of fungi and decay";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "eyes", "nose" };

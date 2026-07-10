@@ -10,7 +10,8 @@ public class SocialInteractionModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "social_interaction";
     public override string DisplayName      => "Social Interaction";
-    public override string ShortDescription => "easy speech with strangers";
+    public override string MenuDescription =>
+        "Strikes up talk with strangers easily and keeps a conversation moving. Inclines toward the ordinary courtesies of meeting and getting along, reading a person for how to keep the exchange smooth.";
     public override string SkillMeans       => "easy speech with strangers";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "ears" };

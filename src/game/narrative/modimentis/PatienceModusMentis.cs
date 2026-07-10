@@ -10,7 +10,8 @@ public class PatienceModusMentis : ModusMentis
 {
     public override string ModusMentisId => "patience";
     public override string DisplayName => "Patience";
-    public override string ShortDescription => "waiting, endurance";
+    public override string MenuDescription =>
+        "Holds out calmly through delay and tedium, enduring the long wait without strain. Keeps effort steady over slow spans, and treats time itself as something to be outlasted.";
     public override string SkillMeans => "waiting and endurance";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "pineal_gland", "backbone" };

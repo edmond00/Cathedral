@@ -10,7 +10,8 @@ public class MillcraftModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "millcraft";
     public override string DisplayName      => "Millcraft";
-    public override string ShortDescription => "grain, stone, flour";
+    public override string MenuDescription =>
+        "Sets the millstones and grinds corn into flour, judging the grind by feel and sound. Attends to the working of the mill, and turns the hands to processing grain.";
     public override string SkillMeans       => "the grinding of grain into flour";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "hands", "arms" };

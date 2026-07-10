@@ -10,7 +10,8 @@ public class HaulageModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "haulage";
     public override string DisplayName      => "Haulage";
-    public override string ShortDescription => "loads, lifting, carrying";
+    public override string MenuDescription =>
+        "Judges a load by how it must be lifted and carried without injury, tracking balance and grip. Sets the body to moving weight, by hand or on the back, over the distance it must go.";
     public override string SkillMeans       => "the loading and carrying of heavy loads";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "arms", "backbone" };

@@ -10,7 +10,8 @@ public class BrewcraftModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "brewcraft";
     public override string DisplayName      => "Brewcraft";
-    public override string ShortDescription => "malt, mash, ferment";
+    public override string MenuDescription =>
+        "Follows the making of ale through malt, mash, and fermentation, tracking warmth and time. Reads smell and taste to judge a brew's progress and to catch the moment it turns.";
     public override string SkillMeans       => "the malting and fermenting of ale";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "nose", "hands" };

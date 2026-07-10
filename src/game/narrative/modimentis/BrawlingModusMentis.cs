@@ -10,7 +10,8 @@ public class BrawlingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "brawling";
     public override string DisplayName      => "Brawling";
-    public override string ShortDescription => "street fighting and rough-and-tumble";
+    public override string MenuDescription =>
+        "Reads a close fight as chaos to be won by any means, with no rules worth respecting. Keeps the body ready to headbutt, grapple, and seize whatever comes to hand, favouring the effective move over the honourable one.";
     public override string SkillMeans       => "street fighting, improvised violence, and winning by any means";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "arms", "hands", "legs" };

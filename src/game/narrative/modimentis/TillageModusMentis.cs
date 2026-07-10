@@ -10,7 +10,8 @@ public class TillageModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "tillage";
     public override string DisplayName      => "Tillage";
-    public override string ShortDescription => "plough, furrow, soil";
+    public override string MenuDescription =>
+        "Reads ground through the resistance it offers, sorting clay from loam by the pull and judging when soil is ready to break. Sets the body to steady, repetitive labour and holds a line straight across long work without flagging.";
     public override string SkillMeans       => "the breaking and turning of soil";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "arms", "backbone" };

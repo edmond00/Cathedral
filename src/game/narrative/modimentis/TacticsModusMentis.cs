@@ -10,7 +10,8 @@ public class TacticsModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "tactics";
     public override string DisplayName      => "Tactics";
-    public override string ShortDescription => "combat strategy and positioning";
+    public override string MenuDescription =>
+        "Reads a fight's geometry and positioning, looking to press an advantage before the enemy sees it. Inclines reasoning toward manoeuvre and the plan that shapes an engagement rather than reacts to it.";
     public override string SkillMeans       => "reading the fight's geometry and pressing the advantage before the opponent sees it";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "cerebellum", "eyes" };

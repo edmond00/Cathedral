@@ -2827,7 +2827,7 @@ public class NarrativeController
             var appropriatenessResult = appropriatenessResult1;
             if (!appropriatenessSuccess)
             {
-                var appropriatenessTree2 = CriticTrees.BuildItemAppropriatenessTree(goalDescription, actionModusMentis.ShortDescription, item.DisplayName, criticContext);
+                var appropriatenessTree2 = CriticTrees.BuildItemAppropriatenessTree(goalDescription, item.DisplayName, criticContext);
                 appropriatenessResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(appropriatenessTree2);
                 appropriatenessSuccess = appropriatenessResult.OverallSuccess;
                 Console.WriteLine($"NarrativeController: Item appropriateness pass 2 (neutral): {(appropriatenessSuccess ? "success" : "fail")}");

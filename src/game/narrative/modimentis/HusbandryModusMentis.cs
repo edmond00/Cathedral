@@ -10,7 +10,8 @@ public class HusbandryModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "husbandry";
     public override string DisplayName      => "Husbandry";
-    public override string ShortDescription => "tending livestock";
+    public override string MenuDescription =>
+        "Keeps the needs of livestock in mind, feeding, tending, breeding, and handling them. Reads an animal's condition, and inclines toward steady care and management of the farm's beasts.";
     public override string SkillMeans       => "the tending and handling of livestock";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "hands", "viscera" };

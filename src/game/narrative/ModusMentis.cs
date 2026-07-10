@@ -11,12 +11,22 @@ public abstract class ModusMentis
 {
     public abstract string ModusMentisId { get; }           // "observation", "algebraic_analysis"
     public abstract string DisplayName { get; }       // "Observation", "Algebraic Analysis"
-    public abstract string ShortDescription { get; }  // 2-4 word description for prompts
+
     /// <summary>
     /// How this skill operates, shown in action lists as "with [SkillMeans]".
-    /// Defaults to ShortDescription; override in subclasses for cleaner phrasing.
+    /// A short flavored phrase used inside LLM prompts (e.g. "the breaking and turning of soil").
     /// </summary>
-    public virtual string SkillMeans => ShortDescription;
+    public abstract string SkillMeans { get; }
+
+    /// <summary>
+    /// Player-facing manual entry shown in the memory menu's detail box — a factual,
+    /// third-person explanation of what this modusMentis governs and when it helps.
+    /// Unlike <see cref="SkillMeans"/> / <see cref="PersonaTone"/> this is NEVER fed to the LLM,
+    /// so it is written as neutral game documentation rather than in-character flavour.
+    /// The detail box word-wraps to roughly 34 columns by ~11 lines, so keep it under ~60 words
+    /// and use continuous prose (no manual line breaks — the renderer wraps on spaces).
+    /// </summary>
+    public abstract string MenuDescription { get; }
     public abstract ModusMentisFunction[] Functions { get; } // Can have multiple functions (1-3)
     public abstract string[] Organs { get; }          // Associated organ ids (1-2)
     public int Level { get; set; }                    // 1-10, used for modusMentis checks (random initial)

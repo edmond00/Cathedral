@@ -10,7 +10,8 @@ public class LinguisticModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "linguistic";
     public override string DisplayName      => "Linguistics";
-    public override string ShortDescription => "tongues, foreign script";
+    public override string MenuDescription =>
+        "Keeps a feel for how speech is built, catching pattern in foreign tongues and unfamiliar script. Inclines toward interpreting and puzzling out language rather than dismissing it as noise.";
     public override string SkillMeans       => "feel for foreign tongues and script";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "encephalon" };

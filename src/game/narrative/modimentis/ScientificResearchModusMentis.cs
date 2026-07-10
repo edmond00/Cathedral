@@ -10,7 +10,8 @@ public class ScientificResearchModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "scientific_research";
     public override string DisplayName      => "Scientific Research";
-    public override string ShortDescription => "method, test, careful note";
+    public override string MenuDescription =>
+        "Approaches a problem by method: forming a guess, testing it, and noting the result with care. Inclines toward ordered, evidence-led inquiry over intuition or assumption.";
     public override string SkillMeans       => "method, test and careful note";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "encephalon", "eyes" };

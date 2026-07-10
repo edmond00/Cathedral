@@ -363,11 +363,11 @@ public static class CriticTrees
     /// Uses a neutral goal-based phrasing (second pass).
     /// "clearly_helps", "plausibly_helps", and "detoured_use" are passing choices.
     /// </summary>
-    public static CriticNode BuildItemAppropriatenessTree(string goalText, string modusMentisShortDescription, string itemName, CriticContext context)
+    public static CriticNode BuildItemAppropriatenessTree(string goalText, string itemName, CriticContext context)
     {
         return new CriticNode(
             name: "ItemAppropriateness",
-            question: $"{context.BuildPreamble()}\n\nThe character wants to {goalText} with {modusMentisShortDescription}.\nThey are holding: {itemName}.\n\nCompared to attempting this with bare hands, does {itemName} provide a meaningful advantage for this action?",
+            question: $"{context.BuildPreamble()}\n\nThe character wants to {goalText}.\nThey are holding: {itemName}.\n\nCompared to attempting this with bare hands, does {itemName} provide a meaningful advantage for this action?",
             choices: new List<CriticChoice>
             {
                 new("clearly_helps",    "the item provides a clear, direct advantage over bare hands"),

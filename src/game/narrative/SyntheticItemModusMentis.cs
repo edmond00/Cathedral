@@ -25,7 +25,9 @@ internal sealed class SyntheticItemModusMentis : ModusMentis
 
     public override string ModusMentisId   => $"item:{_itemId}";
     public override string DisplayName     => _displayName;
-    public override string ShortDescription => _displayName;
+    public override string SkillMeans      => _displayName;
+    // Never shown in the memory menu (synthetic, display/accounting only), but the base contract requires it.
+    public override string MenuDescription => _displayName;
     public override ModusMentisFunction[] Functions => System.Array.Empty<ModusMentisFunction>();
     public override string[] Organs        => System.Array.Empty<string>();
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

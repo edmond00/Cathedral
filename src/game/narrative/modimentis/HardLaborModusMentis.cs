@@ -10,7 +10,8 @@ public class HardLaborModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "hard_labor";
     public override string DisplayName      => "Hard Labor";
-    public override string ShortDescription => "long, heavy bodily work";
+    public override string MenuDescription =>
+        "Sets the body to long, heavy toil, digging, hauling, and grinding through exhausting tasks. Draws on raw endurance and holds effort steady where lighter work would flag.";
     public override string SkillMeans       => "long heavy bodily work";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "arms", "trunk" };

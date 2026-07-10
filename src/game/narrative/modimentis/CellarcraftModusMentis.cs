@@ -10,7 +10,8 @@ public class CellarcraftModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "cellarcraft";
     public override string DisplayName      => "Cellarcraft";
-    public override string ShortDescription => "storing, casking, keeping";
+    public override string MenuDescription =>
+        "Runs a standing check on what spoils and what keeps: damp, vermin, air, and the order stock should be used in. Sets stores off the ground, seals what must stay dry, and treats the oldest goods as the first to move.";
     public override string SkillMeans       => "the storing and keeping of goods";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "hands", "nose" };

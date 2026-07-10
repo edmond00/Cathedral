@@ -10,7 +10,8 @@ public class FinesseModusMentis : ModusMentis
 {
     public override string ModusMentisId => "finesse";
     public override string DisplayName => "Finesse";
-    public override string ShortDescription => "precision, delicate touch";
+    public override string MenuDescription =>
+        "Applies a light, exact touch to fine work, favouring control over force. Keeps the hands steady and the movement small, and treats delicate tasks as a matter of precision rather than effort.";
     public override string SkillMeans => "precision and delicate touch";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs => new[] { "hands", "cerebellum" };

@@ -10,7 +10,8 @@ public class CartographyModusMentis : ModusMentis
 {
     public override string ModusMentisId => "cartography";
     public override string DisplayName => "Cartography";
-    public override string ShortDescription => "maps, spatial memory";
+    public override string MenuDescription =>
+        "Builds space into an internal map, tracking bearing, distance, and landmark as it goes. Keeps a constant sense of position relative to where it has been, and reads routes as direct or circuitous rather than merely walked.";
     public override string SkillMeans => "spatial memory and mapping";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "eyes", "cerebrum" };

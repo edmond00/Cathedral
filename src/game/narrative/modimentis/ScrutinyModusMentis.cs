@@ -10,7 +10,8 @@ public class ScrutinyModusMentis : ModusMentis
 {
     public override string ModusMentisId => "scrutiny";
     public override string DisplayName => "Scrutiny";
-    public override string ShortDescription => "intense examination, detail";
+    public override string MenuDescription =>
+        "Fixes an intense, patient attention on fine detail, inspecting a thing thoroughly. Holds focus on what others pass over, and inclines toward examining before concluding.";
     public override string SkillMeans => "intense close examination";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs => new[] { "eyes", "ears" };

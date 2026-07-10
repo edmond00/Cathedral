@@ -10,7 +10,8 @@ public class IronNervesModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "iron_nerves";
     public override string DisplayName      => "Iron Nerves";
-    public override string ShortDescription => "absolute composure under pressure";
+    public override string MenuDescription =>
+        "Holds the mind steady and clear when things go wrong, refusing panic. Keeps judgement working under pressure, and meets a crisis calmly rather than fleeing it.";
     public override string SkillMeans       => "the trained composure that does not break when things go wrong";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "viscera", "cerebellum" };

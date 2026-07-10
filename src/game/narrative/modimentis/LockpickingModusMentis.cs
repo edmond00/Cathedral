@@ -10,7 +10,8 @@ public class LockpickingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "lockpicking";
     public override string DisplayName      => "Lockpicking";
-    public override string ShortDescription => "feeling tumblers by touch";
+    public override string MenuDescription =>
+        "Works a lock blind, feeling tumblers fall under the pick and reading a mechanism by touch alone. Keeps attention in the fingertips, and inclines toward opening a fastening rather than forcing it.";
     public override string SkillMeans       => "the soft feeling of tumblers under a pick";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands" };

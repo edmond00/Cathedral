@@ -10,7 +10,8 @@ public class HedgecraftModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "hedgecraft";
     public override string DisplayName      => "Hedgecraft";
-    public override string ShortDescription => "fences, hedges, bounds";
+    public override string MenuDescription =>
+        "Attends to the bounds of the land, laying and mending fences, hedges, and borders. Reads where an enclosure has failed, and sets the hands to closing it.";
     public override string SkillMeans       => "the mending of fences and hedges";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "arms" };

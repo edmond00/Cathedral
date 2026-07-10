@@ -10,7 +10,8 @@ public class BloodLustModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "blood_lust";
     public override string DisplayName      => "Blood Lust";
-    public override string ShortDescription => "the intoxication of violence";
+    public override string MenuDescription =>
+        "Feeds on bloodshed already begun, each wound given or taken sharpening the next blow rather than the caution that should follow. Drives the body harder as violence continues, at the cost of restraint and clear judgement.";
     public override string SkillMeans       => "the dark energy that rises from bloodshed and makes the next strike come harder";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "viscera", "spleen" };

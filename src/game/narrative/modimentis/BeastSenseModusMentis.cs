@@ -10,7 +10,8 @@ public class BeastSenseModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "beast_sense";
     public override string DisplayName      => "Beast Sense";
-    public override string ShortDescription => "reading animals' moods";
+    public override string MenuDescription =>
+        "Reads an animal by its mood and small signs, catching the moment before it bolts or bites. Keeps attention on ears, stance, and breath, and inclines toward calming or steering a beast rather than forcing it.";
     public override string SkillMeans       => "the reading of an animal's mood";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "nose", "ears" };

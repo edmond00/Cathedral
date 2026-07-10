@@ -10,7 +10,8 @@ public class GreedModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "greed";
     public override string DisplayName      => "Greed";
-    public override string ShortDescription => "the want of more";
+    public override string MenuDescription =>
+        "Keeps an unshaken want of more running beneath thought, driving toward acquisition past need. Inclines reasoning and action toward seizing wealth and advantage wherever they appear.";
     public override string SkillMeans       => "the unshaken want of more";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "heart", "eyes" };

@@ -10,7 +10,8 @@ public class VigilanceModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "vigilance";
     public override string DisplayName      => "Vigilance";
-    public override string ShortDescription => "heightened combat awareness";
+    public override string MenuDescription =>
+        "Spreads attention across a fight, catching threats and openings before others register them. Keeps a defensive awareness running, and inclines toward noticing danger early rather than reacting late.";
     public override string SkillMeans       => "distributed attention that notices threats and openings before others register them";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "eyes", "ears" };

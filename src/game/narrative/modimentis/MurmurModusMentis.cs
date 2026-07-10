@@ -10,7 +10,8 @@ public class MurmurModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "murmur";
     public override string DisplayName      => "Murmur";
-    public override string ShortDescription => "soft, unbroken speech";
+    public override string MenuDescription =>
+        "Keeps a low, steady voice running, soft and unbroken, to reassure or hold attention. Favours the calm, continuous word that coaxes over the raised one that commands.";
     public override string SkillMeans       => "low, unbroken speech";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "pulmones" };

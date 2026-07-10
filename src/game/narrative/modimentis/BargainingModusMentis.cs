@@ -10,7 +10,8 @@ public class BargainingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "bargaining";
     public override string DisplayName      => "Bargaining";
-    public override string ShortDescription => "haggling, trade-talk";
+    public override string MenuDescription =>
+        "Holds two figures in mind at once, the price asked and the price that would actually be accepted, and works the gap between them. Inclines toward patience, feigned reluctance, and letting a deal be pulled loose rather than offered.";
     public override string SkillMeans       => "well-handled trade-talk";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "tongue", "encephalon" };

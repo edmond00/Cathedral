@@ -10,7 +10,8 @@ public class FirecraftModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "firecraft";
     public override string DisplayName      => "Firecraft";
-    public override string ShortDescription => "heat, embers, draught";
+    public override string MenuDescription =>
+        "Tends a working fire by heat, ember, and draught, laying and feeding it to hold the flame wanted. Reads a fire for warmth, cooking, or craft, and adjusts fuel and air to keep it steady.";
     public override string SkillMeans       => "the feeding and judging of a working fire";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "hands", "eyes" };

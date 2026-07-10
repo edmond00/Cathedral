@@ -10,7 +10,8 @@ public class NauticalJargonModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "nautical_jargon";
     public override string DisplayName      => "Nautical Jargon";
-    public override string ShortDescription => "harbour cant, rigging-talk";
+    public override string MenuDescription =>
+        "Holds the speech of ships and docks ready, the cant of the harbour and the names of rigging. Reads seamen and waterfront dealings by their own idiom, and inclines toward talk that marks one as of the sea.";
     public override string SkillMeans       => "harbour cant and the talk of rigging";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "ears" };

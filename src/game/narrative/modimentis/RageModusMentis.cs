@@ -10,7 +10,8 @@ public class RageModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "rage";
     public override string DisplayName      => "Rage";
-    public override string ShortDescription => "consuming battle fury";
+    public override string MenuDescription =>
+        "Rises into an all-consuming anger that burns through pain, fear, and doubt. Drives the body into powerful assault while it lasts, at the cost of caution and control.";
     public override string SkillMeans       => "the battle fury that burns through pain, fear, and doubt";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "viscera", "arms" };
