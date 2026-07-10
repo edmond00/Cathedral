@@ -40,6 +40,10 @@ public static class TextSanitizationPipeline
     // Regex fallback for Layer 3 when Catalyst fails to initialise at all
     private static Regex? _spottedPattern;
 
+    // Entity type the Layer 3 Spotter tags its hits with; used to tell Spotter
+    // (anachronism) hits apart from WikiNER (real-world name) hits.
+    private const string SpotterTag = "FORBIDDEN";
+
     public static bool IsReady => _initialized;
 
     // ── Initialisation ─────────────────────────────────────────────────────────
@@ -53,6 +57,9 @@ public static class TextSanitizationPipeline
         if (_initialized) return;
 
         _llamaServer = llamaServer;
+
+        // ── Common-word guard for Layer 2 (WikiNER false positives) ───────────
+        CommonWordLexicon.Initialize();
 
         // ── Build regex fallback for Layer 3 (always available) ───────────────
         var escaped = SpottedTerms.All
@@ -71,7 +78,7 @@ public static class TextSanitizationPipeline
             var pipeline = await Pipeline.ForAsync(Language.English);
 
             // Layer 3 — Spotter (no external model required, populated inline)
-            var spotter = new Spotter(Language.English, 0, "ForbiddenTerms", "FORBIDDEN");
+            var spotter = new Spotter(Language.English, 0, "ForbiddenTerms", SpotterTag);
             spotter.IgnoreCase = true;
             spotter.AppendList(SpottedTerms.All.Where(t => !string.IsNullOrWhiteSpace(t)));
             pipeline.Add(spotter);
@@ -134,7 +141,11 @@ public static class TextSanitizationPipeline
         if (PlaygroundMode.IsActive)
             return text;
 
-        var detected = new List<string>();
+        // Layer 3 (Spotter / SpottedTerms) → genuine anachronisms.
+        // Layer 2 (WikiNER)                → real-world proper names.
+        // These are described differently in the rewrite prompt.
+        var anachronisms   = new List<string>();
+        var realWorldNames = new List<string>();
 
         // Layers 2 + 3 via Catalyst pipeline
         if (_catalystReady && _catalystPipeline != null)
@@ -146,8 +157,30 @@ public static class TextSanitizationPipeline
 
                 foreach (var span in doc)
                     foreach (var token in span)
-                        if (token.EntityTypes.Count > 0)
-                            detected.Add(token.Value);
+                    {
+                        if (token.EntityTypes.Count == 0)
+                            continue;
+
+                        // The Spotter tags its hits with type "FORBIDDEN"; anything else
+                        // is a WikiNER named-entity type (Person/Location/Organization/…).
+                        bool isAnachronism = token.EntityTypes.Any(et => et.Type == SpotterTag);
+
+                        if (isAnachronism)
+                        {
+                            anachronisms.Add(token.Value);
+                        }
+                        else if (CommonWordLexicon.IsCommonWord(token.Value))
+                        {
+                            // Layer 2 false positive: an ordinary common word that WikiNER
+                            // flagged only because it was capitalised (e.g. "Nostalgia").
+                            Console.WriteLine(
+                                $"TextSanitizationPipeline: guard dropped WikiNER false positive '{token.Value}'.");
+                        }
+                        else
+                        {
+                            realWorldNames.Add(token.Value);
+                        }
+                    }
             }
             catch (Exception ex)
             {
@@ -156,34 +189,40 @@ public static class TextSanitizationPipeline
         }
         else if (_spottedPattern != null)
         {
-            // Regex fallback for Layer 3 when Catalyst is unavailable
+            // Regex fallback for Layer 3 when Catalyst is unavailable (anachronisms only).
             foreach (Match m in _spottedPattern.Matches(text))
-                detected.Add(m.Value);
+                anachronisms.Add(m.Value);
         }
 
-        if (detected.Count == 0)
+        if (anachronisms.Count == 0 && realWorldNames.Count == 0)
             return text;
 
         if (!_llmReady || _llamaServer == null || _rewriterSlot < 0)
         {
+            var all = anachronisms.Concat(realWorldNames).Distinct();
             Console.WriteLine(
-                $"TextSanitizationPipeline: detected [{string.Join(", ", detected.Distinct())}] but rewriter LLM unavailable.");
+                $"TextSanitizationPipeline: detected [{string.Join(", ", all)}] but rewriter LLM unavailable.");
             return text;
         }
 
-        return await RewriteAsync(text, detected);
+        return await RewriteAsync(text, anachronisms, realWorldNames);
     }
 
     // ── Rewriter ───────────────────────────────────────────────────────────────
 
-    private static async Task<string> RewriteAsync(string text, List<string> detected)
+    private static async Task<string> RewriteAsync(
+        string text, List<string> anachronisms, List<string> realWorldNames)
     {
         try
         {
-            var distinctIssues = string.Join(", ", detected.Distinct(StringComparer.OrdinalIgnoreCase));
-            Console.WriteLine($"TextSanitizationPipeline: rewriting — detected [{distinctIssues}]");
+            var distinctAnachronisms = anachronisms.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var distinctNames        = realWorldNames.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            Console.WriteLine(
+                "TextSanitizationPipeline: rewriting — " +
+                $"anachronisms [{string.Join(", ", distinctAnachronisms)}] " +
+                $"names [{string.Join(", ", distinctNames)}]");
 
-            var prompt  = BuildRewritePrompt(text, distinctIssues);
+            var prompt  = BuildRewritePrompt(text, distinctAnachronisms, distinctNames);
             var schema  = LLMSchemaConfig.CreateContinuationObservationSchema("rewritten_text");
             var grammar = JsonConstraintGenerator.GenerateGBNF(schema);
 
@@ -218,12 +257,23 @@ public static class TextSanitizationPipeline
         }
     }
 
-    private static string BuildRewritePrompt(string text, string detectedIssues)
+    private static string BuildRewritePrompt(
+        string text, List<string> anachronisms, List<string> realWorldNames)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"Detected anachronistic or out-of-setting terms: {detectedIssues}");
+
+        if (anachronisms.Count > 0)
+            sb.AppendLine(
+                $"Anachronistic or modern terms to replace with low-fantasy medieval equivalents: " +
+                $"{string.Join(", ", anachronisms)}");
+
+        if (realWorldNames.Count > 0)
+            sb.AppendLine(
+                $"Real-world proper names to replace with fitting invented in-world names: " +
+                $"{string.Join(", ", realWorldNames)}");
+
         sb.AppendLine();
-        sb.AppendLine("Rewrite the following text, replacing those terms with appropriate low-fantasy medieval equivalents.");
+        sb.AppendLine("Rewrite the following text, replacing those terms accordingly.");
         sb.AppendLine("Keep the meaning and tone. Return only the corrected text:");
         sb.AppendLine();
         sb.Append(text);
@@ -234,8 +284,9 @@ public static class TextSanitizationPipeline
 
     private const string RewriterSystemPrompt =
         "You are a text corrector for a low-fantasy medieval narrative game. " +
-        "When given a passage of text and a list of anachronistic or out-of-setting words, " +
-        "you rewrite the text to replace those words with fitting medieval equivalents. " +
+        "When given a passage of text, you may be told about anachronistic or modern terms " +
+        "(replace them with fitting medieval equivalents) and/or real-world proper names " +
+        "(replace them with fitting invented in-world names). " +
         "You preserve the sentence structure and tone. " +
         "You return ONLY the corrected text — no explanation, no preamble.";
 }

@@ -101,7 +101,7 @@ public static class NeutralNarration
         => $"I tried to {FirstPerson(actionDisplay)}, but it could not happen here.";
 
     public static string ItemCombinationFailure(string actionDisplay, string itemWithArticle)
-        => $"Using {FirstPerson(itemWithArticle)} to {FirstPerson(actionDisplay)} did not work.";
+        => $"I tried to use {FirstPerson(itemWithArticle)} to {FirstPerson(actionDisplay)}, but it did not work.";
 
     // ── Reminescence outcome ───────────────────────────────────────────────────
 

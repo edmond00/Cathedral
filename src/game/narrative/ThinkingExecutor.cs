@@ -119,6 +119,7 @@ public class ThinkingExecutor
             PreselectedOutcome  = (VerbOutcome)resolved,
             ActionText          = $"try to {bareAction}",
             DisplayText         = bareAction,
+            NeutralActionText   = goalPhrase,
             ThinkingModusMentis = thinkingModusMentis,
             Keyword             = keyword
         };

@@ -2870,6 +2870,11 @@ public class NarrativeController
                 {
                     ActionText             = reformulatedText,
                     DisplayText            = reformulatedText,
+                    // Keep a neutral phrasing for the outcome template ("I tried to … using an item")
+                    // so it doesn't re-embed the styled reformulation; empty when the source had none.
+                    NeutralActionText      = string.IsNullOrWhiteSpace(action.NeutralActionText)
+                                                 ? string.Empty
+                                                 : $"{action.NeutralActionText} using {item.WithArticle()}",
                     ActionModusMentisId    = action.ActionModusMentisId,   // real skill for execution/slot lookup
                     ActionModusMentis      = action.ActionModusMentis,     // real skill for organ score etc.
                     CombinedActionModusMentis = itemModusMentis,           // item as chain leaf / display prefix

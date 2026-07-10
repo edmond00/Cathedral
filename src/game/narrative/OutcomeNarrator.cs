@@ -18,6 +18,9 @@ public class OutcomeNarrator
     private readonly ModusMentisSlotManager _slotManager;
     private readonly PersonaRewriter _rewriter;
 
+    /// <summary>GBNF-forced opening for outcome narration — keeps the styled result first-person.</summary>
+    private const string OutcomePrefix = "I ";
+
     public OutcomeNarrator(LlamaServerManager llmManager, ModusMentisSlotManager slotManager)
     {
         _llmManager  = llmManager;
@@ -44,8 +47,11 @@ public class OutcomeNarrator
         string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, failureHint);
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         // keepHistory so the dual-outcome snapshot/restore (humor flips) sees the generated turns.
+        // forcedPrefix "I " constrains the styled result to a first-person opening (matching the
+        // neutral "I tried to …" framing), the same GBNF trick the action rewrite uses.
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
-            actionModusMentis.PersonaReminder2, keepHistory: true, styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
+            actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
     }
 
     // ── Dual outcome pre-generation (for humor dice modifiers) ─────────────────
@@ -133,7 +139,8 @@ public class OutcomeNarrator
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
-            actionModusMentis.PersonaReminder2, keepHistory: true, styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
+            actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
     }
 
     /// <summary>
@@ -152,7 +159,8 @@ public class OutcomeNarrator
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
-            actionModusMentis.PersonaReminder2, keepHistory: true, styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
+            actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
@@ -166,11 +174,14 @@ public class OutcomeNarrator
     }
 
     /// <summary>
-    /// Clean action phrase for templates: prefers DisplayText ("climb the tree"), falling back to
-    /// ActionText with any leading "try to " stripped.
+    /// Clean neutral action phrase for the neutral-meaning templates fed back to the persona rewriter.
+    /// Prefers <see cref="ParsedNarrativeAction.NeutralActionText"/> ("get up and continue my journey")
+    /// so the "I tried to …" framing embeds the plain phrasing rather than the already-styled label;
+    /// falls back to DisplayText, then to ActionText with any leading "try to " stripped.
     /// </summary>
     private static string ActionDisplay(ParsedNarrativeAction action)
     {
+        if (!string.IsNullOrWhiteSpace(action.NeutralActionText)) return action.NeutralActionText;
         if (!string.IsNullOrWhiteSpace(action.DisplayText)) return action.DisplayText;
         var text = action.ActionText ?? "";
         return text.StartsWith("try to ", StringComparison.OrdinalIgnoreCase) ? text.Substring(7) : text;

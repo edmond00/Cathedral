@@ -22,8 +22,7 @@ public static class LLMSchemaConfig
             new TemplateStringField(fieldName,
                 Template: string.IsNullOrEmpty(forcedPrefix) ? "<generated>" : $"{forcedPrefix}<generated>",
                 MinGenLength: 15,
-                MaxGenLength: 400,
-                FirstSentenceMaxLength: 200)
+                MaxGenLength: Config.Narrative.MaxNarrativeTextLength)
         );
     }
 
@@ -55,8 +54,7 @@ public static class LLMSchemaConfig
             new TemplateStringField(fieldName,
                 Template: "<generated>",
                 MinGenLength: 20,
-                MaxGenLength: 300,
-                FirstSentenceMaxLength: 120)
+                MaxGenLength: Config.Narrative.MaxNarrativeTextLength)
         );
     }
 

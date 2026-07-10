@@ -241,6 +241,16 @@ public class ParsedNarrativeAction : ModusMentisChainElement
 {
     public string ActionText { get; set; } = "";              // Full text including "try to " prefix
     public string DisplayText { get; set; } = "";             // Text without "try to " prefix (for UI)
+
+    /// <summary>
+    /// The neutral, un-styled action phrase (e.g. "get up and continue my journey") as chosen by the
+    /// thinking modusMentis, captured BEFORE the action modusMentis re-expressed it into persona voice.
+    /// <see cref="DisplayText"/>/<see cref="ActionText"/> hold the styled form (the button label and
+    /// the phrasing critics see); this preserves the plain meaning so the neutral outcome sentence
+    /// ("I tried to …, and succeeded.") templates cleanly instead of re-embedding an already-styled
+    /// phrase that does not fit the template. Empty for actions with no neutral source.
+    /// </summary>
+    public string NeutralActionText { get; set; } = "";
     public string ActionModusMentisId { get; set; } = "";           // Which action modusMentis to use for check
     public ModusMentis? ActionModusMentis { get; set; }                   // Resolved modusMentis reference
     public ModusMentis ThinkingModusMentis { get; set; } = null!;         // Which thinking modusMentis generated this

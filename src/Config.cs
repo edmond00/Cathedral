@@ -514,6 +514,13 @@ public static class Config
         /// </summary>
         public const int TargetKeywordCount = 10;
 
+        /// <summary>
+        /// Maximum character length of an LLM-generated narrative text — observation, thinking,
+        /// action, outcome, speaking, dialogue, and sanitizer rewrites all share this cap. It is
+        /// encoded straight into the GBNF grammar as the upper bound of the free-text body.
+        /// </summary>
+        public const int MaxNarrativeTextLength = 800;
+
         /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
         private const string OneSentenceClause = "Answer in one short sentence and stop.";
 
