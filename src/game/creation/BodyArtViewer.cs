@@ -938,7 +938,7 @@ public class BodyArtViewer
             // sub-header (e.g. secretion percentages beneath the "Secretion" label).
             void RenderStat(DerivedStat stat, Vector4 labelColor, int extraIndent = 0)
             {
-                int val = stat.CalculateValue(stat.GetSourceScore(_protagonist));
+                int val = stat.GetRawValue(_protagonist);
                 Vector4 valueColor = AdjustLuminosity(labelColor, 0.65f);
                 string pad = new string(' ', extraIndent);
                 _terminal.Text(PanelContentX, row, $"{pad}  {stat.ShortDisplayName}", labelColor, Config.Colors.Black);

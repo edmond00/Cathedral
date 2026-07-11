@@ -11,7 +11,7 @@ public class RoutineQueueSizeStat : DerivedStat
     public override string? RelatedOrganId => "anamnesis";
 
     /// <summary>Routine capacity = anamnesis organ score × 10.</summary>
-    public override int CalculateValue(int sourceScore) => sourceScore * 10;
+    protected override int CalculateValue(int sourceScore) => sourceScore * 10;
     public override string FormatValue(int value) => $"{value} routines";
-    public override int MinimumValue() => 10;
+    public override int WorstValue => 10;
 }

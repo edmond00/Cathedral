@@ -49,10 +49,7 @@ public class Protagonist : PartyMember
 
     /// <summary>Maximum number of routines that can be held, from the anamnesis derived stat.</summary>
     public int GetRoutineQueueSize()
-    {
-        var stat = DerivedStats.FirstOrDefault(s => s.Name == "routine_queue_size");
-        return stat?.GetValue(this) ?? 10;
-    }
+        => DerivedStats.First(s => s.Name == "routine_queue_size").GetValue(this);
 
     /// <summary>
     /// Records a routine into the FIFO queue. When the queue is full, the oldest UNLOCKED routine is

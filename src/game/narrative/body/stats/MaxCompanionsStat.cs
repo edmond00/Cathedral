@@ -14,6 +14,6 @@ public class MaxCompanionsStat : DerivedStat
     public override string Name         => "max_companions";
     public override string DisplayName  => "Max Companions";
     public override string? RelatedOrganId => "heart";
-    public override int CalculateValue(int sourceScore) => sourceScore * 2;
+    protected override int CalculateValue(int sourceScore) => sourceScore * 2;
     public override string FormatValue(int value) => $"{value} companions";
 }

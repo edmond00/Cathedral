@@ -299,7 +299,7 @@ public static class FightAI
         int stopAt = Math.Max(0, fullPath.Count - 1);
         if (stopAt == 0) yield break;
 
-        double budget = ai.CurrentCineticPoints * Math.Max(1, ai.MoveSpeed);
+        double budget = ai.CurrentCineticPoints * ai.MoveSpeed;
         double accCost = 0;
         int px = ai.X, py = ai.Y;
         int affordable = 0;

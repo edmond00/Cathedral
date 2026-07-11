@@ -14,6 +14,6 @@ public class EncounterAvoidanceStat : DerivedStat
     public override string DisplayName => "Encounter Avoidance";
     public override string? RelatedOrganId => "nose";
 
-    public override int CalculateValue(int sourceScore) => sourceScore * 10;
+    protected override int CalculateValue(int sourceScore) => sourceScore * 10;
     public override string FormatValue(int value) => $"{value}%";
 }

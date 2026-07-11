@@ -14,7 +14,6 @@ public class TeethHardFoodStat : DerivedStat
     public override string DisplayName => "Chewing Strength";
     public override string? RelatedOrganPartId => "teeths";
 
-    public override int CalculateValue(int sourceScore) => sourceScore > 0 ? 1 : 0;
-    public override int CalculateValueDisabled() => 0;
+    protected override int CalculateValue(int sourceScore) => sourceScore > 0 ? 1 : 0;
     public override string FormatValue(int value) => value > 0 ? "strong" : "weak";
 }

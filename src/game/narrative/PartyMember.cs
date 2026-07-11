@@ -279,15 +279,15 @@ public abstract class PartyMember
     /// </summary>
     public void InitializeMemory()
     {
-        int WorkingCap   = Math.Clamp(GetMemoryStat("working_memory_capacity"),    1, 20);
-        int ProceduralCap= Math.Clamp(GetMemoryStat("procedural_memory_capacity"), 1, 20);
-        int SemanticCap  = Math.Clamp(GetMemoryStat("semantic_memory_capacity"),   1, 20);
-        int SensoryCap   = Math.Clamp(GetMemoryStat("sensory_memory_capacity"),    1, 20);
-        int ResidualCap  = Math.Clamp(GetMemoryStat("residual_memory_capacity"),   1, 20);
+        int WorkingCap   = GetMemoryStat("working_memory_capacity");
+        int ProceduralCap= GetMemoryStat("procedural_memory_capacity");
+        int SemanticCap  = GetMemoryStat("semantic_memory_capacity");
+        int SensoryCap   = GetMemoryStat("sensory_memory_capacity");
+        int ResidualCap  = GetMemoryStat("residual_memory_capacity");
 
         MemoryModules = new List<MemoryModule>
         {
-            new MemoryModule(MemoryModuleType.Working,    WorkingCap),
+            new MemoryModule(MemoryModuleType.Working,    WorkingCap, maxCapacity: 25),
             new MemoryModule(MemoryModuleType.Procedural, ProceduralCap),
             new MemoryModule(MemoryModuleType.Semantic,   SemanticCap),
             new MemoryModule(MemoryModuleType.Sensory,    SensoryCap),
@@ -296,11 +296,7 @@ public abstract class PartyMember
     }
 
     private int GetMemoryStat(string name)
-    {
-        var stat = DerivedStats.FirstOrDefault(s => s.Name == name);
-        if (stat == null) return 1;
-        return stat.GetValue(this);
-    }
+        => DerivedStats.First(s => s.Name == name).GetValue(this);
 
     /// <summary>
     /// Randomly distribute modiMentis across compatible memory modules for testing.
@@ -504,7 +500,7 @@ public abstract class PartyMember
 
     /// <summary>XP a modusMentis needs to gain one level (pineal-gland-derived stat, 6-12).</summary>
     public int GetModusMentisXpThreshold() =>
-        DerivedStats.FirstOrDefault(s => s.Name == "modus_mentis_xp_threshold")?.GetValue(this) ?? 12;
+        DerivedStats.First(s => s.Name == "modus_mentis_xp_threshold").GetValue(this);
 
     /// <summary>
     /// Awards XP to a modusMentis. When CurrentXp reaches the pineal threshold the bar resets to 0
@@ -574,7 +570,7 @@ public abstract class PartyMember
         {
             var stat = DerivedStats.FirstOrDefault(s => s.Name == "health_point");
             return stat != null
-                ? stat.CalculateValue(stat.GetSourceScore(this))
+                ? stat.GetRawValue(this)
                 : _bodyParts.FirstOrDefault(bp => bp.Id == "trunk")?.Score ?? 0;
         }
     }

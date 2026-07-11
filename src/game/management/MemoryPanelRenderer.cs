@@ -32,6 +32,11 @@ public class MemoryPanelRenderer
     private const int SlotHeight      = 3;
     private const int SlotsPerRow     = 4;
 
+    // Working memory holds up to 25 slots; pack them 5-per-row (narrower) so the grid keeps
+    // the same 5-row height as a 20-slot / 4-per-row module and doesn't push later sections down.
+    private const int WorkingSlotsPerRow = 5;
+    private const int WorkingSlotWidth   = 16; // 5 × 16 = 80 ≤ AreaWidth (83)
+
     // ── Narrow 3-column layout (Sensory | Procedural | Semantic) ─
     // 83 = 27 + │ + 27 + │ + 27
     private const int ColW            = 27;
@@ -122,7 +127,7 @@ public class MemoryPanelRenderer
             m => m.Type == MemoryModuleType.Working);
         if (working != null)
         {
-            row = RenderModuleFull(working, row);
+            row = RenderModuleFull(working, row, WorkingSlotsPerRow, WorkingSlotWidth);
             row += 2;
         }
 
@@ -202,7 +207,8 @@ public class MemoryPanelRenderer
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>Render one memory module full-width. Returns next free row.</summary>
-    private int RenderModuleFull(MemoryModule module, int startRow)
+    private int RenderModuleFull(MemoryModule module, int startRow,
+                                 int slotsPerRow = SlotsPerRow, int slotWidth = SlotWidth)
     {
         string label    = GetModuleLabel(module.Type);
         string subtitle = GetModuleSubtitle(module.Type);
@@ -236,10 +242,10 @@ public class MemoryPanelRenderer
         int slotIndex = 0;
         while (slotIndex < module.Slots.Count)
         {
-            int inRow = Math.Min(SlotsPerRow, module.Slots.Count - slotIndex);
+            int inRow = Math.Min(slotsPerRow, module.Slots.Count - slotIndex);
             for (int col = 0; col < inRow; col++)
             {
-                int sx = StartX + col * SlotWidth;
+                int sx = StartX + col * slotWidth;
                 bool isHovered = _hoveredSlot.HasValue
                     && _hoveredSlot.Value.mod  == module.Type
                     && _hoveredSlot.Value.slot == slotIndex + col;
@@ -247,9 +253,9 @@ public class MemoryPanelRenderer
                     && _selectedSlot.Value.mod  == module.Type
                     && _selectedSlot.Value.slot == slotIndex + col;
                 RenderSlot(module.Slots[slotIndex + col], module.Type,
-                           slotIndex + col, sx, row, isHovered, isSelected);
+                           slotIndex + col, sx, row, isHovered, isSelected, slotWidth);
             }
-            slotIndex += SlotsPerRow;
+            slotIndex += slotsPerRow;
             row       += SlotHeight;
         }
         return row;

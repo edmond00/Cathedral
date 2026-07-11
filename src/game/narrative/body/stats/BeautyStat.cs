@@ -11,7 +11,6 @@ public class BeautyStat : DerivedStat
     public override string Name         => "beauty";
     public override string DisplayName  => "Beauty";
     public override string? RelatedBodyPartId => "visage";
-    public override int CalculateValue(int sourceScore) => sourceScore * 2;
-    public override int MinimumValue() => 0;
+    protected override int CalculateValue(int sourceScore) => sourceScore * 2;
     public override string FormatValue(int value) => $"{value}%";
 }

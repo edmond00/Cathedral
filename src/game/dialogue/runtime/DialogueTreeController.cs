@@ -42,7 +42,7 @@ public class DialogueTreeController
 
     /// <summary>Per-roll humor modifier budget from the viscera <c>humor_modifier_limit</c> stat.</summary>
     private static int HumorModifierLimit(PartyMember member)
-        => member.DerivedStats.FirstOrDefault(s => s.Name == "humor_modifier_limit")?.GetValue(member) ?? 0;
+        => member.DerivedStats.First(s => s.Name == "humor_modifier_limit").GetValue(member);
 
     public bool HasRequestedExit => _state.RequestedExit;
 

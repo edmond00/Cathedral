@@ -16,7 +16,7 @@ public class HumorModifierLimitStat : DerivedStat
     public override string DisplayName  => "Humor Modifier Limit";
     public override string? RelatedOrganId => "viscera";
 
-    public override int CalculateValue(int sourceScore) => System.Math.Max(1, sourceScore);
-    public override int MinimumValue() => 1;
+    protected override int CalculateValue(int sourceScore) => sourceScore;
+    public override int WorstValue => 1;
     public override string FormatValue(int value) => $"{value}/roll";
 }

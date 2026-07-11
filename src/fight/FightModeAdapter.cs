@@ -1135,7 +1135,7 @@ public class FightModeAdapter
     {
         if (owner == null || !owner.IsPlayerControlled) return;
         var member = owner.Member;
-        int limit = member.DerivedStats.FirstOrDefault(s => s.Name == "humor_modifier_limit")?.GetValue(member) ?? 0;
+        int limit = member.DerivedStats.First(s => s.Name == "humor_modifier_limit").GetValue(member);
         if (limit > 0) _dice.EnableHumorModifiers(member.HumorQueues, limit);
     }
 

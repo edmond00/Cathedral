@@ -47,11 +47,11 @@ public class Fighter
     /// <summary>Natural defense including active posture bonus.</summary>
     public int NaturalDefense     => BaseNaturalDefense + (IsDefensePostureActive ? 2 : 0);
     /// <summary>Number of d6 rolled in a runaway check (1 die per foot level). At least one six required to flee.</summary>
-    public int RunawayDiceCount => Math.Max(1, GetCombatStat("runaway_dice"));
+    public int RunawayDiceCount => GetCombatStat("runaway_dice");
     /// <summary>Equilibrium — feet stat. Higher = lower terrain-slip risk during movement.</summary>
-    public int EquilibriumValue => Math.Max(1, GetCombatStat("equilibrium"));
+    public int EquilibriumValue => GetCombatStat("equilibrium");
     /// <summary>Knockdown recovery dice count — heart stat. Need at least one 6 to recover.</summary>
-    public int KnockdownRecoveryDiceCount => Math.Max(1, GetCombatStat("knockdown_recovery"));
+    public int KnockdownRecoveryDiceCount => GetCombatStat("knockdown_recovery");
     public int InitiativeValue    => GetCombatStat("initiative");
 
     // ── HP delegation ─────────────────────────────────────────────
@@ -206,8 +206,5 @@ public class Fighter
 
     // ── Helpers ───────────────────────────────────────────────────
     private int GetCombatStat(string name)
-    {
-        var stat = Member.DerivedStats.FirstOrDefault(s => s.Name == name);
-        return stat?.GetValue(Member) ?? 0;
-    }
+        => Member.DerivedStats.First(s => s.Name == name).GetValue(Member);
 }

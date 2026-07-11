@@ -140,7 +140,7 @@ public static class FightModeUI
 
         // Combat stats — one per line
         int damageRes = fighter.Member.DerivedStats
-            .FirstOrDefault(s => s.Name == "damage_resistance")?.GetValue(fighter.Member) ?? 0;
+            .First(s => s.Name == "damage_resistance").GetValue(fighter.Member);
         terminal.Text(x, y++, $"INIT: {fighter.InitiativeValue}", Config.Colors.LightGray, Config.Colors.Black);
         terminal.Text(x, y++, $"DEF : {fighter.NaturalDefense}",  Config.Colors.LightGray, Config.Colors.Black);
         terminal.Text(x, y++, $"MOV : {fighter.MoveSpeed}",        Config.Colors.LightGray, Config.Colors.Black);

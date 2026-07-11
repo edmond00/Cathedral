@@ -13,7 +13,7 @@ public class NoseRecognitionStat : DerivedStat
     public override string DisplayName => "Humor Recognition";
     public override string? RelatedOrganPartId => "nose";
 
-    public override int CalculateValue(int sourceScore) => sourceScore switch
+    protected override int CalculateValue(int sourceScore) => sourceScore switch
     {
         0 => 0,
         1 => 1,

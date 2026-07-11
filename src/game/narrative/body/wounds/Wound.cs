@@ -29,7 +29,8 @@ public enum WoundTargetKind
 /// <summary>
 /// Abstract base class for a wound. Each concrete wound type is a subclass.
 /// Wounds affect organ parts, organs, or body parts and modify derived stat calculations
-/// via <see cref="DerivedStat.CalculateValueNegative"/> and <see cref="DerivedStat.CalculateValueDisabled"/>.
+/// via <see cref="DerivedStat.GetEffectiveScore"/>; when a source is disabled the stat degrades
+/// to its <see cref="DerivedStat.WorstValue"/>.
 /// </summary>
 public abstract class Wound
 {

@@ -142,7 +142,7 @@ public class NarrativeController
 
     /// <summary>Per-roll humor modifier budget from the viscera <c>humor_modifier_limit</c> stat.</summary>
     private static int HumorModifierLimit(PartyMember member)
-        => member.DerivedStats.FirstOrDefault(s => s.Name == "humor_modifier_limit")?.GetValue(member) ?? 0;
+        => member.DerivedStats.First(s => s.Name == "humor_modifier_limit").GetValue(member);
 
     /// <summary>
     /// Fired by the dice component when a humor modifier flips success↔failure. Swaps the active
@@ -2421,8 +2421,7 @@ public class NarrativeController
     /// <summary>Number of d6 rolled in an exit-runaway check — the protagonist's feet stat, min 1.</summary>
     private int ProtagonistRunawayDiceCount()
     {
-        var stat = _protagonist.DerivedStats.FirstOrDefault(s => s.Name == "runaway_dice");
-        return Math.Max(1, stat?.GetValue(_protagonist) ?? 1);
+        return _protagonist.DerivedStats.First(s => s.Name == "runaway_dice").GetValue(_protagonist);
     }
 
     /// <summary>
@@ -2860,8 +2859,7 @@ public class NarrativeController
                 // The item's UsageLevel is capped by the hands-derived "item_usage_cap" stat so that
                 // characters with stronger (or unwounded) hands extract more bonus from potent tools.
                 int usageCap = _activePartyMember.DerivedStats
-                    .FirstOrDefault(s => s.Name == "item_usage_cap")?.GetValue(_activePartyMember)
-                    ?? item.UsageLevel;
+                    .First(s => s.Name == "item_usage_cap").GetValue(_activePartyMember);
                 int effectiveUsageLevel = System.Math.Min(item.UsageLevel, usageCap);
                 Console.WriteLine($"NarrativeController: Item usage level {item.UsageLevel} capped to {effectiveUsageLevel} (hands cap {usageCap}).");
                 var itemModusMentis = new SyntheticItemModusMentis(item.ItemId, item.DisplayName, effectiveUsageLevel);

@@ -15,9 +15,8 @@ public class MaxTravelDistanceStat : DerivedStat
     public override string DisplayName => "Max Travel Distance";
     public override string? RelatedOrganId => "feet";
 
-    public override int CalculateValue(int sourceScore) => sourceScore * 18 + 40;
-    public override int CalculateValueDisabled() => 40;
-    public override int MinimumValue() => 40;
+    protected override int CalculateValue(int sourceScore) => sourceScore * 18 + 40;
+    public override int WorstValue => 40;
 
     public override string FormatValue(int value) => $"~{(int)(value / 7.4f)} cells";
 

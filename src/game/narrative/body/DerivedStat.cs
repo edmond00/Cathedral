@@ -48,16 +48,28 @@ public abstract class DerivedStat
     public virtual string FormatValue(int value) => value.ToString();
 
     /// <summary>
-    /// Convert a negative source score (due to low-handicap wounds) into the stat value.
-    /// Default: clamps to 0. Override for stats that can meaningfully go negative.
+    /// Whether a higher computed value is better for the player. Default: true.
+    /// Override to false for stats where a lower value is preferable (e.g. an XP cost or
+    /// threshold). This drives which side of the value range is the "worst" and how the
+    /// value is clamped — see <see cref="WorstValue"/> and <see cref="BestValue"/>.
     /// </summary>
-    public virtual int CalculateValueNegative(int sourceScore) => 0;
+    public virtual bool HigherIsBetter => true;
 
     /// <summary>
-    /// Stat value when the source organ/body part is fully disabled by a high-handicap wound.
-    /// Default: 0.
+    /// The maximally-degraded value for this stat — what <see cref="GetValue"/> returns when
+    /// the source is absent or disabled, and the bound the result can never be worse than.
+    /// For a <see cref="HigherIsBetter"/> stat this is a floor (a low number); for a
+    /// lower-is-better stat it is a ceiling (a high number). Default: 0.
     /// </summary>
-    public virtual int CalculateValueDisabled() => 0;
+    public virtual int WorstValue => 0;
+
+    /// <summary>
+    /// Optional cap on the best side of the range, or null for no cap. For a
+    /// <see cref="HigherIsBetter"/> stat this is the maximum the value may reach; for a
+    /// lower-is-better stat it is the minimum. Lets each stat carry its own two-sided bounds
+    /// instead of relying on clamps at the call site. Default: null (no cap).
+    /// </summary>
+    public virtual int? BestValue => null;
 
     /// <summary>
     /// Get the raw (unmodified by wounds) source score.
@@ -143,24 +155,17 @@ public abstract class DerivedStat
     }
 
     /// <summary>
-    /// Convert the source score into the derived stat value (score >= 0 path).
-    /// Each subclass implements its own formula.
+    /// Convert the source score into the raw derived stat value (score >= 0 path), before
+    /// any bounds are applied. Each subclass implements its own formula. Protected so callers
+    /// go through <see cref="GetValue"/> / <see cref="GetRawValue"/>, which apply the bounds.
     /// </summary>
-    public abstract int CalculateValue(int sourceScore);
-
-    /// <summary>
-    /// The lowest meaningful value for this stat regardless of wounds or anatomy.
-    /// Used as a safe fallback when <see cref="IsUsable"/> returns false and the caller
-    /// needs a numeric value to stay compatible with running code.
-    /// Default: 0. Override in stats where a minimum of 1 is required (e.g. memory slots).
-    /// </summary>
-    public virtual int MinimumValue() => 0;
+    protected abstract int CalculateValue(int sourceScore);
 
     /// <summary>
     /// Returns false when this stat cannot be computed for the given party member because
     /// (a) the related organ / organ part / body part is absent from their anatomy, or
     /// (b) the related source is fully disabled by a High-handicap wound.
-    /// Callers can use <see cref="MinimumValue"/> as the fallback score, or invoke
+    /// Callers can use <see cref="WorstValue"/> as the fallback score, or invoke
     /// anatomy-specific fallback logic.
     /// </summary>
     public bool IsUsable(PartyMember member)
@@ -189,10 +194,36 @@ public abstract class DerivedStat
     /// </summary>
     public int GetValue(PartyMember member)
     {
-        int effective = GetEffectiveScore(member);
-        if (effective == int.MinValue) return CalculateValueDisabled();
-        if (effective < 0)             return CalculateValueNegative(effective);
-        return CalculateValue(effective);
+        int score = GetEffectiveScore(member);
+        // A negative score means the source is absent (int.MinValue) or wound-disabled: the
+        // stat degrades all the way to its worst value.
+        if (score < 0) return WorstValue;
+        return Clamp(CalculateValue(score));
+    }
+
+    /// <summary>
+    /// Value computed from the raw source score, ignoring wounds, with bounds applied.
+    /// Used where wounds are accounted for separately (e.g. <see cref="PartyMember.MaxHp"/>).
+    /// </summary>
+    public int GetRawValue(PartyMember member) => Clamp(CalculateValue(GetSourceScore(member)));
+
+    /// <summary>
+    /// Clamp a raw computed value so it is never worse than <see cref="WorstValue"/> nor,
+    /// when set, better than <see cref="BestValue"/>, respecting <see cref="HigherIsBetter"/>.
+    /// </summary>
+    private int Clamp(int value)
+    {
+        if (HigherIsBetter)
+        {
+            value = Math.Max(WorstValue, value);
+            if (BestValue.HasValue) value = Math.Min(BestValue.Value, value);
+        }
+        else
+        {
+            value = Math.Min(WorstValue, value);
+            if (BestValue.HasValue) value = Math.Max(BestValue.Value, value);
+        }
+        return value;
     }
 
     /// <summary>
