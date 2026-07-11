@@ -6,6 +6,6 @@ loading screen messages
 age
 organ name in humor button during dices rolls
 childhood XP
-move to button on inventory
 stats related to multiples organs
 MM max level
+item description written 2 times

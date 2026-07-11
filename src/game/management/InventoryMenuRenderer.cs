@@ -115,6 +115,11 @@ public sealed class InventoryMenuRenderer
     private record struct ContentHit(int Index, int Y0, int Y1);
     private readonly List<ContentHit> _contentHits = new();
 
+    // "Move to" destinations (body anchor or container item).
+    private enum MoveDestKind { Anchor, Container }
+    private readonly record struct MoveDest(MoveDestKind Kind, EquipmentAnchor Anchor, ContainerItem? Container, string Label);
+    private readonly List<(int Row, MoveDest Dest)> _moveDestHits = new();
+
     // ── State ─────────────────────────────────────────────────────
     private EquipmentAnchor? _hoveredAnchor  = null;
     private int              _hoveredItemIdx = -1;
@@ -175,6 +180,18 @@ public sealed class InventoryMenuRenderer
     // Consume button hit region (row of the button label, or -1 if not shown)
     private int  _consumeButtonRow     = -1;
     private bool _consumeButtonHovered = false;
+
+    // Throw-away / move-to action buttons (row of the button label, or -1 if not shown)
+    private int  _throwButtonRow      = -1;
+    private bool _throwButtonHovered  = false;
+    private int  _moveButtonRow       = -1;
+    private bool _moveButtonHovered   = false;
+    private bool _moveButtonEnabled   = false;
+
+    // "Move to" submenu state
+    private bool  _moveMenuOpen    = false;
+    private Item? _moveMenuItem    = null;  // item the submenu was opened for
+    private int   _hoveredMoveDest = -1;    // index into the last-rendered destination list
 
     /// <summary>
     /// Invoked when the player successfully consumes an item.
@@ -251,7 +268,7 @@ public sealed class InventoryMenuRenderer
         int boxW = contentLen + 2;                 // 1 cell padding each side
         int boxRight = RightPanelX - 1;            // column of the separator
         int x0 = Math.Max(ArtOffsetX, boxRight - boxW);
-        int y0 = 0;
+        int y0 = 2;
 
         // Background strip + single-line border.
         for (int dy = 0; dy < 3; dy++)
@@ -298,6 +315,18 @@ public sealed class InventoryMenuRenderer
 
         bool newConsumeHovered = _consumeButtonRow >= 0 && x >= RightContentX && y == _consumeButtonRow;
         if (newConsumeHovered != _consumeButtonHovered) { _consumeButtonHovered = newConsumeHovered; changed = true; }
+
+        bool newThrowHovered = _throwButtonRow >= 0 && x >= RightContentX && y == _throwButtonRow;
+        if (newThrowHovered != _throwButtonHovered) { _throwButtonHovered = newThrowHovered; changed = true; }
+
+        bool newMoveHovered = _moveButtonRow >= 0 && _moveButtonEnabled && x >= RightContentX && y == _moveButtonRow;
+        if (newMoveHovered != _moveButtonHovered) { _moveButtonHovered = newMoveHovered; changed = true; }
+
+        int newMoveDest = -1;
+        if (x >= RightContentX)
+            for (int i = 0; i < _moveDestHits.Count; i++)
+                if (_moveDestHits[i].Row == y) { newMoveDest = i; break; }
+        if (newMoveDest != _hoveredMoveDest) { _hoveredMoveDest = newMoveDest; changed = true; }
 
         // During drag: update sticky hover-item when the cursor enters a real item.
         // When the cursor moves to a placeholder / header / empty space the previous
@@ -443,6 +472,14 @@ public sealed class InventoryMenuRenderer
         if (_consumeButtonRow >= 0 && x >= RightContentX && y == _consumeButtonRow)
             return true;
 
+        // Same deal for the throw-away / move-to buttons and the move submenu rows:
+        // keep the selection so mouse-up can act on the displayed item.
+        if (x >= RightContentX &&
+            ((_throwButtonRow >= 0 && y == _throwButtonRow)
+             || (_moveButtonRow >= 0 && y == _moveButtonRow)
+             || _moveDestHits.Exists(h => h.Row == y)))
+            return true;
+
         _selectedAnchor  = null;
         _selectedItemIdx = -1;
         _selectedContentPath.Clear();
@@ -474,6 +511,7 @@ public sealed class InventoryMenuRenderer
                 _selectedItemIdx = idx;
                 _selectedContentPath.Clear();
             }
+            CloseMoveMenu();
             return true;
         }
 
@@ -484,6 +522,7 @@ public sealed class InventoryMenuRenderer
             _selectedItemIdx = -1;
             _selectedContentPath.Clear();
             _pendingDragAnchor = null;
+            CloseMoveMenu();
             return true;
         }
 
@@ -518,6 +557,43 @@ public sealed class InventoryMenuRenderer
                     OnItemConsumed?.Invoke();
                     return true;
                 }
+            }
+
+            // Throw-away button: discard the displayed item (and any container contents).
+            if (_throwButtonRow >= 0 && x >= RightContentX && y == _throwButtonRow && _member != null)
+            {
+                ThrowAwayDisplayedItem();
+                return true;
+            }
+
+            // Click on a move-to destination row (submenu open).
+            if (x >= RightContentX)
+            {
+                foreach (var (row, dest) in _moveDestHits)
+                {
+                    if (row == y)
+                    {
+                        MoveDisplayedItem(dest);
+                        return true;
+                    }
+                }
+            }
+
+            // Move-to button toggles the destination submenu.
+            if (_moveButtonRow >= 0 && _moveButtonEnabled && x >= RightContentX && y == _moveButtonRow)
+            {
+                var displayed = ResolveDisplayedItem();
+                if (_moveMenuOpen && ReferenceEquals(_moveMenuItem, displayed))
+                {
+                    _moveMenuOpen = false;
+                    _moveMenuItem = null;
+                }
+                else
+                {
+                    _moveMenuOpen = true;
+                    _moveMenuItem = displayed;
+                }
+                return true;
             }
 
             return false;
@@ -605,7 +681,17 @@ public sealed class InventoryMenuRenderer
         _hoveredAnchor      = null;
         _hoveredItemIdx     = -1;
         _hoveringRightPanel = false;
+        CloseMoveMenu();
         CancelDrag();
+    }
+
+    /// <summary>Close the "move to" destination submenu and clear its hover state.</summary>
+    private void CloseMoveMenu()
+    {
+        _moveMenuOpen    = false;
+        _moveMenuItem    = null;
+        _hoveredMoveDest = -1;
+        _moveDestHits.Clear();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -679,14 +765,20 @@ public sealed class InventoryMenuRenderer
     {
         var viewedContainer = ResolveViewedContainer();
         if (viewedContainer != null && contentIdx < viewedContainer.Contents.Count)
+        {
             _selectedContentPath.Add(contentIdx);
+            CloseMoveMenu();
+        }
     }
 
     /// <summary>Go back one level in the content selection path.</summary>
     private void GoBackContent()
     {
         if (_selectedContentPath.Count > 0)
+        {
             _selectedContentPath.RemoveAt(_selectedContentPath.Count - 1);
+            CloseMoveMenu();
+        }
     }
 
     /// <summary>
@@ -727,6 +819,133 @@ public sealed class InventoryMenuRenderer
             else break;
         }
         return displayed;
+    }
+
+    /// <summary>
+    /// Resolve the displayed item together with its immediate location:
+    /// <c>parent</c> is the container it currently sits in (null when it sits
+    /// directly on the anchor list), and <c>anchor</c> is the top-level anchor.
+    /// </summary>
+    private (Item item, ContainerItem? parent, EquipmentAnchor anchor)? ResolveDisplayedItemLocation()
+    {
+        if (_member == null || !_selectedAnchor.HasValue || _selectedItemIdx < 0) return null;
+        var anchor = _selectedAnchor.Value;
+        var items  = _member.EquippedItems[anchor];
+        if (_selectedItemIdx >= items.Count) return null;
+
+        Item displayed = items[_selectedItemIdx];
+        ContainerItem? parent = null;
+        foreach (int ci in _selectedContentPath)
+        {
+            if (displayed is not ContainerItem container) break;
+            if (ci >= container.Contents.Count) break;
+            parent    = container;
+            displayed = container.Contents[ci];
+        }
+        return (displayed, parent, anchor);
+    }
+
+    /// <summary>
+    /// Enumerate every place the displayed item could be moved to: body anchors that
+    /// accept it with room, and container items with room. Excludes the item's current
+    /// location, the item itself, and (for containers) its own descendants.
+    /// </summary>
+    private List<MoveDest> BuildMoveDestinations(Item item, ContainerItem? currentParent, EquipmentAnchor currentAnchor)
+    {
+        var dests = new List<MoveDest>();
+        if (_member == null) return dests;
+
+        foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
+        {
+            // A move onto the anchor the item already sits directly on is a no-op.
+            if (currentParent == null && anchor == currentAnchor) continue;
+            if (anchor.CanAccept(item) && _member.AvailableSlots(anchor) >= item.SlotCount)
+                dests.Add(new MoveDest(MoveDestKind.Anchor, anchor, null, anchor.Label().ToUpperInvariant()));
+        }
+
+        foreach (var list in _member.EquippedItems.Values)
+            foreach (var equipped in list)
+                CollectContainerDests(equipped, item, currentParent, dests);
+
+        return dests;
+    }
+
+    /// <summary>Recursively collect container destinations, skipping the moved item and its subtree.</summary>
+    private void CollectContainerDests(Item candidate, Item moving, ContainerItem? currentParent, List<MoveDest> dests)
+    {
+        if (ReferenceEquals(candidate, moving)) return;  // skip the moved item and everything inside it
+
+        if (candidate is ContainerItem container)
+        {
+            if (!ReferenceEquals(container, currentParent)
+                && container.CanContain(moving) && container.AvailableSlots >= moving.SlotCount)
+                dests.Add(new MoveDest(MoveDestKind.Container, default, container, container.DisplayName));
+
+            foreach (var c in container.Contents)
+                CollectContainerDests(c, moving, currentParent, dests);
+        }
+    }
+
+    /// <summary>Remove the displayed item from the inventory. Containers take their contents with them.</summary>
+    private void ThrowAwayDisplayedItem()
+    {
+        var loc = ResolveDisplayedItemLocation();
+        if (loc == null || _member == null) return;
+        var (item, parent, anchor) = loc.Value;
+
+        if (parent != null) parent.TryRemove(item);
+        else _member.EquippedItems[anchor].Remove(item);
+
+        ClearItemSelection();
+    }
+
+    /// <summary>Move the displayed item to the chosen destination, restoring it on failure.</summary>
+    private void MoveDisplayedItem(MoveDest dest)
+    {
+        var loc = ResolveDisplayedItemLocation();
+        if (loc == null || _member == null) return;
+        var (item, parent, anchor) = loc.Value;
+
+        // Remove from the source first so destination slot checks are accurate.
+        if (parent != null) parent.TryRemove(item);
+        else _member.EquippedItems[anchor].Remove(item);
+
+        bool placed = dest.Kind == MoveDestKind.Anchor
+            ? TryPlaceOnAnchor(dest.Anchor, item)
+            : dest.Container != null && dest.Container.TryAdd(item);
+
+        // Put the item back where it was if the destination unexpectedly refused it.
+        if (!placed)
+        {
+            if (parent != null) parent.TryAdd(item);
+            else _member.EquippedItems[anchor].Add(item);
+        }
+
+        ClearItemSelection();
+    }
+
+    private bool TryPlaceOnAnchor(EquipmentAnchor anchor, Item item)
+    {
+        if (_member == null) return false;
+        if (!anchor.CanAccept(item) || _member.AvailableSlots(anchor) < item.SlotCount) return false;
+        _member.EquippedItems[anchor].Add(item);
+        return true;
+    }
+
+    /// <summary>Clear item selection plus all right-panel button/menu state.</summary>
+    private void ClearItemSelection()
+    {
+        _selectedAnchor       = null;
+        _selectedItemIdx      = -1;
+        _selectedContentPath.Clear();
+        _consumeButtonRow     = -1;
+        _consumeButtonHovered = false;
+        _throwButtonRow       = -1;
+        _throwButtonHovered   = false;
+        _moveButtonRow        = -1;
+        _moveButtonHovered    = false;
+        _moveButtonEnabled    = false;
+        CloseMoveMenu();
     }
 
     private void ResetDragState()
@@ -1056,7 +1275,7 @@ public sealed class InventoryMenuRenderer
 
         _terminal.Text(RightContentX, y, TruncRight(item.DisplayName, RightContentW), InfoTitleColor, RightPanelBg);
         y++;
-        DrawSep(y); y++;
+        DrawSep(y); y += 2;
 
         string types = string.Join(", ", item.Types.Select(t => t.ToString()));
         DrawKV("Type",   types,                                       ref y);
@@ -1073,7 +1292,7 @@ public sealed class InventoryMenuRenderer
 
         if (item.Info.Length > 0)
         {
-            DrawSep(y); y++;
+            DrawSep(y); y += 2;
             foreach (string line in item.Info)
             {
                 if (y > InfoEndRow) break;
@@ -1090,7 +1309,7 @@ public sealed class InventoryMenuRenderer
         _consumeButtonRow = -1;
         if (item is ConsumableItem consumable && _member != null)
         {
-            if (y <= InfoEndRow) { DrawSep(y); y++; }
+            if (y <= InfoEndRow) { DrawSep(y); y += 2; }
             if (y <= InfoEndRow)
             {
                 _terminal.Text(RightContentX, y, "— Composition —", InfoLabelColor, RightPanelBg);
@@ -1158,6 +1377,63 @@ public sealed class InventoryMenuRenderer
             }
         }
 
+        // ── Throw-away / move-to buttons (available for every item) ─────
+        _throwButtonRow    = -1;
+        _moveButtonRow     = -1;
+        _moveButtonEnabled = false;
+        _moveDestHits.Clear();
+
+        var loc = ResolveDisplayedItemLocation();
+        if (_member != null && loc.HasValue && ReferenceEquals(loc.Value.item, item))
+        {
+            var (locItem, locParent, locAnchor) = loc.Value;
+
+            if (y <= InfoEndRow) { DrawSep(y); y += 2; }
+
+            // THROW AWAY — always present, always clickable. Purple = destructive/negative.
+            if (y <= InfoEndRow)
+            {
+                Vector4 tFg = _throwButtonHovered ? Config.Colors.Black       : Config.Colors.LightPurple;
+                Vector4 tBg = _throwButtonHovered ? Config.Colors.LightPurple : Config.Colors.DarkGray35;
+                _terminal.Text(RightContentX, y, "[ THROW AWAY ]", tFg, tBg);
+                _throwButtonRow = y;
+                y += 2;   // blank line between buttons
+            }
+
+            // MOVE TO — greyed out when there is nowhere else to move the item.
+            var dests = BuildMoveDestinations(locItem, locParent, locAnchor);
+            bool canMove = dests.Count > 0;
+            _moveButtonEnabled = canMove;
+            if (y <= InfoEndRow)
+            {
+                Vector4 mFg, mBg;
+                if (!canMove)                { mFg = InfoLabelColor; mBg = RightPanelBg; }
+                else if (_moveButtonHovered) { mFg = Config.TravelUI.ClearButtonHoverTextColor; mBg = Config.TravelUI.ClearButtonHoverBackgroundColor; }
+                else                         { mFg = Config.TravelUI.ClearButtonTextColor;      mBg = Config.TravelUI.ClearButtonBackgroundColor; }
+                _terminal.Text(RightContentX, y, "[ MOVE TO ]", mFg, mBg);
+                _moveButtonRow = y;
+                y += 2;   // blank line before the destination submenu
+            }
+
+            // Destination submenu (only when opened for this item).
+            if (canMove && _moveMenuOpen && ReferenceEquals(_moveMenuItem, item))
+            {
+                for (int di = 0; di < dests.Count; di++)
+                {
+                    if (y > InfoEndRow) break;
+                    var d = dests[di];
+                    bool hovered = _hoveredMoveDest == di;
+                    Vector4 dFg = hovered ? ContentHovered : ContentNormal;
+                    Vector4 dBg = hovered ? ContentSelBg   : RightPanelBg;
+                    string glyph = d.Kind == MoveDestKind.Anchor ? "→ " : "→ ▢ ";
+                    string label = TruncRight("  " + glyph + d.Label, RightContentW);
+                    _terminal.Text(RightContentX, y, label.PadRight(RightContentW), dFg, dBg);
+                    _moveDestHits.Add((y, d));
+                    y++;
+                }
+            }
+        }
+
         return y;
     }
 
@@ -1171,7 +1447,7 @@ public sealed class InventoryMenuRenderer
         int y = startRow;
         if (y > InfoEndRow) return;
 
-        DrawSep(y); y++;
+        DrawSep(y); y += 2;
         string header = $"Contents  {container.UsedSlots}/{container.ContentSlots} slots";
         _terminal.Text(RightContentX, y, TruncRight(header, RightContentW), InfoLabelColor, RightPanelBg);
         y++;
@@ -1225,7 +1501,7 @@ public sealed class InventoryMenuRenderer
                        && container != _dragItem;
 
         int usedPreview = container.UsedSlots + (_dragItem != null && canDrop ? _dragItem.SlotCount : 0);
-        DrawSep(y); y++;
+        DrawSep(y); y += 2;
         string header = canDrop
             ? $"Contents  {usedPreview}/{container.ContentSlots} slots (preview)"
             : $"Contents  {container.UsedSlots}/{container.ContentSlots} slots";
