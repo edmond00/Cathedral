@@ -114,6 +114,30 @@ public sealed class HumorQueue
     }
 
     /// <summary>
+    /// Fill every slot by secretion based on organ score, but never produce Black Bile.
+    /// Black bile's share of the distribution is redistributed proportionally across
+    /// Blood, Phlegm and Yellow Bile. Used at protagonist creation.
+    /// </summary>
+    public void FillWithSecretionSkippingBlackBile(int organScore, Random rng)
+    {
+        for (int i = 0; i < Capacity; i++)
+            _items[i] = CreateSecretedHumorNoBlackBile(organScore, rng);
+    }
+
+    /// <summary>
+    /// Randomly overwrite roughly <paramref name="percent"/>% of the slots with Juvenescence.
+    /// Each slot is independently converted with probability percent/100.
+    /// Used once at protagonist creation to seed the vigour of youth.
+    /// </summary>
+    public void SeedJuvenescence(int percent, Random rng)
+    {
+        if (percent <= 0) return;
+        for (int i = 0; i < Capacity; i++)
+            if (rng.Next(100) < percent)
+                _items[i] = new JuvenescenceHumor();
+    }
+
+    /// <summary>
     /// TEMPORARY: Directly set a slot by index, bypassing queue logic.
     /// Use only for testing humor display. Remove after verification.
     /// </summary>
@@ -265,5 +289,28 @@ public sealed class HumorQueue
         roll -= phlegm;
         if (roll < yellow) return new YellowBileHumor();
         return new BlackBileHumor();
+    }
+
+    /// <summary>
+    /// Same secretion probabilities as <see cref="CreateSecretedHumor"/> but Black Bile is
+    /// excluded: its share is redistributed proportionally across Blood, Phlegm and Yellow Bile
+    /// by rolling within the non-black total. Used for protagonist-creation queue fills.
+    /// </summary>
+    private static BodyHumor CreateSecretedHumorNoBlackBile(int organScore, Random rng)
+    {
+        int score  = Math.Clamp(organScore, 0, 10);
+        int blood  = Math.Max(0, score * 8 - 3);
+        int yellow = Math.Max(0, 40 - score * 3);
+        int black  = Math.Max(0, 50 - score * 5);
+        int phlegm = 100 - blood - yellow - black;
+
+        int total = blood + phlegm + yellow;
+        if (total <= 0) return new PhlegmHumor();
+
+        int roll = rng.Next(total);
+        if (roll < blood)  return new BloodHumor();
+        roll -= blood;
+        if (roll < phlegm) return new PhlegmHumor();
+        return new YellowBileHumor();
     }
 }

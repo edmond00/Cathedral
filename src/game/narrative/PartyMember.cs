@@ -240,12 +240,16 @@ public abstract class PartyMember
     }
 
     /// <summary>
-    /// Re-fills all four humor queues using the current organ scores.
+    /// Re-fills all four humor queues using the current organ scores, following the
+    /// protagonist-creation rules: secrete only Blood / Phlegm / Yellow Bile (no Black Bile),
+    /// then seed Juvenescence into a random <c>youthfulness</c>% of the slots.
     /// Call this after the player has finished setting scores in the creation screen.
     /// </summary>
     public void ReinitializeHumorQueues()
     {
-        HumorQueues.Initialize(this, _sharedRng);
+        int youthfulness = DerivedStats
+            .FirstOrDefault(s => s.Name == "youthfulness")?.GetValue(this) ?? 0;
+        HumorQueues.InitializeForCreation(this, _sharedRng, youthfulness);
     }
 
 

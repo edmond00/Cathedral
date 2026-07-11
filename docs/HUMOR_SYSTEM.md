@@ -13,6 +13,7 @@ Cathedral models the four classical humors as FIFO slot queues, one queue per hu
 | Yellow Bile   | ♌      | Yellow      | −1         | Subtract **1** from result (N→N−1) | Low organ score |
 | Black Bile    | ☩      | Dark gray   | 0          | *(none)*                    | Medium-low score |
 | Melancholia   | ☽      | Medium gray | −2         | Convert face **6 → 5**      | Event-only       |
+| Juvenescence  | ♈      | Bright gold | +2         | Add **+2** to result (N→N+2) | Creation-only (youthfulness) |
 
 **Vital Heat** is an integer modifier applied to dice rolls when a humor is consumed. Positive values raise the result; negative values lower it.
 
@@ -86,6 +87,15 @@ Black bile can only be removed via event-driven purgation (`HumorQueue.ForceRemo
 ## Queue Initialization
 
 When a `PartyMember` is constructed, `HumorQueueSet.Initialize(member, rng)` fills all four queues to capacity using `FillWithSecretion(organScore, rng)`. This calls `Secrete()` 49 times, building the queue from position 48 down to 0, so the "oldest" slot reflects the organ's baseline composition at character creation.
+
+### Protagonist creation
+
+After the player finishes allocating organ scores, `PartyMember.ReinitializeHumorQueues()` rebuilds the queues via `HumorQueueSet.InitializeForCreation(member, rng, youthfulnessPercent)`, which differs from the generic init in two ways:
+
+1. **No Black Bile.** Each queue is filled with `FillWithSecretionSkippingBlackBile(organScore, rng)`: humors are secreted using the normal organ-score probabilities, but Black Bile is excluded and its share is redistributed proportionally across Blood, Phlegm and Yellow Bile.
+2. **Juvenescence seeding.** `SeedJuvenescence(youthfulnessPercent, rng)` then independently converts each slot to `JuvenescenceHumor` with probability `youthfulness / 100`, so roughly `youthfulness`% of every queue becomes Juvenescence.
+
+`youthfulness` is the heart-derived `YouthfulnessStat` (0–50 %, `score * 50 / 4`). It is consumed only here, at creation.
 
 ---
 

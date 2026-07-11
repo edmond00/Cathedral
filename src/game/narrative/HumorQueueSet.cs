@@ -118,6 +118,22 @@ public sealed class HumorQueueSet
         }
     }
 
+    /// <summary>
+    /// Protagonist-creation initialisation. For every queue: fill all slots by secretion using
+    /// the organ's score but never Black Bile (Blood / Phlegm / Yellow Bile only), then seed
+    /// Juvenescence into a random <paramref name="youthfulnessPercent"/>% of the slots.
+    /// </summary>
+    public void InitializeForCreation(PartyMember member, Random rng, int youthfulnessPercent)
+    {
+        foreach (var queue in All)
+        {
+            var organ = member.GetOrganById(queue.OrganId);
+            int score = organ?.Score ?? 5;
+            queue.FillWithSecretionSkippingBlackBile(score, rng);
+            queue.SeedJuvenescence(youthfulnessPercent, rng);
+        }
+    }
+
     // ── Gameplay API (future implementation hooks) ────────────────
 
     /// <summary>
