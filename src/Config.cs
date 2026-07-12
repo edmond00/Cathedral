@@ -9,6 +9,33 @@ namespace Cathedral;
 /// </summary>
 public static class Config
 {
+    #region Randomness
+
+    public static class Rng
+    {
+        /// <summary>
+        /// Master seed for the entire playthrough — world layout, protagonist spawn,
+        /// dice rolls, travel-path jitter, etc. all derive from it (see <see cref="GameRng"/>).
+        ///
+        /// <list type="bullet">
+        /// <item><c>null</c> (default) → a fresh time-based seed each launch, so every run
+        /// gets a different world.</item>
+        /// <item>a fixed integer → the exact same run can be replayed by making the same
+        /// decisions.</item>
+        /// </list>
+        ///
+        /// Set it here, or pass <c>--seed &lt;n&gt;</c> on the command line (the CLI flag
+        /// overrides this value). The resolved seed is printed at startup so a time-based
+        /// run can be pinned afterwards.
+        ///
+        /// Note: this does not affect the LLM (its sampling is nondeterministic and carries
+        /// no seed), nor RNG already seeded from world data such as NPC or location ids.
+        /// </summary>
+        public static int? Seed { get; set; } = null;
+    }
+
+    #endregion
+
     #region Terminal Configuration
     public static class Name {
         public const string GameTitle = "Anatomia Cogitationis et Cosmi";
@@ -102,8 +129,8 @@ public static class Config
         // Update timing for interface animations
         public const float UpdateInterval = 0.1f; // Update every 100ms (10 Hz)
         
-        // Pathfinding noise
-        public const int PathfindingNoiseSeed = 42; // Fixed seed for consistent paths
+        // Pathfinding noise. The seed now comes from the central Config.Rng.Seed /
+        // GameRng master seed (see GameRng.DerivedSeed("pathfinding-noise")).
         public const float PathfindingNoiseStrength = 0.25f; // 0-1, adds up to 25% terrain-correlated variation to edge costs
 
         /// <summary>

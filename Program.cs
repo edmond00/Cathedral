@@ -28,6 +28,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --mm                               After the childhood reminescence phase, fill every empty memory slot with random unheld modiMentis");
     Console.WriteLine("  --weapons                          Give the protagonist a starter weapon loadout (Arming Sword, Hunting Bow, Round Shield)");
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
+    Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice)");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
 }
@@ -199,6 +200,20 @@ if (args.Any(a => a == "--cpu"))
     Console.ResetColor();
     Console.WriteLine();
 }
+
+// Check for --seed <n> flag (fix the master RNG seed for a reproducible run).
+// Overrides Config.Rng.Seed when present.
+for (int i = 0; i < args.Length; i++)
+{
+    if (args[i] == "--seed" && i + 1 < args.Length && int.TryParse(args[i + 1], out int parsedSeed))
+    {
+        Cathedral.Config.Rng.Seed = parsedSeed;
+        break;
+    }
+}
+// Resolve and lock in the master seed (null -> time-based) and print it so a
+// time-based run can be replayed later with --seed <printed value>.
+Cathedral.GameRng.Initialize(Cathedral.Config.Rng.Seed);
 
 // Validate narrative structure at startup
 try

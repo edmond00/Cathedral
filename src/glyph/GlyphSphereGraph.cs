@@ -117,7 +117,7 @@ namespace Cathedral.Glyph
             unchecked
             {
                 uint h = (uint)(lo * 73856093) ^ (uint)(hi * 19349663)
-                       ^ (uint)Config.GlyphSphere.PathfindingNoiseSeed;
+                       ^ (uint)GameRng.DerivedSeed("pathfinding-jitter");
                 // xorshift-style avalanche so neighbouring (lo, hi) pairs decorrelate.
                 h ^= h >> 13;
                 h *= 0x5bd1e995u;

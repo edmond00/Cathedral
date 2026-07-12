@@ -24,8 +24,13 @@ namespace Cathedral.Glyph.Microworld
         // Track vertices that need water animation (sea and ocean biomes without locations)
         private readonly HashSet<int> waterVertices = new HashSet<int>();
         
-        // Random generator for water animation
+        // Random generator for water animation (purely cosmetic — intentionally unseeded)
         private readonly Random animationRandom = new Random();
+
+        // Master-seed-derived offset added to every Perlin sample position, so a
+        // different seed shifts the sampled noise field and yields a different world.
+        // Computed once in GenerateWorld and reused by the recompute fallback.
+        private Vector3 _worldNoiseOffset;
 
         // Protagonist system
         private int _protagonistVertex = -1;
@@ -231,7 +236,15 @@ namespace Cathedral.Glyph.Microworld
         public override void GenerateWorld()
         {
             Console.WriteLine("Generating microworld biomes using Perlin noise...");
-            
+
+            // Derive the world's noise offset from the master seed. A large offset moves
+            // the sampled region of the (fixed) Perlin field, so each seed is a new world.
+            var worldRng = GameRng.For("world-terrain");
+            _worldNoiseOffset = new Vector3(
+                (float)(worldRng.NextDouble() * 20000.0 - 10000.0),
+                (float)(worldRng.NextDouble() * 20000.0 - 10000.0),
+                (float)(worldRng.NextDouble() * 20000.0 - 10000.0));
+
             var noiseValues = new List<float>();
             var glyphCounts = new Dictionary<char, int>();
 
@@ -244,10 +257,11 @@ namespace Cathedral.Glyph.Microworld
                 Vector3 off1 = new Vector3(1337.0f, 2468.0f, 9876.0f);
                 Vector3 off2 = new Vector3(5432.0f, 8765.0f, 1234.0f);
                 Vector3 off3 = new Vector3(9999.0f, 3333.0f, 7777.0f);
-                
-                Vector3 p1 = (off1 + pos) / 12f;
-                Vector3 p2 = (off2 + pos) / 3f;
-                Vector3 p3 = (off3 + pos) / 8f;
+
+                Vector3 sp = pos + _worldNoiseOffset;
+                Vector3 p1 = (off1 + sp) / 12f;
+                Vector3 p2 = (off2 + sp) / 3f;
+                Vector3 p3 = (off3 + sp) / 8f;
                 
                 float perlinNoise1 = Perlin.Noise(p1.X, p1.Y, p1.Z);
                 float perlinNoise2 = Perlin.Noise(p2.X, p2.Y, p2.Z);
@@ -402,9 +416,10 @@ namespace Cathedral.Glyph.Microworld
 
         private LocationType? DetermineLocation(BiomeType biome, Vector3 position)
         {
-            // Generate a pseudo-random value based on position for consistency
+            // Generate a pseudo-random value based on position for consistency, mixed with
+            // the master seed so the same vertex yields different locations across worlds.
             int seed = (int)(position.X * 1000 + position.Y * 2000 + position.Z * 3000);
-            var random = new Random(Math.Abs(seed));
+            var random = new Random(Math.Abs(unchecked(seed ^ GameRng.MasterSeed)));
             
             // Check if a location should spawn based on biome density
             if (random.NextDouble() > biome.Density)
@@ -448,10 +463,11 @@ namespace Cathedral.Glyph.Microworld
             Vector3 off1 = new Vector3(1337.0f, 2468.0f, 9876.0f);
             Vector3 off2 = new Vector3(5432.0f, 8765.0f, 1234.0f);
             Vector3 off3 = new Vector3(9999.0f, 3333.0f, 7777.0f);
-            
-            Vector3 p1 = (off1 + pos) / 12f;
-            Vector3 p2 = (off2 + pos) / 3f;
-            Vector3 p3 = (off3 + pos) / 8f;
+
+            Vector3 sp = pos + _worldNoiseOffset;
+            Vector3 p1 = (off1 + sp) / 12f;
+            Vector3 p2 = (off2 + sp) / 3f;
+            Vector3 p3 = (off3 + sp) / 8f;
             
             float perlinNoise1 = Perlin.Noise(p1.X, p1.Y, p1.Z);
             float perlinNoise2 = Perlin.Noise(p2.X, p2.Y, p2.Z);
@@ -556,7 +572,13 @@ namespace Cathedral.Glyph.Microworld
 
             if (suitableVertices.Count > 0)
             {
-                int newVertex = suitableVertices[animationRandom.Next(suitableVertices.Count)];
+                // Fresh seeded generator each call so the spawn is reproducible per seed
+                // (and identical across in-session "new game" resets for the same world).
+                var spawnRng = GameRng.For("spawn");
+                // suitableVertices comes from dictionary enumeration; sort for a stable
+                // ordering so the picked index maps to the same vertex every run.
+                suitableVertices.Sort();
+                int newVertex = suitableVertices[spawnRng.Next(suitableVertices.Count)];
                 PlaceProtagonist(newVertex, centerCamera: true); // PlaceProtagonist restores the old position first
 
                 Console.WriteLine($"Protagonist initialized at vertex {_protagonistVertex} ({vertexData[_protagonistVertex].Biome.Name})");
@@ -668,8 +690,9 @@ namespace Cathedral.Glyph.Microworld
                         candidate = i; // force-overwrite self as last resort
                 }
 
-                // Randomly pick farm or village (seeded on vertex index for determinism)
-                LocationType chosen = new Random(i).Next(2) == 0 ? farm : village;
+                // Randomly pick farm or village (seeded on vertex index + master seed for
+                // per-world determinism)
+                LocationType chosen = new Random(unchecked(i ^ GameRng.MasterSeed)).Next(2) == 0 ? farm : village;
 
                 // Place chosen location on candidate and refresh its visual
                 var cd = vertexData[candidate];

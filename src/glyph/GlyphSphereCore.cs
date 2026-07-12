@@ -1116,8 +1116,9 @@ namespace Cathedral.Glyph
 
             BuildIcosphere(subdivisions, radius);
 
-            // Initialize random with fixed seed for consistent pathfinding noise
-            var random = new Random(Config.GlyphSphere.PathfindingNoiseSeed);
+            // Initialize random from the master seed for consistent pathfinding noise
+            int pathfindingSeed = GameRng.DerivedSeed("pathfinding-noise");
+            var random = new Random(pathfindingSeed);
 
             // Initialize all vertices with default green dots and pathfinding noise
             for (int i = 0; i < vertices.Count; i++)
@@ -1137,7 +1138,7 @@ namespace Cathedral.Glyph
             }
 
             instanceCount = vertices.Count;
-            Console.WriteLine($"Generated {vertices.Count} vertices with pathfinding noise (seed: {Config.GlyphSphere.PathfindingNoiseSeed})");
+            Console.WriteLine($"Generated {vertices.Count} vertices with pathfinding noise (seed: {pathfindingSeed})");
         }
 
         private void BuildIcosphere(int subdivisions, float radius)

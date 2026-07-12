@@ -69,8 +69,8 @@ public class NarrativeController
     // Non-null only for scene-backed Exploration narration.
     private RoutineRecorder? _recorder = null;
     
-    // Random for dice rolls
-    private readonly Random _diceRandom = new Random();
+    // Random for dice rolls — seeded from the master seed so runs are reproducible.
+    private readonly Random _diceRandom = GameRng.For("dice");
 
     // Unified dice-roll overlay (animation + humor modifiers + hit-testing).
     private readonly DiceRollComponent _dice = new();

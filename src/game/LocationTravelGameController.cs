@@ -105,7 +105,7 @@ public class LocationTravelGameController : IDisposable
 
     // Travel progress — vital heat consumption during Traveling mode
     private TravelProgressRenderer? _travelProgressRenderer;
-    private readonly Random _travelRng = new Random();
+    private readonly Random _travelRng = GameRng.For("travel");
     private float _tripVhRequired;
     private float _tripVhConsumedNet;
     private float _tripVhDebt;
