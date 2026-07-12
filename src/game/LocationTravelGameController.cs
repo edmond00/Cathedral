@@ -151,8 +151,8 @@ public class LocationTravelGameController : IDisposable
     // Scene factories for biomes that use the Scene system directly (not graph-based)
     private readonly Dictionary<string, SceneFactory> _sceneFactories = new();
     
-    // Action executors (used by NarrativeController)
-    private LLMActionExecutor? _llmActionExecutor; // Optional - requires LLamaServerManager
+    // Local LLM server; when set, narrative generation is enabled. Null = no LLM (fallback narration).
+    private LlamaServerManager? _llamaServer;
     private CriticEvaluator? _criticEvaluator;
     
     // Events
@@ -201,8 +201,8 @@ public class LocationTravelGameController : IDisposable
             throw;
         }
         
-        // Initialize LLM action executor (will be set via SetLLMActionExecutor())
-        _llmActionExecutor = null;
+        // The LLM server is attached later via SetLlamaServer() once it is ready.
+        _llamaServer = null;
         
         // Initialize with WorldView as default (SetMode(MainMenu) will transition properly)
         _currentMode = GameMode.WorldView;
@@ -574,67 +574,57 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// Sets the LLM action executor for Phase 5.
-    /// If not set, falls back to SimpleActionExecutor.
+    /// Attaches the local LLM server and spins up the narrative subsystems that depend on it
+    /// (modusMentis slots, thinking executor, critic, text sanitization). When no server is
+    /// attached the game runs with fallback narration.
     /// </summary>
-    public void SetLLMActionExecutor(LLMActionExecutor executor)
+    public void SetLlamaServer(LlamaServerManager llamaServer)
     {
-        _llmActionExecutor = executor;
-        
-        // Initialize ModusMentisSlotManager for Phase 6
-        if (executor != null)
-        {
-            _modusMentisSlotManager = new ModusMentisSlotManager(executor.GetLlamaServerManager());
-            var thinkingPromptConstructor = new ThinkingPromptConstructor();
-            _thinkingExecutor = new ThinkingExecutor(
-                executor.GetLlamaServerManager(), 
-                thinkingPromptConstructor, 
-                _modusMentisSlotManager);
-            Console.WriteLine("LocationTravelGameController: ModusMentisSlotManager and ThinkingExecutor initialized for Phase 6");
-        }
-        
-        // Initialize Critic evaluator
-        if (executor != null)
-        {
-            _criticEvaluator = new CriticEvaluator(executor.GetLlamaServerManager());
+        _llamaServer = llamaServer ?? throw new ArgumentNullException(nameof(llamaServer));
 
-            _ = Task.Run(async () =>
+        // Per-modusMentis LLM slots and the thinking executor
+        _modusMentisSlotManager = new ModusMentisSlotManager(llamaServer);
+        var thinkingPromptConstructor = new ThinkingPromptConstructor();
+        _thinkingExecutor = new ThinkingExecutor(
+            llamaServer,
+            thinkingPromptConstructor,
+            _modusMentisSlotManager);
+        Console.WriteLine("LocationTravelGameController: ModusMentisSlotManager and ThinkingExecutor initialized");
+
+        // Critic evaluator
+        _criticEvaluator = new CriticEvaluator(llamaServer);
+        _ = Task.Run(async () =>
+        {
+            try
             {
-                try
-                {
-                    await _criticEvaluator.InitializeAsync();
-                    Console.WriteLine("LocationTravelGameController: Critic evaluator initialized");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"LocationTravelGameController: Failed to initialize Critic - {ex.Message}");
-                    _criticEvaluator = null;
-                }
-            });
-        }
-
-        
-        // Initialize text sanitization pipeline (3-layer anachronism/entity filter)
-        if (executor != null)
-        {
-            _ = Task.Run(async () =>
+                await _criticEvaluator.InitializeAsync();
+                Console.WriteLine("LocationTravelGameController: Critic evaluator initialized");
+            }
+            catch (Exception ex)
             {
-                try
-                {
-                    var modelPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "catalyst-models");
-                    await TextSanitizationPipeline.InitializeAsync(modelPath, executor.GetLlamaServerManager());
-                    Console.WriteLine("LocationTravelGameController: TextSanitizationPipeline initialized");
-                    await Cathedral.Game.Narrative.KeywordExtractor.InitializeAsync(modelPath);
-                    Console.WriteLine("LocationTravelGameController: KeywordExtractor initialized");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"LocationTravelGameController: Failed to initialize TextSanitizationPipeline - {ex.Message}");
-                }
-            });
-        }
+                Console.WriteLine($"LocationTravelGameController: Failed to initialize Critic - {ex.Message}");
+                _criticEvaluator = null;
+            }
+        });
 
-        Console.WriteLine("LocationTravelGameController: LLM action executor enabled");
+        // Text sanitization pipeline (3-layer anachronism/entity filter)
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var modelPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "catalyst-models");
+                await TextSanitizationPipeline.InitializeAsync(modelPath, llamaServer);
+                Console.WriteLine("LocationTravelGameController: TextSanitizationPipeline initialized");
+                await Cathedral.Game.Narrative.KeywordExtractor.InitializeAsync(modelPath);
+                Console.WriteLine("LocationTravelGameController: KeywordExtractor initialized");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"LocationTravelGameController: Failed to initialize TextSanitizationPipeline - {ex.Message}");
+            }
+        });
+
+        Console.WriteLine("LocationTravelGameController: LLM server enabled");
     }
     
     /// <summary>
@@ -2114,8 +2104,6 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
-        // Mode 6 doesn't need to reset conversation histories (uses NarrativeController architecture)
-        
         // Show terminal for interaction
         if (_core.Terminal != null)
         {
@@ -2274,7 +2262,7 @@ public class LocationTravelGameController : IDisposable
         if (_core.Terminal != null) _core.Terminal.Visible = true;
 
         if (_core.Terminal == null || _core.PopupTerminal == null
-            || _llmActionExecutor == null || _modusMentisSlotManager == null
+            || _llamaServer == null || _modusMentisSlotManager == null
             || _thinkingExecutor == null || _criticEvaluator == null
             || _protagonist == null)
         {
@@ -2300,7 +2288,7 @@ public class LocationTravelGameController : IDisposable
             var worldContext = new Cathedral.Game.Narrative.PlainBiomeContext();
             var outcomeApplicator = new OutcomeApplicator();
             var outcomeNarrator = new OutcomeNarrator(
-                _llmActionExecutor.GetLlamaServerManager(),
+                _llamaServer,
                 _modusMentisSlotManager);
             var actionExecutor = new ActionExecutionController(
                 outcomeNarrator,
@@ -2314,7 +2302,7 @@ public class LocationTravelGameController : IDisposable
                 _core.Terminal,
                 _core.PopupTerminal,
                 _core,
-                _llmActionExecutor.GetLlamaServerManager(),
+                _llamaServer,
                 _modusMentisSlotManager,
                 inputHandler,
                 _thinkingExecutor,
@@ -2356,7 +2344,7 @@ public class LocationTravelGameController : IDisposable
         if (_core.Terminal != null) _core.Terminal.Visible = true;
 
         if (_core.Terminal == null || _core.PopupTerminal == null
-            || _llmActionExecutor == null || _modusMentisSlotManager == null
+            || _llamaServer == null || _modusMentisSlotManager == null
             || _thinkingExecutor == null || _criticEvaluator == null
             || _protagonist == null)
         {
@@ -2381,7 +2369,7 @@ public class LocationTravelGameController : IDisposable
             var worldContext = new Cathedral.Game.Narrative.PlainBiomeContext();
             var outcomeApplicator = new OutcomeApplicator();
             var outcomeNarrator = new OutcomeNarrator(
-                _llmActionExecutor.GetLlamaServerManager(),
+                _llamaServer,
                 _modusMentisSlotManager);
             var actionExecutor = new ActionExecutionController(
                 outcomeNarrator,
@@ -2395,7 +2383,7 @@ public class LocationTravelGameController : IDisposable
                 _core.Terminal,
                 _core.PopupTerminal,
                 _core,
-                _llmActionExecutor.GetLlamaServerManager(),
+                _llamaServer,
                 _modusMentisSlotManager,
                 inputHandler,
                 _thinkingExecutor,
@@ -2428,7 +2416,7 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void StartNarrativeInteraction(int vertexIndex, string? startAreaLemma = null, Cathedral.Game.Narrative.TimePeriod? startTime = null)
     {
-        if (_core.Terminal == null || _core.PopupTerminal == null || _llmActionExecutor == null || _modusMentisSlotManager == null)
+        if (_core.Terminal == null || _core.PopupTerminal == null || _llamaServer == null || _modusMentisSlotManager == null)
         {
             Console.Error.WriteLine("NarrativeController: Cannot start - missing dependencies");
             return;
@@ -2460,7 +2448,7 @@ public class LocationTravelGameController : IDisposable
             // Create Action Execution Controller dependencies
             var outcomeApplicator = new OutcomeApplicator();
             var outcomeNarrator = new OutcomeNarrator(
-                _llmActionExecutor.GetLlamaServerManager(),
+                _llamaServer,
                 _modusMentisSlotManager
             );
             
@@ -2511,7 +2499,7 @@ public class LocationTravelGameController : IDisposable
                     _core.Terminal,
                     _core.PopupTerminal,
                     _core,
-                    _llmActionExecutor.GetLlamaServerManager(),
+                    _llamaServer,
                     _modusMentisSlotManager,
                     inputHandler,
                     _thinkingExecutor,
@@ -2530,7 +2518,7 @@ public class LocationTravelGameController : IDisposable
                     _core.Terminal,
                     _core.PopupTerminal,
                     _core,
-                    _llmActionExecutor.GetLlamaServerManager(),
+                    _llamaServer,
                     _modusMentisSlotManager,
                     inputHandler,
                     _thinkingExecutor,
@@ -2851,12 +2839,12 @@ public class LocationTravelGameController : IDisposable
     private Cathedral.Game.Scene.Scene? BuildSceneForLocation(int vertexIndex, out LocationInstanceState? lis)
     {
         lis = null;
-        if (_llmActionExecutor == null || _protagonist == null) return null;
+        if (_llamaServer == null || _protagonist == null) return null;
 
         var biomeInfo    = _interface.GetDetailedBiomeInfoAt(vertexIndex);
         var biomeName    = biomeInfo.biome.Name.ToLowerInvariant();
         var locationName = biomeInfo.location?.Name.ToLowerInvariant();
-        var sessionPath  = _llmActionExecutor.GetLlamaServerManager().SessionLogDir;
+        var sessionPath  = _llamaServer.SessionLogDir;
 
         if ((locationName == null || !_sceneFactories.TryGetValue(locationName, out var sceneFactory)) &&
             !_sceneFactories.TryGetValue(biomeName, out sceneFactory))
@@ -2991,7 +2979,7 @@ public class LocationTravelGameController : IDisposable
     private void StartDialogueMode(DialogueOutcome dialogueOutcome)
     {
         if (_core.Terminal == null || _narrativeController == null ||
-            _llmActionExecutor == null || _modusMentisSlotManager == null)
+            _llamaServer == null || _modusMentisSlotManager == null)
             return;
         
         Console.WriteLine($"LocationTravelGameController: Starting dialogue with {dialogueOutcome.Target.DisplayName}");
@@ -3000,7 +2988,7 @@ public class LocationTravelGameController : IDisposable
             npc:          dialogueOutcome.Target,
             protagonist:  _narrativeController.Protagonist,
             treeId:       dialogueOutcome.TreeId,
-            llmManager:   _llmActionExecutor.GetLlamaServerManager(),
+            llmManager:   _llamaServer,
             slotManager:  _modusMentisSlotManager,
             terminal:     _core.Terminal,
             prebuiltTree: dialogueOutcome.Tree,

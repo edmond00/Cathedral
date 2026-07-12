@@ -68,9 +68,8 @@ public static class LocationTravelModeLauncher
         // Create game controller AFTER core is set up
         LocationTravelGameController? gameController = null;
         
-        // LLM components (optional - Phase 5)
+        // LLM server (optional)
         LlamaServerManager? llamaServer = null;
-        LLMActionExecutor? llmExecutor = null;
         
         // Initialize LLM if requested
         if (useLLM)
@@ -127,14 +126,14 @@ public static class LocationTravelModeLauncher
                 catch (Exception ex)
                 {
                     Console.WriteLine($"✗ Failed to initialize LLM: {ex.Message}");
-                    Console.WriteLine("  Continuing without LLM (will use fallback executor)");
+                    Console.WriteLine("  Continuing without LLM (fallback narration)");
                     llamaServer = null;
                 }
             }
         }
         else
         {
-            Console.WriteLine("=== LLM Disabled - Using Simple Action Executor ===");
+            Console.WriteLine("=== LLM Disabled - Using fallback narration ===");
         }
         
         // Set up event handlers for enhanced interaction
@@ -181,64 +180,19 @@ public static class LocationTravelModeLauncher
             gameController.RegisterSceneFactory("peak",     new PeakSceneFactory());
             gameController.RegisterSceneFactory("coast",    new CoastSceneFactory());
             
-            // Set up LLM action executor if server is ready
+            // Attach the LLM server if it is ready
             if (PlaygroundMode.IsActive && llamaServer != null)
             {
-                // Playground mode: set up executor immediately — no server required
-                Console.WriteLine("Setting up playground LLM executor (no server)...");
-                try
-                {
-                    var simpleExecutor = new SimpleActionExecutor();
-                    llmExecutor = new LLMActionExecutor(llamaServer, simpleExecutor);
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            await llmExecutor.InitializeAsync();
-                            gameController?.SetLLMActionExecutor(llmExecutor);
-                            Console.WriteLine("✓ Playground executor ready");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"✗ Failed to initialize playground executor: {ex.Message}");
-                        }
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"✗ Failed to create playground executor: {ex.Message}");
-                    llmExecutor = null;
-                }
+                // Playground mode: attach immediately — the server is never actually started
+                Console.WriteLine("Attaching playground LLM server (no server process)...");
+                gameController?.SetLlamaServer(llamaServer);
+                Console.WriteLine("✓ Playground LLM server attached");
             }
             else if (llamaServer != null && llamaServer.IsServerReady)
             {
-                Console.WriteLine("Setting up LLM action executor...");
-                try
-                {
-                    var simpleExecutor = new SimpleActionExecutor();
-                    llmExecutor = new LLMActionExecutor(llamaServer, simpleExecutor);
-                    
-                    // Initialize async and set immediately when ready
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            // Initialize (Mode 6 doesn't create Director/Narrator slots)
-                            await llmExecutor.InitializeAsync();
-                            gameController.SetLLMActionExecutor(llmExecutor);
-                            Console.WriteLine("✓ LLM action executor ready");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"✗ Failed to initialize LLM executor: {ex.Message}");
-                        }
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"✗ Failed to create LLM executor: {ex.Message}");
-                    llmExecutor = null;
-                }
+                Console.WriteLine("Attaching LLM server...");
+                gameController.SetLlamaServer(llamaServer);
+                Console.WriteLine("✓ LLM server attached");
             }
             else if (llamaServer != null)
             {
@@ -255,23 +209,19 @@ public static class LocationTravelModeLauncher
                 };
 
                 // Wire the ServerReady callback to transition out of loading screen
-                llamaServer.ServerReady += async (sender, e) =>
+                llamaServer.ServerReady += (sender, e) =>
                 {
                     if (e.IsReady && gameController != null)
                     {
-                        Console.WriteLine("LLM server became ready - setting up executor and leaving loading screen...");
+                        Console.WriteLine("LLM server became ready - attaching and leaving loading screen...");
                         try
                         {
-                            var simpleExecutor = new SimpleActionExecutor();
-                            var executor = new LLMActionExecutor(llamaServer, simpleExecutor);
-                            // Initialize (Mode 6 doesn't create Director/Narrator slots)
-                            await executor.InitializeAsync();
-                            gameController.SetLLMActionExecutor(executor);
-                            Console.WriteLine("✓ LLM action executor ready (delayed initialization)");
+                            gameController.SetLlamaServer(llamaServer);
+                            Console.WriteLine("✓ LLM server attached (delayed)");
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"✗ Failed to initialize delayed LLM executor: {ex.Message}");
+                            Console.WriteLine($"✗ Failed to attach delayed LLM server: {ex.Message}");
                         }
                         // Signal the main-thread game loop to leave LLMLoading mode
                         gameController.NotifyLLMReady();
@@ -448,7 +398,6 @@ public static class LocationTravelModeLauncher
         
         // Cleanup
         Console.WriteLine("Shutting down...");
-        // llmExecutor no longer needs Dispose() - simplified to just provide LlamaServerManager access
         gameController?.Dispose();
         llamaServer?.Dispose();
         ambianceEngine?.Dispose();

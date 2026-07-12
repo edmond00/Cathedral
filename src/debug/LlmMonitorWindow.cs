@@ -283,7 +283,7 @@ public sealed class LlmMonitorWindow : Form
                        .ToTitleCase(raw.ToLowerInvariant());
         }
 
-        // Pattern 2: "You are [a/the] ROLE [,.]" — covers Critic, Narrator, etc.
+        // Pattern 2: "You are [a/the] ROLE [,.]" — covers Critic and modusMentis personas.
         m = Regex.Match(systemPrompt,
             @"^You are (?:a |the |an )?([^.,\n]{3,40})",
             RegexOptions.IgnoreCase | RegexOptions.Multiline);

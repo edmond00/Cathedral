@@ -252,32 +252,6 @@ public static class LLMLogger
     }
     
     /// <summary>
-    /// Logs a fallback event (when LLM fails and SimpleActionExecutor is used).
-    /// </summary>
-    public static void LogFallback(string reason)
-    {
-        if (!_isEnabled || _logFilePath == null) return;
-        
-        try
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] FALLBACK → Using SimpleActionExecutor");
-            sb.AppendLine($"{'-',-80}");
-            sb.AppendLine($"REASON: {reason}");
-            sb.AppendLine($"{'=',-80}\n");
-            
-            lock (_lockObject)
-            {
-                File.AppendAllText(_logFilePath, sb.ToString());
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"LLMLogger: Failed to log fallback: {ex.Message}");
-        }
-    }
-    
-    /// <summary>
     /// Logs a parsing error (when JSON response is invalid).
     /// </summary>
     public static void LogParseError(string role, string response, string error)
