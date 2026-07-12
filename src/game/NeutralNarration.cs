@@ -83,10 +83,19 @@ public static class NeutralNarration
 
     /// <summary>
     /// The intended action as a first-person "I will …" statement (e.g. "I will climb the tree").
-    /// The styled rewrite is GBNF-forced to open with the same prefix, which is then stripped to
-    /// form the button label.
+    /// When <paramref name="discrete"/> is true the adverb "discretely" is inserted ("I will
+    /// discretely climb the tree") to reflect a stealthy modus mentis. The styled rewrite is
+    /// GBNF-forced to open with the "I will " prefix, which is then stripped to form the button label.
     /// </summary>
-    public static string ActionIntent(string verbVerbatim) => $"I will {FirstPerson(verbVerbatim)}";
+    public static string ActionIntent(string verbVerbatim, bool discrete = false)
+        => discrete ? $"I will discretely {FirstPerson(verbVerbatim)}"
+                    : $"I will {FirstPerson(verbVerbatim)}";
+
+    /// <summary>
+    /// First-person refusal used when the action modus mentis is too reluctant/opposed to attempt the
+    /// action (persona-fit cancellation). Rewritten in the skill's voice as the outcome narration.
+    /// </summary>
+    public static string ActionRefusal(string verbVerbatim) => $"I don't want to {FirstPerson(verbVerbatim)}.";
 
     // ── Action outcomes ────────────────────────────────────────────────────────
     // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.
@@ -99,6 +108,18 @@ public static class NeutralNarration
 
     public static string PlausibilityFailure(string actionDisplay)
         => $"I tried to {FirstPerson(actionDisplay)}, but it could not happen here.";
+
+    /// <summary>
+    /// Refusal for a coded-rule block: the character declines an action they cannot take, with a
+    /// first-person reason (e.g. a witness present, an enemy at hand). Re-expressed in the acting
+    /// modus mentis's voice as the [IMPOSSIBLE] narration.
+    /// </summary>
+    public static string ActionImpossible(string actionDisplay, string reason)
+    {
+        var r = (reason ?? "").Trim();
+        if (r.Length == 0) return $"I cannot {FirstPerson(actionDisplay)} here.";
+        return $"I cannot {FirstPerson(actionDisplay)}: {FirstPerson(r)}";
+    }
 
     public static string ItemCombinationFailure(string actionDisplay, string itemWithArticle)
         => $"I tried to use {FirstPerson(itemWithArticle)} to {FirstPerson(actionDisplay)}, but it did not work.";

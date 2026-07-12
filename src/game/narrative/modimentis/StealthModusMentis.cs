@@ -14,6 +14,7 @@ public class StealthModusMentis : ModusMentis
         "Moves to stay unheard and unseen, keeping to shadow and quiet. Attends to noise and sightline, and inclines toward concealment, shadowing, and going undetected.";
     public override string SkillMeans       => "moving unheard and unseen";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override bool ActsDiscretely    => true;
     public override string[] Organs        => new[] { "feet", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

@@ -43,10 +43,14 @@ public sealed class StartFightTransition : PhaseTransition
     public NpcEntity Enemy { get; }
     public string Reason { get; }
 
-    public StartFightTransition(NpcEntity enemy, string reason)
+    /// <summary>When true the enemy has the initiative (surprise round) — see <see cref="FightOutcome.EnemyInitiative"/>.</summary>
+    public bool EnemyInitiative { get; }
+
+    public StartFightTransition(NpcEntity enemy, string reason, bool enemyInitiative = false)
     {
         Enemy  = enemy;
         Reason = reason;
+        EnemyInitiative = enemyInitiative;
     }
 }
 

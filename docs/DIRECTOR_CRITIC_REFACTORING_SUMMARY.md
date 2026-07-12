@@ -1,5 +1,15 @@
 # Director/Critic Refactoring - Implementation Summary
 
+> **OUTDATED (superseded 2026-07).** The general-purpose critic described below no longer exists.
+> The LLM critic has been narrowed to the **Item-Use Critic** (`src/game/ItemUseCritic.cs`), which
+> only judges whether a combined item helps an action and whether it is consumed. Its former roles moved to:
+> - **plausibility + difficulty** → the modus-mentis **persona-fit enum** (eager/willing/unsure/reluctant/opposed),
+>   asked on the action-MM slot in `ThinkingExecutor.GenerateThinkingAsync` before the action-text rewrite;
+> - **witness detection + under-threat opportunity** → deterministic **coded rules** (`ActionRulesChecker`) plus a
+>   per-modus-mentis `ActsDiscretely` flag and the `ProximityModel` effective-proximity model;
+> - **failure wounds** → per-verb `Verb.FailurePenalties`, sampled at random.
+> See `CriticTrees.cs` (now item trees only) and the plan `as-the-modus-mentis-*` for details.
+
 ## Date: December 6, 2025
 
 ## Overview

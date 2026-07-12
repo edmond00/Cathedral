@@ -39,6 +39,31 @@ public class ThinkingPromptConstructor
     }
 
     /// <summary>
+    /// PERSONA-FIT: how strongly the action modus mentis is drawn to carrying out <paramref name="actionPhrase"/>.
+    /// Asked on the action skill's own slot (so <see cref="ModusMentis.PersonaReminder"/> here is the
+    /// skill's), just before the action-text rewrite. The five-way answer decides both whether the
+    /// action happens at all (reluctant/opposed cancel it) and its difficulty modifier
+    /// (eager −1 / willing 0 / unsure +1). Replaces the old plausibility + difficulty critic trees.
+    /// </summary>
+    public static string BuildPersonaFitPrompt(string actionPhrase, ModusMentis actionModusMentis)
+    {
+        string reminderClause = actionModusMentis.PersonaReminder != null
+            ? $"As a {actionModusMentis.PersonaReminder}, "
+            : "";
+
+        return $@"You are considering whether to {actionPhrase}.
+
+{reminderClause}how strongly are you drawn to this?
+- eager: it fits you perfectly — you are keen to do it
+- willing: you are willing to do it
+- unsure: you are hesitant and unsure about it
+- reluctant: you would rather not do it
+- opposed: it goes against who you are — you refuse
+
+{Config.Narrative.JsonFormatClause("{\"drawn\": \"...\"}")}";
+    }
+
+    /// <summary>
     /// HOW: pick which action skill to use to reach the goal.
     /// </summary>
     public string BuildHowPrompt(

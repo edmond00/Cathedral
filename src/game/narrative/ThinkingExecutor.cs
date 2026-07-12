@@ -52,6 +52,7 @@ public class ThinkingExecutor
         Protagonist protagonist,
         WorldContext worldContext,
         bool isReminescence = false,
+        bool autoSuccess = false,
         CancellationToken cancellationToken = default)
     {
         int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
@@ -99,29 +100,63 @@ public class ThinkingExecutor
         string reasoningText = await _rewriter.RewriteAsync(
             thinkingSlot, reasoningNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, ct: cancellationToken);
 
-        // ── Flavor: action text (action skill slot) ─────────────────────────────
+        // ── Action skill slot: persona-fit check, then action-text flavor ───────
         int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(skill);
         _llmManager.ResetInstance(actionSlot);
-        // The neutral sentence opens with "I will …", and the GBNF prefix constraint forces the
-        // styled rewrite to open with the same literal. This guarantees the prefix can be stripped
-        // cleanly to form the button label (DisplayText); ActionText keeps the canonical "try to …"
-        // form the critics expect.
+
+        // Persona-fit: how strongly is the skill drawn to this action? Decides possibility + difficulty.
+        // Asked with keepHistory:true so it shares context with the action-text rewrite below (both
+        // concern the same action). Skipped for auto-success phases (reminescence / get-up).
+        // Replaces the former plausibility + difficulty critic trees.
+        PersonaFit fit = autoSuccess
+            ? PersonaFit.Willing
+            : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, cancellationToken);
+
+        // Reluctant / opposed → the skill refuses; produce a first-person refusal outcome, no action.
+        if (fit.Cancels)
+        {
+            string refusalNeutral = NeutralNarration.ActionRefusal(goalPhrase);
+            string refusalText = await _rewriter.RewriteAsync(
+                actionSlot, refusalNeutral, NarrationKind.Outcome, skill.PersonaReminder2,
+                styleInstruction: skill.StyleInstruction, ct: cancellationToken);
+            return new ThinkingResponse
+            {
+                ReasoningText   = reasoningText,
+                Actions         = new List<ParsedNarrativeAction>(),
+                RefusalText     = string.IsNullOrWhiteSpace(refusalText) ? refusalNeutral : refusalText,
+                RefusalModusMentis = skill
+            };
+        }
+
+        // The neutral sentence opens with "I will …" (plus "discretely" for a discrete skill), and the
+        // GBNF prefix constraint forces the styled rewrite to open with the same literal. This
+        // guarantees the prefix can be stripped cleanly to form the button label (DisplayText);
+        // ActionText keeps the canonical "try to …" form the item critic expects.
         const string actionPrefix = "I will ";
         string styledAction = await _rewriter.RewriteAsync(
-            actionSlot, NeutralNarration.ActionIntent(goalPhrase), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: actionPrefix, styleInstruction: skill.StyleInstruction, ct: cancellationToken);
-        if (string.IsNullOrWhiteSpace(styledAction)) styledAction = actionPrefix + goalPhrase;
+            actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: actionPrefix, styleInstruction: skill.StyleInstruction, ct: cancellationToken);
+        if (string.IsNullOrWhiteSpace(styledAction))
+            styledAction = actionPrefix + (skill.ActsDiscretely ? "discretely " : "") + goalPhrase;
         string bareAction = StripPrefix(styledAction, actionPrefix);
+
+        // Difficulty: verb base ± the persona-fit modifier (eager −1 / willing 0 / unsure +1),
+        // clamped to 1..10. Auto-success phases carry difficulty 0 (rendered with the ○ glyph).
+        var verbOutcome = (VerbOutcome)resolved;
+        int difficultyLevel = autoSuccess
+            ? 0
+            : Math.Clamp(verbOutcome.VerbView.Verb.DifficultyFor(verbOutcome.VerbView.Target) + fit.DifficultyModifier, 1, 10);
 
         var action = new ParsedNarrativeAction
         {
             ActionModusMentisId = skill.ModusMentisId,
             ActionModusMentis   = skill,
-            PreselectedOutcome  = (VerbOutcome)resolved,
+            PreselectedOutcome  = verbOutcome,
             ActionText          = $"try to {bareAction}",
             DisplayText         = bareAction,
             NeutralActionText   = goalPhrase,
             ThinkingModusMentis = thinkingModusMentis,
-            Keyword             = keyword
+            Keyword             = keyword,
+            DifficultyLevel     = difficultyLevel
         };
 
         return new ThinkingResponse
@@ -129,6 +164,49 @@ public class ThinkingExecutor
             ReasoningText = reasoningText,
             Actions = new List<ParsedNarrativeAction> { action }
         };
+    }
+
+    // ── Persona-fit (possibility + difficulty) ──────────────────────────────────
+
+    /// <summary>The five persona-fit answers and how each maps to difficulty / cancellation.</summary>
+    private readonly struct PersonaFit
+    {
+        public int DifficultyModifier { get; }
+        public bool Cancels { get; }
+        private PersonaFit(int modifier, bool cancels) { DifficultyModifier = modifier; Cancels = cancels; }
+
+        public static readonly PersonaFit Eager     = new(-1, false);
+        public static readonly PersonaFit Willing   = new(0,  false);
+        public static readonly PersonaFit Unsure    = new(+1, false);
+        public static readonly PersonaFit Reluctant = new(0,  true);
+        public static readonly PersonaFit Opposed   = new(0,  true);
+
+        public static PersonaFit FromId(string id) => id switch
+        {
+            "eager"     => Eager,
+            "willing"   => Willing,
+            "unsure"    => Unsure,
+            "reluctant" => Reluctant,
+            "opposed"   => Opposed,
+            _           => Willing, // unrecognised → proceed at base difficulty
+        };
+    }
+
+    private static readonly List<string> PersonaFitOptions =
+        new() { "eager", "willing", "unsure", "reluctant", "opposed" };
+
+    /// <summary>
+    /// Asks the action skill how strongly it is drawn to the action (constrained enum on its slot,
+    /// keepHistory:true so the following rewrite shares context). In playground mode picks "willing".
+    /// </summary>
+    private async Task<PersonaFit> AskPersonaFitAsync(int actionSlot, ModusMentis skill, string goalPhrase, CancellationToken ct)
+    {
+        if (PlaygroundMode.IsActive) return PersonaFit.Willing;
+
+        string prompt = ThinkingPromptConstructor.BuildPersonaFitPrompt(goalPhrase, skill);
+        string chosen = await _rewriter.ChooseAsync(actionSlot, prompt, PersonaFitOptions, fieldName: "drawn", keepHistory: true, ct: ct);
+        Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {(string.IsNullOrWhiteSpace(chosen) ? "(none)" : chosen)}");
+        return PersonaFit.FromId(chosen.Trim());
     }
 
     // ── Decision: GOAL ─────────────────────────────────────────────────────────
@@ -267,4 +345,14 @@ public class ThinkingResponse
 {
     public string ReasoningText { get; set; } = "";
     public List<ParsedNarrativeAction> Actions { get; set; } = new();
+
+    /// <summary>
+    /// Set when the action modus mentis refused the action (persona-fit reluctant/opposed): the
+    /// first-person "I don't want to …" narration, shown as an outcome block. <see cref="Actions"/>
+    /// is empty in this case.
+    /// </summary>
+    public string? RefusalText { get; set; }
+
+    /// <summary>The skill that refused, whose voice the <see cref="RefusalText"/> is in.</summary>
+    public ModusMentis? RefusalModusMentis { get; set; }
 }

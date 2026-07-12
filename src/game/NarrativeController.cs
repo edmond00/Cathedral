@@ -457,6 +457,8 @@ public class NarrativeController
                 _protagonist,
                 _worldContext,
                 isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
+                autoSuccess: _scene?.Phase == NarrationPhase.ChildhoodReminescence
+                             || _scene?.Phase == NarrationPhase.GetUp,
                 cancellationToken: CancellationToken.None);
 
             if (response == null)
@@ -486,41 +488,30 @@ public class NarrativeController
                 action.ChainOrigin = thinkingBlock;
             }
 
-            // Pre-compute difficulty for each action while still in loading state.
-            // Reminescence actions (REMEMBER) skip the critic LLM call entirely — they are
-            // automatic-success and rendered with the '○' glyph (no numeric difficulty).
-            if (response.Actions.Count > 0)
-            {
-                bool isReminescence = _scene != null &&
-                    (_scene.Phase == NarrationPhase.ChildhoodReminescence || _scene.Phase == NarrationPhase.GetUp);
-                if (!isReminescence)
-                {
-                    _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingDifficulty;
-                    foreach (var act in response.Actions)
-                    {
-                        var criticContext = new CriticContext(
-                            _currentNode, _worldContext, _locationId,
-                            act.PreselectedOutcome?.ToNaturalLanguageString() ?? "");
-                        var difficultyTree = CriticTrees.BuildDifficultyTree(act.ActionText, criticContext);
-                        var difficultyResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(difficultyTree);
-                        act.DifficultyLevel = CriticTrees.CalculateFinalDifficulty(act.Verb, difficultyResult, act.PreselectedOutcome.VerbView.Target);
-                        Console.WriteLine($"NarrativeController: Pre-computed difficulty for '{act.DisplayText}': {act.DifficultyLevel}/10");
-                    }
-                }
-                else
-                {
-                    foreach (var act in response.Actions)
-                    {
-                        act.DifficultyLevel = 0;
-                        Console.WriteLine($"NarrativeController: Reminescence action '{act.DisplayText}' — auto-success, ○ glyph");
-                    }
-                }
-            }
-            
+            // Difficulty is now computed inside ThinkingExecutor from the persona-fit answer
+            // (verb base ± eager/willing/unsure modifier), so each action already carries its
+            // DifficultyLevel. Auto-success phases (reminescence / get-up) carry difficulty 0 (○ glyph).
+
             // Add to scroll buffer
             _scrollBuffer.AddBlock(thinkingBlock);
             _narrationState.AddBlock(thinkingBlock);
             _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
+
+            // Persona-fit cancellation: the action skill refused (reluctant/opposed). Show the
+            // first-person refusal as an outcome block; no action button is offered. The noetic
+            // point is still consumed below via the normal thinking-complete decrement.
+            if (!hasActions && response.RefusalText != null && response.RefusalModusMentis != null)
+            {
+                var refusalBlock = new NarrationBlock(
+                    Type: NarrationBlockType.Outcome,
+                    ModusMentis: response.RefusalModusMentis,
+                    Text: response.RefusalText,
+                    Keywords: null,
+                    Actions: null);
+                _scrollBuffer.AddBlock(refusalBlock);
+                _narrationState.AddBlock(refusalBlock);
+                Console.WriteLine("NarrativeController: Action refused by persona-fit — refusal narrated, no button.");
+            }
             
             // Auto-scroll to bottom to show new thinking block
             _scrollBuffer.ScrollToBottom();
@@ -618,12 +609,31 @@ public class NarrativeController
             {
                 Console.WriteLine($"NarrativeController: Coded rule blocked action — {ruleResult.ErrorMessage}");
                 action.IsImpossible = true;
+
+                // Re-express the refusal in the acting modus mentis's voice when one is resolvable
+                // (e.g. caught-red-handed, under threat); fall back to the raw rule message otherwise.
+                var refusalMm = _activePartyMember.ModiMentis
+                    .FirstOrDefault(m => m.ModusMentisId == action.ActionModusMentisId)
+                    ?? action.ActionModusMentis;
+                string refusalText;
+                if (refusalMm != null)
+                {
+                    refusalText = await _actionExecutor.OutcomeNarrator.NarrateRefusalAsync(
+                        action, refusalMm, ruleResult.ErrorMessage ?? "", _activePartyMember, CancellationToken.None);
+                    if (string.IsNullOrWhiteSpace(refusalText))
+                        refusalText = $"[IMPOSSIBLE] {ruleResult.ErrorMessage}";
+                }
+                else
+                {
+                    refusalText = $"[IMPOSSIBLE] {ruleResult.ErrorMessage}";
+                }
+
                 _narrationState.IsLoadingAction = false;
 
                 var ruleBlock = new NarrationBlock(
                     Type: NarrationBlockType.Outcome,
-                    ModusMentis: action.ThinkingModusMentis,
-                    Text: $"[IMPOSSIBLE] {ruleResult.ErrorMessage}",
+                    ModusMentis: refusalMm ?? action.ThinkingModusMentis,
+                    Text: refusalText,
                     Keywords: null,
                     Actions: null);
                 _scrollBuffer.AddBlock(ruleBlock);
@@ -1248,13 +1258,15 @@ public class NarrativeController
             return;
         }
 
-        // === FAILURE-PATH ENEMY OPPORTUNITY ATTACK (step 4c) ===
-        // On failure, the executor asked the LLM whether the enemy seized an opportunity.
-        // If triggered, skip normal outcome and queue a fight immediately.
+        // === FAILURE-PATH ENEMY OPPORTUNITY ATTACK ===
+        // An action failed under threat: the enemy seizes the moment and attacks with the initiative.
         if (!result.Succeeded && result.FightTriggered && result.FightEnemy != null)
         {
-            Console.WriteLine($"NarrativeController: Enemy '{result.FightEnemy.DisplayName}' seized opportunity — triggering fight");
-            _pendingFightOutcome = new FightOutcome(result.FightEnemy, $"opportunity attack by {result.FightEnemy.DisplayName}");
+            Console.WriteLine($"NarrativeController: Enemy '{result.FightEnemy.DisplayName}' attacks after failed action under threat — enemy initiative");
+            _pendingFightOutcome = new FightOutcome(result.FightEnemy, $"opportunity attack by {result.FightEnemy.DisplayName}")
+            {
+                EnemyInitiative = true
+            };
             return;
         }
 
@@ -2328,7 +2340,7 @@ public class NarrativeController
         get
         {
             if (_pendingFightOutcome != null)
-                return new StartFightTransition(_pendingFightOutcome.Target, _pendingFightOutcome.CombatContext);
+                return new StartFightTransition(_pendingFightOutcome.Target, _pendingFightOutcome.CombatContext, _pendingFightOutcome.EnemyInitiative);
             if (_pendingDialogueOutcome != null)
                 return new StartDialogueTransition(_pendingDialogueOutcome.Target,
                     _pendingDialogueOutcome.TreeId, _pendingDialogueOutcome.Tree);
@@ -2818,7 +2830,7 @@ public class NarrativeController
             // === CRITIC: can the item help? (two passes — either succeeding is enough) ===
             // Pass 1: original action-text phrasing (persona voice)
             var appropriatenessTree1 = CriticTrees.BuildItemAppropriatenessTreeByActionText(action.ActionText, itemContext, criticContext);
-            var appropriatenessResult1 = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(appropriatenessTree1);
+            var appropriatenessResult1 = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree1);
             Console.WriteLine($"NarrativeController: Item appropriateness pass 1 (action text): {(appropriatenessResult1.OverallSuccess ? "success" : "fail")}");
 
             // Pass 2: neutral goal-based phrasing (only if pass 1 failed)
@@ -2827,7 +2839,7 @@ public class NarrativeController
             if (!appropriatenessSuccess)
             {
                 var appropriatenessTree2 = CriticTrees.BuildItemAppropriatenessTree(goalDescription, item.DisplayName, criticContext);
-                appropriatenessResult = await _actionExecutor.CriticEvaluator.EvaluateTreeAsync(appropriatenessTree2);
+                appropriatenessResult = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree2);
                 appropriatenessSuccess = appropriatenessResult.OverallSuccess;
                 Console.WriteLine($"NarrativeController: Item appropriateness pass 2 (neutral): {(appropriatenessSuccess ? "success" : "fail")}");
             }

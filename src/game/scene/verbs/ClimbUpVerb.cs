@@ -31,6 +31,16 @@ public class ClimbUpVerb : Verb
         return new[] { new AreaMoveOutcome(cliff.TopArea) };
     }
 
+    // A failed climb is a fall: usually a scare, sometimes a fracture. Extra nulls keep injury the minority.
+    public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]
+    {
+        null, null, null,
+        new AnkleFractureLeftWound(),
+        new KneeFractureRightWound(),
+        new TibiaFractureLeftWound(),
+        new BrokenArmRightWound(),
+    };
+
     // ── Routine recording ─────────────────────────────────────────────────────
     // Replay skips the climb skill check — a "practised" route is the point of a routine.
     public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)

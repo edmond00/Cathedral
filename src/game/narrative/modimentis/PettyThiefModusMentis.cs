@@ -23,6 +23,7 @@ public class PettyThiefModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Use furtive imagery of quick fingers and easy marks, with a pickpocket's casual, practiced nonchalance.";
     public override MoralLevel MoralLevel    => MoralLevel.Low;
+    public override bool ActsDiscretely      => true;
 
     public override string PersonaPrompt => @"You are the inner voice of PETTY THIEF, the practised small hand that has been at fairs since it could reach a stranger's belt.
 

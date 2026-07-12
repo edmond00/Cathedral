@@ -10,12 +10,15 @@ using Cathedral.LLM;
 namespace Cathedral.Game;
 
 /// <summary>
-/// LLM-based critic that evaluates game actions using enum-choice decision trees.
-/// Each node presents a question with a constrained set of choices (GBNF-constrained).
-/// The LLM picks one choice; the matching branch determines the next node.
-/// Stateless — instance is reset after every evaluation.
+/// The Item-Use Critic: a small LLM scoped to judging how the player's <b>items</b> figure in an
+/// action — whether a combined item meaningfully helps accomplish the action, and whether it is
+/// consumed in the process. It answers via enum-choice decision trees (GBNF-constrained), picking one
+/// choice per node. Stateless — the slot is reset after every evaluation.
+///
+/// This is all the critic does now. Plausibility, difficulty, wounds, witnesses and threats moved out:
+/// to the modus-mentis persona-fit enum, to per-verb penalty lists, and to deterministic coded rules.
 /// </summary>
-public class CriticEvaluator : IDisposable
+public class ItemUseCritic : IDisposable
 {
     private readonly LlamaServerManager _llamaServer;
     private int _criticSlotId = -1;
@@ -24,7 +27,7 @@ public class CriticEvaluator : IDisposable
     private int _totalEvaluations = 0;
     private double _totalDurationMs = 0;
 
-    public CriticEvaluator(LlamaServerManager llamaServer)
+    public ItemUseCritic(LlamaServerManager llamaServer)
     {
         _llamaServer = llamaServer ?? throw new ArgumentNullException(nameof(llamaServer));
     }
@@ -72,7 +75,7 @@ public class CriticEvaluator : IDisposable
         Console.WriteLine($"\n🌳 Done: {(result.OverallSuccess ? "SUCCESS ✓" : $"FAILURE ✗ — {result.FirstErrorMessage}")} ({result.TotalDurationMs:F0}ms)");
 
         try { SaveTreeTraceToFile(result, rootNode.Name); }
-        catch (Exception ex) { Console.Error.WriteLine($"CriticEvaluator: Failed to save trace: {ex.Message}"); }
+        catch (Exception ex) { Console.Error.WriteLine($"ItemUseCritic: Failed to save trace: {ex.Message}"); }
 
         return result;
     }
@@ -132,7 +135,7 @@ public class CriticEvaluator : IDisposable
             nodeResult.ChosenId = fallback.Id;
             nodeResult.IsFailure = false;
             nodeResult.ErrorMessage = $"Evaluation error (fallback to '{fallback.Id}'): {ex.Message}";
-            Console.Error.WriteLine($"CriticEvaluator: Error evaluating '{node.Name}': {ex.Message}");
+            Console.Error.WriteLine($"ItemUseCritic: Error evaluating '{node.Name}': {ex.Message}");
         }
 
         sw.Stop();
@@ -153,7 +156,7 @@ public class CriticEvaluator : IDisposable
 
         if (!_isInitialized || !_llamaServer.IsServerReady || _criticSlotId < 0)
         {
-            Console.Error.WriteLine("CriticEvaluator: Not initialized or server not ready");
+            Console.Error.WriteLine("ItemUseCritic: Not initialized or server not ready");
             return choices.FirstOrDefault(c => !c.IsFailure)?.Id ?? choices[0].Id;
         }
 
@@ -169,7 +172,7 @@ public class CriticEvaluator : IDisposable
         result = result.Trim();
         if (!choices.Any(c => c.Id == result))
         {
-            Console.Error.WriteLine($"CriticEvaluator: LLM returned unexpected id '{result}', falling back to first choice.");
+            Console.Error.WriteLine($"ItemUseCritic: LLM returned unexpected id '{result}', falling back to first choice.");
             _llamaServer.ResetInstance(_criticSlotId);
             return choices[0].Id;
         }
@@ -201,7 +204,7 @@ public class CriticEvaluator : IDisposable
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"CriticEvaluator: Failed to get failure reason: {ex.Message}");
+            Console.Error.WriteLine($"ItemUseCritic: Failed to get failure reason: {ex.Message}");
             _llamaServer.ResetInstance(_criticSlotId);
             return string.Empty;
         }
@@ -242,33 +245,28 @@ public class CriticEvaluator : IDisposable
 
         try
         {
-            Console.WriteLine("CriticEvaluator: Initializing...");
+            Console.WriteLine("ItemUseCritic: Initializing...");
             _criticSlotId = await _llamaServer.CreateInstanceAsync(GetCriticSystemPrompt());
             _isInitialized = true;
-            Console.WriteLine($"CriticEvaluator: Created slot {_criticSlotId}");
+            Console.WriteLine($"ItemUseCritic: Created slot {_criticSlotId}");
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"CriticEvaluator: Failed to initialize: {ex.Message}");
-            LLMLogger.LogInstanceCreated(-1, "CriticEvaluator", false, ex.Message);
+            Console.Error.WriteLine($"ItemUseCritic: Failed to initialize: {ex.Message}");
+            LLMLogger.LogInstanceCreated(-1, "ItemUseCritic", false, ex.Message);
             _isInitialized = false;
         }
     }
 
-    private static string GetCriticSystemPrompt() => @"You are a CRITIC evaluating game content for coherence and quality.
-
-Your role is simple:
-- Answer questions about game actions, consequences, and narratives
-- Evaluate coherence, plausibility, and appropriateness
-- Respond ONLY with one of the provided option ids — nothing else
+    private static string GetCriticSystemPrompt() => @"You are the ITEM-USE CRITIC. You judge only how a tool or object figures in an action:
+- whether an item meaningfully helps the character accomplish the action (versus bare hands), and
+- whether the item is consumed, destroyed, or used up in doing so.
 
 Guidelines:
-- Be strict but fair in your evaluations
-- Consider logical consistency
-- Value plausibility over creativity
-- Focus on the specific question asked
-
-You must respond with exactly one of the provided option ids.";
+- Reason concretely about the item's physical properties and how it would actually be used.
+- Be strict but fair; value plausibility over generosity.
+- Judge only the specific item question asked — not the wider wisdom of the action.
+- Respond with EXACTLY one of the provided option ids — nothing else.";
 
     private void SaveTreeTraceToFile(CriticTreeResult result, string treeName)
     {
@@ -311,6 +309,6 @@ You must respond with exactly one of the provided option ids.";
     public void Dispose()
     {
         if (_totalEvaluations > 0)
-            Console.WriteLine($"CriticEvaluator: {_totalEvaluations} evaluations, avg {_totalDurationMs / _totalEvaluations:F1}ms");
+            Console.WriteLine($"ItemUseCritic: {_totalEvaluations} evaluations, avg {_totalDurationMs / _totalEvaluations:F1}ms");
     }
 }

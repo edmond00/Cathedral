@@ -31,6 +31,16 @@ public class ClimbDownVerb : Verb
         return new[] { new AreaMoveOutcome(cliff.BottomArea) };
     }
 
+    // A failed descent is a fall: usually a scare, sometimes a fracture. Extra nulls keep injury the minority.
+    public override IReadOnlyList<Wound?> FailurePenalties(Element? target) => new Wound?[]
+    {
+        null, null, null,
+        new AnkleFractureRightWound(),
+        new KneeFractureLeftWound(),
+        new TibiaFractureRightWound(),
+        new BrokenFootLeftWound(),
+    };
+
     // ── Routine recording ─────────────────────────────────────────────────────
     public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
         => target is CliffPointOfInterest;

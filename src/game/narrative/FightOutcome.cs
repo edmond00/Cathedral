@@ -17,6 +17,13 @@ public class FightOutcome : ConcreteOutcome
     /// <summary>Context text used for arena theming and narration (e.g., "ambushed by a wolf in the clearing").</summary>
     public string CombatContext { get; }
 
+    /// <summary>
+    /// When true the enemy has the initiative (a surprise round): enemy fighters act before the party
+    /// regardless of the initiative roll. Set for fights that start because an action failed under
+    /// threat; false for player-initiated attacks.
+    /// </summary>
+    public bool EnemyInitiative { get; init; }
+
     public FightOutcome(NpcEntity target, string combatContext = "")
     {
         Target = target;

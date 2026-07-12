@@ -20,6 +20,7 @@ public static class ActionRulesChecker
         new NegativeAffinityDialogueRule(),
         new IllegalActionHighMoralityRule(),
         new IllegalActionVisualWitnessRule(),
+        new UnderThreatImpossibleRule(),
         new InventoryCapacityRule(),
     };
 

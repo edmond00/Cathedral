@@ -471,6 +471,8 @@ public class MemoryPanelRenderer
         {
             ("Memory type",   modusMentis.MemoryType.ToString(),                              SlotText),
             ("Functions",     string.Join(", ", modusMentis.Functions),                       Config.Colors.LightGray75),
+            ("Discreet",      modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",
+             modusMentis.ActsDiscretely ? Config.Colors.BrightYellow : Config.Colors.LightGray75),
             ("Primary organ", modusMentis.Organs.Length > 0 ? modusMentis.Organs[0] : "—",         Config.Colors.LightGray75),
             ("Organ score",   _member != null ? _member.GetOrganScoreForModusMentis(modusMentis).ToString() : "—",
              Config.Colors.LightGray75),

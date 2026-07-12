@@ -172,4 +172,28 @@ public abstract class Verb
     /// inventory-capacity rule can block the action when there is no room to carry it.
     /// </summary>
     public virtual Item? AcquiredItem(Element? target) => null;
+
+    // ── Failure penalties ──────────────────────────────────────────────────────
+    // Replaces the former LLM failure-outcome critic tree: instead of asking the critic which body
+    // part is wounded, each verb declares the injuries a failure can cause and one is sampled.
+
+    /// <summary>A single "no injury" penalty list — the default for verbs that never wound on failure.</summary>
+    protected static readonly IReadOnlyList<Wound?> NoPenalty = new Wound?[] { null };
+
+    /// <summary>
+    /// Candidate physical penalties for a failed execution of this verb. Each entry is a
+    /// <see cref="Wound"/> to inflict or <c>null</c> for "no injury". On failure one entry is sampled
+    /// uniformly (see <see cref="SampleFailurePenalty"/>), so repeat an entry to weight it — e.g.
+    /// several <c>null</c>s for a usually-harmless verb. Default: never injures. Return fresh wound
+    /// instances when the wound carries placement state.
+    /// </summary>
+    public virtual IReadOnlyList<Wound?> FailurePenalties(Element? target) => NoPenalty;
+
+    /// <summary>Samples one failure penalty uniformly (null ⇒ no injury).</summary>
+    public Wound? SampleFailurePenalty(Element? target, System.Random rng)
+    {
+        var penalties = FailurePenalties(target);
+        if (penalties == null || penalties.Count == 0) return null;
+        return penalties[rng.Next(penalties.Count)];
+    }
 }

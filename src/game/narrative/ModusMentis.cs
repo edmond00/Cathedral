@@ -45,7 +45,15 @@ public abstract class ModusMentis
     /// Defaults to <see cref="MoralLevel.Medium"/>; override in subclasses.
     /// </summary>
     public virtual MoralLevel MoralLevel => MoralLevel.Medium;
-    
+
+    /// <summary>
+    /// Whether this modus mentis carries out its actions discreetly (quietly, out of sight).
+    /// A discrete modus mentis is one step harder to notice: it prepends "discretely" to its action
+    /// text and, in the effective-proximity model, downgrades a nearby witness/threat by one level
+    /// (Visual→Audio, Audio→None). Defaults to false; override to true on stealthy modiMentis.
+    /// </summary>
+    public virtual bool ActsDiscretely => false;
+
     /// <summary>
     /// Persona prompt for LLM (only for Observation and Thinking modiMentis).
     /// This is cached in the LLM slot and defines the modusMentis's narrative voice.

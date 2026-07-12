@@ -144,6 +144,25 @@ public class OutcomeNarrator
     }
 
     /// <summary>
+    /// Narrates a coded-rule refusal (witness present, under threat, …) in the action Modus Mentis's
+    /// voice. <paramref name="reason"/> is the rule's first-person reason phrase.
+    /// </summary>
+    public async Task<string> NarrateRefusalAsync(
+        ParsedNarrativeAction action,
+        ModusMentis actionModusMentis,
+        string reason,
+        PartyMember protagonist,
+        CancellationToken cancellationToken = default)
+    {
+        string neutral = NeutralNarration.ActionImpossible(ActionDisplay(action), reason);
+
+        int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
+        return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
+            actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
+            styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
+    }
+
+    /// <summary>
     /// Narrates why a combined item cannot be used for the action, in the action Modus Mentis's voice.
     /// </summary>
     public async Task<string> NarrateItemCombinationFailureAsync(

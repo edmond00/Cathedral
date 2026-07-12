@@ -153,7 +153,7 @@ public class LocationTravelGameController : IDisposable
     
     // Local LLM server; when set, narrative generation is enabled. Null = no LLM (fallback narration).
     private LlamaServerManager? _llamaServer;
-    private CriticEvaluator? _criticEvaluator;
+    private ItemUseCritic? _criticEvaluator;
     
     // Events
     public event Action<GameMode, GameMode>? ModeChanged;
@@ -592,7 +592,7 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine("LocationTravelGameController: ModusMentisSlotManager and ThinkingExecutor initialized");
 
         // Critic evaluator
-        _criticEvaluator = new CriticEvaluator(llamaServer);
+        _criticEvaluator = new ItemUseCritic(llamaServer);
         _ = Task.Run(async () =>
         {
             try
@@ -2703,7 +2703,7 @@ public class LocationTravelGameController : IDisposable
         {
             case StartFightTransition f:
                 if (_narrativeController != null)
-                    StartFightMode(new FightOutcome(f.Enemy, f.Reason));
+                    StartFightMode(new FightOutcome(f.Enemy, f.Reason) { EnemyInitiative = f.EnemyInitiative });
                 else
                 {
                     Console.Error.WriteLine("ApplyPhaseTransition: fight requested with no narrative context — returning to travel");
@@ -2968,7 +2968,8 @@ public class LocationTravelGameController : IDisposable
             arena2,
             allies,
             sfxTrigger: e => _ambianceEngine?.TriggerGameEvent(e),
-            setMusicFilter: f => _ambianceEngine?.SetFilter(f));
+            setMusicFilter: f => _ambianceEngine?.SetFilter(f),
+            enemyInitiative: fightOutcome.EnemyInitiative);
 
         SetMode(GameMode.Fighting);
     }

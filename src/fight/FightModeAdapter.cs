@@ -135,7 +135,8 @@ public class FightModeAdapter
         IFightAreaGenerator arenaGenerator,
         IReadOnlyList<NpcEntity>? allies = null,
         Action<GameEventType>? sfxTrigger = null,
-        Action<MusicFilter>? setMusicFilter = null)
+        Action<MusicFilter>? setMusicFilter = null,
+        bool enemyInitiative = false)
     {
         _terminal = terminal;
         _ = popup; // unused (popups removed; the param is kept for caller compatibility)
@@ -165,14 +166,18 @@ public class FightModeAdapter
         foreach (var f in fighters)
             f.InitiativeRoll = _rng.Next(1, 7) + f.InitiativeValue;
 
+        // When the enemy has the initiative (surprise round — the fight started because an action
+        // failed under threat), enemy fighters act before the party regardless of the roll.
         fighters.Sort((a, b) =>
         {
+            if (enemyInitiative && a.Faction != b.Faction)
+                return a.Faction == FighterFaction.Enemy ? -1 : 1;
             int cmp = b.InitiativeRoll.CompareTo(a.InitiativeRoll);
             return cmp != 0 ? cmp : (a.Faction == FighterFaction.Party ? -1 : 1);
         });
 
         _state = new FightState(area, fighters);
-        _state.AddLog("Fight begins!", LogEntryType.Normal);
+        _state.AddLog(enemyInitiative ? "The enemy strikes first!" : "Fight begins!", LogEntryType.Normal);
 
         // Render initial arena terrain
         FightAreaRenderer.Render(_terminal, area, "fight", 0);
