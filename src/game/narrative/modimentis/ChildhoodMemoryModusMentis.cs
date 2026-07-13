@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.RegularExpressions;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -59,9 +61,39 @@ public class ChildhoodMemoryModusMentis : ModusMentis
             "Carries the settled residue of a childhood now behind, its instincts, reflexes, and hard-won lessons surfacing as brief parallels between past and present. Draws on what was already lived when the present echoes it, rather than labouring to recall.";
         if (string.IsNullOrWhiteSpace(_experiences))
             return baseText;
-        string flat = System.Text.RegularExpressions.Regex.Replace(_experiences, @"\s+", " ").Trim();
-        return baseText + " Carried experiences: " + flat;
+
+        // _experiences is ToExperienceSummary()'s block: an optional leading location sentence
+        // ("You spent your childhood at X.") followed by "- "-prefixed gerund phrases. The menu is
+        // one flat, word-wrapped block (no newlines), so the list syntax can't render. Rebuild it as
+        // prose: keep the location as its own sentence, then render the phrases as a proper
+        // comma-separated list with an Oxford "and" and a terminal period.
+        string? location = null;
+        var exps = new List<string>();
+        foreach (var raw in _experiences.Split('\n'))
+        {
+            string line = Regex.Replace(raw, @"\s+", " ").Trim();
+            if (line.Length == 0) continue;
+            if (line.StartsWith("-"))
+                exps.Add(line.TrimStart('-', ' ').Trim());
+            else
+                location = line;
+        }
+
+        var sb = new StringBuilder(baseText);
+        if (!string.IsNullOrEmpty(location))
+            sb.Append(' ').Append(location);
+        if (exps.Count > 0)
+            sb.Append(" Carried experiences: ").Append(JoinPhrases(exps)).Append('.');
+        return sb.ToString();
     }
+
+    /// <summary>Joins phrases into a natural list: "a", "a and b", or "a, b, and c".</summary>
+    private static string JoinPhrases(List<string> items) => items.Count switch
+    {
+        1 => items[0],
+        2 => $"{items[0]} and {items[1]}",
+        _ => string.Join(", ", items.Take(items.Count - 1)) + ", and " + items[^1],
+    };
 
     private string BuildPersonaPrompt()
     {

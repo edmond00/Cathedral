@@ -28,6 +28,9 @@ public class MemoryPanelRenderer
     private const int TitleRow        = 2;
     private const int ModulesStartRow = 4;
     private const int DetailPanelRow  = 77;
+    // Detail panel fills from DetailPanelRow down to the last terminal row (99) so it uses
+    // the full available height: 99 - 77 + 1 = 23. Avoids black gap / description truncation.
+    private const int DetailPanelH    = 23;
     private const int SlotWidth       = 20;
     private const int SlotHeight      = 3;
     private const int SlotsPerRow     = 4;
@@ -409,7 +412,7 @@ public class MemoryPanelRenderer
     /// </summary>
     private void RenderDetailPanel()
     {
-        const int panelH = 14;
+        const int panelH = DetailPanelH;
 
         // Separator above detail panel
         for (int x = StartX; x <= EndX; x++)
@@ -473,6 +476,7 @@ public class MemoryPanelRenderer
             ("Functions",     string.Join(", ", modusMentis.Functions),                       Config.Colors.LightGray75),
             ("Discreet",      modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",
              modusMentis.ActsDiscretely ? Config.Colors.BrightYellow : Config.Colors.LightGray75),
+            ("Morality",      modusMentis.MoralLevel.ToString(),                             Config.Colors.LightGray75),
             ("Primary organ", modusMentis.Organs.Length > 0 ? modusMentis.Organs[0] : "—",         Config.Colors.LightGray75),
             ("Organ score",   _member != null ? _member.GetOrganScoreForModusMentis(modusMentis).ToString() : "—",
              Config.Colors.LightGray75),
@@ -680,7 +684,7 @@ public class MemoryPanelRenderer
         _buttonHits.Add(new ButtonHit(id, x, y, x + text.Length - 1, y, enabled));
 
         // Disabled reason on the next row
-        if (!enabled && disabledReason != null && y + 1 < DetailPanelRow + 14 - 1)
+        if (!enabled && disabledReason != null && y + 1 < DetailPanelRow + DetailPanelH - 1)
             _terminal.Text(x + 2, y + 1, $"↳ {disabledReason}", EmptyText, DetailBg);
     }
 
