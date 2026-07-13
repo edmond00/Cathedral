@@ -32,6 +32,7 @@ public class ObservationPhaseController
     private readonly ObservationExecutor _observationExecutor;
     private readonly PersonaRewriter _rewriter;
     private readonly KeywordRenderer _keywordRenderer;
+    private readonly WorldContext? _worldContext;
     private readonly Random _random = new();
 
     public ObservationPhaseController(
@@ -42,6 +43,7 @@ public class ObservationPhaseController
         _observationExecutor = new ObservationExecutor(llamaServer, slotManager);
         _rewriter            = new PersonaRewriter(llamaServer);
         _keywordRenderer     = new KeywordRenderer();
+        _worldContext        = worldContext;
     }
 
     /// <summary>
@@ -89,14 +91,16 @@ public class ObservationPhaseController
         var sentences = new List<NarrationSentence>();
 
         // First object: chosen by the Modus Mentis, observed without a transition.
-        var first = await ChooseObservationObjectAsync(slotId, candidates, modusMentis, ct, isReminescence);
+        var first = await ChooseObservationObjectAsync(slotId, candidates, modusMentis, ct, isReminescence,
+            _worldContext?.GenerateContextDescription(locationId), currentNode.GenerateNeutralDescription(locationId));
         await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence);
 
         // Second object (if any): chosen from the remaining objects, reached via one transition.
         var remaining = candidates.Where(o => o != first).ToList();
         if (remaining.Count > 0)
         {
-            var second = await ChooseObservationObjectAsync(slotId, remaining, modusMentis, ct, isReminescence);
+            var second = await ChooseObservationObjectAsync(slotId, remaining, modusMentis, ct, isReminescence,
+                _worldContext?.GenerateContextDescription(locationId), currentNode.GenerateNeutralDescription(locationId));
             await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence);
         }
 
@@ -155,7 +159,8 @@ public class ObservationPhaseController
                 .Where(o => !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase)));
         if (remaining.Count > 0)
         {
-            var second = await ChooseObservationObjectAsync(slotId, remaining, observationModusMentis, ct, isReminescence);
+            var second = await ChooseObservationObjectAsync(slotId, remaining, observationModusMentis, ct, isReminescence,
+                _worldContext?.GenerateContextDescription(locationId), currentNode.GenerateNeutralDescription(locationId));
             await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence);
         }
 
@@ -267,7 +272,9 @@ public class ObservationPhaseController
         List<ConcreteOutcome> candidates,
         ModusMentis modusMentis,
         CancellationToken ct,
-        bool isReminescence = false)
+        bool isReminescence = false,
+        string? overallLocation = null,
+        string? areaLocation = null)
     {
         if (candidates.Count == 1) return candidates[0];
         if (PlaygroundMode.IsActive) return candidates[_random.Next(candidates.Count)];
@@ -275,20 +282,21 @@ public class ObservationPhaseController
             return candidates[_random.Next(candidates.Count)];
 
         var names = candidates.Select(GetNeutralName).ToList();
-        var prompt = BuildObservationChoicePrompt(names, modusMentis);
+        var prompt = BuildObservationChoicePrompt(names, modusMentis, overallLocation, areaLocation);
         var chosen = await _rewriter.ChooseAsync(slotId, prompt, names, "observation", keepHistory: true, ct);
 
         var idx = names.FindIndex(n => n.Equals(chosen, StringComparison.OrdinalIgnoreCase));
         return idx >= 0 ? candidates[idx] : candidates[0];
     }
 
-    private static string BuildObservationChoicePrompt(List<string> names, ModusMentis modusMentis)
+    private static string BuildObservationChoicePrompt(List<string> names, ModusMentis modusMentis, string? overallLocation = null, string? areaLocation = null)
     {
         string reminderClause = modusMentis.PersonaReminder != null ? $"As a {modusMentis.PersonaReminder}, " : "";
         string list = string.Join("\n", names.Select(n => $"- {n}"));
-        // Only the JSON-format clause here — the styling/grounding/"one short sentence" tail belongs
-        // to the observation *text* generation, not to this constrained object choice.
-        return $@"Around you, you notice:
+        // Nothing is observed yet at this step, so only the location context is prepended.
+        // Only the JSON-format clause is appended — the styling/grounding/"one short sentence" tail
+        // belongs to the observation *text* generation, not to this constrained object choice.
+        return $@"{ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, null)}Around you, you notice:
 {list}
 
 {reminderClause}which one draws your attention first?

@@ -219,7 +219,7 @@ internal static class ReminescenceCatalog
                     outcome: To("runaway",
                         skills: new[] { "lockpicking" },
                         items:  new Func<Item>[] { () => new Hairpin() }),
-                    contextSummary:   "picking a lock to escape"),
+                    contextSummary:   "picking a lock to escape the orphanage the night you ran away"),
 
                 new("chair, table, paper, inkwell",
                     observationText:  "a row of still shapes in lamplight — ordered, patient, waiting",
@@ -323,7 +323,7 @@ internal static class ReminescenceCatalog
                     observationText:  "thick darkness pressing against the walls — no lamp, no stars, nowhere to go",
                     outcomeText:      "hiding in shadow so as not to be seen the night you ran away",
                     outcome: To("survive", skills: new[] { "stealth" }),
-                    contextSummary:   "hiding in shadow to escape"),
+                    contextSummary:   "hiding in shadow the night you ran away"),
 
                 new("a small flame",
                     observationText:  "a tiny orange finger of fire trembling in the dark, far too small to warm anything",
@@ -561,19 +561,19 @@ internal static class ReminescenceCatalog
                     observationText:  "a dark recess in a wall, barely large enough to press yourself into",
                     outcomeText:      "a shady corner where you hid while the looters ransacked everything around you",
                     outcome: To("survive", skills: new[] { "stealth" }),
-                    contextSummary:   "hiding while looters ransacked everything around you"),
+                    contextSummary:   "hiding while looters raided and ransacked the place where you lived"),
 
                 new("a pile of corpses",
                     observationText:  "a shapeless heap in the shadows, utterly still while chaos moved around it",
                     outcomeText:      "a pile of corpses — you lay among them, pretending to be dead until the looters left",
                     outcome: To("survive", skills: new[] { "masquerade" }),
-                    contextSummary:   "pretending to be dead among corpses until the looters left"),
+                    contextSummary:   "pretending to be dead among corpses until the looters who raided the place where you lived had gone"),
 
                 new("pain in the leg",
                     observationText:  "a burning ache spreading up from the knees, the ground blurring below you",
                     outcomeText:      "the pain in your legs from running as fast as you could away from the pillage",
                     outcome: To("survive", skills: new[] { "athletics" }),
-                    contextSummary:   "running from the looters until your legs gave out"),
+                    contextSummary:   "running to escape the looters who raided the place where you lived until your legs gave out"),
             });
 
         // ── survive (terminal) ────────────────────────────────────────────────

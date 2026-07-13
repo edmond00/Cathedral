@@ -2246,6 +2246,7 @@ public class LocationTravelGameController : IDisposable
         if (SkipChildhoodMode.IsActive && _protagonist != null)
         {
             SkipChildhoodMode.SimulateAndApply(_protagonist);
+            SwapReminescenceForChildhoodMemory(_protagonist);
             if (FillMemoryMode.IsActive)
                 FillMemoryMode.FillEmptySlots(_protagonist);
             SetMode(GameMode.WorldView);
@@ -3214,7 +3215,8 @@ public class LocationTravelGameController : IDisposable
     /// <c>childhood_reminescence</c> MM (a "recollect a fuzzy memory" persona that no longer fits
     /// ordinary exploration) with a <see cref="ChildhoodMemoryModusMentis"/> whose prompt is built
     /// from the childhood life-experiences just recorded — a "reuse your childhood experience"
-    /// persona. No-op if the reminescence MM is absent (e.g. the --skip-childhood path).
+    /// persona. No-op if the reminescence MM is absent. Called on both the normal reminescence
+    /// finish and the --skip-childhood path (which simulates the history first).
     /// </summary>
     private static void SwapReminescenceForChildhoodMemory(Protagonist protagonist)
     {

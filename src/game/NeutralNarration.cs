@@ -216,9 +216,9 @@ public static class NeutralNarration
 
     // ── Critic ─────────────────────────────────────────────────────────────────
 
-    /// <summary>Impersonal — this is a critic's verdict, not character narration.</summary>
+    /// <summary>First-person critic verdict ("I think …"), matching the LLM reason's voice.</summary>
     public static string CriticFailureReason()
-        => "That cannot be done as intended.";
+        => "I think this cannot be done as intended.";
 
     // ── Keyword helper ─────────────────────────────────────────────────────────
 

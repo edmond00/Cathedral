@@ -456,6 +456,7 @@ public class NarrativeController
                 actionModiMentis,
                 _protagonist,
                 _worldContext,
+                _locationId,
                 isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
                 autoSuccess: _scene?.Phase == NarrationPhase.ChildhoodReminescence
                              || _scene?.Phase == NarrationPhase.GetUp,
@@ -2827,22 +2828,11 @@ public class NarrativeController
             var criticContext = new CriticContext(_currentNode, _worldContext, _locationId, goalDescription);
             criticContext.CombinedItemContext = itemContext;
 
-            // === CRITIC: can the item help? (two passes — either succeeding is enough) ===
-            // Pass 1: original action-text phrasing (persona voice)
-            var appropriatenessTree1 = CriticTrees.BuildItemAppropriatenessTreeByActionText(action.ActionText, itemContext, criticContext);
-            var appropriatenessResult1 = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree1);
-            Console.WriteLine($"NarrativeController: Item appropriateness pass 1 (action text): {(appropriatenessResult1.OverallSuccess ? "success" : "fail")}");
-
-            // Pass 2: neutral goal-based phrasing (only if pass 1 failed)
-            bool appropriatenessSuccess = appropriatenessResult1.OverallSuccess;
-            var appropriatenessResult = appropriatenessResult1;
-            if (!appropriatenessSuccess)
-            {
-                var appropriatenessTree2 = CriticTrees.BuildItemAppropriatenessTree(goalDescription, item.DisplayName, criticContext);
-                appropriatenessResult = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree2);
-                appropriatenessSuccess = appropriatenessResult.OverallSuccess;
-                Console.WriteLine($"NarrativeController: Item appropriateness pass 2 (neutral): {(appropriatenessSuccess ? "success" : "fail")}");
-            }
+            // === CRITIC: can the item help? (single pass, neutral goal-based phrasing) ===
+            var appropriatenessTree = CriticTrees.BuildItemAppropriatenessTree(goalDescription, item.DisplayName, criticContext);
+            var appropriatenessResult = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree);
+            bool appropriatenessSuccess = appropriatenessResult.OverallSuccess;
+            Console.WriteLine($"NarrativeController: Item appropriateness (neutral): {(appropriatenessSuccess ? "success" : "fail")}");
 
             // Item combination always costs one noetic point, regardless of outcome
             _narrationState.ThinkingAttemptsRemaining = Math.Max(0, _narrationState.ThinkingAttemptsRemaining - 1);

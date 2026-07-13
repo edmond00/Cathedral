@@ -51,6 +51,7 @@ public class ThinkingExecutor
         List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
         WorldContext worldContext,
+        int locationId,
         bool isReminescence = false,
         bool autoSuccess = false,
         CancellationToken cancellationToken = default)
@@ -68,8 +69,15 @@ public class ThinkingExecutor
 
         string targetDescription = targetOutcome.ToNaturalLanguageString();
 
+        // Short situational context threaded into every constrained-choice prompt: the overall
+        // location (e.g. "a farm"), the specific area within it (e.g. "courtyard"), and what drew
+        // the character's attention (the observed object).
+        string overallLocation = worldContext.GenerateContextDescription(locationId);
+        string areaLocation = node.GenerateNeutralDescription(locationId);
+        string? observedPhrase = sourceObs?.NeutralPhrase;
+
         // ── Decision 1: GOAL ────────────────────────────────────────────────────
-        ConcreteOutcome resolved = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, sourceObs?.NeutralPhrase, cancellationToken);
+        ConcreteOutcome resolved = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken);
         bool isIgnore = resolved is VerbOutcome vIgnore && vIgnore.VerbView.Verb is IgnoreVerb;
 
         // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
@@ -88,7 +96,7 @@ public class ThinkingExecutor
         string goalPhrase = resolved.ToNaturalLanguageString();
 
         // ── Decision 2: HOW (which action skill) ────────────────────────────────
-        ModusMentis? skill = await ChooseSkillAsync(thinkingSlot, goalPhrase, actionModiMentis, thinkingModusMentis, cancellationToken);
+        ModusMentis? skill = await ChooseSkillAsync(thinkingSlot, goalPhrase, actionModiMentis, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken);
         if (skill == null)
         {
             Console.Error.WriteLine("ThinkingExecutor: no usable action skill for the chosen goal.");
@@ -110,7 +118,7 @@ public class ThinkingExecutor
         // Replaces the former plausibility + difficulty critic trees.
         PersonaFit fit = autoSuccess
             ? PersonaFit.Willing
-            : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, cancellationToken);
+            : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, overallLocation, areaLocation, observedPhrase, cancellationToken);
 
         // Reluctant / opposed → the skill refuses; produce a first-person refusal outcome, no action.
         if (fit.Cancels)
@@ -199,11 +207,13 @@ public class ThinkingExecutor
     /// Asks the action skill how strongly it is drawn to the action (constrained enum on its slot,
     /// keepHistory:true so the following rewrite shares context). In playground mode picks "willing".
     /// </summary>
-    private async Task<PersonaFit> AskPersonaFitAsync(int actionSlot, ModusMentis skill, string goalPhrase, CancellationToken ct)
+    private async Task<PersonaFit> AskPersonaFitAsync(
+        int actionSlot, ModusMentis skill, string goalPhrase,
+        string? overallLocation, string? areaLocation, string? observedPhrase, CancellationToken ct)
     {
         if (PlaygroundMode.IsActive) return PersonaFit.Willing;
 
-        string prompt = ThinkingPromptConstructor.BuildPersonaFitPrompt(goalPhrase, skill);
+        string prompt = ThinkingPromptConstructor.BuildPersonaFitPrompt(goalPhrase, skill, overallLocation, areaLocation, observedPhrase);
         string chosen = await _rewriter.ChooseAsync(actionSlot, prompt, PersonaFitOptions, fieldName: "drawn", keepHistory: true, ct: ct);
         Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {(string.IsNullOrWhiteSpace(chosen) ? "(none)" : chosen)}");
         return PersonaFit.FromId(chosen.Trim());
@@ -215,6 +225,8 @@ public class ThinkingExecutor
         int thinkingSlot,
         List<ConcreteOutcome> subOutcomes,
         ModusMentis thinkingModusMentis,
+        string? overallLocation,
+        string? areaLocation,
         string? observedPhrase,
         CancellationToken ct)
     {
@@ -230,7 +242,7 @@ public class ThinkingExecutor
         var options = subOutcomes.Select(o => o.ToNaturalLanguageString())
                                  .Distinct(StringComparer.OrdinalIgnoreCase)
                                  .ToList();
-        string prompt = ThinkingPromptConstructor.BuildGoalPrompt(options, thinkingModusMentis, observedPhrase);
+        string prompt = ThinkingPromptConstructor.BuildGoalPrompt(options, thinkingModusMentis, overallLocation, areaLocation, observedPhrase);
         string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateChoiceSchema("goal", options));
         string json = await _llmManager.GenerateConstrainedStringAsync(thinkingSlot, prompt, gbnf, maxTokens: 64, skipReset: true);
 
@@ -247,6 +259,9 @@ public class ThinkingExecutor
         string goalPhrase,
         List<ModusMentis> actionModiMentis,
         ModusMentis thinkingModusMentis,
+        string? overallLocation,
+        string? areaLocation,
+        string? observedPhrase,
         CancellationToken ct)
     {
         if (actionModiMentis.Count == 0) return null;
@@ -254,7 +269,7 @@ public class ThinkingExecutor
             return actionModiMentis[_rng.Next(actionModiMentis.Count)];
 
         var means = actionModiMentis.Select(s => $"with {s.SkillMeans}").ToList();
-        string prompt = _promptConstructor.BuildHowPrompt(goalPhrase, actionModiMentis, thinkingModusMentis);
+        string prompt = _promptConstructor.BuildHowPrompt(goalPhrase, actionModiMentis, thinkingModusMentis, overallLocation, areaLocation, observedPhrase);
         string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateChoiceSchema("how", means));
         string json = await _llmManager.GenerateConstrainedStringAsync(thinkingSlot, prompt, gbnf, maxTokens: 48, skipReset: true);
 

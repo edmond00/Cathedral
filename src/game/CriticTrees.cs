@@ -89,29 +89,8 @@ public static class CriticTrees
     #region Item Appropriateness Tree
 
     /// <summary>
-    /// Asks the LLM critic whether a combined item can plausibly help realise an action.
-    /// Uses the raw persona-voice action text (first pass).
-    /// "clearly_helps", "plausibly_helps", and "detoured_use" are passing choices.
-    /// </summary>
-    public static CriticNode BuildItemAppropriatenessTreeByActionText(string actionText, string itemContext, CriticContext context)
-    {
-        return new CriticNode(
-            name: "ItemAppropriatenessActionText",
-            question: $"{context.BuildPreamble()}\n\nThe {Config.Narrative.PlayerName} wants to: \"{actionText}\"\nThe character is holding: {itemContext}.\n\nCompared to attempting this action with bare hands, does {itemContext} provide a meaningful advantage?",
-            choices: new List<CriticChoice>
-            {
-                new("clearly_helps",    "the item provides a clear, direct advantage over bare hands"),
-                new("plausibly_helps",  "the item offers a real but modest advantage over bare hands"),
-                new("detoured_use",     "the item could help through creative use, though barely more than bare hands"),
-                new("cannot_help",      "the item offers no meaningful advantage over bare hands for this action", isFailure: true, errorMessage: "That item cannot help with this action."),
-                new("makes_no_sense",   "using this item here makes no sense compared to bare hands",             isFailure: true, errorMessage: "Using that item here makes no sense."),
-            });
-    }
-
-    /// <summary>
-    /// Asks the LLM critic whether a combined item can plausibly help realise an action.
-    /// Uses a neutral goal-based phrasing (second pass).
-    /// "clearly_helps", "plausibly_helps", and "detoured_use" are passing choices.
+    /// Asks the LLM critic whether a combined item can plausibly help realise an action, using a
+    /// neutral goal-based phrasing. "clearly_helps", "plausibly_helps", and "detoured_use" pass.
     /// </summary>
     public static CriticNode BuildItemAppropriatenessTree(string goalText, string itemName, CriticContext context)
     {

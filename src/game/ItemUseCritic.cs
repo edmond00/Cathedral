@@ -181,8 +181,15 @@ public class ItemUseCritic : IDisposable
     }
 
     /// <summary>
+    /// GBNF that forces the "why" explanation into the critic's own first-person voice: it must open
+    /// with "I think " and then run as a single line. This keeps the reason first-person so it embeds
+    /// cleanly into the (also first-person) failure narration without an "I …/You …" person clash.
+    /// </summary>
+    private const string FailureReasonGrammar = @"root ::= ""I think "" [^\n]+";
+
+    /// <summary>
     /// Asks the critic a follow-up "why" question while its previous answer is still in context.
-    /// Resets the slot afterwards. Returns a short free-text sentence, or empty on failure.
+    /// Resets the slot afterwards. Returns a short first-person sentence ("I think …"), or empty on failure.
     /// </summary>
     private async Task<string> GetFailureReasonAsync()
     {
@@ -196,8 +203,8 @@ public class ItemUseCritic : IDisposable
         {
             string reason = await _llamaServer.GenerateConstrainedStringAsync(
                 _criticSlotId,
-                "In one short sentence (around 12 words), explain to the character why you answered that way (address him directly in the second person).",
-                gbnfGrammar: string.Empty,
+                "In one short sentence (around 12 words), explain why you think that way. Begin with \"I think\".",
+                gbnfGrammar: FailureReasonGrammar,
                 maxTokens: 60,
                 skipReset: false); // reset after this call
             return reason.Trim();

@@ -5,33 +5,58 @@ using Cathedral;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// Builds the two surviving constrained-choice prompts for the thinking pipeline: GOAL (which
-/// sub-outcome to pursue) and HOW (which action skill to use). The reasoning and action *flavor*
-/// are produced separately via <see cref="PersonaRewriter"/>; the persona itself is the slot's
-/// system prompt, so these prompts only carry the options.
+/// Builds the constrained-choice prompts for the thinking pipeline: GOAL (which sub-outcome to
+/// pursue), HOW (which action skill to use), and PERSONA-FIT (how drawn the skill is to the action).
+/// The reasoning and action *flavor* are produced separately via <see cref="PersonaRewriter"/>; the
+/// persona itself is the slot's system prompt, so these prompts only carry a little situational
+/// context (<see cref="SituationLine"/>) plus the options.
 /// </summary>
 public class ThinkingPromptConstructor
 {
     /// <summary>
+    /// Short "where you are / what you are attending to" preamble prepended to the choice prompts so
+    /// the modus mentis has enough situational context to choose well. Names both the overall location
+    /// (e.g. "a farm") and the specific area within it (e.g. "courtyard"), plus the observed object.
+    /// Any part is omitted when its phrase is blank. Ends with a blank line so the options read cleanly.
+    /// </summary>
+    public static string SituationLine(string? overallLocation, string? areaLocation, string? observedPhrase)
+    {
+        var parts = new List<string>();
+
+        bool hasOverall = !string.IsNullOrWhiteSpace(overallLocation);
+        bool hasArea    = !string.IsNullOrWhiteSpace(areaLocation);
+        if (hasOverall && hasArea)
+            parts.Add($"You are in {NeutralNarration.NounPhrase(overallLocation)}, in the {areaLocation!.Trim()}.");
+        else if (hasOverall)
+            parts.Add($"You are in {NeutralNarration.NounPhrase(overallLocation)}.");
+        else if (hasArea)
+            parts.Add($"You are in the {areaLocation!.Trim()}.");
+
+        if (!string.IsNullOrWhiteSpace(observedPhrase))
+            parts.Add($"Your attention is on {NeutralNarration.NounPhrase(observedPhrase)}.");
+
+        return parts.Count == 0 ? "" : string.Join(" ", parts) + "\n\n";
+    }
+
+    /// <summary>
     /// GOAL: pick which sub-outcome to pursue. <paramref name="goalOptions"/> must include the
-    /// "ignore and move on" sentinel. <paramref name="observedPhrase"/> names the object being
-    /// observed (e.g. "a beech tree"), shown as context before the options when supplied.
+    /// "ignore and move on" sentinel. <paramref name="locationPhrase"/> / <paramref name="observedPhrase"/>
+    /// provide the situational context (where the character is, what drew their attention).
     /// Only the JSON-format clause is appended — this is a constrained choice, not styled prose.
     /// </summary>
     public static string BuildGoalPrompt(
         IEnumerable<string> goalOptions,
         ModusMentis thinkingModusMentis,
+        string? overallLocation = null,
+        string? areaLocation = null,
         string? observedPhrase = null)
     {
         string reminderClause = thinkingModusMentis.PersonaReminder != null
             ? $"As a {thinkingModusMentis.PersonaReminder}, "
             : "";
-        string contextClause = string.IsNullOrWhiteSpace(observedPhrase)
-            ? ""
-            : $"You are observing {observedPhrase}. ";
         string optionsList = string.Join("\n", goalOptions.Select(o => $"- {o}"));
 
-        return $@"{contextClause}You could:
+        return $@"{SituationLine(overallLocation, areaLocation, observedPhrase)}You could:
 {optionsList}
 
 {reminderClause}what do you want to do?
@@ -45,13 +70,18 @@ public class ThinkingPromptConstructor
     /// action happens at all (reluctant/opposed cancel it) and its difficulty modifier
     /// (eager −1 / willing 0 / unsure +1). Replaces the old plausibility + difficulty critic trees.
     /// </summary>
-    public static string BuildPersonaFitPrompt(string actionPhrase, ModusMentis actionModusMentis)
+    public static string BuildPersonaFitPrompt(
+        string actionPhrase,
+        ModusMentis actionModusMentis,
+        string? overallLocation = null,
+        string? areaLocation = null,
+        string? observedPhrase = null)
     {
         string reminderClause = actionModusMentis.PersonaReminder != null
             ? $"As a {actionModusMentis.PersonaReminder}, "
             : "";
 
-        return $@"You are considering whether to {actionPhrase}.
+        return $@"{SituationLine(overallLocation, areaLocation, observedPhrase)}You are considering whether to {actionPhrase}.
 
 {reminderClause}how strongly are you drawn to this?
 - eager: it fits you perfectly — you are keen to do it
@@ -64,18 +94,21 @@ public class ThinkingPromptConstructor
     }
 
     /// <summary>
-    /// HOW: pick which action skill to use to reach the goal.
+    /// HOW: pick which action skill to use to reach the goal, with the situational context prepended.
     /// </summary>
     public string BuildHowPrompt(
         string outcomeDescription,
         List<ModusMentis> actionModiMentis,
-        ModusMentis thinkingModusMentis)
+        ModusMentis thinkingModusMentis,
+        string? overallLocation = null,
+        string? areaLocation = null,
+        string? observedPhrase = null)
     {
         string reminderClause = thinkingModusMentis.PersonaReminder != null
             ? $"As a {thinkingModusMentis.PersonaReminder}, "
             : "";
 
-        return $@"Your goal is to {outcomeDescription}.
+        return $@"{SituationLine(overallLocation, areaLocation, observedPhrase)}Your goal is to {outcomeDescription}.
 
 You could proceed:
 {string.Join("\n", actionModiMentis.Select(s => $"- with {s.SkillMeans}"))}
