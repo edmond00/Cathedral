@@ -457,6 +457,7 @@ public class NarrativeController
                 _protagonist,
                 _worldContext,
                 _locationId,
+                _activePartyMember,
                 isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
                 autoSuccess: _scene?.Phase == NarrationPhase.ChildhoodReminescence
                              || _scene?.Phase == NarrationPhase.GetUp,
@@ -1377,6 +1378,7 @@ public class NarrativeController
                 observationModusMentis,
                 _currentNode,
                 _protagonist.CurrentLocationId,
+                _activePartyMember,
                 isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence
             );
 

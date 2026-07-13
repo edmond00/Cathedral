@@ -18,8 +18,14 @@ public class CharcoalBurnerArchetype : WildernessNpcArchetype
         "Aldhelm Char", "Hugh Coalman", "Robin Cinder", "Tibb Coalwood",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a soot-blackened figure tends a smouldering mound of earth, smoke curling — {name}, the charcoal burner";
+    public override string RoleNoun => "charcoal burner";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a soot-blackened figure tends a smouldering mound of earth, smoke curling",
+        "a grimed figure rakes ash from a cooling clamp",
+        "someone stacks cordwood into a dome, face streaked with black",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a charcoal burner. You tend the great smouldering mound day and night for a week at a time, turning logs to charcoal that the village forge will burn.

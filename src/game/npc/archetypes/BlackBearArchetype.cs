@@ -17,6 +17,13 @@ public class BlackBearArchetype : NamedNpcArchetype
         "Old Black Bear", "Young Bear", "Heavy Bear", "Scarred Bear"
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a {name.ToLowerInvariant()} lifts its broad head and sniffs the air, a low grunt rolling in its chest";
+    public override string RoleNoun => "black bear";
+    protected override bool LabelMentionsLocation => false;
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a black bear lifts its broad head and sniffs the air, a low grunt rolling in its chest",
+        "a glossy black bear turns from a torn log, muzzle wet",
+        "a dark bear rears and huffs, small eyes fixing on you",
+    };
 }

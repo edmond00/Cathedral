@@ -16,6 +16,13 @@ public class StrayCatArchetype : NamedNpcArchetype
         "Thin Cat", "Old Cat", "Wild Cat", "Scarred Cat"
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a {name.ToLowerInvariant()} regards you with narrowed eyes, tail twitching";
+    public override string RoleNoun => "cat";
+    protected override bool LabelMentionsLocation => false;
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a lean cat regards you with narrowed eyes, tail twitching",
+        "a ragged-eared cat crouches on a wall, watching every move",
+        "a wary cat slinks along the shadow of a fence, low to the ground",
+    };
 }

@@ -16,8 +16,14 @@ public class SwineherdArchetype : PeasantArchetype
         "Mariot Swine", "Joan Pigsty", "Tibb Swine", "Hawise Tusker",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a thick-booted figure waves a switch over a knot of pigs, mud to his knees — {name}, the swineherd";
+    public override string RoleNoun => "swineherd";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a thick-booted figure waves a switch over a knot of pigs, mud to the knees",
+        "a stout figure drives a grunting drove between the trees",
+        "someone tips a pail of scraps into a trough, pigs crowding in",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the swineherd. You mind the farm's pigs — the sow and her piglets, the boar in the corner pen — and in autumn you'd take them out to root for acorns.

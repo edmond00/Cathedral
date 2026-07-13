@@ -18,8 +18,14 @@ public class CarpenterArchetype : CraftsmanArchetype
         "Amice Sawyer", "Ivetta Plank", "Roger Wright", "Thurkil Wood",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a sinewy figure looks up from a half-shaped beam, plane in hand — {name}, the village carpenter";
+    public override string RoleNoun => "carpenter";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a sinewy figure looks up from a half-shaped beam, plane in hand",
+        "a lean figure runs a thumb along a fresh joint, sawdust in their hair",
+        "someone drives pegs into a frame, mallet-taps echoing",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the village carpenter. You shape beams, lay floors, mend roofs, and hang doors. Wood speaks to you — you can read a tree from its grain.

@@ -19,8 +19,14 @@ public class HermitArchetype : NamedNpcArchetype
         "Crag-Sitter", "Maelis the Quiet", "Barefoot Herne"
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"an old solitary figure sits by a smouldering fire — {name}, a hermit of these heights";
+    public override string RoleNoun => "hermit";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "an old solitary figure sits by a smouldering fire",
+        "a gaunt, bearded figure watches from the mouth of a rough shelter",
+        "someone in patched rags stirs a small pot, muttering to themselves",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a hermit who retreated from civilization long ago. You live alone in the mountains, eating what the rock gives you, sleeping where the wind allows. Visitors are rare — and rarely welcome.

@@ -16,8 +16,14 @@ public class ReaperArchetype : PeasantArchetype
         "Hawise Reap", "Edmund Sheaf", "Petronilla Sickle", "Robin Sower",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a stooped figure straightens with a sickle in hand, grain dust on her sleeves — {name}, a reaper";
+    public override string RoleNoun => "reaper";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a stooped figure straightens with a sickle in hand, grain dust on their sleeves",
+        "a sunburnt figure swings a scythe through standing corn",
+        "someone binds a sheaf and stacks it, chaff drifting around them",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a reaper. In summer you swing the sickle from dawn to dusk; in autumn you tie sheaves; in spring you might be a sower instead. The work is bone-deep tiring and the pay is in days, not coin.

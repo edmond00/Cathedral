@@ -24,6 +24,13 @@ public class FightOutcome : ConcreteOutcome
     /// </summary>
     public bool EnemyInitiative { get; init; }
 
+    /// <summary>
+    /// Contextual label substituted for the proper name in the LLM-facing goal phrase.
+    /// Null until stamped by <see cref="Npc.NpcObservationObject"/>; the human-facing
+    /// <see cref="DisplayName"/> and <see cref="CombatContext"/> always keep the real name.
+    /// </summary>
+    public string? ContextLabel { get; set; }
+
     public FightOutcome(NpcEntity target, string combatContext = "")
     {
         Target = target;
@@ -35,6 +42,6 @@ public class FightOutcome : ConcreteOutcome
     public override string DisplayName => $"Fight {Target.DisplayName}";
 
     public override string ToNaturalLanguageString()
-        => $"engage in combat with {Target.DisplayName}";
+        => $"engage in combat with {ContextLabel ?? Target.DisplayName}";
 
 }

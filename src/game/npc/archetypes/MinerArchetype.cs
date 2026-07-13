@@ -20,8 +20,14 @@ public class MinerArchetype : WildernessNpcArchetype
         "Hugh Shaft", "Walter Vein", "Edmund Mine", "Roger Pick",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a soot-faced figure straightens, pick in hand, lantern at his hip — {name}, a miner";
+    public override string RoleNoun => "miner";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a soot-faced figure straightens, pick in hand, lantern at the hip",
+        "a grimed figure wheels a barrow of ore from a dark mouth in the rock",
+        "someone taps at a seam by lantern-light, dust hanging in the air",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a miner who works a small ore-vein in a cave nearby and brings the ore down to the village forge every few days.

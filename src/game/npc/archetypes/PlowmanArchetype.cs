@@ -14,8 +14,14 @@ public class PlowmanArchetype : PeasantArchetype
         "Walter Tilth", "Osbert Plough", "Hugh Furrow", "Tibb Plough",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a heavy figure leans on the plough's stilt, oxen breathing hard ahead — {name}, the plowman";
+    public override string RoleNoun => "plowman";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a heavy figure leans on the plough's stilt, oxen breathing hard ahead",
+        "a broad figure guides the share through heavy soil, reins looped over a shoulder",
+        "someone turns a straight dark furrow, mud clotted on their boots",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a plowman. You work the heavy team, opening the strips at first light, sweating through the day. Your back is sore. Your boots are heavy with mud.

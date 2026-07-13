@@ -18,8 +18,14 @@ public class DruidArchetype : NamedNpcArchetype
         "Daegel Thornhand", "Elowen Rootwalker", "Finbar Ashcloak"
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a robed figure leans against a gnarled staff — {name}, a druid of these woods";
+    public override string RoleNoun => "druid";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a robed figure leans against a gnarled staff",
+        "a hooded figure traces a sign in the air, beads and bone at their belt",
+        "someone stands motionless among the trees, eyes half-closed",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a druid who has lived in these woods for decades. The trees are your congregation, the fungi your messengers, the rain your hymn. You distrust outsiders on principle — not from malice, but because most who come here take without asking.

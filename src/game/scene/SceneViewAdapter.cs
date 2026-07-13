@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Npc;
 using Cathedral.Game.Scene.Verbs;
 
 namespace Cathedral.Game.Scene;
@@ -259,9 +260,16 @@ public class SyntheticAreaObservationObject : ObservationObject
 /// <summary>
 /// A synthetic ObservationObject backed by a <see cref="SceneNpc"/>.
 /// </summary>
-public class SyntheticNpcObservationObject : ObservationObject
+public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabelStampable
 {
     private readonly SceneNpc _npc;
+
+    /// <summary>
+    /// Contextual label (relation + role + location) substituted for the proper name in LLM
+    /// prompts. Only set for named (<see cref="NpcEntity"/>) NPCs; stays null for shallow wildlife,
+    /// which keeps its current type/appearance text. Reads fall back to the display name.
+    /// </summary>
+    public string? ContextLabel { get; private set; }
 
     public SyntheticNpcObservationObject(SceneNpc npc, SceneViewEntry entry)
     {
@@ -274,16 +282,32 @@ public class SyntheticNpcObservationObject : ObservationObject
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(npc));
     }
 
+    /// <inheritdoc/>
+    public void StampContextLabel(PartyMember? actingMember, WorldContext? world, int locationId)
+    {
+        // Named NPCs only — shallow wildlife has no affinity and keeps its current behavior.
+        if (_npc.Entity is not NpcEntity named) return;
+
+        ContextLabel = NpcLabelResolver.Resolve(named, world, locationId, actingMember);
+        foreach (var sub in SubOutcomes)
+            if (sub is VerbOutcome v) v.ContextLabel = ContextLabel;
+    }
+
     public override string ObservationId => _npc.DisplayName.ToLowerInvariant().Replace(' ', '_');
 
-    public override string NeutralName => _npc.DisplayName;
+    public override string NeutralName => ContextLabel ?? _npc.DisplayName;
 
-    public override string NeutralPhrase => _npc.DisplayName;   // proper name — no article
+    public override string NeutralPhrase => ContextLabel ?? _npc.DisplayName;   // label or proper name — no article
 
     public override string ReferenceLemma => "person";          // names aren't in the embedding vocab
 
     public override string GenerateNeutralDescription(int locationId = 0)
     {
+        // Named NPC: use its name-free observation hint (also avoids leaking the proper name that
+        // SceneNpc.Descriptions defaults to). Shallow NPC: keep the scene-authored descriptions.
+        if (_npc.Entity is NpcEntity named)
+            return named.ObservationHint;
+
         if (_npc.Descriptions.Count > 0)
         {
             var rng = new Random(locationId);
@@ -301,6 +325,13 @@ public class VerbOutcome : ConcreteOutcome
     public VerbView  VerbView { get; }
     public Element?  Target   { get; }
 
+    /// <summary>
+    /// Contextual NPC label substituted for the target's proper name in the LLM-facing goal
+    /// phrase. Null unless the parent observation object stamps it (named NPCs only); the
+    /// human-facing <see cref="DisplayName"/> always keeps the verbatim verb text.
+    /// </summary>
+    public string? ContextLabel { get; set; }
+
     public VerbOutcome(VerbView verbView, Element? target)
     {
         VerbView = verbView;
@@ -308,6 +339,10 @@ public class VerbOutcome : ConcreteOutcome
     }
 
     public override string DisplayName => VerbView.Verbatim;
-    public override string ToNaturalLanguageString() => VerbView.Verbatim;
+
+    public override string ToNaturalLanguageString()
+        => ContextLabel != null && Target is SceneNpc n
+            ? VerbView.Verbatim.Replace(n.DisplayName, ContextLabel)
+            : VerbView.Verbatim;
 
 }

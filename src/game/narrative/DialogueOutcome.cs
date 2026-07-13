@@ -28,6 +28,13 @@ public class DialogueOutcome : ConcreteOutcome
     /// </summary>
     public DialogueTree? Tree { get; init; }
 
+    /// <summary>
+    /// Contextual label substituted for the proper name in the LLM-facing goal phrase.
+    /// Null until stamped by <see cref="Npc.NpcObservationObject"/>; the human-facing
+    /// <see cref="DisplayName"/> always keeps the real name.
+    /// </summary>
+    public string? ContextLabel { get; set; }
+
     public DialogueOutcome(NpcEntity target, string? treeId = null, DialogueTree? tree = null)
     {
         Target = target;
@@ -38,6 +45,6 @@ public class DialogueOutcome : ConcreteOutcome
     public override string DisplayName => $"Talk to {Target.DisplayName}";
 
     public override string ToNaturalLanguageString()
-        => $"engage in conversation with {Target.DisplayName}";
+        => $"engage in conversation with {ContextLabel ?? Target.DisplayName}";
 
 }

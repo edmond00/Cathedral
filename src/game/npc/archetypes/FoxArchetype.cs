@@ -16,6 +16,13 @@ public class FoxArchetype : NamedNpcArchetype
         "Old Fox", "Vixen", "Mangy Fox", "Sleek Fox"
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a {name.ToLowerInvariant()} freezes mid-step, watching you with cautious amber eyes";
+    public override string RoleNoun => "fox";
+    protected override bool LabelMentionsLocation => false;
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a russet fox freezes mid-step, watching you with cautious amber eyes",
+        "a slim fox slips between the ferns, brush held low",
+        "a sharp-nosed fox pauses on a log, ears swivelling toward you",
+    };
 }

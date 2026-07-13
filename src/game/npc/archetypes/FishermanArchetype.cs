@@ -20,8 +20,14 @@ public class FishermanArchetype : WildernessNpcArchetype
         "Joan Net", "Mariot Tide", "Aldhelm Wave", "Roger Sail",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a salt-bearded figure squats by a drying rack, fingers working a knot — {name}, a fisherman";
+    public override string RoleNoun => "fisherman";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a salt-bearded figure squats by a drying rack, fingers working a knot",
+        "a weather-beaten figure hauls a dripping net onto the stones",
+        "someone mends a line with quick, practised hands, a boat rocking nearby",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a fisherman who fishes this stretch of coast for three days at a time and brings the catch back to the village to sell.

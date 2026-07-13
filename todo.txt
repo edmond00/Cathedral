@@ -11,4 +11,5 @@ MM max level
 item description written 2 times
 npc name
 noetic points 
-overall MM props fixs
+overall MM properties fixs
+overall beast fixs

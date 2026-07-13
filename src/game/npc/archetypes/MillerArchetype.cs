@@ -18,8 +18,14 @@ public class MillerArchetype : CraftsmanArchetype
         "Margery Mill", "Alyce Grist", "John Grindstone", "Reynold Miller",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a flour-dusted figure straightens by the millstone, white prints across his apron — {name}, the village miller";
+    public override string RoleNoun => "miller";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a flour-dusted figure straightens by the millstone, white prints across their apron",
+        "a pale-dusted figure heaves a sack of grain toward the hopper",
+        "someone brushes meal from the millstone, the wheel groaning outside",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the village miller. The mill is yours, or near enough — the lord owns the right but you take the toll, and you've taken it your whole life.

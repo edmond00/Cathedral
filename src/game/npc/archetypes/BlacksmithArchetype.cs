@@ -18,8 +18,14 @@ public class BlacksmithArchetype : CraftsmanArchetype
         "Hild Smith", "Ranulf Forge", "Walter Anvil", "Wulfric Smith",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a heavy-shouldered figure looks up from the anvil, soot streaking his arms — {name}, the village blacksmith";
+    public override string RoleNoun => "blacksmith";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a heavy-shouldered figure looks up from the anvil, soot streaking their arms",
+        "a broad figure in a scorched leather apron turns a glowing bar with the tongs",
+        "someone hammers a length of iron on the anvil, sparks leaping with each blow",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the village blacksmith. You forge iron into tools — saws, axes, sickles, ploughshares — that everyone in the village and the surrounding country depends on. Your forge is hot, your hands are scarred, and your patience for fools is short.

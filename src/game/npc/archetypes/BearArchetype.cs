@@ -17,6 +17,13 @@ public class BearArchetype : NamedNpcArchetype
         "Scarred Bear", "Old Bear", "Young Bear", "Massive Bear"
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a {name.ToLowerInvariant()} stands upright nearby, sniffing the air with a low growl";
+    public override string RoleNoun => "bear";
+    protected override bool LabelMentionsLocation => false;
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a great shaggy bear stands upright nearby, sniffing the air with a low growl",
+        "a heavy brown bear swings its head toward you, claws raking the dirt",
+        "a hulking bear rises onto its hind legs, a rumble building in its chest",
+    };
 }

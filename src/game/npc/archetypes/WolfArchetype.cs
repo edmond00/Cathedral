@@ -17,6 +17,13 @@ public class WolfArchetype : NamedNpcArchetype
         "Scarred Wolf", "Young Wolf", "Old Wolf", "Lone Wolf"
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a {name.ToLowerInvariant()} watches from the shadows, yellow eyes gleaming";
+    public override string RoleNoun => "wolf";
+    protected override bool LabelMentionsLocation => false;
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a lean grey shape watches from the shadows, yellow eyes gleaming",
+        "a grey wolf paces at the tree-line, head low and eyes fixed",
+        "a rangy wolf bares its fangs, a growl rolling from its chest",
+    };
 }

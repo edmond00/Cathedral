@@ -18,8 +18,14 @@ public class ReeveArchetype : PeasantArchetype
         "Godric Reeve", "Wulfwynn Reeve", "Roger Reeve", "Matilda Reeve",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a tall figure in a knee-length tunic walks the strip-edge, tally-stick in hand — {name}, the field reeve";
+    public override string RoleNoun => "reeve";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a tall figure in a knee-length tunic walks the strip-edge, tally-stick in hand",
+        "a keen-eyed figure notes the day's work on a notched stick",
+        "someone directs the field-work with a raised hand and a hard look",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the reeve overseeing this field. You are accountable to the lord (or to the village if it is freeholder land) for the harvest, the bondmen, the boundary stones.

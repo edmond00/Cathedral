@@ -18,8 +18,14 @@ public class CooperArchetype : CraftsmanArchetype
         "Sara Cooper", "Joan Stavewright", "Hugh Hoopwright", "Edmund Cooper",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a stocky figure works iron over a half-built barrel, hammer-taps ringing — {name}, the village cooper";
+    public override string RoleNoun => "cooper";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a stocky figure works iron over a half-built barrel, hammer-taps ringing",
+        "a broad figure bends a stave around a mould, muscles taut",
+        "someone hoops a cask tight, shavings curling underfoot",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the village cooper. You shape staves, fit hoops, and bind barrels for the brewer, the miller, and the farms. A barrel that leaks is your shame.

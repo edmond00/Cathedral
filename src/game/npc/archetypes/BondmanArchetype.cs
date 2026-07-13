@@ -14,8 +14,14 @@ public class BondmanArchetype : PeasantArchetype
         "Mariot Bond", "Avice Field", "Hawise Stoop", "Sara Bond",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a thin labourer bends to a vegetable bed, hands black with earth — {name}, a bondman of this field";
+    public override string RoleNoun => "bondman";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a thin labourer bends to a vegetable bed, hands black with earth",
+        "a gaunt figure hauls a basket of turnips, back bent from the work",
+        "someone hoes a long row under the sun, sweat dark on their shirt",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a bondman tied to this land. Whatever the reeve sets you to, you do — weeding beds, mending fences, hauling sacks. You are not free, but the village is your village.

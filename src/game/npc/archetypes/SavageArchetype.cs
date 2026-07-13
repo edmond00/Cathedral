@@ -18,8 +18,15 @@ public class SavageArchetype : NamedNpcArchetype
         "Gnaw", "Bark-Hide", "Bone-Shaker", "Cinder"
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a wild, paint-streaked figure crouches nearby — {name}, eyeing you with suspicion";
+    public override string RoleNoun => "savage";
+    protected override bool LabelMentionsLocation => false;
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a wild, paint-streaked figure crouches nearby, eyeing you with suspicion",
+        "a matted, half-clad figure bares its teeth from behind a rock",
+        "someone daubed in ochre watches from the brush, spear held low",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a wild human who has lived outside civilization for as long as you can remember. You speak in broken, clipped sentences — grammar is an afterthought. You rely on actions more than words. You are territorial and suspicious of soft-handed strangers.

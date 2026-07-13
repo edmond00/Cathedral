@@ -20,8 +20,15 @@ public class FarmhandArchetype : NamedNpcArchetype
         "Hugh Swindle", "Joan Thatcher", "Robin Clod", "Cecily Field",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a young labourer straightens from their work and eyes you warily — {name}, a hand on this farm";
+    public override string RoleNoun => "farmhand";
+    protected override bool LabelMentionsLocation => false;
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a young labourer straightens from their work and eyes you warily",
+        "a wiry figure shoulders a bundle of tools, glancing over",
+        "someone pauses mid-task, wiping their brow with a forearm",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a farmhand — a hired labourer on a small medieval farm. Your days are long, your pay is modest, and your complaints are many, though you air them quietly. You know every corner of this farm and most of the local gossip, but you're careful about who you share it with.

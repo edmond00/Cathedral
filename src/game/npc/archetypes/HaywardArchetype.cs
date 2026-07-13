@@ -18,8 +18,14 @@ public class HaywardArchetype : PeasantArchetype
         "Wymark Hayward", "Hugh Hedge", "Joan Hayward", "Avice Margin",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a stick-armed figure paces the edge of the field, eyes on the hedge-line — {name}, the hayward";
+    public override string RoleNoun => "hayward";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a stick-armed figure paces the edge of the field, eyes on the hedge-line",
+        "a wiry figure mends a gap in the hedge, switch under one arm",
+        "someone walks the boundary with a keen, suspicious eye",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the hayward. You walk the field margin from morning to evening, watching for stray animals, broken hedges, and bondmen sleeping in the shade. You report damage to the reeve.

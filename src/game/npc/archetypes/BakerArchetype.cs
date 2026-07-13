@@ -18,8 +18,14 @@ public class BakerArchetype : CraftsmanArchetype
         "Mariot Loaf", "Wymark Baker", "Petronilla Crumb", "Robert Furner",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a flour-dusted figure pulls a loaf from the oven, face flushed from the heat — {name}, the village baker";
+    public override string RoleNoun => "baker";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a flour-dusted figure pulls a loaf from the oven, face flushed from the heat",
+        "a broad figure kneads dough on a floured board, sleeves pushed back",
+        "someone slides a paddle of loaves into a glowing oven, flour clouding the air",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the village baker. You rise long before dawn to fire the oven; by the time most of the village is awake, the bread is out and the smell is rolling down the lane.

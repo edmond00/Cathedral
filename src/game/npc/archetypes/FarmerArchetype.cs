@@ -24,8 +24,15 @@ public class FarmerArchetype : NamedNpcArchetype
         "Godwin Furrow", "Mildred Furrow", "Osbert Grain", "Wulfhild Grain",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a broad-shouldered figure in a mud-stained smock watches you — {name}, who tends this land";
+    public override string RoleNoun => "farmer";
+    protected override bool LabelMentionsLocation => false;
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a broad-shouldered figure in a mud-stained smock watches you",
+        "a weathered figure straightens from the soil, hands caked with earth",
+        "someone leans on a hoe at the field's edge, sizing you up",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a medieval farmer who has worked this land your whole life. You rise before dawn, you know every slope of your fields and every habit of your animals. You have no patience for idleness or fancy talk.

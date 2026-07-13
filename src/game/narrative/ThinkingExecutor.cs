@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
+using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
 
@@ -52,12 +53,17 @@ public class ThinkingExecutor
         Protagonist protagonist,
         WorldContext worldContext,
         int locationId,
+        PartyMember actingMember,
         bool isReminescence = false,
         bool autoSuccess = false,
         CancellationToken cancellationToken = default)
     {
         int thinkingSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(thinkingModusMentis);
         _llmManager.ResetInstance(thinkingSlot);
+
+        // Stamp the contextual NPC label for the current narrator's POV before any prompt text is
+        // built (this also propagates the label to the target's sub-outcomes / goal phrases).
+        (targetOutcome as INpcContextLabelStampable)?.StampContextLabel(actingMember, worldContext, locationId);
 
         // Sub-outcomes to choose between, always including an "ignore and move on" option.
         var sourceObs = targetOutcome as ObservationObject;

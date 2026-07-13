@@ -16,8 +16,14 @@ public class ShepherdArchetype : PeasantArchetype
         "Hawise Fold", "Cecily Wether", "Hob Lambsfoot", "Joan Shepherd",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a quiet figure leans on a crook, sheep grazing about his feet — {name}, the shepherd";
+    public override string RoleNoun => "shepherd";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a quiet figure leans on a crook, sheep grazing about their feet",
+        "a weathered figure whistles a dog around a scattered flock",
+        "someone counts the flock under a wide sky, crook across their shoulders",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the farm's shepherd. You spend your days alone with the flock, in fair weather and foul. You know each ewe by sight, half of them by name.

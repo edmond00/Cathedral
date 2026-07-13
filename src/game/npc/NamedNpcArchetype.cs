@@ -1,4 +1,5 @@
 using System;
+using Cathedral;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 
@@ -89,7 +90,7 @@ public abstract class NamedNpcArchetype : NpcArchetype
         var combatant = new EnemyCombatant(name, Species);
         combatant.InitializeModiMentis(ModusMentisRegistry.Instance, ModiMentisCount);
 
-        var hint           = BuildObservationHint(name, nodeContext);
+        var hint           = PickObservationHint(npcId, nodeContext);
         var wayToSpeak     = CanSpeak ? GenerateWayToSpeakDescription(name, rng) : null;
         var affinityTable  = savedAffinity ?? new AffinityTable();
 
@@ -105,10 +106,51 @@ public abstract class NamedNpcArchetype : NpcArchetype
             ownedSectionIds:       DefaultOwnedSectionIds);
     }
 
-    // ── Overridable builders ──────────────────────────────────────────────────
+    // ── Observation hint ──────────────────────────────────────────────────────
 
-    /// <summary>Override to provide the observation hint sentence.</summary>
-    protected abstract string BuildObservationHint(string name, string nodeContext);
+    /// <summary>
+    /// Override to provide 2-4 interchangeable observation-hint variants. Each describes only
+    /// the NPC's appearance/activity — <b>never</b> the proper name and <b>never</b> the role
+    /// (the role now lives in the dynamic label; see <see cref="RoleNoun"/>). One variant is
+    /// chosen deterministically per NPC by <see cref="PickObservationHint"/>.
+    /// </summary>
+    protected abstract string[] ObservationHintVariants(string nodeContext);
+
+    /// <summary>
+    /// Picks one <see cref="ObservationHintVariants"/> entry, seeded deterministically by the
+    /// NPC id so a given NPC always looks the same within a run (and reproducibly under
+    /// <c>--seed</c>). Uses <see cref="GameRng.DerivedSeed"/> (a stable FNV-1a hash) rather than
+    /// <see cref="string.GetHashCode"/>, which is randomized per process.
+    /// </summary>
+    private string PickObservationHint(string npcId, string nodeContext)
+    {
+        var variants = ObservationHintVariants(nodeContext);
+        var rng = new Random(GameRng.DerivedSeed($"npc_hint_{npcId}"));
+        return variants[rng.Next(variants.Length)];
+    }
+
+    // ── Dynamic label ─────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Short role noun used to build the NPC's contextual label (e.g. "blacksmith", "wolf").
+    /// Fed into <see cref="BuildRoleClause"/> and thereby <see cref="NpcLabelResolver"/>.
+    /// </summary>
+    public abstract string RoleNoun { get; }
+
+    /// <summary>
+    /// Whether the role clause mentions the current location ("the blacksmith of the village").
+    /// Override to false for creatures/roles where a location reads oddly (wild animals).
+    /// </summary>
+    protected virtual bool LabelMentionsLocation => true;
+
+    /// <summary>
+    /// Builds the role portion of the label from the current location noun (already lower-cased,
+    /// possibly empty). Always grammatical and short; override wholesale for irregular phrasing.
+    /// </summary>
+    public virtual string BuildRoleClause(string locationNoun)
+        => LabelMentionsLocation && locationNoun.Length > 0
+            ? $"the {RoleNoun} of the {locationNoun}"
+            : $"the {RoleNoun}";
 
     /// <summary>
     /// Override to return a natural-language description of how this NPC speaks.

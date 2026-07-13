@@ -18,8 +18,14 @@ public class WeaverArchetype : CraftsmanArchetype
         "Reginald Webster", "Hugh Loom", "Maud Spinster", "Avice Threadgold",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a small figure leans into the loom's clatter, fingers flying through the warp — {name}, the village weaver";
+    public override string RoleNoun => "weaver";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a small figure leans into the loom's clatter, fingers flying through the warp",
+        "a slight figure winds thread onto a shuttle, eyes on the pattern",
+        "someone works a treadle loom, cloth inching out beneath their hands",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the village weaver. You take wool from the farmers and flax from the field and turn them into cloth — undyed for the poor, sometimes dyed for the better-off.

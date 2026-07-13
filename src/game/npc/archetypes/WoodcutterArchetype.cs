@@ -20,8 +20,14 @@ public class WoodcutterArchetype : WildernessNpcArchetype
         "Hugh Treesong", "Edmund Stump", "Walter Axe", "Roger Bole",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a hard-handed figure stands beside a felled log, axe leaning against his thigh — {name}, a woodcutter";
+    public override string RoleNoun => "woodcutter";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a hard-handed figure stands beside a felled log, axe leaning against a thigh",
+        "a broad figure splits a round with one clean stroke",
+        "someone limbs a fallen trunk, chips scattered across the moss",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, a woodcutter who works the deep wood for three days at a time and brings the timber back to the village to sell to the carpenter and the cooper.

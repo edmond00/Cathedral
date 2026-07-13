@@ -17,6 +17,13 @@ public class StrayDogArchetype : NamedNpcArchetype
         "Mangy Hound", "Lean Cur", "Wild Hound", "Half-Starved Dog"
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a {name.ToLowerInvariant()} stands hackles raised, a low snarl in its throat";
+    public override string RoleNoun => "dog";
+    protected override bool LabelMentionsLocation => false;
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a gaunt dog stands with hackles raised, a low snarl in its throat",
+        "a rangy dog circles at a distance, ribs showing through matted fur",
+        "a mangy dog bares its teeth, ears flat against its skull",
+    };
 }

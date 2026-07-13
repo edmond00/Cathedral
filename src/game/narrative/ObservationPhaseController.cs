@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cathedral;
 using Cathedral.LLM;
+using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Narrative;
 
@@ -79,6 +80,11 @@ public class ObservationPhaseController
             return new List<NarrationBlock>();
         }
 
+        // Stamp the contextual NPC label (relation + role + location) for this narrator's POV
+        // before any prompt text is built. Non-NPC / shallow outcomes no-op.
+        foreach (var o in allOutcomes)
+            (o as INpcContextLabelStampable)?.StampContextLabel(actingMember, _worldContext, locationId);
+
         // Collapse identical objects (e.g. several "Birch Tree") to one random representative each,
         // so the choice list has no duplicates and a chosen object's twins are not re-proposed.
         var candidates = DeduplicateByName(allOutcomes);
@@ -135,10 +141,17 @@ public class ObservationPhaseController
         ModusMentis observationModusMentis,
         NarrationNode currentNode,
         int locationId,
+        PartyMember actingMember,
         bool isReminescence = false,
         CancellationToken ct = default)
     {
         Console.WriteLine($"ObservationPhaseController: Starting focus observation on '{focusOutcome.DisplayName}'");
+
+        // Stamp the contextual NPC label for this narrator's POV on the clicked outcome and every
+        // other node outcome (the second, LLM-chosen object is drawn from these). Non-NPC no-op.
+        (focusOutcome as INpcContextLabelStampable)?.StampContextLabel(actingMember, _worldContext, locationId);
+        foreach (var o in currentNode.GetAllDirectConcreteOutcomes())
+            (o as INpcContextLabelStampable)?.StampContextLabel(actingMember, _worldContext, locationId);
 
         var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(observationModusMentis);
         _observationExecutor.ResetSlot(slotId);

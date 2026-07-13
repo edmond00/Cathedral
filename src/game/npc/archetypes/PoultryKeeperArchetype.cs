@@ -16,8 +16,14 @@ public class PoultryKeeperArchetype : PeasantArchetype
         "Editha Coop", "Lufa Henwife", "Petronilla Featherwife", "Cecily Coop",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a small figure crouches at the nest-box, basket of eggs balanced on her hip — {name}, the poultry keeper";
+    public override string RoleNoun => "poultry keeper";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a small figure crouches at the nest-box, basket of eggs balanced on one hip",
+        "a quick figure scatters grain to a scrum of clucking hens",
+        "someone counts a flock of birds, shooing a stray back toward the coop",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the farm's poultry keeper. You feed the chickens, gather eggs, count beaks at dusk and worry when one is missing.

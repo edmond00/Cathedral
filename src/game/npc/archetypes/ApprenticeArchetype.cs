@@ -14,8 +14,14 @@ public class ApprenticeArchetype : CraftsmanArchetype
         "Wat Hammers", "Stephen Bellows", "Roger Coalboy", "Dickon Forge",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a soot-faced youth pauses at his work, eyeing you warily — {name}, an apprentice";
+    public override string RoleNoun => "apprentice";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a soot-faced youth pauses at their work, eyeing you warily",
+        "a young figure in a coal-smudged apron fetches and carries, glancing up nervously",
+        "a lanky apprentice sweeps shavings from the floor, keeping half an eye on you",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, an apprentice in a village workshop — bound to the master craftsman for years yet. You do the dirty work: fetching coal, sweeping shavings, stoking fires.

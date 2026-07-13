@@ -17,6 +17,13 @@ public class BoarArchetype : NamedNpcArchetype
         "Scarred Boar", "Old Boar", "Bristled Boar", "Feral Boar"
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a {name.ToLowerInvariant()} roots aggressively in the undergrowth, tusks gleaming";
+    public override string RoleNoun => "boar";
+    protected override bool LabelMentionsLocation => false;
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a bristling boar roots aggressively in the undergrowth, tusks gleaming",
+        "a heavy boar wheels to face you, hackles stiff along its spine",
+        "a tusked boar snorts and paws the earth, ready to charge",
+    };
 }

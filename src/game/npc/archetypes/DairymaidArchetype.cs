@@ -16,8 +16,14 @@ public class DairymaidArchetype : PeasantArchetype
         "Joan Whey", "Petronilla Curd", "Editha Pail", "Lufa Churn",
     };
 
-    protected override string BuildObservationHint(string name, string nodeContext)
-        => $"a quick figure leans against the churn, sleeves rolled, hands red — {name}, the dairymaid";
+    public override string RoleNoun => "dairymaid";
+
+    protected override string[] ObservationHintVariants(string nodeContext) => new[]
+    {
+        "a quick figure leans against the churn, sleeves rolled, hands red",
+        "a brisk figure carries two brimming pails on a yoke",
+        "someone skims cream from a shallow pan, apron spotted with milk",
+    };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the dairymaid. You start before dawn — milking the cows, then churning, then pressing. By noon the work is mostly done and you are mostly tired.
