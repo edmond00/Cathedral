@@ -134,7 +134,9 @@ public class Fighter
         // ── Organ-medium learnable skills ─────────────────────────────
         var organLearnables = registry.GetAll()
             .Where(s => s.Medium.Type == MediumType.OrganMedium)
-            .Where(s => !Member.LearnedModiMentis.Any(m => m.ModusMentisId == s.RequiredModusMentisId))
+            .Where(s => !Member.LearnedModiMentis.Any(m =>
+                m.ModusMentisId == s.RequiredModusMentisId ||
+                s.SecondaryModusMentisIds.Contains(m.ModusMentisId)))
             .Where(s => IsMediumAvailable(s))
             .Where(s => CurrentCineticPoints >= s.CineticPointsCost)
             .GroupBy(s => s.Medium.OrganId ?? s.SkillId)
@@ -144,7 +146,9 @@ public class Fighter
         // One learnable per available body-part region: the lowest-MediumPosition unknown skill.
         var bodyPartLearnables = registry.GetAll()
             .Where(s => s.Medium.Type == MediumType.BodyPartMedium)
-            .Where(s => !Member.LearnedModiMentis.Any(m => m.ModusMentisId == s.RequiredModusMentisId))
+            .Where(s => !Member.LearnedModiMentis.Any(m =>
+                m.ModusMentisId == s.RequiredModusMentisId ||
+                s.SecondaryModusMentisIds.Contains(m.ModusMentisId)))
             .Where(s => IsMediumAvailable(s))
             .Where(s => CurrentCineticPoints >= s.CineticPointsCost)
             .GroupBy(s => s.Medium.BodyPartId ?? s.SkillId)
@@ -170,7 +174,9 @@ public class Fighter
             {
                 var skill = registry.GetById(skillId);
                 if (skill == null) continue;
-                if (Member.LearnedModiMentis.Any(m => m.ModusMentisId == skill.RequiredModusMentisId)) continue;
+                if (Member.LearnedModiMentis.Any(m =>
+                    m.ModusMentisId == skill.RequiredModusMentisId ||
+                    skill.SecondaryModusMentisIds.Contains(m.ModusMentisId))) continue;
                 if (CurrentCineticPoints < skill.CineticPointsCost) continue;
                 weaponLearnables.Add(skill);
                 break; // one learnable per category

@@ -202,13 +202,16 @@ public abstract class FightingSkill
 
     /// <summary>
     /// Returns true when the fighter can use this skill in the current combat state.
-    /// Checks: primary ModusMentis known, medium available, organ not disabled by wounds.
+    /// Checks: primary OR any secondary ModusMentis known, medium available, organ not disabled by wounds.
     /// (CP cost check is handled separately in GetUnlockedSkills.)
     /// </summary>
     public bool IsUnlocked(Fighter f)
     {
-        // Check primary ModusMentis known
-        if (!f.Member.LearnedModiMentis.Any(m => m.ModusMentisId == RequiredModusMentisId))
+        // Check primary OR any secondary ModusMentis known
+        bool anyMmKnown = f.Member.LearnedModiMentis.Any(m =>
+            m.ModusMentisId == RequiredModusMentisId ||
+            SecondaryModusMentisIds.Contains(m.ModusMentisId));
+        if (!anyMmKnown)
             return false;
 
         // Check medium
