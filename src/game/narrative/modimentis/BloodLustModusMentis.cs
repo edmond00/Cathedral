@@ -13,9 +13,10 @@ public class BloodLustModusMentis : ModusMentis
     public override string MenuDescription =>
         "Feeds on bloodshed already begun, each wound given or taken sharpening the next blow rather than the caution that should follow. Drives the body harder as violence continues, at the cost of restraint and clear judgement.";
     public override string SkillMeans       => "the dark energy that rises from bloodshed and makes the next strike come harder";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override string[] Organs        => new[] { "viscera", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a fighter intoxicated by bloodshed who grows more dangerous with every blow struck";
     public override string PersonaReminder  => "the blood-intoxicated fighter";

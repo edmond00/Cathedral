@@ -13,8 +13,8 @@ public class AthleticsModusMentis : ModusMentis
     public override string MenuDescription =>
         "Measures the world in strides, handholds, and breaths that can be sustained, treating obstacles as invitations to test the body. Keeps muscle and lung ready for exertion, and reads a gap as a running start rather than a barrier.";
     public override string SkillMeans => "running, climbing, and exertion";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs => new[] { "legs", "pulmones" };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override string[] Organs => new[] { "legs", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     
     public override string PersonaTone => "an exuberant competitor who sees the world as an obstacle course to conquer";

@@ -13,9 +13,10 @@ public class BrawlingModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads a close fight as chaos to be won by any means, with no rules worth respecting. Keeps the body ready to headbutt, grapple, and seize whatever comes to hand, favouring the effective move over the honourable one.";
     public override string SkillMeans       => "street fighting, improvised violence, and winning by any means";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "arms", "hands", "legs" };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a tavern brawler who fights without rules and wins by creative violence";
     public override string PersonaReminder  => "tavern brawler";

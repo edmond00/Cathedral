@@ -13,8 +13,8 @@ public class UppercutModusMentis : ModusMentis
     public override string MenuDescription =>
         "Drives an explosive upward blow from the legs through the fist. Sets a close strike to lift and stun, and inclines toward the rising hit placed under a guard.";
     public override string SkillMeans => "an explosive upward strike";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs => new[] { "arms", "cerebellum" };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override string[] Organs => new[] { "hands", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     
     public override string PersonaTone => "a ferocious striker who finds beauty in perfectly timed explosive impacts";

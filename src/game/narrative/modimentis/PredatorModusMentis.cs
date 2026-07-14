@@ -13,9 +13,11 @@ public class PredatorModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads a larger quarry for its line of escape and works to close it, stalking and cornering until space runs out. Keeps a patient pressure on the pursuit rather than a hasty rush.";
     public override string SkillMeans       => "the patient hunt that ends when the prey runs out of space";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "eyes", "legs" };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override string[] Organs        => new[] { "fangs", "claws" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override MoralLevel MoralLevel => MoralLevel.Low;
+    public override bool ActsDiscretely => true;
 
     public override string PersonaTone     => "a predator who circles, reads, and closes when the prey has no options left";
     public override string PersonaReminder  => "the patient circling predator";

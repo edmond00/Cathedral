@@ -260,8 +260,8 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 
 - Mediums : claws #1
 - Cinetic Points : 1
-- Main MM : Ferocity
-- Secondary MM : Predator / Brawling
+- Main MM : Predator
+- Secondary MM : Ferocity / Brawling
 - Type : Attack
 - Damage Type : cutting
 - Localization : Trunk / Lower Limbs
@@ -272,8 +272,8 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 
 - Mediums : claws #2
 - Cinetic Points : 3
-- Main MM : Ferocity
-- Secondary MM : Incisiveness / Blood Lust
+- Main MM : Predator
+- Secondary MM : Ferocity / Incisiveness / Blood Lust
 - Type : Attack
 - Damage Type : cutting
 - Localization : Trunk
@@ -285,8 +285,8 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 
 - Mediums : claws #3
 - Cinetic Points : 5
-- Main MM : Ferocity
-- Secondary MM : Incisiveness / Predator
+- Main MM : Predator
+- Secondary MM : Ferocity / Incisiveness
 - Type : Attack
 - Damage Type : cutting
 - Localization : Viscera

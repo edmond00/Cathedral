@@ -8,7 +8,7 @@ public sealed class SnapThrustSkill : FightingSkill
     public override string Description            => "Fast stabbing thrust.";
     public override string RequiredModusMentisId  => "swordsmanship";
     public override string[] SecondaryModusMentisIds => new[] { "incisiveness", "battlecraft" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

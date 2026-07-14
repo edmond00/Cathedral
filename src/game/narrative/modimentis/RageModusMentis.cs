@@ -13,9 +13,10 @@ public class RageModusMentis : ModusMentis
     public override string MenuDescription =>
         "Rises into an all-consuming anger that burns through pain, fear, and doubt. Drives the body into powerful assault while it lasts, at the cost of caution and control.";
     public override string SkillMeans       => "the battle fury that burns through pain, fear, and doubt";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "viscera", "arms" };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override string[] Organs        => new[] { "viscera", "hepar" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a warrior consumed by battle fury who becomes unstoppable as the rage takes hold";
     public override string PersonaReminder  => "the battle-raged warrior";

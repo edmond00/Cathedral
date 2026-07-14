@@ -8,7 +8,7 @@ public sealed class ShieldBashSkill : FightingSkill
     public override string Description            => "Bash with the shield targeting face or trunk.";
     public override string RequiredModusMentisId  => "battlecraft";
     public override string[] SecondaryModusMentisIds => new[] { "brute_force", "brawling" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

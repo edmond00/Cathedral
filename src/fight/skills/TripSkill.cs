@@ -8,7 +8,7 @@ public sealed class TripSkill : FightingSkill
     public override string Description            => "Sweep the legs. Knocks target down.";
     public override string RequiredModusMentisId  => "low_blow";
     public override string[] SecondaryModusMentisIds => new[] { "brawling", "acrobatics" };
-    public override FightingMedium Medium         => FightingMedium.Organ("feet");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("feet") };
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

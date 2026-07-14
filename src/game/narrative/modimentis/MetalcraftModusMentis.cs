@@ -13,7 +13,7 @@ public class MetalcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Works iron at the forge, reading heat and colour to know when metal will move under the hammer. Sets the hands to heating and shaping, and inclines toward mending or making in metal.";
     public override string SkillMeans       => "the working of iron at the forge";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

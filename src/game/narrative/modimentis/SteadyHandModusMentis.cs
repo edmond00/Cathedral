@@ -16,6 +16,7 @@ public class SteadyHandModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "a worker who can hold a thing dead still under strain for as long as the work takes";
     public override string PersonaReminder  => "steady-handed worker";

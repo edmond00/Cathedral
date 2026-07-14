@@ -13,9 +13,10 @@ public class LowBlowModusMentis : ModusMentis
     public override string MenuDescription =>
         "Marks the softest, least-guarded points on a body and aims for them. Inclines toward underhanded strikes that disable through pain, choosing effect over fairness.";
     public override string SkillMeans       => "underhanded strikes aimed at the body's softest and least-guarded points";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override string[] Organs        => new[] { "legs", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a pragmatic fighter who aims below the belt and sleeps well at night";
     public override string PersonaReminder  => "low blow pragmatist";

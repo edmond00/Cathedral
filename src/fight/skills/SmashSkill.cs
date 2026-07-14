@@ -8,7 +8,7 @@ public sealed class SmashSkill : FightingSkill
     public override string Description            => "Direct blow to face, trunk or head.";
     public override string RequiredModusMentisId  => "brute_force";
     public override string[] SecondaryModusMentisIds => new[] { "battlecraft", "brawling" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

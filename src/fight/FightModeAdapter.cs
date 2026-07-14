@@ -557,7 +557,8 @@ public class FightModeAdapter
             {
                 _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
                 ExecuteAction(new Actions.SkillAction(active, active, skill,
-                    FightModeUI.OrganPartIdFromKey(mediumKey)));
+                    FightModeUI.OrganPartIdFromKey(mediumKey),
+                    ActiveMediumFromKey(skill, mediumKey)));
             }
             else
             {
@@ -568,8 +569,7 @@ public class FightModeAdapter
                 if (target != null)
                 {
                     _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
-                    TryUseSkillOnTarget(active, target, skill, mediumKey);
-                }
+                    TryUseSkillOnTarget(active, target, skill, mediumKey);                }
                 else
                 {
                     int cost = skill.CineticPointsCost;
@@ -624,6 +624,32 @@ public class FightModeAdapter
         if (s.Medium.Type == MediumType.BodyPartMedium)
             return FightModeUI.BodyPartKey(s.Medium.BodyPartId ?? s.SkillId);
         return $"mm:{s.RequiredModusMentisId}";
+    }
+
+    /// <summary>
+    /// Resolves the active <see cref="FightingMedium"/> for a skill from a left-panel tab key.
+    /// For organ tabs ("organ:xxx" or "organpart:xxx") returns the matching medium in the skill;
+    /// for body-part tabs ("bodypart:xxx") returns the matching body-part medium; otherwise null.
+    /// </summary>
+    private static FightingMedium? ActiveMediumFromKey(FightingSkill skill, string? mediumKey)
+    {
+        if (mediumKey == null) return null;
+        if (mediumKey.StartsWith(FightModeUI.OrganKeyPrefix, StringComparison.Ordinal))
+        {
+            string organId = mediumKey[FightModeUI.OrganKeyPrefix.Length..];
+            return skill.GetMediumForOrganId(organId);
+        }
+        if (mediumKey.StartsWith(FightModeUI.OrganPartKeyPrefix, StringComparison.Ordinal))
+        {
+            // part key — the organ id is inferred from Mediums; return the first organ-type medium
+            return skill.Mediums.FirstOrDefault(m => m.Type == MediumType.OrganMedium);
+        }
+        if (mediumKey.StartsWith(FightModeUI.BodyPartKeyPrefix, StringComparison.Ordinal))
+        {
+            string bodyPartId = mediumKey[FightModeUI.BodyPartKeyPrefix.Length..];
+            return skill.GetMediumForBodyPartId(bodyPartId);
+        }
+        return null;
     }
 
     /// <summary>Called by the game loop when a terminal cell is hovered.</summary>
@@ -1020,7 +1046,8 @@ public class FightModeAdapter
     private void TryUseSkillOnTarget(Fighter attacker, Fighter target, FightingSkill skill,
                                       string? mediumKey = null)
     {
-        string? organPartId = FightModeUI.OrganPartIdFromKey(mediumKey);
+        string? organPartId  = FightModeUI.OrganPartIdFromKey(mediumKey);
+        var     activeMedium = ActiveMediumFromKey(skill, mediumKey);
         if (skill.WoundTargetMode == WoundTargetMode.PlayerChooses)
         {
             string usedKey = mediumKey ?? DefaultMediumKeyFor(skill);
@@ -1034,13 +1061,11 @@ public class FightModeAdapter
                 {
                     _state.PendingBodyPartId = localization;
                     _localizationOverlay = null;
-                    // Same path normal attacks take: deducts CP, configures dice, starts the roll.
-                    ExecuteAction(new Actions.SkillAction(attacker, target, skill, organPartId));
+                    ExecuteAction(new Actions.SkillAction(attacker, target, skill, organPartId, activeMedium));
                 },
                 onCancel: () =>
                 {
                     _localizationOverlay = null;
-                    // Cancelling frees the once-per-turn lock so the player may pick again.
                     _state.UsedActionsThisTurn.Remove((usedKey, skill.SkillId));
                     _state.PendingSkill = null;
                     _state.PendingTarget = null;
@@ -1054,7 +1079,7 @@ public class FightModeAdapter
         }
 
         _state.PendingTarget = target;
-        ExecuteAction(new Actions.SkillAction(attacker, target, skill, organPartId));
+        ExecuteAction(new Actions.SkillAction(attacker, target, skill, organPartId, activeMedium));
     }
 
     private void BeginDiceRoll()
@@ -1185,7 +1210,13 @@ public class FightModeAdapter
         _state.PendingSkill = null;  // signals "this is a learning roll, not an attack roll"
         _state.PendingTarget = target;
         _state.LearningDiceCount = Math.Max(1, attacker.FightLearningStat);
-        _state.LearningDifficulty = Math.Max(0, skill.MediumPosition - 1);
+        // Difficulty comes from position in the specific medium the player accessed the skill through.
+        string? organId     = FightModeUI.OrganIdFromKey(_pendingLearnMediumKey);
+        string? bodyPartId  = FightModeUI.BodyPartIdFromKey(_pendingLearnMediumKey);
+        int position = organId    != null ? skill.GetMediumPositionForOrganId(organId)
+                     : bodyPartId != null ? skill.GetMediumPositionForBodyPartId(bodyPartId)
+                     : skill.MediumPosition;
+        _state.LearningDifficulty = Math.Max(0, position - 1);
         _state.DiceNumberOfDice = _state.LearningDiceCount;
         _state.DiceDifficulty = _state.LearningDifficulty;
         _state.Phase = TurnPhase.AnimatingDice;
@@ -1299,7 +1330,8 @@ public class FightModeAdapter
             if (skill.EffectType == FightingSkillEffect.DefensePosture)
             {
                 ExecuteAction(new Actions.SkillAction(active, active, skill,
-                    FightModeUI.OrganPartIdFromKey(learnedMediumKey)));
+                    FightModeUI.OrganPartIdFromKey(learnedMediumKey),
+                    ActiveMediumFromKey(skill, learnedMediumKey)));
             }
             else if (learnedTarget != null && learnedTarget.IsAlive)
             {
@@ -1578,47 +1610,47 @@ public class FightModeAdapter
     /// Decide what the left-bottom info box should describe: the hovered action
     /// if the mouse is over one, otherwise the currently selected action.
     /// </summary>
-    private (FightModeUI.LeftInfoKind Kind, FightingSkill? Skill, string? OrganPartId) ResolveLeftInfo(Fighter active)
+    private (FightModeUI.LeftInfoKind Kind, FightingSkill? Skill, string? OrganPartId, string? ActiveOrganId) ResolveLeftInfo(Fighter active)
     {
-        if (!active.IsPlayerControlled) return (FightModeUI.LeftInfoKind.None, null, null);
+        if (!active.IsPlayerControlled) return (FightModeUI.LeftInfoKind.None, null, null, null);
 
-        // 1. Hovered button (priority)
         if (_hoveredButtonRow == FightModeUI.MoveButtonRow)
-            return (FightModeUI.LeftInfoKind.Move, null, null);
+            return (FightModeUI.LeftInfoKind.Move, null, null, null);
         if (_hoveredButtonRow == FightModeUI.EndTurnButtonRow)
-            return (FightModeUI.LeftInfoKind.EndTurn, null, null);
+            return (FightModeUI.LeftInfoKind.EndTurn, null, null, null);
         if (_hoveredButtonRow == FightModeUI.RunButtonRow)
-            return (FightModeUI.LeftInfoKind.Run, null, null);
+            return (FightModeUI.LeftInfoKind.Run, null, null, null);
 
         if (_hoveredButtonRow >= 0)
         {
             foreach (var r in _leftPanelLayout)
             {
                 if (r.Y != _hoveredButtonRow) continue;
-                string? partId = FightModeUI.OrganPartIdFromKey(r.MediumKey);
+                string? partId   = FightModeUI.OrganPartIdFromKey(r.MediumKey);
+                string? organId  = FightModeUI.OrganIdFromKey(r.MediumKey);
                 if (r.Kind == LeftPanelRowKind.UnlockedSkill
                     && r.SkillIndex >= 0 && r.SkillIndex < _currentUnlockedSkills.Count)
-                    return (FightModeUI.LeftInfoKind.Skill, _currentUnlockedSkills[r.SkillIndex], partId);
+                    return (FightModeUI.LeftInfoKind.Skill, _currentUnlockedSkills[r.SkillIndex], partId, organId);
                 if (r.Kind == LeftPanelRowKind.LearnableSkill
                     && r.SkillIndex >= 0 && r.SkillIndex < _currentLearnableSkills.Count)
-                    return (FightModeUI.LeftInfoKind.LearnableSkill, _currentLearnableSkills[r.SkillIndex], partId);
+                    return (FightModeUI.LeftInfoKind.LearnableSkill, _currentLearnableSkills[r.SkillIndex], partId, organId);
                 if (r.Kind == LeftPanelRowKind.UnaffordableSkill
                     && r.SkillIndex >= 0 && r.SkillIndex < _currentUnaffordableSkills.Count)
-                    return (FightModeUI.LeftInfoKind.Skill, _currentUnaffordableSkills[r.SkillIndex], partId);
+                    return (FightModeUI.LeftInfoKind.Skill, _currentUnaffordableSkills[r.SkillIndex], partId, organId);
                 break;
             }
         }
 
-        // 2. Selected action (fallback)
-        string? selPartId = FightModeUI.OrganPartIdFromKey(_selectedMediumKey);
+        string? selPartId  = FightModeUI.OrganPartIdFromKey(_selectedMediumKey);
+        string? selOrganId = FightModeUI.OrganIdFromKey(_selectedMediumKey);
         if (_selectedSkillIndex >= 0 && _selectedSkillIndex < _currentUnlockedSkills.Count)
-            return (FightModeUI.LeftInfoKind.Skill, _currentUnlockedSkills[_selectedSkillIndex], selPartId);
+            return (FightModeUI.LeftInfoKind.Skill, _currentUnlockedSkills[_selectedSkillIndex], selPartId, selOrganId);
         if (_selectedLearnableSkillIndex >= 0 && _selectedLearnableSkillIndex < _currentLearnableSkills.Count)
-            return (FightModeUI.LeftInfoKind.LearnableSkill, _currentLearnableSkills[_selectedLearnableSkillIndex], selPartId);
+            return (FightModeUI.LeftInfoKind.LearnableSkill, _currentLearnableSkills[_selectedLearnableSkillIndex], selPartId, selOrganId);
         if (_isMoveMode)
-            return (FightModeUI.LeftInfoKind.Move, null, null);
+            return (FightModeUI.LeftInfoKind.Move, null, null, null);
 
-        return (FightModeUI.LeftInfoKind.None, null, null);
+        return (FightModeUI.LeftInfoKind.None, null, null, null);
     }
 
     private void FullRedraw()
@@ -1650,8 +1682,8 @@ public class FightModeAdapter
             _hoverSkillCells = ComputeHoverSkillCells(_hoveredButtonRow, active);
 
             // Bottom-half info panel — hovered action > selected action > none
-            var (infoKind, infoSkill, infoPartId) = ResolveLeftInfo(active);
-            FightModeUI.RenderLeftInfoPanel(_terminal, infoKind, infoSkill, active, infoPartId);
+            var (infoKind, infoSkill, infoPartId, infoOrganId) = ResolveLeftInfo(active);
+            FightModeUI.RenderLeftInfoPanel(_terminal, infoKind, infoSkill, active, infoPartId, infoOrganId);
         }
 
         FightModeUI.RenderCenterPanel(_terminal, _state.Area, _state.Fighters,

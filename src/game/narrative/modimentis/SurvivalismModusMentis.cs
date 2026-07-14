@@ -13,7 +13,7 @@ public class SurvivalismModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps a constant tally of what the body needs to last: water within reach, warmth before nightfall, food that will not poison. Rates every option by whether it buys another day rather than whether it pleases, and treats no source as beneath use.";
     public override string SkillMeans       => "the unfussy keeping-of-oneself-alive";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override string[] Organs        => new[] { "viscera", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

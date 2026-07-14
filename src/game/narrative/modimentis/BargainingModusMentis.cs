@@ -14,7 +14,7 @@ public class BargainingModusMentis : ModusMentis
         "Holds two figures in mind at once, the price asked and the price that would actually be accepted, and works the gap between them. Inclines toward patience, feigned reluctance, and letting a deal be pulled loose rather than offered.";
     public override string SkillMeans       => "well-handled trade-talk";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
-    public override string[] Organs        => new[] { "tongue", "encephalon" };
+    public override string[] Organs        => new[] { "tongue", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a market-tongued haggler who would rather walk away than pay one penny over the proper figure";

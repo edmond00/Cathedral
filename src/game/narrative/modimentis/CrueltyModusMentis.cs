@@ -16,8 +16,8 @@ public class CrueltyModusMentis : ModusMentis
     public override string SkillMeans    => "cruelty and predatory instinct";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override MoralLevel MoralLevel => MoralLevel.Low;
-    public override string[] Organs => new[] { "cerebrum", "hands" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override string[] Organs => new[] { "spleen", "heart" };
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone => "a cold predator who finds satisfaction in the suffering of weaker things";
     public override string PersonaReminder => "cold-blooded dominator";

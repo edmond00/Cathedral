@@ -8,7 +8,7 @@ public sealed class IronNervesSkill : FightingSkill
     public override string Description            => "Absolute composure — allows repeating a skill already used this turn.";
     public override string RequiredModusMentisId  => "iron_nerves";
     public override string[] SecondaryModusMentisIds => new[] { "cold_blood", "vigilance" };
-    public override FightingMedium Medium         => FightingMedium.Organ("viscera");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("viscera") };
     public override int CineticPointsCost         => 1;
     public override int VitalHeatCost             => 10;
     public override int BaseDice                  => 0;

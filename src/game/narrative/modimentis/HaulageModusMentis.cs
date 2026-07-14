@@ -14,7 +14,7 @@ public class HaulageModusMentis : ModusMentis
         "Judges a load by how it must be lifted and carried without injury, tracking balance and grip. Sets the body to moving weight, by hand or on the back, over the distance it must go.";
     public override string SkillMeans       => "the loading and carrying of heavy loads";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "arms", "backbone" };
+    public override string[] Organs        => new[] { "trunk" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a porter's body that knows how to get under a load and stand up straight with it";

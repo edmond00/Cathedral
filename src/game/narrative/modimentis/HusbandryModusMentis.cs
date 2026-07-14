@@ -13,9 +13,10 @@ public class HusbandryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps the needs of livestock in mind, feeding, tending, breeding, and handling them. Reads an animal's condition, and inclines toward steady care and management of the farm's beasts.";
     public override string SkillMeans       => "the tending and handling of livestock";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "viscera" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "a herder who knows each beast by name and can tell a sick one by how it stands";
     public override string PersonaReminder  => "livestock-keeper";

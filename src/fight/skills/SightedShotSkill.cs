@@ -8,7 +8,7 @@ public sealed class SightedShotSkill : FightingSkill
     public override string Description            => "Aimed shot targeting the heart/viscera.";
     public override string RequiredModusMentisId  => "marksman";
     public override string[] SecondaryModusMentisIds => new[] { "deadeye", "tactics" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

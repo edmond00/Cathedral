@@ -14,7 +14,7 @@ public class AvariceModusMentis : ModusMentis
         "Weighs every expense against the option of keeping, and reads generosity, in others and in oneself, as a cost paid somewhere. Leans toward the cheaper road and the harder bargain, and counts an unspent purse as a small victory.";
     public override string SkillMeans       => "the tight-fisted holding-on of coin";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
-    public override string[] Organs        => new[] { "heart", "encephalon" };
+    public override string[] Organs        => new[] { "heart", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a tight-fisted soul who counts every coin twice and parts with none willingly";

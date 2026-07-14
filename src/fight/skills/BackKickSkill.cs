@@ -8,7 +8,7 @@ public sealed class BackKickSkill : FightingSkill
     public override string Description            => "Powerful back kick targeting trunk. Pushes target back.";
     public override string RequiredModusMentisId  => "athletics";
     public override string[] SecondaryModusMentisIds => new[] { "acrobatics", "battlecraft" };
-    public override FightingMedium Medium         => FightingMedium.Organ("feet");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("feet") };
     public override int CineticPointsCost         => 3;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

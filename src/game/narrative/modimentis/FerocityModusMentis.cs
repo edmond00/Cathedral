@@ -13,9 +13,10 @@ public class FerocityModusMentis : ModusMentis
     public override string MenuDescription =>
         "Presses an attack so hard the enemy is given no room to answer. Trades defence for momentum and keeps the body driving forward, favouring relentless assault over measured exchange.";
     public override string SkillMeans       => "the savage and overwhelming attack that leaves no room for defense";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "viscera", "arms" };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override string[] Organs        => new[] { "fangs", "teeths" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a berserker who overwhelms with savage intensity before thought can intervene";
     public override string PersonaReminder  => "ferocious berserker";

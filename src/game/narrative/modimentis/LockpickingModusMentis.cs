@@ -15,7 +15,7 @@ public class LockpickingModusMentis : ModusMentis
     public override string SkillMeans       => "the soft feeling of tumblers under a pick";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override bool ActsDiscretely    => true;
-    public override string[] Organs        => new[] { "hands" };
+    public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a quiet pair of hands that learnt their craft on dormitory doors with a stolen hairpin";

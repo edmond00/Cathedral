@@ -14,8 +14,9 @@ public class ScholarshipModusMentis : ModusMentis
         "Draws on what is recorded in manuscripts, reading letters and old texts with patient study. Inclines reasoning toward written knowledge, and treats a question as something the record may already answer.";
     public override string SkillMeans       => "what is recorded in old manuscripts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
-    public override string[] Organs        => new[] { "encephalon", "eyes" };
+    public override string[] Organs        => new[] { "encephalon" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
+    public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "a tutor-bred reader who reaches for what was already written before answering";
     public override string PersonaReminder  => "tutor-bred reader";

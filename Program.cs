@@ -29,7 +29,27 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --weapons                          Give the protagonist a starter weapon loadout (Arming Sword, Hunting Bow, Round Shield)");
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice)");
+    Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
+    return;
+}
+
+// Modus-mentis content audit mode: print the report (violations are listed, not fatal) and exit.
+if (args.Length >= 1 && args[0] == "--mm-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.ModusMentisRuleValidator.BuildAuditReport());
+    return;
+}
+
+// Validate the modus-mentis hard rules at every launch: any violation aborts the run.
+try
+{
+    Cathedral.Game.Narrative.ModusMentisRuleValidator.ValidateOrThrow();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ MODUS MENTIS VALIDATION FAILED:\n{ex.Message}");
+    Console.WriteLine("Run with --mm-audit for the full content report.");
     return;
 }
 

@@ -15,8 +15,9 @@ public class MasqueradeModusMentis : ModusMentis
     public override string SkillMeans       => "the wearing of a false face — a borrowed posture, a stolen name, a look of belonging";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override bool ActsDiscretely    => true;
-    public override string[] Organs        => new[] { "encephalon", "trunk" };
+    public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a practiced shape-shifter who has passed as pauper, merchant, guard and corpse when the moment demanded";
     public override string PersonaReminder  => "false-faced infiltrator";

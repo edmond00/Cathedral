@@ -8,7 +8,7 @@ public sealed class PunchSkill : FightingSkill
     public override string Description            => "Basic punch. Player chooses target.";
     public override string RequiredModusMentisId  => "pugilitas";
     public override string[] SecondaryModusMentisIds => new[] { "brawling", "brute_force" };
-    public override FightingMedium Medium         => FightingMedium.Organ("hands");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("hands") };
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

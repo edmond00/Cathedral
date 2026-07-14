@@ -16,6 +16,7 @@ public class GluttonyModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "nose", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
+    public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a soul that catches the smell of pies and stews from a long way off";
     public override string PersonaReminder  => "pie-greedy observer";

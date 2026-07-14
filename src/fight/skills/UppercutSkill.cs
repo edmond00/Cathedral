@@ -8,7 +8,7 @@ public sealed class UppercutSkill : FightingSkill
     public override string Description            => "Rising strike targeting head.";
     public override string RequiredModusMentisId  => "uppercut";
     public override string[] SecondaryModusMentisIds => new[] { "pugilitas", "iron_fist" };
-    public override FightingMedium Medium         => FightingMedium.Organ("hands");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("hands") };
     public override int CineticPointsCost         => 3;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

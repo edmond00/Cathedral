@@ -13,9 +13,9 @@ public class FirecraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Tends a working fire by heat, ember, and draught, laying and feeding it to hold the flame wanted. Reads a fire for warmth, cooking, or craft, and adjusts fuel and air to keep it steady.";
     public override string SkillMeans       => "the feeding and judging of a working fire";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a hearth-tender who can hold a fire steady for hours by feel alone";
     public override string PersonaReminder  => "fire-keeper";

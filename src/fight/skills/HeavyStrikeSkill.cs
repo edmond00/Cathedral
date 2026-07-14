@@ -8,7 +8,7 @@ public sealed class HeavyStrikeSkill : FightingSkill
     public override string Description            => "Massive blow. Player chooses target. Knocks back.";
     public override string RequiredModusMentisId  => "battlecraft";
     public override string[] SecondaryModusMentisIds => new[] { "brute_force", "swordsmanship" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 4;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 2;

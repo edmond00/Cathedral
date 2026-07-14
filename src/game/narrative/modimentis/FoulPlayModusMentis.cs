@@ -13,10 +13,11 @@ public class FoulPlayModusMentis : ModusMentis
     public override string MenuDescription =>
         "Looks for the unfair edge in any contest: the cheat, the distraction, the rule that can be broken unseen. Inclines toward deception and sabotage, and treats scruple as a handicap.";
     public override string SkillMeans => "dirty tricks and deception";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "cerebrum", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override bool ActsDiscretely => true;
     
     public override string PersonaTone => "a cunning schemer who sees rules as obstacles and honor as a exploitable weakness";
     public override string PersonaReminder => "cunning rule-bending schemer";

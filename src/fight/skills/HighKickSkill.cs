@@ -8,7 +8,7 @@ public sealed class HighKickSkill : FightingSkill
     public override string Description            => "High sweeping kick targeting face or trunk.";
     public override string RequiredModusMentisId  => "acrobatics";
     public override string[] SecondaryModusMentisIds => new[] { "athletics", "low_blow" };
-    public override FightingMedium Medium         => FightingMedium.Organ("feet");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("feet") };
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

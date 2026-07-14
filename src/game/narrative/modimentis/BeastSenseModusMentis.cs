@@ -16,6 +16,7 @@ public class BeastSenseModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "nose", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
+    public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "a stable-bred soul who reads the temper of beasts the way others read faces";
     public override string PersonaReminder  => "stable-bred reader of beasts";

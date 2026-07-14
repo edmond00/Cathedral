@@ -14,7 +14,7 @@ public class TreasureHuntingModusMentis : ModusMentis
         "Follows old tales, rumours, and signs toward hidden riches. Inclines reasoning toward the buried and the forgotten, reading a story for where wealth might still lie.";
     public override string SkillMeans       => "the chasing of old tales of gold";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Observation };
-    public override string[] Organs        => new[] { "eyes", "encephalon" };
+    public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a soul kept moving by tales of nuggets and lost veins, always one further bend along";

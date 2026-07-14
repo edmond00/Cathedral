@@ -481,7 +481,9 @@ internal class FightModeWindow : GameWindow
                         if (s.IsSelfTargeting)
                         {
                             _state.UsedActionsThisTurn.Add((row.MediumKey, s.SkillId));
-                            ExecuteAction(new Actions.SkillAction(active, active, s));
+                            ExecuteAction(new Actions.SkillAction(active, active, s,
+                                FightModeUI.OrganPartIdFromKey(row.MediumKey),
+                                ActiveMediumFromKey(s, row.MediumKey)));
                         }
                         else
                         {
@@ -516,7 +518,9 @@ internal class FightModeWindow : GameWindow
             if (skill.IsSelfTargeting)
             {
                 _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
-                ExecuteAction(new Actions.SkillAction(active, active, skill));
+                ExecuteAction(new Actions.SkillAction(active, active, skill,
+                    FightModeUI.OrganPartIdFromKey(mediumKey),
+                    ActiveMediumFromKey(skill, mediumKey)));
             }
             else
             {
@@ -552,6 +556,18 @@ internal class FightModeWindow : GameWindow
             : s.Medium.Type == MediumType.BodyPartMedium
                 ? $"bodypart:{s.Medium.BodyPartId ?? s.SkillId}"
                 : $"mm:{s.RequiredModusMentisId}";
+
+    private static FightingMedium? ActiveMediumFromKey(FightingSkill skill, string? mediumKey)
+    {
+        if (mediumKey == null) return null;
+        if (mediumKey.StartsWith(FightModeUI.OrganKeyPrefix, StringComparison.Ordinal))
+            return skill.GetMediumForOrganId(mediumKey[FightModeUI.OrganKeyPrefix.Length..]);
+        if (mediumKey.StartsWith(FightModeUI.OrganPartKeyPrefix, StringComparison.Ordinal))
+            return skill.Mediums.FirstOrDefault(m => m.Type == MediumType.OrganMedium);
+        if (mediumKey.StartsWith(FightModeUI.BodyPartKeyPrefix, StringComparison.Ordinal))
+            return skill.GetMediumForBodyPartId(mediumKey[FightModeUI.BodyPartKeyPrefix.Length..]);
+        return null;
+    }
 
     // ── Keyboard shortcuts ────────────────────────────────────────────
 
@@ -787,7 +803,8 @@ internal class FightModeWindow : GameWindow
                 {
                     _state.PendingBodyPartId = localization;
                     _localizationOverlay = null;
-                    ExecuteAction(new Actions.SkillAction(attacker, target, skill));
+                    ExecuteAction(new Actions.SkillAction(attacker, target, skill,
+                        null, ActiveMediumFromKey(skill, _selectedMediumKey)));
                 },
                 onCancel: () =>
                 {
@@ -802,7 +819,8 @@ internal class FightModeWindow : GameWindow
         }
 
         _state.PendingTarget = target;
-        ExecuteAction(new Actions.SkillAction(attacker, target, skill));
+        ExecuteAction(new Actions.SkillAction(attacker, target, skill,
+            null, ActiveMediumFromKey(skill, _selectedMediumKey)));
     }
 
     private void BeginDiceRoll()

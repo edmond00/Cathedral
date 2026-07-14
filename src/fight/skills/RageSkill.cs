@@ -8,7 +8,7 @@ public sealed class RageSkill : FightingSkill
     public override string Description            => "Enter battle rage — refill cinetic points.";
     public override string RequiredModusMentisId  => "rage";
     public override string[] SecondaryModusMentisIds => new[] { "ferocity", "blood_lust" };
-    public override FightingMedium Medium         => FightingMedium.Organ("viscera");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("viscera") };
     public override int CineticPointsCost         => 1;
     public override int VitalHeatCost             => 6;
     public override int BaseDice                  => 0;

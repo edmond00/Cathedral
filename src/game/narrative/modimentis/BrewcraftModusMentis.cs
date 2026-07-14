@@ -13,9 +13,9 @@ public class BrewcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Follows the making of ale through malt, mash, and fermentation, tracking warmth and time. Reads smell and taste to judge a brew's progress and to catch the moment it turns.";
     public override string SkillMeans       => "the malting and fermenting of ale";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "nose", "hands" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "an alewife who knows the mash is right by its smell and the ale by its head";
     public override string PersonaReminder  => "ale-brewer";

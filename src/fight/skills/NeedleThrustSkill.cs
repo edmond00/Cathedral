@@ -8,7 +8,7 @@ public sealed class NeedleThrustSkill : FightingSkill
     public override string Description            => "Precise piercing stab. Player chooses target.";
     public override string RequiredModusMentisId  => "incisiveness";
     public override string[] SecondaryModusMentisIds => new[] { "swordsmanship", "tactics" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

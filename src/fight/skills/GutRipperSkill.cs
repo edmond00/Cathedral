@@ -6,9 +6,9 @@ public sealed class GutRipperSkill : FightingSkill
     public override string SkillId                => "gut_ripper";
     public override string DisplayName            => "Gut Ripper";
     public override string Description            => "Disemboweling claw strike. Causes severe bleeding.";
-    public override string RequiredModusMentisId  => "ferocity";
-    public override string[] SecondaryModusMentisIds => new[] { "incisiveness", "predator" };
-    public override FightingMedium Medium         => FightingMedium.Organ("claws");
+    public override string RequiredModusMentisId  => "predator";
+    public override string[] SecondaryModusMentisIds => new[] { "ferocity", "incisiveness" };
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("claws") };
     public override int CineticPointsCost         => 5;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 2;

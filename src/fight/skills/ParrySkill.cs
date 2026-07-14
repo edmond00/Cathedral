@@ -8,7 +8,7 @@ public sealed class ParrySkill : FightingSkill
     public override string Description            => "Deflect the next incoming melee attack.";
     public override string RequiredModusMentisId  => "vigilance";
     public override string[] SecondaryModusMentisIds => new[] { "battlecraft", "swordsmanship" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 2;

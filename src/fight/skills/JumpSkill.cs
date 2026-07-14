@@ -8,7 +8,7 @@ public sealed class JumpSkill : FightingSkill
     public override string Description            => "Leap over obstacles — move ignoring intermediate terrain.";
     public override string RequiredModusMentisId  => "athletics";
     public override string[] SecondaryModusMentisIds => new[] { "acrobatics", "brute_force" };
-    public override FightingMedium Medium         => FightingMedium.Organ("legs");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("legs") };
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

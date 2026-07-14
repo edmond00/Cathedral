@@ -14,7 +14,7 @@ public class FablesAndTalesModusMentis : ModusMentis
         "Matches the trouble at hand to a remembered fable, moral, or old tale. Draws on a store of stories for wisdom or persuasion, reaching for the one that fits the present case.";
     public override string SkillMeans       => "the right old story for the present trouble";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
-    public override string[] Organs        => new[] { "tongue", "encephalon" };
+    public override string[] Organs        => new[] { "tongue", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "an attentive listener of grandfathers who answers a fresh trouble with a half-remembered fable";

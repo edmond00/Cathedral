@@ -14,8 +14,9 @@ public class GamblingModusMentis : ModusMentis
         "Weighs dice, coin, and odds, reading the risk folded into a wager. Attends to likelihood and to the bluff, and inclines toward the calculated bet over the sure thing or the wild one.";
     public override string SkillMeans       => "the weighing of dice, coin and odds";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
-    public override string[] Organs        => new[] { "encephalon", "hands" };
+    public override string[] Organs        => new[] { "heart", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
+    public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a tavern dice-roller who weighs each chance against the size of the purse on the table";
     public override string PersonaReminder  => "tavern dice-roller";

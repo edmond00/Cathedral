@@ -13,7 +13,7 @@ public class PeasantryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Carries the plain ways of country folk, the everyday chores and homely wisdom of village life. Sets the hands easily to ordinary rural labour, and reads a situation by common sense rather than learning.";
     public override string SkillMeans       => "the plain ways of country folk";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "viscera" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

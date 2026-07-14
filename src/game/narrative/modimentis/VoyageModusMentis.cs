@@ -13,8 +13,8 @@ public class VoyageModusMentis : ModusMentis
     public override string MenuDescription =>
         "Settles into the long road, holding steadiness and stamina over great distances. Paces effort for the journey, and takes the wear of travel as something to be endured evenly.";
     public override string SkillMeans       => "long-road steadiness";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "feet", "trunk" };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override string[] Organs        => new[] { "lower_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a wanderer drawn forward by old manuscripts and unmapped horizons";

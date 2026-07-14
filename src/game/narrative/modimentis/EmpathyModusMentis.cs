@@ -16,6 +16,7 @@ public class EmpathyModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
     public override string[] Organs => new[] { "heart", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
+    public override MoralLevel MoralLevel => MoralLevel.High;
     
     public override string PersonaTone => "a compassionate reader of hearts who feels the emotional currents between people";
     public override string PersonaReminder => "compassionate reader of hearts";

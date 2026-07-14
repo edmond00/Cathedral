@@ -8,7 +8,7 @@ public sealed class CrushingBlowSkill : FightingSkill
     public override string Description            => "Devastating blow to face, trunk or head.";
     public override string RequiredModusMentisId  => "brute_force";
     public override string[] SecondaryModusMentisIds => new[] { "battlecraft", "iron_fist" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 3;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 2;

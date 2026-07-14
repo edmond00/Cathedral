@@ -13,9 +13,9 @@ public class BushcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads wild country for what it offers: dry tinder inside wet wood, ground that will shelter, the line that leads out. Keeps the hands ready to make fire and cover from little, and takes rough terrain as workable rather than hostile.";
     public override string SkillMeans       => "fire-making, shelter and woodcraft";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a soul who has fought wet wood for a flame and remembers exactly why it would not catch";
     public override string PersonaReminder  => "wet-wood fire-keeper";

@@ -8,7 +8,7 @@ public sealed class PinpointShotSkill : FightingSkill
     public override string Description            => "Precise aimed shot. Player chooses target.";
     public override string RequiredModusMentisId  => "marksman";
     public override string[] SecondaryModusMentisIds => new[] { "deadeye", "tactics" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 3;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

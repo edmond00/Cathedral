@@ -14,7 +14,7 @@ public class GeometricSchemeModusMentis : ModusMentis
         "Lays a problem out as lines, angles, and proportion, planning and measuring by construction. Attends to shape and ratio, and reasons through figures where another would guess.";
     public override string SkillMeans       => "the careful drawing of lines and angles";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
-    public override string[] Organs        => new[] { "encephalon", "eyes" };
+    public override string[] Organs        => new[] { "cerebrum", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a quiet draughtsman who sees the world as triangles, circles and the lines that join them";

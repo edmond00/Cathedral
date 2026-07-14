@@ -8,7 +8,7 @@ public sealed class ColdBloodSkill : FightingSkill
     public override string Description            => "Glacial calm in combat — suppresses fear and pain.";
     public override string RequiredModusMentisId  => "cold_blood";
     public override string[] SecondaryModusMentisIds => new[] { "tactics", "iron_nerves" };
-    public override FightingMedium Medium         => FightingMedium.Organ("viscera");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("viscera") };
     public override int CineticPointsCost         => 1;
     public override int VitalHeatCost             => 4;
     public override int BaseDice                  => 0;

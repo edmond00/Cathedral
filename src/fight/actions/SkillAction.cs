@@ -20,12 +20,21 @@ public class SkillAction : IFightAction
     /// </summary>
     public string? OrganPartId { get; }
 
-    public SkillAction(Fighter attacker, Fighter target, FightingSkill skill, string? organPartId = null)
+    /// <summary>
+    /// The medium the skill is being executed through. Overrides <see cref="FightingSkill.Medium"/>
+    /// in the dice calculation for skills that appear in multiple medium lists.
+    /// Null means use the skill's primary medium (<see cref="FightingSkill.Medium"/>).
+    /// </summary>
+    public FightingMedium? ActiveMedium { get; }
+
+    public SkillAction(Fighter attacker, Fighter target, FightingSkill skill,
+        string? organPartId = null, FightingMedium? activeMedium = null)
     {
-        Attacker    = attacker;
-        Target      = target;
-        Skill       = skill;
-        OrganPartId = organPartId;
+        Attacker     = attacker;
+        Target       = target;
+        Skill        = skill;
+        OrganPartId  = organPartId;
+        ActiveMedium = activeMedium;
     }
 
     public void Execute(FightState state, Random rng)
@@ -46,7 +55,7 @@ public class SkillAction : IFightAction
         // Set up dice roll for the window to animate (two-roll: attack dice vs defense dice)
         state.PendingSkill  = Skill;
         state.PendingTarget = Target;
-        state.DiceNumberOfDice          = Skill.TotalDice(Attacker, OrganPartId);
+        state.DiceNumberOfDice          = Skill.TotalDice(Attacker, OrganPartId, ActiveMedium);
         state.DiceDifficulty            = Target.NaturalDefense; // kept for logging
         state.DiceSecondaryNumberOfDice = Target.NaturalDefense;
         state.IsDiceRolling             = true;

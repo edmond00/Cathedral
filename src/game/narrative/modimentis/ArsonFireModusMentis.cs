@@ -14,6 +14,7 @@ public class ArsonFireModusMentis : ModusMentis
         "Assesses a structure for how it would catch and spread: which material carries flame, where draught pulls, how long before it takes. Treats fire coldly as a tool for destruction, cover, or forced passage rather than for its own sake.";
     public override string SkillMeans       => "the lighting of what should not burn";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override bool ActsDiscretely    => true;
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

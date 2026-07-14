@@ -13,9 +13,9 @@ public class PuppetTheatherModusMentis : ModusMentis
     public override string MenuDescription =>
         "Lends voice and seeming life to inert things, playing several parts at once. Inclines toward mummery that entertains, distracts, or misdirects, shaping attention through performance.";
     public override string SkillMeans       => "the lending of voices to inert things";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "hands" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a child of wooden dolls who can lend a voice to anything inert and let it answer back";
     public override string PersonaReminder  => "puppet-voiced player";

@@ -13,7 +13,7 @@ public class DeadeyeModusMentis : ModusMentis
     public override string MenuDescription =>
         "Treats distance as arithmetic: trajectory, drop, and wind reduced to accountable figures. Holds the body still and the breath waiting, releasing only once the correction is made rather than trusting the shot to chance.";
     public override string SkillMeans       => "legendary accuracy at ranges that others consider impossible";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

@@ -13,8 +13,8 @@ public class PugilitasModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads a fist-fight through footwork, guard, and trained striking. Keeps the body drilled for boxing, and inclines toward disciplined hand-to-hand exchange over wild swinging.";
     public override string SkillMeans => "boxing and hand-to-hand combat";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs => new[] { "arms", "pulmones" };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override string[] Organs => new[] { "hands", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     
     public override string PersonaTone => "a disciplined fighter who treats combat as an ancient, honorable science";

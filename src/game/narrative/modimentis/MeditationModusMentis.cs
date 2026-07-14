@@ -14,8 +14,9 @@ public class MeditationModusMentis : ModusMentis
         "Holds a long, settled calm that quiets thought and steadies feeling. Keeps the mind clear and unhurried, and inclines toward focus and patience where noise would scatter attention.";
     public override string SkillMeans       => "a long held stillness of mind";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
-    public override string[] Organs        => new[] { "encephalon", "heart" };
+    public override string[] Organs        => new[] { "pineal_gland", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
+    public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "a temple-trained novice who lets the breath slow before any question is answered";
     public override string PersonaReminder  => "temple-trained novice";

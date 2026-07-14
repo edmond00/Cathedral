@@ -8,7 +8,7 @@ public sealed class RunSkill : FightingSkill
     public override string Description            => "Sprint — double move speed this turn.";
     public override string RequiredModusMentisId  => "athletics";
     public override string[] SecondaryModusMentisIds => new[] { "acrobatics", "survivalism" };
-    public override FightingMedium Medium         => FightingMedium.Organ("legs");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("legs") };
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

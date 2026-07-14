@@ -8,7 +8,7 @@ public sealed class PalmStrikeSkill : FightingSkill
     public override string Description            => "Devastating open-hand strike.";
     public override string RequiredModusMentisId  => "iron_fist";
     public override string[] SecondaryModusMentisIds => new[] { "pugilitas", "battlecraft" };
-    public override FightingMedium Medium         => FightingMedium.Organ("hands");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("hands") };
     public override int CineticPointsCost         => 3;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

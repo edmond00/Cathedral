@@ -13,9 +13,10 @@ public class ObedienceModusMentis : ModusMentis
     public override string MenuDescription =>
         "Carries out an order promptly and without quarrel, deferring judgement to instruction. Inclines toward compliance, and takes a command as a thing to be done rather than weighed.";
     public override string SkillMeans       => "doing as told without quarrel";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "ears", "hands" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
+    public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "a well-drilled servant of authority, practiced in wordless compliance";
     public override string PersonaReminder  => "well-drilled follower of orders";

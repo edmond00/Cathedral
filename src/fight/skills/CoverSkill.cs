@@ -8,7 +8,7 @@ public sealed class CoverSkill : FightingSkill
     public override string Description            => "Shield cover — block all incoming attacks this turn.";
     public override string RequiredModusMentisId  => "vigilance";
     public override string[] SecondaryModusMentisIds => new[] { "battlecraft", "iron_nerves" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

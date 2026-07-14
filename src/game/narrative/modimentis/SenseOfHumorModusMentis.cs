@@ -13,7 +13,7 @@ public class SenseOfHumorModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reaches for the quick jest and the light word, finding the angle that raises a laugh. Inclines toward amusing and disarming, easing a moment through humour rather than pressing it.";
     public override string SkillMeans       => "easy laughter and a quick jest";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "heart", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

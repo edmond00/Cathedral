@@ -13,7 +13,7 @@ public class SwordsmanshipModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads close combat through edge, point, guard, and the geometry of the blade. Keeps the body drilled for the sword, and inclines toward measured attack and defence over brute swinging.";
     public override string SkillMeans       => "the blade's edge, point, and the geometry of close combat";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

@@ -13,9 +13,10 @@ public class HuntModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads sign and cover for small game, setting snares and closing the distance on a quarry. Keeps the senses tuned to track and trap, favouring patience over noise.";
     public override string SkillMeans       => "snare and stalk for small game";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
+    public override bool ActsDiscretely => true;
 
     public override string PersonaTone     => "a quiet child who once snared mice and squirrels to fill an empty belly";
     public override string PersonaReminder  => "snare-bred hunter";

@@ -13,9 +13,10 @@ public class HerbloreModusMentis : ModusMentis
     public override string MenuDescription =>
         "Recognizes plants by leaf and habit and holds their uses in mind, for remedy, seasoning, or harm. Inclines toward gathering and preparing herbs, and reads a hedgerow for what it can yield.";
     public override string SkillMeans       => "the knowing and gathering of herbs";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "nose", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
+    public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "a garden-wise soul who knows each herb by leaf and scent, and what it is good for";
     public override string PersonaReminder  => "herb-knower";

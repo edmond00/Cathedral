@@ -14,7 +14,7 @@ public class ThresheryModusMentis : ModusMentis
         "Beats and sifts harvested grain to part seed from chaff. Sets the body to threshing and winnowing, and reads the work by how clean the grain comes.";
     public override string SkillMeans       => "the threshing and sifting of grain";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "arms", "hands" };
+    public override string[] Organs        => new[] { "upper_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a thresher on the barn floor who beats the ear clean and lets the wind take the chaff";

@@ -13,7 +13,7 @@ public class IronNervesModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds the mind steady and clear when things go wrong, refusing panic. Keeps judgement working under pressure, and meets a crisis calmly rather than fleeing it.";
     public override string SkillMeans       => "the trained composure that does not break when things go wrong";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override string[] Organs        => new[] { "viscera", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

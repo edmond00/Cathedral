@@ -8,7 +8,7 @@ public sealed class LongshotSkill : FightingSkill
     public override string Description            => "Extreme range shot. Double range. Targets trunk, limbs or face.";
     public override string RequiredModusMentisId  => "deadeye";
     public override string[] SecondaryModusMentisIds => new[] { "marksman", "tactics" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 4;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

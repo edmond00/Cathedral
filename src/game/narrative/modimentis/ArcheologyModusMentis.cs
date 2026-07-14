@@ -14,7 +14,7 @@ public class ArcheologyModusMentis : ModusMentis
         "Reads the present landscape as the worn draft of an older one, flagging cut stone in a rough wall or a hill too flat to be natural. Holds attention on what a place once was and on what its remains imply.";
     public override string SkillMeans       => "the reading of old stones";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
-    public override string[] Organs        => new[] { "eyes", "encephalon" };
+    public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a dreamer who once dreamt a golden arch and ever since has read the ground for ruin";

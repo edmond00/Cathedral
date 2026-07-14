@@ -14,7 +14,7 @@ public class DecipherModusMentis : ModusMentis
         "Takes an unclear text one uncertain syllable at a time, weighing likely letters and comparing hands. Trusts the laboured reading over the confident one, and holds a sign in doubt until later in the line settles it.";
     public override string SkillMeans       => "the slow reading of broken script";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
-    public override string[] Organs        => new[] { "eyes", "encephalon" };
+    public override string[] Organs        => new[] { "eyes", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a candle-eyed novice patient with the worst-formed letters of a faded manuscript";

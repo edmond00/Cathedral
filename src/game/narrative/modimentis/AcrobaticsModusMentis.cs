@@ -13,8 +13,8 @@ public class AcrobaticsModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads distance, height, and surface as one problem of momentum, and commits fully where hesitation would hurt. Keeps the body ready to roll, tuck, and land, trusting thin footing that reason alone would refuse.";
     public override string SkillMeans       => "leaping, balance and the well-taken fall";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "legs", "backbone" };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
+    public override string[] Organs        => new[] { "legs", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a rooftop runaway whose body knows how to fall well and how never to fall at all";

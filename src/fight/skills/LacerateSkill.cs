@@ -6,9 +6,9 @@ public sealed class LacerateSkill : FightingSkill
     public override string SkillId                => "lacerate";
     public override string DisplayName            => "Lacerate";
     public override string Description            => "Deep raking slash across the trunk.";
-    public override string RequiredModusMentisId  => "ferocity";
-    public override string[] SecondaryModusMentisIds => new[] { "incisiveness", "blood_lust" };
-    public override FightingMedium Medium         => FightingMedium.Organ("claws");
+    public override string RequiredModusMentisId  => "predator";
+    public override string[] SecondaryModusMentisIds => new[] { "ferocity", "incisiveness", "blood_lust" };
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("claws") };
     public override int CineticPointsCost         => 3;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

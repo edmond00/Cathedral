@@ -8,7 +8,7 @@ public sealed class DeepPierceSkill : FightingSkill
     public override string Description            => "Deep stabbing thrust. Player chooses target. Causes bleeding.";
     public override string RequiredModusMentisId  => "incisiveness";
     public override string[] SecondaryModusMentisIds => new[] { "swordsmanship", "predator" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 5;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 2;

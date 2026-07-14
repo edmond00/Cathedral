@@ -8,7 +8,7 @@ public sealed class ForwardLungeSkill : FightingSkill
     public override string Description            => "Charging thrust. Can close distance before striking.";
     public override string RequiredModusMentisId  => "swordsmanship";
     public override string[] SecondaryModusMentisIds => new[] { "athletics", "battlecraft" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 2;

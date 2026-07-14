@@ -14,7 +14,7 @@ public class HarvestryModusMentis : ModusMentis
         "Judges a crop for ripeness and reaps it at the right moment, cutting and gathering before it spoils. Sets the body to the steady rhythm of bringing in a field.";
     public override string SkillMeans       => "the reaping of ripe crop";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "arms", "hands" };
+    public override string[] Organs        => new[] { "upper_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a reaper whose sickle-arm keeps its swing from dawn to dusk in the heat of harvest";

@@ -132,31 +132,55 @@ public class Fighter
     public IEnumerable<FightingSkill> GetLearnableSkills(FightingSkillRegistry registry)
     {
         // ── Organ-medium learnable skills ─────────────────────────────
-        var organLearnables = registry.GetAll()
-            .Where(s => s.Medium.Type == MediumType.OrganMedium)
-            .Where(s => !Member.LearnedModiMentis.Any(m =>
-                m.ModusMentisId == s.RequiredModusMentisId ||
-                s.SecondaryModusMentisIds.Contains(m.ModusMentisId)))
-            .Where(s => IsMediumAvailable(s))
-            .Where(s => CurrentCineticPoints >= s.CineticPointsCost)
-            .GroupBy(s => s.Medium.OrganId ?? s.SkillId)
-            .Select(g => g.OrderBy(s => s.MediumPosition).First());
+        // Iterate each organ registry category in order. For each available organ, find
+        // the first skill in its list whose primary MM is not yet known. Because a skill
+        // can appear in multiple organ lists (e.g. flesh_tear in fangs AND teeths), we
+        // deduplicate by SkillId so the same skill object is returned only once — the UI's
+        // AddOrganSkillToGroups will place it under every applicable organ tab on its own.
+        var seenOrganSkillIds = new HashSet<string>();
+        var organLearnables   = new List<FightingSkill>();
+
+        foreach (var cat in OrganMediumRegistry.GetAll())
+        {
+            if (Member.GetOrganById(cat.OrganId) == null) continue; // fighter lacks this organ
+            foreach (var skillId in cat.SkillIds)
+            {
+                var skill = registry.GetById(skillId);
+                if (skill == null) continue;
+                if (CurrentCineticPoints < skill.CineticPointsCost) continue;
+                if (Member.LearnedModiMentis.Any(m =>
+                    m.ModusMentisId == skill.RequiredModusMentisId ||
+                    skill.SecondaryModusMentisIds.Contains(m.ModusMentisId)))
+                    continue; // at least one unlocking MM already known
+                if (seenOrganSkillIds.Add(skill.SkillId))
+                    organLearnables.Add(skill);
+                break; // first unknown per organ
+            }
+        }
 
         // ── Body-part-medium learnable skills ─────────────────────────
-        // One learnable per available body-part region: the lowest-MediumPosition unknown skill.
-        var bodyPartLearnables = registry.GetAll()
-            .Where(s => s.Medium.Type == MediumType.BodyPartMedium)
-            .Where(s => !Member.LearnedModiMentis.Any(m =>
-                m.ModusMentisId == s.RequiredModusMentisId ||
-                s.SecondaryModusMentisIds.Contains(m.ModusMentisId)))
-            .Where(s => IsMediumAvailable(s))
-            .Where(s => CurrentCineticPoints >= s.CineticPointsCost)
-            .GroupBy(s => s.Medium.BodyPartId ?? s.SkillId)
-            .Select(g => g.OrderBy(s => s.MediumPosition).First());
+        var seenBodyPartSkillIds = new HashSet<string>();
+        var bodyPartLearnables   = new List<FightingSkill>();
+
+        foreach (var cat in BodyPartMediumRegistry.GetAll())
+        {
+            if (Member.GetBodyPartById(cat.BodyPartId) == null) continue;
+            foreach (var skillId in cat.SkillIds)
+            {
+                var skill = registry.GetById(skillId);
+                if (skill == null) continue;
+                if (CurrentCineticPoints < skill.CineticPointsCost) continue;
+                if (Member.LearnedModiMentis.Any(m =>
+                    m.ModusMentisId == skill.RequiredModusMentisId ||
+                    skill.SecondaryModusMentisIds.Contains(m.ModusMentisId)))
+                    continue;
+                if (seenBodyPartSkillIds.Add(skill.SkillId))
+                    bodyPartLearnables.Add(skill);
+                break;
+            }
+        }
 
         // ── Weapon-medium learnable skills ────────────────────────────
-        // One learnable per equipped weapon's category; skill is the first
-        // unknown entry in that category's ordered skill list.
         var equippedWeapons = Member.EquippedItems[EquipmentAnchor.RightHold]
             .Concat(Member.EquippedItems[EquipmentAnchor.LeftHold])
             .OfType<IWeaponItem>()
@@ -179,32 +203,11 @@ public class Fighter
                     skill.SecondaryModusMentisIds.Contains(m.ModusMentisId))) continue;
                 if (CurrentCineticPoints < skill.CineticPointsCost) continue;
                 weaponLearnables.Add(skill);
-                break; // one learnable per category
+                break;
             }
         }
 
         return organLearnables.Concat(bodyPartLearnables).Concat(weaponLearnables);
-    }
-
-    private bool IsMediumAvailable(FightingSkill skill)
-    {
-        if (skill.Medium.Type == MediumType.OrganMedium)
-        {
-            var organId = skill.Medium.OrganId;
-            if (string.IsNullOrEmpty(organId)) return false;
-            return Member.GetOrganById(organId) != null;
-        }
-        if (skill.Medium.Type == MediumType.BodyPartMedium)
-        {
-            var bodyPartId = skill.Medium.BodyPartId;
-            if (string.IsNullOrEmpty(bodyPartId)) return false;
-            return Member.GetBodyPartById(bodyPartId) != null;
-        }
-        // Weapon: at least one equipped weapon whose category contains this skill
-        return Member.EquippedItems[EquipmentAnchor.RightHold]
-            .Concat(Member.EquippedItems[EquipmentAnchor.LeftHold])
-            .OfType<IWeaponItem>()
-            .Any(w => WeaponMediumRegistry.GetById(w.WeaponCategory)?.SkillIds.Contains(skill.SkillId) == true);
     }
 
     /// <summary>Fight learning stat value — number of dice rolled when attempting to learn an unknown skill.</summary>

@@ -14,7 +14,7 @@ public class EnterpriseModusMentis : ModusMentis
         "Reads goods, routes, and demand for where profit sits, tracking where wares run cheap and where they sell dear. Inclines reasoning toward the venture, the margin, and the chance worth taking.";
     public override string SkillMeans       => "the read of trade routes and foreign ware";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
-    public override string[] Organs        => new[] { "encephalon", "tongue" };
+    public override string[] Organs        => new[] { "cerebrum", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a soul drawn after eccentric foreign merchants, looking for the trade behind the trade";

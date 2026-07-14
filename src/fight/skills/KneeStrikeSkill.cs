@@ -8,7 +8,7 @@ public sealed class KneeStrikeSkill : FightingSkill
     public override string Description            => "Knee to the gut or groin.";
     public override string RequiredModusMentisId  => "pugilitas";
     public override string[] SecondaryModusMentisIds => new[] { "brawling", "low_blow" };
-    public override FightingMedium Medium         => FightingMedium.Organ("legs");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("legs") };
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

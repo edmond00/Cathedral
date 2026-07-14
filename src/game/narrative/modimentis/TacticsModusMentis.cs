@@ -13,9 +13,9 @@ public class TacticsModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads a fight's geometry and positioning, looking to press an advantage before the enemy sees it. Inclines reasoning toward manoeuvre and the plan that shapes an engagement rather than reacts to it.";
     public override string SkillMeans       => "reading the fight's geometry and pressing the advantage before the opponent sees it";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "cerebellum", "eyes" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Fighting };
+    public override string[] Organs        => new[] { "cerebrum", "eyes" };
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a cold-eyed strategist who wins every fight before the first blow is exchanged";
     public override string PersonaReminder  => "the tactician";

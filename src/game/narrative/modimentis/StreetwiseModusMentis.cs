@@ -16,6 +16,7 @@ public class StreetwiseModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
+    public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a port-alley urchin who reads a crowd, a gait, a look in three breaths";
     public override string PersonaReminder  => "alley-bred urchin";

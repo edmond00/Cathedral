@@ -8,7 +8,7 @@ public sealed class MightySwingSkill : FightingSkill
     public override string Description            => "Bone-shattering swing. Player chooses target. Knocks down.";
     public override string RequiredModusMentisId  => "battlecraft";
     public override string[] SecondaryModusMentisIds => new[] { "brute_force", "ferocity" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 5;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 3;

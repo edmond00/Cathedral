@@ -8,7 +8,7 @@ public sealed class ThroatGripSkill : FightingSkill
     public override string Description            => "Crushing grip on the throat. Immobilizes and causes heavy bleeding.";
     public override string RequiredModusMentisId  => "predator";
     public override string[] SecondaryModusMentisIds => new[] { "ferocity", "incisiveness" };
-    public override FightingMedium Medium         => FightingMedium.Organ("fangs");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("fangs") };
     public override int CineticPointsCost         => 4;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 2;

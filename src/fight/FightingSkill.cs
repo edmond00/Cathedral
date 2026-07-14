@@ -62,8 +62,14 @@ public abstract class FightingSkill
     /// </summary>
     public virtual string[] SecondaryModusMentisIds => Array.Empty<string>();
 
-    /// <summary>Physical medium this skill uses (organ or weapon).</summary>
-    public abstract FightingMedium Medium { get; }
+    /// <summary>
+    /// All physical mediums this skill can be used through (organ or weapon).
+    /// A skill may appear in multiple organ-medium lists (e.g. flesh_tear in fangs and teeth).
+    /// </summary>
+    public abstract FightingMedium[] Mediums { get; }
+
+    /// <summary>Primary medium (first in <see cref="Mediums"/>). Convenience accessor for single-medium skills.</summary>
+    public FightingMedium Medium => Mediums[0];
 
     /// <summary>Cinetic points spent to use this skill.</summary>
     public abstract int CineticPointsCost { get; }
@@ -125,29 +131,58 @@ public abstract class FightingSkill
         get
         {
             int best = int.MaxValue;
-
-            if (Medium.Type == MediumType.OrganMedium)
+            foreach (var m in Mediums)
             {
-                foreach (var cat in OrganMediumRegistry.GetAll())
-                    for (int i = 0; i < cat.SkillIds.Count; i++)
-                        if (cat.SkillIds[i] == SkillId) { best = Math.Min(best, i + 1); break; }
+                if (m.Type == MediumType.OrganMedium)
+                {
+                    foreach (var cat in OrganMediumRegistry.GetAll())
+                        for (int i = 0; i < cat.SkillIds.Count; i++)
+                            if (cat.SkillIds[i] == SkillId) { best = Math.Min(best, i + 1); break; }
+                }
+                else if (m.Type == MediumType.BodyPartMedium)
+                {
+                    foreach (var cat in BodyPartMediumRegistry.GetAll())
+                        for (int i = 0; i < cat.SkillIds.Count; i++)
+                            if (cat.SkillIds[i] == SkillId) { best = Math.Min(best, i + 1); break; }
+                }
+                else
+                {
+                    foreach (var cat in WeaponMediumRegistry.GetAll())
+                        for (int i = 0; i < cat.SkillIds.Count; i++)
+                            if (cat.SkillIds[i] == SkillId) { best = Math.Min(best, i + 1); break; }
+                }
             }
-            else if (Medium.Type == MediumType.BodyPartMedium)
-            {
-                foreach (var cat in BodyPartMediumRegistry.GetAll())
-                    for (int i = 0; i < cat.SkillIds.Count; i++)
-                        if (cat.SkillIds[i] == SkillId) { best = Math.Min(best, i + 1); break; }
-            }
-            else
-            {
-                foreach (var cat in WeaponMediumRegistry.GetAll())
-                    for (int i = 0; i < cat.SkillIds.Count; i++)
-                        if (cat.SkillIds[i] == SkillId) { best = Math.Min(best, i + 1); break; }
-            }
-
             return best == int.MaxValue ? 1 : best;
         }
     }
+
+    /// <summary>1-based position of this skill in the specified organ's medium list. Falls back to <see cref="MediumPosition"/> if not found.</summary>
+    public int GetMediumPositionForOrganId(string organId)
+    {
+        var cat = OrganMediumRegistry.GetAll().FirstOrDefault(c => c.OrganId == organId);
+        if (cat != null)
+            for (int i = 0; i < cat.SkillIds.Count; i++)
+                if (cat.SkillIds[i] == SkillId) return i + 1;
+        return MediumPosition;
+    }
+
+    /// <summary>1-based position of this skill in the specified body-part's medium list. Falls back to <see cref="MediumPosition"/> if not found.</summary>
+    public int GetMediumPositionForBodyPartId(string bodyPartId)
+    {
+        var cat = BodyPartMediumRegistry.GetAll().FirstOrDefault(c => c.BodyPartId == bodyPartId);
+        if (cat != null)
+            for (int i = 0; i < cat.SkillIds.Count; i++)
+                if (cat.SkillIds[i] == SkillId) return i + 1;
+        return MediumPosition;
+    }
+
+    /// <summary>Returns the medium from <see cref="Mediums"/> whose organ id matches, or null.</summary>
+    public FightingMedium? GetMediumForOrganId(string organId) =>
+        Mediums.FirstOrDefault(m => m.Type == MediumType.OrganMedium && m.OrganId == organId);
+
+    /// <summary>Returns the medium from <see cref="Mediums"/> whose body-part id matches, or null.</summary>
+    public FightingMedium? GetMediumForBodyPartId(string bodyPartId) =>
+        Mediums.FirstOrDefault(m => m.Type == MediumType.BodyPartMedium && m.BodyPartId == bodyPartId);
 
     /// <summary>
     /// True when this skill targets only the user — clicking the action button
@@ -192,10 +227,12 @@ public abstract class FightingSkill
     /// where mm_level is the sum of all known MM levels (main + secondary).
     /// When <paramref name="organPartId"/> is supplied, the medium level is that organ part's
     /// score (e.g. a left-hand punch uses only the left hand's level) instead of the whole organ.
+    /// When <paramref name="activeMedium"/> is supplied it overrides <see cref="Medium"/> for the
+    /// level lookup — used when a multi-medium skill is executed from a non-primary medium tab.
     /// </summary>
-    public int TotalDice(Fighter f, string? organPartId = null)
+    public int TotalDice(Fighter f, string? organPartId = null, FightingMedium? activeMedium = null)
     {
-        int mediumLevel = Medium.GetLevel(f, organPartId);
+        int mediumLevel = (activeMedium ?? Medium).GetLevel(f, organPartId);
         int mmLevel     = GetTotalMmLevel(f);
         return BaseDice + mediumLevel * MediumLevelMultiplicator + mmLevel * SkillLevelMultiplicator;
     }
@@ -214,50 +251,49 @@ public abstract class FightingSkill
         if (!anyMmKnown)
             return false;
 
-        // Check medium
-        if (Medium.Type == MediumType.OrganMedium)
+        // At least one medium must be available and undisabled.
+        return IsAnyMediumAvailable(f);
+    }
+
+    /// <summary>Returns true when at least one of <see cref="Mediums"/> is usable by this fighter.</summary>
+    public bool IsAnyMediumAvailable(Fighter f)
+    {
+        var equippedWeapons = f.Member.EquippedItems[EquipmentAnchor.RightHold]
+            .Concat(f.Member.EquippedItems[EquipmentAnchor.LeftHold])
+            .OfType<IWeaponItem>();
+
+        foreach (var m in Mediums)
         {
-            // Organ must exist and must not be fully disabled by wounds
-            var organId = Medium.OrganId;
-            if (string.IsNullOrEmpty(organId)) return false;
-
-            var organ = f.Member.GetOrganById(organId);
-            if (organ == null) return false;
-
-            // Check if organ is disabled by a High-handicap wound (any organ part)
-            bool disabled = f.Member.Wounds.Any(w =>
-                w.Handicap == WoundHandicap.High &&
-                (w.TargetKind == WoundTargetKind.Organ && w.TargetId == organId ||
-                 w.TargetKind == WoundTargetKind.BodyPart && w.TargetId == organ.BodyPartId));
-            if (disabled) return false;
+            if (m.Type == MediumType.OrganMedium)
+            {
+                var organId = m.OrganId;
+                if (string.IsNullOrEmpty(organId)) continue;
+                var organ = f.Member.GetOrganById(organId);
+                if (organ == null) continue;
+                bool disabled = f.Member.Wounds.Any(w =>
+                    w.Handicap == WoundHandicap.High &&
+                    (w.TargetKind == WoundTargetKind.Organ && w.TargetId == organId ||
+                     w.TargetKind == WoundTargetKind.BodyPart && w.TargetId == organ.BodyPartId));
+                if (!disabled) return true;
+            }
+            else if (m.Type == MediumType.BodyPartMedium)
+            {
+                var bodyPartId = m.BodyPartId;
+                if (string.IsNullOrEmpty(bodyPartId)) continue;
+                var bodyPart = f.Member.GetBodyPartById(bodyPartId);
+                if (bodyPart == null) continue;
+                bool disabled = f.Member.Wounds.Any(w =>
+                    w.Handicap == WoundHandicap.High &&
+                    w.TargetKind == WoundTargetKind.BodyPart && w.TargetId == bodyPartId);
+                if (!disabled) return true;
+            }
+            else // WeaponMedium
+            {
+                if (equippedWeapons.Any(w =>
+                    WeaponMediumRegistry.GetById(w.WeaponCategory)?.SkillIds.Contains(SkillId) == true))
+                    return true;
+            }
         }
-        else if (Medium.Type == MediumType.BodyPartMedium)
-        {
-            // Body part must exist and must not be fully disabled by a High-handicap wound
-            // targeting the whole region.
-            var bodyPartId = Medium.BodyPartId;
-            if (string.IsNullOrEmpty(bodyPartId)) return false;
-
-            var bodyPart = f.Member.GetBodyPartById(bodyPartId);
-            if (bodyPart == null) return false;
-
-            bool disabled = f.Member.Wounds.Any(w =>
-                w.Handicap == WoundHandicap.High &&
-                w.TargetKind == WoundTargetKind.BodyPart && w.TargetId == bodyPartId);
-            if (disabled) return false;
-        }
-        else // WeaponMedium
-        {
-            // The fighter must have an equipped weapon whose category includes this skill
-            var equippedWeapons =
-                f.Member.EquippedItems[EquipmentAnchor.RightHold].Concat(
-                f.Member.EquippedItems[EquipmentAnchor.LeftHold])
-                .OfType<IWeaponItem>();
-            bool hasMatchingWeapon = equippedWeapons.Any(w =>
-                WeaponMediumRegistry.GetById(w.WeaponCategory)?.SkillIds.Contains(SkillId) == true);
-            if (!hasMatchingWeapon) return false;
-        }
-
-        return true;
+        return false;
     }
 }

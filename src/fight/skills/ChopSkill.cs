@@ -8,7 +8,7 @@ public sealed class ChopSkill : FightingSkill
     public override string Description            => "Chopping strike to upper or lower limbs.";
     public override string RequiredModusMentisId  => "battlecraft";
     public override string[] SecondaryModusMentisIds => new[] { "brute_force", "swordsmanship" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

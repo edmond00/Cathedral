@@ -8,7 +8,7 @@ public sealed class ElbowStrikeSkill : FightingSkill
     public override string Description            => "Vicious elbow strike to face or trunk.";
     public override string RequiredModusMentisId  => "brawling";
     public override string[] SecondaryModusMentisIds => new[] { "pugilitas", "iron_fist" };
-    public override FightingMedium Medium         => FightingMedium.Organ("arms");
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("arms") };
     public override int CineticPointsCost         => 2;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

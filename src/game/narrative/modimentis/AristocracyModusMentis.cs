@@ -14,7 +14,7 @@ public class AristocracyModusMentis : ModusMentis
         "Reads a room by rank and precedence, tracking who outranks whom and what a courtesy conceals. Holds conduct to the forms of the highborn and marks the slight in a forgotten title as sharply as an open insult.";
     public override string SkillMeans       => "the careful manners of the highborn";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
-    public override string[] Organs        => new[] { "encephalon", "tongue" };
+    public override string[] Organs        => new[] { "cerebrum", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a castle-raised soul who knows precedence, salutation and where to stand at table";

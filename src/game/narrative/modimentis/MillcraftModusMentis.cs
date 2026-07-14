@@ -13,8 +13,8 @@ public class MillcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Sets the millstones and grinds corn into flour, judging the grind by feel and sound. Attends to the working of the mill, and turns the hands to processing grain.";
     public override string SkillMeans       => "the grinding of grain into flour";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
-    public override string[] Organs        => new[] { "hands", "arms" };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override string[] Organs        => new[] { "upper_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a miller who judges the meal by rubbing it between finger and thumb";

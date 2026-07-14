@@ -44,7 +44,7 @@ public class FightingSkillRegistry
     public FightingSkill? GetById(string id) => _byId.GetValueOrDefault(id);
 
     public IEnumerable<FightingSkill> GetByMediumOrgan(string organId) =>
-        _byId.Values.Where(s => s.Medium.Type == MediumType.OrganMedium && s.Medium.OrganId == organId);
+        _byId.Values.Where(s => s.Mediums.Any(m => m.Type == MediumType.OrganMedium && m.OrganId == organId));
 
     public IEnumerable<FightingSkill> GetByModusMentis(string modId) =>
         _byId.Values.Where(s => s.RequiredModusMentisId == modId);

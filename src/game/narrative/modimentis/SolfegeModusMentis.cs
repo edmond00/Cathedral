@@ -15,7 +15,7 @@ public class SolfegeModusMentis : ModusMentis
     public override string SkillMeans => "pitch, rhythm, and harmony";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "ears", "cerebellum" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     
     public override string PersonaTone => "a musical analyst who hears the mathematical structure beneath every sound";
     public override string PersonaReminder => "musical structure analyst";

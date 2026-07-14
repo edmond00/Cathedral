@@ -8,7 +8,7 @@ public sealed class DeadeyeShotSkill : FightingSkill
     public override string Description            => "Legendary precision shot. Player chooses target.";
     public override string RequiredModusMentisId  => "deadeye";
     public override string[] SecondaryModusMentisIds => new[] { "marksman", "incisiveness" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 5;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 2;

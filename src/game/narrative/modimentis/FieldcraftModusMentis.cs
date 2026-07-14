@@ -13,9 +13,9 @@ public class FieldcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Carries the plain feel of working the land through its seasons and chores. Reads soil, weather, and crop by long familiarity, and sets the body easily to the ordinary labour of a working field.";
     public override string SkillMeans       => "the plain feel of working the land";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a field-hand at home among the strips, who knows weed from crop at a glance";
     public override string PersonaReminder  => "field-worker";

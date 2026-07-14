@@ -14,7 +14,7 @@ public class HedgecraftModusMentis : ModusMentis
         "Attends to the bounds of the land, laying and mending fences, hedges, and borders. Reads where an enclosure has failed, and sets the hands to closing it.";
     public override string SkillMeans       => "the mending of fences and hedges";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "hands", "arms" };
+    public override string[] Organs        => new[] { "upper_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a hedger whose gloved hands weave a stock-proof barrier out of thorn and stake";

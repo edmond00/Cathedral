@@ -6,9 +6,9 @@ public sealed class ScratchSkill : FightingSkill
     public override string SkillId                => "scratch";
     public override string DisplayName            => "Scratch";
     public override string Description            => "Quick claw strike.";
-    public override string RequiredModusMentisId  => "ferocity";
-    public override string[] SecondaryModusMentisIds => new[] { "predator", "brawling" };
-    public override FightingMedium Medium         => FightingMedium.Organ("claws");
+    public override string RequiredModusMentisId  => "predator";
+    public override string[] SecondaryModusMentisIds => new[] { "ferocity", "brawling" };
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("claws") };
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;

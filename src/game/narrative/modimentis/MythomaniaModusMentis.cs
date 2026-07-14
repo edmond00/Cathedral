@@ -14,7 +14,7 @@ public class MythomaniaModusMentis : ModusMentis
         "Produces smooth, brazen falsehood without a flicker of doubt. Inclines toward invented truth told with full conviction, shaping a story to convince rather than to record.";
     public override string SkillMeans       => "smooth and brazen lying";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
-    public override string[] Organs        => new[] { "tongue", "encephalon" };
+    public override string[] Organs        => new[] { "tongue", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a glib tongue that has slipped past gatehouses by inventing a noble lineage and a useful relative";

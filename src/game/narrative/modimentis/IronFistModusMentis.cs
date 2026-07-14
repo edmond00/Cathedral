@@ -13,7 +13,7 @@ public class IronFistModusMentis : ModusMentis
     public override string MenuDescription =>
         "Treats a fist or palm as a weapon conditioned through long training. Sets unarmed strikes with toughened hands, and favours blunt, practised blows that carry weight.";
     public override string SkillMeans       => "striking with a fist or palm conditioned into a weapon";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

@@ -13,9 +13,10 @@ public class DisciplineModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds a steady line against pain, insult, and temptation, refusing the reaction they invite. Keeps conduct fixed on the chosen course, and treats provocation as something to be outlasted rather than answered.";
     public override string SkillMeans       => "self-control kept under pressure";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Action };
-    public override string[] Organs        => new[] { "backbone", "encephalon" };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override string[] Organs        => new[] { "backbone", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
+    public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "a soul ground to patience by long practice, accustomed to outwait impulse and hold the form";
     public override string PersonaReminder  => "form-held practitioner";

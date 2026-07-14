@@ -8,7 +8,7 @@ public sealed class FeintSkill : FightingSkill
     public override string Description            => "Deceptive strike — 6s rolled add to next attack this turn.";
     public override string RequiredModusMentisId  => "tactics";
     public override string[] SecondaryModusMentisIds => new[] { "incisiveness", "swordsmanship" };
-    public override FightingMedium Medium         => FightingMedium.Weapon;
+    public override FightingMedium[] Mediums => new[] { FightingMedium.Weapon };
     public override int CineticPointsCost         => 1;
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;
