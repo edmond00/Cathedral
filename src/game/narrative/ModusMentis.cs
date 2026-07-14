@@ -28,8 +28,15 @@ public abstract class ModusMentis
     /// </summary>
     public abstract string MenuDescription { get; }
     public abstract ModusMentisFunction[] Functions { get; } // Can have multiple functions (1-3)
-    public abstract string[] Organs { get; }          // Associated organ ids (1-2)
-    public int Level { get; set; }                    // 1-10, used for modusMentis checks (random initial)
+
+    /// <summary>
+    /// Ids of the anatomy sources this modusMentis draws on. Each entry may name an <b>organ</b>
+    /// (e.g. "eyes", "tongue") or a <b>body region</b> (e.g. "visage", "trunk"); both contribute to
+    /// the max level via their <see cref="IMaxLevelContributionStat"/> (organ +0..+3, region +0..+6).
+    /// The first entry is also used as the "primary organ" for legacy action/wound targeting.
+    /// </summary>
+    public abstract string[] Organs { get; }
+    public int Level { get; set; }                    // current level; capped by GetMaxLevelForModusMentis (random initial)
     public int CurrentXp { get; set; }                // progress toward next level; reset to 0 on level-up
 
     /// <summary>

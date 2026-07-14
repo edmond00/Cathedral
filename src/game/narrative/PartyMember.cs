@@ -498,9 +498,21 @@ public abstract class PartyMember
 
     // ── ModusMentis XP / leveling ──────────────────────────────────────
 
-    /// <summary>Maximum level a modusMentis can reach = sum of its related organ scores (never below 1).</summary>
+    /// <summary>
+    /// Maximum level a modusMentis can reach: a floor of 1 plus the max-level contribution of every
+    /// organ / body region it is related to (its <see cref="ModusMentis.Organs"/> entries, which may
+    /// name organs or body regions). Each contribution comes from that source's
+    /// <see cref="IMaxLevelContributionStat"/> — an organ adds +0..+3, a region +0..+6 — and already
+    /// accounts for wounds (a disabled source contributes +0).
+    /// </summary>
     public int GetMaxLevelForModusMentis(ModusMentis modusMentis) =>
-        Math.Max(1, modusMentis.Organs.Sum(id => GetOrganById(id)?.Score ?? 0));
+        1 + modusMentis.Organs.Sum(GetMaxLevelContribution);
+
+    /// <summary>Max-level contribution of a single organ or body-region id (0 if none/absent).</summary>
+    private int GetMaxLevelContribution(string id) =>
+        DerivedStats.FirstOrDefault(s => s is IMaxLevelContributionStat
+                                      && (s.RelatedOrganId == id || s.RelatedBodyPartId == id))
+                    ?.GetValue(this) ?? 0;
 
     /// <summary>XP a modusMentis needs to gain one level (pineal-gland-derived stat, 6-12).</summary>
     public int GetModusMentisXpThreshold() =>

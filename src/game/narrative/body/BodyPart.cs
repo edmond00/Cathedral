@@ -31,4 +31,7 @@ public abstract class BodyPart
     /// Score is the sum of all organ scores within this body part.
     /// </summary>
     public int Score => Organs.Sum(o => o.Score);
+
+    /// <summary>Maximum possible score = the sum of all contained organs' max scores.</summary>
+    public int MaxScore => Organs.Sum(o => o.MaxScore);
 }

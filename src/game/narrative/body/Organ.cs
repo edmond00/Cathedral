@@ -49,4 +49,7 @@ public abstract class Organ
     /// Score is the sum of all organ part scores.
     /// </summary>
     public int Score => Parts.Sum(p => p.Score);
+
+    /// <summary>Maximum possible score = the sum of all organ part max scores (species-adjusted).</summary>
+    public int MaxScore => Parts.Sum(p => p.MaxScore);
 }

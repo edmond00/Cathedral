@@ -162,6 +162,14 @@ public abstract class DerivedStat
     protected abstract int CalculateValue(int sourceScore);
 
     /// <summary>
+    /// Member-aware variant of <see cref="CalculateValue(int)"/>, used by <see cref="GetValue"/> and
+    /// <see cref="GetRawValue"/>. Defaults to the member-agnostic formula, so existing stats are
+    /// unaffected; override when the value depends on more than the source score (e.g. a linear
+    /// scale relative to the source's <c>MaxScore</c>).
+    /// </summary>
+    protected virtual int CalculateValue(PartyMember member, int sourceScore) => CalculateValue(sourceScore);
+
+    /// <summary>
     /// Returns false when this stat cannot be computed for the given party member because
     /// (a) the related organ / organ part / body part is absent from their anatomy, or
     /// (b) the related source is fully disabled by a High-handicap wound.
@@ -198,14 +206,14 @@ public abstract class DerivedStat
         // A negative score means the source is absent (int.MinValue) or wound-disabled: the
         // stat degrades all the way to its worst value.
         if (score < 0) return WorstValue;
-        return Clamp(CalculateValue(score));
+        return Clamp(CalculateValue(member, score));
     }
 
     /// <summary>
     /// Value computed from the raw source score, ignoring wounds, with bounds applied.
     /// Used where wounds are accounted for separately (e.g. <see cref="PartyMember.MaxHp"/>).
     /// </summary>
-    public int GetRawValue(PartyMember member) => Clamp(CalculateValue(GetSourceScore(member)));
+    public int GetRawValue(PartyMember member) => Clamp(CalculateValue(member, GetSourceScore(member)));
 
     /// <summary>
     /// Clamp a raw computed value so it is never worse than <see cref="WorstValue"/> nor,
