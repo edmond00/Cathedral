@@ -9,7 +9,5 @@ childhood XP
 stats related to multiples organs
 MM max level
 item description written 2 times
-npc name
-noetic points 
 overall MM properties fixs
 overall beast fixs

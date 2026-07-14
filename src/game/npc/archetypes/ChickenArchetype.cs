@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
@@ -15,8 +16,11 @@ public class ChickenArchetype : ShallowNpcArchetype
     public override string ArchetypeId     => "chicken";
     public override string TypeDisplayName => "Chicken";
 
-    protected override string BuildObservationHint(string nodeContext)
-        => "a speckled hen clucks and scratches in the yard, paying you no mind";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "plump", "scrawny", "small" },
+        colors: new[] { "speckled", "russet", "white", "black-and-white" },
+        noun:   "hen",
+        traits: new[] { "clucking and scratching in the dirt", "pecking at the ground, oblivious", "fluffed up and strutting" });
 
     public override CorpseSpot CreateCorpse(ShallowNpcEntity entity, Area area)
     {

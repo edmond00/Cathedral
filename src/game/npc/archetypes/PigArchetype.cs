@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
@@ -15,8 +16,11 @@ public class PigArchetype : ShallowNpcArchetype
     public override string ArchetypeId     => "pig";
     public override string TypeDisplayName => "Pig";
 
-    protected override string BuildObservationHint(string nodeContext)
-        => "a fat sow looks up from the mire, snout twitching, then returns to rooting";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "fat", "heavy", "muddy" },
+        colors: new[] { "pink", "pink-and-black", "bristled grey" },
+        noun:   "pig",
+        traits: new[] { "snout twitching as it roots in the mire", "wallowing in the mud", "grunting over a trough" });
 
     public override CorpseSpot CreateCorpse(ShallowNpcEntity entity, Area area)
     {

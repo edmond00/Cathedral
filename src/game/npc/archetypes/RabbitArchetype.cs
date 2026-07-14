@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
@@ -15,8 +16,11 @@ public class RabbitArchetype : ShallowNpcArchetype
     public override string ArchetypeId     => "rabbit";
     public override string TypeDisplayName => "Rabbit";
 
-    protected override string BuildObservationHint(string nodeContext)
-        => "a grey rabbit freezes as you approach, nose twitching, eyes wide";
+    protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
+        sizes:  new[] { "small", "lean" },
+        colors: new[] { "grey", "brown", "grey-brown", "white" },
+        noun:   "rabbit",
+        traits: new[] { "nose twitching, eyes wide", "frozen mid-hop, ears upright", "nibbling at the grass, ready to bolt" });
 
     public override CorpseSpot CreateCorpse(ShallowNpcEntity entity, Area area)
     {

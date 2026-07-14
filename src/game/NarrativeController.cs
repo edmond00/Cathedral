@@ -232,7 +232,11 @@ public class NarrativeController
             _protagonist.InitializeMemory();
         }
         _activePartyMember = _protagonist;
-        
+
+        // Noetic points for a fresh node/reset come from the active member's encephalon
+        // (NoeticPointsStat), so a smarter mind gets more thinking attempts.
+        _narrationState.MaxNoeticPointsProvider = () => (_activePartyMember ?? _protagonist).MaxNoeticPoints;
+
         // Generate graph for this location using factory
         if (graphFactory == null)
             throw new ArgumentNullException(nameof(graphFactory), "NarrationGraphFactory is required - no fallback provided");
@@ -1423,7 +1427,7 @@ public class NarrativeController
     private void LoadNoeticPoints(PartyMember member)
     {
         if (!_memberNoeticPoints.TryGetValue(member.DisplayName, out var points))
-            points = NarrativeUI.GetMaxThinkingAttempts();
+            points = member.MaxNoeticPoints;
         _narrationState.ThinkingAttemptsRemaining = points;
     }
 
@@ -1537,7 +1541,8 @@ public class NarrativeController
         // Header: agent name (left) + noetic counter (right, hidden in phases without cost)
         bool showNoetic = _scene?.Phase != NarrationPhase.ChildhoodReminescence
                        && _scene?.Phase != NarrationPhase.GetUp;
-        _ui.RenderHeader(_activePartyMember.DisplayName, _narrationState.ThinkingAttemptsRemaining, showNoetic);
+        _ui.RenderHeader(_activePartyMember.DisplayName, _narrationState.ThinkingAttemptsRemaining,
+            _activePartyMember.MaxNoeticPoints, showNoetic);
 
         // The footer exit button is only (re)rendered in the interactive states below. Clear its
         // click region each frame so stale zones don't linger during dice/loading/error states.

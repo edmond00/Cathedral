@@ -11,6 +11,9 @@ public class LimbsBodyPart : BodyPart
     public override string Id => "limbs";
     public override string DisplayName => "Limbs";
     public override bool AcceptsWildcardWounds => true;
+    public override string Description =>
+        "The four members of the beast, foreleg and hindleg with their claws, by which it runs, seizes, " +
+        "and rends. Taken whole, they serve alike for the chase and for the kill.";
 
     private readonly List<Organ> _organs;
     public override List<Organ> Organs => _organs;

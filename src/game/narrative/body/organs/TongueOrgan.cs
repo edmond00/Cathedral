@@ -10,7 +10,11 @@ public class TongueOrgan : Organ
     public override string Id => "tongue";
     public override string DisplayName => "Tongue";
     public override string BodyPartId => "visage";
-    
+    public override string Description =>
+        "The organ of articulate speech, and the measure of the body's fluency. It is the seat of the " +
+        "verbal disciplines entire: eloquence and persuasion, language and lore, and the arts of song, " +
+        "story, and company.";
+
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;
     

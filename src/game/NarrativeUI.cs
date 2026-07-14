@@ -28,12 +28,13 @@ public class NarrativeUI : TerminalPanelUI
     }
     
     /// <summary>
-    /// Get maximum thinking attempts.
-    /// TODO: This should be retrieved from the protagonist instance once that characteristic is implemented.
+    /// Fallback maximum thinking attempts, used only when no member-derived value is available
+    /// (e.g. before the active member is known). The real per-member value comes from the
+    /// encephalon-derived <see cref="Cathedral.Game.Narrative.NoeticPointsStat"/> via
+    /// <see cref="Cathedral.Game.Narrative.PartyMember.MaxNoeticPoints"/>.
     /// </summary>
     public static int GetMaxThinkingAttempts()
     {
-        // Placeholder implementation - will be replaced with protagonist characteristic
         return 13;
     }
     
@@ -49,7 +50,8 @@ public class NarrativeUI : TerminalPanelUI
     /// Pass <paramref name="showNoeticPoints"/> as false for phases where noetic points are
     /// not consumed (childhood reminescence, get-up scene).
     /// </summary>
-    public void RenderHeader(string activeAgentName, int thinkingAttemptsRemaining, bool showNoeticPoints = true)
+    public void RenderHeader(string activeAgentName, int thinkingAttemptsRemaining, int maxNoeticPoints,
+        bool showNoeticPoints = true)
     {
         int headerY = _layout.TOP_PADDING;
 
@@ -60,7 +62,7 @@ public class NarrativeUI : TerminalPanelUI
         // Right: noetic-point counter (only when noetic points are meaningful)
         if (showNoeticPoints)
         {
-            int maxAttempts = GetMaxThinkingAttempts();
+            int maxAttempts = maxNoeticPoints;
             string prefix = "[";
             // Reserve space: maxAttempts markers + prefix "[" + suffix "]"
             int suffixWidth = 1 + maxAttempts + 1;

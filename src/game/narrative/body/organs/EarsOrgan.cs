@@ -10,7 +10,11 @@ public class EarsOrgan : Organ
     public override string Id => "ears";
     public override string DisplayName => "Ears";
     public override string BodyPartId => "visage";
-    
+    public override string Description =>
+        "The organs of audition, and of the body's promptitude in answering what occurs about it. They " +
+        "are the seat of the disciplines of attentive hearing: music, vigilance, and the finer " +
+        "attunements of social exchange.";
+
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;
     

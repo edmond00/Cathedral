@@ -92,6 +92,15 @@ public class NarrativeState
     public int ThinkingAttemptsRemaining { get; set; } = NarrativeUI.GetMaxThinkingAttempts();
 
     /// <summary>
+    /// Supplies the max noetic points for a fresh node/reset, sourced from the active member's
+    /// encephalon (see <see cref="NoeticPointsStat"/>). Set by <see cref="NarrativeController"/>.
+    /// Falls back to <see cref="NarrativeUI.GetMaxThinkingAttempts"/> when unset.
+    /// </summary>
+    public System.Func<int>? MaxNoeticPointsProvider { get; set; }
+
+    private int MaxNoeticPoints() => MaxNoeticPointsProvider?.Invoke() ?? NarrativeUI.GetMaxThinkingAttempts();
+
+    /// <summary>
     /// Should the "Continue" button be shown?
     /// </summary>
     public bool ShowContinueButton { get; set; } = false;
@@ -238,7 +247,7 @@ public class NarrativeState
         IsLoadingFocusObservation = false;
         LoadingMessage = Config.LoadingMessages.Default;
         HoveredKeyword = null;
-        ThinkingAttemptsRemaining = NarrativeUI.GetMaxThinkingAttempts();
+        ThinkingAttemptsRemaining = MaxNoeticPoints();
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
         IsSelectingObservationModusMentis = false;
@@ -274,7 +283,7 @@ public class NarrativeState
         HoveredKeyword = null;
         HoveredAction = null;
         ActionRegions.Clear();
-        ThinkingAttemptsRemaining = NarrativeUI.GetMaxThinkingAttempts();
+        ThinkingAttemptsRemaining = MaxNoeticPoints();
         ShowContinueButton = false;
         IsContinueButtonHovered = false;
         IsSelectingObservationModusMentis = false;

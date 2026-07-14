@@ -11,7 +11,11 @@ public class LegsOrgan : Organ
     public override string DisplayName => "Legs";
     public override bool AcceptsWildcardWounds => true;
     public override string BodyPartId => "lower_limbs";
-    
+    public override string Description =>
+        "The organs of locomotion, mediating the body's celerity. They are the seat of the disciplines " +
+        "of movement: running and springing, agility, and the pursuits and evasions of the body in " +
+        "motion.";
+
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;
     

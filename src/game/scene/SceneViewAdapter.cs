@@ -295,26 +295,26 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
 
     public override string ObservationId => _npc.DisplayName.ToLowerInvariant().Replace(' ', '_');
 
-    public override string NeutralName => ContextLabel ?? _npc.DisplayName;
+    public override string NeutralName => Label;
 
-    public override string NeutralPhrase => ContextLabel ?? _npc.DisplayName;   // label or proper name — no article
+    public override string NeutralPhrase => Label;
 
     public override string ReferenceLemma => "person";          // names aren't in the embedding vocab
 
-    public override string GenerateNeutralDescription(int locationId = 0)
-    {
-        // Named NPC: use its name-free observation hint (also avoids leaking the proper name that
-        // SceneNpc.Descriptions defaults to). Shallow NPC: keep the scene-authored descriptions.
-        if (_npc.Entity is NpcEntity named)
-            return named.ObservationHint;
+    /// <summary>
+    /// Named NPC: the stamped contextual label (else the proper name). Shallow NPC: the clean articled
+    /// type noun ("a crab", "an owl") so it reads naturally mid-sentence rather than the bare "Crab".
+    /// </summary>
+    private string Label => ContextLabel
+        ?? (_npc.Entity is ShallowNpcEntity
+            ? Cathedral.Game.NeutralNarration.NounPhrase(_npc.DisplayName.ToLowerInvariant())
+            : _npc.DisplayName);
 
-        if (_npc.Descriptions.Count > 0)
-        {
-            var rng = new Random(locationId);
-            return _npc.Descriptions[rng.Next(_npc.Descriptions.Count)];
-        }
-        return _npc.DisplayName.ToLowerInvariant();
-    }
+    public override string GenerateNeutralDescription(int locationId = 0)
+        // Both named and shallow entities carry an appearance-only ObservationHint (name-free; the
+        // shallow one is composed with per-NPC-id variation). This supersedes the old SceneNpc.Descriptions
+        // path, which only ever held the bare DisplayName ("Crab").
+        => _npc.Entity.ObservationHint;
 }
 
 /// <summary>

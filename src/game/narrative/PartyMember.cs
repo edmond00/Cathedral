@@ -582,4 +582,19 @@ public abstract class PartyMember
     /// <summary>Current HP = max HP minus total wound count (all severities cost 1 HP).</summary>
     public int CurrentHp => Math.Max(0, MaxHp - Wounds.Count);
 
+    /// <summary>
+    /// Maximum noetic points = encephalon body part score, defined by <see cref="NoeticPointsStat"/>.
+    /// This is the per-node pool of thinking attempts (one per encephalon level).
+    /// </summary>
+    public int MaxNoeticPoints
+    {
+        get
+        {
+            var stat = DerivedStats.FirstOrDefault(s => s.Name == "noetic_points");
+            return stat != null
+                ? stat.GetRawValue(this)
+                : Math.Max(1, _bodyParts.FirstOrDefault(bp => bp.Id == "encephalon")?.Score ?? 1);
+        }
+    }
+
 }

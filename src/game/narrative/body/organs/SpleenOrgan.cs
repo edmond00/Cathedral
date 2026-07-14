@@ -10,7 +10,11 @@ public class SpleenOrgan : Organ
     public override string Id => "spleen";
     public override string DisplayName => "Spleen";
     public override string BodyPartId => "trunk";
-    
+    public override string Description =>
+        "Of the four sanguific organs, that of the melancholic temperament; it elaborates the humors as " +
+        "its fellows do, yet withholds the atrabilious humor from ordinary circulation, which grave and " +
+        "particular occasions alone provoke.";
+
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;
     

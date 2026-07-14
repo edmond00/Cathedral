@@ -10,7 +10,10 @@ public class VisageBodyPart : BodyPart
     public override string Id => "visage";
     public override string DisplayName => "Visage";
     public override bool AcceptsWildcardWounds => true;
-    
+    public override string Description =>
+        "The countenance, comprising the organs of the special senses seated in the face. Taken whole, " +
+        "it governs the comeliness of the face, the favour it procures upon a first acquaintance.";
+
     private readonly List<Organ> _organs;
     public override List<Organ> Organs => _organs;
     

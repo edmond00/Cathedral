@@ -242,7 +242,9 @@ public class ManagementMenuRenderer
         {
             case ManagementTab.Body:
                 int lastRow = _bodyViewer.RenderOrganStats();
-                _bodyViewer.RenderHoveredDetail(lastRow);
+                int descRow = _bodyViewer.RenderHoveredOrganDescription(lastRow);
+                _bodyViewer.RenderHoveredDetail(descRow);
+                _bodyViewer.RenderHoveredRegionDetail(lastRow);
                 break;
             case ManagementTab.Inventory:
                 var invMember = GetPartyMember(_selectedCharacterIndex);
@@ -279,7 +281,9 @@ public class ManagementMenuRenderer
             _bodyViewer.ShowWounds = true;
             _bodyViewer.RenderBodyArt();
             int lastRow = _bodyViewer.RenderOrganStats();
-            _bodyViewer.RenderHoveredDetail(lastRow);
+            int descRow = _bodyViewer.RenderHoveredOrganDescription(lastRow);
+            _bodyViewer.RenderHoveredDetail(descRow);
+            _bodyViewer.RenderHoveredRegionDetail(lastRow);
             // Re-render left panel on top after art redraw
             RenderLeftPanel();
         }

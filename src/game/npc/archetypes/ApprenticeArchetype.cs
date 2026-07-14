@@ -18,7 +18,7 @@ public class ApprenticeArchetype : CraftsmanArchetype
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]
     {
-        "a soot-faced youth pauses at their work, eyeing you warily",
+        "a soot-faced youth pauses at their work, wary and watchful",
         "a young figure in a coal-smudged apron fetches and carries, glancing up nervously",
         "a lanky apprentice sweeps shavings from the floor, keeping half an eye on you",
     };

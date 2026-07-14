@@ -11,6 +11,9 @@ public class BeastLegsOrgan : Organ
     public override string DisplayName => "Legs";
     public override bool AcceptsWildcardWounds => true;
     public override string BodyPartId => "limbs";
+    public override string Description =>
+        "The locomotor organs of the Beast, propelling it at a pace no biped may maintain; the seat of " +
+        "the disciplines of the chase.";
 
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;

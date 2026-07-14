@@ -51,7 +51,9 @@ public class ProtagonistCreationRenderer
         _viewer.RenderBodyArt();
         RenderPanelHeader();
         int lastRow = _viewer.RenderOrganStats();
-        _viewer.RenderHoveredDetail(lastRow);
+        int descRow = _viewer.RenderHoveredOrganDescription(lastRow);
+        _viewer.RenderHoveredDetail(descRow);
+        _viewer.RenderHoveredRegionDetail(lastRow);
         RenderFooter();
     }
 

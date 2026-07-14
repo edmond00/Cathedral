@@ -10,7 +10,10 @@ public class TrunkBodyPart : BodyPart
     public override string Id => "trunk";
     public override string DisplayName => "Trunk";
     public override bool AcceptsWildcardWounds => true;
-    
+    public override string Description =>
+        "The great central cavity, containing the vital and sanguific organs. Taken whole, it is the " +
+        "vessel of life, the measure of injury the body may sustain before dissolution.";
+
     private readonly List<Organ> _organs;
     public override List<Organ> Organs => _organs;
     

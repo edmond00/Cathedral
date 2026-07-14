@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Terminal.Utils;
@@ -87,6 +88,7 @@ public class BodyArtViewer
     private readonly Dictionary<string, char> _organPartNameToChar;
     private readonly List<(string bodyPartId, int startRow)> _bodyPartRows = new();
     private readonly Dictionary<int, string> _rowToOrganPartId = new();
+    private readonly Dictionary<int, string> _rowToBodyPartId = new();
     private readonly Dictionary<int, (int decX, int incX)> _rowToArrowX = new();
 
     /// <summary>Exposes row→organPartId mapping for callers that need hit-testing.</summary>
@@ -110,6 +112,7 @@ public class BodyArtViewer
     public void ComputeLayout()
     {
         _rowToOrganPartId.Clear();
+        _rowToBodyPartId.Clear();
         _rowToArrowX.Clear();
         _bodyPartRows.Clear();
 
@@ -117,6 +120,7 @@ public class BodyArtViewer
         foreach (var bp in _protagonist.BodyParts)
         {
             _bodyPartRows.Add((bp.Id, row));
+            _rowToBodyPartId[row] = bp.Id;
             row++; // header row
 
             foreach (var organ in bp.Organs)
@@ -254,6 +258,11 @@ public class BodyArtViewer
                         }
                     }
                 }
+            }
+            else if (_rowToBodyPartId.TryGetValue(y, out var hoverBpId))
+            {
+                // Hovering a region header row → region selected (no organ, whole-region box).
+                newBodyPart = hoverBpId;
             }
         }
 
@@ -612,6 +621,32 @@ public class BodyArtViewer
             return;
         }
 
+        // Region arrow: a region is hovered with no organ part (region name text or a non-organ
+        // body cell). Connect the region's art box to its header row, without any organ highlight.
+        if (_hoveredOrganPartName == null && _hoveredBodyPartId != null)
+        {
+            ArtBounds? regionBounds =
+                (LimbBodyParts.Contains(_hoveredBodyPartId) && _hoveredRawPartName != null)
+                    ? _artData.GetRawPartBounds(_hoveredRawPartName)
+                    : _artData.GetBodyPartBounds(_hoveredBodyPartId);
+
+            int headerRow = -1;
+            foreach (var (bpId, startRow) in _bodyPartRows)
+                if (bpId == _hoveredBodyPartId) { headerRow = startRow; break; }
+
+            if (regionBounds != null && headerRow >= 0)
+            {
+                int ox = ArtOffsetX + regionBounds.MaxX;
+                int oy = ArtOffsetY + (regionBounds.MinY + regionBounds.MaxY) / 2;
+                if (ox < PanelX - 2)
+                    ArrowRenderer.DrawConnector(_terminal,
+                        ox, oy,
+                        PanelContentX - 1, headerRow,
+                        Config.Colors.MediumYellow, Config.Colors.Black);
+            }
+            return;
+        }
+
         if (_hoveredOrganPartName == null) return;
         if (!_organPartNameToChar.TryGetValue(_hoveredOrganPartName, out char organChar)) return;
 
@@ -828,6 +863,57 @@ public class BodyArtViewer
         }
 
         return row;
+    }
+
+    /// <summary>
+    /// Renders the hovered organ's flavour description in the band between the organ list
+    /// and the derived-stat detail. Returns the row after the description so the caller can
+    /// anchor the detail section below it. Renders nothing and returns <paramref name="minRow"/>
+    /// unchanged when no organ is hovered (or a wound glyph is hovered), preserving the detail
+    /// section's default position.
+    /// </summary>
+    public int RenderHoveredOrganDescription(int minRow)
+    {
+        if (_hoveredWoundId != null || _hoveredOrganPartName == null) return minRow;
+
+        var opInfo = FindOrganPartByName(_hoveredOrganPartName);
+        if (opInfo == null) return minRow;
+
+        var organ = _protagonist.GetOrganById(opInfo.Value.organName);
+        if (organ == null || string.IsNullOrWhiteSpace(organ.Description)) return minRow;
+
+        int row = Math.Max(minRow + 1, StatsStartRow);
+        _terminal.Text(PanelContentX, row, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
+        row += 2;
+        _terminal.Text(PanelContentX, row, opInfo.Value.organDisplayName.ToUpper(), Config.Colors.MediumYellow, Config.Colors.Black);
+        row += 2;
+
+        foreach (var line in WrapText(organ.Description, PanelContentW))
+        {
+            _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
+            row++;
+        }
+        return row;
+    }
+
+    /// <summary>Greedy word-wrap of <paramref name="text"/> into lines no wider than <paramref name="maxWidth"/>.</summary>
+    private static IEnumerable<string> WrapText(string text, int maxWidth)
+    {
+        var sb = new StringBuilder();
+        foreach (var word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (sb.Length == 0)
+                sb.Append(word);
+            else if (sb.Length + 1 + word.Length <= maxWidth)
+                sb.Append(' ').Append(word);
+            else
+            {
+                yield return sb.ToString();
+                sb.Clear();
+                sb.Append(word);
+            }
+        }
+        if (sb.Length > 0) yield return sb.ToString();
     }
 
     /// <summary>
@@ -1101,6 +1187,81 @@ public class BodyArtViewer
                 row++;
             }
 
+        }
+    }
+
+    /// <summary>
+    /// Renders the hovered region (body part) detail: its flavour description in the middle band
+    /// (right below the organ list), followed by the derived stats that belong specifically to the
+    /// region (not to its organs) and any region fighting medium. No-ops unless a region is hovered
+    /// with no organ part and no wound glyph.
+    /// </summary>
+    public void RenderHoveredRegionDetail(int minRow)
+    {
+        if (_hoveredWoundId != null || _hoveredOrganPartName != null || _hoveredBodyPartId == null) return;
+
+        var bodyPart = _protagonist.GetBodyPartById(_hoveredBodyPartId);
+        if (bodyPart == null) return;
+
+        // ── Description block (middle band) ──
+        int row = Math.Max(minRow + 1, StatsStartRow);
+        _terminal.Text(PanelContentX, row, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
+        row += 2;
+        _terminal.Text(PanelContentX, row, bodyPart.DisplayName.ToUpper(), Config.Colors.MediumYellow, Config.Colors.Black);
+        row += 2;
+        if (!string.IsNullOrWhiteSpace(bodyPart.Description))
+            foreach (var line in WrapText(bodyPart.Description, PanelContentW))
+            {
+                _terminal.Text(PanelContentX, row, line, Config.Colors.LightGray75, Config.Colors.Black);
+                row++;
+            }
+
+        // ── Region-specific derived stats + region fighting medium (the info section) ──
+        var regionStats = _protagonist.DerivedStats
+            .Where(s => s.RelatedBodyPartId == _hoveredBodyPartId)
+            .ToList();
+        var regionCategory = BodyPartMediumRegistry.GetById(_hoveredBodyPartId);
+        if (regionStats.Count == 0 && regionCategory == null) return;
+
+        int detailRow = Math.Max(row + 1, 50);
+        _terminal.Text(PanelContentX, detailRow, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
+        detailRow += 2;
+        _terminal.Text(PanelContentX, detailRow, $"▸ {bodyPart.DisplayName}  (region)", Config.Colors.DarkYellow, Config.Colors.Black);
+        detailRow += 2;
+
+        Vector4 statGrey = Config.Colors.LightGray75;
+        foreach (var stat in regionStats)
+        {
+            int val = stat.GetRawValue(_protagonist);
+            _terminal.Text(PanelContentX, detailRow, $"  {stat.ShortDisplayName}", statGrey, Config.Colors.Black);
+            detailRow++;
+            _terminal.Text(PanelContentX, detailRow, $"    {stat.FormatValue(val)}", AdjustLuminosity(statGrey, 0.65f), Config.Colors.Black);
+            detailRow++;
+        }
+
+        if (regionCategory != null)
+        {
+            if (regionStats.Count > 0) detailRow++; // blank line between stats and medium
+            _terminal.Text(PanelContentX, detailRow, $"  Fighting Medium  lv.{bodyPart.Score}", Config.Colors.White, Config.Colors.Black);
+            detailRow++;
+            bool nextLearnable = false;
+            foreach (var skillId in regionCategory.SkillIds)
+            {
+                var skill = FightingSkillRegistry.Instance.GetById(skillId);
+                if (skill == null) continue;
+                bool isLearned = _protagonist.LearnedModiMentis.Any(m => m.ModusMentisId == skill.RequiredModusMentisId);
+                if (isLearned)
+                {
+                    _terminal.Text(PanelContentX, detailRow, $"    · {skill.DisplayName}", Config.Colors.LightGray75, Config.Colors.Black);
+                    detailRow++;
+                }
+                else if (!nextLearnable)
+                {
+                    _terminal.Text(PanelContentX, detailRow, $"    · {skill.DisplayName}", Config.Colors.DarkGray35, Config.Colors.Black);
+                    detailRow++;
+                    nextLearnable = true;
+                }
+            }
         }
     }
 

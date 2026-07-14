@@ -31,7 +31,7 @@ public class FarmerArchetype : NamedNpcArchetype
     {
         "a broad-shouldered figure in a mud-stained smock watches you",
         "a weathered figure straightens from the soil, hands caked with earth",
-        "someone leans on a hoe at the field's edge, sizing you up",
+        "someone leans on a hoe at the field's edge, taking your measure",
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)

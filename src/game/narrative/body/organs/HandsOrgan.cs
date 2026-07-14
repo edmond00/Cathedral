@@ -12,7 +12,11 @@ public class HandsOrgan : Organ
     public override bool AcceptsWildcardWounds => true;
     public override bool PartsAreIndependentMediums => true; // left & right hand strike independently
     public override string BodyPartId => "upper_limbs";
-    
+    public override string Description =>
+        "The organs of manual dexterity, by which any implement is turned to use. They are the seat of " +
+        "the broadest family of practical disciplines: the crafts and trades, fine manipulation, and " +
+        "every art of the deft or cunning hand.";
+
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;
     

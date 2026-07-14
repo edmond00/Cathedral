@@ -14,6 +14,13 @@ public abstract class Organ
     public abstract string DisplayName { get; }
     public abstract string BodyPartId { get; }
     public abstract List<OrganPart> Parts { get; }
+
+    /// <summary>
+    /// Encyclopedia-style flavour text describing the organ's overall purpose and the
+    /// disciplines it lends to. Shown in the creation and body menus, in the band between
+    /// the organ list and the derived-stat detail, when the organ is hovered.
+    /// </summary>
+    public virtual string Description => "";
     
     /// <summary>
     /// When true, each organ part of this organ appears as a candidate target for wildcard

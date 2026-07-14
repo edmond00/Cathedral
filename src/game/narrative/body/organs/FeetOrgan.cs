@@ -12,7 +12,11 @@ public class FeetOrgan : Organ
     public override bool AcceptsWildcardWounds => true;
     public override bool PartsAreIndependentMediums => true; // left & right foot strike independently
     public override string BodyPartId => "lower_limbs";
-    
+    public override string Description =>
+        "The organs of stance and endurance in travel, bearing the body over distance and holding it " +
+        "sure upon uncertain ground. They are the seat of the disciplines of quiet movement and the long " +
+        "road: stealth, wayfaring, and sure footing.";
+
     private readonly List<OrganPart> _parts;
     public override List<OrganPart> Parts => _parts;
     

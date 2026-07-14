@@ -25,7 +25,7 @@ public class FarmhandArchetype : NamedNpcArchetype
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]
     {
-        "a young labourer straightens from their work and eyes you warily",
+        "a young labourer straightens from their work, wary and watchful",
         "a wiry figure shoulders a bundle of tools, glancing over",
         "someone pauses mid-task, wiping their brow with a forearm",
     };
