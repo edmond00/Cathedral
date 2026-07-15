@@ -53,6 +53,18 @@ catch (Exception ex)
     return;
 }
 
+// Validate the childhood-reminescence outcome rules: the protagonist must always leave the
+// childhood phase with at least one Semantic, one Procedural and one Sensory modusMentis.
+try
+{
+    Cathedral.Game.Narrative.Reminescence.ReminescenceRuleValidator.ValidateOrThrow();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ REMINESCENCE VALIDATION FAILED:\n{ex.Message}");
+    return;
+}
+
 // Check for fight mode
 if (args.Length >= 1 && args[0] == "--fight")
 {

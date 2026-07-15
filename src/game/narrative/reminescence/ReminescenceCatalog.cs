@@ -64,7 +64,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a warm, distant laugh dissolving into darkness",
                     outcomeText:      "the laugh of your father at the stable where you spent your childhood",
                     outcome: To("stable_childhood",
-                        skills: new[] { typeof(SenseOfHumorModusMentis), typeof(BeastSenseModusMentis) },
+                        skills: new[] { typeof(SenseOfHumorModusMentis), typeof(BeastSenseModusMentis), typeof(HospitalityModusMentis) },
                         items:  new Func<Item>[] {
                             () => new StableChildSmock(),
                             () => new StableChildBreeches(),
@@ -76,7 +76,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a muffled weeping, a woman's voice somewhere in the dark",
                     outcomeText:      "the sobs of an unknown lady on the dock of the port city where you spent your childhood",
                     outcome: To("port_city_childhood",
-                        skills: new[] { typeof(EmpathyModusMentis), typeof(NauticalJargonModusMentis) },
+                        skills: new[] { typeof(EmpathyModusMentis), typeof(NauticalJargonModusMentis), typeof(KnotworkModusMentis) },
                         items:  new Func<Item>[] {
                             () => new TownsmanCloak(),
                             () => new TownsmanTunic(),
@@ -89,7 +89,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a stern, clipped voice reciting something you could not follow",
                     outcomeText:      "the severe voice of your tutor at the orphanage where you spent your childhood",
                     outcome: To("orphanage_childhood",
-                        skills: new[] { typeof(DisciplineModusMentis), typeof(ObedienceModusMentis) },
+                        skills: new[] { typeof(DisciplineModusMentis), typeof(ObedienceModusMentis), typeof(RoteModusMentis) },
                         items:  new Func<Item>[] { () => new PlainRobe() },
                         setLocation: "the orphanage")),
 
@@ -97,7 +97,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a raw, animal scream cutting through the night",
                     outcomeText:      "the pained scream of a slaughtered pig at the farm where you spent your childhood",
                     outcome: To("farm_childhood",
-                        skills: new[] { typeof(ButcheryModusMentis), typeof(PeasantryModusMentis) },
+                        skills: new[] { typeof(ButcheryModusMentis), typeof(PeasantryModusMentis), typeof(RipeloreModusMentis) },
                         items:  new Func<Item>[] {
                             () => new FarmerSmock(),
                             () => new FarmerBreeches(),
@@ -110,7 +110,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a low, murmured chant winding under a closed door",
                     outcomeText:      "the whispered recitation of a monk at the temple where you spent your childhood",
                     outcome: To("temple_childhood",
-                        skills: new[] { typeof(MeditationModusMentis), typeof(MurmurModusMentis) },
+                        skills: new[] { typeof(MeditationModusMentis), typeof(MurmurModusMentis), typeof(IconographyModusMentis) },
                         items:  new Func<Item>[] { () => new PlainRobe() },
                         setLocation: "the temple")),
 
@@ -118,7 +118,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a soft melody, half-heard and warm, pulling you toward sleep",
                     outcomeText:      "the lullaby sung by your mother in your bedroom at the castle where you spent your childhood",
                     outcome: To("castle_childhood",
-                        skills: new[] { typeof(LullabyModusMentis), typeof(AristocracyModusMentis) },
+                        skills: new[] { typeof(LullabyModusMentis), typeof(AristocracyModusMentis), typeof(HeraldryModusMentis) },
                         items:  new Func<Item>[] {
                             () => new SilkStockings(),
                             () => new KneeLengthCoat(),
