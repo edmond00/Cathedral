@@ -19,6 +19,7 @@ public class ChildhoodReminescenceModusMentis : ModusMentis
     {
         ModusMentisFunction.Observation,
         ModusMentisFunction.Thinking,
+        ModusMentisFunction.Action,
     };
     public override string[] Organs         => new[] { "anamnesis", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

@@ -41,14 +41,14 @@ public class RememberVerb : Verb
         var reports = new List<OutcomeReport>();
 
         // Skills — visible positive chips; Apply() grants a fresh level-1 instance.
-        foreach (var skillId in outcome.SkillIds)
+        foreach (var skillType in outcome.SkillTypes)
         {
-            var template = ModusMentisRegistry.Instance.GetModusMentis(skillId);
+            var template = ModusMentisRegistry.Instance.GetModusMentis(skillType);
             if (template == null)
-            {
-                Console.WriteLine($"RememberVerb: skill '{skillId}' not registered — skipping.");
-                continue;
-            }
+                throw new InvalidOperationException(
+                    $"RememberVerb: modusMentis '{skillType.Name}' is not registered "
+                    + "(it needs a public parameterless constructor to be auto-registered).");
+
             reports.Add(new SkillAcquisitionOutcome(template));
         }
 

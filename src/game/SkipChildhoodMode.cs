@@ -54,15 +54,15 @@ public static class SkipChildhoodMode
             var fragment = data.Fragments[_rng.Next(data.Fragments.Count)];
             var outcome  = fragment.Outcome;
 
-            foreach (var skillId in outcome.SkillIds)
+            foreach (var skillType in outcome.SkillTypes)
             {
-                var template = ModusMentisRegistry.Instance.GetModusMentis(skillId);
+                var template = ModusMentisRegistry.Instance.GetModusMentis(skillType);
                 if (template == null)
-                {
-                    Console.WriteLine($"SkipChildhoodMode: skill '{skillId}' not registered — skipping.");
-                    continue;
-                }
-                var instance = (ModusMentis)Activator.CreateInstance(template.GetType())!;
+                    throw new InvalidOperationException(
+                        $"SkipChildhoodMode: modusMentis '{skillType.Name}' is not registered "
+                        + "(it needs a public parameterless constructor to be auto-registered).");
+
+                var instance = (ModusMentis)Activator.CreateInstance(skillType)!;
                 instance.Level = 1;
                 protagonist.AcquireModusMentis(instance);
             }
@@ -77,7 +77,7 @@ public static class SkipChildhoodMode
                 currentId, fragment.Name, fragment.Summary, fragment.ContextSummary);
 
             Console.WriteLine($"  [{currentId}] → '{fragment.Name}' "
-                + $"({outcome.SkillIds.Count} skill(s), {outcome.Items.Count} item(s))");
+                + $"({outcome.SkillTypes.Count} skill(s), {outcome.Items.Count} item(s))");
 
             if (outcome.IsTerminal) break;
             currentId = outcome.NextReminescenceId;

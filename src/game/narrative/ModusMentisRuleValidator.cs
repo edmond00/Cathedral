@@ -12,7 +12,7 @@ namespace Cathedral.Game.Narrative;
 /// <c>--mm-audit</c> report that also tracks the soft statistical targets.
 ///
 /// Hard rules (violations throw at startup, see <see cref="ValidateOrThrow"/>):
-///   R1  no MM has both Thinking and Action
+///   R1  no MM has both Thinking and Action (except exempt special first skills, see below)
 ///   R2  every MM has at least one of Observation / Thinking / Action
 ///   R3  every MM has at most 3 functions, without duplicates
 ///   R4  Semantic memory requires Thinking; Sensory requires Observation; Procedural requires Action
@@ -31,6 +31,13 @@ namespace Cathedral.Game.Narrative;
 public static class ModusMentisRuleValidator
 {
     private const int MinRelatedModiMentis = 5;
+
+    /// <summary>
+    /// MMs exempt from R1 (Thinking+Action exclusivity). Childhood Reminescence is the special
+    /// temporary first skill of the intro phase and deliberately carries all three of
+    /// Observation/Thinking/Action; every other rule still applies to it.
+    /// </summary>
+    private static readonly HashSet<string> ThinkingActionExemptIds = new() { "childhood_reminescence" };
 
     // ── Canonical anatomy ids (reflection over Organ / BodyPart subclasses) ──
 
@@ -90,8 +97,9 @@ public static class ModusMentisRuleValidator
             if (fns.Distinct().Count() != fns.Length)
                 violations.Add($"[R3] {mm.ModusMentisId}: duplicate entries in Functions");
 
-            // R1 — Thinking and Action are mutually exclusive
-            if (fns.Contains(ModusMentisFunction.Thinking) && fns.Contains(ModusMentisFunction.Action))
+            // R1 — Thinking and Action are mutually exclusive (special first-skill MMs exempt)
+            if (!ThinkingActionExemptIds.Contains(mm.ModusMentisId)
+                && fns.Contains(ModusMentisFunction.Thinking) && fns.Contains(ModusMentisFunction.Action))
                 violations.Add($"[R1] {mm.ModusMentisId}: has both Thinking and Action");
 
             // R2 — at least one of Observation / Thinking / Action

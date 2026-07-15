@@ -13,6 +13,7 @@ namespace Cathedral.Game.Narrative;
 public class ModusMentisRegistry
 {
     private readonly Dictionary<string, ModusMentis> _modiMentisById = new();
+    private readonly Dictionary<Type, ModusMentis> _modiMentisByType = new();
     private static ModusMentisRegistry? _instance;
     
     public static ModusMentisRegistry Instance => _instance ??= new ModusMentisRegistry();
@@ -79,11 +80,22 @@ public class ModusMentisRegistry
     private void RegisterModusMentis(ModusMentis modusMentis)
     {
         _modiMentisById[modusMentis.ModusMentisId] = modusMentis;
+        _modiMentisByType[modusMentis.GetType()]   = modusMentis;
     }
-    
+
     public ModusMentis? GetModusMentis(string modusMentisId)
     {
         return _modiMentisById.GetValueOrDefault(modusMentisId);
+    }
+
+    /// <summary>
+    /// Looks up the registered template by concrete type. Preferred over the id overload at
+    /// call sites that can name the type directly (e.g. the reminescence catalog), since the
+    /// compiler then guarantees the modusMentis exists.
+    /// </summary>
+    public ModusMentis? GetModusMentis(Type modusMentisType)
+    {
+        return _modiMentisByType.GetValueOrDefault(modusMentisType);
     }
     
     public List<ModusMentis> GetAllModiMentis()

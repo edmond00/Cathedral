@@ -15,7 +15,7 @@ public class SenseOfHumorModusMentis : ModusMentis
     public override string SkillMeans       => "easy laughter and a quick jest";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "heart", "tongue" };
-    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
+    public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a cheerful soul who finds the merry seam in even hard days";
     public override string PersonaReminder  => "merry-hearted commoner";

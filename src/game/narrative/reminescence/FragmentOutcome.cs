@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Narrative.ModiMentis;
 
 namespace Cathedral.Game.Narrative.Reminescence;
 
@@ -13,8 +14,13 @@ namespace Cathedral.Game.Narrative.Reminescence;
 /// </summary>
 public sealed class FragmentOutcome
 {
-    /// <summary>Modus-mentis ids granted (resolved against <see cref="ModusMentisRegistry"/>).</summary>
-    public IReadOnlyList<string> SkillIds { get; }
+    /// <summary>
+    /// Modus-mentis types granted (resolved against <see cref="ModusMentisRegistry"/>).
+    /// Declared as concrete types rather than string ids so that a mistyped or renamed
+    /// modusMentis is a compile error at the catalog rather than a fragment that silently
+    /// grants nothing at runtime.
+    /// </summary>
+    public IReadOnlyList<Type> SkillTypes { get; }
 
     /// <summary>Item factories invoked when REMEMBER fires.</summary>
     public IReadOnlyList<Func<Item>> Items { get; }
@@ -32,15 +38,25 @@ public sealed class FragmentOutcome
     public string NextReminescenceId { get; }
 
     public FragmentOutcome(
-        IReadOnlyList<string>? skillIds = null,
+        IReadOnlyList<Type>? skillTypes = null,
         IReadOnlyList<Func<Item>>? items = null,
         string? setChildhoodLocation = null,
         string nextReminescenceId = "<END>")
     {
-        SkillIds             = skillIds ?? Array.Empty<string>();
+        SkillTypes           = skillTypes ?? Array.Empty<Type>();
         Items                = items ?? Array.Empty<Func<Item>>();
         SetChildhoodLocation = setChildhoodLocation;
         NextReminescenceId   = nextReminescenceId;
+
+        // typeof(X) fixes the *spelling* at compile time but not the *kind*: Type itself is
+        // unconstrained, so a non-modusMentis would still compile. Fail loudly while the catalog
+        // is being built rather than skipping the grant when the player reaches the fragment.
+        foreach (var type in SkillTypes)
+        {
+            if (!typeof(ModusMentis).IsAssignableFrom(type) || type.IsAbstract)
+                throw new ArgumentException(
+                    $"FragmentOutcome: '{type.Name}' is not a concrete ModusMentis.", nameof(skillTypes));
+        }
     }
 
     /// <summary>True when this fragment terminates the childhood reminescence phase.</summary>
