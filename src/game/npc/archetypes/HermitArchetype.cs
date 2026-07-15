@@ -5,6 +5,10 @@ namespace Cathedral.Game.Npc.Archetypes;
 /// <summary>Hermit NPC — reclusive sage, dialogue-capable, knows mountain secrets. Generally peaceful.</summary>
 public class HermitArchetype : NamedNpcArchetype
 {
+    // Someone who has withdrawn from the world has usually lived in it first: 40–80 years.
+    public override int MinAgeDays => 40 * LifetimeStat.DaysPerYear;
+    public override int MaxAgeDays => 80 * LifetimeStat.DaysPerYear;
+
     public override string ArchetypeId => "hermit";
     public override ItemTag? SellTag => ItemTag.Forage;
     public override ItemTag? BuyTag  => ItemTag.Foodstuff;

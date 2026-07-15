@@ -37,7 +37,7 @@ namespace Cathedral.Game
     {
         public bool HasPath { get; init; }
         public int CellCount { get; init; }
-        public float TotalDurationHours { get; init; }
+        public float TotalDurationDays { get; init; }
         public float TotalVitalHeat { get; init; }
         public float TotalEncounterChance { get; init; }
         /// <summary>Sorted list of (creature, chance) entries — chance is "at least once".</summary>
@@ -176,7 +176,7 @@ namespace Cathedral.Game
                     lastBiome = biomeName;
                 }
                 var info = BiomeTravelDatabase.GetFor(biomeName);
-                duration += info.DurationHours;
+                duration += info.DurationDays;
                 heat += info.VitalHeatPerCell;
                 foreach (var enc in info.Encounters)
                 {
@@ -205,7 +205,7 @@ namespace Cathedral.Game
             {
                 HasPath = true,
                 CellCount = path.Count - 1,
-                TotalDurationHours = duration,
+                TotalDurationDays = duration,
                 TotalVitalHeat = heat,
                 TotalEncounterChance = totalChance,
                 EncounterBreakdown = breakdown,

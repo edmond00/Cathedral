@@ -71,9 +71,9 @@ public record LocationInstanceState
 
     /// <summary>
     /// Item-depletion timestamps: <see cref="Cathedral.Game.Scene.ItemElement.DepletionKey"/> → the
-    /// <c>Protagonist.GameTimeHours</c> at which that slot was last picked. Mutated in place during a
+    /// <c>Protagonist.GameTimeDays</c> at which that slot was last picked. Mutated in place during a
     /// visit (the scene shares this dictionary), so depletion persists across visits with no explicit
-    /// save step. A slot is depleted while <c>now − pickedAt &lt; PoI.RegenHours</c>.
+    /// save step. A slot is depleted while <c>now − pickedAt &lt; PoI.RegenDays</c>.
     /// </summary>
     public Dictionary<string, double> ItemDepletions { get; init; } = new();
 

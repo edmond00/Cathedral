@@ -221,12 +221,14 @@ public class ManagementMenuRenderer
         if (_activeTab == ManagementTab.Body)
         {
             _bodyViewer.ShowWounds = true;
+            _bodyViewer.ShowAge    = true;
             _bodyViewer.RenderBodyArt();
         }
         else if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
                  && _activeTab != ManagementTab.Routines)
         {
             _bodyViewer.ShowWounds = false;
+            _bodyViewer.ShowAge    = false;
             // Draw separator on non-body, non-memory, non-humors, non-routines tabs
             int sepX = BodyArtViewer.PanelX - 1;
             for (int y = 0; y < 100; y++)

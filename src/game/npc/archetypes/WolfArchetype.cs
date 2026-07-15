@@ -11,6 +11,10 @@ public class WolfArchetype : NamedNpcArchetype
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 6;
 
+    // A wolf met in the wild is grown but rarely old: 2–9 years.
+    public override int MinAgeDays => 2 * LifetimeStat.DaysPerYear;
+    public override int MaxAgeDays => 9 * LifetimeStat.DaysPerYear;
+
     public override string[] NamePool => new[]
     {
         "Grey Wolf", "Timber Wolf", "Black Wolf", "Lean Wolf",

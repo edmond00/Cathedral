@@ -82,15 +82,17 @@ public class EquilibriumStat : DerivedStat
 
 /// <summary>
 /// Knockdown recovery — number of d6 rolled at the start of a knocked-down fighter's turn.
-/// At least one six is needed to recover. Higher heart score = better odds.
-/// Source: heart organ (trunk).
-/// Formula: score (range 1–10).
+/// At least one six is needed to recover. Gathering yourself off the ground is an act of
+/// self-possession, so the pineal gland (the seat of inward regard) governs it — this also keeps
+/// the heart free to govern lifespan alone (see <see cref="LifetimeStat"/>).
+/// Source: pineal gland organ (encephalon).
+/// Formula: score (range 1–3).
 /// </summary>
 public class KnockdownRecoveryStat : DerivedStat
 {
     public override string Name         => "knockdown_recovery";
     public override string DisplayName  => "Knockdown Recovery";
-    public override string? RelatedOrganId => "heart";
+    public override string? RelatedOrganId => "pineal_gland";
     protected override int CalculateValue(int sourceScore) => sourceScore;
     public override int WorstValue => 1;
     public override string FormatValue(int value) => $"{value} dice";

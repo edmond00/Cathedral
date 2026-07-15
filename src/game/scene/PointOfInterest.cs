@@ -8,11 +8,11 @@ namespace Cathedral.Game.Scene;
 /// </summary>
 public static class ResourceRegen
 {
-    /// <summary>Natural resources (wild plants, fruit, fungi, rock): 3 months.</summary>
-    public const double NaturalHours = 3 * 30 * 24;   // 2160
+    /// <summary>Natural resources (wild plants, fruit, fungi, rock): 90 days.</summary>
+    public const double NaturalDays = 90;
 
-    /// <summary>Man-made / cultivated stock (caches, crops, crafted goods): 1 year.</summary>
-    public const double ManMadeHours = 12 * 30 * 24;  // 8640
+    /// <summary>Man-made / cultivated stock (caches, crops, crafted goods): 360 days.</summary>
+    public const double ManMadeDays = 360;
 }
 
 /// <summary>
@@ -29,8 +29,8 @@ public class PointOfInterest : Element
     /// </summary>
     public bool IsNatural { get; init; }
 
-    /// <summary>Regeneration wait for this PoI's depleted item slots, derived from <see cref="IsNatural"/>.</summary>
-    public double RegenHours => IsNatural ? ResourceRegen.NaturalHours : ResourceRegen.ManMadeHours;
+    /// <summary>Regeneration wait in days for this PoI's depleted item slots, derived from <see cref="IsNatural"/>.</summary>
+    public double RegenDays => IsNatural ? ResourceRegen.NaturalDays : ResourceRegen.ManMadeDays;
 
     public override string DisplayName { get; }
     public override List<string> Descriptions { get; }

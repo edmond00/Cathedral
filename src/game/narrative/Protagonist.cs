@@ -30,12 +30,6 @@ public class Protagonist : PartyMember
     public int CurrentLocationId { get; set; }
 
     /// <summary>
-    /// Accumulated in-game time in hours, advanced by travel. Serves as the global clock used to
-    /// timestamp item depletion and decide when depleted resources have regenerated.
-    /// </summary>
-    public double GameTimeHours { get; set; }
-
-    /// <summary>
     /// The protagonist's childhood biography, populated during the childhood reminescence
     /// phase as fragments are remembered. Empty at run start.
     /// </summary>
@@ -74,12 +68,30 @@ public class Protagonist : PartyMember
     // ── PartyMember abstract ─────────────────────────────────────
     public override string DisplayName => "Protagonist";
 
+    // ── Starting age ─────────────────────────────────────────────
+
+    /// <summary>Nominal age the protagonist begins a run at: 14 years.</summary>
+    public const int StartAgeDays = 14 * LifetimeStat.DaysPerYear;   // 5040
+
+    /// <summary>
+    /// How far either side of <see cref="StartAgeDays"/> the protagonist's true starting age may
+    /// fall: ±1 year. The heart only yields five distinct lifetimes, so without this every
+    /// protagonist sharing a heart score would die on exactly the same day. Jittering the birth
+    /// time rather than the lifetime keeps the Lifetime stat honest — the number shown on the body
+    /// panel is the literal truth — while still making no two death dates alike.
+    /// </summary>
+    public const int StartAgeJitterDays = 1 * LifetimeStat.DaysPerYear;   // 360
+
     // ── Constructor ──────────────────────────────────────────────
     public Protagonist() : base(SpeciesRegistry.Human)
     {
         // No test equipment, no starter modus mentis: the protagonist starts the run with
         // only the ChildhoodReminescence MM (granted explicitly when entering the reminescence
         // phase) and an empty inventory. Items and skills are acquired via REMEMBER actions.
+
+        // Born roughly fourteen years before day zero, give or take a year.
+        var rng = GameRng.For("protagonist_birth");
+        SetAgeAtCreation(StartAgeDays + rng.Next(-StartAgeJitterDays, StartAgeJitterDays + 1));
     }
 
 }

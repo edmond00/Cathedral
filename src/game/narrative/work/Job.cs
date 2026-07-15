@@ -2,11 +2,12 @@ namespace Cathedral.Game.Narrative.Work;
 
 /// <summary>
 /// A job a master or reeve can hire the player into. A job is an abstract exchange of the player's
-/// time (in months) for coins and modus-mentis experience — not a specific task or quest.
+/// time (in days) for coins and modus-mentis experience — not a specific task or quest.
 ///
-/// Pay is fixed per job: <see cref="CoinsPerMonth"/> is a float so a rate below one coin per month
-/// can be expressed (e.g. 0.25 = one coin every four months). Coins earned for a stint of
-/// <c>months</c> is <c>floor(CoinsPerMonth * months)</c>.
+/// Pay is fixed per job and expressed as <see cref="DaysPerCoin"/> — how long the player must work
+/// to earn a single coin of <see cref="PayCoin"/>. Stating the rate this way keeps the low-paying
+/// village trades readable (a bellows-hand earns one silver every 120 days) without fractional
+/// per-day rates. Coins earned for a stint of <c>days</c> is <c>floor(days / DaysPerCoin)</c>.
 ///
 /// Each job trains exactly three modi mentis, listed most-defining first. The XP a stint grants is
 /// front-loaded onto the first skill (see <see cref="WorkOutcome"/>).
@@ -22,18 +23,18 @@ public sealed class Job
     /// <summary>Coin denomination this job pays in.</summary>
     public CoinType PayCoin { get; }
 
-    /// <summary>Coins of <see cref="PayCoin"/> earned per month worked (may be fractional).</summary>
-    public float CoinsPerMonth { get; }
+    /// <summary>Days that must be worked to earn one coin of <see cref="PayCoin"/>.</summary>
+    public float DaysPerCoin { get; }
 
     /// <summary>The three modus-mentis ids this job trains, ordered by importance (first is most defining).</summary>
     public string[] ModusMentisIds { get; }
 
-    public Job(string id, string title, CoinType payCoin, float coinsPerMonth, string[] modusMentisIds)
+    public Job(string id, string title, CoinType payCoin, float daysPerCoin, string[] modusMentisIds)
     {
         Id             = id;
         Title          = title;
         PayCoin        = payCoin;
-        CoinsPerMonth  = coinsPerMonth;
+        DaysPerCoin    = daysPerCoin;
         ModusMentisIds = modusMentisIds;
     }
 

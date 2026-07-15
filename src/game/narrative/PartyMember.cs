@@ -55,6 +55,58 @@ public abstract class PartyMember
     /// <summary>Active wounds currently affecting this party member.</summary>
     public List<Wound> Wounds { get; private set; } = new();
 
+    // ── Age ───────────────────────────────────────────────────────
+    /// <summary>
+    /// The reading on the run's global clock (<see cref="GameClock.Days"/>) at the moment this member
+    /// was born. Anyone alive when the run begins was therefore born before day zero, so this is
+    /// normally negative — a protagonist starting at 14 years old has a birth time of about −5040.
+    ///
+    /// <para>
+    /// Age is never stored: it is always <c>GameClock.Days − BirthTimeDays</c>, so every member ages
+    /// automatically as the clock advances, with nothing to keep in sync. Set once at creation via
+    /// <see cref="SetAgeAtCreation"/>.
+    /// </para>
+    /// </summary>
+    public double BirthTimeDays { get; private set; } = -DefaultAgeDays;
+
+    /// <summary>Age a member falls back to when nobody sets one explicitly: 25 years.</summary>
+    private const double DefaultAgeDays = 25 * LifetimeStat.DaysPerYear;
+
+    /// <summary>
+    /// Stamps this member's birth time so that they are <paramref name="ageDays"/> old right now.
+    /// Call at creation, after organ scores are settled (the age is clamped against the member's
+    /// heart-derived lifetime, so it must be able to read that).
+    ///
+    /// <para>
+    /// The age is capped at <see cref="MaxFractionOfLifeAtCreation"/> of the member's lifetime so no
+    /// one is ever born already past their death date — an NPC rolled old from a wide archetype range
+    /// but dealt a weak heart would otherwise drop dead the moment they joined the party.
+    /// </para>
+    /// </summary>
+    public void SetAgeAtCreation(double ageDays)
+    {
+        double capped = Math.Min(Math.Max(0, ageDays), GetLifetimeDays() * MaxFractionOfLifeAtCreation);
+        BirthTimeDays = GameClock.Days - capped;
+    }
+
+    /// <summary>The most of their lifetime a member may already have spent when created (90%).</summary>
+    private const double MaxFractionOfLifeAtCreation = 0.9;
+
+    /// <summary>This member's current age in days, measured against the run's global clock.</summary>
+    public double GetAgeDays() => GameClock.Days - BirthTimeDays;
+
+    /// <summary>
+    /// The total span of days this member's body is granted, from the heart-derived
+    /// <see cref="LifetimeStat"/>. Wound-aware: damage to the heart really does shorten it.
+    /// </summary>
+    public int GetLifetimeDays() => new LifetimeStat().GetValue(this);
+
+    /// <summary>Days of life this member has left; zero once they are due to die.</summary>
+    public double GetRemainingLifeDays() => Math.Max(0, GetLifetimeDays() - GetAgeDays());
+
+    /// <summary>True once this member has lived out their full lifetime and should die of old age.</summary>
+    public bool IsDeadOfOldAge() => GetAgeDays() >= GetLifetimeDays();
+
     // ── Species & anatomy ─────────────────────────────────────────
     /// <summary>The species of this party member (determines anatomy type and art folder).</summary>
     public Species Species { get; }

@@ -49,6 +49,9 @@ public class BodyArtViewer
     /// <summary>When true, wound glyphs and HP bar are rendered (body submenu only).</summary>
     public bool ShowWounds { get; set; } = false;
 
+    /// <summary>When true, the age / remaining-lifetime readout is rendered (body submenu only).</summary>
+    public bool ShowAge { get; set; } = false;
+
     /// <summary>When true, ◄/► arrows are rendered next to each score for editing.</summary>
     public bool ShowScoreEditControls { get; set; } = false;
 
@@ -544,6 +547,10 @@ public class BodyArtViewer
         if (ShowWounds)
             RenderHpBar();
 
+        // Age readout in the opposite (top-right) corner of the art area
+        if (ShowAge)
+            RenderAgeReadout();
+
         // Separator line between art and panel
         int sepX = PanelX - 1;
         for (int y = 0; y < 100; y++)
@@ -589,6 +596,62 @@ public class BodyArtViewer
             _terminal.SetCell(barX + i, barRow, '█', c, Config.Colors.Black);
         }
     }
+
+    /// <summary>
+    /// Age readout in the top-right of the art area, mirroring the HP bar opposite it.
+    ///   Row 1: current age / lifetime, in days.
+    ///   Row 2: a short bar and percentage showing how much life is left.
+    /// Both are derived — age from the member's birth time against the global clock, lifetime from
+    /// the heart — so nothing here needs refreshing when either changes.
+    /// </summary>
+    private void RenderAgeReadout()
+    {
+        int lifetime = _protagonist.GetLifetimeDays();
+        if (lifetime <= 0) return;
+
+        int age       = (int)Math.Round(_protagonist.GetAgeDays());
+        int remaining = (int)Math.Round(_protagonist.GetRemainingLifeDays());
+        float fraction = Math.Clamp((float)remaining / lifetime, 0f, 1f);
+        int percent    = (int)Math.Round(fraction * 100f);
+
+        // "Age " mirrors the "HP  " prefix on the opposite corner — both four cells wide.
+        string label = $"Age {age}/{lifetime} d";
+        string pct   = $"{percent}%";
+
+        // Right-align both rows against the art area's right edge, kept clear of the separator.
+        int rightEdge = Math.Min(ArtOffsetX + _artData.Width - 1, PanelX - 3);
+        int labelRow  = ArtOffsetY + 1;
+        int barRow    = ArtOffsetY + 2;
+
+        int rowWidth = Math.Max(label.Length, AgeBarWidth + 1 + pct.Length);
+        int x0       = rightEdge - rowWidth + 1;
+        if (x0 < 0) return;   // art area too narrow to hold the readout
+
+        // Row 1 — age / lifetime in days, right-aligned.
+        _terminal.Text(rightEdge - label.Length + 1, labelRow, label,
+            Config.Colors.DarkYellowGrey, Config.Colors.Black);
+
+        // Row 2 — remaining-lifetime bar, then the percentage.
+        int filled = (int)Math.Round(fraction * AgeBarWidth);
+        Vector4 barColor = AgeBarColor(fraction);
+        for (int i = 0; i < AgeBarWidth; i++)
+        {
+            Vector4 c = i < filled ? barColor : Config.Colors.DarkGray35;
+            _terminal.SetCell(x0 + i, barRow, '█', c, Config.Colors.Black);
+        }
+        _terminal.Text(x0 + AgeBarWidth + 1, barRow, pct, barColor, Config.Colors.Black);
+    }
+
+    /// <summary>Width in cells of the remaining-lifetime bar.</summary>
+    private const int AgeBarWidth = 10;
+
+    /// <summary>Bar colour by remaining life: it sours as the end approaches.</summary>
+    private static Vector4 AgeBarColor(float remainingFraction) => remainingFraction switch
+    {
+        <= 0.10f => Config.Colors.BrightPurple,   // on the threshold
+        <= 0.25f => Config.Colors.Purple,         // failing
+        _        => Config.Colors.DarkYellowGrey, // matches the HP bar opposite
+    };
 
     private void RenderArrows()
     {

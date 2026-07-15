@@ -77,6 +77,9 @@ public class LocationTravelGameController : IDisposable
     // Companion-capacity gate shown at the start of WorldView (over max companions).
     private CompanionRemovalRenderer? _companionRemovalRenderer;
 
+    // Old-age notice shown at the start of WorldView when companions have outlived their lifetime.
+    private CompanionDeathBox? _companionDeathBox;
+
     // Routine replay: list box (travel UI), outcome box (after replay), engine and pending state.
     private TravelRoutinesBox? _travelRoutinesBox;
     private RoutineOutcomeBox? _routineOutcomeBox;
@@ -97,8 +100,8 @@ public class LocationTravelGameController : IDisposable
     // Latest planner state cached for rendering
     private List<int>? _plannedPath;
     private TravelEstimate? _plannedEstimate;
-    // In-game hours for the in-flight trip, captured at travel start, applied to the clock on arrival.
-    private float _committedTravelHours;
+    // In-game days for the in-flight trip, captured at travel start, applied to the clock on arrival.
+    private float _committedTravelDays;
     // Tracks a cell that was flashed as "forbidden" so it can be cleared after a tick.
     private int _forbiddenFlashVertex = -1;
     private int _forbiddenFlashFramesLeft = 0;
@@ -445,6 +448,15 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // Old-age notice owns the screen until dismissed — it is checked before the removal gate
+        // because a companion who just died also frees a party slot.
+        if (_currentMode == GameMode.WorldView && _companionDeathBox != null)
+        {
+            _companionDeathBox.Render();
+            UpdatePopupTerminal();
+            return;
+        }
+
         // Companion-removal overlay owns the screen until confirmed — redraw it and
         // skip the travel UI underneath.
         if (_currentMode == GameMode.WorldView && _companionRemovalRenderer != null)
@@ -663,6 +675,20 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellClicked(int x, int y)
     {
+        // Old-age notice is modal: CONTINUE dismisses it and resumes entering the world view,
+        // which re-runs the remaining WorldView gates (e.g. companion capacity) from the top.
+        if (_currentMode == GameMode.WorldView && _companionDeathBox != null)
+        {
+            if (_companionDeathBox.OnMouseClick(x, y))
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                _companionDeathBox = null;
+                _core.Terminal?.Clear();
+                OnEnterWorldView();
+            }
+            return;
+        }
+
         // Companion-removal overlay is modal: it captures every click while shown.
         if (_currentMode == GameMode.WorldView && _companionRemovalRenderer != null)
         {
@@ -959,6 +985,14 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void OnTerminalCellHovered(int x, int y)
     {
+        // Old-age notice is modal: route hover to it and play a tick on change.
+        if (_currentMode == GameMode.WorldView && _companionDeathBox != null)
+        {
+            if (_companionDeathBox.OnMouseMove(x, y))
+                _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            return;
+        }
+
         // Companion-removal overlay is modal: route hover to it and play a tick on change.
         if (_currentMode == GameMode.WorldView && _companionRemovalRenderer != null)
         {
@@ -1479,7 +1513,7 @@ public class LocationTravelGameController : IDisposable
 
         // Capture the trip's in-game duration before the estimate is cleared; added to the global
         // clock when the protagonist arrives (the estimate is gone by then).
-        _committedTravelHours = _plannedEstimate?.TotalDurationHours ?? 0f;
+        _committedTravelDays = _plannedEstimate?.TotalDurationDays ?? 0f;
 
         _plannedEstimate = null;
 
@@ -1565,9 +1599,8 @@ public class LocationTravelGameController : IDisposable
 
         // Advance the global in-game clock by the trip's duration before any scene is built (so
         // depletion timestamps and regen checks use the post-travel time).
-        if (_protagonist != null)
-            _protagonist.GameTimeHours += _committedTravelHours;
-        _committedTravelHours = 0f;
+        Cathedral.Game.Narrative.GameClock.Advance(_committedTravelDays);
+        _committedTravelDays = 0f;
 
         // Routine replay: if the player launched travel from the routine box and the routine belongs
         // to this destination, replay it instead of starting a fresh narration phase.
@@ -1932,6 +1965,16 @@ public class LocationTravelGameController : IDisposable
         // Disable narration mode (world is interactive and in focus)
         _core.SetNarrationMode(false);
 
+        // Age gate: the clock only advances on travel and work, so returning to the world map is
+        // the moment anyone can have aged past their lifetime. Check before anything else — a dead
+        // protagonist ends the run outright.
+        if (CheckOldAgeDeaths())
+        {
+            _core.SetWorldInteractionsEnabled(false);
+            _interface.SetWorldInteractionsEnabled(false);
+            return;
+        }
+
         // Companion-capacity gate: if the party exceeds what the heart can sustain, show the
         // dismissal overlay and keep the world non-interactive until the player confirms.
         if (TryShowCompanionRemoval())
@@ -1942,6 +1985,50 @@ public class LocationTravelGameController : IDisposable
         }
 
         EnterWorldViewInteractive();
+    }
+
+    /// <summary>
+    /// Ages the party: kills the protagonist outright if they have outlived their lifetime, and
+    /// otherwise drops any companion who has, announcing them in a modal box. Returns true when the
+    /// caller should stop (the run ended, or a modal box is now up and owns the screen).
+    ///
+    /// <para>
+    /// Lifetime is wound-aware, so this also catches the case where a heart wound — not the passage
+    /// of time — is what pushed someone past their span.
+    /// </para>
+    /// </summary>
+    private bool CheckOldAgeDeaths()
+    {
+        if (_protagonist == null || _core.Terminal == null) return false;
+
+        // The protagonist's death ends the run; no point reporting companions.
+        if (_protagonist.IsDeadOfOldAge())
+        {
+            Console.WriteLine("LocationTravelGameController: Protagonist died of old age");
+            TriggerDeath(DeathCause.OldAge);
+            return true;
+        }
+
+        var departed = _protagonist.CompanionParty.Where(c => c.IsDeadOfOldAge()).ToList();
+        if (departed.Count == 0) return false;
+
+        var lines = new List<string>();
+        foreach (var companion in departed)
+        {
+            int age = (int)Math.Round(companion.GetAgeDays());
+            Console.WriteLine($"LocationTravelGameController: Companion '{companion.DisplayName}' died of old age at {age} d");
+            lines.Add($"{companion.DisplayName} — died at {age} days");
+            _protagonist.CompanionParty.Remove(companion);
+        }
+
+        // Modal overlay: transparent backdrop (world visible behind) but clicks are captured.
+        _core.Terminal.Visible = true;
+        _core.Terminal.TransparentClickPassthrough = false;
+        _core.Terminal.Clear();
+        _companionDeathBox = new CompanionDeathBox(_core.Terminal, lines);
+        _companionDeathBox.Render();
+        _ambianceEngine?.TriggerGameEvent(GameEventType.NegativeOutcome);
+        return true;
     }
 
     /// <summary>
@@ -2591,6 +2678,10 @@ public class LocationTravelGameController : IDisposable
         _pendingEncounterNpc = null;
         _pendingEncounterCreatureName = null;
 
+        // Discard any modal overlay left over from the previous run.
+        _companionDeathBox = null;
+        _companionRemovalRenderer = null;
+
         // Reset travel consumption state from the previous run.
         _consumptionActive  = false;
         _locationVhConsumed = 0f;
@@ -2603,6 +2694,10 @@ public class LocationTravelGameController : IDisposable
 
         // Reset protagonist to a new random starting position
         _interface.ResetProtagonistPosition();
+
+        // Rewind the global clock before the protagonist is built, so their birth time (and hence
+        // their starting age) is measured against day zero of the new run.
+        Cathedral.Game.Narrative.GameClock.Reset();
 
         // Create a fresh protagonist for the new game.
         // No starter modus mentis, no starter items, no companions: the run starts in the
@@ -2874,17 +2969,17 @@ public class LocationTravelGameController : IDisposable
 
         // Share the depletion store with the persistent state, then apply current depletion (regen).
         scene.ItemDepletions = state.ItemDepletions;
-        ApplyDepletion(scene, _protagonist.GameTimeHours);
+        ApplyDepletion(scene, Cathedral.Game.Narrative.GameClock.Days);
 
         return scene;
     }
 
     /// <summary>
     /// Removes still-depleted items from the freshly built scene. An item slot is depleted while
-    /// <c>now − lastPicked &lt; poi.RegenHours</c>; once that elapses it is simply present again
+    /// <c>now − lastPicked &lt; poi.RegenDays</c>; once that elapses it is simply present again
     /// (regeneration requires no state write). Lazily prunes entries whose regen has elapsed.
     /// </summary>
-    private static void ApplyDepletion(Cathedral.Game.Scene.Scene scene, double nowHours)
+    private static void ApplyDepletion(Cathedral.Game.Scene.Scene scene, double nowDays)
     {
         foreach (var area in scene.AllAreas)
         {
@@ -2902,7 +2997,7 @@ public class LocationTravelGameController : IDisposable
                     var key = poi.Items[i].DepletionKey;
                     if (!scene.ItemDepletions.TryGetValue(key, out var pickedAt)) continue;
 
-                    if (nowHours - pickedAt < poi.RegenHours)
+                    if (nowDays - pickedAt < poi.RegenDays)
                         poi.Items.RemoveAt(i);          // still depleted
                     else
                         scene.ItemDepletions.Remove(key); // regenerated — prune the stale entry

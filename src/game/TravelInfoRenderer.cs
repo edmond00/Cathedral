@@ -119,7 +119,7 @@ namespace Cathedral.Game
                 Truncate(destinationName ?? "—", _boxW - 18),
                 Config.TravelUI.ValueAccentColor);
             DrawRow(innerLeft, valueCol, contentY + 3, "Travel time",
-                FormatDuration(estimate.TotalDurationHours),
+                FormatDuration(estimate.TotalDurationDays),
                 Config.TravelUI.ValueColor);
             DrawRow(innerLeft, valueCol, contentY + 4, "Vital heat",
                 estimate.TotalVitalHeat.ToString("F1"),
@@ -239,29 +239,13 @@ namespace Cathedral.Game
         }
 
         /// <summary>
-        /// Formats a duration as "X mo Y d", "X d Y h", or "X h" — auto-promotes to the
-        /// largest meaningful unit. One month is treated as 30 in-game days.
+        /// Formats a travel duration in days — the only time unit the world keeps.
+        /// A trip always costs at least one day.
         /// </summary>
-        private static string FormatDuration(float hours)
+        private static string FormatDuration(float days)
         {
-            const float hoursPerDay = 24f;
-            const float daysPerMonth = 30f;
-            const float hoursPerMonth = hoursPerDay * daysPerMonth;
-
-            if (hours < hoursPerDay)
-                return $"{hours:F0} h";
-
-            if (hours < hoursPerMonth)
-            {
-                int days = (int)(hours / hoursPerDay);
-                int remHours = (int)Math.Round(hours - days * hoursPerDay);
-                return remHours == 0 ? $"{days} d" : $"{days} d {remHours} h";
-            }
-
-            int months = (int)(hours / hoursPerMonth);
-            int remDays = (int)Math.Round((hours - months * hoursPerMonth) / hoursPerDay);
-            if (remDays >= (int)daysPerMonth) { months++; remDays = 0; }
-            return remDays == 0 ? $"{months} mo" : $"{months} mo {remDays} d";
+            int whole = Math.Max(1, (int)Math.Round(days));
+            return whole == 1 ? "1 day" : $"{whole} days";
         }
 
         private static string Pct(float p) => $"{Math.Round(p * 100f)}%";

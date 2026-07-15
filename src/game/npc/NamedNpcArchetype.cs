@@ -31,6 +31,19 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// <summary>How many modiMentis to assign at creation.</summary>
     public virtual int ModiMentisCount => 8;
 
+    // ── Age ───────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Youngest age, in days, an instance of this archetype may spawn at. Override together with
+    /// <see cref="MaxAgeDays"/> to give an archetype its own age band — an apprentice should be
+    /// young, a reeve middle-aged, a wolf short-lived. The default band is a working adult of
+    /// 18–55 years.
+    /// </summary>
+    public virtual int MinAgeDays => 18 * LifetimeStat.DaysPerYear;
+
+    /// <summary>Oldest age, in days, an instance of this archetype may spawn at.</summary>
+    public virtual int MaxAgeDays => 55 * LifetimeStat.DaysPerYear;
+
     /// <summary>
     /// Whether spawned NPCs can be spoken to.
     /// Subclasses that provide a <see cref="GenerateWayToSpeakDescription"/> should override this to true.
@@ -89,6 +102,14 @@ public abstract class NamedNpcArchetype : NpcArchetype
 
         var combatant = new EnemyCombatant(name, Species);
         combatant.InitializeModiMentis(ModusMentisRegistry.Instance, ModiMentisCount);
+
+        // Age is sampled from this archetype's band and stamped as a birth time against the clock as
+        // it reads now, so the NPC is exactly this old today and ages onward from here.
+        // SetAgeAtCreation clamps the roll to the combatant's own heart-derived lifetime, so a wide
+        // band can never produce someone born already past their death date.
+        int lo = Math.Min(MinAgeDays, MaxAgeDays);
+        int hi = Math.Max(MinAgeDays, MaxAgeDays);
+        combatant.SetAgeAtCreation(rng.Next(lo, hi + 1));
 
         var hint           = PickObservationHint(npcId, nodeContext);
         var wayToSpeak     = CanSpeak ? GenerateWayToSpeakDescription(name, rng) : null;

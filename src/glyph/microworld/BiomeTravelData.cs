@@ -32,8 +32,8 @@ namespace Cathedral.Glyph.Microworld
         /// <summary>Identifier of the biome this info applies to (must match <see cref="BiomeType.Name"/>).</summary>
         public string BiomeName { get; }
 
-        /// <summary>Real-world hours required to cross a single cell of this biome.</summary>
-        public float DurationHours { get; }
+        /// <summary>Days required to cross a single cell of this biome.</summary>
+        public float DurationDays { get; }
 
         /// <summary>Vital-heat units consumed to cross a single cell. Negative values
         /// (e.g. cold biomes) increase the required heat — handled by callers.</summary>
@@ -42,11 +42,11 @@ namespace Cathedral.Glyph.Microworld
         /// <summary>Possible enemy encounters while travelling through this biome.</summary>
         public IReadOnlyList<EncounterEntry> Encounters { get; }
 
-        public BiomeTravelInfo(string biomeName, float durationHours, float vitalHeatPerCell,
+        public BiomeTravelInfo(string biomeName, float durationDays, float vitalHeatPerCell,
             IReadOnlyList<EncounterEntry>? encounters = null)
         {
             BiomeName = biomeName;
-            DurationHours = durationHours;
+            DurationDays = durationDays;
             VitalHeatPerCell = vitalHeatPerCell;
             Encounters = encounters ?? Array.Empty<EncounterEntry>();
         }
@@ -61,35 +61,35 @@ namespace Cathedral.Glyph.Microworld
     public static class BiomeTravelDatabase
     {
         // Default fallback for any biome not explicitly registered.
-        // Durations are calibrated so a single-cell hop costs days of travel — a
-        // multi-cell trip naturally lands in the months range.
+        // Durations are calibrated so a single-cell hop costs several days of travel — a
+        // multi-cell trip naturally runs into the hundreds of days.
         private static readonly BiomeTravelInfo Fallback =
-            new("unknown", durationHours: 24f * 6f, vitalHeatPerCell: 1f);
+            new("unknown", durationDays: 6f, vitalHeatPerCell: 1f);
 
         public static readonly Dictionary<string, BiomeTravelInfo> Entries = new()
         {
-            // hoursPerCell ≈ 24 × days-of-foot-travel per world cell.
-            ["plain"]    = new BiomeTravelInfo("plain",    durationHours: 24f *  5f, vitalHeatPerCell: 2f,
+            // durationDays = days of foot travel per world cell.
+            ["plain"]    = new BiomeTravelInfo("plain",    durationDays:  5f, vitalHeatPerCell: 2f,
                 new[] { new EncounterEntry("wolf", 0.02f), new EncounterEntry("bandit", 0.01f) }),
-            ["field"]    = new BiomeTravelInfo("field",    durationHours: 24f *  5f, vitalHeatPerCell: 1f,
+            ["field"]    = new BiomeTravelInfo("field",    durationDays:  5f, vitalHeatPerCell: 1f,
                 new[] { new EncounterEntry("bandit", 0.01f) }),
-            ["forest"]   = new BiomeTravelInfo("forest",   durationHours: 24f *  8f, vitalHeatPerCell: 4f,
+            ["forest"]   = new BiomeTravelInfo("forest",   durationDays:  8f, vitalHeatPerCell: 4f,
                 new[] { new EncounterEntry("wolf", 0.06f), new EncounterEntry("bear", 0.02f),
                         new EncounterEntry("brigand", 0.02f) }),
-            ["mountain"] = new BiomeTravelInfo("mountain", durationHours: 24f * 12f, vitalHeatPerCell: 6f,
+            ["mountain"] = new BiomeTravelInfo("mountain", durationDays: 12f, vitalHeatPerCell: 6f,
                 new[] { new EncounterEntry("bear", 0.03f), new EncounterEntry("rockfall", 0.02f) }),
-            ["peak"]     = new BiomeTravelInfo("peak",     durationHours: 24f * 18f, vitalHeatPerCell: 10f,
+            ["peak"]     = new BiomeTravelInfo("peak",     durationDays: 18f, vitalHeatPerCell: 10f,
                 new[] { new EncounterEntry("blizzard", 0.05f), new EncounterEntry("ice wraith", 0.01f) }),
-            ["coast"]    = new BiomeTravelInfo("coast",    durationHours: 24f *  6f, vitalHeatPerCell: 3f,
+            ["coast"]    = new BiomeTravelInfo("coast",    durationDays:  6f, vitalHeatPerCell: 3f,
                 new[] { new EncounterEntry("smuggler", 0.01f) }),
-            ["city"]     = new BiomeTravelInfo("city",     durationHours: 24f *  3f, vitalHeatPerCell: 1f,
+            ["city"]     = new BiomeTravelInfo("city",     durationDays:  3f, vitalHeatPerCell: 1f,
                 new[] { new EncounterEntry("thief", 0.01f) }),
 
             // Water biomes are registered so ship travel can pick them up later. They are
             // forbidden for land travel (see LandForbiddenBiomes below).
-            ["sea"]      = new BiomeTravelInfo("sea",      durationHours: 24f * 10f, vitalHeatPerCell: 8f,
+            ["sea"]      = new BiomeTravelInfo("sea",      durationDays: 10f, vitalHeatPerCell: 8f,
                 new[] { new EncounterEntry("storm", 0.03f), new EncounterEntry("pirate", 0.02f) }),
-            ["ocean"]    = new BiomeTravelInfo("ocean",    durationHours: 24f * 14f, vitalHeatPerCell: 16f,
+            ["ocean"]    = new BiomeTravelInfo("ocean",    durationDays: 14f, vitalHeatPerCell: 16f,
                 new[] { new EncounterEntry("leviathan", 0.01f), new EncounterEntry("storm", 0.04f) }),
         };
 

@@ -8,6 +8,10 @@ public class ApprenticeArchetype : CraftsmanArchetype
     public override string ArchetypeId => "apprentice";
     public override int    ModiMentisCount => 6;
 
+    // Bound to a master and still a youth: 12–22 years.
+    public override int MinAgeDays => 12 * LifetimeStat.DaysPerYear;
+    public override int MaxAgeDays => 22 * LifetimeStat.DaysPerYear;
+
     public override string[] NamePool => new[]
     {
         "Young Edmund", "Cuthbert Lad", "Hob Apprentice", "Tibb Smith-boy",

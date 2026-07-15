@@ -5,6 +5,10 @@ namespace Cathedral.Game.Npc.Archetypes;
 /// <summary>Boar NPC — hostile beast, charges, moderate fight.</summary>
 public class BoarArchetype : NamedNpcArchetype
 {
+    // A grown boar: 2–10 years.
+    public override int MinAgeDays => 2 * LifetimeStat.DaysPerYear;
+    public override int MaxAgeDays => 10 * LifetimeStat.DaysPerYear;
+
     public override string ArchetypeId => "boar";
     public override Species Species => SpeciesRegistry.Boar;
     public override bool DefaultEnemy => true;

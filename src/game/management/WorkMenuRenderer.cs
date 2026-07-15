@@ -11,7 +11,7 @@ namespace Cathedral.Game.Management;
 
 /// <summary>
 /// Full-screen work menu, opened after a successful request-job dialogue. The player drags a slider
-/// (1 month … 5 years) to choose how long to work; a live preview shows the coins and modus-mentis XP
+/// (30 … 1800 days) to choose how long to work; a live preview shows the coins and modus-mentis XP
 /// the stint would earn (and which unknown skills it would let them learn). Confirming advances the
 /// game clock, credits the coins, applies the XP/learning, then shows a results box with a Continue button.
 /// </summary>
@@ -20,9 +20,10 @@ public sealed class WorkMenuRenderer
     private enum Phase { Configure, Working, Done }
 
     // ── Duration range ────────────────────────────────────────────
-    private const int MinMonths = 1;
-    private const int MaxMonths = 60;   // five years
-    private const double HoursPerMonth = 30 * 24;
+    private const int MinDays  = 30;
+    private const int MaxDays  = 1800;
+    /// <summary>Days added/removed by one click of the ◄/► arrows.</summary>
+    private const int ArrowStepDays = 10;
     private const double WorkAnimationSeconds = 1.3;
 
     // ── Layout ────────────────────────────────────────────────────
@@ -62,7 +63,7 @@ public sealed class WorkMenuRenderer
     private readonly Job         _job;
 
     // ── State ─────────────────────────────────────────────────────
-    private int     _months = 1;
+    private int     _days = MinDays;
     private Phase   _phase   = Phase.Configure;
     private bool    _dragging;
     private DateTime _workStartUtc;
@@ -101,7 +102,7 @@ public sealed class WorkMenuRenderer
             if (_dragging || (y >= SliderRow - 1 && y <= SliderRow + 1 && x >= BarX0 - 1 && x <= BarX0 + BarWidth))
             {
                 _dragging = true;
-                SetMonths(MonthsAtX(x));
+                SetDays(DaysAtX(x));
             }
         }
         else _dragging = false;
@@ -131,24 +132,24 @@ public sealed class WorkMenuRenderer
         // Step arrows.
         if (y == SliderRow)
         {
-            if (x >= BarX0 - 4 && x < BarX0 - 1) { SetMonths(_months - 1); return; }
-            if (x >= BarX0 + BarWidth + 1 && x < BarX0 + BarWidth + 4) { SetMonths(_months + 1); return; }
-            if (x >= BarX0 && x <= BarX0 + BarWidth) { SetMonths(MonthsAtX(x)); return; }
+            if (x >= BarX0 - 4 && x < BarX0 - 1) { SetDays(_days - ArrowStepDays); return; }
+            if (x >= BarX0 + BarWidth + 1 && x < BarX0 + BarWidth + 4) { SetDays(_days + ArrowStepDays); return; }
+            if (x >= BarX0 && x <= BarX0 + BarWidth) { SetDays(DaysAtX(x)); return; }
         }
     }
 
-    private int MonthsAtX(int x)
+    private int DaysAtX(int x)
     {
         double frac = (double)(x - BarX0) / BarWidth;
-        return MinMonths + (int)Math.Round(frac * (MaxMonths - MinMonths));
+        return MinDays + (int)Math.Round(frac * (MaxDays - MinDays));
     }
 
-    private void SetMonths(int m) => _months = Math.Clamp(m, MinMonths, MaxMonths);
+    private void SetDays(int d) => _days = Math.Clamp(d, MinDays, MaxDays);
 
     private void BeginWork()
     {
-        _result       = WorkOutcome.Apply(_job, _months, _protagonist, _party);
-        _protagonist.GameTimeHours += _months * HoursPerMonth;
+        _result       = WorkOutcome.Apply(_job, _days, _protagonist, _party);
+        GameClock.Advance(_days);
         _phase        = Phase.Working;
         _workStartUtc = DateTime.UtcNow;
     }
@@ -180,15 +181,15 @@ public sealed class WorkMenuRenderer
         _terminal.CenteredText(DurLabelRow, "How long will you work?", Label, Bg);
 
         // Slider: [<]  ██████░░░░░░  [>]
-        DrawArrow(BarX0 - 4, SliderRow, "[<]", _months > MinMonths);
-        int filled = (int)Math.Round((double)(_months - MinMonths) / (MaxMonths - MinMonths) * BarWidth);
+        DrawArrow(BarX0 - 4, SliderRow, "[<]", _days > MinDays);
+        int filled = (int)Math.Round((double)(_days - MinDays) / (MaxDays - MinDays) * BarWidth);
         for (int i = 0; i < BarWidth; i++)
             _terminal.Text(BarX0 + i, SliderRow, "█", i < filled ? Accent : Sep, Bg);
-        DrawArrow(BarX0 + BarWidth + 1, SliderRow, "[>]", _months < MaxMonths);
-        _terminal.CenteredText(SliderRow + 2, MonthsText(_months), Value, Bg);
+        DrawArrow(BarX0 + BarWidth + 1, SliderRow, "[>]", _days < MaxDays);
+        _terminal.CenteredText(SliderRow + 2, DaysText(_days), Value, Bg);
 
         // Outcome preview.
-        var preview = WorkOutcome.Preview(_job, _months, _protagonist);
+        var preview = WorkOutcome.Preview(_job, _days, _protagonist);
         int row = PreviewRow;
         _terminal.CenteredText(row, "— you would earn —", Label, Bg);
         row += 2;
@@ -231,7 +232,7 @@ public sealed class WorkMenuRenderer
     private void RenderWorking()
     {
         _terminal.CenteredText(TitleRow + 6, $"You work as {_job.WithArticle()} for {_npc.DisplayName}…", Title, Bg);
-        _terminal.CenteredText(TitleRow + 8, $"{MonthsText(_months)} pass.", Value, Bg);
+        _terminal.CenteredText(TitleRow + 8, $"{DaysText(_days)} pass.", Value, Bg);
 
         if ((DateTime.UtcNow - _workStartUtc).TotalSeconds >= WorkAnimationSeconds)
             _phase = Phase.Done;
@@ -241,7 +242,7 @@ public sealed class WorkMenuRenderer
     {
         if (_result == null) { IsComplete = true; return; }
 
-        _terminal.CenteredText(TitleRow, $"— {MonthsText(_months)} of work done —", Title, Bg);
+        _terminal.CenteredText(TitleRow, $"— {DaysText(_days)} of work done —", Title, Bg);
         int row = TitleRow + 3;
 
         if (_result.Coins > 0)
@@ -338,13 +339,7 @@ public sealed class WorkMenuRenderer
     // Helpers
     // ═══════════════════════════════════════════════════════════════
 
-    private static string MonthsText(int m)
-    {
-        int y = m / 12, mo = m % 12;
-        if (y == 0) return $"{m} month{(m == 1 ? "" : "s")}";
-        string years = $"{y} year{(y == 1 ? "" : "s")}";
-        return mo == 0 ? years : $"{years} {mo} month{(mo == 1 ? "" : "s")}";
-    }
+    private static string DaysText(int d) => d == 1 ? "1 day" : $"{d} days";
 
     private static char CoinGlyph(CoinType c) => c switch
     {

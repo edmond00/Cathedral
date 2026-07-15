@@ -5,6 +5,10 @@ namespace Cathedral.Game.Npc.Archetypes;
 /// <summary>Bear NPC — hostile beast, high HP, hard fight.</summary>
 public class BearArchetype : NamedNpcArchetype
 {
+    // A full-grown bear: 4–20 years.
+    public override int MinAgeDays => 4 * LifetimeStat.DaysPerYear;
+    public override int MaxAgeDays => 20 * LifetimeStat.DaysPerYear;
+
     public override string ArchetypeId => "bear";
     public override Species Species => SpeciesRegistry.Bear;
     public override bool DefaultEnemy => true;

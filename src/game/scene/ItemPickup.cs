@@ -55,8 +55,7 @@ public static class ItemPickup
         // Stamp depletion against the global clock so this slot stays empty until it regenerates.
         if (!string.IsNullOrEmpty(item.DepletionKey))
         {
-            double now = (actor as Protagonist)?.GameTimeHours ?? 0.0;
-            scene.ItemDepletions[item.DepletionKey] = now;
+            scene.ItemDepletions[item.DepletionKey] = GameClock.Days;
         }
     }
 }

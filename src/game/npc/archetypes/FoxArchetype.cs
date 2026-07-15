@@ -5,6 +5,10 @@ namespace Cathedral.Game.Npc.Archetypes;
 /// <summary>Fox NPC — skittish beast, non-hostile, flees when threatened.</summary>
 public class FoxArchetype : NamedNpcArchetype
 {
+    // Foxes are short-lived: 1–5 years.
+    public override int MinAgeDays => 1 * LifetimeStat.DaysPerYear;
+    public override int MaxAgeDays => 5 * LifetimeStat.DaysPerYear;
+
     public override string ArchetypeId => "fox";
     public override Species Species => SpeciesRegistry.Fox;
     public override bool DefaultPersistent => false;

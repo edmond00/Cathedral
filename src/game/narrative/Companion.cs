@@ -69,6 +69,7 @@ public class Companion : PartyMember
             c.InitializeModiMentis(registry, modusMentisCount: 30);
             c.InitializeMemory();
             c.AssignModiMentisToMemoryRandom();
+            c.SetAgeAtCreation(rng.Next(20, 61) * LifetimeStat.DaysPerYear);
             companions.Add(c);
         }
         return companions;

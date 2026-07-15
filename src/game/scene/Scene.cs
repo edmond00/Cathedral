@@ -41,9 +41,9 @@ public class Scene
 
     /// <summary>
     /// Item-depletion timestamps for this location: <see cref="ItemElement.DepletionKey"/> → the
-    /// <c>Protagonist.GameTimeHours</c> at which that slot was last picked. Pointed at the owning
+    /// <c>Protagonist.GameTimeDays</c> at which that slot was last picked. Pointed at the owning
     /// <c>LocationInstanceState.ItemDepletions</c> (shared backing store) so picks persist across
-    /// visits without an explicit save step. An item is depleted while <c>now − pickedAt &lt; RegenHours</c>.
+    /// visits without an explicit save step. An item is depleted while <c>now − pickedAt &lt; RegenDays</c>.
     /// </summary>
     public Dictionary<string, double> ItemDepletions { get; set; } = new();
 
