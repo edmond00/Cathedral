@@ -23,19 +23,21 @@ namespace Cathedral.Game.Narrative;
 public class ThinkingExecutor
 {
     private readonly LlamaServerManager _llmManager;
-    private readonly ThinkingPromptConstructor _promptConstructor;
     private readonly ModusMentisSlotManager _slotManager;
     private readonly PersonaRewriter _rewriter;
+    private readonly PersonaChoiceSelector _selector;
 
+    /// <param name="promptConstructor">Retained for API compatibility; the thinking prompts now use
+    /// <see cref="ThinkingPromptConstructor"/>'s static helpers directly, so no instance is stored.</param>
     public ThinkingExecutor(
         LlamaServerManager llmManager,
         ThinkingPromptConstructor promptConstructor,
         ModusMentisSlotManager slotManager)
     {
         _llmManager = llmManager;
-        _promptConstructor = promptConstructor;
         _slotManager = slotManager ?? throw new ArgumentNullException(nameof(slotManager));
         _rewriter = new PersonaRewriter(llmManager);
+        _selector = new PersonaChoiceSelector(llmManager);
     }
 
     private readonly Random _rng = new();
@@ -65,13 +67,13 @@ public class ThinkingExecutor
         // built (this also propagates the label to the target's sub-outcomes / goal phrases).
         (targetOutcome as INpcContextLabelStampable)?.StampContextLabel(actingMember, worldContext, locationId);
 
-        // Sub-outcomes to choose between, always including an "ignore and move on" option.
+        // Sub-outcomes to choose between. "Ignore and move on" is no longer an explicit option:
+        // under the yes/no method, answering "no" to every real goal IS the ignore outcome
+        // (see ChooseGoalAsync).
         var sourceObs = targetOutcome as ObservationObject;
         var subOutcomes = sourceObs != null
             ? new List<ConcreteOutcome>(sourceObs.SubOutcomes)
             : new List<ConcreteOutcome> { targetOutcome };
-        if (!subOutcomes.Any(o => o is VerbOutcome vo && vo.VerbView.Verb is IgnoreVerb))
-            subOutcomes.Add(IgnoreVerb.MakeOutcome());
 
         string targetDescription = targetOutcome.ToNaturalLanguageString();
 
@@ -105,8 +107,22 @@ public class ThinkingExecutor
         ModusMentis? skill = await ChooseSkillAsync(thinkingSlot, goalPhrase, actionModiMentis, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken);
         if (skill == null)
         {
-            Console.Error.WriteLine("ThinkingExecutor: no usable action skill for the chosen goal.");
-            return null;
+            if (actionModiMentis.Count == 0)
+            {
+                Console.Error.WriteLine("ThinkingExecutor: no usable action skill for the chosen goal.");
+                return null;
+            }
+
+            // Skills exist but the thinking Modus Mentis rejected them all (all-No) → "no way to do
+            // it": a reasoning-only outcome in the thinking MM's voice, mirroring the ignore branch.
+            string noMeansNeutral = NeutralNarration.ReasoningNoMeans(targetDescription, goalPhrase, isReminescence);
+            string noMeansText = await _rewriter.RewriteAsync(
+                thinkingSlot, noMeansNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, ct: cancellationToken);
+            return new ThinkingResponse
+            {
+                ReasoningText = string.IsNullOrWhiteSpace(noMeansText) ? noMeansNeutral : noMeansText,
+                Actions = new List<ParsedNarrativeAction>()
+            };
         }
 
         // ── Flavor: reasoning (thinking slot) ───────────────────────────────────
@@ -236,25 +252,32 @@ public class ThinkingExecutor
         string? observedPhrase,
         CancellationToken ct)
     {
+        // Only real, pursuable goals are offered; "ignore & move on" is not a listed option — a "no"
+        // to every goal is the ignore outcome (returned as IgnoreVerb.MakeOutcome() so the caller's
+        // isIgnore early-exit fires).
+        var realOutcomes = subOutcomes
+            .Where(o => !(o is VerbOutcome vo && vo.VerbView.Verb is IgnoreVerb))
+            .ToList();
+        if (realOutcomes.Count == 0) return IgnoreVerb.MakeOutcome();
+
         if (PlaygroundMode.IsActive)
-        {
-            var pick = subOutcomes.OfType<VerbOutcome>().FirstOrDefault(v => v.VerbView.Verb is not IgnoreVerb)
-                       ?? subOutcomes.OfType<VerbOutcome>().FirstOrDefault();
-            return (ConcreteOutcome?)pick ?? subOutcomes[0];
-        }
+            return realOutcomes[_rng.Next(realOutcomes.Count)];
 
         // Collapse identical phrasings (e.g. two "grab a beechnut") to one option; the chosen string
         // maps back to the first matching sub-outcome below, so dropping duplicates is safe.
-        var options = subOutcomes.Select(o => o.ToNaturalLanguageString())
-                                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                                 .ToList();
-        string prompt = ThinkingPromptConstructor.BuildGoalPrompt(options, thinkingModusMentis, overallLocation, areaLocation, observedPhrase);
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateChoiceSchema("goal", options));
-        string json = await _llmManager.GenerateConstrainedStringAsync(thinkingSlot, prompt, gbnf, maxTokens: 64, skipReset: true);
+        var options = realOutcomes.Select(o => o.ToNaturalLanguageString())
+                                  .Distinct(StringComparer.OrdinalIgnoreCase)
+                                  .ToList();
+        var parts = new GradeEvalPromptParts(
+            ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase),
+            "You could:",
+            "calls you to pursue it");
+        var chosen = await _selector.SelectAsync(thinkingSlot, thinkingModusMentis, options, parts, pick: 1, keepHistory: true, ct);
+        if (chosen.Count == 0) return IgnoreVerb.MakeOutcome();   // all-No → ignore & move on
 
-        string chosen = ParseChoice(json, "goal");
-        return subOutcomes.FirstOrDefault(o =>
-                   o.ToNaturalLanguageString().Equals(chosen, StringComparison.OrdinalIgnoreCase))
+        string pickPhrase = chosen[0];
+        return realOutcomes.FirstOrDefault(o =>
+                   o.ToNaturalLanguageString().Equals(pickPhrase, StringComparison.OrdinalIgnoreCase))
                ?? IgnoreVerb.MakeOutcome();
     }
 
@@ -275,31 +298,23 @@ public class ThinkingExecutor
             return actionModiMentis[_rng.Next(actionModiMentis.Count)];
 
         var means = actionModiMentis.Select(s => $"with {s.SkillMeans}").ToList();
-        string prompt = _promptConstructor.BuildHowPrompt(goalPhrase, actionModiMentis, thinkingModusMentis, overallLocation, areaLocation, observedPhrase);
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateChoiceSchema("how", means));
-        string json = await _llmManager.GenerateConstrainedStringAsync(thinkingSlot, prompt, gbnf, maxTokens: 48, skipReset: true);
+        var parts = new GradeEvalPromptParts(
+            ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase)
+                + $"Your goal is to {goalPhrase}.\n\n",
+            "You could proceed:",
+            "fits how you would act");
+        var chosen = await _selector.SelectAsync(thinkingSlot, thinkingModusMentis, means, parts, pick: 1, keepHistory: true, ct);
 
-        string chosen = ParseChoice(json, "how");
-        return MapMeansToModusMentis(chosen, actionModiMentis)
+        // all-No → no fitting means; return null. The caller distinguishes this from "no skills at
+        // all" (actionModiMentis.Count == 0) and renders the "no way to do it" reasoning outcome.
+        if (chosen.Count == 0) return null;
+
+        return MapMeansToModusMentis(chosen[0], actionModiMentis)
                ?? actionModiMentis[0];
     }
 
     private static ModusMentis? MapMeansToModusMentis(string means, List<ModusMentis> actionModiMentis)
         => actionModiMentis.FirstOrDefault(s => $"with {s.SkillMeans}" == means);
-
-    private static string ParseChoice(string? json, string field)
-    {
-        if (string.IsNullOrWhiteSpace(json)) return string.Empty;
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            return doc.RootElement.TryGetProperty(field, out var p) ? (p.GetString() ?? string.Empty) : string.Empty;
-        }
-        catch (JsonException)
-        {
-            return string.Empty;
-        }
-    }
 
     // ── Item combination (reasoning + reformulated action) ──────────────────────
 

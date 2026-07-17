@@ -39,31 +39,6 @@ public class ThinkingPromptConstructor
     }
 
     /// <summary>
-    /// GOAL: pick which sub-outcome to pursue. <paramref name="goalOptions"/> must include the
-    /// "ignore and move on" sentinel. <paramref name="locationPhrase"/> / <paramref name="observedPhrase"/>
-    /// provide the situational context (where the character is, what drew their attention).
-    /// Only the JSON-format clause is appended — this is a constrained choice, not styled prose.
-    /// </summary>
-    public static string BuildGoalPrompt(
-        IEnumerable<string> goalOptions,
-        ModusMentis thinkingModusMentis,
-        string? overallLocation = null,
-        string? areaLocation = null,
-        string? observedPhrase = null)
-    {
-        string reminderClause = thinkingModusMentis.PersonaReminder != null
-            ? $"As a {thinkingModusMentis.PersonaReminder}, "
-            : "";
-        string optionsList = string.Join("\n", goalOptions.Select(o => $"- {o}"));
-
-        return $@"{SituationLine(overallLocation, areaLocation, observedPhrase)}You could:
-{optionsList}
-
-{reminderClause}what do you want to do?
-{Config.Narrative.JsonFormatClause("{\"goal\": \"...\"}")}";
-    }
-
-    /// <summary>
     /// PERSONA-FIT: how strongly the action modus mentis is drawn to carrying out <paramref name="actionPhrase"/>.
     /// Asked on the action skill's own slot (so <see cref="ModusMentis.PersonaReminder"/> here is the
     /// skill's), just before the action-text rewrite. The five-way answer decides both whether the
@@ -91,29 +66,5 @@ public class ThinkingPromptConstructor
 - opposed: it goes against who you are — you refuse
 
 {Config.Narrative.JsonFormatClause("{\"drawn\": \"...\"}")}";
-    }
-
-    /// <summary>
-    /// HOW: pick which action skill to use to reach the goal, with the situational context prepended.
-    /// </summary>
-    public string BuildHowPrompt(
-        string outcomeDescription,
-        List<ModusMentis> actionModiMentis,
-        ModusMentis thinkingModusMentis,
-        string? overallLocation = null,
-        string? areaLocation = null,
-        string? observedPhrase = null)
-    {
-        string reminderClause = thinkingModusMentis.PersonaReminder != null
-            ? $"As a {thinkingModusMentis.PersonaReminder}, "
-            : "";
-
-        return $@"{SituationLine(overallLocation, areaLocation, observedPhrase)}Your goal is to {outcomeDescription}.
-
-You could proceed:
-{string.Join("\n", actionModiMentis.Select(s => $"- with {s.SkillMeans}"))}
-
-{reminderClause}which approach do you take?
-{Config.Narrative.JsonFormatClause("{\"how\": \"...\"}")}";
     }
 }

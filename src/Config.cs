@@ -590,6 +590,26 @@ public static class Config
         }
 
         /// <summary>
+        /// Builds the instruction tail for a per-option graded persona evaluation (see
+        /// <see cref="Narrative.PersonaChoiceSelector"/>). The caller has already emitted the
+        /// situational context and the (shuffled) option list; this tail asks the Modus Mentis to
+        /// grade every option <c>high</c>/<c>medium</c>/<c>low</c> for how well it matches the persona,
+        /// spelling out what each grade means, and closes with the JSON-format clause.
+        ///
+        /// <paramref name="personaReminder"/> is the short "As a …" persona hook (may be null);
+        /// <paramref name="interestPhrase"/> completes "grade how strongly it …" per call site
+        /// (e.g. "draws your attention", "calls you to pursue it", "fits how you would act").
+        /// </summary>
+        public static string GradeEvalInstruction(string? personaReminder, string interestPhrase)
+        {
+            string lead = personaReminder != null ? $"As a {personaReminder}, for" : "For";
+            return $"{lead} each option above, grade how strongly it {interestPhrase} — use " +
+                   "\"high\" if it strongly matches your nature, \"medium\" if it could fit you somewhat, " +
+                   "\"low\" if it does not match you. Be honest: reserve \"high\" for what truly fits. " +
+                   "Respond in JSON where each key is an option, exactly as written above, and its value is \"high\", \"medium\" or \"low\".";
+        }
+
+        /// <summary>
         /// Like <see cref="AnswerInstructionFor"/> but adds a 2nd-person dialogue reminder
         /// for speaking prompts where the character is directly addressing a companion.
         /// </summary>

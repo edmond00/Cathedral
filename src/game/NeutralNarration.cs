@@ -57,6 +57,15 @@ public static class NeutralNarration
     public static string Observation(bool isFirst, string simpleName, string description, bool isReminescence = false)
         => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence)}";
 
+    /// <summary>
+    /// Neutral meaning for a failed observation: the Modus Mentis found nothing here worth its
+    /// attention (every candidate object was rejected in the yes/no persona evaluation). Re-expressed
+    /// in the observation persona's voice as the whole observation block.
+    /// </summary>
+    public static string ObservationNothing(bool isReminescence = false)
+        => isReminescence ? "Nothing surfaces from my memory here."
+                          : "Nothing here draws my attention.";
+
     // ── Thinking ───────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -80,6 +89,17 @@ public static class NeutralNarration
         => isReminescence
             ? $"I remember {NounPhrase(FirstPerson(targetPhrase))}, but I let it be and move on."
             : $"I notice {NounPhrase(FirstPerson(targetPhrase))}, but I let it be and move on.";
+
+    /// <summary>
+    /// Neutral reasoning for the "no way to do it" path: the goal was chosen but the thinking Modus
+    /// Mentis judged that none of the available action skills fit (every one rejected in the yes/no
+    /// evaluation), so the intent is dropped. Reasoning-only, no action follows.
+    /// </summary>
+    public static string ReasoningNoMeans(string targetPhrase, string goalPhrase, bool isReminescence = false)
+    {
+        var opener = isReminescence ? "I remember" : "I notice";
+        return $"{opener} {NounPhrase(FirstPerson(targetPhrase))}. I want to {FirstPerson(goalPhrase)}, but I find no way to do it, and let it go.";
+    }
 
     /// <summary>
     /// The intended action as a first-person "I will …" statement (e.g. "I will climb the tree").

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Cathedral.LLM.JsonConstraints;
 
 namespace Cathedral.Game.Narrative;
@@ -37,6 +38,23 @@ public static class LLMSchemaConfig
     {
         return new CompositeField("Choice",
             new ChoiceField<string>(fieldName, options.ToArray())
+        );
+    }
+
+    /// <summary>
+    /// Graded per-option evaluation schema: a fixed-schema JSON object whose keys are exactly the
+    /// given options (in the given, already-shuffled order) and whose value is constrained to
+    /// <c>"high"</c>, <c>"medium"</c> or <c>"low"</c> — how well the option matches the persona. Used
+    /// by <see cref="PersonaChoiceSelector"/>, which then samples the final choice from the "high"
+    /// options (or the "medium" ones if there are no "high"), failing only when all are "low".
+    ///
+    /// Option strings become JSON keys verbatim, so callers MUST pass keys free of <c>"</c> and
+    /// <c>\</c> (the selector sanitizes and de-duplicates them before calling this).
+    /// </summary>
+    public static CompositeField CreateGradeEvalSchema(IReadOnlyList<string> orderedKeys)
+    {
+        return new CompositeField("Eval",
+            orderedKeys.Select(k => (JsonField)new ChoiceField<string>(k, new[] { "high", "medium", "low" })).ToArray()
         );
     }
 

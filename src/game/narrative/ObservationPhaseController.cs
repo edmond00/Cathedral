@@ -32,6 +32,7 @@ public class ObservationPhaseController
 {
     private readonly ObservationExecutor _observationExecutor;
     private readonly PersonaRewriter _rewriter;
+    private readonly PersonaChoiceSelector _selector;
     private readonly KeywordRenderer _keywordRenderer;
     private readonly WorldContext? _worldContext;
     private readonly Random _random = new();
@@ -43,6 +44,7 @@ public class ObservationPhaseController
     {
         _observationExecutor = new ObservationExecutor(llamaServer, slotManager);
         _rewriter            = new PersonaRewriter(llamaServer);
+        _selector            = new PersonaChoiceSelector(llamaServer);
         _keywordRenderer     = new KeywordRenderer();
         _worldContext        = worldContext;
     }
@@ -96,18 +98,21 @@ public class ObservationPhaseController
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
-        // First object: chosen by the Modus Mentis, observed without a transition.
-        var first = await ChooseObservationObjectAsync(slotId, candidates, modusMentis, ct, isReminescence,
+        // One yes/no persona evaluation over all candidates; up to two of the "yes" objects are kept
+        // (first observed directly, second reached via a transition). An empty result means the
+        // Modus Mentis found nothing here worth its attention — a single "nothing draws me" block.
+        var chosen = await SelectObservationObjectsAsync(slotId, candidates, modusMentis, pick: 2, ct, isReminescence,
             _worldContext?.GenerateContextDescription(locationId), currentNode.GenerateNeutralDescription(locationId));
-        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence);
 
-        // Second object (if any): chosen from the remaining objects, reached via one transition.
-        var remaining = candidates.Where(o => o != first).ToList();
-        if (remaining.Count > 0)
+        if (chosen.Count == 0)
         {
-            var second = await ChooseObservationObjectAsync(slotId, remaining, modusMentis, ct, isReminescence,
-                _worldContext?.GenerateContextDescription(locationId), currentNode.GenerateNeutralDescription(locationId));
-            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence);
+            await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct);
+        }
+        else
+        {
+            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, chosen[0], withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence);
+            if (chosen.Count > 1)
+                await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, chosen[1], withTransition: true, locationId, ct, isReminescence: isReminescence);
         }
 
         if (sentences.Count == 0)
@@ -172,9 +177,12 @@ public class ObservationPhaseController
                 .Where(o => !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase)));
         if (remaining.Count > 0)
         {
-            var second = await ChooseObservationObjectAsync(slotId, remaining, observationModusMentis, ct, isReminescence,
+            // The clicked object is already observed; the Modus Mentis may or may not find a second
+            // object worth attention. All-No simply omits the second (no failure block here).
+            var chosen = await SelectObservationObjectsAsync(slotId, remaining, observationModusMentis, pick: 1, ct, isReminescence,
                 _worldContext?.GenerateContextDescription(locationId), currentNode.GenerateNeutralDescription(locationId));
-            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence);
+            if (chosen.Count > 0)
+                await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, chosen[0], withTransition: true, locationId, ct, isReminescence: isReminescence);
         }
 
         if (sentences.Count == 0)
@@ -270,50 +278,69 @@ public class ObservationPhaseController
             .ToList();
 
     /// <summary>
-    /// Asks the Modus Mentis to choose which object (by NeutralName) to observe — the one that best
-    /// matches its persona interest. Returns the single candidate when there is only one, and a
-    /// random candidate in playground mode (no LLM).
+    /// Runs one yes/no persona evaluation over the candidate objects (by NeutralName) and returns up
+    /// to <paramref name="pick"/> of the objects the Modus Mentis answered "yes" to, sampled at
+    /// random (see <see cref="PersonaChoiceSelector"/>). An empty result means every object was "no"
+    /// — the caller renders the "nothing draws me" failure. Returns a random subset in playground
+    /// mode (no LLM).
     ///
     /// Exception: during the childhood reminescence phase the <c>childhood_reminescence</c> MM picks
-    /// at random (no LLM), so that across playthroughs every childhood memory fragment is reachable
-    /// rather than the model always gravitating to the same few. Deliberately narrow — it does NOT
-    /// apply to the post-childhood <c>childhood_memory</c> MM, to any other MM used during the phase,
-    /// or to any observation outside the reminescence phase.
+    /// at random (no LLM, never declines), so that across playthroughs every childhood memory fragment
+    /// is reachable rather than the model always gravitating to the same few. Deliberately narrow — it
+    /// does NOT apply to the post-childhood <c>childhood_memory</c> MM, to any other MM used during the
+    /// phase, or to any observation outside the reminescence phase.
     /// </summary>
-    private async Task<ConcreteOutcome> ChooseObservationObjectAsync(
+    private async Task<List<ConcreteOutcome>> SelectObservationObjectsAsync(
         int slotId,
         List<ConcreteOutcome> candidates,
         ModusMentis modusMentis,
+        int pick,
         CancellationToken ct,
         bool isReminescence = false,
         string? overallLocation = null,
         string? areaLocation = null)
     {
-        if (candidates.Count == 1) return candidates[0];
-        if (PlaygroundMode.IsActive) return candidates[_random.Next(candidates.Count)];
+        if (candidates.Count == 0) return new List<ConcreteOutcome>();
+
+        // Childhood reminescence: random pick, never declines (keeps every fragment reachable).
         if (isReminescence && modusMentis.ModusMentisId == "childhood_reminescence")
-            return candidates[_random.Next(candidates.Count)];
+            return candidates.OrderBy(_ => _random.Next()).Take(Math.Min(pick, candidates.Count)).ToList();
 
         var names = candidates.Select(GetNeutralName).ToList();
-        var prompt = BuildObservationChoicePrompt(names, modusMentis, overallLocation, areaLocation);
-        var chosen = await _rewriter.ChooseAsync(slotId, prompt, names, "observation", keepHistory: true, ct);
+        var parts = new GradeEvalPromptParts(
+            ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, null),
+            "Around you, you notice:",
+            "draws your attention");
+        var chosenNames = await _selector.SelectAsync(slotId, modusMentis, names, parts, pick, keepHistory: true, ct);
 
-        var idx = names.FindIndex(n => n.Equals(chosen, StringComparison.OrdinalIgnoreCase));
-        return idx >= 0 ? candidates[idx] : candidates[0];
+        // Map chosen names back to their outcomes (candidates are name-deduplicated, so names are unique).
+        return chosenNames
+            .Select(n => candidates.First(c => GetNeutralName(c).Equals(n, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
     }
 
-    private static string BuildObservationChoicePrompt(List<string> names, ModusMentis modusMentis, string? overallLocation = null, string? areaLocation = null)
+    /// <summary>
+    /// Appends the "nothing here draws my attention" observation (the all-No failure of the object
+    /// evaluation), re-expressed in the Modus Mentis's voice with no clickable keyword.
+    /// </summary>
+    private async Task AppendNothingObservationAsync(
+        List<NarrationSentence> sentences,
+        int slotId,
+        ModusMentis modusMentis,
+        bool isReminescence,
+        CancellationToken ct)
     {
-        string reminderClause = modusMentis.PersonaReminder != null ? $"As a {modusMentis.PersonaReminder}, " : "";
-        string list = string.Join("\n", names.Select(n => $"- {n}"));
-        // Nothing is observed yet at this step, so only the location context is prepended.
-        // Only the JSON-format clause is appended — the styling/grounding/"one short sentence" tail
-        // belongs to the observation *text* generation, not to this constrained object choice.
-        return $@"{ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, null)}Around you, you notice:
-{list}
-
-{reminderClause}which one draws your attention first?
-{Config.Narrative.JsonFormatClause("{\"observation\": \"...\"}")}";
+        try
+        {
+            var neutral = NeutralNarration.ObservationNothing(isReminescence);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, ct: ct);
+            sentences.Add(new NarrationSentence(text, new List<string>()));
+            Console.WriteLine("ObservationPhaseController: nothing drew the persona's attention (all-No).");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ObservationPhaseController: 'nothing' observation failed: {ex.Message}");
+        }
     }
 
     /// <summary>Short name of an outcome, used for the observation-choice enum.</summary>
