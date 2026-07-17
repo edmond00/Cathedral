@@ -85,6 +85,8 @@ public class PersonaRewriter
 
     private static string BuildPrompt(string neutralText, string instruction, string footer) => $@"Re-express the following sentence in your own voice: ""{neutralText}""
 
+This sentence is written in the first person, and that ""I"" is you — it describes your own perception, thought or action, not anyone else's.
+
 {instruction}
 {footer}";
 
