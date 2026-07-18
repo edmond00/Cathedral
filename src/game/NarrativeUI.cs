@@ -14,10 +14,7 @@ namespace Cathedral.Game;
 /// </summary>
 public class NarrativeUI : TerminalPanelUI
 {
-    // Dice roll animation — _loadingFrameIndex/_lastFrameUpdate live in TerminalPanelUI base
-    
     private readonly KeywordRenderer _keywordRenderer;
-    private int SCROLLBAR_X => _scrollbarX;  // alias to base protected field
     private List<KeywordRegion> _keywordRegions = new();
     private List<ActionRegion> _actionRegions = new();
     
@@ -686,51 +683,10 @@ public class NarrativeUI : TerminalPanelUI
     
     /// <summary>
     /// Render the footer status bar. In normal operation, pass scene-info text (biome, location,
-    /// time). For transient states (loading, dice, error) pass the relevant status message.
+    /// time). For transient states (dice, error) pass the relevant status message.
     /// </summary>
     public void RenderStatusBar(string message = "")
-    {
-        int statusY = _layout.STATUS_BAR_Y;
-        int separatorY = _layout.SEPARATOR_Y;
+        => DrawStatusBar(message);
 
-        DrawHorizontalLine(separatorY);
-
-        // Truncate to fit
-        int maxWidth = _layout.CONTENT_WIDTH - 2;
-        if (message.Length > maxWidth)
-            message = message.Substring(0, maxWidth - 3) + "...";
-
-        _terminal.Text(_layout.CONTENT_START_X, statusY, message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-    }
-    
-    // ShowLoadingIndicator — inherited from TerminalPanelUI (public virtual)
-
-    
-    /// <summary>
-    /// Show dice roll loading indicator with animated rolling dice.
-    /// </summary>
-
-    // ShowError — inherited from TerminalPanelUI (public virtual)
-
-    
-    // DrawHorizontalLine, GenerateProgressBar, WrapText — inherited from TerminalPanelUI
-
-    /// <summary>
-    /// Renders the single narration footer button (e.g. "CONTINUE", "LEAVE" or "RUNAWAY") at the
-    /// bottom-left, above the separator, and returns its click region.
-    /// </summary>
-    public (int X, int Y, int Width) RenderExitButton(string label, bool isHovered = false)
-    {
-        string buttonText = $"[ {label} ]";
-        int buttonWidth = buttonText.Length;
-        int buttonX = _layout.CONTENT_START_X;   // bottom-left
-        int buttonY = _layout.SEPARATOR_Y - 2;
-
-        Vector4 buttonColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverColor : Config.NarrativeUI.ContinueButtonColor;
-        Vector4 buttonBackgroundColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;
-
-        _terminal.Text(buttonX, buttonY, buttonText, buttonColor, buttonBackgroundColor);
-
-        return (buttonX, buttonY, buttonWidth);
-    }
+    // RenderExitButton — inherited from TerminalPanelUI (shared with DialogueTreeUI)
 }

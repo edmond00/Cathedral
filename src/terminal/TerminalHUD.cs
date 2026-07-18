@@ -218,6 +218,29 @@ namespace Cathedral.Terminal
             _view.ClearRect(x, y, width, height);
         }
 
+        /// <summary>
+        /// Greys out a rectangular region: every visible foreground color is snapped to
+        /// <paramref name="dimTextColor"/> and every visible background to <paramref name="dimBackgroundColor"/>.
+        /// Characters are preserved. Snapping (rather than scaling) makes the operation idempotent,
+        /// so it is safe to apply every frame over content that is not fully redrawn.
+        /// Fully transparent cells are left untouched (WorldView passthrough).
+        /// </summary>
+        public void DimRect(int x, int y, int width, int height, Vector4 dimTextColor, Vector4 dimBackgroundColor)
+        {
+            int x0 = Math.Max(0, x), y0 = Math.Max(0, y);
+            int x1 = Math.Min(Width, x + width), y1 = Math.Min(Height, y + height);
+            for (int cy = y0; cy < y1; cy++)
+            {
+                for (int cx = x0; cx < x1; cx++)
+                {
+                    var cell = _view[cx, cy];
+                    Vector4 fg = cell.TextColor.W < 0.01f ? cell.TextColor : dimTextColor;
+                    Vector4 bg = cell.BackgroundColor.W < 0.01f ? cell.BackgroundColor : dimBackgroundColor;
+                    cell.SetColors(fg, bg);
+                }
+            }
+        }
+
         #endregion
 
         #region Drawing Operations

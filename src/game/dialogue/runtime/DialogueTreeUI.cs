@@ -24,8 +24,10 @@ namespace Cathedral.Game.Dialogue.Runtime;
 public class DialogueTreeUI : TerminalPanelUI
 {
     private readonly NpcEntity    _npc;
-    private readonly DialogueTree _tree;
     private readonly string       _partyMemberId;
+
+    /// <summary>Rows reserved at the bottom of the content area for the footer exit button.</summary>
+    private const int FooterRows = 2;
 
     // Row → option index mapping, rebuilt every Render call
     private readonly Dictionary<int, int> _optionRowToIndex = new();
@@ -33,12 +35,10 @@ public class DialogueTreeUI : TerminalPanelUI
     public DialogueTreeUI(
         TerminalHUD   terminal,
         NpcEntity     npc,
-        DialogueTree  tree,
         string        partyMemberId)
         : base(terminal)
     {
         _npc           = npc;
-        _tree          = tree;
         _partyMemberId = partyMemberId;
     }
 
@@ -48,6 +48,28 @@ public class DialogueTreeUI : TerminalPanelUI
     public int GetOptionIndexAt(int mx, int my)
         => _optionRowToIndex.TryGetValue(my, out int idx) ? idx : -1;
 
+    /// <summary>
+    /// Render the panel frame with a bottom status message, used during session setup
+    /// (LLM slot acquisition) before any dialogue content exists. Keeping the same
+    /// bordered frame as the narration panel avoids a black flash during the transition.
+    /// </summary>
+    public void RenderSetupFrame(string message, string? error = null)
+    {
+        Clear();
+        RenderHeader();
+        DrawHorizontalLine(_layout.TOP_PADDING + 1);
+
+        if (error != null)
+        {
+            ShowError(error);
+            DrawStatusBar("Error — press ESC to exit.");
+        }
+        else
+        {
+            RenderGeneratingStatus(message);
+        }
+    }
+
     // ── Main render entry ──────────────────────────────────────────────────────
 
     public void Render(DialogueSessionState state, DiceRollComponent dice)
@@ -55,16 +77,25 @@ public class DialogueTreeUI : TerminalPanelUI
         Clear();
         _optionRowToIndex.Clear();
 
+        // The footer button is only rendered in the interactive states below; clear its
+        // click region each frame so stale zones don't linger during dice/loading states.
+        state.ExitButtonRegion = default;
+
         RenderHeader();
         DrawHorizontalLine(_layout.TOP_PADDING + 1);
 
         if (state.ErrorMessage != null)
         {
             ShowError(state.ErrorMessage);
-            DrawStatusBar("Error — press ESC to exit.");
+            state.ExitButtonRegion = RenderExitButton("LEAVE", state.IsExitButtonHovered);
+            DrawStatusBar("Error — leave to exit.");
             return;
         }
 
+        RenderLogAndOptions(state);
+
+        // Dice overlay: the conversation stays visible but greyed out underneath a
+        // small dice box — same presentation as fight mode.
         if (state.IsDiceRollActive)
         {
             RenderDiceComponent(dice, state.IsContinueHovered);
@@ -74,22 +105,33 @@ public class DialogueTreeUI : TerminalPanelUI
             return;
         }
 
-        if (state.IsLoadingReaction)
+        // LLM generating: grey out the log and show an animated message at the bottom.
+        string? generating = BuildGeneratingText(state);
+        if (generating != null)
         {
-            ShowLoadingIndicator($"{_npc.DisplayName} reacts…");
-            DrawStatusBar("Waiting…");
+            DimContent();
+            RenderGeneratingStatus(generating);
             return;
         }
 
-        if (state.IsLoadingNpcReplica && state.Log.Count == 0)
-        {
-            ShowLoadingIndicator($"{_npc.DisplayName} considers…");
-            DrawStatusBar("Waiting…");
-            return;
-        }
+        // Footer button — same placement as the narration panel: LEAVE once the
+        // conversation has ended, INTERRUPT to walk away mid-conversation.
+        state.ExitButtonRegion = RenderExitButton(
+            state.ConversationEnded ? "LEAVE" : "INTERRUPT",
+            state.IsExitButtonHovered);
 
-        RenderLogAndOptions(state);
         DrawStatusBar(BuildStatusText(state));
+    }
+
+    /// <summary>The generating-status message for the current loading state, or null when idle.</summary>
+    private string? BuildGeneratingText(DialogueSessionState state)
+    {
+        if (state.IsLoadingReaction)   return $"{_npc.DisplayName} reacts…";
+        if (state.IsLoadingNpcReplica) return $"{_npc.DisplayName} is thinking…";
+        if (state.IsLoadingOptions)    return state.OptionsTotal > 0
+            ? $"Thinking of replies… ({state.OptionsLoaded}/{state.OptionsTotal})"
+            : "Thinking of replies…";
+        return null;
     }
 
     // ── Header ─────────────────────────────────────────────────────────────────
@@ -110,7 +152,7 @@ public class DialogueTreeUI : TerminalPanelUI
         _terminal.Text(labelX, y, label,
             Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
 
-        // Right: affinity pips  ● ● ● ○ ○  (0–5 filled)
+        // Right: "Affinity ● ● ● ○ ○" — pips show the 0–5 affinity level
         const int MaxPips = 5;
         int       lvl     = (int)affinity;
         var       pips    = new System.Text.StringBuilder();
@@ -119,11 +161,17 @@ public class DialogueTreeUI : TerminalPanelUI
             pips.Append(i < lvl ? '●' : '○');
             if (i < MaxPips - 1) pips.Append(' ');
         }
-        string pipsStr = pips.ToString();
-        int    pipsX   = _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING - pipsStr.Length - 1;
-        if (pipsX > labelX + label.Length + 2)
+        const string pipsLabel  = "Affinity ";
+        string pipsStr    = pips.ToString();
+        int    pipsX      = _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING - pipsStr.Length - 1;
+        int    pipsLabelX = pipsX - pipsLabel.Length;
+        if (pipsLabelX > labelX + label.Length + 2)
+        {
+            _terminal.Text(pipsLabelX, y, pipsLabel,
+                Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
             _terminal.Text(pipsX, y, pipsStr,
                 Config.NarrativeUI.DiceGoldColor, Config.NarrativeUI.BackgroundColor);
+        }
     }
 
     // ── Log + options ──────────────────────────────────────────────────────────
@@ -133,7 +181,8 @@ public class DialogueTreeUI : TerminalPanelUI
         var logLines = BuildLogLines(state.Log);
         int optLineCount = ComputeOptionLineCount(state);
 
-        int contentRows = _layout.NARRATIVE_HEIGHT;
+        // Bottom rows are reserved for the footer exit button (LEAVE / INTERRUPT)
+        int contentRows = _layout.NARRATIVE_HEIGHT - FooterRows;
         // Reserve option rows + 1 gap row at bottom; log gets the rest
         int logRows = optLineCount > 0
             ? Math.Max(1, contentRows - optLineCount - 1)
@@ -218,7 +267,7 @@ public class DialogueTreeUI : TerminalPanelUI
     private int ComputeOptionLineCount(DialogueSessionState state)
     {
         if (state.ConversationEnded) return 0;
-        if (state.IsLoadingOptions)  return 2; // progress hint takes ~2 rows
+        if (state.IsLoadingOptions)  return 0; // progress is shown in the generating status bar
 
         if (state.Options.Count == 0) return 0;
 
@@ -244,22 +293,10 @@ public class DialogueTreeUI : TerminalPanelUI
 
         int maxX = _scrollbarX - 1;
 
-        if (state.IsLoadingOptions)
-        {
-            if (startY < _layout.CONTENT_END_Y)
-            {
-                string msg = state.OptionsTotal > 0
-                    ? $"  Thinking of replies… ({state.OptionsLoaded}/{state.OptionsTotal})"
-                    : "  Thinking of replies…";
-                _terminal.Text(_layout.CONTENT_START_X, startY, msg,
-                    Config.NarrativeUI.HistoryColor, Config.NarrativeUI.BackgroundColor);
-            }
-            return;
-        }
-
+        int maxY = _layout.CONTENT_END_Y - FooterRows;
         for (int r = 0; r < state.Options.Count; r++)
         {
-            if (startY > _layout.CONTENT_END_Y) break;
+            if (startY > maxY) break;
 
             bool    hovered   = r == state.HoveredOptionIndex;
             Vector4 bg        = hovered ? Config.NarrativeUI.ActionHoverBackgroundColor : Config.NarrativeUI.BackgroundColor;
@@ -307,7 +344,7 @@ public class DialogueTreeUI : TerminalPanelUI
             startY++;
 
             // Continuation lines (word-wrap overflow)
-            for (int ln = 1; ln < wrapped.Count && startY <= _layout.CONTENT_END_Y; ln++)
+            for (int ln = 1; ln < wrapped.Count && startY <= maxY; ln++)
             {
                 int    avail = maxX - contX;
                 string seg   = wrapped[ln].Length > avail ? wrapped[ln][..avail] : wrapped[ln];
@@ -322,10 +359,7 @@ public class DialogueTreeUI : TerminalPanelUI
 
     private string BuildStatusText(DialogueSessionState state)
     {
-        if (state.ConversationEnded)   return "Conversation ended — click to exit.";
-        if (state.IsLoadingNpcReplica) return $"{_npc.DisplayName} is thinking…";
-        if (state.IsLoadingOptions)    return $"Thinking of replies… ({state.OptionsLoaded}/{state.OptionsTotal})";
-        if (state.IsLoadingReaction)   return "Waiting for response…";
+        if (state.ConversationEnded)   return "Conversation ended — leave to exit.";
         if (state.Options.Count > 0)   return "Click a reply. Scroll to read history.";
         return "";
     }

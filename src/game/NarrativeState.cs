@@ -47,6 +47,14 @@ public class NarrativeState
     public string LoadingMessage { get; set; } = "Loading...";
 
     /// <summary>
+    /// True while any LLM generation is in flight. The content is rendered greyed out
+    /// and inert during this time (only scrolling stays interactive).
+    /// </summary>
+    public bool IsAnyLoading =>
+        IsLoadingObservations || IsLoadingThinking || IsLoadingFocusObservation ||
+        IsLoadingSpeaking || IsLoadingAction;
+
+    /// <summary>
     /// Currently hovered keyword region (null if none).
     /// </summary>
     public KeywordRegion? HoveredKeyword { get; set; } = null;

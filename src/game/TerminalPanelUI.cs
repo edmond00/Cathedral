@@ -11,7 +11,8 @@ namespace Cathedral.Game;
 ///   • Padding-zone border rendering  (Clear / ClearContent)
 ///   • Horizontal separator lines     (DrawHorizontalLine)
 ///   • Proportional scrollbar         (RenderScrollbar + hit-test helpers)
-///   • Animated loading spinner       (ShowLoadingIndicator  — public virtual)
+///   • Content grey-out               (DimContent)
+///   • Animated generating status     (RenderGeneratingStatus)
 ///   • Centered error display         (ShowError             — public virtual)
 ///   • Status bar                     (DrawStatusBar         — protected)
 ///   • Word-wrap helper               (WrapText              — protected)
@@ -189,34 +190,51 @@ public abstract class TerminalPanelUI
         return Math.Clamp((int)(maxScrollOffset * scrollRatio), 0, maxScrollOffset);
     }
 
-    // ── Loading indicator ─────────────────────────────────────────────────────
+    // ── Content grey-out + generating status ─────────────────────────────────
 
-    /// <summary>Animate a spinner + progress bar centred in the content area.</summary>
-    public virtual void ShowLoadingIndicator(string message = "Loading...")
+    /// <summary>
+    /// Grey out everything inside the panel border (header, content, status bar).
+    /// Idempotent — safe to apply every frame. Draw any overlay (dice box, status
+    /// message) AFTER dimming so it stays at full brightness.
+    /// </summary>
+    public void DimContent()
+    {
+        _terminal.DimRect(
+            _layout.LEFT_PADDING,
+            _layout.TOP_PADDING,
+            _layout.TERMINAL_WIDTH  - _layout.LEFT_PADDING - _layout.RIGHT_PADDING,
+            _layout.TERMINAL_HEIGHT - _layout.TOP_PADDING  - _layout.BOTTOM_PADDING,
+            Config.NarrativeUI.DimmedContentColor,
+            Config.NarrativeUI.BackgroundColor);
+    }
+
+    /// <summary>
+    /// Show an animated "generating" message in the status bar (bottom of the panel):
+    /// separator line + spinner + message. Used while the LLM is producing text —
+    /// callers render the normal content first (optionally dimmed via <see cref="DimContent"/>).
+    /// </summary>
+    public void RenderGeneratingStatus(string message)
+    {
+        string spinner = Config.Symbols.LoadingSpinner[AdvanceSpinnerFrame()];
+
+        DrawHorizontalLine(_layout.SEPARATOR_Y);
+
+        string text = $"{spinner} {message}";
+        int maxW = _layout.CONTENT_WIDTH - 2;
+        if (text.Length > maxW) text = text[..(maxW - 3)] + "...";
+        _terminal.Text(_layout.CONTENT_START_X, _layout.STATUS_BAR_Y,
+            text, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
+    }
+
+    /// <summary>Advance the shared spinner animation at ~10 fps and return the current frame index.</summary>
+    protected int AdvanceSpinnerFrame()
     {
         if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds > 100)
         {
             _loadingFrameIndex = (_loadingFrameIndex + 1) % Config.Symbols.LoadingSpinner.Length;
             _lastFrameUpdate   = DateTime.Now;
         }
-
-        string spinner = Config.Symbols.LoadingSpinner[_loadingFrameIndex];
-
-        ClearContent();
-
-        string loadingText = $"{spinner}  {message}  {spinner}";
-        int    centerY     = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
-        int    centerX     = (_layout.TERMINAL_WIDTH - loadingText.Length) / 2;
-        _terminal.Text(centerX, centerY, loadingText, Config.Colors.DarkYellowGrey, Config.NarrativeUI.BackgroundColor);
-
-        string dots  = new string('.', _loadingFrameIndex % 4);
-        string hint  = $"Please wait {dots}";
-        _terminal.Text((_layout.TERMINAL_WIDTH - hint.Length) / 2, centerY + 2, hint,
-            Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-
-        string bar = GenerateProgressBar(30, _loadingFrameIndex);
-        _terminal.Text((_layout.TERMINAL_WIDTH - 30) / 2, centerY - 2, bar,
-            Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
+        return _loadingFrameIndex;
     }
 
     // ── Error display ─────────────────────────────────────────────────────────
@@ -289,28 +307,40 @@ public abstract class TerminalPanelUI
         return lines;
     }
 
-    private string GenerateProgressBar(int width, int frame)
+    // ── Footer exit button ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Renders the single footer button (e.g. "CONTINUE", "LEAVE", "RUNAWAY", "INTERRUPT")
+    /// at the bottom-left, above the separator, and returns its click region.
+    /// </summary>
+    public (int X, int Y, int Width) RenderExitButton(string label, bool isHovered = false)
     {
-        var    bar   = new System.Text.StringBuilder("[");
-        string chars = " ░░▒▒▓█▓▒▒░░";
-        for (int i = 0; i < width - 2; i++) bar.Append(chars[(frame + i) % chars.Length]);
-        bar.Append(']');
-        return bar.ToString();
+        string buttonText = $"[ {label} ]";
+        int buttonX = _layout.CONTENT_START_X;   // bottom-left
+        int buttonY = _layout.SEPARATOR_Y - 2;
+
+        Vector4 buttonColor           = isHovered ? Config.NarrativeUI.ContinueButtonHoverColor           : Config.NarrativeUI.ContinueButtonColor;
+        Vector4 buttonBackgroundColor = isHovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;
+
+        _terminal.Text(buttonX, buttonY, buttonText, buttonColor, buttonBackgroundColor);
+
+        return (buttonX, buttonY, buttonText.Length);
     }
 
     // ── Dice-roll overlay (shared with NarrativeUI and DialogueUI) ────────────
 
     /// <summary>
-    /// Render a <see cref="DiceRollComponent"/> centered in this panel's content area.
-    /// Clears the content first, then delegates animation, dice, humor buttons, and the
-    /// [ Continue ] button to the component. Returns true once the continue button is visible.
+    /// Render a <see cref="DiceRollComponent"/> as an overlay box centered in this panel's
+    /// content area. The underlying content is greyed out first (matching fight mode), then
+    /// animation, dice, humor buttons, and the [ Continue ] button are delegated to the
+    /// component. Returns true once the continue button is visible.
     /// Hit-test clicks against <see cref="DiceRollComponent.ContinueButtonRegion"/> and route
     /// hover/click to <see cref="DiceRollComponent.HandleHumorHover"/> /
     /// <see cref="DiceRollComponent.HandleHumorClick"/>.
     /// </summary>
     public bool RenderDiceComponent(DiceRollComponent dice, bool continueHovered)
     {
-        ClearContent();
+        DimContent();
         int centerX = _layout.TERMINAL_WIDTH / 2;
         int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
         return dice.Render(_terminal, centerX, centerY, continueHovered);

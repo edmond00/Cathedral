@@ -1041,9 +1041,15 @@ public static class FightModeUI
 
     // ── Dice overlay ─────────────────────────────────────────────────
 
-    /// <summary>Draw the dice roll animation overlay, centered in the arena.</summary>
+    /// <summary>
+    /// Draw the dice roll animation overlay, centered in the arena.
+    /// The fight UI underneath is greyed out first so the dice box stands out —
+    /// same presentation as the narration and dialogue panels.
+    /// </summary>
     public static bool RenderDiceOverlay(TerminalHUD terminal, DiceRollComponent dice, bool continueHovered)
     {
+        terminal.DimRect(0, 0, terminal.Width, terminal.Height,
+            Config.Colors.DarkGray35, Config.Colors.Black);
         int cx = CenterX + FightArea.Width / 2;
         int cy = CenterY + FightArea.Height / 2;
         return dice.Render(terminal, cx, cy, continueHovered);

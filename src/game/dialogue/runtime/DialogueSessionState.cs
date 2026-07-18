@@ -100,6 +100,11 @@ public class DialogueSessionState
     // ── Selection ─────────────────────────────────────────────────────────────
     public int HoveredOptionIndex { get; set; } = -1;
 
+    // ── Footer exit button (LEAVE / INTERRUPT) ────────────────────────────────
+    /// <summary>Click region of the footer button; default (Width 0) while hidden.</summary>
+    public (int X, int Y, int Width) ExitButtonRegion { get; set; }
+    public bool IsExitButtonHovered { get; set; }
+
     // ── Scroll ────────────────────────────────────────────────────────────────
     public int ScrollOffset { get; set; }
 
@@ -123,6 +128,8 @@ public class DialogueSessionState
         Log.Clear();
         Options.Clear();
         HoveredOptionIndex  = -1;
+        ExitButtonRegion    = default;
+        IsExitButtonHovered = false;
         ScrollOffset        = 0;
         ConversationEnded   = false;
         RequestedExit       = false;

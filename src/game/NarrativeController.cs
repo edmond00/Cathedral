@@ -1525,14 +1525,9 @@ public class NarrativeController
         // Sync music filter based on current loading/dice state
         if (_ambianceEngine != null)
         {
-            bool diceActive    = _narrationState.IsDiceRollActive;
-            bool loadingActive = _narrationState.IsLoadingObservations
-                              || _narrationState.IsLoadingThinking
-                              || _narrationState.IsLoadingFocusObservation
-                              || _narrationState.IsLoadingSpeaking
-                              || _narrationState.IsLoadingAction;
-            var desired = diceActive   ? MusicFilter.DiceRoll
-                        : loadingActive ? MusicFilter.Loading
+            bool diceActive = _narrationState.IsDiceRollActive;
+            var desired = diceActive                  ? MusicFilter.DiceRoll
+                        : _narrationState.IsAnyLoading ? MusicFilter.Loading
                         : MusicFilter.None;
             if (_ambianceEngine.ActiveFilter != desired)
                 _ambianceEngine.SetFilter(desired);
@@ -1559,10 +1554,12 @@ public class NarrativeController
             return;
         }
 
-        // Show dice roll screen if active (for action execution)
+        // Dice roll overlay (action execution): narration stays visible but greyed out
+        // underneath a small dice box — same presentation as fight mode.
         if (_narrationState.IsDiceRollActive)
         {
             _dice.Advance();
+            RenderNarrationContent();
             _ui.RenderDiceComponent(_dice, _narrationState.IsDiceRollButtonHovered);
 
             string diceStatus = _narrationState.IsDiceRolling
@@ -1572,34 +1569,20 @@ public class NarrativeController
             return;
         }
 
-        // Show loading indicator if generating (for non-action loading, or action evaluation phase before dice roll)
-        bool isLoadingNonDice = _narrationState.IsLoadingObservations || _narrationState.IsLoadingThinking ||
-                                _narrationState.IsLoadingFocusObservation || _narrationState.IsLoadingSpeaking ||
-                                (_narrationState.IsLoadingAction && !_narrationState.IsDiceRollActive);
-        if (isLoadingNonDice)
+        // LLM generating (non-action loading, or action evaluation phase before dice roll):
+        // keep the narration visible but greyed out, with an animated message at the bottom.
+        if (_narrationState.IsAnyLoading)
         {
-            _ui.ShowLoadingIndicator(_narrationState.LoadingMessage);
-            _ui.RenderStatusBar(sceneInfo);
+            RenderNarrationContent();
+            _ui.DimContent();
+            _ui.RenderGeneratingStatus(_narrationState.LoadingMessage);
             return;
         }
 
         // Show continue button if flagged
         if (_narrationState.ShowContinueButton)
         {
-            _ui.RenderObservationBlocks(
-                _scrollBuffer,
-                _narrationState.ScrollOffset,
-                _narrationState.ThinkingAttemptsRemaining,
-                null,
-                null,
-                true
-            );
-
-            _narrationState.ScrollbarThumb = _ui.RenderScrollbar(
-                _scrollBuffer,
-                _narrationState.ScrollOffset,
-                _narrationState.IsScrollbarThumbHovered
-            );
+            RenderNarrationContent(dimContent: true);
 
             // Post-action progression uses the single footer button, shown here as CONTINUE.
             RenderFooterButton(showNoetic);
@@ -1608,19 +1591,7 @@ public class NarrativeController
         }
 
         // Render observation blocks with keywords
-        _ui.RenderObservationBlocks(
-            _scrollBuffer,
-            _narrationState.ScrollOffset,
-            _narrationState.ThinkingAttemptsRemaining,
-            _narrationState.HoveredKeyword,
-            _narrationState.HoveredAction
-        );
-
-        _narrationState.ScrollbarThumb = _ui.RenderScrollbar(
-            _scrollBuffer,
-            _narrationState.ScrollOffset,
-            _narrationState.IsScrollbarThumbHovered
-        );
+        RenderNarrationContent(_narrationState.HoveredKeyword, _narrationState.HoveredAction);
 
         // Single footer button — LEAVE/RUNAWAY while idle in exploration (the only interactive
         // control once noetic points are exhausted, since keyword regions render inert then).
@@ -1628,6 +1599,29 @@ public class NarrativeController
 
         // Footer always shows scene info in the idle observation state
         _ui.RenderStatusBar(sceneInfo);
+    }
+
+    /// <summary>
+    /// Render the panel's normal content: observation blocks plus the scrollbar
+    /// (updating the stored thumb region for hit-testing).
+    /// </summary>
+    private void RenderNarrationContent(
+        KeywordRegion? hoveredKeyword = null,
+        ActionRegion?  hoveredAction  = null,
+        bool           dimContent     = false)
+    {
+        _ui.RenderObservationBlocks(
+            _scrollBuffer,
+            _narrationState.ScrollOffset,
+            _narrationState.ThinkingAttemptsRemaining,
+            hoveredKeyword,
+            hoveredAction,
+            dimContent);
+
+        _narrationState.ScrollbarThumb = _ui.RenderScrollbar(
+            _scrollBuffer,
+            _narrationState.ScrollOffset,
+            _narrationState.IsScrollbarThumbHovered);
     }
 
     /// <summary>
@@ -1894,9 +1888,9 @@ public class NarrativeController
             }
         }
 
-        // In the post-action (CONTINUE) state, content is inert — skip keyword/action hover
-        // (scrollbar interactions above are still allowed).
-        if (_narrationState.ShowContinueButton)
+        // In the post-action (CONTINUE) state and while the LLM is generating, content is
+        // inert — skip keyword/action hover (scrollbar interactions above are still allowed).
+        if (_narrationState.ShowContinueButton || _narrationState.IsAnyLoading)
             return;
         
         // Update hovered keyword region
@@ -1977,9 +1971,9 @@ public class NarrativeController
             return;
         }
 
-        // In the post-action (CONTINUE) state the content is inert — swallow other clicks
-        // (scrollbar clicks were already handled above).
-        if (_narrationState.ShowContinueButton)
+        // In the post-action (CONTINUE) state and while the LLM is generating, the content
+        // is inert — swallow other clicks (scrollbar clicks were already handled above).
+        if (_narrationState.ShowContinueButton || _narrationState.IsAnyLoading)
             return;
 
         // If choice popup is visible, handle it first

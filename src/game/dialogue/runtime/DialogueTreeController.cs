@@ -8,7 +8,6 @@ using Cathedral.Game.Dialogue.Tree;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 using Cathedral.LLM;
-using Cathedral.Terminal;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Cathedral.Game.Dialogue.Runtime;
@@ -55,7 +54,7 @@ public class DialogueTreeController
         int                    npcSlotId,
         LlamaServerManager     llmManager,
         ModusMentisSlotManager slotManager,
-        TerminalHUD            terminal,
+        DialogueTreeUI         ui,
         Cathedral.Audio.AmbianceEngine? ambianceEngine = null)
     {
         _tree          = tree;
@@ -72,7 +71,7 @@ public class DialogueTreeController
         _reactionExec   = new NpcReactionExecutor(llmManager);
 
         _currentNode = tree.EntryNode;
-        _ui          = new DialogueTreeUI(terminal, npc, tree, _partyMemberId);
+        _ui          = ui;
 
         _dice.OnDiceTick      = () => _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.SmallInteraction);
         _dice.OnButtonHover   = () => _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.SmallInteraction);
@@ -104,6 +103,16 @@ public class DialogueTreeController
             _dice.HandleHumorHover(mx, my);
             return;
         }
+
+        // Footer exit button (LEAVE / INTERRUPT) — region is default while hidden.
+        var exit = _state.ExitButtonRegion;
+        bool overExit = exit.Width > 0 && my == exit.Y && mx >= exit.X && mx < exit.X + exit.Width;
+        if (overExit != _state.IsExitButtonHovered)
+        {
+            _state.IsExitButtonHovered = overExit;
+            if (overExit) _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.SmallInteraction);
+        }
+
         if (!_state.IsLoadingOptions && !_state.IsDiceRollActive && !_state.ConversationEnded)
             _state.HoveredOptionIndex = _ui.GetOptionIndexAt(mx, my);
     }
@@ -112,7 +121,20 @@ public class DialogueTreeController
     {
         if (_state.RequestedExit) return;
 
-        if (_state.ConversationEnded) { _state.RequestedExit = true; return; }
+        // Footer exit button: LEAVE (normal exit after the tree ends, or on error)
+        // or INTERRUPT (early exit mid-conversation, with consequences).
+        var exit = _state.ExitButtonRegion;
+        if (exit.Width > 0 && my == exit.Y && mx >= exit.X && mx < exit.X + exit.Width)
+        {
+            _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.StrongInteraction);
+            if (_state.ConversationEnded || _state.ErrorMessage != null)
+                _state.RequestedExit = true;
+            else
+                InterruptConversation();
+            return;
+        }
+
+        if (_state.ConversationEnded) return;
 
         if (_state.IsDiceRollActive && !_state.IsDiceRolling)
         {
@@ -145,13 +167,39 @@ public class DialogueTreeController
 
     public void OnKeyPress(Keys key)
     {
-        if (key == Keys.Escape) _state.RequestedExit = true;
+        if (key != Keys.Escape) return;
+
+        // ESC mirrors the footer button: a plain exit once the conversation has ended
+        // (or errored), an interruption with consequences while it is still running.
+        if (_state.ConversationEnded || _state.ErrorMessage != null)
+            _state.RequestedExit = true;
+        else
+            InterruptConversation();
+    }
+
+    /// <summary>
+    /// Early exit mid-conversation. Walking away is rude: the NPC still remembers the
+    /// meeting (first contact), then affinity drops one step. Suspicious NPCs are left
+    /// untouched — stepping them "down" the scale would paradoxically make them friends.
+    /// </summary>
+    private void InterruptConversation()
+    {
+        _npc.AffinityTable.MarkFirstContact(_partyMemberId);
+        if (_npc.AffinityTable.GetLevel(_partyMemberId) != AffinityLevel.Suspicious)
+            _npc.AffinityTable.Adjust(_partyMemberId, -1);
+
+        Console.WriteLine(
+            $"DialogueTreeController: Conversation with {_npc.DisplayName} interrupted — " +
+            $"affinity now {_npc.AffinityTable.GetLevel(_partyMemberId)}");
+        _state.RequestedExit = true;
     }
 
     // ── Phase: NPC speaks ─────────────────────────────────────────────────────
 
     private void BeginNpcSpeakPhase()
     {
+        _state.Options.Clear();          // previous node's replies are no longer selectable
+        _state.HoveredOptionIndex = -1;
         _state.IsLoadingNpcReplica = true;
         _state.Log.Add(new DialogueLogEntry(DialogueLogEntryType.SystemMessage, null, "..."));
         _ = Task.Run(NpcSpeakAsync);

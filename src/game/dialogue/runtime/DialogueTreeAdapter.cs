@@ -26,9 +26,9 @@ public class DialogueTreeAdapter
     private readonly DialogueTree?          _prebuiltTree;
     private readonly LlamaServerManager     _llmManager;
     private readonly ModusMentisSlotManager _slotManager;
-    private readonly TerminalHUD            _terminal;
     private readonly Cathedral.Audio.AmbianceEngine? _ambianceEngine;
 
+    private readonly DialogueTreeUI  _ui;
     private DialogueTreeController? _controller;
     private int                     _npcSlotId  = -1;
     private bool                    _ready;
@@ -60,8 +60,11 @@ public class DialogueTreeAdapter
         _prebuiltTree = prebuiltTree;
         _llmManager   = llmManager;
         _slotManager  = slotManager;
-        _terminal     = terminal;
         _ambianceEngine = ambianceEngine;
+
+        // The UI is created up front so the setup phase can already render the standard
+        // bordered panel — avoids a black flash when transitioning from narration.
+        _ui = new DialogueTreeUI(terminal, npc, protagonist.DisplayName);
     }
 
     // ── Public API ──────────────────────────────────────────────────────────────
@@ -78,13 +81,11 @@ public class DialogueTreeAdapter
             return;
         }
 
-        // While setting up, show a minimal loading screen
-        _terminal.Clear();
-        _terminal.CenteredText(
-            Config.Terminal.MainHeight / 2,
-            _failed ? $"Dialogue failed: {_errorMessage}" : "Starting dialogue…",
-            _failed ? Config.Colors.BrightPurple : Config.Colors.LightGray,
-            Config.Colors.Black);
+        // While setting up, keep the standard panel frame with a generating message
+        // at the bottom — a smooth transition from the narration panel.
+        _ui.RenderSetupFrame(
+            $"Starting dialogue with {_npc.DisplayName}…",
+            _failed ? $"Dialogue failed: {_errorMessage}" : null);
     }
 
     public void OnMouseMove(int mx, int my)  => _controller?.OnMouseMove(mx, my);
@@ -112,7 +113,7 @@ public class DialogueTreeAdapter
                 npcSlotId:   _npcSlotId,
                 llmManager:  _llmManager,
                 slotManager: _slotManager,
-                terminal:    _terminal,
+                ui:          _ui,
                 ambianceEngine: _ambianceEngine);
 
             _ready = true;
