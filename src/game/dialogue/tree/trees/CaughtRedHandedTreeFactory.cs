@@ -55,6 +55,7 @@ public static class CaughtRedHandedTreeFactory
             var forgiven = new DialogueTreeNode(
                 nodeId:      "forgiven",
                 description: "the witness accepts your apology and lets you go with a stern warning",
+                replica:     "...Fine. Off with you — and let me never catch you at this again.",
                 outcomes: new List<DialogueOutcomeCase>
                 {
                     new(new ClearCrimeOutcome(),                                              BranchCondition.Either),
@@ -74,11 +75,15 @@ public static class CaughtRedHandedTreeFactory
                 description: witnessIsBrave
                     ? "the witness rejects your apology and demands you answer for your actions"
                     : "the witness rejects your apology but lets you go with cold contempt",
+                replica:     witnessIsBrave
+                    ? "No. You'll answer for this, here and now."
+                    : "Spare me your words. Get out of my sight.",
                 outcomes: rejectedOutcomes);
 
             var believed = new DialogueTreeNode(
                 nodeId:      "believed",
                 description: "the witness believes your story and you escape without consequence",
+                replica:     "...Hm. Very well — I suppose I was mistaken. Go on, then.",
                 outcomes: new List<DialogueOutcomeCase>
                 {
                     // No record — the lie worked.
@@ -87,6 +92,7 @@ public static class CaughtRedHandedTreeFactory
             var caughtLying = new DialogueTreeNode(
                 nodeId:      "caught_lying",
                 description: "the witness sees through your lie and is now doubly enraged",
+                replica:     "You're lying to my face! Now you'll truly regret it.",
                 outcomes: new List<DialogueOutcomeCase>
                 {
                     new(new CriminalAffinityOutcome(criminalType), BranchCondition.Either),
@@ -96,6 +102,7 @@ public static class CaughtRedHandedTreeFactory
             var fightDemanded = new DialogueTreeNode(
                 nodeId:      "fight_demanded",
                 description: "your provocations push the witness over the edge — they draw their weapon",
+                replica:     "That's the last insult I'll take from you. Draw!",
                 outcomes: new List<DialogueOutcomeCase>
                 {
                     new(new CriminalAffinityOutcome(criminalType), BranchCondition.Either),
@@ -107,6 +114,7 @@ public static class CaughtRedHandedTreeFactory
             var apologize = new DialogueTreeNode(
                 nodeId:      "apologize",
                 description: "attempting to defuse the situation by apologising and explaining yourself",
+                replica:     "I'm sorry — please, let me explain myself.",
                 branches: new List<DialogueBranch>
                 {
                     new(forgiven,  BranchCondition.Success),
@@ -116,6 +124,7 @@ public static class CaughtRedHandedTreeFactory
             var lie = new DialogueTreeNode(
                 nodeId:      "lie",
                 description: "trying to talk your way out by spinning a plausible story",
+                replica:     "You've got it wrong — it isn't what it looked like.",
                 branches: new List<DialogueBranch>
                 {
                     new(believed,     BranchCondition.Success),
@@ -125,6 +134,7 @@ public static class CaughtRedHandedTreeFactory
             var provoke = new DialogueTreeNode(
                 nodeId:      "provoke",
                 description: "deliberately aggravating the witness to force a confrontation on your own terms",
+                replica:     "And what exactly do you mean to do about it?",
                 branches: new List<DialogueBranch>
                 {
                     new(fightDemanded, BranchCondition.Either),
@@ -135,6 +145,7 @@ public static class CaughtRedHandedTreeFactory
             _entry = new DialogueTreeNode(
                 nodeId:      "confrontation",
                 description: BuildConfrontationDescription(criminalType),
+                replica:     BuildConfrontationReplica(criminalType),
                 isEntry:     true,
                 branches: new List<DialogueBranch>
                 {
@@ -161,6 +172,14 @@ public static class CaughtRedHandedTreeFactory
             CriminalAffinityType.Intruder => "the witness demands to know what you are doing in a restricted area",
             CriminalAffinityType.Murderer => "the witness confronts you in horror over what they just saw you do",
             _                             => "the witness confronts you about what they just witnessed",
+        };
+
+        private static string BuildConfrontationReplica(CriminalAffinityType crime) => crime switch
+        {
+            CriminalAffinityType.Thief    => "Stop right there — I saw you take that!",
+            CriminalAffinityType.Intruder => "Hold! What are you doing here? You've no business in this place.",
+            CriminalAffinityType.Murderer => "God above — I saw what you just did!",
+            _                             => "Hold it right there. I saw what you did.",
         };
     }
 

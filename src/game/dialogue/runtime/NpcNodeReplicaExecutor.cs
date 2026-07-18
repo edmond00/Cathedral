@@ -25,9 +25,10 @@ public class NpcNodeReplicaExecutor
         string treeDescription,
         CancellationToken ct = default)
     {
-        string neutral = NeutralNarration.NpcOpening(treeDescription, node.Description);
-        string text = await _rewriter.RewriteAsync(npcSlotId, neutral, NarrationKind.Speaking,
-            personaReminder2: null, addressee: "the traveler", keepHistory: true, ct: ct);
+        string neutral = NeutralNarration.NpcOpening(node.Replica);
+        string text = await _rewriter.RewriteAsync(npcSlotId, neutral, NarrationKind.DialogueReplica,
+            personaReminder2: null, addressee: "the traveler", keepHistory: true,
+            dialogueContext: treeDescription, ct: ct);
         text = text.Trim().Trim('"');
         return string.IsNullOrWhiteSpace(text) ? $"{npc.DisplayName} looks at you in silence." : text;
     }

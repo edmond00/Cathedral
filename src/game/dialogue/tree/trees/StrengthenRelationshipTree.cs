@@ -27,6 +27,7 @@ public class StrengthenRelationshipTree : DialogueTree
     private static readonly DialogueTreeNode Salutation = new(
         nodeId:      "salutation",
         description: "wrapping up the conversation and parting warmly — or not",
+        replica:     "Well, it was good to talk. Take care of yourself.",
         outcomes: new List<DialogueOutcomeCase>
         {
             new(new AffinityIncrementOutcome(+1, AffinityLevel.AnnoyingAcquaintance, AffinityLevel.CloseFriend),
@@ -40,6 +41,7 @@ public class StrengthenRelationshipTree : DialogueTree
     private static readonly DialogueTreeNode Compliment = new(
         nodeId:      "compliment",
         description: "offering a genuine compliment or words of appreciation",
+        replica:     "I've always thought well of you, you know.",
         branches: new List<DialogueBranch>
         {
             new(Salutation, BranchCondition.Either),
@@ -48,6 +50,7 @@ public class StrengthenRelationshipTree : DialogueTree
     private static readonly DialogueTreeNode CheckIn = new(
         nodeId:      "check_in",
         description: "asking how the other person is doing and showing genuine interest",
+        replica:     "How have you been keeping lately?",
         branches: new List<DialogueBranch>
         {
             new(Salutation, BranchCondition.Either),
@@ -56,6 +59,7 @@ public class StrengthenRelationshipTree : DialogueTree
     private static readonly DialogueTreeNode SmallTalk = new(
         nodeId:      "small_talk",
         description: "making pleasant conversation about everyday topics",
+        replica:     "Fine weather we're having, isn't it?",
         branches: new List<DialogueBranch>
         {
             new(Salutation, BranchCondition.Either),
@@ -64,6 +68,7 @@ public class StrengthenRelationshipTree : DialogueTree
     private static readonly DialogueTreeNode Greeting = new(
         nodeId:      "greeting",
         description: "greeting someone you have already met before",
+        replica:     "Good to see you again.",
         isEntry:     true,
         branches: new List<DialogueBranch>
         {

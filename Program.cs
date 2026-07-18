@@ -23,6 +23,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("    --stretch                        Stretch/shrink to exact width/height (ignore aspect ratio)");
     Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console) + viewers");
     Console.WriteLine("  --view                             Show LLM and scene viewers without console decision overriding");
+    Console.WriteLine("  --dialogue-view                    Open a window graphing every dialogue tree (neutral replica text per node)");
     Console.WriteLine("  --playground                       Replace all LLM calls with instant placeholders (no server needed)");
     Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
     Console.WriteLine("  --mm                               After the childhood reminescence phase, fill every empty memory slot with random unheld modiMentis");
@@ -76,6 +77,13 @@ if (args.Length >= 1 && args[0] == "--fight")
 if (args.Length >= 1 && args[0] == "--music")
 {
     Cathedral.Audio.MusicModeLauncher.Launch(args);
+    return;
+}
+
+// Check for dialogue-tree viewer mode (graph every registered dialogue tree; no LLM/game needed)
+if (args.Length >= 1 && args[0] == "--dialogue-view")
+{
+    Cathedral.Debug.DialogueViewLauncher.Launch();
     return;
 }
 

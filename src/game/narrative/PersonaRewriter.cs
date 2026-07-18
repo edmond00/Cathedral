@@ -11,7 +11,12 @@ using Cathedral.Game.Narrative.Sanitizer;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>The kind of text being rewritten — selects the persona styling instruction.</summary>
-public enum NarrationKind { Observation, Reasoning, Action, Outcome, Speaking }
+/// <remarks>
+/// <c>Speaking</c> is self-narration spoken aloud to a companion ("come look at this"); it uses the
+/// first-person narration framing. <c>DialogueReplica</c> is a turn in a two-person conversation —
+/// framed as direct speech where "I" is the speaker and "you" is the interlocutor being addressed.
+/// </remarks>
+public enum NarrationKind { Observation, Reasoning, Action, Outcome, Speaking, DialogueReplica }
 
 /// <summary>
 /// Turns neutral meaning text (from <see cref="NeutralNarration"/>) into persona-styled prose by
@@ -49,11 +54,16 @@ public class PersonaRewriter
         bool keepHistory = false,
         string? forcedPrefix = null,
         string? styleInstruction = null,
+        string? dialogueContext = null,
         CancellationToken ct = default)
     {
         if (PlaygroundMode.IsActive) return neutralText;
 
-        string prompt = BuildPrompt(neutralText, InstructionFor(kind, addressee), FooterFor(kind, personaReminder2, styleInstruction, TextHint));
+        string prompt = kind == NarrationKind.DialogueReplica
+            ? BuildDialoguePrompt(neutralText, addressee, dialogueContext,
+                                  FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee))
+            : BuildPrompt(neutralText, InstructionFor(kind, addressee),
+                          FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee));
         string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateRewriteSchema(forcedPrefix: forcedPrefix));
         string json = await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
 
@@ -90,6 +100,26 @@ This sentence is written in the first person, and that ""I"" is you — it descr
 {instruction}
 {footer}";
 
+    /// <summary>
+    /// Prompt for a single line of dialogue in a two-person conversation. Frames the neutral line as
+    /// direct speech: "I" is the speaker (this persona), "you" is <paramref name="addressee"/>. The
+    /// neutral line is a plain, short reply; the persona keeps its meaning and adds flavour.
+    /// </summary>
+    private static string BuildDialoguePrompt(string neutralText, string? addressee,
+                                              string? dialogueContext, string footer)
+    {
+        string who     = string.IsNullOrWhiteSpace(addressee) ? "the person you are speaking with" : addressee!;
+        string context = string.IsNullOrWhiteSpace(dialogueContext)
+            ? ""
+            : $"The conversation is about {dialogueContext.Trim().TrimEnd('.')}.\n\n";
+
+        return $@"You are in conversation with {who}. {context}Re-express the following spoken line in your own voice, keeping the same meaning and intent: ""{neutralText}""
+
+This is a line of direct dialogue that you say out loud. In it, ""I"" is you, the speaker, and ""you"" is {who}, the person you are talking to. Keep it a short, natural spoken reply — add your own flavour, wording and personality, but do not change what is being said, asked or offered.
+
+{footer}";
+    }
+
     private static string InstructionFor(NarrationKind kind, string? addressee) => kind switch
     {
         NarrationKind.Observation =>
@@ -105,9 +135,12 @@ This sentence is written in the first person, and that ""I"" is you — it descr
         _ => "Re-express this in your own voice, keeping the same meaning.",
     };
 
-    private static string FooterFor(NarrationKind kind, string? personaReminder2, string? styleInstruction, string? jsonHint) =>
+    private static string FooterFor(NarrationKind kind, string? personaReminder2, string? styleInstruction, string? jsonHint, string? addressee) =>
         kind switch
         {
+            // A dialogue turn: 2nd-person reminder that names the interlocutor being addressed.
+            NarrationKind.DialogueReplica =>
+                Config.Narrative.DialogueAnswerInstructionFor(personaReminder2, addressee, jsonHint, styleInstruction),
             // Speaking carries its own 2nd-person dialogue reminder (single sentence per line).
             NarrationKind.Speaking =>
                 Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2, jsonHint, styleInstruction),

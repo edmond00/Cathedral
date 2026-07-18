@@ -219,20 +219,32 @@ public static class NeutralNarration
         => "What do you make of it?";
 
     // ── Dialogue ───────────────────────────────────────────────────────────────
+    // Dialogue neutral text is *direct speech*: a short, plain spoken line authored on each
+    // DialogueTreeNode (its Replica), where "I" is the speaker and "you" is the person addressed.
+    // The persona rewriter keeps the meaning and adds character flavour. The same line serves both
+    // the NPC (when it opens at a node) and the player (when they reply by moving to a node).
 
-    /// <summary>Neutral player line for a chosen dialogue node (its intent, as direct speech).</summary>
-    public static string DialoguePlayerReplica(string nodeDescription)
-        => $"I want to {LowerFirst(nodeDescription.Trim().TrimEnd('.'))}.";
+    /// <summary>Direct neutral player line for a chosen dialogue node — the node's authored replica.</summary>
+    public static string DialoguePlayerReplica(string nodeReplica)
+        => DirectReplica(nodeReplica);
 
-    /// <summary>Neutral NPC opening line for a dialogue node (the step's intent stated plainly).</summary>
-    public static string NpcOpening(string treeDescription, string nodeDescription)
-        => $"{Capitalize(nodeDescription.Trim().TrimEnd('.'))}.";
+    /// <summary>Direct neutral NPC opening line for a dialogue node — the node's authored replica.</summary>
+    public static string NpcOpening(string nodeReplica)
+        => DirectReplica(nodeReplica);
 
-    /// <summary>Neutral NPC reaction after the player's replica and skill check.</summary>
-    public static string NpcReaction(bool succeeded, string nodeDescription)
-        => succeeded
-            ? $"Very well — {LowerFirst(nodeDescription.Trim().TrimEnd('.'))}."
-            : "That does not move me.";
+    /// <summary>
+    /// Direct neutral NPC reaction after the player's replica and skill check — a short spoken
+    /// acknowledgement the persona rewriter flavours using the conversation so far.
+    /// </summary>
+    public static string NpcReaction(bool succeeded)
+        => succeeded ? "Very well." : "That does not move me.";
+
+    /// <summary>Trims an authored replica; falls back to a neutral placeholder when none was set.</summary>
+    private static string DirectReplica(string? replica)
+    {
+        var s = (replica ?? "").Trim();
+        return s.Length == 0 ? "..." : s;
+    }
 
     // ── Critic ─────────────────────────────────────────────────────────────────
 
@@ -310,10 +322,4 @@ public static class NeutralNarration
 
     private static bool IsCapitalizedWord(string w)
         => w.Length > 0 && char.IsUpper(w[0]) && w.All(c => char.IsLetter(c) || c == '-' || c == '\'');
-
-    private static string Capitalize(string s)
-        => string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
-
-    private static string LowerFirst(string s)
-        => string.IsNullOrEmpty(s) ? s : char.ToLowerInvariant(s[0]) + s.Substring(1);
 }

@@ -24,11 +24,13 @@ public class NpcReactionExecutor
         string playerReplica,
         bool succeeded,
         DialogueTreeNode targetNode,
+        string treeDescription,
         CancellationToken ct = default)
     {
-        string neutral = NeutralNarration.NpcReaction(succeeded, targetNode.Description);
-        string text = await _rewriter.RewriteAsync(npcSlotId, neutral, NarrationKind.Speaking,
-            personaReminder2: null, addressee: "the traveler", keepHistory: true, ct: ct);
+        string neutral = NeutralNarration.NpcReaction(succeeded);
+        string text = await _rewriter.RewriteAsync(npcSlotId, neutral, NarrationKind.DialogueReplica,
+            personaReminder2: null, addressee: "the traveler", keepHistory: true,
+            dialogueContext: treeDescription, ct: ct);
         text = text.Trim().Trim('"');
         return string.IsNullOrWhiteSpace(text) ? Fallback(npc, succeeded) : text;
     }

@@ -27,9 +27,10 @@ public class MmReplicaExecutor
         string treeDescription,
         CancellationToken ct = default)
     {
-        string neutral = NeutralNarration.DialoguePlayerReplica(targetNode.Description);
-        string text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Speaking,
-            mm.PersonaReminder2, addressee: npc.DisplayName, keepHistory: true, styleInstruction: mm.StyleInstruction, ct: ct);
+        string neutral = NeutralNarration.DialoguePlayerReplica(targetNode.Replica);
+        string text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.DialogueReplica,
+            mm.PersonaReminder2, addressee: npc.DisplayName, keepHistory: true, styleInstruction: mm.StyleInstruction,
+            dialogueContext: treeDescription, ct: ct);
         return text.Trim().Trim('"');
     }
 }

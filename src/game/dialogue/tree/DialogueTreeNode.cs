@@ -15,10 +15,19 @@ public class DialogueTreeNode
     public string NodeId { get; }
 
     /// <summary>
-    /// Short description of what happens at this step, used in LLM prompts.
+    /// Short description of the intent of this step, used as context in branch-selection LLM prompts
+    /// and in debug tooling. NOT the spoken line — see <see cref="Replica"/>.
     /// e.g. "greeting the stranger for the first time"
     /// </summary>
     public string Description { get; }
+
+    /// <summary>
+    /// The direct, short neutral spoken line for this step, written as first-person direct speech
+    /// where "I" is the speaker and "you" is the person addressed (e.g. "And who might you be?").
+    /// The same line reads naturally whether the NPC opens with it or the player replies with it.
+    /// It is handed to the persona rewriter, which keeps its meaning and adds character flavour.
+    /// </summary>
+    public string Replica { get; }
 
     /// <summary>Whether this is the entry point of the tree.</summary>
     public bool IsEntry { get; }
@@ -41,6 +50,7 @@ public class DialogueTreeNode
     public DialogueTreeNode(
         string                     nodeId,
         string                     description,
+        string                     replica  = "",
         bool                       isEntry  = false,
         List<DialogueBranch>?      branches = null,
         List<DialogueOutcomeCase>? outcomes = null)
@@ -50,6 +60,7 @@ public class DialogueTreeNode
 
         NodeId      = nodeId;
         Description = description;
+        Replica     = replica;
         IsEntry     = isEntry;
         Branches    = branches ?? new List<DialogueBranch>();
         Outcomes    = outcomes ?? new List<DialogueOutcomeCase>();

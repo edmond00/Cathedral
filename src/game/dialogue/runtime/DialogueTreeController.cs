@@ -291,7 +291,7 @@ public class DialogueTreeController
             try
             {
                 reaction = await _reactionExec.ExecuteAsync(
-                    _npc, _npcSlotId, option.ReplicaText, succeeded, option.TargetNode);
+                    _npc, _npcSlotId, option.ReplicaText, succeeded, option.TargetNode, _tree.Description);
             }
             catch (Exception ex)
             {

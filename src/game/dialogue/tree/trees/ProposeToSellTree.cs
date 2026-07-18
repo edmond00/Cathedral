@@ -26,6 +26,7 @@ public class ProposeToSellTree : DialogueTree
     private static readonly DialogueTreeNode Haggle = new(
         nodeId:      "haggle",
         description: "talking up your goods and pressing them to name a price",
+        replica:     "Have a look — what will you give me for them?",
         outcomes: new List<DialogueOutcomeCase>
         {
             new(new OpenTradeMenuOutcome(TradeMode.Sell), BranchCondition.Success),
@@ -34,16 +35,19 @@ public class ProposeToSellTree : DialogueTree
     private static readonly DialogueTreeNode OfferGoods = new(
         nodeId:      "offer_goods",
         description: "plainly offering what you have to sell",
+        replica:     "I've goods here you might want to buy.",
         branches: new List<DialogueBranch> { new(Haggle, BranchCondition.Either) });
 
     private static readonly DialogueTreeNode Flatter = new(
         nodeId:      "flatter",
         description: "appealing to their needs to warm them to a purchase",
+        replica:     "You look like someone who could use fine wares like these.",
         branches: new List<DialogueBranch> { new(Haggle, BranchCondition.Either) });
 
     private static readonly DialogueTreeNode Opening = new(
         nodeId:      "opening",
         description: "opening the conversation with an offer to do business",
+        replica:     "Good day — I've come to do a bit of business.",
         branches: new List<DialogueBranch>
         {
             new(OfferGoods, BranchCondition.Either),

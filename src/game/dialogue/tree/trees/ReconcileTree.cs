@@ -29,6 +29,7 @@ public class ReconcileTree : DialogueTree
     private static readonly DialogueTreeNode Negotiation = new(
         nodeId:      "negotiation",
         description: "pressing your case and trying to convince them to stand down",
+        replica:     "So — can we let this go, you and I?",
         outcomes: new List<DialogueOutcomeCase>
         {
             // Success: clear enemy flag, set Suspicious affinity
@@ -43,6 +44,7 @@ public class ReconcileTree : DialogueTree
     private static readonly DialogueTreeNode Apologize = new(
         nodeId:      "apologize",
         description: "offering a sincere apology and asking for a chance to make things right",
+        replica:     "I'm sorry for what happened. Let me make it right.",
         branches: new List<DialogueBranch>
         {
             new(Negotiation, BranchCondition.Either),
@@ -51,6 +53,7 @@ public class ReconcileTree : DialogueTree
     private static readonly DialogueTreeNode Explain = new(
         nodeId:      "explain",
         description: "explaining your side of things and arguing that the hostility is unwarranted",
+        replica:     "Hear me out — this quarrel between us is a mistake.",
         branches: new List<DialogueBranch>
         {
             new(Negotiation, BranchCondition.Either),
@@ -61,6 +64,7 @@ public class ReconcileTree : DialogueTree
     private static readonly DialogueTreeNode Opening = new(
         nodeId:      "opening",
         description: "opening the conversation and signalling you want to end the hostility",
+        replica:     "Wait — I don't want us to be at odds.",
         branches: new List<DialogueBranch>
         {
             new(Apologize, BranchCondition.Either),

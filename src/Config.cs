@@ -620,6 +620,19 @@ public static class Config
                 ? $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in the character of {personaReminder2}. Address your companion using \"you\". No narration, no third-person phrasing."
                 : $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in character. Adress your companion using \"you\". No narration, no third-person phrasing.";
         }
+
+        /// <summary>
+        /// Like <see cref="SpeakingAnswerInstructionFor"/> but for a turn in a two-person conversation:
+        /// the reminder names the interlocutor (<paramref name="addressee"/>) the speaker addresses as
+        /// "you", and asks for a single spoken line of dialogue.
+        /// </summary>
+        public static string DialogueAnswerInstructionFor(string? personaReminder2, string? addressee, string? jsonHint = null, string? styleInstruction = null)
+        {
+            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
+            string who   = string.IsNullOrWhiteSpace(addressee) ? "the person you are speaking with" : addressee.Trim();
+            string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
+            return $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} {character} Speak directly to {who} using \"you\". Give only the spoken line — no narration, no third-person phrasing, no quotation marks.";
+        }
     }
 
     #endregion

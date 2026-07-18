@@ -25,6 +25,7 @@ public class RequestJobTree : DialogueTree
     private static readonly DialogueTreeNode Decide = new(
         nodeId:      "decide",
         description: "waiting on their answer as they weigh whether to take you on",
+        replica:     "So, will you take me on?",
         outcomes: new List<DialogueOutcomeCase>
         {
             new(new OpenJobMenuOutcome(), BranchCondition.Success),
@@ -33,16 +34,19 @@ public class RequestJobTree : DialogueTree
     private static readonly DialogueTreeNode AskPlainly = new(
         nodeId:      "ask_plainly",
         description: "asking plainly for the work and what it pays",
+        replica:     "What work have you, and what does it pay?",
         branches: new List<DialogueBranch> { new(Decide, BranchCondition.Either) });
 
     private static readonly DialogueTreeNode ShowWilling = new(
         nodeId:      "show_willing",
         description: "showing you are willing and able for the labour",
+        replica:     "I'm strong and willing — put me to any task you like.",
         branches: new List<DialogueBranch> { new(Decide, BranchCondition.Either) });
 
     private static readonly DialogueTreeNode Opening = new(
         nodeId:      "opening",
         description: "opening the conversation with a request for work",
+        replica:     "I'm looking for work, if you have any.",
         isEntry:     true,
         branches: new List<DialogueBranch>
         {
