@@ -64,7 +64,7 @@ public class DialogueTreeAdapter
 
         // The UI is created up front so the setup phase can already render the standard
         // bordered panel — avoids a black flash when transitioning from narration.
-        _ui = new DialogueTreeUI(terminal, npc, protagonist.DisplayName);
+        _ui = new DialogueTreeUI(terminal, npc, protagonist.AffinityKey);
     }
 
     // ── Public API ──────────────────────────────────────────────────────────────
@@ -135,7 +135,7 @@ public class DialogueTreeAdapter
         // Pre-built tree (e.g. caught-red-handed) takes precedence over registry lookup.
         if (_prebuiltTree != null) return _prebuiltTree;
 
-        string partyMemberId = _protagonist.DisplayName;
+        string partyMemberId = _protagonist.AffinityKey;
 
         if (_treeId != null)
         {

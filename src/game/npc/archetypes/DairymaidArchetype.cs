@@ -10,11 +10,7 @@ public class DairymaidArchetype : PeasantArchetype
     public override ItemTag? BuyTag  => ItemTag.Craftware;
     public override int    ModiMentisCount => 7;
 
-    public override string[] NamePool => new[]
-    {
-        "Mariot Dairy", "Cecily Curd", "Hawise Pail", "Avice Churn",
-        "Joan Whey", "Petronilla Curd", "Editha Pail", "Lufa Churn",
-    };
+    protected override NameGender? GenderBias => NameGender.Female;
 
     public override string RoleNoun => "dairymaid";
 

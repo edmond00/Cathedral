@@ -15,12 +15,6 @@ public class WolfArchetype : NamedNpcArchetype
     public override int MinAgeDays => 2 * LifetimeStat.DaysPerYear;
     public override int MaxAgeDays => 9 * LifetimeStat.DaysPerYear;
 
-    public override string[] NamePool => new[]
-    {
-        "Grey Wolf", "Timber Wolf", "Black Wolf", "Lean Wolf",
-        "Scarred Wolf", "Young Wolf", "Old Wolf", "Lone Wolf"
-    };
-
     public override string RoleNoun => "wolf";
     protected override bool LabelMentionsLocation => false;
 

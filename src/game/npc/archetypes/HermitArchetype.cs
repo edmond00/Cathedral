@@ -17,12 +17,6 @@ public class HermitArchetype : NamedNpcArchetype
     public override int ModiMentisCount => 12;
     public override bool CanSpeak => true;
 
-    public override string[] NamePool => new[]
-    {
-        "Old Wynn", "Silence", "Brother Ashmore", "The Recluse",
-        "Crag-Sitter", "Maelis the Quiet", "Barefoot Herne"
-    };
-
     public override string RoleNoun => "hermit";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

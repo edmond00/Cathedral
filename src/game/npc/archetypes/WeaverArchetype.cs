@@ -12,12 +12,6 @@ public class WeaverArchetype : CraftsmanArchetype
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
-    public override string[] NamePool => new[]
-    {
-        "Audrey Webster", "Beatrix Loom", "Cecily Weaver", "Editha Flax",
-        "Reginald Webster", "Hugh Loom", "Maud Spinster", "Avice Threadgold",
-    };
-
     public override string RoleNoun => "weaver";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

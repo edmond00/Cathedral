@@ -24,7 +24,7 @@ public static class NpcLabelResolver
     {
         // Affinity is keyed by the party member's display name ("Protagonist" for the protagonist),
         // matching MeetStrangerVerb / StrengthenRelationshipVerb / DialogueTreeController.
-        string key = actingMember?.DisplayName ?? "Protagonist";
+        string key = actingMember?.AffinityKey ?? "Protagonist";
 
         string locationNoun = world?.DisplayName.ToLowerInvariant() ?? "";
         string roleClause   = npc.Archetype.BuildRoleClause(locationNoun);
@@ -68,7 +68,7 @@ public static class NpcLabelResolver
     }
 
     /// <summary>Reads the NPC's "gender" derived stat (male when &gt; 0); defaults to male if absent.</summary>
-    private static bool GenderIsMale(PartyMember member)
+    public static bool GenderIsMale(PartyMember member)
     {
         var stat = member.DerivedStats.FirstOrDefault(s => s.Name == "gender");
         return stat == null || stat.GetValue(member) > 0;

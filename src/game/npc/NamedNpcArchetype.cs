@@ -25,8 +25,12 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// <summary>Whether spawned NPCs persist across visits (named characters).</summary>
     public abstract bool DefaultPersistent { get; }
 
-    /// <summary>Pool of possible display names. One is picked randomly on spawn.</summary>
-    public abstract string[] NamePool { get; }
+    /// <summary>
+    /// Optional forced gender for spawned NPCs of inherently gendered roles (a dairymaid, a reeve).
+    /// Null means the gender is a seeded 50/50 flip. Only meaningful for human archetypes; beasts
+    /// have no gender and ignore this.
+    /// </summary>
+    protected virtual NameGender? GenderBias => null;
 
     /// <summary>How many modiMentis to assign at creation.</summary>
     public virtual int ModiMentisCount => 8;
@@ -95,12 +99,29 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// <summary>Spawns a new <see cref="NpcEntity"/> from this archetype.</summary>
     public NpcEntity Spawn(Random rng, string nodeContext = "", AffinityTable? savedAffinity = null)
     {
-        var name = NamePool[rng.Next(NamePool.Length)];
+        // Seed a dedicated name RNG from the (deterministic, per-location) scene stream so a given
+        // NPC's name is stable across visits and reproducible under --seed, independent of later
+        // draw order. See the naming plan / SceneFactory.CreateSeededRandom.
+        var nameRng = new Random(rng.Next());
+
+        var combatant = new EnemyCombatant("", Species);
+
+        // Humans get a seeded biological sex stamped on the combatant; GenderStat then reflects it.
+        // Beasts have no genitories and no gender — they use the descriptive beast generator.
+        bool isHuman = Species.AnatomyType == AnatomyType.Human;
+        if (isHuman)
+            combatant.BiologicalSexMale = GenderFor(nameRng);
+
+        // Read gender back through GenderStat so it is the single source of truth for the name.
+        string name = isHuman
+            ? Naming.NameGenerator.GenerateHuman(NpcLabelResolver.GenderIsMale(combatant), nameRng)
+            : Naming.NameGenerator.GenerateBeast(nameRng);
+        combatant.SetDisplayName(name);
+
         var npcId = DefaultPersistent
             ? $"{ArchetypeId}_{name.ToLowerInvariant().Replace(' ', '_')}"
             : $"{ArchetypeId}_{rng.Next(100000)}";
 
-        var combatant = new EnemyCombatant(name, Species);
         combatant.InitializeModiMentis(ModusMentisRegistry.Instance, ModiMentisCount);
 
         // Age is sampled from this archetype's band and stamped as a birth time against the clock as
@@ -126,6 +147,14 @@ public abstract class NamedNpcArchetype : NpcArchetype
             authorityLevel:        AuthorityLevel,
             ownedSectionIds:       DefaultOwnedSectionIds);
     }
+
+    /// <summary>Resolves the sex to stamp: a forced <see cref="GenderBias"/> or a seeded 50/50 flip.</summary>
+    private bool GenderFor(Random rng) => GenderBias switch
+    {
+        NameGender.Male   => true,
+        NameGender.Female => false,
+        _                 => rng.Next(2) == 0,
+    };
 
     // ── Observation hint ──────────────────────────────────────────────────────
 
@@ -179,4 +208,11 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// Only called when <see cref="CanSpeak"/> is true.
     /// </summary>
     protected virtual string GenerateWayToSpeakDescription(string name, Random rng) => string.Empty;
+}
+
+/// <summary>Forced gender for an archetype's spawned NPCs (see <see cref="NamedNpcArchetype.GenderBias"/>).</summary>
+public enum NameGender
+{
+    Male,
+    Female,
 }

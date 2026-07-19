@@ -17,14 +17,22 @@ public class ProtagonistCreationRenderer
 {
     private readonly TerminalHUD _terminal;
     private readonly BodyArtViewer _viewer;
+    private readonly Protagonist _protagonist;
 
     // Footer layout
     private const int ContinueButtonY = 96;
     private const int ContinueButtonX = 72;
     private const int ContinueButtonW = 18;
 
+    // Name banner layout (top of the body-art pane): [⟲] reroll button, then the name to its right.
+    private const int NameRow = 2;
+    private const int NameX = 2;
+    private const string RegenLabel = "[⟲]";
+
     // State
     private bool _continueHovered;
+    private bool _regenHovered;
+    private int _regenButtonX = -1;   // computed each Render (depends on name length)
 
     /// <summary>Callback for when the player clicks Continue.</summary>
     public Action? OnContinue { get; set; }
@@ -32,6 +40,7 @@ public class ProtagonistCreationRenderer
     public ProtagonistCreationRenderer(TerminalHUD terminal, Protagonist protagonist, BodyArtData artData)
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
+        _protagonist = protagonist ?? throw new ArgumentNullException(nameof(protagonist));
 
         _viewer = new BodyArtViewer(terminal, protagonist, artData)
         {
@@ -49,6 +58,7 @@ public class ProtagonistCreationRenderer
         _terminal.Visible = true;
 
         _viewer.RenderBodyArt();
+        RenderNameBanner();
         RenderPanelHeader();
         int lastRow = _viewer.RenderOrganStats();
         int descRow = _viewer.RenderHoveredOrganDescription(lastRow);
@@ -61,7 +71,12 @@ public class ProtagonistCreationRenderer
     public void Update()
     {
         if (_viewer.UpdateBlink())
+        {
+            // RenderBodyArt repaints (and clears) the whole left pane, so the name banner must be
+            // redrawn on top of it or it would vanish on blink frames.
             _viewer.RenderBodyArt();
+            RenderNameBanner();
+        }
     }
 
     /// <summary>Handle mouse hover at terminal coordinates.</summary>
@@ -69,11 +84,13 @@ public class ProtagonistCreationRenderer
     {
         bool viewerChanged = _viewer.ProcessHover(x, y);
         bool newContinueHovered = IsOnContinueButton(x, y);
-        bool continueChanged = newContinueHovered != _continueHovered;
+        bool newRegenHovered = IsOnRegenButton(x, y);
+        bool buttonsChanged = newContinueHovered != _continueHovered || newRegenHovered != _regenHovered;
 
-        if (viewerChanged || continueChanged)
+        if (viewerChanged || buttonsChanged)
         {
             _continueHovered = newContinueHovered;
+            _regenHovered = newRegenHovered;
             Render();
         }
     }
@@ -81,11 +98,21 @@ public class ProtagonistCreationRenderer
     /// <summary>Handle left click at terminal coordinates (+1 to organ part score).</summary>
     public void OnMouseClick(int x, int y)
     {
+        if (IsOnRegenButton(x, y))
+        {
+            _protagonist.RegenerateName();
+            Render();
+            return;
+        }
+
         if (IsOnContinueButton(x, y))
         {
             OnContinue?.Invoke();
             return;
         }
+
+        // A gender change (genitories score crossing 0) rerolls the name to match the new sex.
+        bool maleBefore = IsMale();
 
         // Check arrow buttons in stats panel
         int arrowDelta = _viewer.GetArrowClickDelta(x, y);
@@ -95,6 +122,7 @@ public class ProtagonistCreationRenderer
             if (partId != null)
             {
                 _viewer.AdjustOrganPartScore(partId, arrowDelta);
+                RegenerateIfGenderChanged(maleBefore);
                 Render();
                 return;
             }
@@ -104,14 +132,41 @@ public class ProtagonistCreationRenderer
         if (clickedPart != null)
         {
             _viewer.CycleOrganPartScore(clickedPart);
+            RegenerateIfGenderChanged(maleBefore);
             Render();
         }
+    }
+
+    /// <summary>True when the protagonist's current genitories score reads as male (&gt; 0).</summary>
+    private bool IsMale() => (_protagonist.GetOrganPartById("genitories")?.Score ?? 1) > 0;
+
+    /// <summary>Rerolls the name when the last score edit flipped the gender.</summary>
+    private void RegenerateIfGenderChanged(bool maleBefore)
+    {
+        if (IsMale() != maleBefore)
+            _protagonist.RegenerateName();
     }
 
     /// <summary>Right click has no effect in creation mode.</summary>
     public void OnRightClick(int x, int y) { }
 
     // ── Panel header ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Draws the protagonist's generated name at the top of the body-art pane, with a "[⟲]" reroll
+    /// button to its right. The button's x depends on the name length, so it is recomputed and stored
+    /// here for hit-testing (<see cref="IsOnRegenButton"/>).
+    /// </summary>
+    private void RenderNameBanner()
+    {
+        _regenButtonX = NameX;
+        Vector4 fg = _regenHovered ? Config.Colors.BrightYellow  : Config.Colors.DarkYellowGrey;
+        Vector4 bg = _regenHovered ? Config.Colors.DarkYellow    : Config.Colors.Black;
+        _terminal.Text(_regenButtonX, NameRow, RegenLabel, fg, bg);
+
+        int nameX = _regenButtonX + RegenLabel.Length + 1;
+        _terminal.Text(nameX, NameRow, _protagonist.DisplayName, Config.Colors.BrightYellow, Config.Colors.Black);
+    }
 
     private void RenderPanelHeader()
     {
@@ -156,9 +211,14 @@ public class ProtagonistCreationRenderer
         return y == ContinueButtonY && x >= ContinueButtonX && x < ContinueButtonX + ContinueButtonW;
     }
 
+    /// <summary>True when (x, y) is on the "[⟲]" reroll button next to the name banner.</summary>
+    private bool IsOnRegenButton(int x, int y)
+        => y == NameRow && _regenButtonX >= 0 && x >= _regenButtonX && x < _regenButtonX + RegenLabel.Length;
+
     /// <summary>Returns a stable element id for the UI element at (x, y), or null if none.</summary>
     public string? GetHoveredElementId(int x, int y)
     {
+        if (IsOnRegenButton(x, y)) return "regen";
         if (IsOnContinueButton(x, y)) return "continue";
         int arrowDelta = _viewer.GetArrowClickDelta(x, y);
         if (arrowDelta != 0)

@@ -18,12 +18,6 @@ public class FarmerArchetype : NamedNpcArchetype
     public override bool IsBrave            => true;   // owns the land, will demand a fight
     public override int  AuthorityLevel     => 1;      // landowner
 
-    public override string[] NamePool => new[]
-    {
-        "Aldric Holt", "Brenna Holt", "Cuthbert Marsh", "Edwyna Marsh",
-        "Godwin Furrow", "Mildred Furrow", "Osbert Grain", "Wulfhild Grain",
-    };
-
     public override string RoleNoun => "farmer";
     protected override bool LabelMentionsLocation => false;
 

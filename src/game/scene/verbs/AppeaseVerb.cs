@@ -31,7 +31,7 @@ public class AppeaseVerb : Verb
         if (!npc.IsAlive) return false;
         if (!scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id)) return false;
 
-        var protagonistId = actor?.DisplayName ?? "Protagonist";
+        var protagonistId = actor?.AffinityKey ?? "Protagonist";
         var isEnemy   = npc.AffinityTable.IsEnemy(protagonistId);
         var affinity  = npc.AffinityTable.GetLevel(protagonistId);
         var isNegative = affinity == AffinityLevel.AnnoyingAcquaintance;

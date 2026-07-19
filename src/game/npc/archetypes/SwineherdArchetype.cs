@@ -10,12 +10,6 @@ public class SwineherdArchetype : PeasantArchetype
     public override ItemTag? BuyTag  => ItemTag.Crop;
     public override int    ModiMentisCount => 6;
 
-    public override string[] NamePool => new[]
-    {
-        "Hob Swine", "Walter Pigsty", "Robert Tusker", "Edmer Swine",
-        "Mariot Swine", "Joan Pigsty", "Tibb Swine", "Hawise Tusker",
-    };
-
     public override string RoleNoun => "swineherd";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

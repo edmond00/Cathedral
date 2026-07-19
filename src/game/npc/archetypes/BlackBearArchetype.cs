@@ -15,12 +15,6 @@ public class BlackBearArchetype : NamedNpcArchetype
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 7;
 
-    public override string[] NamePool => new[]
-    {
-        "Black Bear", "Shaggy Bear", "Boar-Scarred Bear", "Lean Bear",
-        "Old Black Bear", "Young Bear", "Heavy Bear", "Scarred Bear"
-    };
-
     public override string RoleNoun => "black bear";
     protected override bool LabelMentionsLocation => false;
 

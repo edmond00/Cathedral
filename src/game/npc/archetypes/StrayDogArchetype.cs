@@ -15,12 +15,6 @@ public class StrayDogArchetype : NamedNpcArchetype
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 5;
 
-    public override string[] NamePool => new[]
-    {
-        "Gaunt Dog", "Feral Dog", "Snarling Dog", "Scarred Dog",
-        "Mangy Hound", "Lean Cur", "Wild Hound", "Half-Starved Dog"
-    };
-
     public override string RoleNoun => "dog";
     protected override bool LabelMentionsLocation => false;
 

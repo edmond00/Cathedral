@@ -66,7 +66,33 @@ public class Protagonist : PartyMember
     }
 
     // ── PartyMember abstract ─────────────────────────────────────
-    public override string DisplayName => "Protagonist";
+
+    /// <summary>
+    /// The protagonist's generated proper name, rolled at run start and re-rollable in the creation
+    /// screen (see <see cref="RegenerateName"/>). Null only until the constructor's first roll.
+    /// </summary>
+    public string? CharacterName { get; private set; }
+
+    /// <summary>The generated name once set, falling back to "Protagonist" before the first roll.</summary>
+    public override string DisplayName => CharacterName ?? "Protagonist";
+
+    /// <summary>
+    /// Affinity key stays the fixed "Protagonist" constant regardless of the generated
+    /// <see cref="CharacterName"/>, so changing the display name never re-keys NPC affinity.
+    /// </summary>
+    public override string AffinityKey => "Protagonist";
+
+    /// <summary>
+    /// Rolls a fresh gendered name from the procedural generator, matching the current gender
+    /// (from the "gender" derived stat, driven by the genitories organ score). Uses a fresh
+    /// <see cref="System.Random"/> so each reroll differs — the protagonist name is player-chosen,
+    /// so it need not be reproducible under <c>--seed</c>.
+    /// </summary>
+    public void RegenerateName()
+    {
+        bool male = DerivedStats.First(s => s.Name == "gender").GetValue(this) > 0;
+        CharacterName = Cathedral.Game.Npc.Naming.NameGenerator.GenerateHuman(male, new System.Random());
+    }
 
     // ── Starting age ─────────────────────────────────────────────
 
@@ -92,6 +118,10 @@ public class Protagonist : PartyMember
         // Born roughly fourteen years before day zero, give or take a year.
         var rng = GameRng.For("protagonist_birth");
         SetAgeAtCreation(StartAgeDays + rng.Next(-StartAgeJitterDays, StartAgeJitterDays + 1));
+
+        // Roll an initial name. Organ scores were just randomised to 1 (genitories = 1 → male), so
+        // this starts as a male name matching the default body; it rerolls when gender changes.
+        RegenerateName();
     }
 
 }

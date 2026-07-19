@@ -12,12 +12,6 @@ public class CharcoalBurnerArchetype : WildernessNpcArchetype
     public override ItemTag? BuyTag  => ItemTag.Wood;
     public override int    ModiMentisCount => 7;
 
-    public override string[] NamePool => new[]
-    {
-        "Cuthbert Coalman", "Edmund Char", "Walter Cinder", "Wymark Coalwood",
-        "Aldhelm Char", "Hugh Coalman", "Robin Cinder", "Tibb Coalwood",
-    };
-
     public override string RoleNoun => "charcoal burner";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

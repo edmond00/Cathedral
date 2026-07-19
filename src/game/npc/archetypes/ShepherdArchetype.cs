@@ -10,12 +10,6 @@ public class ShepherdArchetype : PeasantArchetype
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 7;
 
-    public override string[] NamePool => new[]
-    {
-        "Coleman Shepherd", "Wymar Fold", "Edmund Wether", "Robin Shepherd",
-        "Hawise Fold", "Cecily Wether", "Hob Lambsfoot", "Joan Shepherd",
-    };
-
     public override string RoleNoun => "shepherd";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

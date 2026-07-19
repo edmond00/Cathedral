@@ -14,12 +14,6 @@ public class MinerArchetype : WildernessNpcArchetype
     public override int    ModiMentisCount => 8;
     public override bool   IsBrave      => true;
 
-    public override string[] NamePool => new[]
-    {
-        "Wulfstan Pick", "Edmer Shaft", "Robert Vein", "Coleman Pick",
-        "Hugh Shaft", "Walter Vein", "Edmund Mine", "Roger Pick",
-    };
-
     public override string RoleNoun => "miner";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

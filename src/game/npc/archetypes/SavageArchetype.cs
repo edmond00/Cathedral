@@ -12,12 +12,6 @@ public class SavageArchetype : NamedNpcArchetype
     public override int ModiMentisCount => 10;
     public override bool CanSpeak => true;
 
-    public override string[] NamePool => new[]
-    {
-        "Scar", "Fang-Tooth", "Red Knuckle", "Ashface",
-        "Gnaw", "Bark-Hide", "Bone-Shaker", "Cinder"
-    };
-
     public override string RoleNoun => "savage";
     protected override bool LabelMentionsLocation => false;
 

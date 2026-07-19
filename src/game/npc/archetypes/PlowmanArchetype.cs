@@ -8,12 +8,6 @@ public class PlowmanArchetype : PeasantArchetype
     public override string ArchetypeId => "plowman";
     public override int    ModiMentisCount => 7;
 
-    public override string[] NamePool => new[]
-    {
-        "Hob Furrow", "Wat Plough", "Coleman Tilth", "Edmer Furrow",
-        "Walter Tilth", "Osbert Plough", "Hugh Furrow", "Tibb Plough",
-    };
-
     public override string RoleNoun => "plowman";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

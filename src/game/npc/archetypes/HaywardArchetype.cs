@@ -12,12 +12,6 @@ public class HaywardArchetype : PeasantArchetype
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
-    public override string[] NamePool => new[]
-    {
-        "Coleman Hayward", "Roger Hayward", "Walter Hedge", "Edmund Margin",
-        "Wymark Hayward", "Hugh Hedge", "Joan Hayward", "Avice Margin",
-    };
-
     public override string RoleNoun => "hayward";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

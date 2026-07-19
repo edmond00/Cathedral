@@ -12,12 +12,6 @@ public class BlacksmithArchetype : CraftsmanArchetype
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
-    public override string[] NamePool => new[]
-    {
-        "Aelric Smith", "Brand Coalheart", "Edric Iron", "Godfrey Hammer",
-        "Hild Smith", "Ranulf Forge", "Walter Anvil", "Wulfric Smith",
-    };
-
     public override string RoleNoun => "blacksmith";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

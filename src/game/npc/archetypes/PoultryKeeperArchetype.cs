@@ -10,12 +10,6 @@ public class PoultryKeeperArchetype : PeasantArchetype
     public override ItemTag? BuyTag  => ItemTag.Crop;
     public override int    ModiMentisCount => 6;
 
-    public override string[] NamePool => new[]
-    {
-        "Avice Henwife", "Mariot Coop", "Hawise Featherwife", "Joan Henwife",
-        "Editha Coop", "Lufa Henwife", "Petronilla Featherwife", "Cecily Coop",
-    };
-
     public override string RoleNoun => "poultry keeper";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

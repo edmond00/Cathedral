@@ -196,8 +196,8 @@ public sealed class AffinityChangeOutcome : OutcomeReport
 
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
-        _npc.AffinityTable.ClearEnemy(protagonist.DisplayName);
-        _npc.AffinityTable.SetLevel(protagonist.DisplayName, Cathedral.Game.Dialogue.Affinity.AffinityLevel.Suspicious);
+        _npc.AffinityTable.ClearEnemy(protagonist.AffinityKey);
+        _npc.AffinityTable.SetLevel(protagonist.AffinityKey, Cathedral.Game.Dialogue.Affinity.AffinityLevel.Suspicious);
     }
 }
 

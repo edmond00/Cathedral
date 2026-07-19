@@ -2777,7 +2777,7 @@ public class LocationTravelGameController : IDisposable
 
         var archetype = archetypeFactory();
         var npc = archetype.Spawn(_travelRng, _consumptionBiome);
-        npc.AffinityTable.SetEnemy(_protagonist.DisplayName);
+        npc.AffinityTable.SetEnemy(_protagonist.AffinityKey);
 
         _interface.MovementPaused = true;
         _inTravelEncounter = true;
@@ -2964,8 +2964,8 @@ public class LocationTravelGameController : IDisposable
         // Non-persistent beasts spawn fresh as strangers each visit, so they are always re-flagged.
         foreach (var sceneNpc in scene.Npcs)
             if (sceneNpc.Entity is Cathedral.Game.Npc.NpcEntity npcEnt && npcEnt.Archetype.DefaultEnemy
-                && npcEnt.AffinityTable.IsStranger(_protagonist.DisplayName))
-                npcEnt.AffinityTable.SetEnemy(_protagonist.DisplayName);
+                && npcEnt.AffinityTable.IsStranger(_protagonist.AffinityKey))
+                npcEnt.AffinityTable.SetEnemy(_protagonist.AffinityKey);
 
         // Share the depletion store with the persistent state, then apply current depletion (regen).
         scene.ItemDepletions = state.ItemDepletions;
@@ -3019,7 +3019,7 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine($"LocationTravelGameController: Starting fight with {mainEnemy.DisplayName}");
 
         // Mark main enemy and all allies as enemies of the protagonist
-        mainEnemy.AffinityTable.SetEnemy(protagonist.DisplayName);
+        mainEnemy.AffinityTable.SetEnemy(protagonist.AffinityKey);
 
         // Compute allies: brave NPCs in the same section as the player (excluding main enemy)
         var allies = new List<Cathedral.Game.Npc.NpcEntity>();
@@ -3039,7 +3039,7 @@ public class LocationTravelGameController : IDisposable
                     .ToList();
 
                 foreach (var ally in allies)
-                    ally.AffinityTable.SetEnemy(protagonist.DisplayName);
+                    ally.AffinityTable.SetEnemy(protagonist.AffinityKey);
 
                 Console.WriteLine($"LocationTravelGameController: {allies.Count} ally(ies) joining the fight");
             }

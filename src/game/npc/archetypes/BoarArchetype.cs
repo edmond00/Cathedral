@@ -15,12 +15,6 @@ public class BoarArchetype : NamedNpcArchetype
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 6;
 
-    public override string[] NamePool => new[]
-    {
-        "Wild Boar", "Tusked Boar", "Great Boar", "Mud Boar",
-        "Scarred Boar", "Old Boar", "Bristled Boar", "Feral Boar"
-    };
-
     public override string RoleNoun => "boar";
     protected override bool LabelMentionsLocation => false;
 

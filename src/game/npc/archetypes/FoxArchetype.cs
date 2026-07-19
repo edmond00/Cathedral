@@ -14,12 +14,6 @@ public class FoxArchetype : NamedNpcArchetype
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 4;
 
-    public override string[] NamePool => new[]
-    {
-        "Red Fox", "Grey Fox", "Lean Fox", "Young Fox",
-        "Old Fox", "Vixen", "Mangy Fox", "Sleek Fox"
-    };
-
     public override string RoleNoun => "fox";
     protected override bool LabelMentionsLocation => false;
 

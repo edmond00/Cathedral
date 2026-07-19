@@ -8,12 +8,6 @@ public class BondmanArchetype : PeasantArchetype
     public override string ArchetypeId => "bondman";
     public override int    ModiMentisCount => 6;
 
-    public override string[] NamePool => new[]
-    {
-        "Tibb Field", "Hob Bond", "Walter Tilth", "Edmer Stoop",
-        "Mariot Bond", "Avice Field", "Hawise Stoop", "Sara Bond",
-    };
-
     public override string RoleNoun => "bondman";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

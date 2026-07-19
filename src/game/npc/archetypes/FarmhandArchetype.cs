@@ -14,12 +14,6 @@ public class FarmhandArchetype : NamedNpcArchetype
     public override int  ModiMentisCount    => 8;
     public override bool CanSpeak           => true;
 
-    public override string[] NamePool => new[]
-    {
-        "Wat Cooper", "Agnes Rowe", "Tom Barley", "Matilda Webb",
-        "Hugh Swindle", "Joan Thatcher", "Robin Clod", "Cecily Field",
-    };
-
     public override string RoleNoun => "farmhand";
     protected override bool LabelMentionsLocation => false;
 

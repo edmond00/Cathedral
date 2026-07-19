@@ -12,12 +12,6 @@ public class MillerArchetype : CraftsmanArchetype
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
-    public override string[] NamePool => new[]
-    {
-        "Adam Miller", "Burchard Grist", "Walter Grindstone", "Robert Mill",
-        "Margery Mill", "Alyce Grist", "John Grindstone", "Reynold Miller",
-    };
-
     public override string RoleNoun => "miller";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

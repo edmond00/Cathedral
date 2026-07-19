@@ -7,7 +7,7 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public class EnemyCombatant : PartyMember
 {
-    private readonly string _displayName;
+    private string _displayName;
     public override string DisplayName => _displayName;
 
     /// <summary>
@@ -18,4 +18,10 @@ public class EnemyCombatant : PartyMember
     {
         _displayName = displayName;
     }
+
+    /// <summary>
+    /// Overwrite the display name after construction. Used by the name generator, which must build
+    /// the combatant first (to read its seeded gender) before it can produce a gendered name.
+    /// </summary>
+    public void SetDisplayName(string displayName) => _displayName = displayName;
 }

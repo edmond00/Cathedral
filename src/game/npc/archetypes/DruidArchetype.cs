@@ -12,12 +12,6 @@ public class DruidArchetype : NamedNpcArchetype
     public override int ModiMentisCount => 12;
     public override bool CanSpeak => true;
 
-    public override string[] NamePool => new[]
-    {
-        "Aldous the Green", "Branna of the Oak", "Cerwyn Mossfoot",
-        "Daegel Thornhand", "Elowen Rootwalker", "Finbar Ashcloak"
-    };
-
     public override string RoleNoun => "druid";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

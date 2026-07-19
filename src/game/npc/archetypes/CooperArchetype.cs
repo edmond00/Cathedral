@@ -12,12 +12,6 @@ public class CooperArchetype : CraftsmanArchetype
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
-    public override string[] NamePool => new[]
-    {
-        "Ailwin Cooper", "Ralph Stave", "Theobald Hooper", "Wymar Cooper",
-        "Sara Cooper", "Joan Stavewright", "Hugh Hoopwright", "Edmund Cooper",
-    };
-
     public override string RoleNoun => "cooper";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

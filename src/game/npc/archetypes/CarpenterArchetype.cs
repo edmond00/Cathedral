@@ -12,12 +12,6 @@ public class CarpenterArchetype : CraftsmanArchetype
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
-    public override string[] NamePool => new[]
-    {
-        "Henry Plank", "Ealdred Beam", "Osric Wright", "Durstan Wood",
-        "Amice Sawyer", "Ivetta Plank", "Roger Wright", "Thurkil Wood",
-    };
-
     public override string RoleNoun => "carpenter";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

@@ -10,12 +10,6 @@ public class ReaperArchetype : PeasantArchetype
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 7;
 
-    public override string[] NamePool => new[]
-    {
-        "Sara Sheaf", "Lufa Reap", "Cuthbert Sickle", "Joan Sower",
-        "Hawise Reap", "Edmund Sheaf", "Petronilla Sickle", "Robin Sower",
-    };
-
     public override string RoleNoun => "reaper";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

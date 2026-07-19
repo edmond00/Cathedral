@@ -12,12 +12,6 @@ public class ApprenticeArchetype : CraftsmanArchetype
     public override int MinAgeDays => 12 * LifetimeStat.DaysPerYear;
     public override int MaxAgeDays => 22 * LifetimeStat.DaysPerYear;
 
-    public override string[] NamePool => new[]
-    {
-        "Young Edmund", "Cuthbert Lad", "Hob Apprentice", "Tibb Smith-boy",
-        "Wat Hammers", "Stephen Bellows", "Roger Coalboy", "Dickon Forge",
-    };
-
     public override string RoleNoun => "apprentice";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

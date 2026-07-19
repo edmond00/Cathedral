@@ -12,12 +12,6 @@ public class BrewerArchetype : CraftsmanArchetype
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
-    public override string[] NamePool => new[]
-    {
-        "Avice Alewife", "Mabel Brewer", "Elias Mash", "Thurstan Ale",
-        "Christina Brewer", "Walter Hops", "Hawise Tipple", "Robin Brewer",
-    };
-
     public override string RoleNoun => "brewer";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

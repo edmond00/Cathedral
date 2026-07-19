@@ -12,12 +12,6 @@ public class BakerArchetype : CraftsmanArchetype
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
-    public override string[] NamePool => new[]
-    {
-        "Geoffrey Baker", "Hugh Furner", "Aldwyn Crust", "Hawise Baker",
-        "Mariot Loaf", "Wymark Baker", "Petronilla Crumb", "Robert Furner",
-    };
-
     public override string RoleNoun => "baker";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

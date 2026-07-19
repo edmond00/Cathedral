@@ -21,14 +21,14 @@ public static class ThreatSelector
     public static ThreatContext ComputeContext(Scene scene, PoV pov, Protagonist protagonist)
     {
         // 1. Visual threat: same area
-        var visual = SelectFrom(scene, pov.Where, pov.When, protagonist.DisplayName);
+        var visual = SelectFrom(scene, pov.Where, pov.When, protagonist.AffinityKey);
         if (visual != null)
             return new ThreatContext(ThreatLevel.Visual, visual);
 
         // 2. Audio threat: adjacent areas (one hop in either direction)
         foreach (var adjacent in GetAdjacentAreas(scene, pov.Where))
         {
-            var audio = SelectFrom(scene, adjacent, pov.When, protagonist.DisplayName);
+            var audio = SelectFrom(scene, adjacent, pov.When, protagonist.AffinityKey);
             if (audio != null)
                 return new ThreatContext(ThreatLevel.Audio, audio);
         }

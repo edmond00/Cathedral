@@ -13,7 +13,7 @@ internal static class TradeGate
 {
     public static bool CanTrade(NpcEntity npc, Protagonist? actor)
     {
-        var partyMemberId = actor?.DisplayName ?? "Protagonist";
+        var partyMemberId = actor?.AffinityKey ?? "Protagonist";
         if (npc.AffinityTable.IsEnemy(partyMemberId)) return false;
 
         var level = npc.AffinityTable.GetLevel(partyMemberId);

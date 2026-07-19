@@ -12,12 +12,6 @@ public class ReeveArchetype : PeasantArchetype
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
-    public override string[] NamePool => new[]
-    {
-        "Aldhelm Reeve", "Brunwyn Reeve", "Coleman Reeve", "Edith Reeve",
-        "Godric Reeve", "Wulfwynn Reeve", "Roger Reeve", "Matilda Reeve",
-    };
-
     public override string RoleNoun => "reeve";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

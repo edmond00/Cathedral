@@ -60,7 +60,7 @@ public class DialogueTreeController
         _tree          = tree;
         _npc           = npc;
         _protagonist   = protagonist;
-        _partyMemberId = protagonist.DisplayName;
+        _partyMemberId = protagonist.AffinityKey;
         _npcSlotId     = npcSlotId;
         _slotManager   = slotManager;
         _ambianceEngine = ambianceEngine;

@@ -14,12 +14,6 @@ public class FishermanArchetype : WildernessNpcArchetype
     public override int    ModiMentisCount => 8;
     public override bool   IsBrave      => true;
 
-    public override string[] NamePool => new[]
-    {
-        "Cuthbert Net", "Edmund Sail", "Walter Tide", "Hugh Wave",
-        "Joan Net", "Mariot Tide", "Aldhelm Wave", "Roger Sail",
-    };
-
     public override string RoleNoun => "fisherman";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

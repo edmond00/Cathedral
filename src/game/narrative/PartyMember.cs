@@ -24,6 +24,15 @@ public abstract class PartyMember
     public List<BodyPart> BodyParts => _bodyParts;
     public List<DerivedStat> DerivedStats { get; private set; }
 
+    /// <summary>
+    /// Biological sex, when assigned (true = male, false = female). Set at NPC creation from a seeded
+    /// flip and read by <see cref="GenderStat"/>. Left null for members whose sex is not stamped
+    /// (e.g. beasts, which have no genitories), in which case <see cref="GenderStat"/> falls back to
+    /// the genitories organ score. Kept separate from that score so it never affects HP or
+    /// genitories-based skills.
+    /// </summary>
+    public bool? BiologicalSexMale { get; set; }
+
     // ── Humor queues ──────────────────────────────────────────────
     /// <summary>
     /// The four FIFO humor queues (Hepar, Paunch, Pulmones, Spleen), each holding
@@ -117,6 +126,14 @@ public abstract class PartyMember
     // ── Display name (subclasses define this differently) ────────
     /// <summary>Human-readable name shown in the party panel.</summary>
     public abstract string DisplayName { get; }
+
+    /// <summary>
+    /// Stable identity used to key this member in NPC <see cref="Dialogue.Affinity.AffinityTable"/>s,
+    /// deliberately decoupled from <see cref="DisplayName"/>. Defaults to the display name (companions),
+    /// but the protagonist overrides it to a fixed constant so a player-chosen/generated display name
+    /// never shifts affinity keys mid-run.
+    /// </summary>
+    public virtual string AffinityKey => DisplayName;
 
     // ── Constructor ──────────────────────────────────────────────
     protected PartyMember(Species species)

@@ -14,12 +14,6 @@ public class WoodcutterArchetype : WildernessNpcArchetype
     public override int    ModiMentisCount => 8;
     public override bool   IsBrave      => true;
 
-    public override string[] NamePool => new[]
-    {
-        "Eadmer Axe", "Cuthbert Bole", "Wulfric Timber", "Robin Faller",
-        "Hugh Treesong", "Edmund Stump", "Walter Axe", "Roger Bole",
-    };
-
     public override string RoleNoun => "woodcutter";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

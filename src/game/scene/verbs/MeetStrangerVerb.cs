@@ -25,7 +25,7 @@ public class MeetStrangerVerb : Verb
         if (!scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id)) return false;
 
         // Only for strangers
-        var partyMemberId = actor?.DisplayName ?? "Protagonist";
+        var partyMemberId = actor?.AffinityKey ?? "Protagonist";
         if (!npc.AffinityTable.IsStranger(partyMemberId)) return false;
 
         // Protagonist must have at least one speaking modus mentis

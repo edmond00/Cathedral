@@ -14,12 +14,6 @@ public class StrayCatArchetype : NamedNpcArchetype
     public override bool DefaultPersistent => false;
     public override int ModiMentisCount => 4;
 
-    public override string[] NamePool => new[]
-    {
-        "Tabby Cat", "Grey Cat", "Black Cat", "Tortoiseshell Cat",
-        "Thin Cat", "Old Cat", "Wild Cat", "Scarred Cat"
-    };
-
     public override string RoleNoun => "cat";
     protected override bool LabelMentionsLocation => false;
 
