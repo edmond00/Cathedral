@@ -2,7 +2,6 @@ using Label       = System.Windows.Forms.Label;
 using Orientation = System.Windows.Forms.Orientation;
 using FontStyle   = System.Drawing.FontStyle;
 using MsaglGraph  = Microsoft.Msagl.Drawing.Graph;
-using MsaglNode   = Microsoft.Msagl.Drawing.Node;
 using MsaglColor  = Microsoft.Msagl.Drawing.Color;
 using MsaglShape  = Microsoft.Msagl.Drawing.Shape;
 
@@ -11,7 +10,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using Cathedral.Game;
 using Cathedral.Game.Dialogue.Tree;
 using Microsoft.Msagl.GraphViewerGdi;
 
@@ -19,30 +17,25 @@ namespace Cathedral.Debug;
 
 /// <summary>
 /// WinForms window that renders every registered <see cref="DialogueTree"/> as a graph, one tab per
-/// tree. Each node carries the neutral replica text (as fed to the persona rewriter) for both the
-/// NPC opening line and the player's reply; terminal nodes also show the success/failure reaction and
-/// the outcomes that fire. Purely static inspection — no LLM, no game state.
-/// Reuses the same MSAGL <see cref="GViewer"/> stack as the scene debug window.
+/// tree. Nodes are colour-coded by speaker: NPC lines, player options ("You"), and the resolution
+/// (the single dice check with its success/failure lines and outcomes). Neutral replica text is shown
+/// verbatim including <c>{scope:field}</c> template tokens, so authoring is easy to inspect.
+/// Purely static — no LLM, no game state. Reuses the scene debug window's MSAGL <see cref="GViewer"/>.
 /// </summary>
 public class DialogueViewWindow : Form
 {
     private readonly TabControl _tabs;
 
     // ── Node fill colours ────────────────────────────────────────
-    private static readonly MsaglColor ColorEntry        = new(  0, 160, 160); // teal
-    private static readonly MsaglColor ColorIntermediate = new( 90, 145, 210); // blue
-    private static readonly MsaglColor ColorTerminal     = new(210, 160,  50); // amber
+    private static readonly MsaglColor ColorNpc        = new( 90, 145, 210); // blue  — NPC speaks
+    private static readonly MsaglColor ColorPlayer     = new( 90, 190, 110); // green — "You" option
+    private static readonly MsaglColor ColorResolution = new(210, 160,  50); // amber — dice check
 
     private static readonly MsaglColor BorderNormal = new(80, 80, 90);
 
-    // ── Edge colours by branch condition ─────────────────────────
-    private static readonly MsaglColor EdgeEither  = new(120, 120, 130);
-    private static readonly MsaglColor EdgeSuccess = new( 90, 190, 110);
-    private static readonly MsaglColor EdgeFailure = new(210,  90,  90);
-
     public DialogueViewWindow()
     {
-        Text        = "Dialogue Trees — Neutral Replica View";
+        Text        = "Dialogue Trees — Speaker View";
         Width       = 1400;
         Height      = 920;
         MinimumSize = new Size(900, 650);
@@ -86,10 +79,10 @@ public class DialogueViewWindow : Form
             catch (InvalidOperationException) { }
         };
 
+        var detailsById = new Dictionary<string, string>();
         var viewer = new GViewer { Dock = DockStyle.Fill, NavigationVisible = true };
-        viewer.Graph = BuildTreeGraph(tree);
+        viewer.Graph = BuildTreeGraph(tree, detailsById);
 
-        // ── Right-hand info panel: tree subject + selected node details ──
         var detailsBox = new RichTextBox
         {
             Dock        = DockStyle.Fill,
@@ -126,15 +119,11 @@ public class DialogueViewWindow : Form
         right.Controls.Add(detailsHeader);
         right.Controls.Add(subjectBox);
 
-        // Index nodes by id so clicks can resolve them (ids are unique within a tree).
-        var byId = new Dictionary<string, DialogueTreeNode>();
-        CollectNodes(tree.EntryNode, byId);
-
         viewer.MouseClick += (_, e) =>
         {
             var obj = viewer.GetObjectAt(e.X, e.Y);
-            if (obj is Microsoft.Msagl.Drawing.IViewerNode vn && byId.TryGetValue(vn.Node.Id, out var node))
-                detailsBox.Text = NodeDetails(node);
+            if (obj is Microsoft.Msagl.Drawing.IViewerNode vn && detailsById.TryGetValue(vn.Node.Id, out var text))
+                detailsBox.Text = text;
         };
 
         split.Panel1.Controls.Add(viewer);
@@ -147,7 +136,7 @@ public class DialogueViewWindow : Form
     //  GRAPH CONSTRUCTION
     // ══════════════════════════════════════════════════════════════
 
-    private MsaglGraph BuildTreeGraph(DialogueTree tree)
+    private MsaglGraph BuildTreeGraph(DialogueTree tree, Dictionary<string, string> detailsById)
     {
         var msagl = new MsaglGraph(tree.TreeId)
         {
@@ -155,122 +144,78 @@ public class DialogueViewWindow : Form
         };
 
         var visited = new HashSet<string>();
-        AddNodeRecursive(msagl, tree, tree.EntryNode, visited);
+        AddNpcNode(msagl, tree.EntryNode, visited, detailsById, isEntry: true);
         return msagl;
     }
 
-    private void AddNodeRecursive(MsaglGraph msagl, DialogueTree tree, DialogueTreeNode node,
-                                  HashSet<string> visited)
+    private void AddNpcNode(MsaglGraph msagl, NpcLineNode node, HashSet<string> visited,
+                            Dictionary<string, string> detailsById, bool isEntry = false)
     {
         if (!visited.Add(node.NodeId)) return;
 
-        var gnode = msagl.AddNode(node.NodeId);
-        gnode.LabelText      = NodeLabel(node);
-        gnode.Attr.FillColor = node.IsEntry ? ColorEntry
-                             : node.IsTerminal ? ColorTerminal
-                             : ColorIntermediate;
-        gnode.Attr.Color     = BorderNormal;
-        gnode.Attr.Shape     = node.IsTerminal ? MsaglShape.Box : MsaglShape.Box;
-        gnode.Label.FontColor = new MsaglColor(245, 245, 245);
-        gnode.Label.FontSize  = 9;
+        string title = isEntry ? $"★ NPC: {node.NodeId}" : $"NPC: {node.NodeId}";
+        AddNode(msagl, node.NodeId, $"{title}\n“{node.Replica}”", ColorNpc);
+        detailsById[node.NodeId] =
+            $"NPC line node: {node.NodeId}\r\nSpeaker: NPC\r\n\r\nReplica:\r\n  {node.Replica}\r\n\r\nOptions: {node.Options.Count}";
 
-        foreach (var branch in node.Branches)
+        foreach (var opt in node.Options)
         {
-            AddNodeRecursive(msagl, tree, branch.TargetNode, visited);
-            var edge = msagl.AddEdge(node.NodeId, EdgeLabel(branch.Condition), branch.TargetNode.NodeId);
-            edge.Attr.Color = ConditionColor(branch.Condition);
+            string optId = $"{node.NodeId}::{opt.OptionId}";
+            AddNode(msagl, optId, $"You: {opt.OptionId}\nintent: {opt.Intent}\n“{opt.Replica}”", ColorPlayer);
+            detailsById[optId] =
+                $"Player option: {opt.OptionId}\r\nSpeaker: You\r\n\r\nIntent (for MM grading):\r\n  {opt.Intent}\r\n\r\nReplica:\r\n  {opt.Replica}\r\n\r\nLeads to: {opt.Next.NodeId}";
+            msagl.AddEdge(node.NodeId, optId).Attr.Color = new MsaglColor(120, 120, 130);
+
+            switch (opt.Next)
+            {
+                case NpcLineNode npcNext:
+                    AddNpcNode(msagl, npcNext, visited, detailsById);
+                    msagl.AddEdge(optId, npcNext.NodeId).Attr.Color = new MsaglColor(120, 120, 130);
+                    break;
+                case ResolutionNode res:
+                    AddResolutionNode(msagl, res, visited, detailsById);
+                    msagl.AddEdge(optId, res.NodeId).Attr.Color = new MsaglColor(120, 120, 130);
+                    break;
+            }
         }
     }
 
-    /// <summary>Multi-line node label carrying the direct neutral replica plus its intent.</summary>
-    private static string NodeLabel(DialogueTreeNode node)
+    private void AddResolutionNode(MsaglGraph msagl, ResolutionNode res, HashSet<string> visited,
+                                   Dictionary<string, string> detailsById)
     {
-        string title = node.IsEntry ? $"★ {node.NodeId}"
-                     : node.IsTerminal ? $"⊙ {node.NodeId}"
-                     : node.NodeId;
+        if (!visited.Add(res.NodeId)) return;
+
+        string label = $"⊙ CHECK: {res.NodeId}  (need {res.Difficulty}×6)\n"
+                     + $"✓ “{res.SuccessReplica}”\n"
+                     + $"✗ “{res.FailureReplica}”";
+        AddNode(msagl, res.NodeId, label, ColorResolution);
 
         var lines = new List<string>
         {
-            title,
-            $"“{NeutralNarration.NpcOpening(node.Replica)}”",
-            $"intent: {node.Description}",
-        };
-
-        if (node.IsTerminal)
-        {
-            lines.Add($"✓ {NeutralNarration.NpcReaction(true)}");
-            lines.Add($"✗ {NeutralNarration.NpcReaction(false)}");
-            foreach (var oc in node.Outcomes)
-                lines.Add($"⇒ [{EdgeLabel(oc.Condition, "always")}] {oc.Outcome.Description}");
-        }
-
-        return string.Join("\n", lines);
-    }
-
-    // ══════════════════════════════════════════════════════════════
-    //  DETAILS PANEL
-    // ══════════════════════════════════════════════════════════════
-
-    private static string NodeDetails(DialogueTreeNode node)
-    {
-        var lines = new List<string>
-        {
-            $"Node id     : {node.NodeId}",
-            $"Kind        : {(node.IsEntry ? "entry " : "")}{(node.IsTerminal ? "terminal" : "intermediate")}".Trim(),
-            $"Intent      : {node.Description}",
+            $"Resolution node: {res.NodeId}",
+            $"Speaker: NPC (post-check)",
+            $"Difficulty: {res.Difficulty} six(es) needed",
             "",
-            "─── Direct neutral replica ───",
-            $"Spoken line : {NeutralNarration.NpcOpening(node.Replica)}",
-            "  (same line whether the NPC opens with it or the player replies with it)",
+            $"Success line:\r\n  {res.SuccessReplica}",
+            $"Failure line:\r\n  {res.FailureReplica}",
+            "",
+            $"Outcomes ({res.Outcomes.Count}):",
         };
-
-        if (node.IsTerminal)
-        {
-            lines.Add($"React (win) : {NeutralNarration.NpcReaction(true)}");
-            lines.Add($"React (lose): {NeutralNarration.NpcReaction(false)}");
-            lines.Add("");
-            lines.Add($"─── Outcomes ({node.Outcomes.Count}) ───");
-            if (node.Outcomes.Count == 0)
-                lines.Add("  (none)");
-            else
-                foreach (var oc in node.Outcomes)
-                    lines.Add($"  [{oc.Condition}] {oc.Outcome.Description}");
-        }
-        else
-        {
-            lines.Add("");
-            lines.Add($"─── Branches ({node.Branches.Count}) ───");
-            foreach (var b in node.Branches)
-                lines.Add($"  [{b.Condition}] → {b.TargetNode.NodeId}  ({b.TargetNode.Description})");
-        }
-
-        return string.Join(Environment.NewLine, lines);
+        if (res.Outcomes.Count == 0) lines.Add("  (none)");
+        else foreach (var oc in res.Outcomes) lines.Add($"  [{oc.Condition}] {oc.Outcome.Description}");
+        detailsById[res.NodeId] = string.Join("\r\n", lines);
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //  HELPERS
-    // ══════════════════════════════════════════════════════════════
-
-    private static void CollectNodes(DialogueTreeNode node, Dictionary<string, DialogueTreeNode> into)
+    private static void AddNode(MsaglGraph msagl, string id, string label, MsaglColor fill)
     {
-        if (into.ContainsKey(node.NodeId)) return;
-        into[node.NodeId] = node;
-        foreach (var b in node.Branches) CollectNodes(b.TargetNode, into);
+        var node = msagl.AddNode(id);
+        node.LabelText       = label;
+        node.Attr.FillColor  = fill;
+        node.Attr.Color      = BorderNormal;
+        node.Attr.Shape      = MsaglShape.Box;
+        node.Label.FontColor = new MsaglColor(245, 245, 245);
+        node.Label.FontSize  = 9;
     }
-
-    private static string EdgeLabel(BranchCondition c, string eitherText = "") => c switch
-    {
-        BranchCondition.Success => "success",
-        BranchCondition.Failure => "failure",
-        _                       => eitherText,
-    };
-
-    private static MsaglColor ConditionColor(BranchCondition c) => c switch
-    {
-        BranchCondition.Success => EdgeSuccess,
-        BranchCondition.Failure => EdgeFailure,
-        _                       => EdgeEither,
-    };
 
     private Panel BuildLegendPanel()
     {
@@ -283,11 +228,9 @@ public class DialogueViewWindow : Form
 
         var items = new (Color fill, string text)[]
         {
-            (Color.FromArgb(  0, 160, 160), " entry "),
-            (Color.FromArgb( 90, 145, 210), " step "),
-            (Color.FromArgb(210, 160,  50), " terminal "),
-            (Color.FromArgb( 90, 190, 110), " success edge "),
-            (Color.FromArgb(210,  90,  90), " failure edge "),
+            (Color.FromArgb( 90, 145, 210), " NPC line "),
+            (Color.FromArgb( 90, 190, 110), " You (option) "),
+            (Color.FromArgb(210, 160,  50), " Resolution (dice check) "),
         };
 
         int x = 6;

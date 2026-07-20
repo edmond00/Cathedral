@@ -26,6 +26,8 @@ public class DialogueTreeAdapter
     private readonly DialogueTree?          _prebuiltTree;
     private readonly LlamaServerManager     _llmManager;
     private readonly ModusMentisSlotManager _slotManager;
+    private readonly WorldContext?          _world;
+    private readonly int                    _locationId;
     private readonly Cathedral.Audio.AmbianceEngine? _ambianceEngine;
 
     private readonly DialogueTreeUI  _ui;
@@ -51,7 +53,9 @@ public class DialogueTreeAdapter
         LlamaServerManager     llmManager,
         ModusMentisSlotManager slotManager,
         TerminalHUD            terminal,
-        DialogueTree?          prebuiltTree = null,
+        WorldContext?          world          = null,
+        int                    locationId     = 0,
+        DialogueTree?          prebuiltTree   = null,
         Cathedral.Audio.AmbianceEngine? ambianceEngine = null)
     {
         _npc          = npc;
@@ -60,6 +64,8 @@ public class DialogueTreeAdapter
         _prebuiltTree = prebuiltTree;
         _llmManager   = llmManager;
         _slotManager  = slotManager;
+        _world        = world;
+        _locationId   = locationId;
         _ambianceEngine = ambianceEngine;
 
         // The UI is created up front so the setup phase can already render the standard
@@ -102,8 +108,16 @@ public class DialogueTreeAdapter
             // Resolve tree
             DialogueTree tree = ResolveTree();
 
-            // Acquire NPC slot (system prompt = way-to-speak description)
-            string systemPrompt = _npc.WayToSpeakDescription ?? $"You are {_npc.DisplayName}.";
+            // Placeholder names: the LLM never sees real names. Build the mapping once, then use it
+            // both to rewrite the NPC persona prompt (real → placeholder) and, later, to restore real
+            // names into every generated replica.
+            var names   = DialogueNameTable.Build(_protagonist, _npc);
+            var context = new DialogueContext(_protagonist, _npc, _world, _locationId, names);
+
+            // Acquire NPC slot (system prompt = way-to-speak description, with the NPC's real name
+            // swapped for its placeholder).
+            string rawPrompt    = _npc.WayToSpeakDescription ?? $"You are {names.Placeholder("npc")}.";
+            string systemPrompt = names.ToPlaceholder(rawPrompt);
             _npcSlotId = await _llmManager.CreateInstanceAsync(systemPrompt);
 
             _controller = new DialogueTreeController(
@@ -114,6 +128,7 @@ public class DialogueTreeAdapter
                 llmManager:  _llmManager,
                 slotManager: _slotManager,
                 ui:          _ui,
+                context:     context,
                 ambianceEngine: _ambianceEngine);
 
             _ready = true;

@@ -7,14 +7,7 @@ namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
 /// "Propose to sell" — the player offers goods to an NPC who buys that category.
-///
-/// Tree structure:
-///   opening (entry)
-///     ├─ offer_goods → haggle
-///     └─ flatter     → haggle
-///   haggle (terminal):
-///     ✓ Success → OpenTradeMenuOutcome(Sell)  (the sell menu opens after dialogue)
-///     ✗ Failure → nothing (the NPC isn't buying for now)
+/// Success opens the sell menu after the dialogue; failure declines for now.
 /// </summary>
 public class ProposeToSellTree : DialogueTree
 {
@@ -23,38 +16,35 @@ public class ProposeToSellTree : DialogueTree
     public override string Description      => "offering the buyer goods and trying to interest them in a purchase";
     public override string AssociatedVerbId => "propose_to_sell";
 
-    private static readonly DialogueTreeNode Haggle = new(
-        nodeId:      "haggle",
-        description: "talking up your goods and pressing them to name a price",
-        replica:     "Have a look — what will you give me for them?",
+    private static ResolutionNode Haggle(string id, string success, string failure) => new(
+        nodeId:         id,
+        difficulty:     1,
+        successReplica: success,
+        failureReplica: failure,
         outcomes: new List<DialogueOutcomeCase>
         {
             new(new OpenTradeMenuOutcome(TradeMode.Sell), BranchCondition.Success),
         });
 
-    private static readonly DialogueTreeNode OfferGoods = new(
-        nodeId:      "offer_goods",
-        description: "plainly offering what you have to sell",
-        replica:     "I've goods here you might want to buy.",
-        branches: new List<DialogueBranch> { new(Haggle, BranchCondition.Either) });
+    private static readonly ResolutionNode OfferOutcome = Haggle(
+        "offer_outcome",
+        "Let's see what you've got, then. I'll not turn away a fair deal.",
+        "I'm not buying today. Keep your goods.");
 
-    private static readonly DialogueTreeNode Flatter = new(
-        nodeId:      "flatter",
-        description: "appealing to their needs to warm them to a purchase",
-        replica:     "You look like someone who could use fine wares like these.",
-        branches: new List<DialogueBranch> { new(Haggle, BranchCondition.Either) });
+    private static readonly ResolutionNode FlatterOutcome = Haggle(
+        "flatter_outcome",
+        "Hah, well — a silver tongue earns a look, at least. Show me.",
+        "Save the sweet talk. I've no need of your wares.");
 
-    private static readonly DialogueTreeNode Opening = new(
-        nodeId:      "opening",
-        description: "opening the conversation with an offer to do business",
-        replica:     "Good day — I've come to do a bit of business.",
-        branches: new List<DialogueBranch>
-        {
-            new(OfferGoods, BranchCondition.Either),
-            new(Flatter,    BranchCondition.Either),
-        });
+    private static readonly NpcLineNode Opening = new(
+        nodeId:  "opening",
+        replica: "Aye, {you:name}? What is it you're carrying?",
+        new PlayerOption("offer_goods", "plainly offer what you have to sell",
+            "I've goods you might want to buy, {npc:name}.", OfferOutcome),
+        new PlayerOption("flatter", "appeal to their needs to warm them to a purchase",
+            "You look like someone who could use fine wares like these.", FlatterOutcome));
 
-    public override DialogueTreeNode EntryNode => Opening;
+    public override NpcLineNode EntryNode => Opening;
 
     public override bool IsAvailable(NpcEntity npc, string partyMemberId)
     {

@@ -5,17 +5,9 @@ using Cathedral.Game.Npc;
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
-/// "Reconcile" — available when the NPC is an enemy of the protagonist or has
-/// AnnoyingAcquaintance affinity.
-///
-/// Tree structure:
-///   opening (entry)
-///     ├─ apologize → negotiation
-///     └─ explain   → negotiation
-///
-///   negotiation (terminal):
-///     ✓ Success → reconciled: ClearEnemy + Suspicious affinity
-///     ✗ Failure → rejected: stays enemy [IsBrave NPCs also demand a fight]
+/// "Reconcile" — available when the NPC is an enemy or an AnnoyingAcquaintance.
+/// The player tries to end the hostility. Success clears the enemy flag and sets a wary Suspicious
+/// affinity; failure leaves them hostile and a brave NPC demands a fight. A hard check (difficulty 2).
 /// </summary>
 public class ReconcileTree : DialogueTree
 {
@@ -24,54 +16,49 @@ public class ReconcileTree : DialogueTree
     public override string Description      => "attempting to end hostility and reach a fragile peace";
     public override string AssociatedVerbId => "reconcile";
 
-    // ── Terminal node ─────────────────────────────────────────────────────────
+    // ── Resolution nodes ────────────────────────────────────────────────────────
 
-    private static readonly DialogueTreeNode Negotiation = new(
-        nodeId:      "negotiation",
-        description: "pressing your case and trying to convince them to stand down",
-        replica:     "So — can we let this go, you and I?",
+    private static ResolutionNode Outcome(string id, string success, string failure) => new(
+        nodeId:         id,
+        difficulty:     2,
+        successReplica: success,
+        failureReplica: failure,
         outcomes: new List<DialogueOutcomeCase>
         {
-            // Success: clear enemy flag, set Suspicious affinity
-            new(new ClearEnemyOutcome(),       BranchCondition.Success),
+            new(new ClearEnemyOutcome(),         BranchCondition.Success),
             new(new SuspiciousAffinityOutcome(), BranchCondition.Success),
-            // Failure: stays enemy; brave NPCs demand a fight
-            new(new FightRequestOutcome(),     BranchCondition.Failure),
+            new(new FightRequestOutcome(),       BranchCondition.Failure),
         });
 
-    // ── Intermediate nodes ────────────────────────────────────────────────────
+    private static readonly ResolutionNode ApologyOutcome = Outcome(
+        "apology_outcome",
+        "...Fine. I'll let it lie — for now. Don't make me regret it.",
+        "Empty words. If it's a reckoning you're after, you'll have one!");
 
-    private static readonly DialogueTreeNode Apologize = new(
-        nodeId:      "apologize",
-        description: "offering a sincere apology and asking for a chance to make things right",
-        replica:     "I'm sorry for what happened. Let me make it right.",
-        branches: new List<DialogueBranch>
-        {
-            new(Negotiation, BranchCondition.Either),
-        });
+    private static readonly ResolutionNode ExplainOutcome = Outcome(
+        "explain_outcome",
+        "Hm. Perhaps I judged you too quickly. We'll leave it there, then.",
+        "You twist your words prettily, but I'm not fooled. Draw, if you dare!");
 
-    private static readonly DialogueTreeNode Explain = new(
-        nodeId:      "explain",
-        description: "explaining your side of things and arguing that the hostility is unwarranted",
-        replica:     "Hear me out — this quarrel between us is a mistake.",
-        branches: new List<DialogueBranch>
-        {
-            new(Negotiation, BranchCondition.Either),
-        });
+    // ── Intermediate NPC response (for the "apologize" branch) ──────────────────
 
-    // ── Entry node ────────────────────────────────────────────────────────────
+    private static readonly NpcLineNode HearOut = new(
+        nodeId:  "hear_out",
+        replica: "...Sorry, are you? Go on, then. I'm listening.",
+        new PlayerOption("press_peace", "press for peace between you",
+            "Let's put it behind us, {npc:name}. There's no sense in bad blood.", ApologyOutcome));
 
-    private static readonly DialogueTreeNode Opening = new(
-        nodeId:      "opening",
-        description: "opening the conversation and signalling you want to end the hostility",
-        replica:     "Wait — I don't want us to be at odds.",
-        branches: new List<DialogueBranch>
-        {
-            new(Apologize, BranchCondition.Either),
-            new(Explain,   BranchCondition.Either),
-        });
+    // ── Entry ───────────────────────────────────────────────────────────────────
 
-    public override DialogueTreeNode EntryNode => Opening;
+    private static readonly NpcLineNode Opening = new(
+        nodeId:  "opening",
+        replica: "You've a nerve, showing your face to me. What do you want?",
+        new PlayerOption("apologize", "offer a sincere apology",
+            "I've come to make peace. I'm sorry for what passed between us.", HearOut),
+        new PlayerOption("explain", "explain that the hostility is a misunderstanding",
+            "Hear me out — this quarrel between us is a misunderstanding.", ExplainOutcome));
+
+    public override NpcLineNode EntryNode => Opening;
 
     public override bool IsAvailable(NpcEntity npc, string partyMemberId)
     {

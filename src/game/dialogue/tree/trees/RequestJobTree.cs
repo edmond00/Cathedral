@@ -5,15 +5,8 @@ using Cathedral.Game.Npc;
 namespace Cathedral.Game.Dialogue.Tree.Trees;
 
 /// <summary>
-/// "Request job" — the player asks a master or reeve to take them on for a specific job.
-///
-/// Tree structure:
-///   opening (entry)
-///     ├─ ask_plainly    → decide
-///     └─ show_willing   → decide
-///   decide (terminal):
-///     ✓ Success → OpenJobMenuOutcome  (the work menu opens after dialogue)
-///     ✗ Failure → nothing (the NPC turns you away for now)
+/// "Request job" — the player asks a master or reeve to take them on for work.
+/// Success opens the work menu after the dialogue; failure turns the player away for now.
 /// </summary>
 public class RequestJobTree : DialogueTree
 {
@@ -22,39 +15,35 @@ public class RequestJobTree : DialogueTree
     public override string Description      => "asking a master or reeve to take you on for work";
     public override string AssociatedVerbId => "request_job";
 
-    private static readonly DialogueTreeNode Decide = new(
-        nodeId:      "decide",
-        description: "waiting on their answer as they weigh whether to take you on",
-        replica:     "So, will you take me on?",
+    private static ResolutionNode Decide(string id, string success, string failure) => new(
+        nodeId:         id,
+        difficulty:     2,
+        successReplica: success,
+        failureReplica: failure,
         outcomes: new List<DialogueOutcomeCase>
         {
             new(new OpenJobMenuOutcome(), BranchCondition.Success),
         });
 
-    private static readonly DialogueTreeNode AskPlainly = new(
-        nodeId:      "ask_plainly",
-        description: "asking plainly for the work and what it pays",
-        replica:     "What work have you, and what does it pay?",
-        branches: new List<DialogueBranch> { new(Decide, BranchCondition.Either) });
+    private static readonly ResolutionNode DecidePlain = Decide(
+        "decide_plain",
+        "Well, you've the look of a worker. Come — there's labour enough for willing hands.",
+        "I've naught for you today. Try your luck elsewhere.");
 
-    private static readonly DialogueTreeNode ShowWilling = new(
-        nodeId:      "show_willing",
-        description: "showing you are willing and able for the labour",
-        replica:     "I'm strong and willing — put me to any task you like.",
-        branches: new List<DialogueBranch> { new(Decide, BranchCondition.Either) });
+    private static readonly ResolutionNode DecideWilling = Decide(
+        "decide_willing",
+        "Bold words. Let's see if your back matches your tongue — there's work to be had.",
+        "Willing or no, I've nothing for you just now.");
 
-    private static readonly DialogueTreeNode Opening = new(
-        nodeId:      "opening",
-        description: "opening the conversation with a request for work",
-        replica:     "I'm looking for work, if you have any.",
-        isEntry:     true,
-        branches: new List<DialogueBranch>
-        {
-            new(AskPlainly,  BranchCondition.Either),
-            new(ShowWilling, BranchCondition.Either),
-        });
+    private static readonly NpcLineNode Opening = new(
+        nodeId:  "opening",
+        replica: "Aye, {you:name}? What brings you to me?",
+        new PlayerOption("ask_plainly", "ask plainly for work and its pay",
+            "I'm after work, {npc:name}. What have you, and what does it pay?", DecidePlain),
+        new PlayerOption("show_willing", "show you are willing and able",
+            "I'm strong and willing — put me to any task you like.", DecideWilling));
 
-    public override DialogueTreeNode EntryNode => Opening;
+    public override NpcLineNode EntryNode => Opening;
 
     public override bool IsAvailable(NpcEntity npc, string partyMemberId)
     {

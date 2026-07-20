@@ -27,14 +27,19 @@ public class DialogueLogEntry
 /// <summary>One generated player reply option shown during option-selection phase.</summary>
 public class PlayerReplicaOption
 {
-    public ModusMentis      Skill        { get; }
-    public DialogueTreeNode TargetNode   { get; }
-    public string           ReplicaText  { get; }
+    /// <summary>The Modus Mentis that voiced this option; its level feeds the branch dice pool.</summary>
+    public ModusMentis  Skill       { get; }
 
-    public PlayerReplicaOption(ModusMentis skill, DialogueTreeNode targetNode, string replicaText)
+    /// <summary>The authored option chosen; <see cref="PlayerOption.Next"/> is where selecting it leads.</summary>
+    public PlayerOption Option      { get; }
+
+    /// <summary>The persona-rewritten line shown to the player (real names restored).</summary>
+    public string       ReplicaText { get; }
+
+    public PlayerReplicaOption(ModusMentis skill, PlayerOption option, string replicaText)
     {
         Skill       = skill;
-        TargetNode  = targetNode;
+        Option      = option;
         ReplicaText = replicaText;
     }
 }

@@ -3088,6 +3088,8 @@ public class LocationTravelGameController : IDisposable
             llmManager:   _llamaServer,
             slotManager:  _modusMentisSlotManager,
             terminal:     _core.Terminal,
+            world:        _narrativeController.WorldContext,
+            locationId:   _narrativeController.LocationId,
             prebuiltTree: dialogueOutcome.Tree,
             ambianceEngine: _ambianceEngine);
 

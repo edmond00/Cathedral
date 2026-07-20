@@ -2333,6 +2333,12 @@ public class NarrativeController
     /// </summary>
     public Protagonist Protagonist => _protagonist;
 
+    /// <summary>The world context of the current location (for dialogue template fields).</summary>
+    public WorldContext? WorldContext => _worldContext;
+
+    /// <summary>The current location's vertex id (for dialogue template fields).</summary>
+    public int LocationId => _locationId;
+
     /// <summary>
     /// Unified next-phase request. Maps the legacy pending fight/dialogue outcomes onto the
     /// <see cref="PhaseTransition"/> abstraction so the game controller can consume one channel.

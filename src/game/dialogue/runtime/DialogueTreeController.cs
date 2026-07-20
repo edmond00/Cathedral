@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Dialogue.Tree;
@@ -14,30 +13,44 @@ namespace Cathedral.Game.Dialogue.Runtime;
 
 /// <summary>
 /// Orchestrates a full dialogue tree session.
-/// Loop: NPC speaks → MM samples options → player picks → dice roll → NPC reacts → advance or end.
+/// Flow: NPC speaks a line → sampled Modi Mentis grade + voice the player replies → player picks →
+/// (advance to the next NPC line, or, at a <see cref="ResolutionNode"/>, roll the single accumulated
+/// dice check) → the NPC speaks its success/failure line and outcomes fire.
+///
+/// <para>
+/// A conversation rolls the dice <b>once</b>, at the branch end. The pool is the NPC affinity bonus
+/// plus the summed levels of every Modus Mentis that voiced a chosen reply along the branch; the
+/// difficulty is authored on the <see cref="ResolutionNode"/>.
+/// </para>
 /// </summary>
 public class DialogueTreeController
 {
-    private readonly DialogueTree            _tree;
-    private readonly NpcEntity               _npc;
-    private readonly Protagonist             _protagonist;
-    private readonly string                  _partyMemberId;
-    private readonly int                     _npcSlotId;
-    private readonly ModusMentisSlotManager  _slotManager;
+    private readonly DialogueTree             _tree;
+    private readonly NpcEntity                _npc;
+    private readonly Protagonist              _protagonist;
+    private readonly string                   _partyMemberId;
+    private readonly int                      _npcSlotId;
+    private readonly DialogueContext          _context;
 
-    private readonly NpcNodeReplicaExecutor  _npcReplicaExec;
-    private readonly MmBranchSelectorExecutor _branchSelExec;
-    private readonly MmReplicaExecutor       _mmReplicaExec;
-    private readonly NpcReactionExecutor     _reactionExec;
+    private readonly DialogueReplicaWriter    _replicaWriter;
+    private readonly DialogueOptionGenerator  _optionGenerator;
 
-    private readonly DialogueSessionState    _state = new();
-    private readonly DialogueTreeUI          _ui;
+    private readonly DialogueSessionState     _state = new();
+    private readonly DialogueTreeUI           _ui;
 
     // Unified dice-roll overlay (animation + humor modifiers + hit-testing).
-    private readonly DiceRollComponent       _dice = new();
+    private readonly DiceRollComponent        _dice = new();
 
-    private DialogueTreeNode                 _currentNode;
-    private readonly Random                  _rng = new();
+    private NpcLineNode                       _currentNode;
+    private readonly Random                   _rng = new();
+
+    // ── Branch accumulation (reset per conversation) ───────────────────────────
+    /// <summary>Summed levels of the Modi Mentis that voiced each chosen reply so far.</summary>
+    private int                               _accumulatedDice;
+    /// <summary>The Modi Mentis that voiced chosen replies, awarded XP on a successful check.</summary>
+    private readonly List<ModusMentis>        _chosenMMs = new();
+    /// <summary>The resolution node awaiting the dice continue-click.</summary>
+    private ResolutionNode?                   _pendingResolution;
 
     /// <summary>Per-roll humor modifier budget from the viscera <c>humor_modifier_limit</c> stat.</summary>
     private static int HumorModifierLimit(PartyMember member)
@@ -55,6 +68,7 @@ public class DialogueTreeController
         LlamaServerManager     llmManager,
         ModusMentisSlotManager slotManager,
         DialogueTreeUI         ui,
+        DialogueContext        context,
         Cathedral.Audio.AmbianceEngine? ambianceEngine = null)
     {
         _tree          = tree;
@@ -62,13 +76,11 @@ public class DialogueTreeController
         _protagonist   = protagonist;
         _partyMemberId = protagonist.AffinityKey;
         _npcSlotId     = npcSlotId;
-        _slotManager   = slotManager;
+        _context       = context;
         _ambianceEngine = ambianceEngine;
 
-        _npcReplicaExec = new NpcNodeReplicaExecutor(llmManager);
-        _branchSelExec  = new MmBranchSelectorExecutor(llmManager);
-        _mmReplicaExec  = new MmReplicaExecutor(llmManager);
-        _reactionExec   = new NpcReactionExecutor(llmManager);
+        _replicaWriter   = new DialogueReplicaWriter(llmManager);
+        _optionGenerator = new DialogueOptionGenerator(llmManager, slotManager);
 
         _currentNode = tree.EntryNode;
         _ui          = ui;
@@ -85,6 +97,9 @@ public class DialogueTreeController
     public void Start()
     {
         _state.Clear();
+        _accumulatedDice = 0;
+        _chosenMMs.Clear();
+        _pendingResolution = null;
         BeginNpcSpeakPhase();
     }
 
@@ -143,7 +158,7 @@ public class DialogueTreeController
             {
                 _state.ClearDiceRoll();
                 _dice.Hide();
-                BeginReactionPhase();
+                ResolveRoll();
                 return;
             }
             _dice.HandleHumorClick(mx, my);
@@ -194,7 +209,7 @@ public class DialogueTreeController
         _state.RequestedExit = true;
     }
 
-    // ── Phase: NPC speaks ─────────────────────────────────────────────────────
+    // ── Phase: NPC speaks the current line ────────────────────────────────────
 
     private void BeginNpcSpeakPhase()
     {
@@ -209,8 +224,8 @@ public class DialogueTreeController
     {
         try
         {
-            string text = await _npcReplicaExec.ExecuteAsync(
-                _npc, _npcSlotId, _currentNode, _tree.Description);
+            string text = await _replicaWriter.WriteAsync(
+                _npcSlotId, _currentNode.Replica, _context, addresseeRole: "you", subject: _tree.Description);
 
             _state.Log[^1] = new DialogueLogEntry(
                 DialogueLogEntryType.NpcSpeaking, _npc.DisplayName, text);
@@ -229,104 +244,110 @@ public class DialogueTreeController
 
     private void BeginOptionsPhase()
     {
-        // Terminal nodes still show options; they just have no branch to choose
-        var speakingMMs = ModusMentisRegistry.Instance.GetSpeakingModiMentis();
-        if (speakingMMs.Count == 0)
+        if (_currentNode.Options.Count == 0)
         {
-            // No speaking skills — skip to end
+            // Malformed node (no replies) — nothing the player can say; end gracefully.
             EndConversation();
             return;
         }
 
-        int maxOptions = Math.Min(3, speakingMMs.Count);
-        var sampled    = speakingMMs.OrderBy(_ => _rng.Next()).Take(maxOptions).ToList();
+        int expected = Math.Min(
+            DialogueOptionGenerator.SpeechFluency(_protagonist),
+            _protagonist.GetSpeakingModiMentis().Count);
 
         _state.IsLoadingOptions = true;
         _state.OptionsLoaded    = 0;
-        _state.OptionsTotal     = sampled.Count;
+        _state.OptionsTotal     = Math.Max(1, expected);
         _state.Options.Clear();
 
-        _ = Task.Run(() => GenerateOptionsAsync(sampled));
+        _ = Task.Run(GenerateOptionsAsync);
     }
 
-    private async Task GenerateOptionsAsync(List<ModusMentis> skills)
+    private async Task GenerateOptionsAsync()
     {
-        var results = new List<PlayerReplicaOption>();
-
-        foreach (var mm in skills)
+        try
         {
-            try
-            {
-                int slotId = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
+            var options = await _optionGenerator.GenerateAsync(
+                _currentNode, _protagonist, _context, _tree.Description);
 
-                // Choose branch (only if >1 branch; terminal nodes skip this)
-                DialogueTreeNode targetNode = _currentNode;
-                if (_currentNode.Branches.Count > 1)
-                {
-                    int branchIdx = await _branchSelExec.ExecuteAsync(
-                        mm, slotId, _currentNode, _tree.Description);
-                    targetNode = _currentNode.Branches[branchIdx].TargetNode;
-                }
-                else if (_currentNode.Branches.Count == 1)
-                {
-                    targetNode = _currentNode.Branches[0].TargetNode;
-                }
-                // else: terminal node, targetNode stays as _currentNode
-
-                string replica = await _mmReplicaExec.ExecuteAsync(
-                    mm, slotId, targetNode, _npc, _partyMemberId, _tree.Description);
-
-                results.Add(new PlayerReplicaOption(mm, targetNode, replica));
-                _state.OptionsLoaded++;
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"DialogueTreeController: Option gen failed for {mm.DisplayName}: {ex.Message}");
-                _state.OptionsLoaded++;
-            }
+            _state.Options       = options;
+            _state.OptionsLoaded = options.Count;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"DialogueTreeController: Option generation failed: {ex.Message}");
+            _state.Options = new List<PlayerReplicaOption>();
+        }
+        finally
+        {
+            _state.IsLoadingOptions = false;
         }
 
-        _state.Options          = results;
-        _state.IsLoadingOptions = false;
+        // If no MM had anything to say, there is nothing to choose — end the conversation.
+        if (_state.Options.Count == 0) EndConversation();
     }
 
-    // ── Phase: player selects an option → dice roll ───────────────────────────
+    // ── Phase: player selects a reply ─────────────────────────────────────────
 
     private void OnOptionSelected(PlayerReplicaOption option)
     {
         _state.Log.Add(new DialogueLogEntry(
             DialogueLogEntryType.PlayerReplica, "You", $"\"{option.ReplicaText}\""));
 
-        // Compute dice: MM level + affinity bonus
-        int affinityBonus = (int)_npc.AffinityTable.GetLevel(_partyMemberId);
-        int diceCount     = Math.Clamp(option.Skill.Level + affinityBonus, 1, 15);
-        int difficulty    = Math.Max(1, (int)Math.Ceiling(diceCount * 0.4)); // ~40% base difficulty
+        // This reply's Modus Mentis contributes its level to the branch dice pool.
+        _accumulatedDice += option.Skill.Level;
+        _chosenMMs.Add(option.Skill);
+        _state.Options.Clear();
+
+        switch (option.Option.Next)
+        {
+            case NpcLineNode npcNode:
+                _currentNode = npcNode;
+                _state.Log.Add(new DialogueLogEntry(DialogueLogEntryType.Separator, null, string.Empty));
+                BeginNpcSpeakPhase();
+                break;
+
+            case ResolutionNode resolution:
+                BeginResolution(resolution);
+                break;
+
+            default:
+                Console.Error.WriteLine("DialogueTreeController: option leads to an unknown node type.");
+                EndConversation();
+                break;
+        }
+    }
+
+    // ── Phase: the single dice check at a branch end ──────────────────────────
+
+    private void BeginResolution(ResolutionNode resolution)
+    {
+        _pendingResolution = resolution;
+
+        int affinityBonus = _npc.AffinityTable.GetLevel(_partyMemberId).BonusDice();
+        int diceCount     = Math.Clamp(affinityBonus + _accumulatedDice, 1, 15);
+        int difficulty    = resolution.Difficulty;
 
         _state.StartDiceRoll(diceCount, difficulty);
         _dice.Start(diceCount, difficulty);
         int limit = HumorModifierLimit(_protagonist);
         if (limit > 0) _dice.EnableHumorModifiers(_protagonist.HumorQueues, limit);
-        _selectedOption = option;
 
         _ = Task.Run(async () =>
         {
-            await Task.Delay(700); // Let animation play
+            await Task.Delay(700); // Let the animation play
             int[] values = Enumerable.Range(0, diceCount).Select(_ => _rng.Next(1, 7)).ToArray();
             _state.CompleteDiceRoll(values);
             _dice.Complete(values);
         });
     }
 
-    private PlayerReplicaOption? _selectedOption;
-
-    // ── Phase: show reaction + apply outcome ──────────────────────────────────
-
-    private void BeginReactionPhase()
+    private void ResolveRoll()
     {
-        if (_selectedOption == null) return;
+        var resolution = _pendingResolution;
+        _pendingResolution = null;
+        if (resolution == null) return;
 
-        var option = _selectedOption!;
-        _selectedOption = null;
         // Final outcome reflects any humor modifiers the player applied during the roll.
         bool succeeded = _dice.IsCurrentlySuccess;
 
@@ -334,80 +355,51 @@ public class DialogueTreeController
 
         _ = Task.Run(async () =>
         {
-            // Generate the reaction lazily for the FINAL outcome (so a humor flip is honoured).
+            // The NPC's closing line — one of the node's two authored replicas.
+            string neutral = succeeded ? resolution.SuccessReplica : resolution.FailureReplica;
             string reaction;
             try
             {
-                reaction = await _reactionExec.ExecuteAsync(
-                    _npc, _npcSlotId, option.ReplicaText, succeeded, option.TargetNode, _tree.Description);
+                reaction = await _replicaWriter.WriteAsync(
+                    _npcSlotId, neutral, _context, addresseeRole: "you", subject: _tree.Description);
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"DialogueTreeController: Reaction gen failed: {ex.Message}");
-                reaction = succeeded
-                    ? $"{_npc.DisplayName} nods."
-                    : $"{_npc.DisplayName} doesn't react.";
+                Console.Error.WriteLine($"DialogueTreeController: Resolution line failed: {ex.Message}");
+                reaction = succeeded ? $"{_npc.DisplayName} nods." : $"{_npc.DisplayName} doesn't react.";
             }
 
-            // Award +1 XP to the player's learned speaking MM on a successful replica.
-            // option.Skill is a registry template; map it to the protagonist's own instance by id.
+            // Award +1 XP to every learned speaking MM that voiced a chosen reply on this branch.
             if (succeeded)
             {
-                var learnedSkill = _protagonist.GetModusMentisById(option.Skill.ModusMentisId);
-                if (learnedSkill != null) _protagonist.AwardModusMentisXp(learnedSkill);
+                foreach (var mm in _chosenMMs.DistinctBy(m => m.ModusMentisId))
+                {
+                    var learned = _protagonist.GetModusMentisById(mm.ModusMentisId);
+                    if (learned != null) _protagonist.AwardModusMentisXp(learned);
+                }
             }
 
             _state.Log.Add(new DialogueLogEntry(
                 DialogueLogEntryType.NpcSpeaking, _npc.DisplayName, reaction));
-
             _state.IsLoadingReaction = false;
 
-            if (_currentNode.IsTerminal)
+            // Apply the outcomes gated by success/failure.
+            foreach (var oc in resolution.Outcomes)
             {
-                // Apply matching outcomes
-                foreach (var oc in _currentNode.Outcomes)
-                {
-                    bool fires = oc.Condition == BranchCondition.Either
-                        || (oc.Condition == BranchCondition.Success && succeeded)
-                        || (oc.Condition == BranchCondition.Failure && !succeeded);
-
-                    if (fires) oc.Outcome.Apply(_npc, _partyMemberId);
-                }
-
-                // Mark first contact if still stranger
-                _npc.AffinityTable.MarkFirstContact(_partyMemberId);
-
-                // Show final affinity
-                var finalLevel = _npc.AffinityTable.GetLevel(_partyMemberId);
-                _state.Log.Add(new DialogueLogEntry(
-                    DialogueLogEntryType.SystemMessage, null,
-                    $"[{finalLevel.ToDisplayName(_npc.DisplayName)}]"));
-
-                EndConversation();
+                bool fires = oc.Condition == BranchCondition.Either
+                    || (oc.Condition == BranchCondition.Success && succeeded)
+                    || (oc.Condition == BranchCondition.Failure && !succeeded);
+                if (fires) oc.Outcome.Apply(_npc, _partyMemberId);
             }
-            else
-            {
-                // Advance to chosen branch node whose condition matches
-                var branchesToFollow = option.TargetNode.Branches
-                    .Where(b => b.Condition == BranchCondition.Either
-                        || (b.Condition == BranchCondition.Success && succeeded)
-                        || (b.Condition == BranchCondition.Failure && !succeeded))
-                    .ToList();
 
-                if (branchesToFollow.Count == 0)
-                {
-                    // No valid branch — go to the target node directly
-                    _currentNode = option.TargetNode;
-                }
-                else
-                {
-                    _currentNode = branchesToFollow[0].TargetNode;
-                }
+            _npc.AffinityTable.MarkFirstContact(_partyMemberId);
 
-                _state.Log.Add(new DialogueLogEntry(
-                    DialogueLogEntryType.Separator, null, string.Empty));
-                BeginNpcSpeakPhase();
-            }
+            var finalLevel = _npc.AffinityTable.GetLevel(_partyMemberId);
+            _state.Log.Add(new DialogueLogEntry(
+                DialogueLogEntryType.SystemMessage, null,
+                $"[{finalLevel.ToDisplayName(_npc.DisplayName)}]"));
+
+            EndConversation();
         });
     }
 

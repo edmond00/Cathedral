@@ -4,9 +4,9 @@ using Cathedral.Game.Npc;
 namespace Cathedral.Game.Dialogue.Tree;
 
 /// <summary>
-/// A named dialogue tree — a directed graph of <see cref="DialogueTreeNode"/>s with a
-/// fixed entry point and a guarding availability condition.
-/// Each tree is associated with a verb that can trigger it.
+/// A named dialogue tree — a directed graph of speaker-typed <see cref="DialogueNode"/>s
+/// (<see cref="NpcLineNode"/> / <see cref="ResolutionNode"/>) with a fixed entry point and a
+/// guarding availability condition. Each tree is associated with a verb that can trigger it.
 /// Tree instances are stateless; all session state lives in the runtime controller.
 /// </summary>
 public abstract class DialogueTree
@@ -26,8 +26,8 @@ public abstract class DialogueTree
     /// <summary>The verb ID that triggers this tree (e.g. "meet_stranger").</summary>
     public abstract string AssociatedVerbId { get; }
 
-    /// <summary>Entry node — first node shown to the player.</summary>
-    public abstract DialogueTreeNode EntryNode { get; }
+    /// <summary>Entry node — the NPC's opening line and its player replies.</summary>
+    public abstract NpcLineNode EntryNode { get; }
 
     /// <summary>
     /// Returns whether this tree can be started given the NPC's current affinity

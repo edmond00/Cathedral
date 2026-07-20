@@ -9,16 +9,11 @@ namespace Cathedral.Game.Dialogue.Tree.Trees;
 /// - <paramref name="criminalType"/> — the crime the party member was witnessed committing
 /// - <paramref name="witnessIsBrave"/> — whether the witness will escalate to a fight on failure
 ///
-/// Tree structure:
-///   confrontation (entry)
-///   ├─ apologize
-///   │   ├─ Success → forgiven         (ClearCrime + set AnnoyingAcquaintance)
-///   │   └─ Failure → rejected         (RecordCrime [+ FightRequest if brave])
-///   ├─ lie
-///   │   ├─ Success → believed         (no record — you got away with it)
-///   │   └─ Failure → caught_lying     (RecordCrime + FightRequest)
-///   └─ provoke
-///       └─ Either  → fight_demanded   (RecordCrime + FightRequest)
+/// Tree shape (new model): the witness confronts the player, who may apologise, lie, or provoke.
+/// Each reply leads to its own single-check resolution:
+///   apologise → success: forgiven (crime cleared) / failure: rejected (recorded; fight if brave)
+///   lie       → success: believed (no record)     / failure: caught out (recorded + fight)
+///   provoke   → either: the witness draws (recorded + fight)
 /// </summary>
 public static class CaughtRedHandedTreeFactory
 {
@@ -36,13 +31,13 @@ public static class CaughtRedHandedTreeFactory
 
     private sealed class CaughtRedHandedTree : DialogueTree
     {
-        private readonly DialogueTreeNode _entry;
+        private readonly NpcLineNode _entry;
 
-        public override string TreeId          => $"{TreeIdPrefix}_{_criminalType.ToString().ToLowerInvariant()}";
-        public override string DisplayName     => "Caught Red-Handed";
-        public override string Description     => BuildDescription();
+        public override string TreeId           => $"{TreeIdPrefix}_{_criminalType.ToString().ToLowerInvariant()}";
+        public override string DisplayName      => "Caught Red-Handed";
+        public override string Description      => BuildDescription();
         public override string AssociatedVerbId => "";   // triggered programmatically, not by a verb
-        public override DialogueTreeNode EntryNode => _entry;
+        public override NpcLineNode EntryNode   => _entry;
 
         private readonly CriminalAffinityType _criminalType;
 
@@ -50,109 +45,66 @@ public static class CaughtRedHandedTreeFactory
         {
             _criminalType = criminalType;
 
-            // ── Terminal nodes ──────────────────────────────────────────────────
+            // ── Apologise → forgiven / rejected ─────────────────────────────────
+            var rejectedOutcomes = new List<DialogueOutcomeCase>
+            {
+                new(new CriminalAffinityOutcome(criminalType), BranchCondition.Failure),
+            };
+            rejectedOutcomes.Add(witnessIsBrave
+                ? new(new FightRequestOutcome(), BranchCondition.Failure)
+                : new(new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance), BranchCondition.Failure));
 
-            var forgiven = new DialogueTreeNode(
-                nodeId:      "forgiven",
-                description: "the witness accepts your apology and lets you go with a stern warning",
-                replica:     "...Fine. Off with you — and let me never catch you at this again.",
+            var apologyOutcomes = new List<DialogueOutcomeCase>
+            {
+                new(new ClearCrimeOutcome(),                                           BranchCondition.Success),
+                new(new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance), BranchCondition.Success),
+            };
+            apologyOutcomes.AddRange(rejectedOutcomes);
+
+            var apologyResult = new ResolutionNode(
+                nodeId:         "apology_result",
+                difficulty:     2,
+                successReplica: "...Fine. See that it never happens again. Now get out of my sight.",
+                failureReplica: witnessIsBrave
+                    ? "Sorry means nothing to me now. You'll answer for this — here and now!"
+                    : "Spare me your words. Get out, and don't let me see you again.",
+                outcomes: apologyOutcomes);
+
+            // ── Lie → believed / caught out ─────────────────────────────────────
+            var lieResult = new ResolutionNode(
+                nodeId:         "lie_result",
+                difficulty:     2,
+                successReplica: "...Hm. Maybe I saw it wrong. Go on, then — off with you.",
+                failureReplica: "You're lying to my face! Now you'll truly regret it.",
                 outcomes: new List<DialogueOutcomeCase>
                 {
-                    new(new ClearCrimeOutcome(),                                              BranchCondition.Either),
-                    new(new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance),   BranchCondition.Either),
+                    // Success: the lie worked, no record.
+                    new(new CriminalAffinityOutcome(criminalType), BranchCondition.Failure),
+                    new(new FightRequestOutcome(),                  BranchCondition.Failure),
                 });
 
-            List<DialogueOutcomeCase> rejectedOutcomes = [
-                new(new CriminalAffinityOutcome(criminalType), BranchCondition.Either),
-            ];
-            if (witnessIsBrave)
-                rejectedOutcomes.Add(new(new FightRequestOutcome(), BranchCondition.Either));
-            else
-                rejectedOutcomes.Add(new(new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance), BranchCondition.Either));
-
-            var rejected = new DialogueTreeNode(
-                nodeId:      "rejected",
-                description: witnessIsBrave
-                    ? "the witness rejects your apology and demands you answer for your actions"
-                    : "the witness rejects your apology but lets you go with cold contempt",
-                replica:     witnessIsBrave
-                    ? "No. You'll answer for this, here and now."
-                    : "Spare me your words. Get out of my sight.",
-                outcomes: rejectedOutcomes);
-
-            var believed = new DialogueTreeNode(
-                nodeId:      "believed",
-                description: "the witness believes your story and you escape without consequence",
-                replica:     "...Hm. Very well — I suppose I was mistaken. Go on, then.",
-                outcomes: new List<DialogueOutcomeCase>
-                {
-                    // No record — the lie worked.
-                });
-
-            var caughtLying = new DialogueTreeNode(
-                nodeId:      "caught_lying",
-                description: "the witness sees through your lie and is now doubly enraged",
-                replica:     "You're lying to my face! Now you'll truly regret it.",
-                outcomes: new List<DialogueOutcomeCase>
-                {
-                    new(new CriminalAffinityOutcome(criminalType), BranchCondition.Either),
-                    new(new FightRequestOutcome(),                  BranchCondition.Either),
-                });
-
-            var fightDemanded = new DialogueTreeNode(
-                nodeId:      "fight_demanded",
-                description: "your provocations push the witness over the edge — they draw their weapon",
-                replica:     "That's the last insult I'll take from you. Draw!",
+            // ── Provoke → the witness draws (either result) ─────────────────────
+            var provokeResult = new ResolutionNode(
+                nodeId:         "provoke_result",
+                difficulty:     1,
+                successReplica: "That's the last insult I'll take from you. Draw!",
+                failureReplica: "You dare mock me? Then face me, coward!",
                 outcomes: new List<DialogueOutcomeCase>
                 {
                     new(new CriminalAffinityOutcome(criminalType), BranchCondition.Either),
                     new(new FightRequestOutcome(),                  BranchCondition.Either),
                 });
 
-            // ── Intermediate nodes ──────────────────────────────────────────────
-
-            var apologize = new DialogueTreeNode(
-                nodeId:      "apologize",
-                description: "attempting to defuse the situation by apologising and explaining yourself",
-                replica:     "I'm sorry — please, let me explain myself.",
-                branches: new List<DialogueBranch>
-                {
-                    new(forgiven,  BranchCondition.Success),
-                    new(rejected,  BranchCondition.Failure),
-                });
-
-            var lie = new DialogueTreeNode(
-                nodeId:      "lie",
-                description: "trying to talk your way out by spinning a plausible story",
-                replica:     "You've got it wrong — it isn't what it looked like.",
-                branches: new List<DialogueBranch>
-                {
-                    new(believed,     BranchCondition.Success),
-                    new(caughtLying,  BranchCondition.Failure),
-                });
-
-            var provoke = new DialogueTreeNode(
-                nodeId:      "provoke",
-                description: "deliberately aggravating the witness to force a confrontation on your own terms",
-                replica:     "And what exactly do you mean to do about it?",
-                branches: new List<DialogueBranch>
-                {
-                    new(fightDemanded, BranchCondition.Either),
-                });
-
-            // ── Entry ───────────────────────────────────────────────────────────
-
-            _entry = new DialogueTreeNode(
-                nodeId:      "confrontation",
-                description: BuildConfrontationDescription(criminalType),
-                replica:     BuildConfrontationReplica(criminalType),
-                isEntry:     true,
-                branches: new List<DialogueBranch>
-                {
-                    new(apologize, BranchCondition.Either),
-                    new(lie,       BranchCondition.Either),
-                    new(provoke,   BranchCondition.Either),
-                });
+            // ── Entry: the witness confronts the player ─────────────────────────
+            _entry = new NpcLineNode(
+                nodeId:  "confrontation",
+                replica: BuildConfrontationReplica(criminalType),
+                new PlayerOption("apologize", "apologise and explain yourself",
+                    "I'm sorry — please, let me explain myself.", apologyResult),
+                new PlayerOption("lie", "talk your way out with a story",
+                    "You've got it wrong — it isn't what it looked like.", lieResult),
+                new PlayerOption("provoke", "provoke them into a fight",
+                    "And what exactly do you mean to do about it?", provokeResult));
         }
 
         // The tree is triggered programmatically — IsAvailable is never checked.
@@ -164,14 +116,6 @@ public static class CaughtRedHandedTreeFactory
             CriminalAffinityType.Intruder => "being caught trespassing by a witness",
             CriminalAffinityType.Murderer => "being caught committing violence by a witness",
             _                             => "being caught in an illegal act by a witness",
-        };
-
-        private static string BuildConfrontationDescription(CriminalAffinityType crime) => crime switch
-        {
-            CriminalAffinityType.Thief    => "the witness confronts you about the theft they just witnessed",
-            CriminalAffinityType.Intruder => "the witness demands to know what you are doing in a restricted area",
-            CriminalAffinityType.Murderer => "the witness confronts you in horror over what they just saw you do",
-            _                             => "the witness confronts you about what they just witnessed",
         };
 
         private static string BuildConfrontationReplica(CriminalAffinityType crime) => crime switch
