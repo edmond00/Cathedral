@@ -37,11 +37,17 @@ public class DialogueOptionGenerator
         _slots    = slots;
     }
 
+    /// <param name="previousNpcReplica">
+    /// The NPC's line the player is replying to (already persona-rewritten, real names) — this is
+    /// always the line just spoken at <paramref name="node"/>, so it is never null in practice, but
+    /// null is accepted for callers that have none to give.
+    /// </param>
     public async Task<List<PlayerReplicaOption>> GenerateAsync(
         NpcLineNode      node,
         PartyMember      pc,
         DialogueContext  ctx,
         string           subject,
+        string?          previousNpcReplica = null,
         CancellationToken ct = default)
     {
         var results = new List<PlayerReplicaOption>();
@@ -83,7 +89,8 @@ public class DialogueOptionGenerator
                 string text = await _rewriter.RewriteAsync(
                     slot, expanded, NarrationKind.DialogueReplica,
                     mm.PersonaReminder2, addressee: addressee, keepHistory: true,
-                    styleInstruction: mm.StyleInstruction, dialogueContext: subject, ct: ct);
+                    styleInstruction: mm.StyleInstruction, dialogueContext: subject,
+                    previousReplica: previousNpcReplica, ct: ct);
                 text = ctx.Names.ToReal(text.Trim().Trim('"'));
 
                 results.Add(new PlayerReplicaOption(mm, opt, text));

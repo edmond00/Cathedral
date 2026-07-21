@@ -314,6 +314,57 @@ public class NarrativeController
     public PoV? CurrentPoV => _pov;
 
     /// <summary>
+    /// The shared text history for this narration session. Every text-bearing phase of the visit
+    /// writes into it — dialogue appends its lines live, fight/trade append their summaries — so the
+    /// player can scroll back through the whole visit. It is emptied only when a new session starts
+    /// (i.e. after world travel), since each session builds its own controller.
+    /// </summary>
+    public NarrationScrollBuffer ScrollBuffer => _scrollBuffer;
+
+    /// <summary>
+    /// Grey the current live text into history, closed by a labelled separator rule, and reset the
+    /// node state (which refills noetic points). The node, scene and PoV are left untouched, so
+    /// anything a phase added to the world — corpses from a fight, for instance — is still there.
+    /// Call this when LEAVING narration for another phase; no observation pass is started.
+    /// </summary>
+    /// <param name="separatorLabel">Caption for the rule, naming the segment that follows.</param>
+    public void CloseNarrationSegment(string? separatorLabel = null)
+    {
+        _scrollBuffer.ConvertToHistory(separatorLabel);
+        _narrationState.ResetForNewNode();
+        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+    }
+
+    /// <summary>
+    /// <see cref="CloseNarrationSegment"/> followed by a fresh observation pass in the SAME node and
+    /// scene. Call this when RETURNING to narration from another phase (or on a node transition,
+    /// where the caller reassigns <c>_currentNode</c> first): the player gets full noetic points and
+    /// narration that describes the scene as it now stands.
+    /// </summary>
+    public void BeginNarrationSegment(string? separatorLabel = null)
+    {
+        CloseNarrationSegment(separatorLabel);
+        StartObservationPhaseWithHistory();
+    }
+
+    /// <summary>
+    /// Append a one-line note from a non-narration phase (e.g. a trade summary) to the shared
+    /// history, so the phase leaves a trace in the log.
+    /// </summary>
+    public void AppendPhaseNote(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        _scrollBuffer.AddBlock(new NarrationBlock(
+            Type: NarrationBlockType.Outcome,
+            ModusMentis: null!,
+            Text: text,
+            Keywords: null,
+            Actions: null));
+        _scrollBuffer.ScrollToBottom();
+        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+    }
+
+    /// <summary>
     /// Start the observation phase (generates observations asynchronously).
     /// This clears all history - use for initial start only.
     /// </summary>
@@ -344,11 +395,11 @@ public class NarrativeController
     
     /// <summary>
     /// Start the observation phase while preserving scroll buffer history.
-    /// Used when transitioning to a new node after a successful action.
+    /// Always reached through <see cref="BeginNarrationSegment"/>, which performs the required
+    /// grey-into-history + node reset first.
     /// </summary>
     private void StartObservationPhaseWithHistory()
     {
-        // Note: ResetForNewNode() should already be called before this
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear(); // New node — everyone starts with a fresh counter
         // Re-apply the current time period so new node gets its NPCs placed
@@ -857,10 +908,7 @@ public class NarrativeController
         ReplaceScene(newScene);
 
         // Preserve the prior narration as history and start a fresh observation phase.
-        _scrollBuffer.ConvertToHistory();
-        _narrationState.ResetForNewNode();
-        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-        StartObservationPhaseWithHistory();
+        BeginNarrationSegment();
     }
 
     /// <summary>
@@ -1533,16 +1581,13 @@ public class NarrativeController
                 _ambianceEngine.SetFilter(desired);
         }
 
-        // Header: agent name (left) + noetic counter (right, hidden in phases without cost) —
-        // replaced by an animated progress bar spanning the full row while the LLM is
-        // generating text, since the name/points aren't meaningful mid-generation.
+        // Header: agent name (left) + noetic counter (right, hidden in phases without cost).
+        // Always rendered — while the LLM is generating it's greyed out along with the rest
+        // of the panel (see below) rather than replaced.
         bool showNoetic = _scene?.Phase != NarrationPhase.ChildhoodReminescence
                        && _scene?.Phase != NarrationPhase.GetUp;
-        if (_narrationState.IsAnyLoading)
-            _ui.RenderHeaderProgressBar();
-        else
-            _ui.RenderHeader(_activePartyMember.DisplayName, _narrationState.ThinkingAttemptsRemaining,
-                _activePartyMember.MaxNoeticPoints, showNoetic);
+        _ui.RenderHeader(_activePartyMember.DisplayName, _narrationState.ThinkingAttemptsRemaining,
+            _activePartyMember.MaxNoeticPoints, showNoetic);
 
         // The footer exit button is only (re)rendered in the interactive states below. Clear its
         // click region each frame so stale zones don't linger during dice/loading/error states.
@@ -1575,12 +1620,13 @@ public class NarrativeController
         }
 
         // LLM generating (non-action loading, or action evaluation phase before dice roll):
-        // keep the narration visible but greyed out below the animated header bar, with the
-        // waiting message (animated ellipsis) repeated on the footer status line.
+        // keep the narration visible but greyed out (header included), with a centered
+        // progress bar animation and the waiting message (animated ellipsis) on the footer.
         if (_narrationState.IsAnyLoading)
         {
             RenderNarrationContent();
-            _ui.DimContentBelowHeader();
+            _ui.DimContent();
+            _ui.RenderCenterProgressBar();
             _ui.RenderWaitingStatus(_narrationState.LoadingMessage);
             return;
         }
@@ -1618,7 +1664,6 @@ public class NarrativeController
     {
         _ui.RenderObservationBlocks(
             _scrollBuffer,
-            _narrationState.ScrollOffset,
             _narrationState.ThinkingAttemptsRemaining,
             hoveredKeyword,
             hoveredAction,
@@ -2509,10 +2554,7 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: CONTINUE — transitioning to node {_narrationState.PendingTransitionNode.NodeId}");
             _currentNode = _narrationState.PendingTransitionNode;
-            _scrollBuffer.ConvertToHistory();
-            _narrationState.ResetForNewNode();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-            StartObservationPhaseWithHistory();
+            BeginNarrationSegment();
             return;
         }
 
@@ -2532,10 +2574,7 @@ public class NarrativeController
         if (noEarlyExit)
         {
             Console.WriteLine("NarrativeController: CONTINUE — restarting observations (no-early-exit phase)");
-            _scrollBuffer.ConvertToHistory();
-            _narrationState.ResetForNewNode();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-            StartObservationPhaseWithHistory();
+            BeginNarrationSegment();
         }
         else
         {
@@ -2615,7 +2654,8 @@ public class NarrativeController
     public void OnFightCompleted(
         Fight.FightAdapterResult result,
         NpcEntity npc,
-        IReadOnlyList<NpcEntity>? allEnemyNpcs = null)
+        IReadOnlyList<NpcEntity>? allEnemyNpcs = null,
+        IReadOnlyList<string>? combatLog = null)
     {
         Console.WriteLine($"NarrativeController: Fight completed with result {result} vs {npc.DisplayName}");
 
@@ -2660,6 +2700,22 @@ public class NarrativeController
                     enemy.AffinityTable.SetEnemy(name);
                 Console.WriteLine($"NarrativeController: {enemy.DisplayName} flagged the whole party ({partyNames.Count} member(s)) as enemies after runaway");
             }
+        }
+
+        // Archive the tail of the combat log so the fight leaves a scrollable trace. One block, not
+        // one per line: the buffer re-wraps every block on each append, and WrapText already splits
+        // on newlines. Only the closing exchange is kept — the rest was always ephemeral.
+        if (combatLog is { Count: > 0 })
+        {
+            const int MaxCombatLogLines = 12;
+            var tail = combatLog.Skip(Math.Max(0, combatLog.Count - MaxCombatLogLines));
+            string logText = (combatLog.Count > MaxCombatLogLines ? "…\n" : "") + string.Join("\n", tail);
+            _scrollBuffer.AddBlock(new NarrationBlock(
+                Type: NarrationBlockType.Outcome,
+                ModusMentis: null!,
+                Text: logText,
+                Keywords: null,
+                Actions: null));
         }
 
         string outcomeText = result switch

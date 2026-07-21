@@ -24,6 +24,11 @@ public class DialogueReplicaWriter
     /// <param name="ctx">Live conversation context (fields + name mapping).</param>
     /// <param name="addresseeRole">Role the line is spoken to ("you" for NPC lines, "npc" for player lines).</param>
     /// <param name="subject">The dialogue subject, for the rewrite prompt context.</param>
+    /// <param name="previousReplica">
+    /// The addressee's previous spoken line (already persona-rewritten, real names), or null if this
+    /// is the opening line of the conversation. Forwarded verbatim to
+    /// <see cref="PersonaRewriter.RewriteAsync"/> for prompt grounding.
+    /// </param>
     public async Task<string> WriteAsync(
         int              slotId,
         string           neutralTemplate,
@@ -33,6 +38,7 @@ public class DialogueReplicaWriter
         string?          personaReminder2 = null,
         string?          styleInstruction = null,
         bool             keepHistory      = true,
+        string?          previousReplica  = null,
         CancellationToken ct              = default)
     {
         string expanded  = DialogueTemplate.Expand(neutralTemplate, ctx);
@@ -41,7 +47,8 @@ public class DialogueReplicaWriter
         string text = await _rewriter.RewriteAsync(
             slotId, expanded, NarrationKind.DialogueReplica,
             personaReminder2, addressee: addressee, keepHistory: keepHistory,
-            styleInstruction: styleInstruction, dialogueContext: subject, ct: ct);
+            styleInstruction: styleInstruction, dialogueContext: subject,
+            previousReplica: previousReplica, ct: ct);
 
         return ctx.Names.ToReal(text.Trim().Trim('"'));
     }

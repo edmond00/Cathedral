@@ -15,18 +15,26 @@ public class NarrationScrollBuffer
 {
     private readonly List<NarrationBlock> _blocks = new();
     private readonly List<RenderedLine> _renderedLines = new();
-    private readonly List<RenderedLine> _historyLines = new(); // Previous narration node lines (grayed out)
+    private readonly List<RenderedLine> _historyLines = new(); // Previous phase/node lines (grayed out)
     private int _scrollOffset = 0;
     private readonly int _maxWidth;
     private readonly NarrativeLayout _layout;
 
-    public int ScrollOffset => _scrollOffset;
-    public int TotalLines => _renderedLines.Count;
-    
     /// <summary>
-    /// Number of lines that are history (from previous narration nodes).
+    /// Guards every read/write of the line lists. Blocks are appended from LLM continuations on
+    /// background tasks while the render thread reads the visible window every frame, and
+    /// <see cref="RegenerateRenderedLines"/> clears-then-refills <see cref="_renderedLines"/> —
+    /// without this an enumeration can observe the empty intermediate state.
     /// </summary>
-    public int HistoryLineCount => _historyLines.Count;
+    private readonly object _gate = new();
+
+    public int ScrollOffset => _scrollOffset;
+    public int TotalLines { get { lock (_gate) return _renderedLines.Count; } }
+
+    /// <summary>
+    /// Number of lines that are history (from previous phases or narration nodes).
+    /// </summary>
+    public int HistoryLineCount { get { lock (_gate) return _historyLines.Count; } }
 
     public NarrationScrollBuffer(int maxWidth, NarrativeLayout layout)
     {
@@ -40,42 +48,52 @@ public class NarrationScrollBuffer
     /// </summary>
     public void AddBlock(NarrationBlock block)
     {
-        // Speaking blocks are manually assembled with outer quotes — skip truncation cleanup
-        // because CleanTruncatedText would strip the closing " (it only recognises . ! ? as endings).
-        string cleanedText = block.Type == NarrationBlockType.Speaking
-            ? block.Text
-            : TextTruncationUtils.CleanTruncatedText(block.Text);
-        
+        // Speech blocks are manually assembled with outer quotes and multi-line blocks (e.g. a
+        // combat log) carry their own line breaks — both would be mangled by CleanTruncatedText,
+        // which only recognises . ! ? as sentence endings and would strip everything after the last one.
+        bool skipCleanup = block.Type is NarrationBlockType.Speaking or NarrationBlockType.PlayerSpeaking
+                           || block.Text.Contains('\n');
+        string cleanedText = skipCleanup ? block.Text : TextTruncationUtils.CleanTruncatedText(block.Text);
+
         // Create a new block with cleaned text if it was modified, preserving all properties
         var blockToAdd = cleanedText != block.Text
             ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Keywords, block.Actions, block.ChainOrigin,
                 block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences, block.SpeakerName,
                 block.OutcomeReports)
             : block;
-        
-        _blocks.Add(blockToAdd);
-        RegenerateRenderedLines();
-        
+
+        lock (_gate)
+        {
+            _blocks.Add(blockToAdd);
+            RegenerateRenderedLines();
+        }
+
         // Don't auto-scroll - let user see from the top
         // User can scroll down if needed
     }
 
     /// <summary>
-    /// Get visible lines for the viewport.
+    /// Get the visible window of lines, starting at the buffer's current <see cref="ScrollOffset"/>.
+    /// The buffer owns the scroll position — callers move it with
+    /// <see cref="ScrollUp"/>/<see cref="ScrollDown"/>/<see cref="SetScrollOffset"/>/<see cref="ScrollToBottom"/>.
+    /// This matters because the narration and dialogue panels share one buffer and must therefore
+    /// share one scroll position.
     /// </summary>
-    public List<RenderedLine> GetVisibleLines(int startLine, int visibleCount)
+    public List<RenderedLine> GetVisibleLines(int visibleCount)
     {
-        if (_renderedLines.Count == 0)
-            return new List<RenderedLine>();
+        lock (_gate)
+        {
+            if (_renderedLines.Count == 0)
+                return new List<RenderedLine>();
 
-        // Start from current scroll offset
-        int actualStart = Math.Max(0, Math.Min(_scrollOffset, _renderedLines.Count - 1));
-        int actualCount = Math.Min(visibleCount, _renderedLines.Count - actualStart);
+            int actualStart = Math.Max(0, Math.Min(_scrollOffset, _renderedLines.Count - 1));
+            int actualCount = Math.Min(visibleCount, _renderedLines.Count - actualStart);
 
-        if (actualCount <= 0)
-            return new List<RenderedLine>();
+            if (actualCount <= 0)
+                return new List<RenderedLine>();
 
-        return _renderedLines.Skip(actualStart).Take(actualCount).ToList();
+            return _renderedLines.Skip(actualStart).Take(actualCount).ToList();
+        }
     }
 
     /// <summary>
@@ -85,7 +103,7 @@ public class NarrationScrollBuffer
     {
         if (_scrollOffset <= 0)
             return;
-        
+
         _scrollOffset = Math.Max(0, _scrollOffset - lines);
     }
 
@@ -94,10 +112,10 @@ public class NarrationScrollBuffer
     /// </summary>
     public void ScrollDown(int lines = 1)
     {
-        int maxScroll = _layout.CalculateMaxScrollOffset(_renderedLines.Count);
+        int maxScroll = MaxScrollOffset();
         if (_scrollOffset >= maxScroll)
             return;
-        
+
         _scrollOffset = Math.Min(maxScroll, _scrollOffset + lines);
     }
 
@@ -106,7 +124,7 @@ public class NarrationScrollBuffer
     /// </summary>
     public void ScrollToBottom()
     {
-        _scrollOffset = Math.Max(0, _layout.CalculateMaxScrollOffset(_renderedLines.Count));
+        _scrollOffset = MaxScrollOffset();
     }
 
     /// <summary>
@@ -114,8 +132,13 @@ public class NarrationScrollBuffer
     /// </summary>
     public void SetScrollOffset(int offset)
     {
-        int maxScroll = _layout.CalculateMaxScrollOffset(_renderedLines.Count);
-        _scrollOffset = Math.Clamp(offset, 0, Math.Max(0, maxScroll));
+        _scrollOffset = Math.Clamp(offset, 0, MaxScrollOffset());
+    }
+
+    private int MaxScrollOffset()
+    {
+        lock (_gate)
+            return Math.Max(0, _layout.CalculateMaxScrollOffset(_renderedLines.Count));
     }
 
     /// <summary>
@@ -126,65 +149,122 @@ public class NarrationScrollBuffer
     /// <summary>
     /// Can we scroll down?
     /// </summary>
-    public bool CanScrollDown(int visibleLines) => _scrollOffset + visibleLines < _renderedLines.Count;
+    public bool CanScrollDown(int visibleLines)
+    {
+        lock (_gate)
+            return _scrollOffset + visibleLines < _renderedLines.Count;
+    }
 
     /// <summary>
     /// Clear all blocks and rendered lines (including history).
     /// </summary>
     public void Clear()
     {
-        _blocks.Clear();
-        _renderedLines.Clear();
-        _historyLines.Clear();
-        _scrollOffset = 0;
-    }
-    
-    /// <summary>
-    /// Convert current narration content to history (grayed out, non-interactive).
-    /// This preserves the text for player reference while starting a new narration node.
-    /// Adds a visual separator line at the end.
-    /// </summary>
-    public void ConvertToHistory()
-    {
-        Console.WriteLine($"ConvertToHistory: Starting with {_renderedLines.Count} rendered lines, {_historyLines.Count} existing history lines");
-        
-        if (_renderedLines.Count == 0)
+        lock (_gate)
         {
-            Console.WriteLine("ConvertToHistory: No lines to convert, returning");
-            return;
+            _blocks.Clear();
+            _renderedLines.Clear();
+            _historyLines.Clear();
+            _scrollOffset = 0;
         }
-        
-        int convertedCount = 0;
-        
-        // Only convert lines that are NOT already history
-        // (_renderedLines contains both history lines at the start and current content after)
-        foreach (var line in _renderedLines)
+    }
+
+    /// <summary>
+    /// Convert the current live content to history (grayed out, non-interactive) and close it with a
+    /// separator rule. This preserves the text for player reference while a new segment — a new
+    /// narration node, or a whole new phase such as a conversation or a fight — begins.
+    /// </summary>
+    /// <param name="label">
+    /// Optional caption centred in the separator naming what comes next (e.g. "conversation with Emma"),
+    /// so long scroll-back history stays navigable. Null draws a plain rule.
+    /// </param>
+    public void ConvertToHistory(string? label = null)
+    {
+        lock (_gate)
         {
-            // Skip lines that are already in history
-            if (line.IsHistory)
-                continue;
-                
-            // Create new line with IsHistory=true, and clear interactive elements
-            var historyLine = new RenderedLine(
-                Text: line.Text,
-                Type: line.Type,
-                BlockType: line.BlockType,
-                Keywords: null,  // Remove keywords to disable interactivity
-                Actions: null,   // Remove actions to disable interactivity
+            int convertedCount = 0;
+
+            // Only convert lines that are NOT already history
+            // (_renderedLines contains both history lines at the start and current content after)
+            foreach (var line in _renderedLines)
+            {
+                // Skip lines that are already in history
+                if (line.IsHistory)
+                    continue;
+
+                // Create new line with IsHistory=true, and clear interactive elements
+                var historyLine = new RenderedLine(
+                    Text: line.Text,
+                    Type: line.Type,
+                    BlockType: line.BlockType,
+                    Keywords: null,  // Remove keywords to disable interactivity
+                    Actions: null,   // Remove actions to disable interactivity
+                    IsHistory: true,
+                    GlobalActionIndex: -1,
+                    SourceBlock: null  // Clear source block for history
+                );
+                _historyLines.Add(historyLine);
+                convertedCount++;
+            }
+
+            // The separator is emitted even when nothing was converted: a phase entered on an empty
+            // buffer still needs its caption, otherwise the segment silently loses its heading.
+            _historyLines.Add(BuildSeparator(label));
+
+            // Add empty line after separator for spacing
+            _historyLines.Add(new RenderedLine(
+                Text: "",
+                Type: LineType.Empty,
+                BlockType: NarrationBlockType.Observation,
+                Keywords: null,
+                Actions: null,
                 IsHistory: true,
                 GlobalActionIndex: -1,
-                SourceBlock: null  // Clear source block for history
-            );
-            _historyLines.Add(historyLine);
-            convertedCount++;
+                SourceBlock: null
+            ));
+
+            // Clear current blocks (they're now in history)
+            _blocks.Clear();
+            _renderedLines.Clear();
+
+            // Regenerate (will include history lines at the top)
+            RegenerateRenderedLines();
+
+            Console.WriteLine($"ConvertToHistory({label ?? "-"}): converted {convertedCount} lines; " +
+                              $"{_historyLines.Count} history, {_renderedLines.Count} total");
         }
-        
-        Console.WriteLine($"ConvertToHistory: Converted {convertedCount} non-history lines");
-        
-        // Add separator line
-        string separatorText = new string('─', Math.Min(_maxWidth, 40)); // 40 dashes or max width
-        _historyLines.Add(new RenderedLine(
-            Text: separatorText,
+
+        // Park at the tail so the new segment's content appears at the bottom. Uses the shared
+        // clamp so SCROLL_BOTTOM_MARGIN is respected exactly like every other scroll path.
+        ScrollToBottom();
+    }
+
+    /// <summary>
+    /// Build the separator rule closing a segment: a plain dashed line, or the label centred in it
+    /// with at least four dashes on each side.
+    /// </summary>
+    private RenderedLine BuildSeparator(string? label)
+    {
+        string text;
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            text = new string('─', Math.Min(_maxWidth, 40));
+        }
+        else
+        {
+            const int MinDashesPerSide = 4;
+            int maxLabel = _maxWidth - 2 * (MinDashesPerSide + 1); // room for dashes + the flanking spaces
+            string caption = label.Trim();
+            if (maxLabel > 0 && caption.Length > maxLabel) caption = caption[..maxLabel];
+
+            string padded = $" {caption} ";
+            int dashes = Math.Max(2 * MinDashesPerSide, _maxWidth - padded.Length);
+            int left   = dashes / 2;
+            text = new string('─', left) + padded + new string('─', dashes - left);
+        }
+
+        return new RenderedLine(
+            Text: text,
             Type: LineType.Separator,
             BlockType: NarrationBlockType.Observation, // Doesn't matter for separator
             Keywords: null,
@@ -192,36 +272,13 @@ public class NarrationScrollBuffer
             IsHistory: true,
             GlobalActionIndex: -1,
             SourceBlock: null
-        ));
-        
-        // Add empty line after separator for spacing
-        _historyLines.Add(new RenderedLine(
-            Text: "",
-            Type: LineType.Empty,
-            BlockType: NarrationBlockType.Observation,
-            Keywords: null,
-            Actions: null,
-            IsHistory: true,
-            GlobalActionIndex: -1,
-            SourceBlock: null
-        ));
-        
-        // Clear current blocks (they're now in history)
-        _blocks.Clear();
-        _renderedLines.Clear();
-        
-        // Regenerate (will include history lines at the top)
-        RegenerateRenderedLines();
-        
-        // Scroll so the last portion of history is visible and new content will appear at bottom
-        _scrollOffset = Math.Max(0, _historyLines.Count - _layout.NARRATIVE_HEIGHT);
-        
-        Console.WriteLine($"ConvertToHistory: Complete - {_historyLines.Count} history lines, {_renderedLines.Count} total lines, scroll offset: {_scrollOffset}");
+        );
     }
 
     /// <summary>
     /// Regenerate all rendered lines from blocks with word wrapping.
     /// History lines are prepended at the top.
+    /// Callers must hold <see cref="_gate"/>.
     /// </summary>
     private void RegenerateRenderedLines()
     {
@@ -240,7 +297,8 @@ public class NarrationScrollBuffer
             {
                 // Generate modusMentis level indicators using dice glyphs
                 string levelIndicators = new string(Config.Symbols.ModusMentisLevelIndicator, block.ModusMentis.Level);
-                string headerText = block.Type == NarrationBlockType.Speaking && block.SpeakerName != null
+                string headerText = block.Type is NarrationBlockType.Speaking or NarrationBlockType.PlayerSpeaking
+                                    && block.SpeakerName != null
                     ? $"[{block.SpeakerName.ToUpper()}/{block.ModusMentis.DisplayName.ToUpper()} {levelIndicators}]"
                     : $"[{block.ModusMentis.DisplayName.ToUpper()} {levelIndicators}]";
                 
@@ -275,6 +333,7 @@ public class NarrationScrollBuffer
                 NarrationBlockType.Action => LineType.Action,
                 NarrationBlockType.Outcome => LineType.Outcome,
                 NarrationBlockType.Speaking => LineType.Content,
+                NarrationBlockType.PlayerSpeaking => LineType.Content, // colour comes from BlockType
                 _ => LineType.Content
             };
 
@@ -690,7 +749,10 @@ public class NarrationScrollBuffer
     /// <summary>
     /// Get all blocks for external access.
     /// </summary>
-    public IReadOnlyList<NarrationBlock> GetBlocks() => _blocks.AsReadOnly();
+    public IReadOnlyList<NarrationBlock> GetBlocks()
+    {
+        lock (_gate) return _blocks.ToList();
+    }
 }
 
 /// <summary>

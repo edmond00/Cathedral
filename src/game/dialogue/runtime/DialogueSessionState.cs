@@ -4,24 +4,6 @@ using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Dialogue.Runtime;
 
-// ── Log entry types ───────────────────────────────────────────────────────────
-
-public enum DialogueLogEntryType { NpcSpeaking, PlayerReplica, SystemMessage, Separator }
-
-public class DialogueLogEntry
-{
-    public DialogueLogEntryType Type    { get; }
-    public string?              Speaker { get; }
-    public string               Text    { get; }
-
-    public DialogueLogEntry(DialogueLogEntryType type, string? speaker, string text)
-    {
-        Type    = type;
-        Speaker = speaker;
-        Text    = text;
-    }
-}
-
 // ── Player option ─────────────────────────────────────────────────────────────
 
 /// <summary>One generated player reply option shown during option-selection phase.</summary>
@@ -99,7 +81,8 @@ public class DialogueSessionState
     }
 
     // ── Content ───────────────────────────────────────────────────────────────
-    public List<DialogueLogEntry>     Log     { get; } = new();
+    // Spoken lines live in the narration session's shared NarrationScrollBuffer, which also owns the
+    // scroll position — only the selectable replies are session-local.
     public List<PlayerReplicaOption>  Options { get; set; } = new();
 
     // ── Selection ─────────────────────────────────────────────────────────────
@@ -109,9 +92,6 @@ public class DialogueSessionState
     /// <summary>Click region of the footer button; default (Width 0) while hidden.</summary>
     public (int X, int Y, int Width) ExitButtonRegion { get; set; }
     public bool IsExitButtonHovered { get; set; }
-
-    // ── Scroll ────────────────────────────────────────────────────────────────
-    public int ScrollOffset { get; set; }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
     public bool ConversationEnded { get; set; }
@@ -130,12 +110,10 @@ public class DialogueSessionState
         OptionsLoaded       = 0;
         OptionsTotal        = 0;
         ClearDiceRoll();
-        Log.Clear();
         Options.Clear();
         HoveredOptionIndex  = -1;
         ExitButtonRegion    = default;
         IsExitButtonHovered = false;
-        ScrollOffset        = 0;
         ConversationEnded   = false;
         RequestedExit       = false;
         ErrorMessage        = null;

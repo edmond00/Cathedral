@@ -11,8 +11,8 @@ namespace Cathedral.Game;
 ///   • Padding-zone border rendering  (Clear / ClearContent)
 ///   • Horizontal separator lines     (DrawHorizontalLine)
 ///   • Proportional scrollbar         (RenderScrollbar + hit-test helpers)
-///   • Content grey-out               (DimContent / DimContentBelowHeader)
-///   • Animated "generating" header   (RenderHeaderProgressBar)
+///   • Content grey-out               (DimContent)
+///   • Animated center progress bar   (RenderCenterProgressBar)
 ///   • Centered error display         (ShowError             — public virtual)
 ///   • Status bar                     (DrawStatusBar         — protected)
 ///   • Word-wrap helper               (WrapText              — protected)
@@ -206,29 +206,20 @@ public abstract class TerminalPanelUI
 
     /// <summary>
     /// Grey out everything inside the panel border (header, content, status bar).
-    /// Idempotent — safe to apply every frame. Draw any overlay (dice box, status
-    /// message) AFTER dimming so it stays at full brightness.
+    /// Idempotent — safe to apply every frame. Draw any overlay (dice box, progress bar,
+    /// status message) AFTER dimming so it stays at full brightness.
     /// </summary>
     public void DimContent() => DimFrom(_layout.TOP_PADDING);
 
     /// <summary>
-    /// Grey out the content and status-bar rows only, leaving the header row untouched.
-    /// Use alongside <see cref="RenderHeaderProgressBar"/>, which paints the header itself.
+    /// Draw a small centered animated progress bar (bracketed, same width as the old
+    /// centre-screen loading bar) in the middle of the content area, in a lighter shade
+    /// than <see cref="Config.NarrativeUI.DimmedContentColor"/> so it stands out against
+    /// the greyed-out content drawn underneath via <see cref="DimContent"/>.
     /// </summary>
-    public void DimContentBelowHeader() => DimFrom(_layout.CONTENT_START_Y);
-
-    /// <summary>
-    /// Replace the header row with a small centered animated progress bar (bracketed,
-    /// same width as the old centre-screen loading bar), then redraw the separator beneath
-    /// it. Used in place of the normal header (party member/NPC name, noetic points,
-    /// affinity — none of which are meaningful mid-generation) while the LLM is producing
-    /// text. The waiting message itself is shown on the footer status line via
-    /// <see cref="RenderWaitingStatus"/>.
-    /// </summary>
-    public void RenderHeaderProgressBar()
+    public void RenderCenterProgressBar()
     {
         const int barWidth = 30;
-        int y     = _layout.TOP_PADDING;
         int frame = AdvanceSpinnerFrame();
 
         const string chars = " ░░▒▒▓█▓▒▒░░";
@@ -238,9 +229,8 @@ public abstract class TerminalPanelUI
         bar.Append(']');
 
         int barX = (_layout.TERMINAL_WIDTH - barWidth) / 2;
-        _terminal.Text(barX, y, bar.ToString(), Config.Colors.MediumGray50, Config.NarrativeUI.BackgroundColor);
-
-        DrawHorizontalLine(_layout.TOP_PADDING + 1);
+        int barY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
+        _terminal.Text(barX, barY, bar.ToString(), Config.Colors.LightGray75, Config.NarrativeUI.BackgroundColor);
     }
 
     /// <summary>
@@ -248,7 +238,7 @@ public abstract class TerminalPanelUI
     /// (0–3 dots cycling) instead of static — e.g. "Observing surroundings", "Observing surroundings.",
     /// "Observing surroundings..". Any literal trailing dots/ellipsis on <paramref name="message"/>
     /// are stripped first so the animation is the only source of "...". Used at the bottom of the
-    /// panel while the LLM is generating, alongside <see cref="RenderHeaderProgressBar"/>.
+    /// panel while the LLM is generating, alongside <see cref="RenderCenterProgressBar"/>.
     /// </summary>
     public void RenderWaitingStatus(string message)
     {

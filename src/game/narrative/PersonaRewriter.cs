@@ -45,6 +45,12 @@ public class PersonaRewriter
     /// </summary>
     /// <param name="forcedPrefix">When set (e.g. <c>"I "</c>), the rewritten text is constrained by
     /// GBNF to start with this literal — used to force a first-person opening on the observation opener.</param>
+    /// <param name="previousReplica">
+    /// For <see cref="NarrationKind.DialogueReplica"/> only: the addressee's most recent spoken line
+    /// in this conversation, so the rewrite responds in the flow of the exchange instead of in a
+    /// vacuum. Pass null/empty for the opening line of a conversation — the prompt then says so
+    /// explicitly rather than silently omitting any mention of prior context.
+    /// </param>
     public async Task<string> RewriteAsync(
         int slotId,
         string neutralText,
@@ -55,12 +61,13 @@ public class PersonaRewriter
         string? forcedPrefix = null,
         string? styleInstruction = null,
         string? dialogueContext = null,
+        string? previousReplica = null,
         CancellationToken ct = default)
     {
         if (PlaygroundMode.IsActive) return neutralText;
 
         string prompt = kind == NarrationKind.DialogueReplica
-            ? BuildDialoguePrompt(neutralText, addressee, dialogueContext,
+            ? BuildDialoguePrompt(neutralText, addressee, dialogueContext, previousReplica,
                                   FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee))
             : BuildPrompt(neutralText, InstructionFor(kind, addressee),
                           FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee));
@@ -104,16 +111,24 @@ This sentence is written in the first person, and that ""I"" is you — it descr
     /// Prompt for a single line of dialogue in a two-person conversation. Frames the neutral line as
     /// direct speech: "I" is the speaker (this persona), "you" is <paramref name="addressee"/>. The
     /// neutral line is a plain, short reply; the persona keeps its meaning and adds flavour.
+    /// <paramref name="previousReplica"/> — what <paramref name="addressee"/> just said — is included
+    /// so the rewrite lands as a reply to something rather than a line spoken into a void; when null
+    /// the prompt says outright that this opens the conversation.
     /// </summary>
     private static string BuildDialoguePrompt(string neutralText, string? addressee,
-                                              string? dialogueContext, string footer)
+                                              string? dialogueContext, string? previousReplica, string footer)
     {
         string who     = string.IsNullOrWhiteSpace(addressee) ? "the person you are speaking with" : addressee!;
         string context = string.IsNullOrWhiteSpace(dialogueContext)
             ? ""
-            : $"The conversation is about {dialogueContext.Trim().TrimEnd('.')}.\n\n";
+            : $" The conversation is about {dialogueContext.Trim().TrimEnd('.')}.";
+        string history = string.IsNullOrWhiteSpace(previousReplica)
+            ? " This is the opening line of the conversation — no one has spoken yet."
+            : $" {who} just said: \"{previousReplica.Trim().Trim('"')}\"";
 
-        return $@"You are in conversation with {who}. {context}Re-express the following spoken line in your own voice, keeping the same meaning and intent: ""{neutralText}""
+        return $@"You are in conversation with {who}.{context}{history}
+
+Re-express the following spoken line in your own voice, keeping the same meaning and intent: ""{neutralText}""
 
 This is a line of direct dialogue that you say out loud. In it, ""I"" is you, the speaker, and ""you"" is {who}, the person you are talking to. Keep it a short, natural spoken reply — add your own flavour, wording and personality, but do not change what is being said, asked or offered.
 

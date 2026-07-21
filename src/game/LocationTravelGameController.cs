@@ -3067,6 +3067,11 @@ public class LocationTravelGameController : IDisposable
             setMusicFilter: f => _ambianceEngine?.SetFilter(f),
             enemyInitiative: fightOutcome.EnemyInitiative);
 
+        // Grey the narration so far into history under a labelled rule. Deliberately after every
+        // early-return guard above — bailing out with the panel already greyed would strand the
+        // player on dead text.
+        _narrativeController.CloseNarrationSegment($"fight with {mainEnemy.DisplayName}");
+
         SetMode(GameMode.Fighting);
     }
     
@@ -3088,10 +3093,16 @@ public class LocationTravelGameController : IDisposable
             llmManager:   _llamaServer,
             slotManager:  _modusMentisSlotManager,
             terminal:     _core.Terminal,
+            scrollBuffer: _narrativeController.ScrollBuffer,
             world:        _narrativeController.WorldContext,
             locationId:   _narrativeController.LocationId,
             prebuiltTree: dialogueOutcome.Tree,
             ambianceEngine: _ambianceEngine);
+
+        // Grey the narration into history BEFORE the adapter starts: setup is async and appends the
+        // NPC's first line when it completes, which must land live rather than be swept into history.
+        _narrativeController.CloseNarrationSegment(
+            $"conversation with {dialogueOutcome.Target.DisplayName}");
 
         _dialogueAdapter.Start();
         SetMode(GameMode.Dialogue);
@@ -3146,7 +3157,10 @@ public class LocationTravelGameController : IDisposable
         // ── Narrative-session fight path ──────────────────────────────────────
         if (_narrativeController == null) return;
 
-        _narrativeController.OnFightCompleted(result, npc, allEnemyNpcs);
+        // Snapshot the combat log before the adapter is dropped — it is the fight's only text trace.
+        var combatLog = _fightAdapter.ActionLog.Select(e => e.Text).ToList();
+
+        _narrativeController.OnFightCompleted(result, npc, allEnemyNpcs, combatLog);
         _fightAdapter = null;
         _core.Terminal?.Clear();
 
@@ -3164,7 +3178,11 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // Victory: re-enter narration first so the fresh observation task isn't racing
+        // OnEnterLocationInteraction's redraw, then open a new segment. The scene is untouched, so
+        // the corpses spawned by OnFightCompleted are described by the new observation pass.
         SetMode(GameMode.LocationInteraction);
+        _narrativeController.BeginNarrationSegment($"after the fight with {npc.DisplayName}");
     }
     
     /// <summary>
@@ -3217,8 +3235,11 @@ public class LocationTravelGameController : IDisposable
 
         _dialogueAdapter = null;
 
-        // Return to narrative mode
+        // Return to narrative mode. The Clear is required: the dialogue panel's option rows and
+        // footer would otherwise bleed through into the narration frame.
+        _core.Terminal?.Clear();
         SetMode(GameMode.LocationInteraction);
+        _narrativeController.BeginNarrationSegment($"after talking with {npc.DisplayName}");
     }
 
     /// <summary>
@@ -3235,21 +3256,28 @@ public class LocationTravelGameController : IDisposable
             mode:        mode,
             terminal:    _core.Terminal);
 
+        _narrativeController.CloseNarrationSegment($"trading with {npc.DisplayName}");
         _tradeAdapter.Start();
         SetMode(GameMode.Trading);
     }
 
     /// <summary>
-    /// Called when the trade menu reports completion. Returns to narrative mode.
+    /// Called when the trade menu reports completion. Begins a fresh narration segment.
     /// </summary>
     private void OnTradeCompleted()
     {
         if (_tradeAdapter == null) return;
 
-        Console.WriteLine($"LocationTravelGameController: Trade completed with {_tradeAdapter.TargetNpc.DisplayName}");
+        var npc = _tradeAdapter.TargetNpc;
+        Console.WriteLine($"LocationTravelGameController: Trade completed with {npc.DisplayName}");
         _tradeAdapter = null;
         _core.Terminal?.Clear();
         SetMode(GameMode.LocationInteraction);
+
+        // The trade menu draws no narration text of its own, so leave a one-line trace before the
+        // segment closes, then re-observe the scene.
+        _narrativeController?.AppendPhaseNote($"You finished trading with {npc.DisplayName}.");
+        _narrativeController?.BeginNarrationSegment($"after trading with {npc.DisplayName}");
     }
 
     /// <summary>
@@ -3266,21 +3294,25 @@ public class LocationTravelGameController : IDisposable
             job:         job,
             terminal:    _core.Terminal);
 
+        _narrativeController.CloseNarrationSegment($"working for {npc.DisplayName}");
         _workAdapter.Start();
         SetMode(GameMode.Working);
     }
 
     /// <summary>
-    /// Called when the work menu reports completion. Returns to narrative mode.
+    /// Called when the work menu reports completion. Unlike the other phases this does NOT return to
+    /// narration: a work stint advances <see cref="Cathedral.Game.Narrative.GameClock"/> by up to
+    /// several years, so the scene the player left is long stale. Exit to the world map instead and
+    /// let them travel somewhere with a freshly built scene.
     /// </summary>
     private void OnWorkCompleted()
     {
         if (_workAdapter == null) return;
 
-        Console.WriteLine($"LocationTravelGameController: Work completed with {_workAdapter.TargetNpc.DisplayName}");
+        Console.WriteLine($"LocationTravelGameController: Work completed with {_workAdapter.TargetNpc.DisplayName} — months have passed, returning to world view");
         _workAdapter = null;
         _core.Terminal?.Clear();
-        SetMode(GameMode.LocationInteraction);
+        ExitNarrativeMode();
     }
     
     /// <summary>

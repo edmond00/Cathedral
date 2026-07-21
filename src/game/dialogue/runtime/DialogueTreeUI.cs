@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using OpenTK.Mathematics;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Dialogue.Tree;
+using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 using Cathedral.Terminal;
 
@@ -26,6 +27,12 @@ public class DialogueTreeUI : TerminalPanelUI
     private readonly NpcEntity    _npc;
     private readonly string       _partyMemberId;
 
+    /// <summary>
+    /// The narration session's shared text history — the conversation's own lines plus everything
+    /// that came before it in this location visit, greyed out.
+    /// </summary>
+    private readonly NarrationScrollBuffer _buffer;
+
     /// <summary>Rows reserved at the bottom of the content area for the footer exit button.</summary>
     private const int FooterRows = 2;
 
@@ -33,13 +40,15 @@ public class DialogueTreeUI : TerminalPanelUI
     private readonly Dictionary<int, int> _optionRowToIndex = new();
 
     public DialogueTreeUI(
-        TerminalHUD   terminal,
-        NpcEntity     npc,
-        string        partyMemberId)
+        TerminalHUD           terminal,
+        NpcEntity             npc,
+        string                partyMemberId,
+        NarrationScrollBuffer scrollBuffer)
         : base(terminal)
     {
         _npc           = npc;
         _partyMemberId = partyMemberId;
+        _buffer        = scrollBuffer;
     }
 
     // ── Public API ─────────────────────────────────────────────────────────────
@@ -56,18 +65,18 @@ public class DialogueTreeUI : TerminalPanelUI
     public void RenderSetupFrame(string message, string? error = null)
     {
         Clear();
+        RenderHeader();
+        DrawHorizontalLine(_layout.TOP_PADDING + 1);
 
         if (error != null)
         {
-            RenderHeader();
-            DrawHorizontalLine(_layout.TOP_PADDING + 1);
             ShowError(error);
             DrawStatusBar("Error — press ESC to exit.");
         }
         else
         {
-            RenderHeaderProgressBar();
-            DimContentBelowHeader();
+            DimContent();
+            RenderCenterProgressBar();
             RenderWaitingStatus(message);
         }
     }
@@ -83,24 +92,17 @@ public class DialogueTreeUI : TerminalPanelUI
         // click region each frame so stale zones don't linger during dice/loading states.
         state.ExitButtonRegion = default;
 
-        // Header: NPC name/affinity normally, replaced by an animated progress bar spanning
-        // the full row while the LLM is generating text (mirrors the narration panel).
+        // Header: NPC name/affinity. Always rendered — while the LLM is generating it's
+        // greyed out along with the rest of the panel (see below) rather than replaced.
         string? generating = state.ErrorMessage == null ? BuildGeneratingText(state) : null;
-        if (generating != null)
-        {
-            RenderHeaderProgressBar();
-        }
-        else
-        {
-            RenderHeader();
-            DrawHorizontalLine(_layout.TOP_PADDING + 1);
-        }
+        RenderHeader();
+        DrawHorizontalLine(_layout.TOP_PADDING + 1);
 
         if (state.ErrorMessage != null)
         {
             ShowError(state.ErrorMessage);
-            state.ExitButtonRegion = RenderExitButton("LEAVE", state.IsExitButtonHovered);
-            DrawStatusBar("Error — leave to exit.");
+            state.ExitButtonRegion = RenderExitButton("END", state.IsExitButtonHovered);
+            DrawStatusBar("Error — end to exit.");
             return;
         }
 
@@ -117,19 +119,20 @@ public class DialogueTreeUI : TerminalPanelUI
             return;
         }
 
-        // LLM generating: grey out the log below the animated header bar, with the waiting
-        // message (animated ellipsis) repeated on the footer status line.
+        // LLM generating: grey out the whole panel (header included), with a centered
+        // progress bar animation and the waiting message (animated ellipsis) on the footer.
         if (generating != null)
         {
-            DimContentBelowHeader();
+            DimContent();
+            RenderCenterProgressBar();
             RenderWaitingStatus(generating);
             return;
         }
 
-        // Footer button — same placement as the narration panel: LEAVE once the
+        // Footer button — same placement as the narration panel: END once the
         // conversation has ended, INTERRUPT to walk away mid-conversation.
         state.ExitButtonRegion = RenderExitButton(
-            state.ConversationEnded ? "LEAVE" : "INTERRUPT",
+            state.ConversationEnded ? "END" : "INTERRUPT",
             state.IsExitButtonHovered);
 
         DrawStatusBar(BuildStatusText(state));
@@ -190,40 +193,34 @@ public class DialogueTreeUI : TerminalPanelUI
 
     private void RenderLogAndOptions(DialogueSessionState state)
     {
-        var logLines = BuildLogLines(state.Log);
         int optLineCount = ComputeOptionLineCount(state);
 
-        // Bottom rows are reserved for the footer exit button (LEAVE / INTERRUPT)
+        // Bottom rows are reserved for the footer exit button (END / INTERRUPT)
         int contentRows = _layout.NARRATIVE_HEIGHT - FooterRows;
         // Reserve option rows + 1 gap row at bottom; log gets the rest
         int logRows = optLineCount > 0
             ? Math.Max(1, contentRows - optLineCount - 1)
             : contentRows;
 
-        // Auto-scroll: scrollOffset = lines scrolled back from the bottom of log
-        // 0 → show latest entries; positive → show that many lines further back
-        int scrollOffset = Math.Max(0, state.ScrollOffset);
-        int autoStart    = Math.Max(0, logLines.Count - logRows);
-        int lineStart    = Math.Max(0, autoStart - scrollOffset);
-        int lineEnd      = Math.Min(logLines.Count, lineStart + logRows);
+        // The shared buffer owns the scroll position, so this window can run back off the top of
+        // the conversation into the greyed narration that preceded it.
+        var lines = _buffer.GetVisibleLines(logRows);
 
-        // Draw log lines
+        int maxW    = _scrollbarX - _layout.CONTENT_START_X;
         int screenY = _layout.CONTENT_START_Y;
-        for (int i = lineStart; i < lineEnd; i++)
+        foreach (var line in lines)
         {
-            var (text, color) = logLines[i];
-            if (!string.IsNullOrEmpty(text))
+            if (!string.IsNullOrEmpty(line.Text))
             {
-                int    maxW = _scrollbarX - _layout.CONTENT_START_X;
-                string t    = text.Length > maxW ? text[..maxW] : text;
+                string t = line.Text.Length > maxW ? line.Text[..maxW] : line.Text;
                 _terminal.Text(_layout.CONTENT_START_X, screenY, t,
-                    color, Config.NarrativeUI.BackgroundColor);
+                    ColorFor(line), Config.NarrativeUI.BackgroundColor);
             }
             screenY++;
         }
 
-        // Scrollbar (reflects position in the full log history)
-        RenderScrollbar(logLines.Count, lineStart, false);
+        // Scrollbar (reflects position in the whole shared history)
+        RenderScrollbar(_buffer.TotalLines, _buffer.ScrollOffset, false);
 
         // Gap row + options
         if (optLineCount > 0)
@@ -233,45 +230,28 @@ public class DialogueTreeUI : TerminalPanelUI
         }
     }
 
-    // ── Log line builder ───────────────────────────────────────────────────────
-
-    private List<(string Text, Vector4 Color)> BuildLogLines(List<DialogueLogEntry> entries)
+    /// <summary>
+    /// Colour for one buffer line. Mirrors <c>NarrativeUI.RenderHistoryLine</c> so a line looks the
+    /// same whichever panel is showing it.
+    /// </summary>
+    private static Vector4 ColorFor(RenderedLine line)
     {
-        var lines = new List<(string, Vector4)>();
-        int maxW  = _scrollbarX - _layout.CONTENT_START_X;
+        if (line.IsHistory)
+            return line.Type == LineType.Separator
+                ? Config.NarrativeUI.SeparatorColor
+                : Config.NarrativeUI.HistoryColor;
 
-        foreach (var entry in entries)
+        return line.Type switch
         {
-            switch (entry.Type)
+            LineType.Separator => Config.NarrativeUI.SeparatorColor,
+            LineType.Header    => Config.NarrativeUI.ModusMentisHeaderColor,
+            _ => line.BlockType switch
             {
-                case DialogueLogEntryType.Separator:
-                    lines.Add((new string('─', maxW), Config.NarrativeUI.StatusBarColor));
-                    break;
-
-                case DialogueLogEntryType.SystemMessage:
-                    foreach (var l in WrapText(entry.Text, maxW))
-                        lines.Add((l, Config.NarrativeUI.StatusBarColor));
-                    break;
-
-                case DialogueLogEntryType.NpcSpeaking:
-                {
-                    string prefix  = entry.Speaker != null ? $"{entry.Speaker}: " : "";
-                    foreach (var l in WrapText(prefix + entry.Text, maxW))
-                        lines.Add((l, Config.NarrativeUI.NarrativeColor));
-                    break;
-                }
-
-                case DialogueLogEntryType.PlayerReplica:
-                {
-                    string prefix  = entry.Speaker != null ? $"{entry.Speaker}: " : "";
-                    foreach (var l in WrapText(prefix + entry.Text, maxW))
-                        lines.Add((l, Config.Colors.LightPurple));
-                    break;
-                }
-            }
-        }
-
-        return lines;
+                NarrationBlockType.PlayerSpeaking => Config.Colors.LightPurple,
+                NarrationBlockType.Outcome        => Config.NarrativeUI.StatusBarColor,
+                _                                 => Config.NarrativeUI.NarrativeColor,
+            },
+        };
     }
 
     // ── Option line count (for layout reservation) ─────────────────────────────

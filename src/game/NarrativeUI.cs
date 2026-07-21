@@ -91,7 +91,6 @@ public class NarrativeUI : TerminalPanelUI
     /// </summary>
     public void RenderObservationBlocks(
         NarrationScrollBuffer scrollBuffer,
-        int scrollOffset,
         int thinkingAttemptsRemaining,
         KeywordRegion? hoveredKeyword = null,
         ActionRegion? hoveredAction = null,
@@ -109,10 +108,10 @@ public class NarrativeUI : TerminalPanelUI
             }
         }
         
-        // Get visible lines based on scroll offset
+        // Get the visible window (the buffer owns the scroll position).
         // Subtract 1 from NARRATIVE_HEIGHT to account for the bottom separator line
         int visibleContentHeight = _layout.NARRATIVE_HEIGHT - _layout.SEPARATOR_HEIGHT;
-        var visibleLines = scrollBuffer.GetVisibleLines(scrollOffset, visibleContentHeight);
+        var visibleLines = scrollBuffer.GetVisibleLines(visibleContentHeight);
         
         // When dimming content, find the last outcome block to keep it highlighted
         int lastOutcomeBlockStart = -1;
@@ -261,6 +260,16 @@ public class NarrativeUI : TerminalPanelUI
                     break;
                     
                 case LineType.Content:
+                    // A dialogue reply the player chose: flat, in the player's colour. These carry
+                    // no keywords, so the highlighting pass is skipped entirely.
+                    if (renderedLine.BlockType == NarrationBlockType.PlayerSpeaking)
+                    {
+                        _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
+                            shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.Colors.LightPurple,
+                            Config.NarrativeUI.BackgroundColor);
+                        break;
+                    }
+
                     // Render content with keyword highlighting
                     RenderLineWithKeywords(
                         renderedLine.Text,
@@ -370,8 +379,14 @@ public class NarrativeUI : TerminalPanelUI
                     }
                     break;
 
-                case LineType.Empty:
                 case LineType.Separator:
+                    // A segment rule that has not yet aged into history (ConvertToHistory marks its
+                    // own separators as history, so this covers any live one).
+                    _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
+                        Config.NarrativeUI.SeparatorColor, Config.NarrativeUI.BackgroundColor);
+                    break;
+
+                case LineType.Empty:
                     // Just skip (already cleared)
                     break;
             }

@@ -28,6 +28,7 @@ public class DialogueTreeAdapter
     private readonly ModusMentisSlotManager _slotManager;
     private readonly WorldContext?          _world;
     private readonly int                    _locationId;
+    private readonly NarrationScrollBuffer  _buffer;
     private readonly Cathedral.Audio.AmbianceEngine? _ambianceEngine;
 
     private readonly DialogueTreeUI  _ui;
@@ -46,6 +47,11 @@ public class DialogueTreeAdapter
     /// <summary>True when dialogue has ended and the session should be torn down.</summary>
     public bool HasRequestedExit => _controller?.HasRequestedExit ?? _failed;
 
+    /// <param name="scrollBuffer">
+    /// The narration session's shared text history. The conversation appends its lines to it live and
+    /// the dialogue panel renders from it, so the player can scroll back into the greyed narration
+    /// that preceded the conversation.
+    /// </param>
     public DialogueTreeAdapter(
         NpcEntity              npc,
         Protagonist            protagonist,
@@ -53,6 +59,7 @@ public class DialogueTreeAdapter
         LlamaServerManager     llmManager,
         ModusMentisSlotManager slotManager,
         TerminalHUD            terminal,
+        NarrationScrollBuffer  scrollBuffer,
         WorldContext?          world          = null,
         int                    locationId     = 0,
         DialogueTree?          prebuiltTree   = null,
@@ -66,11 +73,12 @@ public class DialogueTreeAdapter
         _slotManager  = slotManager;
         _world        = world;
         _locationId   = locationId;
+        _buffer       = scrollBuffer;
         _ambianceEngine = ambianceEngine;
 
         // The UI is created up front so the setup phase can already render the standard
         // bordered panel — avoids a black flash when transitioning from narration.
-        _ui = new DialogueTreeUI(terminal, npc, protagonist.AffinityKey);
+        _ui = new DialogueTreeUI(terminal, npc, protagonist.AffinityKey, scrollBuffer);
     }
 
     // ── Public API ──────────────────────────────────────────────────────────────
@@ -129,6 +137,7 @@ public class DialogueTreeAdapter
                 slotManager: _slotManager,
                 ui:          _ui,
                 context:     context,
+                buffer:      _buffer,
                 ambianceEngine: _ambianceEngine);
 
             _ready = true;

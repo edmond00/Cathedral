@@ -127,6 +127,13 @@ public class FightModeAdapter
     /// <summary>The NPC that was fought.</summary>
     public NpcEntity TargetNpc => _targetNpc;
 
+    /// <summary>
+    /// The turn-by-turn combat log (capped at 200 entries by <see cref="FightState.AddLog"/>).
+    /// Read it before the adapter is dropped — the caller archives a tail of it into the shared
+    /// narration history so the fight leaves a trace the player can scroll back to.
+    /// </summary>
+    public IReadOnlyList<(string Text, LogEntryType Type)> ActionLog => _state.ActionLog;
+
     public FightModeAdapter(
         TerminalHUD terminal,
         PopupTerminalHUD? popup,

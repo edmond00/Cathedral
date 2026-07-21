@@ -38,6 +38,13 @@ public class DialogueTreeController
     private readonly DialogueSessionState     _state = new();
     private readonly DialogueTreeUI           _ui;
 
+    /// <summary>
+    /// The narration session's shared text history. Spoken lines are appended here as they are
+    /// produced; the panel renders from the same buffer, so scrolling up reaches the greyed-out
+    /// narration that preceded the conversation.
+    /// </summary>
+    private readonly NarrationScrollBuffer    _buffer;
+
     // Unified dice-roll overlay (animation + humor modifiers + hit-testing).
     private readonly DiceRollComponent        _dice = new();
 
@@ -51,6 +58,12 @@ public class DialogueTreeController
     private readonly List<ModusMentis>        _chosenMMs = new();
     /// <summary>The resolution node awaiting the dice continue-click.</summary>
     private ResolutionNode?                   _pendingResolution;
+
+    // ── Last spoken line on each side (for rewrite-prompt grounding) ───────────
+    /// <summary>The NPC's most recently spoken line (rewritten, real names), or null before the first.</summary>
+    private string?                           _lastNpcLine;
+    /// <summary>The player's most recently spoken reply (rewritten, real names), or null before the first.</summary>
+    private string?                           _lastPlayerLine;
 
     /// <summary>Per-roll humor modifier budget from the viscera <c>humor_modifier_limit</c> stat.</summary>
     private static int HumorModifierLimit(PartyMember member)
@@ -69,8 +82,10 @@ public class DialogueTreeController
         ModusMentisSlotManager slotManager,
         DialogueTreeUI         ui,
         DialogueContext        context,
+        NarrationScrollBuffer  buffer,
         Cathedral.Audio.AmbianceEngine? ambianceEngine = null)
     {
+        _buffer        = buffer;
         _tree          = tree;
         _npc           = npc;
         _protagonist   = protagonist;
@@ -100,6 +115,8 @@ public class DialogueTreeController
         _accumulatedDice = 0;
         _chosenMMs.Clear();
         _pendingResolution = null;
+        _lastNpcLine = null;
+        _lastPlayerLine = null;
         BeginNpcSpeakPhase();
     }
 
@@ -174,10 +191,10 @@ public class DialogueTreeController
 
     public void OnMouseWheel(float delta)
     {
-        // Scroll up (delta > 0) → show older log entries (increase "lines back from bottom")
-        // Scroll down (delta ≤ 0) → return toward latest content
-        if (delta > 0) _state.ScrollOffset++;
-        else           _state.ScrollOffset = Math.Max(0, _state.ScrollOffset - 1);
+        // The buffer owns and clamps the scroll position, so scrolling up runs off the top of the
+        // conversation into the greyed narration history rather than into dead travel.
+        if (delta > 0) _buffer.ScrollUp(3);
+        else           _buffer.ScrollDown(3);
     }
 
     public void OnKeyPress(Keys key)
@@ -209,6 +226,43 @@ public class DialogueTreeController
         _state.RequestedExit = true;
     }
 
+    // ── Shared-history writers ────────────────────────────────────────────────
+
+    /// <summary>A line the NPC speaks. No modus mentis, so no header — renders as "Emma: …".</summary>
+    private void AppendNpcLine(string text) => Append(new NarrationBlock(
+        Type: NarrationBlockType.Speaking,
+        ModusMentis: null!,
+        Text: $"{_npc.DisplayName}: {text}",
+        Keywords: null,
+        Actions: null,
+        SpeakerName: _npc.DisplayName));
+
+    /// <summary>
+    /// The reply the player chose. Carries the voicing modus mentis so history keeps the skill
+    /// attribution in its "[YOU/CHARM ▪▪]" header, and renders in the player's colour.
+    /// </summary>
+    private void AppendPlayerLine(ModusMentis skill, string text) => Append(new NarrationBlock(
+        Type: NarrationBlockType.PlayerSpeaking,
+        ModusMentis: skill,
+        Text: $"\"{text}\"",
+        Keywords: null,
+        Actions: null,
+        SpeakerName: "You"));
+
+    /// <summary>A bracketed system note (affinity change, conversation end).</summary>
+    private void AppendSystemLine(string text) => Append(new NarrationBlock(
+        Type: NarrationBlockType.Outcome,
+        ModusMentis: null!,
+        Text: text,
+        Keywords: null,
+        Actions: null));
+
+    private void Append(NarrationBlock block)
+    {
+        _buffer.AddBlock(block);
+        _buffer.ScrollToBottom();   // follow the conversation unless the player scrolls back
+    }
+
     // ── Phase: NPC speaks the current line ────────────────────────────────────
 
     private void BeginNpcSpeakPhase()
@@ -216,7 +270,7 @@ public class DialogueTreeController
         _state.Options.Clear();          // previous node's replies are no longer selectable
         _state.HoveredOptionIndex = -1;
         _state.IsLoadingNpcReplica = true;
-        _state.Log.Add(new DialogueLogEntry(DialogueLogEntryType.SystemMessage, null, "..."));
+        // No placeholder line: the wait is already shown as a greyed panel + "{npc} is thinking…".
         _ = Task.Run(NpcSpeakAsync);
     }
 
@@ -225,10 +279,11 @@ public class DialogueTreeController
         try
         {
             string text = await _replicaWriter.WriteAsync(
-                _npcSlotId, _currentNode.Replica, _context, addresseeRole: "you", subject: _tree.Description);
+                _npcSlotId, _currentNode.Replica, _context, addresseeRole: "you", subject: _tree.Description,
+                previousReplica: _lastPlayerLine);
 
-            _state.Log[^1] = new DialogueLogEntry(
-                DialogueLogEntryType.NpcSpeaking, _npc.DisplayName, text);
+            _lastNpcLine = text;
+            AppendNpcLine(text);
             _state.IsLoadingNpcReplica = false;
             BeginOptionsPhase();
         }
@@ -268,7 +323,8 @@ public class DialogueTreeController
         try
         {
             var options = await _optionGenerator.GenerateAsync(
-                _currentNode, _protagonist, _context, _tree.Description);
+                _currentNode, _protagonist, _context, _tree.Description,
+                previousNpcReplica: _lastNpcLine);
 
             _state.Options       = options;
             _state.OptionsLoaded = options.Count;
@@ -291,8 +347,8 @@ public class DialogueTreeController
 
     private void OnOptionSelected(PlayerReplicaOption option)
     {
-        _state.Log.Add(new DialogueLogEntry(
-            DialogueLogEntryType.PlayerReplica, "You", $"\"{option.ReplicaText}\""));
+        AppendPlayerLine(option.Skill, option.ReplicaText);
+        _lastPlayerLine = option.ReplicaText;
 
         // This reply's Modus Mentis contributes its level to the branch dice pool.
         _accumulatedDice += option.Skill.Level;
@@ -303,7 +359,8 @@ public class DialogueTreeController
         {
             case NpcLineNode npcNode:
                 _currentNode = npcNode;
-                _state.Log.Add(new DialogueLogEntry(DialogueLogEntryType.Separator, null, string.Empty));
+                // No separator: blocks already emit a trailing blank line, and segment rules are
+                // owned by ConvertToHistory.
                 BeginNpcSpeakPhase();
                 break;
 
@@ -361,7 +418,8 @@ public class DialogueTreeController
             try
             {
                 reaction = await _replicaWriter.WriteAsync(
-                    _npcSlotId, neutral, _context, addresseeRole: "you", subject: _tree.Description);
+                    _npcSlotId, neutral, _context, addresseeRole: "you", subject: _tree.Description,
+                    previousReplica: _lastPlayerLine);
             }
             catch (Exception ex)
             {
@@ -379,8 +437,7 @@ public class DialogueTreeController
                 }
             }
 
-            _state.Log.Add(new DialogueLogEntry(
-                DialogueLogEntryType.NpcSpeaking, _npc.DisplayName, reaction));
+            AppendNpcLine(reaction);
             _state.IsLoadingReaction = false;
 
             // Apply the outcomes gated by success/failure.
@@ -395,9 +452,7 @@ public class DialogueTreeController
             _npc.AffinityTable.MarkFirstContact(_partyMemberId);
 
             var finalLevel = _npc.AffinityTable.GetLevel(_partyMemberId);
-            _state.Log.Add(new DialogueLogEntry(
-                DialogueLogEntryType.SystemMessage, null,
-                $"[{finalLevel.ToDisplayName(_npc.DisplayName)}]"));
+            AppendSystemLine($"[{finalLevel.ToDisplayName(_npc.DisplayName)}]");
 
             EndConversation();
         });
@@ -405,8 +460,7 @@ public class DialogueTreeController
 
     private void EndConversation()
     {
-        _state.Log.Add(new DialogueLogEntry(
-            DialogueLogEntryType.SystemMessage, null, "[The conversation has ended.]"));
+        AppendSystemLine("[The conversation has ended.]");
         _state.ConversationEnded = true;
     }
 }

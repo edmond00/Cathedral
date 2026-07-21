@@ -216,7 +216,8 @@ public enum NarrationBlockType
     Thinking,      // ModusMentis reasons about keyword (CoT)
     Action,        // Player selected action (modusMentis check result)
     Outcome,       // Result of action (success/failure)
-    Speaking       // Active party member speaks directly to a companion
+    Speaking,      // Active party member speaks directly to a companion
+    PlayerSpeaking // Player's chosen reply in a dialogue (rendered in the player's colour)
 }
 
 /// <summary>
