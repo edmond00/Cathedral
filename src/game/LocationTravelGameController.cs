@@ -181,6 +181,83 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public TerminalInputHandler? GetTerminalInputHandler() => _core.Terminal?.InputHandler;
 
+    // ── CLI driving surface (--cli) ───────────────────────────────────────────
+    // Accessors the command driver needs. Kept here rather than making the sub-controllers public
+    // so the driver has a single seam onto the game.
+
+    /// <summary>The terminal the CLI dumps as text.</summary>
+    public TerminalHUD? CliTerminal => _core.Terminal;
+
+    /// <summary>The live narration controller, or null outside a narration session.</summary>
+    public NarrativeController? CliNarration => _narrativeController;
+
+    /// <summary>The live dialogue adapter, or null when not in a conversation.</summary>
+    public DialogueTreeAdapter? CliDialogue => _dialogueAdapter;
+
+    /// <summary>The live fight adapter, or null when not fighting.</summary>
+    public Fight.FightModeAdapter? CliFight => _fightAdapter;
+
+    /// <summary>The world/travel interface, for world-state reporting and travel commands.</summary>
+    public MicroworldInterface CliWorld => _interface;
+
+    /// <summary>The vertex the protagonist currently occupies.</summary>
+    public int CliAvatarVertex => _interface.GetAvatarVertex();
+
+    /// <summary>Inject a click at a terminal cell, as if the player had clicked there.</summary>
+    public void CliClickCell(int x, int y) => OnTerminalCellClicked(x, y);
+
+    /// <summary>Inject a hover at a terminal cell (some UI only reacts once hovered).</summary>
+    public void CliHoverCell(int x, int y) => OnTerminalCellHovered(x, y);
+
+    /// <summary>Inject a world-map vertex click, bypassing 3D ray picking entirely.</summary>
+    public void CliClickVertex(int vertexIndex)
+        => OnVertexClicked(vertexIndex, ' ', new OpenTK.Mathematics.Vector4(1, 1, 1, 1), 0f);
+
+    /// <summary>Close the game window (the CLI <c>quit</c> command).</summary>
+    public void CliRequestClose() => _core.Close();
+
+    /// <summary>Main-menu buttons with their cell positions, or null outside the menu.</summary>
+    public IReadOnlyList<(string Label, bool Enabled, int X, int Y)>? CliMenuButtons()
+        => _currentMode == GameMode.MainMenu ? _mainMenuRenderer?.CliButtons() : null;
+
+    /// <summary>
+    /// Cell position of the protagonist-creation Continue button, or null outside that screen.
+    /// Creation waits for this click, so an automated run has to press it to reach narration.
+    /// </summary>
+    public (int X, int Y)? CliCreationContinue()
+        => _currentMode == GameMode.ProtagonistCreation
+            ? _protagonistCreationRenderer?.CliContinueButton
+            : null;
+
+    /// <summary>
+    /// True when the game is settled: no LLM generation in flight, no travel animation running and
+    /// no dice mid-roll. The CLI <c>wait</c> command blocks on this.
+    /// </summary>
+    public bool CliIsIdle()
+    {
+        if (_currentMode == GameMode.Traveling) return false;
+
+        if (_currentMode == GameMode.Dialogue)
+        {
+            var dlg = _dialogueAdapter?.Controller;
+            if (_dialogueAdapter != null && dlg == null) return false;   // still acquiring its LLM slot
+            if (dlg != null)
+            {
+                var s = dlg.CliSnapshot();
+                // IsDiceRolling is only meaningful while a roll is active — it rests at true.
+                return !s.Loading && !(s.DiceActive && s.DiceRolling);
+            }
+            return true;
+        }
+
+        if (_narrativeController != null)
+        {
+            var s = _narrativeController.CliSnapshot();
+            if (s.AnyLoading || (s.DiceActive && s.DiceRolling)) return false;
+        }
+        return true;
+    }
+
     public LocationTravelGameController(GlyphSphereCore core, MicroworldInterface microworldInterface,
         AmbianceEngine? ambianceEngine = null)
     {

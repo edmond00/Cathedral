@@ -134,6 +134,24 @@ public class FightModeAdapter
     /// </summary>
     public IReadOnlyList<(string Text, LogEntryType Type)> ActionLog => _state.ActionLog;
 
+    /// <summary>
+    /// Force the fight to a result without playing it out (--cli <c>fight-end</c>). Driving a whole
+    /// tactical battle from a script is impractical, but the fight→narration transition still needs
+    /// testing, so this jumps to the end state the transition reads.
+    /// On victory every enemy NPC is marked slain, which is what makes
+    /// <c>NarrativeController.OnFightCompleted</c> spawn their corpses into the scene.
+    /// </summary>
+    public void CliForceEnd(FightResult result)
+    {
+        // Marking the NpcEntity slain is what OnFightCompleted checks when spawning corpses; the
+        // Fighter's own HP is a read-only projection of its member and does not need touching,
+        // since the fight ends here rather than continuing to evaluate end conditions.
+        if (result == FightResult.PartyWon)
+            foreach (var npc in AllEnemyNpcs) npc.IsAlive = false;
+        _state.AddLog($"[cli] fight force-ended: {result}");
+        _state.Result = result;
+    }
+
     public FightModeAdapter(
         TerminalHUD terminal,
         PopupTerminalHUD? popup,

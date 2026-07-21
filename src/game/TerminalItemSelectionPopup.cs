@@ -61,6 +61,9 @@ public class TerminalItemSelectionPopup
     /// <summary>Whether the popup is currently visible.</summary>
     public bool IsVisible => _items.Count > 0;
 
+    /// <summary>The items currently offered (for --cli listing/selection by index).</summary>
+    public IReadOnlyList<Item> Choices => _items;
+
     /// <summary>
     /// Update hover state based on screen pixel mouse position.
     /// Returns true if hover state changed.

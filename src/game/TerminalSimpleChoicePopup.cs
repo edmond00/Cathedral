@@ -60,6 +60,16 @@ public class TerminalSimpleChoicePopup
     /// <summary>True while the popup is displayed.</summary>
     public bool IsVisible => _choices.Count > 0;
 
+    /// <summary>The choice labels currently offered (for --cli listing/selection by index).</summary>
+    public IReadOnlyList<string> Choices => _choices;
+
+    /// <summary>The popup title (for --cli listing).</summary>
+    public string Title => _title;
+
+    /// <summary>True when the choice at <paramref name="index"/> exists and is selectable.</summary>
+    public bool IsChoiceEnabled(int index)
+        => index >= 0 && index < _choices.Count && !_disabledIndices.Contains(index);
+
     /// <summary>Update hover highlight from screen pixel coordinates. Returns true if repaint needed.</summary>
     public bool UpdateHover(float screenX, float screenY, Vector2i windowSize, float cellPixelSize)
     {

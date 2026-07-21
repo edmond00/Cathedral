@@ -226,6 +226,51 @@ public class DialogueTreeController
         _state.RequestedExit = true;
     }
 
+    // ── CLI driving surface (--cli) ───────────────────────────────────────────
+
+    /// <summary>Snapshot of the conversation state a --cli `state` command reports.</summary>
+    public (bool Loading, bool DiceActive, bool DiceRolling, bool Ended, string? Error, int OptionCount)
+        CliSnapshot() => (
+            _state.IsLoadingNpcReplica || _state.IsLoadingOptions || _state.IsLoadingReaction,
+            _state.IsDiceRollActive,
+            _state.IsDiceRolling,
+            _state.ConversationEnded,
+            _state.ErrorMessage,
+            _state.Options.Count);
+
+    /// <summary>The selectable replies, as (index, skill, text).</summary>
+    public IReadOnlyList<(int Index, string Skill, string Text)> CliOptions()
+        => _state.Options.Select((o, i) => (i, o.Skill.DisplayName, o.ReplicaText)).ToList();
+
+    /// <summary>Pick a reply by index. Returns an error string, or null on success.</summary>
+    public string? CliSelectOption(int index)
+    {
+        if (_state.IsDiceRollActive)    return "a dice roll is in progress";
+        if (_state.ConversationEnded)   return "the conversation has ended";
+        if (index < 0 || index >= _state.Options.Count)
+            return $"option {index} out of range (have {_state.Options.Count})";
+        OnOptionSelected(_state.Options[index]);
+        return null;
+    }
+
+    /// <summary>Click the footer button: END after the conversation, INTERRUPT during it.</summary>
+    public void CliPressExitButton()
+    {
+        if (_state.ConversationEnded || _state.ErrorMessage != null) _state.RequestedExit = true;
+        else                                                        InterruptConversation();
+    }
+
+    /// <summary>Confirm the dice overlay's [ Continue ] button, if it is showing.</summary>
+    public string? CliDiceContinue()
+    {
+        if (!_state.IsDiceRollActive) return "no dice roll is active";
+        if (_state.IsDiceRolling)     return "dice are still rolling";
+        _state.ClearDiceRoll();
+        _dice.Hide();
+        ResolveRoll();
+        return null;
+    }
+
     // ── Shared-history writers ────────────────────────────────────────────────
 
     /// <summary>A line the NPC speaks. No modus mentis, so no header — renders as "Emma: …".</summary>

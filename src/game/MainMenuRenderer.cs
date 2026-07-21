@@ -214,6 +214,18 @@ public class MainMenuRenderer
         return (idx >= 0 && idx < _buttons.Count && _buttons[idx].Enabled) ? idx : -1;
     }
 
+    /// <summary>
+    /// The menu buttons with their cell positions, so --cli can list and press them by name
+    /// instead of hard-coding the layout constants.
+    /// </summary>
+    public IReadOnlyList<(string Label, bool Enabled, int X, int Y)> CliButtons()
+    {
+        int startX = (_terminal.Width - ButtonWidth) / 2;
+        return _buttons
+            .Select((b, i) => (b.Label, b.Enabled, startX, FirstButtonRow + i * ButtonSpacing))
+            .ToList();
+    }
+
     // ── Data types ───────────────────────────────────────────────
 
     private record struct MenuButton(string Label, Action? OnClick, bool Enabled);

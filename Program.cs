@@ -21,6 +21,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("    --negative                       Invert brightness");
     Console.WriteLine("    --auto-contrast                  Automatically stretch contrast");
     Console.WriteLine("    --stretch                        Stretch/shrink to exact width/height (ignore aspect ratio)");
+    Console.WriteLine("  --cli                              Drive the game from stdin and observe it as text (for scripted/automated verification)");
+    Console.WriteLine("  --cli-script <file>                Run a newline-separated command script at startup (implies --cli)");
+    Console.WriteLine("  --cli-timeout <seconds>            Hard limit for a --cli run before it closes itself (default 300)");
     Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console) + viewers");
     Console.WriteLine("  --view                             Show LLM and scene viewers without console decision overriding");
     Console.WriteLine("  --dialogue-view                    Open a window graphing every dialogue tree (neutral replica text per node)");
@@ -181,7 +184,30 @@ if (args.Any(a => a == "--debug"))
     Cathedral.Game.DebugMode.ShowViewers = true;
     Console.ForegroundColor = ConsoleColor.Yellow;
     Console.WriteLine("*** DEBUG MODE ACTIVE ***");
-    Console.WriteLine("LLM critic decisions and dice rolls will prompt for manual override via console.");
+    if (args.Any(a => a == "--cli" || a == "--cli-script"))
+        Console.WriteLine("Combined with --cli: outcomes follow the preset `strategy` (no console prompts).");
+    else
+        Console.WriteLine("LLM critic decisions and dice rolls will prompt for manual override via console.");
+    Console.ResetColor();
+    Console.WriteLine();
+}
+
+// Check for --cli flag (drive the game from stdin and observe it as text)
+if (args.Any(a => a == "--cli") || args.Any(a => a == "--cli-script"))
+{
+    Cathedral.Game.Cli.CliMode.IsActive = true;
+    for (int i = 0; i < args.Length; i++)
+    {
+        if (args[i] == "--cli-script" && i + 1 < args.Length)
+            Cathedral.Game.Cli.CliMode.ScriptPath = args[i + 1];
+        if (args[i] == "--cli-timeout" && i + 1 < args.Length && int.TryParse(args[i + 1], out int secs))
+            Cathedral.Game.Cli.CliMode.RunTimeout = TimeSpan.FromSeconds(Math.Max(5, secs));
+    }
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine("*** CLI MODE ACTIVE ***");
+    Console.WriteLine("The game is driven from stdin. Type `help` for the command list.");
+    if (Cathedral.Game.Cli.CliMode.ScriptPath != null)
+        Console.WriteLine($"Script: {Cathedral.Game.Cli.CliMode.ScriptPath}");
     Console.ResetColor();
     Console.WriteLine();
 }
@@ -273,4 +299,11 @@ Console.WriteLine("Launching the integrated narrative exploration system...");
 Console.WriteLine("Press Ctrl+C to exit at any time.\n");
 
 Cathedral.Game.LocationTravelModeLauncher.Launch();
+
+// A --cli run fails its build step when any `expect` assertion failed.
+if (Cathedral.Game.Cli.CliMode.IsActive && Cathedral.Game.Cli.CliMode.HasFailedAssertion)
+{
+    Console.WriteLine("[cli] run finished with FAILED assertions");
+    Environment.ExitCode = 1;
+}
 

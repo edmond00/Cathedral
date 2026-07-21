@@ -67,6 +67,9 @@ public class TerminalThinkingModusMentisPopup
     /// Check if the popup is currently visible.
     /// </summary>
     public bool IsVisible => _thinkingModiMentis.Count > 0;
+
+    /// <summary>The modi mentis currently offered (for --cli listing/selection by index).</summary>
+    public IReadOnlyList<ModusMentis> Choices => _thinkingModiMentis;
     
     /// <summary>
     /// Update hover state based on screen pixel mouse position.

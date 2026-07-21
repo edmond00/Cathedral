@@ -67,6 +67,9 @@ public static class LocationTravelModeLauncher
 
         // Create game controller AFTER core is set up
         LocationTravelGameController? gameController = null;
+
+        // Command driver for --cli: created once the controller exists (see CoreLoaded below).
+        Cathedral.Game.Cli.CliDriver? cliDriver = null;
         
         // LLM server (optional)
         LlamaServerManager? llamaServer = null;
@@ -276,6 +279,10 @@ public static class LocationTravelModeLauncher
             core.UpdateRequested += (deltaTime) =>
             {
                 gameController?.Update((float)deltaTime);
+
+                // Drain queued CLI commands on the game thread, after Update so `dump`/`regions`
+                // observe the frame the player would see and hit-regions are freshly populated.
+                cliDriver?.Pump();
             };
             
             // Wire up mouse wheel for scrolling
@@ -284,6 +291,13 @@ public static class LocationTravelModeLauncher
                 gameController?.OnMouseWheel(delta);
             };
             
+            // Start accepting scripted/stdin commands now that the controller exists.
+            if (Cathedral.Game.Cli.CliMode.IsActive && gameController != null)
+            {
+                cliDriver = new Cathedral.Game.Cli.CliDriver(gameController);
+                cliDriver.Start();
+            }
+
             Console.WriteLine("\n=== Location Travel Mode Ready ===");
             Console.WriteLine("Controls:");
             Console.WriteLine("  - Click on locations to travel");

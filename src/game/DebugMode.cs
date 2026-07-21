@@ -38,6 +38,35 @@ public static class DebugMode
     /// <summary>Current strategy for the action being executed.</summary>
     public static DebugStrategy CurrentStrategy { get; private set; } = DebugStrategy.Custom;
 
+    /// <summary>
+    /// Set the strategy without prompting. Used by <c>--cli</c> (the <c>strategy</c> command) so an
+    /// automated run can pin an action's outcome up front instead of answering console prompts.
+    /// </summary>
+    public static void SetStrategy(DebugStrategy strategy) => CurrentStrategy = strategy;
+
+    /// <summary>
+    /// Parse a strategy name accepted by the CLI <c>strategy</c> command.
+    /// Returns null when the name is not recognised.
+    /// </summary>
+    public static DebugStrategy? ParseStrategy(string name) => name.Trim().ToLowerInvariant() switch
+    {
+        "fail-plausibility" or "failplausibility" => DebugStrategy.FailPlausibility,
+        "fail-dice" or "faildice" or "fail"       => DebugStrategy.FailDiceRoll,
+        "succeed" or "success" or "pass"          => DebugStrategy.Succeed,
+        "custom"                                  => DebugStrategy.Custom,
+        "auto"                                    => DebugStrategy.Auto,
+        _                                         => null,
+    };
+
+    /// <summary>
+    /// True when console prompts must not block. Under <c>--cli</c> stdin belongs to the command
+    /// driver, so a blocking <see cref="Console.ReadLine"/> from a background LLM task would steal
+    /// commands and deadlock the run. In that case the preset <see cref="CurrentStrategy"/> answers
+    /// every decision instead, and <see cref="DebugStrategy.Custom"/> degrades to letting the
+    /// LLM/RNG decide.
+    /// </summary>
+    private static bool NonInteractive => Cli.CliMode.IsActive;
+
     /// <summary>True when the current strategy is Auto — LLM and RNG run normally, no override.</summary>
     public static bool IsAutoStrategy => CurrentStrategy == DebugStrategy.Auto;
 
@@ -68,6 +97,13 @@ public static class DebugMode
     /// </summary>
     public static void PromptActionStrategy(string actionText, string outcomeSummary)
     {
+        // Under --cli the strategy is preset by the `strategy` command; never block on stdin.
+        if (NonInteractive)
+        {
+            Cli.CliMode.Emit($"action-strategy {CurrentStrategy} action=\"{actionText}\" outcome=\"{outcomeSummary}\"");
+            return;
+        }
+
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine();
         Console.WriteLine($"[DEBUG] ═══ Action Strategy ═══");
@@ -133,6 +169,13 @@ public static class DebugMode
     /// </summary>
     public static string? PromptCriticNode(string nodeName, string question, List<CriticChoice> choices)
     {
+        // Custom (per-node prompting) is interactive by nature; under --cli fall back to the LLM.
+        if (NonInteractive)
+        {
+            Cli.CliMode.Emit($"critic-node {nodeName} → auto (custom prompts disabled under --cli)");
+            return null;
+        }
+
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine();
         Console.WriteLine($"[DEBUG] Critic Node: {nodeName}");
@@ -186,6 +229,14 @@ public static class DebugMode
     /// </summary>
     public static bool PromptDiceRoll(string actionText, double successProbability)
     {
+        // No stdin under --cli: succeed by default so a scripted run makes progress. Pin the
+        // outcome explicitly with `strategy succeed` / `strategy fail-dice`.
+        if (NonInteractive)
+        {
+            Cli.CliMode.Emit($"dice-roll auto=success p={successProbability:P0} (use `strategy fail-dice` to force failure)");
+            return true;
+        }
+
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine();
         Console.WriteLine($"[DEBUG] Dice Roll");

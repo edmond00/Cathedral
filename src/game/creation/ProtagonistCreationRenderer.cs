@@ -37,6 +37,9 @@ public class ProtagonistCreationRenderer
     /// <summary>Callback for when the player clicks Continue.</summary>
     public Action? OnContinue { get; set; }
 
+    /// <summary>Cell position of the Continue button, so --cli can press it by name.</summary>
+    public (int X, int Y) CliContinueButton => (ContinueButtonX, ContinueButtonY);
+
     public ProtagonistCreationRenderer(TerminalHUD terminal, Protagonist protagonist, BodyArtData artData)
     {
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));

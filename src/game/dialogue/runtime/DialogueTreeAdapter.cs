@@ -47,6 +47,12 @@ public class DialogueTreeAdapter
     /// <summary>True when dialogue has ended and the session should be torn down.</summary>
     public bool HasRequestedExit => _controller?.HasRequestedExit ?? _failed;
 
+    /// <summary>
+    /// The live conversation controller, or null while the LLM slot is still being acquired.
+    /// Exposed for --cli driving; the driver reports "still starting" when this is null.
+    /// </summary>
+    public DialogueTreeController? Controller => _controller;
+
     /// <param name="scrollBuffer">
     /// The narration session's shared text history. The conversation appends its lines to it live and
     /// the dialogue panel renders from it, so the player can scroll back into the greyed narration

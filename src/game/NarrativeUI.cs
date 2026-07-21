@@ -17,6 +17,12 @@ public class NarrativeUI : TerminalPanelUI
     private readonly KeywordRenderer _keywordRenderer;
     private List<KeywordRegion> _keywordRegions = new();
     private List<ActionRegion> _actionRegions = new();
+
+    /// <summary>Clickable keyword regions in the current frame (used by --cli to list handles).</summary>
+    public IReadOnlyList<KeywordRegion> KeywordRegions => _keywordRegions;
+
+    /// <summary>Clickable action regions in the current frame (used by --cli to list handles).</summary>
+    public IReadOnlyList<ActionRegion> ActionRegions => _actionRegions;
     
     public NarrativeUI(TerminalHUD terminal) : base(terminal)
     {

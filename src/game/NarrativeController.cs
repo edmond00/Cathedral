@@ -2077,53 +2077,7 @@ public class NarrativeController
             var selectedModusMentis = _modusMentisPopup.HandleClick(correctedScreenPos.X, correctedScreenPos.Y, _core.ClientSize, cellPixelSize);
             if (selectedModusMentis != null)
             {
-                Console.WriteLine($"NarrativeController: Selected modusMentis: {selectedModusMentis.DisplayName}");
-
-                if (_narrationState.IsSelectingModusMentisForSpeaking)
-                {
-                    // Step 1 of Speak About: speaking modusMentis selected → show companion selection
-                    _narrationState.IsSelectingModusMentisForSpeaking = false;
-                    _narrationState.SpeakingModusMentisPending = selectedModusMentis;
-                    _pendingCompanions = _protagonist.CompanionParty.ToList();
-                    var companionNames = _pendingCompanions.Select(c => c.Name).ToList();
-                    _narrationState.IsSelectingCompanionForSpeaking = true;
-                    Vector2 screenPos2 = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
-                    _choicePopup.Show(screenPos2, companionNames, "Who do you address?");
-                }
-                // Get the keyword that was clicked (stored before popup appeared)
-                else if (_narrationState.HoveredKeyword != null)
-                {
-                    string keyword = _narrationState.HoveredKeyword.Keyword;
-                    var sourceBlock = _narrationState.HoveredKeyword.SourceBlock;
-
-                    // Check if we're selecting an observation modusMentis or thinking modusMentis
-                    if (_narrationState.IsSelectingObservationModusMentis)
-                    {
-                        // Focus observation phase
-                        _narrationState.IsLoadingFocusObservation = true;
-                        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
-                        _narrationState.IsSelectingObservationModusMentis = false;
-
-                        // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
-                        ConcreteOutcome? focusOutcome = null;
-                        if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
-                            focusOutcome = fko;
-                        else
-                            focusOutcome = sourceBlock?.LinkedOutcome;
-
-                        if (focusOutcome != null)
-                            _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
-                        else
-                            Console.WriteLine($"NarrativeController: Cannot focus - no outcome found for keyword '{keyword}'");
-                    }
-                    else
-                    {
-                        // Thinking phase
-                        _narrationState.IsLoadingThinking = true;
-                        _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
-                        _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
-                    }
-                }
+                ApplyModusMentisSelection(selectedModusMentis);
             }
             else
             {
@@ -2187,6 +2141,63 @@ public class NarrativeController
                          && _protagonist.CompanionParty.Count > 0;
             if (!canSpeak) speakDisabled.Add(2);
             _choicePopup.Show(screenPos, speakChoices, "Keyword Action", speakDisabled);
+        }
+    }
+
+    /// <summary>
+    /// Route a modus-mentis popup selection to the phase it starts: the companion picker (step 2 of
+    /// Speak About), a focus observation, or a thinking phase. Shared by the mouse path and the
+    /// --cli <c>choose</c> command.
+    /// </summary>
+    private void ApplyModusMentisSelection(ModusMentis selectedModusMentis)
+    {
+        Console.WriteLine($"NarrativeController: Selected modusMentis: {selectedModusMentis.DisplayName}");
+
+        if (_narrationState.IsSelectingModusMentisForSpeaking)
+        {
+            // Step 1 of Speak About: speaking modusMentis selected → show companion selection
+            _narrationState.IsSelectingModusMentisForSpeaking = false;
+            _narrationState.SpeakingModusMentisPending = selectedModusMentis;
+            _pendingCompanions = _protagonist.CompanionParty.ToList();
+            var companionNames = _pendingCompanions.Select(c => c.Name).ToList();
+            _narrationState.IsSelectingCompanionForSpeaking = true;
+            Vector2 screenPos2 = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
+            _choicePopup.Show(screenPos2, companionNames, "Who do you address?");
+            return;
+        }
+
+        // Get the keyword that was clicked (stored before popup appeared)
+        if (_narrationState.HoveredKeyword == null) return;
+
+        string keyword = _narrationState.HoveredKeyword.Keyword;
+        var sourceBlock = _narrationState.HoveredKeyword.SourceBlock;
+
+        // Check if we're selecting an observation modusMentis or thinking modusMentis
+        if (_narrationState.IsSelectingObservationModusMentis)
+        {
+            // Focus observation phase
+            _narrationState.IsLoadingFocusObservation = true;
+            _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+            _narrationState.IsSelectingObservationModusMentis = false;
+
+            // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
+            ConcreteOutcome? focusOutcome = null;
+            if (sourceBlock?.KeywordOutcomeMap?.TryGetValue(keyword, out var fko) == true)
+                focusOutcome = fko;
+            else
+                focusOutcome = sourceBlock?.LinkedOutcome;
+
+            if (focusOutcome != null)
+                _ = ExecuteFocusObservationAsync(selectedModusMentis, focusOutcome);
+            else
+                Console.WriteLine($"NarrativeController: Cannot focus - no outcome found for keyword '{keyword}'");
+        }
+        else
+        {
+            // Thinking phase
+            _narrationState.IsLoadingThinking = true;
+            _narrationState.LoadingMessage = Config.LoadingMessages.ThinkingDeeply;
+            _ = ExecuteThinkingPhaseAsync(selectedModusMentis, keyword);
         }
     }
 
@@ -2334,6 +2345,121 @@ public class NarrativeController
     /// Check if the thinking modusMentis popup is visible.
     /// </summary>
     public bool IsPopupVisible => _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible || _choicePopup.IsVisible;
+
+    // ── CLI driving surface (--cli) ───────────────────────────────────────────
+    // These exist so an automated run can act on named handles instead of pixel coordinates.
+    // Note the popup selectors deliberately bypass OnMouseClick: its popup branches read the live
+    // OS cursor via GetCorrectedMousePosition(), which no injected coordinate can influence.
+
+    /// <summary>Snapshot of the narration state a --cli `state` command reports.</summary>
+    public (bool AnyLoading, string LoadingMessage, bool DiceActive, bool DiceRolling,
+            bool ShowContinue, int Noetic, int MaxNoetic, string? Error)
+        CliSnapshot() => (
+            _narrationState.IsAnyLoading,
+            _narrationState.LoadingMessage,
+            _narrationState.IsDiceRollActive,
+            _narrationState.IsDiceRolling,
+            _narrationState.ShowContinueButton,
+            _narrationState.ThinkingAttemptsRemaining,
+            _activePartyMember.MaxNoeticPoints,
+            _narrationState.ErrorMessage);
+
+    /// <summary>Distinct clickable keywords in the current frame, in reading order.</summary>
+    public IReadOnlyList<string> CliKeywords()
+        => _ui.KeywordRegions.Select(r => r.Keyword).Distinct().ToList();
+
+    /// <summary>Clickable action lines in the current frame as (index, text) pairs.</summary>
+    public IReadOnlyList<(int Index, string Text)> CliActions()
+        => _ui.ActionRegions
+            .Select(r => (r.ActionIndex, r.Action?.ActionText ?? "?"))
+            .Distinct()
+            .ToList();
+
+    /// <summary>The footer button label and whether it is currently clickable.</summary>
+    public (bool Present, int X, int Y, int Width) CliExitButton() =>
+        (_exitButtonRegion.Width > 0, _exitButtonRegion.X, _exitButtonRegion.Y, _exitButtonRegion.Width);
+
+    /// <summary>The dice [ Continue ] button region, if the dice overlay is showing one.</summary>
+    public (bool Present, int X, int Y, int Width) CliDiceContinue()
+    {
+        var r = _dice.ContinueButtonRegion;
+        return (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling && r.Width > 0, r.X, r.Y, r.Width);
+    }
+
+    /// <summary>Labels of the currently visible popup, or null when no popup is up.</summary>
+    public (string Kind, IReadOnlyList<string> Labels)? CliPopup()
+    {
+        if (_choicePopup.IsVisible)
+            return ("choice", _choicePopup.Choices.Select((c, i) =>
+                _choicePopup.IsChoiceEnabled(i) ? c : $"{c} (disabled)").ToList());
+        if (_modusMentisPopup.IsVisible)
+            return ("modus-mentis", _modusMentisPopup.Choices.Select(m => m.DisplayName).ToList());
+        if (_itemSelectionPopup.IsVisible)
+            return ("item", _itemSelectionPopup.Choices.Select(i => i.DisplayName).ToList());
+        return null;
+    }
+
+    /// <summary>
+    /// Answer the visible popup by index. Returns an error string, or null on success.
+    /// </summary>
+    public string? CliChoosePopup(int index)
+    {
+        if (_choicePopup.IsVisible)
+        {
+            if (!_choicePopup.IsChoiceEnabled(index))
+                return $"choice {index} is disabled or out of range";
+            _choicePopup.Hide();
+            _narrationState.IsSelectingInteractionMode = false;
+            DispatchChoiceSelection(index);
+            return null;
+        }
+
+        if (_modusMentisPopup.IsVisible)
+        {
+            var list = _modusMentisPopup.Choices;
+            if (index < 0 || index >= list.Count) return $"modus-mentis {index} out of range";
+            var chosen = list[index];
+            _modusMentisPopup.Hide();
+            ApplyModusMentisSelection(chosen);
+            return null;
+        }
+
+        if (_itemSelectionPopup.IsVisible)
+        {
+            var list = _itemSelectionPopup.Choices;
+            if (index < 0 || index >= list.Count) return $"item {index} out of range";
+            var chosen = list[index];
+            _itemSelectionPopup.Hide();
+            var pending = _narrationState.ActionPendingItemCombination;
+            _narrationState.IsSelectingItemForAction = false;
+            _narrationState.ActionPendingItemCombination = null;
+            if (pending != null) _ = ExecuteItemCombinationAsync(pending, chosen);
+            return null;
+        }
+
+        return "no popup is visible";
+    }
+
+    /// <summary>Click the first region whose keyword matches (case-insensitive).</summary>
+    public string? CliClickKeyword(string keyword)
+    {
+        var region = _ui.KeywordRegions
+            .FirstOrDefault(r => r.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase));
+        if (region == null) return $"no clickable keyword '{keyword}' on screen";
+        OnMouseMove(region.StartX, region.Y);
+        OnMouseClick(region.StartX, region.Y);
+        return null;
+    }
+
+    /// <summary>Click the action with the given global action index.</summary>
+    public string? CliClickAction(int actionIndex)
+    {
+        var region = _ui.ActionRegions.FirstOrDefault(r => r.ActionIndex == actionIndex);
+        if (region == null) return $"no action {actionIndex} on screen";
+        OnMouseMove(region.StartX, region.StartY);
+        OnMouseClick(region.StartX, region.StartY);
+        return null;
+    }
     
     /// <summary>
     /// Close the thinking modusMentis popup if it's open.
