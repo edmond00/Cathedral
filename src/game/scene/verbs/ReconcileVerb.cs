@@ -44,7 +44,7 @@ public class ReconcileVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"try to reconcile with {target.DisplayName}";
+        => $"meet {target.DisplayName}, to try to reconcile";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

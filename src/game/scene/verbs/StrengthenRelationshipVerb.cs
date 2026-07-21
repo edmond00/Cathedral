@@ -43,9 +43,9 @@ public class StrengthenRelationshipVerb : Verb
         {
             var level   = npc.AffinityTable.GetLevel(partyId);
             var display = level.ToDisplayName(npc.DisplayName);
-            return $"talk to {display}";
+            return $"meet {display}, to talk";
         }
-        return $"talk to {target.DisplayName}";
+        return $"meet {target.DisplayName}, to talk";
     }
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)

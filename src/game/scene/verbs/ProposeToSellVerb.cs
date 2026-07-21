@@ -32,7 +32,7 @@ public class ProposeToSellVerb : Verb
     {
         var npc = (target as SceneNpc)?.Entity as NpcEntity;
         string goods = npc?.BuyTag?.Label() ?? "goods";
-        return $"propose to sell {goods} to {target.DisplayName}";
+        return $"meet {target.DisplayName}, to propose to sell {goods}";
     }
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)

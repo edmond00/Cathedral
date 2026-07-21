@@ -34,8 +34,10 @@ public class MeetStrangerVerb : Verb
         return true;
     }
 
+    // Leads with the encounter itself — the introduction is only the intent behind it, since the
+    // conversation proper is handled by the dialogue tree this verb triggers.
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"introduce myself to {target.DisplayName}";
+        => $"meet {target.DisplayName}, to introduce myself";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

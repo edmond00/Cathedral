@@ -349,8 +349,8 @@ public class VerbOutcome : ConcreteOutcome
 
         // Some verbs prefix the bare name with a determiner and lower-case it (e.g. SlayVerb's
         // "slay the edmund sheaf"). Drop that determiner when swapping in the contextual label —
-        // it already carries its own article ("a man, the reaper of the field"), so we must not
-        // produce "slay the a man …". Case-insensitive so a lower-cased name still matches.
+        // it already carries its own article ("the reaper of the field (a man)"), so we must not
+        // produce "slay the the reaper …". Case-insensitive so a lower-cased name still matches.
         string withArticle = VerbView.Verbatim.Replace($"the {name}", ContextLabel, System.StringComparison.OrdinalIgnoreCase);
         if (withArticle != VerbView.Verbatim)
             return withArticle;

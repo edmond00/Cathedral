@@ -56,17 +56,19 @@ public class DialogueTreeUI : TerminalPanelUI
     public void RenderSetupFrame(string message, string? error = null)
     {
         Clear();
-        RenderHeader();
-        DrawHorizontalLine(_layout.TOP_PADDING + 1);
 
         if (error != null)
         {
+            RenderHeader();
+            DrawHorizontalLine(_layout.TOP_PADDING + 1);
             ShowError(error);
             DrawStatusBar("Error — press ESC to exit.");
         }
         else
         {
-            RenderGeneratingStatus(message);
+            RenderHeaderProgressBar();
+            DimContentBelowHeader();
+            RenderWaitingStatus(message);
         }
     }
 
@@ -81,8 +83,18 @@ public class DialogueTreeUI : TerminalPanelUI
         // click region each frame so stale zones don't linger during dice/loading states.
         state.ExitButtonRegion = default;
 
-        RenderHeader();
-        DrawHorizontalLine(_layout.TOP_PADDING + 1);
+        // Header: NPC name/affinity normally, replaced by an animated progress bar spanning
+        // the full row while the LLM is generating text (mirrors the narration panel).
+        string? generating = state.ErrorMessage == null ? BuildGeneratingText(state) : null;
+        if (generating != null)
+        {
+            RenderHeaderProgressBar();
+        }
+        else
+        {
+            RenderHeader();
+            DrawHorizontalLine(_layout.TOP_PADDING + 1);
+        }
 
         if (state.ErrorMessage != null)
         {
@@ -105,12 +117,12 @@ public class DialogueTreeUI : TerminalPanelUI
             return;
         }
 
-        // LLM generating: grey out the log and show an animated message at the bottom.
-        string? generating = BuildGeneratingText(state);
+        // LLM generating: grey out the log below the animated header bar, with the waiting
+        // message (animated ellipsis) repeated on the footer status line.
         if (generating != null)
         {
-            DimContent();
-            RenderGeneratingStatus(generating);
+            DimContentBelowHeader();
+            RenderWaitingStatus(generating);
             return;
         }
 

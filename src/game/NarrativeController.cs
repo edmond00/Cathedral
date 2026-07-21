@@ -1533,11 +1533,16 @@ public class NarrativeController
                 _ambianceEngine.SetFilter(desired);
         }
 
-        // Header: agent name (left) + noetic counter (right, hidden in phases without cost)
+        // Header: agent name (left) + noetic counter (right, hidden in phases without cost) —
+        // replaced by an animated progress bar spanning the full row while the LLM is
+        // generating text, since the name/points aren't meaningful mid-generation.
         bool showNoetic = _scene?.Phase != NarrationPhase.ChildhoodReminescence
                        && _scene?.Phase != NarrationPhase.GetUp;
-        _ui.RenderHeader(_activePartyMember.DisplayName, _narrationState.ThinkingAttemptsRemaining,
-            _activePartyMember.MaxNoeticPoints, showNoetic);
+        if (_narrationState.IsAnyLoading)
+            _ui.RenderHeaderProgressBar();
+        else
+            _ui.RenderHeader(_activePartyMember.DisplayName, _narrationState.ThinkingAttemptsRemaining,
+                _activePartyMember.MaxNoeticPoints, showNoetic);
 
         // The footer exit button is only (re)rendered in the interactive states below. Clear its
         // click region each frame so stale zones don't linger during dice/loading/error states.
@@ -1570,12 +1575,13 @@ public class NarrativeController
         }
 
         // LLM generating (non-action loading, or action evaluation phase before dice roll):
-        // keep the narration visible but greyed out, with an animated message at the bottom.
+        // keep the narration visible but greyed out below the animated header bar, with the
+        // waiting message (animated ellipsis) repeated on the footer status line.
         if (_narrationState.IsAnyLoading)
         {
             RenderNarrationContent();
-            _ui.DimContent();
-            _ui.RenderGeneratingStatus(_narrationState.LoadingMessage);
+            _ui.DimContentBelowHeader();
+            _ui.RenderWaitingStatus(_narrationState.LoadingMessage);
             return;
         }
 

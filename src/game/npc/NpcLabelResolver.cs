@@ -10,8 +10,8 @@ namespace Cathedral.Game.Npc;
 ///
 /// The label is composed from the NPC's role clause (archetype + current location) and the
 /// relationship the <b>acting/narrating</b> party member has with the NPC:
-///   • Stranger  → name omitted; for a human, a person descriptor is prepended, e.g.
-///     "an old man, the reeve of the field"; for a non-human just the role, e.g. "the wolf".
+///   • Stranger  → name omitted; for a human, a person descriptor trails in parentheses, e.g.
+///     "the reeve of the field (an old man)"; for a non-human just the role, e.g. "the wolf".
 ///   • Otherwise → first-person relation + name, e.g. "my friend Godric Reeve, the blacksmith of
 ///     the village" (the name already identifies the person, so no descriptor is added).
 ///
@@ -32,10 +32,11 @@ public static class NpcLabelResolver
         var affinity = npc.AffinityTable;
         if (affinity.IsStranger(key) || affinity.GetLevel(key) == AffinityLevel.Stranger)
         {
-            // Stranger: no name yet. For a human, lead with a person descriptor built from age and
-            // gender ("an old man, the reeve of the field"); non-humans keep the bare role clause.
+            // Stranger: no name yet. For a human, the role clause leads and a person descriptor
+            // built from age and gender trails in parentheses ("the reeve of the field (an old
+            // man)"); non-humans keep the bare role clause.
             return npc.Combatant.AnatomyType == AnatomyType.Human
-                ? $"{DescribePerson(npc)}, {roleClause}"
+                ? $"{roleClause} ({DescribePerson(npc)})"
                 : roleClause;
         }
 

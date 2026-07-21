@@ -11,8 +11,8 @@ namespace Cathedral.Game;
 ///   • Padding-zone border rendering  (Clear / ClearContent)
 ///   • Horizontal separator lines     (DrawHorizontalLine)
 ///   • Proportional scrollbar         (RenderScrollbar + hit-test helpers)
-///   • Content grey-out               (DimContent)
-///   • Animated generating status     (RenderGeneratingStatus)
+///   • Content grey-out               (DimContent / DimContentBelowHeader)
+///   • Animated "generating" header   (RenderHeaderProgressBar)
 ///   • Centered error display         (ShowError             — public virtual)
 ///   • Status bar                     (DrawStatusBar         — protected)
 ///   • Word-wrap helper               (WrapText              — protected)
@@ -190,40 +190,73 @@ public abstract class TerminalPanelUI
         return Math.Clamp((int)(maxScrollOffset * scrollRatio), 0, maxScrollOffset);
     }
 
-    // ── Content grey-out + generating status ─────────────────────────────────
+    // ── Content grey-out + generating header ──────────────────────────────────
+
+    /// <summary>Grey out every row from <paramref name="startY"/> to the bottom of the panel.</summary>
+    private void DimFrom(int startY)
+    {
+        _terminal.DimRect(
+            _layout.LEFT_PADDING,
+            startY,
+            _layout.TERMINAL_WIDTH - _layout.LEFT_PADDING - _layout.RIGHT_PADDING,
+            (_layout.TERMINAL_HEIGHT - _layout.BOTTOM_PADDING) - startY,
+            Config.NarrativeUI.DimmedContentColor,
+            Config.NarrativeUI.BackgroundColor);
+    }
 
     /// <summary>
     /// Grey out everything inside the panel border (header, content, status bar).
     /// Idempotent — safe to apply every frame. Draw any overlay (dice box, status
     /// message) AFTER dimming so it stays at full brightness.
     /// </summary>
-    public void DimContent()
+    public void DimContent() => DimFrom(_layout.TOP_PADDING);
+
+    /// <summary>
+    /// Grey out the content and status-bar rows only, leaving the header row untouched.
+    /// Use alongside <see cref="RenderHeaderProgressBar"/>, which paints the header itself.
+    /// </summary>
+    public void DimContentBelowHeader() => DimFrom(_layout.CONTENT_START_Y);
+
+    /// <summary>
+    /// Replace the header row with a small centered animated progress bar (bracketed,
+    /// same width as the old centre-screen loading bar), then redraw the separator beneath
+    /// it. Used in place of the normal header (party member/NPC name, noetic points,
+    /// affinity — none of which are meaningful mid-generation) while the LLM is producing
+    /// text. The waiting message itself is shown on the footer status line via
+    /// <see cref="RenderWaitingStatus"/>.
+    /// </summary>
+    public void RenderHeaderProgressBar()
     {
-        _terminal.DimRect(
-            _layout.LEFT_PADDING,
-            _layout.TOP_PADDING,
-            _layout.TERMINAL_WIDTH  - _layout.LEFT_PADDING - _layout.RIGHT_PADDING,
-            _layout.TERMINAL_HEIGHT - _layout.TOP_PADDING  - _layout.BOTTOM_PADDING,
-            Config.NarrativeUI.DimmedContentColor,
-            Config.NarrativeUI.BackgroundColor);
+        const int barWidth = 30;
+        int y     = _layout.TOP_PADDING;
+        int frame = AdvanceSpinnerFrame();
+
+        const string chars = " ░░▒▒▓█▓▒▒░░";
+        var bar = new System.Text.StringBuilder("[");
+        for (int i = 0; i < barWidth - 2; i++)
+            bar.Append(chars[(frame + i) % chars.Length]);
+        bar.Append(']');
+
+        int barX = (_layout.TERMINAL_WIDTH - barWidth) / 2;
+        _terminal.Text(barX, y, bar.ToString(), Config.Colors.MediumGray50, Config.NarrativeUI.BackgroundColor);
+
+        DrawHorizontalLine(_layout.TOP_PADDING + 1);
     }
 
     /// <summary>
-    /// Show an animated "generating" message in the status bar (bottom of the panel):
-    /// separator line + spinner + message. Used while the LLM is producing text —
-    /// callers render the normal content first (optionally dimmed via <see cref="DimContent"/>).
+    /// Draw the status bar with the current loading message, its trailing ellipsis animated
+    /// (0–3 dots cycling) instead of static — e.g. "Observing surroundings", "Observing surroundings.",
+    /// "Observing surroundings..". Any literal trailing dots/ellipsis on <paramref name="message"/>
+    /// are stripped first so the animation is the only source of "...". Used at the bottom of the
+    /// panel while the LLM is generating, alongside <see cref="RenderHeaderProgressBar"/>.
     /// </summary>
-    public void RenderGeneratingStatus(string message)
+    public void RenderWaitingStatus(string message)
     {
-        string spinner = Config.Symbols.LoadingSpinner[AdvanceSpinnerFrame()];
-
-        DrawHorizontalLine(_layout.SEPARATOR_Y);
-
-        string text = $"{spinner} {message}";
-        int maxW = _layout.CONTENT_WIDTH - 2;
-        if (text.Length > maxW) text = text[..(maxW - 3)] + "...";
-        _terminal.Text(_layout.CONTENT_START_X, _layout.STATUS_BAR_Y,
-            text, Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
+        int frame = AdvanceSpinnerFrame();
+        string spinner = Config.Symbols.LoadingSpinner[frame];
+        string baseMsg = message.TrimEnd('.', ' ', '…');
+        string dots    = new string('.', frame % 4);
+        DrawStatusBar($"{spinner} {baseMsg}{dots}", Config.Colors.LightGray75);
     }
 
     /// <summary>Advance the shared spinner animation at ~10 fps and return the current frame index.</summary>
@@ -265,12 +298,16 @@ public abstract class TerminalPanelUI
 
     /// <summary>Draw the horizontal separator and write a message to the status bar row.</summary>
     protected void DrawStatusBar(string message)
+        => DrawStatusBar(message, Config.NarrativeUI.StatusBarColor);
+
+    /// <summary>Draw the horizontal separator and write a message to the status bar row in a given color.</summary>
+    protected void DrawStatusBar(string message, Vector4 textColor)
     {
         DrawHorizontalLine(_layout.SEPARATOR_Y);
         int maxW = _layout.CONTENT_WIDTH - 2;
         if (message.Length > maxW) message = message[..(maxW - 3)] + "...";
         _terminal.Text(_layout.CONTENT_START_X, _layout.STATUS_BAR_Y,
-            message, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+            message, textColor, Config.NarrativeUI.BackgroundColor);
     }
 
     // ── Text helpers ──────────────────────────────────────────────────────────

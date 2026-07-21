@@ -33,7 +33,7 @@ public class RequestJobVerb : Verb
         => Eligible(scene, pov, target, actor) is not null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"ask {target.DisplayName} for work";
+        => $"meet {target.DisplayName}, to ask for work";
 
     public override IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {

@@ -40,7 +40,7 @@ public class AppeaseVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"try to appease {target.DisplayName}";
+        => $"meet {target.DisplayName}, to try to appease them";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
