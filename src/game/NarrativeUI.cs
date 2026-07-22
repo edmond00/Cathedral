@@ -167,6 +167,18 @@ public class NarrativeUI : TerminalPanelUI
             // Determine if this specific line should be dimmed
             int lineIndex = visibleLines.IndexOf(renderedLine);
             bool shouldDimThisLine = dimContent && (lastOutcomeBlockStart == -1 || lineIndex < lastOutcomeBlockStart);
+
+            // When an action is hovered, grey out every block outside its chain-of-thought
+            // (full header, narration text and dice symbols) so the chain stands out.
+            // Clickable action lines are excluded here: RenderActionLine dims per-action,
+            // so sibling actions of the hovered one grey out individually.
+            if (!shouldDimThisLine && hoveredAction?.Action != null &&
+                renderedLine.SourceBlock != null &&
+                !(renderedLine.Type == LineType.Action && renderedLine.Actions != null) &&
+                !hoveredAction.Action.IsElementInChain(renderedLine.SourceBlock))
+            {
+                shouldDimThisLine = true;
+            }
             
             switch (renderedLine.Type)
             {
@@ -228,22 +240,12 @@ public class NarrativeUI : TerminalPanelUI
                         
                         Vector4 modusMentisHeaderColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.ModusMentisHeaderColor;
                         
-                        // Determine modusMentis level indicator color based on whether this specific block is in the hovered action's chain
-                        Vector4 modusMentisLevelColor;
-                        if (shouldDimThisLine)
-                        {
-                            modusMentisLevelColor = Config.NarrativeUI.DimmedContentColor;
-                        }
-                        else if (hoveredAction?.Action != null && renderedLine.SourceBlock != null)
-                        {
-                            // Check if this specific block is in the hovered action's chain (not just matching modusMentis)
-                            bool isInChain = hoveredAction.Action.IsElementInChain(renderedLine.SourceBlock);
-                            modusMentisLevelColor = isInChain ? Config.NarrativeUI.LoadingColor : Config.NarrativeUI.ModusMentisHeaderColor;
-                        }
-                        else
-                        {
-                            modusMentisLevelColor = Config.NarrativeUI.LoadingColor;
-                        }
+                        // ModusMentis level indicator color: blocks outside a hovered action's chain
+                        // are fully dimmed above, so any line reaching here un-dimmed is either
+                        // in the chain or no action is hovered — both keep the bright dice color.
+                        Vector4 modusMentisLevelColor = shouldDimThisLine
+                            ? Config.NarrativeUI.DimmedContentColor
+                            : Config.NarrativeUI.LoadingColor;
                         
                         _terminal.Text(_layout.CONTENT_START_X, currentY, modusMentisName, modusMentisHeaderColor, Config.NarrativeUI.BackgroundColor);
                         _terminal.Text(_layout.CONTENT_START_X + modusMentisName.Length, currentY, levelIndicators, modusMentisLevelColor, Config.NarrativeUI.BackgroundColor);
@@ -531,6 +533,13 @@ public class NarrativeUI : TerminalPanelUI
         // Check if this action is hovered
         bool isHovered = hoveredAction != null && hoveredAction.ActionIndex == actionIndex;
 
+        // When another action is hovered, grey out this whole action line (difficulty glyph,
+        // bracket, dice and text) — only the hovered action's chain stays lit.
+        if (!isHovered && hoveredAction?.Action != null && !hoveredAction.Action.IsElementInChain(action))
+        {
+            dimContent = true;
+        }
+
         // Calculate colors - when dimmed, use dark grey regardless of hover state
         Vector4 prefixColor = dimContent ? Config.NarrativeUI.DimmedContentColor : Config.NarrativeUI.NarrativeColor;
         Vector4 textColor = dimContent ? Config.NarrativeUI.DimmedContentColor : 
@@ -542,28 +551,11 @@ public class NarrativeUI : TerminalPanelUI
         Vector4 modusMentisBracketColor = dimContent ? Config.NarrativeUI.DimmedContentColor :
             (isHovered ? Config.NarrativeUI.ActionHoverColor : Config.Colors.DarkYellowGrey);
         
-        // ModusMentis level color - when an action is hovered, only highlight modusMentis levels in the chain
-        Vector4 modusMentisLevelColor;
-        if (dimContent)
-        {
-            modusMentisLevelColor = Config.NarrativeUI.DimmedContentColor;
-        }
-        else if (isHovered)
-        {
-            // This action is hovered - its modusMentis is always in its own chain, so highlight it
-            modusMentisLevelColor = Config.NarrativeUI.LoadingColor;
-        }
-        else if (hoveredAction?.Action != null)
-        {
-            // Another action is hovered - check if this specific action element is in that chain
-            // (different actions are never in each other's chains)
-            bool isInChain = hoveredAction.Action.IsElementInChain(action);
-            modusMentisLevelColor = isInChain ? Config.NarrativeUI.LoadingColor : Config.NarrativeUI.ModusMentisHeaderColor;
-        }
-        else
-        {
-            modusMentisLevelColor = Config.NarrativeUI.LoadingColor;
-        }
+        // ModusMentis level color: actions outside a hovered action's chain are fully
+        // dimmed above, so any un-dimmed action keeps the bright dice color.
+        Vector4 modusMentisLevelColor = dimContent
+            ? Config.NarrativeUI.DimmedContentColor
+            : Config.NarrativeUI.LoadingColor;
         
         Vector4 modusMentisBracketBackground = backgroundColor; // Use action background for modusMentis parts too
         
