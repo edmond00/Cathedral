@@ -79,6 +79,9 @@ public class NarrativeController
     // OnDiceRollContinue commits whichever matches the final (humor-modified) result.
     private ActionExecutionResult? _pendingSuccessResult;
     private ActionExecutionResult? _pendingFailureResult;
+    // Separator caption for the segment the post-action CONTINUE closes ("after trying to grab a
+    // rope"). Set when an in-place outcome shows the CONTINUE button; consumed by HandleContinueClicked.
+    private string? _pendingSegmentLabel;
     // True when the pending result came from PrepareDualOutcomesAsync and therefore needs its
     // side-effects (XP, item consumption) committed at Continue. False for the Get-Up path,
     // which commits its own side-effects via reports only.
@@ -1430,6 +1433,7 @@ public class NarrativeController
             _narrationState.PendingTransitionNode = null;
             _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
             _narrationState.ShowContinueButton = true;
+            _pendingSegmentLabel = SegmentLabelFor(result);
         }
         else
         {
@@ -1437,6 +1441,7 @@ public class NarrativeController
             _narrationState.PendingTransitionNode = null;
             _narrationState.ShouldExitOnContinue = IsMovementAction(result.Action);
             _narrationState.ShowContinueButton = true;
+            _pendingSegmentLabel = SegmentLabelFor(result);
         }
 
         // Refresh debug window to reflect any state changes
@@ -2690,6 +2695,12 @@ public class NarrativeController
     /// Continue button did) while normal exploration simply returns to the interactive observation
     /// state without regenerating observations.
     /// </summary>
+    /// <summary>Separator caption for the segment a resolved action closes.</summary>
+    private static string? SegmentLabelFor(ActionExecutionResult result)
+        => string.IsNullOrWhiteSpace(result.Action?.NeutralActionText)
+            ? null
+            : $"after trying to {result.Action.NeutralActionText}";
+
     private void HandleContinueClicked()
     {
         // Get-Up success transition: protagonist risen, world travel begins.
@@ -2724,20 +2735,13 @@ public class NarrativeController
             return;
         }
 
-        // Nothing pending. No-early-exit phases regenerate observations (as before); normal
-        // exploration returns to the interactive state without restarting observations.
-        bool noEarlyExit = _scene?.Phase == NarrationPhase.ChildhoodReminescence
-                        || _scene?.Phase == NarrationPhase.GetUp;
-        if (noEarlyExit)
-        {
-            Console.WriteLine("NarrativeController: CONTINUE — restarting observations (no-early-exit phase)");
-            BeginNarrationSegment();
-        }
-        else
-        {
-            Console.WriteLine("NarrativeController: CONTINUE — returning to interactive observation (no restart)");
-            _narrationState.ShowContinueButton = false;
-        }
+        // Nothing pending: the resolved action closes the segment — grey the text into history under
+        // a labelled separator, refill noetic points, and open a fresh observation of the scene as it
+        // now stands (the outcome may have changed it: item gone, state shifted). This makes CONTINUE
+        // behave identically for in-place actions and transitions.
+        Console.WriteLine("NarrativeController: CONTINUE — closing segment after action, restarting observations");
+        BeginNarrationSegment(_pendingSegmentLabel);
+        _pendingSegmentLabel = null;
     }
 
     /// <summary>
