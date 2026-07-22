@@ -35,16 +35,34 @@ public class NaturalDefenseStat : DerivedStat
 }
 
 /// <summary>
+/// Natural attack — bonus attack dice added to every offensive fighting-skill roll,
+/// the raw virile vigour behind any blow.
+/// Source: genitories organ (trunk).
+/// Formula: score (range 0–2).
+/// </summary>
+public class NaturalAttackStat : DerivedStat
+{
+    public override string Name         => "natural_attack";
+    public override string DisplayName  => "Natural Attack";
+    public override string? RelatedOrganId => "genitories";
+    protected override int CalculateValue(int sourceScore) => sourceScore;
+    public override string FormatValue(int value) => $"{value} dice";
+}
+
+/// <summary>
 /// Move speed — tiles the fighter can traverse per cinetic point during movement.
-/// Source: legs organ (lower_limbs).
-/// Formula: score (range 1–10).
+/// Source: legs organ (lower_limbs), aggregate of both legs (0–4).
+/// Table: 0 → 1, 1 → 2, 2 → 4, 3 → 6, 4 → 8 tiles.
 /// </summary>
 public class MoveSpeedStat : DerivedStat
 {
+    private static readonly int[] TilesByScore = { 1, 2, 4, 6, 8 };
+
     public override string Name         => "move_speed";
     public override string DisplayName  => "Move Speed";
     public override string? RelatedOrganId => "legs";
-    protected override int CalculateValue(int sourceScore) => sourceScore;
+    protected override int CalculateValue(int sourceScore) =>
+        TilesByScore[Math.Clamp(sourceScore, 0, TilesByScore.Length - 1)];
     public override int WorstValue => 1;
     public override string FormatValue(int value) => $"{value} tiles/CP";
 }

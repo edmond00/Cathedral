@@ -266,20 +266,16 @@ public sealed class HumorQueue
     /// <summary>
     /// Randomly create a secreted humor instance using organ-score-based probabilities.
     ///
-    /// Secretion probabilities (score 1–10, all four always sum to 100 %):
-    ///   Blood    % = max(0, score * 8 - 3)
-    ///   Yellow   % = max(0, 40 - score * 3)
-    ///   Black    % = max(0, 50 - score * 5)
-    ///   Phlegm   % = 100 - other three         ← always 13 % regardless of score
+    /// Secretion probabilities come from <see cref="HumoralSecretionTable"/> (organ score 0–3,
+    /// beasts up to 4; all four always sum to 100 %).
     ///
     /// High score → mostly Blood / Phlegm; low score → Black Bile dominant.
     /// </summary>
     private static BodyHumor CreateSecretedHumor(int organScore, Random rng)
     {
-        int score = Math.Clamp(organScore, 0, 10);
-        int blood     = Math.Max(0, score * 8 - 3);
-        int yellow    = Math.Max(0, 40 - score * 3);
-        int blackbile = Math.Max(0, 50 - score * 5);
+        int blood     = HumoralSecretionTable.BloodPct(organScore);
+        int yellow    = HumoralSecretionTable.YellowBilePct(organScore);
+        int blackbile = HumoralSecretionTable.BlackBilePct(organScore);
         int phlegm    = 100 - blood - yellow - blackbile;
 
         int roll = rng.Next(100);
@@ -298,10 +294,9 @@ public sealed class HumorQueue
     /// </summary>
     private static BodyHumor CreateSecretedHumorNoBlackBile(int organScore, Random rng)
     {
-        int score  = Math.Clamp(organScore, 0, 10);
-        int blood  = Math.Max(0, score * 8 - 3);
-        int yellow = Math.Max(0, 40 - score * 3);
-        int black  = Math.Max(0, 50 - score * 5);
+        int blood  = HumoralSecretionTable.BloodPct(organScore);
+        int yellow = HumoralSecretionTable.YellowBilePct(organScore);
+        int black  = HumoralSecretionTable.BlackBilePct(organScore);
         int phlegm = 100 - blood - yellow - black;
 
         int total = blood + phlegm + yellow;

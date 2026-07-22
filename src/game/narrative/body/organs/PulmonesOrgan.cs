@@ -26,5 +26,6 @@ public class PulmonesOrgan : Organ
     {
         public override string Id => "pulmones";
         public override string DisplayName => "Pulmones";
+        public override int DefaultMaxScore => 3;
     }
 }

@@ -51,35 +51,33 @@
 
 - can eat hard food (bool)
 
-### TONGUE (3)
+### TONGUE (5)
 
-- speech fluency
+- speech fluency (1 reply per level, 0 = mute: dialogue-triggering actions auto-fail)
 
 ## UPPER LIMBS
 
-- natural attack
-
-### ARM (4)
+### ARM (2 per arm)
 
 - fighting skill medium level
 
-### HAND (5)
+### HAND (3 per hand)
 
-- item usage level cap (max item UsageLevel that grants bonus dice when combining an item with an action)
+- item usage level cap (max item UsageLevel that grants bonus dice when combining an item with an action; +1 per hands level, max 6)
 - fighting skill medium level
 
 ## LOWER LIMBS
 
 - natural defense
+- max travel distance (region aggregate, 40→148 tenths of sphere units)
 
-### LEG (4)
+### LEG (2 per leg)
 
-- move speed
+- move speed (legs aggregate 0–4 → 1, 2, 4, 6, 8 tiles)
 - fighting skill medium level
 
 ### FOOT (3)
 
-- max travel distance
 - runaway chance
 - fighting skill medium level
 
@@ -93,35 +91,37 @@
 - max carrying weights
 - body damage resistance
 
-### PAUNCH (5)
+### PAUNCH (3)
 
 - secretions
 
-### PULMONES (5)
+### PULMONES (3)
 
 - secretions
 
-### SPLEEN (5)
+### SPLEEN (3)
 
 - secretions
 
 ### GENITORIES (2)
 
-- gender
+- gender (female at 0, male otherwise)
+- natural attack (+1 attack die per level, 0–2)
 
-### HEART (4)
+### HEART (5)
 
-- max companions
+- max companions (1 per level, 0–5)
 - lifetime
-- knockdown recovery
+- youthfulness
 
-### HEPAR (5)
+### HEPAR (3)
 
 - secretions
 
-### VISCERA (4)
+### VISCERA (5)
 
 - desease resistance
+- humor modifier limit (+1 per level, 1–5)
 - fighting skill medium level (skill like rage, cold blodd, ...)
 
 # BEAST

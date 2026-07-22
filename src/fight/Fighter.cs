@@ -46,6 +46,8 @@ public class Fighter
     public int BaseNaturalDefense => GetCombatStat("natural_defense");
     /// <summary>Natural defense including active posture bonus.</summary>
     public int NaturalDefense     => BaseNaturalDefense + (IsDefensePostureActive ? 2 : 0);
+    /// <summary>Bonus attack dice added to every offensive skill roll (genitories stat).</summary>
+    public int NaturalAttack      => GetCombatStat("natural_attack");
     /// <summary>Number of d6 rolled in a runaway check (1 die per foot level). At least one six required to flee.</summary>
     public int RunawayDiceCount => GetCombatStat("runaway_dice");
     /// <summary>Equilibrium — feet stat. Higher = lower terrain-slip risk during movement.</summary>

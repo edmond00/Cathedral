@@ -102,7 +102,7 @@ public class DialogueOptionGenerator
         return results;
     }
 
-    /// <summary>Max player replies this turn — the tongue-derived speech-fluency stat (1–5).</summary>
+    /// <summary>Max player replies this turn — the tongue-derived speech-fluency stat (0–5).</summary>
     public static int SpeechFluency(PartyMember m)
         => m.DerivedStats.FirstOrDefault(s => s.Name == "speech fluency")?.GetValue(m) ?? 1;
 

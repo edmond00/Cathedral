@@ -8,8 +8,8 @@ namespace Cathedral.Game.Narrative;
 /// A member dies of old age once their age (<see cref="PartyMember.GetAgeDays"/>) reaches this value.
 /// The span runs from <see cref="MinLifetimeDays"/> at heart score 0 up to <see cref="MaxLifetimeDays"/>
 /// when the heart is at its species maximum, scaled linearly in between. Scaling against the
-/// member's own heart max (rather than a hard-coded 4) keeps the range correct for species whose
-/// heart tops out elsewhere — a wolf's heart maxes at 5, and still yields the same 120-year ceiling.
+/// member's own heart max (rather than a hard-coded 5) keeps the range correct for species whose
+/// heart tops out elsewhere, still yielding the same 120-year ceiling.
 /// </para>
 ///
 /// <para>
@@ -40,9 +40,9 @@ public sealed class LifetimeStat : DerivedStat
     public override int WorstValue  => MinLifetimeDays;
     public override int? BestValue  => MaxLifetimeDays;
 
-    // Member-agnostic fallback: assume the human heart max of 4. The member-aware path below is
+    // Member-agnostic fallback: assume the human heart max of 5. The member-aware path below is
     // what actually runs, and it reads the real max off the member's own anatomy.
-    protected override int CalculateValue(int sourceScore) => Interpolate(sourceScore, 4);
+    protected override int CalculateValue(int sourceScore) => Interpolate(sourceScore, 5);
 
     protected override int CalculateValue(PartyMember member, int sourceScore)
         => Interpolate(sourceScore, member.GetOrganById(RelatedOrganId!)?.MaxScore ?? 0);

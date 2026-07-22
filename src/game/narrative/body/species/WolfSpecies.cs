@@ -21,7 +21,7 @@ public sealed class WolfSpecies : Species
             // Trunk: built for endurance, lean gut
             { "backbone",   5 }, // powerful spine for pursuit
             { "heart",      5 }, // long-chase stamina
-            { "pulmones",   5 }, // endurance breathing
+            { "pulmones",   4 }, // endurance breathing
             { "viscera",    4 },
             { "paunch",     3 }, // lean predator, fasts between hunts
             { "hepar",      4 },

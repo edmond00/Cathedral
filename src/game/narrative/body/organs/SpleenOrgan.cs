@@ -27,5 +27,6 @@ public class SpleenOrgan : Organ
     {
         public override string Id => "spleen";
         public override string DisplayName => "Spleen";
+        public override int DefaultMaxScore => 3;
     }
 }

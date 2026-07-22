@@ -21,10 +21,10 @@ public sealed class BearSpecies : Species
             // Trunk: everything maxed — an unstoppable biological machine
             { "backbone",   5 },
             { "heart",      5 },
-            { "pulmones",   5 },
+            { "pulmones",   4 },
             { "viscera",    5 }, // virtually immune to disease
-            { "paunch",     5 }, // omnivore, digests anything
-            { "hepar",      5 },
+            { "paunch",     4 }, // omnivore, digests anything
+            { "hepar",      4 },
             { "spleen",     4 },
             // Body: strongest raw power among beasts
             { "fangs",           4 },

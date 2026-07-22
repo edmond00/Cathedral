@@ -142,6 +142,7 @@ public static class FightModeUI
         int damageRes = fighter.Member.DerivedStats
             .First(s => s.Name == "damage_resistance").GetValue(fighter.Member);
         terminal.Text(x, y++, $"INIT: {fighter.InitiativeValue}", Config.Colors.LightGray, Config.Colors.Black);
+        terminal.Text(x, y++, $"ATK : {fighter.NaturalAttack}",   Config.Colors.LightGray, Config.Colors.Black);
         terminal.Text(x, y++, $"DEF : {fighter.NaturalDefense}",  Config.Colors.LightGray, Config.Colors.Black);
         terminal.Text(x, y++, $"MOV : {fighter.MoveSpeed}",        Config.Colors.LightGray, Config.Colors.Black);
         terminal.Text(x, y++, $"DR  : {damageRes}",                Config.Colors.LightGray, Config.Colors.Black);
@@ -631,7 +632,7 @@ public static class FightModeUI
                 y++;
                 WrapText(skill.Description ?? "", Config.Colors.White);
                 y++;
-                TextLine($"Dice  : {skill.TotalDice(fighter, organPartId)}", Config.Colors.LightGray);
+                TextLine($"Dice  : {skill.TotalDice(fighter, organPartId) + (skill.IsSelfTargeting ? 0 : fighter.NaturalAttack)}", Config.Colors.LightGray);
                 TextLine($"Cost  : {skill.CineticPointsCost} CP", Config.Colors.LightGray);
                 TextLine(skill.MinRange > 1
                     ? $"Range : {skill.MinRange}-{skill.Range}"

@@ -29,11 +29,13 @@ public class HandsOrgan : Organ
     {
         public override string Id => "left_hand";
         public override string DisplayName => "Left Hand";
+        public override int DefaultMaxScore => 3;
     }
     
     public sealed class RightHandPart : OrganPart
     {
         public override string Id => "right_hand";
         public override string DisplayName => "Right Hand";
+        public override int DefaultMaxScore => 3;
     }
 }

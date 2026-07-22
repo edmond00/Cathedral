@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative;
 /// Item Usage Cap — the maximum item <see cref="Item.UsageLevel"/> that contributes bonus
 /// dice when an item is combined with an action during the narration phase.
 /// Source: hands organ (upper_limbs).
-/// Formula: cap = hands score (0–10). A character whose hands are stronger can extract the
+/// Formula: cap = hands score (0–6). A character whose hands are stronger can extract the
 /// full potency of high-UsageLevel tools, while weak or wounded hands clamp the bonus down.
 ///
 /// Applied when building the SyntheticItemModusMentis in

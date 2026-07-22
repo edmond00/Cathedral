@@ -26,5 +26,6 @@ public class PaunchOrgan : Organ
     {
         public override string Id => "paunch";
         public override string DisplayName => "Paunch";
+        public override int DefaultMaxScore => 3;
     }
 }

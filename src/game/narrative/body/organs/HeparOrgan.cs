@@ -27,5 +27,6 @@ public class HeparOrgan : Organ
     {
         public override string Id => "hepar";
         public override string DisplayName => "Hepar";
+        public override int DefaultMaxScore => 3;
     }
 }

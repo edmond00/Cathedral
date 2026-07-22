@@ -212,7 +212,7 @@ public static class FightAI
 
     private static double ScoreAttack(FightingSkill skill, Fighter ai, Fighter target, AiPersonality p)
     {
-        int totalDice = skill.TotalDice(ai);
+        int totalDice = skill.TotalDice(ai) + ai.NaturalAttack;
         double hitProxy = Math.Clamp((totalDice - target.NaturalDefense * 1.5) / 10.0, 0.1, 1.0);
         double damageProxy = 0.6 + 0.05 * Math.Max(0, totalDice - target.NaturalDefense);
 

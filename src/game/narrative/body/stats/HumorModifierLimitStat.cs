@@ -3,7 +3,7 @@ namespace Cathedral.Game.Narrative;
 /// <summary>
 /// Humor Modifier Limit — how many humor transmuting virtues the player may apply to a single
 /// dice roll before confirming the result.
-/// Source: viscera organ (trunk), whose max score is 4 — so 1–4 modifiers per roll.
+/// Source: viscera organ (trunk), whose max score is 5 — so 1–5 modifiers per roll.
 /// Formula: limit = viscera score (clamped to a minimum of 1 so a roll can always be tweaked
 /// at least once even with a weak or wounded viscera).
 ///

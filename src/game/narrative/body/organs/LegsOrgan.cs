@@ -28,13 +28,13 @@ public class LegsOrgan : Organ
     {
         public override string Id => "left_leg";
         public override string DisplayName => "Left Leg";
-        public override int DefaultMaxScore => 4;
+        public override int DefaultMaxScore => 2;
     }
     
     public sealed class RightLegPart : OrganPart
     {
         public override string Id => "right_leg";
         public override string DisplayName => "Right Leg";
-        public override int DefaultMaxScore => 4;
+        public override int DefaultMaxScore => 2;
     }
 }

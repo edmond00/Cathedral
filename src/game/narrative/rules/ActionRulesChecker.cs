@@ -17,6 +17,7 @@ public static class ActionRulesChecker
     /// </summary>
     private static readonly IReadOnlyList<IActionRule> Rules = new List<IActionRule>
     {
+        new ZeroRepliesDialogueRule(),
         new NegativeAffinityDialogueRule(),
         new IllegalActionHighMoralityRule(),
         new IllegalActionVisualWitnessRule(),

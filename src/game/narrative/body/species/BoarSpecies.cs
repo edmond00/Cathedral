@@ -23,7 +23,7 @@ public sealed class BoarSpecies : Species
             { "heart",      4 },
             { "pulmones",   4 },
             { "viscera",    5 }, // tough, disease-resistant
-            { "paunch",     5 }, // forager, digests roots and refuse
+            { "paunch",     4 }, // forager, digests roots and refuse
             { "hepar",      4 },
             { "spleen",     3 },
             // Body: powerful tusks and charging legs

@@ -55,7 +55,10 @@ public class SkillAction : IFightAction
         // Set up dice roll for the window to animate (two-roll: attack dice vs defense dice)
         state.PendingSkill  = Skill;
         state.PendingTarget = Target;
-        state.DiceNumberOfDice          = Skill.TotalDice(Attacker, OrganPartId, ActiveMedium);
+        // Natural attack dice apply only to offensive rolls against another fighter,
+        // not to self-targeted (defense/utility) skills.
+        state.DiceNumberOfDice          = Skill.TotalDice(Attacker, OrganPartId, ActiveMedium)
+                                          + (Target != Attacker ? Attacker.NaturalAttack : 0);
         state.DiceDifficulty            = Target.NaturalDefense; // kept for logging
         state.DiceSecondaryNumberOfDice = Target.NaturalDefense;
         state.IsDiceRolling             = true;
