@@ -143,7 +143,7 @@ public static class PersonaMatchCritic
         sb.Append("Here are the options they can choose from:\n");
         for (int i = 0; i < options.Count; i++)
             sb.Append(Letter(i)).Append(" - ").Append(ToThirdPerson(options[i].Trim())).Append('\n');
-        sb.Append("\nWhich single option best matches what they said they want? ");
+        sb.Append("\nExtract the target of the character's intention, then select the option referring to that target.");
         sb.Append("Answer with that option's letter and nothing else.");
         return sb.ToString();
     }

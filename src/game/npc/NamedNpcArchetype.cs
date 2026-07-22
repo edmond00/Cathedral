@@ -96,8 +96,15 @@ public abstract class NamedNpcArchetype : NpcArchetype
 
     // ── Spawn ─────────────────────────────────────────────────────────────────
 
-    /// <summary>Spawns a new <see cref="NpcEntity"/> from this archetype.</summary>
-    public NpcEntity Spawn(Random rng, string nodeContext = "", AffinityTable? savedAffinity = null)
+    /// <summary>
+    /// Spawns a new <see cref="NpcEntity"/> from this archetype.
+    /// <paramref name="affinityResolver"/>, when given, supplies the NPC's persistent
+    /// <see cref="AffinityTable"/>; it is called with the NPC's stable name-derived id
+    /// (<c>{archetypeId}_{name}</c>) — per NPC, so two NPCs of the same role never share a table.
+    /// The resolver form exists because the name is only generated here, inside Spawn, so callers
+    /// cannot compute the key beforehand. Null (or a null return) spawns with a fresh table.
+    /// </summary>
+    public NpcEntity Spawn(Random rng, string nodeContext = "", Func<string, AffinityTable?>? affinityResolver = null)
     {
         // Seed a dedicated name RNG from the (deterministic, per-location) scene stream so a given
         // NPC's name is stable across visits and reproducible under --seed, independent of later
@@ -118,9 +125,11 @@ public abstract class NamedNpcArchetype : NpcArchetype
             : Naming.NameGenerator.GenerateBeast(nameRng);
         combatant.SetDisplayName(name);
 
-        var npcId = DefaultPersistent
-            ? $"{ArchetypeId}_{name.ToLowerInvariant().Replace(' ', '_')}"
-            : $"{ArchetypeId}_{rng.Next(100000)}";
+        // The stable name-derived id: names are per-NPC and reproducible across visits (nameRng),
+        // so this identifies THIS individual — used as the affinity-persistence key for everyone,
+        // and as the npcId for persistent NPCs.
+        var stableId = $"{ArchetypeId}_{name.ToLowerInvariant().Replace(' ', '_')}";
+        var npcId = DefaultPersistent ? stableId : $"{ArchetypeId}_{rng.Next(100000)}";
 
         combatant.InitializeModiMentis(ModusMentisRegistry.Instance, ModiMentisCount);
 
@@ -134,7 +143,7 @@ public abstract class NamedNpcArchetype : NpcArchetype
 
         var hint           = PickObservationHint(npcId, nodeContext);
         var wayToSpeak     = CanSpeak ? GenerateWayToSpeakDescription(name, rng) : null;
-        var affinityTable  = savedAffinity ?? new AffinityTable();
+        var affinityTable  = affinityResolver?.Invoke(stableId) ?? new AffinityTable();
 
         return new NpcEntity(
             npcId, combatant, this,

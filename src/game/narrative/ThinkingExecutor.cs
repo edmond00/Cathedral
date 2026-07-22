@@ -84,7 +84,7 @@ public class ThinkingExecutor
         string? observedPhrase = sourceObs?.NeutralPhrase;
 
         // ── Decision 1: GOAL ────────────────────────────────────────────────────
-        ConcreteOutcome resolved = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken);
+        var (resolved, goalThought) = await ChooseGoalAsync(thinkingSlot, subOutcomes, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken);
         bool isIgnore = resolved is VerbOutcome vIgnore && vIgnore.VerbView.Verb is IgnoreVerb;
 
         // ── Early exit: IGNORE (reasoning only, no action) ──────────────────────
@@ -92,7 +92,7 @@ public class ThinkingExecutor
         {
             string ignoreNeutral = NeutralNarration.ReasoningIgnore(targetDescription, isReminescence);
             string ignoreReasoning = await _rewriter.RewriteAsync(
-                thinkingSlot, ignoreNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, ct: cancellationToken);
+                thinkingSlot, ignoreNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, innerThought: goalThought, ct: cancellationToken);
             return new ThinkingResponse
             {
                 ReasoningText = ignoreReasoning,
@@ -103,7 +103,7 @@ public class ThinkingExecutor
         string goalPhrase = resolved.ToNaturalLanguageString();
 
         // ── Decision 2: HOW (which action skill) ────────────────────────────────
-        ModusMentis? skill = await ChooseSkillAsync(thinkingSlot, goalPhrase, actionModiMentis, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken);
+        var (skill, skillThought) = await ChooseSkillAsync(thinkingSlot, goalPhrase, actionModiMentis, thinkingModusMentis, overallLocation, areaLocation, observedPhrase, cancellationToken);
         if (skill == null)
         {
             if (actionModiMentis.Count == 0)
@@ -116,7 +116,7 @@ public class ThinkingExecutor
             // it": a reasoning-only outcome in the thinking MM's voice, mirroring the ignore branch.
             string noMeansNeutral = NeutralNarration.ReasoningNoMeans(targetDescription, goalPhrase, isReminescence);
             string noMeansText = await _rewriter.RewriteAsync(
-                thinkingSlot, noMeansNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, ct: cancellationToken);
+                thinkingSlot, noMeansNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, innerThought: JoinThoughts(goalThought, skillThought), ct: cancellationToken);
             return new ThinkingResponse
             {
                 ReasoningText = string.IsNullOrWhiteSpace(noMeansText) ? noMeansNeutral : noMeansText,
@@ -125,9 +125,11 @@ public class ThinkingExecutor
         }
 
         // ── Flavor: reasoning (thinking slot) ───────────────────────────────────
+        // The goal and means wants are handed back as the inner thought behind the chain, so the
+        // styled reasoning echoes why this goal and this way were chosen.
         string reasoningNeutral = NeutralNarration.ReasoningChain(targetDescription, goalPhrase, skill.SkillMeans, isReminescence);
         string reasoningText = await _rewriter.RewriteAsync(
-            thinkingSlot, reasoningNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, ct: cancellationToken);
+            thinkingSlot, reasoningNeutral, NarrationKind.Reasoning, thinkingModusMentis.PersonaReminder2, styleInstruction: thinkingModusMentis.StyleInstruction, innerThought: JoinThoughts(goalThought, skillThought), ct: cancellationToken);
 
         // ── Action skill slot: persona-fit check, then action-text flavor ───────
         int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(skill);
@@ -137,17 +139,18 @@ public class ThinkingExecutor
         // via the persona-reasoning → neutral-critic pass (the selector resets the slot in and out, so
         // the action rewrite below starts fresh). Skipped for auto-success phases (reminescence /
         // get-up). Replaces the former plausibility + difficulty critic trees.
-        PersonaFit fit = autoSuccess
-            ? PersonaFit.Willing
+        var (fit, fitThought) = autoSuccess
+            ? (PersonaFit.Willing, (string?)null)
             : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, overallLocation, areaLocation, observedPhrase, cancellationToken);
 
         // "refuse to do it" → the skill refuses; produce a first-person refusal outcome, no action.
+        // The fit want explains the refusal, so it rides into the rewrite as the inner thought.
         if (fit.Cancels)
         {
             string refusalNeutral = NeutralNarration.ActionRefusal(goalPhrase);
             string refusalText = await _rewriter.RewriteAsync(
                 actionSlot, refusalNeutral, NarrationKind.Outcome, skill.PersonaReminder2,
-                styleInstruction: skill.StyleInstruction, ct: cancellationToken);
+                styleInstruction: skill.StyleInstruction, innerThought: fitThought, ct: cancellationToken);
             return new ThinkingResponse
             {
                 ReasoningText   = reasoningText,
@@ -163,7 +166,7 @@ public class ThinkingExecutor
         // ActionText keeps the canonical "try to …" form the item critic expects.
         const string actionPrefix = "I will ";
         string styledAction = await _rewriter.RewriteAsync(
-            actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: actionPrefix, styleInstruction: skill.StyleInstruction, ct: cancellationToken);
+            actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: actionPrefix, styleInstruction: skill.StyleInstruction, innerThought: fitThought, ct: cancellationToken);
         if (string.IsNullOrWhiteSpace(styledAction))
             styledAction = actionPrefix + (skill.ActsDiscretely ? "discretely " : "") + goalPhrase;
         string bareAction = StripPrefix(styledAction, actionPrefix);
@@ -225,11 +228,11 @@ public class ThinkingExecutor
     /// caller renders the refusal outcome). The selector resets the slot in and out, so the
     /// following action rewrite starts from the system prompt. In playground mode picks Willing.
     /// </summary>
-    private async Task<PersonaFit> AskPersonaFitAsync(
+    private async Task<(PersonaFit Fit, string? Reasoning)> AskPersonaFitAsync(
         int actionSlot, ModusMentis skill, string goalPhrase,
         string? overallLocation, string? areaLocation, string? observedPhrase, CancellationToken ct)
     {
-        if (PlaygroundMode.IsActive) return PersonaFit.Willing;
+        if (PlaygroundMode.IsActive) return (PersonaFit.Willing, null);
 
         string situation = ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase).TrimEnd();
         string lead = situation.Length == 0 ? "" : situation + " ";
@@ -242,8 +245,8 @@ public class ThinkingExecutor
             a => a,
             prompt, declineOption: "refuse to do it", ct: ct);
 
-        Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {chosen ?? "refuse to do it"}");
-        return chosen switch
+        Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {chosen.Item ?? "refuse to do it"}");
+        var fit = chosen.Item switch
         {
             "do it eagerly"     => PersonaFit.Eager,
             "do it willingly"   => PersonaFit.Willing,
@@ -251,11 +254,12 @@ public class ThinkingExecutor
             null                => PersonaFit.Refused,
             _                   => PersonaFit.Willing, // unrecognised → proceed at base difficulty
         };
+        return (fit, chosen.Reasoning);
     }
 
     // ── Decision: GOAL ─────────────────────────────────────────────────────────
 
-    private async Task<ConcreteOutcome> ChooseGoalAsync(
+    private async Task<(ConcreteOutcome Outcome, string? Reasoning)> ChooseGoalAsync(
         int thinkingSlot,
         List<ConcreteOutcome> subOutcomes,
         ModusMentis thinkingModusMentis,
@@ -269,10 +273,10 @@ public class ThinkingExecutor
         var realOutcomes = subOutcomes
             .Where(o => !(o is VerbOutcome vo && vo.VerbView.Verb is IgnoreVerb))
             .ToList();
-        if (realOutcomes.Count == 0) return IgnoreVerb.MakeOutcome();
+        if (realOutcomes.Count == 0) return (IgnoreVerb.MakeOutcome(), null);
 
         if (PlaygroundMode.IsActive)
-            return realOutcomes[_rng.Next(realOutcomes.Count)];
+            return (realOutcomes[_rng.Next(realOutcomes.Count)], null);
 
         // The Modus Mentis reasons over the goals ("What do you want to do?") and the neutral critic
         // maps that to one — or to the decline option, which is the ignore outcome. Each goal phrase
@@ -286,12 +290,13 @@ public class ThinkingExecutor
             o => o.ToNaturalLanguageString(),
             prompt, ct: ct);
 
-        return chosen ?? IgnoreVerb.MakeOutcome();  // null only if the list was empty
+        // Null item only if the list was empty; the reasoning still explains the (non-)choice.
+        return (chosen.Item ?? IgnoreVerb.MakeOutcome(), chosen.Reasoning);
     }
 
     // ── Decision: HOW (skill) ──────────────────────────────────────────────────
 
-    private async Task<ModusMentis?> ChooseSkillAsync(
+    private async Task<(ModusMentis? Skill, string? Reasoning)> ChooseSkillAsync(
         int thinkingSlot,
         string goalPhrase,
         List<ModusMentis> actionModiMentis,
@@ -301,9 +306,9 @@ public class ThinkingExecutor
         string? observedPhrase,
         CancellationToken ct)
     {
-        if (actionModiMentis.Count == 0) return null;
+        if (actionModiMentis.Count == 0) return (null, null);
         if (PlaygroundMode.IsActive)
-            return actionModiMentis[_rng.Next(actionModiMentis.Count)];
+            return (actionModiMentis[_rng.Next(actionModiMentis.Count)], null);
 
         // The goal is fixed; the Modus Mentis reasons over the available means ("How do you want to do
         // it?") and the neutral critic maps that to one skill — or to the decline option, which is the
@@ -320,8 +325,15 @@ public class ThinkingExecutor
             s => $"go about it with {s.SkillMeans}",
             prompt, ct: ct);
 
-        // null only if the list was empty; the caller still handles it as "no way to do it".
-        return chosen;
+        // Null item only if the list was empty; the caller still handles it as "no way to do it".
+        return (chosen.Item, chosen.Reasoning);
+    }
+
+    /// <summary>Joins choice reasonings into one inner-thought hint; null when there is none.</summary>
+    private static string? JoinThoughts(params string?[] thoughts)
+    {
+        var parts = thoughts.Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t!.Trim()).ToList();
+        return parts.Count == 0 ? null : string.Join(" ", parts);
     }
 
     // ── Item combination (reasoning + reformulated action) ──────────────────────

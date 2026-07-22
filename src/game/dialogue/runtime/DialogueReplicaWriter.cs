@@ -44,11 +44,15 @@ public class DialogueReplicaWriter
         string expanded  = DialogueTemplate.Expand(neutralTemplate, ctx);
         string? addressee = ctx.Names.Placeholder(addresseeRole);
 
+        // The speaker is the other core role: NPC lines address "you", player lines address "npc".
+        string speakerRole = string.Equals(addresseeRole, "you", StringComparison.OrdinalIgnoreCase) ? "npc" : "you";
+        string? speaker    = ctx.Names.Placeholder(speakerRole);
+
         string text = await _rewriter.RewriteAsync(
             slotId, expanded, NarrationKind.DialogueReplica,
             personaReminder2, addressee: addressee, keepHistory: keepHistory,
             styleInstruction: styleInstruction, dialogueContext: subject,
-            previousReplica: previousReplica, ct: ct);
+            previousReplica: previousReplica, speakerName: speaker, ct: ct);
 
         return ctx.Names.ToReal(text.Trim().Trim('"'));
     }

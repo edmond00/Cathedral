@@ -251,16 +251,9 @@ public class VillageSceneFactory : SceneFactory
 
     private void SpawnCraftsman(Random rng, Scene scene, NamedNpcArchetype archetype, Area workArea)
     {
-        AffinityTable? saved = null;
-        if (_locationState?.NpcAffinityData.TryGetValue(archetype.ArchetypeId, out var dict) == true)
-            saved = new AffinityTable(dict);
-        else if (_locationState != null)
-        {
-            var newDict = new Dictionary<string, AffinityLevel>();
-            _locationState.NpcAffinityData[archetype.ArchetypeId] = newDict;
-            saved = new AffinityTable(newDict);
-        }
-        var entity = archetype.Spawn(rng, workArea.ContextDescription, saved);
+        // Affinity persists per NPC: Spawn resolves the table by the NPC's stable id.
+        var entity = archetype.Spawn(rng, workArea.ContextDescription,
+            _locationState != null ? _locationState.AffinityFor : null);
 
         // Master craftsmen own their workshop section
         if (entity.Archetype is CraftsmanArchetype && entity.Archetype.GetType() != typeof(ApprenticeArchetype))

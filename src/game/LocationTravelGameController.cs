@@ -170,11 +170,16 @@ public class LocationTravelGameController : IDisposable
     public bool IsAtLocation => _currentMode == GameMode.LocationInteraction && _currentLocationState != null;
     public bool HasGameStarted => _hasGameStarted;
     /// <summary>
-    /// Mode to resume when the main menu is dismissed. When narration is still alive underneath
-    /// (the menu was opened as a pause overlay), resume into it; otherwise fall back to the world.
-    /// Derived from <see cref="_isInNarrativeMode"/> so intermediate menu navigation can't clobber it.
+    /// Mode to resume when the main menu is dismissed. When a conversation is still alive underneath
+    /// (the menu was opened as a pause overlay during dialogue), resume into it; when narration is
+    /// alive, resume into that; otherwise fall back to the world. Derived from live state
+    /// (<see cref="_dialogueAdapter"/> / <see cref="_isInNarrativeMode"/>) so intermediate menu
+    /// navigation can't clobber it.
     /// </summary>
-    public GameMode MenuReturnMode => _isInNarrativeMode ? GameMode.LocationInteraction : GameMode.WorldView;
+    public GameMode MenuReturnMode =>
+        _dialogueAdapter != null ? GameMode.Dialogue
+        : _isInNarrativeMode     ? GameMode.LocationInteraction
+        :                          GameMode.WorldView;
     
     /// <summary>
     /// Gets the terminal input handler for coordinate conversion (null if no terminal).

@@ -27,6 +27,15 @@ namespace Cathedral.Game.Narrative;
 public readonly record struct PersonaChoicePrompt(string ContextText, string OpenQuestion, string ReportedQuestion);
 
 /// <summary>
+/// Result of a persona choice: the picked <see cref="Item"/> (<c>null</c> ⇒ the decline option was
+/// chosen, or there was nothing to choose) and the persona's free-text <see cref="Reasoning"/> — its
+/// in-voice answer to the open question, captured before the critic mapped it to an option. Callers
+/// reuse the reasoning as an inner-thought hint in the follow-up rewrite, so the prose that narrates
+/// the choice echoes the want that made it. <c>null</c> in playground mode and on no-LLM fallbacks.
+/// </summary>
+public readonly record struct PersonaChoice<T>(T? Item, string? Reasoning) where T : class;
+
+/// <summary>
 /// Persona-driven option selection, split into a persona stage and a neutral stage so the flavoured
 /// Modus Mentis slots are never asked to reason logically against a schema (which they do poorly):
 /// <list type="number">
@@ -61,16 +70,17 @@ public class PersonaChoiceSelector
     /// <summary>
     /// Runs the persona reasoning on <paramref name="slotId"/> (whose system prompt carries
     /// <paramref name="evaluator"/>'s persona) and the neutral match on the shared critic, returning
-    /// the chosen item — or <c>null</c> when the persona chose to decline (<paramref name="declineOption"/>).
+    /// the chosen item — <c>null</c> when the persona chose to decline (<paramref name="declineOption"/>)
+    /// — together with the persona's free-text reasoning (see <see cref="PersonaChoice{T}"/>).
     ///
     /// <paramref name="describe"/> renders an item as a short option label the persona and critic read
     /// (e.g. "grab a beechnut", "an irrigation ditch", "greet them warmly"); items that describe
     /// identically collapse to one, so callers need no de-duplication pass. <paramref name="declineOption"/>
-    /// is the label for the "do none of these" choice; picking it yields <c>null</c>. Pass
+    /// is the label for the "do none of these" choice; picking it yields a <c>null</c> item. Pass
     /// <c>null</c> (the default) to omit the decline option entirely — the persona must then choose one
-    /// of the real items, and the result is never <c>null</c> (used by dialogue, which has no refusal).
+    /// of the real items, and the item is never <c>null</c> (used by dialogue, which has no refusal).
     /// </summary>
-    public async Task<T?> SelectAsync<T>(
+    public async Task<PersonaChoice<T>> SelectAsync<T>(
         int slotId,
         ModusMentis evaluator,
         IReadOnlyList<T> items,
@@ -79,7 +89,7 @@ public class PersonaChoiceSelector
         string? declineOption = null,
         CancellationToken ct = default) where T : class
     {
-        if (items == null || items.Count == 0) return null;
+        if (items == null || items.Count == 0) return new PersonaChoice<T>(null, null);
 
         // Collapse items that read identically, keeping the first of each.
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -90,11 +100,11 @@ public class PersonaChoiceSelector
             if (label.Length == 0 || !seen.Add(label)) continue;
             candidates.Add((label, item));
         }
-        if (candidates.Count == 0) return null;
+        if (candidates.Count == 0) return new PersonaChoice<T>(null, null);
 
         // Playground: no LLM — pick a random real option, never declining, so the scene flows.
         if (PlaygroundMode.IsActive)
-            return candidates[_random.Next(candidates.Count)].Item;
+            return new PersonaChoice<T>(candidates[_random.Next(candidates.Count)].Item, null);
 
         string? decline = Normalize(declineOption ?? "");
         bool hasDecline = decline.Length > 0;
@@ -118,7 +128,7 @@ public class PersonaChoiceSelector
         string reasoning = await _llm.GenerateConstrainedStringAsync(
             slotId, BuildReasoningPrompt(prompt, labels, evaluator), gbnfGrammar: null, ReasoningMaxTokens, skipReset: false);
         reasoning = reasoning.Trim();
-        if (reasoning.Length == 0) return candidates[0].Item;   // no signal → first real option
+        if (reasoning.Length == 0) return new PersonaChoice<T>(candidates[0].Item, null);   // no signal → first real option
 
         // ── Neutral stage: the critic maps the want to one lettered option ───────
         // The critic is an exterior observer: it introduces the persona in the third person and
@@ -126,8 +136,8 @@ public class PersonaChoiceSelector
         string title = string.IsNullOrWhiteSpace(evaluator.PersonaReminder) ? "" : $"a {evaluator.PersonaReminder}";
 
         int idx = await PersonaMatchCritic.PickAsync(prompt.ContextText, title, prompt.ReportedQuestion.Trim(), reasoning, labels, ct);
-        if (idx < 0 || idx >= options.Count) return candidates[0].Item;
-        return options[idx].Item;   // null ⇒ decline was chosen
+        if (idx < 0 || idx >= options.Count) return new PersonaChoice<T>(candidates[0].Item, reasoning);
+        return new PersonaChoice<T>(options[idx].Item, reasoning);   // null item ⇒ decline was chosen
     }
 
     // ── Prompt ──────────────────────────────────────────────────────────────────

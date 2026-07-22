@@ -51,8 +51,12 @@ public class NarrationScrollBuffer
         // Speech blocks are manually assembled with outer quotes and multi-line blocks (e.g. a
         // combat log) carry their own line breaks — both would be mangled by CleanTruncatedText,
         // which only recognises . ! ? as sentence endings and would strip everything after the last one.
+        // Bracketed system chips ("[The conversation has ended.]", affinity notes) are hand-written,
+        // never LLM-truncated, and end in ']' — cleanup would eat their tail and append "...".
+        bool isSystemChip = block.Text.Length >= 2 && block.Text[0] == '[' && block.Text[^1] == ']';
         bool skipCleanup = block.Type is NarrationBlockType.Speaking or NarrationBlockType.PlayerSpeaking
-                           || block.Text.Contains('\n');
+                           || block.Text.Contains('\n')
+                           || isSystemChip;
         string cleanedText = skipCleanup ? block.Text : TextTruncationUtils.CleanTruncatedText(block.Text);
 
         // Create a new block with cleaned text if it was modified, preserving all properties

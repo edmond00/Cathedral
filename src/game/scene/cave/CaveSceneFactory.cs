@@ -294,17 +294,10 @@ public class CaveSceneFactory : SceneFactory
 
         if (_hasMiner)
         {
-            AffinityTable? saved = null;
             var archetype = new MinerArchetype();
-            if (_locationState?.NpcAffinityData.TryGetValue(archetype.ArchetypeId, out var dict) == true)
-                saved = new AffinityTable(dict);
-            else if (_locationState != null)
-            {
-                var newDict = new Dictionary<string, AffinityLevel>();
-                _locationState.NpcAffinityData[archetype.ArchetypeId] = newDict;
-                saved = new AffinityTable(newDict);
-            }
-            var entity = archetype.Spawn(rng, _entrance.ContextDescription, saved);
+            // Affinity persists per NPC: Spawn resolves the table by the NPC's stable id.
+            var entity = archetype.Spawn(rng, _entrance.ContextDescription,
+                _locationState != null ? _locationState.AffinityFor : null);
             var sceneNpc = new SceneNpc(entity);
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);

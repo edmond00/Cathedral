@@ -51,6 +51,17 @@ public class PersonaRewriter
     /// vacuum. Pass null/empty for the opening line of a conversation — the prompt then says so
     /// explicitly rather than silently omitting any mention of prior context.
     /// </param>
+    /// <param name="innerThought">
+    /// The persona's own free-text reasoning behind the choice this sentence narrates (see
+    /// <see cref="PersonaChoice{T}.Reasoning"/>), quoted in the prompt as the inner thought behind
+    /// the neutral line — a flavour hint the rewrite may echo, never new facts to state. Ignored for
+    /// <see cref="NarrationKind.DialogueReplica"/>.
+    /// </param>
+    /// <param name="speakerName">
+    /// For <see cref="NarrationKind.DialogueReplica"/> only: the speaker's (placeholder) name, so the
+    /// prompt can say who the "I" is by name ("that ""I"" is you, Bob"). Pass the placeholder, not the
+    /// real name — the caller restores real names afterwards, like everywhere else in dialogue.
+    /// </param>
     public async Task<string> RewriteAsync(
         int slotId,
         string neutralText,
@@ -62,15 +73,18 @@ public class PersonaRewriter
         string? styleInstruction = null,
         string? dialogueContext = null,
         string? previousReplica = null,
+        string? innerThought = null,
+        string? speakerName = null,
         CancellationToken ct = default)
     {
         if (PlaygroundMode.IsActive) return neutralText;
 
         string prompt = kind == NarrationKind.DialogueReplica
-            ? BuildDialoguePrompt(neutralText, addressee, dialogueContext, previousReplica,
+            ? BuildDialoguePrompt(neutralText, addressee, dialogueContext, previousReplica, speakerName,
                                   FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee))
             : BuildPrompt(neutralText, InstructionFor(kind, addressee),
-                          FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee));
+                          FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee),
+                          innerThought);
         string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateRewriteSchema(forcedPrefix: forcedPrefix));
         string json = await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
 
@@ -100,12 +114,21 @@ public class PersonaRewriter
 
     // ── Prompt construction ────────────────────────────────────────────────────
 
-    private static string BuildPrompt(string neutralText, string instruction, string footer) => $@"Re-express the following sentence in your own voice: ""{neutralText}""
+    private static string BuildPrompt(string neutralText, string instruction, string footer, string? innerThought = null)
+    {
+        // The persona's own words from the choice this sentence narrates, offered back as the
+        // thought behind the line — flavour to echo, not content to add.
+        string thought = string.IsNullOrWhiteSpace(innerThought)
+            ? ""
+            : $"\nBehind this line lies your inner thought: \"{innerThought.Trim().Trim('"')}\" — let it colour how you tell it, without quoting it word for word.\n";
 
+        return $@"Re-express the following sentence in your own voice: ""{neutralText}""
+{thought}
 This sentence is written in the first person, and that ""I"" is you — it describes your own perception, thought or action, not anyone else's.
 
 {instruction}
 {footer}";
+    }
 
     /// <summary>
     /// Prompt for a single line of dialogue in a two-person conversation. Frames the neutral line as
@@ -114,11 +137,15 @@ This sentence is written in the first person, and that ""I"" is you — it descr
     /// <paramref name="previousReplica"/> — what <paramref name="addressee"/> just said — is included
     /// so the rewrite lands as a reply to something rather than a line spoken into a void; when null
     /// the prompt says outright that this opens the conversation.
+    /// <paramref name="speakerName"/> names the "I" of the line (the speaker's placeholder name, e.g.
+    /// Bob/Alice for the party member) so the model knows who it is speaking as, not just to.
     /// </summary>
     private static string BuildDialoguePrompt(string neutralText, string? addressee,
-                                              string? dialogueContext, string? previousReplica, string footer)
+                                              string? dialogueContext, string? previousReplica,
+                                              string? speakerName, string footer)
     {
         string who     = string.IsNullOrWhiteSpace(addressee) ? "the person you are speaking with" : addressee!;
+        string speaker = string.IsNullOrWhiteSpace(speakerName) ? "" : $", {speakerName.Trim()}";
         string context = string.IsNullOrWhiteSpace(dialogueContext)
             ? ""
             : $" The conversation is about {dialogueContext.Trim().TrimEnd('.')}.";
@@ -130,7 +157,7 @@ This sentence is written in the first person, and that ""I"" is you — it descr
 
 Re-express the following spoken line in your own voice, keeping the same meaning and intent: ""{neutralText}""
 
-This is a line of direct dialogue that you say out loud. In it, ""I"" is you, the speaker, and ""you"" is {who}, the person you are talking to. Keep it a short, natural spoken reply — add your own flavour, wording and personality, but do not change what is being said, asked or offered.
+This is a line of direct dialogue that you say out loud. In it, ""I"" is you{speaker}, the speaker, and ""you"" is {who}, the person you are talking to. Keep it a short, natural spoken reply — add your own flavour, wording and personality, but do not change what is being said, asked or offered.
 
 {footer}";
     }

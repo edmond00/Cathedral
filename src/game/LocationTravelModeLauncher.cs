@@ -327,11 +327,11 @@ public static class LocationTravelModeLauncher
                 }
                 else if (gameController?.CurrentMode == GameMode.Dialogue)
                 {
-                    // ESC during dialogue: request exit
-                    if (gameController is LocationTravelGameController ltgc)
-                    {
-                        ltgc.OnKeyDown(args.Key);
-                    }
+                    // ESC during dialogue: pause overlay, exactly like narration — the conversation
+                    // is NOT interrupted (walking away is the footer INTERRUPT button's job) and
+                    // resumes when the menu is dismissed (see MenuReturnMode).
+                    Console.WriteLine("ESC pressed - opening pause menu over dialogue");
+                    gameController.SetMode(GameMode.MainMenu);
                 }
                 else if (gameController?.CurrentMode == GameMode.MainMenu)
                 {

@@ -75,6 +75,10 @@ public class DialogueTreeUI : TerminalPanelUI
         }
         else
         {
+            // Keep the shared history visible (dimmed) under the progress bar — without it the log
+            // area is empty for the whole slot-acquisition beat, which reads as a black flash
+            // between the narration frame and the first dialogue frame.
+            RenderLog(_layout.NARRATIVE_HEIGHT - FooterRows);
             DimContent();
             RenderCenterProgressBar();
             RenderWaitingStatus(message);
@@ -204,6 +208,23 @@ public class DialogueTreeUI : TerminalPanelUI
 
         // The shared buffer owns the scroll position, so this window can run back off the top of
         // the conversation into the greyed narration that preceded it.
+        int screenY = RenderLog(logRows);
+
+        // Gap row + options
+        if (optLineCount > 0)
+        {
+            screenY++; // blank gap row
+            RenderOptions(state, screenY);
+        }
+    }
+
+    /// <summary>
+    /// Renders the shared-history log window (top <paramref name="logRows"/> rows of the content
+    /// area) plus its scrollbar, and returns the row just below the window. Shared by the live
+    /// render and <see cref="RenderSetupFrame"/>, so the log never disappears between frames.
+    /// </summary>
+    private int RenderLog(int logRows)
+    {
         var lines = _buffer.GetVisibleLines(logRows);
 
         int maxW    = _scrollbarX - _layout.CONTENT_START_X;
@@ -221,13 +242,7 @@ public class DialogueTreeUI : TerminalPanelUI
 
         // Scrollbar (reflects position in the whole shared history)
         RenderScrollbar(_buffer.TotalLines, _buffer.ScrollOffset, false);
-
-        // Gap row + options
-        if (optLineCount > 0)
-        {
-            screenY++; // blank gap row
-            RenderOptions(state, screenY);
-        }
+        return screenY;
     }
 
     /// <summary>

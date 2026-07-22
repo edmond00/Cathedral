@@ -137,11 +137,24 @@ public class SyntheticNarrationNode : NarrationNode
 }
 
 /// <summary>
+/// A scene-backed observation object whose verb SubOutcomes can be re-expanded against the CURRENT
+/// scene state. The synthetic objects bake their verb lists at graph-build time, but verb
+/// applicability is state-dependent (affinity, item presence, depletion …), so the controller
+/// refreshes them at each narration-segment start and before each thinking request. Implementations
+/// mutate <see cref="ObservationObject.SubOutcomes"/> in place, preserving object identity in the
+/// node (keyword→outcome maps hold references to these instances).
+/// </summary>
+public interface IVerbRefreshable
+{
+    void RefreshVerbs(Scene scene, PoV pov, Protagonist? actor = null);
+}
+
+/// <summary>
 /// A synthetic ObservationObject backed by a <see cref="PointOfInterest"/>.
 /// Items inside the PoI are NOT separate observations — their applicable verbs are folded
 /// in as SubOutcomes (e.g. "grab the apple", "grab the leaf").
 /// </summary>
-public class SyntheticObservationObject : ObservationObject
+public class SyntheticObservationObject : ObservationObject, IVerbRefreshable
 {
     private readonly PointOfInterest _poi;
 
@@ -161,6 +174,24 @@ public class SyntheticObservationObject : ObservationObject
                 SubOutcomes.Add(new VerbOutcome(vv, itemEntry.Source));
 
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(poi));
+    }
+
+    /// <inheritdoc cref="IVerbRefreshable"/>
+    public void RefreshVerbs(Scene scene, PoV pov, Protagonist? actor = null)
+    {
+        SubOutcomes.Clear();
+
+        foreach (var verb in scene.Verbs)
+            foreach (var vv in verb.ExpandViews(scene, pov, _poi, actor))
+                SubOutcomes.Add(new VerbOutcome(vv, _poi));
+
+        // Items are re-read from the PoI, so grabbed/expired items drop their verbs naturally.
+        foreach (var item in _poi.Items)
+            foreach (var verb in scene.Verbs)
+                foreach (var vv in verb.ExpandViews(scene, pov, item, actor))
+                    SubOutcomes.Add(new VerbOutcome(vv, item));
+
+        SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(_poi));
     }
 
     public override string ObservationId => _poi.DisplayName.ToLowerInvariant().Replace(' ', '_');
@@ -190,7 +221,7 @@ public class SyntheticObservationObject : ObservationObject
 /// <summary>
 /// A synthetic ObservationObject backed by a <see cref="Spot"/> (enterable sub-location).
 /// </summary>
-public class SyntheticSpotObject : ObservationObject
+public class SyntheticSpotObject : ObservationObject, IVerbRefreshable
 {
     private readonly Spot _spot;
 
@@ -203,6 +234,16 @@ public class SyntheticSpotObject : ObservationObject
             SubOutcomes.Add(new VerbOutcome(vv, spot));
 
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(spot));
+    }
+
+    /// <inheritdoc cref="IVerbRefreshable"/>
+    public void RefreshVerbs(Scene scene, PoV pov, Protagonist? actor = null)
+    {
+        SubOutcomes.Clear();
+        foreach (var verb in scene.Verbs)
+            foreach (var vv in verb.ExpandViews(scene, pov, _spot, actor))
+                SubOutcomes.Add(new VerbOutcome(vv, _spot));
+        SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(_spot));
     }
 
     public override string ObservationId => _spot.DisplayName.ToLowerInvariant().Replace(' ', '_');
@@ -224,6 +265,9 @@ public class SyntheticSpotObject : ObservationObject
 
 /// <summary>
 /// A synthetic ObservationObject backed by a reachable <see cref="Area"/>.
+/// Deliberately NOT <see cref="IVerbRefreshable"/>: its one verb is the hand-wired
+/// <see cref="MoveToAreaVerb"/> transition (not registry-expanded — see the graph factory's
+/// area wiring), which a registry re-expansion would silently drop.
 /// </summary>
 public class SyntheticAreaObservationObject : ObservationObject
 {
@@ -260,7 +304,7 @@ public class SyntheticAreaObservationObject : ObservationObject
 /// <summary>
 /// A synthetic ObservationObject backed by a <see cref="SceneNpc"/>.
 /// </summary>
-public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabelStampable
+public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabelStampable, IVerbRefreshable
 {
     private readonly SceneNpc _npc;
 
@@ -280,6 +324,26 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
             SubOutcomes.Add(new VerbOutcome(vv, npc));
 
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(npc));
+    }
+
+    /// <summary>
+    /// <inheritdoc cref="IVerbRefreshable"/>
+    /// For NPCs the load-bearing gate is affinity — "meet …, to introduce myself" is only for
+    /// strangers, strengthen-relationship only for acquaintances — so without this a dialogue's
+    /// affinity change would neither retire nor unlock verbs until the location was re-entered.
+    /// The stamped <see cref="ContextLabel"/>, if any, is re-applied to the fresh VerbOutcomes.
+    /// </summary>
+    public void RefreshVerbs(Scene scene, PoV pov, Protagonist? actor = null)
+    {
+        SubOutcomes.Clear();
+        foreach (var verb in scene.Verbs)
+            foreach (var vv in verb.ExpandViews(scene, pov, _npc, actor))
+                SubOutcomes.Add(new VerbOutcome(vv, _npc));
+        SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(_npc));
+
+        if (ContextLabel != null)
+            foreach (var sub in SubOutcomes)
+                if (sub is VerbOutcome v) v.ContextLabel = ContextLabel;
     }
 
     /// <inheritdoc/>

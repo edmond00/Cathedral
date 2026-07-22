@@ -199,14 +199,10 @@ public class DialogueTreeController
 
     public void OnKeyPress(Keys key)
     {
-        if (key != Keys.Escape) return;
-
-        // ESC mirrors the footer button: a plain exit once the conversation has ended
-        // (or errored), an interruption with consequences while it is still running.
-        if (_state.ConversationEnded || _state.ErrorMessage != null)
-            _state.RequestedExit = true;
-        else
-            InterruptConversation();
+        // ESC is deliberately NOT handled here: it opens the pause menu at the launcher level
+        // (same as narration) and must never interrupt the conversation. Walking away is done
+        // through the footer button (INTERRUPT while running, END once ended) — see OnMouseClick
+        // and CliPressExitButton.
     }
 
     /// <summary>

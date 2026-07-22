@@ -63,11 +63,26 @@ public record LocationInstanceState
     public int VisitCount { get; init; }
 
     /// <summary>
-    /// Per-NPC affinity data, keyed by NPC display name.
+    /// Per-NPC affinity data, keyed by the NPC's stable name-derived id
+    /// (<c>{archetypeId}_{name}</c> — see <see cref="Npc.NamedNpcArchetype.Spawn"/>).
     /// Each inner dictionary is the shared backing store for that NPC's <see cref="AffinityTable"/>.
     /// Mutable in place — changes during dialogue are preserved automatically.
     /// </summary>
     public Dictionary<string, Dictionary<string, AffinityLevel>> NpcAffinityData { get; init; }
+
+    /// <summary>
+    /// The persistent <see cref="AffinityTable"/> for one NPC, wrapping this location's backing
+    /// store for <paramref name="npcKey"/> (created on first use — later mutations persist with no
+    /// explicit save step). The key must be unique per NPC, not per role: keying by archetype alone
+    /// once made every same-role NPC in a location share one table, so befriending one plowman
+    /// befriended them all.
+    /// </summary>
+    public AffinityTable AffinityFor(string npcKey)
+    {
+        if (!NpcAffinityData.TryGetValue(npcKey, out var dict))
+            NpcAffinityData[npcKey] = dict = new Dictionary<string, AffinityLevel>();
+        return new AffinityTable(dict);
+    }
 
     /// <summary>
     /// Item-depletion timestamps: <see cref="Cathedral.Game.Scene.ItemElement.DepletionKey"/> → the

@@ -404,7 +404,13 @@ public class NarrativeController
         _memberNoeticPoints.Clear(); // New node — everyone starts with a fresh counter
         // Re-apply the current time period so new node gets its NPCs placed
         _graph.TimeUpdate(_graph.CurrentPeriod);
-        
+
+        // Scene-backed nodes bake their verb lists at graph-build time, but verb applicability is
+        // state-dependent (affinity above all: "introduce myself" is for strangers only, and a
+        // dialogue may just have changed that). Re-expand them so the goals offered on the next
+        // observation match the world as it now stands.
+        RefreshSceneVerbs();
+
         // Just set loading state and start generation
         _narrationState.IsLoadingObservations = true;
         _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
@@ -417,7 +423,28 @@ public class NarrativeController
         // Fire-and-forget async task
         _ = GenerateObservationsAsync();
     }
-    
+
+    /// <summary>
+    /// Re-expands the verb SubOutcomes of every scene-backed observation (NPCs, PoIs + their items,
+    /// spots — everything <see cref="IVerbRefreshable"/>; areas keep their static transition verb)
+    /// against the current scene state. Called at each narration-segment start and before each
+    /// thinking request, so the offered goals always reflect the world as it stands. No-op for the
+    /// legacy graph system, whose <see cref="NpcObservationObject"/>s are rebuilt by TimeUpdate.
+    /// </summary>
+    private void RefreshSceneVerbs()
+    {
+        if (_scene == null) return;
+
+        foreach (var node in _graph.AllNodes.Values)
+        {
+            if (node is not SyntheticNarrationNode { Area: { } area }) continue;
+            var pov = new PoV(area, _graph.CurrentPeriod);
+            foreach (var outcome in node.PossibleOutcomes)
+                if (outcome is IVerbRefreshable refreshable)
+                    refreshable.RefreshVerbs(_scene, pov, _protagonist);
+        }
+    }
+
     /// <summary>
     /// Generate observations from selected modiMentis (async).
     /// </summary>
@@ -488,6 +515,10 @@ public class NarrativeController
             {
                 throw new Exception($"No outcome found for keyword '{keyword}'");
             }
+
+            // Verb gates read mutable world state (affinity, item presence, …) — re-expand every
+            // scene verb list right before the goal choice so it can only offer what is possible NOW.
+            RefreshSceneVerbs();
 
             // Get action modiMentis from the active party member.
             // In the childhood reminescence phase REMEMBER may only be performed with the
@@ -2852,10 +2883,11 @@ public class NarrativeController
             _ => "The fight ended."
         };
 
-        // Add outcome to scroll buffer
+        // Add outcome to scroll buffer. No modus mentis: this is a system note, not an MM's
+        // narration — attaching one would print its skill header without any LLM involvement.
         var block = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
-            ModusMentis: _protagonist.ModiMentis.FirstOrDefault()!,
+            ModusMentis: null!,
             Text: outcomeText,
             Keywords: null,
             Actions: null
@@ -2881,9 +2913,11 @@ public class NarrativeController
     {
         Console.WriteLine($"NarrativeController: Dialogue completed with {npc.DisplayName}");
         
+        // No modus mentis: a system note — an MM here would print its skill header (e.g.
+        // "[DISCIPLINE ▪]") before the segment separator without any LLM involvement.
         var block = new NarrationBlock(
             Type: NarrationBlockType.Outcome,
-            ModusMentis: _protagonist.ModiMentis.FirstOrDefault()!,
+            ModusMentis: null!,
             Text: $"You finished talking with {npc.DisplayName}.",
             Keywords: null,
             Actions: null

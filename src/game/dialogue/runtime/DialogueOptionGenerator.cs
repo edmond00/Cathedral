@@ -76,7 +76,7 @@ public class DialogueOptionGenerator
 
                 // The MM reasons over the replies and the neutral critic maps that to one. Dialogue has
                 // no refusal: no decline option is offered, so the MM always contributes a reply.
-                var opt = await _selector.SelectAsync(slot, mm, node.Options, Action, prompt, ct: ct);
+                var opt = (await _selector.SelectAsync(slot, mm, node.Options, Action, prompt, ct: ct)).Item;
                 if (opt == null) continue;                            // only if the option list was empty
 
                 // Rewrite the chosen option's replica in the MM's voice (fresh slot — the grading
@@ -87,7 +87,8 @@ public class DialogueOptionGenerator
                     slot, expanded, NarrationKind.DialogueReplica,
                     mm.PersonaReminder2, addressee: addressee, keepHistory: true,
                     styleInstruction: mm.StyleInstruction, dialogueContext: subject,
-                    previousReplica: previousNpcReplica, ct: ct);
+                    previousReplica: previousNpcReplica,
+                    speakerName: ctx.Names.Placeholder("you"), ct: ct);
                 text = ctx.Names.ToReal(text.Trim().Trim('"'));
 
                 results.Add(new PlayerReplicaOption(mm, opt, text));

@@ -214,16 +214,9 @@ public class FarmSceneFactory : SceneFactory
 
     private NpcEntity SpawnNamed(Random rng, NamedNpcArchetype archetype, string nodeContext)
     {
-        AffinityTable? saved = null;
-        if (_locationState?.NpcAffinityData.TryGetValue(archetype.ArchetypeId, out var dict) == true)
-            saved = new AffinityTable(dict);
-        else if (_locationState != null)
-        {
-            var newDict = new Dictionary<string, AffinityLevel>();
-            _locationState.NpcAffinityData[archetype.ArchetypeId] = newDict;
-            saved = new AffinityTable(newDict);
-        }
-        return archetype.Spawn(rng, nodeContext, saved);
+        // Affinity persists per NPC: Spawn resolves the table by the NPC's stable id.
+        return archetype.Spawn(rng, nodeContext,
+            _locationState != null ? _locationState.AffinityFor : null);
     }
 
     private static void SpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype, Area home, int count)
