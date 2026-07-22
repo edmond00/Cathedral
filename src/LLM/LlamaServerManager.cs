@@ -545,7 +545,7 @@ public class LlamaServerManager : IDisposable
     public async Task<string> GenerateConstrainedStringAsync(
         int slotId,
         string userMessage,
-        string gbnfGrammar,
+        string? gbnfGrammar,
         int maxTokens = 20,
         bool skipReset = false)
     {
@@ -586,15 +586,19 @@ public class LlamaServerManager : IDisposable
                 ["top_k"] = Config.LLM.TopK,
                 ["temperature"] = Config.LLM.Temperature,
                 ["top_p"] = Config.LLM.TopP,
-                ["grammar"] = gbnfGrammar
             };
+
+            // No grammar → unconstrained free-text generation (persona reasoning). llama.cpp treats
+            // an empty grammar as constraining to the empty string, so omit the key entirely.
+            if (!string.IsNullOrEmpty(gbnfGrammar))
+                requestData["grammar"] = gbnfGrammar;
 
             if (requestLogDir != null)
             {
                 var messagesArray = (object[])requestData["messages"];
                 var contextJson = JsonSerializer.Serialize(messagesArray, new JsonSerializerOptions { WriteIndented = true });
                 await File.WriteAllTextAsync(Path.Combine(requestLogDir, "full_context.json"), contextJson);
-                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "gbnf_constraints.txt"), gbnfGrammar);
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "gbnf_constraints.txt"), gbnfGrammar ?? "(none — free text)");
             }
 
             var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", requestData);

@@ -98,21 +98,31 @@ public class ObservationPhaseController
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
-        // One yes/no persona evaluation over all candidates; up to two of the "yes" objects are kept
-        // (first observed directly, second reached via a transition). An empty result means the
-        // Modus Mentis found nothing here worth its attention — a single "nothing draws me" block.
-        var chosen = await SelectObservationObjectsAsync(slotId, candidates, modusMentis, pick: 2, ct, isReminescence,
-            _worldContext?.GenerateContextDescription(locationId), currentNode.GenerateNeutralDescription(locationId));
+        string? overall = _worldContext?.GenerateContextDescription(locationId);
+        string? area    = currentNode.GenerateNeutralDescription(locationId);
 
-        if (chosen.Count == 0)
+        // First observation: the Modus Mentis reasons over every candidate and the neutral critic maps
+        // that to one object (or the decline option). A null result means nothing here drew it at all —
+        // a single "nothing draws me" block.
+        var first = await SelectObservationObjectAsync(slotId, candidates, modusMentis, locationId, ct, isReminescence, overall, area);
+
+        if (first == null)
         {
             await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct);
         }
         else
         {
-            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, chosen[0], withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence);
-            if (chosen.Count > 1)
-                await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, chosen[1], withTransition: true, locationId, ct, isReminescence: isReminescence);
+            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence);
+
+            // Second observation: ask again over the remaining objects (the first excluded), reached
+            // via a transition. Declining here simply omits the second — no failure block.
+            var remaining = candidates.Where(c => !ReferenceEquals(c, first)).ToList();
+            if (remaining.Count > 0)
+            {
+                var second = await SelectObservationObjectAsync(slotId, remaining, modusMentis, locationId, ct, isReminescence, overall, area);
+                if (second != null)
+                    await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence);
+            }
         }
 
         if (sentences.Count == 0)
@@ -165,24 +175,23 @@ public class ObservationPhaseController
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
-        // 1. Observe the clicked object (no transition).
+        // 1. Observe the clicked object (no transition) — it is always the first observation.
         await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence);
 
-        // 2. A second object chosen by the Modus Mentis from the remaining objects, reached via a
-        //    transition. Exclude the clicked object's name-twins (not just the clicked instance),
-        //    then collapse remaining duplicates to one random representative each.
+        // 2. A second object chosen from the remaining objects, reached via a transition. Exclude the
+        //    clicked object's name-twins (not just the clicked instance), then collapse duplicates.
         var focusName = GetNeutralName(focusOutcome);
         var remaining = DeduplicateByName(
             currentNode.GetAllDirectConcreteOutcomes()
                 .Where(o => !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase)));
         if (remaining.Count > 0)
         {
-            // The clicked object is already observed; the Modus Mentis may or may not find a second
-            // object worth attention. All-No simply omits the second (no failure block here).
-            var chosen = await SelectObservationObjectsAsync(slotId, remaining, observationModusMentis, pick: 1, ct, isReminescence,
+            // The clicked object is already observed; the Modus Mentis may or may not want a second.
+            // Declining here simply omits it — no failure block.
+            var second = await SelectObservationObjectAsync(slotId, remaining, observationModusMentis, locationId, ct, isReminescence,
                 _worldContext?.GenerateContextDescription(locationId), currentNode.GenerateNeutralDescription(locationId));
-            if (chosen.Count > 0)
-                await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, chosen[0], withTransition: true, locationId, ct, isReminescence: isReminescence);
+            if (second != null)
+                await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence);
         }
 
         if (sentences.Count == 0)
@@ -278,11 +287,10 @@ public class ObservationPhaseController
             .ToList();
 
     /// <summary>
-    /// Runs one yes/no persona evaluation over the candidate objects (by NeutralName) and returns up
-    /// to <paramref name="pick"/> of the objects the Modus Mentis answered "yes" to, sampled at
-    /// random (see <see cref="PersonaChoiceSelector"/>). An empty result means every object was "no"
-    /// — the caller renders the "nothing draws me" failure. Returns a random subset in playground
-    /// mode (no LLM).
+    /// The Modus Mentis reasons over the candidate objects ("What do you want to focus on?") and the
+    /// neutral <see cref="PersonaMatchCritic"/> maps that to one object — the one it wants to attend to
+    /// — or to the decline option, in which case this returns <c>null</c> and the caller renders the
+    /// "nothing draws me" failure. Returns a random object in playground mode (no LLM).
     ///
     /// Exception: during the childhood reminescence phase the <c>childhood_reminescence</c> MM picks
     /// at random (no LLM, never declines), so that across playthroughs every childhood memory fragment
@@ -290,37 +298,37 @@ public class ObservationPhaseController
     /// does NOT apply to the post-childhood <c>childhood_memory</c> MM, to any other MM used during the
     /// phase, or to any observation outside the reminescence phase.
     /// </summary>
-    private async Task<List<ConcreteOutcome>> SelectObservationObjectsAsync(
+    private async Task<ConcreteOutcome?> SelectObservationObjectAsync(
         int slotId,
         List<ConcreteOutcome> candidates,
         ModusMentis modusMentis,
-        int pick,
+        int locationId,
         CancellationToken ct,
         bool isReminescence = false,
         string? overallLocation = null,
         string? areaLocation = null)
     {
-        if (candidates.Count == 0) return new List<ConcreteOutcome>();
+        if (candidates.Count == 0) return null;
 
         // Childhood reminescence: random pick, never declines (keeps every fragment reachable).
         if (isReminescence && modusMentis.ModusMentisId == "childhood_reminescence")
-            return candidates.OrderBy(_ => _random.Next()).Take(Math.Min(pick, candidates.Count)).ToList();
+            return candidates[_random.Next(candidates.Count)];
 
-        var names = candidates.Select(GetNeutralName).ToList();
-        var parts = new GradeEvalPromptParts(
+        // Each object is offered as the act of attending to it — "focus on the plowman of the field
+        // (a woman)" — via GetNeutralPhrase (proper names stay verbatim; common-noun objects gain
+        // "a"/"an").
+        var prompt = new PersonaChoicePrompt(
             ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, null),
-            "Around you, you notice:",
-            "draws your attention");
-        var chosenNames = await _selector.SelectAsync(slotId, modusMentis, names, parts, pick, keepHistory: true, ct);
-
-        // Map chosen names back to their outcomes (candidates are name-deduplicated, so names are unique).
-        return chosenNames
-            .Select(n => candidates.First(c => GetNeutralName(c).Equals(n, StringComparison.OrdinalIgnoreCase)))
-            .ToList();
+            "What do you want to focus on?", "what they want to focus on");
+        // No decline option for now — the persona always settles on one object to attend to.
+        return await _selector.SelectAsync(
+            slotId, modusMentis, candidates,
+            c => $"focus on {GetNeutralPhrase(c, locationId)}",
+            prompt, ct: ct);
     }
 
     /// <summary>
-    /// Appends the "nothing here draws my attention" observation (the all-No failure of the object
+    /// Appends the "nothing here draws my attention" observation (the decline result of the object
     /// evaluation), re-expressed in the Modus Mentis's voice with no clickable keyword.
     /// </summary>
     private async Task AppendNothingObservationAsync(
@@ -335,7 +343,7 @@ public class ObservationPhaseController
             var neutral = NeutralNarration.ObservationNothing(isReminescence);
             var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, ct: ct);
             sentences.Add(new NarrationSentence(text, new List<string>()));
-            Console.WriteLine("ObservationPhaseController: nothing drew the persona's attention (all-No).");
+            Console.WriteLine("ObservationPhaseController: nothing drew the persona's attention (declined).");
         }
         catch (Exception ex)
         {

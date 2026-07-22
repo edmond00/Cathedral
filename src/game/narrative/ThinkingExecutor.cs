@@ -67,9 +67,8 @@ public class ThinkingExecutor
         // built (this also propagates the label to the target's sub-outcomes / goal phrases).
         (targetOutcome as INpcContextLabelStampable)?.StampContextLabel(actingMember, worldContext, locationId);
 
-        // Sub-outcomes to choose between. "Ignore and move on" is no longer an explicit option:
-        // under the yes/no method, answering "no" to every real goal IS the ignore outcome
-        // (see ChooseGoalAsync).
+        // Sub-outcomes to choose between. "Ignore and move on" is offered by ChooseGoalAsync as the
+        // decline option ("walk away and leave it"); the persona choosing it IS the ignore outcome.
         var sourceObs = targetOutcome as ObservationObject;
         var subOutcomes = sourceObs != null
             ? new List<ConcreteOutcome>(sourceObs.SubOutcomes)
@@ -113,7 +112,7 @@ public class ThinkingExecutor
                 return null;
             }
 
-            // Skills exist but the thinking Modus Mentis rejected them all (all-No) → "no way to do
+            // Skills exist but the thinking Modus Mentis declined every means → "no way to do
             // it": a reasoning-only outcome in the thinking MM's voice, mirroring the ignore branch.
             string noMeansNeutral = NeutralNarration.ReasoningNoMeans(targetDescription, goalPhrase, isReminescence);
             string noMeansText = await _rewriter.RewriteAsync(
@@ -252,9 +251,8 @@ public class ThinkingExecutor
         string? observedPhrase,
         CancellationToken ct)
     {
-        // Only real, pursuable goals are offered; "ignore & move on" is not a listed option — a "no"
-        // to every goal is the ignore outcome (returned as IgnoreVerb.MakeOutcome() so the caller's
-        // isIgnore early-exit fires).
+        // Only real, pursuable goals go in the list; "ignore & move on" rides in as the decline option
+        // below. Choosing decline returns IgnoreVerb.MakeOutcome() so the caller's isIgnore exit fires.
         var realOutcomes = subOutcomes
             .Where(o => !(o is VerbOutcome vo && vo.VerbView.Verb is IgnoreVerb))
             .ToList();
@@ -263,22 +261,19 @@ public class ThinkingExecutor
         if (PlaygroundMode.IsActive)
             return realOutcomes[_rng.Next(realOutcomes.Count)];
 
-        // Collapse identical phrasings (e.g. two "grab a beechnut") to one option; the chosen string
-        // maps back to the first matching sub-outcome below, so dropping duplicates is safe.
-        var options = realOutcomes.Select(o => o.ToNaturalLanguageString())
-                                  .Distinct(StringComparer.OrdinalIgnoreCase)
-                                  .ToList();
-        var parts = new GradeEvalPromptParts(
+        // The Modus Mentis reasons over the goals ("What do you want to do?") and the neutral critic
+        // maps that to one — or to the decline option, which is the ignore outcome. Each goal phrase
+        // ("grab a beechnut") is already the action; the selector lists them and collapses duplicates.
+        var prompt = new PersonaChoicePrompt(
             ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase),
-            "You could:",
-            "calls you to pursue it");
-        var chosen = await _selector.SelectAsync(thinkingSlot, thinkingModusMentis, options, parts, pick: 1, keepHistory: true, ct);
-        if (chosen.Count == 0) return IgnoreVerb.MakeOutcome();   // all-No → ignore & move on
+            "What do you want to do?", "what they want to do");
+        // No decline option for now — the persona always commits to a real goal.
+        var chosen = await _selector.SelectAsync(
+            thinkingSlot, thinkingModusMentis, realOutcomes,
+            o => o.ToNaturalLanguageString(),
+            prompt, ct: ct);
 
-        string pickPhrase = chosen[0];
-        return realOutcomes.FirstOrDefault(o =>
-                   o.ToNaturalLanguageString().Equals(pickPhrase, StringComparison.OrdinalIgnoreCase))
-               ?? IgnoreVerb.MakeOutcome();
+        return chosen ?? IgnoreVerb.MakeOutcome();  // null only if the list was empty
     }
 
     // ── Decision: HOW (skill) ──────────────────────────────────────────────────
@@ -297,24 +292,24 @@ public class ThinkingExecutor
         if (PlaygroundMode.IsActive)
             return actionModiMentis[_rng.Next(actionModiMentis.Count)];
 
-        var means = actionModiMentis.Select(s => $"with {s.SkillMeans}").ToList();
-        var parts = new GradeEvalPromptParts(
-            ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase)
-                + $"Your goal is to {goalPhrase}.\n\n",
-            "You could proceed:",
-            "fits how you would act");
-        var chosen = await _selector.SelectAsync(thinkingSlot, thinkingModusMentis, means, parts, pick: 1, keepHistory: true, ct);
+        // The goal is fixed; the Modus Mentis reasons over the available means ("How do you want to do
+        // it?") and the neutral critic maps that to one skill — or to the decline option, which is the
+        // "no way to do it" outcome. Each option is the means ("with the unfussy keeping-of-oneself-
+        // alive"); the goal lives in the context so it need not repeat per option.
+        string situation = ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase).TrimEnd();
+        string lead = situation.Length == 0 ? "" : situation + " ";
+        var prompt = new PersonaChoicePrompt(
+            $"{lead}Your goal is to {goalPhrase}.\n\n",
+            "How do you want to do it?", "how they want to go about it");
+        // No decline option for now — the persona always settles on one means.
+        var chosen = await _selector.SelectAsync(
+            thinkingSlot, thinkingModusMentis, actionModiMentis,
+            s => $"go about it with {s.SkillMeans}",
+            prompt, ct: ct);
 
-        // all-No → no fitting means; return null. The caller distinguishes this from "no skills at
-        // all" (actionModiMentis.Count == 0) and renders the "no way to do it" reasoning outcome.
-        if (chosen.Count == 0) return null;
-
-        return MapMeansToModusMentis(chosen[0], actionModiMentis)
-               ?? actionModiMentis[0];
+        // null only if the list was empty; the caller still handles it as "no way to do it".
+        return chosen;
     }
-
-    private static ModusMentis? MapMeansToModusMentis(string means, List<ModusMentis> actionModiMentis)
-        => actionModiMentis.FirstOrDefault(s => $"with {s.SkillMeans}" == means);
 
     // ── Item combination (reasoning + reformulated action) ──────────────────────
 

@@ -15,13 +15,14 @@ namespace Cathedral.Game.Dialogue.Runtime;
 /// <list type="number">
 ///   <item>sample <c>N</c> speaking Modi Mentis from the party member's known skills, where
 ///         <c>N = min(speech-fluency, held speaking MMs)</c> ([SpeechFluencyStat]);</item>
-///   <item>each sampled MM grades the node's options by their <b>intent</b> (not the neutral text)
-///         via <see cref="PersonaChoiceSelector"/> and picks its best-fitting one;</item>
+///   <item>each sampled MM chooses among the node's options by their <b>intent</b> (not the neutral
+///         text) via <see cref="PersonaChoiceSelector"/> — it reasons in its own voice, then the
+///         neutral critic maps that to one option;</item>
 ///   <item>that MM then rewrites the chosen option's neutral replica in its own voice (same slot,
-///         history kept) to produce one shown option.</item>
+///         freshly reset by the selection pass) to produce one shown option.</item>
 /// </list>
-/// Two MMs may pick the same option and word it differently; an MM that grades everything low stays
-/// silent (yields no option). The chosen option's MM later contributes its level to the dice pool.
+/// Two MMs may pick the same option and word it differently. Dialogue has no refusal — every sampled
+/// MM contributes a reply. The chosen option's MM later contributes its level to the dice pool.
 /// </summary>
 public class DialogueOptionGenerator
 {
@@ -59,18 +60,13 @@ public class DialogueOptionGenerator
         int n = Math.Min(SpeechFluency(pc), speaking.Count);
         var sampled = speaking.OrderBy(_ => _rng.Next()).Take(n).ToList();
 
-        // Expanded intent → option (deduped), preserving order for the grade list.
-        var intentToOption = new Dictionary<string, PlayerOption>(StringComparer.Ordinal);
-        var intents        = new List<string>();
-        foreach (var o in node.Options)
-        {
-            string intent = DialogueTemplate.Expand(o.Intent, ctx);
-            if (intentToOption.ContainsKey(intent)) continue;
-            intentToOption[intent] = o;
-            intents.Add(intent);
-        }
+        // Each option is offered as the speech act it would be — "ask who they are" — from its intent,
+        // never its neutral replica. Intents are authored as imperative speech acts ("greet them
+        // warmly"), not verbatim lines, so they are told, not quoted.
+        string Action(PlayerOption o) => DialogueTemplate.Expand(o.Intent, ctx);
 
-        string contextText = BuildContextText(ctx, subject);
+        var prompt = new PersonaChoicePrompt(
+            BuildContextText(ctx, subject, previousNpcReplica), "What do you want to say?", "what they want to say");
 
         foreach (var mm in sampled)
         {
@@ -78,12 +74,13 @@ public class DialogueOptionGenerator
             {
                 int slot = await _slots.GetOrCreateSlotForModusMentisAsync(mm);
 
-                var parts = new GradeEvalPromptParts(contextText, "You could say:", "fits what you would say");
-                var picks = await _selector.SelectAsync(slot, mm, intents, parts, pick: 1, keepHistory: true, ct: ct);
-                if (picks.Count == 0) continue;                       // graded everything low → silent
-                if (!intentToOption.TryGetValue(picks[0], out var opt)) continue;
+                // The MM reasons over the replies and the neutral critic maps that to one. Dialogue has
+                // no refusal: no decline option is offered, so the MM always contributes a reply.
+                var opt = await _selector.SelectAsync(slot, mm, node.Options, Action, prompt, ct: ct);
+                if (opt == null) continue;                            // only if the option list was empty
 
-                // Rewrite the chosen option's replica in the MM's voice (history kept from grading).
+                // Rewrite the chosen option's replica in the MM's voice (fresh slot — the grading
+                // requests reset themselves so no single option's evaluation colours the rewrite).
                 string expanded  = DialogueTemplate.Expand(opt.Replica, ctx);
                 string? addressee = ctx.Names.Placeholder("npc");
                 string text = await _rewriter.RewriteAsync(
@@ -108,10 +105,19 @@ public class DialogueOptionGenerator
     public static int SpeechFluency(PartyMember m)
         => m.DerivedStats.FirstOrDefault(s => s.Name == "speech fluency")?.GetValue(m) ?? 1;
 
-    private static string BuildContextText(DialogueContext ctx, string subject)
+    /// <summary>
+    /// Situational preamble for the grading prompts — who is being spoken to, what about, and the
+    /// line being replied to. Constant across a node's options, so it stays in the cached prefix;
+    /// it mirrors what the rewrite prompt is told, so an option is graded against the same exchange
+    /// it will later be voiced into.
+    /// </summary>
+    private static string BuildContextText(DialogueContext ctx, string subject, string? previousNpcReplica)
     {
         string who  = ctx.Names.Placeholder("npc") ?? "someone";
         string desc = DialogueTemplate.Expand("{npc:description}", ctx);
-        return $"You are speaking with {who}, {desc}. The conversation is about {subject}.\n\n";
+        string said = string.IsNullOrWhiteSpace(previousNpcReplica)
+            ? " No one has spoken yet."
+            : $" {who} just said: \"{previousNpcReplica.Trim().Trim('"')}\"";
+        return $"You are speaking with {who}, {desc}. The conversation is about {subject}.{said}\n\n";
     }
 }

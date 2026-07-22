@@ -696,6 +696,21 @@ public class LocationTravelGameController : IDisposable
             }
         });
 
+        // Persona-match critic: the shared neutral instance that maps each persona's free-text want to
+        // one of the offered options (see PersonaChoiceSelector). Own slot, initialised once.
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Cathedral.Game.Narrative.PersonaMatchCritic.InitializeAsync(llamaServer);
+                Console.WriteLine("LocationTravelGameController: PersonaMatchCritic initialized");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"LocationTravelGameController: Failed to initialize PersonaMatchCritic - {ex.Message}");
+            }
+        });
+
         // Text sanitization pipeline (3-layer anachronism/entity filter)
         _ = Task.Run(async () =>
         {

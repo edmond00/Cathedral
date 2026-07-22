@@ -59,7 +59,7 @@ public static class NeutralNarration
 
     /// <summary>
     /// Neutral meaning for a failed observation: the Modus Mentis found nothing here worth its
-    /// attention (every candidate object was rejected in the yes/no persona evaluation). Re-expressed
+    /// attention (every candidate object was graded "averse" in the persona evaluation). Re-expressed
     /// in the observation persona's voice as the whole observation block.
     /// </summary>
     public static string ObservationNothing(bool isReminescence = false)
@@ -92,8 +92,8 @@ public static class NeutralNarration
 
     /// <summary>
     /// Neutral reasoning for the "no way to do it" path: the goal was chosen but the thinking Modus
-    /// Mentis judged that none of the available action skills fit (every one rejected in the yes/no
-    /// evaluation), so the intent is dropped. Reasoning-only, no action follows.
+    /// Mentis judged that none of the available action skills fit (every one graded "averse" in the
+    /// willingness evaluation), so the intent is dropped. Reasoning-only, no action follows.
     /// </summary>
     public static string ReasoningNoMeans(string targetPhrase, string goalPhrase, bool isReminescence = false)
     {
