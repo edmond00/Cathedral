@@ -12,7 +12,7 @@ public class MuskMarkingModusMentis : ModusMentis
     public override string DisplayName      => "Musk Marking";
     public override string MenuDescription =>
         "Treats ground as something to be claimed and boundaries as things to be posted and enforced. Sets the body to marking territory and reads the claims of others as challenges, warnings, or invitations.";
-    public override string SkillMeans       => "the claiming of ground by scent and sign";
+    public override string SkillMeans       => "the marking and claiming of territory by scent";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "snout", "genitories" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

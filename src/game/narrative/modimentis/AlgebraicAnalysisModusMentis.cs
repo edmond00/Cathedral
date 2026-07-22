@@ -12,7 +12,7 @@ public class AlgebraicAnalysisModusMentis : ModusMentis
     public override string DisplayName => "Algebraic Analysis";
     public override string MenuDescription =>
         "Reduces a situation to variables, constraints, and relations, then treats it as a system to be solved. Strips away feeling and intent in favour of structure, and looks for the pattern that unlike problems secretly share.";
-    public override string SkillMeans => "abstract pattern reasoning";
+    public override string SkillMeans => "the finding of patterns and logic in abstract problems";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

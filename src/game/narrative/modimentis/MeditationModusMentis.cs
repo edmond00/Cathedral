@@ -12,7 +12,7 @@ public class MeditationModusMentis : ModusMentis
     public override string DisplayName      => "Meditation";
     public override string MenuDescription =>
         "Holds a long, settled calm that quiets thought and steadies feeling. Keeps the mind clear and unhurried, and inclines toward focus and patience where noise would scatter attention.";
-    public override string SkillMeans       => "a long held stillness of mind";
+    public override string SkillMeans       => "the calming and stilling of the mind";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "pineal_gland", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

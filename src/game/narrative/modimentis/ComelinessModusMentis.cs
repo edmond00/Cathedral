@@ -12,7 +12,7 @@ public class ComelinessModusMentis : ModusMentis
     public override string DisplayName      => "Comeliness";
     public override string MenuDescription =>
         "Knows the effect of its own fair face and manages it: the angle, the smile, the moment to be seen. Reads how looks move a room, and spends beauty deliberately where it opens doors or softens judgement.";
-    public override string SkillMeans       => "fair looks worn deliberately";
+    public override string SkillMeans       => "good looks used deliberately to advantage";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

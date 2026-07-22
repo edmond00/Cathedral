@@ -12,7 +12,7 @@ public class ContinenceModusMentis : ModusMentis
     public override string DisplayName      => "Continence";
     public override string MenuDescription =>
         "Holds appetite and desire under deliberate governance, spending them only where chosen. Inclines reasoning toward restraint and the long good over the near pleasure, without pretending the wanting is not there.";
-    public override string SkillMeans       => "the deliberate governance of appetite";
+    public override string SkillMeans       => "the restraint of appetite and desire";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "genitories", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

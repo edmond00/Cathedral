@@ -12,7 +12,7 @@ public class GrimaceryModusMentis : ModusMentis
     public override string DisplayName      => "Grimacery";
     public override string MenuDescription =>
         "Commands a mobile, elastic face: pulled grimaces, copied expressions, and mimicry that lands just close enough to sting or delight. Speaks as much through the features as the tongue, playing a crowd for laughter or mockery.";
-    public override string SkillMeans       => "the pulled face and the copied expression";
+    public override string SkillMeans       => "the making and mimicking of faces and expressions";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

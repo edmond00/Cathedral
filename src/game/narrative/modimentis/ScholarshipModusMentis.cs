@@ -12,7 +12,7 @@ public class ScholarshipModusMentis : ModusMentis
     public override string DisplayName      => "Scholarship";
     public override string MenuDescription =>
         "Draws on what is recorded in manuscripts, reading letters and old texts with patient study. Inclines reasoning toward written knowledge, and treats a question as something the record may already answer.";
-    public override string SkillMeans       => "what is recorded in old manuscripts";
+    public override string SkillMeans       => "the knowledge found in books and old manuscripts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "encephalon" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

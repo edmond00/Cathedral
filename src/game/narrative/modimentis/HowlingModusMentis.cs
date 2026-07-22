@@ -12,7 +12,7 @@ public class HowlingModusMentis : ModusMentis
     public override string DisplayName      => "Howling";
     public override string MenuDescription =>
         "Sends the long call and reads the answers: who is out there, how far, how many, and whether they are friend. Treats voice as a beacon across distance, binding the scattered together and warning the strange away.";
-    public override string SkillMeans       => "the long call sent and the answers read";
+    public override string SkillMeans       => "long-distance calling and answering by voice";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "muzzle" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

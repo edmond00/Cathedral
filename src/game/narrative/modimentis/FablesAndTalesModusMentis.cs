@@ -12,7 +12,7 @@ public class FablesAndTalesModusMentis : ModusMentis
     public override string DisplayName      => "Fables and Tales";
     public override string MenuDescription =>
         "Matches the trouble at hand to a remembered fable, moral, or old tale. Draws on a store of stories for wisdom or persuasion, reaching for the one that fits the present case.";
-    public override string SkillMeans       => "the right old story for the present trouble";
+    public override string SkillMeans       => "the knowledge of old stories and the lessons they hold";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "tongue", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

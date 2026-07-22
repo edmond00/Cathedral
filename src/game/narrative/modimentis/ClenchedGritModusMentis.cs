@@ -12,7 +12,7 @@ public class ClenchedGritModusMentis : ModusMentis
     public override string DisplayName      => "Clenched Grit";
     public override string MenuDescription =>
         "Sets the teeth and straightens the spine when pain or dread argue for stopping. Carries the body through what hurts by clenching down on it, trading comfort now for the task finished.";
-    public override string SkillMeans       => "teeth set and spine held through what hurts";
+    public override string SkillMeans       => "the gritted determination to push through pain";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "teeths", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

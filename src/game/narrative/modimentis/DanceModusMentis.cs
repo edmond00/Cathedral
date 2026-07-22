@@ -12,7 +12,7 @@ public class DanceModusMentis : ModusMentis
     public override string DisplayName      => "Dance";
     public override string MenuDescription =>
         "Keeps the legs schooled in step, turn, and rhythm, from village round to hall pavane. Moves the body in time with music and partner, and carries that timing into footwork of every kind.";
-    public override string SkillMeans       => "the schooled step and the kept rhythm";
+    public override string SkillMeans       => "the trained sense of rhythm and graceful movement";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "lower_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

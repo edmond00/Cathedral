@@ -12,7 +12,7 @@ public class DreamloreModusMentis : ModusMentis
     public override string DisplayName      => "Dreamlore";
     public override string MenuDescription =>
         "Keeps the night's dreams from dissolving and reads them against the day: omen, memory, or worry wearing a mask. Attends to the half-seen and the symbolic, and treats a strong dream as testimony worth weighing.";
-    public override string SkillMeans       => "the keeping and reading of dreams";
+    public override string SkillMeans       => "the remembering and interpreting of dreams";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "pineal_gland", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

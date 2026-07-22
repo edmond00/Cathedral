@@ -12,7 +12,7 @@ public class ProsaicGrammarModusMentis : ModusMentis
     public override string DisplayName      => "Prosaic Grammar";
     public override string MenuDescription =>
         "Shapes speech into elaborate, clause-laden prose wound through with subordinate turns. Inclines toward the ornate construction, favouring intricate language over plain statement.";
-    public override string SkillMeans       => "ornate, clause-laden speech wound through with subordinate turns";
+    public override string SkillMeans       => "elaborate formal speech full of long, winding sentences";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

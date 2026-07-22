@@ -12,7 +12,7 @@ public class StonefaceModusMentis : ModusMentis
     public override string DisplayName      => "Stoneface";
     public override string MenuDescription =>
         "Holds the face still under provocation, surprise, and bluff, showing only what is chosen. Keeps tells off the features at the card table, the market, and the interrogation alike.";
-    public override string SkillMeans       => "the face held still under provocation";
+    public override string SkillMeans       => "the expressionless face that shows nothing";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

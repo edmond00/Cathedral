@@ -12,7 +12,7 @@ public class IronStomachModusMentis : ModusMentis
     public override string DisplayName      => "Iron Stomach";
     public override string MenuDescription =>
         "Keeps down what would double another over: the spoiled, the bitter, the frankly vile. Sets the body to eat, drink, and endure past squeamishness, treating revulsion as a habit the gut can be trained out of.";
-    public override string SkillMeans       => "the keeping-down of what would fell another";
+    public override string SkillMeans       => "the stomach that keeps down what would sicken others";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "paunch", "hepar" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

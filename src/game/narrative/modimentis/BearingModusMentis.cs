@@ -12,7 +12,7 @@ public class BearingModusMentis : ModusMentis
     public override string DisplayName      => "Bearing";
     public override string MenuDescription =>
         "Carries the whole frame with deliberate dignity: the straight back, the unhurried step, the stillness that draws a room's attention. Lends weight to word and deed through presence rather than volume.";
-    public override string SkillMeans       => "the dignified carriage that commands before a word is spoken";
+    public override string SkillMeans       => "the dignified posture and presence that commands respect";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "trunk" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

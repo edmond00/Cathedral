@@ -12,7 +12,7 @@ public class WayfaringModusMentis : ModusMentis
     public override string DisplayName      => "Wayfaring";
     public override string MenuDescription =>
         "Reads the road as it is walked: the ground ahead, the weather turning, the mile still owed before shelter. Keeps the legs at a pace that lasts, and marks the roadside signs that walking people live by.";
-    public override string SkillMeans       => "the walker's reading of road, pace and weather";
+    public override string SkillMeans       => "the traveller's knowledge of roads, pace and weather";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "lower_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

@@ -12,7 +12,7 @@ public class LopeModusMentis : ModusMentis
     public override string DisplayName      => "Lope";
     public override string MenuDescription =>
         "Falls into the ground-eating gait that can be held from dawn to dusk, trading speed for tirelessness. Runs down the faster by simply never stopping, and measures pursuit in hours rather than strides.";
-    public override string SkillMeans       => "the tireless gait that eats distance";
+    public override string SkillMeans       => "the tireless running pace that covers great distances";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

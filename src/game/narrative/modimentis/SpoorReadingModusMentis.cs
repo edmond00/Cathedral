@@ -12,7 +12,7 @@ public class SpoorReadingModusMentis : ModusMentis
     public override string DisplayName      => "Spoor Reading";
     public override string MenuDescription =>
         "Reads ground and air together for the story of who passed: the depth of a print, the age of a scent, the bent grass that gives away a direction. Reasons from sign to creature, gait, burden, and intent.";
-    public override string SkillMeans       => "the reading of track, scent and broken twig";
+    public override string SkillMeans       => "the reading of tracks, scents and trail signs";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "snout", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

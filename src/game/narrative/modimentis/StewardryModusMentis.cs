@@ -18,7 +18,7 @@ public class StewardryModusMentis : ModusMentis
     public override string DisplayName      => "Stewardry";
     public override string MenuDescription =>
         "Sizes up a place by how it is run: who holds authority, who owes labour, what is tallied and what is owed. Reads a scene for its order of work and its accounts rather than its beauty or feeling, reasons about who owes what, and speaks with a steward's plain authority.";
-    public override string SkillMeans       => "the ordering of a manor's labour and dues";
+    public override string SkillMeans       => "the managing of an estate's work, goods and dues";
     public override ModusMentisFunction[] Functions => new[]
     {
         ModusMentisFunction.Observation,

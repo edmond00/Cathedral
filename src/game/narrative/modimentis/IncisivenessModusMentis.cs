@@ -12,7 +12,7 @@ public class IncisivenessModusMentis : ModusMentis
     public override string DisplayName      => "Incisiveness";
     public override string MenuDescription =>
         "Watches a guarded target for the single opening and drives a clean cut or thrust through it. Holds the attack in reserve until the gap shows, favouring one precise strike over many loose ones.";
-    public override string SkillMeans       => "the precise cut or thrust placed through the single gap in any defense";
+    public override string SkillMeans       => "the precise strike aimed at the one gap in a defense";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

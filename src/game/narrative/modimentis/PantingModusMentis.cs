@@ -12,7 +12,7 @@ public class PantingModusMentis : ModusMentis
     public override string DisplayName      => "Panting";
     public override string MenuDescription =>
         "Manages the body's heat and breath through the open muzzle: cooling after effort, recovering fast, and pacing exertion against the day's warmth. Knows when to spend heat and when to lie in the shade and shed it.";
-    public override string SkillMeans       => "the shedding of heat and the recovery of breath";
+    public override string SkillMeans       => "the cooling down and recovery of breath";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "muzzle" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

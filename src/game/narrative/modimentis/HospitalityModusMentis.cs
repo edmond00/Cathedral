@@ -14,7 +14,7 @@ public class HospitalityModusMentis : ModusMentis
     public override string DisplayName      => "Hospitality";
     public override string MenuDescription =>
         "Takes in an arrival and makes them keep: room found where there was none, a pot stretched to one more, wet gear dried, tired baggage stowed. Judges what a traveller needs before they ask, and talks them warm and easy while the work is done around them.";
-    public override string SkillMeans       => "the taking in of travellers";
+    public override string SkillMeans       => "the welcoming and care of guests and travellers";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "hands", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

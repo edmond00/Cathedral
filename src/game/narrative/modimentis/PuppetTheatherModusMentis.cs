@@ -12,7 +12,7 @@ public class PuppetTheatherModusMentis : ModusMentis
     public override string DisplayName      => "Puppet Theatre";
     public override string MenuDescription =>
         "Lends voice and seeming life to inert things, playing several parts at once. Inclines toward mummery that entertains, distracts, or misdirects, shaping attention through performance.";
-    public override string SkillMeans       => "the lending of voices to inert things";
+    public override string SkillMeans       => "the giving of voices and life to puppets and objects";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

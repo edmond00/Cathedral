@@ -12,7 +12,7 @@ public class ScentingModusMentis : ModusMentis
     public override string DisplayName      => "Scenting";
     public override string MenuDescription =>
         "Reads a place nose-first, layering what the air carries: who passed, how long ago, what they carried and what they feared. Ties each smell to a remembered one, so that a scent arrives already named.";
-    public override string SkillMeans       => "the nose-first reading of what the air carries";
+    public override string SkillMeans       => "the smelling and identifying of scents on the air";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "snout", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

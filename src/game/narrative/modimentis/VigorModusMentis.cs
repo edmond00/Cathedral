@@ -12,7 +12,7 @@ public class VigorModusMentis : ModusMentis
     public override string DisplayName      => "Vigor";
     public override string MenuDescription =>
         "Draws on the body's deep surplus of vital heat, the animal drive of blood and loin. Sets effort going with appetite rather than duty, and recovers fast where others stay spent.";
-    public override string SkillMeans       => "the animal surplus of vital force";
+    public override string SkillMeans       => "abundant physical energy and vitality";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "genitories", "hepar" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

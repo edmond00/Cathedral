@@ -12,7 +12,7 @@ public class WeepingModusMentis : ModusMentis
     public override string DisplayName      => "Weeping";
     public override string MenuDescription =>
         "Feels grief and pity near the surface and lets them show, meeting sorrow with sorrow rather than composure. Reads the suppressed tear in others, and disarms hardness with the plain honesty of a wet face.";
-    public override string SkillMeans       => "the unashamed honesty of tears";
+    public override string SkillMeans       => "the open and honest shedding of tears";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

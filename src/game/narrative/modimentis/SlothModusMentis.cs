@@ -12,7 +12,7 @@ public class SlothModusMentis : ModusMentis
     public override string DisplayName      => "Sloth";
     public override string MenuDescription =>
         "Looks for the path of least work in any task, an artful laziness that spares effort. Inclines reasoning and action toward the result reached with the least exertion, distrusting labour for its own sake.";
-    public override string SkillMeans       => "an artful conservation of every effort";
+    public override string SkillMeans       => "the clever avoidance of unnecessary effort";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "trunk" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

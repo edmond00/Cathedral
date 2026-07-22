@@ -12,7 +12,7 @@ public class PettyThiefModusMentis : ModusMentis
     public override string DisplayName      => "Petty Thief";
     public override string MenuDescription =>
         "Watches for the quick lift: the loose purse, the unattended trinket, the palmed small thing. Keeps the hands ready to take unseen, and inclines toward the minor theft over the bold one.";
-    public override string SkillMeans       => "the small picked purse";
+    public override string SkillMeans       => "the picking of pockets and small thefts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

@@ -12,7 +12,7 @@ public class GnawingModusMentis : ModusMentis
     public override string DisplayName      => "Gnawing";
     public override string MenuDescription =>
         "Works the teeth steadily through rind, husk, bone, and binding to reach what is worth having inside. Treats hard obstacles as merely slow food, and keeps the belly's ledger of effort against reward.";
-    public override string SkillMeans       => "the steady tooth-work through husk and bone";
+    public override string SkillMeans       => "the steady gnawing through tough or hard material";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "teeths", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

@@ -12,7 +12,7 @@ public class StreetwiseModusMentis : ModusMentis
     public override string DisplayName      => "Streetwise";
     public override string MenuDescription =>
         "Keeps an alley-bred wariness up, reading a rough street for danger, marks, and the quickest way out. Inclines toward suspicion and quick reckoning where crime and trouble are near.";
-    public override string SkillMeans       => "alley-bred wariness";
+    public override string SkillMeans       => "the wariness and cunning learned on rough streets";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

@@ -12,7 +12,7 @@ public class AvariceModusMentis : ModusMentis
     public override string DisplayName      => "Avarice";
     public override string MenuDescription =>
         "Weighs every expense against the option of keeping, and reads generosity, in others and in oneself, as a cost paid somewhere. Leans toward the cheaper road and the harder bargain, and counts an unspent purse as a small victory.";
-    public override string SkillMeans       => "the tight-fisted holding-on of coin";
+    public override string SkillMeans       => "the tight-fisted keeping and hoarding of money";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "heart", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

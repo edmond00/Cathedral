@@ -13,7 +13,7 @@ public class RoteModusMentis : ModusMentis
     public override string DisplayName      => "Rote";
     public override string MenuDescription =>
         "Recalls precept and doctrine learned by question and answer, word-perfect and without hesitation. Supplies the proper formula or citation for an occasion, and recognises when someone else is reciting rather than thinking.";
-    public override string SkillMeans       => "the answers drilled in by rote";
+    public override string SkillMeans       => "the answers learned by heart through repetition";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

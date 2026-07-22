@@ -12,7 +12,7 @@ public class DeathShakeModusMentis : ModusMentis
     public override string DisplayName      => "Death Shake";
     public override string MenuDescription =>
         "Drives the finishing motion: seize, then whip the whole spine to end resistance in one violent instant. Prefers the decisive conclusion over the drawn-out struggle, in violence and in any task that wants a hard, final stroke.";
-    public override string SkillMeans       => "the whole-spine snap that ends a struggle at once";
+    public override string SkillMeans       => "the violent shake that kills caught prey at once";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "fangs", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

@@ -12,7 +12,7 @@ public class TrenchermanModusMentis : ModusMentis
     public override string DisplayName      => "Trencherman";
     public override string MenuDescription =>
         "Attends to food as an expert witness: the true taste of a dish, the honesty of a kitchen, the quality behind a smell. Reads a table, a larder, or a market stall for what is actually good rather than merely plentiful.";
-    public override string SkillMeans       => "the tasting and judging of the table";
+    public override string SkillMeans       => "the tasting and judging of food and drink";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "paunch", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

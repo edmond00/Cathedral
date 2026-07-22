@@ -12,7 +12,7 @@ public class PounceModusMentis : ModusMentis
     public override string DisplayName      => "Pounce";
     public override string MenuDescription =>
         "Gathers the whole body into stillness and releases it in one committed spring at the chosen instant. Watches for the single right moment, and treats hesitation after launch as the only true mistake.";
-    public override string SkillMeans       => "the gathered stillness and the single committed spring";
+    public override string SkillMeans       => "the still crouch and the sudden leap onto a target";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

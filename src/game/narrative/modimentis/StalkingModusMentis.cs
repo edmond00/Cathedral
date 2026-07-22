@@ -12,7 +12,7 @@ public class StalkingModusMentis : ModusMentis
     public override string DisplayName      => "Stalking";
     public override string MenuDescription =>
         "Closes distance on the unaware in slow, frozen-footed steps, timed to their attention rather than to haste. Reads a quarry's rhythm of looking and not-looking, and moves only inside the gaps.";
-    public override string SkillMeans       => "the slow, frozen-footed closing of distance";
+    public override string SkillMeans       => "the slow, silent approach toward a target";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "lower_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

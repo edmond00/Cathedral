@@ -12,7 +12,7 @@ public class EnduranceModusMentis : ModusMentis
     public override string DisplayName      => "Endurance";
     public override string MenuDescription =>
         "Draws on the trunk's deep stamina to outlast what cannot be outfought: cold, hunger, the long march, the slow work. Paces the body's reserves and holds steady long after quicker strength has spent itself.";
-    public override string SkillMeans       => "the slow strength that outlasts";
+    public override string SkillMeans       => "the stamina to keep going long after others tire";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "trunk" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

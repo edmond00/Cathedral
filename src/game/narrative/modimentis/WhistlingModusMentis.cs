@@ -12,7 +12,7 @@ public class WhistlingModusMentis : ModusMentis
     public override string DisplayName      => "Whistling";
     public override string MenuDescription =>
         "Catches tunes, birdcalls, and signals by ear and carries them on the breath through the teeth. Attends to the whistled world — who signals whom, which call is a bird and which is not — while keeping its own.";
-    public override string SkillMeans       => "the catching and carrying of tunes and calls";
+    public override string SkillMeans       => "the whistling of tunes and signal calls";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "teeths", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

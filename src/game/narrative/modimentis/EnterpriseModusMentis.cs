@@ -12,7 +12,7 @@ public class EnterpriseModusMentis : ModusMentis
     public override string DisplayName      => "Enterprise";
     public override string MenuDescription =>
         "Reads goods, routes, and demand for where profit sits, tracking where wares run cheap and where they sell dear. Inclines reasoning toward the venture, the margin, and the chance worth taking.";
-    public override string SkillMeans       => "the read of trade routes and foreign ware";
+    public override string SkillMeans       => "the understanding of trade, markets and foreign goods";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

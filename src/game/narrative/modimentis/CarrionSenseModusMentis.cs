@@ -12,7 +12,7 @@ public class CarrionSenseModusMentis : ModusMentis
     public override string DisplayName      => "Carrion Sense";
     public override string MenuDescription =>
         "Catches the smell of death and spoilage from far off and reads its age without flinching. Judges what a find is worth to an empty belly, telling the merely dead from the truly dangerous.";
-    public override string SkillMeans       => "the far-off smell of death and the judging of what remains";
+    public override string SkillMeans       => "the smelling of death from afar and the judging of what remains";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "snout", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

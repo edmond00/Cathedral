@@ -12,7 +12,7 @@ public class GutFeelingModusMentis : ModusMentis
     public override string DisplayName      => "Gut Feeling";
     public override string MenuDescription =>
         "Registers the body's verdict on a place, a person, or a plan before reason has spoken: the tightening belly, the ease that says safe. Flags what feels wrong without yet knowing why, and is right more often than it can explain.";
-    public override string SkillMeans       => "the belly's wordless verdict of safe or wrong";
+    public override string SkillMeans       => "the instinctive feeling that something is safe or wrong";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "paunch", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

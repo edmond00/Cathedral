@@ -12,7 +12,7 @@ public class IntrospectionModusMentis : ModusMentis
     public override string DisplayName      => "Introspection";
     public override string MenuDescription =>
         "Turns attention inward, watching moods, motives, and judgements as they form. Catches the fear disguised as prudence and the wish disguised as reason, and reads one's own weather before acting on it.";
-    public override string SkillMeans       => "the inward watching of one's own mind";
+    public override string SkillMeans       => "the examining of one's own thoughts and feelings";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "encephalon" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

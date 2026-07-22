@@ -12,7 +12,7 @@ public class SoftMouthModusMentis : ModusMentis
     public override string DisplayName      => "Soft Mouth";
     public override string MenuDescription =>
         "Carries the fragile unharmed in jaws that could crush it: the egg, the nestling, the wounded thing. Applies exactly the force a task needs and no more, gentleness practiced as a precision skill.";
-    public override string SkillMeans       => "strength held to a carrying gentleness";
+    public override string SkillMeans       => "the gentle grip that carries without harming";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "muzzle" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

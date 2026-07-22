@@ -12,7 +12,7 @@ public class ElegyModusMentis : ModusMentis
     public override string DisplayName      => "Elegy";
     public override string MenuDescription =>
         "Sees the ending folded inside every present thing: the ruin in the new wall, the parting in the meeting. Colours perception and reasoning with a grave, unhurried sadness that is often clearer-eyed than cheer.";
-    public override string SkillMeans       => "the grave sight that sees endings inside present things";
+    public override string SkillMeans       => "the sense for loss, endings and the passing of things";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "spleen", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

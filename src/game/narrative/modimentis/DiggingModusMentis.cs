@@ -12,7 +12,7 @@ public class DiggingModusMentis : ModusMentis
     public override string DisplayName      => "Digging";
     public override string MenuDescription =>
         "Sets all four limbs to moving earth: the pit dug fast, the cache buried and found again, the buried thing brought up whole. Remembers where things were hidden and reads disturbed ground for what others have hidden.";
-    public override string SkillMeans       => "the fast moving of earth and the finding of what it hides";
+    public override string SkillMeans       => "the fast digging of earth and the uncovering of what it hides";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

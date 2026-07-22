@@ -12,7 +12,7 @@ public class InvectiveModusMentis : ModusMentis
     public override string DisplayName      => "Invective";
     public override string MenuDescription =>
         "Runs every slight and obstacle through a hot ledger of grievance, and gives the verdict a sharp tongue. Inclines toward indignation, the cutting reply, and the quarrel entered on principle and enjoyed in practice.";
-    public override string SkillMeans       => "grievance heated into sharp words";
+    public override string SkillMeans       => "sharp insults and cutting words";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "hepar", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

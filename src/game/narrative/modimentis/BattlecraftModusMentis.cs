@@ -12,7 +12,7 @@ public class BattlecraftModusMentis : ModusMentis
     public override string DisplayName      => "Battlecraft";
     public override string MenuDescription =>
         "Frames a fight as a system of angle, initiative, and advantage rather than a scramble. Runs a trained appraisal of formation, ground, and timing, and disposes the body toward disciplined engagement instead of reckless violence.";
-    public override string SkillMeans       => "military combat training and the disciplined science of engagement";
+    public override string SkillMeans       => "disciplined military training and knowledge of warfare";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Fighting };
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

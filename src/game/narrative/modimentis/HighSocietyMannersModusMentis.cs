@@ -12,7 +12,7 @@ public class HighSocietyMannersModusMentis : ModusMentis
     public override string DisplayName      => "High Society Manners";
     public override string MenuDescription =>
         "Holds conduct to the polished customs of city society, tracking fine address and refined manner. Reads a genteel room for its unspoken rules, and inclines toward the courteous, well-bred move.";
-    public override string SkillMeans       => "city courtesy and fine address";
+    public override string SkillMeans       => "refined manners and polite conversation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "tongue", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

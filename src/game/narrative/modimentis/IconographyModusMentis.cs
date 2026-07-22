@@ -13,7 +13,7 @@ public class IconographyModusMentis : ModusMentis
     public override string DisplayName      => "Iconography";
     public override string MenuDescription =>
         "Reads carved and painted holy images: who is depicted, what the attributes in their hands mean, and what a posture or gesture was meant to promise or threaten. Notices when an image has been defaced, recut or quietly rededicated to something else.";
-    public override string SkillMeans       => "the reading of sacred images";
+    public override string SkillMeans       => "the understanding of sacred images and symbols";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

@@ -12,7 +12,7 @@ public class PhilosophyModusMentis : ModusMentis
     public override string DisplayName      => "Philosophy";
     public override string MenuDescription =>
         "Steps back from the immediate question to the one beneath it: what a thing truly is, why it should be done, what would follow if everyone did. Inclines toward definitions, first causes, and the argued examination of ordinary life.";
-    public override string SkillMeans       => "the stubborn question underneath the obvious one";
+    public override string SkillMeans       => "the questioning of deeper meanings behind the obvious";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "encephalon" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

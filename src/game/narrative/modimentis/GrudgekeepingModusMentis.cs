@@ -12,7 +12,7 @@ public class GrudgekeepingModusMentis : ModusMentis
     public override string DisplayName      => "Grudgekeeping";
     public override string MenuDescription =>
         "Keeps a cold, exact archive of wrongs received: who, when, witnessed by whom, and what settlement would balance it. Inclines reasoning toward old debts of injury, and never mistakes forgiving for forgetting.";
-    public override string SkillMeans       => "the cold keeping of old wrongs";
+    public override string SkillMeans       => "the long memory of wrongs and insults";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "spleen", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

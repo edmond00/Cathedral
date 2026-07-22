@@ -12,7 +12,7 @@ public class ClairvoyanceModusMentis : ModusMentis
     public override string DisplayName      => "Clairvoyance";
     public override string MenuDescription =>
         "Catches impressions that lie past ordinary perception, faint hints of the hidden, distant, or not plainly there. Holds a quiet attention open for what the plain senses miss.";
-    public override string SkillMeans       => "the seer's catching of strange light";
+    public override string SkillMeans       => "the glimpsing of things beyond ordinary sight";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "eyes", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

@@ -12,7 +12,7 @@ public class TreasureHuntingModusMentis : ModusMentis
     public override string DisplayName      => "Treasure Hunting";
     public override string MenuDescription =>
         "Follows old tales, rumours, and signs toward hidden riches. Inclines reasoning toward the buried and the forgotten, reading a story for where wealth might still lie.";
-    public override string SkillMeans       => "the chasing of old tales of gold";
+    public override string SkillMeans       => "the hunting of hidden treasure and lost riches";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

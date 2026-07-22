@@ -13,7 +13,7 @@ public class RipeloreModusMentis : ModusMentis
     public override string DisplayName      => "Ripelore";
     public override string MenuDescription =>
         "Judges when a living thing has come to its point: fruit fit to pick, grain fit to cut, a beast grown as far as feeding it will carry. Reads swell, colour and smell to tell ready from nearly, and knows what waiting one more day will cost.";
-    public override string SkillMeans       => "the judging of what is ready";
+    public override string SkillMeans       => "the judging of ripeness and the right moment";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "nose", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

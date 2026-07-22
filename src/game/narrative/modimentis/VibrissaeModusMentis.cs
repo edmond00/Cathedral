@@ -12,7 +12,7 @@ public class VibrissaeModusMentis : ModusMentis
     public override string DisplayName      => "Vibrissae";
     public override string MenuDescription =>
         "Feels the near world through the muzzle's fine sense: the width of a gap, the stir of air before a touch, the wall in the dark before the nose meets it. Trusts close touch where eyes fail.";
-    public override string SkillMeans       => "the whisker's reading of gap, air and nearness";
+    public override string SkillMeans       => "the sensing of nearby gaps, walls and movement by whisker";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation };
     public override string[] Organs        => new[] { "muzzle" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

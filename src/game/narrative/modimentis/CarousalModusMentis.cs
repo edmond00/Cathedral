@@ -12,7 +12,7 @@ public class CarousalModusMentis : ModusMentis
     public override string DisplayName      => "Carousal";
     public override string MenuDescription =>
         "Carries the long drinking night as a craft: pacing the cups, leading the song, keeping the table loud and friendly. Holds drink better than most and uses the loosened room to bind company together, or to listen.";
-    public override string SkillMeans       => "the craft of the long drinking night";
+    public override string SkillMeans       => "the enjoying of drink, feasting and long celebration";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action, ModusMentisFunction.Speaking };
     public override string[] Organs        => new[] { "hepar", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

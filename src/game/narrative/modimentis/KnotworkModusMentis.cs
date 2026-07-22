@@ -13,7 +13,7 @@ public class KnotworkModusMentis : ModusMentis
     public override string DisplayName      => "Knotwork";
     public override string MenuDescription =>
         "Works rope and line by feel: hitches that bite, lashings that hold a load, splices that outlast the rope around them. Judges what a cord will bear before trusting weight to it, and unpicks a fouled tangle rather than cutting it.";
-    public override string SkillMeans       => "the tying and trusting of rope";
+    public override string SkillMeans       => "the tying and handling of ropes and knots";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
