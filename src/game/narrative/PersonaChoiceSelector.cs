@@ -121,11 +121,11 @@ public class PersonaChoiceSelector
         if (reasoning.Length == 0) return candidates[0].Item;   // no signal → first real option
 
         // ── Neutral stage: the critic maps the want to one lettered option ───────
-        // Attribute the reasoning to the persona and the question, so the critic knows who answered.
-        string title = string.IsNullOrWhiteSpace(evaluator.PersonaReminder) ? "a character" : evaluator.PersonaReminder!;
-        string attribution = $"Asking {title} {prompt.ReportedQuestion.Trim()}, they just said:";
+        // The critic is an exterior observer: it introduces the persona in the third person and
+        // converts the shared second-person context/labels itself (see PersonaMatchCritic).
+        string title = string.IsNullOrWhiteSpace(evaluator.PersonaReminder) ? "" : $"a {evaluator.PersonaReminder}";
 
-        int idx = await PersonaMatchCritic.PickAsync(prompt.ContextText, attribution, reasoning, labels, ct);
+        int idx = await PersonaMatchCritic.PickAsync(prompt.ContextText, title, prompt.ReportedQuestion.Trim(), reasoning, labels, ct);
         if (idx < 0 || idx >= options.Count) return candidates[0].Item;
         return options[idx].Item;   // null ⇒ decline was chosen
     }

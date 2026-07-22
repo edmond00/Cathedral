@@ -66,6 +66,17 @@ public static class NeutralNarration
         => isReminescence ? "Nothing surfaces from my memory here."
                           : "Nothing here draws my attention.";
 
+    /// <summary>
+    /// Neutral meaning for a refused focus: a (new) observation Modus Mentis was handed
+    /// <paramref name="targetPhrase"/> (already articled) to focus on, and chose to lose interest
+    /// instead of observing it. Re-expressed in that persona's voice as the whole focus block —
+    /// no detail, no clickable keyword.
+    /// </summary>
+    public static string ObservationNotInterested(string targetPhrase, bool isReminescence = false)
+        => isReminescence
+            ? $"I am not interested in the memory of {targetPhrase}, and let it fade."
+            : $"I am not interested in {targetPhrase}, and turn my attention away.";
+
     // ── Thinking ───────────────────────────────────────────────────────────────
 
     /// <summary>

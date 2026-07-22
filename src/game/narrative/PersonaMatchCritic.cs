@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Cathedral.LLM;
@@ -58,10 +59,14 @@ public static class PersonaMatchCritic
     /// <summary>
     /// Returns the index into <paramref name="options"/> of the one that best fits
     /// <paramref name="reasoning"/> (the Modus Mentis's free-text answer), given the shared
-    /// <paramref name="context"/>. <paramref name="attribution"/> is the lead line naming who answered
-    /// and what was asked ("Asking a curious wanderer what they want to focus on, they just said:").
-    /// Options are presented as a lettered list A, B, C … and the reply is GBNF-constrained to a single
-    /// one of those letters.
+    /// <paramref name="context"/>. The critic is an exterior observer, so the whole prompt is
+    /// rendered in the <b>third person</b>: <paramref name="personaTitle"/> introduces who the
+    /// character is ("a curious wanderer"; blank to omit), <paramref name="reportedQuestion"/> is
+    /// the question in reported speech ("what they want to focus on"), and the second-person
+    /// context and option labels the callers share with the persona stage are converted
+    /// mechanically ("You are…" → "They are…", "your" → "their") — quoted speech excepted, since a
+    /// "you" inside quotes addresses someone real. Options are presented as a lettered list A, B,
+    /// C … and the reply is GBNF-constrained to a single one of those letters.
     ///
     /// <para>Callers must pass at most <see cref="MaxOptions"/> options (sample beforehand). In
     /// playground mode, or when the critic is unavailable, returns a safe index (random / 0) so the
@@ -69,7 +74,8 @@ public static class PersonaMatchCritic
     /// </summary>
     public static async Task<int> PickAsync(
         string context,
-        string attribution,
+        string personaTitle,
+        string reportedQuestion,
         string reasoning,
         IReadOnlyList<string> options,
         CancellationToken ct = default)
@@ -87,7 +93,7 @@ public static class PersonaMatchCritic
             return 0;
         }
 
-        string prompt  = BuildPrompt(context, attribution, reasoning, options);
+        string prompt  = BuildPrompt(context, personaTitle, reportedQuestion, reasoning, options);
         string grammar = BuildLetterGrammar(options.Count);
 
         try
@@ -111,18 +117,59 @@ public static class PersonaMatchCritic
 
     // ── Prompt / grammar ─────────────────────────────────────────────────────────
 
-    private static string BuildPrompt(string context, string attribution, string reasoning, IReadOnlyList<string> options)
+    /// <summary>
+    /// Renders the whole pick prompt from the critic's exterior point of view — "The character is a
+    /// curious wanderer. They are in a field… Asked what they want to focus on, they just said:" —
+    /// converting the shared second-person context and option labels via <see cref="ToThirdPerson"/>.
+    /// The persona intro sentence is omitted when <paramref name="personaTitle"/> is blank.
+    /// </summary>
+    private static string BuildPrompt(string context, string personaTitle, string reportedQuestion, string reasoning, IReadOnlyList<string> options)
     {
         var sb = new StringBuilder();
-        if (!string.IsNullOrWhiteSpace(context)) sb.Append(context.TrimEnd()).Append("\n\n");
-        sb.Append(attribution.Trim()).Append('\n');
+
+        // Opening paragraph: who the character is, then where they are / what they attend to.
+        bool hasTitle   = !string.IsNullOrWhiteSpace(personaTitle);
+        bool hasContext = !string.IsNullOrWhiteSpace(context);
+        if (hasTitle) sb.Append("The character is ").Append(personaTitle.Trim()).Append('.');
+        if (hasContext)
+        {
+            if (hasTitle) sb.Append(' ');
+            sb.Append(ToThirdPerson(context.TrimEnd()));
+        }
+        if (hasTitle || hasContext) sb.Append("\n\n");
+
+        sb.Append("Asked ").Append(reportedQuestion.Trim()).Append(", the character just said:\n");
         sb.Append('"').Append(reasoning.Trim()).Append("\"\n\n");
         sb.Append("Here are the options they can choose from:\n");
         for (int i = 0; i < options.Count; i++)
-            sb.Append(Letter(i)).Append(" - ").Append(options[i].Trim()).Append('\n');
+            sb.Append(Letter(i)).Append(" - ").Append(ToThirdPerson(options[i].Trim())).Append('\n');
         sb.Append("\nWhich single option best matches what they said they want? ");
         sb.Append("Answer with that option's letter and nothing else.");
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Mechanically converts the second-person prompt fragments the persona stage uses into third
+    /// person for the critic ("You are" → "They are", "your" → "their", "yourself" → "themselves").
+    /// Text inside double quotes is left verbatim — a "you" in quoted speech addresses someone real
+    /// (an NPC line, the persona's own words), not the character being described.
+    /// </summary>
+    private static string ToThirdPerson(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        var parts = text.Split('"');
+        for (int i = 0; i < parts.Length; i += 2)   // even indices are outside quotes
+        {
+            var s = parts[i];
+            s = Regex.Replace(s, @"\bYourself\b", "Themselves");
+            s = Regex.Replace(s, @"\byourself\b", "themselves");
+            s = Regex.Replace(s, @"\bYour\b", "Their");
+            s = Regex.Replace(s, @"\byour\b", "their");
+            s = Regex.Replace(s, @"\bYou\b", "They");
+            s = Regex.Replace(s, @"\byou\b", "they");
+            parts[i] = s;
+        }
+        return string.Join("\"", parts);
     }
 
     /// <summary><c>root ::= "A" | "B" | … </c> over exactly the letters in range.</summary>
@@ -152,7 +199,6 @@ You are given: some situational context, a short statement of what a character w
 
 Guidelines:
 - Match on meaning and intent, not on wording. Pick the option that does what they described.
-- If they clearly want to disengage, hold back, or do nothing, pick the option that represents that.
 - Do not judge whether the want is wise or in character — that is already decided. Just map it to the closest option.
 - Answer with EXACTLY one letter from the list and nothing else.";
 }

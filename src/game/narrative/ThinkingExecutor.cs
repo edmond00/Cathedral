@@ -133,15 +133,15 @@ public class ThinkingExecutor
         int actionSlot = await _slotManager.GetOrCreateSlotForModusMentisAsync(skill);
         _llmManager.ResetInstance(actionSlot);
 
-        // Persona-fit: how strongly is the skill drawn to this action? Decides possibility + difficulty.
-        // Asked with keepHistory:true so it shares context with the action-text rewrite below (both
-        // concern the same action). Skipped for auto-success phases (reminescence / get-up).
-        // Replaces the former plausibility + difficulty critic trees.
+        // Persona-fit: how strongly is the skill drawn to this action? Decides possibility + difficulty
+        // via the persona-reasoning → neutral-critic pass (the selector resets the slot in and out, so
+        // the action rewrite below starts fresh). Skipped for auto-success phases (reminescence /
+        // get-up). Replaces the former plausibility + difficulty critic trees.
         PersonaFit fit = autoSuccess
             ? PersonaFit.Willing
             : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, overallLocation, areaLocation, observedPhrase, cancellationToken);
 
-        // Reluctant / opposed → the skill refuses; produce a first-person refusal outcome, no action.
+        // "refuse to do it" → the skill refuses; produce a first-person refusal outcome, no action.
         if (fit.Cancels)
         {
             string refusalNeutral = NeutralNarration.ActionRefusal(goalPhrase);
@@ -168,7 +168,7 @@ public class ThinkingExecutor
             styledAction = actionPrefix + (skill.ActsDiscretely ? "discretely " : "") + goalPhrase;
         string bareAction = StripPrefix(styledAction, actionPrefix);
 
-        // Difficulty: verb base ± the persona-fit modifier (eager −1 / willing 0 / unsure +1),
+        // Difficulty: verb base ± the persona-fit modifier (eager −1 / willing 0 / reluctant +1),
         // clamped to 1..10. Auto-success phases carry difficulty 0 (rendered with the ○ glyph).
         var verbOutcome = (VerbOutcome)resolved;
         int difficultyLevel = autoSuccess
@@ -197,7 +197,7 @@ public class ThinkingExecutor
 
     // ── Persona-fit (possibility + difficulty) ──────────────────────────────────
 
-    /// <summary>The five persona-fit answers and how each maps to difficulty / cancellation.</summary>
+    /// <summary>The persona-fit answers and how each maps to difficulty / cancellation.</summary>
     private readonly struct PersonaFit
     {
         public int DifficultyModifier { get; }
@@ -206,27 +206,24 @@ public class ThinkingExecutor
 
         public static readonly PersonaFit Eager     = new(-1, false);
         public static readonly PersonaFit Willing   = new(0,  false);
-        public static readonly PersonaFit Unsure    = new(+1, false);
-        public static readonly PersonaFit Reluctant = new(0,  true);
-        public static readonly PersonaFit Opposed   = new(0,  true);
-
-        public static PersonaFit FromId(string id) => id switch
-        {
-            "eager"     => Eager,
-            "willing"   => Willing,
-            "unsure"    => Unsure,
-            "reluctant" => Reluctant,
-            "opposed"   => Opposed,
-            _           => Willing, // unrecognised → proceed at base difficulty
-        };
+        public static readonly PersonaFit Reluctant = new(+1, false);
+        public static readonly PersonaFit Refused   = new(0,  true);
     }
 
-    private static readonly List<string> PersonaFitOptions =
-        new() { "eager", "willing", "unsure", "reluctant", "opposed" };
+    /// <summary>
+    /// The real persona-fit options, written as actions ("do it eagerly"); the refusal rides in as
+    /// the selector's decline option, so a <c>null</c> pick means the skill refuses the action.
+    /// </summary>
+    private static readonly string[] PersonaFitActions = { "do it eagerly", "do it willingly", "do it reluctantly" };
 
     /// <summary>
-    /// Asks the action skill how strongly it is drawn to the action (constrained enum on its slot,
-    /// keepHistory:true so the following rewrite shares context). In playground mode picks "willing".
+    /// Asks the action skill how strongly it is drawn to the action, through the same
+    /// persona-reasoning → neutral-critic pass as every other choice
+    /// (<see cref="PersonaChoiceSelector"/>): the skill answers "Do you want to do it?" in its own
+    /// voice, and the critic maps that onto "do it eagerly" (−1 difficulty), "do it willingly" (0),
+    /// "do it reluctantly" (+1), or the decline option "refuse to do it" (cancels the action —
+    /// caller renders the refusal outcome). The selector resets the slot in and out, so the
+    /// following action rewrite starts from the system prompt. In playground mode picks Willing.
     /// </summary>
     private async Task<PersonaFit> AskPersonaFitAsync(
         int actionSlot, ModusMentis skill, string goalPhrase,
@@ -234,10 +231,26 @@ public class ThinkingExecutor
     {
         if (PlaygroundMode.IsActive) return PersonaFit.Willing;
 
-        string prompt = ThinkingPromptConstructor.BuildPersonaFitPrompt(goalPhrase, skill, overallLocation, areaLocation, observedPhrase);
-        string chosen = await _rewriter.ChooseAsync(actionSlot, prompt, PersonaFitOptions, fieldName: "drawn", keepHistory: true, ct: ct);
-        Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {(string.IsNullOrWhiteSpace(chosen) ? "(none)" : chosen)}");
-        return PersonaFit.FromId(chosen.Trim());
+        string situation = ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase).TrimEnd();
+        string lead = situation.Length == 0 ? "" : situation + " ";
+        var prompt = new PersonaChoicePrompt(
+            $"{lead}You are considering whether to {goalPhrase}.\n\n",
+            "Do you want to do it?", "whether they want to do it");
+
+        var chosen = await _selector.SelectAsync(
+            actionSlot, skill, PersonaFitActions,
+            a => a,
+            prompt, declineOption: "refuse to do it", ct: ct);
+
+        Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {chosen ?? "refuse to do it"}");
+        return chosen switch
+        {
+            "do it eagerly"     => PersonaFit.Eager,
+            "do it willingly"   => PersonaFit.Willing,
+            "do it reluctantly" => PersonaFit.Reluctant,
+            null                => PersonaFit.Refused,
+            _                   => PersonaFit.Willing, // unrecognised → proceed at base difficulty
+        };
     }
 
     // ── Decision: GOAL ─────────────────────────────────────────────────────────

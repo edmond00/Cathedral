@@ -147,9 +147,12 @@ public class ObservationPhaseController
     }
 
     /// <summary>
-    /// Generates a focus observation for a specific outcome (clicking "observe" on a keyword):
-    /// observe the clicked object, then the Modus Mentis chooses one other object and bridges to it
-    /// with a transition before observing it.
+    /// Generates a focus observation for a specific outcome (clicking "observe" on a keyword). The
+    /// clicked focus is offered, not imposed: the (newly chosen) Modus Mentis first decides whether
+    /// to keep its focus on the object or lose interest. Losing interest interrupts the chain of
+    /// thought — the block is a single "I am not interested" sentence in its voice, with no detail
+    /// and no keywords. Otherwise it observes the clicked object, then may choose one other object
+    /// and bridge to it with a transition before observing it.
     /// </summary>
     public async Task<List<NarrationBlock>> GenerateFocusObservationAsync(
         ConcreteOutcome focusOutcome,
@@ -171,6 +174,16 @@ public class ObservationPhaseController
         var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(observationModusMentis);
         _observationExecutor.ResetSlot(slotId);
 
+        string  focusPhrase = GetNeutralPhrase(focusOutcome, locationId);
+        string? overall     = _worldContext?.GenerateContextDescription(locationId);
+        string? area        = currentNode.GenerateNeutralDescription(locationId);
+
+        // 0. Keep focus or lose interest? The new Modus Mentis may interrupt the chain of thought
+        //    right here: losing interest yields a single "not interested" sentence — no observation,
+        //    no keywords — and nothing else happens.
+        if (!await AskKeepFocusAsync(slotId, observationModusMentis, focusOutcome, focusPhrase, ct, isReminescence, overall, area))
+            return await BuildNotInterestedBlockAsync(slotId, observationModusMentis, focusPhrase, isReminescence, ct);
+
         var allKeywords = new List<string>();
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
@@ -189,7 +202,7 @@ public class ObservationPhaseController
             // The clicked object is already observed; the Modus Mentis may or may not want a second.
             // Declining here simply omits it — no failure block.
             var second = await SelectObservationObjectAsync(slotId, remaining, observationModusMentis, locationId, ct, isReminescence,
-                _worldContext?.GenerateContextDescription(locationId), currentNode.GenerateNeutralDescription(locationId));
+                overall, area);
             if (second != null)
                 await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence);
         }
@@ -325,6 +338,74 @@ public class ObservationPhaseController
             slotId, modusMentis, candidates,
             c => $"focus on {GetNeutralPhrase(c, locationId)}",
             prompt, ct: ct);
+    }
+
+    /// <summary>
+    /// Asks the (new) focus Modus Mentis whether it keeps its focus on the handed object or loses
+    /// interest, via the same persona-reasoning → neutral-critic pass as every other choice: the
+    /// options are "keep your focus on X" and, as the decline option, "lose interest in X" — a
+    /// <c>null</c> pick means the persona lost interest. Playground mode never declines (the
+    /// selector picks the only real option), and the childhood-reminescence MM always keeps the
+    /// handed memory (mirrors its random-pick exception in <see cref="SelectObservationObjectAsync"/>).
+    /// </summary>
+    private async Task<bool> AskKeepFocusAsync(
+        int slotId,
+        ModusMentis modusMentis,
+        ConcreteOutcome focusOutcome,
+        string focusPhrase,
+        CancellationToken ct,
+        bool isReminescence,
+        string? overallLocation,
+        string? areaLocation)
+    {
+        if (isReminescence && modusMentis.ModusMentisId == "childhood_reminescence") return true;
+
+        var prompt = new PersonaChoicePrompt(
+            ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, focusPhrase),
+            "What do you want to do?", "what they want to do");
+        var kept = await _selector.SelectAsync(
+            slotId, modusMentis, new[] { focusOutcome },
+            _ => $"keep your focus on {focusPhrase}",
+            prompt, declineOption: $"lose interest in {focusPhrase}", ct: ct);
+        return kept != null;
+    }
+
+    /// <summary>
+    /// Builds the whole focus block for a refused focus: the "I am not interested in X" line
+    /// re-expressed in the refusing Modus Mentis's voice — no detail, no clickable keyword, so the
+    /// chain of thought ends here.
+    /// </summary>
+    private async Task<List<NarrationBlock>> BuildNotInterestedBlockAsync(
+        int slotId,
+        ModusMentis modusMentis,
+        string focusPhrase,
+        bool isReminescence,
+        CancellationToken ct)
+    {
+        var neutral = NeutralNarration.ObservationNotInterested(focusPhrase, isReminescence);
+        string text;
+        try
+        {
+            text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, ct: ct);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ObservationPhaseController: 'not interested' rewrite failed: {ex.Message}");
+            text = neutral;
+        }
+
+        Console.WriteLine($"ObservationPhaseController: focus refused — lost interest in '{focusPhrase}'.");
+        var block = new NarrationBlock(
+            Type: NarrationBlockType.Observation,
+            ModusMentis: modusMentis,
+            Text: text,
+            Keywords: new List<string>(),
+            Actions: null,
+            SourceObservationType: ObservationType.Focus,
+            KeywordOutcomeMap: new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase),
+            Sentences: new List<NarrationSentence> { new(text, new List<string>()) }
+        );
+        return new List<NarrationBlock> { block };
     }
 
     /// <summary>
