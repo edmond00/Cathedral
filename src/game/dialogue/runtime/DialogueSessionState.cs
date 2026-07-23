@@ -93,6 +93,11 @@ public class DialogueSessionState
     public (int X, int Y, int Width) ExitButtonRegion { get; set; }
     public bool IsExitButtonHovered { get; set; }
 
+    // ── Generation preview box CONTINUE button ─────────────────────────────────
+    /// <summary>Click region of the preview box CONTINUE; default (Width 0) while not clickable.</summary>
+    public (int X, int Y, int Width) PreviewContinueRegion { get; set; }
+    public bool IsPreviewHovered { get; set; }
+
     // ── Lifecycle ─────────────────────────────────────────────────────────────
     public bool ConversationEnded { get; set; }
     public bool RequestedExit     { get; set; }
@@ -114,6 +119,8 @@ public class DialogueSessionState
         HoveredOptionIndex  = -1;
         ExitButtonRegion    = default;
         IsExitButtonHovered = false;
+        PreviewContinueRegion = default;
+        IsPreviewHovered    = false;
         ConversationEnded   = false;
         RequestedExit       = false;
         ErrorMessage        = null;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Cathedral;
+using Cathedral.Game.Narrative.Preview;
 using Cathedral.LLM;
 
 namespace Cathedral.Game.Narrative;
@@ -40,18 +41,19 @@ public class OutcomeNarrator
         PartyMember protagonist,
         CancellationToken cancellationToken = default,
         string? failureHint = null,
-        string? neutralOverride = null)
+        string? neutralOverride = null,
+        ILlmPreviewSink? preview = null)
     {
         // The reminescence path supplies its own neutral meaning (a plain "I tried to remember …"
         // framing that embeds the concrete recovered memory); everything else templates it here.
         string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, failureHint);
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
-        // keepHistory so the dual-outcome snapshot/restore (humor flips) sees the generated turns.
         // forcedPrefix "I " constrains the styled result to a first-person opening (matching the
-        // neutral "I tried to …" framing), the same GBNF trick the action rewrite uses.
+        // neutral "I tried to …" framing), the same GBNF trick the action rewrite uses. When a preview
+        // sink is supplied, the outcome streams into the preview box like every other narration.
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
     }
 
     // ── Dual outcome pre-generation (for humor dice modifiers) ─────────────────

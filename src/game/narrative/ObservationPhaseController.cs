@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Cathedral;
 using Cathedral.LLM;
 using Cathedral.Game.Npc;
+using Cathedral.Game.Narrative.Preview;
 
 namespace Cathedral.Game.Narrative;
 
@@ -59,6 +60,8 @@ public class ObservationPhaseController
         PartyMember actingMember,
         int locationId,
         bool isReminescence = false,
+        LlmPreviewSession? preview = null,
+        Action<List<NarrationBlock>>? commit = null,
         CancellationToken ct = default)
     {
         Console.WriteLine($"ObservationPhaseController: Starting overall observation for {currentNode.NodeId}");
@@ -105,15 +108,20 @@ public class ObservationPhaseController
         // that to one object (or the decline option). A null result means nothing here drew it at all —
         // a single "nothing draws me" block. The focus reasoning rides into the observation rewrite as
         // the inner thought behind why this object drew the persona.
+        // Both observation sentences (same modus mentis) stream into ONE preview part and are shown
+        // stacked; CONTINUE unlocks only once the second finishes. The phase still commits as one
+        // joined Observation block, deferred to that CONTINUE (see FinalizePreview).
+        var part = preview?.BeginAccumulatingPart(PreviewTitles.For(modusMentis));
+
         var (first, firstThought) = await SelectObservationObjectAsync(slotId, candidates, modusMentis, locationId, ct, isReminescence, overall, area);
 
         if (first == null)
         {
-            await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct, innerThought: firstThought);
+            await AppendNothingObservationAsync(sentences, slotId, modusMentis, isReminescence, ct, innerThought: firstThought, part: part);
         }
         else
         {
-            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence, innerThought: firstThought);
+            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence, innerThought: firstThought, part: part);
 
             // Second observation: ask again over the remaining objects (the first excluded), reached
             // via a transition. Declining here simply omits the second — no failure block.
@@ -122,12 +130,13 @@ public class ObservationPhaseController
             {
                 var (second, secondThought) = await SelectObservationObjectAsync(slotId, remaining, modusMentis, locationId, ct, isReminescence, overall, area);
                 if (second != null)
-                    await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence, innerThought: secondThought);
+                    await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence, innerThought: secondThought, part: part);
             }
         }
 
         if (sentences.Count == 0)
         {
+            preview?.Reset();
             Console.WriteLine("ObservationPhaseController: All sentences failed.");
             return new List<NarrationBlock>();
         }
@@ -144,7 +153,33 @@ public class ObservationPhaseController
         );
 
         Console.WriteLine($"ObservationPhaseController: Overall observation complete ({sentences.Count} sentences, {allKeywords.Count} keywords)");
-        return new List<NarrationBlock> { block };
+        var resultBlocks = new List<NarrationBlock> { block };
+        FinalizePreview(preview, commit, resultBlocks, part);
+        return resultBlocks;
+    }
+
+    /// <summary>
+    /// Wires the deferred commit for a preview flow: the last part carries the buffer-append closure
+    /// and is marked complete only after that closure is attached (so a fast CONTINUE can never fire a
+    /// commit-less part). Non-preview callers commit immediately. Ordering matters — see the race note.
+    /// </summary>
+    private static void FinalizePreview(
+        LlmPreviewSession? preview,
+        Action<List<NarrationBlock>>? commit,
+        List<NarrationBlock> blocks,
+        PreviewPart? lastPart)
+    {
+        if (preview != null && lastPart != null)
+        {
+            if (commit != null) lastPart.AttachCommit(() => commit(blocks));
+            lastPart.MarkComplete();
+            preview.EndProduction();
+        }
+        else
+        {
+            commit?.Invoke(blocks);
+            preview?.Reset();
+        }
     }
 
     /// <summary>
@@ -162,6 +197,8 @@ public class ObservationPhaseController
         int locationId,
         PartyMember actingMember,
         bool isReminescence = false,
+        LlmPreviewSession? preview = null,
+        Action<List<NarrationBlock>>? commit = null,
         CancellationToken ct = default)
     {
         Console.WriteLine($"ObservationPhaseController: Starting focus observation on '{focusOutcome.DisplayName}'");
@@ -185,14 +222,17 @@ public class ObservationPhaseController
         //    rewrite as the inner thought behind keeping (or dropping) the focus.
         var (keeps, focusThought) = await AskKeepFocusAsync(slotId, observationModusMentis, focusOutcome, focusPhrase, ct, isReminescence, overall, area);
         if (!keeps)
-            return await BuildNotInterestedBlockAsync(slotId, observationModusMentis, focusPhrase, isReminescence, ct, innerThought: focusThought);
+            return await BuildNotInterestedBlockAsync(slotId, observationModusMentis, focusPhrase, isReminescence, ct, innerThought: focusThought, preview: preview, commit: commit);
 
         var allKeywords = new List<string>();
         var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
         var sentences = new List<NarrationSentence>();
 
+        // Both focus sentences (same modus mentis) stream into one stacked preview part.
+        var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
+
         // 1. Observe the clicked object (no transition) — it is always the first observation.
-        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence, innerThought: focusThought);
+        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence, innerThought: focusThought, part: part);
 
         // 2. A second object chosen from the remaining objects, reached via a transition. Exclude the
         //    clicked object's name-twins (not just the clicked instance), then collapse duplicates.
@@ -207,11 +247,12 @@ public class ObservationPhaseController
             var (second, secondThought) = await SelectObservationObjectAsync(slotId, remaining, observationModusMentis, locationId, ct, isReminescence,
                 overall, area);
             if (second != null)
-                await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence, innerThought: secondThought);
+                await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence, innerThought: secondThought, part: part);
         }
 
         if (sentences.Count == 0)
         {
+            preview?.Reset();
             Console.WriteLine("ObservationPhaseController: All focus sentences failed.");
             return new List<NarrationBlock>();
         }
@@ -228,7 +269,9 @@ public class ObservationPhaseController
         );
 
         Console.WriteLine($"ObservationPhaseController: Focus observation complete ({sentences.Count} sentences, {allKeywords.Count} keywords)");
-        return new List<NarrationBlock> { block };
+        var resultBlocks = new List<NarrationBlock> { block };
+        FinalizePreview(preview, commit, resultBlocks, part);
+        return resultBlocks;
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
@@ -254,8 +297,10 @@ public class ObservationPhaseController
         CancellationToken ct,
         bool isPhaseOpener = false,
         bool isReminescence = false,
-        string? innerThought = null)
+        string? innerThought = null,
+        PreviewPart? part = null)
     {
+        var sink = part?.NextSegment();
         try
         {
             // Attention + detail merged into one neutral text and rewritten in a single request
@@ -268,7 +313,7 @@ public class ObservationPhaseController
                 GetNeutralPhrase(outcome, locationId),
                 GetNeutralDescription(outcome, locationId),
                 isReminescence: isReminescence);
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: isPhaseOpener ? "I " : null, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, ct: ct);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: isPhaseOpener ? "I " : null, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, preview: sink, ct: ct);
 
             // Keyword is chosen by rule from the final (sanitized) text — the noun most related to the object.
             var kw = KeywordExtractor.ExtractKeyword(text, GetReferenceLemma(outcome));
@@ -386,13 +431,16 @@ public class ObservationPhaseController
         string focusPhrase,
         bool isReminescence,
         CancellationToken ct,
-        string? innerThought = null)
+        string? innerThought = null,
+        LlmPreviewSession? preview = null,
+        Action<List<NarrationBlock>>? commit = null)
     {
+        var part = preview?.BeginPart(PreviewTitles.For(modusMentis));
         var neutral = NeutralNarration.ObservationNotInterested(focusPhrase, isReminescence);
         string text;
         try
         {
-            text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, ct: ct);
+            text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, preview: part?.Sink, ct: ct);
         }
         catch (Exception ex)
         {
@@ -411,7 +459,9 @@ public class ObservationPhaseController
             KeywordOutcomeMap: new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase),
             Sentences: new List<NarrationSentence> { new(text, new List<string>()) }
         );
-        return new List<NarrationBlock> { block };
+        var resultBlocks = new List<NarrationBlock> { block };
+        FinalizePreview(preview, commit, resultBlocks, part);
+        return resultBlocks;
     }
 
     /// <summary>
@@ -424,12 +474,14 @@ public class ObservationPhaseController
         ModusMentis modusMentis,
         bool isReminescence,
         CancellationToken ct,
-        string? innerThought = null)
+        string? innerThought = null,
+        PreviewPart? part = null)
     {
+        var sink = part?.NextSegment();
         try
         {
             var neutral = NeutralNarration.ObservationNothing(isReminescence);
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, ct: ct);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, preview: sink, ct: ct);
             sentences.Add(new NarrationSentence(text, new List<string>()));
             Console.WriteLine("ObservationPhaseController: nothing drew the persona's attention (declined).");
         }
@@ -501,6 +553,8 @@ public class ObservationPhaseController
         PartyMember actingMember,
         int locationId,
         WorldContext worldContext,
+        LlmPreviewSession? preview = null,
+        Action<NarrationBlock>? commit = null,
         CancellationToken ct = default)
     {
         Console.WriteLine($"ObservationPhaseController: Speaking to '{companionName}' about '{keyword}' with {speakingModusMentis.DisplayName}");
@@ -514,9 +568,12 @@ public class ObservationPhaseController
             var style = speakingModusMentis.StyleInstruction;
             var descr = GetNeutralDescription(linkedOutcome, locationId);
 
-            var sentence1 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Attention(companionName), NarrationKind.Speaking, r2, companionName, keepHistory: true, styleInstruction: style, ct: ct)).Trim().Trim('"');
-            var sentence2 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Description(descr), NarrationKind.Speaking, r2, companionName, keepHistory: true, styleInstruction: style, ct: ct)).Trim().Trim('"');
-            var sentence3 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Question(), NarrationKind.Speaking, r2, companionName, keepHistory: true, styleInstruction: style, ct: ct)).Trim().Trim('"');
+            // Three spoken lines stream into one stacked preview part (same modus mentis); CONTINUE
+            // unlocks only once all three are done. The part carries the deferred commit (finalize below).
+            var part = preview?.BeginAccumulatingPart(PreviewTitles.For(speakingModusMentis));
+            var sentence1 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Attention(companionName), NarrationKind.Speaking, r2, companionName, keepHistory: true, styleInstruction: style, preview: part?.NextSegment(), ct: ct)).Trim().Trim('"');
+            var sentence2 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Description(descr), NarrationKind.Speaking, r2, companionName, keepHistory: true, styleInstruction: style, preview: part?.NextSegment(), ct: ct)).Trim().Trim('"');
+            var sentence3 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Question(), NarrationKind.Speaking, r2, companionName, keepHistory: true, styleInstruction: style, preview: part?.NextSegment(), ct: ct)).Trim().Trim('"');
 
             var parts = new[] { sentence1, sentence2, sentence3 }
                 .Where(s => !string.IsNullOrWhiteSpace(s))
@@ -524,6 +581,7 @@ public class ObservationPhaseController
 
             if (parts.Count == 0)
             {
+                preview?.Reset();
                 Console.WriteLine("ObservationPhaseController: All speaking sentences empty.");
                 return null;
             }
@@ -564,10 +622,24 @@ public class ObservationPhaseController
             );
 
             Console.WriteLine($"ObservationPhaseController: Speaking generation complete (keyword '{kw}')");
+
+            // Deferred commit on CONTINUE (race-free: complete only after the commit attaches).
+            if (preview != null && part != null)
+            {
+                if (commit != null) part.AttachCommit(() => commit(block));
+                part.MarkComplete();
+                preview.EndProduction();
+            }
+            else
+            {
+                commit?.Invoke(block);
+                preview?.Reset();
+            }
             return block;
         }
         catch (Exception ex)
         {
+            preview?.Reset();
             Console.Error.WriteLine($"ObservationPhaseController: Speaking generation failed: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
             return null;

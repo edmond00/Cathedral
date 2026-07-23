@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Preview;
 using Cathedral.LLM;
 
 namespace Cathedral.Game.Dialogue.Runtime;
@@ -39,6 +40,7 @@ public class DialogueReplicaWriter
         string?          styleInstruction = null,
         bool             keepHistory      = true,
         string?          previousReplica  = null,
+        ILlmPreviewSink? preview          = null,
         CancellationToken ct              = default)
     {
         string expanded  = DialogueTemplate.Expand(neutralTemplate, ctx);
@@ -52,7 +54,7 @@ public class DialogueReplicaWriter
             slotId, expanded, NarrationKind.DialogueReplica,
             personaReminder2, addressee: addressee, keepHistory: keepHistory,
             styleInstruction: styleInstruction, dialogueContext: subject,
-            previousReplica: previousReplica, speakerName: speaker, ct: ct);
+            previousReplica: previousReplica, speakerName: speaker, preview: preview, ct: ct);
 
         return ctx.Names.ToReal(text.Trim().Trim('"'));
     }

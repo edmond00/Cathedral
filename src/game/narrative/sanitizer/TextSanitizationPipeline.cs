@@ -141,11 +141,43 @@ public static class TextSanitizationPipeline
         if (PlaygroundMode.IsActive)
             return text;
 
+        // Layers 2 + 3 detection (Layer 3 → anachronisms, Layer 2 → real-world names).
+        var (anachronisms, realWorldNames) = Detect(text);
+
+        if (anachronisms.Count == 0 && realWorldNames.Count == 0)
+            return text;
+
+        if (!_llmReady || _llamaServer == null || _rewriterSlot < 0)
+        {
+            var all = anachronisms.Concat(realWorldNames).Distinct();
+            Console.WriteLine(
+                $"TextSanitizationPipeline: detected [{string.Join(", ", all)}] but rewriter LLM unavailable.");
+            return text;
+        }
+
+        return await RewriteAsync(text, anachronisms, realWorldNames);
+    }
+
+    /// <summary>
+    /// Detect-only pass: runs Layers 2 (WikiNER real-world names) and 3 (Spotter/regex anachronisms)
+    /// on <paramref name="text"/> and returns the hits, WITHOUT triggering the Layer-1 replacement or
+    /// the LLM rewrite. Side-effect-free and synchronous, so the streaming preview can call it per
+    /// completed word to decide whether the partial text is safe to show yet.
+    ///
+    /// Returns empty lists for blank text, in playground mode, and (for names) when WikiNER is absent.
+    /// When Catalyst failed to initialise entirely, Layer 3 falls back to the compiled regex.
+    /// Callers that also want Layer-1 correction should run <see cref="ForbiddenWordsDictionary.Apply"/>
+    /// first (as <see cref="SanitizeAsync"/> does), since Layer 1 is applied there, not here.
+    /// </summary>
+    public static (List<string> anachronisms, List<string> realWorldNames) Detect(string text)
+    {
         // Layer 3 (Spotter / SpottedTerms) → genuine anachronisms.
         // Layer 2 (WikiNER)                → real-world proper names.
-        // These are described differently in the rewrite prompt.
         var anachronisms   = new List<string>();
         var realWorldNames = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(text) || PlaygroundMode.IsActive)
+            return (anachronisms, realWorldNames);
 
         // Layers 2 + 3 via Catalyst pipeline
         if (_catalystReady && _catalystPipeline != null)
@@ -194,18 +226,7 @@ public static class TextSanitizationPipeline
                 anachronisms.Add(m.Value);
         }
 
-        if (anachronisms.Count == 0 && realWorldNames.Count == 0)
-            return text;
-
-        if (!_llmReady || _llamaServer == null || _rewriterSlot < 0)
-        {
-            var all = anachronisms.Concat(realWorldNames).Distinct();
-            Console.WriteLine(
-                $"TextSanitizationPipeline: detected [{string.Join(", ", all)}] but rewriter LLM unavailable.");
-            return text;
-        }
-
-        return await RewriteAsync(text, anachronisms, realWorldNames);
+        return (anachronisms, realWorldNames);
     }
 
     // ── Rewriter ───────────────────────────────────────────────────────────────

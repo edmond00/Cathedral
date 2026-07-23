@@ -4,6 +4,7 @@ using OpenTK.Mathematics;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Dialogue.Tree;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Preview;
 using Cathedral.Game.Npc;
 using Cathedral.Terminal;
 
@@ -89,7 +90,7 @@ public class DialogueTreeUI : TerminalPanelUI
 
     // ── Main render entry ──────────────────────────────────────────────────────
 
-    public void Render(DialogueSessionState state, DiceRollComponent dice)
+    public void Render(DialogueSessionState state, DiceRollComponent dice, PreviewSnapshot preview, bool previewHovered)
     {
         Clear();
         _optionRowToIndex.Clear();
@@ -97,6 +98,7 @@ public class DialogueTreeUI : TerminalPanelUI
         // The footer button is only rendered in the interactive states below; clear its
         // click region each frame so stale zones don't linger during dice/loading states.
         state.ExitButtonRegion = default;
+        state.PreviewContinueRegion = default;
 
         // Header: NPC name/affinity. Always rendered — while the LLM is generating it's
         // greyed out along with the rest of the panel (see below) rather than replaced.
@@ -124,6 +126,16 @@ public class DialogueTreeUI : TerminalPanelUI
             DrawStatusBar(state.IsDiceRolling
                 ? "Rolling..."
                 : (dice.IsCurrentlySuccess ? "SUCCESS — click to continue." : "FAILURE — click to continue."));
+            return;
+        }
+
+        // Reply-generation preview box (streams the player replies being written). Shown for the whole
+        // life of the preview session, so it precedes the plain generating branch below.
+        if (preview.Active)
+        {
+            var region = RenderPreviewBox(preview, previewHovered);
+            state.PreviewContinueRegion = region.Present ? (region.X, region.Y, region.Width) : default;
+            RenderWaitingStatus(generating ?? "Thinking of replies…");
             return;
         }
 

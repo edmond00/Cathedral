@@ -8,6 +8,7 @@ using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Dialogue.Tree.Trees;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Nodes;
+using Cathedral.Game.Narrative.Preview;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
@@ -78,10 +79,11 @@ public class NarrativeController
     // Unified dice-roll overlay (animation + humor modifiers + hit-testing).
     private readonly DiceRollComponent _dice = new();
 
-    // Pre-generated success/failure outcome candidates for the in-flight roll (Part E).
-    // OnDiceRollContinue commits whichever matches the final (humor-modified) result.
-    private ActionExecutionResult? _pendingSuccessResult;
-    private ActionExecutionResult? _pendingFailureResult;
+    // In-flight roll (main path): the evaluation to narrate and the current (humor-modified) result.
+    // The actual outcome is generated only once the player presses the dice CONTINUE — see
+    // OnDiceRollContinue → GenerateOutcomePreviewAsync — so no narration is produced during the roll.
+    private ActionEvaluationResult? _pendingEval;
+    private bool _pendingSucceeded;
     // Separator caption for the segment the post-action CONTINUE closes ("after trying to grab a
     // rope"). Set when an in-place outcome shows the CONTINUE button; consumed by HandleContinueClicked.
     private string? _pendingSegmentLabel;
@@ -104,6 +106,13 @@ public class NarrativeController
     private bool _exitRunawayPending;
     private NpcEntity? _exitRunawayTarget;
     private bool _exitRunawayIsEnemy;
+
+    // ── LLM generation preview box ───────────────────────────────────────────────
+    // Streams the text being generated over the greyed-out menu, gated by a CONTINUE button.
+    // Active from the first BeginPart until the last part's CONTINUE commits its block(s).
+    private readonly LlmPreviewSession _previewSession = new();
+    private (int X, int Y, int Width) _previewContinueRegion; // last-rendered CONTINUE region (Width 0 ⇒ none)
+    private bool _previewContinueHovered;
 
     // Ambient music engine (optional — null when MIDI is unavailable)
     private readonly AmbianceEngine? _ambianceEngine;
@@ -151,12 +160,12 @@ public class NarrativeController
         => member.DerivedStats.First(s => s.Name == "humor_modifier_limit").GetValue(member);
 
     /// <summary>
-    /// Fired by the dice component when a humor modifier flips success↔failure. Swaps the active
-    /// pending outcome candidate (pre-generated during the roll) and replays the outcome cue.
+    /// Fired by the dice component when a humor modifier flips success↔failure. Records the new final
+    /// result (the outcome is generated later, on the dice CONTINUE) and replays the outcome cue.
     /// </summary>
     private void OnDiceOutcomeFlipped(bool nowSuccess)
     {
-        _pendingActionResult = nowSuccess ? _pendingSuccessResult : _pendingFailureResult;
+        _pendingSucceeded = nowSuccess;
         _ambianceEngine?.TriggerGameEvent(nowSuccess
             ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
     }
@@ -473,40 +482,48 @@ public class NarrativeController
         try
         {
             Console.WriteLine("NarrativeController: Calling ObservationPhaseController...");
-            
-            // Generate ONE overall observation (one sentence per sampled outcome)
-            var blocks = await _observationController.ExecuteObservationPhaseAsync(
+
+            _previewSession.Reset();
+
+            // Deferred commit: the generated block(s) are appended to the buffer only when the player
+            // presses CONTINUE on the last preview part (see FinalizePreview). Playing the reveal sound
+            // and scrolling ride along at commit time so the reveal matches the button press.
+            void CommitObservation(List<NarrationBlock> blocks)
+            {
+                Console.WriteLine($"NarrativeController: Committing {blocks.Count} observation blocks");
+                foreach (var block in blocks)
+                {
+                    _scrollBuffer.AddBlock(block);
+                    _narrationState.AddBlock(block);
+                }
+                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            }
+
+            // Generate ONE overall observation (one sentence per sampled outcome), streamed into the box.
+            await _observationController.ExecuteObservationPhaseAsync(
                 _currentNode,
                 _activePartyMember,
                 _protagonist.CurrentLocationId,
-                isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence
+                isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
+                preview: _previewSession,
+                commit: CommitObservation
             );
-            
-            Console.WriteLine($"NarrativeController: Generated {blocks.Count} observation blocks");
-            
-            // Add blocks to scroll buffer
-            foreach (var block in blocks)
-            {
-                _scrollBuffer.AddBlock(block);
-                _narrationState.AddBlock(block);
-            }
-            _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
-            
-            // Scroll to show the new observation at the bottom of the view
-            _scrollBuffer.ScrollToBottom();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-            
-            // Update state
+
+            // Generation is done; the box now waits for CONTINUE. Clearing the loading flag lets the
+            // CLI settle (idle) so a test can drive the CONTINUE clicks.
             _narrationState.IsLoadingObservations = false;
             _narrationState.ErrorMessage = null;
-            
+
             Console.WriteLine("NarrativeController: Observation phase complete");
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Error generating observations: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
-            
+
+            _previewSession.Reset();
             _narrationState.IsLoadingObservations = false;
             _narrationState.ErrorMessage = $"Failed to generate observations: {ex.Message}";
         }
@@ -523,6 +540,8 @@ public class NarrativeController
         try
         {
             Console.WriteLine($"NarrativeController: Executing thinking with {thinkingModusMentis.DisplayName} on keyword '{keyword}'");
+
+            _previewSession.Reset();
 
             // Resolve the outcome linked to the clicked keyword via KeywordOutcomeMap or LinkedOutcome
             ConcreteOutcome? targetOutcome = null;
@@ -567,6 +586,7 @@ public class NarrativeController
                 isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
                 autoSuccess: _scene?.Phase == NarrationPhase.ChildhoodReminescence
                              || _scene?.Phase == NarrationPhase.GetUp,
+                preview: _previewSession,
                 cancellationToken: CancellationToken.None);
 
             if (response == null)
@@ -600,32 +620,54 @@ public class NarrativeController
             // (verb base ± eager/willing/unsure modifier), so each action already carries its
             // DifficultyLevel. Auto-success phases (reminescence / get-up) carry difficulty 0 (○ glyph).
 
-            // Add to scroll buffer
-            _scrollBuffer.AddBlock(thinkingBlock);
-            _narrationState.AddBlock(thinkingBlock);
-            _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
-
             // Persona-fit cancellation: the action skill refused (reluctant/opposed). Show the
             // first-person refusal as an outcome block; no action button is offered. The noetic
             // point is still consumed below via the normal thinking-complete decrement.
+            NarrationBlock? refusalBlock = null;
             if (!hasActions && response.RefusalText != null && response.RefusalModusMentis != null)
             {
-                var refusalBlock = new NarrationBlock(
+                refusalBlock = new NarrationBlock(
                     Type: NarrationBlockType.Outcome,
                     ModusMentis: response.RefusalModusMentis,
                     Text: response.RefusalText,
                     Keywords: null,
                     Actions: null);
-                _scrollBuffer.AddBlock(refusalBlock);
-                _narrationState.AddBlock(refusalBlock);
                 Console.WriteLine("NarrativeController: Action refused by persona-fit — refusal narrated, no button.");
             }
-            
-            // Auto-scroll to bottom to show new thinking block
-            _scrollBuffer.ScrollToBottom();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset; // Sync scroll position
-            
-            // Update state
+
+            // Deferred commit: the thinking block (and refusal, and its action button) become visible
+            // only when the player presses CONTINUE on the last preview part. Reveal sound + scroll ride
+            // along at commit time so they match the button press.
+            void CommitThinking()
+            {
+                _scrollBuffer.AddBlock(thinkingBlock);
+                _narrationState.AddBlock(thinkingBlock);
+                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
+                if (refusalBlock != null)
+                {
+                    _scrollBuffer.AddBlock(refusalBlock);
+                    _narrationState.AddBlock(refusalBlock);
+                }
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            }
+
+            // Attach the commit and complete the last part only after it is attached (race-free), or
+            // commit immediately when previewing produced no part.
+            if (response.PreviewLastPart is { } lastPart)
+            {
+                lastPart.AttachCommit(CommitThinking);
+                lastPart.MarkComplete();
+                _previewSession.EndProduction();
+            }
+            else
+            {
+                CommitThinking();
+                _previewSession.Reset();
+            }
+
+            // Update state at generation end (not deferred): the noetic point is spent now, and the
+            // loading flag clears so the CLI settles for the CONTINUE clicks.
             _narrationState.IsLoadingThinking = false;
             if (_scene?.Phase != NarrationPhase.ChildhoodReminescence
                 && _scene?.Phase != NarrationPhase.GetUp)
@@ -644,7 +686,8 @@ public class NarrativeController
         {
             Console.Error.WriteLine($"NarrativeController: Error during thinking phase: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
-            
+
+            _previewSession.Reset();
             _narrationState.IsLoadingThinking = false;
             _narrationState.ErrorMessage = $"Thinking failed: {ex.Message}";
         }
@@ -867,20 +910,14 @@ public class NarrativeController
 
             Console.WriteLine($"NarrativeController: Rolled {finalDiceValues.Count(v => v == 6)} sixes out of {numberOfDice} dice (need {actualDifficulty}) → {(succeeded ? "SUCCESS" : "FAILURE")}");
 
-            // Pre-generate BOTH outcomes (success + failure) during the animation so the player
-            // can flip the result with humor modifiers instantly. Side-effects are committed
-            // later in OnDiceRollContinue for whichever outcome is final.
-            var (successResult, failureResult) = await _actionExecutor.PrepareDualOutcomesAsync(
-                evalResult,
-                CancellationToken.None
-            );
+            // Do NOT generate any narration during the animation. Remember the evaluation and the
+            // rolled result; humor modifiers may still flip _pendingSucceeded. The actual (single)
+            // outcome is generated only when the player presses the dice CONTINUE — see
+            // OnDiceRollContinue → GenerateOutcomePreviewAsync — and streams into a preview box.
+            _pendingEval      = evalResult;
+            _pendingSucceeded = succeeded;
 
-            _pendingSuccessResult = successResult;
-            _pendingFailureResult = failureResult;
-            _pendingActionResult  = succeeded ? successResult : failureResult;
-            _pendingDeferredCommit = true;
-
-            Console.WriteLine($"NarrativeController: Action prepared — rolled {(succeeded ? "SUCCESS" : "FAILURE")} (humor may change this)");
+            Console.WriteLine($"NarrativeController: Rolled {(succeeded ? "SUCCESS" : "FAILURE")} (humor may change this) — outcome generated on continue");
 
             // Complete the dice roll (stops animation, shows final values and continue button)
             NarrationDiceComplete(finalDiceValues);
@@ -1262,26 +1299,76 @@ public class NarrativeController
     }
     
     /// <summary>
-    /// Handle continue button click on dice roll screen.
-    /// Applies the pending action result and shows outcome.
+    /// Handle continue button click on the dice-roll screen. The Get-Up path has a ready-made result
+    /// (narration already generated) and commits synchronously; the main path defers to now — the
+    /// actual outcome is generated (streamed into a preview box) and committed on the preview CONTINUE.
     /// </summary>
     private void OnDiceRollContinue()
     {
-        if (_pendingActionResult == null)
+        // Get-Up path: a fully-formed result (narration already generated) — commit immediately.
+        if (_pendingActionResult != null)
         {
-            Console.WriteLine("NarrativeController: No pending action result for dice roll continue");
-            NarrationDiceClear();
+            var ready = _pendingActionResult;
+            _pendingActionResult = null;
+            bool dc = _pendingDeferredCommit;
+            _pendingDeferredCommit = false;
+            CommitOutcomeResult(ready, dc);
             return;
         }
-        
-        var result = _pendingActionResult;
-        _pendingActionResult = null;
-        _pendingSuccessResult = null;
-        _pendingFailureResult = null;
-        bool deferredCommit = _pendingDeferredCommit;
-        _pendingDeferredCommit = false;
 
-        Console.WriteLine($"NarrativeController: Dice roll continue - committing {(result.Succeeded ? "SUCCESS" : "FAILURE")} outcome");
+        // Main path: generate ONLY the final (possibly humor-modified) outcome now, into a preview box.
+        if (_pendingEval != null)
+        {
+            var eval = _pendingEval;
+            _pendingEval = null;
+            bool succeeded = _pendingSucceeded;
+            NarrationDiceClear();
+            _narrationState.IsLoadingAction = true;
+            _ = Task.Run(() => GenerateOutcomePreviewAsync(eval, succeeded));
+            return;
+        }
+
+        Console.WriteLine("NarrativeController: No pending action result for dice roll continue");
+        NarrationDiceClear();
+    }
+
+    /// <summary>
+    /// Generates the single true outcome after the dice, streaming it into the preview box; the block
+    /// commit and all side-effects fire when the player presses the preview CONTINUE.
+    /// </summary>
+    private async Task GenerateOutcomePreviewAsync(ActionEvaluationResult eval, bool succeeded)
+    {
+        try
+        {
+            _previewSession.Reset();
+            _narrationState.LoadingMessage = "Narrating the outcome...";
+            string title = eval.ActionModusMentis != null ? PreviewTitles.For(eval.ActionModusMentis) : "OUTCOME";
+            var part = _previewSession.BeginPart(title);
+            var result = await _actionExecutor.PrepareSingleOutcomeAsync(eval, succeeded, part.Sink, CancellationToken.None);
+            _narrationState.IsLoadingAction = false;
+            part.AttachCommit(() => CommitOutcomeResult(result, deferredCommit: true));
+            part.MarkComplete();
+            _previewSession.EndProduction();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"NarrativeController: Outcome generation failed: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            _previewSession.Reset();
+            _narrationState.IsLoadingAction = false;
+            NarrationDiceClear();
+            _narrationState.ErrorMessage = $"Outcome failed: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Applies a resolved action outcome: side-effects (XP/item when <paramref name="deferredCommit"/>),
+    /// outcome reports, the outcome narration block, and any fight/dialogue/transition it triggers.
+    /// Called synchronously for Get-Up and via the outcome preview's CONTINUE for the main path.
+    /// </summary>
+    private void CommitOutcomeResult(ActionExecutionResult result, bool deferredCommit)
+    {
+        Console.WriteLine($"NarrativeController: committing {(result.Succeeded ? "SUCCESS" : "FAILURE")} outcome");
 
         if (deferredCommit)
         {
@@ -1479,26 +1566,33 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Executing focus observation with {observationModusMentis.DisplayName} on outcome '{focusOutcome.DisplayName}'");
 
-            var blocks = await _observationController.GenerateFocusObservationAsync(
+            _previewSession.Reset();
+
+            // Deferred commit: reveal the focus block(s) when the player presses CONTINUE.
+            void CommitFocus(List<NarrationBlock> blocks)
+            {
+                foreach (var block in blocks)
+                {
+                    _scrollBuffer.AddBlock(block);
+                    _narrationState.AddBlock(block);
+                }
+                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            }
+
+            await _observationController.GenerateFocusObservationAsync(
                 focusOutcome,
                 observationModusMentis,
                 _currentNode,
                 _protagonist.CurrentLocationId,
                 _activePartyMember,
-                isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence
+                isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
+                preview: _previewSession,
+                commit: CommitFocus
             );
 
-            foreach (var block in blocks)
-            {
-                _scrollBuffer.AddBlock(block);
-                _narrationState.AddBlock(block);
-            }
-
-            // Auto-scroll to bottom to show new observation
-            _scrollBuffer.ScrollToBottom();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-
-            // Consume a thinking point (same pool as thinking)
+            // Consume a thinking point (same pool as thinking) at generation end.
             if (_scene?.Phase != NarrationPhase.ChildhoodReminescence
                 && _scene?.Phase != NarrationPhase.GetUp)
                 _narrationState.ThinkingAttemptsRemaining--;
@@ -1564,7 +1658,32 @@ public class NarrativeController
                 return;
             }
 
-            var speakingBlock = await _observationController.GenerateSpeakingTextAsync(
+            _previewSession.Reset();
+
+            // Deferred commit: when the player presses CONTINUE on the last spoken line, grey the old
+            // content, add the speaking block, spend a noetic point and hand off to the companion.
+            void CommitSpeaking(NarrationBlock speakingBlock)
+            {
+                _scrollBuffer.ConvertToHistory();
+                _narrationState.ResetForPartyMemberChange();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
+                _scrollBuffer.AddBlock(speakingBlock);
+                _narrationState.AddBlock(speakingBlock);
+                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
+                // Consume one noetic point from the speaker's own pool, then save it.
+                _narrationState.ThinkingAttemptsRemaining--;
+                SaveActiveNoeticPoints();
+
+                // Switch to companion and load their own counter (fresh if first hand-off to them).
+                _activePartyMember = companion;
+                LoadNoeticPoints(companion);
+            }
+
+            var speakingResult = await _observationController.GenerateSpeakingTextAsync(
                 keyword,
                 speakingModusMentis,
                 companion.Name,
@@ -1572,35 +1691,19 @@ public class NarrativeController
                 _currentNode,
                 _activePartyMember,
                 _protagonist.CurrentLocationId,
-                _worldContext
+                _worldContext,
+                preview: _previewSession,
+                commit: CommitSpeaking
             );
 
-            if (speakingBlock == null)
+            if (speakingResult == null)
             {
                 Console.Error.WriteLine("NarrativeController: Speaking generation returned null.");
+                _previewSession.Reset();
                 _narrationState.IsLoadingSpeaking = false;
                 _narrationState.ErrorMessage = "Speaking failed — no text generated.";
                 return;
             }
-
-            // Grey out current content and reset without spending all noetic points
-            _scrollBuffer.ConvertToHistory();
-            _narrationState.ResetForPartyMemberChange();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-
-            // Speaking block is the new observation root for this sequence
-            _scrollBuffer.AddBlock(speakingBlock);
-            _narrationState.AddBlock(speakingBlock);
-            _scrollBuffer.ScrollToBottom();
-            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-
-            // Consume one noetic point from the speaker's own pool, then save it.
-            _narrationState.ThinkingAttemptsRemaining--;
-            SaveActiveNoeticPoints();
-
-            // Switch to companion and load their own counter (fresh if first hand-off to them).
-            _activePartyMember = companion;
-            LoadNoeticPoints(companion);
 
             _narrationState.IsLoadingSpeaking = false;
             _narrationState.ErrorMessage = null;
@@ -1611,6 +1714,7 @@ public class NarrativeController
         {
             Console.Error.WriteLine($"NarrativeController: Speaking phase error: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
+            _previewSession.Reset();
             _narrationState.IsLoadingSpeaking = false;
             _narrationState.ErrorMessage = $"Speaking failed: {ex.Message}";
         }
@@ -1672,6 +1776,21 @@ public class NarrativeController
             _ui.RenderStatusBar(diceStatus);
             return;
         }
+
+        // LLM generation preview: a box streaming the text being written, gated by CONTINUE. Shown
+        // for the whole life of the preview session (generation in flight AND the wait-for-CONTINUE
+        // after), which is why it precedes the plain IsAnyLoading branch below.
+        if (_previewSession.IsActive)
+        {
+            RenderNarrationContent();
+            var region = _ui.RenderPreviewBox(_previewSession.Snapshot(), _previewContinueHovered);
+            _previewContinueRegion = region.Present ? (region.X, region.Y, region.Width) : default;
+            // No footer button while the box is up — clear its region so a stale one can't be clicked.
+            _exitButtonRegion = default;
+            _ui.RenderWaitingStatus(_narrationState.LoadingMessage);
+            return;
+        }
+        _previewContinueRegion = default;
 
         // LLM generating (non-action loading, or action evaluation phase before dice roll):
         // keep the narration visible but greyed out (header included), with a centered
@@ -1993,9 +2112,22 @@ public class NarrativeController
             }
         }
 
-        // In the post-action (CONTINUE) state and while the LLM is generating, content is
-        // inert — skip keyword/action hover (scrollbar interactions above are still allowed).
-        if (_narrationState.ShowContinueButton || _narrationState.IsAnyLoading)
+        // Preview box CONTINUE hover (shown while the generation-preview session is active).
+        if (_previewContinueRegion.Width > 0)
+        {
+            bool overPreview = mouseY == _previewContinueRegion.Y
+                            && mouseX >= _previewContinueRegion.X
+                            && mouseX <  _previewContinueRegion.X + _previewContinueRegion.Width;
+            if (overPreview != _previewContinueHovered)
+            {
+                _previewContinueHovered = overPreview;
+                if (overPreview) PlayHoverSound();
+            }
+        }
+
+        // In the post-action (CONTINUE) state, while the LLM is generating, and while the preview box
+        // is up, content is inert — skip keyword/action hover (scrollbar interactions stay allowed).
+        if (_narrationState.ShowContinueButton || _narrationState.IsAnyLoading || _previewSession.IsActive)
             return;
         
         // Update hovered keyword region
@@ -2065,6 +2197,18 @@ public class NarrativeController
             return;
         }
 
+        // Preview box CONTINUE — commit the current part and advance to the next (or end the session).
+        if (_previewContinueRegion.Width > 0
+            && mouseY == _previewContinueRegion.Y
+            && mouseX >= _previewContinueRegion.X
+            && mouseX <  _previewContinueRegion.X + _previewContinueRegion.Width)
+        {
+            PlayClickSound();
+            _previewContinueHovered = false;
+            _previewSession.TryContinue();
+            return;
+        }
+
         // Single footer button (CONTINUE / LEAVE / RUNAWAY) — clickable in idle and post-action states.
         if (_exitButtonRegion.Width > 0
             && mouseY == _exitButtonRegion.Y
@@ -2076,9 +2220,9 @@ public class NarrativeController
             return;
         }
 
-        // In the post-action (CONTINUE) state and while the LLM is generating, the content
-        // is inert — swallow other clicks (scrollbar clicks were already handled above).
-        if (_narrationState.ShowContinueButton || _narrationState.IsAnyLoading)
+        // In the post-action (CONTINUE) state, while the LLM is generating, and while the preview box
+        // is up, the content is inert — swallow other clicks (scrollbar clicks handled above).
+        if (_narrationState.ShowContinueButton || _narrationState.IsAnyLoading || _previewSession.IsActive)
             return;
 
         // If choice popup is visible, handle it first
@@ -2439,6 +2583,17 @@ public class NarrativeController
         var r = _dice.ContinueButtonRegion;
         return (_narrationState.IsDiceRollActive && !_narrationState.IsDiceRolling && r.Width > 0, r.X, r.Y, r.Width);
     }
+
+    /// <summary>Whether the generation-preview box is up, its title, text and CONTINUE region (if clickable).</summary>
+    public (bool Active, string Title, string Text, bool Complete) CliPreview()
+    {
+        var s = _previewSession.Snapshot();
+        return (s.Active, s.Title, s.DisplayText, s.Complete);
+    }
+
+    /// <summary>The preview box [ CONTINUE ] button region, when generation is done and it is clickable.</summary>
+    public (bool Present, int X, int Y, int Width) CliPreviewContinue() =>
+        (_previewContinueRegion.Width > 0, _previewContinueRegion.X, _previewContinueRegion.Y, _previewContinueRegion.Width);
 
     /// <summary>Labels of the currently visible popup, or null when no popup is up.</summary>
     public (string Kind, IReadOnlyList<string> Labels)? CliPopup()

@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
+using Cathedral.Terminal.Utils;
+using Cathedral.Game.Narrative.Preview;
 
 namespace Cathedral.Game;
 
@@ -371,5 +374,77 @@ public abstract class TerminalPanelUI
         int centerX = _layout.TERMINAL_WIDTH / 2;
         int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
         return dice.Render(_terminal, centerX, centerY, continueHovered);
+    }
+
+    // ── LLM generation preview overlay (replaces the centre progress bar) ─────────
+
+    /// <summary>
+    /// Draws the "text being generated" preview box: a thin-grey-bordered, black-filled overlay ~half
+    /// the menu size, centred over the greyed-out content. Layout top→bottom: the modus-mentis title
+    /// centred on the top border; a blank row; the animated progress bar; a blank row; the streamed
+    /// preview text (tail-clipped); then either a <c>.</c>/<c>..</c>/<c>...</c> dot animation (still
+    /// generating) or a <c>[ CONTINUE ]</c> button (done). Returns the CONTINUE hit-region for the
+    /// controller to store and click-test — <c>Present=false</c> while generation is still in flight.
+    /// </summary>
+    public (bool Present, int X, int Y, int Width) RenderPreviewBox(PreviewSnapshot state, bool continueHovered)
+    {
+        if (!state.Active) return (false, 0, 0, 0);
+
+        DimContent();
+
+        Vector4 border = Config.NarrativeUI.SeparatorColor;
+        Vector4 black  = Config.NarrativeUI.BackgroundColor;
+
+        int bgW = Math.Max(28, _layout.CONTENT_WIDTH  / 2);
+        int bgH = Math.Max(11, _layout.NARRATIVE_HEIGHT / 2);
+        int centerX = _layout.TERMINAL_WIDTH / 2;
+        int centerY = _layout.CONTENT_START_Y + _layout.NARRATIVE_HEIGHT / 2;
+        int bgX = centerX - bgW / 2;
+        int bgY = centerY - bgH / 2;
+
+        _terminal.FillRect(bgX, bgY, bgW, bgH, ' ', Config.Colors.White, black);
+        _terminal.DrawBox(bgX, bgY, bgW, bgH, BoxStyle.Single, border, black);
+
+        // Title centred on the top border line.
+        if (!string.IsNullOrEmpty(state.Title))
+            _terminal.Text(bgX + bgW / 2, bgY, $" {state.Title} ",
+                Config.NarrativeUI.ModusMentisHeaderColor, black, TextAlignment.Center);
+
+        int innerX = bgX + 2;
+        int innerW = bgW - 4;
+        int frame  = AdvanceSpinnerFrame();
+
+        // Progress bar on the second interior row (border + one blank row above it).
+        const string barChars = " ░░▒▒▓█▓▒▒░░";
+        var bar = new StringBuilder();
+        for (int i = 0; i < innerW; i++) bar.Append(barChars[(frame + i) % barChars.Length]);
+        _terminal.Text(innerX, bgY + 2, bar.ToString(), Config.Colors.LightGray75, black);
+
+        // Preview text: blank row (bgY+3), then wrapped text from bgY+4 down to just above the button.
+        int textStartY = bgY + 4;
+        int buttonY    = bgY + bgH - 3; // one row up from the bottom border
+        int textEndY   = buttonY - 2; // leave a blank row above the button
+        int maxRows    = Math.Max(0, textEndY - textStartY + 1);
+
+        var wrapped = WrapText(state.DisplayText, innerW);
+        // Show the tail so the most recently streamed lines stay visible as the text grows.
+        int first = Math.Max(0, wrapped.Count - maxRows);
+        for (int i = first; i < wrapped.Count; i++)
+            _terminal.Text(innerX, textStartY + (i - first), wrapped[i], Config.NarrativeUI.NarrativeColor, black);
+
+        if (state.Complete)
+        {
+            string btn = "[ CONTINUE ]";
+            int btnX = centerX - btn.Length / 2;
+            Vector4 fg = continueHovered ? Config.NarrativeUI.ContinueButtonHoverColor           : Config.NarrativeUI.ContinueButtonColor;
+            Vector4 bg = continueHovered ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor;
+            _terminal.Text(btnX, buttonY, btn, fg, bg);
+            return (true, btnX, buttonY, btn.Length);
+        }
+
+        // Still generating → dot animation where the button will be.
+        string dots = new string('.', 1 + (frame % 3));
+        _terminal.Text(centerX - 1, buttonY, dots.PadRight(3), Config.Colors.LightGray75, black);
+        return (false, 0, 0, 0);
     }
 }

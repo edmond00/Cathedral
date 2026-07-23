@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Dialogue.Tree;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Preview;
 using Cathedral.Game.Npc;
 using Cathedral.LLM;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -47,6 +48,9 @@ public class DialogueTreeController
 
     // Unified dice-roll overlay (animation + humor modifiers + hit-testing).
     private readonly DiceRollComponent        _dice = new();
+
+    // Streams the player replies being generated into a preview box, gated by CONTINUE.
+    private readonly LlmPreviewSession        _preview = new();
 
     private NpcLineNode                       _currentNode;
     private readonly Random                   _rng = new();
@@ -131,7 +135,7 @@ public class DialogueTreeController
     public void Update()
     {
         if (_state.IsDiceRollActive) _dice.Advance();
-        _ui.Render(_state, _dice);
+        _ui.Render(_state, _dice, _preview.Snapshot(), _state.IsPreviewHovered);
     }
 
     public void OnMouseMove(int mx, int my)
@@ -144,6 +148,15 @@ public class DialogueTreeController
             return;
         }
 
+        // Preview box CONTINUE hover (while replies are being previewed).
+        var pv = _state.PreviewContinueRegion;
+        bool overPreview = pv.Width > 0 && my == pv.Y && mx >= pv.X && mx < pv.X + pv.Width;
+        if (overPreview != _state.IsPreviewHovered)
+        {
+            _state.IsPreviewHovered = overPreview;
+            if (overPreview) _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.SmallInteraction);
+        }
+
         // Footer exit button (LEAVE / INTERRUPT) — region is default while hidden.
         var exit = _state.ExitButtonRegion;
         bool overExit = exit.Width > 0 && my == exit.Y && mx >= exit.X && mx < exit.X + exit.Width;
@@ -153,7 +166,7 @@ public class DialogueTreeController
             if (overExit) _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.SmallInteraction);
         }
 
-        if (!_state.IsLoadingOptions && !_state.IsDiceRollActive && !_state.ConversationEnded)
+        if (!_state.IsLoadingOptions && !_preview.IsActive && !_state.IsDiceRollActive && !_state.ConversationEnded)
             _state.HoveredOptionIndex = _ui.GetOptionIndexAt(mx, my);
     }
 
@@ -176,6 +189,16 @@ public class DialogueTreeController
 
         if (_state.ConversationEnded) return;
 
+        // Preview box CONTINUE — commit the replies and make them selectable.
+        var pv = _state.PreviewContinueRegion;
+        if (pv.Width > 0 && my == pv.Y && mx >= pv.X && mx < pv.X + pv.Width)
+        {
+            _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.StrongInteraction);
+            _state.IsPreviewHovered = false;
+            _preview.TryContinue();
+            return;
+        }
+
         if (_state.IsDiceRollActive && !_state.IsDiceRolling)
         {
             var r = _dice.ContinueButtonRegion;
@@ -190,7 +213,7 @@ public class DialogueTreeController
             return;
         }
         if (_state.IsDiceRollActive || _state.IsLoadingNpcReplica
-            || _state.IsLoadingOptions || _state.IsLoadingReaction) return;
+            || _state.IsLoadingOptions || _state.IsLoadingReaction || _preview.IsActive) return;
 
         int idx = _ui.GetOptionIndexAt(mx, my);
         if (idx >= 0 && idx < _state.Options.Count)
@@ -275,6 +298,22 @@ public class DialogueTreeController
         return null;
     }
 
+    /// <summary>Whether the reply-generation preview box is up, its title, text and completeness.</summary>
+    public (bool Active, string Title, string Text, bool Complete) CliPreview()
+    {
+        var s = _preview.Snapshot();
+        return (s.Active, s.Title, s.DisplayText, s.Complete);
+    }
+
+    /// <summary>Press the preview box [ CONTINUE ] (commits the replies). Returns an error, or null.</summary>
+    public string? CliPreviewContinue()
+    {
+        if (!_preview.IsActive)          return "no preview is active";
+        if (!_preview.Snapshot().Complete) return "replies are still generating";
+        _preview.TryContinue();
+        return null;
+    }
+
     // ── Shared-history writers ────────────────────────────────────────────────
 
     /// <summary>A line the NPC speaks. No modus mentis, so no header — renders as "Emma: …".</summary>
@@ -313,20 +352,32 @@ public class DialogueTreeController
 
     private async Task NpcSpeakAsync()
     {
+        _preview.Reset();
+        // The NPC's line streams into a preview box titled with the NPC name; on CONTINUE it is added
+        // to the log and the player-reply generation begins (which shows its own preview box).
+        var part = _preview.BeginPart(_npc.DisplayName.ToUpper());
         try
         {
             string text = await _replicaWriter.WriteAsync(
                 _npcSlotId, _currentNode.Replica, _context, addresseeRole: "you", subject: _tree.Description,
-                previousReplica: _lastPlayerLine);
+                previousReplica: _lastPlayerLine, preview: part.Sink);
 
-            _lastNpcLine = text;
-            AppendNpcLine(text);
             _state.IsLoadingNpcReplica = false;
-            BeginOptionsPhase();
+
+            void CommitNpcLine()
+            {
+                _lastNpcLine = text;
+                AppendNpcLine(text);
+                BeginOptionsPhase();
+            }
+            part.AttachCommit(CommitNpcLine);
+            part.MarkComplete();
+            _preview.EndProduction();
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"DialogueTreeController: NPC speak failed: {ex.Message}");
+            _preview.Reset();
             _state.IsLoadingNpcReplica = false;
             _state.ErrorMessage = ex.Message;
         }
@@ -357,45 +408,56 @@ public class DialogueTreeController
 
     private async Task GenerateOptionsAsync()
     {
+        _preview.Reset();
+
+        // Deferred commit: the replies become visible and selectable only when the player presses
+        // CONTINUE on the preview box (once every reply has finished streaming).
+        void CommitOptions(List<PlayerReplicaOption> options)
+        {
+            _state.Options = options;
+
+            // Append the replies to the shared scroll buffer as clickable lines — they flow with
+            // the conversation text (and scroll with it) instead of floating over the log.
+            _optionsBlock = new NarrationBlock(
+                Type: NarrationBlockType.DialogueOptions,
+                ModusMentis: null!,
+                Text: "",
+                Keywords: null,
+                Actions: null,
+                DialogueOptions: options
+                    .Select(o => new DialogueOptionItem(o.Skill.DisplayName, o.Skill.Level, o.ReplicaText))
+                    .ToList());
+            Append(_optionsBlock);
+        }
+
         try
         {
             var options = await _optionGenerator.GenerateAsync(
                 _currentNode, _protagonist, _context, _tree.Description,
-                previousNpcReplica: _lastNpcLine);
+                previousNpcReplica: _lastNpcLine,
+                preview: _preview,
+                commit: CommitOptions);
 
-            _state.Options       = options;
             _state.OptionsLoaded = options.Count;
 
-            // Append the replies to the shared scroll buffer as clickable lines — they flow with
-            // the conversation text (and scroll with it) instead of floating over the log. The
-            // block before this one already ends in a blank line, separating the NPC's replica
-            // from the group of replies.
-            if (options.Count > 0)
+            // If no MM had anything to say, there is nothing to choose — end the conversation.
+            // (When options exist, they are committed on CONTINUE, not here.)
+            if (options.Count == 0)
             {
-                _optionsBlock = new NarrationBlock(
-                    Type: NarrationBlockType.DialogueOptions,
-                    ModusMentis: null!,
-                    Text: "",
-                    Keywords: null,
-                    Actions: null,
-                    DialogueOptions: options
-                        .Select(o => new DialogueOptionItem(o.Skill.DisplayName, o.Skill.Level, o.ReplicaText))
-                        .ToList());
-                Append(_optionsBlock);
+                _preview.Reset();
+                _state.IsLoadingOptions = false;
+                EndConversation();
+                return;
             }
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"DialogueTreeController: Option generation failed: {ex.Message}");
+            _preview.Reset();
             _state.Options = new List<PlayerReplicaOption>();
         }
-        finally
-        {
-            _state.IsLoadingOptions = false;
-        }
 
-        // If no MM had anything to say, there is nothing to choose — end the conversation.
-        if (_state.Options.Count == 0) EndConversation();
+        _state.IsLoadingOptions = false;
     }
 
     // ── Phase: player selects a reply ─────────────────────────────────────────

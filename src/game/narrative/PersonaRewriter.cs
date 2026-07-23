@@ -75,9 +75,16 @@ public class PersonaRewriter
         string? previousReplica = null,
         string? innerThought = null,
         string? speakerName = null,
+        Preview.ILlmPreviewSink? preview = null,
         CancellationToken ct = default)
     {
-        if (PlaygroundMode.IsActive) return neutralText;
+        if (PlaygroundMode.IsActive)
+        {
+            // No LLM call in playground: hand the neutral placeholder straight to the preview (so the
+            // box appears and is immediately continue-able) and return it unchanged.
+            preview?.OnComplete(neutralText);
+            return neutralText;
+        }
 
         string prompt = kind == NarrationKind.DialogueReplica
             ? BuildDialoguePrompt(neutralText, addressee, dialogueContext, previousReplica, speakerName,
@@ -86,11 +93,24 @@ public class PersonaRewriter
                           FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee),
                           innerThought);
         string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateRewriteSchema(forcedPrefix: forcedPrefix));
-        string json = await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
+
+        // When a preview sink is supplied, stream the tokens through it; otherwise keep the one-shot
+        // path so the Critic / non-preview callers are byte-for-byte unchanged.
+        string json = preview != null
+            ? await _llm.GenerateConstrainedStringStreamingAsync(
+                  slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory,
+                  onTokenStreamed: (token, _) => preview.OnToken(token))
+            : await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
 
         string text = ParseField(json, "text");
-        if (string.IsNullOrWhiteSpace(text)) return neutralText;
-        return await TextSanitizationPipeline.SanitizeAsync(TextTruncationUtils.TrimToLastSentence(text));
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            preview?.OnComplete(neutralText);
+            return neutralText;
+        }
+        string sanitized = await TextSanitizationPipeline.SanitizeAsync(TextTruncationUtils.TrimToLastSentence(text));
+        preview?.OnComplete(sanitized);
+        return sanitized;
     }
 
     /// <summary>

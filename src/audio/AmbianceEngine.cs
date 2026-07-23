@@ -1984,6 +1984,12 @@ public sealed class AmbianceEngine : IDisposable
         Stop();
         _cts.Dispose();
         _uiSfx.Dispose();
-        try { _device?.Dispose(); } catch { /* ignore */ }
+        // Null the device BEFORE disposing it: an in-flight SFX task (PlayNote sleeps between its
+        // NoteOn and NoteOff) would otherwise call SendEvent on a disposed native device and crash the
+        // process with an AccessViolationException that C# try/catch cannot intercept. Nulling first
+        // makes those late note-offs bail on the `_device == null` guard in the send helpers.
+        var device = _device;
+        _device = null;
+        try { device?.Dispose(); } catch { /* ignore */ }
     }
 }

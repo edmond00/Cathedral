@@ -349,7 +349,14 @@ public sealed class CliDriver
 
         if (_game.CliNarration is { } n)
         {
-            if (n.CliPopup() is { } popup)
+            var pv = n.CliPreview();
+            if (pv.Active)
+            {
+                CliMode.Emit($"preview [{pv.Title}]: {pv.Text}");
+                if (pv.Complete) { CliMode.Emit("  click continue  (preview)"); any = true; }
+                else CliMode.Emit("  (generating…)");
+            }
+            else if (n.CliPopup() is { } popup)
             {
                 CliMode.Emit($"popup ({popup.Kind}):");
                 for (int i = 0; i < popup.Labels.Count; i++)
@@ -378,6 +385,13 @@ public sealed class CliDriver
 
         if (_game.CliDialogue?.Controller is { } dc)
         {
+            var dpv = dc.CliPreview();
+            if (dpv.Active)
+            {
+                CliMode.Emit($"preview [{dpv.Title}]: {dpv.Text}");
+                if (dpv.Complete) { CliMode.Emit("  click continue  (preview)"); any = true; }
+                else CliMode.Emit("  (generating…)");
+            }
             foreach (var (i, skill, text) in dc.CliOptions())
             {
                 CliMode.Emit($"  click option {i}  [{skill}] \"{text}\"");
@@ -478,9 +492,22 @@ public sealed class CliDriver
                     return;
                 }
                 var dc = _game.CliDialogue?.Controller;
-                if (dc != null) { Report(dc.CliDiceContinue(), "confirmed dice"); return; }
+                if (dc != null)
+                {
+                    // Preview box CONTINUE takes precedence over the dice overlay (they never co-occur).
+                    if (dc.CliPreview().Active) { Report(dc.CliPreviewContinue(), "preview continue"); return; }
+                    Report(dc.CliDiceContinue(), "confirmed dice");
+                    return;
+                }
                 var n = _game.CliNarration;
                 if (n == null) { CliMode.Emit("error: not in narration"); return; }
+                var preview = n.CliPreviewContinue();
+                if (preview.Present)
+                {
+                    _game.CliClickCell(preview.X, preview.Y);
+                    CliMode.Emit("ok: preview continue");
+                    return;
+                }
                 var dice = n.CliDiceContinue();
                 if (!dice.Present) { CliMode.Emit("error: no dice continue button on screen"); return; }
                 _game.CliClickCell(dice.X, dice.Y);

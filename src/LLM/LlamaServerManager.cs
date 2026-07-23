@@ -655,6 +655,163 @@ public class LlamaServerManager : IDisposable
     }
 
     /// <summary>
+    /// Streaming twin of <see cref="GenerateConstrainedStringAsync"/>: same constrained (GBNF) request,
+    /// but sent with <c>stream=true</c> so each token delta is delivered to <paramref name="onTokenStreamed"/>
+    /// (token, slotId) as it arrives. Returns the full assembled string, so the return contract matches the
+    /// one-shot variant — callers that ignore the callback behave identically.
+    ///
+    /// Used by <see cref="Cathedral.Game.Narrative.PersonaRewriter"/> to drive the live generation preview.
+    /// Kept separate from the one-shot method so the Critic / constrained-choice paths stay non-streaming.
+    /// Unlike the (unused) <see cref="ContinueRequestAsync"/>, this reads the response with
+    /// <see cref="HttpCompletionOption.ResponseHeadersRead"/> so tokens surface in real time rather than
+    /// after the whole body has buffered.
+    /// </summary>
+    public async Task<string> GenerateConstrainedStringStreamingAsync(
+        int slotId,
+        string userMessage,
+        string? gbnfGrammar,
+        int maxTokens = 20,
+        bool skipReset = false,
+        Action<string, int>? onTokenStreamed = null)
+    {
+        if (Cathedral.Game.PlaygroundMode.IsActive)
+            return string.Empty;
+
+        if (!_instances.TryGetValue(slotId, out var instance))
+            throw new ArgumentException($"Instance with slot ID {slotId} not found.");
+
+        if (instance.IsActive)
+            throw new InvalidOperationException($"Instance {slotId} is currently processing another request.");
+
+        instance.IsActive = true;
+        instance.AddUserMessage(userMessage);
+        instance.RequestCount++;
+
+        var startTime = DateTime.Now;
+        var timestamp = startTime.ToString("HH-mm-ss-fff");
+
+        string? requestLogDir = null;
+        if (_sessionLogDir != null)
+        {
+            requestLogDir = Path.Combine(_sessionLogDir, $"slot_{slotId}", $"request_{instance.RequestCount:D3}_{timestamp}");
+            Directory.CreateDirectory(requestLogDir);
+            await File.WriteAllTextAsync(Path.Combine(requestLogDir, "user_message.txt"), userMessage);
+        }
+
+        try
+        {
+            var requestData = new Dictionary<string, object>
+            {
+                ["model"] = "local",
+                ["messages"] = instance.GetMessages(),
+                ["max_tokens"] = maxTokens,
+                ["stream"] = true,
+                ["cache_prompt"] = true,
+                ["slot_id"] = slotId,
+                ["top_k"] = Config.LLM.TopK,
+                ["temperature"] = Config.LLM.Temperature,
+                ["top_p"] = Config.LLM.TopP,
+            };
+
+            // No grammar → unconstrained free-text generation. llama.cpp treats an empty grammar as
+            // constraining to the empty string, so omit the key entirely (mirrors the one-shot variant).
+            if (!string.IsNullOrEmpty(gbnfGrammar))
+                requestData["grammar"] = gbnfGrammar;
+
+            if (requestLogDir != null)
+            {
+                var messagesArray = (object[])requestData["messages"];
+                var contextJson = JsonSerializer.Serialize(messagesArray, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "full_context.json"), contextJson);
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "gbnf_constraints.txt"), gbnfGrammar ?? "(none — free text)");
+            }
+
+            // Stream: read response headers first so token deltas surface as they arrive.
+            using var request = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
+            {
+                Content = JsonContent.Create(requestData)
+            };
+            var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"GenerateConstrainedStringStreamingAsync failed: {response.StatusCode} - {errorContent}");
+            }
+
+            var sb = new StringBuilder();
+            int promptTokens = 0, completionTokens = 0;
+
+            using (var stream = await response.Content.ReadAsStreamAsync())
+            using (var reader = new StreamReader(stream))
+            {
+                string? line;
+                while ((line = await reader.ReadLineAsync()) != null)
+                {
+                    if (!line.StartsWith("data: ")) continue;
+                    var jsonData = line.Substring(6);
+                    if (jsonData == "[DONE]") break;
+
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(jsonData);
+                        var root = doc.RootElement;
+
+                        if (root.TryGetProperty("usage", out var usageEl))
+                        {
+                            if (usageEl.TryGetProperty("prompt_tokens", out var ptEl)) promptTokens = ptEl.GetInt32();
+                            if (usageEl.TryGetProperty("completion_tokens", out var ctEl)) completionTokens = ctEl.GetInt32();
+                        }
+
+                        if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+                        {
+                            var choice = choices[0];
+                            if (choice.TryGetProperty("delta", out var delta) &&
+                                delta.TryGetProperty("content", out var content))
+                            {
+                                var token = content.GetString();
+                                if (!string.IsNullOrEmpty(token))
+                                {
+                                    sb.Append(token);
+                                    onTokenStreamed?.Invoke(token, slotId);
+                                }
+                            }
+                        }
+                    }
+                    catch (JsonException)
+                    {
+                        continue; // Skip malformed chunks
+                    }
+                }
+            }
+
+            var generated = sb.ToString().Trim();
+
+            if (requestLogDir != null)
+            {
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "llm_response.txt"), generated);
+                var timingText = $"Duration: {(DateTime.Now - startTime).TotalMilliseconds:F0}ms (streaming)";
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "timing.txt"), timingText);
+
+                int reportedPrompt = promptTokens > 0 ? promptTokens : instance.EstimateConversationTokens();
+                bool isEstimate = promptTokens == 0;
+                int slotCtx = _contextSize;
+                double fillPct = slotCtx > 0 ? reportedPrompt * 100.0 / slotCtx : 0;
+                var ctxText = $"Prompt Tokens:     {reportedPrompt}{(isEstimate ? " (estimated)" : "")}\nCompletion Tokens: {completionTokens}\nContext Size:      {slotCtx} (slot)\nContext Fill:      {fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}%\n";
+                await File.WriteAllTextAsync(Path.Combine(requestLogDir, "context_usage.txt"), ctxText);
+            }
+
+            instance.AddAssistantResponse(generated);
+            return generated;
+        }
+        finally
+        {
+            instance.IsActive = false;
+            if (!skipReset)
+                try { ResetInstance(slotId); } catch { /* Ignore reset errors */ }
+        }
+    }
+
+    /// <summary>
     /// Continue a conversation with an LLM instance, optionally using GBNF grammar constraints
     /// </summary>
     /// <param name="slotId">The instance slot ID</param>

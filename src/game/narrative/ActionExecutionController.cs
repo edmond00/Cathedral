@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Cathedral.Game;
+using Cathedral.Game.Narrative.Preview;
 
 namespace Cathedral.Game.Narrative;
 
@@ -305,6 +306,98 @@ public class ActionExecutionController
             FightTriggered = fightTriggered,
             FightEnemy = fightEnemy,
         };
+    }
+
+    /// <summary>
+    /// PHASE 2 (post-dice variant): compute ONLY the actual outcome once the final (possibly
+    /// humor-modified) success/failure is known, streaming its narration into <paramref name="preview"/>
+    /// like every other text. No game-state side-effects are applied here; the caller commits them on
+    /// the preview's CONTINUE. Item consumption is decided regardless of success (it does not depend on
+    /// the outcome); the failure branch also samples the wound and resolves witness/threat consequences.
+    /// </summary>
+    public async Task<ActionExecutionResult> PrepareSingleOutcomeAsync(
+        ActionEvaluationResult evalResult, bool succeeded, ILlmPreviewSink? preview = null,
+        CancellationToken cancellationToken = default)
+    {
+        var action = evalResult.Action;
+        var actionModusMentis = evalResult.ActionModusMentis;
+        var thinkingModusMentisUsed = evalResult.ThinkingModusMentis;
+        double difficultyScore = evalResult.DifficultyScore;
+        int difficultyLevel = evalResult.DifficultyLevel;
+        var currentNode = evalResult.CurrentNode;
+
+        // ── Item consumption decision (independent of the dice outcome) ──
+        bool itemConsumed = false;
+        if (action.CombinedItem != null)
+        {
+            string itemContext = $"{action.CombinedItem.DisplayName} ({action.CombinedItem.Description})";
+            var goalDesc = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
+            var consumptionCtx = new CriticContext(currentNode, _worldContext, _locationId, goalDesc);
+            var consumptionTree = CriticTrees.BuildItemConsumptionTree(action.ActionText, itemContext, consumptionCtx);
+            var consumptionResult = await _criticEvaluator.EvaluateTreeAsync(consumptionTree);
+            itemConsumed = CriticTrees.IsItemConsumedFromResult(consumptionResult);
+        }
+
+        if (succeeded)
+        {
+            OutcomeBase successOutcome = action.PreselectedOutcome;
+            string narration = await _outcomeNarrator.NarrateOutcomeAsync(
+                action, actionModusMentis, successOutcome, true, difficultyScore, ActingMember,
+                cancellationToken, preview: preview);
+            return new ActionExecutionResult
+            {
+                Action = action,
+                ActionModusMentis = actionModusMentis,
+                ThinkingModusMentis = thinkingModusMentisUsed,
+                Difficulty = difficultyScore,
+                DifficultyLevel = difficultyLevel,
+                Succeeded = true,
+                ActualOutcome = successOutcome,
+                LlmDecidedReports = System.Array.Empty<OutcomeReport>(),
+                Narration = narration,
+                FailureWound = null,
+                IsPlausibilityFailure = false,
+                ItemConsumed = itemConsumed,
+            };
+        }
+        else
+        {
+            var (failureWound, witnessDetected, detectedWitness, fightTriggered, fightEnemy) =
+                ResolveFailureConsequences(evalResult);
+            OutcomeBase failureOutcome = new WoundOutcome(failureWound);
+
+            var llmDecidedReports = new List<OutcomeReport>();
+            if (failureWound != null)
+                llmDecidedReports.Add(new WoundInflictionOutcome(failureWound));
+
+            string? failureHint = failureWound != null
+                ? $"The character suffered a wound: {failureWound.WoundName} to their {WoundLocationLabel(failureWound)}"
+                : null;
+
+            string narration = await _outcomeNarrator.NarrateOutcomeAsync(
+                action, actionModusMentis, failureOutcome, false, difficultyScore, ActingMember,
+                cancellationToken, failureHint: failureHint, preview: preview);
+
+            return new ActionExecutionResult
+            {
+                Action = action,
+                ActionModusMentis = actionModusMentis,
+                ThinkingModusMentis = thinkingModusMentisUsed,
+                Difficulty = difficultyScore,
+                DifficultyLevel = difficultyLevel,
+                Succeeded = false,
+                ActualOutcome = failureOutcome,
+                LlmDecidedReports = llmDecidedReports,
+                Narration = narration,
+                FailureWound = failureWound,
+                IsPlausibilityFailure = false,
+                WitnessDetected = witnessDetected,
+                DetectedWitness = detectedWitness,
+                FightTriggered = fightTriggered,
+                FightEnemy = fightEnemy,
+                ItemConsumed = itemConsumed,
+            };
+        }
     }
 
     /// <summary>

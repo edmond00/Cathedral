@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cathedral.Game.Dialogue.Tree;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Preview;
 using Cathedral.LLM;
 
 namespace Cathedral.Game.Dialogue.Runtime;
@@ -49,16 +50,23 @@ public class DialogueOptionGenerator
         DialogueContext  ctx,
         string           subject,
         string?          previousNpcReplica = null,
+        LlmPreviewSession? preview = null,
+        Action<List<PlayerReplicaOption>>? commit = null,
         CancellationToken ct = default)
     {
         var results = new List<PlayerReplicaOption>();
-        if (node.Options.Count == 0) return results;
+        if (node.Options.Count == 0) { preview?.Reset(); return results; }
 
         var speaking = pc.GetSpeakingModiMentis();
-        if (speaking.Count == 0) return results;
+        if (speaking.Count == 0) { preview?.Reset(); return results; }
 
         int n = Math.Min(SpeechFluency(pc), speaking.Count);
         var sampled = speaking.OrderBy(_ => _rng.Next()).Take(n).ToList();
+        if (sampled.Count == 0) { preview?.Reset(); return results; }
+
+        // All replies accumulate in one box as "- "-prefixed lines; the title switches to each reply's
+        // modus mentis as it streams, and CONTINUE unlocks only once every reply is done.
+        var part = preview?.BeginAccumulatingPart(PreviewTitles.For(sampled[0]), " - ");
 
         // Each option is offered as the speech act it would be — "ask who they are" — from its intent,
         // never its neutral replica. Intents are authored as imperative speech acts ("greet them
@@ -79,6 +87,9 @@ public class DialogueOptionGenerator
                 var opt = (await _selector.SelectAsync(slot, mm, node.Options, Action, prompt, ct: ct)).Item;
                 if (opt == null) continue;                            // only if the option list was empty
 
+                // Switch the box title to this reply's MM and start its streamed segment.
+                var sink = part?.NextSegment(PreviewTitles.For(mm));
+
                 // Rewrite the chosen option's replica in the MM's voice (fresh slot — the grading
                 // requests reset themselves so no single option's evaluation colours the rewrite).
                 string expanded  = DialogueTemplate.Expand(opt.Replica, ctx);
@@ -88,7 +99,7 @@ public class DialogueOptionGenerator
                     mm.PersonaReminder2, addressee: addressee, keepHistory: true,
                     styleInstruction: mm.StyleInstruction, dialogueContext: subject,
                     previousReplica: previousNpcReplica,
-                    speakerName: ctx.Names.Placeholder("you"), ct: ct);
+                    speakerName: ctx.Names.Placeholder("you"), preview: sink, ct: ct);
                 text = ctx.Names.ToReal(text.Trim().Trim('"'));
 
                 results.Add(new PlayerReplicaOption(mm, opt, text));
@@ -97,6 +108,23 @@ public class DialogueOptionGenerator
             {
                 Console.Error.WriteLine($"DialogueOptionGenerator: option gen failed for {mm.DisplayName}: {ex.Message}");
             }
+        }
+
+        // Deferred commit: the reply list is revealed (and becomes selectable) on CONTINUE.
+        if (results.Count == 0)
+        {
+            preview?.Reset();
+        }
+        else if (preview != null && part != null)
+        {
+            if (commit != null) part.AttachCommit(() => commit(results));
+            part.MarkComplete();
+            preview.EndProduction();
+        }
+        else
+        {
+            commit?.Invoke(results);
+            preview?.Reset();
         }
 
         return results;
