@@ -60,6 +60,9 @@ public class NarrativeController
     // ── Scene system (new backend, coexists with NarrationGraph) ──
     private Cathedral.Game.Scene.Scene? _scene;
     private PoV? _pov;
+
+    // Period-aware placement of the scene's NPCs into graph nodes; null on the pure-graph path.
+    private Cathedral.Game.Scene.SceneNpcPlacement? _npcPlacement;
     
     // Pending fight/dialogue transitions (set by OnDiceRollContinue, consumed by game controller)
     private FightOutcome? _pendingFightOutcome = null;
@@ -246,7 +249,7 @@ public class NarrativeController
 
         _graph       = graphFactory.GenerateGraph(locationId);
         _currentNode = _graph.EntryNode;
-        Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}' ({_graph.Npcs.Count} NPCs)");
+        Console.WriteLine($"NarrativeController: Generated graph for location {locationId} with entry node '{_currentNode.NodeId}' ({_graph.AllNodes.Count} nodes)");
         LlmMonitorDebugManager.Show();
         
         // Initialize controllers
@@ -284,6 +287,7 @@ public class NarrativeController
                ambianceEngine)
     {
         _scene = scene;
+        _npcPlacement = new Cathedral.Game.Scene.SceneNpcPlacement(scene, _graph.AllNodes.Values);
 
         // Build initial PoV from the first area
         var firstArea = scene.AllAreas.FirstOrDefault();
@@ -380,7 +384,7 @@ public class NarrativeController
 
         // Place NPCs into nodes based on the supplied time period, or a random one when none is given.
         var period = forcedPeriod ?? TimePeriodExtensions.Random(_diceRandom);
-        _graph.TimeUpdate(period);
+        ApplyTimePeriod(period);
         Console.WriteLine($"NarrativeController: Time period is {period}");
 
         // Begin recording a routine for scene-backed Exploration sessions (other phases opt out).
@@ -405,14 +409,10 @@ public class NarrativeController
     {
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear(); // New node — everyone starts with a fresh counter
-        // Re-apply the current time period so new node gets its NPCs placed
-        _graph.TimeUpdate(_graph.CurrentPeriod);
-
-        // Scene-backed nodes bake their verb lists at graph-build time, but verb applicability is
-        // state-dependent (affinity above all: "introduce myself" is for strangers only, and a
-        // dialogue may just have changed that). Re-expand them so the goals offered on the next
-        // observation match the world as it now stands.
-        RefreshSceneVerbs();
+        // Re-apply the current time period so this segment's nodes get their NPCs (re)placed and
+        // their state-dependent verbs re-expanded (affinity above all: "introduce myself" is for
+        // strangers only, and a dialogue may just have changed that).
+        ApplyTimePeriod(_graph.CurrentPeriod);
 
         // Just set loading state and start generation
         _narrationState.IsLoadingObservations = true;
@@ -428,11 +428,25 @@ public class NarrativeController
     }
 
     /// <summary>
+    /// Applies a time period to the scene-backed graph: records it on the graph, repositions the
+    /// scene's NPCs into the nodes where their schedule places them for that period (via
+    /// <see cref="SceneNpcPlacement"/>), then re-expands every observation's verbs against the now-
+    /// current state. NPC placement and verb gating therefore always share one period — the source
+    /// of the earlier "NPCs at the wrong place / no actions offered" bug was letting them diverge.
+    /// </summary>
+    private void ApplyTimePeriod(TimePeriod period)
+    {
+        _graph.SetCurrentPeriod(period);
+        _npcPlacement?.PlaceForPeriod(period);
+        RefreshSceneVerbs();
+    }
+
+    /// <summary>
     /// Re-expands the verb SubOutcomes of every scene-backed observation (NPCs, PoIs + their items,
     /// spots — everything <see cref="IVerbRefreshable"/>; areas keep their static transition verb)
-    /// against the current scene state. Called at each narration-segment start and before each
-    /// thinking request, so the offered goals always reflect the world as it stands. No-op for the
-    /// legacy graph system, whose <see cref="NpcObservationObject"/>s are rebuilt by TimeUpdate.
+    /// against the current scene state, at the graph's current period. Called on each period change
+    /// (through <see cref="ApplyTimePeriod"/>) and before each thinking request, so the offered
+    /// goals always reflect the world — and the NPCs actually present — as they now stand.
     /// </summary>
     private void RefreshSceneVerbs()
     {
@@ -441,6 +455,9 @@ public class NarrativeController
         foreach (var node in _graph.AllNodes.Values)
         {
             if (node is not SyntheticNarrationNode { Area: { } area }) continue;
+            // Gate at the live period. NPCs were placed into this node by SceneNpcPlacement using
+            // the same Scene.GetNpcsAt query the verb gates use, so a present NPC's verbs always
+            // survive here, and an absent one simply has no observation object to refresh.
             var pov = new PoV(area, _graph.CurrentPeriod);
             foreach (var outcome in node.PossibleOutcomes)
                 if (outcome is IVerbRefreshable refreshable)
@@ -957,6 +974,7 @@ public class NarrativeController
         var newFactory = new Cathedral.Game.Scene.SceneSyntheticGraphFactory(newScene, _locationId, _protagonist);
         _graph         = newFactory.GenerateGraph(_locationId);
         _currentNode   = _graph.EntryNode;
+        _npcPlacement  = new Cathedral.Game.Scene.SceneNpcPlacement(newScene, _graph.AllNodes.Values);
 
         Console.WriteLine($"NarrativeController: scene replaced with reminescence '{newScene.CurrentReminescenceId}'");
     }
@@ -2832,7 +2850,6 @@ public class NarrativeController
                 {
                     var corpse = enemy.GenerateCorpse(_pov.Where);
                     _scene.AddSpotToArea(_pov.Where, corpse);
-                    _graph.NotifyNpcDead(enemy);
                     Console.WriteLine($"NarrativeController: Corpse spawned for {enemy.DisplayName}");
 
                     if (enemy == npc)
@@ -2846,6 +2863,11 @@ public class NarrativeController
                 _pov.Focus = mainCorpse;
                 SceneDebugManager.UpdatePoV(_pov);
             }
+
+            // Drop the slain NPCs from their nodes immediately: re-placing for the current period
+            // removes anyone no longer alive (Scene.GetNpcsAt filters the dead), so a defeated NPC
+            // can't still be observed standing where their corpse now lies.
+            _npcPlacement?.PlaceForPeriod(_graph.CurrentPeriod);
         }
         else if (result == Fight.FightAdapterResult.Runaway)
         {

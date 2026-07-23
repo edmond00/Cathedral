@@ -327,6 +327,19 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
     }
 
     /// <summary>
+    /// Placement constructor: builds the object without pre-expanded verbs. Used by
+    /// <see cref="SceneNpcPlacement"/>, which owns one instance per NPC and moves it between area
+    /// nodes each period; the verb SubOutcomes are then filled in by <see cref="RefreshVerbs"/>
+    /// (which the controller runs against the current period before observation/thinking). Seeds
+    /// with the IGNORE sub-outcome only so the object is never verb-less before its first refresh.
+    /// </summary>
+    public SyntheticNpcObservationObject(SceneNpc npc)
+    {
+        _npc        = npc;
+        SubOutcomes = new List<ConcreteOutcome> { SceneViewAdapter.MakeIgnoreSubOutcome(npc) };
+    }
+
+    /// <summary>
     /// <inheritdoc cref="IVerbRefreshable"/>
     /// For NPCs the load-bearing gate is affinity — "meet …, to introduce myself" is only for
     /// strangers, strengthen-relationship only for acquaintances — so without this a dialogue's

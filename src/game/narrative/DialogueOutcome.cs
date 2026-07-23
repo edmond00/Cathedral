@@ -6,8 +6,8 @@ namespace Cathedral.Game.Narrative;
 
 /// <summary>
 /// Outcome that triggers a dialogue with an NPC using a specific dialogue tree.
-/// When applied, the narrative controller pauses and enters dialogue mode.
-/// Extends ConcreteOutcome so it can appear as a sub-outcome inside NpcObservationObject.
+/// When applied, the narrative controller pauses and enters dialogue mode. Also used as the
+/// pending-transition payload the controller hands to dialogue mode when a verb starts a dialogue.
 /// </summary>
 public class DialogueOutcome : ConcreteOutcome
 {
@@ -29,9 +29,8 @@ public class DialogueOutcome : ConcreteOutcome
     public DialogueTree? Tree { get; init; }
 
     /// <summary>
-    /// Contextual label substituted for the proper name in the LLM-facing goal phrase.
-    /// Null until stamped by <see cref="Npc.NpcObservationObject"/>; the human-facing
-    /// <see cref="DisplayName"/> always keeps the real name.
+    /// Contextual label substituted for the proper name in the LLM-facing goal phrase; the
+    /// human-facing <see cref="DisplayName"/> always keeps the real name.
     /// </summary>
     public string? ContextLabel { get; set; }
 

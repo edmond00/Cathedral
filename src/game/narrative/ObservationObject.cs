@@ -64,11 +64,6 @@ public abstract class ObservationObject : ConcreteOutcome, IObservation
     /// </summary>
     public abstract string GenerateNeutralDescription(int locationId = 0);
 
-    /// <summary>
-    /// Optional NPC encounter slots associated with this observation.
-    /// </summary>
-    public virtual List<NpcEncounterSlot> AssociatedEncounters => new();
-
     // ── ConcreteOutcome overrides ─────────────────────────────────────────────
 
     /// <inheritdoc/>

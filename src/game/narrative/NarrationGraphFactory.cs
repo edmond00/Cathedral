@@ -10,14 +10,11 @@ namespace Cathedral.Game.Narrative;
 /// Abstract base for procedural narration graph generation.
 /// Each location gets a unique <see cref="NarrationGraph"/> seeded by locationId.
 ///
-/// Subclass responsibilities:
+/// Subclass responsibility:
 ///   <see cref="BuildNodes"/>  — build the NarrationNode network and return the entry node.
-///   <see cref="BuildNpcs"/>   — (optional override) produce GraphNpc list with schedules.
 ///
-/// The base <see cref="BuildNpcs"/> reads <c>PossibleEncounters</c> from every node and
-/// <c>AssociatedEncounters</c> from every ObservationObject, rolls RNG for graph inclusion,
-/// and assigns a simple <see cref="NpcSchedule.Always"/> schedule by default.
-/// Override in a subclass to add time-of-day movement.
+/// NPC population is not the graph factory's concern: the live scene system places its NPCs into
+/// nodes per time period through <c>SceneNpcPlacement</c>.
 /// </summary>
 public abstract class NarrationGraphFactory
 {
@@ -39,8 +36,7 @@ public abstract class NarrationGraphFactory
         var rng      = CreateSeededRandom(locationId);
         var entry    = BuildNodes(rng, locationId);
         var allNodes = CollectAllNodes(entry);
-        var npcs     = BuildNpcs(rng, allNodes, locationId);
-        var graph    = new NarrationGraph(entry, npcs, allNodes);
+        var graph    = new NarrationGraph(entry, allNodes);
         WriteGraphToLog(graph, locationId);
         return graph;
     }
@@ -52,37 +48,6 @@ public abstract class NarrationGraphFactory
     /// and return the entry node.  PossibleOutcomes must be populated before returning.
     /// </summary>
     protected abstract NarrationNode BuildNodes(Random rng, int locationId);
-
-    /// <summary>
-    /// Build the GraphNpc list for this graph.
-    /// The default implementation reads <c>PossibleEncounters</c> on every node and
-    /// <c>AssociatedEncounters</c> on every ObservationObject, rolls RNG against
-    /// SpawnChance (now treated as graph inclusion probability), spawns the NPC once,
-    /// and assigns <see cref="NpcSchedule.Always"/> at that node.
-    ///
-    /// Override to apply richer per-archetype schedules or roaming patterns.
-    /// </summary>
-    protected virtual List<GraphNpc> BuildNpcs(
-        Random rng,
-        IReadOnlyDictionary<string, NarrationNode> allNodes,
-        int locationId)
-    {
-        var npcs = new List<GraphNpc>();
-
-        foreach (var (nodeId, node) in allNodes)
-        {
-            // Node-level encounter slots
-            foreach (var slot in node.PossibleEncounters)
-                TryAddNpc(npcs, slot, nodeId, rng, node.ContextDescription);
-
-            // ObservationObject associated encounter slots
-            foreach (var obs in node.PossibleOutcomes.OfType<ObservationObject>())
-                foreach (var slot in obs.AssociatedEncounters)
-                    TryAddNpc(npcs, slot, nodeId, rng, node.ContextDescription);
-        }
-
-        return npcs;
-    }
 
     // ── Shared helpers ────────────────────────────────────────────────────────
 
@@ -97,22 +62,6 @@ public abstract class NarrationGraphFactory
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
-
-    private static void TryAddNpc(
-        List<GraphNpc> npcs,
-        NpcEncounterSlot slot,
-        string nodeId,
-        Random rng,
-        string nodeContext)
-    {
-        for (int i = 0; i < slot.MaxCount; i++)
-        {
-            if (rng.NextDouble() > slot.SpawnChance) continue;  // graph inclusion roll
-            var entity   = slot.Archetype.Spawn(rng, nodeContext);
-            var schedule = NpcSchedule.Always(nodeId);
-            npcs.Add(new GraphNpc(entity, schedule));
-        }
-    }
 
     protected virtual IReadOnlyDictionary<string, NarrationNode> CollectAllNodes(NarrationNode entry)
     {
@@ -186,24 +135,8 @@ public abstract class NarrationGraphFactory
                 writer.WriteLine();
             }
 
-            // NPCs
-            writer.WriteLine($"=== NPCs ({graph.Npcs.Count}) ===");
-            foreach (var gnpc in graph.Npcs)
-            {
-                writer.WriteLine($"NPC: {gnpc.Entity.DisplayName}  [{gnpc.Entity.Archetype.ArchetypeId}]");
-                writer.WriteLine($"  Persistent: {gnpc.Entity.IsPersistent}  CanSpeak: {gnpc.Entity.CanSpeak}");
-                writer.WriteLine($"  Schedule:");
-                foreach (TimePeriod p in Enum.GetValues(typeof(TimePeriod)))
-                {
-                    var nodeId = gnpc.Schedule.GetNodeId(p);
-                    writer.WriteLine($"    {p,-10} → {nodeId ?? "(absent)"}");
-                }
-                writer.WriteLine();
-            }
-
             writer.WriteLine($"=== Summary ===");
             writer.WriteLine($"Total nodes: {nodeCount}");
-            writer.WriteLine($"Total NPCs:  {graph.Npcs.Count}");
 
             Console.WriteLine($"NarrationGraphFactory: Graph written to {logPath}");
         }

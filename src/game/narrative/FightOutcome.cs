@@ -6,8 +6,8 @@ namespace Cathedral.Game.Narrative;
 /// <summary>
 /// Outcome that triggers combat with an NPC.
 /// Can be a positive outcome (player chose to attack) or a failure outcome (NPC attacks player).
-/// When applied, the narrative controller pauses and enters fight mode.
-/// Extends ConcreteOutcome so it can appear as a sub-outcome inside NpcObservationObject.
+/// When applied, the narrative controller pauses and enters fight mode. Also used as the
+/// pending-transition payload the controller hands to fight mode when a verb starts a fight.
 /// </summary>
 public class FightOutcome : ConcreteOutcome
 {
@@ -25,9 +25,8 @@ public class FightOutcome : ConcreteOutcome
     public bool EnemyInitiative { get; init; }
 
     /// <summary>
-    /// Contextual label substituted for the proper name in the LLM-facing goal phrase.
-    /// Null until stamped by <see cref="Npc.NpcObservationObject"/>; the human-facing
-    /// <see cref="DisplayName"/> and <see cref="CombatContext"/> always keep the real name.
+    /// Contextual label substituted for the proper name in the LLM-facing goal phrase; the
+    /// human-facing <see cref="DisplayName"/> and <see cref="CombatContext"/> keep the real name.
     /// </summary>
     public string? ContextLabel { get; set; }
 

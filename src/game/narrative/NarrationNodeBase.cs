@@ -40,13 +40,6 @@ public abstract class NarrationNode : ConcreteOutcome, IObservation
     public abstract bool IsEntryNode { get; }
 
     /// <summary>
-    /// NPC encounter slots for this node. Used by <see cref="NarrationGraphFactory.BuildNpcs"/>
-    /// at graph-construction time to decide whether to include an NPC in this location.
-    /// Empty by default (no encounters).
-    /// </summary>
-    public virtual List<NpcEncounterSlot> PossibleEncounters => new();
-
-    /// <summary>
     /// Returns the items available at this node. Override in subclasses to list items explicitly.
     /// </summary>
     public virtual List<Item> GetItems() => new();

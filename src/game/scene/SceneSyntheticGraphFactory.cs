@@ -97,6 +97,10 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
                 area);
         }
 
+        // PoI/spot verbs do not depend on the time of day (their gates read item/spot state, not
+        // NPC presence), so any period serves for the initial expansion; RefreshSceneVerbs re-gates
+        // them live afterwards. NPC observation objects are NOT baked here — they are placed per
+        // period by SceneNpcPlacement so a scene only ever shows the NPCs actually present now.
         var pov = new PoV(area, TimePeriod.Morning);
 
         // Add points of interest as synthetic ObservationObjects
@@ -127,17 +131,6 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
                     .ToList());
 
             node.PossibleOutcomes.Add(new SyntheticSpotObject(spot, entry));
-        }
-
-        // Add NPCs as ObservationObjects with verb SubOutcomes (attack, slay, meet, etc.)
-        foreach (var npc in _scene.GetNpcsAt(area, pov.When))
-        {
-            var entry = new SceneViewEntry(npc,
-                _scene.Verbs
-                    .SelectMany(v => v.ExpandViews(_scene, pov, npc))
-                    .ToList());
-
-            node.PossibleOutcomes.Add(new SyntheticNpcObservationObject(npc, entry));
         }
 
         return node;
