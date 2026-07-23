@@ -3070,6 +3070,26 @@ public class LocationTravelGameController : IDisposable
         scene.ItemDepletions = state.ItemDepletions;
         ApplyDepletion(scene, Cathedral.Game.Narrative.GameClock.Days);
 
+        // Scene-wide false names: map the protagonist, party companions and every named (human) NPC to
+        // simple, sanitizer-safe placeholder names the LLM sees in prompts; real names are restored on
+        // output (see NameFaking). Non-human NPCs (beasts) are referenced by role clause, not a proper
+        // name, so they are excluded.
+        var namedCharacters = new List<(string Real, bool Male)>
+        {
+            (_protagonist.DisplayName, Cathedral.Game.Npc.NpcLabelResolver.GenderIsMale(_protagonist)),
+        };
+        foreach (var companion in _protagonist.CompanionParty)
+            namedCharacters.Add((companion.DisplayName, Cathedral.Game.Npc.NpcLabelResolver.GenderIsMale(companion)));
+        foreach (var sceneNpc in scene.Npcs)
+            if (sceneNpc.Entity is Cathedral.Game.Npc.NpcEntity human
+                && human.Combatant.AnatomyType == Cathedral.Game.Narrative.AnatomyType.Human)
+                namedCharacters.Add((human.DisplayName, Cathedral.Game.Npc.NpcLabelResolver.GenderIsMale(human.Combatant)));
+
+        var nameRegistry = new Cathedral.Game.Narrative.NameFakingRegistry();
+        nameRegistry.Build(namedCharacters);
+        Cathedral.Game.Narrative.NameFaking.Current = nameRegistry;
+        Cathedral.Game.Narrative.Sanitizer.TextSanitizationPipeline.SetAllowedNames(nameRegistry.FalseNames);
+
         return scene;
     }
 

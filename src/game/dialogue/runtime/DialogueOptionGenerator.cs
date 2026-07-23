@@ -65,8 +65,9 @@ public class DialogueOptionGenerator
         if (sampled.Count == 0) { preview?.Reset(); return results; }
 
         // All replies accumulate in one box as "- "-prefixed lines; the title switches to each reply's
-        // modus mentis as it streams, and CONTINUE unlocks only once every reply is done.
-        var part = preview?.BeginAccumulatingPart(PreviewTitles.For(sampled[0]), " - ");
+        // modus mentis as it streams, and CONTINUE unlocks only once every reply is done. The transform
+        // restores real names (the rewrite streams the simpler placeholder names).
+        var part = preview?.BeginAccumulatingPart(PreviewTitles.For(sampled[0]), " - ", ctx.Names.ToReal);
 
         // Each option is offered as the speech act it would be — "ask who they are" — from its intent,
         // never its neutral replica. Intents are authored as imperative speech acts ("greet them
@@ -84,11 +85,15 @@ public class DialogueOptionGenerator
 
                 // The MM reasons over the replies and the neutral critic maps that to one. Dialogue has
                 // no refusal: no decline option is offered, so the MM always contributes a reply.
-                var opt = (await _selector.SelectAsync(slot, mm, node.Options, Action, prompt, ct: ct)).Item;
+                // The MM's free reasoning streams first (dimmer, parenthesized), switching the box title
+                // to this reply's MM; the critic then maps it to an option.
+                var opt = (await _selector.SelectAsync(
+                    slot, mm, node.Options, Action, prompt,
+                    preview: part?.NextSegment(PreviewTitles.For(mm), isFree: true), ct: ct)).Item;
                 if (opt == null) continue;                            // only if the option list was empty
 
-                // Switch the box title to this reply's MM and start its streamed segment.
-                var sink = part?.NextSegment(PreviewTitles.For(mm));
+                // The chosen reply's rewrite streams next as the normal "- " line.
+                var sink = part?.NextSegment();
 
                 // Rewrite the chosen option's replica in the MM's voice (fresh slot — the grading
                 // requests reset themselves so no single option's evaluation colours the rewrite).

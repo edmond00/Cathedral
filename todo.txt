@@ -1,9 +1,7 @@
 coins during childhood
 humor outcome
-youthness
 all MM functions after childhood reminescence
-loading screen messages
-age
+LLM loading screen messages
 organ name in humor button during dices rolls
 childhood XP
 stats related to multiples organs
@@ -11,3 +9,7 @@ MM max level
 item description written 2 times
 overall MM properties fixs
 overall beast fixs
+2 same keywords on observation text, click the second, interact with object related to the first
+"John" in free reasoning thought preview
+too much dices during second dialogue with reeve (3 instead of 1 expected)
+request work to reeve -> use body humor to pass dice roll check -> reeve still refuse to give work

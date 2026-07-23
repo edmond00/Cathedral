@@ -44,6 +44,18 @@ public static class TextSanitizationPipeline
     // (anachronism) hits apart from WikiNER (real-world name) hits.
     private const string SpotterTag = "FORBIDDEN";
 
+    // Scene "false names" (lowercased) that WikiNER must NOT flag: they are deliberate placeholders the
+    // LLM sees, later swapped back to real in-world names, so the sanitizer should leave them alone.
+    private static HashSet<string> _allowedNames = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Registers the current scene's false names so Layer 2 (WikiNER) leaves them untouched — the
+    /// scene name faking (see <see cref="NameFaking"/>) restores real names after sanitization.
+    /// </summary>
+    public static void SetAllowedNames(IEnumerable<string> names)
+        => _allowedNames = names?.Select(n => n.ToLowerInvariant()).ToHashSet(StringComparer.Ordinal)
+                           ?? new HashSet<string>(StringComparer.Ordinal);
+
     public static bool IsReady => _initialized;
 
     // ── Initialisation ─────────────────────────────────────────────────────────
@@ -200,6 +212,11 @@ public static class TextSanitizationPipeline
                         if (isAnachronism)
                         {
                             anachronisms.Add(token.Value);
+                        }
+                        else if (_allowedNames.Contains(token.Value.ToLowerInvariant()))
+                        {
+                            // A deliberate scene false name (placeholder) — leave it; NameFaking will
+                            // swap it back to the real in-world name after sanitization.
                         }
                         else if (CommonWordLexicon.IsCommonWord(token.Value))
                         {

@@ -420,17 +420,29 @@ public abstract class TerminalPanelUI
         for (int i = 0; i < innerW; i++) bar.Append(barChars[(frame + i) % barChars.Length]);
         _terminal.Text(innerX, bgY + 2, bar.ToString(), Config.Colors.LightGray75, black);
 
-        // Preview text: blank row (bgY+3), then wrapped text from bgY+4 down to just above the button.
+        // Preview text: blank row (bgY+3), then wrapped text from bgY+4 down to a guaranteed blank row
+        // above the button.
         int textStartY = bgY + 4;
         int buttonY    = bgY + bgH - 3; // one row up from the bottom border
-        int textEndY   = buttonY - 2; // leave a blank row above the button
+        int textEndY   = buttonY - 2; // leave (at least) one blank row above the button
         int maxRows    = Math.Max(0, textEndY - textStartY + 1);
 
-        var wrapped = WrapText(state.DisplayText, innerW);
-        // Show the tail so the most recently streamed lines stay visible as the text grows.
-        int first = Math.Max(0, wrapped.Count - maxRows);
-        for (int i = first; i < wrapped.Count; i++)
-            _terminal.Text(innerX, textStartY + (i - first), wrapped[i], Config.NarrativeUI.NarrativeColor, black);
+        // Wrap each segment to the box width, tagging every wrapped line with its kind so free reasoning
+        // renders dimmer. Free reasoning (the persona's unconstrained inner thought) is parenthesized by
+        // the snapshot already.
+        var lines = new List<(string Text, bool IsFree)>();
+        foreach (var seg in state.Segments)
+            foreach (var wl in WrapText(seg.Text, innerW))
+                lines.Add((wl, seg.IsFree));
+
+        // Auto-scroll: drop the oldest lines so the most recently streamed text stays visible; the
+        // clip to maxRows keeps the blank row above the button intact even as the text grows.
+        int first = Math.Max(0, lines.Count - maxRows);
+        for (int i = first; i < lines.Count; i++)
+        {
+            Vector4 col = lines[i].IsFree ? Config.Colors.DarkGray35 : Config.NarrativeUI.NarrativeColor;
+            _terminal.Text(innerX, textStartY + (i - first), lines[i].Text, col, black);
+        }
 
         if (state.Complete)
         {

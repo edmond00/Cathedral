@@ -78,12 +78,24 @@ public class PersonaRewriter
         Preview.ILlmPreviewSink? preview = null,
         CancellationToken ct = default)
     {
+        // Single name boundary: everything that goes INTO the prompt is switched to the scene's simple,
+        // sanitizer-safe false names; everything RETURNED is switched back to the real in-world names.
+        // NameFaking is null-safe and idempotent (already-false text round-trips), so this is safe even
+        // when upstream already faked (NpcLabelResolver) or when no scene table is active.
+        neutralText     = NameFaking.Fake(neutralText);
+        addressee       = addressee       == null ? null : NameFaking.Fake(addressee);
+        dialogueContext = dialogueContext == null ? null : NameFaking.Fake(dialogueContext);
+        previousReplica = previousReplica == null ? null : NameFaking.Fake(previousReplica);
+        speakerName     = speakerName     == null ? null : NameFaking.Fake(speakerName);
+        innerThought    = innerThought    == null ? null : NameFaking.Fake(innerThought);
+
         if (PlaygroundMode.IsActive)
         {
-            // No LLM call in playground: hand the neutral placeholder straight to the preview (so the
-            // box appears and is immediately continue-able) and return it unchanged.
-            preview?.OnComplete(neutralText);
-            return neutralText;
+            // No LLM call in playground: hand the neutral placeholder straight to the preview (real
+            // names restored) and return it.
+            string playgroundText = NameFaking.Real(neutralText);
+            preview?.OnComplete(playgroundText);
+            return playgroundText;
         }
 
         string prompt = kind == NarrationKind.DialogueReplica
@@ -105,12 +117,14 @@ public class PersonaRewriter
         string text = ParseField(json, "text");
         if (string.IsNullOrWhiteSpace(text))
         {
-            preview?.OnComplete(neutralText);
-            return neutralText;
+            string fallback = NameFaking.Real(neutralText);
+            preview?.OnComplete(fallback);
+            return fallback;
         }
         string sanitized = await TextSanitizationPipeline.SanitizeAsync(TextTruncationUtils.TrimToLastSentence(text));
-        preview?.OnComplete(sanitized);
-        return sanitized;
+        string restored  = NameFaking.Real(sanitized);
+        preview?.OnComplete(restored);
+        return restored;
     }
 
     /// <summary>

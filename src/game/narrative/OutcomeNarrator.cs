@@ -133,7 +133,8 @@ public class OutcomeNarrator
         ModusMentis actionModusMentis,
         string plausibilityError,
         PartyMember protagonist,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
     {
         string neutral = NeutralNarration.PlausibilityFailure(ActionDisplay(action));
         if (!string.IsNullOrWhiteSpace(plausibilityError))
@@ -142,7 +143,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
     }
 
     /// <summary>
@@ -154,14 +155,15 @@ public class OutcomeNarrator
         ModusMentis actionModusMentis,
         string reason,
         PartyMember protagonist,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
     {
         string neutral = NeutralNarration.ActionImpossible(ActionDisplay(action), reason);
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
     }
 
     /// <summary>
@@ -172,7 +174,8 @@ public class OutcomeNarrator
         Item item,
         ModusMentis actionModusMentis,
         string criticReason = "",
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
     {
         string neutral = NeutralNarration.ItemCombinationFailure(ActionDisplay(action), item.WithArticle());
         if (!string.IsNullOrWhiteSpace(criticReason))
@@ -181,7 +184,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

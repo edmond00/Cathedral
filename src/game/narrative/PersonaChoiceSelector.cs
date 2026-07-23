@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Cathedral;
+using Cathedral.Game.Narrative.Preview;
 using Cathedral.LLM;
 
 namespace Cathedral.Game.Narrative;
@@ -87,6 +88,7 @@ public class PersonaChoiceSelector
         Func<T, string> describe,
         PersonaChoicePrompt prompt,
         string? declineOption = null,
+        ILlmPreviewSink? preview = null,
         CancellationToken ct = default) where T : class
     {
         if (items == null || items.Count == 0) return new PersonaChoice<T>(null, null);
@@ -123,11 +125,19 @@ public class PersonaChoiceSelector
         var labels = options.Select(o => o.Label).ToList();
 
         // ── Persona stage: free-text reasoning on the Modus Mentis slot ──────────
-        // Reset in and out so the reasoning neither inherits nor leaks slot history.
+        // Reset in and out so the reasoning neither inherits nor leaks slot history. When a preview
+        // sink is supplied, the reasoning streams into the box as a dimmer parenthesized "inner thought"
+        // preceding the rewrite it will hint.
         _llm.ResetInstance(slotId);
-        string reasoning = await _llm.GenerateConstrainedStringAsync(
-            slotId, BuildReasoningPrompt(prompt, labels, evaluator), gbnfGrammar: null, ReasoningMaxTokens, skipReset: false);
+        string reasoningPrompt = BuildReasoningPrompt(prompt, labels, evaluator);
+        string reasoning = preview != null
+            ? await _llm.GenerateConstrainedStringStreamingAsync(
+                  slotId, reasoningPrompt, gbnfGrammar: null, ReasoningMaxTokens, skipReset: false,
+                  onTokenStreamed: (t, _) => preview.OnToken(t))
+            : await _llm.GenerateConstrainedStringAsync(
+                  slotId, reasoningPrompt, gbnfGrammar: null, ReasoningMaxTokens, skipReset: false);
         reasoning = reasoning.Trim();
+        preview?.OnComplete(reasoning);
         if (reasoning.Length == 0) return new PersonaChoice<T>(candidates[0].Item, null);   // no signal → first real option
 
         // ── Neutral stage: the critic maps the want to one lettered option ───────

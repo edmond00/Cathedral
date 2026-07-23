@@ -51,6 +51,7 @@ public class DialogueTreeController
 
     // Streams the player replies being generated into a preview box, gated by CONTINUE.
     private readonly LlmPreviewSession        _preview = new();
+    private string                            _lastPreviewText = ""; // last rendered preview text, to tick on change
 
     private NpcLineNode                       _currentNode;
     private readonly Random                   _rng = new();
@@ -135,7 +136,18 @@ public class DialogueTreeController
     public void Update()
     {
         if (_state.IsDiceRollActive) _dice.Advance();
-        _ui.Render(_state, _dice, _preview.Snapshot(), _state.IsPreviewHovered);
+        var preview = _preview.Snapshot();
+        // Play the hover tick whenever new preview text streams in (typewriter feedback).
+        if (preview.Active && preview.DisplayText != _lastPreviewText)
+        {
+            _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.SmallInteraction);
+            _lastPreviewText = preview.DisplayText;
+        }
+        else if (!preview.Active)
+        {
+            _lastPreviewText = "";
+        }
+        _ui.Render(_state, _dice, preview, _state.IsPreviewHovered);
     }
 
     public void OnMouseMove(int mx, int my)
@@ -354,8 +366,9 @@ public class DialogueTreeController
     {
         _preview.Reset();
         // The NPC's line streams into a preview box titled with the NPC name; on CONTINUE it is added
-        // to the log and the player-reply generation begins (which shows its own preview box).
-        var part = _preview.BeginPart(_npc.DisplayName.ToUpper());
+        // to the log and the player-reply generation begins (which shows its own preview box). The
+        // transform restores real names (the rewrite streams the simpler placeholder names).
+        var part = _preview.BeginPart(_npc.DisplayName.ToUpper(), _context.Names.ToReal);
         try
         {
             string text = await _replicaWriter.WriteAsync(
@@ -535,6 +548,11 @@ public class DialogueTreeController
 
         _ = Task.Run(async () =>
         {
+            _preview.Reset();
+            // The NPC's closing line streams into a preview box titled with the NPC name, just like its
+            // opening lines; XP, outcomes and the conversation end commit on the preview CONTINUE.
+            var part = _preview.BeginPart(_npc.DisplayName.ToUpper(), _context.Names.ToReal);
+
             // The NPC's closing line — one of the node's two authored replicas.
             string neutral = succeeded ? resolution.SuccessReplica : resolution.FailureReplica;
             string reaction;
@@ -542,7 +560,7 @@ public class DialogueTreeController
             {
                 reaction = await _replicaWriter.WriteAsync(
                     _npcSlotId, neutral, _context, addresseeRole: "you", subject: _tree.Description,
-                    previousReplica: _lastPlayerLine);
+                    previousReplica: _lastPlayerLine, preview: part.Sink);
             }
             catch (Exception ex)
             {
@@ -550,34 +568,42 @@ public class DialogueTreeController
                 reaction = succeeded ? $"{_npc.DisplayName} nods." : $"{_npc.DisplayName} doesn't react.";
             }
 
-            // Award +1 XP to every learned speaking MM that voiced a chosen reply on this branch.
-            if (succeeded)
-            {
-                foreach (var mm in _chosenMMs.DistinctBy(m => m.ModusMentisId))
-                {
-                    var learned = _protagonist.GetModusMentisById(mm.ModusMentisId);
-                    if (learned != null) _protagonist.AwardModusMentisXp(learned);
-                }
-            }
-
-            AppendNpcLine(reaction);
             _state.IsLoadingReaction = false;
 
-            // Apply the outcomes gated by success/failure.
-            foreach (var oc in resolution.Outcomes)
+            void CommitResolution()
             {
-                bool fires = oc.Condition == BranchCondition.Either
-                    || (oc.Condition == BranchCondition.Success && succeeded)
-                    || (oc.Condition == BranchCondition.Failure && !succeeded);
-                if (fires) oc.Outcome.Apply(_npc, _partyMemberId);
+                // Award +1 XP to every learned speaking MM that voiced a chosen reply on this branch.
+                if (succeeded)
+                {
+                    foreach (var mm in _chosenMMs.DistinctBy(m => m.ModusMentisId))
+                    {
+                        var learned = _protagonist.GetModusMentisById(mm.ModusMentisId);
+                        if (learned != null) _protagonist.AwardModusMentisXp(learned);
+                    }
+                }
+
+                AppendNpcLine(reaction);
+
+                // Apply the outcomes gated by success/failure.
+                foreach (var oc in resolution.Outcomes)
+                {
+                    bool fires = oc.Condition == BranchCondition.Either
+                        || (oc.Condition == BranchCondition.Success && succeeded)
+                        || (oc.Condition == BranchCondition.Failure && !succeeded);
+                    if (fires) oc.Outcome.Apply(_npc, _partyMemberId);
+                }
+
+                _npc.AffinityTable.MarkFirstContact(_partyMemberId);
+
+                var finalLevel = _npc.AffinityTable.GetLevel(_partyMemberId);
+                AppendSystemLine($"[{finalLevel.ToDisplayName(_npc.DisplayName)}]");
+
+                EndConversation();
             }
 
-            _npc.AffinityTable.MarkFirstContact(_partyMemberId);
-
-            var finalLevel = _npc.AffinityTable.GetLevel(_partyMemberId);
-            AppendSystemLine($"[{finalLevel.ToDisplayName(_npc.DisplayName)}]");
-
-            EndConversation();
+            part.AttachCommit(CommitResolution);
+            part.MarkComplete();
+            _preview.EndProduction();
         });
     }
 

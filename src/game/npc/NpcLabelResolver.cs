@@ -40,8 +40,10 @@ public static class NpcLabelResolver
                 : roleClause;
         }
 
-        // Known NPC: the relation + proper name already identifies the person.
-        return $"{affinity.GetLevel(key).ToFirstPersonRelation(npc.DisplayName)}, {roleClause}";
+        // Known NPC: the relation + proper name already identifies the person. The proper name is
+        // swapped for its scene false name so the LLM (and sanitizer) only see a simple placeholder;
+        // NameFaking restores the real name in the generated output.
+        return $"{affinity.GetLevel(key).ToFirstPersonRelation(NameFaking.Fake(npc.DisplayName))}, {roleClause}";
     }
 
     /// <summary>

@@ -113,6 +113,7 @@ public class NarrativeController
     private readonly LlmPreviewSession _previewSession = new();
     private (int X, int Y, int Width) _previewContinueRegion; // last-rendered CONTINUE region (Width 0 ⇒ none)
     private bool _previewContinueHovered;
+    private string _lastPreviewText = ""; // last rendered preview text, to tick on change
 
     // Ambient music engine (optional — null when MIDI is unavailable)
     private readonly AmbianceEngine? _ambianceEngine;
@@ -763,14 +764,17 @@ public class NarrativeController
 
                 // Re-express the refusal in the acting modus mentis's voice when one is resolvable
                 // (e.g. caught-red-handed, under threat); fall back to the raw rule message otherwise.
+                // The refusal streams into a preview box like every other outcome text.
                 var refusalMm = _activePartyMember.ModiMentis
                     .FirstOrDefault(m => m.ModusMentisId == action.ActionModusMentisId)
                     ?? action.ActionModusMentis;
+                _previewSession.Reset();
+                var refusalPart = refusalMm != null ? _previewSession.BeginPart(PreviewTitles.For(refusalMm)) : null;
                 string refusalText;
                 if (refusalMm != null)
                 {
                     refusalText = await _actionExecutor.OutcomeNarrator.NarrateRefusalAsync(
-                        action, refusalMm, ruleResult.ErrorMessage ?? "", _activePartyMember, CancellationToken.None);
+                        action, refusalMm, ruleResult.ErrorMessage ?? "", _activePartyMember, CancellationToken.None, preview: refusalPart?.Sink);
                     if (string.IsNullOrWhiteSpace(refusalText))
                         refusalText = $"[IMPOSSIBLE] {ruleResult.ErrorMessage}";
                 }
@@ -787,10 +791,20 @@ public class NarrativeController
                     Text: refusalText,
                     Keywords: null,
                     Actions: null);
-                _scrollBuffer.AddBlock(ruleBlock);
-                _narrationState.AddBlock(ruleBlock);
-                _scrollBuffer.ScrollToBottom();
-                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                void CommitRuleFailure()
+                {
+                    _scrollBuffer.AddBlock(ruleBlock);
+                    _narrationState.AddBlock(ruleBlock);
+                    _scrollBuffer.ScrollToBottom();
+                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                }
+                if (refusalPart != null)
+                {
+                    refusalPart.AttachCommit(CommitRuleFailure);
+                    refusalPart.MarkComplete();
+                    _previewSession.EndProduction();
+                }
+                else CommitRuleFailure();
 
                 Console.WriteLine($"NarrativeController: Coded rule failure - consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
 
@@ -831,13 +845,17 @@ public class NarrativeController
                 Console.WriteLine($"NarrativeController: Action failed plausibility check");
                 action.IsImpossible = true;
 
-                // Generate plausibility failure narration
+                // Generate plausibility failure narration, streamed into a preview box.
+                _previewSession.Reset();
+                var plausPart = evalResult.ActionModusMentis != null
+                    ? _previewSession.BeginPart(PreviewTitles.For(evalResult.ActionModusMentis))
+                    : null;
                 var plausibilityResult = await _actionExecutor.GeneratePlausibilityFailureNarrationAsync(
-                    evalResult, CancellationToken.None);
-                
+                    evalResult, CancellationToken.None, preview: plausPart?.Sink);
+
                 _narrationState.IsLoadingAction = false;
-                
-                // Add outcome narration block
+
+                // Add outcome narration block (deferred to the preview CONTINUE).
                 var plausibilityBlock = new NarrationBlock(
                     Type: NarrationBlockType.Outcome,
                     ModusMentis: plausibilityResult.ActionModusMentis ?? throw new InvalidOperationException("Action modusMentis cannot be null"),
@@ -845,13 +863,21 @@ public class NarrativeController
                     Keywords: null,
                     Actions: null
                 );
-                _scrollBuffer.AddBlock(plausibilityBlock);
-                _narrationState.AddBlock(plausibilityBlock);
-                
-                // Auto-scroll to bottom to show outcome
-                _scrollBuffer.ScrollToBottom();
-                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
-                
+                void CommitPlausibility()
+                {
+                    _scrollBuffer.AddBlock(plausibilityBlock);
+                    _narrationState.AddBlock(plausibilityBlock);
+                    _scrollBuffer.ScrollToBottom();
+                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                }
+                if (plausPart != null)
+                {
+                    plausPart.AttachCommit(CommitPlausibility);
+                    plausPart.MarkComplete();
+                    _previewSession.EndProduction();
+                }
+                else CommitPlausibility();
+
                 Console.WriteLine($"NarrativeController: Plausibility failure - consumed 1 noetic point ({_narrationState.ThinkingAttemptsRemaining} remaining)");
 
                 // Reminescence and GetUp phases never cost noetic — player can retry freely
@@ -919,6 +945,10 @@ public class NarrativeController
 
             Console.WriteLine($"NarrativeController: Rolled {(succeeded ? "SUCCESS" : "FAILURE")} (humor may change this) — outcome generated on continue");
 
+            // Brief animation window: no async work backs this roll anymore (the outcome is generated
+            // only on Continue), so pause like the runaway/fight rolls do to let the dice animate.
+            await Task.Delay(900);
+
             // Complete the dice roll (stops animation, shows final values and continue button)
             NarrationDiceComplete(finalDiceValues);
             _narrationState.IsLoadingAction = false;
@@ -930,6 +960,7 @@ public class NarrativeController
             Console.Error.WriteLine($"NarrativeController: Error during action execution: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
 
+            _previewSession.Reset();
             _narrationState.IsLoadingAction = false;
             NarrationDiceClear();
             _narrationState.ErrorMessage = $"Action execution failed: {ex.Message}";
@@ -1783,7 +1814,14 @@ public class NarrativeController
         if (_previewSession.IsActive)
         {
             RenderNarrationContent();
-            var region = _ui.RenderPreviewBox(_previewSession.Snapshot(), _previewContinueHovered);
+            var snap = _previewSession.Snapshot();
+            // Play the hover tick whenever new preview text streams in (typewriter feedback).
+            if (snap.DisplayText != _lastPreviewText)
+            {
+                PlayHoverSound();
+                _lastPreviewText = snap.DisplayText;
+            }
+            var region = _ui.RenderPreviewBox(snap, _previewContinueHovered);
             _previewContinueRegion = region.Present ? (region.X, region.Y, region.Width) : default;
             // No footer button while the box is up — clear its region so a stale one can't be clicked.
             _exitButtonRegion = default;
@@ -1791,6 +1829,7 @@ public class NarrativeController
             return;
         }
         _previewContinueRegion = default;
+        _lastPreviewText = "";
 
         // LLM generating (non-action loading, or action evaluation phase before dice roll):
         // keep the narration visible but greyed out (header included), with a centered
@@ -3252,15 +3291,19 @@ public class NarrativeController
             {
                 Console.WriteLine($"NarrativeController: Item '{item.DisplayName}' approved — generating reasoning then reformulating.");
 
+                // Both the reasoning and the reformulated action stream into one preview box.
+                _previewSession.Reset();
+                var itemPart = _previewSession.BeginAccumulatingPart(PreviewTitles.For(actionModusMentis));
+
                 // ── Step 1: reasoning (how does the item help?) ─────────────────
                 string? reasoningText = await _thinkingExecutor.ExecuteItemReasoningAsync(
-                    action, item, _currentNode, _protagonist, _worldContext);
+                    action, item, _currentNode, _protagonist, _worldContext, preview: itemPart?.NextSegment());
                 if (string.IsNullOrWhiteSpace(reasoningText))
                     reasoningText = $"I could use {item.DisplayName} to help with this.";
 
                 // ── Step 2: reformulation (rewrite the action incorporating the item) ──
                 string? reformulatedText = await _thinkingExecutor.ExecuteItemReformulationAsync(
-                    action, item, _currentNode, _protagonist, _worldContext);
+                    action, item, _currentNode, _protagonist, _worldContext, preview: itemPart?.NextSegment());
                 if (string.IsNullOrWhiteSpace(reformulatedText))
                     reformulatedText = action.DisplayText;
 
@@ -3307,17 +3350,31 @@ public class NarrativeController
                 );
                 combinedAction.ChainOrigin = reasoningBlock;
 
-                _scrollBuffer.AddBlock(reasoningBlock);
-                _narrationState.AddBlock(reasoningBlock);
-                _scrollBuffer.ScrollToBottom();
-                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                // Deferred commit: reveal the reasoning block (and its reformulated action button) on CONTINUE.
+                void CommitItemReasoning()
+                {
+                    _scrollBuffer.AddBlock(reasoningBlock);
+                    _narrationState.AddBlock(reasoningBlock);
+                    _scrollBuffer.ScrollToBottom();
+                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                }
+                if (itemPart != null)
+                {
+                    itemPart.AttachCommit(CommitItemReasoning);
+                    itemPart.MarkComplete();
+                    _previewSession.EndProduction();
+                }
+                else CommitItemReasoning();
             }
             else
             {
                 Console.WriteLine($"NarrativeController: Item '{item.ItemId}' rejected — narrating failure.");
 
+                // The failure explanation streams into a preview box.
+                _previewSession.Reset();
+                var itemFailPart = _previewSession.BeginPart(PreviewTitles.For(actionModusMentis));
                 string failureNarration = await _actionExecutor.OutcomeNarrator.NarrateItemCombinationFailureAsync(
-                    action, item, actionModusMentis, appropriatenessResult.CombinedFailureReason);
+                    action, item, actionModusMentis, appropriatenessResult.CombinedFailureReason, preview: itemFailPart?.Sink);
 
                 var failureBlock = new NarrationBlock(
                     Type: NarrationBlockType.Outcome,
@@ -3327,15 +3384,26 @@ public class NarrativeController
                     Actions: null,
                     ChainOrigin: action.ChainOrigin
                 );
-                _scrollBuffer.AddBlock(failureBlock);
-                _narrationState.AddBlock(failureBlock);
-                _scrollBuffer.ScrollToBottom();
-                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                void CommitItemFailure()
+                {
+                    _scrollBuffer.AddBlock(failureBlock);
+                    _narrationState.AddBlock(failureBlock);
+                    _scrollBuffer.ScrollToBottom();
+                    _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+                }
+                if (itemFailPart != null)
+                {
+                    itemFailPart.AttachCommit(CommitItemFailure);
+                    itemFailPart.MarkComplete();
+                    _previewSession.EndProduction();
+                }
+                else CommitItemFailure();
             }
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: Error during item combination: {ex.Message}");
+            _previewSession.Reset();
         }
         finally
         {

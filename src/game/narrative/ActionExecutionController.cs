@@ -190,7 +190,8 @@ public class ActionExecutionController
     /// </summary>
     public async Task<ActionExecutionResult> GeneratePlausibilityFailureNarrationAsync(
         ActionEvaluationResult evalResult,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ILlmPreviewSink? preview = null)
     {
         return await CreatePlausibilityFailureResultAsync(
             evalResult.Action,
@@ -198,7 +199,8 @@ public class ActionExecutionController
             evalResult.ThinkingModusMentis,
             evalResult.PlausibilityError!,
             evalResult.CurrentNode,
-            cancellationToken);
+            cancellationToken,
+            preview);
     }
 
     /// <summary>
@@ -588,17 +590,19 @@ public class ActionExecutionController
         ModusMentis thinkingModusMentis,
         string plausibilityError,
         NarrationNode currentNode,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ILlmPreviewSink? preview = null)
     {
         // Generate narration explaining why the action is not possible
         var failureOutcome = new HumorOutcome("Melancholia", 1, "inability to act");
-        
+
         string narration = await _outcomeNarrator.NarratePlausibilityFailureAsync(
             action,
             actionModusMentis,
             plausibilityError,
             ActingMember,
-            cancellationToken);
+            cancellationToken,
+            preview);
         
         return new ActionExecutionResult
         {
