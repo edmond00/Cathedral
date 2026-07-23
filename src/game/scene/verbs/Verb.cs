@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
+using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Scene.Verbs;
 
@@ -67,6 +68,20 @@ public abstract class Verb
     /// (e.g. requesting work from a master is harder than from a reeve).
     /// </summary>
     public virtual int DifficultyFor(Element? target) => BaseDifficulty;
+
+    /// <summary>
+    /// Object pronoun for a named NPC target, used by NPC verb verbatims: the NPC is introduced
+    /// once in the prompt's attention line, and the verbatim refers back by pronoun. Gendered
+    /// ("him"/"her" from the NPC's gender stat, "it" for named beasts) rather than neutral "them",
+    /// because the critic stage renders the acting character as "they" — a neutral "them" for the
+    /// NPC would collide with it. Falls back to "them" for non-NPC targets.
+    /// </summary>
+    protected static string NpcPronoun(Element target)
+    {
+        if (target is not SceneNpc { Entity: NpcEntity npc }) return "them";
+        if (npc.Combatant.AnatomyType != AnatomyType.Human) return "it";
+        return NpcLabelResolver.GenderIsMale(npc.Combatant) ? "him" : "her";
+    }
 
     /// <summary>
     /// Builds the verbatim for an item-pickup verb (grab/gather/steal/cut), e.g. "gather some moss",

@@ -35,5 +35,5 @@ public class WorkMenuAdapter
     public void OnMouseMove(int mx, int my)  => _renderer.OnMouseMove(mx, my);
     public void OnMouseClick(int mx, int my) => _renderer.OnMouseClick(mx, my);
     public void OnMouseWheel(float delta)    { /* no scrolling */ }
-    public void OnKeyPress(Keys key)         { if (key == Keys.Escape) _renderer.OnKeyEscape(); }
+    public void OnKeyPress(Keys key)         { /* ESC opens the pause menu (handled by the launcher) */ }
 }

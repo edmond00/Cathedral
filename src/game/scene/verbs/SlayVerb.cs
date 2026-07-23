@@ -31,8 +31,12 @@ public class SlayVerb : Verb
         return scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == npc.Id);
     }
 
+    // Named NPCs are introduced once in the prompt's attention line, so the verbatim refers back
+    // by pronoun; shallow wildlife keeps its type name ("slay the crab").
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"slay the {target.DisplayName.ToLowerInvariant()}";
+        => target is SceneNpc { Entity: Cathedral.Game.Npc.NpcEntity }
+            ? $"slay {NpcPronoun(target)}"
+            : $"slay the {target.DisplayName.ToLowerInvariant()}";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

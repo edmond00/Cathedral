@@ -178,6 +178,8 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     public GameMode MenuReturnMode =>
         _dialogueAdapter != null ? GameMode.Dialogue
+        : _workAdapter != null   ? GameMode.Working
+        : _tradeAdapter != null  ? GameMode.Trading
         : _isInNarrativeMode     ? GameMode.LocationInteraction
         :                          GameMode.WorldView;
     

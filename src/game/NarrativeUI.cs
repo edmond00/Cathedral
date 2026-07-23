@@ -394,6 +394,21 @@ public class NarrativeUI : TerminalPanelUI
                         Config.NarrativeUI.SeparatorColor, Config.NarrativeUI.BackgroundColor);
                     break;
 
+                case LineType.DialogueOption:
+                    // Dialogue reply lines are interactive only in the dialogue panel; if one is
+                    // still live here (not yet aged into history), show the chosen reply in the
+                    // player's colour and the rejected ones greyed, never clickable.
+                    {
+                        int sel = renderedLine.SourceBlock?.SelectedDialogueOptionIndex ?? -1;
+                        Vector4 optColor = shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor
+                            : sel < 0                                    ? Config.NarrativeUI.NarrativeColor
+                            : sel == renderedLine.DialogueOptionIndex    ? Config.Colors.LightPurple
+                            :                                              Config.NarrativeUI.DimmedContentColor;
+                        _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
+                            optColor, Config.NarrativeUI.BackgroundColor);
+                    }
+                    break;
+
                 case LineType.Empty:
                     // Just skip (already cleared)
                     break;

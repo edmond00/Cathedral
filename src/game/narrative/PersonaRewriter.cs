@@ -59,7 +59,7 @@ public class PersonaRewriter
     /// </param>
     /// <param name="speakerName">
     /// For <see cref="NarrationKind.DialogueReplica"/> only: the speaker's (placeholder) name, so the
-    /// prompt can say who the "I" is by name ("that ""I"" is you, Bob"). Pass the placeholder, not the
+    /// prompt can name the speaker ("You are Bob, the speaker"). Pass the placeholder, not the
     /// real name — the caller restores real names afterwards, like everywhere else in dialogue.
     /// </param>
     public async Task<string> RewriteAsync(
@@ -117,10 +117,12 @@ public class PersonaRewriter
     private static string BuildPrompt(string neutralText, string instruction, string footer, string? innerThought = null)
     {
         // The persona's own words from the choice this sentence narrates, offered back as the
-        // thought behind the line — flavour to echo, not content to add.
+        // thought behind the line — flavour to echo, not content to add. The precedence clause is
+        // load-bearing: a reluctant choice's thought can argue AGAINST the action, and without it
+        // the model follows the mood and swaps the deed for what the thought would rather do.
         string thought = string.IsNullOrWhiteSpace(innerThought)
             ? ""
-            : $"\nBehind this line lies your inner thought: \"{innerThought.Trim().Trim('"')}\" — let it colour how you tell it, without quoting it word for word.\n";
+            : $"\nA passing thought accompanies it: \"{innerThought.Trim().Trim('"')}\" — use it to colour the mood and wording only. It changes nothing about what is done: the sentence above states what actually happens, and wherever the thought pulls elsewhere, the sentence wins.\n";
 
         return $@"Re-express the following sentence in your own voice: ""{neutralText}""
 {thought}
@@ -145,7 +147,10 @@ This sentence is written in the first person, and that ""I"" is you — it descr
                                               string? speakerName, string footer)
     {
         string who     = string.IsNullOrWhiteSpace(addressee) ? "the person you are speaking with" : addressee!;
-        string speaker = string.IsNullOrWhiteSpace(speakerName) ? "" : $", {speakerName.Trim()}";
+        // Role statement, not a pronoun equation: phrasing like «"I" is you, Bob» reads to a small
+        // model as a substitution rule (I → you) and gets applied to the text, turning "I'm Bob"
+        // into "you're Bob". State who the speaker is, then say which pronoun to use for whom.
+        string speaker = string.IsNullOrWhiteSpace(speakerName) ? "You are the speaker" : $"You are {speakerName.Trim()}, the speaker";
         string context = string.IsNullOrWhiteSpace(dialogueContext)
             ? ""
             : $" The conversation is about {dialogueContext.Trim().TrimEnd('.')}.";
@@ -157,7 +162,7 @@ This sentence is written in the first person, and that ""I"" is you — it descr
 
 Re-express the following spoken line in your own voice, keeping the same meaning and intent: ""{neutralText}""
 
-This is a line of direct dialogue that you say out loud. In it, ""I"" is you{speaker}, the speaker, and ""you"" is {who}, the person you are talking to. Keep it a short, natural spoken reply — add your own flavour, wording and personality, but do not change what is being said, asked or offered.
+This is a line of direct dialogue that you say out loud. {speaker}; {who} is the person you are talking to. Speak in the first person: call yourself ""I"", and call {who} ""you"". Keep it a short, natural spoken reply — add your own flavour, wording and personality, but do not change what is being said, asked or offered.
 
 {footer}";
     }

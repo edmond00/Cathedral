@@ -9,10 +9,11 @@ namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
 /// Asks a master or reeve for work. Like GRAB across items, this expands into one action per job the
-/// NPC offers — "request to work as a bellows-hand", "…as a quench-hand", etc. Each NPC deterministically
-/// samples ~3 jobs from its archetype's pool (stable per NPC id). On success it opens the request-job
-/// dialogue; only succeeding THAT dialogue opens the work menu. Requesting work from a master is harder
-/// than from a reeve. Gated to acquaintances and above — you must have met the NPC first.
+/// NPC offers — "meet them to request to work as a bellows-hand", "…as a quench-hand", etc. Each NPC
+/// deterministically samples ~3 jobs from its archetype's pool (stable per NPC id). On success it
+/// opens the request-job dialogue; only succeeding THAT dialogue opens the work menu — the action
+/// itself is just the meeting, hence base difficulty 1. Gated to acquaintances and above — you must
+/// have met the NPC first.
 /// </summary>
 public class RequestJobVerb : Verb
 {
@@ -20,20 +21,13 @@ public class RequestJobVerb : Verb
 
     public override string VerbId         => "request_job";
     public override string DisplayName    => "Request job";
-    public override int    BaseDifficulty => 3;   // reeve baseline
-
-    /// <summary>Requesting work from a village master is harder than from a reeve/farmer/hayward.</summary>
-    public override int DifficultyFor(Element? target)
-    {
-        var npc = (target as SceneNpc)?.Entity as NpcEntity;
-        return npc?.Archetype is CraftsmanArchetype ? 5 : BaseDifficulty;
-    }
+    public override int    BaseDifficulty => 1;   // the action only meets the NPC; the dialogue carries the real stakes
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
         => Eligible(scene, pov, target, actor) is not null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"meet {target.DisplayName}, to ask for work";
+        => $"meet {NpcPronoun(target)} to ask for work";
 
     public override IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
@@ -41,7 +35,7 @@ public class RequestJobVerb : Verb
         if (npc is null) yield break;
 
         foreach (var job in JobRegistry.Instance.SampleJobs(npc.NpcId, npc.Archetype.ArchetypeId, JobsOffered))
-            yield return new VerbView(this, $"request to work as {job.WithArticle()}", target, variant: job);
+            yield return new VerbView(this, $"meet {NpcPronoun(target)} to request to work as {job.WithArticle()}", target, variant: job);
     }
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target, VerbView view)

@@ -333,6 +333,15 @@ public static class LocationTravelModeLauncher
                     Console.WriteLine("ESC pressed - opening pause menu over dialogue");
                     gameController.SetMode(GameMode.MainMenu);
                 }
+                else if (gameController?.CurrentMode == GameMode.Working
+                         || gameController?.CurrentMode == GameMode.Trading)
+                {
+                    // ESC during the work/trade menu: pause overlay, exactly like narration — the
+                    // session is NOT cancelled (leaving is the menu's LEAVE button's job) and
+                    // resumes when the menu is dismissed (see MenuReturnMode).
+                    Console.WriteLine($"ESC pressed - opening pause menu over {gameController.CurrentMode} menu");
+                    gameController.SetMode(GameMode.MainMenu);
+                }
                 else if (gameController?.CurrentMode == GameMode.MainMenu)
                 {
                     // ESC in main menu: resume where the menu was opened from (pause-overlay return —

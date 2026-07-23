@@ -59,6 +59,13 @@ public class DialogueTreeController
     /// <summary>The resolution node awaiting the dice continue-click.</summary>
     private ResolutionNode?                   _pendingResolution;
 
+    /// <summary>
+    /// The buffer block holding the current node's selectable replies. Options live inside the
+    /// shared scroll buffer (so they scroll with the conversation); on selection the block is marked
+    /// with the chosen index and stays in the log — selected highlighted, the rest greyed.
+    /// </summary>
+    private NarrationBlock?                   _optionsBlock;
+
     // ── Last spoken line on each side (for rewrite-prompt grounding) ───────────
     /// <summary>The NPC's most recently spoken line (rewritten, real names), or null before the first.</summary>
     private string?                           _lastNpcLine;
@@ -115,6 +122,7 @@ public class DialogueTreeController
         _accumulatedDice = 0;
         _chosenMMs.Clear();
         _pendingResolution = null;
+        _optionsBlock = null;
         _lastNpcLine = null;
         _lastPlayerLine = null;
         BeginNpcSpeakPhase();
@@ -186,7 +194,7 @@ public class DialogueTreeController
 
         int idx = _ui.GetOptionIndexAt(mx, my);
         if (idx >= 0 && idx < _state.Options.Count)
-            OnOptionSelected(_state.Options[idx]);
+            OnOptionSelected(idx);
     }
 
     public void OnMouseWheel(float delta)
@@ -245,7 +253,7 @@ public class DialogueTreeController
         if (_state.ConversationEnded)   return "the conversation has ended";
         if (index < 0 || index >= _state.Options.Count)
             return $"option {index} out of range (have {_state.Options.Count})";
-        OnOptionSelected(_state.Options[index]);
+        OnOptionSelected(index);
         return null;
     }
 
@@ -277,18 +285,6 @@ public class DialogueTreeController
         Keywords: null,
         Actions: null,
         SpeakerName: _npc.DisplayName));
-
-    /// <summary>
-    /// The reply the player chose. Carries the voicing modus mentis so history keeps the skill
-    /// attribution in its "[YOU/CHARM ▪▪]" header, and renders in the player's colour.
-    /// </summary>
-    private void AppendPlayerLine(ModusMentis skill, string text) => Append(new NarrationBlock(
-        Type: NarrationBlockType.PlayerSpeaking,
-        ModusMentis: skill,
-        Text: $"\"{text}\"",
-        Keywords: null,
-        Actions: null,
-        SpeakerName: "You"));
 
     /// <summary>A bracketed system note (affinity change, conversation end).</summary>
     private void AppendSystemLine(string text) => Append(new NarrationBlock(
@@ -369,6 +365,24 @@ public class DialogueTreeController
 
             _state.Options       = options;
             _state.OptionsLoaded = options.Count;
+
+            // Append the replies to the shared scroll buffer as clickable lines — they flow with
+            // the conversation text (and scroll with it) instead of floating over the log. The
+            // block before this one already ends in a blank line, separating the NPC's replica
+            // from the group of replies.
+            if (options.Count > 0)
+            {
+                _optionsBlock = new NarrationBlock(
+                    Type: NarrationBlockType.DialogueOptions,
+                    ModusMentis: null!,
+                    Text: "",
+                    Keywords: null,
+                    Actions: null,
+                    DialogueOptions: options
+                        .Select(o => new DialogueOptionItem(o.Skill.DisplayName, o.Skill.Level, o.ReplicaText))
+                        .ToList());
+                Append(_optionsBlock);
+            }
         }
         catch (Exception ex)
         {
@@ -386,9 +400,15 @@ public class DialogueTreeController
 
     // ── Phase: player selects a reply ─────────────────────────────────────────
 
-    private void OnOptionSelected(PlayerReplicaOption option)
+    private void OnOptionSelected(int index)
     {
-        AppendPlayerLine(option.Skill, option.ReplicaText);
+        var option = _state.Options[index];
+
+        // The chosen reply stays visible inside the options group in the log: mark the block and
+        // the renderer highlights the selected line (player colour) and greys out the others.
+        // No separate "You: …" block — that would repeat the same text right below the group.
+        if (_optionsBlock != null) _optionsBlock.SelectedDialogueOptionIndex = index;
+        _optionsBlock = null;
         _lastPlayerLine = option.ReplicaText;
 
         // This reply's Modus Mentis contributes its level to the branch dice pool.

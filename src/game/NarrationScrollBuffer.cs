@@ -55,6 +55,7 @@ public class NarrationScrollBuffer
         // never LLM-truncated, and end in ']' — cleanup would eat their tail and append "...".
         bool isSystemChip = block.Text.Length >= 2 && block.Text[0] == '[' && block.Text[^1] == ']';
         bool skipCleanup = block.Type is NarrationBlockType.Speaking or NarrationBlockType.PlayerSpeaking
+                                      or NarrationBlockType.DialogueOptions
                            || block.Text.Contains('\n')
                            || isSystemChip;
         string cleanedText = skipCleanup ? block.Text : TextTruncationUtils.CleanTruncatedText(block.Text);
@@ -63,7 +64,7 @@ public class NarrationScrollBuffer
         var blockToAdd = cleanedText != block.Text
             ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Keywords, block.Actions, block.ChainOrigin,
                 block.SourceObservationType, block.LinkedOutcome, block.KeywordOutcomeMap, block.Sentences, block.SpeakerName,
-                block.OutcomeReports)
+                block.OutcomeReports, block.DialogueOptions)
             : block;
 
         lock (_gate)
@@ -341,11 +342,40 @@ public class NarrationScrollBuffer
                 _ => LineType.Content
             };
 
+            // Dialogue options: no prose to wrap — render each selectable reply like a
+            // thinking-block action line ("> [Skill ▪▪] “text”", continuations indented 4) and tag
+            // every wrapped line with its option index so the dialogue panel can hit-test and
+            // restyle it (hover / selected / greyed) without regenerating the buffer.
+            if (block.Type == NarrationBlockType.DialogueOptions)
+            {
+                for (int i = 0; block.DialogueOptions != null && i < block.DialogueOptions.Count; i++)
+                {
+                    var opt = block.DialogueOptions[i];
+                    string levelDots = new string(Config.Symbols.ModusMentisLevelIndicator, opt.SkillLevel);
+                    string optPrefix = $"> [{opt.SkillName} {levelDots}] ";
+                    int firstLineWidth    = Math.Max(4, _maxWidth - optPrefix.Length);
+                    int continuationWidth = Math.Max(4, _maxWidth - 4);
+                    var wrapped = WrapActionText($"“{opt.Text}”", firstLineWidth, continuationWidth);
+                    for (int ln = 0; ln < wrapped.Count; ln++)
+                    {
+                        _renderedLines.Add(new RenderedLine(
+                            Text: ln == 0 ? optPrefix + wrapped[ln] : "    " + wrapped[ln],
+                            Type: LineType.DialogueOption,
+                            BlockType: block.Type,
+                            Keywords: null,
+                            Actions: null,
+                            IsHistory: false,
+                            GlobalActionIndex: -1,
+                            SourceBlock: block,
+                            DialogueOptionIndex: i));
+                    }
+                }
+            }
             // Wrap block.Text as one continuous paragraph (preserving natural word-flow).
             // When per-sentence data is available, compute which character range each sentence
             // occupies in block.Text and assign each wrapped line only the keywords from the
             // sentence(s) that overlap its character range — preventing cross-sentence highlighting.
-            if (block.Sentences != null && block.Sentences.Count > 0)
+            else if (block.Sentences != null && block.Sentences.Count > 0)
             {
                 var sentenceRanges = ComputeSentenceRanges(block.Text, block.Sentences);
                 var linesWithOffsets = WrapTextWithOffsets(block.Text, _maxWidth);
@@ -772,7 +802,8 @@ public record RenderedLine(
     int GlobalActionIndex = -1,  // Global action index (0-based) across all thinking blocks, -1 if not an action line
     NarrationBlock? SourceBlock = null,  // The narration block this line comes from (for modusMentis chain tracking)
     List<int>? KeywordOccurrenceIndices = null,  // Parallel to Keywords: which occurrence (0-based) within this line to highlight
-    OutcomeReport? Report = null  // Set only for LineType.Report lines; null for all other types
+    OutcomeReport? Report = null,  // Set only for LineType.Report lines; null for all other types
+    int DialogueOptionIndex = -1  // 0-based index into SourceBlock.DialogueOptions for LineType.DialogueOption lines, -1 otherwise
 );
 
 /// <summary>
@@ -780,11 +811,12 @@ public record RenderedLine(
 /// </summary>
 public enum LineType
 {
-    Header,     // ModusMentis name header
-    Content,    // Narration text
-    Action,     // Action line (for Thinking blocks)
-    Outcome,    // Outcome narration (for Action/Outcome blocks)
-    Report,     // Prewritten outcome chip (item received, wound, …)
-    Empty,      // Spacing
-    Separator   // Transition separator between narration nodes
+    Header,         // ModusMentis name header
+    Content,        // Narration text
+    Action,         // Action line (for Thinking blocks)
+    Outcome,        // Outcome narration (for Action/Outcome blocks)
+    Report,         // Prewritten outcome chip (item received, wound, …)
+    Empty,          // Spacing
+    Separator,      // Transition separator between narration nodes
+    DialogueOption  // Selectable player reply line (for DialogueOptions blocks)
 }

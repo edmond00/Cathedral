@@ -597,8 +597,8 @@ public static class Config
         {
             string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
             return personaReminder2 != null
-                ? $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in the character of {personaReminder2}. Address your companion using \"you\". No narration, no third-person phrasing."
-                : $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in character. Adress your companion using \"you\". No narration, no third-person phrasing.";
+                ? $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in the character of {personaReminder2}. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing."
+                : $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in character. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing.";
         }
 
         /// <summary>
@@ -611,7 +611,7 @@ public static class Config
             string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
             string who   = string.IsNullOrWhiteSpace(addressee) ? "the person you are speaking with" : addressee.Trim();
             string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
-            return $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} {character} Speak directly to {who} using \"you\". Give only the spoken line — no narration, no third-person phrasing, no quotation marks.";
+            return $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} {character} Speak directly to {who} as \"you\", and refer to yourself only as \"I\" — never call {who} by your own name or describe yourself in the second person. Give only the spoken line — no narration, no third-person phrasing, no quotation marks.";
         }
     }
 

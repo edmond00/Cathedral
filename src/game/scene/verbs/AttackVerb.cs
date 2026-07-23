@@ -30,8 +30,12 @@ public class AttackVerb : Verb
         return scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id);
     }
 
+    // Named NPCs are introduced once in the prompt's attention line, so the verbatim refers back
+    // by pronoun; shallow wildlife keeps its type name ("attack the crab").
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"attack {target.DisplayName}";
+        => target is SceneNpc { Entity: NpcEntity }
+            ? $"attack {NpcPronoun(target)}"
+            : $"attack {target.DisplayName}";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

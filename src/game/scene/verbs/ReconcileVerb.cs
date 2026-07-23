@@ -19,7 +19,7 @@ public class ReconcileVerb : Verb
 {
     public override string VerbId         => "reconcile";
     public override string DisplayName    => "Reconcile";
-    public override int    BaseDifficulty => 2;
+    public override int    BaseDifficulty => 1;   // the action only meets the NPC; the dialogue carries the real stakes
 
     /// <summary>Reconciliation is a legal, non-violent action.</summary>
     public override bool IsLegal => true;
@@ -44,7 +44,7 @@ public class ReconcileVerb : Verb
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"meet {target.DisplayName}, to try to reconcile";
+        => $"meet {NpcPronoun(target)} to try to reconcile";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

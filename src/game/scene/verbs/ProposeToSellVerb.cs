@@ -15,7 +15,7 @@ public class ProposeToSellVerb : Verb
 {
     public override string VerbId         => "propose_to_sell";
     public override string DisplayName    => "Propose to sell";
-    public override int    BaseDifficulty => 2;
+    public override int    BaseDifficulty => 1;   // the action only meets the NPC; the dialogue carries the real stakes
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
@@ -32,7 +32,7 @@ public class ProposeToSellVerb : Verb
     {
         var npc = (target as SceneNpc)?.Entity as NpcEntity;
         string goods = npc?.BuyTag?.Label() ?? "goods";
-        return $"meet {target.DisplayName}, to propose to sell {goods}";
+        return $"meet {NpcPronoun(target)} to propose to sell {goods}";
     }
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)

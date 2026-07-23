@@ -120,6 +120,13 @@ public class NarrationState
 public record NarrationSentence(string Text, List<string> Keywords);
 
 /// <summary>
+/// One selectable player reply carried by a <see cref="NarrationBlockType.DialogueOptions"/> block.
+/// A display-only projection of the dialogue session's PlayerReplicaOption: the scroll buffer only
+/// needs what it renders (skill prefix + text); selection routing stays in the dialogue controller.
+/// </summary>
+public record DialogueOptionItem(string SkillName, int SkillLevel, string Text);
+
+/// <summary>
 /// Represents a single block of narration text in the UI.
 /// Can be observation, thinking (CoT), action result, or outcome.
 /// Inherits from ModusMentisChainElement to participate in modusMentis chain calculations.
@@ -171,6 +178,21 @@ public class NarrationBlock : ModusMentisChainElement
     public IReadOnlyList<OutcomeReport>? OutcomeReports { get; init; } = null;
 
     /// <summary>
+    /// For <see cref="NarrationBlockType.DialogueOptions"/> blocks: the selectable player replies,
+    /// rendered in the scroll buffer as clickable lines (like thinking-block actions). Null for all
+    /// other block types.
+    /// </summary>
+    public IReadOnlyList<DialogueOptionItem>? DialogueOptions { get; init; } = null;
+
+    /// <summary>
+    /// For <see cref="NarrationBlockType.DialogueOptions"/> blocks: index of the reply the player
+    /// picked, or -1 while still choosing. Deliberately mutable — the dialogue controller sets it on
+    /// selection and the renderer restyles the already-generated lines (selected highlighted, the
+    /// rest greyed) without regenerating the buffer.
+    /// </summary>
+    public int SelectedDialogueOptionIndex { get; set; } = -1;
+
+    /// <summary>
     /// Implements ModusMentisChainElement.ChainModusMentis - returns the modusMentis of this block.
     /// </summary>
     public override ModusMentis ChainModusMentis => ModusMentis;
@@ -190,7 +212,8 @@ public class NarrationBlock : ModusMentisChainElement
         Dictionary<string, ConcreteOutcome>? KeywordOutcomeMap = null,
         List<NarrationSentence>? Sentences = null,
         string? SpeakerName = null,
-        IReadOnlyList<OutcomeReport>? OutcomeReports = null)
+        IReadOnlyList<OutcomeReport>? OutcomeReports = null,
+        IReadOnlyList<DialogueOptionItem>? DialogueOptions = null)
     {
         this.Type = Type;
         this.ModusMentis = ModusMentis;
@@ -204,6 +227,7 @@ public class NarrationBlock : ModusMentisChainElement
         this.Sentences = Sentences;
         this.SpeakerName = SpeakerName;
         this.OutcomeReports = OutcomeReports;
+        this.DialogueOptions = DialogueOptions;
     }
 }
 
@@ -216,8 +240,9 @@ public enum NarrationBlockType
     Thinking,      // ModusMentis reasons about keyword (CoT)
     Action,        // Player selected action (modusMentis check result)
     Outcome,       // Result of action (success/failure)
-    Speaking,      // Active party member speaks directly to a companion
-    PlayerSpeaking // Player's chosen reply in a dialogue (rendered in the player's colour)
+    Speaking,       // Active party member speaks directly to a companion
+    PlayerSpeaking, // Player's chosen reply in a dialogue (rendered in the player's colour)
+    DialogueOptions // Group of selectable player replies, rendered inline in the scroll buffer
 }
 
 /// <summary>

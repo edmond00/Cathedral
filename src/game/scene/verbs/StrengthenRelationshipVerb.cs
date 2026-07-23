@@ -35,18 +35,11 @@ public class StrengthenRelationshipVerb : Verb
         return true;
     }
 
+    // The NPC (and their affinity) is named once in the prompt's attention line; the verbatim
+    // refers back with the neutral pronoun — embedding the affinity display here used to double up
+    // with the contextual label ("meet a distant acquaintance (my acquaintance …), to talk").
     public override string Verbatim(Scene scene, PoV pov, Element target)
-    {
-        var actor        = null as Protagonist; // actor not available in Verbatim
-        var partyId      = "Protagonist";
-        if (target is SceneNpc sceneNpc && sceneNpc.Entity is NpcEntity npc)
-        {
-            var level   = npc.AffinityTable.GetLevel(partyId);
-            var display = level.ToDisplayName(npc.DisplayName);
-            return $"meet {display}, to talk";
-        }
-        return $"meet {target.DisplayName}, to talk";
-    }
+        => $"meet {NpcPronoun(target)} to talk";
 
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {

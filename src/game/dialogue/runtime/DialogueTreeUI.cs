@@ -15,8 +15,10 @@ namespace Cathedral.Game.Dialogue.Runtime;
 /// Visual structure:
 ///   Header row  : NPC name (left) | affinity label (centre) | affinity pips (right)
 ///   Separator
-///   Scrollable log  : NPC speech, player replicas, system messages
-///   Options area    : selectable player replies (below log, always visible)
+///   Scrollable log  : NPC speech, selectable player replies, system messages — the replies are
+///                     ordinary buffer lines (like narration action lines), so they scroll with
+///                     the conversation; after a pick the chosen one stays highlighted and the
+///                     rest grey out
 ///   Separator
 ///   Status bar
 ///
@@ -110,7 +112,9 @@ public class DialogueTreeUI : TerminalPanelUI
             return;
         }
 
-        RenderLogAndOptions(state);
+        // Bottom rows are reserved for the footer exit button (END / INTERRUPT); the replies are
+        // ordinary buffer lines inside the log window, so no extra area is reserved for them.
+        RenderLog(_layout.NARRATIVE_HEIGHT - FooterRows, state);
 
         // Dice overlay: the conversation stays visible but greyed out underneath a
         // small dice box — same presentation as fight mode.
@@ -193,37 +197,16 @@ public class DialogueTreeUI : TerminalPanelUI
         }
     }
 
-    // ── Log + options ──────────────────────────────────────────────────────────
-
-    private void RenderLogAndOptions(DialogueSessionState state)
-    {
-        int optLineCount = ComputeOptionLineCount(state);
-
-        // Bottom rows are reserved for the footer exit button (END / INTERRUPT)
-        int contentRows = _layout.NARRATIVE_HEIGHT - FooterRows;
-        // Reserve option rows + 1 gap row at bottom; log gets the rest
-        int logRows = optLineCount > 0
-            ? Math.Max(1, contentRows - optLineCount - 1)
-            : contentRows;
-
-        // The shared buffer owns the scroll position, so this window can run back off the top of
-        // the conversation into the greyed narration that preceded it.
-        int screenY = RenderLog(logRows);
-
-        // Gap row + options
-        if (optLineCount > 0)
-        {
-            screenY++; // blank gap row
-            RenderOptions(state, screenY);
-        }
-    }
+    // ── Log (conversation text + inline reply lines) ───────────────────────────
 
     /// <summary>
     /// Renders the shared-history log window (top <paramref name="logRows"/> rows of the content
     /// area) plus its scrollbar, and returns the row just below the window. Shared by the live
     /// render and <see cref="RenderSetupFrame"/>, so the log never disappears between frames.
+    /// Live dialogue-option lines get their own styling and click rows; pass a null
+    /// <paramref name="state"/> (setup frame) to render them without hover feedback.
     /// </summary>
-    private int RenderLog(int logRows)
+    private int RenderLog(int logRows, DialogueSessionState? state = null)
     {
         var lines = _buffer.GetVisibleLines(logRows);
 
@@ -231,7 +214,11 @@ public class DialogueTreeUI : TerminalPanelUI
         int screenY = _layout.CONTENT_START_Y;
         foreach (var line in lines)
         {
-            if (!string.IsNullOrEmpty(line.Text))
+            if (line.Type == LineType.DialogueOption && !line.IsHistory)
+            {
+                RenderOptionLine(line, screenY, maxW, state);
+            }
+            else if (!string.IsNullOrEmpty(line.Text))
             {
                 string t = line.Text.Length > maxW ? line.Text[..maxW] : line.Text;
                 _terminal.Text(_layout.CONTENT_START_X, screenY, t,
@@ -243,6 +230,56 @@ public class DialogueTreeUI : TerminalPanelUI
         // Scrollbar (reflects position in the whole shared history)
         RenderScrollbar(_buffer.TotalLines, _buffer.ScrollOffset, false);
         return screenY;
+    }
+
+    /// <summary>
+    /// One wrapped line of a selectable reply, straight from the scroll buffer. Three visual
+    /// states, driven by the source block's <c>SelectedDialogueOptionIndex</c>: still choosing
+    /// (clickable, hover-highlit, skill bracket coloured like narration action lines), the chosen
+    /// reply after a pick (player colour), and its rejected siblings (greyed out).
+    /// </summary>
+    private void RenderOptionLine(RenderedLine line, int y, int maxW, DialogueSessionState? state)
+    {
+        int    idx      = line.DialogueOptionIndex;
+        int    selected = line.SourceBlock?.SelectedDialogueOptionIndex ?? -1;
+        string text     = line.Text.Length > maxW ? line.Text[..maxW] : line.Text;
+        int    x        = _layout.CONTENT_START_X;
+
+        if (selected >= 0)
+        {
+            // A resolved group: what the player said keeps the player's colour, the rest grey out.
+            _terminal.Text(x, y, text,
+                idx == selected ? Config.Colors.LightPurple : Config.NarrativeUI.DimmedContentColor,
+                Config.NarrativeUI.BackgroundColor);
+            return;
+        }
+
+        // Live group — register the click row and apply hover styling.
+        _optionRowToIndex[y] = idx;
+        bool    hovered   = state != null && idx == state.HoveredOptionIndex;
+        Vector4 bg        = hovered ? Config.NarrativeUI.ActionHoverBackgroundColor : Config.NarrativeUI.BackgroundColor;
+        Vector4 textFg    = hovered ? Config.NarrativeUI.ActionHoverColor           : Config.NarrativeUI.ActionNormalColor;
+        Vector4 bracketFg = hovered ? Config.NarrativeUI.ActionHoverColor           : Config.Colors.DarkYellowGrey;
+
+        // First lines read "> [Skill ▪▪] “…”"; continuation lines are plain indented text.
+        int close = text.StartsWith("> [") ? text.IndexOf(']') : -1;
+        if (close < 0)
+        {
+            _terminal.Text(x, y, text, textFg, bg);
+            return;
+        }
+
+        // The run of level dots directly before the closing bracket gets the dice colour.
+        int dotsStart = close;
+        while (dotsStart > 3 && text[dotsStart - 1] == Config.Symbols.ModusMentisLevelIndicator)
+            dotsStart--;
+
+        _terminal.Text(x, y, "> ", Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
+        _terminal.Text(x + 2,         y, text[2..dotsStart],     bracketFg, bg);
+        _terminal.Text(x + dotsStart, y, text[dotsStart..close], Config.NarrativeUI.LoadingColor, bg);
+        _terminal.Text(x + close,     y, "]",                    bracketFg, bg);
+        if (close + 1 < text.Length)
+            _terminal.Text(x + close + 1, y, text[(close + 1)..], textFg, bg);
     }
 
     /// <summary>
@@ -267,99 +304,6 @@ public class DialogueTreeUI : TerminalPanelUI
                 _                                 => Config.NarrativeUI.NarrativeColor,
             },
         };
-    }
-
-    // ── Option line count (for layout reservation) ─────────────────────────────
-
-    private int ComputeOptionLineCount(DialogueSessionState state)
-    {
-        if (state.ConversationEnded) return 0;
-        if (state.IsLoadingOptions)  return 0; // progress is shown in the generating status bar
-
-        if (state.Options.Count == 0) return 0;
-
-        int total = 0;
-        int maxW  = _scrollbarX - _layout.CONTENT_START_X;
-        foreach (var opt in state.Options)
-        {
-            string skill     = opt.Skill.DisplayName;
-            string lvlDot    = new string(Config.Symbols.ModusMentisLevelIndicator, opt.Skill.Level);
-            int    prefixLen = 2 + 1 + skill.Length + 1 + lvlDot.Length + 2; // "> [skill dots] "
-            int    firstW    = Math.Max(4, maxW - prefixLen);
-            var    wrapped   = WrapText($"\u201C{opt.ReplicaText}\u201D", firstW);
-            total += Math.Max(1, wrapped.Count);
-        }
-        return total;
-    }
-
-    // ── Options renderer ────────────────────────────────────────────────────────
-
-    private void RenderOptions(DialogueSessionState state, int startY)
-    {
-        if (state.ConversationEnded) return;
-
-        int maxX = _scrollbarX - 1;
-
-        int maxY = _layout.CONTENT_END_Y - FooterRows;
-        for (int r = 0; r < state.Options.Count; r++)
-        {
-            if (startY > maxY) break;
-
-            bool    hovered   = r == state.HoveredOptionIndex;
-            Vector4 bg        = hovered ? Config.NarrativeUI.ActionHoverBackgroundColor : Config.NarrativeUI.BackgroundColor;
-            Vector4 textFg    = hovered ? Config.NarrativeUI.ActionHoverColor           : Config.NarrativeUI.ActionNormalColor;
-            Vector4 bracketFg = hovered ? Config.NarrativeUI.ActionHoverColor           : Config.Colors.DarkYellowGrey;
-
-            var    opt       = state.Options[r];
-            string skill     = opt.Skill.DisplayName;
-            string lvlDot    = new string(Config.Symbols.ModusMentisLevelIndicator, opt.Skill.Level);
-            int    prefixLen = 2 + 1 + skill.Length + 1 + lvlDot.Length + 2;
-            int    firstW    = Math.Max(4, (maxX - _layout.CONTENT_START_X) - prefixLen);
-            int    contX     = _layout.CONTENT_START_X + prefixLen;
-            int    contW     = Math.Max(4, maxX - contX);
-
-            var wrapped = WrapText($"\u201C{opt.ReplicaText}\u201D", contW);
-            if (wrapped.Count > 0 && wrapped[0].Length > firstW)
-            {
-                string overflow = wrapped[0][firstW..].TrimStart();
-                wrapped[0]      = wrapped[0][..firstW];
-                if (!string.IsNullOrEmpty(overflow)) wrapped.Insert(1, overflow);
-            }
-            if (wrapped.Count == 0)
-                wrapped.Add(opt.ReplicaText.Length > firstW ? opt.ReplicaText[..firstW] : opt.ReplicaText);
-
-            // First line: prefix + first wrapped segment
-            {
-                int x = _layout.CONTENT_START_X;
-                void PutSeg(string s, Vector4 fg, Vector4 segBg)
-                {
-                    if (x >= maxX || string.IsNullOrEmpty(s)) return;
-                    int    avail = maxX - x;
-                    string seg   = s.Length > avail ? s[..avail] : s;
-                    _terminal.Text(x, startY, seg, fg, segBg);
-                    x += seg.Length;
-                }
-                PutSeg("> ",    Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
-                PutSeg("[",     bracketFg, bg);
-                PutSeg(skill,   bracketFg, bg);
-                PutSeg(" ",     bracketFg, bg);
-                PutSeg(lvlDot,  Config.NarrativeUI.LoadingColor, bg);
-                PutSeg("] ",    bracketFg, bg);
-                if (wrapped.Count > 0) PutSeg(wrapped[0], textFg, bg);
-            }
-            _optionRowToIndex[startY] = r;
-            startY++;
-
-            // Continuation lines (word-wrap overflow)
-            for (int ln = 1; ln < wrapped.Count && startY <= maxY; ln++)
-            {
-                int    avail = maxX - contX;
-                string seg   = wrapped[ln].Length > avail ? wrapped[ln][..avail] : wrapped[ln];
-                _terminal.Text(contX, startY, seg, textFg, bg);
-                _optionRowToIndex[startY] = r;
-                startY++;
-            }
-        }
     }
 
     // ── Status bar text ────────────────────────────────────────────────────────
