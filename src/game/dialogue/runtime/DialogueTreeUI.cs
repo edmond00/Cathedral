@@ -187,16 +187,19 @@ public class DialogueTreeUI : TerminalPanelUI
         _terminal.Text(labelX, y, label,
             Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
 
-        // Right: "Affinity ● ● ● ○ ○" — pips show the 0–5 affinity level
-        const int MaxPips = 5;
-        int       lvl     = (int)affinity;
-        var       pips    = new System.Text.StringBuilder();
+        // Right: "Affinity dice ⟐ ⟐ ○ ○ ○" — the earned pips use the same level indicator as a modus
+        // mentis header in narration, because they mean the same thing: dice this contributes to the
+        // conversation's check (DialogueTreeController.BeginResolution). The count is BonusDice(),
+        // not the raw enum value, so Suspicious reads as zero rather than as a maxed-out bar.
+        const int MaxPips  = 5;
+        int       bonus    = affinity.BonusDice();
+        var       pips     = new System.Text.StringBuilder();
         for (int i = 0; i < MaxPips; i++)
         {
-            pips.Append(i < lvl ? '●' : '○');
+            pips.Append(i < bonus ? Config.Symbols.ModusMentisLevelIndicator : '○');
             if (i < MaxPips - 1) pips.Append(' ');
         }
-        const string pipsLabel  = "Affinity ";
+        const string pipsLabel  = "Affinity dice ";
         string pipsStr    = pips.ToString();
         int    pipsX      = _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING - pipsStr.Length - 1;
         int    pipsLabelX = pipsX - pipsLabel.Length;
@@ -204,8 +207,13 @@ public class DialogueTreeUI : TerminalPanelUI
         {
             _terminal.Text(pipsLabelX, y, pipsLabel,
                 Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
-            _terminal.Text(pipsX, y, pipsStr,
-                Config.NarrativeUI.DiceGoldColor, Config.NarrativeUI.BackgroundColor);
+
+            // Earned dice in the dice gold, empty slots dimmed — a single flat colour would make the
+            // whole bar read as dice you have.
+            for (int i = 0; i < pipsStr.Length; i++)
+                _terminal.SetCell(pipsX + i, y, pipsStr[i],
+                    i / 2 < bonus ? Config.NarrativeUI.DiceGoldColor : Config.NarrativeUI.DimmedContentColor,
+                    Config.NarrativeUI.BackgroundColor);
         }
     }
 
@@ -229,6 +237,15 @@ public class DialogueTreeUI : TerminalPanelUI
             if (line.Type == LineType.DialogueOption && !line.IsHistory)
             {
                 RenderOptionLine(line, screenY, maxW, state);
+            }
+            else if (line.Type == LineType.Report)
+            {
+                // The conversation's outcome chips, drawn exactly as the narration panel draws an
+                // action's — history strips the Report reference, so those fall through to grey text.
+                RenderReportChip(line, screenY, line.IsHistory ? Config.NarrativeUI.HistoryColor : null);
+                if (line.Report == null && !string.IsNullOrEmpty(line.Text))
+                    _terminal.Text(_layout.CONTENT_START_X, screenY, line.Text.TrimEnd(),
+                        Config.NarrativeUI.HistoryColor, Config.NarrativeUI.BackgroundColor);
             }
             else if (!string.IsNullOrEmpty(line.Text))
             {

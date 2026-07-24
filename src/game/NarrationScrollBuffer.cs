@@ -197,9 +197,20 @@ public class NarrationScrollBuffer
                 if (line.IsHistory)
                     continue;
 
+                // Action lines are drawn live from their ParsedNarrativeAction: RenderActionLine
+                // paints the "⑤ [MODUS MENTIS ⟐⟐] " prefix piece by piece and the buffer stores only
+                // the wrapped text. History lines drop the action reference, so the prefix has to be
+                // baked into the text here — otherwise the header vanishes when the segment greys
+                // out. GlobalActionIndex separates real action lines from Action-block prose.
+                string historyText = line.Text;
+                if (line.Type == LineType.Action && line.GlobalActionIndex >= 0)
+                    historyText = line.Actions is { Count: > 0 }
+                        ? line.Actions[0].DisplayPrefix + historyText
+                        : "    " + historyText;      // continuation line: the live 4-space indent
+
                 // Create new line with IsHistory=true, and clear interactive elements
                 var historyLine = new RenderedLine(
-                    Text: line.Text,
+                    Text: historyText,
                     Type: line.Type,
                     BlockType: line.BlockType,
                     Keywords: null,  // Remove keywords to disable interactivity

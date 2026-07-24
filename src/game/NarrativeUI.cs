@@ -366,25 +366,8 @@ public class NarrativeUI : TerminalPanelUI
                     break;
                     
                 case LineType.Report:
-                    if (renderedLine.Report != null)
-                    {
-                        if (shouldDimThisLine)
-                        {
-                            _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
-                                Config.NarrativeUI.DimmedContentColor, Config.NarrativeUI.BackgroundColor);
-                        }
-                        else
-                        {
-                            var bgColor = renderedLine.Report.Severity switch
-                            {
-                                OutcomeReportSeverity.Negative => Config.NarrativeUI.OutcomeReportNegativeBackground,
-                                OutcomeReportSeverity.Positive => Config.NarrativeUI.OutcomeReportPositiveBackground,
-                                _                              => Config.NarrativeUI.OutcomeReportNeutralBackground,
-                            };
-                            _terminal.Text(_layout.CONTENT_START_X, currentY, renderedLine.Text,
-                                Config.NarrativeUI.OutcomeReportTextColor, bgColor);
-                        }
-                    }
+                    RenderReportChip(renderedLine, currentY,
+                        shouldDimThisLine ? Config.NarrativeUI.DimmedContentColor : null);
                     break;
 
                 case LineType.Separator:
@@ -434,6 +417,7 @@ public class NarrativeUI : TerminalPanelUI
 
             case LineType.Report:
                 // Report chips collapse to plain history grey — no color background in history.
+                // (ConvertToHistory drops the Report reference, so this is the text-only fallback.)
                 _terminal.Text(_layout.CONTENT_START_X, y, line.Text.TrimEnd(), historyColor, Config.NarrativeUI.BackgroundColor);
                 break;
 
@@ -578,16 +562,10 @@ public class NarrativeUI : TerminalPanelUI
         
         if (lineIndex == 0)
         {
-            // First line: render difficulty glyph prefix + modusMentis bracket.
-            // Verbs may override the glyph — REMEMBER, for example, always renders '○'
-            // because it has no normal difficulty.
-            char? verbOverride = action.PreselectedOutcome is VerbOutcome vo
-                ? vo.VerbView.Verb.DifficultyGlyphOverride
-                : null;
-            char diffChar = verbOverride ?? (action.DifficultyLevel > 0
-                ? Config.Symbols.DifficultyGlyphs[Math.Clamp(action.DifficultyLevel, 1, 10) - 1]
-                : '>');
-            string diffPrefix = $"{diffChar} ";
+            // First line: render difficulty glyph prefix + modusMentis bracket. The glyph choice
+            // lives on the action so history lines (which bake the whole prefix into their text)
+            // cannot drift from what is painted here.
+            string diffPrefix = $"{action.DifficultyGlyph} ";
 
             // Build modusMentis bracket with level indicators
             string modusMentisName = action.ChainModusMentis?.DisplayName ?? action.ActionModusMentisId;

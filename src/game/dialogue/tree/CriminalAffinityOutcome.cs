@@ -1,4 +1,5 @@
 using Cathedral.Game.Dialogue.Affinity;
+using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Dialogue.Tree;
@@ -15,6 +16,10 @@ public class CriminalAffinityOutcome : IDialogueOutcome
 
     public string Description => $"NPC records crime: {_crime}";
 
-    public void Apply(NpcEntity npc, string partyMemberId)
-        => npc.AffinityTable.RecordCrime(partyMemberId, _crime);
+    public OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
+    {
+        npc.AffinityTable.RecordCrime(partyMemberId, _crime);
+        return DialogueOutcomeReports.Relation(
+            $"{npc.DisplayName} holds you a {_crime.ToString().ToLower()}", OutcomeReportSeverity.Negative);
+    }
 }

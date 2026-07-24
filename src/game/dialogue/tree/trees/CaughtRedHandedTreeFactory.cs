@@ -133,7 +133,12 @@ public static class CaughtRedHandedTreeFactory
     {
         public string Description => "crime record cleared (apology accepted)";
 
-        public void Apply(NpcEntity npc, string partyMemberId)
-            => npc.AffinityTable.ClearCrime(partyMemberId);
+        public Cathedral.Game.Narrative.OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
+        {
+            npc.AffinityTable.ClearCrime(partyMemberId);
+            return DialogueOutcomeReports.Relation(
+                $"{npc.DisplayName} lets the matter drop",
+                Cathedral.Game.Narrative.OutcomeReportSeverity.Positive);
+        }
     }
 }

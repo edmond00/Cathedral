@@ -1,4 +1,5 @@
 using Cathedral.Game.Dialogue.Affinity;
+using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Dialogue.Tree;
@@ -26,6 +27,12 @@ public class AffinityIncrementOutcome : IDialogueOutcome
 
     public string Description => _delta > 0 ? "affinity increases one step" : "affinity decreases one step";
 
-    public void Apply(NpcEntity npc, string partyMemberId)
-        => npc.AffinityTable.Adjust(partyMemberId, _delta, _min, _max);
+    public OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
+    {
+        var before = npc.AffinityTable.GetLevel(partyMemberId);
+        npc.AffinityTable.Adjust(partyMemberId, _delta, _min, _max);
+        // The step can be a no-op at the clamp boundary, in which case AffinityChange returns null
+        // and no chip is shown — which is the honest report.
+        return DialogueOutcomeReports.AffinityChange(npc, before, npc.AffinityTable.GetLevel(partyMemberId));
+    }
 }

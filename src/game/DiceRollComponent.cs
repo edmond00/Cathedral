@@ -316,7 +316,10 @@ public class DiceRollComponent
         bool hasFinal = !IsRolling && _finalPrimary != null && (!IsDual || _finalSecondary != null);
         int primarySixes   = hasFinal ? _finalPrimary!.Count(v => v == 6) : 0;
         int secondarySixes = hasFinal && IsDual ? _finalSecondary!.Count(v => v == 6) : 0;
-        bool isSuccess = IsDual ? primarySixes > secondarySixes : primarySixes >= Difficulty;
+        // The verdict shown is the verdict committed: read IsCurrentlySuccess rather than
+        // recomputing it here. A second local computation can drift from the one the caller acts
+        // on (it did), leaving the player told SUCCESS while the failure branch is applied.
+        bool isSuccess = hasFinal && IsCurrentlySuccess;
 
         // ── Box sizing — extra rows for the secondary dice group when in dual mode
         int primaryRows   = ((Math.Max(1, NumberOfDice)          + 19) / 20) * 2;
@@ -670,17 +673,21 @@ public class DiceRollComponent
 
         bool before = IsCurrentlySuccess;
 
+        // The die's new face and the verdict move together, ahead of everything that could throw
+        // (queue bookkeeping, sound callbacks). Updating the verdict last meant any failure in
+        // between left a modified die on screen and a stale IsCurrentlySuccess for the caller.
         _finalPrimary[dieIndex] = Math.Clamp(virtue.Apply(_finalPrimary[dieIndex], _humorRng), 1, 6);
+        IsCurrentlySuccess = ComputeSuccess();
+
         queue.ConsumeTailModifier();
         _humorApplied++;
-        OnButtonClick?.Invoke();
 
         // Applying a modifier always clears the selection — the player re-picks a humor
         // (the same queue's new tail, or another organ) for the next modification.
         _selectedQueue = -1;
         _hoveredDie = -1;
 
-        IsCurrentlySuccess = ComputeSuccess();
+        OnButtonClick?.Invoke();
         if (IsCurrentlySuccess != before)
             OnResultChanged?.Invoke(IsCurrentlySuccess);
     }

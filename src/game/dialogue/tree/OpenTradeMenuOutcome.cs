@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Trade;
 
@@ -18,5 +19,13 @@ public class OpenTradeMenuOutcome : IDialogueOutcome
         ? "NPC agrees to sell to you"
         : "NPC agrees to buy from you";
 
-    public void Apply(NpcEntity npc, string partyMemberId) => npc.TradeRequest = _mode;
+    public OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
+    {
+        npc.TradeRequest = _mode;
+        return DialogueOutcomeReports.Relation(
+            _mode == TradeMode.Buy
+                ? $"{npc.DisplayName} agrees to sell to you"
+                : $"{npc.DisplayName} agrees to buy from you",
+            OutcomeReportSeverity.Positive);
+    }
 }

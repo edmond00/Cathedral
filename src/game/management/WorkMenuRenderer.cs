@@ -14,8 +14,12 @@ namespace Cathedral.Game.Management;
 /// (black interior, transparent surround so the 3D world stays visible behind it). The player drags
 /// a slider (30 … 1800 days) to choose how long to work; a live preview shows the coins and
 /// modus-mentis XP the stint would earn (and which unknown skills it would let them learn).
-/// Confirming advances the game clock, credits the coins, applies the XP/learning, then shows a
-/// results box with a Continue button. ESC is NOT handled here — the launcher opens the pause menu.
+///
+/// Confirming plays the time-passing beat: the duration bar the player just set refills while a day
+/// counter ticks up, and <see cref="GameClock"/> is advanced in step with it so the world's date
+/// tracks what is on screen. Only once the bar is full is the outcome applied (coins credited, XP
+/// awarded, skills learned) and the results box shown with a Continue button.
+/// ESC is NOT handled here — the launcher opens the pause menu.
 /// </summary>
 public sealed class WorkMenuRenderer
 {
@@ -26,7 +30,11 @@ public sealed class WorkMenuRenderer
     private const int MaxDays  = 1800;
     /// <summary>Days added/removed by one click of the ◄/► arrows.</summary>
     private const int ArrowStepDays = 10;
-    private const double WorkAnimationSeconds = 1.3;
+    /// <summary>Real seconds the whole stint takes to play out, whatever its length in days.</summary>
+    private const double WorkAnimationSeconds = 2.0;
+    /// <summary>Largest real-time step one frame may contribute. Caps the catch-up after a pause
+    /// (ESC overlay, unfocused window) so the animation resumes instead of snapping to its end.</summary>
+    private const double MaxFrameStepSeconds = 0.1;
 
     // ── Layout ────────────────────────────────────────────────────
     private const int BarWidth = 40;
@@ -64,9 +72,14 @@ public sealed class WorkMenuRenderer
     private int     _days = MinDays;
     private Phase   _phase   = Phase.Configure;
     private bool    _dragging;
-    private DateTime _workStartUtc;
     private WorkOutcome? _result;
     private int _hoverX = -1, _hoverY = -1;
+
+    // Time-passing animation: accumulated (not wall-clock) elapsed seconds, and how much of the
+    // stint has already been fed to GameClock so the two never drift apart.
+    private DateTime _lastTickUtc;
+    private double   _animElapsed;
+    private int      _daysAdvanced;
 
     // Box geometry + hit rects, computed each Render and reused by hit-testing.
     private int _boxX, _boxY, _boxH;
@@ -147,12 +160,14 @@ public sealed class WorkMenuRenderer
 
     private void SetDays(int d) => _days = Math.Clamp(d, MinDays, MaxDays);
 
+    /// <summary>Starts the time-passing beat. The outcome is applied only once it finishes, so the
+    /// coins and XP land with the results box rather than before the bar has drawn a single frame.</summary>
     private void BeginWork()
     {
-        _result       = WorkOutcome.Apply(_job, _days, _protagonist, _party);
-        GameClock.Advance(_days);
         _phase        = Phase.Working;
-        _workStartUtc = DateTime.UtcNow;
+        _animElapsed  = 0.0;
+        _daysAdvanced = 0;
+        _lastTickUtc  = DateTime.UtcNow;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -177,19 +192,19 @@ public sealed class WorkMenuRenderer
         var preview = WorkOutcome.Preview(_job, _days, _protagonist);
         int skillRows = preview.Skills.Count;
 
-        // title / sep / duration / slider / sep(earn) / coins / skills… / sep / buttons
-        DrawBox(8 + skillRows);
+        // (blank) title <break> duration / blank / slider <break(earn)> coins / blank / skills… <break> buttons (blank)
+        DrawBox(18 + skillRows);
 
-        int y = _boxY + 1;
+        int y = _boxY + 2;   // one blank row under the top border
         CenteredInBox(y, Truncate($"Working for {_npc.DisplayName} as {_job.WithArticle()}", BoxW - 4), Title, Bg);
         y++;
-        DrawSeparator(y++);
+        DrawSectionBreak(ref y);
 
         // Duration: label left, chosen value right (chip background).
         _terminal.Text(_boxX + 2, y, "How long will you work?", Label, Bg);
         string daysChip = $" {DaysText(_days)} ";
         _terminal.Text(_boxX + BoxW - 2 - daysChip.Length, y, daysChip, Accent, ChipBg);
-        y++;
+        y += 2;   // blank row between the question and the slider
 
         // Slider: [<]  ██████░░░░░░  [>]
         _sliderRow = y;
@@ -205,13 +220,13 @@ public sealed class WorkMenuRenderer
         DrawArrow(BarX0 + BarWidth + 1, y, "[>]", _days < MaxDays);
         y++;
 
-        DrawSeparator(y++, "you would earn");
+        DrawSectionBreak(ref y, "you would earn");
 
         string coins = preview.Coins > 0
             ? $"{preview.Coins}{CoinGlyph(preview.Coin)} ({CoinName(preview.Coin)})"
             : "no coin yet — work longer";
         CenteredInBox(y, coins, preview.Coins > 0 ? CoinColor(preview.Coin) : Dim, Bg);
-        y++;
+        y += 2;   // blank row between the salary and the skill list
 
         foreach (var s in preview.Skills)
         {
@@ -219,7 +234,7 @@ public sealed class WorkMenuRenderer
             y++;
         }
 
-        DrawSeparator(y++);
+        DrawSectionBreak(ref y);
         DrawConfigureButtons(y);
     }
 
@@ -242,14 +257,45 @@ public sealed class WorkMenuRenderer
         return s.LevelsGained > 0 ? Learn : Value;
     }
 
+    /// <summary>
+    /// The time-passing beat: the duration bar refills while the day counter climbs to the chosen
+    /// stint. <see cref="GameClock"/> is advanced by the difference each frame — never in one jump —
+    /// so it lands on exactly the chosen number of days when the bar completes.
+    /// </summary>
     private void RenderWorking()
     {
-        DrawBox(3);
-        CenteredInBox(_boxY + 1, Truncate($"You work as {_job.WithArticle()} for {_npc.DisplayName}…", BoxW - 4), Title, Bg);
-        CenteredInBox(_boxY + 3, $"{DaysText(_days)} pass.", Value, Bg);
+        var now = DateTime.UtcNow;
+        _animElapsed += Math.Clamp((now - _lastTickUtc).TotalSeconds, 0.0, MaxFrameStepSeconds);
+        _lastTickUtc = now;
 
-        if ((DateTime.UtcNow - _workStartUtc).TotalSeconds >= WorkAnimationSeconds)
-            _phase = Phase.Done;
+        double progress = Math.Clamp(_animElapsed / WorkAnimationSeconds, 0.0, 1.0);
+
+        int elapsedDays = (int)Math.Round(progress * _days);
+        if (elapsedDays > _daysAdvanced)
+        {
+            GameClock.Advance(elapsedDays - _daysAdvanced);
+            _daysAdvanced = elapsedDays;
+        }
+
+        // (blank) title (blank) bar (blank) counter (blank)
+        DrawBox(7);
+        int y = _boxY + 2;
+        CenteredInBox(y, Truncate($"You work as {_job.WithArticle()} for {_npc.DisplayName}…", BoxW - 4), Title, Bg);
+        y += 2;
+
+        // Same geometry as the duration slider, so it reads as that bar filling up.
+        int filled = (int)Math.Round(progress * BarWidth);
+        for (int i = 0; i < BarWidth; i++)
+            _terminal.Text(BarX0 + i, y, "█", i < filled ? Accent : Sep, Bg);
+        y += 2;
+
+        CenteredInBox(y, $"{_daysAdvanced} / {DaysText(_days)}", Value, Bg);
+
+        if (progress >= 1.0)
+        {
+            _result = WorkOutcome.Apply(_job, _days, _protagonist, _party);
+            _phase  = Phase.Done;
+        }
     }
 
     private void RenderDone()
@@ -266,13 +312,13 @@ public sealed class WorkMenuRenderer
                 lines.Add(($"(you set aside {s.Dropped.DisplayName} to make room)", Dim));
         }
 
-        // title / sep / lines… / sep / continue
-        DrawBox(4 + lines.Count);
+        // (blank) title <break> lines… <break> continue (blank)
+        DrawBox(10 + lines.Count);
 
-        int y = _boxY + 1;
+        int y = _boxY + 2;   // one blank row under the top border
         CenteredInBox(y, $"— {DaysText(_days)} of work done —", Title, Bg);
         y++;
-        DrawSeparator(y++);
+        DrawSectionBreak(ref y);
 
         foreach (var (text, fg) in lines)
         {
@@ -280,7 +326,7 @@ public sealed class WorkMenuRenderer
             y++;
         }
 
-        DrawSeparator(y++);
+        DrawSectionBreak(ref y);
         DrawContinue(y);
     }
 
@@ -324,6 +370,14 @@ public sealed class WorkMenuRenderer
         _terminal.SetCell(x1,    _boxY, '┐', Border, Bg);
         _terminal.SetCell(_boxX, y1,    '└', Border, Bg);
         _terminal.SetCell(x1,    y1,    '┘', Border, Bg);
+    }
+
+    /// <summary>Section rule with one blank row of breathing room either side; advances <paramref name="y"/> past all three.</summary>
+    private void DrawSectionBreak(ref int y, string? caption = null)
+    {
+        y++;                        // blank above
+        DrawSeparator(y++, caption);
+        y++;                        // blank below
     }
 
     /// <summary>Horizontal rule across the box, optionally with a centered caption.</summary>

@@ -302,29 +302,72 @@ public static class TextSanitizationPipeline
 
         if (anachronisms.Count > 0)
             sb.AppendLine(
-                $"Anachronistic or modern terms to replace with low-fantasy medieval equivalents: " +
+                $"Modern or anachronistic terms, to be replaced by plain wording of the period: " +
                 $"{string.Join(", ", anachronisms)}");
 
         if (realWorldNames.Count > 0)
             sb.AppendLine(
-                $"Real-world proper names to replace with fitting invented in-world names: " +
+                $"Real-world proper names, to be DEMOTED to an ordinary word or DELETED — never renamed: " +
                 $"{string.Join(", ", realWorldNames)}");
 
         sb.AppendLine();
-        sb.AppendLine("Rewrite the following text, replacing those terms accordingly.");
-        sb.AppendLine("Keep the meaning and tone. Return only the corrected text:");
+        sb.AppendLine("Rewrite the passage below with those repairs and no others.");
+        sb.AppendLine("Keep every other word, contraction and mark of punctuation exactly as written.");
         sb.AppendLine();
-        sb.Append(text);
+        sb.AppendLine(text);
+
+        // The last thing the model reads before decoding carries the most weight at this model size,
+        // so the operative rule is restated after the passage, not only before it.
+        if (realWorldNames.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("---");
+            sb.Append("Reminder: demote or delete each listed name. Do not invent a name, " +
+                      "and do not substitute another real one.");
+        }
+
         return sb.ToString().TrimEnd();
     }
 
     // ── System prompt ──────────────────────────────────────────────────────────
 
+    // Names are DEMOTED to a common noun or DELETED — never renamed. Coining a name asks the model to
+    // sample a novel string, which a small model answers with the nearest famous one (Stowe →
+    // Stonehenge); demotion is a hypernym lookup, which it does reliably. It is also stable across
+    // calls (no map needed) and verifiable: re-running Detect on the result must find nothing.
     private const string RewriterSystemPrompt =
-        "You are a text corrector for a low-fantasy medieval narrative game. " +
-        "When given a passage of text, you may be told about anachronistic or modern terms " +
-        "(replace them with fitting medieval equivalents) and/or real-world proper names " +
-        "(replace them with fitting invented in-world names). " +
-        "You preserve the sentence structure and tone. " +
-        "You return ONLY the corrected text — no explanation, no preamble.";
+@"You are a text corrector for a low-fantasy medieval narrative game.
+You are given a passage and a list of terms that must not appear in it.
+
+Two kinds of term may be listed, each with its own repair.
+
+1. MODERN OR ANACHRONISTIC WORDS -> plain wording of the period:
+       the telephone  -> the messenger
+       he panicked    -> he took fright
+       the factory    -> the workshop
+
+2. REAL-WORLD PROPER NAMES -> never a replacement name. NEVER invent a name,
+   and never swap in another real one. Do one of two things instead:
+
+   DEMOTE - use the ordinary word for what it is:
+       Everest         -> the mountain
+       Rome            -> the city
+       Saint Cuthbert  -> the saint
+       the Rhine       -> the river
+
+   DELETE - drop it, when the sentence still says the same thing without it:
+       some French wine     -> some wine
+       a Venetian merchant  -> a merchant
+       I am Edward of Stowe, a man of old lineage
+         -> I am Edward, a man of old lineage
+
+   DELETE when the name only qualifies another word, or when what remains
+   still reads whole. DEMOTE when the sentence is about the thing itself.
+   When in doubt, DEMOTE.
+
+You may adjust only the small words touching a repaired term - an article,
+of, from, a comma - so the sentence stays grammatical. Everything else is
+copied exactly: same words, same contractions, same punctuation, same tone.
+
+Return ONLY the corrected text - no explanation, no preamble.";
 }

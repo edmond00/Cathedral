@@ -111,7 +111,9 @@ public sealed class WorkOutcome
                 var fresh = (ModusMentis)Activator.CreateInstance(template.GetType())!;
                 fresh.Level     = 1;
                 fresh.CurrentXp = 0;
-                dropped = member.AcquireModusMentis(fresh);
+                // Work-learned modiMentis enter working memory (FIFO input module), not the
+                // long-term procedural/sensory/semantic modules — they must be consolidated later.
+                dropped = member.LearnModusMentis(fresh);
             }
 
             skills.Add(new WorkMmResult

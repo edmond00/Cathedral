@@ -4,6 +4,7 @@ using System.Text;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Terminal.Utils;
+using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Preview;
 
 namespace Cathedral.Game;
@@ -355,6 +356,36 @@ public abstract class TerminalPanelUI
         _terminal.Text(buttonX, buttonY, buttonText, buttonColor, buttonBackgroundColor);
 
         return (buttonX, buttonY, buttonText.Length);
+    }
+
+    // ── Outcome report chips (shared with NarrativeUI and DialogueTreeUI) ─────
+
+    /// <summary>
+    /// Draw one outcome-report chip: the pre-centred text of <paramref name="line"/> on a band
+    /// coloured by severity (positive / negative / neutral). Shared so a dialogue's outcome is
+    /// indistinguishable from an action's outcome — they are the same kind of event to the player.
+    /// <paramref name="flatColor"/> replaces the band with plain trimmed text in that colour, which
+    /// is how both panels render a chip that has greyed into history or been dimmed behind an overlay.
+    /// </summary>
+    protected void RenderReportChip(RenderedLine line, int y, Vector4? flatColor = null)
+    {
+        if (line.Report == null) return;
+
+        if (flatColor is { } flat)
+        {
+            _terminal.Text(_layout.CONTENT_START_X, y, line.Text.TrimEnd(), flat,
+                Config.NarrativeUI.BackgroundColor);
+            return;
+        }
+
+        var bg = line.Report.Severity switch
+        {
+            OutcomeReportSeverity.Negative => Config.NarrativeUI.OutcomeReportNegativeBackground,
+            OutcomeReportSeverity.Positive => Config.NarrativeUI.OutcomeReportPositiveBackground,
+            _                              => Config.NarrativeUI.OutcomeReportNeutralBackground,
+        };
+        _terminal.Text(_layout.CONTENT_START_X, y, line.Text,
+            Config.NarrativeUI.OutcomeReportTextColor, bg);
     }
 
     // ── Dice-roll overlay (shared with NarrativeUI and DialogueUI) ────────────

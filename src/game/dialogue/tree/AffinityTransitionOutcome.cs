@@ -1,4 +1,5 @@
 using Cathedral.Game.Dialogue.Affinity;
+using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Dialogue.Tree;
@@ -15,6 +16,10 @@ public class AffinityTransitionOutcome : IDialogueOutcome
 
     public string Description => $"affinity becomes {_targetLevel.ToShortLabel()}";
 
-    public void Apply(NpcEntity npc, string partyMemberId)
-        => npc.AffinityTable.SetLevel(partyMemberId, _targetLevel);
+    public OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
+    {
+        var before = npc.AffinityTable.GetLevel(partyMemberId);
+        npc.AffinityTable.SetLevel(partyMemberId, _targetLevel);
+        return DialogueOutcomeReports.AffinityChange(npc, before, _targetLevel);
+    }
 }

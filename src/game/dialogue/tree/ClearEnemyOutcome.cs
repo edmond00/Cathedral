@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Dialogue.Tree;
@@ -10,6 +11,11 @@ public class ClearEnemyOutcome : IDialogueOutcome
 {
     public string Description => "NPC is no longer considered an enemy";
 
-    public void Apply(NpcEntity npc, string partyMemberId)
-        => npc.AffinityTable.ClearEnemy(partyMemberId);
+    public OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
+    {
+        if (!npc.AffinityTable.IsEnemy(partyMemberId)) return null;
+        npc.AffinityTable.ClearEnemy(partyMemberId);
+        return DialogueOutcomeReports.Relation(
+            $"{npc.DisplayName} no longer counts you an enemy", OutcomeReportSeverity.Positive);
+    }
 }

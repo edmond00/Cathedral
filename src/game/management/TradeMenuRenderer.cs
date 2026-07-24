@@ -267,43 +267,47 @@ public sealed class TradeMenuRenderer
 
         if (Offers.Count == 0)
         {
-            // title / sep / notice / sep / buttons
-            DrawBox(5);
-            int ey = _boxY + 1;
+            // (blank) title <break> notice <break> buttons (blank)
+            DrawBox(11);
+            int ey = _boxY + 2;
             CenteredInBox(ey++, Truncate(title, BoxW - 4), Title, Bg);
-            DrawSeparator(ey++);
+            DrawSectionBreak(ref ey);
             CenteredInBox(ey++, Truncate($"{_npc.DisplayName} has nothing to trade.", BoxW - 4), Label, Bg);
-            DrawSeparator(ey++);
+            DrawSectionBreak(ref ey);
             DrawButtons(ey, withConfirm: false);
             return;
         }
 
-        // title / wallet / sep / header / sep / items… / sep / [total] / message / sep / buttons
+        // (blank) title / wallet <break> header / rule / blank / items… <break> [total] / message / rule / blank / buttons (blank)
         bool showTotal = _mode == TradeMode.Buy;
-        DrawBox(9 + Offers.Count + (showTotal ? 1 : 0));
+        DrawBox(17 + Offers.Count + (showTotal ? 1 : 0));
 
-        int y = _boxY + 1;
+        int y = _boxY + 2;   // one blank row under the top border
         CenteredInBox(y++, Truncate(title, BoxW - 4), Title, Bg);
         RenderWallet(y++);
-        DrawSeparator(y++);
+        DrawSectionBreak(ref y);
 
-        // Column headers.
+        // Column headers, underlined by their own rule (a table head, not a section break).
         _terminal.Text(_boxX + NameOff,  y, "Item",  Label, Bg);
         _terminal.Text(_boxX + PriceOff, y, "Price", Label, Bg);
         _terminal.Text(_boxX + QtyOff - 1, y, "Qty", Label, Bg);
         if (_mode == TradeMode.Sell) _terminal.Text(_boxX + OwnedOff, y, "Have", Label, Bg);
         y++;
         DrawSeparator(y++);
+        y++;
 
         _rowY0 = y;
         for (int i = 0; i < Offers.Count; i++)
             RenderOfferRow(i, y++);
 
-        DrawSeparator(y++);
+        DrawSectionBreak(ref y);
         if (showTotal) RenderTotals(y++);
-        CenteredInBox(y, Truncate(_message, BoxW - 4), Warning, Bg);   // reserved even when empty
+        // Reserved even when empty — this row also serves as the breathing row above the rule below,
+        // so the totals never sit two blank rows away from it.
+        CenteredInBox(y, Truncate(_message, BoxW - 4), Warning, Bg);
         y++;
         DrawSeparator(y++);
+        y++;
         DrawButtons(y, withConfirm: true);
     }
 
@@ -440,6 +444,14 @@ public sealed class TradeMenuRenderer
         _terminal.SetCell(x1,    _boxY, '┐', Border, Bg);
         _terminal.SetCell(_boxX, y1,    '└', Border, Bg);
         _terminal.SetCell(x1,    y1,    '┘', Border, Bg);
+    }
+
+    /// <summary>Section rule with one blank row of breathing room either side; advances <paramref name="y"/> past all three.</summary>
+    private void DrawSectionBreak(ref int y, string? caption = null)
+    {
+        y++;                        // blank above
+        DrawSeparator(y++, caption);
+        y++;                        // blank below
     }
 
     /// <summary>Horizontal rule across the box, optionally with a centered caption.</summary>

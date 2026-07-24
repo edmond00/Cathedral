@@ -11,5 +11,4 @@ overall MM properties fixs
 overall beast fixs
 2 same keywords on observation text, click the second, interact with object related to the first
 "John" in free reasoning thought preview
-too much dices during second dialogue with reeve (3 instead of 1 expected)
 request work to reeve -> use body humor to pass dice roll check -> reeve still refuse to give work

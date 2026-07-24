@@ -318,4 +318,24 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     /// otherwise the real action ModusMentis. Used for chain traversal and display.
     /// </summary>
     public override ModusMentis ChainModusMentis => CombinedActionModusMentis ?? ActionModusMentis!;
+
+    /// <summary>
+    /// The glyph opening this action's line: the verb's override when it has one (REMEMBER uses '○',
+    /// having no normal difficulty), else the difficulty glyph, else '>' before evaluation.
+    /// </summary>
+    public char DifficultyGlyph
+        => PreselectedOutcome?.VerbView?.Verb?.DifficultyGlyphOverride
+           ?? (DifficultyLevel > 0
+               ? Config.Symbols.DifficultyGlyphs[Math.Clamp(DifficultyLevel, 1, 10) - 1]
+               : '>');
+
+    /// <summary>
+    /// The full <c>"⑤ [MODUS MENTIS ⟐⟐] "</c> prefix an action line is drawn with. The live renderer
+    /// paints it piece by piece so each part can take its own colour; history lines carry no action
+    /// reference and bake this string in instead. Both must agree, or a line shifts (and loses its
+    /// header) the moment its segment greys out.
+    /// </summary>
+    public string DisplayPrefix
+        => $"{DifficultyGlyph} [{ChainModusMentis?.DisplayName ?? ActionModusMentisId} " +
+           $"{new string(Config.Symbols.ModusMentisLevelIndicator, ChainModusMentis?.Level ?? 1)}] ";
 }

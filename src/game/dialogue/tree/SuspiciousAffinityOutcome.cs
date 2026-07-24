@@ -1,4 +1,5 @@
 using Cathedral.Game.Dialogue.Affinity;
+using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Dialogue.Tree;
@@ -12,6 +13,10 @@ public class SuspiciousAffinityOutcome : IDialogueOutcome
 {
     public string Description => "NPC is now Suspicious of you (wary but no longer hostile)";
 
-    public void Apply(NpcEntity npc, string partyMemberId)
-        => npc.AffinityTable.SetLevel(partyMemberId, AffinityLevel.Suspicious);
+    public OutcomeReport? Apply(NpcEntity npc, string partyMemberId)
+    {
+        var before = npc.AffinityTable.GetLevel(partyMemberId);
+        npc.AffinityTable.SetLevel(partyMemberId, AffinityLevel.Suspicious);
+        return DialogueOutcomeReports.AffinityChange(npc, before, AffinityLevel.Suspicious);
+    }
 }

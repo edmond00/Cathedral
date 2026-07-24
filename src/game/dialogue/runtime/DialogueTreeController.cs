@@ -21,7 +21,7 @@ namespace Cathedral.Game.Dialogue.Runtime;
 /// <para>
 /// A conversation rolls the dice <b>once</b>, at the branch end. The pool is the NPC affinity bonus
 /// plus the summed levels of every Modus Mentis that voiced a chosen reply along the branch; the
-/// difficulty is authored on the <see cref="ResolutionNode"/>.
+/// difficulty is authored on the <see cref="ResolutionNode"/>, clamped to the pool size.
 /// </para>
 /// </summary>
 public class DialogueTreeController
@@ -216,9 +216,12 @@ public class DialogueTreeController
             var r = _dice.ContinueButtonRegion;
             if (my == r.Y && mx >= r.X && mx < r.X + r.Width)
             {
+                // Read the (possibly humor-modified) verdict BEFORE tearing the roll down, so the
+                // committed outcome can never depend on what Hide() happens to leave behind.
+                bool succeeded = _dice.IsCurrentlySuccess;
                 _state.ClearDiceRoll();
                 _dice.Hide();
-                ResolveRoll();
+                ResolveRoll(succeeded);
                 return;
             }
             _dice.HandleHumorClick(mx, my);
@@ -256,8 +259,15 @@ public class DialogueTreeController
     private void InterruptConversation()
     {
         _npc.AffinityTable.MarkFirstContact(_partyMemberId);
-        if (_npc.AffinityTable.GetLevel(_partyMemberId) != AffinityLevel.Suspicious)
+        var before = _npc.AffinityTable.GetLevel(_partyMemberId);
+        if (before != AffinityLevel.Suspicious)
             _npc.AffinityTable.Adjust(_partyMemberId, -1);
+
+        // Walking away costs standing, so it gets the same chip a resolved outcome would — the panel
+        // closes immediately, but the buffer is shared and the player reads it back in narration.
+        var report = DialogueOutcomeReports.AffinityChange(
+            _npc, before, _npc.AffinityTable.GetLevel(_partyMemberId));
+        if (report != null) AppendOutcomeReports(new List<OutcomeReport> { report });
 
         Console.WriteLine(
             $"DialogueTreeController: Conversation with {_npc.DisplayName} interrupted — " +
@@ -304,9 +314,10 @@ public class DialogueTreeController
     {
         if (!_state.IsDiceRollActive) return "no dice roll is active";
         if (_state.IsDiceRolling)     return "dice are still rolling";
+        bool succeeded = _dice.IsCurrentlySuccess;
         _state.ClearDiceRoll();
         _dice.Hide();
-        ResolveRoll();
+        ResolveRoll(succeeded);
         return null;
     }
 
@@ -337,13 +348,26 @@ public class DialogueTreeController
         Actions: null,
         SpeakerName: _npc.DisplayName));
 
-    /// <summary>A bracketed system note (affinity change, conversation end).</summary>
+    /// <summary>A bracketed system note (conversation end).</summary>
     private void AppendSystemLine(string text) => Append(new NarrationBlock(
         Type: NarrationBlockType.Outcome,
         ModusMentis: null!,
         Text: text,
         Keywords: null,
         Actions: null));
+
+    /// <summary>
+    /// What the conversation actually changed, as the very chips the narration panel uses for an
+    /// action's outcome — same <see cref="OutcomeReport"/> type, same severity colours, same centred
+    /// band. A dialogue outcome and an action outcome should not look like different systems.
+    /// </summary>
+    private void AppendOutcomeReports(List<OutcomeReport> reports) => Append(new NarrationBlock(
+        Type: NarrationBlockType.Outcome,
+        ModusMentis: null!,
+        Text: "",
+        Keywords: null,
+        Actions: null,
+        OutcomeReports: reports));
 
     private void Append(NarrationBlock block)
     {
@@ -519,7 +543,14 @@ public class DialogueTreeController
 
         int affinityBonus = _npc.AffinityTable.GetLevel(_partyMemberId).BonusDice();
         int diceCount     = Math.Clamp(affinityBonus + _accumulatedDice, 1, 15);
-        int difficulty    = resolution.Difficulty;
+        // An authored difficulty above the pool size is unreachable — DialogueSessionState already
+        // clamps it, so clamp here too or the overlay would judge by a target the pool cannot meet.
+        int difficulty    = Math.Clamp(resolution.Difficulty, 1, diceCount);
+
+        Console.WriteLine(
+            $"DialogueTreeController: resolution '{resolution.NodeId}' — {diceCount} dice " +
+            $"(affinity {affinityBonus} + replica levels {_accumulatedDice}), difficulty {difficulty}" +
+            (difficulty != resolution.Difficulty ? $" (authored {resolution.Difficulty}, clamped to the pool)" : ""));
 
         _state.StartDiceRoll(diceCount, difficulty);
         _dice.Start(diceCount, difficulty);
@@ -535,14 +566,18 @@ public class DialogueTreeController
         });
     }
 
-    private void ResolveRoll()
+    /// <param name="succeeded">
+    /// The final verdict, already including any humor modifiers the player applied during the roll.
+    /// Captured by the caller before the overlay is hidden.
+    /// </param>
+    private void ResolveRoll(bool succeeded)
     {
         var resolution = _pendingResolution;
         _pendingResolution = null;
         if (resolution == null) return;
 
-        // Final outcome reflects any humor modifiers the player applied during the roll.
-        bool succeeded = _dice.IsCurrentlySuccess;
+        Console.WriteLine(
+            $"DialogueTreeController: resolution '{resolution.NodeId}' → {(succeeded ? "SUCCESS" : "FAILURE")}");
 
         _state.IsLoadingReaction = true;
 
@@ -584,19 +619,28 @@ public class DialogueTreeController
 
                 AppendNpcLine(reaction);
 
-                // Apply the outcomes gated by success/failure.
+                // Apply the outcomes gated by success/failure, collecting what each one changed.
+                var reports = new List<OutcomeReport>();
                 foreach (var oc in resolution.Outcomes)
                 {
                     bool fires = oc.Condition == BranchCondition.Either
                         || (oc.Condition == BranchCondition.Success && succeeded)
                         || (oc.Condition == BranchCondition.Failure && !succeeded);
-                    if (fires) oc.Outcome.Apply(_npc, _partyMemberId);
+                    if (!fires) continue;
+                    Console.WriteLine($"DialogueTreeController: applying outcome — {oc.Outcome.Description}");
+                    var report = oc.Outcome.Apply(_npc, _partyMemberId);
+                    if (report != null) reports.Add(report);
                 }
 
                 _npc.AffinityTable.MarkFirstContact(_partyMemberId);
 
-                var finalLevel = _npc.AffinityTable.GetLevel(_partyMemberId);
-                AppendSystemLine($"[{finalLevel.ToDisplayName(_npc.DisplayName)}]");
+                // A branch can legitimately change nothing (a failure with no failure-outcome), and
+                // silence there reads as a bug — say so plainly instead.
+                if (reports.Count == 0)
+                    reports.Add(new DialogueOutcomeReport(
+                        $"Nothing changes between you and {_npc.DisplayName}",
+                        OutcomeReportSeverity.Neutral));
+                AppendOutcomeReports(reports);
 
                 EndConversation();
             }
