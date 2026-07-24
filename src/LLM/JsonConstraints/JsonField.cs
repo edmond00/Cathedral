@@ -88,8 +88,10 @@ public record VariantField(string Name, CompositeField[] Variants, string? Hint 
 /// is forced to be a letter to prevent leading punctuation artifacts.
 /// Post-processing via <see cref="Cathedral.Game.Narrative.TextTruncationUtils.TrimToLastSentence"/>
 /// appends "..." when the generated text does not end with sentence-ending punctuation.
+/// When <see cref="AllowParentheses"/> is set, round brackets are added to the body character class
+/// (used by dialogue replies, where a parenthetical aside carries an unspoken inner thought).
 /// </summary>
-public record TemplateStringField(string Name, string Template, int MinGenLength, int MaxGenLength, string? Hint = null) : JsonField(Name, Hint)
+public record TemplateStringField(string Name, string Template, int MinGenLength, int MaxGenLength, string? Hint = null, bool AllowParentheses = false) : JsonField(Name, Hint)
 {
     public string Template { get; init; } = !string.IsNullOrEmpty(Template) ? Template : throw new ArgumentException("Template cannot be null or empty");
     public int MinGenLength { get; init; } = MinGenLength >= 0 ? MinGenLength : throw new ArgumentException("MinGenLength cannot be negative");

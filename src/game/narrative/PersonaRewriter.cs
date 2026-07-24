@@ -104,7 +104,11 @@ public class PersonaRewriter
             : BuildPrompt(neutralText, InstructionFor(kind, addressee),
                           FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee),
                           innerThought);
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(LLMSchemaConfig.CreateRewriteSchema(forcedPrefix: forcedPrefix));
+        // Dialogue replies may carry a parenthetical aside (an inner thought the interlocutor does not
+        // hear), so the body charset is widened to include round brackets for that kind only.
+        string gbnf = JsonConstraintGenerator.GenerateGBNF(
+            LLMSchemaConfig.CreateRewriteSchema(forcedPrefix: forcedPrefix,
+                                                allowParentheses: kind == NarrationKind.DialogueReplica));
 
         // When a preview sink is supplied, stream the tokens through it; otherwise keep the one-shot
         // path so the Critic / non-preview callers are byte-for-byte unchanged.
@@ -197,6 +201,8 @@ This sentence is written in the first person, and that ""I"" is you — it descr
 Re-express the following spoken line in your own voice, keeping the same meaning and intent: ""{neutralText}""
 
 This is a line of direct dialogue that you say out loud. {speaker}; {who} is the person you are talking to. Speak in the first person: call yourself ""I"", and call {who} ""you"". Keep it a short, natural spoken reply — add your own flavour, wording and personality, but do not change what is being said, asked or offered.
+
+You may enclose an aside in parentheses (like this) to voice a private inner thought — something you think but do not say aloud, which {who} does not hear. Everything outside the parentheses is spoken to {who}; keep any parenthetical aside brief and optional.
 
 {footer}";
     }

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Cathedral;
 using Cathedral.Game.Narrative.Preview;
 using Cathedral.LLM;
+using Cathedral.LLM.JsonConstraints;
 
 namespace Cathedral.Game.Narrative;
 
@@ -62,6 +63,21 @@ public class PersonaChoiceSelector
 {
     /// <summary>Reasoning is a sentence or two — enough to name a want, not to monologue.</summary>
     private const int ReasoningMaxTokens = 120;
+
+    /// <summary>
+    /// Character bounds on the (grammar-constrained) reasoning body after the forced "I " opening.
+    /// The token limit above is the practical stop; the max is just a safe grammar ceiling.
+    /// </summary>
+    private const int ReasoningMinChars = 4;
+    private const int ReasoningMaxChars = 600;
+
+    /// <summary>
+    /// GBNF for the persona's free-text reasoning: restricted to the same body charset as the persona
+    /// rewrites and forced to open with "I " so it reads as a first-person want. Raw text (not JSON) —
+    /// it is consumed directly as the reasoning string and streamed into the preview as inner thought.
+    /// </summary>
+    private static readonly string ReasoningGrammar =
+        JsonConstraintGenerator.GenerateRawTextGrammar("I ", ReasoningMinChars, ReasoningMaxChars);
 
     private readonly LlamaServerManager _llm;
     private readonly Random _random = new();
@@ -132,10 +148,10 @@ public class PersonaChoiceSelector
         string reasoningPrompt = BuildReasoningPrompt(prompt, labels, evaluator);
         string reasoning = preview != null
             ? await _llm.GenerateConstrainedStringStreamingAsync(
-                  slotId, reasoningPrompt, gbnfGrammar: null, ReasoningMaxTokens, skipReset: false,
+                  slotId, reasoningPrompt, gbnfGrammar: ReasoningGrammar, ReasoningMaxTokens, skipReset: false,
                   onTokenStreamed: (t, _) => preview.OnToken(t))
             : await _llm.GenerateConstrainedStringAsync(
-                  slotId, reasoningPrompt, gbnfGrammar: null, ReasoningMaxTokens, skipReset: false);
+                  slotId, reasoningPrompt, gbnfGrammar: ReasoningGrammar, ReasoningMaxTokens, skipReset: false);
         reasoning = reasoning.Trim();
         preview?.OnComplete(reasoning);
         if (reasoning.Length == 0) return new PersonaChoice<T>(candidates[0].Item, null);   // no signal → first real option
@@ -166,7 +182,7 @@ public class PersonaChoiceSelector
         if (!string.IsNullOrWhiteSpace(evaluator.PersonaReminder))
             question = $"As a {evaluator.PersonaReminder}, {LowerFirst(question)}";
         sb.Append(question).Append(' ');
-        sb.Append("Answer in one short sentence, in your own voice.");
+        sb.Append("Answer in one short sentence, in your own voice, beginning with \"I\".");
 
         if (!string.IsNullOrWhiteSpace(evaluator.PersonaReminder2))
             sb.Append("\n\nStay in the character of ").Append(evaluator.PersonaReminder2).Append('.');

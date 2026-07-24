@@ -46,10 +46,44 @@ public static class JsonConstraintGenerator
         
         // Add basic JSON primitives
         AppendBasicJsonRules(builder, processedRules);
-        
+
         return builder.ToString();
     }
-    
+
+    /// <summary>
+    /// The character class for free-form persona text: letters, digits, space and a small set of
+    /// punctuation, but never a double-quote (which would close the JSON string). Parentheses are
+    /// opted in only where asides are wanted (dialogue inner thoughts). This is the single source of
+    /// truth for the body charset shared by the JSON template path and the raw-text grammar below.
+    /// </summary>
+    private static string BodyCharClass(bool allowParentheses)
+        => "[-a-zA-Z0-9 .,?!'`" + (allowParentheses ? "()" : "") + "]";
+
+    /// <summary>
+    /// Builds a standalone GBNF (its own <c>root</c> rule) for a single run of free-form persona text
+    /// emitted <b>raw</b> — not wrapped in a JSON object — so it can be consumed directly as a string
+    /// (used by the reasoning stage that feeds the <c>PersonaMatchCritic</c>). The body is restricted
+    /// to the same character set as the JSON persona-rewrite path. When <paramref name="forcedPrefix"/>
+    /// is set (e.g. <c>"I "</c>) it becomes a literal the output must start with; otherwise the first
+    /// character is forced to a letter to avoid a leading-punctuation artifact. <paramref name="minLen"/>
+    /// and <paramref name="maxLen"/> bound the body generated after the prefix (in characters).
+    /// </summary>
+    public static string GenerateRawTextGrammar(string? forcedPrefix, int minLen, int maxLen, bool allowParentheses = false)
+    {
+        string charClass = BodyCharClass(allowParentheses);
+        if (string.IsNullOrEmpty(forcedPrefix))
+        {
+            int restMin = Math.Max(0, minLen - 1);
+            int restMax = Math.Max(restMin, maxLen - 1);
+            return $"root ::= [a-zA-Z] {charClass}{{{restMin},{restMax}}}\n";
+        }
+
+        string escaped = forcedPrefix.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        int bodyMin = Math.Max(0, minLen);
+        int bodyMax = Math.Max(bodyMin, maxLen);
+        return $"root ::= \"{escaped}\" {charClass}{{{bodyMin},{bodyMax}}}\n";
+    }
+
     /// <summary>
     /// Generates a JSON template string from a JsonField structure
     /// </summary>
@@ -340,6 +374,7 @@ public static class JsonConstraintGenerator
 
             string bodyPattern;
             string firstCharPrefix = "";
+            string charClass = BodyCharClass(field.AllowParentheses);
 
             // Free text up to max length. If no literal prefix, force first char to be a letter
             // to prevent leading punctuation artifacts (e.g. ", I ..." instead of "I ...").
@@ -349,14 +384,14 @@ public static class JsonConstraintGenerator
                 int restMin = Math.Max(0, field.MinGenLength - 1);
                 int restMax = field.MaxGenLength - 1;
                 bodyPattern = restMin == restMax
-                    ? $"[-a-zA-Z0-9 .,?!'`]{{{restMin}}}"
-                    : $"[-a-zA-Z0-9 .,?!'`]{{{restMin},{restMax}}}";
+                    ? $"{charClass}{{{restMin}}}"
+                    : $"{charClass}{{{restMin},{restMax}}}";
             }
             else
             {
                 bodyPattern = field.MinGenLength == field.MaxGenLength
-                    ? $"[-a-zA-Z0-9 .,?!'`]{{{field.MinGenLength}}}"
-                    : $"[-a-zA-Z0-9 .,?!'`]{{{field.MinGenLength},{field.MaxGenLength}}}";
+                    ? $"{charClass}{{{field.MinGenLength}}}"
+                    : $"{charClass}{{{field.MinGenLength},{field.MaxGenLength}}}";
             }
 
             var rule = ruleName + " ::= \"\\\"" + before + "\" " + firstCharPrefix + bodyPattern + " \"" + after + "\\\"\"";
