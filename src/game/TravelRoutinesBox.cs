@@ -46,6 +46,7 @@ public class TravelRoutinesBox
     private static Vector4 HoverBg       => Config.Colors.DarkPurple;
     private static Vector4 TitleColor    => Config.Colors.BrightPurple;
     private static Vector4 BodyColor     => Config.Colors.LightPurpleGray;
+    private static Vector4 SubtitleColor => Config.Colors.MediumGray60; // grey, distinct from the clickable rows
     private static Vector4 DisabledColor => Config.Colors.Purple;
 
     public void Render()
@@ -62,7 +63,7 @@ public class TravelRoutinesBox
         DrawBorder();
 
         CenteredInBox(_boxY + 1, "— ROUTINES —", TitleColor, BoxBg);
-        CenteredInBox(_boxY + 2, Truncate("Replay a learned routine at this location.", _boxW - 4), BodyColor, BoxBg);
+        CenteredInBox(_boxY + 2, Truncate("Replay a learned routine at this location.", _boxW - 4), SubtitleColor, BoxBg);
 
         if (_entries.Count == 0)
             CenteredInBox(_listStartY, "(no routines for this destination)", DisabledColor, BoxBg);

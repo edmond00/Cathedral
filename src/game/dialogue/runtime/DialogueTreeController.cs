@@ -559,7 +559,7 @@ public class DialogueTreeController
 
         _ = Task.Run(async () =>
         {
-            await Task.Delay(700); // Let the animation play
+            await Task.Delay(Config.Dice.AnimationDurationMs); // Let the animation play
             int[] values = Enumerable.Range(0, diceCount).Select(_ => _rng.Next(1, 7)).ToArray();
             _state.CompleteDiceRoll(values);
             _dice.Complete(values);

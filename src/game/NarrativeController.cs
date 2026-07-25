@@ -50,8 +50,10 @@ public class NarrativeController
     private int _lastMouseX = 0;
     private int _lastMouseY = 0;
     
-    // Pending action result (stored while waiting for dice roll continue)
-    private ActionExecutionResult? _pendingActionResult = null;
+    // Get-Up defers its outcome narration to the dice CONTINUE (like the main action path), so the
+    // dice animation runs for the fixed Config.Dice duration instead of blocking on LLM generation.
+    // Set while the get-up dice animate; invoked once by OnDiceRollContinue.
+    private Func<Task>? _pendingGetUpOutcome = null;
     
     // _graph and _scene are mutable so the reminescence flow can swap them when transitioning
     // between consecutive reminescences without rebuilding the controller.
@@ -87,10 +89,6 @@ public class NarrativeController
     // Separator caption for the segment the post-action CONTINUE closes ("after trying to grab a
     // rope"). Set when an in-place outcome shows the CONTINUE button; consumed by HandleContinueClicked.
     private string? _pendingSegmentLabel;
-    // True when the pending result came from PrepareDualOutcomesAsync and therefore needs its
-    // side-effects (XP, item consumption) committed at Continue. False for the Get-Up path,
-    // which commits its own side-effects via reports only.
-    private bool _pendingDeferredCommit;
 
     // ── Narration footer button (single button, three values) ────────────────────
     // The one bottom button in narration. In normal exploration it is LEAVE (or RUNAWAY when a
@@ -945,9 +943,9 @@ public class NarrativeController
 
             Console.WriteLine($"NarrativeController: Rolled {(succeeded ? "SUCCESS" : "FAILURE")} (humor may change this) — outcome generated on continue");
 
-            // Brief animation window: no async work backs this roll anymore (the outcome is generated
+            // Fixed animation window: no async work backs this roll anymore (the outcome is generated
             // only on Continue), so pause like the runaway/fight rolls do to let the dice animate.
-            await Task.Delay(900);
+            await Task.Delay(Config.Dice.AnimationDurationMs);
 
             // Complete the dice roll (stops animation, shows final values and continue button)
             NarrationDiceComplete(finalDiceValues);
@@ -1091,57 +1089,87 @@ public class NarrativeController
         Console.WriteLine(
             $"NarrativeController: GetUp dice — {sixesCount}/{numberOfDice} sixes (need {getUpDifficulty}) → {(succeeded ? "SUCCESS" : "FAILURE")}");
 
-        // Choose narration hint for the LLM based on success/failure.
         var actionMm = action.ActionModusMentis ?? action.ChainModusMentis;
-        OutcomeBase outcomeForPrompt = succeeded
-            ? new InlineOutcome("getting up", "with great effort you push yourself to your feet and continue your travel")
-            : new InlineOutcome("the effort", "your exhausted body refuses to rise — you slump back against the tree");
 
-        _narrationState.IsLoadingAction = true;
-        _narrationState.LoadingMessage  = Cathedral.Config.LoadingMessages.EvaluatingAction;
+        // Defer the outcome narration to the dice CONTINUE — like the main action path — so the
+        // animation runs for the fixed Config.Dice duration rather than blocking on the LLM. Get-Up
+        // has no humor modifiers, so the success decided here is final and can be captured as-is.
+        _pendingGetUpOutcome = () => GenerateGetUpOutcomeAsync(action, actionMm, succeeded, getUpDifficulty);
 
-        string narration;
-        try
-        {
-            narration = await _actionExecutor.OutcomeNarrator.NarrateOutcomeAsync(
-                action,
-                actionMm,
-                outcomeForPrompt,
-                succeeded,
-                difficulty: CriticTrees.DifficultyLevelToScore(getUpDifficulty),
-                _protagonist,
-                System.Threading.CancellationToken.None);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"NarrativeController: GetUp narration failed — {ex.Message}");
-            narration = succeeded
-                ? "With great effort, you force yourself to your feet."
-                : "Your body refuses to cooperate. You slump back against the tree.";
-        }
-
-        _narrationState.IsLoadingAction = false;
-
-        // Store as pending action result — OnDiceRollContinue applies verb reports and shows outcome.
-        // ActualOutcome is always the VerbOutcome so the GetUpVerb's Success/FailureReports are invoked.
-        _pendingActionResult = new ActionExecutionResult
-        {
-            Action              = action,
-            ActionModusMentis   = actionMm,
-            ThinkingModusMentis = action.ThinkingModusMentis ?? actionMm,
-            Difficulty          = CriticTrees.DifficultyLevelToScore(getUpDifficulty),
-            DifficultyLevel     = getUpDifficulty,
-            Succeeded           = succeeded,
-            ActualOutcome       = action.PreselectedOutcome != null
-                                      ? (OutcomeBase)action.PreselectedOutcome
-                                      : new InlineOutcome("get up", "rise"),
-            Narration           = narration,
-        };
+        // Fixed animation window (no async work backs this roll now that narration is deferred).
+        await Task.Delay(Config.Dice.AnimationDurationMs);
 
         NarrationDiceComplete(finalDiceValues);
         _narrationState.IsLoadingAction = false;
 
-        Console.WriteLine($"NarrativeController: GetUp action narrated — {(succeeded ? "pending transition" : "failure, will loop")}");
+        Console.WriteLine($"NarrativeController: GetUp dice rolled — {(succeeded ? "SUCCESS" : "FAILURE")}, outcome generated on continue");
+    }
+
+    /// <summary>
+    /// Generates the Get-Up outcome narration after the dice CONTINUE and commits the result.
+    /// Mirrors the main action path's deferred generation; because Get-Up carries no humor
+    /// modifiers the <paramref name="succeeded"/> decided at roll time is already final.
+    /// </summary>
+    private async Task GenerateGetUpOutcomeAsync(ParsedNarrativeAction action, ModusMentis actionMm,
+        bool succeeded, int getUpDifficulty)
+    {
+        try
+        {
+            _narrationState.LoadingMessage = Cathedral.Config.LoadingMessages.EvaluatingAction;
+
+            // Choose the narration hint for the LLM based on success/failure.
+            OutcomeBase outcomeForPrompt = succeeded
+                ? new InlineOutcome("getting up", "with great effort you push yourself to your feet and continue your travel")
+                : new InlineOutcome("the effort", "your exhausted body refuses to rise — you slump back against the tree");
+
+            string narration;
+            try
+            {
+                narration = await _actionExecutor.OutcomeNarrator.NarrateOutcomeAsync(
+                    action,
+                    actionMm,
+                    outcomeForPrompt,
+                    succeeded,
+                    difficulty: CriticTrees.DifficultyLevelToScore(getUpDifficulty),
+                    _protagonist,
+                    System.Threading.CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"NarrativeController: GetUp narration failed — {ex.Message}");
+                narration = succeeded
+                    ? "With great effort, you force yourself to your feet."
+                    : "Your body refuses to cooperate. You slump back against the tree.";
+            }
+
+            // ActualOutcome is always the VerbOutcome so the GetUpVerb's Success/FailureReports fire.
+            var result = new ActionExecutionResult
+            {
+                Action              = action,
+                ActionModusMentis   = actionMm,
+                ThinkingModusMentis = action.ThinkingModusMentis ?? actionMm,
+                Difficulty          = CriticTrees.DifficultyLevelToScore(getUpDifficulty),
+                DifficultyLevel     = getUpDifficulty,
+                Succeeded           = succeeded,
+                ActualOutcome       = action.PreselectedOutcome != null
+                                          ? (OutcomeBase)action.PreselectedOutcome
+                                          : new InlineOutcome("get up", "rise"),
+                Narration           = narration,
+            };
+
+            _narrationState.IsLoadingAction = false;
+            CommitOutcomeResult(result, deferredCommit: false);
+
+            Console.WriteLine($"NarrativeController: GetUp outcome committed — {(succeeded ? "pending transition" : "failure, will loop")}");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"NarrativeController: GetUp outcome generation failed — {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            _narrationState.IsLoadingAction = false;
+            NarrationDiceClear();
+            _narrationState.ErrorMessage = $"GetUp outcome failed: {ex.Message}";
+        }
     }
 
     /// <summary>
@@ -1336,14 +1364,16 @@ public class NarrativeController
     /// </summary>
     private void OnDiceRollContinue()
     {
-        // Get-Up path: a fully-formed result (narration already generated) — commit immediately.
-        if (_pendingActionResult != null)
+        // Get-Up path: narration was deferred to now — generate the outcome text (into a loading
+        // state) and commit, exactly as the main path does. Get-Up carries no humor modifiers, so
+        // the success/failure decided at roll time is already final.
+        if (_pendingGetUpOutcome != null)
         {
-            var ready = _pendingActionResult;
-            _pendingActionResult = null;
-            bool dc = _pendingDeferredCommit;
-            _pendingDeferredCommit = false;
-            CommitOutcomeResult(ready, dc);
+            var generate = _pendingGetUpOutcome;
+            _pendingGetUpOutcome = null;
+            NarrationDiceClear();
+            _narrationState.IsLoadingAction = true;
+            _ = Task.Run(generate);
             return;
         }
 
@@ -1762,8 +1792,11 @@ public class NarrativeController
         // Sync music filter based on current loading/dice state
         if (_ambianceEngine != null)
         {
-            bool diceActive = _narrationState.IsDiceRollActive;
-            var desired = diceActive                  ? MusicFilter.DiceRoll
+            // Play the dice-roll music only while the dice are actually tumbling — it stops the
+            // instant the animation settles and the values are locked in, not when the player
+            // dismisses the settled overlay with Continue.
+            bool diceRolling = _narrationState.IsDiceRollActive && _narrationState.IsDiceRolling;
+            var desired = diceRolling                 ? MusicFilter.DiceRoll
                         : _narrationState.IsAnyLoading ? MusicFilter.Loading
                         : MusicFilter.None;
             if (_ambianceEngine.ActiveFilter != desired)
@@ -2970,8 +3003,8 @@ public class NarrativeController
         NarrationDiceStart(diceCount, 1, subtitle: "RUNAWAY CHECK — feet", difficultyVerb: "to flee");
         _narrationState.LoadingMessage = "Rolling dice...";
 
-        // Brief animation window (no async work backs this roll, unlike thinking checks).
-        await Task.Delay(900);
+        // Fixed animation window (no async work backs this roll, unlike thinking checks).
+        await Task.Delay(Config.Dice.AnimationDurationMs);
 
         var values = new int[diceCount];
         for (int i = 0; i < diceCount; i++) values[i] = _diceRandom.Next(1, 7);

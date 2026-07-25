@@ -547,7 +547,7 @@ public class BodyArtViewer
         if (ShowWounds)
             RenderHpBar();
 
-        // Age readout in the opposite (top-right) corner of the art area
+        // Age readout in the bottom-right corner of the art area, clear of the HP bar (top-left)
         if (ShowAge)
             RenderAgeReadout();
 
@@ -598,7 +598,7 @@ public class BodyArtViewer
     }
 
     /// <summary>
-    /// Age readout in the top-right of the art area, mirroring the HP bar opposite it.
+    /// Age readout in the bottom-right of the art area, kept clear of the HP bar (top-left).
     ///   Row 1: current age / lifetime, in days.
     ///   Row 2: a short bar and percentage showing how much life is left.
     /// Both are derived — age from the member's birth time against the global clock, lifetime from
@@ -619,9 +619,11 @@ public class BodyArtViewer
         string pct   = $"{percent}%";
 
         // Right-align both rows against the art area's right edge, kept clear of the separator.
-        int rightEdge = Math.Min(ArtOffsetX + _artData.Width - 1, PanelX - 3);
-        int labelRow  = ArtOffsetY + 1;
-        int barRow    = ArtOffsetY + 2;
+        // Anchored to the bottom-right of the art area so it never collides with the HP bar
+        // in the top-left corner, then nudged up 2 rows and right 8 columns to clear the feet.
+        int rightEdge = Math.Min(ArtOffsetX + _artData.Width - 1 + 8, PanelX - 3);
+        int barRow    = ArtOffsetY + _artData.Height - 1 - 2;
+        int labelRow  = barRow - 1;
 
         int rowWidth = Math.Max(label.Length, AgeBarWidth + 1 + pct.Length);
         int x0       = rightEdge - rowWidth + 1;

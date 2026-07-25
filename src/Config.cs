@@ -523,8 +523,27 @@ public static class Config
     
     #endregion
     
+    #region Dice
+
+    public static class Dice
+    {
+        /// <summary>
+        /// How long the dice-roll animation tumbles before the values lock in. Shared by every roll
+        /// context — narrative checks, get-up, runaway, dialogue resolutions and fights — so the spin
+        /// (and the dice-roll music that plays alongside it) has one consistent length.
+        /// </summary>
+        public const float AnimationDurationSeconds = 5.0f;
+
+        /// <summary>
+        /// The animation duration in milliseconds, for <see cref="System.Threading.Tasks.Task.Delay(int)"/>.
+        /// </summary>
+        public const int AnimationDurationMs = (int)(AnimationDurationSeconds * 1000);
+    }
+
+    #endregion
+
     #region Narrative Configuration
-    
+
     public static class Narrative
     {
         /// <summary>

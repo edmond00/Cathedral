@@ -158,7 +158,7 @@ public class ThinkingExecutor
             ? (PersonaFit.Willing, (string?)null)
             : await AskPersonaFitAsync(actionSlot, skill, goalPhrase, overallLocation, areaLocation, observedPhrase, cancellationToken, actionPart);
 
-        // "refuse to do it" → the skill refuses; produce a first-person refusal outcome, no action.
+        // "unwilling to do it" → the skill refuses; produce a first-person refusal outcome, no action.
         // The fit want explains the refusal, so it rides into the rewrite as the inner thought.
         if (fit.Cancels)
         {
@@ -231,17 +231,20 @@ public class ThinkingExecutor
     }
 
     /// <summary>
-    /// The real persona-fit options, written as actions ("do it eagerly"); the refusal rides in as
-    /// the selector's decline option, so a <c>null</c> pick means the skill refuses the action.
+    /// The real persona-fit options, written as stances on one willingness axis ("eager to do it");
+    /// the refusal rides in as the selector's decline option ("unwilling to do it"), so a <c>null</c>
+    /// pick means the skill refuses the action. Phrasing the whole set as parallel stances (rather than
+    /// three "do it …" commands plus a lone "refuse") keeps the critic matching on the willingness axis
+    /// instead of on which option names the target.
     /// </summary>
-    private static readonly string[] PersonaFitActions = { "do it eagerly", "do it willingly", "do it reluctantly" };
+    private static readonly string[] PersonaFitActions = { "eager to do it", "willing to do it", "reluctant to do it" };
 
     /// <summary>
     /// Asks the action skill how strongly it is drawn to the action, through the same
     /// persona-reasoning → neutral-critic pass as every other choice
     /// (<see cref="PersonaChoiceSelector"/>): the skill answers "Do you want to do it?" in its own
-    /// voice, and the critic maps that onto "do it eagerly" (−1 difficulty), "do it willingly" (0),
-    /// "do it reluctantly" (+1), or the decline option "refuse to do it" (cancels the action —
+    /// voice, and the critic maps that onto "eager to do it" (−1 difficulty), "willing to do it" (0),
+    /// "reluctant to do it" (+1), or the decline option "unwilling to do it" (cancels the action —
     /// caller renders the refusal outcome). The selector resets the slot in and out, so the
     /// following action rewrite starts from the system prompt. In playground mode picks Willing.
     /// </summary>
@@ -261,14 +264,14 @@ public class ThinkingExecutor
         var chosen = await _selector.SelectAsync(
             actionSlot, skill, PersonaFitActions,
             a => a,
-            prompt, declineOption: "refuse to do it", preview: part?.NextSegment(isFree: true), ct: ct);
+            prompt, declineOption: "unwilling to do it", preview: part?.NextSegment(isFree: true), ct: ct);
 
-        Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {chosen.Item ?? "refuse to do it"}");
+        Console.WriteLine($"ThinkingExecutor: Persona-fit for '{goalPhrase}' ({skill.DisplayName}): {chosen.Item ?? "unwilling to do it"}");
         var fit = chosen.Item switch
         {
-            "do it eagerly"     => PersonaFit.Eager,
-            "do it willingly"   => PersonaFit.Willing,
-            "do it reluctantly" => PersonaFit.Reluctant,
+            "eager to do it"    => PersonaFit.Eager,
+            "willing to do it"  => PersonaFit.Willing,
+            "reluctant to do it" => PersonaFit.Reluctant,
             null                => PersonaFit.Refused,
             _                   => PersonaFit.Willing, // unrecognised → proceed at base difficulty
         };

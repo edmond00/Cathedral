@@ -110,7 +110,7 @@ public class FightModeAdapter
     private const int AiMoveFramesPerTile = 1;
 
     // ── Dice timing ─────────────────────────────────────────────────
-    private const float DiceRollDuration = 0.6f;
+    private const float DiceRollDuration = Config.Dice.AnimationDurationSeconds;
     private double _diceElapsed;
 
     // ── Elapsed time tracking (caller must provide delta) ───────────
@@ -287,11 +287,13 @@ public class FightModeAdapter
         if (_draggingMenuScrollbar && !_terminal.IsLeftMouseDown)
             _draggingMenuScrollbar = false;
 
-        // Music filter: DiceRoll while the dice overlay is visible, otherwise Fighting.
+        // Music filter: DiceRoll only while the dice are actually tumbling, otherwise Fighting.
+        // It stops the instant the animation settles and the values are locked in (IsRolling
+        // flips false in Complete/CompleteDual), not when the settled overlay is dismissed.
         // SetFilter no-ops when the requested filter matches the active one, so calling
         // it every frame is safe.
         if (_setMusicFilter != null && !_state.IsOver)
-            _setMusicFilter(_dice.IsVisible ? MusicFilter.DiceRoll : MusicFilter.Fighting);
+            _setMusicFilter(_dice.IsRolling ? MusicFilter.DiceRoll : MusicFilter.Fighting);
 
         // ── Fight ended ───────────────────────────────────────────
         if (_state.IsOver && Result == FightAdapterResult.Ongoing)

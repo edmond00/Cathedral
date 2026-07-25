@@ -66,7 +66,7 @@ internal class FightModeWindow : GameWindow
     private const int AiMoveFramesPerTile     = 1;
 
     // ── Dice timing ──────────────────────────────────────────────────
-    private const float DiceRollDuration = 0.6f;
+    private const float DiceRollDuration = Config.Dice.AnimationDurationSeconds;
     private double _diceElapsed;
 
     public FightModeWindow(GameWindowSettings gs, NativeWindowSettings ns, FightState state)

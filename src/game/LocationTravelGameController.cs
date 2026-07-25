@@ -823,16 +823,20 @@ public class LocationTravelGameController : IDisposable
                 _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 _travelRoutinesBox    = null;
                 _pendingReplayRoutine = routine;
-                _core.Terminal?.Clear(); // wipe the modal box before travel begins
+                // Wipe the modal box while keeping the world visible for the travel animation — a
+                // bare Clear would leave an opaque-black terminal over the whole trip.
+                SetTransparentWorldOverlay(clickPassthrough: true);
                 StartPlannedTravel();
             }
             else if (kind == TravelRoutinesBox.ResultKind.Return)
             {
                 _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
                 _travelRoutinesBox = null;
-                _core.Terminal?.Clear();
                 _core.SetWorldInteractionsEnabled(true);
                 _interface.SetWorldInteractionsEnabled(true);
+                // Restore the transparent travel overlay (a bare Clear would leave opaque black) and
+                // let clicks fall through to the world again.
+                SetTransparentWorldOverlay(clickPassthrough: true);
             }
             return;
         }
@@ -2043,7 +2047,9 @@ public class LocationTravelGameController : IDisposable
             {
                 if (locId < 0) return;
                 _core.SetNarrationMode(false);
-                _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomRoutineMinimap);
+                // Use the destination-selection zoom so the porthole frames the world the same way
+                // the world map does while the player is choosing where to travel next.
+                _core.Camera.SetDistance(Config.GlyphSphere.CameraZoomWorldView);
                 _core.CenterCameraOnGlyph(locId);
             };
             _managementMenuRenderer.OnRoutinesPortholeClosed = () =>
@@ -2205,18 +2211,27 @@ public class LocationTravelGameController : IDisposable
 
         // Show the terminal as a UI overlay for the travel info box, but let clicks
         // on transparent cells fall through to the 3D world.
-        if (_core.Terminal != null)
-        {
-            _core.Terminal.Visible = true;
-            _core.Terminal.TransparentClickPassthrough = true;
-            _core.Terminal.Clear();
-            // Fill with fully-transparent cells so the world is visible behind us.
-            for (int y = 0; y < _core.Terminal.Height; y++)
-                for (int x = 0; x < _core.Terminal.Width; x++)
-                    _core.Terminal.SetCell(x, y, ' ',
-                        Cathedral.Terminal.Utils.Colors.Transparent,
-                        Cathedral.Terminal.Utils.Colors.Transparent);
-        }
+        SetTransparentWorldOverlay(clickPassthrough: true);
+    }
+
+    /// <summary>
+    /// Resets the terminal to a full sheet of fully-transparent cells so the 3D world shows through,
+    /// and sets whether clicks on those transparent cells fall through to the sphere. Because
+    /// <see cref="TerminalHUD.Clear"/> paints opaque black, every path that wants the world visible
+    /// behind it — the interactive WorldView and the modal travel overlays alike — must re-assert
+    /// transparency this way rather than relying on a bare Clear.
+    /// </summary>
+    private void SetTransparentWorldOverlay(bool clickPassthrough)
+    {
+        if (_core.Terminal == null) return;
+        _core.Terminal.Visible = true;
+        _core.Terminal.TransparentClickPassthrough = clickPassthrough;
+        _core.Terminal.Clear();
+        for (int y = 0; y < _core.Terminal.Height; y++)
+            for (int x = 0; x < _core.Terminal.Width; x++)
+                _core.Terminal.SetCell(x, y, ' ',
+                    Cathedral.Terminal.Utils.Colors.Transparent,
+                    Cathedral.Terminal.Utils.Colors.Transparent);
     }
 
     private void OnEnterTraveling()
@@ -2965,6 +2980,11 @@ public class LocationTravelGameController : IDisposable
         // Keep the world non-interactive while the modal box is shown.
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
+
+        // Modal overlay: the world stays visible behind the box, but the terminal must be reset to
+        // transparent first — the travel overlay leaves stale opaque cells that would otherwise show
+        // as a black backdrop. Capture clicks (no passthrough) so they can't fall through the box.
+        SetTransparentWorldOverlay(clickPassthrough: false);
 
         _travelRoutinesBox = new TravelRoutinesBox(_core.Terminal, entries);
         _travelRoutinesBox.Render();
