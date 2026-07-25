@@ -121,7 +121,7 @@ public class ObservationPhaseController
         }
         else
         {
-            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence, innerThought: firstThought, part: part);
+            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isReminescence: isReminescence, innerThought: firstThought, part: part);
 
             // Second observation: ask again over the remaining objects (the first excluded), reached
             // via a transition. Declining here simply omits the second — no failure block.
@@ -233,7 +233,7 @@ public class ObservationPhaseController
         var sentences = new List<NarrationSentence>();
 
         // 1. Observe the clicked object (no transition) — it is always the first observation.
-        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct, isPhaseOpener: true, isReminescence: isReminescence, innerThought: focusThought, part: part);
+        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct, isReminescence: isReminescence, innerThought: focusThought, part: part);
 
         // 2. A second object chosen from the remaining objects, reached via a transition. Exclude the
         //    clicked object's name-twins (not just the clicked instance), then collapse duplicates.
@@ -283,8 +283,8 @@ public class ObservationPhaseController
     /// ("drawn to" for the first object, "shifts to" for a later one) plus a detail line giving its
     /// richer description. The persona rewrites both at once into two or three short sentences, from
     /// which the clickable keyword (mapped to <paramref name="outcome"/>) is extracted by rule.
-    /// When <paramref name="isPhaseOpener"/> is set (the very first observation of the phase), the
-    /// rewrite is GBNF-constrained to start with "I " so the whole block opens in first person.
+    /// Every observation is GBNF-constrained to open in first person ("I ...") by the rewriter's
+    /// per-kind default, so the whole block reads from the persona's point of view.
     /// </summary>
     private async Task AppendObservationAsync(
         List<NarrationSentence> sentences,
@@ -296,7 +296,6 @@ public class ObservationPhaseController
         bool withTransition,
         int locationId,
         CancellationToken ct,
-        bool isPhaseOpener = false,
         bool isReminescence = false,
         string? innerThought = null,
         PreviewPart? part = null)
@@ -307,14 +306,14 @@ public class ObservationPhaseController
             // Attention + detail merged into one neutral text and rewritten in a single request
             // (two or three short styled sentences) rather than two separate calls: the attention
             // line names the object ("drawn to" / "shifts to"), the detail line gives its richer
-            // description. The phase opener is forced into first person ("I ...") to anchor the PoV.
+            // description. The rewrite is forced into first person ("I ...") to anchor the PoV.
             // The focus-choice reasoning (when given) is the inner thought behind attending to this.
             var neutral = NeutralNarration.Observation(
                 isFirst: !withTransition,
                 GetNeutralPhrase(outcome, locationId),
                 GetNeutralDescription(outcome, locationId),
                 isReminescence: isReminescence);
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: isPhaseOpener ? "I " : null, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, preview: sink, ct: ct);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, preview: sink, ct: ct);
 
             // Keyword is chosen by rule from the final (sanitized) text — the noun most related to the object.
             var kw = KeywordExtractor.ExtractKeyword(text, GetReferenceLemma(outcome));

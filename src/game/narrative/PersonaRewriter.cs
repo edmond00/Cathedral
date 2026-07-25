@@ -104,6 +104,12 @@ public class PersonaRewriter
             : BuildPrompt(neutralText, InstructionFor(kind, addressee),
                           FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee),
                           innerThought);
+        // Every first-person narration kind opens with "I " so a small model cannot drift into a
+        // detached, non-first-person opening (e.g. "Data flows through my eyes..."). An explicit
+        // forcedPrefix (the action's "I will ", say) still wins; spoken kinds (Speaking,
+        // DialogueReplica) are exempt, since a reply or a call to a companion needn't begin with "I".
+        forcedPrefix ??= DefaultForcedPrefix(kind);
+
         // Dialogue replies may carry a parenthetical aside (an inner thought the interlocutor does not
         // hear), so the body charset is widened to include round brackets for that kind only.
         string gbnf = JsonConstraintGenerator.GenerateGBNF(
@@ -220,6 +226,19 @@ You may enclose an aside in parentheses (like this) to voice a private inner tho
         NarrationKind.Speaking =>
             $"Say this to {addressee ?? "your companion"} as direct speech in your own voice, keeping the same meaning.",
         _ => "Re-express this in your own voice, keeping the same meaning.",
+    };
+
+    /// <summary>
+    /// The default GBNF opening prefix for a rewrite kind when the caller doesn't force one. Every
+    /// first-person narration kind (perception, thought, action, outcome) opens with "I " so a small
+    /// model cannot start on a detached, non-first-person phrase. Spoken kinds return null: a spoken
+    /// reply or a line addressed to a companion needn't begin with "I".
+    /// </summary>
+    private static string? DefaultForcedPrefix(NarrationKind kind) => kind switch
+    {
+        NarrationKind.Observation or NarrationKind.Reasoning
+            or NarrationKind.Action or NarrationKind.Outcome => "I ",
+        _ => null,
     };
 
     private static string FooterFor(NarrationKind kind, string? personaReminder2, string? styleInstruction, string? jsonHint, string? addressee) =>

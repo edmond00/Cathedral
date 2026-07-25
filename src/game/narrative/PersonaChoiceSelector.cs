@@ -182,7 +182,16 @@ public class PersonaChoiceSelector
         if (!string.IsNullOrWhiteSpace(evaluator.PersonaReminder))
             question = $"As a {evaluator.PersonaReminder}, {LowerFirst(question)}";
         sb.Append(question).Append(' ');
-        sb.Append("Answer in one short sentence, in your own voice, beginning with \"I\".");
+        // Guard against confabulation: the small model tends to answer a "what do you want" question by
+        // narrating a whole invented scene ("...asking about his day as he shares tales of the harvest").
+        // Pin it to the choice itself; anything beyond that must be framed as private thought, not fact.
+        sb.Append(
+            "Your one purpose is to answer that question — name which of the options above you choose. " +
+            "You may colour the answer with a brief inner thought (a feeling, a flicker of reasoning) to stay in character, " +
+            "but do NOT invent facts or events: do not narrate anything you say or do, or anything that happens in the world " +
+            "(no conversations, no actions, no outcomes). Whatever you imagine beyond the plain choice must be phrased as an " +
+            "inner thought — what you privately think or feel — never stated as something that is actually happening. " +
+            "Answer in one short sentence, in your own voice, beginning with \"I\".");
 
         if (!string.IsNullOrWhiteSpace(evaluator.PersonaReminder2))
             sb.Append("\n\nStay in the character of ").Append(evaluator.PersonaReminder2).Append('.');

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game;
@@ -564,7 +565,11 @@ public class NarrationScrollBuffer
             var kwsWithOffsets = new List<(string, int)>();
             foreach (var kw in sentence.Keywords)
             {
-                int kwPos = blockText.IndexOf(kw, idx, sentEnd - idx, StringComparison.OrdinalIgnoreCase);
+                // Match on a WHOLE WORD, exactly as the renderer's \b…\b highlighting does. A plain
+                // substring search would land on the keyword hidden inside a larger word (e.g. "man"
+                // inside "commanding"), and the occurrence index derived from it then fails to line up
+                // with the renderer's word-boundary matches, so nothing gets highlighted.
+                int kwPos = FirstWholeWord(blockText, kw, idx, sentEnd);
                 if (kwPos >= 0)
                     kwsWithOffsets.Add((kw, kwPos));
             }
@@ -575,23 +580,42 @@ public class NarrationScrollBuffer
     }
 
     /// <summary>
-    /// Counts how many times <paramref name="keyword"/> appears (case-insensitive substring)
-    /// in <paramref name="text"/> strictly before <paramref name="upToIndex"/>.
-    /// Used to compute the occurrence index of a keyword within a single rendered line.
+    /// Counts how many whole-word occurrences of <paramref name="keyword"/> appear (case-insensitive)
+    /// in <paramref name="text"/> strictly before <paramref name="upToIndex"/>. Matches on word
+    /// boundaries (like the renderer) so the occurrence index it produces lines up with the
+    /// renderer's <c>\b…\b</c> matches — a substring count would miscount keywords buried inside
+    /// longer words (e.g. "man" in "commanding") and mis-target the highlight.
     /// </summary>
     private static int CountOccurrencesUpTo(string text, string keyword, int upToIndex)
     {
+        if (string.IsNullOrEmpty(keyword)) return 0;
         int count = 0;
-        int pos = 0;
-        while (pos < upToIndex)
+        foreach (Match m in Regex.Matches(text, WholeWordPattern(keyword), RegexOptions.IgnoreCase))
         {
-            int found = text.IndexOf(keyword, pos, StringComparison.OrdinalIgnoreCase);
-            if (found < 0 || found >= upToIndex) break;
+            if (m.Index >= upToIndex) break;
             count++;
-            pos = found + keyword.Length;
         }
         return count;
     }
+
+    /// <summary>
+    /// Returns the index of the first whole-word (word-boundary) occurrence of
+    /// <paramref name="keyword"/> in <paramref name="text"/> within [<paramref name="start"/>,
+    /// <paramref name="end"/>), or -1 if none. Iterates over full-text matches and filters by range
+    /// so word boundaries are evaluated against the real neighbouring characters.
+    /// </summary>
+    private static int FirstWholeWord(string text, string keyword, int start, int end)
+    {
+        if (string.IsNullOrEmpty(keyword)) return -1;
+        foreach (Match m in Regex.Matches(text, WholeWordPattern(keyword), RegexOptions.IgnoreCase))
+        {
+            if (m.Index >= start && m.Index < end) return m.Index;
+            if (m.Index >= end) break;
+        }
+        return -1;
+    }
+
+    private static string WholeWordPattern(string keyword) => @"\b" + Regex.Escape(keyword) + @"\b";
 
     /// <summary>
     /// Same word-wrap logic as WrapText but also returns the start character offset of each
