@@ -13,8 +13,10 @@ namespace Cathedral.Game.Dialogue.Tree;
 /// </summary>
 public sealed class DialogueOutcomeReport : OutcomeReport
 {
+    // Dialogue chips are rendered in the dialogue panel, never listed in an action's outcome
+    // sentence, so they carry no narration verbatim.
     public DialogueOutcomeReport(string text, OutcomeReportSeverity severity)
-        : base(text, severity) { }
+        : base(text, severity, verbatim: string.Empty) { }
 }
 
 /// <summary>Shared phrasing for the chips dialogue outcomes emit.</summary>

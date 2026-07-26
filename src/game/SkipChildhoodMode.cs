@@ -70,6 +70,9 @@ public static class SkipChildhoodMode
             foreach (var itemFactory in outcome.Items)
                 protagonist.AcquireItem(itemFactory());
 
+            foreach (var (coinType, amount) in outcome.Coins)
+                protagonist.Party.Add(coinType, amount);
+
             if (outcome.SetChildhoodLocation != null)
                 protagonist.ChildhoodHistory.Location = outcome.SetChildhoodLocation;
 
@@ -77,7 +80,7 @@ public static class SkipChildhoodMode
                 currentId, fragment.Name, fragment.Summary, fragment.ContextSummary);
 
             Console.WriteLine($"  [{currentId}] → '{fragment.Name}' "
-                + $"({outcome.SkillTypes.Count} skill(s), {outcome.Items.Count} item(s))");
+                + $"({outcome.SkillTypes.Count} skill(s), {outcome.Items.Count} item(s), {outcome.Coins.Count} coin grant(s))");
 
             if (outcome.IsTerminal) break;
             currentId = outcome.NextReminescenceId;

@@ -1405,7 +1405,10 @@ public class NarrativeController
             _narrationState.LoadingMessage = "Narrating the outcome...";
             string title = eval.ActionModusMentis != null ? PreviewTitles.For(eval.ActionModusMentis) : "OUTCOME";
             var part = _previewSession.BeginPart(title);
-            var result = await _actionExecutor.PrepareSingleOutcomeAsync(eval, succeeded, part.Sink, CancellationToken.None);
+            // Gather the verb's outcome reports up-front so their verbatims can be woven into the
+            // narration; the same instances are reused at commit time (see CommitOutcomeResult).
+            var verbReports = GatherVerbReports(eval.Action.PreselectedOutcome, succeeded);
+            var result = await _actionExecutor.PrepareSingleOutcomeAsync(eval, succeeded, verbReports, part.Sink, CancellationToken.None);
             _narrationState.IsLoadingAction = false;
             part.AttachCommit(() => CommitOutcomeResult(result, deferredCommit: true));
             part.MarkComplete();
@@ -1420,6 +1423,22 @@ public class NarrativeController
             NarrationDiceClear();
             _narrationState.ErrorMessage = $"Outcome failed: {ex.Message}";
         }
+    }
+
+    /// <summary>
+    /// Gathers the verb-specific outcome reports for a resolved action. Success reports carry the
+    /// chosen <see cref="VerbView"/> (so verbs that expanded into several actions read their variant);
+    /// failure reports use the target-only overload. Returns an empty list for non-verb outcomes.
+    /// </summary>
+    private System.Collections.Generic.IReadOnlyList<OutcomeReport> GatherVerbReports(OutcomeBase? outcome, bool succeeded)
+    {
+        if (outcome is VerbOutcome verbTarget && _scene != null && _pov != null && verbTarget.Target != null)
+        {
+            return succeeded
+                ? verbTarget.VerbView.Verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target, verbTarget.VerbView)
+                : verbTarget.VerbView.Verb.FailureReports(_scene, _pov, _activePartyMember, verbTarget.Target);
+        }
+        return System.Array.Empty<OutcomeReport>();
     }
 
     /// <summary>
@@ -1449,15 +1468,21 @@ public class NarrativeController
         }
 
         // Collect all outcome reports: verb-specific + LLM-decided (wound).
-        var allReports = new System.Collections.Generic.List<OutcomeReport>();
-        if (result.ActualOutcome is VerbOutcome verbTarget && _scene != null && _pov != null)
+        System.Collections.Generic.List<OutcomeReport> allReports;
+        if (result.OutcomeReports != null)
         {
-            var verbReports = result.Succeeded
-                ? verbTarget.VerbView.Verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target!, verbTarget.VerbView)
-                : verbTarget.VerbView.Verb.FailureReports(_scene, _pov, _activePartyMember, verbTarget.Target!);
-            allReports.AddRange(verbReports);
+            // Main action path: reports were gathered up-front so their verbatims could feed the
+            // narration. Reuse those exact instances — re-gathering would run any item factory a
+            // second time and materialise duplicate items.
+            allReports = new System.Collections.Generic.List<OutcomeReport>(result.OutcomeReports);
         }
-        allReports.AddRange(result.LlmDecidedReports);
+        else
+        {
+            // Fallback (e.g. Get-Up): no reports were pre-gathered, so build them now.
+            allReports = new System.Collections.Generic.List<OutcomeReport>();
+            allReports.AddRange(GatherVerbReports(result.ActualOutcome, result.Succeeded));
+            allReports.AddRange(result.LlmDecidedReports);
+        }
 
         // Record this verb into the in-progress routine BEFORE applying reports, so the recorder
         // evaluates the verb against the pre-move PoV. Only successful recordable verbs are captured.

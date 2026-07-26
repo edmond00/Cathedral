@@ -218,20 +218,6 @@ public sealed class Hairpin : Item
     public override int    UsageLevel  => 2;
 }
 
-public sealed class GoldCoin : Item
-{
-    public override string ItemId      => "gold_coin";
-    public override string DisplayName => "Gold Coin";
-    public override string Description => "A single bright gold coin, milled and weighty";
-}
-
-public sealed class SilverCoin : Item
-{
-    public override string ItemId      => "silver_coin";
-    public override string DisplayName => "Silver Coin";
-    public override string Description => "A single tarnished silver coin";
-}
-
 public sealed class ShortSword : Item
 {
     public override string ItemId           => "short_sword";

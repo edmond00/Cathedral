@@ -28,20 +28,24 @@ internal static class ReminescenceCatalog
 
     private static FragmentOutcome End(
         IEnumerable<Type>? skills = null,
-        IEnumerable<Func<Item>>? items = null)
+        IEnumerable<Func<Item>>? items = null,
+        IEnumerable<(CoinType Type, int Amount)>? coins = null)
         => new(
             skillTypes:         skills == null ? Array.Empty<Type>() : new List<Type>(skills),
             items:              items == null  ? Array.Empty<Func<Item>>() : new List<Func<Item>>(items),
+            coins:              coins == null  ? Array.Empty<(CoinType, int)>() : new List<(CoinType, int)>(coins),
             nextReminescenceId: ReminescenceRegistry.EndSentinel);
 
     private static FragmentOutcome To(
         string nextId,
         IEnumerable<Type>? skills = null,
         IEnumerable<Func<Item>>? items = null,
+        IEnumerable<(CoinType Type, int Amount)>? coins = null,
         string? setLocation = null)
         => new(
             skillTypes:           skills == null ? Array.Empty<Type>() : new List<Type>(skills),
             items:                items == null  ? Array.Empty<Func<Item>>() : new List<Func<Item>>(items),
+            coins:                coins == null  ? Array.Empty<(CoinType, int)>() : new List<(CoinType, int)>(coins),
             setChildhoodLocation: setLocation,
             nextReminescenceId:   nextId);
 
@@ -300,7 +304,7 @@ internal static class ReminescenceCatalog
                     outcomeText:      "a gold coin you stole from a rich traveller at a fair",
                     outcome: To("gold_thirst",
                         skills: new[] { typeof(PettyThiefModusMentis) },
-                        items:  new Func<Item>[] { () => new GoldCoin() }),
+                        coins:  new[] { (CoinType.Gold, 1) }),
                     contextSummary:   "stealing from a rich traveller"),
 
                 new("a glass of wine",
@@ -398,7 +402,7 @@ internal static class ReminescenceCatalog
                     outcomeText:      "choosing to keep your silver coin rather than spend or gamble it",
                     outcome: To("gold_thirst",
                         skills: new[] { typeof(AvariceModusMentis) },
-                        items:  new Func<Item>[] { () => new SilverCoin() }),
+                        coins:  new[] { (CoinType.Silver, 1) }),
                     contextSummary:   "saving every coin you earned"),
             });
 

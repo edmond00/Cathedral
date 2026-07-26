@@ -26,6 +26,13 @@ public sealed class FragmentOutcome
     public IReadOnlyList<Func<Item>> Items { get; }
 
     /// <summary>
+    /// Coins credited to the shared party wallet when REMEMBER fires. Coins live in the
+    /// wallet, never the inventory, so a "gold coin you stole" grant bumps <see cref="Party"/>
+    /// rather than materialising a carriable item.
+    /// </summary>
+    public IReadOnlyList<(CoinType Type, int Amount)> Coins { get; }
+
+    /// <summary>
     /// When non-null, sets <see cref="ChildhoodHistory.Location"/> on the protagonist.
     /// Set only by the first reminescence (<c>sound_in_the_dark</c>).
     /// </summary>
@@ -40,11 +47,13 @@ public sealed class FragmentOutcome
     public FragmentOutcome(
         IReadOnlyList<Type>? skillTypes = null,
         IReadOnlyList<Func<Item>>? items = null,
+        IReadOnlyList<(CoinType Type, int Amount)>? coins = null,
         string? setChildhoodLocation = null,
         string nextReminescenceId = "<END>")
     {
         SkillTypes           = skillTypes ?? Array.Empty<Type>();
         Items                = items ?? Array.Empty<Func<Item>>();
+        Coins                = coins ?? Array.Empty<(CoinType, int)>();
         SetChildhoodLocation = setChildhoodLocation;
         NextReminescenceId   = nextReminescenceId;
 

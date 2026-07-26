@@ -129,21 +129,14 @@ public class ActionExecutionController
             Console.WriteLine($"  - {modusMentis.ModusMentisId} ({modusMentis.DisplayName})");
         }
         
-        // Resolve action modusMentis
-        var actionModusMentis = ActingMember.ModiMentis.FirstOrDefault(s => s.ModusMentisId == action.ActionModusMentisId);
-        if (actionModusMentis == null)
-        {
-            Console.WriteLine($"DEBUG: ModusMentis '{action.ActionModusMentisId}' NOT FOUND in protagonist's modiMentis!");
-            return Task.FromResult(new ActionEvaluationResult
-            {
-                IsPlausible = false,
-                PlausibilityError = "The modusMentis required for this action is unavailable.",
-                ActionModusMentis = thinkingModusMentisUsed, // Fallback
-                ThinkingModusMentis = thinkingModusMentisUsed,
-                Action = action,
-                CurrentNode = currentNode
-            });
-        }
+        // Resolve action modusMentis. The action was assembled from the acting member's own
+        // modiMentis during the thinking phase, so the id always resolves here — a miss would be a
+        // programming error, not a gameplay outcome, so fail loud rather than manufacturing a
+        // "plausibility failure" the player could never provoke.
+        var actionModusMentis = ActingMember.ModiMentis.FirstOrDefault(s => s.ModusMentisId == action.ActionModusMentisId)
+            ?? throw new InvalidOperationException(
+                $"EvaluateActionAsync: action modusMentis '{action.ActionModusMentisId}' is not present on "
+                + $"the acting member '{ActingMember.DisplayName}'.");
 
         // Difficulty was decided at thinking time from the persona-fit answer (verb base ± the
         // eager/willing/unsure modifier) and stored on the action. Possibility is likewise settled
@@ -275,11 +268,7 @@ public class ActionExecutionController
             }
         }
 
-        // Generate narration — pass wound description as failure hint
-        string? failureHint = failureWound != null
-            ? $"The character suffered a wound: {failureWound.WoundName} to their {WoundLocationLabel(failureWound)}"
-            : null;
-
+        // Generate narration — the wound (if any) contributes its Verbatim to the consequence list.
         string narration = await _outcomeNarrator.NarrateOutcomeAsync(
             action,
             actionModusMentis,
@@ -288,7 +277,7 @@ public class ActionExecutionController
             difficultyScore,
             ActingMember,
             cancellationToken,
-            failureHint);
+            outcomeVerbatims: CollectVerbatims(llmDecidedReports));
 
         return new ActionExecutionResult
         {
@@ -318,7 +307,9 @@ public class ActionExecutionController
     /// the outcome); the failure branch also samples the wound and resolves witness/threat consequences.
     /// </summary>
     public async Task<ActionExecutionResult> PrepareSingleOutcomeAsync(
-        ActionEvaluationResult evalResult, bool succeeded, ILlmPreviewSink? preview = null,
+        ActionEvaluationResult evalResult, bool succeeded,
+        IReadOnlyList<OutcomeReport> verbReports,
+        ILlmPreviewSink? preview = null,
         CancellationToken cancellationToken = default)
     {
         var action = evalResult.Action;
@@ -343,9 +334,13 @@ public class ActionExecutionController
         if (succeeded)
         {
             OutcomeBase successOutcome = action.PreselectedOutcome;
+
+            // The full report list is exactly the verb's success reports; their verbatims become the
+            // "Thanks to this success I …" consequence clause.
+            var allReports = new List<OutcomeReport>(verbReports);
             string narration = await _outcomeNarrator.NarrateOutcomeAsync(
                 action, actionModusMentis, successOutcome, true, difficultyScore, ActingMember,
-                cancellationToken, preview: preview);
+                cancellationToken, outcomeVerbatims: CollectVerbatims(allReports), preview: preview);
             return new ActionExecutionResult
             {
                 Action = action,
@@ -356,6 +351,7 @@ public class ActionExecutionController
                 Succeeded = true,
                 ActualOutcome = successOutcome,
                 LlmDecidedReports = System.Array.Empty<OutcomeReport>(),
+                OutcomeReports = allReports,
                 Narration = narration,
                 FailureWound = null,
                 IsPlausibilityFailure = false,
@@ -372,13 +368,15 @@ public class ActionExecutionController
             if (failureWound != null)
                 llmDecidedReports.Add(new WoundInflictionOutcome(failureWound));
 
-            string? failureHint = failureWound != null
-                ? $"The character suffered a wound: {failureWound.WoundName} to their {WoundLocationLabel(failureWound)}"
-                : null;
+            // Full list = the verb's failure reports followed by the sampled wound. The wound is no
+            // longer a separate free-text hint: its Verbatim ("suffered …") lands in the consequence
+            // clause like every other report.
+            var allReports = new List<OutcomeReport>(verbReports);
+            allReports.AddRange(llmDecidedReports);
 
             string narration = await _outcomeNarrator.NarrateOutcomeAsync(
                 action, actionModusMentis, failureOutcome, false, difficultyScore, ActingMember,
-                cancellationToken, failureHint: failureHint, preview: preview);
+                cancellationToken, outcomeVerbatims: CollectVerbatims(allReports), preview: preview);
 
             return new ActionExecutionResult
             {
@@ -390,6 +388,7 @@ public class ActionExecutionController
                 Succeeded = false,
                 ActualOutcome = failureOutcome,
                 LlmDecidedReports = llmDecidedReports,
+                OutcomeReports = allReports,
                 Narration = narration,
                 FailureWound = failureWound,
                 IsPlausibilityFailure = false,
@@ -401,6 +400,12 @@ public class ActionExecutionController
             };
         }
     }
+
+    /// <summary>The non-empty <see cref="OutcomeReport.Verbatim"/> phrases, in order.</summary>
+    private static IReadOnlyList<string> CollectVerbatims(IEnumerable<OutcomeReport> reports)
+        => reports.Select(r => r.Verbatim)
+                  .Where(v => !string.IsNullOrWhiteSpace(v))
+                  .ToList();
 
     /// <summary>
     /// PHASE 2 (humor-modifier variant): pre-compute BOTH the success and failure outcomes for an
@@ -441,16 +446,17 @@ public class ActionExecutionController
         if (failureWound != null)
             llmDecidedReports.Add(new WoundInflictionOutcome(failureWound));
 
-        string? failureHint = failureWound != null
-            ? $"The character suffered a wound: {failureWound.WoundName} to their {WoundLocationLabel(failureWound)}"
-            : null;
-
         OutcomeBase successOutcome = action.PreselectedOutcome;
 
         // ── Generate both narration texts (snapshot/restore keeps the slot history clean) ──
+        // No verb reports are pre-gathered on this legacy dual path, so only the failure branch's
+        // wound contributes a consequence verbatim.
         var (successNarration, failureNarration) = await _outcomeNarrator.NarrateBothOutcomesAsync(
             action, actionModusMentis, successOutcome, failureOutcome,
-            difficultyScore, ActingMember, failureHint, cancellationToken);
+            difficultyScore, ActingMember,
+            successVerbatims: System.Array.Empty<string>(),
+            failureVerbatims: CollectVerbatims(llmDecidedReports),
+            cancellationToken);
 
         var success = new ActionExecutionResult
         {
@@ -640,6 +646,15 @@ public class ActionExecutionResult
     /// </summary>
     public System.Collections.Generic.IReadOnlyList<OutcomeReport> LlmDecidedReports { get; set; }
         = System.Array.Empty<OutcomeReport>();
+
+    /// <summary>
+    /// The full, ordered outcome-report list (verb reports + LLM-decided wound) gathered up-front so
+    /// their <see cref="OutcomeReport.Verbatim"/> phrases can be woven into the outcome narration.
+    /// When non-null, <c>CommitOutcomeResult</c> applies exactly these reports rather than
+    /// re-gathering them, so each report — and any item factory it carries — is realised once.
+    /// Null for paths that still gather at commit time (e.g. Get-Up).
+    /// </summary>
+    public System.Collections.Generic.IReadOnlyList<OutcomeReport>? OutcomeReports { get; set; }
 
     public string Narration { get; set; } = "";
     

@@ -131,11 +131,34 @@ public static class NeutralNarration
     // ── Action outcomes ────────────────────────────────────────────────────────
     // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.
 
-    public static string OutcomeSuccess(string actionDisplay)
-        => $"I tried to {FirstPerson(actionDisplay)}, and succeeded.";
+    public static string OutcomeSuccess(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null)
+    {
+        var head = $"It is done! I succeeded to {FirstPerson(actionDisplay)}.";
+        var tail = OutcomeConsequences(outcomeVerbatims);
+        return tail.Length == 0 ? head : $"{head} Thanks to this success I {tail}.";
+    }
 
-    public static string OutcomeFailure(string actionDisplay)
-        => $"I tried to {FirstPerson(actionDisplay)}, but failed.";
+    public static string OutcomeFailure(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null)
+    {
+        var head = $"Alas, I failed to {FirstPerson(actionDisplay)}.";
+        var tail = OutcomeConsequences(outcomeVerbatims);
+        return tail.Length == 0 ? head : $"{head} Due to this failure I {tail}.";
+    }
+
+    /// <summary>
+    /// Joins the outcome reports' <c>Verbatim</c> phrases into a single comma-separated clause that
+    /// reads grammatically after "I " (e.g. "obtained a gold coin, learned Bargaining"). Empty
+    /// verbatims (internal bookkeeping reports) are dropped; returns "" when nothing is left, so the
+    /// caller can omit the consequence clause entirely.
+    /// </summary>
+    private static string OutcomeConsequences(IReadOnlyList<string>? outcomeVerbatims)
+    {
+        if (outcomeVerbatims == null || outcomeVerbatims.Count == 0) return "";
+        var parts = outcomeVerbatims
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .Select(v => v.Trim());
+        return string.Join(", ", parts);
+    }
 
     public static string PlausibilityFailure(string actionDisplay)
         => $"I tried to {FirstPerson(actionDisplay)}, but it could not happen here.";

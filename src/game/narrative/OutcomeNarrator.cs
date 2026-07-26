@@ -40,13 +40,13 @@ public class OutcomeNarrator
         double difficulty,
         PartyMember protagonist,
         CancellationToken cancellationToken = default,
-        string? failureHint = null,
+        IReadOnlyList<string>? outcomeVerbatims = null,
         string? neutralOverride = null,
         ILlmPreviewSink? preview = null)
     {
         // The reminescence path supplies its own neutral meaning (a plain "I tried to remember …"
         // framing that embeds the concrete recovered memory); everything else templates it here.
-        string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, failureHint);
+        string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, outcomeVerbatims);
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         // forcedPrefix "I " constrains the styled result to a first-person opening (matching the
         // neutral "I tried to …" framing), the same GBNF trick the action rewrite uses. When a preview
@@ -77,13 +77,15 @@ public class OutcomeNarrator
         OutcomeBase failureOutcome,
         double difficulty,
         PartyMember protagonist,
-        string? failureHint,
+        IReadOnlyList<string>? successVerbatims,
+        IReadOnlyList<string>? failureVerbatims,
         CancellationToken cancellationToken = default)
     {
         if (PlaygroundMode.IsActive)
         {
             _pendingNarratorSlot = -1;
-            return (BuildNeutralOutcome(action, true, null), BuildNeutralOutcome(action, false, failureHint));
+            return (BuildNeutralOutcome(action, true, successVerbatims),
+                    BuildNeutralOutcome(action, false, failureVerbatims));
         }
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
@@ -91,7 +93,8 @@ public class OutcomeNarrator
         var baseline = instance?.SnapshotHistory();
 
         string success = await NarrateOutcomeAsync(
-            action, actionModusMentis, successOutcome, true, difficulty, protagonist, cancellationToken);
+            action, actionModusMentis, successOutcome, true, difficulty, protagonist, cancellationToken,
+            outcomeVerbatims: successVerbatims);
         var afterSuccess = instance?.SnapshotHistory();
 
         // Reset to the pre-narration baseline so the failure branch generates without seeing the
@@ -99,7 +102,8 @@ public class OutcomeNarrator
         if (instance != null && baseline != null) instance.RestoreHistory(baseline);
 
         string failure = await NarrateOutcomeAsync(
-            action, actionModusMentis, failureOutcome, false, difficulty, protagonist, cancellationToken, failureHint);
+            action, actionModusMentis, failureOutcome, false, difficulty, protagonist, cancellationToken,
+            outcomeVerbatims: failureVerbatims);
         var afterFailure = instance?.SnapshotHistory();
 
         _pendingNarratorSlot   = (instance != null) ? slotId : -1;
@@ -189,12 +193,13 @@ public class OutcomeNarrator
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    private static string BuildNeutralOutcome(ParsedNarrativeAction action, bool succeeded, string? failureHint)
+    private static string BuildNeutralOutcome(
+        ParsedNarrativeAction action, bool succeeded, IReadOnlyList<string>? outcomeVerbatims)
     {
         var d = ActionDisplay(action);
-        if (succeeded) return NeutralNarration.OutcomeSuccess(d);
-        var neutral = NeutralNarration.OutcomeFailure(d);
-        return string.IsNullOrWhiteSpace(failureHint) ? neutral : $"{neutral} {failureHint}";
+        return succeeded
+            ? NeutralNarration.OutcomeSuccess(d, outcomeVerbatims)
+            : NeutralNarration.OutcomeFailure(d, outcomeVerbatims);
     }
 
     /// <summary>

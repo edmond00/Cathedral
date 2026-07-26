@@ -15,13 +15,23 @@ public abstract class OutcomeReport
     public string Text { get; }
     public OutcomeReportSeverity Severity { get; }
 
+    /// <summary>
+    /// A short first-person verb phrase describing this outcome, written so it reads grammatically
+    /// after "I " when the outcome narrator lists an action's consequences (e.g. "obtained a gold
+    /// coin", "moved to the courtyard", "suffered a broken arm to my left arm"). Internal
+    /// bookkeeping reports (state capture, phase transitions) carry an empty string so they drop out
+    /// of the narrated list.
+    /// </summary>
+    public string Verbatim { get; }
+
     /// <summary>False for internal bookkeeping outcomes that should not appear as UI chips.</summary>
     public virtual bool ShowInUI => true;
 
-    protected OutcomeReport(string text, OutcomeReportSeverity severity)
+    protected OutcomeReport(string text, OutcomeReportSeverity severity, string verbatim)
     {
         Text     = text;
         Severity = severity;
+        Verbatim = verbatim ?? string.Empty;
     }
 
     /// <summary>Apply the concrete game-state change carried by this report.</summary>
@@ -36,7 +46,8 @@ public sealed class SkillAcquisitionOutcome : OutcomeReport
     private readonly ModusMentis _template;
 
     public SkillAcquisitionOutcome(ModusMentis template)
-        : base($"Skill acquired: {template.DisplayName}", OutcomeReportSeverity.Positive)
+        : base($"Skill acquired: {template.DisplayName}", OutcomeReportSeverity.Positive,
+               $"learned {template.DisplayName}")
     {
         _template = template;
     }
@@ -55,7 +66,8 @@ public sealed class ItemGrantOutcome : OutcomeReport
     private readonly Item _item;
 
     public ItemGrantOutcome(Item item)
-        : base($"Item received: {item.DisplayName}", OutcomeReportSeverity.Positive)
+        : base($"Item received: {item.DisplayName}", OutcomeReportSeverity.Positive,
+               $"obtained {item.WithArticle()}")
     {
         _item = item;
     }
@@ -64,22 +76,49 @@ public sealed class ItemGrantOutcome : OutcomeReport
         => protagonist.AcquireItem(_item);
 }
 
+/// <summary>
+/// Credits coins to the shared party wallet (never the inventory). Used by reminescence
+/// grants such as "a gold coin you stole from a rich traveller".
+/// </summary>
+public sealed class CoinGrantOutcome : OutcomeReport
+{
+    private readonly CoinType _coin;
+    private readonly int      _amount;
+
+    public CoinGrantOutcome(CoinType coin, int amount)
+        : base($"Coins received: {amount} {coin}", OutcomeReportSeverity.Positive,
+               $"gained {amount} {coin.ToString().ToLowerInvariant()} coin{(amount == 1 ? "" : "s")}")
+    {
+        _coin   = coin;
+        _amount = amount;
+    }
+
+    public override void Apply(PartyMember protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
+    {
+        if (protagonist is Protagonist proto)
+            proto.Party.Add(_coin, _amount);
+    }
+}
+
 /// <summary>Inflicts a wound on the protagonist. Produced by the LLM failure critic.</summary>
 public sealed class WoundInflictionOutcome : OutcomeReport
 {
     public Wound Wound { get; }
 
     public WoundInflictionOutcome(Wound wound)
-        : base(FormatText(wound), OutcomeReportSeverity.Negative)
+        : base(FormatText(wound), OutcomeReportSeverity.Negative, FormatVerbatim(wound))
     {
         Wound = wound;
     }
 
+    private static string WoundLocation(Wound w)
+        => (w.TargetId.Length > 0 ? w.TargetId : w.WildcardZoneHint ?? "body").Replace('_', ' ');
+
     private static string FormatText(Wound w)
-    {
-        var loc = (w.TargetId.Length > 0 ? w.TargetId : w.WildcardZoneHint ?? "body").Replace('_', ' ');
-        return $"Wound: {w.WoundName} — {loc}";
-    }
+        => $"Wound: {w.WoundName} — {WoundLocation(w)}";
+
+    private static string FormatVerbatim(Wound w)
+        => $"suffered {w.WoundName.ToLowerInvariant()} to my {WoundLocation(w)}";
 
     public override void Apply(PartyMember protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
         => protagonist.Wounds.Add(Wound);
@@ -90,7 +129,8 @@ public sealed class HumorChangeOutcome : OutcomeReport
 {
     public HumorChangeOutcome(string humorName, int amount)
         : base($"{humorName} {(amount > 0 ? "+" : "")}{amount}",
-               amount > 0 ? OutcomeReportSeverity.Positive : OutcomeReportSeverity.Negative)
+               amount > 0 ? OutcomeReportSeverity.Positive : OutcomeReportSeverity.Negative,
+               $"felt my {humorName.ToLowerInvariant()} {(amount > 0 ? "rise" : "fall")}")
     { }
 
     // TODO: route into HumorQueue once implemented
@@ -112,7 +152,7 @@ public sealed class ChildhoodHistoryOutcome : OutcomeReport
 
     public ChildhoodHistoryOutcome(string originId, string fragmentName, string summary,
         string contextSummary = "", string? setLocation = null)
-        : base(string.Empty, OutcomeReportSeverity.Neutral)
+        : base(string.Empty, OutcomeReportSeverity.Neutral, verbatim: string.Empty)
     {
         _originId       = originId;
         _fragmentName   = fragmentName;

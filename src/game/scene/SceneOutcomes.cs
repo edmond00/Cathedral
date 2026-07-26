@@ -17,7 +17,8 @@ public sealed class ItemAcquisitionOutcome : OutcomeReport
     private readonly ItemElement _itemElement;
 
     public ItemAcquisitionOutcome(ItemElement itemElement)
-        : base($"Item received: {itemElement.Item.DisplayName}", OutcomeReportSeverity.Positive)
+        : base($"Item received: {itemElement.Item.DisplayName}", OutcomeReportSeverity.Positive,
+               $"picked up {itemElement.Item.WithArticle()}")
     {
         _itemElement = itemElement;
     }
@@ -36,7 +37,8 @@ public sealed class CorpseItemAcquisitionOutcome : OutcomeReport
     private readonly ItemElement _itemElement;
 
     public CorpseItemAcquisitionOutcome(ItemElement itemElement)
-        : base($"Item received: {itemElement.Item.DisplayName}", OutcomeReportSeverity.Positive)
+        : base($"Item received: {itemElement.Item.DisplayName}", OutcomeReportSeverity.Positive,
+               $"harvested {itemElement.Item.WithArticle()}")
     {
         _itemElement = itemElement;
     }
@@ -55,7 +57,8 @@ public sealed class AreaMoveOutcome : OutcomeReport
     private readonly Area _destination;
 
     public AreaMoveOutcome(Area destination)
-        : base($"Moved to: {destination.DisplayName}", OutcomeReportSeverity.Neutral)
+        : base($"Moved to: {destination.DisplayName}", OutcomeReportSeverity.Neutral,
+               $"made my way to {destination.DisplayName}")
     {
         _destination = destination;
     }
@@ -74,7 +77,8 @@ public sealed class SpotEnterOutcome : OutcomeReport
     private readonly Spot _spot;
 
     public SpotEnterOutcome(Spot spot)
-        : base($"Examining: {spot.DisplayName}", OutcomeReportSeverity.Neutral)
+        : base($"Examining: {spot.DisplayName}", OutcomeReportSeverity.Neutral,
+               $"went to examine {spot.DisplayName}")
     {
         _spot = spot;
     }
@@ -91,7 +95,7 @@ public sealed class SpotEnterOutcome : OutcomeReport
 public sealed class SpotLeaveOutcome : OutcomeReport
 {
     public SpotLeaveOutcome()
-        : base("Left the spot", OutcomeReportSeverity.Neutral) { }
+        : base("Left the spot", OutcomeReportSeverity.Neutral, "stepped back") { }
 
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
@@ -108,7 +112,8 @@ public sealed class DoorUnlockOutcome : OutcomeReport
     private readonly Area                _destination;
 
     public DoorUnlockOutcome(DoorPointOfInterest door, Area destination)
-        : base($"Door unlocked — entered {destination.DisplayName}", OutcomeReportSeverity.Neutral)
+        : base($"Door unlocked — entered {destination.DisplayName}", OutcomeReportSeverity.Neutral,
+               $"unlocked the way into {destination.DisplayName}")
     {
         _door        = door;
         _destination = destination;
@@ -130,7 +135,8 @@ public sealed class NpcSlaynOutcome : OutcomeReport
     private readonly SceneNpc _sceneNpc;
 
     public NpcSlaynOutcome(SceneNpc sceneNpc)
-        : base($"Slain: {sceneNpc.DisplayName}", OutcomeReportSeverity.Negative)
+        : base($"Slain: {sceneNpc.DisplayName}", OutcomeReportSeverity.Negative,
+               $"killed {sceneNpc.DisplayName}")
     {
         _sceneNpc = sceneNpc;
     }
@@ -151,7 +157,8 @@ public sealed class FightTriggerOutcome : OutcomeReport
     private readonly NpcEntity _npc;
 
     public FightTriggerOutcome(NpcEntity npc)
-        : base($"Combat begins: {npc.DisplayName}", OutcomeReportSeverity.Negative)
+        : base($"Combat begins: {npc.DisplayName}", OutcomeReportSeverity.Negative,
+               $"provoked {npc.DisplayName} into a fight")
     {
         _npc = npc;
     }
@@ -170,7 +177,8 @@ public sealed class DialogueTriggerOutcome : OutcomeReport
     private readonly string    _treeId;
 
     public DialogueTriggerOutcome(NpcEntity npc, string treeId)
-        : base($"Conversation: {npc.DisplayName}", OutcomeReportSeverity.Neutral)
+        : base($"Conversation: {npc.DisplayName}", OutcomeReportSeverity.Neutral,
+               $"began speaking with {npc.DisplayName}")
     {
         _npc    = npc;
         _treeId = treeId;
@@ -189,7 +197,8 @@ public sealed class AffinityChangeOutcome : OutcomeReport
     private readonly NpcEntity _npc;
 
     public AffinityChangeOutcome(NpcEntity npc)
-        : base($"Appeasement: {npc.DisplayName} — hostile→suspicious", OutcomeReportSeverity.Positive)
+        : base($"Appeasement: {npc.DisplayName} — hostile→suspicious", OutcomeReportSeverity.Positive,
+               $"calmed {npc.DisplayName}")
     {
         _npc = npc;
     }
@@ -208,7 +217,7 @@ public sealed class StateCaptureOutcome : OutcomeReport
     public override bool ShowInUI => false;
 
     public StateCaptureOutcome(Element element)
-        : base(string.Empty, OutcomeReportSeverity.Neutral)
+        : base(string.Empty, OutcomeReportSeverity.Neutral, verbatim: string.Empty)
     {
         _element = element;
     }
@@ -230,7 +239,7 @@ public sealed class ReminescenceTransitionOutcome : OutcomeReport
     public override bool ShowInUI => false;
 
     public ReminescenceTransitionOutcome(string fromId, string nextId, string fragmentName)
-        : base(string.Empty, OutcomeReportSeverity.Neutral)
+        : base(string.Empty, OutcomeReportSeverity.Neutral, verbatim: string.Empty)
     {
         _fromId       = fromId;
         _nextId       = nextId;
@@ -252,7 +261,7 @@ public sealed class GetUpTransitionOutcome : OutcomeReport
 {
     public override bool ShowInUI => false;
 
-    public GetUpTransitionOutcome() : base(string.Empty, OutcomeReportSeverity.Positive) { }
+    public GetUpTransitionOutcome() : base(string.Empty, OutcomeReportSeverity.Positive, verbatim: string.Empty) { }
 
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {

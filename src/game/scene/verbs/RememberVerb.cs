@@ -56,6 +56,10 @@ public class RememberVerb : Verb
         foreach (var itemFactory in outcome.Items)
             reports.Add(new ItemGrantOutcome(itemFactory()));
 
+        // Coins — visible positive chips; Apply() credits the shared party wallet.
+        foreach (var (coinType, amount) in outcome.Coins)
+            reports.Add(new CoinGrantOutcome(coinType, amount));
+
         // Internal: childhood history mutation (location + fragment record).
         reports.Add(new ChildhoodHistoryOutcome(origin, data.Name, data.Summary, data.ContextSummary, outcome.SetChildhoodLocation));
 
