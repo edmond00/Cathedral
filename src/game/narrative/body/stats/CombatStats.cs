@@ -30,7 +30,7 @@ public class NaturalDefenseStat : DerivedStat
     public override string Name         => "natural_defense";
     public override string DisplayName  => "Natural Defense";
     public override string? RelatedBodyPartId => "lower_limbs";
-    protected override int CalculateValue(int sourceScore) => sourceScore / 2;
+    protected override int CalculateValue(int sourceScore) => sourceScore / 3;
     public override string FormatValue(int value) => $"{value} dice";
 }
 

@@ -8,28 +8,9 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public static class LLMSchemaConfig
 {
-    #region Persona Rewrite Schemas
-
-    /// <summary>
-    /// Generic persona-rewrite schema: a single styled-text field. Used for every neutral→persona
-    /// rewrite (reasoning, action, outcome, speaking, dialogue) that does not surface a keyword.
-    /// <paramref name="forcedPrefix"/>, when set, becomes a literal prefix the generated value must
-    /// start with (e.g. <c>"I "</c> to force a first-person opening) — encoded straight into the GBNF.
-    /// <paramref name="allowParentheses"/> widens the body charset to include round brackets, used by
-    /// dialogue replies so the persona can enclose an unspoken aside in parentheses.
-    /// </summary>
-    public static CompositeField CreateRewriteSchema(string fieldName = "text", string? forcedPrefix = null, bool allowParentheses = false)
-    {
-        return new CompositeField("Rewrite",
-            new TemplateStringField(fieldName,
-                Template: string.IsNullOrEmpty(forcedPrefix) ? "<generated>" : $"{forcedPrefix}<generated>",
-                MinGenLength: 15,
-                MaxGenLength: Config.Narrative.MaxNarrativeTextLength,
-                AllowParentheses: allowParentheses)
-        );
-    }
-
-    #endregion
+    // Persona rewrites no longer go through a JSON schema: PersonaRewriter emits the styled sentence as
+    // raw text via JsonConstraintGenerator.GenerateRawTextGrammar, so a nested quotation can no longer
+    // close a JSON string and cut generation off mid-sentence.
 
     #region Decision Schemas
 

@@ -71,6 +71,12 @@ public class NarrativeController
     private FightOutcome? _pendingFightOutcome = null;
     private DialogueOutcome? _pendingDialogueOutcome = null;
 
+    // Continuity context captured when a dialogue becomes pending and consumed by the next observation
+    // phase: the NPC talked to and the observation modus mentis that originated the dialogue's chain of
+    // thought (null when the dialogue had no such origin). See SetPendingDialogue / GenerateObservationsAsync.
+    private NpcEntity? _postDialogueNpc = null;
+    private ModusMentis? _postDialogueObservationMM = null;
+
     // Records recordable successful verbs into a learned routine for this narration session.
     // Non-null only for scene-backed Exploration narration.
     private RoutineRecorder? _recorder = null;
@@ -389,6 +395,9 @@ public class NarrativeController
         _scrollBuffer.Clear();
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear();
+        // New session — drop any stale post-dialogue continuity context.
+        _postDialogueNpc = null;
+        _postDialogueObservationMM = null;
 
         // Place NPCs into nodes based on the supplied time period, or a random one when none is given.
         var period = forcedPeriod ?? TimePeriodExtensions.Random(_diceRandom);
@@ -500,15 +509,29 @@ public class NarrativeController
                 _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
             }
 
-            // Generate ONE overall observation (one sentence per sampled outcome), streamed into the box.
-            await _observationController.ExecuteObservationPhaseAsync(
-                _currentNode,
-                _activePartyMember,
-                _protagonist.CurrentLocationId,
-                isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
-                preview: _previewSession,
-                commit: CommitObservation
-            );
+            // If a dialogue just ended, open this phase with a single observation of that NPC, narrated by
+            // the observation modus mentis that originated the dialogue (see GeneratePostDialogueObservationAsync).
+            // The context is consumed once; if the NPC has left the scene we fall through to the normal phase.
+            var postDialogueNpc = _postDialogueNpc;
+            var postDialogueMM  = _postDialogueObservationMM;
+            _postDialogueNpc = null;
+            _postDialogueObservationMM = null;
+
+            bool handled = postDialogueNpc != null
+                && await TryGeneratePostDialogueObservationAsync(postDialogueNpc, postDialogueMM, CommitObservation);
+
+            if (!handled)
+            {
+                // Generate ONE overall observation (one sentence per sampled outcome), streamed into the box.
+                await _observationController.ExecuteObservationPhaseAsync(
+                    _currentNode,
+                    _activePartyMember,
+                    _protagonist.CurrentLocationId,
+                    isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
+                    preview: _previewSession,
+                    commit: CommitObservation
+                );
+            }
 
             // Generation is done; the box now waits for CONTINUE. Clearing the loading flag lets the
             // CLI settle (idle) so a test can drive the CONTINUE clicks.
@@ -527,7 +550,57 @@ public class NarrativeController
             _narrationState.ErrorMessage = $"Failed to generate observations: {ex.Message}";
         }
     }
-    
+
+    /// <summary>
+    /// Runs the post-dialogue continuity observation when possible: resolves <paramref name="npc"/> to
+    /// an observable object in the current node and, if it is still there, generates a single observation
+    /// of it via <see cref="ObservationPhaseController.GeneratePostDialogueObservationAsync"/> (which reuses
+    /// <paramref name="originMM"/> when still learned, else resamples). Returns false — so the caller runs
+    /// the normal phase — when the NPC has left the scene or nothing was produced.
+    /// </summary>
+    private async Task<bool> TryGeneratePostDialogueObservationAsync(
+        NpcEntity npc, ModusMentis? originMM, Action<List<NarrationBlock>> commit)
+    {
+        var npcOutcome = _currentNode.GetAllDirectConcreteOutcomes()
+            .OfType<SyntheticNpcObservationObject>()
+            .FirstOrDefault(o => ReferenceEquals(o.NpcEntity, npc));
+        if (npcOutcome == null)
+        {
+            Console.WriteLine($"NarrativeController: Post-dialogue NPC '{npc.DisplayName}' left the scene — normal observation.");
+            return false;
+        }
+
+        var blocks = await _observationController.GeneratePostDialogueObservationAsync(
+            npcOutcome, originMM, _protagonist.CurrentLocationId, _activePartyMember,
+            preview: _previewSession, commit: commit);
+        return blocks.Count > 0;
+    }
+
+    /// <summary>
+    /// Records a pending dialogue and captures the continuity context for the observation phase that will
+    /// follow it: the NPC being talked to, and the observation modus mentis that originated this chain of
+    /// thought (traced back through <paramref name="chainOrigin"/>; null for dialogues that did not come
+    /// from an observation→thinking→action chain, e.g. a caught-red-handed confrontation).
+    /// </summary>
+    private void SetPendingDialogue(DialogueOutcome outcome, ModusMentisChainElement? chainOrigin)
+    {
+        _pendingDialogueOutcome    = outcome;
+        _postDialogueNpc           = outcome.Target;
+        _postDialogueObservationMM = TraceObservationModusMentis(chainOrigin);
+    }
+
+    /// <summary>
+    /// Walks the modus-mentis chain back to its observation root and returns that observation's modus
+    /// mentis, or null if the chain has no observation origin.
+    /// </summary>
+    private static ModusMentis? TraceObservationModusMentis(ModusMentisChainElement? element)
+    {
+        for (var current = element; current != null; current = current.ChainOrigin)
+            if (current is NarrationBlock { Type: NarrationBlockType.Observation } observation)
+                return observation.ModusMentis;
+        return null;
+    }
+
     /// <summary>
     /// Execute thinking phase with selected modusMentis and keyword (async).
     /// </summary>
@@ -1533,7 +1606,7 @@ public class NarrativeController
             var crimeType = DetermineCrimeType(result.Action.Verb, _pov.Where.IsPrivate);
             Console.WriteLine($"NarrativeController: Witness '{result.DetectedWitness.DisplayName}' detected failed illegal action (crime: {crimeType})");
             var catchTree = CaughtRedHandedTreeFactory.Create(crimeType, result.DetectedWitness.IsBrave);
-            _pendingDialogueOutcome = new Cathedral.Game.Narrative.DialogueOutcome(result.DetectedWitness, tree: catchTree);
+            SetPendingDialogue(new Cathedral.Game.Narrative.DialogueOutcome(result.DetectedWitness, tree: catchTree), result.Action);
             return;
         }
 
@@ -1559,7 +1632,7 @@ public class NarrativeController
         else if (result.ActualOutcome is DialogueOutcome dialogueOutcome)
         {
             Console.WriteLine($"NarrativeController: Dialogue outcome with {dialogueOutcome.Target.DisplayName}, signaling dialogue mode");
-            _pendingDialogueOutcome = dialogueOutcome;
+            SetPendingDialogue(dialogueOutcome, result.Action);
             // Don't show continue button - the game controller will detect the pending dialogue and switch modes
         }
         else if (result.ActualOutcome is NarrationNode nextNode)
@@ -1578,7 +1651,7 @@ public class NarrativeController
             {
                 var req = _scene.PendingDialogueRequest;
                 _scene.PendingDialogueRequest = null;
-                _pendingDialogueOutcome = new Cathedral.Game.Narrative.DialogueOutcome(req.Npc, req.TreeId);
+                SetPendingDialogue(new Cathedral.Game.Narrative.DialogueOutcome(req.Npc, req.TreeId), result.Action);
                 Console.WriteLine($"NarrativeController: Dialogue verb triggered tree '{req.TreeId}' with {req.Npc.DisplayName}");
                 return;
             }
@@ -3074,7 +3147,8 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts trespass");
             var catchTree = CaughtRedHandedTreeFactory.Create(CriminalAffinityType.Intruder, target.IsBrave);
-            _pendingDialogueOutcome = new DialogueOutcome(target, tree: catchTree);
+            // A runaway confrontation has no observation→thinking→action origin — resample the narrator.
+            SetPendingDialogue(new DialogueOutcome(target, tree: catchTree), null);
         }
     }
     

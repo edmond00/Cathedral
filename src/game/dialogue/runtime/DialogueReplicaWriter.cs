@@ -56,6 +56,30 @@ public class DialogueReplicaWriter
             styleInstruction: styleInstruction, dialogueContext: subject,
             previousReplica: previousReplica, speakerName: speaker, preview: preview, ct: ct);
 
-        return ctx.Names.ToReal(text.Trim().Trim('"'));
+        return ctx.Names.ToReal(NormalizeReply(text));
+    }
+
+    /// <summary>
+    /// Normalises a dialogue reply from the structured grammar shape <c>"spoken" (aside)?</c> into the
+    /// inline form the rest of the dialogue pipeline expects: the spoken words with an optional trailing
+    /// parenthetical aside, both without the delimiter quotes. Falls back to the trimmed text as-is when
+    /// it is not quote-delimited (e.g. playground placeholder text, or a reply cut off before its closing
+    /// quote by the token limit).
+    /// </summary>
+    private static string NormalizeReply(string raw)
+    {
+        string s = (raw ?? string.Empty).Trim();
+        if (s.Length < 2 || s[0] != '"') return s.Trim('"');
+
+        int close = s.IndexOf('"', 1);
+        if (close < 0) return s.Trim('"');   // no closing quote (truncated) — degrade gracefully
+
+        string spoken = s.Substring(1, close - 1).Trim();
+        string rest   = s.Substring(close + 1).Trim();
+
+        // A trailing parenthetical aside (the unspoken inner thought) is kept inline after the spoken words.
+        return rest.Length >= 2 && rest[0] == '(' && rest[^1] == ')'
+            ? $"{spoken} {rest}".Trim()
+            : spoken;
     }
 }

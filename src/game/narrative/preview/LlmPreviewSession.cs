@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 using Cathedral.Game.Narrative.Sanitizer;
@@ -174,8 +173,8 @@ public sealed class PreviewPart
     private string _liveTail = "";               // gated, whole-word text of the segment being streamed
     private bool _liveIsFree;                     // kind of the segment currently streaming
 
-    // Active-segment incremental extraction state.
-    private readonly StringBuilder _rawJson = new();
+    // Active-segment incremental accumulation state (the model's raw streamed text).
+    private readonly StringBuilder _rawStream = new();
     private string _lastSeenCandidate = "";
     private bool _frozen;                          // a forbidden term appeared → stop updating until finalize
     private bool _currentIsFree;                   // kind of the segment being fed right now
@@ -249,7 +248,7 @@ public sealed class PreviewPart
     {
         lock (_lock)
         {
-            _rawJson.Clear();
+            _rawStream.Clear();
             _lastSeenCandidate = "";
             _liveTail = "";
             _frozen = false;
@@ -258,18 +257,17 @@ public sealed class PreviewPart
         }
     }
 
-    /// <summary>Feed one raw token delta: extract the growing text (JSON <c>"text"</c> field, or the raw
-    /// stream for free reasoning) and gate it on whole words + the sanitizer.</summary>
+    /// <summary>Feed one raw token delta: accumulate the growing text and gate it on whole words + the
+    /// sanitizer. Both free reasoning and persona rewrites now stream as raw text (no JSON envelope), so
+    /// the stream is the growing sentence directly — <see cref="_currentIsFree"/> only affects rendering.</summary>
     internal void FeedToken(string raw)
     {
         lock (_lock)
         {
-            _rawJson.Append(raw);
+            _rawStream.Append(raw);
             if (_frozen) return;
 
-            // Free reasoning is unconstrained raw text; rewrites arrive as a JSON {"text": …} object.
-            string extracted = _currentIsFree ? _rawJson.ToString() : TextFieldExtractor.Extract(_rawJson.ToString());
-            string candidate = UpToLastWordBoundary(extracted);
+            string candidate = UpToLastWordBoundary(_rawStream.ToString());
             if (candidate.Length == 0 || candidate == _lastSeenCandidate) return;
             _lastSeenCandidate = candidate;
 
@@ -309,7 +307,7 @@ public sealed class PreviewPart
             }
             _liveTail = "";
             _frozen = false;
-            _rawJson.Clear();
+            _rawStream.Clear();
             _lastSeenCandidate = "";
         }
     }
@@ -348,63 +346,3 @@ internal sealed class PreviewSegmentSink : ILlmPreviewSink
     public void OnComplete(string finalText) => _part.FinalizeSegment(finalText);
 }
 
-/// <summary>
-/// Incrementally extracts the value of the JSON <c>"text"</c> field from a partial, still-streaming
-/// document (e.g. <c>{"text": "Hello wor</c>). Honours the common JSON escapes; stops cleanly at the
-/// end of the available buffer so it can be called after every token.
-/// </summary>
-internal static class TextFieldExtractor
-{
-    public static string Extract(string raw)
-    {
-        int i = raw.IndexOf("\"text\"", StringComparison.Ordinal);
-        if (i < 0) return "";
-        i = raw.IndexOf(':', i + 6);
-        if (i < 0) return "";
-        i++;
-        while (i < raw.Length && char.IsWhiteSpace(raw[i])) i++;
-        if (i >= raw.Length || raw[i] != '"') return "";
-        i++; // past opening quote
-
-        var sb = new StringBuilder();
-        while (i < raw.Length)
-        {
-            char c = raw[i];
-            if (c == '\\')
-            {
-                if (i + 1 >= raw.Length) break; // incomplete escape at buffer end
-                char n = raw[i + 1];
-                switch (n)
-                {
-                    case 'n': sb.Append('\n'); break;
-                    case 't': sb.Append(' ');  break; // render tabs as space in the box
-                    case 'r': break;
-                    case '"': sb.Append('"');  break;
-                    case '\\': sb.Append('\\'); break;
-                    case '/': sb.Append('/');  break;
-                    case 'u':
-                        if (i + 5 < raw.Length &&
-                            int.TryParse(raw.Substring(i + 2, 4), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int cp))
-                        {
-                            sb.Append((char)cp);
-                            i += 6;
-                            continue;
-                        }
-                        return sb.ToString(); // incomplete \uXXXX at buffer end
-                    default: sb.Append(n); break;
-                }
-                i += 2;
-            }
-            else if (c == '"')
-            {
-                break; // closing quote → value complete
-            }
-            else
-            {
-                sb.Append(c);
-                i++;
-            }
-        }
-        return sb.ToString();
-    }
-}

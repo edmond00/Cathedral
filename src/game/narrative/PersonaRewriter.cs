@@ -35,8 +35,8 @@ public class PersonaRewriter
 
     private const int RewriteMaxTokens = 280;
 
-    // JSON field-layout hint shown in the "Respond in JSON format (...)" instruction.
-    private const string TextHint = "{\"text\": \"...\"}";
+    // Lower bound (in characters) of the free-text body the GBNF grammar generates after the prefix.
+    private const int RewriteMinChars = 15;
 
     /// <summary>
     /// Rewrites <paramref name="neutralText"/> in the persona of <paramref name="slotId"/>.
@@ -100,9 +100,9 @@ public class PersonaRewriter
 
         string prompt = kind == NarrationKind.DialogueReplica
             ? BuildDialoguePrompt(neutralText, addressee, dialogueContext, previousReplica, speakerName,
-                                  FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee))
+                                  FooterFor(kind, personaReminder2, styleInstruction, addressee))
             : BuildPrompt(neutralText, InstructionFor(kind, addressee),
-                          FooterFor(kind, personaReminder2, styleInstruction, TextHint, addressee),
+                          FooterFor(kind, personaReminder2, styleInstruction, addressee),
                           innerThought);
         // Every first-person narration kind opens with "I " so a small model cannot drift into a
         // detached, non-first-person opening (e.g. "Data flows through my eyes..."). An explicit
@@ -110,28 +110,42 @@ public class PersonaRewriter
         // DialogueReplica) are exempt, since a reply or a call to a companion needn't begin with "I".
         forcedPrefix ??= DefaultForcedPrefix(kind);
 
-        // Dialogue replies may carry a parenthetical aside (an inner thought the interlocutor does not
-        // hear), so the body charset is widened to include round brackets for that kind only.
-        string gbnf = JsonConstraintGenerator.GenerateGBNF(
-            LLMSchemaConfig.CreateRewriteSchema(forcedPrefix: forcedPrefix,
-                                                allowParentheses: kind == NarrationKind.DialogueReplica));
+        // The rewrite is emitted as raw text (no JSON envelope), so a nested quotation no longer
+        // terminates generation mid-sentence — double-quotes are allowed in the body charset. A dialogue
+        // reply is structured instead: a double-quoted spoken line plus an optional parenthetical aside
+        // (the unspoken inner thought), which keeps narration out of the spoken words and the aside out
+        // of the quotes — see GenerateDialogueReplyGrammar.
+        string gbnf = kind == NarrationKind.DialogueReplica
+            ? JsonConstraintGenerator.GenerateDialogueReplyGrammar(
+                  spokenMinLen: RewriteMinChars,
+                  spokenMaxLen: Config.Narrative.MaxNarrativeTextLength,
+                  asideMaxLen: Config.Narrative.DialogueAsideMaxLength)
+            : JsonConstraintGenerator.GenerateRawTextGrammar(
+                  forcedPrefix: forcedPrefix,
+                  minLen: RewriteMinChars,
+                  maxLen: Config.Narrative.MaxNarrativeTextLength,
+                  allowDoubleQuote: true);
 
         // When a preview sink is supplied, stream the tokens through it; otherwise keep the one-shot
-        // path so the Critic / non-preview callers are byte-for-byte unchanged.
-        string json = preview != null
+        // path so the Critic / non-preview callers are byte-for-byte unchanged. The grammar produces the
+        // rewritten sentence directly, so the returned string is the text itself — no field to parse.
+        string text = preview != null
             ? await _llm.GenerateConstrainedStringStreamingAsync(
                   slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory,
                   onTokenStreamed: (token, _) => preview.OnToken(token))
             : await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
 
-        string text = ParseField(json, "text");
         if (string.IsNullOrWhiteSpace(text))
         {
             string fallback = NameFaking.Real(neutralText);
             preview?.OnComplete(fallback);
             return fallback;
         }
-        string sanitized = await TextSanitizationPipeline.SanitizeAsync(TextTruncationUtils.TrimToLastSentence(text));
+        // A dialogue reply is a complete structured string ("spoken" (aside)?) — appending "..." when it
+        // does not end in sentence punctuation (it ends in " or ")") would corrupt that shape, so the
+        // truncation guard is skipped for it. Every other kind keeps the mid-sentence "…" cleanup.
+        string trimmed = kind == NarrationKind.DialogueReplica ? text : TextTruncationUtils.TrimToLastSentence(text);
+        string sanitized = await TextSanitizationPipeline.SanitizeAsync(trimmed);
         string restored  = NameFaking.Real(sanitized);
         preview?.OnComplete(restored);
         return restored;
@@ -241,22 +255,22 @@ You may enclose an aside in parentheses (like this) to voice a private inner tho
         _ => null,
     };
 
-    private static string FooterFor(NarrationKind kind, string? personaReminder2, string? styleInstruction, string? jsonHint, string? addressee) =>
+    private static string FooterFor(NarrationKind kind, string? personaReminder2, string? styleInstruction, string? addressee) =>
         kind switch
         {
             // A dialogue turn: 2nd-person reminder that names the interlocutor being addressed.
             NarrationKind.DialogueReplica =>
-                Config.Narrative.DialogueAnswerInstructionFor(personaReminder2, addressee, jsonHint, styleInstruction),
+                Config.Narrative.DialogueAnswerInstructionFor(personaReminder2, addressee, styleInstruction),
             // Speaking carries its own 2nd-person dialogue reminder (single sentence per line).
             NarrationKind.Speaking =>
-                Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2, jsonHint, styleInstruction),
+                Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2, styleInstruction),
             // Observation (merged attention + detail), Reasoning (inner thought), and Outcome
             // (success/failure of a tried action) all omit the length clause entirely to give the
             // persona freedom over how far it unfolds.
             NarrationKind.Observation or NarrationKind.Reasoning or NarrationKind.Outcome =>
-                Config.Narrative.AnswerInstructionFor(personaReminder2, jsonHint, styleInstruction, includeLengthClause: false),
+                Config.Narrative.AnswerInstructionFor(personaReminder2, styleInstruction, includeLengthClause: false),
             _ =>
-                Config.Narrative.AnswerInstructionFor(personaReminder2, jsonHint, styleInstruction),
+                Config.Narrative.AnswerInstructionFor(personaReminder2, styleInstruction),
         };
 
     // ── Parsing helpers ────────────────────────────────────────────────────────

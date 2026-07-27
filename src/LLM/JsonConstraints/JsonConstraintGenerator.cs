@@ -52,12 +52,14 @@ public static class JsonConstraintGenerator
 
     /// <summary>
     /// The character class for free-form persona text: letters, digits, space and a small set of
-    /// punctuation, but never a double-quote (which would close the JSON string). Parentheses are
-    /// opted in only where asides are wanted (dialogue inner thoughts). This is the single source of
+    /// punctuation. Parentheses are opted in only where asides are wanted (dialogue inner thoughts).
+    /// Double-quotes are opted in only on the raw-text path (<paramref name="allowDoubleQuote"/>): in
+    /// the JSON template path a <c>"</c> would close the JSON string and cut generation off mid-sentence,
+    /// but raw text has no envelope, so a nested quotation is safe there. This is the single source of
     /// truth for the body charset shared by the JSON template path and the raw-text grammar below.
     /// </summary>
-    private static string BodyCharClass(bool allowParentheses)
-        => "[-a-zA-Z0-9 .,?!'`" + (allowParentheses ? "()" : "") + "]";
+    private static string BodyCharClass(bool allowParentheses, bool allowDoubleQuote = false)
+        => "[-a-zA-Z0-9 .,?!'`" + (allowParentheses ? "()" : "") + (allowDoubleQuote ? "\\\"" : "") + "]";
 
     /// <summary>
     /// Builds a standalone GBNF (its own <c>root</c> rule) for a single run of free-form persona text
@@ -67,10 +69,12 @@ public static class JsonConstraintGenerator
     /// is set (e.g. <c>"I "</c>) it becomes a literal the output must start with; otherwise the first
     /// character is forced to a letter to avoid a leading-punctuation artifact. <paramref name="minLen"/>
     /// and <paramref name="maxLen"/> bound the body generated after the prefix (in characters).
+    /// <paramref name="allowDoubleQuote"/> adds <c>"</c> to the body charset so a nested quotation can be
+    /// written — safe here because raw text is not wrapped in a JSON string.
     /// </summary>
-    public static string GenerateRawTextGrammar(string? forcedPrefix, int minLen, int maxLen, bool allowParentheses = false)
+    public static string GenerateRawTextGrammar(string? forcedPrefix, int minLen, int maxLen, bool allowParentheses = false, bool allowDoubleQuote = false)
     {
-        string charClass = BodyCharClass(allowParentheses);
+        string charClass = BodyCharClass(allowParentheses, allowDoubleQuote);
         if (string.IsNullOrEmpty(forcedPrefix))
         {
             int restMin = Math.Max(0, minLen - 1);
@@ -82,6 +86,29 @@ public static class JsonConstraintGenerator
         int bodyMin = Math.Max(0, minLen);
         int bodyMax = Math.Max(bodyMin, maxLen);
         return $"root ::= \"{escaped}\" {charClass}{{{bodyMin},{bodyMax}}}\n";
+    }
+
+    /// <summary>
+    /// Grammar for a dialogue reply emitted raw, of the shape <c>"&lt;spoken&gt;" (&lt;aside&gt;)?</c>: a
+    /// double-quoted spoken line, optionally followed by a single parenthetical aside (the unspoken inner
+    /// thought). The spoken body and the aside share the free-text charset but exclude the double-quote
+    /// and round brackets, so the only quotes are the structural delimiters and the aside cannot nest —
+    /// which lets the caller split "spoken" from (aside) by structure. The first spoken character is
+    /// forced to a letter to avoid a leading-punctuation artifact. Lengths are in characters:
+    /// <paramref name="spokenMinLen"/>/<paramref name="spokenMaxLen"/> bound the spoken line and
+    /// <paramref name="asideMaxLen"/> the aside.
+    /// </summary>
+    public static string GenerateDialogueReplyGrammar(int spokenMinLen, int spokenMaxLen, int asideMaxLen)
+    {
+        // No double-quote (delimiters only) and no parentheses (the aside is a separate group).
+        const string body = "[-a-zA-Z0-9 .,?!'`]";
+        int restMin  = Math.Max(0, spokenMinLen - 1);
+        int restMax  = Math.Max(restMin, spokenMaxLen - 1);
+        int asideMax = Math.Max(1, asideMaxLen);
+
+        // root ::= "\"" [a-zA-Z] body{restMin,restMax} "\"" ( " (" body{1,asideMax} ")" )?
+        return "root ::= \"\\\"\" [a-zA-Z] " + body + "{" + restMin + "," + restMax + "} \"\\\"\""
+             + " ( \" (\" " + body + "{1," + asideMax + "} \")\" )?\n";
     }
 
     /// <summary>

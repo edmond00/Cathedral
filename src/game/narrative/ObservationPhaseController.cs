@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Cathedral;
 using Cathedral.LLM;
 using Cathedral.Game.Npc;
+using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Narrative.Preview;
 
 namespace Cathedral.Game.Narrative;
@@ -66,9 +67,7 @@ public class ObservationPhaseController
     {
         Console.WriteLine($"ObservationPhaseController: Starting overall observation for {currentNode.NodeId}");
 
-        var modusMentis = actingMember.GetObservationModiMentis()
-            .OrderBy(_ => _random.Next())
-            .FirstOrDefault();
+        var modusMentis = PickFirstObservationModusMentis(actingMember);
 
         if (modusMentis == null)
         {
@@ -121,17 +120,13 @@ public class ObservationPhaseController
         }
         else
         {
-            await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isReminescence: isReminescence, innerThought: firstThought, part: part);
+            var firstText = await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, first, withTransition: false, locationId, ct, isReminescence: isReminescence, innerThought: firstThought, part: part);
 
-            // Second observation: ask again over the remaining objects (the first excluded), reached
-            // via a transition. Declining here simply omits the second — no failure block.
-            var remaining = candidates.Where(c => !ReferenceEquals(c, first)).ToList();
-            if (remaining.Count > 0)
-            {
-                var (second, secondThought) = await SelectObservationObjectAsync(slotId, remaining, modusMentis, locationId, ct, isReminescence, overall, area, part: part);
-                if (second != null)
-                    await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence, innerThought: secondThought, part: part);
-            }
+            // Second (and possibly third) observation, gated on how long the first one(s) ran — see the
+            // length rules in AppendFollowUpObservationsAsync. The candidate pool is the deduplicated
+            // set; objects already observed are excluded from every follow-up choice.
+            await AppendFollowUpObservationsAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis,
+                candidates, new List<ConcreteOutcome> { first }, firstText, locationId, ct, isReminescence, overall, area, part);
         }
 
         if (sentences.Count == 0)
@@ -233,23 +228,17 @@ public class ObservationPhaseController
         var sentences = new List<NarrationSentence>();
 
         // 1. Observe the clicked object (no transition) — it is always the first observation.
-        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct, isReminescence: isReminescence, innerThought: focusThought, part: part);
+        var firstText = await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, focusOutcome, withTransition: false, locationId, ct, isReminescence: isReminescence, innerThought: focusThought, part: part);
 
-        // 2. A second object chosen from the remaining objects, reached via a transition. Exclude the
-        //    clicked object's name-twins (not just the clicked instance), then collapse duplicates.
+        // 2. A second (and possibly third) object, reached via a transition and gated on the same length
+        //    rules as the overall phase (see AppendFollowUpObservationsAsync). The candidate pool excludes
+        //    the clicked object's name-twins (not just the clicked instance), then collapses duplicates.
         var focusName = GetNeutralName(focusOutcome);
-        var remaining = DeduplicateByName(
+        var followUpCandidates = DeduplicateByName(
             currentNode.GetAllDirectConcreteOutcomes()
                 .Where(o => !GetNeutralName(o).Equals(focusName, StringComparison.OrdinalIgnoreCase)));
-        if (remaining.Count > 0)
-        {
-            // The clicked object is already observed; the Modus Mentis may or may not want a second.
-            // Declining here simply omits it — no failure block.
-            var (second, secondThought) = await SelectObservationObjectAsync(slotId, remaining, observationModusMentis, locationId, ct, isReminescence,
-                overall, area, part: part);
-            if (second != null)
-                await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence, innerThought: secondThought, part: part);
-        }
+        await AppendFollowUpObservationsAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis,
+            followUpCandidates, new List<ConcreteOutcome> { focusOutcome }, firstText, locationId, ct, isReminescence, overall, area, part);
 
         if (sentences.Count == 0)
         {
@@ -286,7 +275,7 @@ public class ObservationPhaseController
     /// Every observation is GBNF-constrained to open in first person ("I ...") by the rewriter's
     /// per-kind default, so the whole block reads from the persona's point of view.
     /// </summary>
-    private async Task AppendObservationAsync(
+    private async Task<string?> AppendObservationAsync(
         List<NarrationSentence> sentences,
         List<string> allKeywords,
         Dictionary<string, ConcreteOutcome> keywordOutcomeMap,
@@ -315,21 +304,172 @@ public class ObservationPhaseController
                 isReminescence: isReminescence);
             var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, preview: sink, ct: ct);
 
-            // Keyword is chosen by rule from the final (sanitized) text — the noun most related to the object.
-            var kw = KeywordExtractor.ExtractKeyword(text, GetReferenceLemma(outcome));
-            var kws = kw != null ? new List<string> { kw } : new List<string>();
+            // Keywords are chosen by rule from the final (sanitized) text — the noun(s) most related to
+            // the object. A long observation gets two distinct keywords, both mapped to this same object
+            // so either click does the same thing; a normal-length one keeps a single keyword.
+            int wanted = text.Length > Config.Narrative.ObservationTwoKeywordsThreshold ? 2 : 1;
+            var kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted);
             sentences.Add(new NarrationSentence(text, kws));
-            if (kw != null)
+            foreach (var kw in kws)
             {
                 allKeywords.Add(kw);
                 keywordOutcomeMap.TryAdd(kw, outcome);
             }
-            Console.WriteLine($"ObservationPhaseController: Observed '{outcome.DisplayName}' (keyword '{kw}')");
+            Console.WriteLine($"ObservationPhaseController: Observed '{outcome.DisplayName}' (keywords: {string.Join(", ", kws)})");
+            return text;
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"ObservationPhaseController: Observation of '{outcome.DisplayName}' failed: {ex.Message}");
+            return null;
         }
+    }
+
+    /// <summary>
+    /// After the first object of a phase has been observed, appends a second and (conditionally) a third
+    /// observation, gated on the length of what has been produced so far (thresholds in
+    /// <see cref="Config.Narrative"/>):
+    ///   • if the first observation's text alone exceeds <c>ObservationSkipSecondThreshold</c>, stop —
+    ///     the first stands on its own and no second/third is added;
+    ///   • otherwise ask for a second object from the still-unobserved candidates and observe it;
+    ///   • then, if the first + second texts together stay below <c>ObservationTriggerThirdThreshold</c>
+    ///     and more than <c>ObservationThirdMinRemaining</c> objects remain, observe a third.
+    /// Shared by the overall and focus phases. <paramref name="candidates"/> is the deduplicated pool a
+    /// follow-up may draw from; <paramref name="observed"/> holds the objects already narrated (the first,
+    /// plus each follow-up as it is added) so they are never re-proposed. <paramref name="firstText"/> is
+    /// the first observation's text (already appended; null if it failed).
+    /// </summary>
+    private async Task AppendFollowUpObservationsAsync(
+        List<NarrationSentence> sentences,
+        List<string> allKeywords,
+        Dictionary<string, ConcreteOutcome> keywordOutcomeMap,
+        int slotId,
+        ModusMentis modusMentis,
+        List<ConcreteOutcome> candidates,
+        List<ConcreteOutcome> observed,
+        string? firstText,
+        int locationId,
+        CancellationToken ct,
+        bool isReminescence,
+        string? overall,
+        string? area,
+        PreviewPart? part)
+    {
+        // A first observation long enough on its own stops the phase here.
+        if ((firstText?.Length ?? 0) > Config.Narrative.ObservationSkipSecondThreshold)
+            return;
+
+        // Second observation over the still-unobserved objects, reached via a transition. Declining
+        // simply omits it — no failure block.
+        string? secondText = null;
+        var remaining = candidates.Where(c => !observed.Contains(c)).ToList();
+        if (remaining.Count > 0)
+        {
+            var (second, secondThought) = await SelectObservationObjectAsync(slotId, remaining, modusMentis, locationId, ct, isReminescence, overall, area, part: part);
+            if (second != null)
+            {
+                secondText = await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, second, withTransition: true, locationId, ct, isReminescence: isReminescence, innerThought: secondThought, part: part);
+                observed.Add(second);
+            }
+        }
+
+        // Third observation when the first two stayed short and enough objects remain to be observed.
+        int combinedLength = (firstText?.Length ?? 0) + (secondText?.Length ?? 0);
+        var stillRemaining = candidates.Where(c => !observed.Contains(c)).ToList();
+        if (combinedLength < Config.Narrative.ObservationTriggerThirdThreshold
+            && stillRemaining.Count > Config.Narrative.ObservationThirdMinRemaining)
+        {
+            var (third, thirdThought) = await SelectObservationObjectAsync(slotId, stillRemaining, modusMentis, locationId, ct, isReminescence, overall, area, part: part);
+            if (third != null)
+                await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, modusMentis, third, withTransition: true, locationId, ct, isReminescence: isReminescence, innerThought: thirdThought, part: part);
+        }
+    }
+
+    /// <summary>
+    /// Picks the modus mentis that narrates the first observation of a phase: a random one drawn — by
+    /// priority — from the observation modi mentis currently held in the active member's sensory memory,
+    /// falling back to any observation modus mentis when none of them sits in sensory memory. Returns
+    /// null only when the member has no observation modus mentis at all.
+    /// </summary>
+    private ModusMentis? PickFirstObservationModusMentis(PartyMember member)
+    {
+        var observation = member.GetObservationModiMentis();
+        if (observation.Count == 0) return null;
+
+        var inSensory = member.GetMemoryModule(MemoryModuleType.Sensory)?.FilledModiMentis.ToHashSet()
+                        ?? new HashSet<ModusMentis>();
+        var preferred = observation.Where(mm => inSensory.Contains(mm)).ToList();
+        var pool = preferred.Count > 0 ? preferred : observation;
+        return pool[_random.Next(pool.Count)];
+    }
+
+    /// <summary>
+    /// First observation of a narration phase opened right after a dialogue ended, kept continuous with
+    /// that conversation: the narrator is <paramref name="originObservationModusMentis"/> — the observation
+    /// MM that originated the dialogue's chain of thought — when it is still learned, otherwise a resampled
+    /// one (sensory memory first, like any first observation). The observed object is
+    /// <paramref name="npcOutcome"/> — the NPC that was talked to — with no "what draws you?" selection, and
+    /// it is a single observation regardless of length (no second or third). Follows the same
+    /// rewrite/keyword path as any observation, so a long text still gets two keywords. Returns an empty
+    /// list (so the caller can fall back to the normal phase) when no observation MM is available.
+    /// </summary>
+    public async Task<List<NarrationBlock>> GeneratePostDialogueObservationAsync(
+        ConcreteOutcome npcOutcome,
+        ModusMentis? originObservationModusMentis,
+        int locationId,
+        PartyMember actingMember,
+        LlmPreviewSession? preview = null,
+        Action<List<NarrationBlock>>? commit = null,
+        CancellationToken ct = default)
+    {
+        // Reuse the originating observation MM if it is still learned; otherwise resample one.
+        var observationModusMentis =
+            originObservationModusMentis != null && actingMember.LearnedModiMentis.Contains(originObservationModusMentis)
+                ? originObservationModusMentis
+                : PickFirstObservationModusMentis(actingMember);
+        if (observationModusMentis == null)
+        {
+            Console.WriteLine("ObservationPhaseController: No observation modus mentis for post-dialogue observation.");
+            return new List<NarrationBlock>();
+        }
+
+        Console.WriteLine($"ObservationPhaseController: Post-dialogue observation of '{npcOutcome.DisplayName}' with {observationModusMentis.DisplayName}");
+
+        (npcOutcome as INpcContextLabelStampable)?.StampContextLabel(actingMember, _worldContext, locationId);
+
+        var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(observationModusMentis);
+        _observationExecutor.ResetSlot(slotId);
+
+        var allKeywords = new List<string>();
+        var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var sentences = new List<NarrationSentence>();
+
+        var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
+
+        // Exactly one observation, of the NPC, whatever its length — no follow-up choice.
+        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis, npcOutcome, withTransition: false, locationId, ct, isReminescence: false, innerThought: null, part: part);
+
+        if (sentences.Count == 0)
+        {
+            preview?.Reset();
+            Console.WriteLine("ObservationPhaseController: Post-dialogue observation produced nothing.");
+            return new List<NarrationBlock>();
+        }
+
+        var block = new NarrationBlock(
+            Type: NarrationBlockType.Observation,
+            ModusMentis: observationModusMentis,
+            Text: string.Join(" ", sentences.Select(s => s.Text)),
+            Keywords: allKeywords,
+            Actions: null,
+            SourceObservationType: ObservationType.Focus,
+            KeywordOutcomeMap: keywordOutcomeMap,
+            Sentences: sentences);
+
+        Console.WriteLine($"ObservationPhaseController: Post-dialogue observation complete ({allKeywords.Count} keywords)");
+        var resultBlocks = new List<NarrationBlock> { block };
+        FinalizePreview(preview, commit, resultBlocks, part);
+        return resultBlocks;
     }
 
     /// <summary>
@@ -419,7 +559,7 @@ public class ObservationPhaseController
         var kept = await _selector.SelectAsync(
             slotId, modusMentis, new[] { focusOutcome },
             _ => $"keep your focus on {focusPhrase}",
-            prompt, declineOption: $"lose interest in {focusPhrase}", preview: part?.NextSegment(isFree: true), ct: ct);
+            prompt, declineOption: "turn my attention elsewhere instead", preview: part?.NextSegment(isFree: true), ct: ct);
         return (kept.Item != null, kept.Reasoning);
     }
 

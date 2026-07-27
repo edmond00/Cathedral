@@ -567,6 +567,38 @@ public static class Config
         /// </summary>
         public const int MaxNarrativeTextLength = 800;
 
+        // ── Observation phase length thresholds (see ObservationPhaseController) ──────────────
+        // All in characters of the final (sanitized) observation text. Kept here so the pacing of a
+        // multi-object observation phase can be tuned without touching the controller.
+
+        /// <summary>
+        /// If the first object's observation text alone is longer than this, the phase stops there and
+        /// no second (or third) observation is started — one rich paragraph stands on its own.
+        /// </summary>
+        public const int ObservationSkipSecondThreshold = 500;
+
+        /// <summary>
+        /// If the first + second observation texts together stay below this, and more than
+        /// <see cref="ObservationThirdMinRemaining"/> other objects could still be observed, a third
+        /// observation is added over the remaining objects.
+        /// </summary>
+        public const int ObservationTriggerThirdThreshold = 400;
+
+        /// <summary>Minimum number of still-observable objects required before a third observation is added.</summary>
+        public const int ObservationThirdMinRemaining = 5;
+
+        /// <summary>
+        /// If a single observation's text is longer than this, two distinct keywords (both linked to the
+        /// same object, so either click does the same thing) are highlighted instead of one.
+        /// </summary>
+        public const int ObservationTwoKeywordsThreshold = 400;
+
+        /// <summary>
+        /// Maximum length (characters) of the optional parenthetical aside on a dialogue reply — the brief
+        /// unspoken inner thought that trails the spoken line. Bounds the aside in the reply grammar.
+        /// </summary>
+        public const int DialogueAsideMaxLength = 200;
+
         /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
         private const string OneSentenceClause = "Answer in one short sentence and stop.";
 
@@ -581,25 +613,26 @@ public static class Config
         private const string DefaultStyleInstruction = "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
 
         /// <summary>
-        /// Builds the "Respond in JSON format" clause. When <paramref name="jsonHint"/> is given
-        /// (e.g. <c>{"text": "...", "keyword": "..."}</c>) it is shown so the model knows which value
-        /// goes in which field — preventing it from, say, writing the keyword inside the text field.
+        /// Style clause for dialogue replies: a spoken line carries personality in its wording, not in a
+        /// described tone. The broad <see cref="DefaultStyleInstruction"/> ("an inner feeling that suits
+        /// your character is welcome") invites a small model to narrate its own manner ("…, you say with
+        /// curiosity"), which is exactly what a spoken line must not do — so dialogue uses this instead.
+        /// The unspoken inner thought still has its home: the optional parenthetical aside (see the
+        /// dialogue prompt), which the reply grammar keeps outside the spoken quotes.
         /// </summary>
-        public static string JsonFormatClause(string? jsonHint) =>
-            string.IsNullOrEmpty(jsonHint) ? "Respond in JSON format." : $"Respond in JSON format ({jsonHint}).";
+        private const string DialogueStyleInstruction = "Let your wording and personality colour the words themselves; do not describe your tone, expression, or manner of speaking.";
 
         /// <summary>
         /// Returns the full answer instruction, appending a character reminder from PersonaReminder2 when available.
-        /// Falls back to "Stay in character." when no reminder is provided.
-        /// <paramref name="jsonHint"/> optionally shows the expected JSON field layout.
+        /// Falls back to "Stay in character." when no reminder is provided. The rewrite is emitted as raw
+        /// text (constrained by GBNF), so there is no "respond in JSON" clause.
         /// </summary>
-        public static string AnswerInstructionFor(string? personaReminder2, string? jsonHint = null, string? styleInstruction = null, bool includeLengthClause = true)
+        public static string AnswerInstructionFor(string? personaReminder2, string? styleInstruction = null, bool includeLengthClause = true)
         {
             string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
             string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
             var parts = new[]
             {
-                JsonFormatClause(jsonHint),
                 includeLengthClause ? OneSentenceClause : null,
                 GroundingClause,
                 style,
@@ -612,12 +645,12 @@ public static class Config
         /// Like <see cref="AnswerInstructionFor"/> but adds a 2nd-person dialogue reminder
         /// for speaking prompts where the character is directly addressing a companion.
         /// </summary>
-        public static string SpeakingAnswerInstructionFor(string? personaReminder2, string? jsonHint = null, string? styleInstruction = null)
+        public static string SpeakingAnswerInstructionFor(string? personaReminder2, string? styleInstruction = null)
         {
             string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
             return personaReminder2 != null
-                ? $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in the character of {personaReminder2}. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing."
-                : $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} Stay in character. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing.";
+                ? $"{OneSentenceClause} {GroundingClause} {style} Stay in the character of {personaReminder2}. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing."
+                : $"{OneSentenceClause} {GroundingClause} {style} Stay in character. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing.";
         }
 
         /// <summary>
@@ -625,12 +658,14 @@ public static class Config
         /// the reminder names the interlocutor (<paramref name="addressee"/>) the speaker addresses as
         /// "you", and asks for a single spoken line of dialogue.
         /// </summary>
-        public static string DialogueAnswerInstructionFor(string? personaReminder2, string? addressee, string? jsonHint = null, string? styleInstruction = null)
+        public static string DialogueAnswerInstructionFor(string? personaReminder2, string? addressee, string? styleInstruction = null)
         {
-            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
+            // A dialogue line is spoken words, so it uses the narrower dialogue style by default (a broad
+            // narration style makes a small model describe its own manner instead of speaking).
+            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DialogueStyleInstruction : styleInstruction.Trim();
             string who   = string.IsNullOrWhiteSpace(addressee) ? "the person you are speaking with" : addressee.Trim();
             string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
-            return $"{JsonFormatClause(jsonHint)} {OneSentenceClause} {GroundingClause} {style} {character} Speak directly to {who} as \"you\", and refer to yourself only as \"I\" — never call {who} by your own name or describe yourself in the second person. Give only the spoken line — no narration, no third-person phrasing, no quotation marks.";
+            return $"{OneSentenceClause} {GroundingClause} {style} {character} Speak directly to {who} as \"you\", and refer to yourself only as \"I\" — never call {who} by your own name or describe yourself in the second person. Put the words you say out loud in double quotes (\"...\") and write only those words, not how they are said — no narration, no third-person phrasing.";
         }
     }
 

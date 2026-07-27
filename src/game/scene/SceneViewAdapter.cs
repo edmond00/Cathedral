@@ -315,6 +315,13 @@ public class SyntheticNpcObservationObject : ObservationObject, INpcContextLabel
     /// </summary>
     public string? ContextLabel { get; private set; }
 
+    /// <summary>
+    /// The backing named NPC entity, or null for shallow (unnamed) wildlife. Lets a caller match this
+    /// observation object to a specific <see cref="NpcEntity"/> — used to re-observe the NPC a dialogue
+    /// was just held with when a new observation phase opens.
+    /// </summary>
+    public NpcEntity? NpcEntity => _npc.Entity as NpcEntity;
+
     public SyntheticNpcObservationObject(SceneNpc npc, SceneViewEntry entry)
     {
         _npc        = npc;

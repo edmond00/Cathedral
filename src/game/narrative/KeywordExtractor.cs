@@ -27,40 +27,66 @@ public static class KeywordExtractor
     /// </summary>
     public static string? ExtractKeyword(string text, string referenceLemma)
     {
-        if (string.IsNullOrWhiteSpace(text)) return null;
+        var kws = ExtractKeywords(text, referenceLemma, 1);
+        return kws.Count > 0 ? kws[0] : null;
+    }
+
+    /// <summary>
+    /// Returns up to <paramref name="count"/> distinct keywords (surface nouns) from
+    /// <paramref name="text"/>, ranked by semantic relatedness to <paramref name="referenceLemma"/>
+    /// (the object's core noun) and excluding the object's own word. Distinct by case-insensitive
+    /// surface, so the same word is never returned twice; fewer than <paramref name="count"/> may come
+    /// back when the text is short. Used to highlight two keywords for a long observation (both linked
+    /// to the same object). With <paramref name="count"/> = 1 this reproduces <see cref="ExtractKeyword"/>.
+    /// </summary>
+    public static List<string> ExtractKeywords(string text, string referenceLemma, int count)
+    {
+        if (string.IsNullOrWhiteSpace(text) || count <= 0) return new List<string>();
 
         var candidates = NounExtractor.ExtractNounsWithLemmas(text);
         var refLemma = (referenceLemma ?? string.Empty).ToLowerInvariant().Trim();
 
-        // Drop the object's own word (by lemma) so the keyword is associated, not the object itself.
+        // Drop the object's own word (by lemma) so keywords are associated, not the object itself.
         if (candidates.Count > 1 && !string.IsNullOrEmpty(refLemma))
             candidates = candidates.Where(c => !c.Lemma.Equals(refLemma, StringComparison.OrdinalIgnoreCase)).ToList();
 
-        // No nouns at all → longest word fallback.
+        // No nouns at all → longest word fallback (a single keyword only).
         if (candidates.Count == 0)
-            return LongestWord(text);
-
-        // Embedding similarity: closest candidate lemma to the reference lemma.
-        if (WordEmbedding.IsReady && !string.IsNullOrEmpty(refLemma))
         {
-            var refVec = WordEmbedding.GetVector(refLemma);
-            if (refVec != null)
-            {
-                string? best = null;
-                double bestSim = double.NegativeInfinity;
-                foreach (var c in candidates)
-                {
-                    var v = WordEmbedding.GetVector(c.Lemma);
-                    if (v == null) continue;
-                    double sim = WordEmbedding.Cosine(refVec, v);
-                    if (sim > bestSim) { bestSim = sim; best = c.Surface; }
-                }
-                if (best != null) return best;
-            }
+            var w = LongestWord(text);
+            return w != null ? new List<string> { w } : new List<string>();
         }
 
-        // Fallback: longest noun surface.
-        return candidates.OrderByDescending(c => c.Surface.Length).First().Surface;
+        // Rank the candidate surfaces: by embedding similarity to the reference lemma when embeddings
+        // are available (closest first — the old single-keyword behaviour for the top pick), otherwise
+        // by surface length. The ranked order is what lets us take the two best distinct keywords.
+        IEnumerable<string> ranked;
+        var refVec = WordEmbedding.IsReady && !string.IsNullOrEmpty(refLemma) ? WordEmbedding.GetVector(refLemma) : null;
+        if (refVec != null)
+        {
+            var scored = candidates
+                .Select(c => (c.Surface, Vec: WordEmbedding.GetVector(c.Lemma)))
+                .Where(x => x.Vec != null)
+                .Select(x => (x.Surface, Sim: WordEmbedding.Cosine(refVec, x.Vec!)))
+                .ToList();
+            ranked = scored.Count > 0
+                ? scored.OrderByDescending(x => x.Sim).Select(x => x.Surface)
+                : candidates.OrderByDescending(c => c.Surface.Length).Select(c => c.Surface);
+        }
+        else
+        {
+            ranked = candidates.OrderByDescending(c => c.Surface.Length).Select(c => c.Surface);
+        }
+
+        // Take the top distinct surfaces (case-insensitive) so a keyword is never highlighted twice.
+        var result = new List<string>();
+        foreach (var surface in ranked)
+        {
+            if (result.Any(r => r.Equals(surface, StringComparison.OrdinalIgnoreCase))) continue;
+            result.Add(surface);
+            if (result.Count >= count) break;
+        }
+        return result;
     }
 
     private static string? LongestWord(string text)
