@@ -11,11 +11,12 @@ namespace Cathedral.Game.Scene.Verbs;
 /// On success it opens the propose-to-sell dialogue; only succeeding THAT dialogue opens the
 /// sell menu. Gated to acquaintances and above — you must have met the NPC first.
 /// </summary>
-public class ProposeToSellVerb : Verb
+public class ProposeToSellVerb : DialogueVerb
 {
-    public override string VerbId         => "propose_to_sell";
-    public override string DisplayName    => "Propose to sell";
-    public override int    BaseDifficulty => 1;   // the action only meets the NPC; the dialogue carries the real stakes
+    public override string VerbId            => "propose_to_sell";
+    public override string DisplayName       => "Propose to sell";
+    public override int    BaseDifficulty    => 1;   // the action only meets the NPC; the dialogue carries the real stakes
+    protected override string DialogueTreeId => "propose_to_sell";
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {

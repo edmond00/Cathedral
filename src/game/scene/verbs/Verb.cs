@@ -182,6 +182,18 @@ public abstract class Verb
         => RoutinePhaseKind.None;
 
     /// <summary>
+    /// A stable key identifying the chosen <see cref="VerbView.Variant"/> for routine recording, so
+    /// replay can rebuild the same view (e.g. which job was requested). Default: null (no variant).
+    /// </summary>
+    public virtual string? RoutineVariantKey(VerbView view) => null;
+
+    /// <summary>
+    /// Rebuilds the <see cref="VerbView.Variant"/> payload from a key produced by
+    /// <see cref="RoutineVariantKey"/>, used when replaying a recorded step. Default: null.
+    /// </summary>
+    public virtual object? ResolveRoutineVariant(string variantKey) => null;
+
+    /// <summary>
     /// The item this verb would add to the actor's inventory on success, or null for verbs that do not
     /// pick anything up. Pickup verbs (grab/gather/steal/cut) override this so the coded
     /// inventory-capacity rule can block the action when there is no room to carry it.

@@ -1,4 +1,3 @@
-coins during childhood
 humor outcome
 all MM functions after childhood reminescence
 LLM loading screen messages
@@ -12,3 +11,5 @@ overall beast fixs
 2 same keywords on observation text, click the second, interact with object related to the first
 "John" in free reasoning thought preview
 request work to reeve -> use body humor to pass dice roll check -> reeve still refuse to give work
+bottle of ale (instead of ale)
+NPC coherent generation with text description and content parrallel generation

@@ -16,20 +16,27 @@ public class StrengthenRelationshipTree : DialogueTree
     public override string Description      => "deepening the bond with someone you already know";
     public override string AssociatedVerbId => "strengthen_relationship";
 
+    // Small talk is repeatable and self-contained: a routine can bake in the trigger so replaying it
+    // starts the chat directly (its success is rolled live each time).
+    public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeTrigger;
+
+    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    {
+        new AffinityIncrementOutcome(+1, AffinityLevel.AnnoyingAcquaintance, AffinityLevel.CloseFriend),
+    };
+
+    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = new IDialogueOutcome[]
+    {
+        new AffinityIncrementOutcome(-1, AffinityLevel.AnnoyingAcquaintance, AffinityLevel.CloseFriend),
+    };
+
     // ── Resolution nodes ────────────────────────────────────────────────────────
 
     private static ResolutionNode Parting(string id, string success, string failure) => new(
         nodeId:         id,
         difficulty:     1,
         successReplica: success,
-        failureReplica: failure,
-        outcomes: new List<DialogueOutcomeCase>
-        {
-            new(new AffinityIncrementOutcome(+1, AffinityLevel.AnnoyingAcquaintance, AffinityLevel.CloseFriend),
-                BranchCondition.Success),
-            new(new AffinityIncrementOutcome(-1, AffinityLevel.AnnoyingAcquaintance, AffinityLevel.CloseFriend),
-                BranchCondition.Failure),
-        });
+        failureReplica: failure);
 
     private static readonly ResolutionNode ComplimentParting = Parting(
         "compliment_parting",

@@ -58,6 +58,15 @@ public static class NeutralNarration
         => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence)}";
 
     /// <summary>
+    /// Trailing sentence appended to a threatening enemy's observation neutral text: it flags the
+    /// just-described object as a present danger so the observation persona rewrites a note of caution
+    /// into the block. Used only when the first observation of a phase leads with a same-area enemy
+    /// (the "under threat" opener), and kept first-person so it merges into the observation voice.
+    /// </summary>
+    public static string ThreatCaution()
+        => "This one means me harm, right here — I must stay wary and ready.";
+
+    /// <summary>
     /// Neutral meaning for a failed observation: the Modus Mentis found nothing here worth its
     /// attention (every candidate object was graded "averse" in the persona evaluation). Re-expressed
     /// in the observation persona's voice as the whole observation block.

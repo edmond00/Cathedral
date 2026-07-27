@@ -10,11 +10,12 @@ namespace Cathedral.Game.Scene.Verbs;
 /// Requires: target is a speakable NpcEntity, current affinity is Stranger,
 /// and the protagonist has at least one Speaking modus mentis.
 /// </summary>
-public class MeetStrangerVerb : Verb
+public class MeetStrangerVerb : DialogueVerb
 {
-    public override string VerbId         => "meet_stranger";
-    public override string DisplayName    => "Meet";
-    public override int    BaseDifficulty => 1;
+    public override string VerbId            => "meet_stranger";
+    public override string DisplayName       => "Meet";
+    public override int    BaseDifficulty    => 1;
+    protected override string DialogueTreeId => "meet_stranger";
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {

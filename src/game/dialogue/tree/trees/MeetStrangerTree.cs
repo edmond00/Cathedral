@@ -16,18 +16,23 @@ public class MeetStrangerTree : DialogueTree
     public override string Description      => "meeting this person for the first time and exchanging introductions";
     public override string AssociatedVerbId => "meet_stranger";
 
+    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    {
+        new AffinityTransitionOutcome(AffinityLevel.DistantAcquaintance),
+    };
+
+    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = new IDialogueOutcome[]
+    {
+        new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance),
+    };
+
     // ── Resolution nodes (branch ends) ─────────────────────────────────────────
 
     private static ResolutionNode Parting(string id, string success, string failure) => new(
         nodeId:         id,
         difficulty:     1,
         successReplica: success,
-        failureReplica: failure,
-        outcomes: new List<DialogueOutcomeCase>
-        {
-            new(new AffinityTransitionOutcome(AffinityLevel.DistantAcquaintance),  BranchCondition.Success),
-            new(new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance), BranchCondition.Failure),
-        });
+        failureReplica: failure);
 
     private static readonly ResolutionNode WarmParting = Parting(
         "warm_parting",

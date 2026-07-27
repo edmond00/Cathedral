@@ -64,6 +64,7 @@ public class RoutineRecorder
             Target         = targetRef,
             Verbatim       = verb.Verbatim(scene, povBeforeMove, target),
             TriggeredPhase = verb.RoutineTriggeredPhase(scene, povBeforeMove, target),
+            VariantKey     = verb.RoutineVariantKey(action.PreselectedOutcome.VerbView) ?? "",
             Constraints    = BuildConstraints(action, actingMember, itemConsumed),
         };
         _steps.Add(step);

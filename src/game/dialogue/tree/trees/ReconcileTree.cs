@@ -16,19 +16,24 @@ public class ReconcileTree : DialogueTree
     public override string Description      => "attempting to end hostility and reach a fragile peace";
     public override string AssociatedVerbId => "reconcile";
 
+    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    {
+        new ClearEnemyOutcome(),
+        new SuspiciousAffinityOutcome(),
+    };
+
+    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = new IDialogueOutcome[]
+    {
+        new FightRequestOutcome(),
+    };
+
     // ── Resolution nodes ────────────────────────────────────────────────────────
 
     private static ResolutionNode Outcome(string id, string success, string failure) => new(
         nodeId:         id,
         difficulty:     2,
         successReplica: success,
-        failureReplica: failure,
-        outcomes: new List<DialogueOutcomeCase>
-        {
-            new(new ClearEnemyOutcome(),         BranchCondition.Success),
-            new(new SuspiciousAffinityOutcome(), BranchCondition.Success),
-            new(new FightRequestOutcome(),       BranchCondition.Failure),
-        });
+        failureReplica: failure);
 
     private static readonly ResolutionNode ApologyOutcome = Outcome(
         "apology_outcome",

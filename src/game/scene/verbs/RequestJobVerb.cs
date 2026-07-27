@@ -15,13 +15,14 @@ namespace Cathedral.Game.Scene.Verbs;
 /// itself is just the meeting, hence base difficulty 1. Gated to acquaintances and above — you must
 /// have met the NPC first.
 /// </summary>
-public class RequestJobVerb : Verb
+public class RequestJobVerb : DialogueVerb
 {
     private const int JobsOffered = 3;
 
-    public override string VerbId         => "request_job";
-    public override string DisplayName    => "Request job";
-    public override int    BaseDifficulty => 1;   // the action only meets the NPC; the dialogue carries the real stakes
+    public override string VerbId            => "request_job";
+    public override string DisplayName       => "Request job";
+    public override int    BaseDifficulty    => 1;   // the action only meets the NPC; the dialogue carries the real stakes
+    protected override string DialogueTreeId => "request_job";
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
         => Eligible(scene, pov, target, actor) is not null;
@@ -46,6 +47,12 @@ public class RequestJobVerb : Verb
         npc.PendingJobOffer = job;   // the dialogue's terminal outcome promotes this to JobRequest
         return new[] { new DialogueTriggerOutcome(npc, DialogueTreeRegistry.Instance.Get("request_job").TreeId) };
     }
+
+    // Routine recording captures which of the offered jobs was requested, so a replayed routine
+    // reopens the work menu for the same job.
+    public override string? RoutineVariantKey(VerbView view) => (view.Variant as Job)?.Id;
+
+    public override object? ResolveRoutineVariant(string variantKey) => JobRegistry.Instance.GetById(variantKey);
 
     /// <summary>Returns the eligible job-giving NPC at the target, or null when work cannot be requested.</summary>
     private static NpcEntity? Eligible(Scene scene, PoV pov, Element target, Protagonist? actor)

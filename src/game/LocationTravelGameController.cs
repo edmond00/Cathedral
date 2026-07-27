@@ -2488,13 +2488,11 @@ public class LocationTravelGameController : IDisposable
             var scene = sceneFactory.Build(0);
 
             var worldContext = new Cathedral.Game.Narrative.PlainBiomeContext();
-            var outcomeApplicator = new OutcomeApplicator();
             var outcomeNarrator = new OutcomeNarrator(
                 _llamaServer,
                 _modusMentisSlotManager);
             var actionExecutor = new ActionExecutionController(
                 outcomeNarrator,
-                outcomeApplicator,
                 _protagonist,
                 _criticEvaluator,
                 worldContext,
@@ -2569,13 +2567,11 @@ public class LocationTravelGameController : IDisposable
             var scene = sceneFactory.Build(0);
 
             var worldContext = new Cathedral.Game.Narrative.PlainBiomeContext();
-            var outcomeApplicator = new OutcomeApplicator();
             var outcomeNarrator = new OutcomeNarrator(
                 _llamaServer,
                 _modusMentisSlotManager);
             var actionExecutor = new ActionExecutionController(
                 outcomeNarrator,
-                outcomeApplicator,
                 _protagonist,
                 _criticEvaluator,
                 worldContext,
@@ -2618,10 +2614,30 @@ public class LocationTravelGameController : IDisposable
     /// </summary>
     private void StartNarrativeInteraction(int vertexIndex, string? startAreaLemma = null, Cathedral.Game.Narrative.TimePeriod? startTime = null)
     {
+        if (!EstablishNarrativeContext(vertexIndex)) return;
+
+        // Start observation phase (async). When continuing after a routine replay, position the
+        // session at the area the routine ended in, at its recorded time period.
+        if (startAreaLemma != null && startTime != null)
+            _narrativeController!.StartAtArea(startAreaLemma, startTime.Value);
+        else
+            _narrativeController!.StartObservationPhase();
+
+        Console.WriteLine("LocationTravelGameController: Phase 6 narrative interaction started");
+    }
+
+    /// <summary>
+    /// Builds the scene + <see cref="NarrativeController"/> for a location and switches to
+    /// <see cref="GameMode.LocationInteraction"/>, WITHOUT starting the observation phase. Returns
+    /// false (and resets narrative state) on failure. Shared by normal narration entry
+    /// (<see cref="StartNarrativeInteraction"/>) and the routine-replay sub-phase bridge.
+    /// </summary>
+    private bool EstablishNarrativeContext(int vertexIndex)
+    {
         if (_core.Terminal == null || _core.PopupTerminal == null || _llamaServer == null || _modusMentisSlotManager == null)
         {
             Console.Error.WriteLine("NarrativeController: Cannot start - missing dependencies");
-            return;
+            return false;
         }
         
         try
@@ -2631,24 +2647,23 @@ public class LocationTravelGameController : IDisposable
             if (inputHandler is null)
             {
                 Console.WriteLine("LocationTravelGameController: Cannot enter Phase 6 mode - no terminal input handler");
-                return;
+                return false;
             }
-            
+
             // Ensure ThinkingExecutor is initialized
             if (_thinkingExecutor is null)
             {
                 Console.WriteLine("LocationTravelGameController: Cannot enter Phase 6 mode - ThinkingExecutor not initialized");
-                return;
+                return false;
             }
-            
+
             if (_criticEvaluator == null)
             {
                 Console.WriteLine("LocationTravelGameController: Cannot enter Phase 6 mode - Critic not initialized");
-                return;
+                return false;
             }
 
             // Create Action Execution Controller dependencies
-            var outcomeApplicator = new OutcomeApplicator();
             var outcomeNarrator = new OutcomeNarrator(
                 _llamaServer,
                 _modusMentisSlotManager
@@ -2672,7 +2687,6 @@ public class LocationTravelGameController : IDisposable
 
             var actionExecutor = new ActionExecutionController(
                 outcomeNarrator,
-                outcomeApplicator,
                 protagonist,
                 _criticEvaluator,
                 worldContext,
@@ -2693,7 +2707,7 @@ public class LocationTravelGameController : IDisposable
                     Console.Error.WriteLine("LocationTravelGameController: scene build failed - aborting Phase 6");
                     _isInNarrativeMode = false;
                     _narrativeController = null;
-                    return;
+                    return false;
                 }
                 _currentLocationState = locState;
 
@@ -2743,24 +2757,17 @@ public class LocationTravelGameController : IDisposable
             
             // Set mode to LocationInteraction
             SetMode(GameMode.LocationInteraction);
-
-            // Start observation phase (async). When continuing after a routine replay, position the
-            // session at the area the routine ended in, at its recorded time period.
-            if (startAreaLemma != null && startTime != null)
-                _narrativeController.StartAtArea(startAreaLemma, startTime.Value);
-            else
-                _narrativeController.StartObservationPhase();
-
-            Console.WriteLine("LocationTravelGameController: Phase 6 narrative interaction started");
+            return true;
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"LocationTravelGameController: Failed to start Phase 6: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
-            
+
             // Fallback to normal interaction
             _isInNarrativeMode = false;
             _narrativeController = null;
+            return false;
         }
     }
     
@@ -2931,6 +2938,30 @@ public class LocationTravelGameController : IDisposable
                 }
                 break;
 
+            case StartRoutineDialogueTransition rd:
+                StartRoutineSubPhase(rd.Vertex, rd.NpcKey, rd.Time,
+                    npc => StartDialogueMode(new DialogueOutcome(npc, rd.TreeId)));
+                break;
+
+            case StartRoutineTradeTransition rt:
+                StartRoutineSubPhase(rt.Vertex, rt.NpcKey, rt.Time,
+                    npc => StartTradeMode(npc, rt.Mode));
+                break;
+
+            case StartRoutineWorkTransition rw:
+                StartRoutineSubPhase(rw.Vertex, rw.NpcKey, rw.Time, npc =>
+                {
+                    var job = Cathedral.Game.Narrative.Work.JobRegistry.Instance.GetById(rw.JobId);
+                    if (job == null)
+                    {
+                        Console.Error.WriteLine($"ApplyPhaseTransition: recorded job '{rw.JobId}' no longer exists — returning to travel");
+                        ExitNarrativeMode();
+                        return;
+                    }
+                    StartWorkMode(npc, job);
+                });
+                break;
+
             case StartNarrationTransition n:
                 StartNarrativeInteraction(n.Vertex, n.StartArea?.ReferenceLemma, n.Time);
                 break;
@@ -2940,6 +2971,40 @@ public class LocationTravelGameController : IDisposable
                 ReturnToWorldView();
                 break;
         }
+    }
+
+    /// <summary>
+    /// Bridges a headless routine replay into a location sub-phase: rebuilds narrative context at the
+    /// vertex (without an observation pass), re-resolves the recorded NPC in the fresh scene, and then
+    /// runs <paramref name="open"/> to enter the dialogue / trade / work phase. Because a real
+    /// <see cref="NarrativeController"/> now exists, the normal completion handlers
+    /// (OnDialogueCompleted / OnTradeCompleted / OnWorkCompleted) return the player to narration or
+    /// the world map exactly as after a live visit.
+    /// </summary>
+    private void StartRoutineSubPhase(int vertex, string npcKey,
+        Cathedral.Game.Narrative.TimePeriod time, Action<Cathedral.Game.Npc.NpcEntity> open)
+    {
+        if (!EstablishNarrativeContext(vertex))
+        {
+            Console.Error.WriteLine("StartRoutineSubPhase: could not establish narrative context — returning to travel");
+            ReturnToWorldView();
+            return;
+        }
+
+        _narrativeController!.PrepareForRoutineSubPhase(time);
+
+        var npc = _narrativeController.Scene?.Npcs
+            .FirstOrDefault(n => n.IsAlive && string.Equals(n.DisplayName, npcKey, StringComparison.OrdinalIgnoreCase))
+            ?.Entity as Cathedral.Game.Npc.NpcEntity;
+
+        if (npc == null)
+        {
+            Console.Error.WriteLine($"StartRoutineSubPhase: NPC '{npcKey}' not found in the rebuilt scene — exiting to travel");
+            ExitNarrativeMode();
+            return;
+        }
+
+        open(npc);
     }
 
     /// <summary>Tears down any narrative context and returns to the world-travel view.</summary>
@@ -3029,9 +3094,12 @@ public class LocationTravelGameController : IDisposable
 
     private static string PhaseNote(Cathedral.Game.Narrative.PhaseTransition t) => t switch
     {
-        Cathedral.Game.Narrative.StartNarrationTransition n => $"You explore {n.StartArea?.DisplayName ?? "the area"}.",
-        Cathedral.Game.Narrative.StartFightTransition f     => $"A fight breaks out with {f.Enemy.DisplayName}!",
-        Cathedral.Game.Narrative.StartDialogueTransition d  => $"You begin speaking with {d.Npc.DisplayName}.",
+        Cathedral.Game.Narrative.StartNarrationTransition n     => $"You explore {n.StartArea?.DisplayName ?? "the area"}.",
+        Cathedral.Game.Narrative.StartFightTransition f         => $"A fight breaks out with {f.Enemy.DisplayName}!",
+        Cathedral.Game.Narrative.StartDialogueTransition d      => $"You begin speaking with {d.Npc.DisplayName}.",
+        Cathedral.Game.Narrative.StartRoutineDialogueTransition rd => $"You begin speaking with {rd.NpcKey}.",
+        Cathedral.Game.Narrative.StartRoutineTradeTransition rt => $"You sit down to trade with {rt.NpcKey}.",
+        Cathedral.Game.Narrative.StartRoutineWorkTransition rw  => $"You set to work for {rw.NpcKey}.",
         _ => "You return to your journey.",
     };
 

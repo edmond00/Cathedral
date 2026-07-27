@@ -1,6 +1,19 @@
-using System.Collections.Generic;
-
 namespace Cathedral.Game.Dialogue.Tree;
+
+/// <summary>
+/// How a <see cref="ResolutionNode"/> decides success vs failure.
+/// </summary>
+public enum ResolutionMode
+{
+    /// <summary>Roll the accumulated dice pool against the node's difficulty (the normal case).</summary>
+    DiceCheck,
+
+    /// <summary>Force the tree's success outcome with no dice roll.</summary>
+    ForceSuccess,
+
+    /// <summary>Force the tree's failure outcome with no dice roll.</summary>
+    ForceFailure,
+}
 
 /// <summary>
 /// The branch end: reached after the player's last reply, this is where the conversation's single
@@ -11,14 +24,15 @@ namespace Cathedral.Game.Dialogue.Tree;
 ///
 /// <para>
 /// After the roll the NPC speaks one of two lines — <see cref="SuccessReplica"/> or
-/// <see cref="FailureReplica"/> — and the matching <see cref="Outcomes"/> fire. The two lines are the
-/// only place a node carries speaker-conditional text, and they are still the NPC's own lines (no
-/// sharing with the player).
+/// <see cref="FailureReplica"/> — and the owning tree's <see cref="DialogueTree.SuccessOutcomes"/>
+/// or <see cref="DialogueTree.FailureOutcomes"/> fire. A node may instead force its result with no
+/// roll (see <see cref="ResolutionMode"/>): a <see cref="ResolutionMode.ForceFailure"/> node, for
+/// example, guarantees the failure outcome (used by the caught-red-handed "provoke" branch).
 /// </para>
 /// </summary>
 public class ResolutionNode : DialogueNode
 {
-    /// <summary>Fixed number of 6s the pool must roll to succeed (authored per node).</summary>
+    /// <summary>Fixed number of 6s the pool must roll to succeed (authored per node). Ignored when <see cref="Mode"/> is forced.</summary>
     public int Difficulty { get; }
 
     /// <summary>NPC line spoken when the check succeeds (neutral; may contain template tokens).</summary>
@@ -27,20 +41,20 @@ public class ResolutionNode : DialogueNode
     /// <summary>NPC line spoken when the check fails (neutral; may contain template tokens).</summary>
     public string FailureReplica { get; }
 
-    /// <summary>Effects applied on resolution, each gated by a <see cref="BranchCondition"/>.</summary>
-    public IReadOnlyList<DialogueOutcomeCase> Outcomes { get; }
+    /// <summary>Whether this node rolls the dice or forces a fixed result.</summary>
+    public ResolutionMode Mode { get; }
 
     public ResolutionNode(
-        string                     nodeId,
-        int                        difficulty,
-        string                     successReplica,
-        string                     failureReplica,
-        List<DialogueOutcomeCase>? outcomes = null)
+        string         nodeId,
+        int            difficulty,
+        string         successReplica,
+        string         failureReplica,
+        ResolutionMode mode = ResolutionMode.DiceCheck)
         : base(nodeId)
     {
         Difficulty     = System.Math.Max(1, difficulty);
         SuccessReplica = successReplica;
         FailureReplica = failureReplica;
-        Outcomes       = outcomes ?? new List<DialogueOutcomeCase>();
+        Mode           = mode;
     }
 }

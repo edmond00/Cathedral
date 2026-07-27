@@ -541,6 +541,18 @@ public class DialogueTreeController
     {
         _pendingResolution = resolution;
 
+        // A forced node commits its result with no roll (e.g. the caught-red-handed "provoke" branch,
+        // which always ends in a fight). No dice overlay, no accumulated-pool math.
+        if (resolution.Mode != ResolutionMode.DiceCheck)
+        {
+            bool forcedSuccess = resolution.Mode == ResolutionMode.ForceSuccess;
+            Console.WriteLine(
+                $"DialogueTreeController: resolution '{resolution.NodeId}' forced → " +
+                $"{(forcedSuccess ? "SUCCESS" : "FAILURE")} (no roll)");
+            ResolveRoll(forcedSuccess);
+            return;
+        }
+
         int affinityBonus = _npc.AffinityTable.GetLevel(_partyMemberId).BonusDice();
         int diceCount     = Math.Clamp(affinityBonus + _accumulatedDice, 1, 15);
         // An authored difficulty above the pool size is unreachable — DialogueSessionState already
@@ -619,16 +631,12 @@ public class DialogueTreeController
 
                 AppendNpcLine(reaction);
 
-                // Apply the outcomes gated by success/failure, collecting what each one changed.
+                // Apply the tree's success or failure outcome set (shared by every branch).
                 var reports = new List<OutcomeReport>();
-                foreach (var oc in resolution.Outcomes)
+                foreach (var outcome in succeeded ? _tree.SuccessOutcomes : _tree.FailureOutcomes)
                 {
-                    bool fires = oc.Condition == BranchCondition.Either
-                        || (oc.Condition == BranchCondition.Success && succeeded)
-                        || (oc.Condition == BranchCondition.Failure && !succeeded);
-                    if (!fires) continue;
-                    Console.WriteLine($"DialogueTreeController: applying outcome — {oc.Outcome.Description}");
-                    var report = oc.Outcome.Apply(_npc, _partyMemberId);
+                    Console.WriteLine($"DialogueTreeController: applying outcome — {outcome.Description}");
+                    var report = outcome.Apply(_npc, _partyMemberId);
                     if (report != null) reports.Add(report);
                 }
 

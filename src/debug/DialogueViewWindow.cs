@@ -111,7 +111,10 @@ public class DialogueViewWindow : Form
             ScrollBars  = RichTextBoxScrollBars.Vertical,
             Text = $"Tree id : {tree.TreeId}\r\n"
                  + $"Verb    : {tree.AssociatedVerbId}\r\n"
-                 + $"Subject : {tree.Description}",
+                 + $"Routine : {tree.RoutineBehavior}\r\n"
+                 + $"Subject : {tree.Description}\r\n"
+                 + $"Success : {string.Join(", ", tree.SuccessOutcomes.Select(o => o.Description))}\r\n"
+                 + $"Failure : {string.Join(", ", tree.FailureOutcomes.Select(o => o.Description))}",
         };
 
         var right = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(30, 30, 30) };
@@ -199,10 +202,9 @@ public class DialogueViewWindow : Form
             $"Success line:\r\n  {res.SuccessReplica}",
             $"Failure line:\r\n  {res.FailureReplica}",
             "",
-            $"Outcomes ({res.Outcomes.Count}):",
+            $"Resolution: {res.Mode}",
+            "(outcomes are tree-level — see the tree info panel)",
         };
-        if (res.Outcomes.Count == 0) lines.Add("  (none)");
-        else foreach (var oc in res.Outcomes) lines.Add($"  [{oc.Condition}] {oc.Outcome.Description}");
         detailsById[res.NodeId] = string.Join("\r\n", lines);
     }
 

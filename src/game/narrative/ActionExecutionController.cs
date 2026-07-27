@@ -66,7 +66,6 @@ public class ActionEvaluationResult
 public class ActionExecutionController
 {
     private readonly OutcomeNarrator _outcomeNarrator;
-    private readonly OutcomeApplicator _outcomeApplicator;
 
     /// <summary>
     /// The party member currently performing actions. Defaults to the protagonist but is
@@ -88,14 +87,12 @@ public class ActionExecutionController
 
     public ActionExecutionController(
         OutcomeNarrator outcomeNarrator,
-        OutcomeApplicator outcomeApplicator,
         Protagonist protagonist,
         ItemUseCritic criticEvaluator,
         WorldContext worldContext,
         int locationId)
     {
         _outcomeNarrator = outcomeNarrator;
-        _outcomeApplicator = outcomeApplicator;
         ActingMember = protagonist;
         _criticEvaluator = criticEvaluator;
         _worldContext = worldContext;

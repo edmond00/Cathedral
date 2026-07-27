@@ -15,6 +15,12 @@ public class RoutineStep
     public List<RoutineConstraint> Constraints { get; set; } = new();
     public string Verbatim { get; set; } = "";
     public RoutinePhaseKind TriggeredPhase { get; set; } = RoutinePhaseKind.None;
+
+    /// <summary>
+    /// Stable key for the chosen <see cref="Cathedral.Game.Scene.VerbView.Variant"/> (e.g. the
+    /// requested job id), so replay rebuilds the same view. Empty when the verb has no variant.
+    /// </summary>
+    public string VariantKey { get; set; } = "";
 }
 
 /// <summary>

@@ -11,11 +11,12 @@ namespace Cathedral.Game.Scene.Verbs;
 /// Requires: target is a speakable NpcEntity, current affinity is NOT Stranger,
 /// and the protagonist has at least one Speaking modus mentis.
 /// </summary>
-public class StrengthenRelationshipVerb : Verb
+public class StrengthenRelationshipVerb : DialogueVerb
 {
-    public override string VerbId         => "strengthen_relationship";
-    public override string DisplayName    => "Talk";
-    public override int    BaseDifficulty => 1;
+    public override string VerbId            => "strengthen_relationship";
+    public override string DisplayName       => "Talk";
+    public override int    BaseDifficulty    => 1;
+    protected override string DialogueTreeId => "strengthen_relationship";
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {

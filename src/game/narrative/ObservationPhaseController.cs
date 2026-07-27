@@ -287,7 +287,8 @@ public class ObservationPhaseController
         CancellationToken ct,
         bool isReminescence = false,
         string? innerThought = null,
-        PreviewPart? part = null)
+        PreviewPart? part = null,
+        string? trailingNeutral = null)
     {
         var sink = part?.NextSegment();
         try
@@ -302,6 +303,10 @@ public class ObservationPhaseController
                 GetNeutralPhrase(outcome, locationId),
                 GetNeutralDescription(outcome, locationId),
                 isReminescence: isReminescence);
+            // An optional trailing sentence (e.g. a threat caution) is folded into the same neutral
+            // text so the persona rewrite styles it into the block rather than tacking on plain prose.
+            if (!string.IsNullOrWhiteSpace(trailingNeutral))
+                neutral = $"{neutral} {trailingNeutral.Trim()}";
             var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, innerThought: innerThought, preview: sink, ct: ct);
 
             // Keywords are chosen by rule from the final (sanitized) text — the noun(s) most related to
@@ -467,6 +472,74 @@ public class ObservationPhaseController
             Sentences: sentences);
 
         Console.WriteLine($"ObservationPhaseController: Post-dialogue observation complete ({allKeywords.Count} keywords)");
+        var resultBlocks = new List<NarrationBlock> { block };
+        FinalizePreview(preview, commit, resultBlocks, part);
+        return resultBlocks;
+    }
+
+    /// <summary>
+    /// Opens a narration phase with a single, forced observation of a same-area enemy — the "under
+    /// threat" lead-in used when a visual threat is present (the same condition that turns the exit
+    /// button into RUNAWAY). Like the post-dialogue opener, the observed object is imposed
+    /// (<paramref name="threatOutcome"/>, no "what draws you?" selection) and it is one observation
+    /// regardless of length (no second or third). Unlike it, the narrator is freshly sampled (sensory
+    /// memory first, like any first observation) and a threat-caution sentence is folded into the
+    /// neutral text so the persona rewrites a note of danger into the block. Returns an empty list
+    /// (so the caller can fall back to the normal phase) when no observation MM is available or the
+    /// rewrite produced nothing.
+    /// </summary>
+    public async Task<List<NarrationBlock>> GenerateThreatObservationAsync(
+        ConcreteOutcome threatOutcome,
+        int locationId,
+        PartyMember actingMember,
+        LlmPreviewSession? preview = null,
+        Action<List<NarrationBlock>>? commit = null,
+        CancellationToken ct = default)
+    {
+        var observationModusMentis = PickFirstObservationModusMentis(actingMember);
+        if (observationModusMentis == null)
+        {
+            Console.WriteLine("ObservationPhaseController: No observation modus mentis for threat observation.");
+            return new List<NarrationBlock>();
+        }
+
+        Console.WriteLine($"ObservationPhaseController: Threat observation of '{threatOutcome.DisplayName}' with {observationModusMentis.DisplayName}");
+
+        (threatOutcome as INpcContextLabelStampable)?.StampContextLabel(actingMember, _worldContext, locationId);
+
+        var slotId = await _observationExecutor.GetOrCreateSlotForModusMentisPublicAsync(observationModusMentis);
+        _observationExecutor.ResetSlot(slotId);
+
+        var allKeywords = new List<string>();
+        var keywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
+        var sentences = new List<NarrationSentence>();
+
+        var part = preview?.BeginAccumulatingPart(PreviewTitles.For(observationModusMentis));
+
+        // Exactly one observation, of the enemy, whatever its length — no follow-up choice. The
+        // threat-caution sentence rides into the same rewrite as the observation itself.
+        await AppendObservationAsync(sentences, allKeywords, keywordOutcomeMap, slotId, observationModusMentis,
+            threatOutcome, withTransition: false, locationId, ct, isReminescence: false, innerThought: null,
+            part: part, trailingNeutral: NeutralNarration.ThreatCaution());
+
+        if (sentences.Count == 0)
+        {
+            preview?.Reset();
+            Console.WriteLine("ObservationPhaseController: Threat observation produced nothing.");
+            return new List<NarrationBlock>();
+        }
+
+        var block = new NarrationBlock(
+            Type: NarrationBlockType.Observation,
+            ModusMentis: observationModusMentis,
+            Text: string.Join(" ", sentences.Select(s => s.Text)),
+            Keywords: allKeywords,
+            Actions: null,
+            SourceObservationType: ObservationType.Overall,
+            KeywordOutcomeMap: keywordOutcomeMap,
+            Sentences: sentences);
+
+        Console.WriteLine($"ObservationPhaseController: Threat observation complete ({allKeywords.Count} keywords)");
         var resultBlocks = new List<NarrationBlock> { block };
         FinalizePreview(preview, commit, resultBlocks, part);
         return resultBlocks;

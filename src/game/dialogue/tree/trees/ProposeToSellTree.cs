@@ -16,15 +16,21 @@ public class ProposeToSellTree : DialogueTree
     public override string Description      => "offering the buyer goods and trying to interest them in a purchase";
     public override string AssociatedVerbId => "propose_to_sell";
 
+    // Success opens the sell menu; a routine bakes in that success so replaying opens trade directly.
+    public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
+
+    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    {
+        new OpenTradeMenuOutcome(TradeMode.Sell),
+    };
+
+    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = System.Array.Empty<IDialogueOutcome>();
+
     private static ResolutionNode Haggle(string id, string success, string failure) => new(
         nodeId:         id,
         difficulty:     1,
         successReplica: success,
-        failureReplica: failure,
-        outcomes: new List<DialogueOutcomeCase>
-        {
-            new(new OpenTradeMenuOutcome(TradeMode.Sell), BranchCondition.Success),
-        });
+        failureReplica: failure);
 
     private static readonly ResolutionNode OfferOutcome = Haggle(
         "offer_outcome",

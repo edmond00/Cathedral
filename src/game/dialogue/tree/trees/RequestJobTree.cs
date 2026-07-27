@@ -15,15 +15,21 @@ public class RequestJobTree : DialogueTree
     public override string Description      => "asking a master or reeve to take you on for work";
     public override string AssociatedVerbId => "request_job";
 
+    // Success opens the work menu; a routine bakes in that success so replaying opens work directly.
+    public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
+
+    public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
+    {
+        new OpenJobMenuOutcome(),
+    };
+
+    public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = System.Array.Empty<IDialogueOutcome>();
+
     private static ResolutionNode Decide(string id, string success, string failure) => new(
         nodeId:         id,
         difficulty:     2,
         successReplica: success,
-        failureReplica: failure,
-        outcomes: new List<DialogueOutcomeCase>
-        {
-            new(new OpenJobMenuOutcome(), BranchCondition.Success),
-        });
+        failureReplica: failure);
 
     private static readonly ResolutionNode DecidePlain = Decide(
         "decide_plain",

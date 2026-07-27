@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cathedral.Game.Dialogue.Tree;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Rules;
 using Cathedral.Game.Npc;
+using Cathedral.Game.Npc.Trade;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
 
@@ -111,7 +113,14 @@ public class RoutineReplayEngine
             //    will need per-report dry-run isolation here.
             foreach (var c in step.Constraints) c.Consume(ctx);
 
-            var reports = verb.SuccessReports(scene, pov, ctx.ActingMember, target);
+            // Rebuild the exact view the player chose (e.g. which job) so variant-aware verbs like
+            // RequestJobVerb re-run their side effects (PendingJobOffer) during replay.
+            object? variant = string.IsNullOrEmpty(step.VariantKey)
+                ? null
+                : verb.ResolveRoutineVariant(step.VariantKey);
+            var replayView = new VerbView(verb, step.Verbatim, target, variant);
+
+            var reports = verb.SuccessReports(scene, pov, ctx.ActingMember, target, replayView);
             foreach (var report in reports)
             {
                 report.Apply(ctx.ActingMember, scene, pov);
@@ -127,7 +136,7 @@ public class RoutineReplayEngine
 
         result.Replayable = true;
         if (!dryRun)
-            result.FinalTransition = DeriveFinalTransition(routine, scene, pov);
+            result.FinalTransition = DeriveFinalTransition(routine, scene, pov, protagonist, result);
         return result;
     }
 
@@ -170,17 +179,56 @@ public class RoutineReplayEngine
 
     /// <summary>
     /// Derives the post-replay phase from the last step's recorded trigger plus any pending request
-    /// the verb left on the scene (fight/dialogue).
+    /// the verb left on the scene (fight/dialogue). A dialogue trigger is resolved by the tree's
+    /// <see cref="DialogueRoutineBehavior"/>: <b>IncludeTrigger</b> reopens the dialogue live, while
+    /// <b>IncludeSuccess</b> bakes the dialogue's success in (applying its outcomes here) and opens the
+    /// follow-on trade/work phase directly.
     /// </summary>
-    private static PhaseTransition DeriveFinalTransition(Routine routine, Scene.Scene scene, PoV pov)
+    private static PhaseTransition DeriveFinalTransition(Routine routine, Scene.Scene scene, PoV pov,
+        Protagonist protagonist, RoutineReplayResult result)
     {
         if (scene.PendingFightRequest != null)
             return new StartFightTransition(scene.PendingFightRequest.Npc,
                 $"attack on {scene.PendingFightRequest.Npc.DisplayName}");
 
         if (scene.PendingDialogueRequest != null)
-            return new StartDialogueTransition(scene.PendingDialogueRequest.Npc,
-                scene.PendingDialogueRequest.TreeId);
+        {
+            var req      = scene.PendingDialogueRequest;
+            var treeId   = req.TreeId ?? "";
+            var tree     = DialogueTreeRegistry.Instance.TryGet(treeId);
+            var behavior = tree?.RoutineBehavior ?? DialogueRoutineBehavior.Interrupt;
+
+            if (behavior == DialogueRoutineBehavior.IncludeSuccess && tree != null)
+            {
+                // Apply the dialogue's success outcome set (which sets TradeRequest / JobRequest),
+                // surface its chips, then open the follow-on phase directly.
+                string partyMemberId = protagonist.AffinityKey;
+                foreach (var oc in tree.SuccessOutcomes)
+                {
+                    var report = oc.Apply(req.Npc, partyMemberId);
+                    if (report != null) result.Outcomes.Add(report);
+                }
+
+                if (req.Npc.TradeRequest != TradeMode.None)
+                {
+                    var mode = req.Npc.TradeRequest;
+                    req.Npc.TradeRequest = TradeMode.None;   // consume the transient flag
+                    return new StartRoutineTradeTransition(routine.LocationId, req.Npc.DisplayName, mode, routine.StartTime);
+                }
+                if (req.Npc.JobRequest is { } job)
+                {
+                    req.Npc.JobRequest      = null;          // consume the transient flags
+                    req.Npc.PendingJobOffer = null;
+                    return new StartRoutineWorkTransition(routine.LocationId, req.Npc.DisplayName, job.Id, routine.StartTime);
+                }
+
+                // Success set neither flag — treat as inert and return to travel rather than hang.
+                return ReturnToTravelTransition.Instance;
+            }
+
+            // IncludeTrigger (the only other behavior that records the step): reopen the dialogue live.
+            return new StartRoutineDialogueTransition(routine.LocationId, req.Npc.DisplayName, treeId, routine.StartTime);
+        }
 
         var last = routine.Steps.LastOrDefault();
         if (last != null && last.TriggeredPhase == RoutinePhaseKind.Narration)

@@ -418,6 +418,30 @@ public class NarrativeController
     }
     
     /// <summary>
+    /// Initializes a scene-backed session enough to open a sub-phase (dialogue / trade / work)
+    /// directly, WITHOUT running an observation pass. Used by the routine-replay bridge, where a
+    /// recorded routine jumps straight into the dialogue (or its baked-in follow-on phase) it ended
+    /// on. Places NPCs for the period so the target is present, and arms a recorder so anything the
+    /// player does after the sub-phase is still recordable — exactly like a normal visit, minus the
+    /// opening narration.
+    /// </summary>
+    public void PrepareForRoutineSubPhase(TimePeriod period)
+    {
+        _narrationState.Clear();
+        _scrollBuffer.Clear();
+        _activePartyMember = _protagonist;
+        _memberNoeticPoints.Clear();
+        _postDialogueNpc = null;
+        _postDialogueObservationMM = null;
+
+        ApplyTimePeriod(period);
+        Console.WriteLine($"NarrativeController: routine sub-phase prepared at period {period}");
+
+        if (_scene != null && _scene.Phase == NarrationPhase.Exploration)
+            _recorder = new RoutineRecorder(_protagonist, _locationId, period);
+    }
+
+    /// <summary>
     /// Start the observation phase while preserving scroll buffer history.
     /// Always reached through <see cref="BeginNarrationSegment"/>, which performs the required
     /// grey-into-history + node reset first.
@@ -517,8 +541,15 @@ public class NarrativeController
             _postDialogueNpc = null;
             _postDialogueObservationMM = null;
 
-            bool handled = postDialogueNpc != null
-                && await TryGeneratePostDialogueObservationAsync(postDialogueNpc, postDialogueMM, CommitObservation);
+            // Threat-first: a same-area (visual) enemy opens the phase with a forced, caution-flavoured
+            // observation of that enemy — the same condition that turns the exit button into RUNAWAY.
+            // This takes precedence over post-dialogue continuity.
+            bool handled = await TryGenerateThreatObservationAsync(CommitObservation);
+
+            // Otherwise, if a dialogue just ended, open with a single observation of that NPC.
+            if (!handled)
+                handled = postDialogueNpc != null
+                    && await TryGeneratePostDialogueObservationAsync(postDialogueNpc, postDialogueMM, CommitObservation);
 
             if (!handled)
             {
@@ -558,6 +589,37 @@ public class NarrativeController
     /// <paramref name="originMM"/> when still learned, else resamples). Returns false — so the caller runs
     /// the normal phase — when the NPC has left the scene or nothing was produced.
     /// </summary>
+    /// <summary>
+    /// Runs the under-threat opener when a same-area (visual) enemy is present: resolves the threat to
+    /// an observable object in the current node and, if found, leads the phase with a single
+    /// caution-flavoured observation of it via
+    /// <see cref="ObservationPhaseController.GenerateThreatObservationAsync"/>. Returns false — so the
+    /// caller falls through to post-dialogue / normal observation — when there is no visual threat, it
+    /// has no observation object, or nothing was produced. The threat condition mirrors
+    /// <see cref="ComputeExitContext"/> (the RUNAWAY trigger).
+    /// </summary>
+    private async Task<bool> TryGenerateThreatObservationAsync(Action<List<NarrationBlock>> commit)
+    {
+        if (_scene == null || _pov == null || _protagonist == null) return false;
+
+        var threat = ThreatSelector.ComputeContext(_scene, _pov, _protagonist);
+        if (threat.Level != ThreatLevel.Visual || threat.Threat == null) return false;
+
+        var threatOutcome = _currentNode.GetAllDirectConcreteOutcomes()
+            .OfType<SyntheticNpcObservationObject>()
+            .FirstOrDefault(o => ReferenceEquals(o.NpcEntity, threat.Threat));
+        if (threatOutcome == null)
+        {
+            Console.WriteLine($"NarrativeController: Visual threat '{threat.Threat.DisplayName}' has no observation object — normal observation.");
+            return false;
+        }
+
+        var blocks = await _observationController.GenerateThreatObservationAsync(
+            threatOutcome, _protagonist.CurrentLocationId, _activePartyMember,
+            preview: _previewSession, commit: commit);
+        return blocks.Count > 0;
+    }
+
     private async Task<bool> TryGeneratePostDialogueObservationAsync(
         NpcEntity npc, ModusMentis? originMM, Action<List<NarrationBlock>> commit)
     {
@@ -1628,12 +1690,6 @@ public class NarrativeController
             Console.WriteLine($"NarrativeController: Fight outcome with {fightOutcome.Target.DisplayName}, signaling fight mode");
             _pendingFightOutcome = fightOutcome;
             // Don't show continue button - the game controller will detect the pending fight and switch modes
-        }
-        else if (result.ActualOutcome is DialogueOutcome dialogueOutcome)
-        {
-            Console.WriteLine($"NarrativeController: Dialogue outcome with {dialogueOutcome.Target.DisplayName}, signaling dialogue mode");
-            SetPendingDialogue(dialogueOutcome, result.Action);
-            // Don't show continue button - the game controller will detect the pending dialogue and switch modes
         }
         else if (result.ActualOutcome is NarrationNode nextNode)
         {

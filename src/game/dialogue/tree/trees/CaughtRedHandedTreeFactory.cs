@@ -39,61 +39,58 @@ public static class CaughtRedHandedTreeFactory
         public override string AssociatedVerbId => "";   // triggered programmatically, not by a verb
         public override NpcLineNode EntryNode   => _entry;
 
+        public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; }
+        public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; }
+
         private readonly CriminalAffinityType _criminalType;
 
         internal CaughtRedHandedTree(CriminalAffinityType criminalType, bool witnessIsBrave)
         {
             _criminalType = criminalType;
 
-            // ── Apologise → forgiven / rejected ─────────────────────────────────
-            var rejectedOutcomes = new List<DialogueOutcomeCase>
+            // Two shared outcome sets. Apologise and lie are two routes to the same success; a rejected
+            // apology, a caught-out lie, and a provocation all land on the same failure — which draws
+            // steel only against a brave witness.
+            SuccessOutcomes = new IDialogueOutcome[]
             {
-                new(new CriminalAffinityOutcome(criminalType), BranchCondition.Failure),
+                new ClearCrimeOutcome(),
+                new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance),
             };
-            rejectedOutcomes.Add(witnessIsBrave
-                ? new(new FightRequestOutcome(), BranchCondition.Failure)
-                : new(new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance), BranchCondition.Failure));
+            FailureOutcomes = witnessIsBrave
+                ? new IDialogueOutcome[]
+                  {
+                      new CriminalAffinityOutcome(criminalType),
+                      new FightRequestOutcome(),
+                  }
+                : new IDialogueOutcome[]
+                  {
+                      new CriminalAffinityOutcome(criminalType),
+                      new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance),
+                  };
 
-            var apologyOutcomes = new List<DialogueOutcomeCase>
-            {
-                new(new ClearCrimeOutcome(),                                           BranchCondition.Success),
-                new(new AffinityTransitionOutcome(AffinityLevel.AnnoyingAcquaintance), BranchCondition.Success),
-            };
-            apologyOutcomes.AddRange(rejectedOutcomes);
-
+            // ── Apologise → forgiven / rejected (dice) ──────────────────────────
             var apologyResult = new ResolutionNode(
                 nodeId:         "apology_result",
                 difficulty:     2,
                 successReplica: "...Fine. See that it never happens again. Now get out of my sight.",
                 failureReplica: witnessIsBrave
                     ? "Sorry means nothing to me now. You'll answer for this — here and now!"
-                    : "Spare me your words. Get out, and don't let me see you again.",
-                outcomes: apologyOutcomes);
+                    : "Spare me your words. Get out, and don't let me see you again.");
 
-            // ── Lie → believed / caught out ─────────────────────────────────────
+            // ── Lie → believed / caught out (dice) ──────────────────────────────
             var lieResult = new ResolutionNode(
                 nodeId:         "lie_result",
                 difficulty:     2,
                 successReplica: "...Hm. Maybe I saw it wrong. Go on, then — off with you.",
-                failureReplica: "You're lying to my face! Now you'll truly regret it.",
-                outcomes: new List<DialogueOutcomeCase>
-                {
-                    // Success: the lie worked, no record.
-                    new(new CriminalAffinityOutcome(criminalType), BranchCondition.Failure),
-                    new(new FightRequestOutcome(),                  BranchCondition.Failure),
-                });
+                failureReplica: "You're lying to my face! Now you'll truly regret it.");
 
-            // ── Provoke → the witness draws (either result) ─────────────────────
+            // ── Provoke → the failure outcome, no roll ──────────────────────────
             var provokeResult = new ResolutionNode(
                 nodeId:         "provoke_result",
                 difficulty:     1,
-                successReplica: "That's the last insult I'll take from you. Draw!",
+                successReplica: "That's the last insult I'll take from you. Draw!",   // unused (forced failure)
                 failureReplica: "You dare mock me? Then face me, coward!",
-                outcomes: new List<DialogueOutcomeCase>
-                {
-                    new(new CriminalAffinityOutcome(criminalType), BranchCondition.Either),
-                    new(new FightRequestOutcome(),                  BranchCondition.Either),
-                });
+                mode:           ResolutionMode.ForceFailure);
 
             // ── Entry: the witness confronts the player ─────────────────────────
             _entry = new NpcLineNode(
