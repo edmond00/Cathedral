@@ -1,4 +1,6 @@
+using Cathedral.Game.Dialogue.Tree;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Items;
 
 namespace Cathedral.Game.Npc.Archetypes;
 
@@ -24,6 +26,42 @@ public class HermitArchetype : NamedNpcArchetype
         "an old solitary figure sits by a smouldering fire",
         "a gaunt, bearded figure watches from the mouth of a rough shelter",
         "someone in patched rags stirs a small pot, muttering to themselves",
+    };
+
+    // ── Generation ────────────────────────────────────────────────────────────
+
+    public override IReadOnlyList<string> OrganEmphasis =>
+        new[] { "anamnesis", "hippocampus", "backbone", "viscera", "left_foot", "right_foot" };
+
+    public override IReadOnlyList<Func<Item>> Loadout => new Func<Item>[]
+    {
+        () => new PlainRobe(), () => new WoodenBowl(), () => new WalkingStaff(),
+    };
+
+    public override IReadOnlyList<Func<Item>> OptionalLoadout => new Func<Item>[]
+    {
+        () => new Moss(), () => new Mushroom(), () => new Flint(), () => new WildBerry(),
+    };
+
+    // ── Dialogue flavour ──────────────────────────────────────────────────────
+
+    public override string SelfIntroduction => "nobody. That was the point of coming up here";
+    public override string Workplace        => "the mountain";
+    public override string Craft            => "keeping alive up here";
+    public override string DailyLabour      => "water, fire, food, sleep. There is nothing else and there does not need to be";
+
+    protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
+    {
+        [DialogueTopic.Rest]       = "down there, rest is what's left over. Up here it's the whole day, and it took me years to bear it",
+        [DialogueTopic.Neighbours] = "three moons since anyone came this way. What does that tell you?",
+        [DialogueTopic.Food]       = "what the rock gives. Less than you'd think. Enough, so far",
+        [DialogueTopic.Weather]    = "the mountain makes its own. It doesn't consult the valley and it doesn't consult me",
+        [DialogueTopic.Kin]        = "I had people. That's all I'll say on it",
+        [DialogueTopic.Stories]    = "there's marks cut in the stone up here older than any tale anyone's still telling. Nobody comes to read them",
+        [DialogueTopic.Omens]      = "signs. Everything is a sign if you're lonely enough. That's the danger of it",
+        [DialogueTopic.Health]     = "the cold gets into the joints and stays. I've stopped calling it an ailment. It's just the shape of me now",
+        [DialogueTopic.Wilds]      = "the peak doesn't care about your name. That's the first comfortable thing I ever learned",
+        [DialogueTopic.Roads]      = "every road goes back. That's what's wrong with them",
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)

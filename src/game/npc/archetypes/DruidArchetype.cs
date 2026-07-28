@@ -1,4 +1,6 @@
+using Cathedral.Game.Dialogue.Tree;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Items;
 
 namespace Cathedral.Game.Npc.Archetypes;
 
@@ -19,6 +21,42 @@ public class DruidArchetype : NamedNpcArchetype
         "a robed figure leans against a gnarled staff",
         "a hooded figure traces a sign in the air, beads and bone at their belt",
         "someone stands motionless among the trees, eyes half-closed",
+    };
+
+    // ── Generation ────────────────────────────────────────────────────────────
+
+    public override IReadOnlyList<string> OrganEmphasis =>
+        new[] { "anamnesis", "cerebrum", "hippocampus", "nose", "left_eye", "right_eye" };
+
+    public override IReadOnlyList<Func<Item>> Loadout => new Func<Item>[]
+    {
+        () => new PlainRobe(), () => new Herb(), () => new WalkingStaff(),
+    };
+
+    public override IReadOnlyList<Func<Item>> OptionalLoadout => new Func<Item>[]
+    {
+        () => new Mushroom(), () => new Moss(), () => new Poppy(), () => new WoodenBowl(),
+    };
+
+    // ── Dialogue flavour ──────────────────────────────────────────────────────
+
+    public override string SelfIntroduction => "I keep these woods, and have since before most of what you can see was standing";
+    public override string Workplace        => "the grove";
+    public override string Craft            => "root and leaf";
+    public override string DailyLabour      => "walking the wood, gathering what it offers, and taking nothing it did not";
+
+    protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
+    {
+        [DialogueTopic.Wilds]      = "the wood is not a place I live in. It is the thing I belong to, and it has no need of me at all",
+        [DialogueTopic.Weather]    = "rain is not weather. It is the wood drinking, and it drinks when it chooses",
+        [DialogueTopic.Seasons]    = "the year does not turn. It breathes — in through spring, out through autumn — and we are inside it",
+        [DialogueTopic.Beasts]     = "the fox and the hare keep an older bargain than any village council ever wrote down",
+        [DialogueTopic.Health]     = "most sickness is a body out of step with the year. Nettle, willow-bark and patience mend more than anyone credits",
+        [DialogueTopic.Omens]      = "the moss remembers what the stone forgets. Signs are only memory, spoken by something with no mouth",
+        [DialogueTopic.Stories]    = "the old tales are the wood's own account of itself, badly copied by people in a hurry",
+        [DialogueTopic.Work]       = "you cannot make a wood. You can only stop making it worse, and that is work enough",
+        [DialogueTopic.Roads]      = "roads are cuts. They heal over if you let them, and nobody ever lets them",
+        [DialogueTopic.Neighbours] = "the village fears me a little, which is convenient, and needs me a little, which is safer",
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)

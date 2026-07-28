@@ -131,31 +131,48 @@ public abstract class NamedNpcArchetype : NpcArchetype
         var stableId = $"{ArchetypeId}_{name.ToLowerInvariant().Replace(' ', '_')}";
         var npcId = DefaultPersistent ? stableId : $"{ArchetypeId}_{rng.Next(100000)}";
 
-        combatant.InitializeModiMentis(ModusMentisRegistry.Instance, ModiMentisCount);
+        // Body, skills, belongings and personality traits — all rolled off the stable id, so this
+        // individual is the same person every visit and under every replay of the same --seed.
+        var traits = Generation.NpcContentGenerator.Generate(this, combatant, stableId, isHuman);
 
-        // Age is sampled from this archetype's band and stamped as a birth time against the clock as
-        // it reads now, so the NPC is exactly this old today and ages onward from here.
-        // SetAgeAtCreation clamps the roll to the combatant's own heart-derived lifetime, so a wide
-        // band can never produce someone born already past their death date.
-        int lo = Math.Min(MinAgeDays, MaxAgeDays);
-        int hi = Math.Max(MinAgeDays, MaxAgeDays);
-        combatant.SetAgeAtCreation(rng.Next(lo, hi + 1));
-
-        var hint           = PickObservationHint(npcId, nodeContext);
-        var wayToSpeak     = CanSpeak ? GenerateWayToSpeakDescription(name, rng) : null;
-        var affinityTable  = affinityResolver?.Invoke(stableId) ?? new AffinityTable();
+        // Appearance and persona are keyed to the stable id too: npcId carries a fresh random number
+        // for non-persistent NPCs and would give the same person a new face on every visit.
+        var hint          = PickObservationHint(stableId, nodeContext);
+        var wayToSpeak    = CanSpeak ? GenerateWayToSpeakDescription(name, nameRng) : "";
+        var text          = Generation.NpcContentGenerator.BuildTextProfile(hint, wayToSpeak, traits, stableId);
+        var affinityTable = affinityResolver?.Invoke(stableId) ?? new AffinityTable();
 
         return new NpcEntity(
             npcId, combatant, this,
             DefaultPersistent,
-            hint,
+            text,
             canSpeak:              CanSpeak,
-            wayToSpeakDescription: wayToSpeak,
             affinityTable:         affinityTable,
             isBrave:               IsBrave,
             authorityLevel:        AuthorityLevel,
             ownedSectionIds:       DefaultOwnedSectionIds);
     }
+
+    // ── Generation inputs ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Organ-part ids this trade builds up — a smith's arms and hands, a shepherd's eyes and legs.
+    /// The generator aims most of its organ points here, so an archetype is physically recognisable
+    /// before any personality trait is applied. Ids not present on the species are ignored.
+    /// </summary>
+    public virtual IReadOnlyList<string> OrganEmphasis => Array.Empty<string>();
+
+    /// <summary>
+    /// What every member of this trade is carrying: working tools and the clothes on their back.
+    /// Factories, not instances — each NPC needs its own items.
+    /// </summary>
+    public virtual IReadOnlyList<Func<Narrative.Item>> Loadout => Array.Empty<Func<Narrative.Item>>();
+
+    /// <summary>
+    /// Extras a member of this trade <i>might</i> be carrying; the generator takes a random 0–3 of
+    /// them. This is what stops every miller in the world carrying an identical pack.
+    /// </summary>
+    public virtual IReadOnlyList<Func<Narrative.Item>> OptionalLoadout => Array.Empty<Func<Narrative.Item>>();
 
     /// <summary>Resolves the sex to stamp: a forced <see cref="GenderBias"/> or a seeded 50/50 flip.</summary>
     private bool GenderFor(Random rng) => GenderBias switch
@@ -181,10 +198,10 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// <c>--seed</c>). Uses <see cref="GameRng.DerivedSeed"/> (a stable FNV-1a hash) rather than
     /// <see cref="string.GetHashCode"/>, which is randomized per process.
     /// </summary>
-    private string PickObservationHint(string npcId, string nodeContext)
+    private string PickObservationHint(string stableId, string nodeContext)
     {
         var variants = ObservationHintVariants(nodeContext);
-        var rng = new Random(GameRng.DerivedSeed($"npc_hint_{npcId}"));
+        var rng = new Random(GameRng.DerivedSeed($"npc_hint_{stableId}"));
         return variants[rng.Next(variants.Length)];
     }
 
@@ -217,6 +234,91 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// Only called when <see cref="CanSpeak"/> is true.
     /// </summary>
     protected virtual string GenerateWayToSpeakDescription(string name, Random rng) => string.Empty;
+
+    // ── Dialogue flavour ──────────────────────────────────────────────────────
+    //
+    // Everything below feeds the {scope:field} tokens an authored dialogue replica can contain
+    // (see DialogueTemplate). It is short, neutral, in-character prose: the token is expanded
+    // BEFORE the persona rewrite, so these are raw material for the LLM, not finished lines.
+    // Every member has a role-derived default, so an archetype that overrides nothing still
+    // expands every token to something grammatical.
+
+    /// <summary>
+    /// How this NPC names their own place in the world when meeting someone for the first time —
+    /// a clause that completes "I'm …" or stands alone: <c>"the smith here — I keep the forge at
+    /// the lane's end"</c>. Used by <c>{npc:introduction}</c> in the meet-stranger tree.
+    /// </summary>
+    public virtual string SelfIntroduction => $"the {RoleNoun} here";
+
+    /// <summary>
+    /// Where this NPC's working day happens, as a noun phrase: "the forge", "the fields",
+    /// "the mill". Used by <c>{npc:workplace}</c>.
+    /// </summary>
+    public virtual string Workplace => "these parts";
+
+    /// <summary>
+    /// The name of the craft or calling itself, as a bare noun: "smithing", "the plough",
+    /// "the flock". Used by <c>{npc:craft}</c>.
+    /// </summary>
+    public virtual string Craft => $"a {RoleNoun}'s work";
+
+    /// <summary>
+    /// One concrete sentence about what this NPC actually does all day — the material, the tool,
+    /// the complaint. Used by <c>{npc:labour}</c>.
+    /// </summary>
+    public virtual string DailyLabour => $"the work of a {RoleNoun}, day in and day out";
+
+    /// <summary>
+    /// The archetype's own views on ordinary conversational subjects, as first-person clauses
+    /// ready to be dropped into a replica: <c>[DialogueTopic.Weather] = "rain I can work in; it's
+    /// the wind that ruins a fire"</c>. Override with the handful of topics the role actually has
+    /// a distinctive view on — <see cref="OpinionOn"/> falls back to a neutral villager's answer
+    /// for the rest, so a partial table is the normal case.
+    /// </summary>
+    protected virtual IReadOnlyDictionary<Dialogue.Tree.DialogueTopic, string> TopicOpinions
+        => EmptyOpinions;
+
+    private static readonly IReadOnlyDictionary<Dialogue.Tree.DialogueTopic, string> EmptyOpinions =
+        new Dictionary<Dialogue.Tree.DialogueTopic, string>();
+
+    private IReadOnlyDictionary<Dialogue.Tree.DialogueTopic, string>? _opinionCache;
+
+    /// <summary>
+    /// This archetype's opinion on <paramref name="topic"/> — its own if it has one, otherwise the
+    /// shared villager default. Never empty, so <c>{npc:opinion_*}</c> always expands.
+    /// </summary>
+    public string OpinionOn(Dialogue.Tree.DialogueTopic topic)
+    {
+        _opinionCache ??= TopicOpinions;
+        return _opinionCache.TryGetValue(topic, out var opinion) && !string.IsNullOrWhiteSpace(opinion)
+            ? opinion
+            : DefaultOpinion(topic);
+    }
+
+    /// <summary>
+    /// The answer any villager could give — used wherever an archetype has authored nothing. Written
+    /// flat on purpose: it should read as small talk, not as a character note.
+    /// </summary>
+    private static string DefaultOpinion(Dialogue.Tree.DialogueTopic topic) => topic switch
+    {
+        Dialogue.Tree.DialogueTopic.Weather    => "it does what it likes and we do what we can under it",
+        Dialogue.Tree.DialogueTopic.Seasons    => "each part of the year asks its own work of you, and it never asks politely",
+        Dialogue.Tree.DialogueTopic.Harvest    => "a good year feeds you and a bad one teaches you; we've had both",
+        Dialogue.Tree.DialogueTopic.Food       => "plain fare, enough of it, and hot — that's all I ask of a table",
+        Dialogue.Tree.DialogueTopic.Beasts     => "a beast will tell you what it needs if you've the patience to watch it",
+        Dialogue.Tree.DialogueTopic.Wilds      => "the wild has its uses, but I'd not sleep out in it by choice",
+        Dialogue.Tree.DialogueTopic.Water      => "too little and everything withers, too much and it all rots; there's no pleasing it",
+        Dialogue.Tree.DialogueTopic.Kin        => "you're born to your people and you make the best of them",
+        Dialogue.Tree.DialogueTopic.Health     => "keep dry, keep fed, and don't let a small hurt turn into a big one",
+        Dialogue.Tree.DialogueTopic.Work       => "work's work — it doesn't care whether you're in the mood",
+        Dialogue.Tree.DialogueTopic.Rest       => "an evening with nothing owed to anyone is worth more than most folk reckon",
+        Dialogue.Tree.DialogueTopic.Stories    => "the old tales are half nonsense, but the half that isn't will keep you alive",
+        Dialogue.Tree.DialogueTopic.Neighbours => "folk here are decent enough, so long as you don't cross them twice",
+        Dialogue.Tree.DialogueTopic.Trade      => "a fair price is one both sides grumble at",
+        Dialogue.Tree.DialogueTopic.Omens      => "I don't hold with signs, but I've noticed some of them are right",
+        Dialogue.Tree.DialogueTopic.Roads      => "roads bring news and thieves in about equal measure",
+        _                                      => "I've no strong view on it, truth be told",
+    };
 }
 
 /// <summary>Forced gender for an archetype's spawned NPCs (see <see cref="NamedNpcArchetype.GenderBias"/>).</summary>

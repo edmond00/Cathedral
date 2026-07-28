@@ -27,6 +27,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --debug                            Enable debug mode (override LLM/RNG decisions via console) + viewers");
     Console.WriteLine("  --view                             Show LLM and scene viewers without console decision overriding");
     Console.WriteLine("  --dialogue-view                    Open a window graphing every dialogue tree (neutral replica text per node)");
+    Console.WriteLine("  --dialogue-audit                   Print the dialogue-tree shape report (reply counts, branch lengths, bad tokens) and exit");
+    Console.WriteLine("  --npc-audit                        Print the NPC generation report (determinism, trait resolution, body/skill/inventory shape) and exit");
     Console.WriteLine("  --playground                       Replace all LLM calls with instant placeholders (no server needed)");
     Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
     Console.WriteLine("  --mm                               After the childhood reminescence phase, fill every empty memory slot with random unheld modiMentis");
@@ -35,6 +37,22 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice)");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
+    return;
+}
+
+// Dialogue-tree shape audit: print the report (warnings are listed, not fatal) and exit. Headless —
+// no LLM, no game state, no window; the text counterpart of --dialogue-view.
+if (args.Length >= 1 && args[0] == "--dialogue-audit")
+{
+    Console.WriteLine(Cathedral.Game.Dialogue.Tree.DialogueTreeAudit.BuildReport());
+    return;
+}
+
+// NPC generation audit: spawn a sample of every archetype twice, check determinism, trait
+// resolution and body/skill/inventory shape, then exit. Headless — no LLM, no window, no world.
+if (args.Length >= 1 && args[0] == "--npc-audit")
+{
+    Console.WriteLine(Cathedral.Game.Npc.Generation.NpcAudit.BuildReport());
     return;
 }
 

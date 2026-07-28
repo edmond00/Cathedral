@@ -146,6 +146,53 @@ it, otherwise `wait` will return while the phase is still building.
 (`ClearDiceRoll` sets it that way), so always gate it behind `IsDiceRollActive` when testing for
 business. This already caused one bug in `CliIsIdle`.
 
+### Checking dialogue trees without running the game
+
+Tree shape is not something a `--cli` script can see — a script walks one branch. `--dialogue-audit`
+prints the whole picture instead, headless and in about a second (no LLM, no window, no world):
+
+```bash
+dotnet run -- --dialogue-audit
+```
+
+Per tree it reports player replies, NPC lines, branch ends, and branch length (min / average / max,
+counted in **player replies** from the greeting to the dice check). Then it warns about the things
+that are invisible until a player hits them:
+
+- a branch shorter than 2 or longer than 4 replies;
+- a `{scope:field}` token that `DialogueTemplate` cannot expand — or that expands to *nothing* for
+  some archetype, which it checks by spawning one NPC of every speaking archetype and expanding
+  every token used by any tree against it;
+- a resolution whose authored difficulty matches neither `BranchDifficulty` ladder at the depth it
+  is actually reached at (almost always a miscounted depth);
+- duplicate node or option ids, an NPC line with no replies, or a cycle.
+
+`--dialogue-view` remains the way to *read* a tree; this is the way to check one. Run it after
+touching any tree, any archetype's dialogue flavour, or `DialogueTemplate`.
+
+### Checking NPC generation
+
+`--npc-audit` spawns a sample of every speaking archetype — twice each — and reports the shape of
+what came out, headless:
+
+```bash
+dotnet run -- --npc-audit
+```
+
+Per archetype it prints the range of organ totals, skill counts, skill levels, item counts and
+wounds across the sample, plus whether generation was **repeatable**. That column is the important
+one: every NPC is generated twice from the same id and compared name-by-name, organ-by-organ,
+skill-by-skill and item-by-item. Anything but `yes` means an unseeded RNG has crept back in and the
+same person will differ between visits.
+
+It also checks that every trait's modus-mentis and organ-part ids resolve (a typo grants nothing,
+silently), that the pools are the intended 60 global + 6 per archetype with no duplicate ids, that
+every skill is filed in a memory module and within its organ-derived cap, and that sex agrees with
+the genitories score. It finishes with one fully-generated NPC printed in full, which is the quickest
+way to see whether a trait you just wrote actually reads well on a person.
+
+Run it after touching `NpcContentGenerator`, any archetype's generation block, or any trait.
+
 ### What `--cli` cannot check
 
 - **Anything about pixels**: camera framing, the glyph atlas, sky/cloud rendering, and whether the

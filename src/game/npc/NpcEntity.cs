@@ -32,11 +32,34 @@ public class NpcEntity : INpcEntity
     public bool CanSpeak { get; }
 
     /// <summary>
-    /// Natural-language description of how this NPC speaks — used as the LLM system prompt
-    /// for the NPC's dedicated dialogue slot.
-    /// Null when <see cref="CanSpeak"/> is false.
+    /// Every piece of natural-language text about this individual — appearance, LLM persona prompt,
+    /// and the dialogue-flavour overrides its personality traits imposed. Composed once at spawn.
     /// </summary>
-    public string? WayToSpeakDescription { get; }
+    public Traits.NpcTextProfile Text { get; }
+
+    /// <summary>
+    /// Natural-language description of how this NPC speaks — used as the LLM system prompt
+    /// for the NPC's dedicated dialogue slot. Null when <see cref="CanSpeak"/> is false.
+    /// This is the archetype's brief <b>plus</b> whatever its traits added, so a greedy smith and a
+    /// pious one are told different things about themselves.
+    /// </summary>
+    public string? WayToSpeakDescription => CanSpeak ? Text.PersonaPrompt : null;
+
+    // ── Trait-aware dialogue flavour ──────────────────────────────────────────
+    //
+    // Each of these prefers what this individual's traits decided and falls back to the archetype's
+    // default. DialogueTemplate reads them rather than the archetype directly, so a {npc:…} token
+    // resolves per person instead of per trade.
+
+    /// <summary>How this NPC introduces themselves — <c>{npc:introduction}</c>.</summary>
+    public string SelfIntroduction => Text.SelfIntroduction ?? Archetype.SelfIntroduction;
+
+    /// <summary>What their working day is actually like — <c>{npc:labour}</c>.</summary>
+    public string DailyLabour => Text.DailyLabour ?? Archetype.DailyLabour;
+
+    /// <summary>This NPC's own view on <paramref name="topic"/> — <c>{npc:opinion_*}</c>.</summary>
+    public string OpinionOn(Dialogue.Tree.DialogueTopic topic)
+        => Text.Opinion(topic) ?? Archetype.OpinionOn(topic);
 
     /// <summary>
     /// Per-instance affinity table tracking relationships with party members and other NPCs.
@@ -127,7 +150,11 @@ public class NpcEntity : INpcEntity
     public bool IsPersistent { get; }
 
     /// <inheritdoc/>
-    public string ObservationHint { get; }
+    /// <remarks>
+    /// The archetype's chosen appearance line with each trait's visible mark appended, so a scar or a
+    /// missing eye is something the player can actually notice on observing them.
+    /// </remarks>
+    public string ObservationHint => Text.ObservationHint;
 
     /// <inheritdoc/>
     public string SpeciesName => Archetype.Species.DisplayName;
@@ -139,9 +166,8 @@ public class NpcEntity : INpcEntity
         EnemyCombatant      combatant,
         NamedNpcArchetype   archetype,
         bool                isPersistent,
-        string              observationHint,
+        Traits.NpcTextProfile text,
         bool                canSpeak                = false,
-        string?             wayToSpeakDescription   = null,
         AffinityTable?      affinityTable           = null,
         bool                isBrave                 = false,
         int                 authorityLevel          = 0,
@@ -151,9 +177,8 @@ public class NpcEntity : INpcEntity
         Combatant                  = combatant;
         Archetype                  = archetype;
         IsPersistent               = isPersistent;
-        ObservationHint            = observationHint;
+        Text                       = text;
         CanSpeak                   = canSpeak;
-        WayToSpeakDescription      = wayToSpeakDescription;
         AffinityTable              = affinityTable ?? new AffinityTable();
         IsBrave                    = isBrave;
         AuthorityLevel             = authorityLevel;
