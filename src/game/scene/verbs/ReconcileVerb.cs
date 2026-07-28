@@ -47,6 +47,10 @@ public class ReconcileVerb : DialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"meet {NpcPronoun(target)} to try to reconcile";
 
+    // Read out of context in the routines menu, so the pronoun is replaced by the name.
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+        => $"meet {NpcName(target)} to try to reconcile";
+
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc)

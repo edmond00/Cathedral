@@ -1661,17 +1661,21 @@ public sealed class AmbianceEngine : IDisposable
         {
             case GameEventType.PositiveOutcome:
             {
-                // Crystal patch rapid ascending staccato: C6→D6→E6→G6→C7.
-                // Each ping is tight and digital; top note lingers briefly.
-                SendProgramChange(ch, ProceduralMidiComposer.PatchFxCrystal);
-                SendNoteOn(ch, 84, 80); // C6 — fired synchronously for zero latency
+                // Square-lead ascending staccato: C5→E5→G5→C6, closing on a held C6+E6 third.
+                // Weighted to match the failure stab: the old Crystal ping sat an octave higher on a
+                // soft FX patch at velocity 80, so a success was easy to miss entirely under the
+                // music while a failure always cut through — the roll sounded silent when it went well.
+                SendProgramChange(ch, ProceduralMidiComposer.PatchLeadSquare);
+                SendNoteOn(ch, 72, 105); // C5 — fired synchronously for zero latency
                 _ = Task.Run(() =>
                 {
-                    Thread.Sleep(32); SendNoteOff(ch, 84);
-                    SendNoteOn(ch, 86, 85); Thread.Sleep(32); SendNoteOff(ch, 86); // D6
-                    SendNoteOn(ch, 88, 90); Thread.Sleep(32); SendNoteOff(ch, 88); // E6
-                    SendNoteOn(ch, 91, 93); Thread.Sleep(40); SendNoteOff(ch, 91); // G6
-                    SendNoteOn(ch, 96, 97); Thread.Sleep(220); SendNoteOff(ch, 96); // C7 — held
+                    Thread.Sleep(36); SendNoteOff(ch, 72);
+                    SendNoteOn(ch, 76, 110); Thread.Sleep(36); SendNoteOff(ch, 76); // E5
+                    SendNoteOn(ch, 79, 115); Thread.Sleep(40); SendNoteOff(ch, 79); // G5
+                    SendNoteOn(ch, 84, 120);                                        // C6 — held
+                    SendNoteOn(ch, 88, 105);                                        // E6 — third on top
+                    Thread.Sleep(320);
+                    SendNoteOff(ch, 84); SendNoteOff(ch, 88);
                 });
                 break;
             }

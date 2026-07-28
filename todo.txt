@@ -13,3 +13,10 @@ overall beast fixs
 request work to reeve -> use body humor to pass dice roll check -> reeve still refuse to give work
 bottle of ale (instead of ale)
 NPC coherent generation with text description and content parrallel generation
+no success sound during dice roll if natural success (no use of body humor modificator)
+phlegm not appliable
+
+
+words to prevent :
+photo album
+bullet

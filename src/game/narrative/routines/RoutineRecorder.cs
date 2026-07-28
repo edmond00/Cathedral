@@ -63,6 +63,9 @@ public class RoutineRecorder
             VerbId         = verb.VerbId,
             Target         = targetRef,
             Verbatim       = verb.Verbatim(scene, povBeforeMove, target),
+            // Named here, while the scene context is still live: the label is what the player reads
+            // in the routines menu, so it must resolve pronouns and variants to concrete names now.
+            Label          = verb.RoutineLabel(scene, povBeforeMove, target, action.PreselectedOutcome.VerbView),
             TriggeredPhase = verb.RoutineTriggeredPhase(scene, povBeforeMove, target),
             VariantKey     = verb.RoutineVariantKey(action.PreselectedOutcome.VerbView) ?? "",
             Constraints    = BuildConstraints(action, actingMember, itemConsumed),
@@ -103,7 +106,7 @@ public class RoutineRecorder
         {
             LocationId = _locationId,
             StartTime  = _startTime,
-            Name       = _steps[^1].Verbatim,
+            Name       = _steps[^1].DisplayLabel,
             Steps      = new List<RoutineStep>(_steps),
         };
         _steps.Clear();

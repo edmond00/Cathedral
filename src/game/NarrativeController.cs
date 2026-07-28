@@ -81,8 +81,10 @@ public class NarrativeController
     // Non-null only for scene-backed Exploration narration.
     private RoutineRecorder? _recorder = null;
     
-    // Random for dice rolls — seeded from the master seed so runs are reproducible.
-    private readonly Random _diceRandom = GameRng.For("dice");
+    // Random for dice rolls — the run-long shared stream, not a per-controller generator: a new
+    // NarrativeController is built for every narration phase, and a fresh Random on the same derived
+    // seed made the first roll of each phase repeat the previous phase's first roll.
+    private readonly Random _diceRandom = GameRng.Stream("dice");
 
     // Unified dice-roll overlay (animation + humor modifiers + hit-testing).
     private readonly DiceRollComponent _dice = new();
@@ -147,7 +149,19 @@ public class NarrativeController
     {
         _narrationState.CompleteDiceRoll(finalValues);
         _dice.Complete(finalValues);
-        _ambianceEngine?.TriggerGameEvent(_dice.IsCurrentlySuccess
+        PlayDiceVerdictCue(_dice.IsCurrentlySuccess);
+    }
+
+    /// <summary>
+    /// Feedback for a settled roll: the PCM click, then the success/failure sting. The click is what
+    /// guarantees the reveal is heard at all — the stings are MIDI and go silent without an open
+    /// device, which is why a humor-modified result seemed to be the only one that made a sound (the
+    /// humor button plays its own click on the way).
+    /// </summary>
+    private void PlayDiceVerdictCue(bool success)
+    {
+        PlayClickSound();
+        _ambianceEngine?.TriggerGameEvent(success
             ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
     }
 
@@ -1212,7 +1226,9 @@ public class NarrativeController
         int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
         const int getUpDifficulty = 1;
 
-        NarrationDiceStart(numberOfDice, getUpDifficulty);
+        // Humor modifiers are offered here exactly as in the main action roll: rising from the ground
+        // exhausted is precisely the check a spent humor should be able to swing.
+        NarrationDiceStart(numberOfDice, getUpDifficulty, _activePartyMember);
         _narrationState.LoadingMessage = "Rolling dice...";
 
         int[] finalDiceValues = new int[numberOfDice];
@@ -1227,9 +1243,11 @@ public class NarrativeController
         var actionMm = action.ActionModusMentis ?? action.ChainModusMentis;
 
         // Defer the outcome narration to the dice CONTINUE — like the main action path — so the
-        // animation runs for the fixed Config.Dice duration rather than blocking on the LLM. Get-Up
-        // has no humor modifiers, so the success decided here is final and can be captured as-is.
-        _pendingGetUpOutcome = () => GenerateGetUpOutcomeAsync(action, actionMm, succeeded, getUpDifficulty);
+        // animation runs for the fixed Config.Dice duration rather than blocking on the LLM. The
+        // rolled result is only provisional: a humor modifier may still flip it (OnDiceOutcomeFlipped
+        // writes _pendingSucceeded), so the closure reads the field at CONTINUE time, not now.
+        _pendingSucceeded    = succeeded;
+        _pendingGetUpOutcome = () => GenerateGetUpOutcomeAsync(action, actionMm, _pendingSucceeded, getUpDifficulty);
 
         // Fixed animation window (no async work backs this roll now that narration is deferred).
         await Task.Delay(Config.Dice.AnimationDurationMs);
@@ -1242,8 +1260,9 @@ public class NarrativeController
 
     /// <summary>
     /// Generates the Get-Up outcome narration after the dice CONTINUE and commits the result.
-    /// Mirrors the main action path's deferred generation; because Get-Up carries no humor
-    /// modifiers the <paramref name="succeeded"/> decided at roll time is already final.
+    /// Mirrors the main action path's deferred generation, preview box included: the text streams
+    /// into <see cref="_previewSession"/> and the block is committed on the preview CONTINUE.
+    /// <paramref name="succeeded"/> is the final result, humor modifiers already applied.
     /// </summary>
     private async Task GenerateGetUpOutcomeAsync(ParsedNarrativeAction action, ModusMentis actionMm,
         bool succeeded, int getUpDifficulty)
@@ -1257,6 +1276,9 @@ public class NarrativeController
                 ? new InlineOutcome("getting up", "with great effort you push yourself to your feet and continue your travel")
                 : new InlineOutcome("the effort", "your exhausted body refuses to rise — you slump back against the tree");
 
+            _previewSession.Reset();
+            var part = _previewSession.BeginPart(PreviewTitles.For(actionMm));
+
             string narration;
             try
             {
@@ -1267,7 +1289,8 @@ public class NarrativeController
                     succeeded,
                     difficulty: CriticTrees.DifficultyLevelToScore(getUpDifficulty),
                     _protagonist,
-                    System.Threading.CancellationToken.None);
+                    System.Threading.CancellationToken.None,
+                    preview: part.Sink);
             }
             catch (Exception ex)
             {
@@ -1275,6 +1298,9 @@ public class NarrativeController
                 narration = succeeded
                     ? "With great effort, you force yourself to your feet."
                     : "Your body refuses to cooperate. You slump back against the tree.";
+                // The sink never completed — show the fallback text in the box so the player still
+                // gets a CONTINUE to press rather than an empty, stuck preview.
+                part.Sink.OnComplete(narration);
             }
 
             // ActualOutcome is always the VerbOutcome so the GetUpVerb's Success/FailureReports fire.
@@ -1293,14 +1319,17 @@ public class NarrativeController
             };
 
             _narrationState.IsLoadingAction = false;
-            CommitOutcomeResult(result, deferredCommit: false);
+            part.AttachCommit(() => CommitOutcomeResult(result, deferredCommit: false));
+            part.MarkComplete();
+            _previewSession.EndProduction();
 
-            Console.WriteLine($"NarrativeController: GetUp outcome committed — {(succeeded ? "pending transition" : "failure, will loop")}");
+            Console.WriteLine($"NarrativeController: GetUp outcome generated — {(succeeded ? "pending transition" : "failure, will loop")}, commits on preview continue");
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"NarrativeController: GetUp outcome generation failed — {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
+            _previewSession.Reset();
             _narrationState.IsLoadingAction = false;
             NarrationDiceClear();
             _narrationState.ErrorMessage = $"GetUp outcome failed: {ex.Message}";
@@ -1367,9 +1396,13 @@ public class NarrativeController
                 naturalLanguage: $"remember: {fpoi.Fragment.OutcomeText}")
             : new InlineOutcome("memory", "remember this childhood moment");
 
-        // Generate outcome narration through the LLM exactly as any other action.
+        // Generate outcome narration through the LLM exactly as any other action — streamed into the
+        // preview box, with the memory block committed on its CONTINUE.
         _narrationState.IsLoadingAction = true;
         _narrationState.LoadingMessage  = Config.LoadingMessages.EvaluatingAction;
+
+        _previewSession.Reset();
+        var previewPart = _previewSession.BeginPart(PreviewTitles.For(actionMm));
 
         string narrationText;
         try
@@ -1382,7 +1415,8 @@ public class NarrativeController
                 difficulty: 0.0,
                 _protagonist,
                 CancellationToken.None,
-                neutralOverride: reminescenceNeutral);
+                neutralOverride: reminescenceNeutral,
+                preview: previewPart.Sink);
         }
         catch (Exception ex)
         {
@@ -1391,6 +1425,8 @@ public class NarrativeController
             narrationText = fpoi != null
                 ? fpoi.Fragment.OutcomeText
                 : "You remember.";
+            // The sink never completed — put the fallback in the box so CONTINUE still appears.
+            previewPart.Sink.OnComplete(narrationText);
         }
 
         _narrationState.IsLoadingAction = false;
@@ -1408,16 +1444,23 @@ public class NarrativeController
             Actions:        null,
             ChainOrigin:    action,
             OutcomeReports: uiReminescenceReports.Count > 0 ? uiReminescenceReports : null);
-        _scrollBuffer.AddBlock(outcomeBlock);
-        _narrationState.AddBlock(outcomeBlock);
-        // REMEMBER always succeeds (and often grants a skill/item) — cue the positive
-        // outcome sting, matching the normal action-resolution path.
-        _ambianceEngine?.TriggerGameEvent(GameEventType.PositiveOutcome);
-        _scrollBuffer.ScrollToBottom();
-        _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
 
-        _narrationState.PendingTransitionNode = null;
-        _narrationState.ShowContinueButton    = true;
+        previewPart.AttachCommit(() =>
+        {
+            _scrollBuffer.AddBlock(outcomeBlock);
+            _narrationState.AddBlock(outcomeBlock);
+            // REMEMBER always succeeds (and often grants a skill/item) — cue the positive
+            // outcome sting, matching the normal action-resolution path.
+            _ambianceEngine?.TriggerGameEvent(GameEventType.PositiveOutcome);
+            _scrollBuffer.ScrollToBottom();
+            _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+
+            _narrationState.PendingTransitionNode = null;
+            _narrationState.ShowContinueButton    = true;
+        });
+        previewPart.MarkComplete();
+        _previewSession.EndProduction();
+
         Console.WriteLine($"NarrativeController: REMEMBER narrated — pending transition '{_scene.PendingReminescenceTransition?.NextReminescenceId}'");
     }
 
@@ -1493,15 +1536,14 @@ public class NarrativeController
     }
     
     /// <summary>
-    /// Handle continue button click on the dice-roll screen. The Get-Up path has a ready-made result
-    /// (narration already generated) and commits synchronously; the main path defers to now — the
-    /// actual outcome is generated (streamed into a preview box) and committed on the preview CONTINUE.
+    /// Handle continue button click on the dice-roll screen. Both paths defer to now: the outcome is
+    /// generated (streamed into a preview box) and committed on the preview CONTINUE.
     /// </summary>
     private void OnDiceRollContinue()
     {
-        // Get-Up path: narration was deferred to now — generate the outcome text (into a loading
-        // state) and commit, exactly as the main path does. Get-Up carries no humor modifiers, so
-        // the success/failure decided at roll time is already final.
+        // Get-Up path: narration was deferred to now — generate the outcome text (into the preview
+        // box) and commit on its CONTINUE, exactly as the main path does. The closure reads the
+        // final _pendingSucceeded, so a humor modifier applied during the roll is honoured.
         if (_pendingGetUpOutcome != null)
         {
             var generate = _pendingGetUpOutcome;

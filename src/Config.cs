@@ -602,6 +602,14 @@ public static class Config
         /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
         private const string OneSentenceClause = "Answer in one short sentence and stop.";
 
+        /// <summary>
+        /// Brevity clause for the kinds that omit <see cref="OneSentenceClause"/> (observation,
+        /// reasoning, outcome). Those are free to unfold over more than one sentence, but a small model
+        /// left with no ceiling at all drifts into a paragraph that then gets cut off by the token
+        /// limit — this caps the unfolding without pinning it to a single sentence.
+        /// </summary>
+        private const string ShortTextClause = "Write a short text: one to three sentences at most.";
+
         /// <summary>Grounding clause appended after the length clause; keeps the rewrite faithful.</summary>
         private const string GroundingClause = "Keep every literal fact from the given information and invent no new facts, names, objects or events.";
 
@@ -636,6 +644,9 @@ public static class Config
                 includeLengthClause ? OneSentenceClause : null,
                 GroundingClause,
                 style,
+                // The kinds that drop the one-sentence clause still get a ceiling, right before the
+                // closing character reminder.
+                includeLengthClause ? null : ShortTextClause,
                 character,
             };
             return string.Join(" ", parts.Where(p => !string.IsNullOrEmpty(p)));

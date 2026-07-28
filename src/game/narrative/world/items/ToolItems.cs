@@ -85,13 +85,7 @@ public sealed class Rake : ToolItem
     public override float Weight => 0.9f;
 }
 
-public sealed class Hoe : ToolItem
-{
-    public override string ItemId      => "hoe";
-    public override string DisplayName => "Hoe";
-    public override string Description => "A short hoe with a curved iron blade and a worn handle";
-    public override float Weight => 0.8f;
-}
+// A hoe already exists as a trade tool: Cathedral.Game.Narrative.Items.Hoe (TradeToolItems.cs).
 
 public sealed class Scythe : ToolItem
 {

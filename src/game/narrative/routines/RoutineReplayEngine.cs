@@ -94,7 +94,7 @@ public class RoutineReplayEngine
             // 4. Verb-level possibility against the live scene/pov.
             if (!verb.IsPossible(scene, pov, target, ctx.ActingMember as Protagonist))
             {
-                Fail(result, i, $"\"{step.Verbatim}\" is not possible here.");
+                Fail(result, i, $"\"{step.DisplayLabel}\" is not possible here.");
                 return result;
             }
 

@@ -262,7 +262,7 @@ public class RoutinesPanelRenderer
                 RoutinePhaseKind.Dialogue => " 💬",
                 _                          => "",
             };
-            CenterText(x, row++, $"{i + 1}. {step.Verbatim}{phaseMark}", Config.Colors.MediumGray60);
+            CenterText(x, row++, $"{i + 1}. {step.DisplayLabel}{phaseMark}", Config.Colors.MediumGray60);
         }
     }
 
@@ -333,7 +333,7 @@ public class RoutinesPanelRenderer
             "enter_spot"     => $"reach {t}",
             "leave"          => $"leave {t}",
             "gather" or "grab" or "steal" or "cut" => $"gain {t}",
-            _                => step.Verbatim,
+            _                => step.DisplayLabel,
         };
     }
 

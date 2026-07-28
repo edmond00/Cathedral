@@ -175,6 +175,36 @@ public abstract class Verb
     public virtual RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target) => null;
 
     /// <summary>
+    /// The player-facing name of this verb as a recorded routine step — and, for the last step, the
+    /// name of the routine itself. Evaluated once at record time, while scene/pov/target are still
+    /// live, so whatever it reads from the context is baked into the saved routine.
+    ///
+    /// This exists because <see cref="Verbatim"/> is written for the LLM prompt, where the target has
+    /// already been named in the attention line and is therefore referred back to by pronoun ("meet
+    /// her to talk"). A routine is read cold, months of play later, out of any context — so a verb
+    /// whose verbatim leans on the surrounding prompt overrides this to name the target outright
+    /// ("meet Aldith to talk"). Defaults to the verbatim, which is already concrete for every verb
+    /// that spells its target out ("gather some moss", "climb up the low wall").
+    /// </summary>
+    /// <param name="view">The chosen view when the verb expanded into several actions (e.g. which job
+    /// was requested), or null when the caller has none.</param>
+    public virtual string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+        => Verbatim(scene, pov, target);
+
+    /// <summary>
+    /// The display name of an NPC target, for <see cref="RoutineLabel"/> overrides that replace the
+    /// verbatim's pronoun with the real name. Falls back to the target's own display name (and to
+    /// "them" when there is none), so a label is never left with a dangling blank.
+    /// </summary>
+    protected static string NpcName(Element target)
+    {
+        string name = (target as SceneNpc)?.Entity.DisplayName?.Trim()
+                      ?? target?.DisplayName?.Trim()
+                      ?? "";
+        return name.Length == 0 ? "them" : name;
+    }
+
+    /// <summary>
     /// The phase this verb transitions into on success, used to decide where a recorded routine
     /// stops and what happens after replay. Default: <see cref="RoutinePhaseKind.None"/>.
     /// </summary>

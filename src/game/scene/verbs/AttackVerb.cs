@@ -37,6 +37,10 @@ public class AttackVerb : Verb
             ? $"attack {NpcPronoun(target)}"
             : $"attack {target.DisplayName}";
 
+    // Read out of context in the routines menu, so the pronoun is replaced by the name.
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+        => $"attack {NpcName(target)}";
+
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc sceneNpc) return System.Array.Empty<OutcomeReport>();

@@ -30,6 +30,12 @@ public class MoveToAreaVerb : Verb
         return $"move to {DefiniteTarget(target)}";
     }
 
+    // A routine step always names the destination: the area's TransitionDescription describes the
+    // walk ("push through the gap in the hedge") and can leave a step list saying where you went
+    // through without saying where you ended up.
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+        => $"move to {DefiniteTarget(target)}";
+
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not Area targetArea) return System.Array.Empty<OutcomeReport>();

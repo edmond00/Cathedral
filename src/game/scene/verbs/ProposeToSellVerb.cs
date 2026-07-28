@@ -36,6 +36,14 @@ public class ProposeToSellVerb : DialogueVerb
         return $"meet {NpcPronoun(target)} to propose to sell {goods}";
     }
 
+    // Read out of context in the routines menu, so the pronoun is replaced by the name.
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+    {
+        var npc = (target as SceneNpc)?.Entity as NpcEntity;
+        string goods = npc?.BuyTag?.Label() ?? "goods";
+        return $"meet {NpcName(target)} to sell {goods}";
+    }
+
     public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
     {
         if (target is not SceneNpc sceneNpc || sceneNpc.Entity is not NpcEntity npc)

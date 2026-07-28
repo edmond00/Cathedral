@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Cathedral;
 
@@ -66,6 +67,31 @@ public static class GameRng
     /// same sequence, so give each distinct consumer its own tag.
     /// </summary>
     public static Random For(string subsystem) => new Random(DerivedSeed(subsystem));
+
+    /// <summary>
+    /// The run-long <see cref="Random"/> for <paramref name="subsystem"/>: created once on first use
+    /// and shared by every later caller, so the sequence advances across the whole playthrough.
+    ///
+    /// Use this instead of <see cref="For"/> whenever the consumer is rebuilt during a run — a
+    /// per-phase controller calling <c>For("dice")</c> gets a generator restarted from the same seed,
+    /// so the first roll of every phase comes out identical (this is exactly what made the first
+    /// narration roll always read 4-5-1). Still fully reproducible: the same master seed replays the
+    /// same stream, only now it is one stream per subsystem rather than one per instance.
+    /// </summary>
+    public static Random Stream(string subsystem)
+    {
+        lock (_lock)
+        {
+            if (!_streams.TryGetValue(subsystem, out var rng))
+            {
+                rng = new Random(DerivedSeed(subsystem));
+                _streams[subsystem] = rng;
+            }
+            return rng;
+        }
+    }
+
+    private static readonly Dictionary<string, Random> _streams = new();
 
     /// <summary>
     /// The integer seed <see cref="For"/> would use for <paramref name="subsystem"/> —

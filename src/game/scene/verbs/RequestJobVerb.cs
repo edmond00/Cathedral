@@ -30,6 +30,13 @@ public class RequestJobVerb : DialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => $"meet {NpcPronoun(target)} to ask for work";
 
+    // Read out of context in the routines menu: name the NPC, and name the job that was actually
+    // requested (the view's variant) rather than the generic "for work".
+    public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
+        => view?.Variant is Job job
+            ? $"meet {NpcName(target)} to ask to work as {job.WithArticle()}"
+            : $"meet {NpcName(target)} to ask for work";
+
     public override IEnumerable<VerbView> ExpandViews(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         var npc = Eligible(scene, pov, target, actor);

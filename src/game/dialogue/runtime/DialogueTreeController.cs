@@ -575,6 +575,13 @@ public class DialogueTreeController
             int[] values = Enumerable.Range(0, diceCount).Select(_ => _rng.Next(1, 7)).ToArray();
             _state.CompleteDiceRoll(values);
             _dice.Complete(values);
+            // Same verdict cue as narration: a click so the reveal is heard even with no MIDI device,
+            // then the success/failure sting. This roll previously settled in complete silence unless
+            // a humor modifier was applied.
+            _ambianceEngine?.TriggerGameEvent(Cathedral.Audio.GameEventType.StrongInteraction);
+            _ambianceEngine?.TriggerGameEvent(_dice.IsCurrentlySuccess
+                ? Cathedral.Audio.GameEventType.PositiveOutcome
+                : Cathedral.Audio.GameEventType.NegativeOutcome);
         });
     }
 

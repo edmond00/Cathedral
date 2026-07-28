@@ -17,6 +17,16 @@ public class RoutineStep
     public RoutinePhaseKind TriggeredPhase { get; set; } = RoutinePhaseKind.None;
 
     /// <summary>
+    /// Player-facing name of this step, from <see cref="Cathedral.Game.Scene.Verbs.Verb.RoutineLabel"/>
+    /// — the verbatim made explicit out of its prompt context ("meet Aldith to talk", not "meet her to
+    /// talk"). Kept separate from <see cref="Verbatim"/>, which replay still feeds back to the LLM.
+    /// </summary>
+    public string Label { get; set; } = "";
+
+    /// <summary>The label to show, falling back to the verbatim for steps recorded before labels existed.</summary>
+    public string DisplayLabel => string.IsNullOrWhiteSpace(Label) ? Verbatim : Label;
+
+    /// <summary>
     /// Stable key for the chosen <see cref="Cathedral.Game.Scene.VerbView.Variant"/> (e.g. the
     /// requested job id), so replay rebuilds the same view. Empty when the verb has no variant.
     /// </summary>
@@ -38,7 +48,7 @@ public class Routine
     /// <summary>Time period the narration started in; replay forces this arrival time.</summary>
     public TimePeriod StartTime { get; set; }
 
-    /// <summary>Display name — the verbatim of the routine's last step.</summary>
+    /// <summary>Display name — the <see cref="RoutineStep.DisplayLabel"/> of the routine's last step.</summary>
     public string Name { get; set; } = "";
 
     /// <summary>When true, protected from FIFO eviction when the queue overflows.</summary>
