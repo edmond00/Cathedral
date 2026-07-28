@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cathedral.Game.Narrative.Routines;
 
 namespace Cathedral.Game.Narrative;
 
@@ -26,6 +27,19 @@ public abstract class OutcomeReport
 
     /// <summary>False for internal bookkeeping outcomes that should not appear as UI chips.</summary>
     public virtual bool ShowInUI => true;
+
+    /// <summary>
+    /// What this effect does to a routine being recorded — see <see cref="RoutineChainEffect"/>.
+    ///
+    /// <para><b>Declare this on any new report that moves the point of view or hands off to another
+    /// phase.</b> The default (<see cref="RoutineChainEffect.None"/>) says "a routine chain around
+    /// this is still valid", which is right for ordinary state changes and wrong for those two. A
+    /// forgotten <see cref="RoutineChainEffect.Movement"/> is caught at runtime — the narration
+    /// controller compares the area before and after applying reports and logs an error when the
+    /// point of view moved with nothing declaring it — but the routine recorded in that session is
+    /// already wrong, so declare it here rather than relying on the warning.</para>
+    /// </summary>
+    public virtual RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
     protected OutcomeReport(string text, OutcomeReportSeverity severity, string verbatim)
     {

@@ -222,7 +222,11 @@ Re-express the following spoken line in your own voice, keeping the same meaning
 
 This is a line of direct dialogue that you say out loud. {speaker}; {who} is the person you are talking to. Speak in the first person: call yourself ""I"", and call {who} ""you"". Keep it a short, natural spoken reply — add your own flavour, wording and personality, but do not change what is being said, asked or offered.
 
-You may enclose an aside in parentheses (like this) to voice a private inner thought — something you think but do not say aloud, which {who} does not hear. Everything outside the parentheses is spoken to {who}; keep any parenthetical aside brief and optional.
+Your whole answer is one line made of two parts, and holds nothing else:
+  1. the words {who} hears you say, wrapped in double quotes;
+  2. optionally, after the closing quote, one brief thought {who} does not hear, wrapped in parentheses.
+
+The quoted part is your mouth moving: it contains speech, never a report of speech, so nothing about how you say it belongs there. Any remark on your own voice, mood or manner has one home only — the parenthetical thought — and it may just as well be left out. Never write a third part, and never open the quoted words with a phrase that introduces them.
 
 {footer}";
     }

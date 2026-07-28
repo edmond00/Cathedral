@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
@@ -203,6 +204,21 @@ public abstract class Verb
                       ?? "";
         return name.Length == 0 ? "them" : name;
     }
+
+    /// <summary>
+    /// Whether a successful, <i>unrecordable</i> execution of this verb ends the routine being
+    /// recorded, or may simply be left out of it. Skipping is the norm: introducing yourself to a
+    /// stranger, grabbing a one-off item or picking a fight are not routine steps, but the chain of
+    /// steps around them stays perfectly replayable, so recording continues as if they had not
+    /// happened. Only effects that a replayed chain cannot reproduce end the recording.
+    ///
+    /// The decision is read off the reports the execution is about to apply — see
+    /// <see cref="RoutineChainEffect"/> — so it stays correct for verbs that do not exist yet.
+    /// Override only for a verb whose reports do not tell the whole story.
+    /// </summary>
+    public virtual bool BreaksRoutineRecording(Scene scene, PoV pov, Element target,
+                                               IReadOnlyList<OutcomeReport> reports)
+        => reports.Any(r => r.RoutineChainEffect != RoutineChainEffect.None);
 
     /// <summary>
     /// The phase this verb transitions into on success, used to decide where a recorded routine

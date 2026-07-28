@@ -627,6 +627,8 @@ public static class Config
         /// curiosity"), which is exactly what a spoken line must not do — so dialogue uses this instead.
         /// The unspoken inner thought still has its home: the optional parenthetical aside (see the
         /// dialogue prompt), which the reply grammar keeps outside the spoken quotes.
+        /// This clause is always in force for dialogue: a caller-supplied style is kept but this is
+        /// appended after it — see <see cref="DialogueAnswerInstructionFor"/>.
         /// </summary>
         private const string DialogueStyleInstruction = "Let your wording and personality colour the words themselves; do not describe your tone, expression, or manner of speaking.";
 
@@ -671,12 +673,26 @@ public static class Config
         /// </summary>
         public static string DialogueAnswerInstructionFor(string? personaReminder2, string? addressee, string? styleInstruction = null)
         {
-            // A dialogue line is spoken words, so it uses the narrower dialogue style by default (a broad
-            // narration style makes a small model describe its own manner instead of speaking).
-            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DialogueStyleInstruction : styleInstruction.Trim();
+            // A dialogue line is spoken words, so the dialogue style clause is always in force — not just
+            // as a default. A caller-supplied style (a modusMentis's, say) is written for narration, and a
+            // small model reads it as licence to describe its own manner: MURMUR's "use hushed images of
+            // whisper and undertone" produced «"I whisper it softly, 'that sounds like more…'"» — the real
+            // line nested inside a narrated frame. Appending the dialogue clause after the caller's style
+            // keeps the flavour and cancels the invitation to narrate.
+            string style = string.IsNullOrWhiteSpace(styleInstruction)
+                ? DialogueStyleInstruction
+                : $"{styleInstruction.Trim()} {DialogueStyleInstruction}";
             string who   = string.IsNullOrWhiteSpace(addressee) ? "the person you are speaking with" : addressee.Trim();
             string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
-            return $"{OneSentenceClause} {GroundingClause} {style} {character} Speak directly to {who} as \"you\", and refer to yourself only as \"I\" — never call {who} by your own name or describe yourself in the second person. Put the words you say out loud in double quotes (\"...\") and write only those words, not how they are said — no narration, no third-person phrasing.";
+            // Shape first, prohibitions second. "No narration" cannot work on its own here: the reply
+            // grammar forces the answer to open with a double quote, so there is nowhere outside the
+            // quotes for narration to go and the model simply narrates *inside* them. State the required
+            // shape positively, then rule out the two ways it gets violated — a nested quotation, and a
+            // speech verb standing in front of the words.
+            return $"{OneSentenceClause} {GroundingClause} {style} {character} Speak directly to {who} as \"you\", and refer to yourself only as \"I\" — never call {who} by your own name or describe yourself in the second person. "
+                 + $"Write the words {who} hears you say, wrapped in double quotes (\"...\"), and stop — optionally followed by one short thought in parentheses. "
+                 + $"What stands between the double quotes is speech and only speech: the exact sounds leaving your mouth, with no quotation marks of any kind inside them. "
+                 + $"Do not write that you say, whisper, murmur, reply, add, ask or answer anything, and do not describe your voice, tone, expression or manner — begin the quoted text with the first word {who} actually hears.";
         }
     }
 

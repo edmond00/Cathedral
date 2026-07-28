@@ -27,6 +27,29 @@ public class RoutineStep
     public string DisplayLabel => string.IsNullOrWhiteSpace(Label) ? Verbatim : Label;
 
     /// <summary>
+    /// True when this step relocates the point of view (one of its reports declared
+    /// <see cref="RoutineChainEffect.Movement"/>). Movement steps are what every later step depends
+    /// on, so they form the prefix each routine emitted from a session is built from.
+    /// </summary>
+    public bool MovesPointOfView { get; set; }
+
+    /// <summary>
+    /// An independent copy. One session can emit several routines that share a movement prefix, and
+    /// each routine owns its steps outright — a step instance is never live in two routines at once.
+    /// </summary>
+    public RoutineStep Clone() => new()
+    {
+        VerbId           = VerbId,
+        Target           = Target,
+        Constraints      = new List<RoutineConstraint>(Constraints),
+        Verbatim         = Verbatim,
+        Label            = Label,
+        TriggeredPhase   = TriggeredPhase,
+        VariantKey       = VariantKey,
+        MovesPointOfView = MovesPointOfView,
+    };
+
+    /// <summary>
     /// Stable key for the chosen <see cref="Cathedral.Game.Scene.VerbView.Variant"/> (e.g. the
     /// requested job id), so replay rebuilds the same view. Empty when the verb has no variant.
     /// </summary>

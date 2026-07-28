@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Routines;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene.Building;
@@ -63,6 +64,8 @@ public sealed class AreaMoveOutcome : OutcomeReport
         _destination = destination;
     }
 
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Movement;
+
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (pov == null) return;
@@ -83,6 +86,8 @@ public sealed class SpotEnterOutcome : OutcomeReport
         _spot = spot;
     }
 
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Movement;
+
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (pov == null) return;
@@ -96,6 +101,8 @@ public sealed class SpotLeaveOutcome : OutcomeReport
 {
     public SpotLeaveOutcome()
         : base("Left the spot", OutcomeReportSeverity.Neutral, "stepped back") { }
+
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Movement;
 
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
@@ -119,6 +126,10 @@ public sealed class DoorUnlockOutcome : OutcomeReport
         _destination = destination;
     }
 
+    // Moves AND leaves the door unlocked: the scene rebuild replay starts from re-locks it, so a
+    // chain that skipped this step would assume a way through that replay does not have.
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null || pov == null) return;
@@ -140,6 +151,9 @@ public sealed class NpcSlaynOutcome : OutcomeReport
     {
         _sceneNpc = sceneNpc;
     }
+
+    // Removes an actor from the scene — later steps may only have been possible because of it.
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
@@ -163,6 +177,9 @@ public sealed class FightTriggerOutcome : OutcomeReport
         _npc = npc;
     }
 
+    // A fight is a phase a routine cannot contain, and it reshapes the scene while it runs.
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null) return;
@@ -183,6 +200,13 @@ public sealed class DialogueTriggerOutcome : OutcomeReport
         _npc    = npc;
         _treeId = treeId;
     }
+
+    // Deliberately None. A dialogue leaves the world in a state that persists to replay time —
+    // affinity, jobs and trades are stored against the NPC's stable id — so a conversation that is
+    // itself unrecordable (introducing yourself, a one-off tree) can be skipped without invalidating
+    // the steps around it. Recordable dialogue verbs still terminate their own chain through
+    // RoutineTriggeredPhase; that is a separate question from whether a skip is safe.
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.None;
 
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
@@ -246,6 +270,10 @@ public sealed class ReminescenceTransitionOutcome : OutcomeReport
         _fragmentName = fragmentName;
     }
 
+    // Leaves exploration entirely. Never reached while recording (those phases arm no recorder),
+    // declared so the rule holds if that ever changes.
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null) return;
@@ -262,6 +290,9 @@ public sealed class GetUpTransitionOutcome : OutcomeReport
     public override bool ShowInUI => false;
 
     public GetUpTransitionOutcome() : base(string.Empty, OutcomeReportSeverity.Positive, verbatim: string.Empty) { }
+
+    // Leaves exploration entirely — see ReminescenceTransitionOutcome.
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
 
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {

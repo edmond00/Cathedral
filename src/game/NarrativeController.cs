@@ -1662,11 +1662,12 @@ public class NarrativeController
         }
 
         // Record this verb into the in-progress routine BEFORE applying reports, so the recorder
-        // evaluates the verb against the pre-move PoV. Only successful recordable verbs are captured.
+        // evaluates the verb against the pre-move PoV. The reports come along because they carry the
+        // RoutineChainEffect the recorder decides on (skip vs stop, and what counts as movement).
         if (result.Succeeded && _recorder != null && _scene != null && _pov != null
             && result.ActualOutcome is VerbOutcome)
         {
-            _recorder.OnVerbSucceeded(result.Action, _scene, _pov, _activePartyMember, result.ItemConsumed);
+            _recorder.OnVerbSucceeded(result.Action, _scene, _pov, _activePartyMember, result.ItemConsumed, allReports);
         }
 
         // Remember the area before reports apply, so we can detect any area-moving verb (move, follow
@@ -1677,6 +1678,19 @@ public class NarrativeController
         // loot, learned skills, and suffered wounds land on the companion, not the protagonist.
         foreach (var report in allReports)
             report.Apply(_activePartyMember, _scene, _pov);
+
+        // Self-check for the routine recorder's one silent failure mode: a report that moves the
+        // player without declaring RoutineChainEffect.Movement. The recorder cannot see the move (it
+        // runs before Apply, by design), so it would build routines on a stale prefix. Shout rather
+        // than record something subtly wrong.
+        if (!ReferenceEquals(areaBefore, _pov?.Where)
+            && !allReports.Any(r => r.RoutineChainEffect == RoutineChainEffect.Movement))
+        {
+            Console.Error.WriteLine(
+                $"NarrativeController: '{result.Action.Verb?.VerbId}' moved the point of view but none of its " +
+                "reports declared RoutineChainEffect.Movement — routine recording will mis-track position. " +
+                "Declare it on the report that moves the PoV.");
+        }
 
         // UI-visible chips for the outcome block.
         var uiReports = allReports.Where(r => r.ShowInUI).ToList();
