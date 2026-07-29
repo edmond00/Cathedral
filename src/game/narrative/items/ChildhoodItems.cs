@@ -25,6 +25,7 @@ public sealed class StableChildSmock : WearableItem
     public override WearSlot Slot           => WearSlot.Bodywear;
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Peasant, SocialCategory.Pauper };
+    public override int PriceReference => 6;
 }
 
 public sealed class StableChildBreeches : WearableItem
@@ -35,6 +36,7 @@ public sealed class StableChildBreeches : WearableItem
     public override WearSlot Slot           => WearSlot.Legwear;
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Peasant, SocialCategory.Pauper };
+    public override int PriceReference => 5;
 }
 
 public sealed class StableChildClogs : WearableItem
@@ -47,6 +49,7 @@ public sealed class StableChildClogs : WearableItem
     public override int DefenseDice => 1;
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Peasant, SocialCategory.Pauper };
+    public override int PriceReference => 4;
 }
 
 // ── Townsman clothes ──────────────────────────────────────────────────
@@ -60,6 +63,7 @@ public sealed class TownsmanCloak : WearableItem
     public override int DefenseDice => 1;
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Bourgeois, SocialCategory.Urban };
+    public override int PriceReference => 20;
 }
 
 public sealed class TownsmanTunic : WearableItem
@@ -71,6 +75,7 @@ public sealed class TownsmanTunic : WearableItem
     public override WearSlot Slot           => WearSlot.Bodywear;
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Bourgeois, SocialCategory.Urban };
+    public override int PriceReference => 12;
 }
 
 public sealed class TownsmanBreeches : WearableItem
@@ -81,6 +86,7 @@ public sealed class TownsmanBreeches : WearableItem
     public override WearSlot Slot           => WearSlot.Legwear;
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Bourgeois, SocialCategory.Urban };
+    public override int PriceReference => 10;
 }
 
 public sealed class TownsmanCap : WearableItem
@@ -91,6 +97,7 @@ public sealed class TownsmanCap : WearableItem
     public override WearSlot Slot           => WearSlot.Headgear;
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Bourgeois, SocialCategory.Urban };
+    public override int PriceReference => 8;
 }
 
 // ── Plain robe (orphanage / temple) ───────────────────────────────────
@@ -103,6 +110,7 @@ public sealed class PlainRobe : WearableItem
     public override WearSlot Slot           => WearSlot.Outerwear;
     // The knotted cord is the tell: this is temple dress, and those who know it read it instantly.
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Religious };
+    public override int PriceReference => 10;
 }
 
 // ── Farmer clothing ───────────────────────────────────────────────────
@@ -114,6 +122,7 @@ public sealed class FarmerSmock : WearableItem
     public override ItemSize Size           => ItemSize.Medium;
     public override WearSlot Slot           => WearSlot.Bodywear;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Peasant };
+    public override int PriceReference => 8;
 }
 
 public sealed class FarmerBreeches : WearableItem
@@ -123,6 +132,7 @@ public sealed class FarmerBreeches : WearableItem
     public override string Description      => "Sturdy wool breeches, knee-tied with leather thongs";
     public override WearSlot Slot           => WearSlot.Legwear;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Peasant };
+    public override int PriceReference => 7;
 }
 
 public sealed class FarmerStrawHat : WearableItem
@@ -132,6 +142,7 @@ public sealed class FarmerStrawHat : WearableItem
     public override string Description      => "A wide-brimmed straw hat, bleached pale by sun";
     public override WearSlot Slot           => WearSlot.Headgear;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Peasant };
+    public override int PriceReference => 3;
 }
 
 public sealed class FarmerClogs : WearableItem
@@ -142,6 +153,7 @@ public sealed class FarmerClogs : WearableItem
     public override WearSlot Slot           => WearSlot.Footwear;
     public override int DefenseDice => 1;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Peasant };
+    public override int PriceReference => 4;
 }
 
 // ── Noble clothing ────────────────────────────────────────────────────
@@ -152,6 +164,7 @@ public sealed class SilkStockings : WearableItem
     public override string Description      => "A pair of pale-grey silk stockings, finely knitted";
     public override WearSlot Slot           => WearSlot.Legwear;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Aristocrat };
+    public override int PriceReference => 30;
 }
 
 public sealed class KneeLengthCoat : WearableItem
@@ -164,6 +177,7 @@ public sealed class KneeLengthCoat : WearableItem
     public override int DefenseDice => 1;
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Aristocrat, SocialCategory.Bourgeois };
+    public override int PriceReference => 50;
 }
 
 public sealed class NobleUndertunic : WearableItem
@@ -174,6 +188,7 @@ public sealed class NobleUndertunic : WearableItem
     public override ItemSize Size           => ItemSize.Medium;
     public override WearSlot Slot           => WearSlot.Bodywear;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Aristocrat };
+    public override int PriceReference => 35;
 }
 
 public sealed class SoftLeatherShoes : WearableItem
@@ -183,6 +198,7 @@ public sealed class SoftLeatherShoes : WearableItem
     public override string Description      => "Thin-soled shoes of supple dyed leather, not made for rough roads";
     public override WearSlot Slot           => WearSlot.Footwear;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Aristocrat };
+    public override int PriceReference => 25;
 }
 
 // ── Travelling supplies (curiosity / dream / gold_thirst) ─────────────
@@ -199,6 +215,7 @@ public sealed class TravelersBackpack : WearableContainerItem
     // Everything owned, carried on the back: the mark of someone with no roof to leave it under.
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Pauper, SocialCategory.Outlaw };
+    public override int PriceReference => 30;
 }
 
 public sealed class Sausage : ConsumableItem
@@ -210,6 +227,7 @@ public sealed class Sausage : ConsumableItem
     protected override HumorRichness Richness => HumorRichness.Rich;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<BloodHumor>(40).Add<FatHumor>(35).Add<SaltHumor>(25);
+    public override int PriceReference => 8;
 }
 
 public sealed class LeatherCanteen : WearableContainerItem
@@ -226,6 +244,7 @@ public sealed class LeatherCanteen : WearableContainerItem
     // in one — read sympathetically by those who do the same, and by those with nowhere to be.
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Peasant, SocialCategory.Pauper };
+    public override int PriceReference => 12;
 }
 
 public sealed class WaterDraught : ConsumableItem
@@ -237,6 +256,7 @@ public sealed class WaterDraught : ConsumableItem
     protected override HumorRichness Richness => HumorRichness.Sparse;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<AquaHumor>(100);
+    public override int PriceReference => 1;
 }
 
 // ── Sundries ──────────────────────────────────────────────────────────
@@ -247,6 +267,7 @@ public sealed class Hairpin : Item
     public override string Description => "A slim brass hairpin, bent into a useful pick";
     public override ItemCategory Category => ItemCategory.Tool;
     public override int    UsageLevel  => 2;
+    public override int PriceReference => 3;
 }
 
 /// <summary>
@@ -270,6 +291,7 @@ public sealed class WoodenStick : Item
     public override string Description => "A weather-greyed stick still half-imagined as a magic sword";
     public override ItemCategory Category => ItemCategory.Tool;
     public override int    UsageLevel  => 1;
+    public override int PriceReference => 1;
 }
 
 /// <summary>
@@ -281,6 +303,7 @@ public sealed class WoodenDoll : Item
     public override string ItemId      => "wooden_doll";
     public override string DisplayName => "Wooden Doll";
     public override string Description => "A small, lovingly worn doll of carved oak — a sleeping princess once";
+    public override int PriceReference => 4;
 }
 
 public sealed class Worm : ConsumableItem
@@ -292,6 +315,7 @@ public sealed class Worm : ConsumableItem
     protected override HumorRichness Richness => HumorRichness.Sparse;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FiberHumor>(40).Add<FungiHumor>(35).Add<YellowBileHumor>(25);
+    public override int PriceReference => 1;
 }
 
 public sealed class MouseMeat : ConsumableItem
@@ -304,6 +328,7 @@ public sealed class MouseMeat : ConsumableItem
     protected override HumorRichness Richness => HumorRichness.Sparse;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<BloodHumor>(55).Add<FiberHumor>(25).Add<FatHumor>(20);
+    public override int PriceReference => 1;
 }
 
 public sealed class SquirrelMeat : ConsumableItem
@@ -315,4 +340,5 @@ public sealed class SquirrelMeat : ConsumableItem
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<BloodHumor>(45).Add<FatHumor>(30).Add<SaltHumor>(25);
+    public override int PriceReference => 3;
 }

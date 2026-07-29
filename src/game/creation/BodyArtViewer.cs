@@ -585,9 +585,10 @@ public class BodyArtViewer
         int labelRow = ArtOffsetY + 1;
         int barRow   = ArtOffsetY + 2;
 
-        // Label and numeric value
+        // Label and numeric value. Kept light rather than tinted to the bar's own colour, so it
+        // reads as a heading like the inventory's WEIGHT readout and the bar below carries the hue.
         string label = $"HP  {curHp}/{maxHp}";
-        _terminal.Text(barX, labelRow, label, Config.Colors.DarkYellowGrey, Config.Colors.Black);
+        _terminal.Text(barX, labelRow, label, Config.Colors.LightGray75, Config.Colors.Black);
 
         // Individual cells — one per max HP
         for (int i = 0; i < maxHp; i++)
@@ -629,9 +630,10 @@ public class BodyArtViewer
         int x0       = rightEdge - rowWidth + 1;
         if (x0 < 0) return;   // art area too narrow to hold the readout
 
-        // Row 1 — age / lifetime in days, right-aligned.
+        // Row 1 — age / lifetime in days, right-aligned. Light like the HP label opposite it, so
+        // both readouts head their bars the same way.
         _terminal.Text(rightEdge - label.Length + 1, labelRow, label,
-            Config.Colors.DarkYellowGrey, Config.Colors.Black);
+            Config.Colors.LightGray75, Config.Colors.Black);
 
         // Row 2 — remaining-lifetime bar, then the percentage.
         int filled = (int)Math.Round(fraction * AgeBarWidth);

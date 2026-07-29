@@ -54,7 +54,9 @@ public sealed class PaddedGambeson : WearableItem
     public override string ItemId      => "padded_gambeson";
     public override string DisplayName => "Padded Gambeson";
     public override string Description => "A thick quilted coat of layered linen, stitched in close vertical channels and stained at the collar";
-    public override ItemSize Size      => ItemSize.Large;
+    // Medium fills the six-slot Underwear anchor exactly — a gambeson *is* your whole underlayer,
+    // and nothing else fits beneath it. Large would exceed the anchor and could never be worn.
+    public override ItemSize Size      => ItemSize.Medium;
     public override WearSlot Slot      => WearSlot.Underwear;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
@@ -141,7 +143,8 @@ public sealed class IronKettleHelm : WearableItem
     public override string ItemId      => "iron_kettle_helm";
     public override string DisplayName => "Iron Kettle Helm";
     public override string Description => "A wide-brimmed iron helm beaten from a single plate, lined with rag and rust-pitted along the rim";
-    public override ItemSize Size      => ItemSize.Medium;
+    // Headgear holds three slots, so every hat is Small whatever it is made of.
+    public override ItemSize Size      => ItemSize.Small;
     public override WearSlot Slot      => WearSlot.Headgear;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Ironwork };

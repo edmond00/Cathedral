@@ -9,4 +9,5 @@ public sealed class Tallow : Item
     public override string DisplayName => "Tallow";
     public override string Article     => "some";
     public override string Description => "A lump of rendered animal fat, pale and waxy, with a faint rancid smell";
+    public override int PriceReference => 4;
 }

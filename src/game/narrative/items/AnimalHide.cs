@@ -10,4 +10,5 @@ public sealed class AnimalHide : Item
     public override string Description => "A scraped and dried animal hide, stiff and yellowed, smelling of salt and work";
     public override ItemSize Size      => ItemSize.Large;
     public override WeightClass Weight       => WeightClass.Medium;
+    public override int PriceReference => 15;
 }

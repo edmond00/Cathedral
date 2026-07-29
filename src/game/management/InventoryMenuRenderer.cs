@@ -1215,7 +1215,12 @@ public sealed class InventoryMenuRenderer
         _terminal.DrawBox(x, y, ItemBoxW, h, BoxStyle.Single, border, bg);
 
         int innerW = ItemBoxW - 2;
-        int nameRow = h >= 4 ? y + h / 2 - 1 : y + h / 2;
+
+        // Dead centre of the interior. A taller box used to nudge this up a row to leave space for
+        // usage-level pips underneath; those are gone (they marked every item, meaning nothing on
+        // most), and the offset outlived them — which left every Medium and Large box top-heavy,
+        // with its name one row high and an empty row spare at the bottom.
+        int nameRow = y + h / 2;
 
         if (!string.IsNullOrEmpty(label))
         {
@@ -1223,11 +1228,6 @@ public sealed class InventoryMenuRenderer
             int lx = x + 1 + (innerW - name.Length) / 2;
             _terminal.Text(lx, nameRow, name, fg, bg);
         }
-
-        // Usage-level pips used to be drawn here. They were removed because UsageLevel defaults to
-        // 1 on every item, so a loaf of bread and a wool cap carried the same bright-yellow marks
-        // as a chisel — advertising a property that only means anything for a Tool or a Weapon.
-        // The info panel states it plainly ("Usage: lv. 4") for the items where it applies.
     }
 
     private static int ComputeBoxX(int artCol)
@@ -1496,11 +1496,10 @@ public sealed class InventoryMenuRenderer
         DrawKV("Weight", item.Weight.Label(),      ref y);
         DrawKV("Size",   item.Size.ToString(),     ref y);
 
-        // The reference price, before the small per-merchant variation a catalogue applies. An
-        // untagged item belongs to no catalogue at all, so it has no price to quote.
-        DrawKV("Price", item.Tags.Count == 0
-                            ? "not traded"
-                            : $"{item.PriceReference}{CoinSymbol(item.PriceCoin)}", ref y);
+        // What the thing is worth, before the small per-merchant variation a catalogue applies.
+        // Shown for everything, including items no NPC currently stocks: an item without a trade
+        // tag is one nobody happens to deal in, not one without a value.
+        DrawKV("Price", $"{item.PriceReference}{CoinSymbol(item.PriceCoin)}", ref y);
         y++;
 
         // Flavour, not fact: dimmer than the values above so the eye can skip it when scanning

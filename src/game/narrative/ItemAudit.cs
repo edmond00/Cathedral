@@ -293,6 +293,18 @@ public static class ItemAudit
             warnings.Add($"wearable '{w.ItemId}' impresses nobody — give it a standing " +
                          "(Pauper covers plain or makeshift dress)");
 
+        // A garment bigger than the anchor it belongs on can never be worn at all — it passes every
+        // type check and then fails the capacity one, silently, every time.
+        foreach (var w in wearables)
+        {
+            int capacity = w.Slot.DefaultAnchor().Capacity();
+            if (w.SlotCount > capacity)
+                warnings.Add($"wearable '{w.ItemId}' is {w.Size} ({w.SlotCount} slots) but its " +
+                             $"{w.Slot} anchor holds only {capacity} — it can never be equipped");
+        }
+
+        warnings.AddRange(CheckSlotTiling(sb));
+
         foreach (var w in wearables.Where(w => w.DefenseDice is < 0 or > MaxDefenseDicePerItem))
             warnings.Add($"wearable '{w.ItemId}' has DefenseDice {w.DefenseDice}, outside 0–{MaxDefenseDicePerItem}");
 
@@ -301,6 +313,46 @@ public static class ItemAudit
 
         foreach (var w in wearables.Where(w => w.DialogueAppeal.Distinct().Count() != w.DialogueAppeal.Count))
             warnings.Add($"wearable '{w.ItemId}' lists the same social standing twice — the duplicate grants nothing");
+
+        return warnings;
+    }
+
+    /// <summary>
+    /// Sizes and anchor capacities must tile exactly.
+    ///
+    /// The inventory draws one terminal row per slot and fills whatever is left over with
+    /// three-row placeholders, so an anchor only keeps a constant height if every size divides its
+    /// capacity — otherwise a leftover of one or two slots is too small for a placeholder, and the
+    /// anchor visibly shrinks the moment you put something in it. That is exactly what 3/5/7 sizes
+    /// against 3/6/9 capacities did: a medium left four slots, drawing one placeholder and losing
+    /// a row; a large left two, drawing none and losing two.
+    /// </summary>
+    private static List<string> CheckSlotTiling(StringBuilder sb)
+    {
+        const int PlaceholderSlots = 3;   // mirrors InventoryMenuRenderer.PlaceholderH
+        var warnings = new List<string>();
+
+        sb.AppendLine("  size tiling (rows drawn vs anchor capacity)");
+        foreach (var capacity in new[] { 3, 6, 9 })
+        {
+            foreach (ItemSize size in Enum.GetValues<ItemSize>())
+            {
+                int slots = (int)size;
+                if (slots > capacity) continue;
+
+                int left  = capacity - slots;
+                int drawn = slots + (left / PlaceholderSlots) * PlaceholderSlots;
+                bool ok   = drawn == capacity;
+                sb.AppendLine($"    {size,-6} in a {capacity}-slot anchor → {drawn} of {capacity} rows" +
+                              (ok ? "" : "   ← gap"));
+
+                if (!ok)
+                    warnings.Add($"a {size} item ({slots} slots) in a {capacity}-slot anchor draws only " +
+                                 $"{drawn} rows — {capacity - drawn} slot(s) are too few for a placeholder, " +
+                                 "so the anchor shrinks when filled");
+            }
+        }
+        sb.AppendLine();
 
         return warnings;
     }
@@ -385,6 +437,9 @@ public static class ItemAudit
 
         var untagged = items.Where(i => i.Tags.Count == 0).ToList();
         sb.AppendLine($"  untagged (never traded) : {untagged.Count}");
+        if (untagged.Count > 0)
+            foreach (var line in Columnise(untagged.Select(i => $"{i.ItemId}({i.PriceReference})")))
+                sb.AppendLine($"    {line}");
         sb.AppendLine();
 
         // Goods are priced in copper, all of them. Denominations never convert, so a single item
