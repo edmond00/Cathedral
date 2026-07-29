@@ -47,6 +47,7 @@ Run `help` for the authoritative list. The essentials:
 
 ```
   state                     mode + phase flags (loading, dice, noetic, history/total lines)
+                            plus carry[cur/max] and the travel blocker when overloaded
   dump [--color]            the terminal grid as text; --color tags each row dim/mix/lit
   regions                   what is actionable right now — the handles `click` accepts
   world / destinations      world-map state; reachable vertices by name
@@ -58,7 +59,14 @@ Run `help` for the authoritative list. The essentials:
   click option <n>          a dialogue reply
   click button              the footer button (LEAVE / INTERRUPT / END / CONTINUE)
   choose <n>                answer the visible popup by index
-  travel <vertex|name>      world travel (bypasses 3D picking entirely)
+  travel <vertex|name>      plan a route to a vertex (bypasses 3D picking entirely);
+                            clicking your own vertex enters the current location
+  travel-go                 commit the plan and set out — the TRAVEL button
+  manage [tab]              open/close the protagonist screen; with a tab name
+                            (Body / Inventory / Memory / Humors / …) open it there
+  select [item name]        show a carried item's info panel; bare `select` lists what
+                            is carried. Note the starting kit is randomised even under
+                            --seed, so discover the names rather than hard-coding them
   scroll up|down [n]        scroll the shared history buffer
 
   strategy <succeed|fail-dice|fail-plausibility|auto>
@@ -192,6 +200,35 @@ the genitories score. It finishes with one fully-generated NPC printed in full, 
 way to see whether a trait you just wrote actually reads well on a person.
 
 Run it after touching `NpcContentGenerator`, any archetype's generation block, or any trait.
+
+### Checking the item catalogue
+
+`--item-audit` reads `ItemRegistry` and reports the whole catalogue, headless. Coverage is
+automatic — any item with a public parameterless constructor is audited the moment it is written:
+
+```bash
+dotnet run -- --item-audit
+```
+
+It prints the census by `ItemCategory` and subcategory, the wearable table (max armour dice per body
+section, garments per social standing), liquid/vessel reachability, trade-tag coverage, the weight
+distribution and what it means at each backbone tier. Then it warns about:
+
+- duplicate `ItemId`s or `DisplayName`s, and any `Info` line that repeats the description (which
+  would print it twice in the panel);
+- a wearable that neither protects, nor flatters, nor holds anything — dead weight on an anchor;
+- a liquid no vessel accepts, which under the strict pickup rule can never be picked up at all;
+- a category or subcategory thin enough that the player sees no variety (weapons exempt: two per
+  fighting medium is deliberate);
+- a body section whose armour ceiling has crept past ~3 dice. **Armour is uncapped in code** — this
+  line is the only thing standing between layered garments and an unhittable torso, so read it
+  after touching any `DefenseDice`.
+
+It also samples `FightResolver.PreRollHitLocation` 60k times and compares the result against each
+body part's share of the wound pool. Armour needs the hit location *before* the dice, so unaimed
+attacks now pre-roll one; that check is the proof the pre-roll did not change where blows land.
+
+Run it after touching any item, `WearableItem`, `ArmorSections`, or the weight tiers.
 
 ### What `--cli` cannot check
 

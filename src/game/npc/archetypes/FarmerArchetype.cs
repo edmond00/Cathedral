@@ -17,6 +17,9 @@ public class FarmerArchetype : NamedNpcArchetype
     public override bool DefaultPersistent  => true;
     public override int  ModiMentisCount    => 10;
     public override bool CanSpeak           => true;
+
+    /// <summary>Holds his own land, but works it with his own hands.</summary>
+    public override SocialCategory? Social  => SocialCategory.Peasant;
     public override bool IsBrave            => true;   // owns the land, will demand a fight
     public override int  AuthorityLevel     => 1;      // landowner
 

@@ -20,6 +20,51 @@ public class Protagonist : PartyMember
     /// <summary>Named companions travelling with the protagonist.</summary>
     public List<Companion> CompanionParty { get; set; } = new();
 
+    /// <summary>Everyone who travels together: the protagonist first, then the companions.</summary>
+    public IEnumerable<PartyMember> EveryMember =>
+        new PartyMember[] { this }.Concat(CompanionParty);
+
+    /// <summary>
+    /// Members carrying more than they can bear. The party travels together or not at all, so a
+    /// single overloaded companion grounds everyone until the player puts something down —
+    /// acquisition itself is never blocked (see <see cref="PartyMember.IsOverloaded"/>).
+    /// </summary>
+    public IReadOnlyList<PartyMember> OverloadedMembers =>
+        EveryMember.Where(m => m.IsOverloaded).ToList();
+
+    /// <summary>
+    /// The reason travel is blocked, or null when the party can set out.
+    ///
+    /// Kept under ~36 characters because it has to fit inside the travel panel, which is 40 cells
+    /// wide — a longer sentence gets truncated exactly where the actionable half would be. Hence
+    /// the given name only, and "drop N wt" rather than a fuller phrasing.
+    /// </summary>
+    public string? TravelWeightBlocker
+    {
+        get
+        {
+            var overloaded = OverloadedMembers;
+            if (overloaded.Count == 0) return null;
+
+            int excess = overloaded.Sum(m => m.ExcessWeight);
+
+            if (overloaded.Count == 1)
+            {
+                string name = GivenName(overloaded[0].DisplayName);
+                return $"{name} is overloaded — drop {excess} wt";
+            }
+
+            return $"{overloaded.Count} members overloaded — drop {excess} wt";
+        }
+    }
+
+    /// <summary>First word of a display name ("Filyppo the Stout" → "Filyppo"), to save panel width.</summary>
+    private static string GivenName(string displayName)
+    {
+        int space = displayName.IndexOf(' ');
+        return space > 0 ? displayName[..space] : displayName;
+    }
+
     /// <summary>
     /// Global party-wide state not tied to a single member — currently the shared coin wallet
     /// used by the buy/sell economy. Coins are global (not per-member) and weightless.

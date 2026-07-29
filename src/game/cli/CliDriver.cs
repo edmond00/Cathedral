@@ -188,6 +188,9 @@ public sealed class CliDriver
                 case "click":       CmdClick(rest);                   break;
                 case "choose":      CmdChoose(rest);                  break;
                 case "travel":      CmdTravel(rest);                  break;
+                case "travel-go":   CmdTravelGo();                    break;
+                case "manage":      CmdManage(rest);                  break;
+                case "select":      CmdSelect(rest);                  break;
                 case "key":         CmdKey(rest);                     break;
                 case "scroll":      CmdScroll(rest);                  break;
                 case "strategy":    CmdStrategy(rest);                break;
@@ -243,7 +246,11 @@ public sealed class CliDriver
           click continue            confirm the dice overlay
           click cell <x> <y>        raw terminal cell click (escape hatch)
           choose <n>                answer the visible popup by index
-          travel <vertex|name>      travel to a world vertex (bypasses 3D picking)
+          travel <vertex|name>      plan a route to a world vertex (bypasses 3D picking)
+          travel-go                 commit the planned route and set out (the TRAVEL button)
+          manage [tab]              open/close the protagonist screen; with a tab name
+                                    (Body, Inventory, Memory, Humors, …) open it there
+          select [item name]        show a carried item's info panel; bare `select` lists them
           key <escape|…>            send a key
           scroll up|down [n]        scroll the shared history buffer
         Control
@@ -263,6 +270,15 @@ public sealed class CliDriver
     {
         var sb = new StringBuilder();
         sb.Append($"mode={_game.CurrentMode} idle={_game.CliIsIdle()}");
+
+        // Carrying load, and whether it is currently grounding the party. Weight never blocks a
+        // pickup, so this is the only place the constraint is observable before travel is refused.
+        if (_game.CliCarryLoad is { } load)
+        {
+            sb.Append($" carry[{load.Current}/{load.Max}");
+            if (load.Blocker != null) sb.Append($" BLOCKED=\"{load.Blocker}\"");
+            sb.Append(']');
+        }
 
         if (_game.CliNarration is { } n)
         {
@@ -579,6 +595,84 @@ public sealed class CliDriver
 
         _game.CliClickVertex(target);
         CliMode.Emit($"ok: travel requested to vertex {target}");
+    }
+
+    /// <summary>
+    /// Commits the planned waypoints and sets out — the CLI equivalent of pressing TRAVEL.
+    /// <c>travel</c> alone only plans a route; without this a script could never leave the
+    /// starting vertex, and the carrying-weight gate on departure would be untestable.
+    /// </summary>
+    private void CmdTravelGo()
+    {
+        if (_game.CurrentMode != GameMode.WorldView)
+        { CliMode.Emit($"error: travel-go only works in WorldView (currently {_game.CurrentMode})"); return; }
+
+        if (_game.CliCarryLoad is { Blocker: { } blocked })
+        { CliMode.Emit($"refused: {blocked}"); return; }
+
+        _game.StartPlannedTravel();
+        CliMode.Emit($"ok: travelling (mode={_game.CurrentMode})");
+    }
+
+    /// <summary>
+    /// Opens the protagonist-management screen, or closes it if already open; with a tab name,
+    /// opens it and switches to that tab. This is the only way a script can reach the inventory —
+    /// in play the screen sits behind the main-menu overlay, which is not clickable from narration.
+    /// </summary>
+    private void CmdManage(string[] a)
+    {
+        string? tab = a.Length > 0 ? a[0] : null;
+
+        if (tab != null && _game.CliManagementTabs.Count == 0)
+        {
+            // Not open yet — open it first so the tab switch has something to act on.
+            if (!_game.CliToggleManagement())
+            {
+                CliMode.Emit("error: no protagonist yet — start a game first");
+                return;
+            }
+        }
+        else if (tab == null)
+        {
+            if (!_game.CliToggleManagement())
+            {
+                CliMode.Emit("error: no protagonist yet — start a game first");
+                return;
+            }
+            CliMode.Emit("ok: toggled protagonist management");
+            return;
+        }
+
+        if (!_game.CliSelectManagementTab(tab!))
+        {
+            CliMode.Emit($"error: unknown tab '{tab}' (have: {string.Join(", ", _game.CliManagementTabs)})");
+            return;
+        }
+        CliMode.Emit($"ok: management tab {tab}");
+    }
+
+    /// <summary>
+    /// Selects a carried item by name and shows its info panel. Without an argument, lists what is
+    /// carried. Reaching the panel otherwise means clicking a body-art box whose position shifts
+    /// with the art, so this is the stable handle.
+    /// </summary>
+    private void CmdSelect(string[] a)
+    {
+        if (a.Length == 0)
+        {
+            var carried = _game.CliCarriedItemNames;
+            if (carried.Count == 0) { CliMode.Emit("error: open the protagonist screen first (`manage Inventory`)"); return; }
+            foreach (var n in carried) CliMode.Emit($"  select \"{n}\"");
+            return;
+        }
+
+        string name = string.Join(' ', a);
+        if (!_game.CliSelectItem(name))
+        {
+            CliMode.Emit($"error: no carried item matching \"{name}\" (try `select` for the list)");
+            return;
+        }
+        CliMode.Emit($"ok: selected \"{name}\"");
     }
 
     private void CmdKey(string[] a)

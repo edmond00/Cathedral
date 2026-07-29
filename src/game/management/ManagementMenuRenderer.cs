@@ -380,6 +380,53 @@ public class ManagementMenuRenderer
     }
 
     /// <summary>Handle left click at terminal coordinates.</summary>
+    /// <summary>
+    /// Selects a tab by name for <c>--cli</c>, which cannot click the tab strip. Returns false for
+    /// an unknown or disabled tab. Mirrors the click path in <see cref="OnMouseClick"/>, including
+    /// the routines porthole handover, so a scripted switch behaves like a real one.
+    /// </summary>
+    public bool CliSelectTab(string tabName)
+    {
+        // TabDefinition is a record struct, so FirstOrDefault yields default() rather than null on
+        // a miss — index first and check the index, or an unknown name silently selects Body.
+        int idx = Array.FindIndex(AllTabs,
+            t => string.Equals(t.Label, tabName, StringComparison.OrdinalIgnoreCase));
+        if (idx < 0) return false;
+
+        var tabDef = AllTabs[idx];
+        if (!tabDef.Enabled) return false;
+
+        var previousTab = _activeTab;
+        _activeTab = tabDef.Tab;
+
+        if (previousTab == ManagementTab.Routines && _activeTab != ManagementTab.Routines)
+            OnRoutinesPortholeClosed?.Invoke();
+        if (_activeTab == ManagementTab.Routines && previousTab != ManagementTab.Routines)
+            _routinesPanel.OnActivated(_protagonist);
+
+        if (!IsCharacterVisibleForTab(_selectedCharacterIndex, _activeTab))
+            _selectedCharacterIndex = 0;
+
+        Render();
+        return true;
+    }
+
+    /// <summary>The tab labels a <c>--cli</c> script may pass to <see cref="CliSelectTab"/>.</summary>
+    public IReadOnlyList<string> CliTabNames =>
+        AllTabs.Where(t => t.Enabled).Select(t => t.Label).ToList();
+
+    /// <summary>Selects a carried item by name on the Inventory tab, so its info panel can be read.</summary>
+    public bool CliSelectItem(string itemName)
+    {
+        if (!CliSelectTab("Inventory")) return false;
+        if (!_inventoryMenu.CliSelectItem(itemName)) return false;
+        Render();
+        return true;
+    }
+
+    /// <summary>Everything the selected character is carrying, for <c>--cli</c> discovery.</summary>
+    public IReadOnlyList<string> CliCarriedItemNames => _inventoryMenu.CliCarriedItemNames;
+
     public void OnMouseClick(int x, int y)
     {
         // Back button

@@ -1,9 +1,9 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Narrative.World.Items;
 
-public sealed class BoarTusk : Item
+public sealed class BoarTusk : AnimalProductItem
 {
     public override string ItemId      => "boar_tusk";
     public override string DisplayName => "Boar Tusk";
@@ -12,10 +12,10 @@ public sealed class BoarTusk : Item
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 8;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.2f;
+    public override WeightClass    Weight => WeightClass.Light;
 }
 
-public sealed class WolfPelt : Item
+public sealed class WolfPelt : AnimalProductItem
 {
     public override string ItemId      => "wolf_pelt";
     public override string DisplayName => "Wolf Pelt";
@@ -24,10 +24,10 @@ public sealed class WolfPelt : Item
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 20;
     public override ItemSize Size => ItemSize.Large;
-    public override float    Weight => 2.0f;
+    public override WeightClass    Weight => WeightClass.Heavy;
 }
 
-public sealed class DeerHide : Item
+public sealed class DeerHide : AnimalProductItem
 {
     public override string ItemId      => "deer_hide";
     public override string DisplayName => "Deer Hide";
@@ -36,10 +36,10 @@ public sealed class DeerHide : Item
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 18;
     public override ItemSize Size => ItemSize.Large;
-    public override float    Weight => 1.8f;
+    public override WeightClass    Weight => WeightClass.Medium;
 }
 
-public sealed class GoatHide : Item
+public sealed class GoatHide : AnimalProductItem
 {
     public override string ItemId      => "goat_hide";
     public override string DisplayName => "Goat Hide";
@@ -48,34 +48,32 @@ public sealed class GoatHide : Item
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 14;
     public override ItemSize Size => ItemSize.Medium;
-    public override float    Weight => 1.4f;
+    public override WeightClass    Weight => WeightClass.Medium;
 }
 
-public sealed class LynxPelt : Item
+public sealed class LynxPelt : AnimalProductItem
 {
     public override string ItemId      => "lynx_pelt";
     public override string DisplayName => "Lynx Pelt";
     public override string Description => "A spotted lynx pelt, prized and rare";
     public override List<ItemTag> Tags => new() { ItemTag.Pelt };
-    public override CoinType PriceCoin => CoinType.Silver;
-    public override int PriceReference => 2;
+    public override int PriceReference => 20;
     public override ItemSize Size => ItemSize.Medium;
-    public override float    Weight => 1.5f;
+    public override WeightClass    Weight => WeightClass.Medium;
 }
 
-public sealed class SealPelt : Item
+public sealed class SealPelt : AnimalProductItem
 {
     public override string ItemId      => "seal_pelt";
     public override string DisplayName => "Seal Pelt";
     public override string Description => "A sleek dark seal pelt, oily and supple";
     public override List<ItemTag> Tags => new() { ItemTag.Pelt };
-    public override CoinType PriceCoin => CoinType.Silver;
-    public override int PriceReference => 2;
+    public override int PriceReference => 20;
     public override ItemSize Size => ItemSize.Large;
-    public override float    Weight => 2.5f;
+    public override WeightClass    Weight => WeightClass.Heavy;
 }
 
-public sealed class EagleFeather : Item
+public sealed class EagleFeather : AnimalProductItem
 {
     public override string ItemId      => "eagle_feather";
     public override string DisplayName => "Eagle Feather";
@@ -84,10 +82,10 @@ public sealed class EagleFeather : Item
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 6;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.02f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
 }
 
-public sealed class Feather : Item
+public sealed class Feather : AnimalProductItem
 {
     public override string ItemId      => "feather";
     public override string DisplayName => "Feather";
@@ -96,5 +94,5 @@ public sealed class Feather : Item
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.01f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
 }

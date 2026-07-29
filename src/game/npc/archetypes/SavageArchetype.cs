@@ -14,6 +14,9 @@ public class SavageArchetype : NamedNpcArchetype
     public override int ModiMentisCount => 10;
     public override bool CanSpeak => true;
 
+    /// <summary>Outside the law and entirely content there.</summary>
+    public override SocialCategory? Social  => SocialCategory.Outlaw;
+
     public override string RoleNoun => "savage";
     protected override bool LabelMentionsLocation => false;
 

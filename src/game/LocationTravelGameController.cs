@@ -228,6 +228,61 @@ public class LocationTravelGameController : IDisposable
         => _currentMode == GameMode.MainMenu ? _mainMenuRenderer?.CliButtons() : null;
 
     /// <summary>
+    /// Opens the protagonist-management screen (body / inventory / memory tabs) from wherever the
+    /// game currently is, and closes it again on the second call.
+    ///
+    /// In the running game this screen is reached by clicking through the main-menu overlay, which
+    /// a script cannot do from inside narration. Since the inventory is otherwise untestable —
+    /// carrying weight, item categories and equipment all live there — the CLI gets a direct seam
+    /// rather than a reconstruction of the click path.
+    /// </summary>
+    public bool CliToggleManagement()
+    {
+        if (_protagonist == null) return false;
+
+        if (_currentMode == GameMode.ProtagonistManagement)
+        {
+            _core.SetNarrationMode(true);
+            _managementMenuRenderer = null;
+            SetMode(MenuReturnMode);
+            return true;
+        }
+
+        SetMode(GameMode.ProtagonistManagement);
+        return true;
+    }
+
+    /// <summary>
+    /// Switches the management screen to a named tab. Null tab name lists what is available.
+    /// Returns false when the screen is closed or the tab is unknown.
+    /// </summary>
+    public bool CliSelectManagementTab(string tabName) =>
+        _currentMode == GameMode.ProtagonistManagement
+        && _managementMenuRenderer?.CliSelectTab(tabName) == true;
+
+    /// <summary>Tab labels available on the management screen, or empty when it is closed.</summary>
+    public IReadOnlyList<string> CliManagementTabs =>
+        _managementMenuRenderer?.CliTabNames ?? Array.Empty<string>();
+
+    /// <summary>Selects a carried item by name so its info panel can be inspected from a script.</summary>
+    public bool CliSelectItem(string itemName) =>
+        _managementMenuRenderer?.CliSelectItem(itemName) == true;
+
+    /// <summary>Everything carried, for <c>--cli</c> discovery of selectable item names.</summary>
+    public IReadOnlyList<string> CliCarriedItemNames =>
+        _managementMenuRenderer?.CliCarriedItemNames ?? Array.Empty<string>();
+
+    /// <summary>
+    /// The protagonist's carrying load and, when the party is grounded by it, the reason.
+    /// Surfaced to <c>--cli state</c> because weight no longer blocks pickups — the only way a
+    /// script can observe the constraint is here or by being refused travel.
+    /// </summary>
+    public (int Current, int Max, string? Blocker)? CliCarryLoad =>
+        _protagonist == null
+            ? null
+            : (_protagonist.CurrentWeight, _protagonist.MaxCarryWeight, _protagonist.TravelWeightBlocker);
+
+    /// <summary>
     /// Cell position of the protagonist-creation Continue button, or null outside that screen.
     /// Creation waits for this click, so an automated run has to press it to reach narration.
     /// </summary>
@@ -666,7 +721,9 @@ public class LocationTravelGameController : IDisposable
             maxWaypoints: _travelPlanner.MaxWaypoints,
             estimate: _plannedEstimate,
             destinationName: destinationName,
-            routinesAvailable: routinesAvailable);
+            routinesAvailable: routinesAvailable,
+            // An overloaded member grounds the whole party until something is put down.
+            overloadWarning: _protagonist?.TravelWeightBlocker);
     }
 
     /// <summary>
@@ -1583,6 +1640,15 @@ public class LocationTravelGameController : IDisposable
     {
         if (_travelPlanner == null || _travelAStar == null) return;
         if (!_travelPlanner.HasWaypoints) return;
+
+        // The TRAVEL button is already dead while anyone is overloaded, but this is the real gate:
+        // it also covers the routines path and the --cli `travel` command, which never touch the
+        // button. The party walks together, so one overloaded member grounds everyone.
+        if (_protagonist?.TravelWeightBlocker is { } blocked)
+        {
+            Console.WriteLine($"LocationTravelGameController: Travel refused — {blocked}");
+            return;
+        }
 
         int protagonist = _interface.GetAvatarVertex();
         var graph = _interface.GetTravelGraph();

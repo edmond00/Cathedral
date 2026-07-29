@@ -1,9 +1,10 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Straw : Item
 {
+    public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "straw";
     public override string DisplayName => "Straw";
     public override string Article     => "some";

@@ -14,6 +14,9 @@ public class DruidArchetype : NamedNpcArchetype
     public override int ModiMentisCount => 12;
     public override bool CanSpeak => true;
 
+    /// <summary>Set apart by what he serves rather than by what he owns.</summary>
+    public override SocialCategory? Social  => SocialCategory.Religious;
+
     public override string RoleNoun => "druid";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

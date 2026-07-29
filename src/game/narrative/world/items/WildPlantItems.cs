@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
@@ -13,7 +13,7 @@ public sealed class Nettle : ConsumableItem
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.05f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;
     protected override HumorRecipe Recipe => new HumorRecipe()
@@ -29,7 +29,7 @@ public sealed class Fern : ConsumableItem
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.05f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;
     protected override HumorRecipe Recipe => new HumorRecipe()
@@ -41,8 +41,9 @@ public sealed class Ivy : Item
     public override string ItemId      => "ivy";
     public override string DisplayName => "Ivy";
     public override string Description => "A trailing length of ivy, leaves leathery and dark";
+    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.1f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 1;
@@ -57,7 +58,7 @@ public sealed class Bramble : ConsumableItem
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.1f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;
     protected override HumorRecipe Recipe => new HumorRecipe()
@@ -73,7 +74,7 @@ public sealed class Reed : ConsumableItem
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.1f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;
     protected override HumorRecipe Recipe => new HumorRecipe()
@@ -89,7 +90,7 @@ public sealed class Watercress : ConsumableItem
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.1f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;
     protected override HumorRecipe Recipe => new HumorRecipe()

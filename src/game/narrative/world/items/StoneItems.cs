@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
@@ -12,7 +12,7 @@ public sealed class Clay : ConsumableItem
     public override List<ItemTag> Tags => new() { ItemTag.Mineral };
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 6;
-    public override float Weight => 0.6f;
+    public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;
     protected override HumorRecipe Recipe => new HumorRecipe()
@@ -27,7 +27,7 @@ public sealed class Lichen : ConsumableItem
     public override List<ItemTag> Tags => new() { ItemTag.Mineral };
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 4;
-    public override float Weight => 0.05f;
+    public override WeightClass Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;
     protected override HumorRecipe Recipe => new HumorRecipe()

@@ -12,31 +12,6 @@ public enum ItemSize
     Large  = 7,   // 7 slots
 }
 
-/// <summary>
-/// Category tags for items — each mirrors a specific equipment anchor.
-/// Items with anchor-matching types (Headgear, Footwear, etc.) can only be placed
-/// on that anchor.  "Other" items can only go in general containers (holds, backpacks).
-/// "Liquid" items can only go in bottles.
-/// </summary>
-public enum ItemType
-{
-    Headgear,
-    Eyewear,
-    Neckwear,
-    Outerwear,
-    Bodywear,
-    Underwear,
-    BeltGear,
-    Handwear,
-    Legwear,
-    Footwear,
-    Other,
-    Liquid,
-    Food,
-    Drink,
-    Inhalant,
-}
-
 public static class ItemSizeExtensions
 {
     /// <summary>Number of inventory slots this size occupies.</summary>

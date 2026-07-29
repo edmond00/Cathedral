@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
@@ -19,7 +19,7 @@ public sealed class Cod : SeaFoodItem
     public override string DisplayName => "Cod";
     public override string Description => "A fat cod, mottled grey-green along its back";
     public override ItemSize Size => ItemSize.Medium;
-    public override float    Weight => 1.0f;
+    public override WeightClass    Weight => WeightClass.Medium;
     protected override HumorRichness Richness => HumorRichness.Rich;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<BloodHumor>(45).Add<FatHumor>(30).Add<SaltHumor>(25);
@@ -58,8 +58,9 @@ public sealed class Shell : Item
     public override string ItemId      => "shell";
     public override string DisplayName => "Shell";
     public override string Description => "A pearly fragment of seashell, edges worn smooth by tide";
+    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.05f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
 }
 
 public sealed class Seaweed : ConsumableItem
@@ -71,7 +72,7 @@ public sealed class Seaweed : ConsumableItem
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.2f;
+    public override WeightClass    Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;
     protected override HumorRecipe Recipe => new HumorRecipe()
@@ -83,8 +84,9 @@ public sealed class Driftwood : Item
     public override string ItemId      => "driftwood";
     public override string DisplayName => "Driftwood";
     public override string Description => "A water-pale piece of driftwood, salt-cracked";
+    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
-    public override float    Weight => 0.8f;
+    public override WeightClass    Weight => WeightClass.Medium;
 }
 
 public sealed class RopeFragment : Item
@@ -92,6 +94,7 @@ public sealed class RopeFragment : Item
     public override string ItemId      => "rope_fragment";
     public override string DisplayName => "Rope Fragment";
     public override string Description => "A frayed length of tarred rope cut by a tide-rock";
+    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.2f;
+    public override WeightClass    Weight => WeightClass.Light;
 }

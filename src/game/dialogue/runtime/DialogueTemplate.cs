@@ -167,7 +167,8 @@ public static class DialogueTemplate
         var offers = c.Npc.BuyCatalog?.Offers;
         if (offers == null || offers.Count == 0) return c.Npc.SellTag?.Label() ?? "odds and ends";
 
-        var names = offers.Take(3).Select(o => o.Prototype.WithArticle()).ToList();
+        // The offer's name, so a drink is boasted of as "a bottle of ale" rather than bare "ale".
+        var names = offers.Take(3).Select(o => o.WithArticle()).ToList();
         return JoinNaturally(names);
     }
 
@@ -180,7 +181,9 @@ public static class DialogueTemplate
     {
         if (c.Npc.BuyTag is not { } tag) return "what I'm carrying";
 
-        var names = c.Pc.Inventory
+        // GetAllItems(), not Inventory: TryAcquireItem never writes to the overflow list, so
+        // reading Inventory here made this token always fall back to the bare tag label.
+        var names = c.Pc.GetAllItems()
             .Where(i => i.Tags.Contains(tag))
             .Select(i => i.WithArticle())
             .Distinct()
@@ -191,9 +194,10 @@ public static class DialogueTemplate
     }
 
     /// <summary>
-    /// The offered job's pay, phrased the way a villager would state it: "a silver for every four
-    /// months' work", "a copper every five days". Reads <see cref="Job.DaysPerCoin"/> straight —
-    /// the same number the work menu will pay out on.
+    /// The offered job's pay, phrased the way a villager would state it: "a copper a day", "a
+    /// copper for every twelve days of it". Reads <see cref="Job.DaysPerCoin"/> straight — the same
+    /// number the work menu will pay out on. The denomination is read from the job rather than
+    /// assumed, though every wage is copper today, as every price is.
     /// </summary>
     private static string JobPay(DialogueContext c)
     {

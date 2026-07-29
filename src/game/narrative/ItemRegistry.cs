@@ -29,7 +29,10 @@ public class ItemRegistry
         var concreteTypes = Assembly.GetExecutingAssembly()
             .GetTypes()
             .Where(t => t.IsSubclassOf(itemType) && !t.IsAbstract
-                     && t.GetConstructor(Type.EmptyTypes) != null);
+                     && t.GetConstructor(Type.EmptyTypes) != null
+                     // Development fixtures stay instantiable from debug code but never become
+                     // world content — otherwise they surface in shops and clash with real items.
+                     && !typeof(IDebugItem).IsAssignableFrom(t));
 
         foreach (var type in concreteTypes)
         {

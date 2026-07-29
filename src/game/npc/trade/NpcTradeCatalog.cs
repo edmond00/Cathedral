@@ -15,21 +15,53 @@ public enum TradeMode
     Sell,
 }
 
-/// <summary>A single line in a catalogue: an item prototype and its agreed unit price.</summary>
+/// <summary>
+/// A single line in a catalogue: what is sold, and for how much.
+///
+/// Usually that is one item. A liquid, though, cannot change hands on its own — it needs something
+/// to be in — so a drink offer also carries the <see cref="VesselPrototype"/> it comes in, and the
+/// two are bought and sold together. This is why a catalogue line reads "bottle of ale" while the
+/// inventory afterwards holds a "Bottle" and an "Ale": the trade name describes the transaction,
+/// the item names describe what you own.
+/// </summary>
 public sealed class TradeOffer
 {
     /// <summary>Prototype instance from <see cref="ItemRegistry"/> — clone it to create stock.</summary>
     public Item Prototype { get; }
 
-    /// <summary>Unit price in <see cref="Item.PriceCoin"/>, after catalogue variation (1..100).</summary>
+    /// <summary>
+    /// The vessel a liquid is traded in, or null for anything else. Always non-null when
+    /// <see cref="Prototype"/> is a liquid, since a bare liquid cannot be carried.
+    /// </summary>
+    public Item? VesselPrototype { get; }
+
+    /// <summary>Unit price in <see cref="Coin"/>, after catalogue variation (1..100).</summary>
     public int UnitPrice { get; }
 
     public CoinType Coin => Prototype.PriceCoin;
 
-    public TradeOffer(Item prototype, int unitPrice)
+    /// <summary>True when this line delivers two items rather than one.</summary>
+    public bool IsBundle => VesselPrototype is not null;
+
+    /// <summary>
+    /// What the merchant calls it: "bottle of ale" for a bundle, the item's own trade name
+    /// otherwise. Composed here rather than stored on either item, because neither item alone is
+    /// what is being sold.
+    /// </summary>
+    public string DisplayName => VesselPrototype is null
+        ? Prototype.TradeName
+        : $"{VesselPrototype.TradeName} of {Prototype.TradeName}";
+
+    /// <summary>The same name with its article, for dialogue ("I sell a bottle of ale").</summary>
+    public string WithArticle() => VesselPrototype is null
+        ? Prototype.WithArticle()
+        : $"{VesselPrototype.Article} {DisplayName.ToLowerInvariant()}";
+
+    public TradeOffer(Item prototype, int unitPrice, Item? vesselPrototype = null)
     {
-        Prototype = prototype;
-        UnitPrice = unitPrice;
+        Prototype       = prototype;
+        UnitPrice       = unitPrice;
+        VesselPrototype = vesselPrototype;
     }
 }
 
@@ -80,11 +112,36 @@ public sealed class NpcTradeCatalog
         // Sample distinct prototypes.
         var picked = available.OrderBy(_ => rng.Next()).Take(count).ToList();
 
-        var offers = picked
-            .Select(proto => new TradeOffer(proto, VaryPrice(proto.PriceReference, rng)))
-            .ToList();
+        var offers = picked.Select(proto =>
+        {
+            // A liquid is sold in something. Pick the vessel from the same seeded rng so the
+            // catalogue stays reproducible, and fold its price into the line.
+            if (!proto.IsLiquid) return new TradeOffer(proto, VaryPrice(proto.PriceReference, rng));
+
+            var vessel = PickVesselFor(proto, rng);
+            if (vessel == null) return null;                       // nothing to pour it into — skip
+            int bundle = proto.PriceReference + vessel.PriceReference;
+            return new TradeOffer(proto, VaryPrice(bundle, rng), vessel);
+        })
+        .Where(o => o != null)
+        .Select(o => o!)
+        .ToList();
 
         return new NpcTradeCatalog(mode, tag, offers);
+    }
+
+    /// <summary>
+    /// A vessel that will hold <paramref name="liquid"/>, chosen deterministically. Ordered by id
+    /// first so the choice depends only on the seed, never on reflection order.
+    /// </summary>
+    private static Item? PickVesselFor(Item liquid, Random rng)
+    {
+        var vessels = ItemRegistry.Instance.All
+            .Where(i => i is IContainer { Kind: ContainerKind.Vessel } c && c.CanContain(liquid))
+            .OrderBy(i => i.ItemId)
+            .ToList();
+
+        return vessels.Count == 0 ? null : vessels[rng.Next(vessels.Count)];
     }
 
     /// <summary>Applies a small price variation around the reference, clamped to [1, 100].</summary>

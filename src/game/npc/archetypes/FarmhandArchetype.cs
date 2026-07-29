@@ -16,6 +16,9 @@ public class FarmhandArchetype : NamedNpcArchetype
     public override int  ModiMentisCount    => 8;
     public override bool CanSpeak           => true;
 
+    /// <summary>Hired by the season, owns nothing but his labour.</summary>
+    public override SocialCategory? Social  => SocialCategory.Peasant;
+
     public override string RoleNoun => "farmhand";
     protected override bool LabelMentionsLocation => false;
 

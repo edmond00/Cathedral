@@ -1,9 +1,10 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Moss : Item
 {
+    public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId => "moss";
     public override string DisplayName => "Moss";
     public override string Article => "some";

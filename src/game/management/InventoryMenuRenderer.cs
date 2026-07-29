@@ -99,6 +99,8 @@ public sealed class InventoryMenuRenderer
     private static readonly Vector4 InfoLabelColor  = Config.Colors.MediumGray60;
     private static readonly Vector4 InfoValueColor  = Config.Colors.LightGray75;
     private static readonly Vector4 SepColor        = Config.Colors.DarkGray35;
+    // Item flavour text — deliberately recessive against the values above it.
+    private static readonly Vector4 DescriptionColor = Config.Colors.DarkGray40;
 
     private static readonly Vector4 ContentNormal   = Config.Colors.MediumGray60;
     private static readonly Vector4 ContentHovered  = Config.Colors.White;
@@ -117,7 +119,7 @@ public sealed class InventoryMenuRenderer
 
     // "Move to" destinations (body anchor or container item).
     private enum MoveDestKind { Anchor, Container }
-    private readonly record struct MoveDest(MoveDestKind Kind, EquipmentAnchor Anchor, ContainerItem? Container, string Label);
+    private readonly record struct MoveDest(MoveDestKind Kind, EquipmentAnchor Anchor, IContainer? Container, string Label);
     private readonly List<(int Row, MoveDest Dest)> _moveDestHits = new();
 
     // ── State ─────────────────────────────────────────────────────
@@ -135,7 +137,7 @@ public sealed class InventoryMenuRenderer
     private Item?            _dragItem            = null;
     private EquipmentAnchor? _dragSourceAnchor    = null;
     private int              _dragSourceItemIdx   = -1;
-    private ContainerItem?   _dragSourceContainer = null;  // non-null when dragged from container contents
+    private IContainer?   _dragSourceContainer = null;  // non-null when dragged from container contents
 
     // Pending drag — mouse-down records intent; promoted to real drag
     // only after mouse movement or a short delay, so a quick click selects.
@@ -143,7 +145,7 @@ public sealed class InventoryMenuRenderer
     private Item?            _pendingDragItem      = null;
     private EquipmentAnchor? _pendingDragAnchor    = null;
     private int              _pendingDragItemIdx   = -1;
-    private ContainerItem?   _pendingDragContainer = null;  // non-null when from content
+    private IContainer?   _pendingDragContainer = null;  // non-null when from content
     private int              _pendingClickX        = 0;
     private int              _pendingClickY        = 0;
     private long             _pendingClickTick     = 0;
@@ -242,13 +244,50 @@ public sealed class InventoryMenuRenderer
         foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
             RenderAnchor(member, anchor);
 
+        RenderWeightBar(member);
         RenderWallet();
         RenderRightPanel(member);
     }
 
+    /// <summary>Bar width in cells — fixed, since the bar shows a fraction rather than a count.</summary>
+    private const int WeightBarWidth = 20;
+
     /// <summary>
-    /// Draws a compact coin box ("X⎊ Y◉ Z⊚") in the top-right corner of the body-art panel,
-    /// just left of the separator. Each count is shown in its denomination color.
+    /// Draws "WEIGHT 34/100" over a filled bar in the top-left of the art panel — the corner the
+    /// wallet used to occupy. Carrying capacity is the one number that silently decides whether a
+    /// pickup succeeds, so it belongs where the eye lands first rather than buried in the item panel.
+    ///
+    /// The bar sours as it fills: an approaching limit should read as a warning at a glance.
+    /// </summary>
+    private void RenderWeightBar(PartyMember member)
+    {
+        int current = member.CurrentWeight;
+        int max     = Math.Max(1, member.MaxCarryWeight);
+        double frac = Math.Clamp(current / (double)max, 0.0, 1.0);
+
+        int x0 = ArtOffsetX + 2;
+        int y0 = 2;
+
+        string label = $"WEIGHT {current}/{max}";
+        _terminal.Text(x0, y0, label, NormalTextColor, BgColor);
+
+        Vector4 fill = frac >= 1.0  ? Config.Colors.BrightPurple
+                     : frac >= 0.85 ? Config.Colors.Purple
+                     :                Config.Colors.DarkYellowGrey;
+
+        // Distinct glyphs, not just distinct colours: a bar that reads only by hue is invisible in
+        // a text dump and hard to judge at a glance. Matches TerminalView.ProgressBar's convention.
+        int filled = (int)Math.Round(frac * WeightBarWidth);
+        for (int i = 0; i < WeightBarWidth; i++)
+            _terminal.SetCell(x0 + i, y0 + 1,
+                i < filled ? '█' : '░',
+                i < filled ? fill : Config.Colors.DarkGray35, BgColor);
+    }
+
+    /// <summary>
+    /// Draws a compact coin box ("X⎊ Y◉ Z⊚") in the <b>bottom</b>-right corner of the body-art
+    /// panel, just left of the separator — the top-left is now the weight readout, and the purse is
+    /// the thing you consult deliberately rather than monitor. Each count is in its denomination color.
     /// </summary>
     private void RenderWallet()
     {
@@ -268,7 +307,7 @@ public sealed class InventoryMenuRenderer
         int boxW = contentLen + 2;                 // 1 cell padding each side
         int boxRight = RightPanelX - 1;            // column of the separator
         int x0 = Math.Max(ArtOffsetX, boxRight - boxW);
-        int y0 = 2;
+        int y0 = Math.Max(0, _terminal.Height - 4);
 
         // Background strip + single-line border.
         for (int dy = 0; dy < 3; dy++)
@@ -613,7 +652,7 @@ public sealed class InventoryMenuRenderer
         //   3. Sticky _dragHoverItem (from a previous hover on body art) — only
         //      when cursor is NOT on the right panel or a body-art item.
         // Skip containers that are the drag source.
-        ContainerItem? target = null;
+        IContainer? target = null;
         bool onRightPanel = x >= RightPanelX;
 
         // 1. Right-panel container (highest priority when cursor is there).
@@ -629,7 +668,7 @@ public sealed class InventoryMenuRenderer
         if (target == null && hit.HasValue && hit.Value.ItemIdx >= 0)
         {
             var items = _member.EquippedItems[hit.Value.Anchor];
-            if (hit.Value.ItemIdx < items.Count && items[hit.Value.ItemIdx] is ContainerItem c
+            if (hit.Value.ItemIdx < items.Count && items[hit.Value.ItemIdx] is IContainer c
                 && c != _dragSourceContainer)
                 target = c;
         }
@@ -637,7 +676,7 @@ public sealed class InventoryMenuRenderer
         // 3. Sticky drag-hover item — only when cursor is NOT on a body-art item
         //    or the right panel (so direct targets take priority over stale hover).
         if (target == null && !hit.HasValue && !onRightPanel
-            && _dragHoverItem is ContainerItem sticky
+            && _dragHoverItem is IContainer sticky
             && sticky != _dragSourceContainer)
             target = sticky;
 
@@ -658,7 +697,8 @@ public sealed class InventoryMenuRenderer
                 {
                     _selectedAnchor  = _dragHoverAnchor;
                     var anchorItems = _member.EquippedItems[_dragHoverAnchor.Value];
-                    _selectedItemIdx = anchorItems.IndexOf(target);
+                    // Every IContainer is also an Item; the anchor list is typed by the latter.
+                    _selectedItemIdx = anchorItems.IndexOf((Item)target);
                 }
                 _selectedContentPath.Clear();
             }
@@ -676,6 +716,55 @@ public sealed class InventoryMenuRenderer
     }
 
     /// <summary>Clear all hover / selection state (called when switching away from this tab).</summary>
+    /// <summary>
+    /// Selects a carried item by display name so <c>--cli</c> can inspect the info panel, which is
+    /// otherwise reachable only by clicking a body-art box whose position depends on the art.
+    /// Searches the anchors first, then one level of container contents, and returns false when
+    /// nothing matches. Case-insensitive, and a prefix is enough.
+    /// </summary>
+    public bool CliSelectItem(string itemName)
+    {
+        if (_member == null) return false;
+
+        bool Matches(Item i) =>
+            i.DisplayName.StartsWith(itemName, StringComparison.OrdinalIgnoreCase);
+
+        foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
+        {
+            var items = _member.EquippedItems[anchor];
+            for (int i = 0; i < items.Count; i++)
+            {
+                if (Matches(items[i]))
+                {
+                    _selectedAnchor  = anchor;
+                    _selectedItemIdx = i;
+                    _selectedContentPath.Clear();
+                    return true;
+                }
+
+                // One level in: enough to reach what is inside a pack or a bottle.
+                if (items[i] is IContainer held)
+                {
+                    for (int c = 0; c < held.Contents.Count; c++)
+                        if (Matches(held.Contents[c]))
+                        {
+                            _selectedAnchor  = anchor;
+                            _selectedItemIdx = i;
+                            _selectedContentPath.Clear();
+                            _selectedContentPath.Add(c);
+                            return true;
+                        }
+                }
+            }
+        }
+        return false;
+    }
+
+    /// <summary>Display names of everything carried, for <c>--cli</c> discovery.</summary>
+    public IReadOnlyList<string> CliCarriedItemNames =>
+        _member?.GetAllItems().Select(i => i.DisplayName).Distinct().ToList()
+        ?? (IReadOnlyList<string>)Array.Empty<string>();
+
     public void ClearHover()
     {
         _hoveredAnchor      = null;
@@ -785,17 +874,17 @@ public sealed class InventoryMenuRenderer
     /// Walk the selection path to find the container currently being viewed
     /// in the right panel. Returns null when no container is in view.
     /// </summary>
-    private ContainerItem? ResolveViewedContainer()
+    private IContainer? ResolveViewedContainer()
     {
         if (_member == null || !_selectedAnchor.HasValue || _selectedItemIdx < 0) return null;
         var items = _member.EquippedItems[_selectedAnchor.Value];
         if (_selectedItemIdx >= items.Count) return null;
-        if (items[_selectedItemIdx] is not ContainerItem current) return null;
+        if (items[_selectedItemIdx] is not IContainer current) return null;
 
         foreach (int idx in _selectedContentPath)
         {
             if (idx >= current.Contents.Count) return null;
-            if (current.Contents[idx] is ContainerItem nested)
+            if (current.Contents[idx] is IContainer nested)
                 current = nested;
             else
                 return current;  // non-container selected; parent is the viewed container
@@ -811,7 +900,7 @@ public sealed class InventoryMenuRenderer
         Item displayed = items[_selectedItemIdx];
         foreach (int ci in _selectedContentPath)
         {
-            if (displayed is ContainerItem container)
+            if (displayed is IContainer container)
             {
                 if (ci >= container.Contents.Count) break;
                 displayed = container.Contents[ci];
@@ -826,7 +915,7 @@ public sealed class InventoryMenuRenderer
     /// <c>parent</c> is the container it currently sits in (null when it sits
     /// directly on the anchor list), and <c>anchor</c> is the top-level anchor.
     /// </summary>
-    private (Item item, ContainerItem? parent, EquipmentAnchor anchor)? ResolveDisplayedItemLocation()
+    private (Item item, IContainer? parent, EquipmentAnchor anchor)? ResolveDisplayedItemLocation()
     {
         if (_member == null || !_selectedAnchor.HasValue || _selectedItemIdx < 0) return null;
         var anchor = _selectedAnchor.Value;
@@ -834,10 +923,10 @@ public sealed class InventoryMenuRenderer
         if (_selectedItemIdx >= items.Count) return null;
 
         Item displayed = items[_selectedItemIdx];
-        ContainerItem? parent = null;
+        IContainer? parent = null;
         foreach (int ci in _selectedContentPath)
         {
-            if (displayed is not ContainerItem container) break;
+            if (displayed is not IContainer container) break;
             if (ci >= container.Contents.Count) break;
             parent    = container;
             displayed = container.Contents[ci];
@@ -850,7 +939,7 @@ public sealed class InventoryMenuRenderer
     /// accept it with room, and container items with room. Excludes the item's current
     /// location, the item itself, and (for containers) its own descendants.
     /// </summary>
-    private List<MoveDest> BuildMoveDestinations(Item item, ContainerItem? currentParent, EquipmentAnchor currentAnchor)
+    private List<MoveDest> BuildMoveDestinations(Item item, IContainer? currentParent, EquipmentAnchor currentAnchor)
     {
         var dests = new List<MoveDest>();
         if (_member == null) return dests;
@@ -871,15 +960,15 @@ public sealed class InventoryMenuRenderer
     }
 
     /// <summary>Recursively collect container destinations, skipping the moved item and its subtree.</summary>
-    private void CollectContainerDests(Item candidate, Item moving, ContainerItem? currentParent, List<MoveDest> dests)
+    private void CollectContainerDests(Item candidate, Item moving, IContainer? currentParent, List<MoveDest> dests)
     {
         if (ReferenceEquals(candidate, moving)) return;  // skip the moved item and everything inside it
 
-        if (candidate is ContainerItem container)
+        if (candidate is IContainer container)
         {
             if (!ReferenceEquals(container, currentParent)
                 && container.CanContain(moving) && container.AvailableSlots >= moving.SlotCount)
-                dests.Add(new MoveDest(MoveDestKind.Container, default, container, container.DisplayName));
+                dests.Add(new MoveDest(MoveDestKind.Container, default, container, candidate.DisplayName));
 
             foreach (var c in container.Contents)
                 CollectContainerDests(c, moving, currentParent, dests);
@@ -1042,7 +1131,7 @@ public sealed class InventoryMenuRenderer
                 border = DragBoxBorder; bg = DragBoxBg; textCol = DragTextColor;
             }
             else if (isGrayedOut
-                     && !(item is ContainerItem c && _dragItem != null && c.CanContain(_dragItem)
+                     && !(item is IContainer c && _dragItem != null && c.CanContain(_dragItem)
                           && c.AvailableSlots >= _dragItem.SlotCount && c != _dragItem))
             {
                 border = GrayBoxBorder; bg = GrayBoxBg; textCol = GrayTextColor;
@@ -1075,7 +1164,7 @@ public sealed class InventoryMenuRenderer
                 border = NormalBoxBorder; bg = NormalBoxBg; textCol = NormalTextColor;
             }
 
-            DrawItemBox(item.DisplayName, termX, itemY, boxH, border, bg, textCol, item.UsageLevel);
+            DrawItemBox(item.DisplayName, termX, itemY, boxH, border, bg, textCol);
             _itemHits.Add(new ItemHit(anchor, i, termX, itemY, termX + ItemBoxW - 1, itemY + boxH - 1));
             itemY += boxH;
         }
@@ -1117,7 +1206,7 @@ public sealed class InventoryMenuRenderer
         }
     }
 
-    private void DrawItemBox(string label, int x, int y, int h, Vector4 border, Vector4 bg, Vector4 fg, int usageLevel = 0)
+    private void DrawItemBox(string label, int x, int y, int h, Vector4 border, Vector4 bg, Vector4 fg)
     {
         for (int dy = 0; dy < h; dy++)
             for (int dx = 0; dx < ItemBoxW; dx++)
@@ -1135,13 +1224,10 @@ public sealed class InventoryMenuRenderer
             _terminal.Text(lx, nameRow, name, fg, bg);
         }
 
-        // Usage level indicators — shown only when box is tall enough and level > 0
-        if (usageLevel > 0 && h >= 4)
-        {
-            string indicators = new string(Config.Symbols.ModusMentisLevelIndicator, Math.Min(usageLevel, innerW));
-            int lx = x + 1 + (innerW - indicators.Length) / 2;
-            _terminal.Text(lx, nameRow + 1, indicators, Config.Colors.BrightYellow, bg);
-        }
+        // Usage-level pips used to be drawn here. They were removed because UsageLevel defaults to
+        // 1 on every item, so a loaf of bread and a wool cap carried the same bright-yellow marks
+        // as a chisel — advertising a property that only means anything for a Tool or a Weapon.
+        // The info panel states it plainly ("Usage: lv. 4") for the items where it applies.
     }
 
     private static int ComputeBoxX(int artCol)
@@ -1180,16 +1266,16 @@ public sealed class InventoryMenuRenderer
             Item displayItem = selectedItem;
             bool hasPath = false;
 
-            if (selectedItem is ContainerItem root)
+            if (selectedItem is IContainer root)
             {
-                ContainerItem current = root;
+                IContainer current = root;
                 for (int d = 0; d < _selectedContentPath.Count; d++)
                 {
                     int ci = _selectedContentPath[d];
                     if (ci >= current.Contents.Count) break;
                     displayItem = current.Contents[ci];
                     hasPath = true;
-                    if (displayItem is ContainerItem next)
+                    if (displayItem is IContainer next)
                         current = next;
                     else
                         break;
@@ -1198,7 +1284,7 @@ public sealed class InventoryMenuRenderer
                 // Show the deepest selected item, or the root if no path.
                 int nextRow = DrawItemInfo(displayItem, panelStartRow, showBack: hasPath);
                 // Show drag preview only when the mouse is over the right panel.
-                if (displayItem is ContainerItem viewContainer)
+                if (displayItem is IContainer viewContainer)
                 {
                     if (_isDragging && _hoveringRightPanel)
                         DrawContainerContentsDragPreview(viewContainer, nextRow);
@@ -1258,10 +1344,134 @@ public sealed class InventoryMenuRenderer
         {
             if (y > InfoEndRow) break;
             _terminal.Text(RightContentX, y++,
-                TruncRight($"\u2022 {item.DisplayName}  ({item.SlotCount} sl)", RightContentW),
+                TruncRight($"\u2022 {item.DisplayName}", RightContentW),
                 InfoValueColor, RightPanelBg);
         }
     }
+
+    // Dimmer than EmptyTextColor's neighbours: used for things the player cannot reach yet.
+    private static readonly Vector4 LockedTextColor = Config.Colors.DarkGray35;
+
+    /// <summary>
+    /// The half of the info panel that depends on what kind of item this is: usage, armour, social
+    /// appeal, capacity, the attacks a weapon can teach. Separated from the shared block above by a
+    /// rule, so the panel always has the same shape — invariant facts first, then the specifics.
+    /// Returns the row after everything drawn; draws nothing (and no rule) for a plain item.
+    /// </summary>
+    private int DrawItemSpecifics(Item item, int y)
+    {
+        bool isWeapon    = item is Cathedral.Fight.IWeaponItem;
+        bool hasUsage    = item.Category is ItemCategory.Tool or ItemCategory.Weapon;
+        bool anySpecific = hasUsage || isWeapon || item is WearableItem || item is IContainer || item.IsLiquid;
+        if (!anySpecific) return y;
+
+        if (y > InfoEndRow) return y;
+        DrawSep(y); y += 2;
+
+        if (hasUsage)
+            DrawKV("Usage", $"lv. {item.UsageLevel}", ref y);
+
+        if (item is Cathedral.Fight.IWeaponItem weapon)
+        {
+            DrawKV("Medium", $"lv. {weapon.Level}", ref y);
+            y = DrawWeaponAttacks(weapon, y);
+        }
+
+        if (item is WearableItem worn)
+        {
+            // Always shown, even at 0: "this garment protects nothing" is information, and its
+            // absence would read as the panel having forgotten to mention armour.
+            DrawKV("Defence",  $"+{worn.DefenseDice} dice", ref y);
+            DrawKV("Protects", ArmorSections.SectionOf(worn.Slot) is { } sec
+                                   ? sec.Replace('_', ' ')
+                                   : "nothing", ref y);
+            y = DrawDialogueAppeal(worn, y);
+        }
+
+        // What it is built to hold. The capacity is deliberately not repeated here — the contents
+        // display below draws one row per slot, which shows how full it is far better than a ratio.
+        if (item is IContainer container)
+            DrawKV("Holds", container.Kind.ToString(), ref y);
+
+        if (item.IsLiquid)
+            DrawKV("Storage", "needs a vessel", ref y);
+
+        return y + 1;
+    }
+
+    /// <summary>
+    /// Every social standing, ticked or not — a garment's appeal is only meaningful against the
+    /// standings it does <em>not</em> reach, so listing all of them says more than naming the two
+    /// it happens to flatter.
+    /// </summary>
+    private int DrawDialogueAppeal(WearableItem worn, int y)
+    {
+        if (y > InfoEndRow) return y;
+        _terminal.Text(RightContentX, y++, "Impresses", InfoLabelColor, RightPanelBg);
+
+        foreach (Cathedral.Game.Npc.SocialCategory social in
+                 Enum.GetValues<Cathedral.Game.Npc.SocialCategory>())
+        {
+            if (y > InfoEndRow) break;
+            bool appeals = worn.DialogueAppeal.Contains(social);
+            _terminal.Text(RightContentX + 2, y++,
+                TruncRight($"{(appeals ? '☑' : '☐')} {social}", RightContentW - 2),
+                appeals ? InfoValueColor : LockedTextColor, RightPanelBg);
+        }
+        return y;
+    }
+
+    /// <summary>
+    /// The attacks this weapon's medium can teach, in the order they must be learned.
+    ///
+    /// Named if you can act on it, <c>???</c> if you cannot. That means the learnt attacks plus
+    /// the next one — because a fight always lets you attempt the first attack you have not yet
+    /// learned, so hiding its name would conceal the one choice actually in front of you. Only the
+    /// attacks locked behind it stay anonymous. A weapon therefore never shows nothing but <c>???</c>.
+    /// </summary>
+    private int DrawWeaponAttacks(Cathedral.Fight.IWeaponItem weapon, int y)
+    {
+        var category = Cathedral.Fight.WeaponMediumRegistry.GetById(weapon.WeaponCategory);
+        if (category == null || _member == null) return y;
+
+        if (y > InfoEndRow) return y;
+        _terminal.Text(RightContentX, y++, "Unlocks", InfoLabelColor, RightPanelBg);
+
+        var registry = Cathedral.Fight.FightingSkillRegistry.Instance;
+        bool nextMarked = false;
+
+        foreach (string skillId in category.SkillIds)
+        {
+            if (y > InfoEndRow) break;
+            var skill = registry.GetById(skillId);
+            if (skill == null) continue;
+
+            bool known = MemberKnowsSkill(skill);
+
+            // The first unknown attack in the medium's order is the one a fight lets you attempt;
+            // everything behind it is unreachable until that one is learned.
+            bool isNext = !known && !nextMarked;
+            if (isNext) nextMarked = true;
+
+            // Named when it is actionable — learnt, or next in line to be attempted.
+            string label = known || isNext ? skill.DisplayName : "???";
+            _terminal.Text(RightContentX + 2, y++,
+                TruncRight($"• {label}", RightContentW - 2),
+                known ? InfoValueColor : isNext ? InfoLabelColor : LockedTextColor,
+                RightPanelBg);
+        }
+        return y;
+    }
+
+    /// <summary>
+    /// Whether the member already knows a fighting skill. Mirrors <c>FightingSkill.IsUnlocked</c>'s
+    /// modus-mentis test but without a <c>Fighter</c>, which only exists mid-combat — the medium
+    /// availability half of that check is irrelevant here, since the weapon in hand *is* the medium.
+    /// </summary>
+    private bool MemberKnowsSkill(Cathedral.Fight.FightingSkill skill) =>
+        _member != null && _member.LearnedModiMentis.Any(m =>
+            m.ModusMentisId == skill.RequiredModusMentisId ||
+            skill.SecondaryModusMentisIds.Contains(m.ModusMentisId));
 
     private int DrawItemInfo(Item item, int startRow, bool showBack)
     {
@@ -1277,18 +1487,32 @@ public sealed class InventoryMenuRenderer
         y++;
         DrawSep(y); y += 2;
 
-        string types = string.Join(", ", item.Types.Select(t => t.ToString()));
-        DrawKV("Type",   types,                                       ref y);
-        DrawKV("Weight", $"{item.Weight:F1} kg",                      ref y);
-        DrawKV("Size",   $"{item.Size}  ({item.SlotCount} slots)",    ref y);
+        // ── Shared: everything every item has ─────────────────────
+        // Kept together above the separator so the top of the panel reads the same whatever is
+        // selected, and the eye learns where to find weight and size without hunting.
+        DrawKV("Type",   item.Category.ToString(), ref y);
+        if (item.SubcategoryKey.Length > 0)
+            DrawKV("Category", item.SubcategoryKey, ref y);
+        DrawKV("Weight", item.Weight.Label(),      ref y);
+        DrawKV("Size",   item.Size.ToString(),     ref y);
+
+        // The reference price, before the small per-merchant variation a catalogue applies. An
+        // untagged item belongs to no catalogue at all, so it has no price to quote.
+        DrawKV("Price", item.Tags.Count == 0
+                            ? "not traded"
+                            : $"{item.PriceReference}{CoinSymbol(item.PriceCoin)}", ref y);
         y++;
 
+        // Flavour, not fact: dimmer than the values above so the eye can skip it when scanning
+        // for numbers and settle on it when reading.
         foreach (string desc in WrapText(item.Description, RightContentW))
         {
             if (y > InfoEndRow) break;
-            _terminal.Text(RightContentX, y++, desc, InfoValueColor, RightPanelBg);
+            _terminal.Text(RightContentX, y++, desc, DescriptionColor, RightPanelBg);
         }
-        y++;
+
+        // ── Specific: what this kind of item, and only this kind, does ────────
+        y = DrawItemSpecifics(item, y);
 
         if (item.Info.Length > 0)
         {
@@ -1440,7 +1664,7 @@ public sealed class InventoryMenuRenderer
     // Box width for items rendered inside the right info panel.
     private const int ContentBoxW = RightContentW;
 
-    private void DrawContainerContents(ContainerItem container, int startRow)
+    private void DrawContainerContents(IContainer container, int startRow)
     {
         _contentHits.Clear();
 
@@ -1448,8 +1672,10 @@ public sealed class InventoryMenuRenderer
         if (y > InfoEndRow) return;
 
         DrawSep(y); y += 2;
-        string header = $"Contents  {container.UsedSlots}/{container.ContentSlots} slots";
-        _terminal.Text(RightContentX, y, TruncRight(header, RightContentW), InfoLabelColor, RightPanelBg);
+        // No slot count: the boxes below are drawn one row per slot, so how full it is reads off
+        // the display itself. The capacity number lived here and on the specifics line above, and
+        // saying it twice told the player nothing the second time.
+        _terminal.Text(RightContentX, y, "Contents", InfoLabelColor, RightPanelBg);
         y++;
 
         if (container.Contents.Count == 0)
@@ -1491,7 +1717,7 @@ public sealed class InventoryMenuRenderer
     /// Draws container contents with a preview box showing where the dragged item
     /// would land if the user releases the mouse button.
     /// </summary>
-    private void DrawContainerContentsDragPreview(ContainerItem container, int startRow)
+    private void DrawContainerContentsDragPreview(IContainer container, int startRow)
     {
         int y = startRow;
         if (y > InfoEndRow) return;
@@ -1601,12 +1827,28 @@ public sealed class InventoryMenuRenderer
         _terminal.Text(RightContentX, y, new string('\u2500', RightContentW), SepColor, RightPanelBg);
     }
 
+    /// <summary>
+    /// Width of the label column. Must exceed the longest label plus its colon, or that one row
+    /// loses the gap between label and value and reads as a single run-on word — "Category:" is
+    /// nine characters and did exactly that at the previous width.
+    /// </summary>
+    private const int KvLabelW = 10;
+
+    /// <summary>The coin glyph for a denomination, matching the wallet box.</summary>
+    private static string CoinSymbol(CoinType coin) => coin switch
+    {
+        CoinType.Gold   => Config.Symbols.GoldCoinSymbol.ToString(),
+        CoinType.Silver => Config.Symbols.SilverCoinSymbol.ToString(),
+        _               => Config.Symbols.CopperCoinSymbol.ToString(),
+    };
+
     private void DrawKV(string label, string value, ref int y)
     {
         if (y > InfoEndRow) return;
-        string labelPad = (label + ":").PadRight(9);
-        _terminal.Text(RightContentX,     y, labelPad,                              InfoLabelColor, RightPanelBg);
-        _terminal.Text(RightContentX + 9, y, TruncRight(value, RightContentW - 9),  InfoValueColor, RightPanelBg);
+        string labelPad = (label + ":").PadRight(KvLabelW);
+        _terminal.Text(RightContentX, y, labelPad, InfoLabelColor, RightPanelBg);
+        _terminal.Text(RightContentX + KvLabelW, y,
+            TruncRight(value, RightContentW - KvLabelW), InfoValueColor, RightPanelBg);
         y++;
     }
 

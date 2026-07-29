@@ -94,6 +94,16 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// </summary>
     public virtual Narrative.ItemTag? BuyTag => null;
 
+    /// <summary>
+    /// The social stratum this NPC measures others against. Garments appealing to it grant bonus
+    /// dialogue dice — dressing like a townsman opens a craftsman's door and does nothing at all
+    /// for a hermit.
+    ///
+    /// Required for every archetype that can speak; <c>--npc-audit</c> fails on a null. Beasts and
+    /// other non-speakers leave it null, since nothing ever consults it for them.
+    /// </summary>
+    public virtual SocialCategory? Social => null;
+
     // ── Spawn ─────────────────────────────────────────────────────────────────
 
     /// <summary>

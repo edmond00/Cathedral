@@ -19,6 +19,9 @@ public class HermitArchetype : NamedNpcArchetype
     public override int ModiMentisCount => 12;
     public override bool CanSpeak => true;
 
+    /// <summary>Withdrew from the village on principle, and is respected for it by some.</summary>
+    public override SocialCategory? Social  => SocialCategory.Religious;
+
     public override string RoleNoun => "hermit";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

@@ -55,47 +55,49 @@ public sealed class JobRegistry
 
     private void BuildCatalogue()
     {
-        // Village masters pay in silver, slowly: one silver per 60–150 days.
+        // Every wage is paid in copper, like every price — denominations never convert, so a wage
+        // in silver would buy nothing. Village masters pay the better rates (a copper per 6–15
+        // days) against the field and wilderness work below.
         AddArchetype("blacksmith",
-            J("bellows_hand",   "bellows-hand",   CoinType.Silver, 120f, "firecraft", "hard_labor", "patience"),
-            J("coal_breaker",   "coal-breaker",   CoinType.Silver, 150f, "hard_labor", "firecraft", "dirty_labor"),
-            J("quench_hand",    "quench-hand",    CoinType.Silver,  60f, "metalcraft", "firecraft", "steady_hand"),
-            J("scrap_sorter",   "scrap-sorter",   CoinType.Silver,  90f, "metalcraft", "scrutiny", "tallycraft"));
+            J("bellows_hand",   "bellows-hand",   CoinType.Copper, 12f, "firecraft", "hard_labor", "patience"),
+            J("coal_breaker",   "coal-breaker",   CoinType.Copper, 15f, "hard_labor", "firecraft", "dirty_labor"),
+            J("quench_hand",    "quench-hand",    CoinType.Copper,  6f, "metalcraft", "firecraft", "steady_hand"),
+            J("scrap_sorter",   "scrap-sorter",   CoinType.Copper,  9f, "metalcraft", "scrutiny", "tallycraft"));
 
         AddArchetype("carpenter",
-            J("sawyer",         "sawyer",         CoinType.Silver,  90f, "woodcraft", "hard_labor", "steady_hand"),
-            J("plank_stacker",  "plank-stacker",  CoinType.Silver, 120f, "haulage", "woodcraft", "hard_labor"),
-            J("peg_whittler",   "peg-whittler",   CoinType.Silver,  60f, "whittlecraft", "woodcraft", "finesse"),
-            J("shaving_sweeper","shaving-sweeper",CoinType.Silver, 150f, "dirty_labor", "woodcraft", "obedience"));
+            J("sawyer",         "sawyer",         CoinType.Copper,  9f, "woodcraft", "hard_labor", "steady_hand"),
+            J("plank_stacker",  "plank-stacker",  CoinType.Copper, 12f, "haulage", "woodcraft", "hard_labor"),
+            J("peg_whittler",   "peg-whittler",   CoinType.Copper,  6f, "whittlecraft", "woodcraft", "finesse"),
+            J("shaving_sweeper","shaving-sweeper",CoinType.Copper, 15f, "dirty_labor", "woodcraft", "obedience"));
 
         AddArchetype("cooper",
-            J("stave_shaver",   "stave-shaver",   CoinType.Silver,  75f, "woodcraft", "whittlecraft", "steady_hand"),
-            J("hoop_holder",    "hoop-holder",    CoinType.Silver,  90f, "steady_hand", "metalcraft", "patience"),
-            J("barrel_hauler",  "barrel-hauler",  CoinType.Silver, 120f, "haulage", "cellarcraft", "woodcraft"));
+            J("stave_shaver",   "stave-shaver",   CoinType.Copper,  7.5f, "woodcraft", "whittlecraft", "steady_hand"),
+            J("hoop_holder",    "hoop-holder",    CoinType.Copper,  9f, "steady_hand", "metalcraft", "patience"),
+            J("barrel_hauler",  "barrel-hauler",  CoinType.Copper, 12f, "haulage", "cellarcraft", "woodcraft"));
 
         AddArchetype("weaver",
-            J("wool_carder",    "wool-carder",    CoinType.Silver, 120f, "threadwork", "patience", "dirty_labor"),
-            J("spindle_hand",   "spindle-hand",   CoinType.Silver,  75f, "threadwork", "finesse", "patience"),
-            J("warp_threader",  "warp-threader",  CoinType.Silver,  60f, "threadwork", "finesse", "steady_hand"),
-            J("fleece_picker",  "fleece-picker",  CoinType.Silver, 150f, "threadwork", "scrutiny", "dirty_labor"));
+            J("wool_carder",    "wool-carder",    CoinType.Copper, 12f, "threadwork", "patience", "dirty_labor"),
+            J("spindle_hand",   "spindle-hand",   CoinType.Copper,  7.5f, "threadwork", "finesse", "patience"),
+            J("warp_threader",  "warp-threader",  CoinType.Copper,  6f, "threadwork", "finesse", "steady_hand"),
+            J("fleece_picker",  "fleece-picker",  CoinType.Copper, 15f, "threadwork", "scrutiny", "dirty_labor"));
 
         AddArchetype("miller",
-            J("sack_carrier",   "sack-carrier",   CoinType.Silver, 150f, "haulage", "hard_labor", "peasantry"),
-            J("grist_sifter",   "grist-sifter",   CoinType.Silver,  75f, "threshery", "millcraft", "scrutiny"),
-            J("hopper_feeder",  "hopper-feeder",  CoinType.Silver,  90f, "millcraft", "haulage", "patience"),
-            J("toll_tallier",   "toll-tallier",   CoinType.Silver,  60f, "tallycraft", "bargaining", "scrutiny"));
+            J("sack_carrier",   "sack-carrier",   CoinType.Copper, 15f, "haulage", "hard_labor", "peasantry"),
+            J("grist_sifter",   "grist-sifter",   CoinType.Copper,  7.5f, "threshery", "millcraft", "scrutiny"),
+            J("hopper_feeder",  "hopper-feeder",  CoinType.Copper,  9f, "millcraft", "haulage", "patience"),
+            J("toll_tallier",   "toll-tallier",   CoinType.Copper,  6f, "tallycraft", "bargaining", "scrutiny"));
 
         AddArchetype("baker",
-            J("oven_firer",     "oven-firer",     CoinType.Silver,  75f, "firecraft", "doughcraft", "patience"),
-            J("dough_kneader",  "dough-kneader",  CoinType.Silver,  90f, "doughcraft", "hard_labor", "patience"),
-            J("bread_runner",   "bread-runner",   CoinType.Silver, 150f, "haulage", "peasantry", "obedience"),
-            J("wood_fetcher",   "wood-fetcher",   CoinType.Silver, 150f, "haulage", "hard_labor", "obedience"));
+            J("oven_firer",     "oven-firer",     CoinType.Copper,  7.5f, "firecraft", "doughcraft", "patience"),
+            J("dough_kneader",  "dough-kneader",  CoinType.Copper,  9f, "doughcraft", "hard_labor", "patience"),
+            J("bread_runner",   "bread-runner",   CoinType.Copper, 15f, "haulage", "peasantry", "obedience"),
+            J("wood_fetcher",   "wood-fetcher",   CoinType.Copper, 15f, "haulage", "hard_labor", "obedience"));
 
         AddArchetype("brewer",
-            J("malt_turner",    "malt-turner",    CoinType.Silver,  90f, "brewcraft", "patience", "hard_labor"),
-            J("mash_stirrer",   "mash-stirrer",   CoinType.Silver,  75f, "brewcraft", "firecraft", "hard_labor"),
-            J("ale_pourer",     "ale-pourer",     CoinType.Silver,  60f, "enterprise", "bargaining", "brewcraft"),
-            J("cask_roller",    "cask-roller",    CoinType.Silver, 120f, "haulage", "steady_hand", "cellarcraft"));
+            J("malt_turner",    "malt-turner",    CoinType.Copper,  9f, "brewcraft", "patience", "hard_labor"),
+            J("mash_stirrer",   "mash-stirrer",   CoinType.Copper,  7.5f, "brewcraft", "firecraft", "hard_labor"),
+            J("ale_pourer",     "ale-pourer",     CoinType.Copper,  6f, "enterprise", "bargaining", "brewcraft"),
+            J("cask_roller",    "cask-roller",    CoinType.Copper, 12f, "haulage", "steady_hand", "cellarcraft"));
 
         // Field reeve pays in copper: one copper every 5–15 days.
         AddArchetype("reeve",

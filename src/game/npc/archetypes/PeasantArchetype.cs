@@ -14,4 +14,7 @@ public abstract class PeasantArchetype : NamedNpcArchetype
     public override bool DefaultPersistent  => true;
     public override int  ModiMentisCount    => 8;
     public override bool CanSpeak           => true;
+
+    /// <summary>Works another man's land. The reeve overrides this — he keeps the accounts.</summary>
+    public override SocialCategory? Social  => SocialCategory.Peasant;
 }

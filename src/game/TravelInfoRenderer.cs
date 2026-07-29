@@ -27,6 +27,11 @@ namespace Cathedral.Game
         private bool _buttonsEnabled;
         // Whether the ROUTINES button is clickable (routines exist for this destination).
         private bool _routinesEnabled;
+        // Set when someone in the party is carrying more than they can bear. The party cannot
+        // set out at all until that is fixed, so both ROUTINES and TRAVEL go dead — CLEAR stays
+        // live, since abandoning the plan is always allowed.
+        private bool _travelBlocked;
+        private string? _blockReason;
 
         // Track the area we actually painted so Erase() can wipe only those cells.
         private int _paintedX, _paintedY, _paintedW, _paintedH;
@@ -49,6 +54,7 @@ namespace Cathedral.Game
 
         public bool IsOverTravelButton(int cellX, int cellY)
             => _buttonsEnabled
+               && !_travelBlocked
                && cellY == _travelBtnY
                && cellX >= _travelBtnX
                && cellX < _travelBtnX + _travelBtnW;
@@ -63,6 +69,7 @@ namespace Cathedral.Game
         public bool IsOverRoutinesButton(int cellX, int cellY)
             => _buttonsEnabled
                && _routinesEnabled
+               && !_travelBlocked
                && cellY == _routinesBtnY
                && cellX >= _routinesBtnX
                && cellX < _routinesBtnX + _routinesBtnW;
@@ -70,11 +77,17 @@ namespace Cathedral.Game
         /// <summary>
         /// Renders the box if there is a viable plan, otherwise erases anything left
         /// from a previous frame.
+        ///
+        /// <paramref name="overloadWarning"/>, when non-null, means someone in the party is over
+        /// their carrying limit: the message is shown in the box and both ROUTINES and TRAVEL are
+        /// disabled until the player lightens the load.
         /// </summary>
         public void Draw(int waypointCount, int maxWaypoints, TravelEstimate? estimate,
-            string? destinationName, bool routinesAvailable = false)
+            string? destinationName, bool routinesAvailable = false, string? overloadWarning = null)
         {
             _routinesEnabled = routinesAvailable;
+            _blockReason     = overloadWarning;
+            _travelBlocked   = overloadWarning != null;
 
             // Nothing to show when no waypoints are set — keep the world view clean.
             if (waypointCount == 0)
@@ -131,10 +144,25 @@ namespace Cathedral.Game
                 estimate.StarvationRisk ? "yes" : "no",
                 estimate.StarvationRisk ? Config.TravelUI.DangerColor : Config.TravelUI.ValueColor);
 
-            // Empty row (contentY + 7) — visual padding above the buttons.
+            // Row contentY + 7 is normally padding above the buttons; an overload warning takes it,
+            // directly above the two buttons it has just disabled.
+            DrawOverloadWarning(innerLeft, contentY + 7);
+
             // Empty row (contentY + 9) — visual padding below the buttons.
             DrawButtons(estimate);
             MarkPainted();
+        }
+
+        /// <summary>
+        /// Draws the "someone is overloaded" line in purple — the colour this UI already uses for
+        /// wounds and other things standing between the player and what they wanted to do.
+        /// </summary>
+        private void DrawOverloadWarning(int x, int y)
+        {
+            if (_blockReason == null) return;
+
+            _terminal.Text(x, y, Truncate(_blockReason, _boxW - 4),
+                Config.Colors.BrightPurple, Config.TravelUI.BackgroundColor);
         }
 
         private void DrawButtons(TravelEstimate? estimate)
@@ -159,8 +187,9 @@ namespace Cathedral.Game
             _travelBtnY   = row;
             _buttonsEnabled = true;
 
-            // ROUTINES button — greyed out when no routine exists for this destination.
-            if (_routinesEnabled)
+            // ROUTINES button — greyed out when no routine exists for this destination, or when
+            // the party is too loaded to go anywhere (a routine is a journey like any other).
+            if (_routinesEnabled && !_travelBlocked)
             {
                 bool routinesHover = IsOverRoutinesButton(_hoverX, _hoverY);
                 _terminal.Text(_routinesBtnX, _routinesBtnY, routinesLabel,
@@ -179,8 +208,8 @@ namespace Cathedral.Game
                 clearHover ? Config.TravelUI.ClearButtonHoverTextColor       : Config.TravelUI.ClearButtonTextColor,
                 clearHover ? Config.TravelUI.ClearButtonHoverBackgroundColor : Config.TravelUI.ClearButtonBackgroundColor);
 
-            // TRAVEL button — only meaningful when there's a viable plan.
-            bool travelEnabled = estimate != null && estimate.HasPath;
+            // TRAVEL button — needs a viable plan and a party light enough to walk it.
+            bool travelEnabled = estimate != null && estimate.HasPath && !_travelBlocked;
             if (!travelEnabled)
             {
                 _terminal.Text(_travelBtnX, _travelBtnY, travelLabel,

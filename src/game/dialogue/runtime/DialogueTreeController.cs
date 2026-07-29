@@ -554,14 +554,24 @@ public class DialogueTreeController
         }
 
         int affinityBonus = _npc.AffinityTable.GetLevel(_partyMemberId).BonusDice();
-        int diceCount     = Math.Clamp(affinityBonus + _accumulatedDice, 1, 15);
+
+        // What the protagonist is wearing, judged by this NPC's own social standing. A garment
+        // only counts while actually worn, and only for the standing it flatters — so the same
+        // coat that helps with a craftsman does nothing for a hermit.
+        var social      = _npc.Archetype is NamedNpcArchetype named ? named.Social : null;
+        int attireBonus = social is { } sc ? WearingDialogueBonus.For(_protagonist, sc) : 0;
+
+        int diceCount     = Math.Clamp(affinityBonus + _accumulatedDice + attireBonus, 1, 15);
         // An authored difficulty above the pool size is unreachable — DialogueSessionState already
         // clamps it, so clamp here too or the overlay would judge by a target the pool cannot meet.
         int difficulty    = Math.Clamp(resolution.Difficulty, 1, diceCount);
 
+        string attireNote = social is { } s2 && attireBonus > 0
+            ? $" + attire {attireBonus} for {s2} ({WearingDialogueBonus.Explain(_protagonist, s2)})"
+            : "";
         Console.WriteLine(
             $"DialogueTreeController: resolution '{resolution.NodeId}' — {diceCount} dice " +
-            $"(affinity {affinityBonus} + replica levels {_accumulatedDice}), difficulty {difficulty}" +
+            $"(affinity {affinityBonus} + replica levels {_accumulatedDice}{attireNote}), difficulty {difficulty}" +
             (difficulty != resolution.Difficulty ? $" (authored {resolution.Difficulty}, clamped to the pool)" : ""));
 
         _state.StartDiceRoll(diceCount, difficulty);

@@ -28,8 +28,9 @@ public enum FightAdapterResult
 
 /// <summary>
 /// Embeds the fight system into the main game window's terminal.
-/// Extracts the game logic from <see cref="FightModeWindow"/> into a standalone controller
-/// that operates on a provided <see cref="TerminalHUD"/> instead of owning its own window.
+/// This is the single home for fight control flow: it operates on a provided
+/// <see cref="TerminalHUD"/> rather than owning a window, so the host controller drives it
+/// through <c>OnCellClicked</c>/<c>OnCellHovered</c>/<c>OnKeyPress</c>/<c>OnMouseWheel</c>.
 /// </summary>
 public class FightModeAdapter
 {

@@ -317,10 +317,13 @@ public static class FightResolver
         return wounds[rng.Next(wounds.Count)];
     }
 
-    private static List<Wound> GetWoundPool(Fighter defender, FightingSkill skill,
-                                             string? playerChosenBodyPartId, Random rng)
+    /// <summary>
+    /// Every wound that can meaningfully be inflicted on this defender — the flat pool a Random
+    /// attack used to draw from directly. Extracted so <see cref="PreRollHitLocation"/> can bucket
+    /// the same pool it will later be filtered against.
+    /// </summary>
+    public static List<Wound> BuildAnatomyWoundPool(Fighter defender)
     {
-        // Build sets of all valid IDs from the defender's anatomy
         var validBodyPartIds  = defender.Member.BodyParts.Select(bp => bp.Id).ToHashSet();
         var allOrgans         = defender.Member.BodyParts.SelectMany(bp => bp.Organs).ToList();
         var validOrganIds     = allOrgans.Select(o => o.Id).ToHashSet();
@@ -333,31 +336,94 @@ public static class FightResolver
                      || (w.TargetKind == WoundTargetKind.OrganPart && validOrganPartIds.Contains(w.TargetId)))
             .ToList();
 
-        if (anatomyWounds.Count == 0)
-            anatomyWounds = WoundRegistry.All.Values.ToList();
+        return anatomyWounds.Count > 0 ? anatomyWounds : WoundRegistry.All.Values.ToList();
+    }
 
-        switch (skill.WoundTargetMode)
+    /// <summary>
+    /// Decides where a Random blow is aimed <em>before</em> the dice are thrown, so the defender's
+    /// armour for that section can be counted into the defence pool. Returns null for the wildcard
+    /// bucket — a graze that belongs to no section and that no garment turns.
+    ///
+    /// The weighting is bucket-proportional, and that is the whole point: each body part is chosen
+    /// with probability equal to its share of the flat wound pool. Because a body-part filter
+    /// returns exactly that part's wounds, picking a bucket and then drawing uniformly inside it
+    /// reproduces a uniform draw from the flat pool <em>exactly</em>. Random targeting therefore
+    /// wounds precisely as it did before this change; only the armour lookup is new. Picking
+    /// uniformly across the five body parts instead would have quintupled the headshot rate.
+    /// </summary>
+    public static string? PreRollHitLocation(Fighter defender, Random rng)
+    {
+        var pool = BuildAnatomyWoundPool(defender);
+        if (pool.Count == 0) return null;
+
+        int roll = rng.Next(pool.Count);
+        int acc  = 0;
+
+        foreach (var bodyPart in defender.Member.BodyParts)
         {
-            case WoundTargetMode.Random:
-                return anatomyWounds;
-
-            case WoundTargetMode.FixedBodyPart:
-                if (skill.TargetBodyPartId is null) return anatomyWounds;
-                {
-                    var filtered = FilterByTarget(anatomyWounds, skill.TargetBodyPartId, defender);
-                    return filtered.Count > 0 ? filtered : anatomyWounds;
-                }
-
-            case WoundTargetMode.PlayerChooses:
-                if (playerChosenBodyPartId is null) return anatomyWounds;
-                {
-                    var filtered = FilterByTarget(anatomyWounds, playerChosenBodyPartId, defender);
-                    return filtered.Count > 0 ? filtered : anatomyWounds;
-                }
-
-            default:
-                return anatomyWounds;
+            acc += FilterByTargetSingle(pool, bodyPart.Id, defender).Count;
+            if (roll < acc) return bodyPart.Id;
         }
+
+        return null;   // wildcard remainder
+    }
+
+    /// <summary>
+    /// The top-level body part a localisation falls inside, which is the section whose armour
+    /// applies. Handles the overlay's <c>"organ_part_id,body_part_id"</c> pair (the last token is
+    /// the body part) as well as a bare body-part, organ, or organ-part id.
+    /// </summary>
+    public static string? ResolveSectionBodyPartId(Fighter defender, string? localization)
+    {
+        if (string.IsNullOrWhiteSpace(localization)) return null;
+
+        var ids = localization.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                              .Select(s => s.Trim())
+                              .Where(s => s.Length > 0)
+                              .ToList();
+        if (ids.Count == 0) return null;
+
+        // The overlay puts the enclosing body part last; a bare id is the only token there is.
+        string id = ids[^1];
+
+        if (defender.Member.BodyParts.Any(bp => bp.Id == id)) return id;
+
+        // An organ id: its parent body part is the section.
+        var organParent = defender.Member.BodyParts.FirstOrDefault(b => b.Organs.Any(o => o.Id == id));
+        if (organParent != null) return organParent.Id;
+
+        // An organ-part id: walk up two levels.
+        foreach (var bp in defender.Member.BodyParts)
+            foreach (var org in bp.Organs)
+                if (org.Parts.Any(p => p.Id == id))
+                    return bp.Id;
+
+        return null;
+    }
+
+    /// <summary>
+    /// The wounds a blow aimed at <paramref name="resolvedLocationId"/> can inflict.
+    ///
+    /// The targeting mode no longer matters here: the location is decided before the roll for every
+    /// mode, so this simply filters. When the location has no wounds authored for it the pool falls
+    /// back to <em>wildcards</em> rather than the whole anatomy — falling back to everything would
+    /// let a blow that was charged trunk armour come down on the head instead.
+    /// </summary>
+    private static List<Wound> GetWoundPool(Fighter defender, FightingSkill skill,
+                                             string? resolvedLocationId, Random rng)
+    {
+        var anatomyWounds = BuildAnatomyWoundPool(defender);
+        if (resolvedLocationId is null) return Wildcards(anatomyWounds);
+
+        var filtered = FilterByTarget(anatomyWounds, resolvedLocationId, defender);
+        return filtered.Count > 0 ? filtered : Wildcards(anatomyWounds);
+    }
+
+    /// <summary>Generic wounds that belong to no particular place, used as the honest fallback.</summary>
+    private static List<Wound> Wildcards(List<Wound> pool)
+    {
+        var wildcards = pool.Where(w => w.TargetKind == WoundTargetKind.Wildcard).ToList();
+        return wildcards.Count > 0 ? wildcards : pool;
     }
 
     /// <summary>
@@ -386,16 +452,29 @@ public static class FightResolver
     /// <summary>
     /// Find wounds in <paramref name="wounds"/> that match the single anatomy id
     /// <paramref name="targetId"/> — resolved as body-part, then organ, then organ-part.
+    ///
+    /// A body part gathers everything <em>inside</em> it: its own wounds, its organs' wounds, and
+    /// its organs' parts' wounds. That last tier matters twice over — aiming at the visage should
+    /// be able to take an eye, and, because <see cref="PreRollHitLocation"/> weights each body part
+    /// by the size of this very set, omitting organ-part wounds would make them unreachable from an
+    /// unaimed attack altogether.
     /// </summary>
     private static List<Wound> FilterByTargetSingle(List<Wound> wounds, string targetId, Fighter defender)
     {
-        // body part: direct body-part wounds + any organ wounds inside it
         var bodyPart = defender.Member.GetBodyPartById(targetId);
         if (bodyPart != null)
         {
             var result = wounds.Where(w => w.AffectsBodyPart(targetId)).ToList();
-            foreach (var w in wounds.Where(w => bodyPart.Organs.Any(o => w.AffectsOrgan(o.Id, targetId))))
-                if (!result.Contains(w)) result.Add(w);
+
+            foreach (var organ in bodyPart.Organs)
+            {
+                foreach (var w in wounds.Where(w => w.AffectsOrgan(organ.Id, targetId)))
+                    if (!result.Contains(w)) result.Add(w);
+
+                foreach (var part in organ.Parts)
+                    foreach (var w in wounds.Where(w => w.AffectsOrganPart(part.Id, organ.Id, targetId)))
+                        if (!result.Contains(w)) result.Add(w);
+            }
             return result;
         }
 

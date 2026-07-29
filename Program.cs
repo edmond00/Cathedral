@@ -9,7 +9,6 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine();
     Console.WriteLine("Options:");
     Console.WriteLine("  (no args)                          Launch the narrative exploration game");
-    Console.WriteLine("  --fight                            Run the fight loop (turn-based combat test)");
     Console.WriteLine("  --music                            Run the procedural ambient music PoC");
     Console.WriteLine("  --fight-area [options]             Run the fight area generator test");
     Console.WriteLine("    --mode <random|...>              Fight area generation mode (default: random)");
@@ -29,6 +28,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --dialogue-view                    Open a window graphing every dialogue tree (neutral replica text per node)");
     Console.WriteLine("  --dialogue-audit                   Print the dialogue-tree shape report (reply counts, branch lengths, bad tokens) and exit");
     Console.WriteLine("  --npc-audit                        Print the NPC generation report (determinism, trait resolution, body/skill/inventory shape) and exit");
+    Console.WriteLine("  --item-audit                       Print the item catalogue report (identity, reachability, weights, trade coverage) and exit");
     Console.WriteLine("  --playground                       Replace all LLM calls with instant placeholders (no server needed)");
     Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
     Console.WriteLine("  --mm                               After the childhood reminescence phase, fill every empty memory slot with random unheld modiMentis");
@@ -53,6 +53,14 @@ if (args.Length >= 1 && args[0] == "--dialogue-audit")
 if (args.Length >= 1 && args[0] == "--npc-audit")
 {
     Console.WriteLine(Cathedral.Game.Npc.Generation.NpcAudit.BuildReport());
+    return;
+}
+
+// Item catalogue audit: report identity clashes, unreachable liquids, unweighed items and thin
+// trade tags, then exit. Headless — reads ItemRegistry only, so no LLM, no window, no world.
+if (args.Length >= 1 && args[0] == "--item-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.ItemAudit.BuildReport());
     return;
 }
 
@@ -84,13 +92,6 @@ try
 catch (Exception ex)
 {
     Console.WriteLine($"❌ REMINESCENCE VALIDATION FAILED:\n{ex.Message}");
-    return;
-}
-
-// Check for fight mode
-if (args.Length >= 1 && args[0] == "--fight")
-{
-    Cathedral.Fight.FightModeLauncher.Launch();
     return;
 }
 

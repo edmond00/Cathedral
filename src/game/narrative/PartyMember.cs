@@ -175,6 +175,76 @@ public abstract class PartyMember
     /// </summary>
     public void Equip(EquipmentAnchor anchor, Item item) => EquippedItems[anchor].Add(item);
 
+    // ── Carrying weight ───────────────────────────────────────────
+
+    /// <summary>
+    /// Total carrying cost of everything held — worn, in hand, and inside anything worn.
+    /// Relies on <see cref="GetAllItems"/> descending into nested containers, or a flask inside a
+    /// backpack would weigh nothing.
+    /// </summary>
+    public int CurrentWeight => GetAllItems().Sum(i => i.WeightPoints);
+
+    /// <summary>How much this character can carry before anything further is refused.</summary>
+    public int MaxCarryWeight =>
+        DerivedStats.FirstOrDefault(s => s.Name == "maximum_weight")?.GetValue(this) ?? 100;
+
+    /// <summary>Free carrying capacity; never negative.</summary>
+    public int RemainingWeight => Math.Max(0, MaxCarryWeight - CurrentWeight);
+
+    /// <summary>
+    /// True when this character is carrying more than they can bear. Being overloaded never
+    /// prevents picking something up — you can always stoop and take one more thing. What it
+    /// prevents is <em>travel</em>: the party cannot set out until every member is under their
+    /// limit, so the player has to decide what to leave behind rather than being blocked at the
+    /// moment of acquisition.
+    /// </summary>
+    public bool IsOverloaded => CurrentWeight > MaxCarryWeight;
+
+    /// <summary>How much must be put down before this character can travel; 0 when they are fine.</summary>
+    public int ExcessWeight => Math.Max(0, CurrentWeight - MaxCarryWeight);
+
+    // ── Armour ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Bonus defence dice granted by what this character is <em>wearing</em> over
+    /// <paramref name="bodyPartId"/>. Contributions from every slot covering the section add up, so
+    /// a cloak over a tunic over an undershirt all count on the trunk.
+    ///
+    /// Two things are deliberate here. First, the garment must sit on an anchor its own
+    /// <see cref="WearSlot"/> maps to — armour held in a fist or stuffed in a pack protects
+    /// nothing, and iterating <see cref="EquippedItems"/> (which never contains a bag's contents)
+    /// enforces that structurally. Second, the section is looked up against this character's actual
+    /// <see cref="BodyParts"/> rather than trusting <c>Organ.BodyPartId</c>, because several organ
+    /// classes hardcode <c>"visage"</c> even on a beast that has a muzzle instead.
+    ///
+    /// There is no cap: the ceiling is a content decision, watched by <c>--item-audit</c>.
+    /// </summary>
+    public int ArmorDiceForSection(string bodyPartId)
+    {
+        if (!BodyParts.Any(bp => bp.Id == bodyPartId)) return 0;
+
+        int total = 0;
+        foreach (var (anchor, items) in EquippedItems)
+            foreach (var item in items)
+                if (item is WearableItem worn
+                    && worn.Slot.AnchorsTo(anchor)
+                    && ArmorSections.SectionOf(worn.Slot) == bodyPartId)
+                    total += worn.DefenseDice;
+
+        return total;
+    }
+
+    /// <summary>
+    /// The first vessel with room for <paramref name="liquid"/>, or null when there is none.
+    /// Liquids live only in vessels, so this is the whole of their placement logic.
+    /// </summary>
+    public IContainer? FindVesselFor(Item liquid) =>
+        GetAllItems()
+            .OfType<IContainer>()
+            .FirstOrDefault(c => c.Kind == ContainerKind.Vessel
+                              && c.CanContain(liquid)
+                              && liquid.SlotCount <= c.AvailableSlots);
+
     /// <summary>
     /// Try to place an acquired item into the best available slot:
     ///   1. Preferred anchor (if the item declares one and it is free).
@@ -186,6 +256,16 @@ public abstract class PartyMember
     /// </summary>
     public bool TryAcquireItem(Item item)
     {
+        // 0. Liquids first: one never touches an anchor — it goes in a vessel or nowhere at all,
+        //    which is why this precedes the anchor scan rather than joining it. Weight is not
+        //    checked; an overloaded character can still pick things up, they just cannot travel.
+        if (item.IsLiquid)
+        {
+            if (FindVesselFor(item) is { } vessel && vessel.TryAdd(item)) return true;
+            Console.WriteLine($"PartyMember: no vessel with room for '{item.DisplayName}' — item dropped.");
+            return false;
+        }
+
         // 1. Preferred anchor
         if (item.PreferredAnchor.HasValue)
         {
@@ -207,15 +287,9 @@ public abstract class PartyMember
             }
         }
 
-        // 3. Any equipped container that can take the item
-        foreach (var kvp in EquippedItems)
-        {
-            foreach (var equipped in kvp.Value)
-            {
-                if (equipped is ContainerItem container && container.TryAdd(item))
-                    return true;
-            }
-        }
+        // 3. Any container being carried, however deeply nested
+        foreach (var container in GetAllItems().OfType<IContainer>())
+            if (container.TryAdd(item)) return true;
 
         // No room: drop the item rather than overflow.
         Console.WriteLine($"PartyMember: No free anchor/container for '{item.DisplayName}' — item dropped (inventory full).");
@@ -223,31 +297,54 @@ public abstract class PartyMember
     }
 
     /// <summary>
-    /// Non-mutating check mirroring <see cref="TryAcquireItem"/>: returns true when this item could be
-    /// placed in a preferred/compatible anchor or an equipped container. Used by the coded
-    /// inventory-capacity rule to block a pickup before it executes.
+    /// The outcome of an acquisition check: whether the item can be taken, and — when it cannot —
+    /// why, phrased as a first-person sentence fragment. The reason matters: it is handed to
+    /// <c>InventoryCapacityRule</c>, which fails the action, and the refusal is then re-voiced by
+    /// the acting modus mentis rather than swallowed. A pickup must never fail silently.
     /// </summary>
-    public bool CanAcquireItem(Item item)
+    public readonly record struct AcquireCheck(bool Ok, string? Reason)
     {
+        public static AcquireCheck Allow => new(true, null);
+        public static AcquireCheck Deny(string reason) => new(false, reason);
+    }
+
+    /// <summary>
+    /// Non-mutating mirror of <see cref="TryAcquireItem"/>, reporting the reason on refusal.
+    /// Checked in the order the player would notice: too heavy first, then nowhere to put it.
+    /// </summary>
+    public AcquireCheck CanAcquire(Item item)
+    {
+        // Weight is deliberately NOT checked here. Being overloaded does not stop you picking
+        // something up — it stops you walking anywhere with it. See IsOverloaded, which gates
+        // travel instead, so the player discovers the problem when they try to leave rather than
+        // being quietly refused an item they are standing next to.
+
+        // Liquids never sit on the body: a vessel with room is the only way to hold one.
+        if (item.IsLiquid)
+            return FindVesselFor(item) is not null
+                ? AcquireCheck.Allow
+                : AcquireCheck.Deny($"I have no empty vessel to hold {item.WithArticle()}");
+
         if (item.PreferredAnchor.HasValue)
         {
             var preferred = item.PreferredAnchor.Value;
             if (preferred.CanAccept(item) && AvailableSlots(preferred) >= item.SlotCount)
-                return true;
+                return AcquireCheck.Allow;
         }
 
         foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
             if (anchor.CanAccept(item) && AvailableSlots(anchor) >= item.SlotCount)
-                return true;
+                return AcquireCheck.Allow;
 
-        foreach (var kvp in EquippedItems)
-            foreach (var equipped in kvp.Value)
-                if (equipped is ContainerItem container
-                    && container.CanContain(item) && item.SlotCount <= container.AvailableSlots)
-                    return true;
+        foreach (var container in GetAllItems().OfType<IContainer>())
+            if (container.CanContain(item) && item.SlotCount <= container.AvailableSlots)
+                return AcquireCheck.Allow;
 
-        return false;
+        return AcquireCheck.Deny($"I have nowhere left to put {item.WithArticle()}");
     }
+
+    /// <summary>Boolean form of <see cref="CanAcquire"/>, for callers that do not need the reason.</summary>
+    public bool CanAcquireItem(Item item) => CanAcquire(item).Ok;
 
     /// <summary>
     /// Remove a specific item from wherever it is held (overflow, anchor slot, or container).
@@ -258,29 +355,60 @@ public abstract class PartyMember
         if (Inventory.Remove(item)) return true;
         foreach (var list in EquippedItems.Values)
             if (list.Remove(item)) return true;
+
+        // Descend into containers, however deeply nested. Test against IContainer, never
+        // ContainerItem: a backpack is a WearableContainerItem and shares no base class with a
+        // loose jug, so matching on the class silently skips everything the player is wearing.
         foreach (var list in EquippedItems.Values)
             foreach (var equipped in list)
-                if (equipped is ContainerItem c && c.TryRemove(item)) return true;
+                if (equipped is IContainer c && RemoveFromContainer(c, item)) return true;
+        foreach (var held in Inventory)
+            if (held is IContainer c && RemoveFromContainer(c, item)) return true;
+        return false;
+    }
+
+    /// <summary>Removes <paramref name="item"/> from a container or any container nested inside it.</summary>
+    private static bool RemoveFromContainer(IContainer container, Item item)
+    {
+        if (container.TryRemove(item)) return true;
+        foreach (var inner in container.Contents)
+            if (inner is IContainer nested && RemoveFromContainer(nested, item)) return true;
         return false;
     }
 
     /// <summary>
-    /// Returns all items currently held: overflow inventory, every anchor slot,
-    /// and the contents of any equipped containers.
+    /// Returns all items currently held: overflow inventory, every anchor slot, and the contents
+    /// of every container, however deeply nested (a flask inside a backpack counts).
     /// </summary>
     public List<Item> GetAllItems()
     {
         var result = new List<Item>(Inventory);
+        foreach (var item in Inventory)
+            if (item is IContainer nested) CollectContents(nested, result);
+
         foreach (var list in EquippedItems.Values)
         {
             foreach (var item in list)
             {
                 result.Add(item);
-                if (item is ContainerItem c)
-                    result.AddRange(c.Contents);
+                if (item is IContainer c) CollectContents(c, result);
             }
         }
         return result;
+    }
+
+    /// <summary>
+    /// Appends a container's contents to <paramref name="into"/>, descending into nested containers.
+    /// Guards against a container that (incorrectly) ends up holding itself.
+    /// </summary>
+    private static void CollectContents(IContainer container, List<Item> into)
+    {
+        foreach (var item in container.Contents)
+        {
+            if (ReferenceEquals(item, container)) continue;
+            into.Add(item);
+            if (item is IContainer inner) CollectContents(inner, into);
+        }
     }
 
     // ── Body initialisation ──────────────────────────────────────

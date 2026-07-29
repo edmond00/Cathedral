@@ -1,9 +1,10 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Clover : Item
 {
+    public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId => "clover";
     public override string DisplayName => "Clover";
     public override string Article => "some";

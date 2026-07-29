@@ -191,13 +191,13 @@ public class NarrativeState
     public ParsedNarrativeAction? ActionPendingItemCombination { get; set; } = null;
 
     /// <summary>
-    /// Is the initial "Think/Observe" or "Execute/Use Item" choice popup currently visible?
+    /// Is the initial "Think/Observe" or "Execute/Use Tool" choice popup currently visible?
     /// </summary>
     public bool IsSelectingInteractionMode { get; set; } = false;
 
     /// <summary>
     /// True when the choice popup was triggered by a keyword click (Think/Observe).
-    /// False when triggered by an action click (Execute/Use Item).
+    /// False when triggered by an action click (Execute/Use Tool).
     /// </summary>
     public bool InteractionModeIsForKeyword { get; set; } = false;
 

@@ -2210,7 +2210,7 @@ public class NarrativeController
         var layoutInfo = _terminalInputHandler.GetLayoutInfo(_core.ClientSize);
         float cellPixelSize = layoutInfo.CellSize.X;
 
-        // Choice popup (Think/Observe or Execute/Use Item) takes highest priority
+        // Choice popup (Think/Observe or Execute/Use Tool) takes highest priority
         if (_choicePopup.IsVisible)
         {
             int? choiceIndex = _choicePopup.HandleClick(screenPosition.X, screenPosition.Y, _core.ClientSize, cellPixelSize);
@@ -2594,7 +2594,7 @@ public class NarrativeController
                 _narrationState.IsSelectingInteractionMode = true;
                 _narrationState.InteractionModeIsForKeyword = false;
                 Vector2 screenPos = _terminalInputHandler.CellToScreen(mouseX, mouseY, _core.ClientSize);
-                _choicePopup.Show(screenPos, new List<string> { "Execute", "Use Item" }, "Action", disabledIndices);
+                _choicePopup.Show(screenPos, new List<string> { "Execute", "Use Tool" }, "Action", disabledIndices);
             }
             else
             {
@@ -2682,7 +2682,7 @@ public class NarrativeController
     }
 
     /// <summary>
-    /// Dispatches the result of the Think/Observe/SpeakAbout or Execute/Use Item choice popup.
+    /// Dispatches the result of the Think/Observe/SpeakAbout or Execute/Use Tool choice popup.
     /// </summary>
     private void DispatchChoiceSelection(int? choiceIndex)
     {
@@ -2755,7 +2755,7 @@ public class NarrativeController
         }
         else
         {
-            // Action choice: 0 = Execute, 1 = Use Item
+            // Action choice: 0 = Execute, 1 = Use Tool
             var action = _narrationState.ActionPendingModeSelection;
             _narrationState.ActionPendingModeSelection = null;
 
@@ -2769,11 +2769,11 @@ public class NarrativeController
                 var candidateItems = GetCombinableItems();
                 if (candidateItems.Count > 0)
                 {
-                    Console.WriteLine($"NarrativeController: Choice — Use Item for '{action.ActionText}'");
+                    Console.WriteLine($"NarrativeController: Choice — Use Tool for '{action.ActionText}'");
                     _narrationState.IsSelectingItemForAction = true;
                     _narrationState.ActionPendingItemCombination = action;
                     Vector2 screenPos = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
-                    _itemSelectionPopup.Show(screenPos, candidateItems, "Combine Item with Action");
+                    _itemSelectionPopup.Show(screenPos, candidateItems, "Combine Tool with Action");
                 }
                 else
                 {
@@ -3466,10 +3466,21 @@ public class NarrativeController
         };
     }
 
+    /// <summary>
+    /// The tools that may be combined with an action. Only <see cref="ItemCategory.Tool"/> and
+    /// <see cref="ItemCategory.Weapon"/> qualify — a weapon is a tool too, just a specialised and
+    /// often clumsy one (see <c>WeaponItem.UsageLevel</c>). Garments, food and raw material are
+    /// excluded: they are things you wear, eat or own, not things you work with.
+    ///
+    /// Location is deliberately not a factor — anything carried is usable, whether it is in hand
+    /// or at the bottom of a pack. A container holding something is excluded, since combining it
+    /// with an action would mean putting its contents down.
+    /// </summary>
     private List<Item> GetCombinableItems()
     {
         return _activePartyMember.GetAllItems()
-            .Where(i => i is not ContainerItem c || c.Contents.Count == 0)
+            .Where(i => i.Category is ItemCategory.Tool or ItemCategory.Weapon)
+            .Where(i => i is not IContainer c || c.Contents.Count == 0)
             .ToList();
     }
 
@@ -3555,10 +3566,10 @@ public class NarrativeController
                 // Chain leaf: a synthetic ModusMentis carrying item name + effective usage level so that:
                 //   - the action button shows [ItemName ◼◼] instead of [ActionSkill ◼◼◼]
                 //   - GetTotalModusMentisLevel() = obs.Level + thinking.Level + action.Level + effectiveUsage (no repetition)
-                // The item's UsageLevel is capped by the hands-derived "item_usage_cap" stat so that
+                // The item's UsageLevel is capped by the hands-derived "tool_usage_cap" stat so that
                 // characters with stronger (or unwounded) hands extract more bonus from potent tools.
                 int usageCap = _activePartyMember.DerivedStats
-                    .First(s => s.Name == "item_usage_cap").GetValue(_activePartyMember);
+                    .First(s => s.Name == "tool_usage_cap").GetValue(_activePartyMember);
                 int effectiveUsageLevel = System.Math.Min(item.UsageLevel, usageCap);
                 Console.WriteLine($"NarrativeController: Item usage level {item.UsageLevel} capped to {effectiveUsageLevel} (hands cap {usageCap}).");
                 var itemModusMentis = new SyntheticItemModusMentis(item.ItemId, item.DisplayName, effectiveUsageLevel);

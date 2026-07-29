@@ -46,6 +46,13 @@ public class Fighter
     public int BaseNaturalDefense => GetCombatStat("natural_defense");
     /// <summary>Natural defense including active posture bonus.</summary>
     public int NaturalDefense     => BaseNaturalDefense + (IsDefensePostureActive ? 2 : 0);
+
+    /// <summary>
+    /// Bonus defence dice from worn armour covering <paramref name="sectionId"/>. A null section
+    /// (a blow that lands nowhere in particular) is turned by nothing.
+    /// </summary>
+    public int ArmorDice(string? sectionId) =>
+        sectionId is null ? 0 : Member.ArmorDiceForSection(sectionId);
     /// <summary>Bonus attack dice added to every offensive skill roll (genitories stat).</summary>
     public int NaturalAttack      => GetCombatStat("natural_attack");
     /// <summary>Number of d6 rolled in a runaway check (1 die per foot level). At least one six required to flee.</summary>

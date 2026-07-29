@@ -15,6 +15,7 @@ bottle of ale (instead of ale)
 NPC coherent generation with text description and content parrallel generation
 no success sound during dice roll if natural success (no use of body humor modificator)
 phlegm not appliable
+childhood : leave temple -> grandfather story
 
 
 words to prevent :

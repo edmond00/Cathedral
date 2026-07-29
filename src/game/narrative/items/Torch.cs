@@ -1,9 +1,10 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Torch : Item
 {
+    public override ItemCategory Category => ItemCategory.Tool;
     public override string ItemId      => "torch";
     public override string DisplayName => "Torch";
     public override string Description => "A pine-resin torch on a short wooden handle, the head wrapped in charred cloth";

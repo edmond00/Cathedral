@@ -17,6 +17,9 @@ public abstract class WildernessNpcArchetype : NamedNpcArchetype
     public override int  ModiMentisCount    => 8;
     public override bool CanSpeak           => true;
 
+    /// <summary>Country people who happen to work away from the fields.</summary>
+    public override SocialCategory? Social  => SocialCategory.Peasant;
+
     /// <summary>
     /// Days of each rotation spent at the wilderness site before returning to the village.
     /// Not yet acted on by the schedule system — placeholder for future travel logic.

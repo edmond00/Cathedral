@@ -14,4 +14,7 @@ public abstract class CraftsmanArchetype : NamedNpcArchetype
     public override bool DefaultPersistent  => true;
     public override int  ModiMentisCount    => 9;
     public override bool CanSpeak           => true;
+
+    /// <summary>A craftsman owns his trade and reckons himself the townsman's equal.</summary>
+    public override SocialCategory? Social  => SocialCategory.Bourgeois;
 }

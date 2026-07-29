@@ -1,4 +1,4 @@
-namespace Cathedral.Game.Narrative.World.Items;
+﻿namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class Thread : TextileItem
 {
@@ -12,7 +12,7 @@ public sealed class Cloth : TextileItem
     public override string ItemId      => "cloth";
     public override string DisplayName => "Cloth";
     public override string Description => "A folded length of plain woven cloth, undyed";
-    public override float Weight => 0.4f;
+    public override WeightClass Weight => WeightClass.Light;
 }
 
 public sealed class Flax : TextileItem
@@ -27,5 +27,5 @@ public sealed class Linen : TextileItem
     public override string ItemId      => "linen";
     public override string DisplayName => "Linen";
     public override string Description => "A folded sheet of fine linen, smooth and cool to the touch";
-    public override float Weight => 0.3f;
+    public override WeightClass Weight => WeightClass.Light;
 }

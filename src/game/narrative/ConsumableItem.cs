@@ -224,17 +224,14 @@ public abstract class ConsumableItem : Item
         member.RemoveItem(this);
     }
 
-    // ── ItemType tagging ──────────────────────────────────────────
+    // ── Taxonomy ──────────────────────────────────────────────────
 
     /// <summary>
-    /// Consumable items advertise their type via <see cref="ItemType"/>.
-    /// Subclasses should override Types to include the matching tag.
+    /// Every consumable is <see cref="ItemCategory.Consumable"/>; how it is taken is already
+    /// declared by <see cref="ConsumableType"/>, so the subcategory simply mirrors it rather than
+    /// duplicating the distinction in a second enum. A <see cref="ConsumableType.Drink"/> is
+    /// additionally a liquid — see <see cref="Item.IsLiquid"/>, which infers it from here.
     /// </summary>
-    public override List<ItemType> Types => ConsumableType switch
-    {
-        ConsumableType.Food     => new() { ItemType.Food },
-        ConsumableType.Drink    => new() { ItemType.Drink },
-        ConsumableType.Inhalant => new() { ItemType.Inhalant },
-        _                       => new() { ItemType.Other },
-    };
+    public sealed override ItemCategory Category       => ItemCategory.Consumable;
+    public sealed override string       SubcategoryKey => ConsumableType.ToString();
 }

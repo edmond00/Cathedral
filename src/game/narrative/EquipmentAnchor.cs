@@ -72,32 +72,19 @@ public static class EquipmentAnchorExtensions
 
     /// <summary>
     /// Returns false when the anchor refuses the given item.
-    /// Specific anchors only accept items whose type matches the anchor.
-    /// Hold anchors are general-purpose: they accept any type except Liquid.
+    ///
+    /// Liquids are refused everywhere: they may only ever sit inside a
+    /// <see cref="ContainerKind.Vessel"/>, never on the body directly. Hold anchors (the hands)
+    /// are otherwise general-purpose and take anything. Every other anchor is a garment slot and
+    /// accepts only a <see cref="WearableItem"/> whose <see cref="WearableItem.Slot"/> maps to it.
     /// </summary>
     public static bool CanAccept(this EquipmentAnchor anchor, Item item)
     {
-        bool isHold = anchor == EquipmentAnchor.RightHold || anchor == EquipmentAnchor.LeftHold;
-        if (isHold)
-            return !item.Types.Contains(ItemType.Liquid);
+        if (item.IsLiquid) return false;
 
-        // Map each anchor to its required ItemType.
-        ItemType? required = anchor switch
-        {
-            EquipmentAnchor.Headgear      => ItemType.Headgear,
-            EquipmentAnchor.Eyewear       => ItemType.Eyewear,
-            EquipmentAnchor.Neckwear      => ItemType.Neckwear,
-            EquipmentAnchor.Outerwear     => ItemType.Outerwear,
-            EquipmentAnchor.Bodywear      => ItemType.Bodywear,
-            EquipmentAnchor.Underwear     => ItemType.Underwear,
-            EquipmentAnchor.BeltGear      => ItemType.BeltGear,
-            EquipmentAnchor.RightHandwear => ItemType.Handwear,
-            EquipmentAnchor.LeftHandwear  => ItemType.Handwear,
-            EquipmentAnchor.Legwear       => ItemType.Legwear,
-            EquipmentAnchor.Footwear      => ItemType.Footwear,
-            _                             => null,
-        };
+        if (anchor is EquipmentAnchor.RightHold or EquipmentAnchor.LeftHold)
+            return true;
 
-        return required.HasValue && item.Types.Contains(required.Value);
+        return item is WearableItem wearable && wearable.Slot.AnchorsTo(anchor);
     }
 }

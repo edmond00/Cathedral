@@ -14,6 +14,12 @@ public class ReeveArchetype : PeasantArchetype
     public override bool   IsBrave      => true;
     public override int    AuthorityLevel => 1;
 
+    /// <summary>
+    /// The one exception among the peasant roles: a reeve answers to the lord and keeps the
+    /// accounts, so he measures people the way a townsman does rather than the way a bondman does.
+    /// </summary>
+    public override SocialCategory? Social => SocialCategory.Bourgeois;
+
     public override string RoleNoun => "reeve";
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]

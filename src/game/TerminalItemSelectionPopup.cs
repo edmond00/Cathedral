@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
@@ -21,7 +21,7 @@ public class TerminalItemSelectionPopup
     private int? _hoveredItemIndex = null;
     private Vector2 _fixedPosition;
     private int _scrollOffset = 0;
-    private string _title = "Combine Item with Action";
+    private string _title = "Combine Tool with Action";
 
     // Colors reuse the modus mentis popup config
     private static readonly Vector4 BorderColor = Config.Colors.MediumGray60;
@@ -35,7 +35,7 @@ public class TerminalItemSelectionPopup
     /// <summary>
     /// Show the popup at a fixed screen position with the list of items.
     /// </summary>
-    public void Show(Vector2 screenPosition, List<Item> items, string title = "Combine Item with Action")
+    public void Show(Vector2 screenPosition, List<Item> items, string title = "Combine Tool with Action")
     {
         _items = items ?? throw new ArgumentNullException(nameof(items));
         _fixedPosition = screenPosition;

@@ -17,8 +17,15 @@ public abstract class Item : ConcreteOutcome, IObservation
 
     // ── Physical properties ───────────────────────────────────────
 
-    /// <summary>Weight in kilograms.</summary>
-    public virtual float Weight => 0.1f;
+    /// <summary>
+    /// How much carrying this burdens its owner. A label rather than a mass — see
+    /// <see cref="WeightClass"/> for why. Summed across everything held and checked against the
+    /// <c>maximum_weight</c> derived stat before anything may be picked up.
+    /// </summary>
+    public virtual WeightClass Weight => WeightClass.Light;
+
+    /// <summary>This item's carrying cost, in the same unit as <c>maximum_weight</c>.</summary>
+    public int WeightPoints => (int)Weight;
 
     /// <summary>Physical size — determines inventory slot count (Small=3, Medium=5, Large=7).</summary>
     public virtual ItemSize Size => ItemSize.Small;
@@ -26,16 +33,47 @@ public abstract class Item : ConcreteOutcome, IObservation
     /// <summary>Number of inventory slots this item occupies.</summary>
     public int SlotCount => (int)Size;
 
-    /// <summary>Category tags for this item.</summary>
-    public virtual List<ItemType> Types => new() { ItemType.Other };
+    // ── Taxonomy ──────────────────────────────────────────────────
+
+    /// <summary>
+    /// What this item fundamentally is. Decides which systems consider it at all: only
+    /// <see cref="ItemCategory.Weapon"/> grants a fighting medium, only Weapon and
+    /// <see cref="ItemCategory.Tool"/> may be combined with a narration action, only
+    /// <see cref="ItemCategory.Wearing"/> can protect or flatter.
+    /// </summary>
+    public virtual ItemCategory Category => ItemCategory.Other;
+
+    /// <summary>
+    /// The subcategory, flattened to a string for display and audit grouping. Each category names
+    /// its own strongly-typed subcategory (<see cref="WearSlot"/>, <see cref="ConsumableType"/>,
+    /// <see cref="ContainerKind"/>, or a weapon category id) — this is the common denominator, and
+    /// nothing should parse it back.
+    /// </summary>
+    public virtual string SubcategoryKey => "";
+
+    /// <summary>
+    /// Whether this item pours. Inferred, never declared: a liquid is exactly a drinkable
+    /// consumable. Liquids may only be carried inside a <see cref="ContainerKind.Vessel"/> —
+    /// never loose in an anchor, never in a pack.
+    /// </summary>
+    public bool IsLiquid => this is ConsumableItem { ConsumableType: ConsumableType.Drink };
 
     // ── Trade ─────────────────────────────────────────────────────
 
     /// <summary>
     /// Trade category tags (see <see cref="ItemTag"/>). Empty means the item is not part of
-    /// any NPC's buy/sell catalogue. Distinct from <see cref="Types"/> (which mirror anchors).
+    /// any NPC's buy/sell catalogue. Deliberately independent of <see cref="Category"/>: an item
+    /// has one category but any number of tags, and the tags exist only to stock shelves.
     /// </summary>
     public virtual List<ItemTag> Tags => new();
+
+    /// <summary>
+    /// The name a merchant uses, which is not always the name the inventory uses. A catalogue line
+    /// reads "bottle of ale" while the two items it delivers are a "Bottle" and an "Ale" — the
+    /// bundle composes its own label from these, so the item names stay honest about what you
+    /// actually receive. Defaults to <see cref="DisplayName"/>.
+    /// </summary>
+    public virtual string TradeName => DisplayName;
 
     /// <summary>The single coin denomination this item is priced in. Denominations are never mixed.</summary>
     public virtual CoinType PriceCoin => CoinType.Copper;
@@ -47,10 +85,12 @@ public abstract class Item : ConcreteOutcome, IObservation
     public virtual int PriceReference => 1;
 
     /// <summary>
-    /// Lines of text shown in the inventory info panel.
-    /// Override to provide item-specific details beyond the description.
+    /// Extra lines shown in the inventory info panel, <em>below</em> the description.
+    /// Empty by default: the panel already prints <see cref="Description"/> itself, so returning
+    /// it here again is what used to print every description twice. Override only to add detail
+    /// the description does not already carry.
     /// </summary>
-    public virtual string[] Info => new[] { Description };
+    public virtual string[] Info => System.Array.Empty<string>();
 
     /// <summary>
     /// Preferred equipment anchor. When null, the item auto-fills any free compatible slot

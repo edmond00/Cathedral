@@ -185,17 +185,54 @@ public sealed class TradeMenuRenderer
         var v = new VirtualInventory(_member);
         for (int i = 0; i < Offers.Count; i++)
             for (int k = 0; k < q[i]; k++)
-                if (!v.TryPlace(Offers[i].Prototype)) return false;
+                if (!v.TryPlaceOffer(Offers[i])) return false;
         return true;
+    }
+
+    /// <summary>
+    /// Every owned instance matching this offer, ready to hand over. A plain offer matches items of
+    /// the same type that are not full containers; a bundle matches a vessel of the right type that
+    /// actually holds the right liquid, and hands over both — selling "a bottle of ale" means
+    /// parting with the bottle too.
+    /// </summary>
+    private List<(Item Primary, Item? Vessel)> MatchingStock(TradeOffer offer)
+    {
+        var held = _member.GetAllItems();
+
+        if (offer.VesselPrototype is null)
+        {
+            var type = offer.Prototype.GetType();
+            return held.Where(it => it.GetType() == type
+                                 && !(it is IContainer c && c.Contents.Count > 0))
+                       .Select(it => (it, (Item?)null))
+                       .ToList();
+        }
+
+        var vesselType  = offer.VesselPrototype.GetType();
+        var liquidType  = offer.Prototype.GetType();
+        var matches = new List<(Item, Item?)>();
+        foreach (var candidate in held.Where(it => it.GetType() == vesselType))
+        {
+            if (candidate is not IContainer vessel) continue;
+            var liquid = vessel.Contents.FirstOrDefault(c => c.GetType() == liquidType);
+            if (liquid != null) matches.Add((liquid, candidate));
+        }
+        return matches;
     }
 
     /// <summary>(sellable units, total owned of this type, whether any owned instance is a non-empty container).</summary>
     private (int sellable, int total, bool anyFull) OwnedInfo(TradeOffer offer)
     {
+        if (offer.VesselPrototype is not null)
+        {
+            int bundles = MatchingStock(offer).Count;
+            return (bundles, bundles, false);
+        }
+
         var type = offer.Prototype.GetType();
         var owned = _member.GetAllItems().Where(it => it.GetType() == type).ToList();
         int total = owned.Count;
-        int full  = owned.Count(it => it is ContainerItem c && c.Contents.Count > 0);
+        int full  = owned.Count(it => it is IContainer c && c.Contents.Count > 0);
         return (total - full, total, full > 0);
     }
 
@@ -212,6 +249,23 @@ public sealed class TradeMenuRenderer
     // Apply
     // ═══════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Delivers one unit of an offer. For a bundle the vessel is filled before it is handed over,
+    /// so the liquid never has to find a home on its own — placing the bottle first and pouring
+    /// afterwards would fail whenever the buyer owns no other vessel.
+    /// </summary>
+    private bool BuyOne(TradeOffer offer)
+    {
+        if (offer.VesselPrototype is null)
+            return _member.AcquireItem(ItemRegistry.NewInstance(offer.Prototype));
+
+        var vessel = ItemRegistry.NewInstance(offer.VesselPrototype);
+        var liquid = ItemRegistry.NewInstance(offer.Prototype);
+
+        if (vessel is not IContainer container || !container.TryAdd(liquid)) return false;
+        return _member.AcquireItem(vessel);
+    }
+
     private void ApplyAndClose()
     {
         if (_mode == TradeMode.Buy)
@@ -222,8 +276,7 @@ public sealed class TradeMenuRenderer
                 for (int k = 0; k < _staged[i]; k++)
                 {
                     if (!_party.TrySpend(offer.Coin, offer.UnitPrice)) break;        // funds guard
-                    var fresh = ItemRegistry.NewInstance(offer.Prototype);
-                    if (!_member.AcquireItem(fresh)) { _party.Add(offer.Coin, offer.UnitPrice); break; } // space guard → refund
+                    if (!BuyOne(offer)) { _party.Add(offer.Coin, offer.UnitPrice); break; } // space guard → refund
                 }
             }
         }
@@ -235,16 +288,13 @@ public sealed class TradeMenuRenderer
                 int toSell = _staged[i];
                 if (toSell <= 0) continue;
 
-                var type = offer.Prototype.GetType();
-                var removable = _member.GetAllItems()
-                    .Where(it => it.GetType() == type && !(it is ContainerItem c && c.Contents.Count > 0))
-                    .Take(toSell)
-                    .ToList();
-
-                foreach (var item in removable)
+                foreach (var (primary, vessel) in MatchingStock(offer).Take(toSell))
                 {
-                    if (_member.RemoveItem(item))
-                        _party.Add(offer.Coin, offer.UnitPrice);
+                    // Remove the contents first: removing the vessel first would take its contents
+                    // out of GetAllItems' reach and strand the liquid.
+                    if (!_member.RemoveItem(primary)) continue;
+                    if (vessel != null) _member.RemoveItem(vessel);
+                    _party.Add(offer.Coin, offer.UnitPrice);
                 }
             }
         }
@@ -320,7 +370,8 @@ public sealed class TradeMenuRenderer
         Vector4 bg = rowHov ? RowHovBg : Bg;
         _terminal.FillRect(_boxX + 1, y, BoxW - 2, 1, ' ', Value, bg);
 
-        _terminal.Text(_boxX + NameOff, y, Truncate(offer.Prototype.DisplayName, PriceOff - NameOff - 1), Value, bg);
+        // The offer's own name, not the item's: a bundle is sold as "bottle of ale".
+        _terminal.Text(_boxX + NameOff, y, Truncate(offer.DisplayName, PriceOff - NameOff - 1), Value, bg);
 
         _terminal.Text(_boxX + PriceOff, y, $"{offer.UnitPrice}", Value, bg);
         _terminal.SetCell(_boxX + PriceOff + $"{offer.UnitPrice}".Length, y, CoinGlyph(offer.Coin), CoinColor(offer.Coin), bg);
@@ -497,22 +548,40 @@ public sealed class TradeMenuRenderer
     private sealed class VirtualInventory
     {
         private readonly Dictionary<EquipmentAnchor, int> _anchorFree = new();
-        private readonly List<(ContainerItem c, int free)> _containers = new();
+        private readonly List<(IContainer c, int free)> _containers = new();
 
+        // Deliberately no weight budget: buying is an acquisition like any other, and weight does
+        // not gate acquisition — it gates travel. Overspending on heavy goods is allowed, and the
+        // consequence is discovered at the travel panel, not at the merchant's stall.
         public VirtualInventory(PartyMember m)
         {
             foreach (EquipmentAnchor a in Enum.GetValues<EquipmentAnchor>())
                 _anchorFree[a] = m.AvailableSlots(a);
 
-            foreach (var list in m.EquippedItems.Values)
-                foreach (var it in list)
-                    if (it is ContainerItem c)
-                        _containers.Add((c, c.AvailableSlots));
+            foreach (var it in m.GetAllItems())
+                if (it is IContainer c)
+                    _containers.Add((c, c.AvailableSlots));
+        }
+
+        /// <summary>
+        /// Places a whole catalogue line. For a bundle the vessel must be placed first and then
+        /// registered as available space, because the liquid's only home is the bottle arriving
+        /// alongside it — checking the liquid against the player's existing vessels would wrongly
+        /// reject a bundle bought by someone carrying nothing.
+        /// </summary>
+        public bool TryPlaceOffer(TradeOffer offer)
+        {
+            if (offer.VesselPrototype is null) return TryPlace(offer.Prototype);
+
+            if (!TryPlace(offer.VesselPrototype)) return false;
+            if (offer.VesselPrototype is IContainer vessel) AddPendingVessel(vessel);
+            return TryPlaceLiquid(offer.Prototype);
         }
 
         public bool TryPlace(Item item)
         {
             int need = item.SlotCount;
+            if (item.IsLiquid) return TryPlaceLiquid(item);
 
             if (item.PreferredAnchor is { } pref
                 && pref.CanAccept(item) && _anchorFree[pref] >= need)
@@ -540,5 +609,28 @@ public sealed class TradeMenuRenderer
 
             return false;
         }
+
+        /// <summary>A liquid only ever goes into a vessel — no anchor will take it.</summary>
+        private bool TryPlaceLiquid(Item liquid)
+        {
+            int need = liquid.SlotCount;
+
+            for (int i = 0; i < _containers.Count; i++)
+            {
+                var (c, free) = _containers[i];
+                if (c.Kind == ContainerKind.Vessel && c.CanContain(liquid) && free >= need)
+                {
+                    _containers[i] = (c, free - need);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Registers a vessel the player does not own yet but is buying in the same transaction, so
+        /// a bundle's liquid can be placed into the bottle that arrives with it.
+        /// </summary>
+        public void AddPendingVessel(IContainer vessel) => _containers.Add((vessel, vessel.ContentSlots));
     }
 }

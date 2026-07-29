@@ -70,8 +70,19 @@ public class FightState
     public FightingSkill? PendingSkill { get; set; }
     /// <summary>Target fighter for the pending skill.</summary>
     public Fighter? PendingTarget { get; set; }
-    /// <summary>Body-part id chosen by the player for a PlayerChooses skill.</summary>
+    /// <summary>
+    /// Where the blow is aimed, resolved before the dice for <em>every</em> targeting mode: chosen
+    /// by the player, fixed by the skill, or pre-rolled for a Random skill. Either a bare body-part
+    /// id or the overlay's <c>"organ_part_id,body_part_id"</c> pair.
+    /// </summary>
     public string? PendingBodyPartId { get; set; }
+
+    /// <summary>
+    /// The top-level body part <see cref="PendingBodyPartId"/> falls inside — the section whose
+    /// armour is charged. Null when the blow lands nowhere in particular (a wildcard wound), which
+    /// no garment can turn.
+    /// </summary>
+    public string? PendingArmorSection { get; set; }
     /// <summary>Whether the player is selecting a movement destination.</summary>
     public bool IsMovementMode { get; set; }
 
@@ -147,6 +158,7 @@ public class FightState
         PendingSkill = null;
         PendingTarget = null;
         PendingBodyPartId = null;
+        PendingArmorSection = null;
         PendingLearnSkill = null;
         LearningDiceValues = null;
         LearningSucceeded = null;

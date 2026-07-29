@@ -42,6 +42,8 @@ public static class NpcAudit
 
         warnings.AddRange(CheckTraitCatalogue(sb));
         sb.AppendLine();
+        warnings.AddRange(CheckSocialCategories(sb));
+        sb.AppendLine();
         warnings.AddRange(CheckArchetypes(sb));
 
         sb.AppendLine();
@@ -281,6 +283,39 @@ public static class NpcAudit
 
     private static string Range(IReadOnlyList<int> values)
         => values.Count == 0 ? "-" : values.Min() == values.Max() ? $"{values.Min()}" : $"{values.Min()}-{values.Max()}";
+
+    /// <summary>
+    /// <summary>
+    /// Every speaking archetype must declare a <see cref="NamedNpcArchetype.Social"/>, or the
+    /// dialogue bonus from worn garments silently does nothing when talking to them — which looks
+    /// exactly like the feature not existing.
+    ///
+    /// Empty standings are reported but are <b>not</b> warnings: Aristocrat, Military and Urban
+    /// have garments authored for them and are waiting on archetype families that do not exist yet.
+    /// </summary>
+    private static List<string> CheckSocialCategories(StringBuilder sb)
+    {
+        var warnings   = new List<string>();
+        var archetypes = SpeakingArchetypes().ToList();
+
+        sb.AppendLine("── Social standing ───────────────────────────────────────────────────");
+        sb.AppendLine();
+        sb.AppendLine("  standing         archetypes");
+
+        foreach (SocialCategory social in Enum.GetValues<SocialCategory>())
+        {
+            var members = archetypes.Where(a => a.Social == social).Select(a => a.ArchetypeId).ToList();
+            string list = members.Count == 0 ? "(none yet)" : string.Join(", ", members);
+            sb.AppendLine($"    {social,-16} {members.Count,2}  {list}");
+        }
+        sb.AppendLine();
+
+        foreach (var a in archetypes.Where(a => a.Social == null))
+            warnings.Add($"archetype '{a.ArchetypeId}' can speak but declares no social standing — " +
+                         "worn garments will grant it no dialogue dice");
+
+        return warnings;
+    }
 
     /// <summary>
     /// One instance of every archetype whose NPCs go through the full generation path. Beasts are

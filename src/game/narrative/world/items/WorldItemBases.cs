@@ -9,7 +9,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 public abstract class FruitItem : ConsumableItem
 {
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.1f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     // Small wild fruit and berries default to a light composition; tree fruit overrides to Hearty.
     protected override HumorRichness Richness => HumorRichness.Modest;
@@ -23,7 +23,7 @@ public abstract class FruitItem : ConsumableItem
 public abstract class VegetableItem : ConsumableItem
 {
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.2f;
+    public override WeightClass    Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     // Cultivated vegetables are proper food.
     protected override HumorRichness Richness => HumorRichness.Hearty;
@@ -37,7 +37,7 @@ public abstract class VegetableItem : ConsumableItem
 public abstract class HerbItem : ConsumableItem
 {
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.05f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Inhalant;
     // Inhaled sprigs carry only a wisp of humor.
     protected override HumorRichness Richness => HumorRichness.Sparse;
@@ -53,20 +53,20 @@ public abstract class HerbItem : ConsumableItem
 public abstract class WoodRawItem : Item
 {
     public override ItemSize Size => ItemSize.Medium;
-    public override float    Weight => 1.5f;
-    public override List<ItemType> Types => new() { ItemType.Other };
+    public override WeightClass    Weight => WeightClass.Medium;
+    public override ItemCategory Category => ItemCategory.Crafting;
 
     public override List<ItemTag> Tags    => new() { ItemTag.Wood };
     public override CoinType      PriceCoin    => CoinType.Copper;
     public override int           PriceReference => 5;
 }
 
-/// <summary>Stone, clay, lichen — heavy and earthy.</summary>
+/// <summary>Stone, clay and other earthy raw material.</summary>
 public abstract class StoneRawItem : Item
 {
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.8f;
-    public override List<ItemType> Types => new() { ItemType.Other };
+    public override WeightClass    Weight => WeightClass.Medium;
+    public override ItemCategory Category => ItemCategory.Crafting;
 
     public override List<ItemTag> Tags    => new() { ItemTag.Mineral };
     public override CoinType      PriceCoin    => CoinType.Copper;
@@ -77,8 +77,8 @@ public abstract class StoneRawItem : Item
 public abstract class MetalItem : Item
 {
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 1.0f;
-    public override List<ItemType> Types => new() { ItemType.Other };
+    public override WeightClass    Weight => WeightClass.Medium;
+    public override ItemCategory Category => ItemCategory.Crafting;
 
     public override List<ItemTag> Tags    => new() { ItemTag.Mineral };
     public override CoinType      PriceCoin    => CoinType.Copper;
@@ -89,34 +89,33 @@ public abstract class MetalItem : Item
 public abstract class ToolItem : Item
 {
     public override ItemSize Size => ItemSize.Medium;
-    public override float    Weight => 0.7f;
+    public override WeightClass    Weight => WeightClass.Light;
     public override int      UsageLevel => 4;
-    public override List<ItemType> Types => new() { ItemType.Other };
+    public override ItemCategory Category => ItemCategory.Tool;
 
     // Forged tools are also part of the blacksmith's Ironwork.
     public override List<ItemTag> Tags    => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override CoinType      PriceCoin    => CoinType.Silver;
-    public override int           PriceReference => 2;
+    public override int           PriceReference => 20;
 }
 
-/// <summary>Spun or woven textile, thread, raw fibre.</summary>
+/// <summary>Spun or woven textile, thread, raw fibre — the material, not the finished garment.</summary>
 public abstract class TextileItem : Item
 {
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.2f;
-    public override List<ItemType> Types => new() { ItemType.Other };
+    public override WeightClass    Weight => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Crafting;
 
     public override List<ItemTag> Tags    => new() { ItemTag.Textile };
     public override CoinType      PriceCoin    => CoinType.Copper;
     public override int           PriceReference => 12;
 }
 
-/// <summary>Output of a farm animal: milk, butter, hide, etc.</summary>
+/// <summary>Hide, pelt, feather or horn taken from an animal — material, not food.</summary>
 public abstract class AnimalProductItem : Item
 {
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.3f;
-    public override List<ItemType> Types => new() { ItemType.Other };
+    public override WeightClass    Weight => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Crafting;
 
     public override List<ItemTag> Tags    => new() { ItemTag.Pelt };
     public override CoinType      PriceCoin    => CoinType.Copper;
@@ -127,7 +126,7 @@ public abstract class AnimalProductItem : Item
 public abstract class SeaFoodItem : ConsumableItem
 {
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.3f;
+    public override WeightClass    Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     // Fresh-caught fish and shellfish are nourishing.
     protected override HumorRichness Richness => HumorRichness.Hearty;

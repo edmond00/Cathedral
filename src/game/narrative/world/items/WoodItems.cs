@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Cathedral.Game.Narrative;
 
@@ -10,7 +10,7 @@ public sealed class Log : WoodRawItem
     public override string DisplayName => "Log";
     public override string Description => "A heavy length of split log, bark still on one side";
     public override ItemSize Size => ItemSize.Large;
-    public override float    Weight => 4.0f;
+    public override WeightClass    Weight => WeightClass.Heavy;
 }
 
 public sealed class Plank : WoodRawItem
@@ -19,7 +19,7 @@ public sealed class Plank : WoodRawItem
     public override string DisplayName => "Plank";
     public override string Description => "A rough-sawn plank of pale wood, splintered at the ends";
     public override ItemSize Size => ItemSize.Large;
-    public override float    Weight => 2.0f;
+    public override WeightClass    Weight => WeightClass.Heavy;
 }
 
 public sealed class Twig : WoodRawItem
@@ -28,7 +28,7 @@ public sealed class Twig : WoodRawItem
     public override string DisplayName => "Twig";
     public override string Description => "A thin dry twig snapped from a deadfall";
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.05f;
+    public override WeightClass    Weight => WeightClass.Insignificant;
 }
 
 public sealed class BirchSap : ConsumableItem
@@ -41,7 +41,7 @@ public sealed class BirchSap : ConsumableItem
     public override CoinType PriceCoin => CoinType.Copper;
     public override int PriceReference => 3;
     public override ItemSize Size => ItemSize.Small;
-    public override float    Weight => 0.3f;
+    public override WeightClass    Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<AquaHumor>(55).Add<SugarHumor>(45);
