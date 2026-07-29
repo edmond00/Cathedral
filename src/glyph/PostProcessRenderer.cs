@@ -128,6 +128,44 @@ namespace Cathedral.Glyph
         private GameEventType _activePulse;
         private float _pulseRemaining;
 
+        // ── Magnifier ─────────────────────────────────────────────────────────────
+        //
+        // The finished frame is already in a texture, so magnifying it is a UV remap in
+        // the resolve shader — no camera change, no re-layout, nothing the game can see.
+        // It reads the frame that was drawn, so game state is untouched by construction.
+
+        /// <summary>Magnification while the zoom is held. 1.0 = none.</summary>
+        public float ZoomFactor { get; set; } = 3.0f;
+
+        private bool _zoomActive;
+        private float _zoomU, _zoomV;
+
+        /// <summary>
+        /// Points the magnifier at a spot on screen, in UV (0..1, v measured from the
+        /// bottom).
+        ///
+        /// The centre needs no inset: sampleUv = c + (uv - c) / z maps uv in [0,1] onto
+        /// [c - c/z, c + (1-c)/z], which already stays inside [0,1] for any c in [0,1],
+        /// whatever the zoom. Holding the centre away from the edges only makes the outer
+        /// band of the frame unreachable, so c is clamped to [0,1] and nothing more — the
+        /// cursor stays the fixed point of the transform right up to the screen edge.
+        /// </summary>
+        public void SetZoom(bool active, float u, float v)
+        {
+            _zoomActive = active && ZoomFactor > 1.0f;
+            if (!_zoomActive) return;
+
+            // Guards only against a cursor position reported outside the client area.
+            _zoomU = Math.Clamp(u, 0.0f, 1.0f);
+            _zoomV = Math.Clamp(v, 0.0f, 1.0f);
+        }
+
+        /// <summary>
+        /// The pass has to run for the magnifier even with the dither switched off, so
+        /// "is the dither on" is no longer the same question as "is the pass on".
+        /// </summary>
+        private bool PassActive => Mode != DitherMode.Off || _zoomActive;
+
         private int _fbo;
         private int _colorTex;
         private int _depthRbo;
@@ -138,6 +176,11 @@ namespace Cathedral.Glyph
         private int _emptyVao;
 
         private int _uScene, _uMode, _uLevels, _uPixelScale, _uStrength, _uResolution;
+        private int _uZoom, _uZoomCenter;
+
+        // Mirrors the filter currently set on _colorTex, so the zoom toggle only issues
+        // TexParameter calls when it actually changes.
+        private TextureMinFilter _currentFilter = TextureMinFilter.Nearest;
 
         private bool _initialized;
 
@@ -152,6 +195,8 @@ namespace Cathedral.Glyph
             _uPixelScale = GL.GetUniformLocation(_program, "uPixelScale");
             _uStrength = GL.GetUniformLocation(_program, "uStrength");
             _uResolution = GL.GetUniformLocation(_program, "uResolution");
+            _uZoom = GL.GetUniformLocation(_program, "uZoom");
+            _uZoomCenter = GL.GetUniformLocation(_program, "uZoomCenter");
 
             // Fullscreen triangle is generated from gl_VertexID; no buffers needed,
             // but core profile still requires a bound VAO.
@@ -206,11 +251,27 @@ namespace Cathedral.Glyph
 
         private bool PulseActive => _pulseRemaining > 0f && Mode != DitherMode.Off;
 
-        // While a pulse runs the table wins; otherwise the resting state does. Mode Off
-        // stays off throughout — disabling the layer disables the pulses with it.
-        private DitherMode EffectiveMode => PulseActive ? PulseTable[(int)_activePulse].Mode : Mode;
-        private int EffectiveLevels => PulseActive ? PulseTable[(int)_activePulse].Levels : Levels;
-        private int EffectivePixelScale => PulseActive ? PulseTable[(int)_activePulse].PixelScale : PixelScale;
+        /// <summary>
+        /// While the magnifier is held the dither drops to two-tone, which reads as the
+        /// deliberate mode change it is. Gated on the dither being on at all: with it off
+        /// the magnifier stays a clean passthrough rather than switching one on.
+        /// </summary>
+        private bool ZoomDither => _zoomActive && Mode != DitherMode.Off;
+
+        // Precedence: zoom (held, deliberate) beats a pulse (transient), which beats the
+        // resting state. Zoom also suppresses the pulse's levels/scale, so a hover landing
+        // mid-zoom cannot shift the grain under a held magnifier. Mode Off stays off
+        // throughout - disabling the layer disables the pulses with it.
+        private DitherMode EffectiveMode =>
+            ZoomDither    ? DitherMode.Bayer4Mono
+          : PulseActive   ? PulseTable[(int)_activePulse].Mode
+          :                 Mode;
+
+        private int EffectiveLevels =>
+            !ZoomDither && PulseActive ? PulseTable[(int)_activePulse].Levels : Levels;
+
+        private int EffectivePixelScale =>
+            !ZoomDither && PulseActive ? PulseTable[(int)_activePulse].PixelScale : PixelScale;
 
         /// <summary>
         /// Binds the offscreen target. Returns false when the pass is disabled or the
@@ -218,7 +279,7 @@ namespace Cathedral.Glyph
         /// </summary>
         public bool Begin(int width, int height)
         {
-            if (Mode == DitherMode.Off || width <= 0 || height <= 0) return false;
+            if (!PassActive || width <= 0 || height <= 0) return false;
             if (!_initialized) Initialize();
 
             EnsureTarget(width, height);
@@ -231,7 +292,7 @@ namespace Cathedral.Glyph
         /// <summary>Resolves the offscreen frame to the window through the dither shader.</summary>
         public void End(int width, int height)
         {
-            if (Mode == DitherMode.Off || width <= 0 || height <= 0) return;
+            if (!PassActive || width <= 0 || height <= 0) return;
 
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Viewport(0, 0, width, height);
@@ -245,7 +306,21 @@ namespace Cathedral.Glyph
             GL.UseProgram(_program);
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, _colorTex);
+
+            // Nearest keeps the dither pixel-exact at 1:1, but magnified it turns every
+            // texel into a hard 3x3 block. Smooth the frame only while zooming.
+            var filter = _zoomActive ? TextureMinFilter.Linear : TextureMinFilter.Nearest;
+            if (filter != _currentFilter)
+            {
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)filter);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
+                    (int)(_zoomActive ? TextureMagFilter.Linear : TextureMagFilter.Nearest));
+                _currentFilter = filter;
+            }
+
             GL.Uniform1(_uScene, 0);
+            GL.Uniform1(_uZoom, _zoomActive ? ZoomFactor : 1.0f);
+            GL.Uniform2(_uZoomCenter, _zoomU, _zoomV);
             GL.Uniform1(_uMode, (int)EffectiveMode);
             GL.Uniform1(_uLevels, Math.Max(2, EffectiveLevels));
             GL.Uniform1(_uPixelScale, (float)Math.Max(1, EffectivePixelScale));
@@ -295,6 +370,7 @@ namespace Cathedral.Glyph
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             GL.BindTexture(TextureTarget.Texture2D, 0);
+            _currentFilter = TextureMinFilter.Nearest; // fresh texture, filter state reset
 
             _depthRbo = GL.GenRenderbuffer();
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _depthRbo);
@@ -383,6 +459,8 @@ uniform int   uLevels;
 uniform float uPixelScale;
 uniform float uStrength;
 uniform vec2  uResolution;
+uniform float uZoom;        // 1.0 = no magnification
+uniform vec2  uZoomCenter;  // UV the magnifier is centred on
 
 // Ordered dither matrices, normalised to [0,1) and biased to -0.5..0.5 at use.
 const float BAYER8[64] = float[64](
@@ -418,7 +496,22 @@ void main()
     vec2 cell  = floor(pixel / uPixelScale);
     vec2 sampleUv = (cell + 0.5) * uPixelScale / uResolution;
 
+    // Magnify by shrinking the sampled region around the centre. Only the sample
+    // coordinate moves: cell stays in screen space, so the dither grid keeps its
+    // real pixel size instead of being blown up along with the picture.
+    // (Keep this file's GLSL strictly ASCII - the source character set is ASCII and
+    //  drivers reject stray bytes even inside comments.)
+    sampleUv = uZoomCenter + (sampleUv - uZoomCenter) / uZoom;
+
     vec3 original = texture(uScene, sampleUv).rgb;
+
+    // Mode 0 is a pure passthrough. It is reachable now that the magnifier can run the
+    // pass with the dither switched off; without this the frame would be dithered anyway.
+    if (uMode == 0)
+    {
+        FragColor = vec4(original, 1.0);
+        return;
+    }
 
     float levels = float(uLevels);
     float steps  = levels - 1.0;

@@ -664,6 +664,18 @@ namespace Cathedral.Glyph
             // Decay any dither pulse fired by a game event since the last frame
             _postProcess.Update((float)args.Time);
 
+            // Hold right mouse to magnify around the cursor. Purely a post-process remap
+            // of the finished frame — the camera, hit-testing and game state never see it,
+            // so it works in any mode without interacting with what is on screen.
+            // MousePosition is client-relative and top-down; the texture's V runs bottom-up.
+            if (ClientSize.X > 0 && ClientSize.Y > 0)
+            {
+                _postProcess.SetZoom(
+                    MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Right),
+                    MousePosition.X / ClientSize.X,
+                    1.0f - MousePosition.Y / ClientSize.Y);
+            }
+
             // Redirect the whole frame into the post-process target (no-op when disabled)
             _postProcess.Begin(ClientSize.X, ClientSize.Y);
 
