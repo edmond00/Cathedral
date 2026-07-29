@@ -1991,6 +1991,7 @@ public class LocationTravelGameController : IDisposable
                         _ambianceEngine?.SetMasterSfxVolume(AudioSettings.SfxVolume01);
                         AudioSettings.Save();
                     },
+                    OnDitherChanged = on => _core.PostProcess.Enabled = on,
                     OnBack = () => SetMode(GameMode.MainMenu),
                 };
             }
@@ -1998,6 +1999,9 @@ public class LocationTravelGameController : IDisposable
             // Sync controls with the current persisted values each time we enter.
             _settingsMenuRenderer.MusicVolume = AudioSettings.MusicVolume;
             _settingsMenuRenderer.SfxVolume   = AudioSettings.SfxVolume;
+            // Read back from the renderer rather than a stored flag, so the toggle also
+            // reflects --dither off and the F key.
+            _settingsMenuRenderer.DitherEnabled = _core.PostProcess.Enabled;
             _settingsMenuRenderer.Render();
         }
     }

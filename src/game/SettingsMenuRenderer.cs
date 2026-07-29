@@ -25,6 +25,15 @@ public class SettingsMenuRenderer
     /// <summary>Fired with the new SFX volume (0–100) when an SFX button is clicked.</summary>
     public Action<int>? OnSfxVolumeChanged { get; set; }
 
+    /// <summary>
+    /// Whether the final full-screen dither layer is on. Covers the resting dither and
+    /// the event pulses together — they are one effect. Initialize before Render().
+    /// </summary>
+    public bool DitherEnabled { get; set; } = true;
+
+    /// <summary>Fired with the new state when the dither toggle is clicked.</summary>
+    public Action<bool>? OnDitherChanged { get; set; }
+
     /// <summary>Fired when the Back button is clicked.</summary>
     public Action? OnBack { get; set; }
 
@@ -34,6 +43,7 @@ public class SettingsMenuRenderer
     private const int CtlSfxMinus   = 2;
     private const int CtlSfxPlus    = 3;
     private const int CtlBack       = 4;
+    private const int CtlDither     = 5;
     private int _hoveredControl = -1;
 
     private const int Step = 10; // percent per click
@@ -42,10 +52,13 @@ public class SettingsMenuRenderer
     private const int TitleRow   = 28;
     private const int MusicRow   = 40;
     private const int SfxRow     = 43;
-    private const int BackRow    = 48;
+    private const int DitherRow  = 46;
+    private const int BackRow    = 51;
     private const int BarWidth   = 20;
     private const int RowWidth   = 47; // total width of a volume row (see column math below)
     private const string BackLabel = "[ Back ]";
+    // Widest of the two states, so the hit region does not change size with the label.
+    private const int ToggleW = 7; // "[ OFF ]"
 
     public SettingsMenuRenderer(TerminalHUD terminal)
     {
@@ -65,7 +78,11 @@ public class SettingsMenuRenderer
 
         DrawVolumeRow(MusicRow, "MUSIC", MusicVolume, CtlMusicMinus, CtlMusicPlus);
         DrawVolumeRow(SfxRow, "SFX", SfxVolume, CtlSfxMinus, CtlSfxPlus);
+        DrawDitherRow();
         DrawBackButton();
+
+        // Edge rules against the sphere, drawn last so nothing overwrites them
+        _terminal.DrawSideRails();
     }
 
     // ── Column geometry (shared by render + hit-testing) ─────────────────────
@@ -99,6 +116,27 @@ public class SettingsMenuRenderer
         }
 
         _terminal.Text(PctX, row, $"{value,3}%", Config.Colors.White, Config.Colors.Black);
+    }
+
+    /// <summary>
+    /// Dither on/off. Laid out on the same columns as a volume row — label at the left,
+    /// toggle where the [ - ] button sits — so the three rows read as one stack.
+    /// </summary>
+    private void DrawDitherRow()
+    {
+        int startX = RowStartX;
+        _terminal.FillRect(startX, DitherRow, RowWidth, 1, ' ', Config.Colors.White, Config.Colors.Black);
+
+        _terminal.Text(startX, DitherRow, "DITHER".PadRight(7), Config.Colors.MediumGray60, Config.Colors.Black);
+
+        bool hovered = _hoveredControl == CtlDither;
+        Vector4 textColor = hovered      ? Config.Colors.BrightYellow
+                          : DitherEnabled ? Config.Colors.White
+                          :                 Config.Colors.DarkGray35;
+        Vector4 bgColor = hovered ? Config.Colors.DarkYellow : Config.Colors.Black;
+
+        string label = (DitherEnabled ? "[ ON ]" : "[ OFF ]").PadRight(ToggleW);
+        _terminal.Text(MinusX, DitherRow, label, textColor, bgColor);
     }
 
     private void DrawStepButton(int x, int row, string text, int ctl, bool enabled)
@@ -150,8 +188,16 @@ public class SettingsMenuRenderer
             case CtlMusicPlus:  SetMusic(MusicVolume + Step); break;
             case CtlSfxMinus:   SetSfx(SfxVolume - Step); break;
             case CtlSfxPlus:    SetSfx(SfxVolume + Step); break;
+            case CtlDither:     ToggleDither(); break;
             case CtlBack:       OnBack?.Invoke(); break;
         }
+    }
+
+    private void ToggleDither()
+    {
+        DitherEnabled = !DitherEnabled;
+        OnDitherChanged?.Invoke(DitherEnabled);
+        Render();
     }
 
     private void SetMusic(int v)
@@ -185,6 +231,10 @@ public class SettingsMenuRenderer
             if (x >= MinusX && x < MinusX + BtnW) return CtlSfxMinus;
             if (x >= PlusX  && x < PlusX + BtnW)  return CtlSfxPlus;
         }
+        else if (y == DitherRow)
+        {
+            if (x >= MinusX && x < MinusX + ToggleW) return CtlDither;
+        }
         else if (y == BackRow)
         {
             if (x >= BackStartX && x < BackStartX + BackLabel.Length) return CtlBack;
@@ -199,6 +249,7 @@ public class SettingsMenuRenderer
         CtlMusicPlus  => "settings:music-plus",
         CtlSfxMinus   => "settings:sfx-minus",
         CtlSfxPlus    => "settings:sfx-plus",
+        CtlDither     => "settings:dither",
         CtlBack       => "settings:back",
         _             => null,
     };

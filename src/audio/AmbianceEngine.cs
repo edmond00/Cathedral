@@ -267,6 +267,15 @@ public sealed class AmbianceEngine : IDisposable
     }
 
     /// <summary>
+    /// Raised by every <see cref="TriggerGameEvent"/> call, before any audio work and
+    /// regardless of whether a MIDI device is open. Lets non-audio systems react to the
+    /// same signal — the glyph renderer hangs its dither pulses off this, so the visual
+    /// feedback fires from exactly the same sites as the sound it accompanies.
+    /// Raised on the caller's thread; handlers must be thread-safe and quick.
+    /// </summary>
+    public static event Action<GameEventType>? GameEventFired;
+
+    /// <summary>
     /// Triggers a game event: fires the first SFX note synchronously for zero-latency
     /// feel, delegates delays/note-offs to a background thread, and sets a music signal
     /// for the next Melody phrase. Mood gauges are NOT modified — controlled externally.
@@ -274,6 +283,10 @@ public sealed class AmbianceEngine : IDisposable
     /// </summary>
     public void TriggerGameEvent(GameEventType evt)
     {
+        // Before the device check below: the visual response should not depend on whether
+        // audio actually came up.
+        GameEventFired?.Invoke(evt);
+
         // Hover sound is PCM-only — return immediately so no melody signal, no interrupt,
         // and no 400 ms cooldown is consumed. MIDI device doesn't even need to be open.
         if (evt == GameEventType.SmallInteraction) { _uiSfx.PlayHover(); return; }

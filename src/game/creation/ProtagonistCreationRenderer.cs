@@ -68,6 +68,9 @@ public class ProtagonistCreationRenderer
         _viewer.RenderHoveredDetail(descRow);
         _viewer.RenderHoveredRegionDetail(lastRow);
         RenderFooter();
+
+        // Edge rules against the sphere, drawn last so nothing overwrites them
+        _terminal.DrawSideRails();
     }
 
     /// <summary>Called every frame. Handles blink animation for hovered organ part.</summary>
@@ -79,6 +82,8 @@ public class ProtagonistCreationRenderer
             // redrawn on top of it or it would vanish on blink frames.
             _viewer.RenderBodyArt();
             RenderNameBanner();
+            // The left pane repaint reaches column 0, so the rails go back on top of it
+            _terminal.DrawSideRails();
         }
     }
 

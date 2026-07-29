@@ -1991,10 +1991,26 @@ public class NarrativeController
         }
     }
 
+    /// <summary>A modal popup (modus mentis / item / choice) is open over the panel.</summary>
+    private bool IsAnyPopupVisible =>
+        _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible || _choicePopup.IsVisible;
+
     /// <summary>
     /// Update loop - called at 10 Hz by game controller.
     /// </summary>
     public void Update()
+    {
+        RenderPanel();
+
+        // A popup is a modal choice, so the panel behind it is greyed out the same way
+        // the generation preview box greys it: recolouring the text rather than darkening
+        // the whole HUD, so the popup itself (a separate terminal) stays at full strength.
+        // Applied after RenderPanel because DimContent only affects what is already drawn.
+        if (IsAnyPopupVisible)
+            _ui.DimContent();
+    }
+
+    private void RenderPanel()
     {
         // Clear terminal
         _ui.Clear();

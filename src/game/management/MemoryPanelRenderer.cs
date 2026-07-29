@@ -50,15 +50,19 @@ public class MemoryPanelRenderer
     private static readonly int[] ColStartX = { StartX, Div1X + 1, Div2X + 1 }; // 17, 45, 73
 
     // ── Area and slot backgrounds ────────────────────────────────
-    private static readonly Vector4 AreaBg      = new(0.04f, 0.04f, 0.04f, 1.0f);
+    // Panel backgrounds are black: the final dither layer quantises the frame, and a
+    // flat near-black grey lands mid-step and breaks up into visible pattern noise
+    // over a large area. Section headers keep their grey — they are thin bands, and
+    // the shade is what separates a section from its slots.
+    private static readonly Vector4 AreaBg      = new(0.0f, 0.0f, 0.0f, 1.0f);
     private static readonly Vector4 HeaderBg    = new(0.11f, 0.11f, 0.11f, 1.0f);
     private static readonly Vector4 FilledBg    = new(0.09f, 0.09f, 0.09f, 1.0f);
     private static readonly Vector4 FilledBgHov = new(0.15f, 0.15f, 0.10f, 1.0f);
     private static readonly Vector4 SelectedBg  = new(0.20f, 0.18f, 0.06f, 1.0f);
-    private static readonly Vector4 EmptyBg     = new(0.06f, 0.06f, 0.06f, 1f);
-    private static readonly Vector4 UnusableBg  = new(0.04f, 0.04f, 0.04f, 1f); // same as AreaBg — slots blend in
+    private static readonly Vector4 EmptyBg     = new(0.0f, 0.0f, 0.0f, 1f);
+    private static readonly Vector4 UnusableBg  = new(0.0f, 0.0f, 0.0f, 1f);    // black — a flat grey breaks up under the dither layer
     private static readonly Vector4 UnusableFg  = new(0.10f, 0.10f, 0.10f, 1f); // barely visible border
-    private static readonly Vector4 DetailBg    = new(0.08f, 0.08f, 0.08f, 1f);
+    private static readonly Vector4 DetailBg    = new(0.0f, 0.0f, 0.0f, 1f);    // black — a flat grey breaks up under the dither layer
     private static readonly Vector4 DetailTitle = new(0.12f, 0.12f, 0.08f, 1f);
     private static readonly Vector4 BtnHovBg    = new(0.16f, 0.16f, 0.10f, 1f);
 
@@ -288,6 +292,7 @@ public class MemoryPanelRenderer
 
         if (!slot.IsFilled)
         {
+            // Fully black slot — border and grey label are what make it read as open.
             _terminal.DrawBox(x, y, slotW, SlotHeight, BoxStyle.Single, EmptyBorder, EmptyBg);
             for (int ix = x + 1; ix < x + slotW - 1; ix++)
                 _terminal.SetCell(ix, y + 1, ' ', EmptyText, EmptyBg);
@@ -432,12 +437,14 @@ public class MemoryPanelRenderer
 
         if (modusMentis == null)
         {
+            // Same black as the populated state below, so the panel does not change
+            // shade depending on whether a slot is selected.
             for (int y = DetailPanelRow; y < DetailPanelRow + panelH; y++)
                 for (int x = StartX; x <= EndX; x++)
-                    _terminal.SetCell(x, y, ' ', Config.Colors.Black, AreaBg);
+                    _terminal.SetCell(x, y, ' ', Config.Colors.Black, DetailBg);
             _terminal.Text(StartX + 2, DetailPanelRow + 1,
                 "Click a filled memory slot to inspect and manage it.",
-                SubtitleCol, AreaBg);
+                SubtitleCol, DetailBg);
             return;
         }
 

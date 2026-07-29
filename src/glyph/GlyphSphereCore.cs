@@ -90,6 +90,12 @@ namespace Cathedral.Glyph
         // Decorative sky and cloud layers
         private SkyCloudRenderer? _skyCloudRenderer;
 
+        // Final full-screen shader layer (dither). Off by default; F/G/H cycle it.
+        private readonly PostProcessRenderer _postProcess = new();
+
+        /// <summary>The final shader layer, so game code can drive it without keyboard input.</summary>
+        public PostProcessRenderer PostProcess => _postProcess;
+
         /// <summary>
         /// Sets the cloud rotation speed multiplier (1.0 = normal, 5.0 = 5x faster).
         /// </summary>
@@ -252,6 +258,11 @@ namespace Cathedral.Glyph
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            // Mirror the UI sound effects visually: every game event that fires a sound
+            // also pulses the dither. Only queues a request; the pulse itself is applied
+            // on the render thread in OnRenderFrame.
+            Cathedral.Audio.AmbianceEngine.GameEventFired += _postProcess.TriggerPulse;
 
             // Build shader
             program = CreateProgram(vertexShaderSrc, fragmentShaderSrc);
@@ -650,6 +661,12 @@ namespace Cathedral.Glyph
             // Update decorative sky/cloud animation
             _skyCloudRenderer?.Update((float)args.Time);
 
+            // Decay any dither pulse fired by a game event since the last frame
+            _postProcess.Update((float)args.Time);
+
+            // Redirect the whole frame into the post-process target (no-op when disabled)
+            _postProcess.Begin(ClientSize.X, ClientSize.Y);
+
             // Clear
             GL.ClearColor(0f, 0f, 0f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -679,15 +696,9 @@ namespace Cathedral.Glyph
             // Render terminal HUD overlay
             if (_terminal != null)
             {
-                // Darken terminal if popup is active (in fixed mode with visible content)
-                bool popupActive = false;
-                if (_popupTerminal != null && _popupTerminal.IsFixedMode)
-                {
-                    // Check if popup has any visible content
-                    popupActive = _popupTerminal.View.EnumerateCells().Any(c => c.cell.Character != ' ' || c.cell.BackgroundColor.W > 0.01f);
-                }
-                _terminal.SetDarkenFactor(popupActive ? 0.5f : 1.0f);
-                
+                // No blanket darkening while a popup is up: the narration panel now greys
+                // its own text (NarrativeController.Update -> DimContent), matching the
+                // generation preview box. Multiplying on top of that would double-dim it.
                 _terminal.Render(ClientSize);
             }
             
@@ -696,6 +707,9 @@ namespace Cathedral.Glyph
             {
                 _popupTerminal.Render(ClientSize);
             }
+
+            // Final shader layer: resolve the offscreen frame to the window (no-op when disabled)
+            _postProcess.End(ClientSize.X, ClientSize.Y);
 
             SwapBuffers();
         }
@@ -726,6 +740,34 @@ namespace Cathedral.Glyph
             {
                 debugShowMarkers = !debugShowMarkers;
                 Console.WriteLine($"Debug markers: {(debugShowMarkers ? "ON" : "OFF")}");
+            }
+
+            // Final shader layer: F cycles the dither, G its palette depth, H its grain size
+            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.F))
+            {
+                Console.WriteLine($"Post-process: {_postProcess.CycleMode()}");
+            }
+
+            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.G))
+            {
+                _postProcess.Levels = _postProcess.Levels switch
+                {
+                    2 => 3, 3 => 4, 4 => 6, 6 => 8, 8 => 16, _ => 2
+                };
+                Console.WriteLine($"Post-process: {_postProcess.Describe()}");
+            }
+
+            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.H))
+            {
+                _postProcess.PixelScale = _postProcess.PixelScale >= 4 ? 1 : _postProcess.PixelScale + 1;
+                Console.WriteLine($"Post-process: {_postProcess.Describe()}");
+            }
+
+            // J toggles the event pulses, for A/B-ing them against the resting dither
+            if (KeyboardState.IsKeyPressed(OpenTK.Windowing.GraphicsLibraryFramework.Keys.J))
+            {
+                _postProcess.PulsesEnabled = !_postProcess.PulsesEnabled;
+                Console.WriteLine($"Post-process: {_postProcess.Describe()}");
             }
 
             // Center camera on protagonist (SPACE key)
@@ -2315,6 +2357,8 @@ void main() { FragColor = vec4(vColor, 1.0); }";
             _skyCloudRenderer?.Dispose();
             _pathfindingService?.Dispose();
             _terminal?.Dispose();
+            Cathedral.Audio.AmbianceEngine.GameEventFired -= _postProcess.TriggerPulse;
+            _postProcess.Dispose();
             base.OnUnload();
         }
     }

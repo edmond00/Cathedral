@@ -99,6 +99,9 @@ public class MainMenuRenderer
         {
             DrawButton(i);
         }
+
+        // Edge rules against the sphere, drawn last so nothing overwrites them
+        _terminal.DrawSideRails();
     }
 
     /// <summary>Spreads characters within each word with single spaces, and separates words with triple spaces.</summary>

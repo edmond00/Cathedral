@@ -65,7 +65,10 @@ public sealed class InventoryMenuRenderer
 
     // Item box states
     private static readonly Vector4 EmptyBoxBorder  = Config.Colors.DarkGray35;
-    private static readonly Vector4 EmptyBoxBg      = new(0.03f, 0.03f, 0.03f, 1f);
+    // Black, not a near-black grey: the final dither layer quantises the frame and a flat
+    // low grey lands mid-step and breaks up into pattern noise. Filled boxes keep their
+    // grey (NormalBoxBg) — that shade is what distinguishes an occupied slot from an empty one.
+    private static readonly Vector4 EmptyBoxBg      = new(0.0f, 0.0f, 0.0f, 1f);
     private static readonly Vector4 EmptyTextColor  = new(0.22f, 0.22f, 0.22f, 1f);
 
     private static readonly Vector4 NormalBoxBorder = Config.Colors.MediumGray60;

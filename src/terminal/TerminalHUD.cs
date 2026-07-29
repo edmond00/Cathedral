@@ -203,6 +203,31 @@ namespace Cathedral.Terminal
         }
 
         /// <summary>
+        /// Draws a grey vertical rule down the first and last column, edge to edge.
+        ///
+        /// Full-screen menus (main menu, settings, the protagonist submenus) sit over the
+        /// 3D sphere, which stays visible to either side of them. Without an explicit edge
+        /// the menu's black background and the skybox meet with nothing between them and
+        /// the panel appears to bleed into the world. These rails give it a hard border.
+        ///
+        /// Call this <b>last</b>, after all content: it overwrites whatever occupied those
+        /// two columns.
+        /// </summary>
+        public void DrawSideRails(Vector4 lineColor, Vector4 backgroundColor)
+        {
+            int lastCol = Width - 1;
+            for (int y = 0; y < Height; y++)
+            {
+                SetCell(0, y, '│', lineColor, backgroundColor);
+                SetCell(lastCol, y, '│', lineColor, backgroundColor);
+            }
+        }
+
+        /// <summary>Draws the side rails in the standard grey on black.</summary>
+        public void DrawSideRails()
+            => DrawSideRails(Cathedral.Config.Colors.DarkGray20, Cathedral.Config.Colors.Black);
+
+        /// <summary>
         /// Clears the entire terminal (fills with spaces)
         /// </summary>
         public void Clear()

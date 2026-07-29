@@ -35,6 +35,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --weapons                          Give the protagonist a starter weapon loadout (Arming Sword, Hunting Bow, Round Shield)");
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice)");
+    Console.WriteLine("  --dither [mode[:levels[:scale]]]   Retune the final full-screen dither layer (mode off|bayer|mono|noise).");
+    Console.WriteLine("                                     Resting state is bayer:6:1; game events pulse it for 0.15s.");
+    Console.WriteLine("                                     In-game: F cycles the mode, G the palette depth, H the grain, J the event pulses");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
@@ -296,6 +299,36 @@ for (int i = 0; i < args.Length; i++)
         break;
     }
 }
+// Check for --dither [mode[:levels[:scale]]] — turns on the final full-screen shader layer.
+// Bare --dither is bayer:4:2; F/G/H retune it live once the window is up.
+for (int i = 0; i < args.Length; i++)
+{
+    if (args[i] != "--dither") continue;
+
+    Cathedral.Config.PostProcess.DitherMode = 1;
+
+    if (i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+    {
+        string[] parts = args[i + 1].Split(':');
+        Cathedral.Config.PostProcess.DitherMode = parts[0].ToLowerInvariant() switch
+        {
+            "off" => 0,
+            "bayer" => 1,
+            "mono" => 2,
+            "noise" => 3,
+            _ => 1
+        };
+        if (parts.Length > 1 && int.TryParse(parts[1], out int levels))
+            Cathedral.Config.PostProcess.Levels = Math.Max(2, levels);
+        if (parts.Length > 2 && int.TryParse(parts[2], out int scale))
+            Cathedral.Config.PostProcess.PixelScale = Math.Max(1, scale);
+    }
+
+    Console.WriteLine($"Post-process: dither mode={Cathedral.Config.PostProcess.DitherMode} " +
+                      $"levels={Cathedral.Config.PostProcess.Levels} pixelScale={Cathedral.Config.PostProcess.PixelScale}");
+    break;
+}
+
 // Resolve and lock in the master seed (null -> time-based) and print it so a
 // time-based run can be replayed later with --seed <printed value>.
 Cathedral.GameRng.Initialize(Cathedral.Config.Rng.Seed);

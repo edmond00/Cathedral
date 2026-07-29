@@ -21,3 +21,5 @@ childhood : leave temple -> grandfather story
 words to prevent :
 photo album
 bullet
+office
+meeting

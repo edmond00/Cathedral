@@ -148,9 +148,31 @@ public static class Config
         public const float NearClipPlane = 0.01f;
         public const float FarClipPlane = 800.0f; // Must be > SkyCloud.SkySphereRadius + CameraMaxDistance
     }
-    
+
     #endregion
-    
+
+    #region PostProcess Configuration
+
+    /// <summary>
+    /// Final full-screen shader layer applied to the whole render.
+    /// Mutable rather than const: --dither sets it at startup and F/G/H retune it live.
+    /// </summary>
+    public static class PostProcess
+    {
+        // Resting state of the layer. 0 = off, 1 = Bayer 8x8, 2 = Bayer 4x4 two-tone, 3 = noise
+        public static int DitherMode = 1;
+        public static int Levels = 6;       // Quantisation steps per channel (2 = 1 bit)
+        public static int PixelScale = 1;   // Dither cell size in pixels (1 = fine, 4 = chunky)
+        public static float Strength = 1.0f; // Blend between original and dithered
+
+        // Event pulses: the layer briefly switches to a different dither on a game
+        // event, the visual counterpart of the UI sound effects. See PostProcessRenderer.
+        public static bool PulsesEnabled = true;
+        public static float PulseDuration = 0.15f; // Seconds a pulse lasts before decaying back
+    }
+
+    #endregion
+
     #region SkyCloud Configuration
     
     /// <summary>

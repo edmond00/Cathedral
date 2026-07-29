@@ -77,8 +77,10 @@ public class ManagementMenuRenderer
     private const int ContentX = 1;           // text content starts at col 2
     private const int ContentW = 13;          // usable text width inside panel
 
-    // Subtle panel background
-    private static readonly Vector4 PanelBg = new(0.04f, 0.04f, 0.04f, 1.0f);
+    // Panel background. Black rather than a near-black grey: the final dither layer
+    // quantises the frame, and a flat 0.04 grey lands mid-step and breaks up into
+    // visible pattern noise across the whole panel. Pure black quantises cleanly.
+    private static readonly Vector4 PanelBg = new(0.0f, 0.0f, 0.0f, 1.0f);
 
     // Menu section (top of panel)
     private const int MenuTitleRow = 2;
@@ -273,6 +275,9 @@ public class ManagementMenuRenderer
         if (_activeTab != ManagementTab.Memory && _activeTab != ManagementTab.Humors
             && _activeTab != ManagementTab.Routines)
             RenderFooter();
+
+        // Edge rules against the sphere, drawn last so no tab content overwrites them
+        _terminal.DrawSideRails();
     }
 
     /// <summary>Called every frame for animations.</summary>
@@ -288,6 +293,8 @@ public class ManagementMenuRenderer
             _bodyViewer.RenderHoveredRegionDetail(lastRow);
             // Re-render left panel on top after art redraw
             RenderLeftPanel();
+            // …which owns column 0, so the rails go back on top of it
+            _terminal.DrawSideRails();
         }
 
         if (_activeTab == ManagementTab.Inventory && _inventoryMenu.Update())

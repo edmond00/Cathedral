@@ -39,7 +39,9 @@ public sealed class HumorMenuRenderer
 
     // ── Panel background ──────────────────────────────────────────
     private static readonly Vector4 BgColor     = new(0.0f, 0.0f, 0.0f, 1.0f);
-    private static readonly Vector4 PanelBg     = new(0.04f, 0.04f, 0.04f, 1.0f);
+    // Bottom info panel. Black rather than a near-black grey — a flat grey lands
+    // mid-quantisation-step and breaks up into pattern noise under the dither layer.
+    private static readonly Vector4 PanelBg     = new(0.0f, 0.0f, 0.0f, 1.0f);
     private static readonly Vector4 SepColor    = Config.Colors.DarkGray35;
     private static readonly Vector4 TitleColor  = Config.Colors.DarkYellowGrey;
     private static readonly Vector4 HeaderColor = Config.Colors.LightGray75;
