@@ -105,7 +105,10 @@ public class DialogueOptionGenerator
                     styleInstruction: mm.StyleInstruction, dialogueContext: subject,
                     previousReplica: previousNpcReplica,
                     speakerName: ctx.Names.Placeholder("you"), preview: sink, ct: ct);
-                text = ctx.Names.ToReal(text.Trim().Trim('"'));
+                // Same structural parse as the NPC side. `Trim('"')` used to stand here, which stripped
+                // the opening delimiter but left the closing one wherever a parenthetical aside followed
+                // it — the last character was then ')', not '"' — so the reply read: spoken" (aside).
+                text = ctx.Names.ToReal(DialogueReplicaWriter.NormalizeReply(text));
 
                 results.Add(new PlayerReplicaOption(mm, opt, text));
             }

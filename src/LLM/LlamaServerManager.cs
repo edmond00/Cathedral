@@ -23,6 +23,20 @@ public class LlamaServerManager : IDisposable
     private int _contextSize = 4096; // Context size per slot (--parallel 1)
     private string? _sessionLogDir = null; // Directory for this server session's logs
 
+    /// <summary>
+    /// Head-room reserved on top of a request's own <c>max_tokens</c> when bounding history against
+    /// the slot context window. <see cref="LlamaInstance.EstimateConversationTokens"/> approximates a
+    /// token as 4 characters, which undershoots real tokenization of this prose by a few percent;
+    /// this absorbs that error rather than trimming to exactly the edge of the window.
+    /// </summary>
+    private const int ContextEstimateMargin = 128;
+
+    /// <summary>
+    /// Floor for the prompt budget, so a request asking for a large completion cannot drive the
+    /// budget to zero and trim away history that would have fit.
+    /// </summary>
+    private const int MinPromptBudget = 256;
+
     // Model aliases and their corresponding file names
     private readonly Dictionary<string, string> _modelAliases = new()
     {
@@ -259,7 +273,13 @@ public class LlamaServerManager : IDisposable
     }
     
     /// <summary>
-    /// Creates a new LLM instance with the given system prompt
+    /// Creates a new LLM instance with the given system prompt.
+    /// <para>
+    /// Every system prompt is closed with <see cref="Cathedral.Game.Narrative.SceneSetting.Rule"/>,
+    /// so the world's register holds for every request the slot will ever serve. Applied here rather
+    /// than at each call site because that is the only way a slot added later cannot forget it —
+    /// personas, dialogue NPCs, critics and the sanitizer all come through this one door.
+    /// </para>
     /// </summary>
     /// <param name="systemPrompt">The system prompt for this instance</param>
     /// <param name="maxContextTokens">Maximum context size in tokens (default: uses server's context size)</param>
@@ -270,7 +290,9 @@ public class LlamaServerManager : IDisposable
         {
             throw new InvalidOperationException("Server is not ready. Call StartServerAsync first.");
         }
-        
+
+        systemPrompt = $"{systemPrompt.TrimEnd()}\n\n{Cathedral.Game.Narrative.SceneSetting.Rule}";
+
         var slotId = -1;
         LlamaInstance instance;
         lock (_slotLock)
@@ -575,6 +597,8 @@ public class LlamaServerManager : IDisposable
 
         try
         {
+            await EnsureContextFitsAsync(instance, maxTokens);
+
             var requestData = new Dictionary<string, object>
             {
                 ["model"] = "local",
@@ -700,6 +724,8 @@ public class LlamaServerManager : IDisposable
 
         try
         {
+            await EnsureContextFitsAsync(instance, maxTokens);
+
             var requestData = new Dictionary<string, object>
             {
                 ["model"] = "local",
@@ -874,18 +900,12 @@ public class LlamaServerManager : IDisposable
             int promptTokens = 0;
             int completionTokens = 0;
             
-            // Check if conversation history is too long and trim if needed
+            // Check if conversation history is too long and trim if needed. The estimate is taken
+            // after trimming: it stands in for the prompt size in the context-usage log whenever the
+            // server reports no usage block, and what actually got sent is the trimmed history.
+            await EnsureContextFitsAsync(instance, Config.LLM.GenerationMaxTokens);
             int estimatedTokens = instance.EstimateConversationTokens();
-            if (estimatedTokens > instance.MaxContextTokens - 512)
-            {
-                await LogWarningAsync($"Slot {slotId}: Conversation exceeds context window ({estimatedTokens} tokens). Trimming history...");
-                int removedCount = instance.TrimToFitContext();
-                await LogWarningAsync($"Slot {slotId}: Removed {removedCount} old messages to fit context window");
-                
-                // Log to LLM logger
-                try { LLMLogger.LogSlotIssue(slotId, "Context Trimmed", $"Removed {removedCount} messages, estimated {estimatedTokens} tokens"); } catch { }
-            }
-            
+
             // Create the base request
             var requestData = new Dictionary<string, object>
             {
@@ -1163,6 +1183,29 @@ public class LlamaServerManager : IDisposable
         onCancelled?.Invoke(slotId);
     }
     
+    /// <summary>
+    /// Bounds an instance's history to what the slot's context window can hold, before a request goes
+    /// out. A slot that keeps its history (<c>skipReset</c>) grows by one prompt + one reply per call,
+    /// so without this a long-lived conversation eventually sends more tokens than <c>-c</c> allows and
+    /// the server answers 400 <c>exceed_context_size_error</c> — which surfaces as a caller's fallback
+    /// text, not as an obvious failure. Trimming keeps the system prompt (the persona) and the newest
+    /// message (the pending prompt) and drops the oldest turns in between.
+    /// </summary>
+    /// <param name="maxTokens">The request's own completion limit, reserved on top of the prompt.</param>
+    private async Task EnsureContextFitsAsync(LlamaInstance instance, int maxTokens)
+    {
+        int budget    = Math.Max(instance.MaxContextTokens - maxTokens - ContextEstimateMargin, MinPromptBudget);
+        int estimated = instance.EstimateConversationTokens();
+        if (estimated <= budget) return;
+
+        int removed = instance.TrimToFitContext(budget);
+        await LogWarningAsync(
+            $"Slot {instance.SlotId}: conversation ≈{estimated} tokens exceeds the {budget}-token prompt " +
+            $"budget ({instance.MaxContextTokens} ctx − {maxTokens} max_tokens − {ContextEstimateMargin} margin). " +
+            $"Removed {removed} old message(s), now ≈{instance.EstimateConversationTokens()}.");
+        try { LLMLogger.LogSlotIssue(instance.SlotId, "Context Trimmed", $"Removed {removed} messages, estimated {estimated} tokens"); } catch { }
+    }
+
     /// <summary>
     /// Resets an instance, keeping the system prompt but removing other messages
     /// </summary>

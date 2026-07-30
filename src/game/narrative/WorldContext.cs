@@ -15,13 +15,10 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public abstract class WorldContext
 {
-    /// <summary>
-    /// One-line world-register sentence injected into every LLM prompt, between the persona
-    /// line and the location context. Reminds the model it is a dark/medieval fantasy world
-    /// and guards against modern language or real-world references.
-    /// </summary>
-    public static readonly string EpochContext =
-        "You stand in a grim age of iron and myth, where shadows linger long and the old ways still hold sway.";
+    // The world-register sentence that used to live here (EpochContext) was never injected into any
+    // prompt despite its comment saying so — which is part of why modern references kept getting
+    // through. That job now belongs to SceneSetting: SceneSetting.Rule closes every system prompt and
+    // SceneSetting.Reminder() closes every request, the latter naming the place this class describes.
 
     /// <summary>Short name shown in the UI header (e.g., "Forest", "Castle").</summary>
     public abstract string DisplayName { get; }

@@ -195,6 +195,13 @@ public class PersonaChoiceSelector
 
         if (!string.IsNullOrWhiteSpace(evaluator.PersonaReminder2))
             sb.Append("\n\nStay in the character of ").Append(evaluator.PersonaReminder2).Append('.');
+
+        // Same closing setting reminder as the rewrite prompts (see Config.Narrative). The inner
+        // thought this request produces is shown to the player and hints the rewrite that follows, so
+        // a modern image invented here travels onward. The place is restated even though ContextText
+        // opened with it — both read it from the scene's WorldContext, so they cannot disagree, and on
+        // a small model the last line of the prompt is the one that holds.
+        sb.Append(' ').Append(SceneSetting.Reminder());
         return sb.ToString();
     }
 

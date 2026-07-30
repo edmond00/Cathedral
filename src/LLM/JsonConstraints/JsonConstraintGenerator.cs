@@ -89,14 +89,35 @@ public static class JsonConstraintGenerator
     }
 
     /// <summary>
-    /// Grammar for a dialogue reply emitted raw, of the shape <c>"&lt;spoken&gt;" (&lt;aside&gt;)?</c>: a
-    /// double-quoted spoken line, optionally followed by a single parenthetical aside (the unspoken inner
+    /// The fixed opening every dialogue reply is generated behind (see
+    /// <see cref="GenerateDialogueReplyGrammar"/>). It is scaffolding, not content: the caller strips it
+    /// before the reply is shown or stored, so it must never be treated as part of the spoken line.
+    /// <para>
+    /// It exists because forbidding a speech verb did not work. The reply grammar forces the answer to
+    /// open with a double quote, leaving the model nowhere outside the quotes to report the act of
+    /// speaking — so it reported it <i>inside</i> them, and produced lines like
+    /// <c>"I say to you who art seeking trade's worth,"</c>. Giving the report a mandatory home of its
+    /// own satisfies the urge somewhere harmless, and the quotes are left to hold speech alone.
+    /// </para>
+    /// </summary>
+    public const string DialogueReplyFrame = "I say : ";
+
+    /// <summary>
+    /// Grammar for a dialogue reply emitted raw, of the shape
+    /// <c>I say : "&lt;spoken&gt;" (I &lt;aside&gt;)?</c>: the fixed <see cref="DialogueReplyFrame"/>, a
+    /// double-quoted spoken line, then optionally a single parenthetical aside (the unspoken inner
     /// thought). The spoken body and the aside share the free-text charset but exclude the double-quote
     /// and round brackets, so the only quotes are the structural delimiters and the aside cannot nest —
     /// which lets the caller split "spoken" from (aside) by structure. The first spoken character is
     /// forced to a letter to avoid a leading-punctuation artifact. Lengths are in characters:
     /// <paramref name="spokenMinLen"/>/<paramref name="spokenMaxLen"/> bound the spoken line and
     /// <paramref name="asideMaxLen"/> the aside.
+    /// <para>
+    /// The aside is forced to open on <c>I</c>, followed by a space or an apostrophe, so it can only be
+    /// the speaker's own thought ("I wonder…", "I'm not fooled…") — never a stage direction about the
+    /// speaker, and never a bare label. Allowing the apostrophe keeps the contractions a thought is
+    /// naturally phrased in; without it the ladder would be "I am not fooled".
+    /// </para>
     /// </summary>
     public static string GenerateDialogueReplyGrammar(int spokenMinLen, int spokenMaxLen, int asideMaxLen)
     {
@@ -106,9 +127,9 @@ public static class JsonConstraintGenerator
         int restMax  = Math.Max(restMin, spokenMaxLen - 1);
         int asideMax = Math.Max(1, asideMaxLen);
 
-        // root ::= "\"" [a-zA-Z] body{restMin,restMax} "\"" ( " (" body{1,asideMax} ")" )?
-        return "root ::= \"\\\"\" [a-zA-Z] " + body + "{" + restMin + "," + restMax + "} \"\\\"\""
-             + " ( \" (\" " + body + "{1," + asideMax + "} \")\" )?\n";
+        // root ::= "I say : \"" [a-zA-Z] body{restMin,restMax} "\"" ( " (I" [ '] body{1,asideMax} ")" )?
+        return "root ::= \"" + DialogueReplyFrame + "\\\"\" [a-zA-Z] " + body + "{" + restMin + "," + restMax + "} \"\\\"\""
+             + " ( \" (I\" [ '] " + body + "{1," + asideMax + "} \")\" )?\n";
     }
 
     /// <summary>

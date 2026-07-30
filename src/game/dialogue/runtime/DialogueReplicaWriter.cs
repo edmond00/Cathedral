@@ -30,6 +30,15 @@ public class DialogueReplicaWriter
     /// is the opening line of the conversation. Forwarded verbatim to
     /// <see cref="PersonaRewriter.RewriteAsync"/> for prompt grounding.
     /// </param>
+    /// <param name="keepHistory">
+    /// Whether the speaker's slot keeps this turn in its conversation history. Defaults to
+    /// <c>false</c>: every replica re-sends the whole dialogue prompt (framing block + answer
+    /// instruction footer, ~700 tokens with the reply), so keeping history added a full copy of that
+    /// boilerplate per line and the last request of a conversation — the resolution line — overflowed
+    /// the slot's 2048-token window and fell back to "{npc} nods.". Continuity does not depend on the
+    /// history: <paramref name="previousReplica"/> already carries the exchange into the prompt, and
+    /// the persona lives in the slot's system prompt, which a reset preserves.
+    /// </param>
     public async Task<string> WriteAsync(
         int              slotId,
         string           neutralTemplate,
@@ -38,7 +47,7 @@ public class DialogueReplicaWriter
         string           subject,
         string?          personaReminder2 = null,
         string?          styleInstruction = null,
-        bool             keepHistory      = true,
+        bool             keepHistory      = false,
         string?          previousReplica  = null,
         ILlmPreviewSink? preview          = null,
         CancellationToken ct              = default)
@@ -65,8 +74,13 @@ public class DialogueReplicaWriter
     /// parenthetical aside, both without the delimiter quotes. Falls back to the trimmed text as-is when
     /// it is not quote-delimited (e.g. playground placeholder text, or a reply cut off before its closing
     /// quote by the token limit).
+    /// <para>
+    /// The generated line's <c>I say : </c> frame is already gone by here — <see cref="PersonaRewriter"/>
+    /// strips it, since it also has to keep the frame out of the live preview. Shared with
+    /// <see cref="DialogueOptionGenerator"/> so both sides of a conversation parse the shape one way.
+    /// </para>
     /// </summary>
-    private static string NormalizeReply(string raw)
+    public static string NormalizeReply(string raw)
     {
         string s = (raw ?? string.Empty).Trim();
         if (s.Length < 2 || s[0] != '"') return s.Trim('"');

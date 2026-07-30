@@ -655,6 +655,14 @@ public static class Config
         private const string DialogueStyleInstruction = "Let your wording and personality colour the words themselves; do not describe your tone, expression, or manner of speaking.";
 
         /// <summary>
+        /// The setting + place reminder that closes every answer instruction below. Its text and the
+        /// scene's place live in <see cref="Cathedral.Game.Narrative.SceneSetting"/>; it is restated
+        /// per request because the system prompt's copy of the rule is too far up the context to hold
+        /// a small model on its own.
+        /// </summary>
+        private static string SettingReminder => Cathedral.Game.Narrative.SceneSetting.Reminder();
+
+        /// <summary>
         /// Returns the full answer instruction, appending a character reminder from PersonaReminder2 when available.
         /// Falls back to "Stay in character." when no reminder is provided. The rewrite is emitted as raw
         /// text (constrained by GBNF), so there is no "respond in JSON" clause.
@@ -672,6 +680,7 @@ public static class Config
                 // closing character reminder.
                 includeLengthClause ? null : ShortTextClause,
                 character,
+                SettingReminder,
             };
             return string.Join(" ", parts.Where(p => !string.IsNullOrEmpty(p)));
         }
@@ -684,16 +693,22 @@ public static class Config
         {
             string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
             return personaReminder2 != null
-                ? $"{OneSentenceClause} {GroundingClause} {style} Stay in the character of {personaReminder2}. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing."
-                : $"{OneSentenceClause} {GroundingClause} {style} Stay in character. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing.";
+                ? $"{OneSentenceClause} {GroundingClause} {style} Stay in the character of {personaReminder2}. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing. {SettingReminder}"
+                : $"{OneSentenceClause} {GroundingClause} {style} Stay in character. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing. {SettingReminder}";
         }
 
         /// <summary>
-        /// Like <see cref="SpeakingAnswerInstructionFor"/> but for a turn in a two-person conversation:
-        /// the reminder names the interlocutor (<paramref name="addressee"/>) the speaker addresses as
-        /// "you", and asks for a single spoken line of dialogue.
+        /// The closing clauses for a turn in a two-person conversation: length, grounding, style,
+        /// character and setting — the same axes every other kind gets.
+        /// <para>
+        /// It used to also spell out the reply's shape, the pronouns and the ban on narrating one's own
+        /// speech, all of which <c>PersonaRewriter.BuildDialoguePrompt</c> already said in different
+        /// words. Two wordings of one rule read to a small model as two rules, and the pair made the
+        /// dialogue prompt the longest in the game. The shape now lives there alone, next to the grammar
+        /// that enforces it.
+        /// </para>
         /// </summary>
-        public static string DialogueAnswerInstructionFor(string? personaReminder2, string? addressee, string? styleInstruction = null)
+        public static string DialogueAnswerInstructionFor(string? personaReminder2, string? styleInstruction = null)
         {
             // A dialogue line is spoken words, so the dialogue style clause is always in force — not just
             // as a default. A caller-supplied style (a modusMentis's, say) is written for narration, and a
@@ -704,17 +719,8 @@ public static class Config
             string style = string.IsNullOrWhiteSpace(styleInstruction)
                 ? DialogueStyleInstruction
                 : $"{styleInstruction.Trim()} {DialogueStyleInstruction}";
-            string who   = string.IsNullOrWhiteSpace(addressee) ? "the person you are speaking with" : addressee.Trim();
             string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
-            // Shape first, prohibitions second. "No narration" cannot work on its own here: the reply
-            // grammar forces the answer to open with a double quote, so there is nowhere outside the
-            // quotes for narration to go and the model simply narrates *inside* them. State the required
-            // shape positively, then rule out the two ways it gets violated — a nested quotation, and a
-            // speech verb standing in front of the words.
-            return $"{OneSentenceClause} {GroundingClause} {style} {character} Speak directly to {who} as \"you\", and refer to yourself only as \"I\" — never call {who} by your own name or describe yourself in the second person. "
-                 + $"Write the words {who} hears you say, wrapped in double quotes (\"...\"), and stop — optionally followed by one short thought in parentheses. "
-                 + $"What stands between the double quotes is speech and only speech: the exact sounds leaving your mouth, with no quotation marks of any kind inside them. "
-                 + $"Do not write that you say, whisper, murmur, reply, add, ask or answer anything, and do not describe your voice, tone, expression or manner — begin the quoted text with the first word {who} actually hears.";
+            return $"{OneSentenceClause} {GroundingClause} {style} {character} {SettingReminder}";
         }
     }
 

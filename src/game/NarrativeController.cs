@@ -252,7 +252,12 @@ public class NarrativeController
         _terminalInputHandler = terminalInputHandler;
         _worldContext = worldContext ?? new PlainBiomeContext();
         _locationId = locationId;
-        
+
+        // Publish where this scene is, so every prompt's closing reminder can name it (a forest must
+        // not be furnished with town streets). Both constructors funnel through here, and every
+        // narration session builds a controller, so the ambient value cannot go stale behind a move.
+        SceneSetting.SetPlace(_worldContext.GenerateContextDescription(locationId));
+
         // Use the protagonist passed in by the caller (LocationTravelGameController owns the
         // run's protagonist across phases). Fall back to a fresh one only as a safety net for
         // legacy call sites.
