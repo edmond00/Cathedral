@@ -51,6 +51,12 @@ public enum GameEventType
 /// Postprocess audio filters that layer on top of the ambient music.
 /// Designed for UI phases of indeterminate length (loading screens, dice rolls).
 /// Activate with <see cref="AmbianceEngine.SetFilter"/>.
+/// <para>
+/// <see cref="Loading"/>, <see cref="DiceRoll"/> and <see cref="Traveling"/> generate no music
+/// of their own: they leave the ambient loop that was already playing completely alone — same
+/// tempo, same volume, same key — and add only untuned noise on top. Only <see cref="Fighting"/>
+/// still ducks and re-tempos the music and contributes tonal layers.
+/// </para>
 /// </summary>
 public enum MusicFilter
 {
@@ -59,27 +65,25 @@ public enum MusicFilter
 
     /// <summary>
     /// Generic loading-screen filter.
-    /// Doubles the music tempo and overlays a chaotic chromatic noise burst
-    /// (sawtooth lead + rapid percussion hits) suggesting fast, anxious activity.
+    /// Adds a brown-noise wash and nothing else — the sound of something being computed.
+    /// The ambient music continues underneath exactly as it was.
     /// </summary>
     Loading,
 
     /// <summary>
     /// Dice-roll filter.
-    /// Plays irregular clusters of percussive wood-block ticks that build a
-    /// randomised rhythmic rattle, evoking dice tumbling across a surface.
-    /// The ambient music continues underneath unchanged.
+    /// Adds a brown-noise wash and nothing else; the ambient music continues underneath unchanged.
+    /// The tumbling of the dice is the per-tick PCM click fired by the roll animation
+    /// (<c>DiceRollComponent.OnDiceTick</c> → <see cref="GameEventType.SmallInteraction"/>), the
+    /// same sound used for hovers and preview-text updates — this filter adds no percussion of its own.
     /// </summary>
     DiceRoll,
 
     /// <summary>
     /// Travel filter.
-    /// Open-road mood: purposeful forward motion through an outdoor landscape.
-    /// A PanFlute arpeggio steps through the current scale at walking pace
-    /// (mostly ascending, occasional rests to scan the horizon), a low PadSweep
-    /// drone shifts slowly beneath it like passing terrain, and sparse quiet
-    /// footstep-percussion (Bass Drum / Low Tom) marks the walking rhythm.
-    /// The ambient music quickens slightly (×1.5 BPM) and is gently ducked.
+    /// Open-road mood, made entirely of untuned sound: a brown-noise wash (wind on the road)
+    /// and sparse quiet footstep-percussion (Bass Drum / Low Tom) marking the walking rhythm.
+    /// The ambient music continues underneath unchanged, so the location's mood travels with you.
     /// </summary>
     Traveling,
 

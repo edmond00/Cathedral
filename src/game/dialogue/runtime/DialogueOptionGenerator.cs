@@ -40,9 +40,13 @@ public class DialogueOptionGenerator
     }
 
     /// <param name="previousNpcReplica">
-    /// The NPC's line the player is replying to (already persona-rewritten, real names) — this is
-    /// always the line just spoken at <paramref name="node"/>, so it is never null in practice, but
-    /// null is accepted for callers that have none to give.
+    /// The NPC's line the player is replying to, as its authored <b>heard</b> report (template-expanded,
+    /// placeholder names) — "{npc} tells me that…" — rather than the persona's spoken version of it. See
+    /// <c>DialogueTreeController._lastNpcNeutralLine</c>. This reaches the grading prompt only (which
+    /// option to say), never the rewrite prompt (how to say it): choosing a reply needs to know what was
+    /// just said, whereas the rewrite is deliberately given nothing but its own description. It is always
+    /// the line just spoken at <paramref name="node"/>, so it is never null in practice, but null is
+    /// accepted for callers that have none to give.
     /// </param>
     public async Task<List<PlayerReplicaOption>> GenerateAsync(
         NpcLineNode      node,
@@ -103,11 +107,8 @@ public class DialogueOptionGenerator
                     slot, expanded, NarrationKind.DialogueReplica,
                     mm.PersonaReminder2, addressee: addressee, keepHistory: true,
                     styleInstruction: mm.StyleInstruction, dialogueContext: subject,
-                    previousReplica: previousNpcReplica,
                     speakerName: ctx.Names.Placeholder("you"), preview: sink, ct: ct);
-                // Same structural parse as the NPC side. `Trim('"')` used to stand here, which stripped
-                // the opening delimiter but left the closing one wherever a parenthetical aside followed
-                // it — the last character was then ')', not '"' — so the reply read: spoken" (aside).
+                // Same structural parse as the NPC side: unwrap the grammar's delimiter quotes.
                 text = ctx.Names.ToReal(DialogueReplicaWriter.NormalizeReply(text));
 
                 results.Add(new PlayerReplicaOption(mm, opt, text));
@@ -152,9 +153,12 @@ public class DialogueOptionGenerator
     {
         string who  = ctx.Names.Placeholder("npc") ?? "someone";
         string desc = DialogueTemplate.Expand("{npc:description}", ctx);
+        // Stated, not quoted: the value is already a report from the player's side ("Thomas has asked
+        // me…"), and quoting it would put a finished spoken line back into a prompt whose whole point
+        // is that no such line is available to copy.
         string said = string.IsNullOrWhiteSpace(previousNpcReplica)
             ? " No one has spoken yet."
-            : $" {who} just said: \"{previousNpcReplica.Trim().Trim('"')}\"";
+            : $" Just before this: {previousNpcReplica.Trim().Trim('"').TrimEnd('.')}.";
         return $"You are speaking with {who}, {desc}. The conversation is about {subject}.{said}\n\n";
     }
 }

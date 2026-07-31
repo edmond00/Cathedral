@@ -45,12 +45,6 @@ public class PersonaRewriter
     /// </summary>
     /// <param name="forcedPrefix">When set (e.g. <c>"I "</c>), the rewritten text is constrained by
     /// GBNF to start with this literal — used to force a first-person opening on the observation opener.</param>
-    /// <param name="previousReplica">
-    /// For <see cref="NarrationKind.DialogueReplica"/> only: the addressee's most recent spoken line
-    /// in this conversation, so the rewrite responds in the flow of the exchange instead of in a
-    /// vacuum. Pass null/empty for the opening line of a conversation — the prompt then says so
-    /// explicitly rather than silently omitting any mention of prior context.
-    /// </param>
     /// <param name="innerThought">
     /// The persona's own free-text reasoning behind the choice this sentence narrates (see
     /// <see cref="PersonaChoice{T}.Reasoning"/>), quoted in the prompt as the inner thought behind
@@ -72,7 +66,6 @@ public class PersonaRewriter
         string? forcedPrefix = null,
         string? styleInstruction = null,
         string? dialogueContext = null,
-        string? previousReplica = null,
         string? innerThought = null,
         string? speakerName = null,
         Preview.ILlmPreviewSink? preview = null,
@@ -85,7 +78,6 @@ public class PersonaRewriter
         neutralText     = NameFaking.Fake(neutralText);
         addressee       = addressee       == null ? null : NameFaking.Fake(addressee);
         dialogueContext = dialogueContext == null ? null : NameFaking.Fake(dialogueContext);
-        previousReplica = previousReplica == null ? null : NameFaking.Fake(previousReplica);
         speakerName     = speakerName     == null ? null : NameFaking.Fake(speakerName);
         innerThought    = innerThought    == null ? null : NameFaking.Fake(innerThought);
 
@@ -99,7 +91,7 @@ public class PersonaRewriter
         }
 
         string prompt = kind == NarrationKind.DialogueReplica
-            ? BuildDialoguePrompt(neutralText, addressee, dialogueContext, previousReplica, speakerName,
+            ? BuildDialoguePrompt(neutralText, addressee, dialogueContext, speakerName,
                                   FooterFor(kind, personaReminder2, styleInstruction))
             : BuildPrompt(neutralText, InstructionFor(kind, addressee),
                           FooterFor(kind, personaReminder2, styleInstruction),
@@ -112,14 +104,14 @@ public class PersonaRewriter
 
         // The rewrite is emitted as raw text (no JSON envelope), so a nested quotation no longer
         // terminates generation mid-sentence — double-quotes are allowed in the body charset. A dialogue
-        // reply is structured instead: a double-quoted spoken line plus an optional parenthetical aside
-        // (the unspoken inner thought), which keeps narration out of the spoken words and the aside out
-        // of the quotes — see GenerateDialogueReplyGrammar.
+        // reply is structured instead: a frame plus a double-quoted spoken line and nothing after it,
+        // which leaves the model no room to narrate around its own speech — see
+        // GenerateDialogueReplyGrammar.
         string gbnf = kind == NarrationKind.DialogueReplica
             ? JsonConstraintGenerator.GenerateDialogueReplyGrammar(
+                  addressee: addressee,
                   spokenMinLen: RewriteMinChars,
-                  spokenMaxLen: Config.Narrative.MaxNarrativeTextLength,
-                  asideMaxLen: Config.Narrative.DialogueAsideMaxLength)
+                  spokenMaxLen: Config.Narrative.MaxNarrativeTextLength)
             : JsonConstraintGenerator.GenerateRawTextGrammar(
                   forcedPrefix: forcedPrefix,
                   minLen: RewriteMinChars,
@@ -131,7 +123,7 @@ public class PersonaRewriter
         // rewritten sentence directly, so the returned string is the text itself — no field to parse.
         // A dialogue reply arrives behind the "I say : " frame, which is scaffolding for the model and
         // must not be seen: the token stream is filtered so the preview box never shows it either.
-        Action<string, int>? onToken = preview == null ? null : MakeTokenForwarder(preview, kind);
+        Action<string, int>? onToken = preview == null ? null : MakeTokenForwarder(preview, kind, addressee);
         string text = preview != null
             ? await _llm.GenerateConstrainedStringStreamingAsync(
                   slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory,
@@ -139,7 +131,7 @@ public class PersonaRewriter
             : await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
 
         if (kind == NarrationKind.DialogueReplica)
-            text = StripReplyFrame(text);
+            text = StripReplyFrame(text, addressee);
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -147,8 +139,8 @@ public class PersonaRewriter
             preview?.OnComplete(fallback);
             return fallback;
         }
-        // A dialogue reply is a complete structured string ("spoken" (aside)?) — appending "..." when it
-        // does not end in sentence punctuation (it ends in " or ")") would corrupt that shape, so the
+        // A dialogue reply is a complete structured string ("spoken") — appending "..." when it does not
+        // end in sentence punctuation (it ends in the closing quote) would corrupt that shape, so the
         // truncation guard is skipped for it. Every other kind keeps the mid-sentence "…" cleanup.
         string trimmed = kind == NarrationKind.DialogueReplica ? text : TextTruncationUtils.TrimToLastSentence(text);
         string sanitized = await TextSanitizationPipeline.SanitizeAsync(trimmed);
@@ -179,29 +171,32 @@ public class PersonaRewriter
     // ── The dialogue reply frame ───────────────────────────────────────────────
 
     /// <summary>
-    /// Removes the generated reply's <see cref="JsonConstraintGenerator.DialogueReplyFrame"/> opening,
-    /// leaving the <c>"spoken" (aside)?</c> shape the dialogue layer parses. Tolerant of a missing frame
-    /// (a truncated generation, or a caller that changed the grammar) so a reply is never lost to it.
+    /// Removes the <see cref="JsonConstraintGenerator.DialogueReplyFrame"/> opening, leaving the
+    /// <c>"spoken"</c> shape the dialogue layer parses. Tolerant of a missing frame (a truncated
+    /// generation, or a caller that changed the grammar) so a reply is never lost to it.
     /// </summary>
-    private static string StripReplyFrame(string text)
+    private static string StripReplyFrame(string text, string? addressee)
     {
-        string s = (text ?? string.Empty).TrimStart();
-        return s.StartsWith(JsonConstraintGenerator.DialogueReplyFrame, StringComparison.OrdinalIgnoreCase)
-            ? s.Substring(JsonConstraintGenerator.DialogueReplyFrame.Length).TrimStart()
+        string s     = (text ?? string.Empty).TrimStart();
+        string frame = JsonConstraintGenerator.DialogueReplyFrame(addressee);
+        return s.StartsWith(frame, StringComparison.OrdinalIgnoreCase)
+            ? s.Substring(frame.Length).TrimStart()
             : s;
     }
 
     /// <summary>
     /// The per-token preview callback. For every kind but a dialogue reply it forwards tokens straight
     /// through; for a dialogue reply it withholds the leading frame, then forwards everything after it,
-    /// so the player watches the spoken line appear rather than <c>I say : "…</c>.
+    /// so the player watches the spoken line appear rather than <c>I say to Emily : "…</c>. The frame's
+    /// length depends on the addressee's name, so it is measured here rather than assumed.
     /// </summary>
-    private static Action<string, int> MakeTokenForwarder(Preview.ILlmPreviewSink preview, NarrationKind kind)
+    private static Action<string, int> MakeTokenForwarder(
+        Preview.ILlmPreviewSink preview, NarrationKind kind, string? addressee)
     {
         if (kind != NarrationKind.DialogueReplica)
             return (token, _) => preview.OnToken(token);
 
-        string frame = JsonConstraintGenerator.DialogueReplyFrame;
+        int frameLength = JsonConstraintGenerator.DialogueReplyFrame(addressee).Length;
         var head = new System.Text.StringBuilder();
         bool framePassed = false;
 
@@ -214,15 +209,12 @@ public class PersonaRewriter
             }
 
             head.Append(token);
-            if (head.Length < frame.Length) return;   // still inside the frame — nothing to show yet
+            if (head.Length < frameLength) return;   // still inside the frame — nothing to show yet
 
             framePassed = true;
-            string seen = head.ToString();
-            // Defensive: if the frame is absent (grammar changed, or a stray leading space), show what
+            // Defensive: if no frame is there (grammar changed, or a stray leading space), show what
             // arrived rather than silently eating the first characters of the line.
-            string rest = seen.StartsWith(frame, StringComparison.OrdinalIgnoreCase)
-                ? seen.Substring(frame.Length)
-                : seen;
+            string rest = StripReplyFrame(head.ToString(), addressee);
             if (rest.Length > 0) preview.OnToken(rest);
         };
     }
@@ -248,61 +240,63 @@ This sentence is written in the first person, and that ""I"" is you — it descr
     }
 
     /// <summary>
-    /// Prompt for a single line of dialogue in a two-person conversation. Frames the neutral line as
-    /// direct speech: "I" is the speaker (this persona), "you" is <paramref name="addressee"/>. The
-    /// neutral line is a plain, short reply; the persona keeps its meaning and adds flavour.
-    /// <paramref name="previousReplica"/> — what <paramref name="addressee"/> just said — is included
-    /// so the rewrite lands as a reply to something rather than a line spoken into a void; when null
-    /// the prompt says outright that this opens the conversation.
-    /// <paramref name="speakerName"/> names the "I" of the line (the speaker's placeholder name, e.g.
-    /// Bob/Alice for the party member) so the model knows who it is speaking as, not just to.
+    /// Prompt for a single line of dialogue in a two-person conversation. <paramref name="neutralText"/>
+    /// arrives as the plain spoken line ("Good day to you.") and the answer is the same line in this
+    /// persona's words. <paramref name="speakerName"/> names who is speaking,
+    /// <paramref name="addressee"/> who is spoken to, and <paramref name="dialogueContext"/> what the
+    /// conversation is about — that is the whole of the situation the model is given.
     /// <para>
-    /// Two things about the layout are deliberate. <b>The line to speak comes last</b>, after every
-    /// rule: it is the one piece of the prompt the answer must actually carry, and on a 3B model the
-    /// closing lines outweigh the opening ones — stated first, it sat some 300 tokens from the answer
-    /// and came back distorted. <b>Every rule is stated once.</b> The shape, the pronouns and the
-    /// no-narration rule each used to appear both here and in the footer, in different words; a small
-    /// model reads a restatement as a second, subtly different requirement, and the prompt was over
-    /// twice this length for no added instruction.
+    /// <b>One frame, on both sides.</b> The line is shown behind the same
+    /// <see cref="JsonConstraintGenerator.DialogueReplyFrame"/> the grammar will force the answer to
+    /// open with, so prompt and answer are the same shape and the only thing that differs is the part
+    /// the model was asked to change. That is what makes "keep the opening, rewrite what is in the
+    /// quotes" a concrete instruction rather than a description of a mood.
     /// </para>
     /// <para>
-    /// Only the spoken part is shown as a <c>&lt;slot&gt;</c>. The optional aside was drawn the same way
-    /// once — <c>(&lt;one brief thought … — optional&gt;)</c> — and the model answered a slot it had no
-    /// thought for by naming it: the reply came back as <c>… fireside?" (thought)</c>, and that literal
-    /// word then travelled into the next turn's history as what the NPC had said. Described in prose,
-    /// there is no slot to fill.
+    /// <b>Name the operations.</b> A rewrite task lets a small model satisfy every instruction by
+    /// handing the line straight back, and prohibitions ("never give it back word for word") did not
+    /// stop it. Listing what a rewrite may actually <i>do</i> — reorder, substitute, invert, interject,
+    /// add a figure of speech — gives it something to perform instead of something to avoid. The
+    /// meaning clause immediately after is what keeps those operations from turning into invention.
+    /// </para>
+    /// <para>
+    /// <b>Short, and the line stated twice.</b> Everything a 3B model does not need is gone: the
+    /// previous turn of the conversation, the worked example, the pronoun rules, the length clause, and
+    /// the parenthetical aside (which had its own failure — asked for an optional thought it had none
+    /// for, the model wrote the literal word <c>(thought)</c>). What remains is one situation line, the
+    /// line to say, the task, the output shape, and the line again at the end, where the closing lines
+    /// of a prompt weigh most.
     /// </para>
     /// </summary>
     private static string BuildDialoguePrompt(string neutralText, string? addressee,
-                                              string? dialogueContext, string? previousReplica,
-                                              string? speakerName, string footer)
+                                              string? dialogueContext, string? speakerName, string footer)
     {
-        string who     = string.IsNullOrWhiteSpace(addressee) ? "the person you are speaking with" : addressee!;
-        // Role statement, not a pronoun equation: phrasing like «"I" is you, Bob» reads to a small
-        // model as a substitution rule (I → you) and gets applied to the text, turning "I'm Bob"
-        // into "you're Bob". State who the speaker is, then say which pronoun to use for whom.
-        string speaker = string.IsNullOrWhiteSpace(speakerName) ? "You are the speaker" : $"You are {speakerName.Trim()}, the speaker";
+        string who     = string.IsNullOrWhiteSpace(addressee) ? "the person in front of you" : addressee!.Trim();
+        string speaker = string.IsNullOrWhiteSpace(speakerName) ? "the speaker" : speakerName!.Trim();
         string context = string.IsNullOrWhiteSpace(dialogueContext)
             ? ""
-            : $" You speak of {dialogueContext.Trim().TrimEnd('.')}.";
-        string history = string.IsNullOrWhiteSpace(previousReplica)
-            ? " No one has spoken yet: this opens the conversation."
-            : $" {who} just said: \"{previousReplica.Trim().Trim('"')}\"";
-        string frame = JsonConstraintGenerator.DialogueReplyFrame.Trim();
+            : $" You are speaking of {dialogueContext.Trim().TrimEnd('.')}.";
+        string frame = JsonConstraintGenerator.DialogueReplyFrame(addressee);
+        string framed = $"{frame}\"{neutralText.Trim().Trim('"')}\"";
 
-        return $@"{speaker}, talking with {who}.{context}{history}
+        return $@"You are {speaker}. You are speaking directly to {who}.{context}
 
-Answer in this shape, and hold nothing else:
-{JsonConstraintGenerator.DialogueReplyFrame}""<the words {who} hears you say>""
+This is what you must say:
+{framed}
 
-After the closing quote you may add one brief thought {who} does not hear, wrapped in parentheses and beginning with ""I"" — or leave it out entirely.
+Say it again in your own words. Keep the opening ""{frame.Trim()}"" exactly as it is and rewrite only what is inside the quotes.
 
-That opening {frame} is the whole report of your speaking, so the quotes hold sound and nothing else: no speech verb, no quotation marks, nothing of your voice, tone or manner — that belongs in the thought, or nowhere. Call yourself ""I"" and {who} ""you""; never call {who} by your own name.
+Change the word order, use other words, turn the sentence around, add an interjection or a figure of speech — whatever makes the line sound like you. The meaning must not change: add nothing, drop nothing, and a question stays a question. Do not give the line back unchanged.
 
 {footer}
 
-Now say this line as your own — same meaning, same intent, nothing added to or taken from what is said, asked or offered — but put it in your own words, do not give it back word for word:
-""{neutralText}""";
+Output exactly:
+{frame}""<your words>""
+
+Do not add narration, actions, or explanations.
+
+The line to say in your own words:
+{framed}";
     }
 
     private static string InstructionFor(NarrationKind kind, string? addressee) => kind switch

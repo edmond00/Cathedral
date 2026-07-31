@@ -72,10 +72,17 @@ public class DialogueTreeController
     private NarrationBlock?                   _optionsBlock;
 
     // ── Last spoken line on each side (for rewrite-prompt grounding) ───────────
-    /// <summary>The NPC's most recently spoken line (rewritten, real names), or null before the first.</summary>
-    private string?                           _lastNpcLine;
-    /// <summary>The player's most recently spoken reply (rewritten, real names), or null before the first.</summary>
-    private string?                           _lastPlayerLine;
+    // Holds the authored HEARD report (template-expanded, placeholder names) — "{npc} tells me that…" —
+    // not the persona's spoken version the player read. That rendering is one persona's ornamented
+    // take: "What oxen do ye tend to in this field? Is 't only those that till the soil…?" for a line
+    // reporting "asks what I farm". Handing it on gives the next prompt a second persona's voice to
+    // imitate and every flourish as a fact of the exchange.
+    //
+    // There is no player-side counterpart, because only one prompt is told what was just said: the one
+    // grading which reply to offer. The rewrite that turns a description into speech is given nothing
+    // but its own description (see PersonaRewriter.BuildDialoguePrompt).
+    /// <summary>Report of the NPC's most recent line, from the player's side, or null before the first.</summary>
+    private string?                           _lastNpcNeutralLine;
 
     /// <summary>Per-roll humor modifier budget from the viscera <c>humor_modifier_limit</c> stat.</summary>
     private static int HumorModifierLimit(PartyMember member)
@@ -128,8 +135,7 @@ public class DialogueTreeController
         _chosenMMs.Clear();
         _pendingResolution = null;
         _optionsBlock = null;
-        _lastNpcLine = null;
-        _lastPlayerLine = null;
+        _lastNpcNeutralLine = null;
         BeginNpcSpeakPhase();
     }
 
@@ -397,13 +403,14 @@ public class DialogueTreeController
         {
             string text = await _replicaWriter.WriteAsync(
                 _npcSlotId, _currentNode.Replica, _context, addresseeRole: "you", subject: _tree.Description,
-                previousReplica: _lastPlayerLine, preview: part.Sink);
+                preview: part.Sink);
 
             _state.IsLoadingNpcReplica = false;
 
             void CommitNpcLine()
             {
-                _lastNpcLine = text;
+                // The heard report, not `text`: what this line sounds like from the player's side.
+                _lastNpcNeutralLine = DialogueTemplate.Expand(_currentNode.ReplicaHeard, _context);
                 AppendNpcLine(text);
                 BeginOptionsPhase();
             }
@@ -471,7 +478,7 @@ public class DialogueTreeController
         {
             var options = await _optionGenerator.GenerateAsync(
                 _currentNode, _protagonist, _context, _tree.Description,
-                previousNpcReplica: _lastNpcLine,
+                previousNpcReplica: _lastNpcNeutralLine,
                 preview: _preview,
                 commit: CommitOptions);
 
@@ -508,7 +515,6 @@ public class DialogueTreeController
         // No separate "You: …" block — that would repeat the same text right below the group.
         if (_optionsBlock != null) _optionsBlock.SelectedDialogueOptionIndex = index;
         _optionsBlock = null;
-        _lastPlayerLine = option.ReplicaText;
 
         // This reply's Modus Mentis contributes its level to the branch dice pool.
         _accumulatedDice += option.Skill.Level;
@@ -624,7 +630,7 @@ public class DialogueTreeController
             {
                 reaction = await _replicaWriter.WriteAsync(
                     _npcSlotId, neutral, _context, addresseeRole: "you", subject: _tree.Description,
-                    previousReplica: _lastPlayerLine, preview: part.Sink);
+                    preview: part.Sink);
             }
             catch (Exception ex)
             {

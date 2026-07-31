@@ -25,19 +25,13 @@ public class DialogueReplicaWriter
     /// <param name="ctx">Live conversation context (fields + name mapping).</param>
     /// <param name="addresseeRole">Role the line is spoken to ("you" for NPC lines, "npc" for player lines).</param>
     /// <param name="subject">The dialogue subject, for the rewrite prompt context.</param>
-    /// <param name="previousReplica">
-    /// The addressee's previous spoken line (already persona-rewritten, real names), or null if this
-    /// is the opening line of the conversation. Forwarded verbatim to
-    /// <see cref="PersonaRewriter.RewriteAsync"/> for prompt grounding.
-    /// </param>
     /// <param name="keepHistory">
     /// Whether the speaker's slot keeps this turn in its conversation history. Defaults to
-    /// <c>false</c>: every replica re-sends the whole dialogue prompt (framing block + answer
-    /// instruction footer, ~700 tokens with the reply), so keeping history added a full copy of that
-    /// boilerplate per line and the last request of a conversation — the resolution line — overflowed
-    /// the slot's 2048-token window and fell back to "{npc} nods.". Continuity does not depend on the
-    /// history: <paramref name="previousReplica"/> already carries the exchange into the prompt, and
-    /// the persona lives in the slot's system prompt, which a reset preserves.
+    /// <c>false</c>: every replica re-sends the whole dialogue prompt, so keeping history added a full
+    /// copy of that boilerplate per line and the last request of a conversation — the resolution line —
+    /// overflowed the slot's 2048-token window and fell back to "{npc} nods.". Nothing depends on the
+    /// history: each line is generated from its own description alone, and the persona lives in the
+    /// slot's system prompt, which a reset preserves.
     /// </param>
     public async Task<string> WriteAsync(
         int              slotId,
@@ -48,7 +42,6 @@ public class DialogueReplicaWriter
         string?          personaReminder2 = null,
         string?          styleInstruction = null,
         bool             keepHistory      = false,
-        string?          previousReplica  = null,
         ILlmPreviewSink? preview          = null,
         CancellationToken ct              = default)
     {
@@ -63,21 +56,21 @@ public class DialogueReplicaWriter
             slotId, expanded, NarrationKind.DialogueReplica,
             personaReminder2, addressee: addressee, keepHistory: keepHistory,
             styleInstruction: styleInstruction, dialogueContext: subject,
-            previousReplica: previousReplica, speakerName: speaker, preview: preview, ct: ct);
+            speakerName: speaker, preview: preview, ct: ct);
 
         return ctx.Names.ToReal(NormalizeReply(text));
     }
 
     /// <summary>
-    /// Normalises a dialogue reply from the structured grammar shape <c>"spoken" (aside)?</c> into the
-    /// inline form the rest of the dialogue pipeline expects: the spoken words with an optional trailing
-    /// parenthetical aside, both without the delimiter quotes. Falls back to the trimmed text as-is when
-    /// it is not quote-delimited (e.g. playground placeholder text, or a reply cut off before its closing
+    /// Unwraps a dialogue reply from the structured grammar shape <c>"spoken"</c> into the bare spoken
+    /// words the rest of the dialogue pipeline expects. Falls back to the trimmed text as-is when it is
+    /// not quote-delimited (e.g. playground placeholder text, or a reply cut off before its closing
     /// quote by the token limit).
     /// <para>
-    /// The generated line's <c>I say : </c> frame is already gone by here — <see cref="PersonaRewriter"/>
-    /// strips it, since it also has to keep the frame out of the live preview. Shared with
-    /// <see cref="DialogueOptionGenerator"/> so both sides of a conversation parse the shape one way.
+    /// The generated line's <c>I say : </c> / <c>I ask : </c> frame is already gone by here —
+    /// <see cref="PersonaRewriter"/> strips it, since it also has to keep the frame out of the live
+    /// preview. Shared with <see cref="DialogueOptionGenerator"/> so both sides of a conversation parse
+    /// the shape one way.
     /// </para>
     /// </summary>
     public static string NormalizeReply(string raw)
@@ -88,12 +81,6 @@ public class DialogueReplicaWriter
         int close = s.IndexOf('"', 1);
         if (close < 0) return s.Trim('"');   // no closing quote (truncated) — degrade gracefully
 
-        string spoken = s.Substring(1, close - 1).Trim();
-        string rest   = s.Substring(close + 1).Trim();
-
-        // A trailing parenthetical aside (the unspoken inner thought) is kept inline after the spoken words.
-        return rest.Length >= 2 && rest[0] == '(' && rest[^1] == ')'
-            ? $"{spoken} {rest}".Trim()
-            : spoken;
+        return s.Substring(1, close - 1).Trim();
     }
 }

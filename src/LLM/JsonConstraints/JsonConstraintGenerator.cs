@@ -89,9 +89,9 @@ public static class JsonConstraintGenerator
     }
 
     /// <summary>
-    /// The fixed opening every dialogue reply is generated behind (see
-    /// <see cref="GenerateDialogueReplyGrammar"/>). It is scaffolding, not content: the caller strips it
-    /// before the reply is shown or stored, so it must never be treated as part of the spoken line.
+    /// The fixed opening a dialogue reply is generated behind — <c>I say to Emily : </c> — for the
+    /// given <paramref name="addressee"/>. It is scaffolding, not content: the caller strips it before
+    /// the reply is shown or stored, so it must never be treated as part of the spoken line.
     /// <para>
     /// It exists because forbidding a speech verb did not work. The reply grammar forces the answer to
     /// open with a double quote, leaving the model nowhere outside the quotes to report the act of
@@ -99,37 +99,40 @@ public static class JsonConstraintGenerator
     /// <c>"I say to you who art seeking trade's worth,"</c>. Giving the report a mandatory home of its
     /// own satisfies the urge somewhere harmless, and the quotes are left to hold speech alone.
     /// </para>
-    /// </summary>
-    public const string DialogueReplyFrame = "I say : ";
-
-    /// <summary>
-    /// Grammar for a dialogue reply emitted raw, of the shape
-    /// <c>I say : "&lt;spoken&gt;" (I &lt;aside&gt;)?</c>: the fixed <see cref="DialogueReplyFrame"/>, a
-    /// double-quoted spoken line, then optionally a single parenthetical aside (the unspoken inner
-    /// thought). The spoken body and the aside share the free-text charset but exclude the double-quote
-    /// and round brackets, so the only quotes are the structural delimiters and the aside cannot nest —
-    /// which lets the caller split "spoken" from (aside) by structure. The first spoken character is
-    /// forced to a letter to avoid a leading-punctuation artifact. Lengths are in characters:
-    /// <paramref name="spokenMinLen"/>/<paramref name="spokenMaxLen"/> bound the spoken line and
-    /// <paramref name="asideMaxLen"/> the aside.
     /// <para>
-    /// The aside is forced to open on <c>I</c>, followed by a space or an apostrophe, so it can only be
-    /// the speaker's own thought ("I wonder…", "I'm not fooled…") — never a stage direction about the
-    /// speaker, and never a bare label. Allowing the apostrophe keeps the contractions a thought is
-    /// naturally phrased in; without it the ladder would be "I am not fooled".
+    /// It names the addressee rather than standing bare, because the same frame opens the line the
+    /// model is <i>given</i>: prompt and answer share one shape, and the only difference between them
+    /// is the part the model is asked to change. A bare <c>I say :</c> left the frame carrying no
+    /// information at all.
     /// </para>
     /// </summary>
-    public static string GenerateDialogueReplyGrammar(int spokenMinLen, int spokenMaxLen, int asideMaxLen)
+    public static string DialogueReplyFrame(string? addressee)
     {
-        // No double-quote (delimiters only) and no parentheses (the aside is a separate group).
-        const string body = "[-a-zA-Z0-9 .,?!'`]";
-        int restMin  = Math.Max(0, spokenMinLen - 1);
-        int restMax  = Math.Max(restMin, spokenMaxLen - 1);
-        int asideMax = Math.Max(1, asideMaxLen);
+        string who = string.IsNullOrWhiteSpace(addressee) ? "them" : addressee!.Trim();
+        return $"I say to {who} : ";
+    }
 
-        // root ::= "I say : \"" [a-zA-Z] body{restMin,restMax} "\"" ( " (I" [ '] body{1,asideMax} ")" )?
-        return "root ::= \"" + DialogueReplyFrame + "\\\"\" [a-zA-Z] " + body + "{" + restMin + "," + restMax + "} \"\\\"\""
-             + " ( \" (I\" [ '] " + body + "{1," + asideMax + "} \")\" )?\n";
+    /// <summary>
+    /// Grammar for a dialogue reply emitted raw, of the shape <c>I say to Emily : "&lt;spoken&gt;"</c>:
+    /// the <see cref="DialogueReplyFrame"/> for <paramref name="addressee"/> followed by a double-quoted
+    /// spoken line and nothing else. The body excludes the double-quote, so the only quotes in the answer
+    /// are the structural delimiters, and the first spoken character is forced to a letter to avoid a
+    /// leading-punctuation artifact. Lengths are in characters and bound the spoken part alone.
+    /// </summary>
+    public static string GenerateDialogueReplyGrammar(string? addressee, int spokenMinLen, int spokenMaxLen)
+    {
+        // No double-quote: the delimiters are the only ones.
+        const string body = "[-a-zA-Z0-9 .,?!'`]";
+        int restMin = Math.Max(0, spokenMinLen - 1);
+        int restMax = Math.Max(restMin, spokenMaxLen - 1);
+
+        // Placeholder names are allow-listed plain first names, but the frame is still escaped rather
+        // than trusted: a stray quote or backslash in it would silently produce an unparseable grammar.
+        string frame = DialogueReplyFrame(addressee).Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+        // root ::= "I say to Emily : \"" [a-zA-Z] body{restMin,restMax} "\""
+        return "root ::= \"" + frame + "\\\"\" [a-zA-Z] "
+             + body + "{" + restMin + "," + restMax + "} \"\\\"\"\n";
     }
 
     /// <summary>

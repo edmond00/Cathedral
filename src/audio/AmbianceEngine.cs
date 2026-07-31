@@ -1025,398 +1025,72 @@ public sealed class AmbianceEngine : IDisposable
     {
         var rng    = new Random();
         const int drumCh = 9;
-        const int sfxCh  = ProceduralMidiComposer.SfxChannel;
 
         try
         {
             if (filter == MusicFilter.Loading)
             {
                 // ── Loading filter ──────────────────────────────────────────────────────
-                // Neutral "thinking" texture: gentle flowing arpeggio layered on top of
-                // the regular music at a slightly faster tempo. Non-dramatic by design —
-                // just signals that processing is happening without hijacking the mood.
-                //   • _filterBpmMult = 6.0f  (very frantic, saturates at 340 BPM cap)
-                //   • Music at 78/127  (slight duck, ambient stays present)
-                //   • Very soft PadHalo arpeggio on ch 5 (in key, 60–130 ms/note)
-                _filterBpmMult = 6.0f;
-                SetMusicVolume(78);
-
-                const int arpCh = 5;
-                SendProgramChange(arpCh, ProceduralMidiComposer.PatchPadNewAge);
-                // Noise post-processing on the loading channel: dark + resonant + drenched
-                SendCC(arpCh, 74,   8);   // brightness → near zero  (very dark, lo-fi)
-                SendCC(arpCh, 71,  80);   // resonance  → high       (harsh buzzy edge)
-                SendCC(arpCh, 91, 115);   // reverb     → max wet    (cavernous wash)
-                SendCC(arpCh, 93,  80);   // chorus     → deep       (detuned warble)
-                SendCC(arpCh,  1,  42);   // modulation → moderate   (unstable wobble)
-
-                // Brown noise background via waveOut (separate channel from PlaySound —
-                // won't be interrupted by click/hover sounds).
+                // Contributes no music of its own. The ambient loop that was already playing
+                // carries on exactly as it was — same tempo, same volume, same mood — so a
+                // model call no longer hijacks the location's music for its duration. All the
+                // filter adds is the brown-noise wash that says "something is being computed".
+                // The interaction SFX (preview-text reveals, hovers, clicks) come from
+                // TriggerGameEvent / PlaySoundEffect and are untouched by this.
                 using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f * _sfxVolume);
                 brownNoise.Start();
 
-                int[] scale     = Array.Empty<int>();
-                int arpIdx      = 0;
-                int arpDir      = 1;
-                int lastArpNote = -1;
-                int notesSinceJump = 0;
-
-                while (!ct.IsCancellationRequested)
-                {
-                    lock (_moodLock) scale = _sharedScale;
-                    if (scale.Length == 0) { await Task.Delay(30, ct); continue; }
-
-                    arpIdx = Math.Clamp(arpIdx, 0, scale.Length - 1);
-
-                    if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
-
-                    // 6% chance: brief silence gap — irregularity in the stream
-                    if (rng.NextDouble() < 0.06)
-                    {
-                        lastArpNote = -1;
-                        await Task.Delay(rng.Next(80, 220), ct);
-                        continue;
-                    }
-
-                    // Stay strictly in-scale — no chromatic neighbors (removed: were too strident)
-                    int midiNote = scale[arpIdx];
-
-                    // Velocity: consistent whisper with very rare gentle swell
-                    int vel = rng.NextDouble() < 0.08
-                        ? rng.Next(34, 46)   // slight swell
-                        : rng.Next(16, 26);  // default whisper
-                    SendNoteOn(arpCh, midiNote, vel);
-                    lastArpNote = midiNote;
-
-                    arpIdx += arpDir;
-                    notesSinceJump++;
-                    if (arpIdx >= scale.Length) { arpIdx = scale.Length - 2; arpDir = -1; }
-                    else if (arpIdx < 0)        { arpIdx = 1;               arpDir =  1; }
-
-                    // Rare direction flip; jumps limited to ±2 scale steps (no large leaps)
-                    if (rng.NextDouble() < 0.06) arpDir = -arpDir;
-                    if (notesSinceJump > 6 && rng.NextDouble() < 0.12)
-                    {
-                        int step = rng.NextDouble() < 0.5 ? 1 : 2;
-                        arpIdx = Math.Clamp(arpIdx + (rng.NextDouble() < 0.5 ? step : -step), 0, scale.Length - 1);
-                        notesSinceJump = 0;
-                    }
-
-                    // No fast bursts — keep note length calm and flowing
-                    int durMs = rng.NextDouble() < 0.10
-                        ? rng.Next(180, 320)   // occasional long hold
-                        : rng.Next(80, 160);   // steady gentle pace
-                    await Task.Delay(durMs, ct);
-                }
-
-                if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
-                // Reset loading channel CCs to GS defaults
-                SendCC(arpCh, 74, 64);  // brightness default
-                SendCC(arpCh, 71,  0);  // resonance off
-                SendCC(arpCh, 91,  0);  // reverb off
-                SendCC(arpCh, 93,  0);  // chorus off
-                SendCC(arpCh,  1,  0);  // modulation off
+                // Nothing to sequence — hold until SetFilter cancels us, then the `using`
+                // above stops the noise on the way out.
+                await Task.Delay(Timeout.Infinite, ct);
             }
             else if (filter == MusicFilter.DiceRoll)
             {
                 // ── Dice-roll filter ──────────────────────────────────────────────────────────────
-                // Core idea: a continuous scale-based arpeggio on a Marimba channel — so every
-                // note sounds like a wooden tick/click, but the stream is melodically coherent
-                // because it follows the current key.
+                // Adds the brown-noise wash and nothing else; the ambient loop that was playing
+                // continues unchanged underneath.
                 //
-                // Layers:
-                //   • Continuous Marimba arpeggio on ch 5: reads _sharedScale each note.
-                //     Notes at 55–120 ms create a "rolling wooden dice" texture. Direction
-                //     reverses irregularly, short random jumps every ~8 notes.
-                //   • PadHalo shimmer on sfxCh: 2–3 quiet sustained notes, slow turnover —
-                //     the atmosphere of fate/suspension underneath the rolling ticks.
-                //   • Real percussion (wood block, claves) fires only rarely, very quietly —
-                //     a physical punctuation, not the main event.
-                //   • Music ducked to 50/127 — present as distant backdrop.
-                SetMusicVolume(50);
-                _filterBpmMult = 6.0f;
-
-                // Dark atmospheric shimmer
-                SendProgramChange(sfxCh, ProceduralMidiComposer.PatchFxSciFi);
-
-                // Continuous tick arpeggio — Sawtooth: harsh industrial rattle.
-                const int arpCh = 5;
-                SendProgramChange(arpCh, ProceduralMidiComposer.PatchLeadSawtooth);
-
-                // Atmosphere drone on ch 6 — heavy dark cloud hovering above the arpeggio.
-                const int droneCh = 6;
-                SendProgramChange(droneCh, ProceduralMidiComposer.PatchFxAtmosphere);
-                SendCC(droneCh, 7, 90); // boost so it's clearly audible as its own layer
-
-                // Noise post-processing: dark + resonant + drenched — same treatment as Loading
-                foreach (int noiseCh in new[] { sfxCh, arpCh, droneCh })
-                {
-                    SendCC(noiseCh, 74,   8);   // brightness → near zero  (dark, lo-fi)
-                    SendCC(noiseCh, 71,  80);   // resonance  → high       (harsh buzz)
-                    SendCC(noiseCh, 91, 115);   // reverb     → max wet    (cavernous)
-                    SendCC(noiseCh, 93,  80);   // chorus     → deep       (detuned warble)
-                    SendCC(noiseCh,  1,  42);   // modulation → moderate   (unstable wobble)
-                }
-
-                // Brown noise background — same industrial static as Loading
+                // The rattle of the dice is NOT generated here. It comes from the roll animation
+                // itself: DiceRollComponent.OnDiceTick fires SmallInteraction per tick, which is
+                // the same PCM click used for hovers and preview-text updates. That one sound
+                // serves the whole UI, so the filter deliberately contributes no percussion of its
+                // own — a second, dice-only layer on top of it just muddied the roll.
                 using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f * _sfxVolume);
                 brownNoise.Start();
-                var droneNotes   = new List<(int note, long releaseMs)>();
-                long nextDroneMs = Environment.TickCount64 + rng.Next(200, 800);
 
-                var padNotes   = new List<(int note, long releaseMs)>();
-                long nextPadMs = Environment.TickCount64 + rng.Next(400, 1200);
-
-                int[] scale       = Array.Empty<int>();
-                int arpIdx        = 0;
-                int arpDir        = 1;
-                int lastArpNote   = -1;
-                int notesSinceJump = 0;
-
-                // GM percussion: Hi Wood Block, Lo Wood Block, Claves — rare quiet accents
-                int[] accentNotes  = { 76, 77, 75 };
-                long nextAccentMs  = Environment.TickCount64 + rng.Next(800, 2500);
-
-                while (!ct.IsCancellationRequested)
-                {
-                    long now = Environment.TickCount64;
-
-                    // ── PadHalo shimmer ──────────────────────────────────────────────
-                    for (int i = padNotes.Count - 1; i >= 0; i--)
-                    {
-                        if (now >= padNotes[i].releaseMs)
-                        {
-                            SendNoteOff(sfxCh, padNotes[i].note);
-                            padNotes.RemoveAt(i);
-                        }
-                    }
-                    if (now >= nextPadMs && padNotes.Count < 3)
-                    {
-                        int pNote = rng.Next(48, 80);
-                        int pVel  = rng.Next(15, 42);
-                        int pDur  = rng.Next(1500, 4000);
-                        SendNoteOn(sfxCh, pNote, pVel);
-                        padNotes.Add((pNote, now + pDur));
-                        nextPadMs = now + rng.Next(600, 1800);
-                    }
-
-                    // ── PadBowed dirty drone: slowly shifting semitone dissonance ────────────────
-                    for (int i = droneNotes.Count - 1; i >= 0; i--)
-                    {
-                        if (now >= droneNotes[i].releaseMs)
-                        {
-                            SendNoteOff(droneCh, droneNotes[i].note);
-                            droneNotes.RemoveAt(i);
-                        }
-                    }
-                    if (now >= nextDroneMs && droneNotes.Count < 3)
-                    {
-                        int dNote;
-                        if (droneNotes.Count > 0 && rng.NextDouble() < 0.60)
-                        {
-                            // Minor 2nd or minor 3rd interval — unsettling but not as dense as Loading
-                            int anchor = droneNotes[rng.Next(droneNotes.Count)].note;
-                            int interval = rng.NextDouble() < 0.6 ? 1 : rng.Next(2, 4);
-                            dNote = Math.Clamp(anchor + (rng.NextDouble() < 0.5 ? interval : -interval), 60, 84);
-                        }
-                        else
-                        {
-                            dNote = rng.Next(60, 85); // C4–C6 — high, ethereal, floating register
-                        }
-                        SendNoteOn(droneCh, dNote, rng.Next(48, 80)); // audible, prominent
-                        droneNotes.Add((dNote, now + rng.Next(3000, 7000))); // long sustained hold
-                        nextDroneMs = now + rng.Next(1200, 3500); // slow evolution — hovering
-                    }
-
-                    // ── Rare percussion accent ───────────────────────────────────────
-                    if (now >= nextAccentMs)
-                    {
-                        int aNote = accentNotes[rng.Next(accentNotes.Length)];
-                        SendNoteOn(drumCh, aNote, rng.Next(18, 45)); // very quiet
-                        nextAccentMs = now + rng.Next(800, 2800);
-                    }
-
-                    // ── Continuous Marimba arpeggio ──────────────────────────────────
-                    lock (_moodLock) scale = _sharedScale;
-                    if (scale.Length == 0) { await Task.Delay(20, ct); continue; }
-                    arpIdx = Math.Clamp(arpIdx, 0, scale.Length - 1);
-
-                    if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
-
-                    int midiNote = scale[arpIdx];
-                    // 18% chance: chromatic neighbor — one semitone off the scale, adds melodic grit
-                    if (rng.NextDouble() < 0.18)
-                        midiNote = Math.Clamp(midiNote + (rng.NextDouble() < 0.5 ? 1 : -1), 24, 108);
-                    // Velocity: irregular — occasional hard accent drives the "rolling" physicality
-                    int vel = rng.NextDouble() < 0.12
-                        ? rng.Next(50, 72)   // occasional harder hit (quieter than before)
-                        : rng.Next(15, 40);  // normal quiet rolling texture
-                    SendNoteOn(arpCh, midiNote, vel);
-                    lastArpNote = midiNote;
-
-                    // Advance arpeggio
-                    arpIdx += arpDir;
-                    notesSinceJump++;
-
-                    if (arpIdx >= scale.Length)      { arpIdx = scale.Length - 2; arpDir = -1; notesSinceJump = 0; }
-                    else if (arpIdx < 0)             { arpIdx = 1;                arpDir =  1; notesSinceJump = 0; }
-                    else if (rng.NextDouble() < 0.10) arpDir = -arpDir; // random mid-run reversal
-
-                    // Random jump every ~8 notes — like dice changing direction on a bounce
-                    if (notesSinceJump >= rng.Next(5, 12))
-                    {
-                        arpIdx = rng.Next(0, scale.Length);
-                        notesSinceJump = 0;
-                    }
-
-                    // Note spacing: mostly 55–120 ms — "rolling" pace, not manic
-                    // Rare short burst of faster notes (dice accelerating)
-                    int durMs = rng.NextDouble() < 0.15
-                        ? rng.Next(20, 50)    // brief acceleration burst
-                        : rng.Next(55, 120);  // normal rolling pace
-                    await Task.Delay(durMs, ct);
-                }
-
-                if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
-                // Reset DiceRoll channel CCs to GS defaults
-                foreach (int noiseCh in new[] { sfxCh, arpCh, droneCh })
-                {
-                    SendCC(noiseCh, 74, 64);  // brightness default
-                    SendCC(noiseCh, 71,  0);  // resonance off
-                    SendCC(noiseCh, 91,  0);  // reverb off
-                    SendCC(noiseCh, 93,  0);  // chorus off
-                    SendCC(noiseCh,  1,  0);  // modulation off
-                }
+                await Task.Delay(Timeout.Infinite, ct);
             }
             else if (filter == MusicFilter.Traveling)
             {
                 // ── Traveling filter ──────────────────────────────────────────────────────────────
-                // Open-road mood: purposeful forward motion through a landscape.  Not tense, not
-                // industrial — atmospheric and solitary.  Three layers add the sensation of moving
-                // through outdoor space while the ambient music stays largely intact:
+                // The location's ambient loop plays on unchanged — no tempo change, no ducking, so
+                // setting out no longer overwrites the mood the world established. Over it sit two
+                // untuned layers only: the brown-noise wash (wind on the open road) and quiet,
+                // irregularly spaced footfalls on the GM drum channel (uneven ground).
                 //
-                //   • PanFlute arpeggio on ch 5: airy pastoral steps through the current scale,
-                //     mostly ascending ("walking forward"), 180–400 ms/note.  8 % silence gap
-                //     to suggest scanning the horizon.
-                //   • PadSweep landscape drone on ch 6: very slow-shifting sustained low notes
-                //     (5–10 s holds) — the terrain rolling past underfoot.
-                //   • Quiet footstep percussion on ch 9: Bass Drum / Low Tom at low velocity,
-                //     irregularly spaced (500–1200 ms) — uneven ground.
-                //   • _filterBpmMult = 6.0  — ambient music races forward like a time-lapse,
-                //     suggesting time passing during the journey (same cap as Loading: 340 BPM).
-                //     The PanFlute arpeggio is unaffected (it uses its own delay timings).
-                //   • Music at 72/127 — present, gently recessed.
-                _filterBpmMult = 6.0f;
-                SetMusicVolume(72);
-
-                const int arpCh = 5;
-                SendProgramChange(arpCh, ProceduralMidiComposer.PatchPanFlute);
-                // Outdoor CC treatment: warm + spacious + clean — contrasts Loading's dark industrial noise
-                SendCC(arpCh, 74, 52);   // brightness → moderately warm
-                SendCC(arpCh, 71,  8);   // resonance  → subtle hint
-                SendCC(arpCh, 91, 72);   // reverb     → outdoor open space
-                SendCC(arpCh, 93, 22);   // chorus     → gentle warmth
-                SendCC(arpCh,  1, 12);   // modulation → light vibrato
-
-                const int droneCh = 6;
-                SendProgramChange(droneCh, ProceduralMidiComposer.PatchPadSweep);
-                SendCC(droneCh, 7, 55);  // quiet — landscape backdrop, not prominent
-                SendCC(droneCh, 91, 80); // reverb → merges into background wash
-
-                // Brown noise background via waveOut — same wind-like static as Loading/DiceRoll.
-                // Scaled by the SFX volume (read at filter start), so it follows the SFX slider
-                // independently of the music volume.
+                // Scaled by the SFX volume (read at filter start), so the noise follows the SFX
+                // slider independently of the music volume.
                 using var brownNoise = new BrownNoiseStreamer(amplitude: 0.22f * _sfxVolume);
                 brownNoise.Start();
 
-                var droneNotes   = new List<(int note, long releaseMs)>();
-                long nextDroneMs = Environment.TickCount64 + rng.Next(500, 1500);
-
                 // Footstep notes: Acoustic Bass Drum, Low Floor Tom, Low Tom
                 int[] footNotes = { 35, 41, 45 };
-                long nextFootMs = Environment.TickCount64 + rng.Next(400, 900);
-
-                int[] scale      = Array.Empty<int>();
-                int arpIdx       = 0;
-                int arpDir       = 1;   // default: ascending (walking forward)
-                int lastArpNote  = -1;
-                int stepCount    = 0;
+                long nextFootMs = Environment.TickCount64 + rng.Next(180, 450);
 
                 while (!ct.IsCancellationRequested)
                 {
                     long now = Environment.TickCount64;
 
-                    // ── Landscape drone: slow low sustained pads ─────────────────────
-                    for (int i = droneNotes.Count - 1; i >= 0; i--)
-                    {
-                        if (now >= droneNotes[i].releaseMs)
-                        {
-                            SendNoteOff(droneCh, droneNotes[i].note);
-                            droneNotes.RemoveAt(i);
-                        }
-                    }
-                    if (now >= nextDroneMs && droneNotes.Count < 2)
-                    {
-                        int dNote = rng.Next(36, 55); // low register — rumble of the land
-                        SendNoteOn(droneCh, dNote, rng.Next(18, 35));
-                        droneNotes.Add((dNote, now + rng.Next(2000, 4500)));
-                        nextDroneMs = now + rng.Next(1200, 3000);
-                    }
-
-                    // ── Quiet footstep percussion ─────────────────────────────────────
                     if (now >= nextFootMs)
                     {
-                        SendNoteOn(drumCh, footNotes[rng.Next(footNotes.Length)], rng.Next(12, 30));
+                        // Slightly firmer than when a PanFlute arpeggio sat on top of them: with
+                        // nothing else in the overlay the footfalls carry the walking rhythm alone.
+                        SendNoteOn(drumCh, footNotes[rng.Next(footNotes.Length)], rng.Next(20, 40));
                         nextFootMs = now + rng.Next(180, 450);
                     }
 
-                    // ── PanFlute arpeggio ─────────────────────────────────────────────
-                    lock (_moodLock) scale = _sharedScale;
-                    if (scale.Length == 0) { await Task.Delay(40, ct); continue; }
-                    arpIdx = Math.Clamp(arpIdx, 0, scale.Length - 1);
-
-                    if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
-
-                    // 8 % chance: brief rest — pausing to scan the horizon
-                    if (rng.NextDouble() < 0.08)
-                    {
-                        lastArpNote = -1;
-                        await Task.Delay(rng.Next(80, 200), ct);
-                        continue;
-                    }
-
-                    int midiNote = scale[arpIdx];
-                    int vel = rng.NextDouble() < 0.12
-                        ? rng.Next(38, 54)   // occasional gentle swell (cresting a hill)
-                        : rng.Next(22, 36);  // default airy whisper
-                    SendNoteOn(arpCh, midiNote, vel);
-                    lastArpNote = midiNote;
-
-                    // Mostly ascending ("walking forward"), reverse at extremes
-                    arpIdx += arpDir;
-                    stepCount++;
-                    if (arpIdx >= scale.Length)  { arpIdx = scale.Length - 2; arpDir = -1; stepCount = 0; }
-                    else if (arpIdx < 0)         { arpIdx = 1;                arpDir =  1; stepCount = 0; }
-                    // Occasional winding reversal — like a path changing direction
-                    if (stepCount >= rng.Next(4, 9) && rng.NextDouble() < 0.25)
-                    { arpDir = -arpDir; stepCount = 0; }
-
-                    // Fast travel pace: 60–140 ms/note; rare short pause (200–400 ms) = catching breath
-                    int durMs = rng.NextDouble() < 0.07
-                        ? rng.Next(200, 400)   // rest — catching breath
-                        : rng.Next(60, 140);   // fast travel pace
-                    await Task.Delay(durMs, ct);
+                    await Task.Delay(20, ct);
                 }
-
-                if (lastArpNote >= 0) SendNoteOff(arpCh, lastArpNote);
-                foreach (var (note, _) in droneNotes) SendNoteOff(droneCh, note);
-                // Reset Traveling channel CCs to GS defaults
-                SendCC(arpCh, 74, 64);  // brightness default
-                SendCC(arpCh, 71,  0);  // resonance off
-                SendCC(arpCh, 91,  0);  // reverb off
-                SendCC(arpCh, 93,  0);  // chorus off
-                SendCC(arpCh,  1,  0);  // modulation off
-                SendCC(droneCh, 91, 0); // reverb off
             }
             else if (filter == MusicFilter.Fighting)
             {
@@ -1566,13 +1240,18 @@ public sealed class AmbianceEngine : IDisposable
         catch (OperationCanceledException) { /* normal shutdown */ }
         finally
         {
-            // Restore full music volume, reset BPM, and sweep all touched channels
+            // Restore full music volume, reset BPM, and sweep the channels a filter may have used.
+            // Only Fighting touches ch 5 / ch 6 now, but sweeping unconditionally is cheap and keeps
+            // this correct if another filter starts using them again.
+            //
+            // The SFX channel is deliberately NOT swept: no filter writes to it any more, and
+            // clearing it here would cut off a success/failure sting that TriggerGameEvent had just
+            // fired — the roll ends and the filter stops at the same moment.
             SetMusicVolume(100);
             _filterBpmMult = 1.0f;
             SendCC(6, 7, 100); // restore drone channel volume
-            SilenceChannel(ProceduralMidiComposer.SfxChannel);
-            SilenceChannel(5);   // arp channel (both filters)
-            SilenceChannel(6);   // dirty drone channel (both filters)
+            SilenceChannel(5);   // arp / pulse channel
+            SilenceChannel(6);   // drone channel
             SilenceChannel(drumCh);
         }
     }

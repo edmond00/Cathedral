@@ -134,13 +134,18 @@ public static class DialogueTreeAudit
             {
                 case ResolutionNode res:
                     Add(res.SuccessReplica);
+                    Add(res.SuccessReplicaIndirect);
                     Add(res.FailureReplica);
+                    Add(res.FailureReplicaIndirect);
                     break;
                 case NpcLineNode npc:
                     Add(npc.Replica);
+                    Add(npc.ReplicaIndirect);
+                    Add(npc.ReplicaHeard);
                     foreach (var opt in npc.Options)
                     {
                         Add(opt.Replica);
+                        Add(opt.ReplicaIndirect);
                         Add(opt.Intent);
                         Walk(opt.Next);
                     }
@@ -256,7 +261,9 @@ public static class DialogueTreeAudit
                 case ResolutionNode res:
                     if (firstVisit) m.Resolutions++;
                     CollectTokens(res.SuccessReplica);
+                    CollectTokens(res.SuccessReplicaIndirect);
                     CollectTokens(res.FailureReplica);
+                    CollectTokens(res.FailureReplicaIndirect);
                     m.BranchLengths.Add(depth);
                     if (!resolutionDepths.TryGetValue(res, out var depths))
                         resolutionDepths[res] = depths = new SortedSet<int>();
@@ -266,6 +273,8 @@ public static class DialogueTreeAudit
                 case NpcLineNode npc:
                     if (firstVisit) m.NpcNodes++;
                     CollectTokens(npc.Replica);
+                    CollectTokens(npc.ReplicaIndirect);
+                    CollectTokens(npc.ReplicaHeard);
                     if (npc.Options.Count == 0)
                         m.Warnings.Add($"NPC line '{npc.NodeId}' offers no reply — the conversation dead-ends there");
 
@@ -276,6 +285,7 @@ public static class DialogueTreeAudit
                             m.Warnings.Add($"NPC line '{npc.NodeId}' offers two replies both called '{opt.OptionId}'");
                         if (optSeen.Add($"{npc.NodeId}::{opt.OptionId}")) m.PlayerOptions++;
                         CollectTokens(opt.Replica);
+                        CollectTokens(opt.ReplicaIndirect);
                         CollectTokens(opt.Intent);
                         Walk(opt.Next, depth + 1, path);
                     }

@@ -159,14 +159,18 @@ public class DialogueViewWindow : Form
         string title = isEntry ? $"★ NPC: {node.NodeId}" : $"NPC: {node.NodeId}";
         AddNode(msagl, node.NodeId, $"{title}\n“{node.Replica}”", ColorNpc);
         detailsById[node.NodeId] =
-            $"NPC line node: {node.NodeId}\r\nSpeaker: NPC\r\n\r\nReplica:\r\n  {node.Replica}\r\n\r\nOptions: {node.Options.Count}";
+            $"NPC line node: {node.NodeId}\r\nSpeaker: NPC\r\n\r\nReplica (spoken):\r\n  {node.Replica}"
+          + $"\r\n\r\nReplica (indirect, unused):\r\n  {node.ReplicaIndirect}"
+          + $"\r\n\r\nReplica (heard, for reply grading):\r\n  {node.ReplicaHeard}\r\n\r\nOptions: {node.Options.Count}";
 
         foreach (var opt in node.Options)
         {
             string optId = $"{node.NodeId}::{opt.OptionId}";
             AddNode(msagl, optId, $"You: {opt.OptionId}\nintent: {opt.Intent}\n“{opt.Replica}”", ColorPlayer);
             detailsById[optId] =
-                $"Player option: {opt.OptionId}\r\nSpeaker: You\r\n\r\nIntent (for MM grading):\r\n  {opt.Intent}\r\n\r\nReplica:\r\n  {opt.Replica}\r\n\r\nLeads to: {opt.Next.NodeId}";
+                $"Player option: {opt.OptionId}\r\nSpeaker: You\r\n\r\nIntent (for MM grading):\r\n  {opt.Intent}"
+              + $"\r\n\r\nReplica (spoken):\r\n  {opt.Replica}"
+              + $"\r\n\r\nReplica (indirect, unused):\r\n  {opt.ReplicaIndirect}\r\n\r\nLeads to: {opt.Next.NodeId}";
             msagl.AddEdge(node.NodeId, optId).Attr.Color = new MsaglColor(120, 120, 130);
 
             switch (opt.Next)

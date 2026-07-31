@@ -15,6 +15,11 @@ namespace Cathedral.Game.Dialogue.Tree.Trees;
 /// the trade in general and <c>{npc:wares}</c> names two or three things actually in this merchant's
 /// catalogue, so the haggling is about the goods the trade menu will really offer.
 /// </para>
+///
+/// <para>
+/// Every replica is the spoken line, plainly — the trader's patter is the persona's to add. See
+/// "Authoring the neutral text" on <see cref="DialogueTree"/>.
+/// </para>
 /// </summary>
 public class ProposeToBuyTree : DialogueTree
 {
@@ -34,233 +39,333 @@ public class ProposeToBuyTree : DialogueTree
     public override IReadOnlyList<IDialogueOutcome> FailureOutcomes { get; } = System.Array.Empty<IDialogueOutcome>();
 
     /// <summary>A branch end. Opening a stall is not high-stakes, so the easy ladder applies.</summary>
-    private static ResolutionNode End(string id, int depth, string success, string failure) => new(
-        nodeId:         id,
-        difficulty:     BranchDifficulty.Easy(depth),
-        successReplica: success,
-        failureReplica: failure);
+    private static ResolutionNode End(string id, int depth,
+                                      string success, string successIndirect,
+                                      string failure, string failureIndirect) => new(
+        nodeId:                 id,
+        difficulty:             BranchDifficulty.Easy(depth),
+        successReplica:         success,
+        successReplicaIndirect: successIndirect,
+        failureReplica:         failure,
+        failureReplicaIndirect: failureIndirect);
 
     // ══════════════════════════════════════════════════════════════════════════
     //  A — ask plainly what they have (deepest)
     // ══════════════════════════════════════════════════════════════════════════
 
     private static NpcLineNode AskWares() => new(
-        nodeId:  "ask_wares",
-        replica: "What have I? {npc:sells}, chiefly. {npc:wares} — that sort of thing. What is it you're actually after?",
+        nodeId:          "ask_wares",
+        replica:         "{npc:sells}, chiefly. {npc:wares}, and things of that kind. What are you after?",
+        replicaIndirect: "I tell {you:name} I deal chiefly in {npc:sells} — {npc:wares} and such — and ask what they are after.",
+        replicaHeard:    "{npc:name} says they deal chiefly in {npc:sells}, names {npc:wares}, and asks what I am after.",
 
         new PlayerOption("wares_just_looking", "admit you are only looking for now",
-            "Nothing in particular yet. I'd see what there is first.",
+            "Nothing in particular yet. I would see what there is first.",
+            "I tell {npc:name} I would see what there is first.",
             End("wares_looking_end", 2,
-                "Aye, coin's coin. Take a look, then — fair prices for a fair customer.",
-                "Naught here for you today. Move along.")),
+                "Take a look, then. I charge fair prices.",
+                "I tell {you:name} to take a look, and that I charge fair prices.",
+                "There is nothing here for you today. Move along.",
+                "I tell {you:name} there is nothing here for them today.")),
 
         new PlayerOption("wares_ask_best", "ask which of it is their best work",
-            "Which of it is the best you've made? Not the dearest — the best.",
+            "Which of it is the best you have made? Not the dearest, the best.",
+            "I ask {npc:name} which of it is the best they have made, not the dearest.",
             WaresBest()),
 
         new PlayerOption("wares_ask_lasting", "ask which of it will actually last",
-            "Which of it will still be sound in five years? That's what I'd buy.",
+            "Which of it will still be sound in five years? That is what I would buy.",
+            "I ask {npc:name} which of it will still be sound in five years.",
             WaresLasting()));
 
     private static NpcLineNode WaresBest() => new(
-        nodeId:  "wares_best",
-        replica: "...Not the dearest. Nobody asks it that way round. There's a piece I'd not have sold at all if the winter had been kinder.",
+        nodeId:          "wares_best",
+        replica:         "Nobody asks it that way. There is one piece I would not have sold at all if the winter had been easier.",
+        replicaIndirect: "I tell {you:name} there is one piece I would not have sold at all if the winter had been easier.",
+        replicaHeard:    "{npc:name} says there is one piece they would not have sold at all if the winter had been easier.",
 
         new PlayerOption("best_ask_see", "ask to be shown it",
-            "Then show me that one, and we'll talk about the rest after.",
+            "Show me that one, and we will talk about the rest afterwards.",
+            "I ask {npc:name} to show me that one first.",
             End("best_see_end", 3,
-                "Heh — you've an eye, or you've luck. Come on, then. Everything's out.",
-                "It's not for showing to people who won't buy. Off with you.")),
+                "You have an eye for it. Everything is out. Come and look.",
+                "I tell {you:name} they have an eye for it, and that everything is out.",
+                "It is not for showing to people who will not buy. Off with you.",
+                "I tell {you:name} it is not for showing to people who will not buy.")),
 
         new PlayerOption("best_say_understand", "say you understand not wanting to part with it",
-            "Then I'll not press you on that one. A maker's allowed to keep something.",
+            "Then I will not press you on that one. A maker may keep something back.",
+            "I tell {npc:name} a maker may keep something back, and that I will not press them.",
             End("best_keep_end", 3,
-                "...That's a decent thing to say to a tradesman. Aye — come and see what I will sell.",
-                "Don't tell me what I'm allowed. Look or leave.")));
+                "That is a decent thing to say to a tradesman. Come and see what I will sell.",
+                "I tell {you:name} that is a decent thing to say to a tradesman, and to come and see what I will sell.",
+                "Do not tell me what I may do. Look or leave.",
+                "I tell {you:name} not to tell me what I may do.")));
 
     private static NpcLineNode WaresLasting() => new(
-        nodeId:  "wares_lasting",
-        replica: "Now that's the right question, and most never ask it. {npc:opinion_work} So: some of what's here will outlive you, and some of it is what folk can afford.",
+        nodeId:          "wares_lasting",
+        replica:         "That is the right question, and few ask it. {npc:opinion_work} Some of what is here will outlast you, and some of it is what people can afford.",
+        replicaIndirect: "I tell {you:name} few ask that, that of the work I think {npc:opinion_work}, and that some of the stock will outlast them and some is what people can afford.",
+        replicaHeard:    "{npc:name} says few ask that, tells me what they think of the work, and says some of the stock will outlast me and some is what people can afford.",
 
         new PlayerOption("lasting_want_good", "say you would rather pay once for the good sort",
-            "Then I'd rather pay once and be done. Show me the sort that lasts.",
+            "Then I would rather pay once and be done. Show me the sort that lasts.",
+            "I tell {npc:name} I would rather pay once, and ask for the sort that lasts.",
             End("lasting_good_end", 3,
-                "A customer after my own heart. Come — I'll not waste your time with the cheap end.",
-                "Everyone says that until they hear the price. Come back with the coin.")),
+                "Then I will not waste your time with the cheap end. Come.",
+                "I tell {you:name} I will not waste their time with the cheap end.",
+                "Everyone says that until they hear the price. Come back with the coin.",
+                "I tell {you:name} everyone says that until they hear the price.")),
 
         new PlayerOption("lasting_ask_cheap", "ask honestly what the cheap end is like",
-            "And the affordable sort — is it honest, or is it rubbish?",
+            "And the affordable sort. Is it honest work, or is it poor?",
+            "I ask {npc:name} whether the affordable sort is honest work or poor.",
             LastingCheap()));
 
     private static NpcLineNode LastingCheap() => new(
-        nodeId:  "lasting_cheap",
-        replica: "...You'd have me speak ill of my own stock. It's honest. It's not what I'd choose. There's a difference and I'll not hide it from you.",
+        nodeId:          "lasting_cheap",
+        replica:         "You would have me speak against my own stock. It is honest. It is not what I would choose, and I will not hide that.",
+        replicaIndirect: "I tell {you:name} the cheap end is honest but not what I would choose, and that I will not hide it.",
+        replicaHeard:    "{npc:name} says the cheap end is honest but not what they would choose, and that they will not hide it.",
 
         new PlayerOption("cheap_thank_honesty", "thank them for not overselling it",
-            "That's more honesty than I get from most stalls. My thanks.",
+            "That is more honesty than I get at most stalls. Thank you.",
+            "I thank {npc:name} for more honesty than I get at most stalls.",
             End("cheap_honesty_end", 4,
-                "Aye, well. I'd rather sell you the right thing once than the wrong thing twice. Come and look properly.",
-                "Honesty doesn't feed me. Are you buying or admiring?")),
+                "I would rather sell you the right thing once than the wrong thing twice. Come and look properly.",
+                "I tell {you:name} I would rather sell the right thing once than the wrong thing twice.",
+                "Honesty does not feed me. Are you buying or admiring?",
+                "I ask {you:name} whether they are buying or admiring.")),
 
         new PlayerOption("cheap_take_it", "say the honest cheap sort is exactly what you need",
-            "Then the honest sort is what I need. I've not the coin for better and I'll not pretend I have.",
+            "Then the honest sort is what I need. I have not the coin for better.",
+            "I tell {npc:name} the honest sort is what I need, since I have not the coin for better.",
             End("cheap_take_end", 4,
-                "Now there's a man who knows his purse. That's no shame here. Come — I'll see you right.",
-                "Then you're browsing, not buying. I've customers.")));
+                "There is no shame in knowing your purse. Come, I will see you right.",
+                "I tell {you:name} there is no shame in knowing your purse, and that I will see them right.",
+                "Then you are browsing, not buying. I have customers.",
+                "I tell {you:name} they are browsing, not buying.")));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  B — praise their craft (rich)
     // ══════════════════════════════════════════════════════════════════════════
 
     private static NpcLineNode Flatter() => new(
-        nodeId:  "flatter_opening",
-        replica: "Fine craft, is it. Hm. You'd not be the first to warm me up before opening your purse — but go on, I'm listening.",
+        nodeId:          "flatter_opening",
+        replica:         "You would not be the first to praise me before opening a purse. Go on, I am listening.",
+        replicaIndirect: "I tell {you:name} they would not be the first to praise me before opening a purse, but that I am listening.",
+        replicaHeard:    "{npc:name} says I would not be the first to praise them before opening a purse, but that they are listening.",
 
         new PlayerOption("flatter_mean_it", "insist you meant it",
-            "I meant it. I've seen worse sold for more, and often.",
+            "I meant it. I have seen worse sold for more.",
+            "I tell {npc:name} I meant it, and have seen worse sold for more.",
             End("flatter_mean_end", 2,
-                "Heh — you've a honeyed tongue. Go on, see what catches your eye.",
-                "Flattery won't open my stall. Off with you.")),
+                "Go on, then. See what catches your eye.",
+                "I tell {you:name} to see what catches their eye.",
+                "Flattery will not open my stall. Off with you.",
+                "I tell {you:name} that flattery will not open my stall.")),
 
         new PlayerOption("flatter_name_detail", "point out a specific thing you noticed",
-            "The finish on it. That's not something you get by hurrying.",
+            "The finish on it. That does not come from hurrying.",
+            "I tell {npc:name} the finish on it does not come from hurrying.",
             FlatterDetail()),
 
         new PlayerOption("flatter_ask_learn", "ask where they learned to work like that",
             "Where does a person learn to work like that?",
+            "I ask {npc:name} where a person learns to work like that.",
             FlatterLearn()));
 
     private static NpcLineNode FlatterDetail() => new(
-        nodeId:  "flatter_detail",
-        replica: "...The finish. Aye. Nobody notices the finish. They notice the price and the colour and nothing between.",
+        nodeId:          "flatter_detail",
+        replica:         "The finish. Nobody notices the finish. They notice the price and the colour and nothing in between.",
+        replicaIndirect: "I tell {you:name} nobody notices the finish, only the price and the colour.",
+        replicaHeard:    "{npc:name} says nobody notices the finish, only the price and the colour.",
 
         new PlayerOption("detail_ask_time", "ask how long that takes",
-            "How long does that part take you, out of the whole?",
+            "How much of the work is that part?",
+            "I ask {npc:name} how much of the work that part is.",
             End("detail_time_end", 3,
-                "Half of it, and it earns me nothing. Which is why I like being asked. Come, look at the rest.",
-                "Long enough that I'd rather be doing it than talking. Buy or go.")),
+                "Half of it, and it earns me nothing, which is why I like being asked. Come, look at the rest.",
+                "I tell {you:name} it is half of it and earns me nothing, which is why I like being asked.",
+                "Long enough that I would rather be doing it than talking. Buy or go.",
+                "I tell {you:name} I would rather be doing it than talking about it.")),
 
         new PlayerOption("detail_say_worth", "say it is worth paying for",
-            "It's worth paying for. I'd not haggle you down on that part.",
+            "It is worth paying for. I would not haggle you down on that part.",
+            "I tell {npc:name} I would not haggle them down on that part.",
             End("detail_worth_end", 3,
-                "...Then you and I will do business happily. Everything's out — take your time.",
-                "You'll haggle. You all haggle. Spare me the preamble.")));
+                "Then we will do business gladly. Everything is out. Take your time.",
+                "I tell {you:name} everything is out, and to take their time.",
+                "You will haggle. You all haggle. Spare me the preamble.",
+                "I tell {you:name} they will haggle as they all do.")));
 
     private static NpcLineNode FlatterLearn() => new(
-        nodeId:  "flatter_learn",
-        replica: "Years of doing it badly where nobody could see. That's where. {npc:labour} — you get good or you get another trade.",
+        nodeId:          "flatter_learn",
+        replica:         "Years of doing it badly where nobody could see. {npc:labour}. You get good at it or you take another trade.",
+        replicaIndirect: "I tell {you:name} I learned it over years of doing it badly where nobody could see, and that my day is {npc:labour}.",
+        replicaHeard:    "{npc:name} says they learned it over years of doing it badly where nobody could see, and describes their working day.",
 
         new PlayerOption("learn_respect", "say that sounds like a hard road",
-            "That's a hard road to have walked. It shows in the work.",
+            "That was a hard way to learn it. It shows in the work.",
+            "I tell {npc:name} it was a hard way to learn it, and that it shows in the work.",
             End("learn_respect_end", 3,
-                "It does, doesn't it. Alright — you've earned a proper look at the stock.",
-                "Aye, it was hard. It doesn't make my prices softer.")),
+                "It does. You have earned a proper look at the stock.",
+                "I tell {you:name} they have earned a proper look at the stock.",
+                "It was hard. That does not make my prices lower.",
+                "I tell {you:name} that a hard road does not make my prices lower.")),
 
         new PlayerOption("learn_ask_apprentice", "ask whether they have anyone learning it from them",
-            "And is there anyone learning it off you now?",
+            "Is anyone learning it from you now?",
+            "I ask {npc:name} whether anyone is learning it from them now.",
             End("learn_apprentice_end", 3,
-                "One, and slow, and I was slower. It's a fair question and few think to ask it. Come, let's trade.",
-                "That's my business, not yours. Are you buying?")));
+                "One, and slow, and I was slower. Few think to ask. Come, let us trade.",
+                "I tell {you:name} there is one and slow, that I was slower, and that few think to ask.",
+                "That is my business, not yours. Are you buying?",
+                "I tell {you:name} that is my business, and ask whether they are buying.")));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  C — ask after one particular thing (short)
     // ══════════════════════════════════════════════════════════════════════════
 
     private static NpcLineNode AskSpecific() => new(
-        nodeId:  "ask_specific",
-        replica: "Something particular. Well — I deal in {npc:sells} and little else. Tell me what it's for and I'll tell you if I've got it.",
+        nodeId:          "ask_specific",
+        replica:         "I deal in {npc:sells} and little else. Tell me what it is for and I will tell you if I have it.",
+        replicaIndirect: "I tell {you:name} I deal in {npc:sells} and little else, and ask what it is for.",
+        replicaHeard:    "{npc:name} says they deal in {npc:sells} and little else, and asks what it is for.",
 
         new PlayerOption("specific_for_work", "say it is for work you have coming",
-            "It's for work I've got coming. I'd rather have the right thing than the near-enough thing.",
+            "It is for work I have coming. I want the right thing, not the nearest thing.",
+            "I tell {npc:name} it is for work I have coming, and I want the right thing.",
             End("specific_work_end", 2,
-                "The right thing for the job. Aye — come and I'll match you to it properly.",
-                "Then find a stall that stocks whatever it is. It isn't here.")),
+                "The right thing for the work. Come, and I will match you to it.",
+                "I tell {you:name} I will match them to the right thing for the work.",
+                "Then find a stall that stocks it. This one does not.",
+                "I tell {you:name} to find a stall that stocks it.")),
 
         new PlayerOption("specific_for_road", "say it is for the road ahead",
-            "It's for the road. Whatever won't break on me a long way from a repair.",
+            "It is for travelling. Something that will not break far from a repair.",
+            "I tell {npc:name} it is for travelling, and must not break far from a repair.",
             SpecificRoad()),
 
         new PlayerOption("specific_dont_know", "admit you are not sure what you need",
-            "Honestly? I'm not certain what I need. I'd take a word of advice with it.",
+            "I am not certain what I need. I would take advice with it.",
+            "I tell {npc:name} I am not certain what I need, and ask for advice.",
             End("specific_advice_end", 2,
-                "Ha — an honest customer. Come here, then, and I'll not sell you what you can't use.",
-                "I'm a tradesman, not a nursemaid. Come back when you know your own mind.")));
+                "An honest customer. Come, and I will not sell you what you cannot use.",
+                "I tell {you:name} they are an honest customer, and that I will not sell them what they cannot use.",
+                "I am a tradesman, not a nursemaid. Come back when you know your own mind.",
+                "I tell {you:name} I am a tradesman, not a nursemaid.")));
 
     private static NpcLineNode SpecificRoad() => new(
-        nodeId:  "specific_road",
-        replica: "For the road. Then you want the plain, heavy sort and none of the pretty. {npc:opinion_roads}",
+        nodeId:          "specific_road",
+        replica:         "Then you want the plain heavy sort and none of the decorated. {npc:opinion_roads}",
+        replicaIndirect: "I tell {you:name} they want the plain heavy sort and none of the decorated, and that of the roads I think {npc:opinion_roads}.",
+        replicaHeard:    "{npc:name} says I want the plain heavy sort and none of the decorated, and tells me what they think of the roads.",
 
         new PlayerOption("road_agree", "agree and ask for the plain and heavy",
-            "Plain and heavy suits me. Fancy is for people who stay put.",
+            "Plain and heavy suits me. Decoration is for people who stay put.",
+            "I tell {npc:name} plain and heavy suits me, since decoration is for people who stay put.",
             End("road_agree_end", 3,
-                "Ha! Right you are. Come — I keep that sort at the back, where it belongs.",
-                "Then you'll want a stall that outfits wanderers. This one supplies a village.")),
+                "I keep that sort at the back. Come.",
+                "I tell {you:name} I keep that sort at the back.",
+                "Then you want a stall that outfits travellers. This one supplies a village.",
+                "I tell {you:name} this stall supplies a village, not travellers.")),
 
         new PlayerOption("road_ask_advice", "ask what they would take, in your place",
-            "If you were the one walking out of here, what would you carry?",
+            "If you were the one leaving here, what would you carry?",
+            "I ask {npc:name} what they would carry if they were the one leaving.",
             End("road_advice_end", 3,
-                "...In your place? Two things, both dull, both mine. Come, I'll put them in your hand.",
-                "I'd not be walking out of here at all. That's my advice and it's free.")));
+                "Two things, both plain, both mine. Come, I will put them in your hand.",
+                "I tell {you:name} I would take two things, both plain and both mine.",
+                "I would not be leaving at all. That is my advice, and it is free.",
+                "I tell {you:name} I would not be leaving at all, and that the advice is free.")));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  D — talk money before goods (short)
     // ══════════════════════════════════════════════════════════════════════════
 
     private static NpcLineNode TalkCoin() => new(
-        nodeId:  "talk_coin",
-        replica: "Price first, is it? That's either a careful man or a poor one. {npc:opinion_trade}",
+        nodeId:          "talk_coin",
+        replica:         "Price first. That is either a careful man or a poor one. {npc:opinion_trade}",
+        replicaIndirect: "I tell {you:name} asking the price first means a careful man or a poor one, and that of trade I think {npc:opinion_trade}.",
+        replicaHeard:    "{npc:name} says asking the price first means a careful man or a poor one, and tells me what they think of trade.",
 
         new PlayerOption("coin_say_careful", "say you would rather know before you want something",
-            "Careful. I'd rather know the price before I've decided I want the thing.",
+            "Careful. I would rather know the price before I decide I want the thing.",
+            "I tell {npc:name} I would rather know the price before I decide I want the thing.",
             End("coin_careful_end", 2,
-                "Sensible. Most fall in love with a piece and then argue about it. Come, prices and all.",
-                "Careful, poor — it's the same walk out of my stall either way.")),
+                "Sensible. Most decide first and argue afterwards. Come, prices and all.",
+                "I tell {you:name} that is sensible, since most decide first and argue afterwards.",
+                "Careful or poor, it is the same walk out of my stall.",
+                "I tell {you:name} careful or poor is the same walk out of my stall.")),
 
         new PlayerOption("coin_say_poor", "admit your purse is light",
-            "Poor, then. My purse is light and I'll not waste your day pretending.",
+            "Poor, then. My purse is light and I will not waste your day pretending.",
+            "I tell {npc:name} my purse is light and I will not pretend otherwise.",
             CoinPoor()),
 
         new PlayerOption("coin_haggle_early", "make clear you intend to haggle",
-            "And I'll tell you now — I mean to argue about every one of them.",
+            "And I will tell you now, I mean to argue about every one of them.",
+            "I warn {npc:name} I mean to argue about every price.",
             End("coin_haggle_end", 2,
-                "Hah! At least you say so up front. Come on then, let's have it out over the stock.",
-                "Then we'll save each other the trouble. Good day.")));
+                "At least you say so first. Come, let us argue over the stock.",
+                "I tell {you:name} at least they say so first, and to come and argue over the stock.",
+                "Then we will save each other the trouble. Good day.",
+                "I tell {you:name} we will save each other the trouble.")));
 
     private static NpcLineNode CoinPoor() => new(
-        nodeId:  "coin_poor",
-        replica: "...Light purse, said plainly. That's not nothing. Half this village pretends otherwise and settles up in promises.",
+        nodeId:          "coin_poor",
+        replica:         "A light purse, said plainly. Half this village pretends otherwise and settles up in promises.",
+        replicaIndirect: "I tell {you:name} a light purse said plainly is worth something, since half this village settles up in promises.",
+        replicaHeard:    "{npc:name} says a light purse said plainly is worth something, since half the village settles up in promises.",
 
         new PlayerOption("poor_ask_cheapest", "ask what is within reach",
-            "Then what's within reach of a light purse? I'll take the honest answer.",
+            "What is within reach of a light purse? I will take the honest answer.",
+            "I ask {npc:name} what is within reach of a light purse.",
             End("poor_reach_end", 3,
-                "There's a fair bit, if you're not proud about it. Come — I'll show you what's yours to have.",
-                "Nothing. That's the honest answer. Come back with coin.")),
+                "A fair amount, if you are not proud about it. I will show you what you can have.",
+                "I tell {you:name} there is a fair amount if they are not proud about it.",
+                "Nothing. That is the honest answer. Come back with coin.",
+                "I tell {you:name} nothing is, and to come back with coin.")),
 
         new PlayerOption("poor_offer_later", "offer to come back when you can pay properly",
-            "Then I'll come back when I can pay you properly. I'll not ask for credit.",
+            "Then I will come back when I can pay you properly. I will not ask for credit.",
+            "I tell {npc:name} I will come back when I can pay, and will not ask for credit.",
             End("poor_later_end", 3,
-                "...Not asking is what gets you offered. Come here — we'll find something you can carry off today.",
-                "Aye, do that. Come back with a heavier purse and we'll talk.")));
+                "Not asking is what gets you offered. Come, we will find something you can take today.",
+                "I tell {you:name} not asking is what gets you offered, and that we will find something for today.",
+                "Do that. Come back with a heavier purse and we will talk.",
+                "I tell {you:name} to come back with a heavier purse.")));
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Entry
     // ══════════════════════════════════════════════════════════════════════════
 
     private static readonly NpcLineNode Opening = new(
-        nodeId:  "opening",
-        replica: "Aye, {you:name}? Something you're after?",
+        nodeId:          "opening",
+        replica:         "{you:name}. Is there something you are after?",
+        replicaIndirect: "I greet {you:name} and ask whether there is something they are after.",
+        replicaHeard:    "{npc:name} greets me and asks whether there is something I am after.",
 
         new PlayerOption("ask_wares", "ask plainly what they have for sale",
-            "What goods do you have for sale, {npc:name}?", AskWares()),
+            "What goods do you have for sale, {npc:name}?",
+            "I ask {npc:name} what goods they have for sale.",
+            AskWares()),
 
         new PlayerOption("flatter", "praise their craft to warm them to a sale",
-            "Fine craft you keep here — a pleasure to behold.", Flatter()),
+            "You keep fine craft here.",
+            "I tell {npc:name} they keep fine craft here.",
+            Flatter()),
 
         new PlayerOption("ask_specific", "ask whether they have one particular thing",
-            "I'm after something particular. Have you anything of the sort?", AskSpecific()),
+            "I am after something particular. Have you anything of the sort?",
+            "I ask {npc:name} whether they have something particular I am after.",
+            AskSpecific()),
 
         new PlayerOption("talk_coin", "ask about prices before looking at anything",
-            "Before I look — what sort of prices are we talking about?", TalkCoin()));
+            "Before I look, what sort of prices are these?",
+            "I ask {npc:name} what sort of prices these are, before I look.",
+            TalkCoin()));
 
     public override NpcLineNode EntryNode => Opening;
 

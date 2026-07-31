@@ -16,6 +16,55 @@ namespace Cathedral.Game.Dialogue.Tree;
 /// skill check at the branch-end <see cref="ResolutionNode"/> (or forced with no roll when the node
 /// is a <see cref="ResolutionMode.ForceSuccess"/>/<see cref="ResolutionMode.ForceFailure"/> node).
 /// </para>
+///
+/// <para>
+/// <b>Authoring the neutral text.</b> No line in a tree is ever spoken as written. Every replica —
+/// <see cref="NpcLineNode.Replica"/>, <see cref="PlayerOption.Replica"/> and both of a
+/// <see cref="ResolutionNode"/>'s — is handed to a persona (the NPC's, or the modus mentis voicing
+/// the reply) to be said in that persona's own words.
+/// </para>
+/// <para>
+/// <b>Write the spoken words, plainly.</b> The replica is the line as it would leave a mouth — "Who
+/// are you?" — and the persona re-says it in its own wording. So it carries content only: no dialect
+/// or period colour ("aye", "naught", "hereabouts"), no metaphor, simile or imagery, no aphorism, no
+/// ellipses, no exclamation marks, no rhetorical repetition. One or two short sentences. Write "No
+/// one important. Someone travelling through." and let the persona produce "Nobody worth writing
+/// down. Just someone on the road." — authoring the second is doing the persona's job for it, and
+/// worse, the persona then ornaments the ornament.
+/// </para>
+/// <para>
+/// <b>Each replica also carries an indirect-speech twin</b> (<c>ReplicaIndirect</c>, and on a
+/// <see cref="ResolutionNode"/> one per outcome): the same line reported rather than spoken — "I ask
+/// them who they are". Nothing reads it today. It exists because the rewrite prompt has been a
+/// description-to-speech task once already, and turning ~470 lines from one form into the other by
+/// hand is the expensive half of that change; keeping the pair makes it a switch rather than a
+/// rewrite. Update it when you change the line it belongs to.
+/// </para>
+/// <para>
+/// <b>The NPC's third form.</b> An <see cref="NpcLineNode"/> also carries <c>ReplicaHeard</c>: the
+/// same line reported from the <i>player's</i> side ("{npc:name} asks me who I am"). This one has a
+/// live consumer — the prompt that grades which reply to offer, which needs to know what was just
+/// said. It is authored rather than derived from <c>ReplicaIndirect</c> because the two differ by
+/// more than a pronoun swap: grammatical person, verb agreement and the referent of "me" all move.
+/// Neither a <see cref="PlayerOption"/> nor a <see cref="ResolutionNode"/> has one: nothing is ever
+/// told what the player said, and a resolution ends the conversation.
+/// </para>
+/// <para>
+/// <b>Flavour tokens are speaker-side only.</b> <c>{npc:introduction}</c>, <c>{npc:labour}</c>,
+/// <c>{npc:craft}</c>, <c>{npc:workplace}</c>, <c>{npc:job}</c> and every <c>{npc:opinion_*}</c>
+/// expand to a first-person clause the NPC would utter — "weeding, hauling, mending, and starting
+/// again where I left off yesterday". That "I" is the NPC, which is right in the spoken line and in a
+/// report written from the NPC's side, and wrong in a <c>ReplicaHeard</c>, where it would read as the
+/// listener describing their own day. A heard form therefore names the <i>subject</i> instead of
+/// carrying the content: "{npc:name} tells me what their working day is like". Only noun-phrase
+/// tokens — <c>{npc:name}</c>, <c>{you:name}</c>, <c>{npc:job_offer}</c>, <c>{npc:job_pay}</c>,
+/// <c>{npc:sells}</c>, <c>{npc:buys}</c>, <c>{npc:wares}</c>, <c>{you:goods}</c> — are safe there.
+/// </para>
+/// <para>
+/// What must survive the plainness: the speech act (a question stays a question, an offer an offer),
+/// every fact a later node depends on, every <c>{scope:field}</c> token, and — at a resolution — an
+/// unmistakable difference between the success and failure lines.
+/// </para>
 /// </summary>
 public abstract class DialogueTree
 {

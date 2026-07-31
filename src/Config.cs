@@ -615,12 +615,6 @@ public static class Config
         /// </summary>
         public const int ObservationTwoKeywordsThreshold = 400;
 
-        /// <summary>
-        /// Maximum length (characters) of the optional parenthetical aside on a dialogue reply — the brief
-        /// unspoken inner thought that trails the spoken line. Bounds the aside in the reply grammar.
-        /// </summary>
-        public const int DialogueAsideMaxLength = 200;
-
         /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
         private const string OneSentenceClause = "Answer in one short sentence and stop.";
 
@@ -647,8 +641,6 @@ public static class Config
         /// described tone. The broad <see cref="DefaultStyleInstruction"/> ("an inner feeling that suits
         /// your character is welcome") invites a small model to narrate its own manner ("…, you say with
         /// curiosity"), which is exactly what a spoken line must not do — so dialogue uses this instead.
-        /// The unspoken inner thought still has its home: the optional parenthetical aside (see the
-        /// dialogue prompt), which the reply grammar keeps outside the spoken quotes.
         /// This clause is always in force for dialogue: a caller-supplied style is kept but this is
         /// appended after it — see <see cref="DialogueAnswerInstructionFor"/>.
         /// </summary>
@@ -698,14 +690,18 @@ public static class Config
         }
 
         /// <summary>
-        /// The closing clauses for a turn in a two-person conversation: length, grounding, style,
-        /// character and setting — the same axes every other kind gets.
+        /// The one sentence of guidance a dialogue reply gets: whose voice to choose the words in, and
+        /// the setting they belong to. It is a clause of <c>PersonaRewriter.BuildDialoguePrompt</c>'s
+        /// "Rewrite the description as the exact words X says to Y" line, not a paragraph of its own.
         /// <para>
-        /// It used to also spell out the reply's shape, the pronouns and the ban on narrating one's own
-        /// speech, all of which <c>PersonaRewriter.BuildDialoguePrompt</c> already said in different
-        /// words. Two wordings of one rule read to a small model as two rules, and the pair made the
-        /// dialogue prompt the longest in the game. The shape now lives there alone, next to the grammar
-        /// that enforces it.
+        /// Deliberately shorter than every other kind's. It used to carry the reply's shape, the
+        /// pronouns and the ban on narrating one's own speech — all of which the dialogue prompt already
+        /// said in different words — and then a length clause and a grounding clause on top. Two
+        /// wordings of one rule read to a small model as two rules, and the pile made the dialogue prompt
+        /// the longest in the game while the replies got worse. The shape lives in the prompt alone, next
+        /// to the grammar that enforces it; the length clause is gone (a spoken line is as long as it
+        /// needs to be, and the grammar bounds it); and grounding is one short clause rather than the
+        /// full <see cref="GroundingClause"/>, since the description is right there to be faithful to.
         /// </para>
         /// </summary>
         public static string DialogueAnswerInstructionFor(string? personaReminder2, string? styleInstruction = null)
@@ -719,8 +715,13 @@ public static class Config
             string style = string.IsNullOrWhiteSpace(styleInstruction)
                 ? DialogueStyleInstruction
                 : $"{styleInstruction.Trim()} {DialogueStyleInstruction}";
-            string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
-            return $"{OneSentenceClause} {GroundingClause} {style} {character} {SettingReminder}";
+            string character = personaReminder2 != null
+                ? $"Speak as {personaReminder2} would."
+                : "Speak in your own character.";
+            // No grounding clause here: the dialogue prompt's own "the meaning must not change" sentence
+            // sits next to the line it applies to, and a second wording of the same rule reads to a small
+            // model as a second requirement.
+            return $"{character} {style} {SettingReminder}";
         }
     }
 

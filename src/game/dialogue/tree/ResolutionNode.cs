@@ -35,11 +35,27 @@ public class ResolutionNode : DialogueNode
     /// <summary>Fixed number of 6s the pool must roll to succeed (authored per node). Ignored when <see cref="Mode"/> is forced.</summary>
     public int Difficulty { get; }
 
-    /// <summary>NPC line spoken when the check succeeds (neutral; may contain template tokens).</summary>
+    // Both spoken lines are plain content, like every other replica (see "Authoring the neutral text"
+    // on DialogueTree) — with one extra duty: since the persona re-says them in words of its own, the
+    // difference between them has to live in what they say, not in how warmly they say it.
+    //
+    // Neither needs a "heard" counterpart: a resolution ends the conversation, so no later prompt is
+    // ever told what was said here.
+
+    /// <summary>What the NPC says when the check succeeds, as spoken words (may contain tokens).</summary>
     public string SuccessReplica { get; }
 
-    /// <summary>NPC line spoken when the check fails (neutral; may contain template tokens).</summary>
+    /// <summary>What the NPC says when the check fails, as spoken words (may contain tokens).</summary>
     public string FailureReplica { get; }
+
+    /// <summary>
+    /// <see cref="SuccessReplica"/> as an indirect-speech report from the NPC's side. Unused at
+    /// runtime; kept for the same reason as <see cref="NpcLineNode.ReplicaIndirect"/>.
+    /// </summary>
+    public string SuccessReplicaIndirect { get; }
+
+    /// <summary><see cref="FailureReplica"/> as an indirect-speech report. Unused at runtime.</summary>
+    public string FailureReplicaIndirect { get; }
 
     /// <summary>Whether this node rolls the dice or forces a fixed result.</summary>
     public ResolutionMode Mode { get; }
@@ -48,13 +64,17 @@ public class ResolutionNode : DialogueNode
         string         nodeId,
         int            difficulty,
         string         successReplica,
+        string         successReplicaIndirect,
         string         failureReplica,
+        string         failureReplicaIndirect,
         ResolutionMode mode = ResolutionMode.DiceCheck)
         : base(nodeId)
     {
-        Difficulty     = System.Math.Max(1, difficulty);
-        SuccessReplica = successReplica;
-        FailureReplica = failureReplica;
-        Mode           = mode;
+        Difficulty             = System.Math.Max(1, difficulty);
+        SuccessReplica         = successReplica;
+        SuccessReplicaIndirect = successReplicaIndirect;
+        FailureReplica         = failureReplica;
+        FailureReplicaIndirect = failureReplicaIndirect;
+        Mode                   = mode;
     }
 }

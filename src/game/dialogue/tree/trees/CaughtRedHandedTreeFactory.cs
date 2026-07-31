@@ -19,9 +19,15 @@ namespace Cathedral.Game.Dialogue.Tree.Trees;
 ///
 /// <para>
 /// Both parameters reach into the text, not just the outcomes: the crime decides what the witness
-/// accuses you of at every level of the tree, and a brave witness's refusals threaten violence where
-/// a timid one's merely dismiss you. Difficulty follows the <see cref="BranchDifficulty.Hard"/>
+/// accuses you of at every level of the tree, and a brave witness's refusals demand a fight where a
+/// timid one's merely dismiss you. Difficulty follows the <see cref="BranchDifficulty.Hard"/>
 /// ladder throughout — talking your way out of a crime should never be small talk.
+/// </para>
+///
+/// <para>
+/// Every replica is the spoken line, plainly: a brave refusal says the matter will be settled by
+/// fighting, and leaves the shouting to the persona. See "Authoring the neutral text" on
+/// <see cref="DialogueTree"/>.
 /// </para>
 /// </summary>
 public static class CaughtRedHandedTreeFactory
@@ -85,239 +91,374 @@ public static class CaughtRedHandedTreeFactory
             // the conversation actually runs.
 
             // A branch end on the hard ladder. `depth` is how many player replies reached it.
-            ResolutionNode End(string id, int depth, string success, string failure) => new(
-                nodeId:         id,
-                difficulty:     BranchDifficulty.Hard(depth),
-                successReplica: success,
-                failureReplica: failure);
+            ResolutionNode End(string id, int depth,
+                              string success, string successIndirect,
+                              string failure, string failureIndirect) => new(
+                nodeId:                 id,
+                difficulty:             BranchDifficulty.Hard(depth),
+                successReplica:         success,
+                successReplicaIndirect: successIndirect,
+                failureReplica:         failure,
+                failureReplicaIndirect: failureIndirect);
 
             // A branch end that cannot be won — the provoke route. The success line is never spoken.
-            ResolutionNode Doomed(string id, string failure) => new(
-                nodeId:         id,
-                difficulty:     1,
-                successReplica: failure,
-                failureReplica: failure,
-                mode:           ResolutionMode.ForceFailure);
+            ResolutionNode Doomed(string id, string failure, string failureIndirect) => new(
+                nodeId:                 id,
+                difficulty:             1,
+                successReplica:         failure,
+                successReplicaIndirect: failureIndirect,
+                failureReplica:         failure,
+                failureReplicaIndirect: failureIndirect,
+                mode:                   ResolutionMode.ForceFailure);
 
             // A brave witness answers a failure with violence; a timid one just turns you out.
             string Fail(string timid, string brave) => witnessIsBrave ? brave : timid;
 
-            string act = CrimeAct(criminalType);   // "taking that", "being in here", "what you did"
+            string act      = CrimeAct(criminalType);        // "taking that", "coming in here"
+            string actHeard = CrimeActHeard(criminalType);   // the same, as the accused heard it
 
             // ══════════════════════════════════════════════════════════════
             //  A — apologise (deepest: the only route that really opens)
             // ══════════════════════════════════════════════════════════════
 
             var apologyResult = End("apology_result", 2,
-                "...Fine. See that it never happens again. Now get out of my sight.",
-                Fail("Spare me your words. Get out, and don't let me see you again.",
-                     "Sorry means nothing to me now. You'll answer for this — here and now!"));
+                "See that it never happens again. Now go.",
+                "I tell {you:name} to see that it never happens again, and to go.",
+                Fail("Your words mean nothing. Go, and do not let me see you again.",
+                     "Sorry means nothing to me now. You will answer for this here and now."),
+                Fail("I tell {you:name} their words mean nothing, and not to let me see them again.",
+                     "I tell {you:name} sorry means nothing now, and that they will answer for this here."));
 
             var apologyOwnItResult = End("apology_own_it", 3,
-                "...You said it out loud without me dragging it out of you. That counts for something. Go on — get gone.",
-                Fail("Saying it doesn't undo it. Out.",
-                     "You admit it to my face and expect mercy? Stand and answer for it!"));
+                "You said it without my having to drag it out of you. That counts for something. Go.",
+                "I tell {you:name} that saying it without my dragging it out counts for something, and let them go.",
+                Fail("Saying it does not undo it. Out.",
+                     "You admit it to my face and expect mercy. Stand and answer for it."),
+                Fail("I tell {you:name} that saying it does not undo it, and to get out.",
+                     "I tell {you:name} they admit it and expect mercy, and demand they stand and answer."));
 
             var apologyRestoreResult = End("apology_restore", 3,
-                "...Put it back and we'll pretend I was looking the other way. Move.",
-                Fail("Too late for putting anything back. Out with you.",
-                     "You'd hand it over now, would you? No. Now it's blood or nothing!"));
+                "Put it back and I will say I was looking elsewhere. Move.",
+                "I tell {you:name} to put it back, and that I will claim I was looking elsewhere.",
+                Fail("It is too late to put anything back. Out with you.",
+                     "You would hand it over now. No. It is settled by force or not at all."),
+                Fail("I tell {you:name} it is too late to put anything back.",
+                     "I tell {you:name} it is too late, and that this is settled by force or not at all."));
 
             var apologyNoExcuseResult = End("apology_no_excuse", 3,
-                "...No excuse offered at all. That's the first honest thing anyone's said to me in this yard. Go.",
+                "No excuse offered at all. That is the first honest thing anyone has said to me here. Go.",
+                "I tell {you:name} that no excuse at all is the first honest thing anyone has said to me here.",
                 Fail("No excuse and no pardon. Get out.",
-                     "Honest and still guilty. Honesty won't save you now — face me!"));
+                     "Honest and still guilty. Honesty will not save you. Face me."),
+                Fail("I tell {you:name} there is no excuse and no pardon.",
+                     "I tell {you:name} honesty will not save them, and to face me."));
 
             var apologyNothingLeftResult = End("apology_nothing_left", 4,
-                "...God help me. I've been at the end of things myself. Go on, before I change my mind — and don't come back to this door.",
-                Fail("Everyone's at the end of something. It doesn't make my losses smaller. Out.",
-                     "Don't you dare make me the villain in this. Draw!"));
+                "I have been at the end of things myself. Go, before I change my mind, and do not come back to this door.",
+                "I tell {you:name} I have been at the end of things myself, and to go before I change my mind.",
+                Fail("Everyone is at the end of something. It does not make my losses smaller. Out.",
+                     "Do not make me the villain in this. Draw."),
+                Fail("I tell {you:name} everyone is at the end of something, and it does not make my losses smaller.",
+                     "I tell {you:name} not to make me the villain, and to draw."));
 
             var apologyNoDefenceResult = End("apology_no_defence", 4,
-                "...You'll not even argue your own corner. That's either shame or honesty, and I'm tired enough to call it honesty. Go.",
-                Fail("Then there's nothing to weigh in your favour, is there. Out.",
-                     "You'll not defend yourself with words? Then defend yourself properly!"));
+                "You will not even argue your own case. That is either shame or honesty, and I am tired enough to call it honesty. Go.",
+                "I tell {you:name} that refusing to argue their case is either shame or honesty, and that I will call it honesty.",
+                Fail("Then there is nothing to weigh in your favour. Out.",
+                     "You will not defend yourself with words. Then defend yourself properly."),
+                Fail("I tell {you:name} there is nothing to weigh in their favour.",
+                     "I tell {you:name} that if they will not defend themselves with words they may do it properly."));
 
             // The witness is wavering — the one place in this tree where a fourth reply exists.
             var apologyWeighing = new NpcLineNode(
-                nodeId:  "apology_weighing",
-                replica: "...Need. Everyone in this place needs. I need, and I don't go about " +
-                         $"{ActPhrase(criminalType)}. Give me one reason that isn't need.",
+                nodeId:          "apology_weighing",
+                replica:         "Everyone here is in need. I am in need, and I do not go about "
+                               + $"{ActPhrase(criminalType)}. Give me a reason that is not need.",
+                replicaIndirect: "I tell {you:name} that I am in need too and do not go about "
+                               + $"{ActPhrase(criminalType)}, and demand a reason that is not need.",
+                replicaHeard:    "{npc:name} says they are in need too and do not do what I did, and demands a reason that is not need.",
                 new PlayerOption("apology_nothing_left", "say there wasn't one — that you had run out",
-                    "I haven't got one. I'd run out of everything, and this is what was left.",
+                    "I have none. I had run out of everything, and this is what was left.",
+                    "I tell {npc:name} I had run out of everything and this is what was left.",
                     apologyNothingLeftResult),
                 new PlayerOption("apology_no_defence", "decline to defend yourself at all",
-                    "Then I've nothing to give you. Do what you think is right.",
+                    "Then I have nothing to give you. Do what you think is right.",
+                    "I tell {npc:name} I have nothing to give them, and to do what they think is right.",
                     apologyNoDefenceResult));
 
             var apologyWhy = new NpcLineNode(
-                nodeId:  "apology_why",
-                replica: $"Then tell me why. And don't give me a story — I'll know. Why were you {ActPhrase(criminalType)}?",
+                nodeId:          "apology_why",
+                replica:         $"Then tell me why, and do not invent a story. Why were you {ActPhrase(criminalType)}?",
+                replicaIndirect: $"I demand {{you:name}} tell me why they were {ActPhrase(criminalType)}, and not invent a story.",
+                replicaHeard:    $"{{npc:name}} demands I tell them why I was {actHeard}, and not invent a story.",
                 new PlayerOption("apology_need", "admit you needed it",
-                    "Because I needed it, and I'd run out of better ideas.", apologyWeighing),
+                    "Because I needed it, and I had no better idea.",
+                    "I tell {npc:name} I needed it and had no better idea.",
+                    apologyWeighing),
                 new PlayerOption("apology_no_excuse", "offer no excuse at all",
-                    "There's no reason worth your hearing. I did it. That's all there is.", apologyNoExcuseResult));
+                    "There is no reason worth your hearing. I did it. That is all.",
+                    "I tell {npc:name} there is no reason worth their hearing, and that I did it.",
+                    apologyNoExcuseResult));
 
             var apologyOwn = new NpcLineNode(
-                nodeId:  "apology_own",
-                replica: "Explain yourself, then. And be careful — I saw it with my own eyes, so explaining is not the same as denying.",
+                nodeId:          "apology_own",
+                replica:         "Explain yourself. I saw it with my own eyes, so explaining is not the same as denying.",
+                replicaIndirect: "I order {you:name} to explain themselves, and warn them I saw it with my own eyes.",
+                replicaHeard:    "{npc:name} orders me to explain myself, and warns me they saw it with their own eyes.",
                 new PlayerOption("apology_own_it", "own it flatly, without softening",
-                    $"I'll not deny it. You saw me {act}. It was mine to choose and I chose wrong.", apologyOwnItResult),
+                    $"I will not deny it. You saw me {act}. It was my choice and I chose wrong.",
+                    $"I tell {{npc:name}} I will not deny {act}, and that I chose wrong.",
+                    apologyOwnItResult),
                 new PlayerOption("apology_restore", "offer to put it right this instant",
-                    "Then let me put it right now, in front of you, before another word.", apologyRestoreResult),
+                    "Then let me put it right now, in front of you, before anything else.",
+                    "I offer {npc:name} to put it right now, in front of them.",
+                    apologyRestoreResult),
                 new PlayerOption("apology_why", "ask them to hear why before they decide",
-                    "Hear why first. Then decide what to do with me.", apologyWhy));
+                    "Hear why first. Then decide what to do with me.",
+                    "I ask {npc:name} to hear why before deciding what to do with me.",
+                    apologyWhy));
 
             // ══════════════════════════════════════════════════════════════
             //  B — lie your way out (rich)
             // ══════════════════════════════════════════════════════════════
 
             var lieResult = End("lie_result", 2,
-                "...Hm. Maybe I saw it wrong. Go on, then — off with you.",
-                Fail("You're lying to my face. Get out before I fetch someone who cares more than I do.",
-                     "You're lying to my face! Now you'll truly regret it."));
+                "Perhaps I saw it wrong. Go on, then.",
+                "I allow that perhaps I saw it wrong, and tell {you:name} to go on.",
+                Fail("You are lying to my face. Get out before I fetch someone who cares more than I do.",
+                     "You are lying to my face. Now you will answer for it."),
+                Fail("I tell {you:name} they are lying to my face, and to get out.",
+                     "I tell {you:name} they are lying to my face, and that they will answer for it."));
 
             var lieDetailResult = End("lie_detail", 3,
-                "...You've an answer for it, and it hangs together. Alright. I'll say no more.",
-                Fail("Too neat. Nobody has an answer that quick unless they've prepared one. Out.",
-                     "That story's too well made. You had it ready! Face me, then!"));
+                "You have an answer for it, and it holds together. I will say no more.",
+                "I allow that {you:name} has an answer for it that holds together, and let it be.",
+                Fail("Too neat. Nobody answers that quickly unless they prepared it. Out.",
+                     "That story is too well made. You had it ready. Face me."),
+                Fail("I tell {you:name} nobody answers that quickly unless they prepared it.",
+                     "I tell {you:name} the story is too well made, and to face me."));
 
             var lieConfidentResult = End("lie_confident", 3,
-                "...You're either honest or the coolest liar I've met. I'll take the first and be done. Go.",
+                "You are either honest or the coolest liar I have met. I will take the first. Go.",
+                "I tell {you:name} they are either honest or the coolest liar I have met, and that I will take the first.",
                 Fail("Cool as you like. I know what I saw. Get out of my sight.",
-                     "You stand there brazen as brass. Then stand and fight!"));
+                     "You stand there without shame. Then stand and fight."),
+                Fail("I tell {you:name} I know what I saw.",
+                     "I tell {you:name} they stand there without shame, and to stand and fight."));
 
             var lieMistakenResult = End("lie_mistaken", 3,
-                "...It was dim, I'll grant you. Perhaps I misread it. Go on.",
+                "It was dim, I will grant you that. Perhaps I misread it. Go on.",
+                "I grant {you:name} that it was dim and I may have misread it.",
                 Fail("I know my own eyes. Out.",
-                     "Don't you tell me what I saw! Draw!"));
+                     "Do not tell me what I saw. Draw."),
+                Fail("I tell {you:name} I know my own eyes.",
+                     "I tell {you:name} not to tell me what I saw, and to draw."));
 
             var lieSomeoneElseResult = End("lie_someone_else", 3,
-                "...Someone else, then. Someone else it is. I'll be watching either way.",
-                Fail("There was nobody else. There's never anybody else. Out.",
-                     "You'd hang a stranger to save yourself? Then you'll answer to me!"));
+                "Someone else, then. I will be watching either way.",
+                "I allow that it was someone else, and tell {you:name} I will be watching either way.",
+                Fail("There was nobody else. There never is. Out.",
+                     "You would blame a stranger to save yourself. Then answer to me."),
+                Fail("I tell {you:name} there was nobody else and there never is.",
+                     "I tell {you:name} they would blame a stranger to save themselves, and to answer to me."));
 
             var lieDetails = new NpcLineNode(
-                nodeId:  "lie_details",
-                replica: "Go on, then. Tell me what I really saw, if it wasn't what it looked like.",
+                nodeId:          "lie_details",
+                replica:         "Go on. Tell me what I really saw, if it was not what it looked like.",
+                replicaIndirect: "I tell {you:name} to say what I really saw, if it was not what it looked like.",
+                replicaHeard:    "{npc:name} tells me to say what they really saw, if it was not what it looked like.",
                 new PlayerOption("lie_detail", "give a detailed, plausible account",
-                    "Here's the whole of it, start to finish, and it accounts for everything you saw.", lieDetailResult),
+                    "Here is the whole of it, and it accounts for everything you saw.",
+                    "I give {npc:name} the whole of it, accounting for everything they saw.",
+                    lieDetailResult),
                 new PlayerOption("lie_confident", "hold their eye and give a short flat answer",
-                    "It wasn't what you think. That's all, and it's the truth.", lieConfidentResult));
+                    "It was not what you think. That is all, and it is the truth.",
+                    "I tell {npc:name} flatly it was not what they think.",
+                    lieConfidentResult));
 
             var lieBlameSight = new NpcLineNode(
-                nodeId:  "lie_blame_sight",
-                replica: "You're telling me my own eyes lied. Careful, now. I've been looking at this place my whole life.",
+                nodeId:          "lie_blame_sight",
+                replica:         "You are telling me my own eyes lied. Be careful. I have been looking at this place my whole life.",
+                replicaIndirect: "I warn {you:name} to be careful in telling me my own eyes lied, since I have watched this place my whole life.",
+                replicaHeard:    "{npc:name} warns me to be careful in telling them their own eyes lied, since they have watched this place their whole life.",
                 new PlayerOption("lie_mistaken", "insist the light was against them",
-                    "In that light, at that distance, anyone would have read it wrong.", lieMistakenResult),
+                    "In that light, at that distance, anyone would have read it wrong.",
+                    "I tell {npc:name} anyone would have read it wrong in that light.",
+                    lieMistakenResult),
                 new PlayerOption("lie_someone_else", "suggest they saw somebody else",
-                    "Someone was here. It wasn't me. Look properly — do I match what you saw?", lieSomeoneElseResult));
+                    "Someone was here. It was not me. Look properly. Do I match what you saw?",
+                    "I tell {npc:name} someone was here but not me, and ask whether I match what they saw.",
+                    lieSomeoneElseResult));
 
             var lieOpening = new NpcLineNode(
-                nodeId:  "lie_opening",
-                replica: $"Not what it looked like. It looked exactly like {act}, which is what it was. But go on — I'll hear it.",
+                nodeId:          "lie_opening",
+                replica:         $"It looked exactly like {act}, which is what it was. But go on, I will hear it.",
+                replicaIndirect: $"I tell {{you:name}} it looked exactly like {act}, but that I will hear them out.",
+                replicaHeard:    $"{{npc:name}} says it looked exactly like {actHeard}, but that they will hear me out.",
                 new PlayerOption("lie_details", "commit to the story and fill it in",
-                    "Then let me lay it out properly, because you've got the wrong end of it.", lieDetails),
+                    "Then let me lay it out properly, because you have it wrong.",
+                    "I offer to lay it out properly for {npc:name}, who has it wrong.",
+                    lieDetails),
                 new PlayerOption("lie_blame_sight", "cast doubt on what they actually saw",
-                    "How close were you, exactly? And in this light?", lieBlameSight),
+                    "How close were you? And in this light?",
+                    "I ask {npc:name} how close they were, and in what light.",
+                    lieBlameSight),
                 new PlayerOption("lie_result", "keep it short and let it stand",
-                    "You've got it wrong — it isn't what it looked like. That's all I'll say.", lieResult));
+                    "You have it wrong. It is not what it looked like. That is all I will say.",
+                    "I tell {npc:name} it is not what it looked like, and that is all I will say.",
+                    lieResult));
 
             // ══════════════════════════════════════════════════════════════
             //  C — shift the blame (short)
             // ══════════════════════════════════════════════════════════════
 
             var deflectResult = End("deflect_result", 2,
-                "...Hm. There's been others about, that's true enough. Go on, then. But I'm watching.",
-                Fail("Convenient. There's always someone else. Get out.",
-                     "You'd point the finger anywhere but at yourself. Then point it at your blade — face me!"));
+                "There have been others about, that is true enough. Go on, but I am watching.",
+                "I allow that there have been others about, and tell {you:name} I am watching.",
+                Fail("Convenient. There is always someone else. Get out.",
+                     "You would point anywhere but at yourself. Then we will settle it with weapons."),
+                Fail("I tell {you:name} there is always someone else, and to get out.",
+                     "I tell {you:name} they would point anywhere but at themselves, and that we settle it with weapons."));
 
             var deflectSentResult = End("deflect_sent", 3,
-                "...Sent, were you. Then it's whoever sent you I want, not you. Get out and think about who you work for.",
+                "Sent, were you. Then it is whoever sent you I want, not you. Go, and think about who you work for.",
+                "I tell {you:name} it is whoever sent them I want, and to think about who they work for.",
                 Fail("Sent or not, it was your hands. Out.",
-                     "Then I'll start with the one standing in front of me. Draw!"));
+                     "Then I will start with the one standing in front of me. Draw."),
+                Fail("I tell {you:name} that sent or not it was their hands.",
+                     "I tell {you:name} I will start with the one in front of me, and to draw."));
 
             var deflectPermissionResult = End("deflect_permission", 3,
-                "...You thought you had leave to. That's a fool's mistake, not a thief's. Go, and ask next time.",
+                "You thought you had leave. That is a fool's mistake, not a thief's. Go, and ask next time.",
+                "I tell {you:name} that is a fool's mistake and not a thief's, and to ask next time.",
                 Fail("Nobody gave you leave, and you knew it. Out.",
-                     "Don't insult me with that. You'll answer for it properly!"));
+                     "Do not insult me with that. You will answer for it properly."),
+                Fail("I tell {you:name} nobody gave them leave and they knew it.",
+                     "I tell {you:name} not to insult me, and that they will answer for it properly."));
 
             var deflectExplain = new NpcLineNode(
-                nodeId:  "deflect_explain",
-                replica: "Not your doing. Then whose? Say a name or stop wasting my daylight.",
+                nodeId:          "deflect_explain",
+                replica:         "Not your doing. Then whose? Give me a name or stop wasting my day.",
+                replicaIndirect: "I ask {you:name} whose doing it was, and tell them to give me a name or stop wasting my day.",
+                replicaHeard:    "{npc:name} asks whose doing it was, and tells me to give them a name or stop wasting their day.",
                 new PlayerOption("deflect_sent", "say you were sent by someone else",
-                    "I was sent. I'll not name them here, but it wasn't my idea and it wasn't my gain.", deflectSentResult),
+                    "I was sent. I will not name them here, but it was not my idea and not my gain.",
+                    "I tell {npc:name} I was sent, that it was not my idea, and that I will not name them.",
+                    deflectSentResult),
                 new PlayerOption("deflect_permission", "claim you thought you had leave",
-                    "I was told I had leave to. If I was lied to, that's on whoever told me.", deflectPermissionResult));
+                    "I was told I had leave to. If I was lied to, that is on whoever told me.",
+                    "I tell {npc:name} I was told I had leave, and that it is on whoever told me.",
+                    deflectPermissionResult));
 
             var deflectOpening = new NpcLineNode(
-                nodeId:  "deflect_opening",
-                replica: "Someone else's doing. Aye, that's always how it starts. Well — I'm listening, and it had better be good.",
+                nodeId:          "deflect_opening",
+                replica:         "Someone else's doing. That is always how it starts. I am listening, and it had better be good.",
+                replicaIndirect: "I tell {you:name} someone else's doing is always how it starts, and that it had better be good.",
+                replicaHeard:    "{npc:name} says someone else's doing is always how it starts, and that it had better be good.",
                 new PlayerOption("deflect_result", "keep it vague and let the doubt do the work",
-                    "There've been others about this place. I'd look wider than me, if I were you.", deflectResult),
+                    "There have been others about this place. I would look wider than me.",
+                    "I tell {npc:name} there have been others about, and that I would look wider.",
+                    deflectResult),
                 new PlayerOption("deflect_explain", "give them somebody to be angry at instead",
-                    "It wasn't my doing, and I can tell you enough to prove it.", deflectExplain),
+                    "It was not my doing, and I can tell you enough to prove it.",
+                    "I tell {npc:name} it was not my doing, and that I can prove it.",
+                    deflectExplain),
                 new PlayerOption("deflect_admit_anyway", "give it up and admit it after all",
-                    "...No. That's a lie and you'd see through it. It was me.",
+                    "No. That is a lie and you would see through it. It was me.",
+                    "I take it back and admit to {npc:name} that it was me.",
                     End("deflect_admit", 2,
-                        "...You caught yourself out before I had to. That's worth something. Go on — get gone.",
-                        Fail("Aye, it was. Out with you.",
-                             "You admit it and expect that to save you? Stand and answer!"))));
+                        "You caught yourself out before I had to. That is worth something. Go.",
+                        "I tell {you:name} that catching themselves out before I had to is worth something.",
+                        Fail("Yes, it was. Out with you.",
+                             "You admit it and expect that to save you. Stand and answer."),
+                        Fail("I agree that it was them, and tell {you:name} to get out.",
+                             "I tell {you:name} that admitting it will not save them, and to stand and answer."))));
 
             // ══════════════════════════════════════════════════════════════
             //  D — provoke them (every end forced to failure)
             // ══════════════════════════════════════════════════════════════
 
             var provokeResult = Doomed("provoke_result",
-                "You dare mock me? Then face me, coward!");
+                "You are mocking me. Then face me.",
+                "I tell {you:name} they are mocking me, and to face me.");
 
             var provokeThreatResult = Doomed("provoke_threat",
-                "A threat, in my own place, to my own face. That's the last word you'll get in!");
+                "A threat, in my own place, to my face. That is the last word you will get in.",
+                "I tell {you:name} that a threat in my own place is the last word they will get in.");
 
             var provokeSneerResult = Doomed("provoke_sneer",
-                "Look at you sneering. I've had enough of that from your sort — and I'll have no more!");
+                "You sneer at me. I have had enough of that, and I will have no more.",
+                "I tell {you:name} I have had enough of being sneered at, and will have no more.");
 
             var provokeDareResult = Doomed("provoke_dare",
-                "You want it settled? Then it's settled. Now!");
+                "You want it settled. Then it is settled, now.",
+                "I tell {you:name} that if they want it settled, it is settled now.");
 
             var provokeMockResult = Doomed("provoke_mock",
-                "Laugh, then. Laugh while you can!");
+                "Laugh, then. Laugh while you can.",
+                "I tell {you:name} to laugh while they can.");
 
             var provokeEscalate = new NpcLineNode(
-                nodeId:  "provoke_escalate",
-                replica: "...You're enjoying this. God above, you're actually enjoying it.",
+                nodeId:          "provoke_escalate",
+                replica:         "You are enjoying this.",
+                replicaIndirect: "I tell {you:name} they are enjoying this.",
+                replicaHeard:    "{npc:name} says I am enjoying this.",
                 new PlayerOption("provoke_dare", "dare them to do something about it",
-                    "Then do something about it, instead of standing there talking.", provokeDareResult),
+                    "Then do something about it instead of standing there talking.",
+                    "I dare {npc:name} to do something instead of standing there talking.",
+                    provokeDareResult),
                 new PlayerOption("provoke_mock", "laugh in their face",
-                    "You've been shouting for a while now. Was there a point coming?", provokeMockResult));
+                    "You have been shouting a while. Was there a point coming?",
+                    "I ask {npc:name} whether there was a point coming to all this shouting.",
+                    provokeMockResult));
 
             var provokeOpening = new NpcLineNode(
-                nodeId:  "provoke_opening",
-                replica: "What do I mean to do about it? You'll find out, and sooner than you'd like.",
+                nodeId:          "provoke_opening",
+                replica:         "You will find out what I mean to do about it, and sooner than you would like.",
+                replicaIndirect: "I tell {you:name} they will find out what I mean to do, and sooner than they would like.",
+                replicaHeard:    "{npc:name} says I will find out what they mean to do, and sooner than I would like.",
                 new PlayerOption("provoke_threat", "threaten them outright",
-                    "Try it and see how it goes for you.", provokeThreatResult),
+                    "Try it and see how it goes for you.",
+                    "I tell {npc:name} to try it and see how it goes for them.",
+                    provokeThreatResult),
                 new PlayerOption("provoke_sneer", "look them up and down and dismiss them",
-                    "You? I don't think you'll do anything at all.", provokeSneerResult),
+                    "You? I do not think you will do anything at all.",
+                    "I tell {npc:name} I do not think they will do anything at all.",
+                    provokeSneerResult),
                 new PlayerOption("provoke_escalate", "keep pushing",
-                    "Go on, then. I'll wait right here.", provokeEscalate),
+                    "Go on, then. I will wait here.",
+                    "I tell {npc:name} to go on, and that I will wait here.",
+                    provokeEscalate),
                 new PlayerOption("provoke_result", "leave the taunt where it stands",
-                    "Nothing, is my guess.", provokeResult));
+                    "Nothing, I expect.",
+                    "I tell {npc:name} I expect they will do nothing.",
+                    provokeResult));
 
             // ══════════════════════════════════════════════════════════════
             //  Entry: the witness confronts the player
             // ══════════════════════════════════════════════════════════════
 
             _entry = new NpcLineNode(
-                nodeId:  "confrontation",
-                replica: BuildConfrontationReplica(criminalType),
+                nodeId:          "confrontation",
+                replica:         BuildConfrontationReplica(criminalType),
+                replicaIndirect: BuildConfrontationIndirect(criminalType),
+                replicaHeard:    BuildConfrontationHeard(criminalType),
                 new PlayerOption("apologize", "apologise and explain yourself",
-                    "I'm sorry — please, let me explain myself.", apologyOwn),
+                    "I am sorry. Let me explain myself.",
+                    "I apologise to {npc:name} and ask to explain myself.",
+                    apologyOwn),
                 new PlayerOption("lie", "talk your way out with a story",
-                    "You've got it wrong — it isn't what it looked like.", lieOpening),
+                    "You have it wrong. It is not what it looked like.",
+                    "I tell {npc:name} they have it wrong and it is not what it looked like.",
+                    lieOpening),
                 new PlayerOption("deflect", "put the blame on somebody else",
-                    "Whatever you saw, it wasn't my doing.", deflectOpening),
+                    "Whatever you saw, it was not my doing.",
+                    "I tell {npc:name} that whatever they saw, it was not my doing.",
+                    deflectOpening),
                 new PlayerOption("provoke", "provoke them into a fight",
-                    "And what exactly do you mean to do about it?", provokeOpening));
+                    "And what do you mean to do about it?",
+                    "I ask {npc:name} what they mean to do about it.",
+                    provokeOpening));
         }
 
         // The tree is triggered programmatically — IsAvailable is never checked.
@@ -333,10 +474,26 @@ public static class CaughtRedHandedTreeFactory
 
         private static string BuildConfrontationReplica(CriminalAffinityType crime) => crime switch
         {
-            CriminalAffinityType.Thief    => "Stop right there — I saw you take that!",
-            CriminalAffinityType.Intruder => "Hold! What are you doing here? You've no business in this place.",
-            CriminalAffinityType.Murderer => "God above — I saw what you just did!",
-            _                             => "Hold it right there. I saw what you did.",
+            CriminalAffinityType.Thief    => "Stop there. I saw you take that.",
+            CriminalAffinityType.Intruder => "Stop. What are you doing here? You have no business in this place.",
+            CriminalAffinityType.Murderer => "I saw what you just did.",
+            _                             => "Stop there. I saw what you did.",
+        };
+
+        private static string BuildConfrontationIndirect(CriminalAffinityType crime) => crime switch
+        {
+            CriminalAffinityType.Thief    => "I order {you:name} to stop, and tell them I saw them take that.",
+            CriminalAffinityType.Intruder => "I order {you:name} to stop, and tell them they have no business here.",
+            CriminalAffinityType.Murderer => "I tell {you:name} that I saw what they just did.",
+            _                             => "I order {you:name} to stop, and tell them I saw what they did.",
+        };
+
+        private static string BuildConfrontationHeard(CriminalAffinityType crime) => crime switch
+        {
+            CriminalAffinityType.Thief    => "{npc:name} orders me to stop, and says they saw me take that.",
+            CriminalAffinityType.Intruder => "{npc:name} orders me to stop, and says I have no business here.",
+            CriminalAffinityType.Murderer => "{npc:name} says they saw what I just did.",
+            _                             => "{npc:name} orders me to stop, and says they saw what I did.",
         };
 
         /// <summary>The deed as a bare gerund phrase — "taking that", "coming in here".</summary>
@@ -344,16 +501,25 @@ public static class CaughtRedHandedTreeFactory
         {
             CriminalAffinityType.Thief    => "taking that",
             CriminalAffinityType.Intruder => "coming in here",
-            CriminalAffinityType.Murderer => "raising your hand to somebody",
+            CriminalAffinityType.Murderer => "striking somebody",
             _                             => "what you did",
+        };
+
+        /// <summary>The same deed as the accused would report hearing it described.</summary>
+        private static string CrimeActHeard(CriminalAffinityType crime) => crime switch
+        {
+            CriminalAffinityType.Thief    => "taking that",
+            CriminalAffinityType.Intruder => "coming in there",
+            CriminalAffinityType.Murderer => "striking somebody",
+            _                             => "what I did",
         };
 
         /// <summary>The same deed phrased for "why were you …?".</summary>
         private static string ActPhrase(CriminalAffinityType crime) => crime switch
         {
-            CriminalAffinityType.Thief    => "helping yourself to what isn't yours",
-            CriminalAffinityType.Intruder => "in a place you'd no business being",
-            CriminalAffinityType.Murderer => "putting hands on somebody",
+            CriminalAffinityType.Thief    => "taking what is not yours",
+            CriminalAffinityType.Intruder => "in a place you had no right to be",
+            CriminalAffinityType.Murderer => "attacking somebody",
             _                             => "doing what you did",
         };
     }
