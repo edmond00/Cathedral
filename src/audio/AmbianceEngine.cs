@@ -253,7 +253,7 @@ public sealed class AmbianceEngine : IDisposable
         lock (_moodLock)
         {
             _targetMood = new MusicMoodState(
-                Math.Clamp(mood.Sadness,   0f, 1f),
+                Math.Clamp(mood.Coldness,   0f, 1f),
                 Math.Clamp(mood.Fear,      0f, 1f),
                 Math.Clamp(mood.Mystery,   0f, 1f),
                 Math.Clamp(mood.Intensity, 0f, 1f));
@@ -421,7 +421,7 @@ public sealed class AmbianceEngine : IDisposable
                 {
                     justActivated = false;
                     MusicMoodState sm; lock (_moodLock) sm = _activeMood;
-                    double sBpm = ProceduralMidiComposer.GetTempoBpm(sm.Sadness, sm.Fear, sm.Intensity);
+                    double sBpm = ProceduralMidiComposer.GetTempoBpm(sm.Coldness, sm.Fear, sm.Intensity);
                     // Melody: ~0.75 beat, Counter: ~1.5 beats, Texture: ~2.25 beats
                     double offsetBeats = trackIndex * 0.75 + rng.NextDouble() * 0.5;
                     await Task.Delay((int)(60_000.0 / sBpm * offsetBeats), ct);
@@ -443,7 +443,7 @@ public sealed class AmbianceEngine : IDisposable
                     if (needNewScale)
                     {
                         pivotMidiNote = _droneCurrentNote; // save current tone before switching
-                        var newScale = ModalScale.GetScaleForMood(mood.Sadness, mood.Mystery, mood.Fear, rng, _sessionTension);
+                        var newScale = ModalScale.GetScaleForMood(mood.Coldness, mood.Mystery, mood.Fear, rng, _sessionTension);
                         lock (_moodLock) _sharedScale = newScale;
                         currentScale = newScale;
                         needNewScale = false;
@@ -461,21 +461,21 @@ public sealed class AmbianceEngine : IDisposable
                 if (role == TrackRole.Drone)
                 {
                     CurrentScaleName = ModalScale.GetScaleName(currentScale);
-                    CurrentBpm = Math.Clamp(ProceduralMidiComposer.GetTempoBpm(mood.Sadness, mood.Fear, mood.Intensity) + _sessionTension * 12.0, 25.0, 145.0);
+                    CurrentBpm = Math.Clamp(ProceduralMidiComposer.GetTempoBpm(mood.Coldness, mood.Fear, mood.Intensity) + _sessionTension * 12.0, 25.0, 145.0);
                 }
 
                 var (minIdx, maxIdx) = ModalScale.GetNoteRange(currentScale.Length, role);
                 scaleIdx = Math.Clamp(scaleIdx, minIdx, maxIdx);
 
                 // Change instrument if patch changed
-                int patch = ProceduralMidiComposer.GetInstrumentPatch(role, mood.Sadness, mood.Fear, mood.Mystery);
+                int patch = ProceduralMidiComposer.GetInstrumentPatch(role, mood.Coldness, mood.Fear, mood.Mystery);
                 if (patch != lastPatch)
                 {
                     SendProgramChange(channel, patch);
                     lastPatch = patch;
                 }
 
-                double bpm = ProceduralMidiComposer.GetTempoBpm(mood.Sadness, mood.Fear, mood.Intensity);
+                double bpm = ProceduralMidiComposer.GetTempoBpm(mood.Coldness, mood.Fear, mood.Intensity);
                 bpm = Math.Clamp(bpm + _sessionTension * 12.0, 25.0, 145.0); // B11: tension tightens tempo
                 double filterBpmCap = _filterBpmMult > 4.0f ? 340.0 : 220.0;
                 bpm = Math.Clamp(bpm * _filterBpmMult, 25.0, filterBpmCap);    // filter BPM multiplier
@@ -531,7 +531,7 @@ public sealed class AmbianceEngine : IDisposable
                             // NegativeOutcome: single jagged note stab with maximum fear
                             phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
                                 currentScale, scaleIdx, minIdx, maxIdx,
-                                Math.Min(1f, mood.Sadness + 0.5f),
+                                Math.Min(1f, mood.Coldness + 0.5f),
                                 Math.Min(1f, mood.Fear    + 0.95f),
                                 mood.Mystery, bpm, rng, null);
                             // Trim to 1 note: a brutal cut
@@ -545,7 +545,7 @@ public sealed class AmbianceEngine : IDisposable
                         {
                             phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
                                 currentScale, scaleIdx, minIdx, maxIdx,
-                                mood.Sadness, mood.Fear, mood.Mystery, bpm, rng,
+                                mood.Coldness, mood.Fear, mood.Mystery, bpm, rng,
                                 _melodyContour, forceMotifReplay: forceRepeat, forceResolution: phraseForceRes,
                                 intensity: mood.Intensity);
                             // #11: negative echo - quieter descending echo for 2 phrases after the stab
@@ -555,7 +555,7 @@ public sealed class AmbianceEngine : IDisposable
                                 float echoDecay = _negativeEchoCount == 1 ? 0.45f : 0.35f;
                                 phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
                                     currentScale, scaleIdx, minIdx, maxIdx,
-                                    Math.Min(1f, mood.Sadness + 0.3f), mood.Fear, mood.Mystery, bpm, rng,
+                                    Math.Min(1f, mood.Coldness + 0.3f), mood.Fear, mood.Mystery, bpm, rng,
                                     _negativeEchoContour, forceMotifReplay: true);
                                 int echoOctave = currentScale.Length / 3;
                                 for (int pi = 0; pi < phrase.Length; pi++)
@@ -599,14 +599,14 @@ public sealed class AmbianceEngine : IDisposable
                             int imitateStart = Math.Clamp(_melodyLastScaleIdx + 4, minIdx, maxIdx);
                             phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
                                 currentScale, imitateStart, minIdx, maxIdx,
-                                mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour,
+                                mood.Coldness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour,
                                 intensity: mood.Intensity);
                         }
                         else if (doOstinato)
                         {
                             phrase = ProceduralMidiComposer.GenerateOstinatoPhrase(
                                 currentScale, scaleIdx, minIdx, maxIdx,
-                                mood.Sadness, mood.Fear, bpm, rng);
+                                mood.Coldness, mood.Fear, bpm, rng);
                         }
                         else if (doHeterophony)
                         {
@@ -615,7 +615,7 @@ public sealed class AmbianceEngine : IDisposable
                             int hetStart = Math.Clamp(_melodyLastScaleIdx >= 0 ? _melodyLastScaleIdx : scaleIdx, minIdx, maxIdx);
                             phrase = ProceduralMidiComposer.GenerateMelodyPhrase(
                                 currentScale, hetStart, minIdx, maxIdx,
-                                mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour, forceMotifReplay: true);
+                                mood.Coldness, mood.Fear, mood.Mystery, bpm, rng, _melodyContour, forceMotifReplay: true);
                             for (int pi = 0; pi < phrase.Length; pi++)
                             {
                                 int blur = rng.NextDouble() < 0.55 ? 0 : (rng.NextDouble() < 0.5 ? 1 : -1);
@@ -631,7 +631,7 @@ public sealed class AmbianceEngine : IDisposable
                         {
                             phrase = ProceduralMidiComposer.GenerateCounterPhrase(
                                 currentScale, scaleIdx, minIdx, maxIdx,
-                                mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyDirection);
+                                mood.Coldness, mood.Fear, mood.Mystery, bpm, rng, _melodyDirection);
                         }
                     }
 
@@ -671,7 +671,7 @@ public sealed class AmbianceEngine : IDisposable
                         else
                         {
                             double doubleW = 0.5 + mood.Fear * 0.4;
-                            double halfW   = 0.5 + mood.Sadness * 0.4;
+                            double halfW   = 0.5 + mood.Coldness * 0.4;
                             timingMult = rng.NextDouble() * (doubleW + halfW) < doubleW ? 0.5f : 2.0f;
                         }
                         for (int pi = 0; pi < phrase.Length; pi++)
@@ -686,7 +686,7 @@ public sealed class AmbianceEngine : IDisposable
                     // variety without crossing mood boundaries.
                     if (rng.NextDouble() < 0.125)
                     {
-                        int altPatch = ProceduralMidiComposer.GetAlternateInstrumentPatch(role, mood.Sadness, mood.Fear, mood.Mystery, rng);
+                        int altPatch = ProceduralMidiComposer.GetAlternateInstrumentPatch(role, mood.Coldness, mood.Fear, mood.Mystery, rng);
                         if (altPatch != lastPatch)
                         {
                             SendProgramChange(channel, altPatch);
@@ -701,15 +701,20 @@ public sealed class AmbianceEngine : IDisposable
 
                         lock (_moodLock) mood = _activeMood;
                         float trackVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
-                        int rawVel = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                        int rawVel = ProceduralMidiComposer.GetVelocity(mood.Coldness, mood.Fear, role, rng);
                         if (noteEvent.IsAccented) rawVel = Math.Clamp(rawVel + 14, 0, 127);
                         // #8: paragraph gain — velocity shaped by 4-phrase micro-arc
                         rawVel = Math.Clamp((int)(rawVel * noteEvent.VelocityMult * _paragraphGain), 0, 127);
                         int velocity = Math.Clamp((int)(rawVel * _dynamicsLevel * trackVol), 0, 90);
 
-                        // B4: Parallel 3rd shadow — scale degree 2 below at 75% vel (bright moods only)
-                        int shadowSIdx = noteEvent.ScaleIdx - 2;
-                        int shadowMidi = (role == TrackRole.Melody && mood.Sadness < 0.65f && mood.Fear < 0.55f
+                        // B4: Organum shadow — the melody doubled a fifth below (scale degree 4) at 75% vel.
+                        // This used to be a parallel third, which is the sweetest consonance there is and
+                        // read as warmth on every melody note it touched. A parallel fifth is the austere
+                        // medieval alternative: hollow, open, and without the third it has no major/minor
+                        // colour at all. Ungated by Coldness now — the fifth suits every mood — and still
+                        // suppressed at high Fear, where the phrase wants to sound alone and exposed.
+                        int shadowSIdx = noteEvent.ScaleIdx - 4;
+                        int shadowMidi = (role == TrackRole.Melody && mood.Fear < 0.55f
                             && shadowSIdx >= 0 && shadowSIdx < currentScale.Length)
                             ? currentScale[shadowSIdx] : -1;
 
@@ -722,11 +727,11 @@ public sealed class AmbianceEngine : IDisposable
                             if (shadowMidi > 0) SendNoteOn(channel, shadowMidi, Math.Clamp((int)(velocity * 0.75f), 0, 100));
                             SendNoteOn(channel, noteEvent.MidiNote, velocity);
                             await Task.Delay(Math.Max(1, noteEvent.DurationMs - humanMs), ct);
-                            // #5: sadness legato — overlap NoteOff into next NoteOn for a liquid, blurred feel
-                            bool doLegato = mood.Sadness > 0.6f && ni < phrase.Length - 1 && noteEvent.RestAfterMs == 0;
+                            // #5: coldness legato — overlap NoteOff into next NoteOn for a liquid, blurred feel
+                            bool doLegato = mood.Coldness > 0.6f && ni < phrase.Length - 1 && noteEvent.RestAfterMs == 0;
                             if (doLegato)
                             {
-                                int overlapMs   = (int)(30 + mood.Sadness * 30);
+                                int overlapMs   = (int)(30 + mood.Coldness * 30);
                                 int deferredNote   = noteEvent.MidiNote;
                                 int deferredShadow = shadowMidi;
                                 _ = Task.Run(() => { Thread.Sleep(overlapMs); SendNoteOff(channel, deferredNote); if (deferredShadow > 0) SendNoteOff(channel, deferredShadow); });
@@ -797,8 +802,8 @@ public sealed class AmbianceEngine : IDisposable
                     // NeutralOutcome (ForcePause): triple the rest for a contemplative breath.
                     double beatMs = 60_000.0 / bpm;
                     double phraseRestBeats = role == TrackRole.Melody
-                        ? Math.Max(0.05, mood.Sadness * 0.5 + rng.NextDouble() * (0.5 + mood.Sadness * 1.0) + mood.Mystery * mood.Mystery * 6.0 - mood.Fear * 1.5)
-                        : Math.Max(0.05, mood.Sadness * 0.3 + rng.NextDouble() * (0.3 + mood.Sadness * 0.5) + mood.Mystery * mood.Mystery * 3.5 - mood.Fear * 0.8);
+                        ? Math.Max(0.05, mood.Coldness * 0.5 + rng.NextDouble() * (0.5 + mood.Coldness * 1.0) + mood.Mystery * mood.Mystery * 6.0 - mood.Fear * 1.5)
+                        : Math.Max(0.05, mood.Coldness * 0.3 + rng.NextDouble() * (0.3 + mood.Coldness * 0.5) + mood.Mystery * mood.Mystery * 3.5 - mood.Fear * 0.8);
                     if (applyForcePause) phraseRestBeats *= 8.0;
                     // Interruptible: a new event wakes this up immediately so the next
                     // phrase starts with the fresh signal rather than waiting out the rest.
@@ -822,7 +827,7 @@ public sealed class AmbianceEngine : IDisposable
                             : (minIdx + maxIdx) / 2;
                         int sparseMidi = currentScale[Math.Clamp(sparseIdx, 0, currentScale.Length - 1)];
                         float sparseVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
-                        int sparseRaw = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                        int sparseRaw = ProceduralMidiComposer.GetVelocity(mood.Coldness, mood.Fear, role, rng);
                         int sparseVel = Math.Clamp((int)(sparseRaw * _dynamicsLevel * sparseVol * 0.70f), 0, 100);
                         int holdMs = (int)(60_000.0 / bpm * (2.0 + rng.NextDouble() * 1.5));
                         if (sparseVel > 0)
@@ -836,12 +841,12 @@ public sealed class AmbianceEngine : IDisposable
                     }
                     else
                     {
-                        var arpPhrase = ProceduralMidiComposer.GenerateArpeggioPhrase(currentScale, minIdx, maxIdx, mood.Sadness, mood.Fear, mood.Mystery, bpm, rng, _melodyLastScaleIdx);
+                        var arpPhrase = ProceduralMidiComposer.GenerateArpeggioPhrase(currentScale, minIdx, maxIdx, mood.Coldness, mood.Fear, mood.Mystery, bpm, rng, _melodyLastScaleIdx);
                         foreach (var noteEvent in arpPhrase)
                         {
                             if (ct.IsCancellationRequested || trackIndex >= _activeTrackCount) break;
                             float trackVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
-                            int rawVel = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                            int rawVel = ProceduralMidiComposer.GetVelocity(mood.Coldness, mood.Fear, role, rng);
                             rawVel = Math.Clamp((int)(rawVel * noteEvent.VelocityMult), 0, 127);
                             int vel = Math.Clamp((int)(rawVel * _dynamicsLevel * trackVol), 0, 90);
                             if (vel > 0)
@@ -862,7 +867,7 @@ public sealed class AmbianceEngine : IDisposable
                         }
                         // Rest between arpeggio figures (mystery = longer silence)
                         double arpBeatMs = 60_000.0 / bpm;
-                        int arpRestMs = (int)(arpBeatMs * Math.Max(0.05, mood.Sadness * 0.3 + rng.NextDouble() * (0.4 + mood.Sadness * 0.6) + mood.Mystery * 2.5 - mood.Fear * 0.5));
+                        int arpRestMs = (int)(arpBeatMs * Math.Max(0.05, mood.Coldness * 0.3 + rng.NextDouble() * (0.4 + mood.Coldness * 0.6) + mood.Mystery * 2.5 - mood.Fear * 0.5));
                         await Task.Delay(arpRestMs, ct);
                     }
                 }
@@ -874,7 +879,7 @@ public sealed class AmbianceEngine : IDisposable
                     lock (_moodLock) currentScale = _sharedScale;
                     var (noiseMin, noiseMax) = ModalScale.GetNoteRange(currentScale.Length, role);
 
-                    int noisePatch = ProceduralMidiComposer.GetInstrumentPatch(role, mood.Sadness, mood.Fear, mood.Mystery);
+                    int noisePatch = ProceduralMidiComposer.GetInstrumentPatch(role, mood.Coldness, mood.Fear, mood.Mystery);
                     if (noisePatch != lastPatch)
                     {
                         SendProgramChange(channel, noisePatch);
@@ -882,9 +887,9 @@ public sealed class AmbianceEngine : IDisposable
                     }
 
                     var (midiNote, durationMs) = ProceduralMidiComposer.GenerateNoiseNote(
-                        currentScale, noiseMin, noiseMax, mood.Sadness, mood.Fear, mood.Mystery, bpm, rng);
+                        currentScale, noiseMin, noiseMax, mood.Coldness, mood.Fear, mood.Mystery, bpm, rng);
 
-                    int rawVel = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                    int rawVel = ProceduralMidiComposer.GetVelocity(mood.Coldness, mood.Fear, role, rng);
                     float noiseVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
                     // Noise dynamics: allow a fuller swell so the pad texture breathes.
                     float noiseDyn = 0.88f + (_dynamicsLevel - 0.85f) * 1.5f; // range ~0.85–1.07
@@ -922,7 +927,7 @@ public sealed class AmbianceEngine : IDisposable
                     if (scaleJustChanged && pivotMidiNote > 0)
                     {
                         float pivotVol = GetTrackIntensityVolume(trackIndex, mood.Intensity);
-                        int pivotRaw = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                        int pivotRaw = ProceduralMidiComposer.GetVelocity(mood.Coldness, mood.Fear, role, rng);
                         int pivotVel = Math.Clamp((int)(pivotRaw * _dynamicsLevel * pivotVol), 0, 100);
                         int pivotDur = Math.Max(350, (int)(60_000.0 / bpm));
                         if (pivotVel > 0)
@@ -934,13 +939,13 @@ public sealed class AmbianceEngine : IDisposable
                         else
                             await InterruptibleDelay(pivotDur, ct);
                     }
-                    scaleIdx = ProceduralMidiComposer.GetNextNote(currentScale, scaleIdx, rng, mood.Sadness, minIdx, maxIdx);
+                    scaleIdx = ProceduralMidiComposer.GetNextNote(currentScale, scaleIdx, rng, mood.Coldness, minIdx, maxIdx);
                     int midiNote     = currentScale[scaleIdx];
                     float droneVol   = GetTrackIntensityVolume(trackIndex, mood.Intensity);
-                    int rawVelocity  = ProceduralMidiComposer.GetVelocity(mood.Sadness, mood.Fear, role, rng);
+                    int rawVelocity  = ProceduralMidiComposer.GetVelocity(mood.Coldness, mood.Fear, role, rng);
                     int velocity     = Math.Clamp((int)(rawVelocity * _dynamicsLevel * droneVol), 0, 90);
-                    int noteDuration = ProceduralMidiComposer.GetNoteDurationMs(mood.Sadness, mood.Fear, bpm, role);
-                    int restDuration = ProceduralMidiComposer.GetRestMs(mood.Sadness, mood.Fear, bpm, role, rng);
+                    int noteDuration = ProceduralMidiComposer.GetNoteDurationMs(mood.Coldness, mood.Fear, bpm, role);
+                    int restDuration = ProceduralMidiComposer.GetRestMs(mood.Coldness, mood.Fear, bpm, role, rng);
 
                     _droneCurrentNote = midiNote; // broadcast for harmonic awareness
 
@@ -1274,13 +1279,13 @@ public sealed class AmbianceEngine : IDisposable
                 {
                     const float alpha = 0.08f;
                     _activeMood = new MusicMoodState(
-                        _activeMood.Sadness    + alpha * (_targetMood.Sadness    - _activeMood.Sadness),
+                        _activeMood.Coldness    + alpha * (_targetMood.Coldness    - _activeMood.Coldness),
                         _activeMood.Fear       + alpha * (_targetMood.Fear       - _activeMood.Fear),
                         _activeMood.Mystery    + alpha * (_targetMood.Mystery    - _activeMood.Mystery),
                         _activeMood.Intensity  + alpha * (_targetMood.Intensity  - _activeMood.Intensity));
                     snapped = _activeMood;
                 }
-                ApplyGlobalAmbience(snapped.Mystery, snapped.Fear, snapped.Sadness);
+                ApplyGlobalAmbience(snapped.Mystery, snapped.Fear, snapped.Coldness);
             }
         }
         catch (OperationCanceledException) { }
@@ -1594,13 +1599,15 @@ public sealed class AmbianceEngine : IDisposable
     ///   Plain: ~10.  Forest: ~35.  Dungeon: ~60+.
     /// Only sends if value drifted by more than 2 to avoid MIDI event floods.
     /// </summary>
-    private void ApplyGlobalAmbience(float mystery, float fear, float sadness)
+    private void ApplyGlobalAmbience(float mystery, float fear, float coldness)
     {
         float fearCurve = MathF.Sqrt(fear);
         int reverb     = Math.Clamp((int)(mystery * 90 + fearCurve * 30), 0, 115);
         int chorus     = Math.Clamp((int)(mystery * 65),                   0,  70);
-        // CC 74: brightness — high sadness darkens the timbre (muffles high frequencies)
-        int brightness = Math.Clamp((int)(64 - sadness * 50),             14,  64);
+        // CC 74: brightness — high coldness darkens the timbre (muffles high frequencies).
+        // The ceiling is 52, not GM-neutral 64: even at Coldness 0 the top end stays slightly
+        // rolled off, so nothing in the game ever sounds sparkling.
+        int brightness = Math.Clamp((int)(52 - coldness * 38),             14,  52);
         // CC 71: resonance — sqrt curve so effect is audible from low fear, not just threshold
         int resonance  = Math.Clamp((int)(fearCurve * 55),                 0,  55);
 

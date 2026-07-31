@@ -21,13 +21,19 @@ namespace Cathedral.Game.Dialogue.Runtime;
 ///                     the conversation; after a pick the chosen one stays highlighted and the
 ///                     rest grey out
 ///   Separator
-///   Status bar
+///   Status bar  : speaker name (left) | beauty dice (centre) | attire dice (right)
+///
+/// Header and footer together account for the whole dice pool the branch-end check will roll —
+/// affinity above, beauty and attire below — each drawn as the same pip bar, so the player can read
+/// what they bring to the conversation without opening a menu. The footer gives way to the
+/// generating message while the LLM is writing.
 ///
 /// Coordinate system: all x/y values are terminal cell coordinates.
 /// </summary>
 public class DialogueTreeUI : TerminalPanelUI
 {
     private readonly NpcEntity    _npc;
+    private readonly PartyMember  _speaker;
     private readonly string       _partyMemberId;
 
     /// <summary>
@@ -45,12 +51,13 @@ public class DialogueTreeUI : TerminalPanelUI
     public DialogueTreeUI(
         TerminalHUD           terminal,
         NpcEntity             npc,
-        string                partyMemberId,
+        PartyMember           speaker,
         NarrationScrollBuffer scrollBuffer)
         : base(terminal)
     {
         _npc           = npc;
-        _partyMemberId = partyMemberId;
+        _speaker       = speaker;
+        _partyMemberId = speaker.AffinityKey;
         _buffer        = scrollBuffer;
     }
 
@@ -155,7 +162,7 @@ public class DialogueTreeUI : TerminalPanelUI
             state.ConversationEnded ? "END" : "INTERRUPT",
             state.IsExitButtonHovered);
 
-        DrawStatusBar(BuildStatusText(state));
+        RenderFooter();
     }
 
     /// <summary>The generating-status message for the current loading state, or null when idle.</summary>
@@ -187,35 +194,41 @@ public class DialogueTreeUI : TerminalPanelUI
         _terminal.Text(labelX, y, label,
             Config.NarrativeUI.LoadingColor, Config.NarrativeUI.BackgroundColor);
 
-        // Right: "Affinity dice ⟐ ⟐ ○ ○ ○" — the earned pips use the same level indicator as a modus
-        // mentis header in narration, because they mean the same thing: dice this contributes to the
-        // conversation's check (DialogueTreeController.BeginResolution). The count is BonusDice(),
-        // not the raw enum value, so Suspicious reads as zero rather than as a maxed-out bar.
-        const int MaxPips  = 5;
-        int       bonus    = affinity.BonusDice();
-        var       pips     = new System.Text.StringBuilder();
-        for (int i = 0; i < MaxPips; i++)
-        {
-            pips.Append(i < bonus ? Config.Symbols.ModusMentisLevelIndicator : '○');
-            if (i < MaxPips - 1) pips.Append(' ');
-        }
-        const string pipsLabel  = "Affinity dice ";
-        string pipsStr    = pips.ToString();
-        int    pipsX      = _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING - pipsStr.Length - 1;
-        int    pipsLabelX = pipsX - pipsLabel.Length;
-        if (pipsLabelX > labelX + label.Length + 2)
-        {
-            _terminal.Text(pipsLabelX, y, pipsLabel,
-                Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+        // Right: "Affinity dice ⟐ ⟐ ○ ○ ○". The count is BonusDice(), not the raw enum value, so
+        // Suspicious reads as zero rather than as a maxed-out bar.
+        int bonus = affinity.BonusDice();
+        int barX  = _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING - 1 - DiceBarWidth("Affinity dice ", 5);
+        if (barX > labelX + label.Length + 2)
+            DrawDiceBar(barX, y, "Affinity dice ", bonus, 5);
+    }
 
-            // Earned dice in the dice gold, empty slots dimmed — a single flat colour would make the
-            // whole bar read as dice you have.
-            for (int i = 0; i < pipsStr.Length; i++)
-                _terminal.SetCell(pipsX + i, y, pipsStr[i],
-                    i / 2 < bonus ? Config.NarrativeUI.DiceGoldColor : Config.NarrativeUI.DimmedContentColor,
-                    Config.NarrativeUI.BackgroundColor);
+    // ── Dice bars (shared by the header's affinity and the footer's beauty/attire) ──
+
+    /// <summary>
+    /// One "Label ⟐ ⟐ ○ ○ ○" bar: <paramref name="filled"/> earned dice out of <paramref name="max"/>
+    /// slots. The earned pips use the same level indicator as a modus mentis header in narration,
+    /// because they mean the same thing — dice this contributes to the conversation's single check
+    /// (see <c>DialogueTreeController.BeginResolution</c>). Earned pips are dice gold and empty ones
+    /// dimmed; a single flat colour would make the whole bar read as dice you have.
+    /// </summary>
+    private void DrawDiceBar(int x, int y, string label, int filled, int max)
+    {
+        _terminal.Text(x, y, label, Config.NarrativeUI.StatusBarColor, Config.NarrativeUI.BackgroundColor);
+
+        int pipsX = x + label.Length;
+        for (int i = 0; i < max; i++)
+        {
+            // Pips are space-separated, so pip i sits two cells apart from its neighbour.
+            _terminal.SetCell(pipsX + i * 2, y,
+                i < filled ? Config.Symbols.ModusMentisLevelIndicator : '○',
+                i < filled ? Config.NarrativeUI.DiceGoldColor : Config.NarrativeUI.DimmedContentColor,
+                Config.NarrativeUI.BackgroundColor);
         }
     }
+
+    /// <summary>Cells <see cref="DrawDiceBar"/> occupies — label plus space-separated pips.</summary>
+    private static int DiceBarWidth(string label, int max)
+        => label.Length + Math.Max(0, max * 2 - 1);
 
     // ── Log (conversation text + inline reply lines) ───────────────────────────
 
@@ -335,12 +348,56 @@ public class DialogueTreeUI : TerminalPanelUI
         };
     }
 
-    // ── Status bar text ────────────────────────────────────────────────────────
+    // ── Footer ─────────────────────────────────────────────────────────────────
 
-    private string BuildStatusText(DialogueSessionState state)
+    /// <summary>
+    /// The status-bar row while the conversation is the player's to act on: who is doing the talking
+    /// (left), what their face is worth (centre), and what their dress is worth to <em>this</em> NPC's
+    /// standing (right). The two bars are the halves of the pool that neither the header's affinity
+    /// bar nor the replies themselves account for, so between the three the player can see the whole
+    /// check before committing to a branch.
+    ///
+    /// Attire is judged against the NPC's own social standing; an archetype with no standing (an
+    /// animal, an unnamed bystander) reads nobody's clothes, and its bar is drawn empty rather than
+    /// omitted — a missing bar would read as a layout bug, an empty one as "your coat means nothing
+    /// here", which is the truth.
+    /// </summary>
+    private void RenderFooter()
     {
-        if (state.ConversationEnded)   return "Conversation ended — leave to exit.";
-        if (state.Options.Count > 0)   return "Click a reply. Scroll to read history.";
-        return "";
+        // Draws the separator and blanks the row; the three segments are laid over it.
+        DrawStatusBar("");
+
+        int y = _layout.STATUS_BAR_Y;
+
+        string speaker = $"• {_speaker.DisplayName}";
+        _terminal.Text(_layout.CONTENT_START_X, y, speaker,
+            Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
+
+        var social       = _npc.Archetype is NamedNpcArchetype named ? named.Social : (SocialCategory?)null;
+        int attireDice   = social is { } sc ? WearingDialogueBonus.For(_speaker, sc) : 0;
+        int beautyDice   = _speaker.BeautyDice;
+        int maxBeauty    = Math.Max(1, _speaker.MaxBeautyDice);
+
+        const string beautyLabel = "Beauty ";
+        const string attireLabel = "Attire ";
+
+        int attireW = DiceBarWidth(attireLabel, WearingDialogueBonus.MaxDice);
+        int attireX = _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING - 1 - attireW;
+
+        int beautyW = DiceBarWidth(beautyLabel, maxBeauty);
+        int beautyX = (_layout.TERMINAL_WIDTH - beautyW) / 2;
+
+        // Narrow terminals lose the bars rather than overprinting the name or each other; the same
+        // guard the header uses for its affinity bar.
+        int speakerEnd = _layout.CONTENT_START_X + speaker.Length;
+        if (beautyX > speakerEnd + 2 && beautyX + beautyW + 2 < attireX)
+        {
+            DrawDiceBar(beautyX, y, beautyLabel, beautyDice, maxBeauty);
+            DrawDiceBar(attireX, y, attireLabel, attireDice, WearingDialogueBonus.MaxDice);
+        }
+        else if (attireX > speakerEnd + 2)
+        {
+            DrawDiceBar(attireX, y, attireLabel, attireDice, WearingDialogueBonus.MaxDice);
+        }
     }
 }

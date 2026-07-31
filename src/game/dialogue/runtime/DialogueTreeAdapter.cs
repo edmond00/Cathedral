@@ -84,7 +84,7 @@ public class DialogueTreeAdapter
 
         // The UI is created up front so the setup phase can already render the standard
         // bordered panel — avoids a black flash when transitioning from narration.
-        _ui = new DialogueTreeUI(terminal, npc, protagonist.AffinityKey, scrollBuffer);
+        _ui = new DialogueTreeUI(terminal, npc, protagonist, scrollBuffer);
     }
 
     // ── Public API ──────────────────────────────────────────────────────────────

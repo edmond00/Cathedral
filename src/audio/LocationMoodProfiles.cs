@@ -14,7 +14,7 @@ public static class LocationMoodProfiles
 
     // ── Biome profiles ────────────────────────────────────────────────────────
     // Each range covers the expressive space appropriate to that biome.
-    // Higher sadness/mystery = more melancholic/modal music.
+    // Higher coldness/mystery = more melancholic/modal music.
     // Higher fear = more dissonant/unstable music.
     private static readonly Dictionary<string, MoodRange> Profiles = new()
     {
@@ -78,9 +78,23 @@ public static class LocationMoodProfiles
         new(new(0.25f, 0.15f, 0.30f), new(0.50f, 0.35f, 0.55f));
 
     /// <summary>
+    /// Lowest Coldness any location may play at, however warm its profile says it is.
+    /// <para>
+    /// The table above was authored when the axis was called Sadness and 0 meant "bright", so its
+    /// warm end (tavern/market/field/circus at 0.05) asked for outright major-key music. Rather
+    /// than rewrite fifty hand-tuned rows and lose their *relative* character, the sampled value
+    /// is compressed into [<see cref="ColdnessFloor"/>, 1] on the way out: a tavern is still the
+    /// warmest thing on the sphere, it is just no longer a cheerful one. Tune the whole world's
+    /// warmth from this one constant.
+    /// </para>
+    /// </summary>
+    private const float ColdnessFloor = 0.32f;
+
+    /// <summary>
     /// Returns a deterministic mood for a given location type and vertex/location id.
     /// The mood is sampled uniformly from the predefined min–max range so each
-    /// location type has a consistent character but individual locations feel distinct.
+    /// location type has a consistent character but individual locations feel distinct,
+    /// then Coldness is lifted into [<see cref="ColdnessFloor"/>, 1] — see that constant.
     /// Intensity is always sampled in the upper half (0.70–1.0) so all locations play
     /// with reasonably full layering.
     /// </summary>
@@ -93,8 +107,11 @@ public static class LocationMoodProfiles
 
         float Lerp(float a, float b) => a + (float)rng.NextDouble() * (b - a);
 
+        float coldness = Lerp(p.Min.Coldness, p.Max.Coldness);
+        coldness = ColdnessFloor + coldness * (1f - ColdnessFloor);
+
         return new MusicMoodState(
-            Lerp(p.Min.Sadness,   p.Max.Sadness),
+            coldness,
             Lerp(p.Min.Fear,      p.Max.Fear),
             Lerp(p.Min.Mystery,   p.Max.Mystery),
             0.70f + (float)rng.NextDouble() * 0.30f   // intensity 0.70–1.0

@@ -216,6 +216,25 @@ public abstract class DerivedStat
     public int GetRawValue(PartyMember member) => Clamp(CalculateValue(member, GetSourceScore(member)));
 
     /// <summary>
+    /// The value this stat reaches when its source is scored as high as this member's anatomy
+    /// allows — the far end of the stat's range, not its current state. Wounds are ignored, since
+    /// the point is the size of the bar rather than how much of it is filled. UI that draws a stat
+    /// as filled/empty pips needs this to know how many pips to draw; a species with a smaller
+    /// maximum therefore gets a shorter bar rather than one it can never fill.
+    /// Returns <see cref="WorstValue"/> when the source is absent from the anatomy.
+    /// </summary>
+    public int GetValueAtMaxScore(PartyMember member)
+    {
+        int? maxScore =
+              RelatedOrganPartId != null ? member.GetOrganPartById(RelatedOrganPartId)?.MaxScore
+            : RelatedOrganId     != null ? member.GetOrganById(RelatedOrganId)?.MaxScore
+            : RelatedBodyPartId  != null ? member.GetBodyPartById(RelatedBodyPartId)?.MaxScore
+            : null;
+
+        return maxScore is { } max ? Clamp(CalculateValue(member, max)) : WorstValue;
+    }
+
+    /// <summary>
     /// Clamp a raw computed value so it is never worse than <see cref="WorstValue"/> nor,
     /// when set, better than <see cref="BestValue"/>, respecting <see cref="HigherIsBetter"/>.
     /// </summary>

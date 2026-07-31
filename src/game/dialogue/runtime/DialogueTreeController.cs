@@ -19,9 +19,10 @@ namespace Cathedral.Game.Dialogue.Runtime;
 /// dice check) → the NPC speaks its success/failure line and outcomes fire.
 ///
 /// <para>
-/// A conversation rolls the dice <b>once</b>, at the branch end. The pool is the NPC affinity bonus
-/// plus the summed levels of every Modus Mentis that voiced a chosen reply along the branch; the
-/// difficulty is authored on the <see cref="ResolutionNode"/>, clamped to the pool size.
+/// A conversation rolls the dice <b>once</b>, at the branch end. The pool is the NPC affinity bonus,
+/// the summed levels of every Modus Mentis that voiced a chosen reply along the branch, the speaker's
+/// beauty, and what they are wearing as the NPC's own standing reads it; the difficulty is authored
+/// on the <see cref="ResolutionNode"/>, clamped to the pool size.
 /// </para>
 /// </summary>
 public class DialogueTreeController
@@ -567,7 +568,10 @@ public class DialogueTreeController
         var social      = _npc.Archetype is NamedNpcArchetype named ? named.Social : null;
         int attireBonus = social is { } sc ? WearingDialogueBonus.For(_protagonist, sc) : 0;
 
-        int diceCount     = Math.Clamp(affinityBonus + _accumulatedDice + attireBonus, 1, 15);
+        // A fair face helps with everyone, so unlike attire this one owes nothing to who is listening.
+        int beautyBonus = _protagonist.BeautyDice;
+
+        int diceCount     = Math.Clamp(affinityBonus + _accumulatedDice + attireBonus + beautyBonus, 1, 15);
         // An authored difficulty above the pool size is unreachable — DialogueSessionState already
         // clamps it, so clamp here too or the overlay would judge by a target the pool cannot meet.
         int difficulty    = Math.Clamp(resolution.Difficulty, 1, diceCount);
@@ -577,7 +581,8 @@ public class DialogueTreeController
             : "";
         Console.WriteLine(
             $"DialogueTreeController: resolution '{resolution.NodeId}' — {diceCount} dice " +
-            $"(affinity {affinityBonus} + replica levels {_accumulatedDice}{attireNote}), difficulty {difficulty}" +
+            $"(affinity {affinityBonus} + replica levels {_accumulatedDice} + beauty {beautyBonus}{attireNote}), " +
+            $"difficulty {difficulty}" +
             (difficulty != resolution.Difficulty ? $" (authored {resolution.Difficulty}, clamped to the pool)" : ""));
 
         _state.StartDiceRoll(diceCount, difficulty);

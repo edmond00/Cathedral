@@ -1,4 +1,4 @@
-namespace Cathedral.Audio;
+﻿namespace Cathedral.Audio;
 
 /// <summary>A single note event in a generated phrase, with pre-computed timing.</summary>
 public struct NoteEvent
@@ -57,13 +57,15 @@ public static class ProceduralMidiComposer
     /// Picks the next MIDI note using a weighted random walk within [minIdx, maxIdx].
     /// Weighted step probabilities create natural melodic motion with occasional organum-style leaps.
     /// </summary>
-    public static int GetNextNote(int[] scale, int lastNoteIdx, Random rng, float sadness,
+    public static int GetNextNote(int[] scale, int lastNoteIdx, Random rng, float coldness,
         int minIdx, int maxIdx, int droneNote = -1)
     {
         // Build move weights: step ±1, skip ±2, leap (4th = ~2-3 steps), repeat
-        // Sadness increases preference for descending motion
-        double ascendBias  = 1.0 + (1.0 - sadness) * 0.35 - sadness * 0.4; // 1.35 (dance) → 0.6 (lament)
-        double descendBias = 1.0 + sadness * 0.4;                            // 1.0 → 1.4
+        // Gravity is the default: the walk leans downward at every value of Coldness, and
+        // Coldness only decides how heavily. At Coldness 0 the line is level-to-sinking
+        // (1.12 vs 1.06), never climbing — a rising walk is what reads as optimism.
+        double ascendBias  = 1.0 + (1.0 - coldness) * 0.12 - coldness * 0.45; // 1.12 → 0.55
+        double descendBias = 1.0 + coldness * 0.45;                            // 1.00 → 1.45
 
         var candidates = new List<(int idx, double weight)>();
 
@@ -89,11 +91,17 @@ public static class ProceduralMidiComposer
             for (int i = 0; i < candidates.Count; i++)
             {
                 int interval = (scale[candidates[i].idx] - droneNote + 144) % 12;
+                // Minor and major thirds are weighted apart, not lumped together: the major third
+                // is the interval that makes a chord sound happy. No scale in the palette contains
+                // one, but fear's chromatic displacement can still land on it, and when it does we
+                // would rather the melody moved elsewhere.
                 double boost = interval switch {
                     0 or 12 => 2.0, // unison / octave
                     7       => 1.9, // perfect fifth
-                    3 or 4  => 1.6, // minor / major third
-                    8 or 9  => 1.3, // minor / major sixth
+                    3       => 1.7, // minor third — the mode's own colour
+                    8       => 1.4, // minor sixth
+                    9       => 1.1, // major sixth — Dorian's brightness, allowed but not courted
+                    4       => 0.8, // major third — actively discouraged
                     _       => 1.0, // dissonant — no boost
                 };
                 candidates[i] = (candidates[i].idx, candidates[i].weight * boost);
@@ -122,23 +130,23 @@ public static class ProceduralMidiComposer
 
     /// <summary>
     /// Generates a melodic phrase with mood-driven contour and rhythmic variety.
-    /// <para>Contours: Arch (balanced), Descent (sadness/lament), Ascending (dance/hope).</para>
+    /// <para>Contours: Arch (balanced), Descent (the default — see the weights), Ascending (rationed).</para>
     /// <para>Cadence: 50% tonic, 30% dominant, 20% mediant — avoids always resolving to root.</para>
     /// <para>Fear: shorter phrases, broken rhythms, chromatic wrong-notes.</para>
     /// <para>Mystery: occasional within-phrase silences (breath).</para>
     /// </summary>
     public static NoteEvent[] GenerateMelodyPhrase(
         int[] scale, int startIdx, int minIdx, int maxIdx,
-        float sadness, float fear, float mystery, double bpm, Random rng,
+        float coldness, float fear, float mystery, double bpm, Random rng,
         int[]? motifContour = null, bool forceMotifReplay = false, bool? forceResolution = null,
         float intensity = 0.5f)
     {
         double beatMs = 60_000.0 / bpm;
-        // Fear shortens phrases (frantic/broken); sadness also shortens (contemplative).
+        // Fear shortens phrases (frantic/broken); coldness also shortens (contemplative).
         // Normal ceiling raised (8→11) so phrases can breathe before ending.
         // Fear shortens phrases (frantic) but no longer reduces them to fragments —
         // min 3 notes keeps at least a recognisable melodic gesture, max 7 allows tension to build.
-        int maxLen = fear > 0.6f ? 7 : (sadness > 0.5f ? 8 : 11);
+        int maxLen = fear > 0.6f ? 7 : (coldness > 0.5f ? 8 : 11);
         int minLen = fear > 0.6f ? 3 : 4;
         // Low intensity: very few notes, each held very long — sparse sustained figures, not runs.
         if (intensity < 0.4f) { maxLen = Math.Min(maxLen, 5); minLen = Math.Min(minLen, 3); }
@@ -150,13 +158,16 @@ public static class ProceduralMidiComposer
             maxLen = 15;
         }
         int phraseLen = rng.Next(minLen, maxLen + 1);
-        var rhythm = PickRhythmPattern(phraseLen, sadness, fear, rng);
+        var rhythm = PickRhythmPattern(phraseLen, coldness, fear, rng);
 
         // ── Contour selection ─────────────────────────────────────────────────
-        // Weights are mood-driven: sadness favours Descent, low-sadness favours Ascending.
+        // Weights are mood-driven, but Descent keeps a floor: even at Coldness 0 a falling
+        // line is the most likely shape, and Ascending is a minority gesture rather than the
+        // default. A phrase that climbs and stays up is the clearest "hopeful" signal a melody
+        // can send, so it is rationed at every mood rather than only at high Coldness.
         int rangeSize  = maxIdx - minIdx;
-        double descentW   = sadness * 1.5;
-        double ascendingW = (1.0 - sadness) * 1.2 * (1.0 - fear * 0.8);
+        double descentW   = 0.55 + coldness * 1.30;
+        double ascendingW = (1.0 - coldness) * 0.50 * (1.0 - fear * 0.8);
         double archW      = 1.0;
         double totalCW    = archW + descentW + ascendingW;
         double cPick      = rng.NextDouble() * totalCW;
@@ -175,15 +186,16 @@ public static class ProceduralMidiComposer
         }
         else if (cPick < descentW + ascendingW)
         {
-            // Ascending: start near bottom, climb — cadence stays high (dominant or peak)
-            // so the phrase doesn't crash back down after building tension.
+            // Ascending: start near bottom and climb — but the climb is shorter now (3–5 steps
+            // rather than 4–6) and it usually stops on the dominant instead of the peak. Landing
+            // on the peak is the "triumphant arrival" gesture; at 30% it stays available as an
+            // occasional lift without becoming the character of the phrase.
             contourType = 1;
             arcStart   = minIdx + rng.Next(0, rangeSize / 4 + 1);
-            peakIdx    = Math.Clamp(arcStart + rng.Next(4, 7), minIdx, maxIdx);
-            // 60% land on the peak itself, 40% on dominant — both sound like arriving high
-            cadenceIdx = rng.NextDouble() < 0.60
+            peakIdx    = Math.Clamp(arcStart + rng.Next(3, 6), minIdx, maxIdx);
+            cadenceIdx = rng.NextDouble() < 0.30
                 ? peakIdx
-                : Math.Clamp(minIdx + 4, minIdx, maxIdx);  // dominant (~5th)
+                : Math.Clamp(minIdx + 4, minIdx, maxIdx);  // dominant (~5th) — unresolved, hanging
             peakPos    = phraseLen - 2; // leave room for cadence note after the peak
         }
         else
@@ -267,9 +279,9 @@ public static class ProceduralMidiComposer
         }
 
         // Phrase dynamic arc: envelope aligned to melodic contour (ascending→crescendo, descent→decrescendo)
-        float[] envelope = PickVelocityEnvelope(phraseLen, sadness, fear, rng, contourType);
+        float[] envelope = PickVelocityEnvelope(phraseLen, coldness, fear, rng, contourType);
         // Low intensity: dramatically stretch note durations so the fast pulse carries long, held tones.
-        float durationFactor = (1.45f + sadness * 0.5f + (1.0f - intensity) * 5.5f) * (1.0f - fear * 0.55f);
+        float durationFactor = (1.45f + coldness * 0.5f + (1.0f - intensity) * 5.5f) * (1.0f - fear * 0.55f);
         var events = new NoteEvent[phraseLen];
         for (int i = 0; i < phraseLen; i++)
         {
@@ -296,8 +308,8 @@ public static class ProceduralMidiComposer
             };
         }
         // Fermata on the cadence note (~25% chance): extends it 40–100% longer.
-        // At high sadness the chance rises to ~45%. Creates a sense of phrase arrival.
-        float fermataChance = 0.25f + sadness * 0.20f;
+        // At high coldness the chance rises to ~45%. Creates a sense of phrase arrival.
+        float fermataChance = 0.25f + coldness * 0.20f;
         if (events.Length > 0 && rng.NextDouble() < fermataChance)
         {
             ref var last = ref events[events.Length - 1];
@@ -319,11 +331,11 @@ public static class ProceduralMidiComposer
             }
         }
 
-        // Ritardando: last 2 notes slow proportionally with sadness (independent of fermata above)
-        if (sadness > 0.3f && events.Length >= 2)
+        // Ritardando: last 2 notes slow proportionally with coldness (independent of fermata above)
+        if (coldness > 0.3f && events.Length >= 2)
         {
-            events[events.Length - 2].DurationMs = (int)(events[events.Length - 2].DurationMs * (1.0f + sadness * 0.25f));
-            events[events.Length - 1].DurationMs = (int)(events[events.Length - 1].DurationMs * (1.0f + sadness * 0.50f));
+            events[events.Length - 2].DurationMs = (int)(events[events.Length - 2].DurationMs * (1.0f + coldness * 0.25f));
+            events[events.Length - 1].DurationMs = (int)(events[events.Length - 1].DurationMs * (1.0f + coldness * 0.50f));
         }
 
         // Fear micro-tempo jitter: ±8% duration variation in random groups of 2-4 notes
@@ -398,7 +410,7 @@ public static class ProceduralMidiComposer
     /// </summary>
     public static NoteEvent[] GenerateCounterPhrase(
         int[] scale, int startIdx, int minIdx, int maxIdx,
-        float sadness, float fear, float mystery, double bpm, Random rng,
+        float coldness, float fear, float mystery, double bpm, Random rng,
         int melodyDirection = 0)
     {
         double beatMs = 60_000.0 / bpm;
@@ -430,9 +442,9 @@ public static class ProceduralMidiComposer
             cur = Math.Clamp(cur + step, minIdx, maxIdx);
             noteIndices[i] = cur;
         }
-        float durationFactor = (1.0f + sadness * 0.4f) * (1.0f - fear * 0.6f);
-        var rhythm = PickRhythmPattern(phraseLen, sadness, fear, rng);
-        float[] envelope = PickVelocityEnvelope(phraseLen, sadness, fear, rng);
+        float durationFactor = (1.0f + coldness * 0.4f) * (1.0f - fear * 0.6f);
+        var rhythm = PickRhythmPattern(phraseLen, coldness, fear, rng);
+        float[] envelope = PickVelocityEnvelope(phraseLen, coldness, fear, rng);
         var events = new NoteEvent[phraseLen];
         for (int i = 0; i < phraseLen; i++)
         {
@@ -458,7 +470,7 @@ public static class ProceduralMidiComposer
     /// </summary>
     public static NoteEvent[] GenerateArpeggioPhrase(
         int[] scale, int minIdx, int maxIdx,
-        float sadness, float fear, float mystery, double bpm, Random rng,
+        float coldness, float fear, float mystery, double bpm, Random rng,
         int melodyHintIdx = -1)
     {
         double beatMs = 60_000.0 / bpm;
@@ -484,8 +496,8 @@ public static class ProceduralMidiComposer
             idxList.Add(Math.Clamp(baseIdx + offset, minIdx, maxIdx));
         if (descend) idxList.Reverse();
 
-        // Note duration: shorter at high fear, longer with sadness
-        float noteBeatsFactor = (0.35f + sadness * 0.2f) * (1.0f - fear * 0.45f);
+        // Note duration: shorter at high fear, longer with coldness
+        float noteBeatsFactor = (0.35f + coldness * 0.2f) * (1.0f - fear * 0.45f);
         var events = new NoteEvent[idxList.Count];
         for (int i = 0; i < idxList.Count; i++)
         {
@@ -508,7 +520,7 @@ public static class ProceduralMidiComposer
     /// </summary>
     public static NoteEvent[] GenerateOstinatoPhrase(
         int[] scale, int startIdx, int minIdx, int maxIdx,
-        float sadness, float fear, double bpm, Random rng)
+        float coldness, float fear, double bpm, Random rng)
     {
         double beatMs = 60_000.0 / bpm;
         int cellLen = rng.Next(2, 5);
@@ -526,7 +538,7 @@ public static class ProceduralMidiComposer
         }
 
         // Short punchy note duration (0.25–0.4 beats)
-        int durMs = Math.Max(40, (int)(beatMs * (0.30f + sadness * 0.10f) * (1.0f - fear * 0.25f)));
+        int durMs = Math.Max(40, (int)(beatMs * (0.30f + coldness * 0.10f) * (1.0f - fear * 0.25f)));
         int restMs = (int)(beatMs * 0.04f);
 
         var events = new NoteEvent[cellLen * repeats];
@@ -561,10 +573,10 @@ public static class ProceduralMidiComposer
 
     /// <summary>
     /// Returns a per-note velocity multiplier array shaping the phrase dynamically.
-    /// Sadness → decrescendo (soft fade); dance/ascending → arch; fear → flat (unpredictable).
+    /// Coldness → decrescendo (soft fade); ascending contour → crescendo; fear → flat (unpredictable).
     /// </summary>
     // contourHint: +1 = ascending phrase (bias crescendo), -1 = descending (bias decrescendo), 0 = arch
-    private static float[] PickVelocityEnvelope(int len, float sadness, float fear, Random rng, int contourHint = 0)
+    private static float[] PickVelocityEnvelope(int len, float coldness, float fear, Random rng, int contourHint = 0)
     {
         var env = new float[len];
         // Fear bypasses the arc for unpredictability
@@ -573,8 +585,11 @@ public static class ProceduralMidiComposer
             for (int i = 0; i < len; i++) env[i] = 1.0f;
             return env;
         }
-        double crescW  = contourHint > 0  ? 1.8 : (1.0 - sadness) * 0.4;
-        double decresW = contourHint < 0  ? 1.8 : sadness * 0.5;
+        // Crescendo is the dynamic shape of building hope, so it is only strong when the melodic
+        // contour is genuinely ascending, and decrescendo keeps a floor at every Coldness — a
+        // phrase that fades as it ends reads as resignation regardless of key.
+        double crescW  = contourHint > 0  ? 1.4 : (1.0 - coldness) * 0.20;
+        double decresW = contourHint < 0  ? 1.8 : 0.35 + coldness * 0.55;
         double archW   = contourHint == 0 ? 1.8 : 0.6;
         double pick    = rng.NextDouble() * (crescW + decresW + archW);
         if (pick < decresW) // decrescendo: loud start, soft end
@@ -594,7 +609,9 @@ public static class ProceduralMidiComposer
         new[] { 4f, 2f },
         new[] { 2f, 1f, 1f, 2f },
     };
-    private static readonly float[][] LivelyRhythms = {
+    // Measured: an even, unhurried pulse with no dance lilt. This is what the *low* end of
+    // Coldness sounds like — walking, not celebrating.
+    private static readonly float[][] MeasuredRhythms = {
         new[] { 1f, 1f, 2f, 1f, 1f },
         new[] { 1.5f, 0.5f, 1f, 1f, 2f },
         new[] { 1f, 2f, 1f, 2f },
@@ -608,12 +625,16 @@ public static class ProceduralMidiComposer
         new[] { 0.3f, 0.3f, 0.3f, 0.3f, 1.0f },
         new[] { 0.5f, 0.5f, 0.5f, 1.5f },
     };
-    // Celtic/folk dance: compound-triple jig and dotted reel patterns
-    private static readonly float[][] JigRhythms = {
-        new[] { 0.5f, 0.25f, 0.25f, 0.5f, 0.25f, 0.25f }, // compound-triple jig
-        new[] { 0.75f, 0.25f, 0.75f, 0.25f, 0.75f, 0.25f }, // dotted hornpipe
-        new[] { 0.33f, 0.33f, 0.34f, 0.33f, 0.33f, 0.34f }, // even jig quavers
-        new[] { 0.5f, 0.5f, 0.25f, 0.25f, 0.5f, 0.5f },    // reel with skip
+    // Hollow: isolated long tones separated by uneven gaps — the sound of a bell in an empty
+    // room rather than a tune. Replaces the Celtic jig/hornpipe/reel set that used to fire at
+    // low Coldness: a dance rhythm is festive no matter what key it is played in, and it was
+    // the single strongest source of cheer in the engine.
+    private static readonly float[][] HollowRhythms = {
+        new[] { 3f, 2f, 4f },
+        new[] { 2f, 3f, 1f, 4f },
+        new[] { 5f, 2f },
+        new[] { 1f, 4f, 3f },
+        new[] { 4f, 1f, 1f, 3f },
     };
     // Broken/disturbing: syncopated bursts with a held resolution — all notes are
     // >= 0.25 beats so they remain audible at any BPM in the game's range.
@@ -624,54 +645,59 @@ public static class ProceduralMidiComposer
         new[] { 0.75f, 0.25f, 0.25f, 0.25f, 1.0f },  // dotted lead-in + stabs
         new[] { 0.5f, 0.5f, 0.25f, 0.25f, 0.5f },    // off-beat entry, tight finish
     };
-    private static float[] PickRhythmPattern(int phraseLen, float sadness, float fear, Random rng)
+    private static float[] PickRhythmPattern(int phraseLen, float coldness, float fear, Random rng)
     {
         // High fear: 50/50 broken vs staccato — not always broken so there's some variety.
         if (fear > 0.65f) return rng.NextDouble() < 0.5
             ? BrokenRhythms[rng.Next(BrokenRhythms.Length)]
             : StaccatoRhythms[rng.Next(StaccatoRhythms.Length)];
         if (fear > 0.45f) return StaccatoRhythms[rng.Next(StaccatoRhythms.Length)];
-        if (sadness < 0.25f) return JigRhythms[rng.Next(JigRhythms.Length)];
-        if (sadness > 0.50f) return SlowRhythms[rng.Next(SlowRhythms.Length)];
-        return LivelyRhythms[rng.Next(LivelyRhythms.Length)];
+        if (coldness > 0.50f) return SlowRhythms[rng.Next(SlowRhythms.Length)];
+        // Below 0.50, mostly an even measured pulse — with a standing 25% chance of the hollow
+        // set, so even the warmest stretch of the game keeps dropping into isolated tolling notes.
+        if (rng.NextDouble() < 0.25) return HollowRhythms[rng.Next(HollowRhythms.Length)];
+        return MeasuredRhythms[rng.Next(MeasuredRhythms.Length)];
     }
 
     // ── Per-note timing ───────────────────────────────────────────────────────
 
     /// <summary>
-    /// Maps sadness/fear → BPM.
-    /// Sadness slows (108→30), Fear speeds (+0 to +37).
-    /// sadness=0 produces walking/ambient tempos (~72–122 BPM); sadness=1 produces slow lament (~25–72 BPM).
+    /// Maps coldness/fear → BPM.
+    /// Coldness slows, Fear speeds (+0 to +37).
+    /// coldness=0 sits at a slow walking pulse (~62 BPM, was 72 — brisk enough reads as buoyant);
+    /// coldness=1 produces a slow lament (~25 BPM).
     /// Low intensity raises the clock speed (fast pulse with long notes); high intensity uses current pacing.
     /// </summary>
-    public static double GetTempoBpm(float sadness, float fear, float intensity = 0.5f) =>
-        Math.Clamp(72.0 - sadness * 55.0 + fear * 37.0 + (1.0 - intensity) * 50.0, 25.0, 145.0);
+    // Slope chosen so coldness=1 lands exactly on the 25 BPM floor: the old slope bottomed out
+    // around 0.77 and everything above it collapsed to the same tempo, wasting the top of the axis.
+    public static double GetTempoBpm(float coldness, float fear, float intensity = 0.5f) =>
+        Math.Clamp(62.0 - coldness * 37.0 + fear * 37.0 + (1.0 - intensity) * 50.0, 25.0, 145.0);
 
     /// <summary>Returns note duration in milliseconds based on mood, BPM, and track role.
     /// Fear makes Texture staccato; Drone always sustains.</summary>
-    public static int GetNoteDurationMs(float sadness, float fear, double bpm, TrackRole role)
+    public static int GetNoteDurationMs(float coldness, float fear, double bpm, TrackRole role)
     {
         double beatMs = 60_000.0 / bpm;
         double beats = role switch
         {
-            TrackRole.Drone   => 7.0 + sadness * 5.0,
-            TrackRole.Melody  => 1.2 + sadness * 0.8,
-            TrackRole.Counter => 0.7 + sadness * 0.3,
-            TrackRole.Texture => (0.4 + sadness * 0.2) * (1.0 - fear * 0.65),
+            TrackRole.Drone   => 7.0 + coldness * 5.0,
+            TrackRole.Melody  => 1.2 + coldness * 0.8,
+            TrackRole.Counter => 0.7 + coldness * 0.3,
+            TrackRole.Texture => (0.4 + coldness * 0.2) * (1.0 - fear * 0.65),
             _                 => 1.0,
         };
         return Math.Max((int)(beatMs * beats), 60);
     }
 
     /// <summary>Returns rest duration in milliseconds after a note.</summary>
-    public static int GetRestMs(float sadness, float fear, double bpm, TrackRole role, Random rng)
+    public static int GetRestMs(float coldness, float fear, double bpm, TrackRole role, Random rng)
     {
         double beatMs = 60_000.0 / bpm;
         double beats = role switch
         {
             TrackRole.Drone   => 0.04,
-            TrackRole.Melody  => 0.5 + sadness * 1.0,
-            TrackRole.Counter => 0.2 + sadness * 0.3,
+            TrackRole.Melody  => 0.5 + coldness * 1.0,
+            TrackRole.Counter => 0.2 + coldness * 0.3,
             TrackRole.Texture => (0.15 + rng.NextDouble() * 0.3) * (1.0 - fear * 0.55),
             _                 => 0.5,
         };
@@ -679,8 +705,8 @@ public static class ProceduralMidiComposer
     }
 
     /// <summary>Returns MIDI velocity (0–127) for a note.
-    /// Sadness softens. High fear creates lurching bimodal dynamics — sudden ff or pp accents.</summary>
-    public static int GetVelocity(float sadness, float fear, TrackRole role, Random rng)
+    /// Coldness softens. High fear creates lurching bimodal dynamics — sudden ff or pp accents.</summary>
+    public static int GetVelocity(float coldness, float fear, TrackRole role, Random rng)
     {
         // Synth patches are perceptually louder than acoustic ones at the same velocity —
         // base values are kept lower to compensate for the richer harmonic content.
@@ -696,7 +722,7 @@ public static class ProceduralMidiComposer
         // Noise: simple gentle variation, no fear bimodal dynamics
         if (role == TrackRole.Noise)
         {
-            int nShift = -(int)(sadness * 8) + (int)(fear * 12);
+            int nShift = -(int)(coldness * 8) + (int)(fear * 12);
             return Math.Clamp(34 + nShift + rng.Next(-5, 6), 10, 50);
         }
         // High fear: lurching bimodal dynamics (sudden accent or sudden dropout)
@@ -704,7 +730,7 @@ public static class ProceduralMidiComposer
             return rng.NextDouble() < 0.55
                 ? Math.Clamp(baseVelocity + 26, 12, 90)
                 : Math.Clamp(baseVelocity - 22,  5, 90);
-        int moodShift = -(int)(sadness * 14) + (int)(fear * 20);
+        int moodShift = -(int)(coldness * 14) + (int)(fear * 20);
         int swing     = (int)(4 + fear * 16);
         return Math.Clamp(baseVelocity + moodShift + rng.Next(-swing, swing + 1), 5, 90);
     }
@@ -712,33 +738,33 @@ public static class ProceduralMidiComposer
     /// <summary>
     /// Returns the GM patch number for a track role.
     /// Uses all three mood axes for a dramatically different instrument palette:
-    ///   Bright+Calm → Harpsichord/Flute (tavern).
+    ///   Cool+Calm   → Sawtooth/Echoes (thin, metallic).
     ///   Tense       → Oboe/TremoloStrings (urgent).
     ///   Dark+Mysterious → ChoirAahs/PadBowed (dungeon).
     /// </summary>
-    public static int GetInstrumentPatch(TrackRole role, float sadness, float fear, float mystery) =>
+    public static int GetInstrumentPatch(TrackRole role, float coldness, float fear, float mystery) =>
         role switch
         {
             // Drone: low grinding bass layer.
-            // Sawtooth anchors bright moments; PadSweep and FxSciFi sink into heavy darkness.
+            // Sawtooth anchors the cool end; PadSweep and FxSciFi sink into heavy darkness.
             TrackRole.Drone =>
-                fear >= 0.60f && sadness < 0.50f ? PatchLeadSawtooth    // tense — harsh buzzing grind
-                : sadness < 0.35f                ? PatchLeadSawtooth     // low sadness — still industrial, never warm
-                : sadness < 0.70f                ? PatchPadSweep         // mid — heavy dark sweeping wash
+                fear >= 0.60f && coldness < 0.50f ? PatchLeadSawtooth    // tense — harsh buzzing grind
+                : coldness < 0.35f                ? PatchLeadSawtooth     // low coldness — still industrial, never warm
+                : coldness < 0.70f                ? PatchPadSweep         // mid — heavy dark sweeping wash
                 :                                  PatchFxSciFi,          // deep dark — harsh noise underlayer
 
             // Melody: sparse industrial lead voice.
             // Sawtooth for raw edge, FxSciFi for eerie mid, FxAtmosphere for dense mournful cloud.
             TrackRole.Melody =>
-                sadness < 0.28f && fear < 0.45f  ? PatchLeadSawtooth     // bright-ish — harsh industrial lead
-                : sadness < 0.28f                ? PatchLeadSawtooth     // urgent — max saw aggression
-                : sadness < 0.60f                ? PatchFxSciFi          // lament — eerie industrial noise
+                coldness < 0.28f && fear < 0.45f  ? PatchLeadSawtooth     // cool — thin, harsh industrial lead
+                : coldness < 0.28f                ? PatchLeadSawtooth     // urgent — max saw aggression
+                : coldness < 0.60f                ? PatchFxSciFi          // lament — eerie industrial noise
                 :                                  PatchFxAtmosphere,     // mournful — dense atmospheric cloud
 
             // Counter: mid-layer dissonance and texture.
             // Echoes for sparse metallic pings, SciFi for dark mystery, Sawtooth for raw edge.
             TrackRole.Counter =>
-                sadness < 0.32f                  ? PatchFxEchoes         // sparse — echoing metallic drips
+                coldness < 0.32f                  ? PatchFxEchoes         // sparse — echoing metallic drips
                 : mystery >= 0.65f               ? PatchFxSciFi          // high mystery — dark industrial noise
                 :                                  PatchLeadSawtooth,     // general — raw saw buzz layer
 
@@ -746,7 +772,7 @@ public static class ProceduralMidiComposer
             // Sawtooth for tense harshness, Echoes for digital grit, Atmosphere for heavy dark wash.
             TrackRole.Texture =>
                 fear >= 0.60f || mystery >= 0.68f ? PatchLeadSawtooth    // tense/mysterious — saw shimmer
-                : sadness < 0.40f                 ? PatchFxEchoes        // sparse — dry echoing pings
+                : coldness < 0.40f                 ? PatchFxEchoes        // sparse — dry echoing pings
                 :                                   PatchFxAtmosphere,    // dark — dense atmospheric cloud
 
             TrackRole.Noise =>
@@ -773,23 +799,23 @@ public static class ProceduralMidiComposer
     /// giving phrases timbral variety without crossing mood boundaries.
     /// Called ~1-in-8 phrases to swap instrument mid-session.
     /// </summary>
-    public static int GetAlternateInstrumentPatch(TrackRole role, float sadness, float fear, float mystery, Random rng)
+    public static int GetAlternateInstrumentPatch(TrackRole role, float coldness, float fear, float mystery, Random rng)
     {
         // Build a small candidate pool that fits the current mood tier, then pick randomly.
         // Always includes the primary patch so swapping back is equally likely.
-        int primary = GetInstrumentPatch(role, sadness, fear, mystery);
+        int primary = GetInstrumentPatch(role, coldness, fear, mystery);
 
         int[] pool = role switch
         {
             TrackRole.Melody =>
-                sadness < 0.30f && fear < 0.45f
+                coldness < 0.30f && fear < 0.45f
                     ? new[] { PatchLeadSawtooth, PatchFxEchoes,    PatchFxSciFi     }    // raw industrial lead
-                    : sadness < 0.60f
+                    : coldness < 0.60f
                     ? new[] { PatchFxSciFi,      PatchLeadSawtooth,PatchFxAtmosphere}    // mid dark noise
                     : new[] { PatchFxAtmosphere, PatchFxSciFi,     PatchLeadSawtooth},   // heavy dark cloud
 
             TrackRole.Counter =>
-                sadness < 0.32f
+                coldness < 0.32f
                     ? new[] { PatchFxEchoes,     PatchLeadSawtooth,PatchFxSciFi     }    // sparse metallic
                     : mystery >= 0.65f
                     ? new[] { PatchFxSciFi,      PatchFxAtmosphere,PatchFxEchoes    }    // dark industrial
@@ -805,12 +831,12 @@ public static class ProceduralMidiComposer
     /// <summary>
     /// Generates a single long sustained note for the ambient noise/pad track.
     /// Returns (midiNote, durationMs, restMs). Not phrase-based — just individual washes.
-    /// Duration: 6–16 beats depending on mood. Mystery and sadness increase duration;
+    /// Duration: 6–16 beats depending on mood. Mystery and coldness increase duration;
     /// fear shortens and destabilises it. No rest — caller uses legato overlap for continuous presence.
     /// </summary>
     public static (int midiNote, int durationMs) GenerateNoiseNote(
         int[] scale, int minIdx, int maxIdx,
-        float sadness, float fear, float mystery, double bpm, Random rng)
+        float coldness, float fear, float mystery, double bpm, Random rng)
     {
         double beatMs = 60_000.0 / bpm;
         // Lower 32% of the range: very deep bass register for brown-noise character.
@@ -821,8 +847,8 @@ public static class ProceduralMidiComposer
         if (rng.NextDouble() < 0.35)
             scaleIdx = Math.Clamp(scaleIdx + (rng.NextDouble() < 0.5 ? 1 : -1), minIdx, noiseCeil);
         int midiNote = scale[scaleIdx];
-        // Duration: long, influenced by sadness/mystery (contemplative) and shortened by fear (anxious)
-        double baseDurBeats = 6.0 + sadness * 4.5 + mystery * 3.5 - fear * 2.5;
+        // Duration: long, influenced by coldness/mystery (contemplative) and shortened by fear (anxious)
+        double baseDurBeats = 6.0 + coldness * 4.5 + mystery * 3.5 - fear * 2.5;
         int durationMs = (int)(beatMs * Math.Clamp(baseDurBeats + rng.NextDouble() * 4.0, 3.0, 22.0));
         return (midiNote, durationMs);
     }

@@ -203,6 +203,23 @@ public abstract class PartyMember
     /// <summary>How much must be put down before this character can travel; 0 when they are fine.</summary>
     public int ExcessWeight => Math.Max(0, CurrentWeight - MaxCarryWeight);
 
+    // ── Looks ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Bonus dialogue dice this character's face is worth, from the <c>beauty</c> stat. Wounds to
+    /// the visage cost dice here, which is the point of routing it through the stat rather than the
+    /// body part's score.
+    /// </summary>
+    public int BeautyDice =>
+        DerivedStats.FirstOrDefault(s => s.Name == "beauty")?.GetValue(this) ?? 0;
+
+    /// <summary>
+    /// The most beauty dice this character's anatomy could ever be worth — the length of the bar
+    /// the dialogue footer draws <see cref="BeautyDice"/> into.
+    /// </summary>
+    public int MaxBeautyDice =>
+        DerivedStats.FirstOrDefault(s => s.Name == "beauty")?.GetValueAtMaxScore(this) ?? 0;
+
     // ── Armour ────────────────────────────────────────────────────
 
     /// <summary>

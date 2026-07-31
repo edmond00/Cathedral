@@ -1,4 +1,4 @@
-namespace Cathedral.Audio;
+﻿namespace Cathedral.Audio;
 
 /// <summary>
 /// Standalone interactive console for the procedural ambient music PoC.
@@ -6,7 +6,7 @@ namespace Cathedral.Audio;
 ///
 /// Key bindings:
 ///   1–4        Set number of active tracks
-///   S / s      Sadness  +0.1 / -0.1
+///   S / s      Coldness  +0.1 / -0.1
 ///   F / f      Fear     +0.1 / -0.1
 ///   M / m      Mystery  +0.1 / -0.1
 ///   N          Reset mood to Neutral
@@ -87,9 +87,9 @@ public static class MusicModeLauncher
                 case ConsoleKey.D4: engine.SetActiveTrackCount(4); break;
 
                 case ConsoleKey.S when key.Modifiers == ConsoleModifiers.None:
-                    engine.SetMood(engine.CurrentMood.WithSadness(+0.1f)); break;
+                    engine.SetMood(engine.CurrentMood.WithColdness(+0.1f)); break;
                 case ConsoleKey.S when key.Modifiers == ConsoleModifiers.Shift:
-                    engine.SetMood(engine.CurrentMood.WithSadness(-0.1f)); break;
+                    engine.SetMood(engine.CurrentMood.WithColdness(-0.1f)); break;
 
                 case ConsoleKey.F when key.Modifiers == ConsoleModifiers.None:
                     engine.SetMood(engine.CurrentMood.WithFear(+0.1f)); break;
@@ -225,7 +225,7 @@ public static class MusicModeLauncher
 
         // Mood bars
         SetCursor(0, top + 4); ClearLine();
-        WriteBar("  Sadness", mood.Sadness, ConsoleColor.Magenta);
+        WriteBar("  Coldness", mood.Coldness, ConsoleColor.Magenta);
 
         SetCursor(0, top + 5); ClearLine();
         WriteBar("  Fear   ", mood.Fear,    ConsoleColor.DarkRed);
@@ -256,7 +256,7 @@ public static class MusicModeLauncher
 
         SetCursor(0, top + 11); ClearLine();
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write("  S/s=Sadness  F/f=Fear  M/m=Mystery  I/i=Intensity  0=Noise solo  1-4=Tracks  T/L/X/B/W=Preset  Z=Random  A/K/G/J/O=Events  P=Loading  V=DiceRoll  H=Help  Q=Quit");
+        Console.Write("  S/s=Coldness  F/f=Fear  M/m=Mystery  I/i=Intensity  0=Noise solo  1-4=Tracks  T/L/X/B/W=Preset  Z=Random  A/K/G/J/O=Events  P=Loading  V=DiceRoll  H=Help  Q=Quit");
         Console.ResetColor();
     }
 
@@ -322,8 +322,8 @@ public static class MusicModeLauncher
         Console.WriteLine("  0                Noise track only (solo)");
         Console.WriteLine("  1 / 2 / 3 / 4    Set number of active tracks");
         Console.WriteLine();
-        Console.WriteLine("  S                Sadness  +0.1 (more melancholic)");
-        Console.WriteLine("  Shift+S          Sadness  -0.1");
+        Console.WriteLine("  S                Coldness  +0.1 (more melancholic)");
+        Console.WriteLine("  Shift+S          Coldness  -0.1");
         Console.WriteLine("  F                Fear     +0.1  (dissonance, broken rhythms)");
         Console.WriteLine("  Shift+F          Fear     -0.1");
         Console.WriteLine("  M                Mystery  +0.1");
@@ -333,7 +333,7 @@ public static class MusicModeLauncher
         Console.WriteLine("  N                Reset to Neutral mood (1 track)");
         Console.WriteLine("  Z                Random mood (all four parameters randomised)");
         Console.WriteLine();
-        Console.WriteLine("  T                Preset: Tavern       (bright, lively)");
+        Console.WriteLine("  T                Preset: Tavern       (the warmest mood there is)");
         Console.WriteLine("  L                Preset: Lament       (sad, slow, calm)");
         Console.WriteLine("  X                Preset: Dark Dungeon (mysterious, sparse)");
         Console.WriteLine("  B                Preset: Battle       (tense, staccato, fast)");

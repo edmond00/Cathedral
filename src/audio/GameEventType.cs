@@ -28,14 +28,14 @@ public enum GameEventType
     /// <summary>
     /// Positive outcome: gaining an item, passing a skill check, unlocking something.
     /// SFX: ascending flute flourish (C4→E4→G4→C5).
-    /// Music: mood briefly brightens (sadness -0.18, fear -0.12 for 5 s); accented phrase.
+    /// Music: mood briefly brightens (coldness -0.18, fear -0.12 for 5 s); accented phrase.
     /// </summary>
     PositiveOutcome,
 
     /// <summary>
     /// Negative outcome: taking damage, failing a skill check, losing something.
     /// SFX: dissonant tremolo-string thud (tritone A3+Eb4 simultaneously).
-    /// Music: mood briefly darkens (sadness +0.15, fear +0.28 for 5 s); phrase breaks short.
+    /// Music: mood briefly darkens (coldness +0.15, fear +0.28 for 5 s); phrase breaks short.
     /// </summary>
     NegativeOutcome,
 

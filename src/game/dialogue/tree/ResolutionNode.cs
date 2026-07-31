@@ -17,8 +17,9 @@ public enum ResolutionMode
 
 /// <summary>
 /// The branch end: reached after the player's last reply, this is where the conversation's single
-/// dice check resolves. The dice pool is the NPC affinity bonus plus the summed levels of every
-/// Modus Mentis that voiced a chosen reply along the branch; <see cref="Difficulty"/> is the fixed,
+/// dice check resolves. The dice pool is the NPC affinity bonus, the summed levels of every
+/// Modus Mentis that voiced a chosen reply along the branch, the speaker's beauty and their attire;
+/// <see cref="Difficulty"/> is the fixed,
 /// authored number of 6s needed to succeed, clamped at roll time to the pool size so it is always
 /// reachable.
 ///
