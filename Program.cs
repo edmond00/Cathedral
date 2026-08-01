@@ -29,12 +29,15 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --dialogue-audit                   Print the dialogue-tree shape report (reply counts, branch lengths, bad tokens) and exit");
     Console.WriteLine("  --npc-audit                        Print the NPC generation report (determinism, trait resolution, body/skill/inventory shape) and exit");
     Console.WriteLine("  --item-audit                       Print the item catalogue report (identity, reachability, weights, trade coverage) and exit");
+    Console.WriteLine("  --building-audit                   Print the building/schedule report (section partition, locks, beds, hall staffing) and exit");
     Console.WriteLine("  --playground                       Replace all LLM calls with instant placeholders (no server needed)");
     Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
     Console.WriteLine("  --mm                               After the childhood reminescence phase, fill every empty memory slot with random unheld modiMentis");
     Console.WriteLine("  --weapons                          Give the protagonist a starter weapon loadout (Arming Sword, Hunting Bow, Round Shield)");
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice)");
+    Console.WriteLine("  --start-at <name>                  DEBUG: spawn on the first biome/location matching <name> (e.g. village, farm)");
+    Console.WriteLine("  --period <name>                    DEBUG: arrive at every location at this time of day (dawn…night) instead of a random one");
     Console.WriteLine("  --dither [mode[:levels[:scale]]]   Retune the final full-screen dither layer (mode off|bayer|mono|noise).");
     Console.WriteLine("                                     Resting state is bayer:6:1; game events pulse it for 0.15s.");
     Console.WriteLine("                                     In-game: F cycles the mode, G the palette depth, H the grain, J the event pulses");
@@ -64,6 +67,15 @@ if (args.Length >= 1 && args[0] == "--npc-audit")
 if (args.Length >= 1 && args[0] == "--item-audit")
 {
     Console.WriteLine(Cathedral.Game.Narrative.ItemAudit.BuildReport());
+    return;
+}
+
+// Building + schedule audit: generate every inhabited location type across a sample of ids and check
+// the invariants that fail silently — section partition, node-id collisions, doors bypassed by
+// area-graph edges, workers with no bed, empty shop counters. Headless: no LLM, no window.
+if (args.Length >= 1 && args[0] == "--building-audit")
+{
+    Console.WriteLine(Cathedral.Game.Scene.Building.BuildingAudit.BuildReport());
     return;
 }
 
@@ -299,6 +311,18 @@ for (int i = 0; i < args.Length; i++)
         break;
     }
 }
+// Debug placement/time flags. Both are inert unless passed, and exist so a --cli script can reach a
+// feature directly instead of depending on where the seed happened to put the protagonist.
+for (int i = 0; i < args.Length; i++)
+{
+    if (args[i] == "--start-at" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.StartAt = args[i + 1];
+
+    if (args[i] == "--period" && i + 1 < args.Length &&
+        Enum.TryParse<Cathedral.Game.Narrative.TimePeriod>(args[i + 1], ignoreCase: true, out var forced))
+        Cathedral.Config.Debug.ForcedPeriod = forced;
+}
+
 // Check for --dither [mode[:levels[:scale]]] — turns on the final full-screen shader layer.
 // Bare --dither is bayer:4:2; F/G/H retune it live once the window is up.
 for (int i = 0; i < args.Length; i++)

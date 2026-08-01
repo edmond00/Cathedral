@@ -8,6 +8,7 @@ using Cathedral.Game.Narrative.World.Items;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Npc.Archetypes;
 using Cathedral.Game.Scene.Building;
+using Cathedral.Game.Scene.Shared;
 using Cathedral.Fight.Generators;
 
 namespace Cathedral.Game.Scene.Field;
@@ -15,11 +16,16 @@ namespace Cathedral.Game.Scene.Field;
 /// <summary>
 /// Builds a procedural cultivated-field scene per the v1 world-content spec (field.md).
 ///
-/// Sections: Tilled Strips, Field Margin.
+/// Sections: Tilled Strips, Field Margin, plus a Longhouse and optionally a Barracks.
 /// Areas (5 picked): Grain Strip (one of wheat/barley/rye, or flax in 10% of fields),
 /// Vegetable Beds, optional Herb Patch (30%), Fallow Ground (50%), Irrigation Ditch.
 /// Connections: <see cref="PathPointOfInterest"/> field tracks.
-/// NPCs: Reeve, Plowman×1–2, Reaper×1–3, Hayward, Bondman×1–3 (return to farm/village at night).
+///
+/// <para>NPCs: Reeve, Plowman×1–2, Reaper×1–3, Hayward, Bondman×1–3 — and they all sleep here. The
+/// schedules used to set <c>[Night] = null</c> with a note that the workers "return to farm/village
+/// at night", but locations are separate scenes: nobody arrived anywhere, they simply stopped
+/// existing after dark. The field now has a longhouse of its own, and a barracks when the crew is
+/// too large for it.</para>
 /// </summary>
 public class FieldSceneFactory : SceneFactory
 {
@@ -29,6 +35,9 @@ public class FieldSceneFactory : SceneFactory
 
     private GrainCrop _crop;
     private Area? _grainStrip, _vegBeds, _herbPatch, _fallow, _ditch;
+    private BuildingResult? _longhouse, _barracks;
+    private LayoutShape _layout;
+    private List<NamedNpcArchetype> _roster = new();
     private readonly List<Area> _allAreas = new();
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
@@ -76,27 +85,61 @@ public class FieldSceneFactory : SceneFactory
 
         // ── 3. Connect with PathPoIs ─────────────────────────────────────────
 
-        ConnectAreas(scene, _grainStrip, _vegBeds, "Field Track");
-        if (_herbPatch != null)
-            ConnectAreas(scene, _vegBeds, _herbPatch, "Field Track");
-        ConnectAreas(scene, _grainStrip, _ditch, "Ditch Edge");
-        if (_fallow != null)
-            ConnectAreas(scene, _fallow, _ditch, "Margin Path");
+        // Shape is rolled: a chain field runs strip to strip along one headland, a ring loops back
+        // round the ditch. The grain strip leads the list, so it stays the arrival point.
+        _layout = OutdoorLayout.RollShape(rng);
+        OutdoorLayout.Connect(scene, _allAreas, _layout, "Field Track", rng);
 
-        Console.WriteLine($"FieldSceneFactory: Built field — crop={_crop}, areas={_allAreas.Count}");
+        // ── 4. Draw up the crew, then house it ──────────────────────────────
+
+        _roster = BuildRoster(rng);
+
+        int longhouseBeds = Math.Min(_roster.Count, 5);
+        int barracksBeds  = _roster.Count - longhouseBeds;
+
+        _longhouse = BuildingFactory.Build(new BuildingSpec
+        {
+            BuildingName          = "Field Longhouse",
+            RoomPrefix            = "Longhouse",
+            Access                = BuildingAccess.Public,
+            Occupancy             = BuildingOccupancy.Communal,
+            OutsideArea           = _grainStrip,
+            BedCount              = longhouseBeds,
+            FunctionNoun          = "longhouse",
+            ArenaGeneratorFactory = seed => new RoomsGenerator { Seed = seed },
+        }, rng);
+        RegisterBuilding(scene, _longhouse);
+
+        if (barracksBeds > 0)
+        {
+            _barracks = BuildingFactory.Build(new BuildingSpec
+            {
+                BuildingName = "Field Barracks",
+                RoomPrefix   = "Barracks",
+                Access       = BuildingAccess.Private,
+                Occupancy    = BuildingOccupancy.Communal,
+                OutsideArea  = OutdoorLayout.DistributeEntrances(_allAreas, 1, rng)[0],
+                BedCount     = barracksBeds,
+                FunctionNoun = "bunkhouse",
+            }, rng);
+            RegisterBuilding(scene, _barracks);
+        }
+
+        Console.WriteLine($"FieldSceneFactory: Built field — layout={_layout}, crop={_crop}, "
+                        + $"areas={_allAreas.Count}, {_roster.Count} worker(s)");
     }
 
-    private static void ConnectAreas(Scene scene, Area a, Area b, string pathName)
+    /// <summary>The field's crew, drawn up before the buildings so they can be sized to sleep it.</summary>
+    private static List<NamedNpcArchetype> BuildRoster(Random rng)
     {
-        scene.ConnectAreasBidirectional(a, b);
-        var path = new PathPointOfInterest(
-            a, b, pathName,
-            new() { $"A worn track running between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
-            new[] { "worn", "narrow", "cropped" }
-        );
-        a.PointsOfInterest.Add(path);
-        b.PointsOfInterest.Add(path);
-        path.Register(scene);
+        var roles = new List<NamedNpcArchetype> { new ReeveArchetype() };
+
+        for (int i = 0, n = rng.Next(1, 3); i < n; i++) roles.Add(new PlowmanArchetype());
+        for (int i = 0, n = rng.Next(1, 4); i < n; i++) roles.Add(new ReaperArchetype());
+        roles.Add(new HaywardArchetype());
+        for (int i = 0, n = rng.Next(1, 4); i < n; i++) roles.Add(new BondmanArchetype());
+
+        return roles;
     }
 
     // ── Area builders ────────────────────────────────────────────────────────
@@ -375,98 +418,76 @@ public class FieldSceneFactory : SceneFactory
 
     protected override void BuildNpcs(Random rng, int locationId, Scene scene)
     {
-        if (_grainStrip is null) return;
+        if (_grainStrip is null || _longhouse is null) return;
 
-        // Reeve (always) + 1-2 plowmen + 1-3 reapers + hayward + 1-3 bondmen
-        SpawnPeasant(rng, scene, new ReeveArchetype(),     _grainStrip);
+        var beds = _longhouse.BedAreas
+            .Concat(_barracks?.BedAreas ?? Array.Empty<Area>())
+            .ToList();
 
-        int plowmen = rng.Next(1, 3);
-        for (int i = 0; i < plowmen; i++)
-            SpawnPeasant(rng, scene, new PlowmanArchetype(), _grainStrip);
+        var hall      = _longhouse.PublicHall;
+        var schedules = new List<NpcSchedule>();
 
-        int reapers = rng.Next(1, 4);
-        for (int i = 0; i < reapers; i++)
-            SpawnPeasant(rng, scene, new ReaperArchetype(), _grainStrip);
+        for (int i = 0; i < _roster.Count && i < beds.Count; i++)
+        {
+            var archetype = _roster[i];
+            var schedule  = BuildScheduleForRole(archetype.ArchetypeId, beds[i], hall, rng);
+            schedules.Add(schedule);
+            SpawnPeasant(rng, scene, archetype, beds[i], schedule, isReeve: i == 0);
+        }
 
-        SpawnPeasant(rng, scene, new HaywardArchetype(),   _grainStrip);
-
-        int bondmen = rng.Next(1, 4);
-        for (int i = 0; i < bondmen; i++)
-            SpawnPeasant(rng, scene, new BondmanArchetype(), _vegBeds!);
+        // Hands may cover the hall; the reeve never is drafted back. They are meant to be there most
+        // of the day and out for one period, and an empty field hall during that period is fine.
+        if (schedules.Count > 1)
+            BuildingSchedule.StaffPublicHall(hall, schedules.Skip(1).ToList());
     }
 
-    private void SpawnPeasant(Random rng, Scene scene, NamedNpcArchetype archetype, Area defaultArea)
+    private void SpawnPeasant(
+        Random rng, Scene scene, NamedNpcArchetype archetype, Area bed, NpcSchedule schedule, bool isReeve)
     {
         // Affinity persists per NPC: Spawn resolves the table by the NPC's stable id — several
         // same-role peasants (e.g. two plowmen) must never share one table.
-        var entity = archetype.Spawn(rng, defaultArea.ContextDescription,
+        var entity = archetype.Spawn(rng, _grainStrip!.ContextDescription,
             _locationState != null ? _locationState.AffinityFor : null);
+
+        // The reeve answers for the place, so they hold its buildings — without an owner, a witness
+        // check indoors falls back to whoever merely has the highest authority level.
+        if (isReeve)
+        {
+            entity.OwnedSectionIds.Add(_longhouse!.Section.Id.ToString());
+            if (_barracks != null) entity.OwnedSectionIds.Add(_barracks.Section.Id.ToString());
+        }
+
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = BuildScheduleForRole(archetype.ArchetypeId);
+        scene.NpcSchedules[sceneNpc.Id] = schedule;
+
+        Console.WriteLine($"FieldSceneFactory: Spawned {entity.DisplayName} ({archetype.ArchetypeId}) — sleeps in {bed.DisplayName}");
     }
 
-    private NpcSchedule BuildScheduleForRole(string archetypeId)
+    /// <summary>
+    /// A field worker's day across the strips they actually work, ending in their own bed in the
+    /// longhouse or barracks.
+    /// </summary>
+    private NpcSchedule BuildScheduleForRole(string archetypeId, Area bed, Area hall, Random rng)
     {
-        var grainId   = _grainStrip!.DisplayName.ToLowerInvariant();
-        var vegId     = _vegBeds!.DisplayName.ToLowerInvariant();
-        var herbId    = _herbPatch?.DisplayName.ToLowerInvariant();
-        var fallowId  = _fallow?.DisplayName.ToLowerInvariant() ?? grainId;
-        var ditchId   = _ditch!.DisplayName.ToLowerInvariant();
+        var grain  = _grainStrip!;
+        var veg    = _vegBeds!;
+        var ditch  = _ditch!;
+        var fallow = _fallow ?? grain;
+        var herb   = _herbPatch ?? fallow;
 
-        // All workers return to farm/village at night → schedule omits Night.
         return archetypeId switch
         {
-            "reeve" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = grainId,
-                [TimePeriod.Morning]   = grainId,
-                [TimePeriod.Noon]      = fallowId,
-                [TimePeriod.Afternoon] = vegId,
-                [TimePeriod.Evening]   = grainId,
-                [TimePeriod.Night]     = null,
-            }),
+            // The reeve holds the hall and does business there; the spec allows them out for one
+            // period, and an empty hall for that period is acceptable.
+            "reeve" => BuildingSchedule.ForWorker(
+                bed, hall, new[] { grain, veg, fallow }, rng, awayPeriods: 1),
 
-            "plowman" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = grainId,
-                [TimePeriod.Morning]   = grainId,
-                [TimePeriod.Noon]      = ditchId,
-                [TimePeriod.Afternoon] = grainId,
-                [TimePeriod.Evening]   = grainId,
-                [TimePeriod.Night]     = null,
-            }),
-
-            "reaper" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = null,
-                [TimePeriod.Morning]   = grainId,
-                [TimePeriod.Noon]      = ditchId,
-                [TimePeriod.Afternoon] = grainId,
-                [TimePeriod.Evening]   = vegId,
-                [TimePeriod.Night]     = null,
-            }),
-
-            "hayward" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = null,
-                [TimePeriod.Morning]   = ditchId,
-                [TimePeriod.Noon]      = fallowId,
-                [TimePeriod.Afternoon] = ditchId,
-                [TimePeriod.Evening]   = grainId,
-                [TimePeriod.Night]     = null,
-            }),
-
-            _ /* bondman */ => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = null,
-                [TimePeriod.Morning]   = vegId,
-                [TimePeriod.Noon]      = ditchId,
-                [TimePeriod.Afternoon] = herbId ?? fallowId,
-                [TimePeriod.Evening]   = vegId,
-                [TimePeriod.Night]     = null,
-            }),
+            "plowman" => BuildingSchedule.ForHand(bed, new[] { grain, grain, grain, ditch }, rng),
+            "reaper"  => BuildingSchedule.ForHand(bed, new[] { grain, grain, veg, ditch }, rng),
+            "hayward" => BuildingSchedule.ForHand(bed, new[] { ditch, ditch, fallow, grain }, rng),
+            _         => BuildingSchedule.ForHand(bed, new[] { veg, veg, ditch, herb }, rng),
         };
     }
 }

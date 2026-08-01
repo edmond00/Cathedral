@@ -184,7 +184,7 @@ public sealed class CliDriver
                 case "dump":        CmdDump(rest);                    break;
                 case "regions":     CmdRegions();                     break;
                 case "world":       CmdWorld();                       break;
-                case "destinations":CmdDestinations();                break;
+                case "destinations":CmdDestinations(rest);            break;
                 case "click":       CmdClick(rest);                   break;
                 case "choose":      CmdChoose(rest);                  break;
                 case "travel":      CmdTravel(rest);                  break;
@@ -249,7 +249,7 @@ public sealed class CliDriver
           travel <vertex|name>      plan a route to a world vertex (bypasses 3D picking)
           travel-go                 commit the planned route and set out (the TRAVEL button)
           manage [tab]              open/close the protagonist screen; with a tab name
-                                    (Body, Inventory, Memory, Humors, …) open it there
+                                    (Anatomy, Inventory, Memory, Humors, …) open it there
           select [item name]        show a carried item's info panel; bare `select` lists them
           key <escape|…>            send a key
           scroll up|down [n]        scroll the shared history buffer
@@ -435,22 +435,49 @@ public sealed class CliDriver
         CliMode.Emit($"avatar_vertex={v} biome=\"{biome.Name}\" location=\"{location?.Name ?? "-"}\" mode={_game.CurrentMode}");
     }
 
-    private void CmdDestinations()
+    /// <summary>
+    /// Lists where the avatar can travel. Bare, it lists the immediate graph neighbours.
+    ///
+    /// <para><c>destinations all [filter]</c> lists everything inside the stat-derived travel radius
+    /// instead, optionally filtered by biome or location name — <c>destinations all village</c>. The
+    /// neighbour list is only ever half a dozen vertices of whatever the spawn point happens to
+    /// border, so testing a biome-specific feature otherwise means hunting for a lucky seed.</para>
+    /// </summary>
+    private void CmdDestinations(string[] a)
     {
-        var graph = _game.CliWorld.GetTravelGraph();
-        if (graph == null) { CliMode.Emit("error: no travel graph"); return; }
+        bool all      = a.Length > 0 && a[0].Equals("all", StringComparison.OrdinalIgnoreCase);
+        string filter = all ? string.Join(' ', a.Skip(1)) : string.Join(' ', a);
 
-        int from = _game.CliAvatarVertex;
-        var neighbours = graph.GetConnectedNodes(from).ToList();
-        if (neighbours.Count == 0) { CliMode.Emit("no connected vertices"); return; }
+        IEnumerable<int> candidates;
+        if (all)
+        {
+            candidates = _game.CliWorld.EnumerateReachableVertices();
+        }
+        else
+        {
+            var graph = _game.CliWorld.GetTravelGraph();
+            if (graph == null) { CliMode.Emit("error: no travel graph"); return; }
+            candidates = graph.GetConnectedNodes(_game.CliAvatarVertex);
+        }
 
-        foreach (int v in neighbours)
+        int shown = 0;
+        foreach (int v in candidates)
         {
             var (biome, location, _) = _game.CliWorld.GetDetailedBiomeInfoAt(v);
-            bool ok = _game.CliWorld.IsVertexTraversable(v) && !_game.CliWorld.IsOutOfTravelRange(v);
             string name = location?.Name ?? biome.Name;
+            if (filter.Length > 0 && !name.Contains(filter, StringComparison.OrdinalIgnoreCase)) continue;
+
+            bool ok = _game.CliWorld.IsVertexTraversable(v) && !_game.CliWorld.IsOutOfTravelRange(v);
             CliMode.Emit($"  travel {v}  \"{name}\"  {(ok ? "reachable" : "blocked")}");
+
+            // Bounded so `destinations all` on a big world cannot bury the rest of a script's output.
+            if (++shown >= 40) { CliMode.Emit("  … (truncated at 40; narrow with a filter)"); break; }
         }
+
+        if (shown == 0)
+            CliMode.Emit(filter.Length > 0
+                ? $"no {(all ? "in-range" : "connected")} vertex matching \"{filter}\""
+                : "no connected vertices");
     }
 
     // ── Commands: action ──────────────────────────────────────────────────────
@@ -579,18 +606,33 @@ public sealed class CliDriver
         }
         else
         {
-            // Resolve by location/biome name among connected vertices.
-            var graph = _game.CliWorld.GetTravelGraph();
-            if (graph == null) { CliMode.Emit("error: no travel graph"); return; }
-            string want = a[0];
+            // Resolve by location/biome name, nearest first: the vertex under our feet, then immediate
+            // neighbours, then anywhere inside travel range.
+            //
+            // The avatar's own vertex leads because clicking it *enters* the current location rather
+            // than planning a route — so after `--start-at village`, `travel village` walks straight
+            // in, where searching neighbours first would plan a trip to some other village and leave
+            // the script sitting on the travel box waiting for a `travel-go` that never comes.
+            string want  = string.Join(' ', a);
+            var graph    = _game.CliWorld.GetTravelGraph();
+            var searchIn = new[] { _game.CliAvatarVertex }
+                .Concat(graph?.GetConnectedNodes(_game.CliAvatarVertex) ?? Enumerable.Empty<int>())
+                .Concat(_game.CliWorld.EnumerateReachableVertices());
+
             target = -1;
-            foreach (int v in graph.GetConnectedNodes(_game.CliAvatarVertex))
+            foreach (int v in searchIn)
             {
                 var (biome, location, _) = _game.CliWorld.GetDetailedBiomeInfoAt(v);
                 string name = location?.Name ?? biome.Name;
-                if (name.Contains(want, StringComparison.OrdinalIgnoreCase)) { target = v; break; }
+                if (!name.Contains(want, StringComparison.OrdinalIgnoreCase)) continue;
+                // The avatar's own vertex is always a valid target — range gating applies to going
+                // somewhere, not to standing still.
+                if (v != _game.CliAvatarVertex &&
+                    (!_game.CliWorld.IsVertexTraversable(v) || _game.CliWorld.IsOutOfTravelRange(v))) continue;
+                target = v;
+                break;
             }
-            if (target < 0) { CliMode.Emit($"error: no reachable destination matching \"{want}\" (try `destinations`)"); return; }
+            if (target < 0) { CliMode.Emit($"error: no reachable destination matching \"{want}\" (try `destinations all`)"); return; }
         }
 
         _game.CliClickVertex(target);

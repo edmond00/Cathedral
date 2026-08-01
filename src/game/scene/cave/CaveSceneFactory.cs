@@ -123,7 +123,7 @@ public class CaveSceneFactory : SceneFactory
             scene.ConnectAreasBidirectional(_mainShaft, b);
             string passName = b.DisplayName == "Underground Pool" ? "Flooded Passage" : "Passage";
             var path = new PathPointOfInterest(
-                _mainShaft, b, passName,
+                _mainShaft, b, PathPointOfInterest.NameFor(_mainShaft, b, passName),
                 new() { $"A rough passage leading to the {b.DisplayName.ToLowerInvariant()}" },
                 new[] { "narrow", "rough-hewn", "echoing" }
             );
@@ -314,9 +314,9 @@ public class CaveSceneFactory : SceneFactory
 
     private NpcSchedule BuildMinerSchedule()
     {
-        var entrance = _entrance!.DisplayName.ToLowerInvariant();
-        var ore      = (_oreChamber ?? _mainShaft!).DisplayName.ToLowerInvariant();
-        var shaft    = _mainShaft!.DisplayName.ToLowerInvariant();
+        var entrance = _entrance!;
+        var ore      = _oreChamber ?? _mainShaft!;
+        var shaft    = _mainShaft!;
 
         return NpcSchedule.Roaming(new()
         {
@@ -337,6 +337,6 @@ public class CaveSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
     }
 }

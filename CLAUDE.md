@@ -30,6 +30,8 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--seed <n>` | Fixes the master RNG (world, spawn, dice) so a run is repeatable. |
 | `--skip-childhood` | Skips the childhood + get-up phases and fills starting skills/items randomly. |
 | `--debug` | Lets `strategy` force action outcomes. Under `--cli` it never prompts — see below. |
+| `--start-at <name>` | Spawns the protagonist on the first biome or location matching `<name>` (`village`, `farm`, `field`, `cave`…). Without it you get wherever the seed puts you, which is usually plain or forest — testing anything village-specific otherwise means hunting for a lucky seed. |
+| `--period <name>` | Pins the arrival time of day (`dawn`…`night`) instead of drawing one at random. Needed for anything period-gated: every building's entry door shuts at `night`, and a random draw reaches that one visit in six. |
 
 A typical invocation:
 
@@ -50,7 +52,10 @@ Run `help` for the authoritative list. The essentials:
                             plus carry[cur/max] and the travel blocker when overloaded
   dump [--color]            the terminal grid as text; --color tags each row dim/mix/lit
   regions                   what is actionable right now — the handles `click` accepts
-  world / destinations      world-map state; reachable vertices by name
+  world                     avatar vertex, biome and location
+  destinations              vertices bordering the avatar
+  destinations all [filter] every vertex inside the (stat-derived) travel range, not just the
+                            neighbours; filter by biome/location name — `destinations all village`
 
   click menu <label>        main-menu button
   click continue            protagonist-creation Continue, or a settled dice overlay
@@ -63,7 +68,7 @@ Run `help` for the authoritative list. The essentials:
                             clicking your own vertex enters the current location
   travel-go                 commit the plan and set out — the TRAVEL button
   manage [tab]              open/close the protagonist screen; with a tab name
-                            (Body / Inventory / Memory / Humors / …) open it there
+                            (Anatomy / Inventory / Memory / Humors / …) open it there
   select [item name]        show a carried item's info panel; bare `select` lists what
                             is carried. Note the starting kit is randomised even under
                             --seed, so discover the names rather than hard-coding them
@@ -154,6 +159,26 @@ it, otherwise `wait` will return while the phase is still building.
 (`ClearDiceRoll` sets it that way), so always gate it behind `IsDiceRollActive` when testing for
 business. This already caused one bug in `CliIsIdle`.
 
+### Adding a debug flag when a feature is hard to reach
+
+**Adding new debug-only command-line options is expected, not a last resort.** If the thing you
+changed sits behind a rare biome, a particular time of day, a specific roll or a long approach, do
+not hunt for a seed that happens to line it up — add a flag, use it, and document it here so the
+next person can reuse it.
+
+The rules:
+
+- Put the switch on `Config.Debug` (`src/Config.cs`) and parse it in `Program.cs` beside `--seed`.
+- **It must be inert at its default.** A run without the flag has to behave exactly as if the option
+  did not exist; every one of these reads `?? <the normal behaviour>`.
+- Add it to the `--help` block, to the flag table above, and say what it is *for* — the next reader
+  needs to know which problem it solves, not just what it sets.
+
+`--start-at` and `--period` were both added this way: the first because villages rarely spawn within
+travel range, the second because the night door rule fires in one period out of six. `destinations
+all` exists for the same reason — the plain `destinations` list is only the handful of vertices
+bordering the spawn point, while travel range reaches far further.
+
 ### Checking dialogue trees without running the game
 
 Tree shape is not something a `--cli` script can see — a script walks one branch. `--dialogue-audit`
@@ -229,6 +254,44 @@ body part's share of the wound pool. Armour needs the hit location *before* the 
 attacks now pre-roll one; that check is the proof the pre-roll did not change where blows land.
 
 Run it after touching any item, `WearableItem`, `ArmorSections`, or the weight tiers.
+
+### Checking buildings, scenes and NPC schedules
+
+`--building-audit` generates every location type across 60 location ids and checks the structural
+invariants that fail *silently* in play — nothing throws, the scene just quietly misbehaves:
+
+```bash
+dotnet run -- --building-audit
+```
+
+Per factory it prints the range of areas, NPCs and doors (and how many are locked at noon), plus the
+sections that were generated and how often. Then it warns about:
+
+- an area in two sections or in none. Sections must **partition** the areas: every lookup is a
+  "first section containing this area", and an area in none crashes the fight path outright;
+- two areas sharing a node-id slug (`display name → lower_snake`). The narration graph keys nodes by
+  that slug, so a duplicate overwrites and one room ends up with **no node** — unreachable, and
+  invisible to NPC placement. This is why `BuildingFactory` prefixes every room with its building;
+- two PoIs in one area sharing a display name. Observation candidates are de-duplicated by name, so
+  the second is never observable and anything inside it is unreachable. `SceneFactory` merges these
+  automatically now, so a warning here means something bypassed that pass;
+- an `AreaGraph` edge duplicating a door or a stair — that gives `MoveToAreaVerb` a way around the
+  lock, which is exactly how the village's one interior door used to be decorative;
+- an entry door that is not locked at night, or a door with no rolled description;
+- an NPC with `[Night] = null`, sleeping in a room with no bed, or a room sleeping more people than
+  it has beds. Wilderness factories are exempt — a wolf is allowed to sleep rough;
+- a public hall with nobody in it during a day period: a shop with no one behind the counter;
+- stable keys that are missing, colliding, or **different across two builds of one location id**.
+  That last one matters because procedural descriptions are seeded from the key, so a key that moves
+  re-rolls how every door in the place looks between visits.
+
+It finishes by printing real door prose from both sides and at night, and by driving a
+`SyntheticObservationObject` directly to prove the viewing area and the period stamp actually reach
+the description — a door that lost either would still read perfectly well, just always from outside
+and always by day.
+
+Run it after touching `BuildingFactory`, any scene factory, `NpcSchedule`, or the observation
+description path.
 
 ### What `--cli` cannot check
 

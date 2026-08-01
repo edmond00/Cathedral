@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -1425,10 +1426,18 @@ public class LlamaServerManager : IDisposable
             : Path.Combine(Environment.CurrentDirectory, "llama-server.log");
         
         var threadArgs = Config.LLM.CpuThreads > 0 ? $" -t {Config.LLM.CpuThreads}" : string.Empty;
+
+        // Invariant formatting: the server parses these as C-locale decimals, so a French/German
+        // locale writing "1,1" would make llama-server reject the argument.
+        var inv = CultureInfo.InvariantCulture;
+        var samplingArgs = $" --repeat-penalty {Config.LLM.RepeatPenalty.ToString(inv)}"
+                         + $" --frequency-penalty {Config.LLM.FrequencyPenalty.ToString(inv)}"
+                         + $" --dry-multiplier {Config.LLM.DryMultiplier.ToString(inv)}";
+
         var startInfo = new ProcessStartInfo
         {
             FileName = serverPath,
-            Arguments = $"-m \"{modelPath}\" -c {contextSize} --port 8080 --cache-type-k f16 --cache-type-v f16 --repeat-penalty 1.1 --frequency-penalty 0.5 --dry-multiplier 0.8 -ngl {Config.LLM.GpuLayers}{threadArgs} --verbose",
+            Arguments = $"-m \"{modelPath}\" -c {contextSize} --port 8080 --cache-type-k f16 --cache-type-v f16{samplingArgs} -ngl {Config.LLM.GpuLayers}{threadArgs} --verbose",
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,

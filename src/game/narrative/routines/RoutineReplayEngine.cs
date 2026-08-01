@@ -108,9 +108,11 @@ public class RoutineReplayEngine
             }
 
             // 5. Commit the step. Constraints consume (real or ledger-only); verb reports advance the
-            //    disposable scene/pov. NOTE: today's only recordable verb (move) confines its reports to
-            //    the PoV. When recordable verbs that mutate the acting member are added, virtual replay
-            //    will need per-report dry-run isolation here.
+            //    disposable scene/pov — including where and when it is, so a movement or time-shift
+            //    step re-gates every later step's IsPossible through the same GetNpcsAt(Where, When)
+            //    query narration uses. NOTE: gather mutates the acting member's inventory, and picking
+            //    is only made safe by scene.IsVirtualReplay above; a recordable verb whose reports
+            //    touch the member some other way will need per-report dry-run isolation here.
             foreach (var c in step.Constraints) c.Consume(ctx);
 
             // Rebuild the exact view the player chose (e.g. which job) so variant-aware verbs like
@@ -179,7 +181,14 @@ public class RoutineReplayEngine
 
     /// <summary>
     /// Derives the post-replay phase from the last step's recorded trigger plus any pending request
-    /// the verb left on the scene (fight/dialogue). A dialogue trigger is resolved by the tree's
+    /// the verb left on the scene (fight/dialogue).
+    ///
+    /// <para>The handed-on time period is <c>pov.When</c>, not <c>routine.StartTime</c>: replay begins
+    /// at the recorded arrival time but a time-shifting step (waiting out the morning) moves it on,
+    /// exactly as a movement step moves <c>pov.Where</c>. Both are read off the PoV the replay
+    /// actually ended at, so whatever opens next opens where and when the routine left off.</para>
+    ///
+    /// A dialogue trigger is resolved by the tree's
     /// <see cref="DialogueRoutineBehavior"/>: <b>IncludeTrigger</b> reopens the dialogue live, while
     /// <b>IncludeSuccess</b> bakes the dialogue's success in (applying its outcomes here) and opens the
     /// follow-on trade/work phase directly.
@@ -213,13 +222,13 @@ public class RoutineReplayEngine
                 {
                     var mode = req.Npc.TradeRequest;
                     req.Npc.TradeRequest = TradeMode.None;   // consume the transient flag
-                    return new StartRoutineTradeTransition(routine.LocationId, req.Npc.DisplayName, mode, routine.StartTime);
+                    return new StartRoutineTradeTransition(routine.LocationId, req.Npc.DisplayName, mode, pov.When);
                 }
                 if (req.Npc.JobRequest is { } job)
                 {
                     req.Npc.JobRequest      = null;          // consume the transient flags
                     req.Npc.PendingJobOffer = null;
-                    return new StartRoutineWorkTransition(routine.LocationId, req.Npc.DisplayName, job.Id, routine.StartTime);
+                    return new StartRoutineWorkTransition(routine.LocationId, req.Npc.DisplayName, job.Id, pov.When);
                 }
 
                 // Success set neither flag — treat as inert and return to travel rather than hang.
@@ -227,12 +236,12 @@ public class RoutineReplayEngine
             }
 
             // IncludeTrigger (the only other behavior that records the step): reopen the dialogue live.
-            return new StartRoutineDialogueTransition(routine.LocationId, req.Npc.DisplayName, treeId, routine.StartTime);
+            return new StartRoutineDialogueTransition(routine.LocationId, req.Npc.DisplayName, treeId, pov.When);
         }
 
         var last = routine.Steps.LastOrDefault();
         if (last != null && last.TriggeredPhase == RoutinePhaseKind.Narration)
-            return new StartNarrationTransition(routine.LocationId, pov.Where, routine.StartTime);
+            return new StartNarrationTransition(routine.LocationId, pov.Where, pov.When);
 
         return ReturnToTravelTransition.Instance;
     }

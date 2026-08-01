@@ -22,7 +22,7 @@ public class UnlockDoorVerb : Verb
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not DoorPointOfInterest door) return false;
-        return pov.Where.Id == door.FrontArea.Id && door.DoorState == DoorState.Locked;
+        return pov.Where.Id == door.FrontArea.Id && door.EffectiveState(pov.When) == DoorState.Locked;
     }
 
     public override string Verbatim(Scene scene, PoV pov, Element target)

@@ -38,11 +38,15 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         if (firstArea == null)
             throw new InvalidOperationException("Scene has no areas — cannot build synthetic graph");
 
-        // Create a synthetic NarrationNode for each area, keyed by Guid for graph wiring
+        // Create a synthetic NarrationNode for each area, keyed by Guid for graph wiring.
+        // Node ids are display-name slugs and are only unique by convention, so they are
+        // disambiguated here: a duplicate would overwrite the earlier node in _areaNodes and leave a
+        // whole room with no node — unplaceable by SceneNpcPlacement and unreachable by transition.
         var byGuid = new Dictionary<Guid, SyntheticNarrationNode>();
+        var usedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var area in _scene.AllAreas)
         {
-            var node = CreateNodeForArea(area);
+            var node = CreateNodeForArea(area, UniqueNodeId(area, usedIds));
             byGuid[area.Id] = node;
             _areaNodes[node.NodeId] = node;
         }
@@ -64,7 +68,20 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         return byGuid[firstArea.Id];
     }
 
-    private SyntheticNarrationNode CreateNodeForArea(Area area)
+    /// <summary>
+    /// A scene-unique node id for <paramref name="area"/>: the display-name slug, suffixed on
+    /// collision. Two buildings each holding a "Hall" would otherwise produce one id.
+    /// </summary>
+    private static string UniqueNodeId(Area area, HashSet<string> used)
+    {
+        var baseId = area.DisplayName.ToLowerInvariant().Replace(' ', '_');
+        var id     = baseId;
+        for (int n = 2; !used.Add(id); n++)
+            id = $"{baseId}_{n}";
+        return id;
+    }
+
+    private SyntheticNarrationNode CreateNodeForArea(Area area, string nodeId)
     {
         SyntheticNarrationNode node;
         if (_scene.Phase == NarrationPhase.ChildhoodReminescence
@@ -73,7 +90,7 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
             && ReminescenceRegistry.Get(_scene.CurrentReminescenceId) is { } data)
         {
             node = new ReminescenceNarrationNode(
-                area.DisplayName.ToLowerInvariant().Replace(' ', '_'),
+                nodeId,
                 area.ContextDescription,
                 area.TransitionDescription,
                 area,
@@ -83,7 +100,7 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         else if (_scene.Phase == NarrationPhase.GetUp)
         {
             node = new GetUpNarrationNode(
-                area.DisplayName.ToLowerInvariant().Replace(' ', '_'),
+                nodeId,
                 area.ContextDescription,
                 area.TransitionDescription,
                 area);
@@ -91,16 +108,17 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
         else
         {
             node = new SyntheticNarrationNode(
-                area.DisplayName.ToLowerInvariant().Replace(' ', '_'),
+                nodeId,
                 area.ContextDescription,
                 area.TransitionDescription,
                 area);
         }
 
-        // PoI/spot verbs do not depend on the time of day (their gates read item/spot state, not
-        // NPC presence), so any period serves for the initial expansion; RefreshSceneVerbs re-gates
-        // them live afterwards. NPC observation objects are NOT baked here — they are placed per
-        // period by SceneNpcPlacement so a scene only ever shows the NPCs actually present now.
+        // Any period serves for this initial expansion; RefreshSceneVerbs re-gates every verb live at
+        // the real period before anything is shown, and stamps that period onto the observations too.
+        // Doors ARE period-dependent (an entry door is shut at night), so this bake is provisional —
+        // do not read verb availability off it. NPC observation objects are NOT baked here: they are
+        // placed per period by SceneNpcPlacement so a scene only shows the NPCs actually present now.
         var pov = new PoV(area, TimePeriod.Morning);
 
         // Add points of interest as synthetic ObservationObjects
@@ -119,7 +137,9 @@ public class SceneSyntheticGraphFactory : NarrationGraphFactory
                         .ToList()))
                 .ToList();
 
-            node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry, itemSubEntries));
+            // The viewing area is what lets a connector PoI describe itself per side: a door lives in
+            // both areas' PoI lists, so this is the only thing distinguishing the two observations.
+            node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry, itemSubEntries, area));
         }
 
         // Add spots as synthetic enterable sub-locations

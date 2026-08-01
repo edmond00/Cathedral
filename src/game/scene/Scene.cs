@@ -125,8 +125,8 @@ public class Scene
             if (!npc.IsAlive) continue;
             if (!NpcSchedules.TryGetValue(npc.Id, out var schedule)) continue;
 
-            var nodeId = schedule.GetNodeId(period);
-            if (nodeId != null && string.Equals(nodeId, area.DisplayName, StringComparison.OrdinalIgnoreCase))
+            var scheduled = schedule.GetArea(period);
+            if (scheduled != null && scheduled.Id == area.Id)
                 result.Add(npc);
         }
         return result;

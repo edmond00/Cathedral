@@ -68,7 +68,8 @@ public static class SceneViewAdapter
                     .Where(e => e != null)
                     .Select(e => e!)
                     .ToList();
-                node.PossibleOutcomes.Add(new SyntheticObservationObject(poi, entry, itemSubEntries));
+                node.PossibleOutcomes.Add(new SyntheticObservationObject(
+                    poi, entry, itemSubEntries, view.CurrentArea, view.CurrentPeriod));
             }
             else if (entry.Source is ItemElement)
             {
@@ -89,6 +90,50 @@ public static class SceneViewAdapter
     /// </summary>
     public static VerbOutcome MakeIgnoreSubOutcome(Element target)
         => new VerbOutcome(new VerbView(IgnoreVerb.Instance, IgnoreVerb.VerbatimText, target), target);
+
+    /// <summary>
+    /// The RNG that picks which of an element's descriptions and moods are used when it is observed.
+    ///
+    /// <para>Seeded per element, not per location. Seeding on <paramref name="locationId"/> alone —
+    /// which every one of these call sites used to do, and with a hard-coded 0 at that — made every
+    /// object in a scene draw the same index, so a location's whole multi-description and mood
+    /// vocabulary collapsed to one entry. <see cref="Element.StableKey"/> is assigned in deterministic
+    /// build order, so the pick varies between objects while staying identical across rebuilds of the
+    /// same location.</para>
+    /// </summary>
+    public static Random DescriptionRng(Element element, int locationId)
+        => element.StableKey.Length > 0
+            ? new Random(GameRng.DerivedSeed($"obs|{locationId}|{element.StableKey}"))
+            : new Random(locationId);
+
+    /// <summary>
+    /// Picks a mood adjective to prefix <paramref name="description"/> with, skipping any that the
+    /// description already uses. Returns null when every mood is already in there, in which case the
+    /// description stands alone.
+    ///
+    /// <para>Without the check the prefix stutters — the well whose mood is "stone-rimmed" and whose
+    /// description opens "A stone-rimmed well…" came out as "a stone-rimmed stone-rimmed well". The
+    /// mood pools were written to echo the descriptions, so this is the common case rather than a
+    /// rare collision.</para>
+    /// </summary>
+    public static string? PickMood(string[] moods, string description, Random rng)
+    {
+        if (moods.Length == 0) return null;
+
+        var words = new HashSet<string>(
+            description.Split(' ', ',', '.', ';', ':', '—', '(', ')'),
+            StringComparer.OrdinalIgnoreCase);
+
+        // Start at a random offset and take the first mood the description does not already use, so
+        // the choice stays varied rather than always falling to the first free entry.
+        int start = rng.Next(moods.Length);
+        for (int i = 0; i < moods.Length; i++)
+        {
+            var mood = moods[(start + i) % moods.Length];
+            if (!words.Contains(mood)) return mood;
+        }
+        return null;
+    }
 }
 
 /// <summary>
@@ -127,7 +172,7 @@ public class SyntheticNarrationNode : NarrationNode
     {
         if (Area?.Descriptions.Count > 0)
         {
-            var rng  = new Random(locationId);
+            var rng  = SceneViewAdapter.DescriptionRng(Area, locationId);
             var desc = Area.Descriptions[rng.Next(Area.Descriptions.Count)];
             var lower = char.ToLowerInvariant(desc[0]) + desc[1..];
             return $"{_contextDescription} — {lower}";
@@ -154,13 +199,30 @@ public interface IVerbRefreshable
 /// Items inside the PoI are NOT separate observations — their applicable verbs are folded
 /// in as SubOutcomes (e.g. "grab the apple", "grab the leaf").
 /// </summary>
-public class SyntheticObservationObject : ObservationObject, IVerbRefreshable
+public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, IPeriodStampable
 {
     private readonly PointOfInterest _poi;
 
-    public SyntheticObservationObject(PointOfInterest poi, SceneViewEntry entry, List<SceneViewEntry> itemSubEntries)
+    /// <summary>
+    /// The area this observation is made from. A connector PoI (door, stair, path) sits in two areas'
+    /// PoI lists and therefore yields two distinct observation objects — this is what tells them
+    /// apart, so a door can read one way from the street and another from the hall inside.
+    /// </summary>
+    private readonly Area? _viewingArea;
+
+    /// <summary>Live time of day, stamped by the controller. See <see cref="IPeriodStampable"/>.</summary>
+    private TimePeriod? _period;
+
+    public SyntheticObservationObject(
+        PointOfInterest poi,
+        SceneViewEntry entry,
+        List<SceneViewEntry> itemSubEntries,
+        Area? viewingArea = null,
+        TimePeriod? period = null)
     {
-        _poi = poi;
+        _poi         = poi;
+        _viewingArea = viewingArea;
+        _period      = period;
 
         SubOutcomes = new List<ConcreteOutcome>();
 
@@ -194,6 +256,9 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(_poi));
     }
 
+    /// <inheritdoc cref="IPeriodStampable"/>
+    public void StampPeriod(TimePeriod period) => _period = period;
+
     public override string ObservationId => _poi.DisplayName.ToLowerInvariant().Replace(' ', '_');
 
     public override string NeutralName => _poi.DisplayName;
@@ -202,19 +267,23 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable
 
     public override string GenerateNeutralDescription(int locationId = 0)
     {
+        // A door describes itself differently from either side and says whether it looks shut, so it
+        // supersedes the static Descriptions list whenever we know where we are standing.
+        if (_poi is IContextualDescription contextual && _viewingArea != null)
+            return contextual.DescribeFrom(_viewingArea, _period ?? TimePeriod.Morning);
+
         // Use a random description from the PoI's Descriptions list if available, then mood prefix
+        var rng = SceneViewAdapter.DescriptionRng(_poi, locationId);
         if (_poi.Descriptions.Count > 0)
         {
-            var rng = new Random(locationId);
             var desc = _poi.Descriptions[rng.Next(_poi.Descriptions.Count)];
-            if (_poi.Moods.Length > 0)
-                return $"{_poi.Moods[rng.Next(_poi.Moods.Length)]} {desc}";
-            return desc;
+            var mood = SceneViewAdapter.PickMood(_poi.Moods, desc, rng);
+            return mood == null ? desc : $"{mood} {desc}";
         }
-        var moods = _poi.Moods;
-        if (moods.Length == 0) return _poi.DisplayName.ToLowerInvariant();
-        var r = new Random(locationId);
-        return $"{moods[r.Next(moods.Length)]} {_poi.DisplayName.ToLowerInvariant()}";
+
+        var name      = _poi.DisplayName.ToLowerInvariant();
+        var nameMood  = SceneViewAdapter.PickMood(_poi.Moods, name, rng);
+        return nameMood == null ? name : $"{nameMood} {name}";
     }
 }
 
@@ -256,7 +325,7 @@ public class SyntheticSpotObject : ObservationObject, IVerbRefreshable
     {
         if (_spot.Descriptions.Count > 0)
         {
-            var rng = new Random(locationId);
+            var rng = SceneViewAdapter.DescriptionRng(_spot, locationId);
             return _spot.Descriptions[rng.Next(_spot.Descriptions.Count)];
         }
         return _spot.DisplayName.ToLowerInvariant();
@@ -294,7 +363,7 @@ public class SyntheticAreaObservationObject : ObservationObject
     {
         if (_area.Descriptions.Count > 0)
         {
-            var rng = new Random(locationId);
+            var rng = SceneViewAdapter.DescriptionRng(_area, locationId);
             return _area.Descriptions[rng.Next(_area.Descriptions.Count)];
         }
         return _area.DisplayName.ToLowerInvariant();

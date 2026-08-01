@@ -19,6 +19,8 @@ childhood : leave temple -> grandfather story
 mention of town while speaking in a forest : need more context
 (You wonder ...) in dialogue inner thought (2nd person)
 routine + traveling NPC ?
+working memory full = can not learn more MM = remove FIFO
+NPC sleeping in bed
 
 Error during dialogue last NPC replica generation after dice roll :
 DialogueTreeControllerr Resolution line failed: GenerateConstrainedStringStreamingAsync failed: BadRequest - {"error":{"code":400,"message":"request (2263 tokens) exceeds the available context size (2048 tokens), try increasing it","type":"exceed_context_size_error","n_prompt_tokens":2263,"n_ctx":2048}}
@@ -28,3 +30,29 @@ words to prevent :
 photo album
 bullet
 office
+
+
+new verbs :
+MURDER (night/bed)
+SIT AND WAIT
+CRUSH
+CROSS
+SWIM ACROSS
+TRACK
+STALK
+TAME
+EXAMINE/CONTEMPLATE/STUDY
+OBSERVE HORIZON
+MEET TO REQUEST HOSPITALITY
+MAKE A CAMP FIRE AND WAIT
+MEET TO PROPOSE TO JOIN THE PARTY
+HIDE AND WAIT
+PICKPOCKET
+MEET TO ASK TO INTRODUCE ME TO X
+BEF FOR COIN
+MEET TO GATHER KNOWLEDGE
+(need tools)
+FISH (fishing rod, net)
+MINE (pickaxe)
+CUT WOOD (axe)
+DIG (shovel)

@@ -13,7 +13,7 @@ namespace Cathedral.Game.Management;
 /// </summary>
 public enum ManagementTab
 {
-    Body,
+    Anatomy,
     Inventory,
     Journal,
     Memory,
@@ -51,13 +51,13 @@ public class ManagementMenuRenderer
     private GearAnchorData? _beastGearData;
 
     // ── Tab state ────────────────────────────────────────────────
-    private ManagementTab _activeTab = ManagementTab.Body;
+    private ManagementTab _activeTab = ManagementTab.Anatomy;
     private int _selectedCharacterIndex = 0; // 0 = protagonist, 1+ = companions
 
     // ── Tab definitions ──────────────────────────────────────────
     private static readonly TabDefinition[] AllTabs = new[]
     {
-        new TabDefinition("Body",      ManagementTab.Body,      AllCharacters: true),
+        new TabDefinition("Anatomy",   ManagementTab.Anatomy,   AllCharacters: true),
         new TabDefinition("Inventory", ManagementTab.Inventory,  AllCharacters: true),
         new TabDefinition("Journal",   ManagementTab.Journal,    AllCharacters: false), // protagonist only
         new TabDefinition("Memory",    ManagementTab.Memory,    AllCharacters: true),
@@ -219,8 +219,8 @@ public class ManagementMenuRenderer
         _terminal.Fill(' ', Config.Colors.Black, Config.Colors.Black);
         _terminal.Visible = true;
 
-        // Body art (only on Body tab)
-        if (_activeTab == ManagementTab.Body)
+        // Body art (only on Anatomy tab)
+        if (_activeTab == ManagementTab.Anatomy)
         {
             _bodyViewer.ShowWounds = true;
             _bodyViewer.ShowAge    = true;
@@ -231,7 +231,7 @@ public class ManagementMenuRenderer
         {
             _bodyViewer.ShowWounds = false;
             _bodyViewer.ShowAge    = false;
-            // Draw separator on non-body, non-memory, non-humors, non-routines tabs
+            // Draw separator on non-anatomy, non-memory, non-humors, non-routines tabs
             int sepX = BodyArtViewer.PanelX - 1;
             for (int y = 0; y < 100; y++)
                 _terminal.SetCell(sepX, y, '│', Config.Colors.DarkGray35, Config.Colors.Black);
@@ -244,7 +244,7 @@ public class ManagementMenuRenderer
 
         switch (_activeTab)
         {
-            case ManagementTab.Body:
+            case ManagementTab.Anatomy:
                 int lastRow = _bodyViewer.RenderOrganStats();
                 int descRow = _bodyViewer.RenderHoveredOrganDescription(lastRow);
                 _bodyViewer.RenderHoveredDetail(descRow);
@@ -283,7 +283,7 @@ public class ManagementMenuRenderer
     /// <summary>Called every frame for animations.</summary>
     public void Update()
     {
-        if (_activeTab == ManagementTab.Body && _bodyViewer.UpdateBlink())
+        if (_activeTab == ManagementTab.Anatomy && _bodyViewer.UpdateBlink())
         {
             _bodyViewer.ShowWounds = true;
             _bodyViewer.RenderBodyArt();
@@ -338,7 +338,7 @@ public class ManagementMenuRenderer
         }
 
         // Delegate to content-area sub-renderers; tick when entering an interactive element
-        if (_activeTab == ManagementTab.Body)
+        if (_activeTab == ManagementTab.Anatomy)
         {
             if (_bodyViewer.ProcessHover(x, y))
             {
@@ -395,7 +395,7 @@ public class ManagementMenuRenderer
     public bool CliSelectTab(string tabName)
     {
         // TabDefinition is a record struct, so FirstOrDefault yields default() rather than null on
-        // a miss — index first and check the index, or an unknown name silently selects Body.
+        // a miss — index first and check the index, or an unknown name silently selects Anatomy.
         int idx = Array.FindIndex(AllTabs,
             t => string.Equals(t.Label, tabName, StringComparison.OrdinalIgnoreCase));
         if (idx < 0) return false;
@@ -468,7 +468,7 @@ public class ManagementMenuRenderer
                 // _selectedCharacterIndex was reset to 0 above, or the tab just became visible).
                 SwapMemberArt(GetPartyMember(_selectedCharacterIndex));
 
-                if (_activeTab != ManagementTab.Body)
+                if (_activeTab != ManagementTab.Anatomy)
                     _bodyViewer.ClearHover();
                 if (_activeTab != ManagementTab.Memory)
                     _memoryPanel.ClearHover();
@@ -713,7 +713,7 @@ public class ManagementMenuRenderer
     {
         string title = _activeTab switch
         {
-            ManagementTab.Body      => "B O D Y  /  O R G A N S",
+            ManagementTab.Anatomy   => "A N A T O M Y  /  O R G A N S",
             ManagementTab.Inventory => "I N V E N T O R Y",
             ManagementTab.Journal   => "J O U R N A L",
             ManagementTab.Memory    => "",  // memory panel renders its own full-width title
@@ -755,7 +755,7 @@ public class ManagementMenuRenderer
     {
         _terminal.Text(BodyArtViewer.PanelContentX, FooterSepRow, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
 
-        if (_activeTab == ManagementTab.Body)
+        if (_activeTab == ManagementTab.Anatomy)
         {
             int totalScore = _bodyViewer.GetTotalScore();
             string pointsText = $"Total Points: {totalScore}";

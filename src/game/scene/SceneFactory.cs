@@ -36,10 +36,104 @@ public abstract class SceneFactory
         BuildSections(rng, locationId, scene);
         BuildNpcs(rng, locationId, scene);
         AssignVerbs(scene);
+        MergeDuplicateNamedPois(scene);
+        AssignStableKeys(scene);
         AssignDepletionKeys(scene);
         WriteSceneToLog(scene, locationId);
 
         return scene;
+    }
+
+    /// <summary>
+    /// Collapses same-named points of interest within an area into one, moving the losers' items onto
+    /// the survivor.
+    ///
+    /// <para>The observation phase de-duplicates its candidates by display name, so a second PoI
+    /// called "Oak Tree" in the same area could never be observed — and anything inside it could never
+    /// be reached. Terrain builders sample with replacement and produced these routinely: an orchard
+    /// with two apple trees showed one, and half its fruit was unreachable. Merging rather than
+    /// dropping keeps the yield: the surviving tree becomes the stand.</para>
+    ///
+    /// <para>Runs after <see cref="BuildSections"/> so it catches every factory, and before
+    /// <see cref="AssignStableKeys"/> so keys are assigned to the list that actually survives.</para>
+    /// </summary>
+    private static void MergeDuplicateNamedPois(Scene scene)
+    {
+        foreach (var area in scene.AllAreas)
+        {
+            Merge(area.PointsOfInterest);
+            foreach (var spot in area.Spots)
+                Merge(spot.PointsOfInterest);
+        }
+
+        static void Merge(List<PointOfInterest> pois)
+        {
+            var byName = new Dictionary<string, PointOfInterest>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < pois.Count; i++)
+            {
+                var poi = pois[i];
+                if (byName.TryAdd(poi.DisplayName, poi)) continue;
+
+                // A connector is legitimately listed once in each of the two areas it joins, but
+                // never twice in the same one — so anything reaching here is a genuine duplicate.
+                byName[poi.DisplayName].Items.AddRange(poi.Items);
+                pois.RemoveAt(i--);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Assigns every element a rebuild-independent <see cref="Element.StableKey"/> in deterministic
+    /// build order. Keys are built from ordinal positions rather than display names, so two rooms
+    /// called "Hall" in different buildings — or two "Straw Pallet" PoIs in one room — never collide.
+    ///
+    /// <para>Elements that already carry a key are skipped. Connectors (doors, stairs, paths) appear
+    /// in two areas' PoI lists, so the walk would visit them twice and the key would end up depending
+    /// on which side happened to be walked last; <c>BuildingFactory</c> keys those at construction
+    /// instead.</para>
+    ///
+    /// <para>Deliberately separate from <see cref="AssignDepletionKeys"/>: that key is matched against
+    /// persisted <c>LocationInstanceState.ItemDepletions</c> data, so its format must not move.</para>
+    /// </summary>
+    private static void AssignStableKeys(Scene scene)
+    {
+        for (int si = 0; si < scene.Sections.Count; si++)
+        {
+            var section = scene.Sections[si];
+            var sectionKey = $"s{si}:{section.DisplayName}";
+            if (section.StableKey.Length == 0) section.StableKey = sectionKey;
+
+            for (int ai = 0; ai < section.Areas.Count; ai++)
+            {
+                var area = section.Areas[ai];
+                var areaKey = $"{sectionKey}|a{ai}:{area.DisplayName}";
+                if (area.StableKey.Length == 0) area.StableKey = areaKey;
+
+                KeyPois(areaKey, area.PointsOfInterest);
+
+                for (int spi = 0; spi < area.Spots.Count; spi++)
+                {
+                    var spot = area.Spots[spi];
+                    var spotKey = $"{areaKey}|sp{spi}:{spot.ReferenceLemma}";
+                    if (spot.StableKey.Length == 0) spot.StableKey = spotKey;
+                    KeyPois(spotKey, spot.PointsOfInterest);
+                }
+            }
+        }
+
+        static void KeyPois(string parentKey, List<PointOfInterest> pois)
+        {
+            for (int pi = 0; pi < pois.Count; pi++)
+            {
+                var poi = pois[pi];
+                var poiKey = $"{parentKey}|p{pi}:{poi.ReferenceLemma}";
+                if (poi.StableKey.Length == 0) poi.StableKey = poiKey;
+
+                for (int ii = 0; ii < poi.Items.Count; ii++)
+                    if (poi.Items[ii].StableKey.Length == 0)
+                        poi.Items[ii].StableKey = $"{poi.StableKey}|i{ii}";
+            }
+        }
     }
 
     /// <summary>
@@ -127,6 +221,25 @@ public abstract class SceneFactory
             RegisterAll(scene, spot);
     }
 
+    /// <summary>
+    /// Adds a generated building to the scene: its single section, every room in it, and the entry
+    /// door.
+    ///
+    /// <para>The entry door is registered separately because it straddles the boundary — it lives in
+    /// both the outdoor area's PoI list and the hall's, and the outdoor area belongs to a different
+    /// section that was registered earlier.</para>
+    ///
+    /// <para>Deliberately no <c>ConnectAreas</c> call: a building's rooms are joined by doors and
+    /// stairs only. An area-graph edge would give <c>MoveToAreaVerb</c> a way straight past a locked
+    /// door.</para>
+    /// </summary>
+    protected void RegisterBuilding(Scene scene, Building.BuildingResult building)
+    {
+        scene.Sections.Add(building.Section);
+        RegisterAll(scene, building.Section);
+        building.EntryDoor.Register(scene);
+    }
+
     /// <summary>Registers a spot and all its PoIs and items.</summary>
     protected void RegisterAll(Scene scene, Spot spot)
     {
@@ -197,8 +310,8 @@ public abstract class SceneFactory
                 writer.WriteLine($"\n[NPC] {npc.DisplayName}");
                 if (scene.NpcSchedules.TryGetValue(npc.Id, out var schedule))
                 {
-                    foreach (var (period, nodeId) in schedule.ActivePeriods)
-                        writer.WriteLine($"  {period}: {nodeId}");
+                    foreach (var (period, area) in schedule.ActivePeriods)
+                        writer.WriteLine($"  {period}: {area.DisplayName}");
                 }
             }
         }

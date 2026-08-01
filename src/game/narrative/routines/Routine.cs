@@ -27,11 +27,13 @@ public class RoutineStep
     public string DisplayLabel => string.IsNullOrWhiteSpace(Label) ? Verbatim : Label;
 
     /// <summary>
-    /// True when this step relocates the point of view (one of its reports declared
-    /// <see cref="RoutineChainEffect.Movement"/>). Movement steps are what every later step depends
-    /// on, so they form the prefix each routine emitted from a session is built from.
+    /// True when this step relocates the point of view — in space or in time (one of its reports
+    /// declared <see cref="RoutineChainEffect.Movement"/> or <see cref="RoutineChainEffect.TimeShift"/>).
+    /// Repositioning steps are what every later step depends on, so they form the prefix each routine
+    /// emitted from a session is built from, and they are never a routine's reason for existing:
+    /// walking to the slope and waiting for noon are how you get somewhere, not what you went to do.
     /// </summary>
-    public bool MovesPointOfView { get; set; }
+    public bool RepositionsPointOfView { get; set; }
 
     /// <summary>
     /// An independent copy. One session can emit several routines that share a movement prefix, and
@@ -46,7 +48,7 @@ public class RoutineStep
         Label            = Label,
         TriggeredPhase   = TriggeredPhase,
         VariantKey       = VariantKey,
-        MovesPointOfView = MovesPointOfView,
+        RepositionsPointOfView = RepositionsPointOfView,
     };
 
     /// <summary>

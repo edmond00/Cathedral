@@ -96,6 +96,36 @@ public sealed class SpotEnterOutcome : OutcomeReport
     }
 }
 
+/// <summary>
+/// Moves the PoV to a later time of day (waiting, resting, sleeping until dawn).
+///
+/// <para>Time of day is PoV state on the same footing as the current area: it is what
+/// <see cref="Scene.GetNpcsAt"/> — and therefore every NPC verb's <c>IsPossible</c> — gates
+/// presence on, so shifting it changes which actions exist just as walking somewhere else does.
+/// The controller notices the change after reports apply and re-places NPCs for the new period; the
+/// headless routine replay needs nothing extra, because its verb gates read <c>pov.When</c> directly.</para>
+/// </summary>
+public sealed class TimeShiftOutcome : OutcomeReport
+{
+    private readonly TimePeriod _destination;
+
+    public TimeShiftOutcome(TimePeriod destination)
+        : base($"Time passes: {destination.Label()}", OutcomeReportSeverity.Neutral,
+               $"waited until {destination.Label().ToLowerInvariant()}")
+    {
+        _destination = destination;
+    }
+
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.TimeShift;
+
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    {
+        if (pov == null) return;
+        pov.When  = _destination;
+        pov.Focus = null;
+    }
+}
+
 /// <summary>Leaves the current spot.</summary>
 public sealed class SpotLeaveOutcome : OutcomeReport
 {
@@ -127,15 +157,22 @@ public sealed class DoorUnlockOutcome : OutcomeReport
     }
 
     // Moves AND leaves the door unlocked: the scene rebuild replay starts from re-locks it, so a
-    // chain that skipped this step would assume a way through that replay does not have.
-    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+    // chain that skipped this step would assume a way through that replay does not have. Both halves
+    // must be declared — Breaking alone left the door out of the movement prefix, so a routine
+    // emitted after passing through one replayed from the wrong side of it.
+    public override RoutineChainEffect RoutineChainEffect
+        => RoutineChainEffect.Movement | RoutineChainEffect.Breaking;
 
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null || pov == null) return;
-        _door.DoorState = DoorState.Unlocked;
-        pov.Where       = _destination;
-        pov.Focus       = null;
+        _door.DoorState  = DoorState.Unlocked;
+        // ForcedOpen also defeats the night rule for the rest of this visit. Without it a player who
+        // forced an entry door after dark would be shut out again the moment they stepped back
+        // outside, since EffectiveState re-shuts every entry door at Night.
+        _door.ForcedOpen = true;
+        pov.Where        = _destination;
+        pov.Focus        = null;
         scene.StateChanges.Capture(_door);
     }
 }

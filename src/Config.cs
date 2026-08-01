@@ -34,12 +34,39 @@ public static class Config
         public static int? Seed { get; set; } = null;
     }
 
+    /// <summary>
+    /// Switches that exist only to make a feature testable, set from command-line flags and never
+    /// from gameplay. Anything here must be inert when left at its default, so a normal run behaves
+    /// exactly as if the option did not exist.
+    ///
+    /// <para>Adding to this is expected: when a change is hard to reach from a <c>--cli</c> script —
+    /// it needs a rare biome, a particular time of day, a specific roll — the fix is a new flag here
+    /// plus a line in CLAUDE.md, not a hunt for a lucky seed.</para>
+    /// </summary>
+    public static class Debug
+    {
+        /// <summary>
+        /// Time of day to arrive at every location with, instead of a random draw. Set by
+        /// <c>--period &lt;dawn|morning|noon|afternoon|evening|night&gt;</c>. Night is the one that
+        /// matters most: it is when every building's entry door is shut, and a random arrival hits it
+        /// one visit in six.
+        /// </summary>
+        public static Game.Narrative.TimePeriod? ForcedPeriod { get; set; } = null;
+
+        /// <summary>
+        /// Biome or location name to place the protagonist on at world generation, e.g. "village".
+        /// Set by <c>--start-at &lt;name&gt;</c>. Matched case-insensitively as a substring; ignored
+        /// when nothing in the world matches.
+        /// </summary>
+        public static string? StartAt { get; set; } = null;
+    }
+
     #endregion
 
     #region Terminal Configuration
     public static class Name {
-        public const string GameTitle = "Anatomia Cogitationis et Cosmi";
-        public const string Chapter = "Chapter 1";
+        public const string GameTitle = "untitled palimpsests";
+        public const string Chapter = "Volume 1";
         public const string ChapterSubtitle = "Turnips and Radishes";
     }
     
@@ -881,6 +908,19 @@ public static class Config
         public const double Temperature = 0.7;
         public const int TopK = 12;
         public const double TopP = 0.95;
+
+        // Anti-repetition. Passed to the llama.cpp server at launch (not per request), so these
+        // apply to every call — narration, dialogue and constrained single-token alike.
+        // Three mechanisms stack here, so each is kept at or below its conventional value:
+        //   RepeatPenalty   — llama.cpp default 1.0 (off); 1.1 is the usual mild setting.
+        //   FrequencyPenalty— llama.cpp default 0.0; usual range 0.1-0.3. Above that a 3B model
+        //                     starts avoiding words it ought to repeat (names, a recurring object).
+        //   DryMultiplier   — default 0.0 (off); 0.8 is the recommended on-value. Penalises
+        //                     repeated *sequences* rather than tokens, so it curbs verbatim
+        //                     looping without flattening vocabulary. Set to 0 to disable.
+        public const double RepeatPenalty = 1.1;
+        public const double FrequencyPenalty = 0.2;
+        public const double DryMultiplier = 0.8;
 
         // Temperature for utility requests (health-check, prompt pre-caching)
         public const double UtilityTemperature = 0.1;

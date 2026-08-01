@@ -419,7 +419,9 @@ public class NarrativeController
         _postDialogueObservationMM = null;
 
         // Place NPCs into nodes based on the supplied time period, or a random one when none is given.
-        var period = forcedPeriod ?? TimePeriodExtensions.Random(_diceRandom);
+        // --period pins it for the whole run: several rules (every entry door shutting at night) only
+        // fire in one period, and a random draw reaches that one visit in six.
+        var period = forcedPeriod ?? Config.Debug.ForcedPeriod ?? TimePeriodExtensions.Random(_diceRandom);
         ApplyTimePeriod(period);
         Console.WriteLine($"NarrativeController: Time period is {period}");
 
@@ -488,15 +490,23 @@ public class NarrativeController
     }
 
     /// <summary>
-    /// Applies a time period to the scene-backed graph: records it on the graph, repositions the
-    /// scene's NPCs into the nodes where their schedule places them for that period (via
-    /// <see cref="SceneNpcPlacement"/>), then re-expands every observation's verbs against the now-
-    /// current state. NPC placement and verb gating therefore always share one period — the source
-    /// of the earlier "NPCs at the wrong place / no actions offered" bug was letting them diverge.
+    /// Applies a time period to the scene-backed graph: records it on the graph <b>and on the PoV</b>,
+    /// repositions the scene's NPCs into the nodes where their schedule places them for that period
+    /// (via <see cref="SceneNpcPlacement"/>), then re-expands every observation's verbs against the
+    /// now-current state. NPC placement and verb gating therefore always share one period — the
+    /// source of the earlier "NPCs at the wrong place / no actions offered" bug was letting them
+    /// diverge.
+    ///
+    /// <para>This is the <b>single writer</b> of the period. <c>NarrationGraph.CurrentPeriod</c> and
+    /// <c>PoV.When</c> are two views of one fact — node placement reads the first, every verb's
+    /// <c>IsPossible</c> reads the second — so nothing else may set either. A verb that shifts time
+    /// returns a <c>TimeShiftOutcome</c>; <see cref="CommitOutcomeResult"/> notices the PoV change
+    /// once reports have applied and routes it back through here.</para>
     /// </summary>
     private void ApplyTimePeriod(TimePeriod period)
     {
         _graph.SetCurrentPeriod(period);
+        if (_pov != null) _pov.When = period;
         _npcPlacement?.PlaceForPeriod(period);
         RefreshSceneVerbs();
     }
@@ -508,6 +518,18 @@ public class NarrativeController
     /// (through <see cref="ApplyTimePeriod"/>) and before each thinking request, so the offered
     /// goals always reflect the world — and the NPCs actually present — as they now stand.
     /// </summary>
+    /// <summary>
+    /// The graph node standing for <paramref name="area"/>, matched on area identity.
+    ///
+    /// <para>This used to re-derive the node's id from the area's display name. That silently picked
+    /// the wrong node once a location held two rooms with the same name — which every multi-building
+    /// location does, since each building has its own hall and bedrooms — landing the player in
+    /// another building's room. Node ids stay human-readable for logs; routing goes by identity.</para>
+    /// </summary>
+    private NarrationNode? NodeForArea(Cathedral.Game.Scene.Area area)
+        => _graph.AllNodes.Values.FirstOrDefault(
+            n => n is SyntheticNarrationNode { Area: { } a } && a.Id == area.Id);
+
     private void RefreshSceneVerbs()
     {
         if (_scene == null) return;
@@ -520,8 +542,14 @@ public class NarrativeController
             // survive here, and an absent one simply has no observation object to refresh.
             var pov = new PoV(area, _graph.CurrentPeriod);
             foreach (var outcome in node.PossibleOutcomes)
+            {
+                // Stamp before refreshing: an observation whose text depends on the time (a door
+                // saying whether it looks locked) must describe the same period its verbs were gated
+                // at, or the player reads "seems open" and is offered UNLOCK.
+                (outcome as IPeriodStampable)?.StampPeriod(_graph.CurrentPeriod);
                 if (outcome is IVerbRefreshable refreshable)
                     refreshable.RefreshVerbs(_scene, pov, _protagonist);
+            }
         }
     }
 
@@ -1675,26 +1703,45 @@ public class NarrativeController
             _recorder.OnVerbSucceeded(result.Action, _scene, _pov, _activePartyMember, result.ItemConsumed, allReports);
         }
 
-        // Remember the area before reports apply, so we can detect any area-moving verb (move, follow
-        // path, stairs, climb, door) and continue narration at the destination node — not just MoveToArea.
-        var areaBefore = _pov?.Where;
+        // Remember where and when we were before reports apply. The area drives continuing narration
+        // at the destination node (any area-moving verb — move, follow path, stairs, climb, door — not
+        // just MoveToArea); the period drives re-placing NPCs for the new time of day.
+        var areaBefore   = _pov?.Where;
+        var periodBefore = _pov?.When;
 
         // Apply every report's game-state change in order — to the acting member, so a companion's
         // loot, learned skills, and suffered wounds land on the companion, not the protagonist.
         foreach (var report in allReports)
             report.Apply(_activePartyMember, _scene, _pov);
 
-        // Self-check for the routine recorder's one silent failure mode: a report that moves the
-        // player without declaring RoutineChainEffect.Movement. The recorder cannot see the move (it
-        // runs before Apply, by design), so it would build routines on a stale prefix. Shout rather
-        // than record something subtly wrong.
+        // Self-check for the routine recorder's one silent failure mode: a report that relocates the
+        // player without declaring it. The recorder cannot see the move (it runs before Apply, by
+        // design), so it would build routines on a stale prefix. Shout rather than record something
+        // subtly wrong. Space and time are checked separately so the message names the right flag.
         if (!ReferenceEquals(areaBefore, _pov?.Where)
-            && !allReports.Any(r => r.RoutineChainEffect == RoutineChainEffect.Movement))
+            && !allReports.Any(r => r.RoutineChainEffect.HasFlag(RoutineChainEffect.Movement)))
         {
             Console.Error.WriteLine(
                 $"NarrativeController: '{result.Action.Verb?.VerbId}' moved the point of view but none of its " +
                 "reports declared RoutineChainEffect.Movement — routine recording will mis-track position. " +
                 "Declare it on the report that moves the PoV.");
+        }
+
+        if (periodBefore != _pov?.When
+            && !allReports.Any(r => r.RoutineChainEffect.HasFlag(RoutineChainEffect.TimeShift)))
+        {
+            Console.Error.WriteLine(
+                $"NarrativeController: '{result.Action.Verb?.VerbId}' changed the time of day but none of its " +
+                "reports declared RoutineChainEffect.TimeShift — routine recording will mis-track it. " +
+                "Declare it on the report that shifts the period.");
+        }
+
+        // A verb that shifted the period only wrote PoV.When; route it back through the single writer
+        // so the graph's period, NPC placement and verb gating all follow it to the new time of day.
+        if (_pov != null && periodBefore != null && periodBefore != _pov.When)
+        {
+            Console.WriteLine($"NarrativeController: time of day advanced {periodBefore} → {_pov.When}");
+            ApplyTimePeriod(_pov.When);
         }
 
         // UI-visible chips for the outcome block.
@@ -1789,10 +1836,9 @@ public class NarrativeController
             // live session that survives across connectors — required for multi-step routine chains).
             if (_pov != null && areaBefore != null && _pov.Where.Id != areaBefore.Id)
             {
-                var nodeId = _pov.Where.DisplayName.ToLowerInvariant().Replace(' ', '_');
-                if (_graph.AllNodes.TryGetValue(nodeId, out var areaNode))
+                if (NodeForArea(_pov.Where) is { } areaNode)
                 {
-                    Console.WriteLine($"NarrativeController: area changed to '{_pov.Where.DisplayName}' — transitioning to node '{nodeId}'");
+                    Console.WriteLine($"NarrativeController: area changed to '{_pov.Where.DisplayName}' — transitioning to node '{areaNode.NodeId}'");
                     _narrationState.PendingTransitionNode = areaNode;
                     _narrationState.ShowContinueButton = true;
                     return;
@@ -3075,10 +3121,10 @@ public class NarrativeController
                 string.Equals(a.ReferenceLemma, areaLemma, StringComparison.OrdinalIgnoreCase));
             if (area != null)
             {
+                // Only the area is set here — StartObservationPhase(time) below routes the period
+                // through ApplyTimePeriod, the single writer of PoV.When + graph period.
                 _pov.Where = area;
-                _pov.When  = time;
-                var nodeId = area.DisplayName.ToLowerInvariant().Replace(' ', '_');
-                if (_graph.AllNodes.TryGetValue(nodeId, out var node))
+                if (NodeForArea(area) is { } node)
                     _currentNode = node;
             }
         }

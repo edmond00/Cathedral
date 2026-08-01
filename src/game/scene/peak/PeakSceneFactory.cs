@@ -88,7 +88,7 @@ public class PeakSceneFactory : SceneFactory
                         : (a.DisplayName == "Summit Approach" || b.DisplayName == "Summit Approach") ? "Ridge Path"
                         : "Summit Path";
             var path = new PathPointOfInterest(
-                a, b, name,
+                a, b, PathPointOfInterest.NameFor(a, b, name),
                 new() { $"A narrow path winding from {a.DisplayName.ToLowerInvariant()} to {b.DisplayName.ToLowerInvariant()}" },
                 new[] { "narrow", "exposed", "wind-bitten" }
             );
@@ -216,7 +216,7 @@ public class PeakSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
     }
 
     private void TrySpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype, double chance)
@@ -233,6 +233,6 @@ public class PeakSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
     }
 }

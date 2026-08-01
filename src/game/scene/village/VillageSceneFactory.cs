@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
 using Cathedral.Game.Narrative.World.Items;
@@ -14,152 +13,201 @@ using Cathedral.Fight.Generators;
 namespace Cathedral.Game.Scene.Village;
 
 /// <summary>
-/// Builds a procedural village scene per the v1 world-content spec (village.md).
+/// Builds a procedural village: a small outdoor green, and a <b>building</b> for every craftsman.
 ///
-/// Mandatory areas: Square (hub), Forge, Mill.
-/// Optional pool (roll 2–5): Carpenter's Workshop, Cooper's Workshop, Weaver's Workshop,
-/// Bakery, Alehouse, Craftsmen Hall, Sleeping Quarters.
-/// Total: 5–8 areas.
+/// <para>Outdoors: Square (hub), Craft Row and Market End, joined by paths. Each of those is where a
+/// cluster of buildings is entered from.</para>
 ///
-/// Sections: Village Square, Craft Row, Market End.
-/// Connections: <see cref="PathPointOfInterest"/> village roads & lanes;
-/// <see cref="DoorPointOfInterest"/> from Craftsmen Hall → Sleeping Quarters.
+/// <para>Buildings: Forge and Mill always, then 2–4 more from the optional pool. Each is a
+/// public+individual <b>workshop</b> — the existing <see cref="WorkshopSubfactory"/> area becomes its
+/// public hall, and the master sleeps upstairs or out back. Every apprentice gets a
+/// private+individual <b>house</b> off the Square.</para>
 ///
-/// NPCs: Master craftsman per workshop + 0–2 apprentices/journeymen, plus Miller, Baker,
-/// optional Brewer / Dairymaid. Day-cycle schedules follow the spec.
+/// <para>This replaces a flat layout where a workshop was a single outdoor-adjacent area, and every
+/// villager in the place shared one anonymous dormitory. Craftsmen Hall and Sleeping Quarters are
+/// gone; nobody sleeps in a room they do not own.</para>
 /// </summary>
 public class VillageSceneFactory : SceneFactory
 {
     public VillageSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
-    private Area? _square, _forge, _mill, _carpenter, _cooper, _weaver, _bakery, _alehouse, _hall, _sleeping;
-    private readonly List<Area> _allAreas = new();
+    private Area? _square;
+    private LayoutShape _layout;
+
+    /// <summary>Every workshop building, with the archetype that masters it.</summary>
+    private readonly List<(BuildingResult Building, CraftsmanArchetype Master)> _workshops = new();
+
+    /// <summary>Houses built for apprentices, paired with the workshop they are bound to.</summary>
+    private readonly List<(BuildingResult House, BuildingResult Workshop, CraftsmanArchetype MasterTrade)> _houses = new();
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
     {
-        // ── 1. Mandatory areas ───────────────────────────────────────────────
+        // ── 1. The outdoor village ───────────────────────────────────────────
+        // The square is always there; how many ways lead off it, what they are called and how they
+        // join up is rolled, so two villages are laid out differently rather than differing only in
+        // which workshops they happen to contain.
 
         _square = BuildSquare(rng);
-        _forge  = WorkshopSubfactory.BuildForge();
-        _mill   = WorkshopSubfactory.BuildMill();
+        var outdoorAreas = new List<Area> { _square };
 
-        // ── 2. Optional pool — roll 2–5 ──────────────────────────────────────
-
-        var optionalBuilders = new List<(string id, Action build)>
+        int lanes = rng.Next(1, 4);
+        foreach (var idx in SampleUniqueIndices(rng, LanePool.Length, lanes))
         {
-            ("carpenter", () => _carpenter = WorkshopSubfactory.BuildCarpenterWorkshop()),
-            ("cooper",    () => _cooper    = WorkshopSubfactory.BuildCooperWorkshop()),
-            ("weaver",    () => _weaver    = WorkshopSubfactory.BuildWeaverWorkshop()),
-            ("bakery",    () => _bakery    = WorkshopSubfactory.BuildBakery()),
-            ("alehouse",  () => _alehouse  = WorkshopSubfactory.BuildAlehouse()),
-            ("hall",      () => _hall      = WorkshopSubfactory.BuildCraftsmenHall()),
-            ("sleeping",  () => _sleeping  = WorkshopSubfactory.BuildSleepingQuarters()),
+            var (name, lemma, context, transition, description, moods) = LanePool[idx];
+            outdoorAreas.Add(new Area(name, lemma, context, transition, new() { description }, moods));
+        }
+
+        var outdoors = new Section(
+            "Village",
+            new() { "A cluster of workshops and houses around an open square" },
+            seed => new GeometricGenerator { Seed = seed }
+        );
+        foreach (var area in outdoorAreas) outdoors.Areas.Add(area);
+        scene.Sections.Add(outdoors);
+        RegisterAll(scene, outdoors);
+
+        _layout = OutdoorLayout.RollShape(rng);
+        OutdoorLayout.Connect(scene, outdoorAreas, _layout, "Lane", rng);
+
+        // ── 2. Which workshops ───────────────────────────────────────────────
+
+        var trades = new List<(string Name, Func<Area> Hall, CraftsmanArchetype Master, string Noun, BuildingMaterial? Mat)>
+        {
+            ("Carpenter's Workshop", WorkshopSubfactory.BuildCarpenterWorkshop, new CarpenterArchetype(), "workshop", null),
+            ("Cooper's Workshop",    WorkshopSubfactory.BuildCooperWorkshop,    new CooperArchetype(),    "workshop", null),
+            ("Weaver's Workshop",    WorkshopSubfactory.BuildWeaverWorkshop,    new WeaverArchetype(),    "workshop", null),
+            ("Bakery",               WorkshopSubfactory.BuildBakery,            new BakerArchetype(),     "bakery",   BuildingMaterial.Stone),
+            ("Alehouse",             WorkshopSubfactory.BuildAlehouse,          new BrewerArchetype(),    "alehouse", null),
         };
 
-        int optCount = rng.Next(2, 6); // 2–5
-        var picks = SampleUniqueIndices(rng, optionalBuilders.Count, optCount);
-        // Always prefer hall + sleeping if any worker spawned (spec note)
-        var pickSet = new HashSet<int>(picks);
-        // Force-include hall + sleeping (so at least one is present)
-        for (int i = 0; i < optionalBuilders.Count; i++)
+        var chosen = new List<(string Name, Func<Area> Hall, CraftsmanArchetype Master, string Noun, BuildingMaterial? Mat)>
         {
-            if ((optionalBuilders[i].id == "hall" || optionalBuilders[i].id == "sleeping") && !pickSet.Contains(i))
+            ("Forge", WorkshopSubfactory.BuildForge, new BlacksmithArchetype(), "forge", BuildingMaterial.Stone),
+            ("Mill",  WorkshopSubfactory.BuildMill,  new MillerArchetype(),     "mill",  BuildingMaterial.Stone),
+        };
+        foreach (var idx in SampleUniqueIndices(rng, trades.Count, rng.Next(2, 5)))
+            chosen.Add(trades[idx]);
+
+        // ── 3. Where they stand ──────────────────────────────────────────────
+        // Which lane a workshop opens onto is rolled too, so the forge is not always on the same
+        // street. Every lane gets a building before any lane gets a second, so a rolled lane is never
+        // an empty dead end.
+
+        var workshopEntrances = OutdoorLayout.DistributeEntrances(outdoorAreas, chosen.Count, rng);
+        for (int i = 0; i < chosen.Count; i++)
+        {
+            var (name, hall, master, noun, mat) = chosen[i];
+            AddWorkshop(scene, rng, name, hall, master, workshopEntrances[i], noun, mat);
+        }
+
+        // ── 4. Apprentice houses ─────────────────────────────────────────────
+        // Every workshop gets at least one apprentice, and this is a structural requirement rather
+        // than flavour: a master must be out of their own shop for part of the day, and the shop
+        // counter must be manned at every daylight hour, so somebody has to cover. A second
+        // apprentice is a roll — with two, the cover rotates and the pair sometimes overlap with the
+        // master in the hall.
+        //
+        // Each keeps their own roof — and the roof is anonymous. A workshop can hang a sign, so it is
+        // named for its trade; a house cannot, so it is known only by how it looks from the street
+        // ("the crooked house"). Naming these "Blacksmith Apprentice's House" told the player who
+        // lived there before they had met a soul. The traits are drawn without replacement so the
+        // houses stay tellable apart — the observation phase lists them side by side.
+
+        var wear = BuildingDescriptions.BuildingWear.OrderBy(_ => rng.Next()).ToList();
+        int nextWear = 0;
+
+        foreach (var (workshop, master) in _workshops.ToList())
+        {
+            int apprentices = rng.NextDouble() < 0.35 ? 2 : 1;
+            for (int i = 0; i < apprentices; i++)
             {
-                if (pickSet.Count < 5) pickSet.Add(i);
+                string trait = wear[nextWear++ % wear.Count];
+                string label = BuildingDescriptions.AnonymousLabel(trait, BuildingKind.House);
+
+                var house = BuildingFactory.Build(new BuildingSpec
+                {
+                    BuildingName = label,
+                    RoomPrefix   = label,
+                    Access       = BuildingAccess.Private,
+                    Occupancy    = BuildingOccupancy.Individual,
+                    OutsideArea  = OutdoorLayout.DistributeEntrances(outdoorAreas, 1, rng)[0],
+                    BedCount     = 1,
+                    FunctionNoun = "house",
+                    ExteriorWear = trait,
+                }, rng);
+
+                RegisterBuilding(scene, house);
+                _houses.Add((house, workshop, master));
             }
         }
-        foreach (var idx in pickSet)
-            optionalBuilders[idx].build();
 
-        // ── 3. Distribute areas across sections ──────────────────────────────
-
-        var squareSection = new Section(
-            "Village Square",
-            new() { "An open central space where village life converges" },
-            seed => new GeometricGenerator { Seed = seed }
-        );
-        squareSection.Areas.Add(_square);
-        scene.Sections.Add(squareSection);
-        RegisterAll(scene, squareSection);
-
-        var craftRow = new Section(
-            "Craft Row",
-            new() { "Workshops clustered along a lane, living quarters above or behind" },
-            seed => new CorridorGenerator { Seed = seed }
-        );
-        if (_carpenter != null) craftRow.Areas.Add(_carpenter);
-        if (_cooper    != null) craftRow.Areas.Add(_cooper);
-        if (_weaver    != null) craftRow.Areas.Add(_weaver);
-        if (_hall      != null) craftRow.Areas.Add(_hall);
-        if (_sleeping  != null) craftRow.Areas.Add(_sleeping);
-        if (_forge     != null) craftRow.Areas.Add(_forge);
-        scene.Sections.Add(craftRow);
-        RegisterAll(scene, craftRow);
-
-        var marketEnd = new Section(
-            "Market End",
-            new() { "Miller, baker, and brewer occupying the working end of the village" },
-            seed => new GeometricGenerator { Seed = seed }
-        );
-        marketEnd.Areas.Add(_mill);
-        if (_bakery   != null) marketEnd.Areas.Add(_bakery);
-        if (_alehouse != null) marketEnd.Areas.Add(_alehouse);
-        scene.Sections.Add(marketEnd);
-        RegisterAll(scene, marketEnd);
-
-        _allAreas.AddRange(squareSection.Areas);
-        _allAreas.AddRange(craftRow.Areas);
-        _allAreas.AddRange(marketEnd.Areas);
-
-        // Mark sleeping quarters as private (they're behind a door)
-        if (_sleeping != null) _sleeping.IsPrivate = true;
-
-        // ── 4. Connect village ──────────────────────────────────────────────
-
-        // Village Roads from Square out to key workshops
-        ConnectViaPath(scene, _square, _forge!, "Village Road");
-        ConnectViaPath(scene, _square, _mill!,  "Village Road");
-        if (_bakery   != null) ConnectViaPath(scene, _square, _bakery,   "Village Road");
-        if (_hall     != null) ConnectViaPath(scene, _square, _hall,     "Village Road");
-        if (_carpenter != null) ConnectViaPath(scene, _square, _carpenter, "Village Road");
-
-        // Lanes between workshops
-        if (_carpenter != null && _cooper != null)
-            ConnectViaPath(scene, _carpenter, _cooper, "Lane");
-        if (_hall != null && _weaver != null)
-            ConnectViaPath(scene, _hall, _weaver, "Lane");
-        if (_hall != null && _alehouse != null)
-            ConnectViaPath(scene, _hall, _alehouse, "Lane");
-
-        // Mill → Bakery internal shortcut
-        if (_bakery != null)
-            ConnectViaPath(scene, _mill!, _bakery, "Mill Lane");
-
-        // Door: Craftsmen Hall → Sleeping Quarters
-        if (_hall != null && _sleeping != null)
-        {
-            scene.ConnectAreasBidirectional(_hall, _sleeping);
-            var door = new DoorPointOfInterest(
-                frontArea: _hall,
-                backArea:  _sleeping,
-                displayName: "Sleeping Quarters Door",
-                descriptions: new() { "A timber door at the back of the hall, leading to the workers' sleeping quarters" },
-                initialState: DoorState.Unlocked
-            );
-            _hall.PointsOfInterest.Add(door);
-            _sleeping.PointsOfInterest.Add(door);
-            door.Register(scene);
-        }
-
-        Console.WriteLine($"VillageSceneFactory: village built — {_allAreas.Count} areas");
+        Console.WriteLine($"VillageSceneFactory: village built — layout={_layout}, {outdoorAreas.Count} outdoor area(s), "
+                        + $"{_workshops.Count} workshop(s), {_houses.Count} house(s), {scene.AllAreas.Count} areas");
     }
+
+    /// <summary>
+    /// The ways that can lead off the square. A village draws 1–3 without replacement, so both how
+    /// many streets it has and which ones vary. Deliberately no "market": business is done at a
+    /// workshop counter, and a place called the market end implied trade happened there.
+    /// </summary>
+    private static readonly (string Name, string Lemma, string Context, string Transition, string Description, string[] Moods)[] LanePool =
+    {
+        ("Craft Row", "row", "on the village craft row", "walk down the craft row",
+         "A rutted lane with workshop doors down both sides, loud with hammering and sawing",
+         new[] { "noisy", "narrow", "busy", "rutted", "smoky" }),
+
+        ("Mill Lane", "lane", "on mill lane", "walk down mill lane",
+         "A broad cart-track worn into ruts by loaded waggons, pale with spilled flour",
+         new[] { "broad", "dusty", "trafficked", "flour-pale" }),
+
+        ("Church Walk", "walk", "on the church walk", "walk along the church walk",
+         "A quieter way of packed earth, running past a low wall and a leaning yew",
+         new[] { "quiet", "shaded", "walled", "still", "green" }),
+
+        ("Back Lane", "lane", "on the back lane", "slip into the back lane",
+         "A narrow way behind the houses, muddy underfoot and hung with washing",
+         new[] { "narrow", "muddy", "close", "overlooked", "dim" }),
+
+        ("Waterside", "waterside", "on the waterside", "walk down to the waterside",
+         "A soft-verged track along the stream, alder-shaded and loud with water",
+         new[] { "damp", "green", "murmuring", "soft-verged", "cool" }),
+
+        ("Green Edge", "green", "at the village green's edge", "walk out to the green's edge",
+         "The open edge of the village where the grazing begins, fenced with hurdles",
+         new[] { "open", "grassy", "windy", "wide", "hurdle-fenced" }),
+    };
+
+    private void AddWorkshop(
+        Scene scene, Random rng, string name, Func<Area> hallBuilder,
+        CraftsmanArchetype master, Area outside, string functionNoun, BuildingMaterial? material)
+    {
+        var building = BuildingFactory.Build(new BuildingSpec
+        {
+            BuildingName          = name,
+            RoomPrefix            = name,
+            Access                = BuildingAccess.Public,
+            Occupancy             = BuildingOccupancy.Individual,
+            OutsideArea           = outside,
+            PublicHallBuilder     = hallBuilder,
+            BedCount              = 1,
+            Material              = material,
+            FunctionNoun          = functionNoun,
+            ArenaGeneratorFactory = seed => new CorridorGenerator { Seed = seed },
+        }, rng);
+
+        RegisterBuilding(scene, building);
+        _workshops.Add((building, master));
+    }
+
+    private static string Capitalise(string s)
+        => s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s[1..];
 
     private static void ConnectViaPath(Scene scene, Area a, Area b, string pathName)
     {
         if (a == null || b == null) return;
         scene.ConnectAreasBidirectional(a, b);
         var path = new PathPointOfInterest(
-            a, b, pathName,
+            a, b, PathPointOfInterest.NameFor(a, b, pathName),
             new() { $"A {pathName.ToLowerInvariant()} running between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
             new[] { "worn", "muddy", "well-trodden" }
         );
@@ -168,7 +216,7 @@ public class VillageSceneFactory : SceneFactory
         path.Register(scene);
     }
 
-    // ── Square builder ──────────────────────────────────────────────────────
+    // ── Outdoor area builders ───────────────────────────────────────────────
 
     private static Area BuildSquare(Random rng)
     {
@@ -211,144 +259,108 @@ public class VillageSceneFactory : SceneFactory
         return square;
     }
 
+    private static Area BuildCraftRow() => new(
+        displayName: "Craft Row",
+        referenceLemma: "row",
+        contextDescription: "on the village craft row",
+        transitionDescription: "walk down the craft row",
+        descriptions: new() { "A rutted lane with workshop doors down both sides, loud with hammering and sawing" },
+        moods: new[] { "noisy", "narrow", "busy", "rutted", "smoky" }
+    );
+
+    private static Area BuildMarketEnd() => new(
+        displayName: "Market End",
+        referenceLemma: "market",
+        contextDescription: "at the market end of the village",
+        transitionDescription: "walk down to the market end",
+        descriptions: new() { "The working end of the village, where carts are loaded and sacks come and go" },
+        moods: new[] { "open", "dusty", "trafficked", "flour-pale" }
+    );
+
     // ── NPC construction ────────────────────────────────────────────────────
 
     protected override void BuildNpcs(Random rng, int locationId, Scene scene)
     {
-        if (_square is null || _forge is null || _mill is null) return;
+        if (_square is null) return;
 
-        // Always: blacksmith + miller
-        SpawnCraftsman(rng, scene, new BlacksmithArchetype(), _forge);
-        if (rng.NextDouble() < 0.5)
-            SpawnCraftsman(rng, scene, new ApprenticeArchetype(), _forge);
+        // Everywhere a villager might plausibly spend a period that is not their workplace: the open
+        // village, and any public hall other than their own.
+        var publicHalls = _workshops.Select(w => w.Building.PublicHall).ToList();
+        // The outdoor section is whichever one holds the square — its area list is rolled, so it
+        // cannot be reconstructed from fields the way a fixed layout could.
+        var outdoorAreas = scene.Sections.First(s => s.Areas.Contains(_square)).Areas.ToList();
 
-        SpawnCraftsman(rng, scene, new MillerArchetype(), _mill);
+        var scheduleByWorkshop = new Dictionary<string, List<NpcSchedule>>();
 
-        // Optional masters
-        if (_carpenter != null)
+        // ── Masters ─────────────────────────────────────────────────────────
+        foreach (var (building, master) in _workshops)
         {
-            SpawnCraftsman(rng, scene, new CarpenterArchetype(), _carpenter);
+            var elsewhere = outdoorAreas
+                .Concat(publicHalls.Where(h => h.Id != building.PublicHall.Id))
+                .ToList();
+
+            // A master is out of their own workshop for one or two periods — never none. That is the
+            // rule the apprentice exists to serve: with the master always in, nobody would need to
+            // cover, and the shop would have no reason to employ anyone.
+            var schedule = BuildingSchedule.ForWorker(
+                bed:         building.BedAreas.First(),
+                workplace:   building.PublicHall,
+                elsewhere:   elsewhere,
+                rng:         rng,
+                awayPeriods: rng.NextDouble() < 0.5 ? 1 : 2);
+
+            SpawnInto(rng, scene, master, building, schedule);
+
+            // The master is deliberately absent from the cover list — see StaffPublicHall.
+            scheduleByWorkshop[building.Section.DisplayName] = new List<NpcSchedule>();
         }
-        if (_cooper != null)
+
+        // ── Apprentices ─────────────────────────────────────────────────────
+        foreach (var (house, workshop, masterTrade) in _houses)
         {
-            SpawnCraftsman(rng, scene, new CooperArchetype(), _cooper);
+            var archetype = new ApprenticeArchetype { Master = masterTrade };
+
+            var schedule = BuildingSchedule.ForWorker(
+                bed:         house.BedAreas.First(),
+                workplace:   workshop.PublicHall,
+                elsewhere:   outdoorAreas.Concat(new[] { house.PublicHall }).ToList(),
+                rng:         rng,
+                awayPeriods: 2);
+
+            SpawnInto(rng, scene, archetype, house, schedule);
+
+            if (scheduleByWorkshop.TryGetValue(workshop.Section.DisplayName, out var staff))
+                staff.Add(schedule);
         }
-        if (_weaver != null)
+
+        // ── Keep every shop counter manned ──────────────────────────────────
+        foreach (var (building, _) in _workshops)
         {
-            SpawnCraftsman(rng, scene, new WeaverArchetype(), _weaver);
-            if (rng.NextDouble() < 0.5)
-                SpawnCraftsman(rng, scene, new ApprenticeArchetype(), _weaver);
-        }
-        if (_bakery != null)
-        {
-            SpawnCraftsman(rng, scene, new BakerArchetype(), _bakery);
-        }
-        if (_alehouse != null)
-        {
-            SpawnCraftsman(rng, scene, new BrewerArchetype(), _alehouse);
+            if (scheduleByWorkshop.TryGetValue(building.Section.DisplayName, out var staff))
+                BuildingSchedule.StaffPublicHall(building.PublicHall, staff);
         }
     }
 
-    private void SpawnCraftsman(Random rng, Scene scene, NamedNpcArchetype archetype, Area workArea)
+    /// <summary>
+    /// Spawns an NPC, gives them the section of the building they live in, and files their schedule.
+    /// Owning the section is what makes them the authority there — <c>WitnessSelector</c> and
+    /// <c>ThreatSelector</c> both prefer the owner over anyone else present, and until buildings
+    /// existed no villager owned anything, so a thief in a workshop faced whoever happened to be
+    /// standing nearest.
+    /// </summary>
+    private void SpawnInto(
+        Random rng, Scene scene, NamedNpcArchetype archetype, BuildingResult home, NpcSchedule schedule)
     {
-        // Affinity persists per NPC: Spawn resolves the table by the NPC's stable id.
-        var entity = archetype.Spawn(rng, workArea.ContextDescription,
+        var entity = archetype.Spawn(rng, home.PublicHall.ContextDescription,
             _locationState != null ? _locationState.AffinityFor : null);
 
-        // Master craftsmen own their workshop section
-        if (entity.Archetype is CraftsmanArchetype && entity.Archetype.GetType() != typeof(ApprenticeArchetype))
-        {
-            // Workshop areas are private to their masters in the sense that stealing is illegal,
-            // but we don't currently mark each workshop area private. Owned-section bookkeeping
-            // could be added here if desired.
-        }
+        entity.OwnedSectionIds.Add(home.Section.Id.ToString());
 
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = BuildScheduleForRole(archetype.ArchetypeId, workArea);
-    }
+        scene.NpcSchedules[sceneNpc.Id] = schedule;
 
-    private NpcSchedule BuildScheduleForRole(string archetypeId, Area workArea)
-    {
-        var workId   = workArea.DisplayName.ToLowerInvariant();
-        var hallId   = _hall?.DisplayName.ToLowerInvariant()     ?? _square!.DisplayName.ToLowerInvariant();
-        var sleepId  = _sleeping?.DisplayName.ToLowerInvariant() ?? hallId;
-        var squareId = _square!.DisplayName.ToLowerInvariant();
-        var aleId    = _alehouse?.DisplayName.ToLowerInvariant() ?? squareId;
-        var bakeId   = _bakery?.DisplayName.ToLowerInvariant()   ?? squareId;
-
-        return archetypeId switch
-        {
-            "blacksmith" or "carpenter" or "cooper" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = workId,
-                [TimePeriod.Morning]   = workId,
-                [TimePeriod.Noon]      = hallId,
-                [TimePeriod.Afternoon] = workId,
-                [TimePeriod.Evening]   = hallId,
-                [TimePeriod.Night]     = sleepId,
-            }),
-
-            "weaver" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = workId,
-                [TimePeriod.Morning]   = workId,
-                [TimePeriod.Noon]      = hallId,
-                [TimePeriod.Afternoon] = workId,
-                [TimePeriod.Evening]   = aleId,
-                [TimePeriod.Night]     = sleepId,
-            }),
-
-            "miller" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = workId,
-                [TimePeriod.Morning]   = workId,
-                [TimePeriod.Noon]      = hallId,
-                [TimePeriod.Afternoon] = workId,
-                [TimePeriod.Evening]   = hallId,
-                [TimePeriod.Night]     = sleepId,
-            }),
-
-            "baker" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = workId,
-                [TimePeriod.Morning]   = workId,
-                [TimePeriod.Noon]      = hallId,
-                [TimePeriod.Afternoon] = hallId,
-                [TimePeriod.Evening]   = squareId,
-                [TimePeriod.Night]     = sleepId,
-            }),
-
-            "brewer" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = workId,
-                [TimePeriod.Morning]   = workId,
-                [TimePeriod.Noon]      = hallId,
-                [TimePeriod.Afternoon] = workId,
-                [TimePeriod.Evening]   = squareId,
-                [TimePeriod.Night]     = sleepId,
-            }),
-
-            "apprentice" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = workId,
-                [TimePeriod.Morning]   = workId,
-                [TimePeriod.Noon]      = hallId,
-                [TimePeriod.Afternoon] = workId,
-                [TimePeriod.Evening]   = hallId,
-                [TimePeriod.Night]     = sleepId,
-            }),
-
-            _ => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = workId,
-                [TimePeriod.Morning]   = workId,
-                [TimePeriod.Noon]      = hallId,
-                [TimePeriod.Afternoon] = workId,
-                [TimePeriod.Evening]   = hallId,
-                [TimePeriod.Night]     = sleepId,
-            }),
-        };
+        Console.WriteLine($"VillageSceneFactory: Spawned {entity.DisplayName} ({archetype.ArchetypeId}) in {home.Section.DisplayName}");
     }
 }

@@ -4,9 +4,28 @@ using Cathedral.Game.Narrative.Items;
 
 namespace Cathedral.Game.Npc.Archetypes;
 
-/// <summary>Apprentice or journeyman attached to a village master craftsman.</summary>
+/// <summary>
+/// Apprentice or journeyman attached to a village master craftsman.
+///
+/// <para>Set <see cref="Master"/> to bind the apprentice to a trade: they then read as "blacksmith
+/// apprentice" everywhere a role is shown, and trade the master's goods. It must be set on the
+/// archetype <b>instance before Spawn</b> — the persona prompt is generated once inside
+/// <c>NamedNpcArchetype.Spawn</c> and frozen, so a later assignment would never reach the LLM.</para>
+///
+/// <para><see cref="ArchetypeId"/> stays <c>"apprentice"</c> whatever the trade. Personality trait
+/// pools are keyed by that string, so a per-trade id (<c>"blacksmith_apprentice"</c>) would silently
+/// deal no traits at all. Jobs likewise: <c>JobRegistry</c> has no apprentice entry, which is what
+/// keeps an apprentice from granting work while still letting them trade.</para>
+/// </summary>
 public class ApprenticeArchetype : CraftsmanArchetype
 {
+    /// <summary>
+    /// The master this apprentice is bound to, or null for a trade-neutral apprentice. Null must stay
+    /// viable: both <c>--npc-audit</c> and <c>--dialogue-audit</c> construct every archetype through
+    /// its parameterless constructor and expand every dialogue token against it.
+    /// </summary>
+    public CraftsmanArchetype? Master { get; init; }
+
     public override string ArchetypeId => "apprentice";
     public override int    ModiMentisCount => 6;
 
@@ -14,7 +33,14 @@ public class ApprenticeArchetype : CraftsmanArchetype
     public override int MinAgeDays => 12 * LifetimeStat.DaysPerYear;
     public override int MaxAgeDays => 22 * LifetimeStat.DaysPerYear;
 
-    public override string RoleNoun => "apprentice";
+    public override string RoleNoun =>
+        Master == null ? "apprentice" : $"{Master.RoleNoun} apprentice";
+
+    // Trades the master's catalogue. NpcTradeCatalog seeds its offer list from the NPC's own id, so
+    // the apprentice sells the same class of goods from their own stock rather than a copy of the
+    // master's — which is the right reading for a shop boy minding the counter.
+    public override ItemTag? SellTag => Master?.SellTag;
+    public override ItemTag? BuyTag  => Master?.BuyTag;
 
     protected override string[] ObservationHintVariants(string nodeContext) => new[]
     {
@@ -40,10 +66,19 @@ public class ApprenticeArchetype : CraftsmanArchetype
 
     // ── Dialogue flavour ──────────────────────────────────────────────────────
 
-    public override string SelfIntroduction => "nobody yet — I'm bound apprentice here, and I've years of it left";
-    public override string Workplace        => "the master's workshop";
-    public override string Craft            => "the trade, or as much of it as I'm let near";
-    public override string DailyLabour      => "fetching, carrying, sweeping, and stoking whatever needs stoking";
+    public override string SelfIntroduction =>
+        Master == null
+            ? "nobody yet — I'm bound apprentice here, and I've years of it left"
+            : $"nobody yet — I'm bound apprentice to the {Master.RoleNoun}, and I've years of it left";
+
+    public override string Workplace => Master?.Workplace ?? "the master's workshop";
+
+    public override string Craft =>
+        Master == null
+            ? "the trade, or as much of it as I'm let near"
+            : $"{Master.Craft} — or as much of it as I'm let near";
+
+    public override string DailyLabour => "fetching, carrying, sweeping, and stoking whatever needs stoking";
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
@@ -57,7 +92,7 @@ public class ApprenticeArchetype : CraftsmanArchetype
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
-        => $@"You are {name}, an apprentice in a village workshop — bound to the master craftsman for years yet. You do the dirty work: fetching coal, sweeping shavings, stoking fires.
+        => $@"You are {name}, {(Master == null ? "an apprentice in a village workshop" : $"an apprentice {Master.RoleNoun}")} — bound to the master craftsman for years yet. You do the dirty work: fetching coal, sweeping shavings, stoking fires.
 
 You speak deferentially when the master is near and more freely when he isn't. You know the trade gossip — who is behind on payments, which orders are late — but you'd rather not be the one caught telling.
 

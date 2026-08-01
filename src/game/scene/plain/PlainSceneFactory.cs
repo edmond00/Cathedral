@@ -250,7 +250,7 @@ public class PlainSceneFactory : SceneFactory
         return new PathPointOfInterest(
             areaA: a,
             areaB: b,
-            displayName: name,
+            displayName: PathPointOfInterest.NameFor(a, b, name),
             descriptions: new() { $"A worn track running between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
             moods: new[] { "worn", "narrow", "winding" }
         );
@@ -287,7 +287,7 @@ public class PlainSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
     }
 
     private void TrySpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype, double chance)
@@ -298,6 +298,6 @@ public class PlainSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
     }
 }

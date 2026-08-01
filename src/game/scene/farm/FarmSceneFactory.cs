@@ -19,19 +19,27 @@ namespace Cathedral.Game.Scene.Farm;
 /// Sections:
 ///   • Farmyard       — Courtyard (hub), Chicken Coop, Pigsty, Sheep Pen, Storage Shed, Dairy Shed
 ///   • Farm Grounds   — Vegetable Garden, Orchard
-///   • Farmhouse      — Hall, Kitchen, optional Pantry, 1–3 Bedrooms (built by <see cref="HouseBuilder"/>)
+///   • Longhouse      — the household's building: public hall, kitchen, dormitories
+///   • Barracks       — optional second building when the crew outgrows the longhouse
 ///
 /// Connections: <see cref="PathPointOfInterest"/> (Farmyard Tracks, Garden Paths) between
-/// Courtyard and outdoor areas; locked <see cref="DoorPointOfInterest"/> from Courtyard → Hall.
+/// Courtyard and outdoor areas; buildings are entered through their own doors.
 ///
-/// NPCs (one per bedroom + role-specific): Farmer, Farmhand(s), Shepherd, Dairymaid,
-/// Swineherd, Poultry Keeper. Shallow: Sheep, Pig, Chicken, Cow.
+/// <para><b>The roster decides the buildings, not the reverse.</b> Farm hands used to be dealt into
+/// however many bedrooms the house happened to roll — which capped a whole farm at three people and
+/// meant <c>FarmhandArchetype</c> could never spawn at all, since the specialists always filled the
+/// slots first. Now the crew is drawn up first and the buildings are sized to sleep it.</para>
+///
+/// NPCs: Farmer, Shepherd, Dairymaid, Swineherd, Poultry Keeper, 0–3 Farmhands.
+/// Shallow: Sheep, Pig, Chicken, Cow.
 /// </summary>
 public class FarmSceneFactory : SceneFactory
 {
     public FarmSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
-    private HouseResult? _houseResult;
+    private BuildingResult? _longhouse, _barracks;
+    private LayoutShape _layout;
+    private List<NamedNpcArchetype> _roster = new();
     private Area? _courtyard, _chickenCoop, _pigsty, _sheepPen, _dairyShed, _shed;
     private Area? _vegetableGarden, _orchard;
     private bool  _hasSheep, _hasDairy;
@@ -81,96 +89,126 @@ public class FarmSceneFactory : SceneFactory
         scene.Sections.Add(grounds);
         RegisterAll(scene, grounds);
 
-        // ── 4. Connect outdoor areas with PathPoIs (Courtyard as hub) ────────
+        // ── 4. Connect outdoor areas ─────────────────────────────────────────
+        // The shape is rolled rather than always a hub off the courtyard: a chain farm strings its
+        // pens out along one track, a ring lets you come back round the far side. The courtyard leads
+        // the list either way, so it stays the arrival point and the buildings' front yard.
 
-        var outdoorPaths = new List<(Area, Area, string)>
-        {
-            (_courtyard, _chickenCoop, "Farmyard Track"),
-            (_courtyard, _pigsty,      "Farmyard Track"),
-            (_courtyard, _shed,        "Farmyard Track"),
-            (_courtyard, _vegetableGarden, "Garden Path"),
-            (_courtyard, _orchard,         "Garden Path"),
-            (_vegetableGarden, _orchard,   "Garden Path"),
-        };
-        if (_sheepPen  != null) outdoorPaths.Add((_courtyard, _sheepPen,  "Farmyard Track"));
-        if (_dairyShed != null) outdoorPaths.Add((_courtyard, _dairyShed, "Farmyard Track"));
+        var outdoorAreas = new List<Area> { _courtyard, _chickenCoop, _pigsty, _shed, _vegetableGarden, _orchard };
+        if (_sheepPen  != null) outdoorAreas.Add(_sheepPen);
+        if (_dairyShed != null) outdoorAreas.Add(_dairyShed);
 
-        foreach (var (a, b, pathName) in outdoorPaths)
+        _layout = OutdoorLayout.RollShape(rng);
+        OutdoorLayout.Connect(scene, outdoorAreas, _layout, "Track", rng);
+
+        // ── 5. Draw up the crew, then build to fit it ────────────────────────
+
+        _roster = BuildRoster(rng);
+
+        // The longhouse sleeps up to five; anything above that gets a barracks alongside. The farmer
+        // always sleeps under the longhouse roof — it is their hall and their business room.
+        int longhouseBeds = Math.Min(_roster.Count, 5);
+        int barracksBeds  = _roster.Count - longhouseBeds;
+
+        _longhouse = BuildingFactory.Build(new BuildingSpec
         {
-            scene.ConnectAreasBidirectional(a, b);
-            var path = new PathPointOfInterest(
-                areaA: a,
-                areaB: b,
-                displayName: pathName,
-                descriptions: new() { $"A worn farmyard track between the {a.DisplayName.ToLowerInvariant()} and the {b.DisplayName.ToLowerInvariant()}" },
-                moods: new[] { "worn", "muddy", "narrow" }
-            );
-            a.PointsOfInterest.Add(path);
-            b.PointsOfInterest.Add(path);
-            path.Register(scene);
+            BuildingName          = "Longhouse",
+            RoomPrefix            = "Longhouse",
+            Access                = BuildingAccess.Public,
+            Occupancy             = BuildingOccupancy.Communal,
+            OutsideArea           = _courtyard,
+            BedCount              = longhouseBeds,
+            FunctionNoun          = "farmhouse",
+            ArenaGeneratorFactory = seed => new RoomsGenerator { Seed = seed },
+        }, rng);
+        RegisterBuilding(scene, _longhouse);
+
+        if (barracksBeds > 0)
+        {
+            _barracks = BuildingFactory.Build(new BuildingSpec
+            {
+                BuildingName = "Farm Barracks",
+                RoomPrefix   = "Barracks",
+                Access       = BuildingAccess.Private,
+                Occupancy    = BuildingOccupancy.Communal,
+                OutsideArea  = OutdoorLayout.DistributeEntrances(outdoorAreas, 1, rng)[0],
+                BedCount     = barracksBeds,
+                FunctionNoun = "bunkhouse",
+            }, rng);
+            RegisterBuilding(scene, _barracks);
         }
 
-        // ── 5. Build the farmhouse ───────────────────────────────────────────
+        Console.WriteLine($"FarmSceneFactory: Built farm — layout={_layout}, sheep={_hasSheep} dairy={_hasDairy}, "
+                        + $"{_roster.Count} worker(s), {longhouseBeds} longhouse bed(s), {barracksBeds} barracks bed(s)");
+    }
 
-        var houseBuilder = new HouseBuilder
-        {
-            MinBedrooms = 1,
-            MaxBedrooms = rng.Next(1, 4),
-            MaxFloors   = rng.NextDouble() < 0.65 ? 2 : 1,
-        };
-        var house = houseBuilder.Build(rng);
-        HouseBuilder.PopulateFurniture(house, rng);
+    /// <summary>
+    /// The farm's people, decided before a single wall goes up: the farmer, whichever specialists the
+    /// rolled outbuildings call for, and 0–3 hands on top.
+    /// </summary>
+    private List<NamedNpcArchetype> BuildRoster(Random rng)
+    {
+        var roles = new List<NamedNpcArchetype> { new FarmerArchetype() };
 
-        foreach (var section in house.Sections)
-        {
-            foreach (var area in section.Areas)
-                area.IsPrivate = true;
+        if (_sheepPen  != null) roles.Add(new ShepherdArchetype());
+        if (_dairyShed != null) roles.Add(new DairymaidArchetype());
+        roles.Add(new SwineherdArchetype());
+        roles.Add(new PoultryKeeperArchetype());
 
-            scene.Sections.Add(section);
-            RegisterAll(scene, section);
-        }
+        // Hands scale with the farm, and — unlike before — actually get dealt in: they are appended
+        // to the roster rather than left to fill beds the specialists had already taken.
+        int hands = rng.Next(0, 4);
+        for (int i = 0; i < hands; i++)
+            roles.Add(new FarmhandArchetype());
 
-        // ── 6. Main entrance: Courtyard ↔ Hall (locked door) ─────────────────
-
-        var entranceDoor = BuildMainEntranceDoor(_courtyard, house.EntryRoom, house.Material);
-        _courtyard.PointsOfInterest.Add(entranceDoor);
-        house.EntryRoom.PointsOfInterest.Add(entranceDoor);
-        entranceDoor.Register(scene);
-
-        _houseResult = house;
-
-        Console.WriteLine($"FarmSceneFactory: Built farm — sheep={_hasSheep} dairy={_hasDairy}, {house.Bedrooms.Count} bedroom(s)");
+        return roles;
     }
 
     // ── NPC construction ────────────────────────────────────────────────────
 
     protected override void BuildNpcs(Random rng, int locationId, Scene scene)
     {
-        if (_houseResult is null || _courtyard is null) return;
+        if (_longhouse is null || _courtyard is null) return;
 
-        var bedrooms = _houseResult.Bedrooms;
-        var npcRoles = AssignBedroomRoles(rng, bedrooms.Count);
+        // One bed per worker, longhouse first then barracks — the buildings were sized from this same
+        // roster, so the two lists are the same length by construction.
+        var beds = _longhouse.BedAreas
+            .Concat(_barracks?.BedAreas ?? Array.Empty<Area>())
+            .ToList();
 
-        for (int i = 0; i < bedrooms.Count; i++)
+        var hall      = _longhouse.PublicHall;
+        var schedules = new List<NpcSchedule>();
+
+        for (int i = 0; i < _roster.Count && i < beds.Count; i++)
         {
-            var bedroom   = bedrooms[i];
-            var archetype = npcRoles[i];
+            var archetype = _roster[i];
+            var bed       = beds[i];
             var entity    = SpawnNamed(rng, archetype, "a medieval farm");
 
-            // The first NPC (farmer) owns the house sections
+            // The farmer holds the farm: both buildings are theirs, which makes them the authority
+            // any witness or threat check defers to anywhere indoors.
             if (i == 0)
             {
-                foreach (var section in _houseResult.Sections)
-                    entity.OwnedSectionIds.Add(section.Id.ToString());
+                entity.OwnedSectionIds.Add(_longhouse.Section.Id.ToString());
+                if (_barracks != null) entity.OwnedSectionIds.Add(_barracks.Section.Id.ToString());
             }
+
+            var schedule = BuildScheduleForRole(archetype.ArchetypeId, bed, hall, rng);
+            schedules.Add(schedule);
 
             var sceneNpc = new SceneNpc(entity);
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);
-            scene.NpcSchedules[sceneNpc.Id] = BuildScheduleForRole(archetype.ArchetypeId, bedroom);
+            scene.NpcSchedules[sceneNpc.Id] = schedule;
 
-            Console.WriteLine($"FarmSceneFactory: Spawned {entity.DisplayName} ({archetype.ArchetypeId})");
+            Console.WriteLine($"FarmSceneFactory: Spawned {entity.DisplayName} ({archetype.ArchetypeId}) — sleeps in {bed.DisplayName}");
         }
+
+        // Hands may be pulled in to the hall; the farmer never is. Unlike a village workshop, a farm
+        // hall is allowed to stand empty for the one period its master is out — there is no counter
+        // to mind, only a household — so no one is drafted to cover it.
+        if (schedules.Count > 1)
+            BuildingSchedule.StaffPublicHall(hall, schedules.Skip(1).ToList());
 
         // ── Shallow animals ─────────────────────────────────────────────────
 
@@ -181,35 +219,6 @@ public class FarmSceneFactory : SceneFactory
             SpawnShallow(rng, scene, new SheepArchetype(), _sheepPen, count: rng.Next(2, 7));
         if (_dairyShed != null)
             SpawnShallow(rng, scene, new CowArchetype(), _dairyShed, count: rng.Next(1, 3));
-    }
-
-    private List<NamedNpcArchetype> AssignBedroomRoles(Random rng, int count)
-    {
-        // Slot 0 is always the Farmer (owner). Then specialists, then farmhands.
-        var roles = new List<NamedNpcArchetype> { new FarmerArchetype() };
-
-        var specialists = new List<NamedNpcArchetype>();
-        if (_sheepPen  != null) specialists.Add(new ShepherdArchetype());
-        if (_dairyShed != null) specialists.Add(new DairymaidArchetype());
-        specialists.Add(new SwineherdArchetype());
-        specialists.Add(new PoultryKeeperArchetype());
-
-        // Shuffle the specialist order
-        for (int i = specialists.Count - 1; i > 0; i--)
-        {
-            int j = rng.Next(i + 1);
-            (specialists[i], specialists[j]) = (specialists[j], specialists[i]);
-        }
-
-        foreach (var s in specialists)
-        {
-            if (roles.Count >= count) break;
-            roles.Add(s);
-        }
-        while (roles.Count < count)
-            roles.Add(new FarmhandArchetype());
-
-        return roles;
     }
 
     private NpcEntity SpawnNamed(Random rng, NamedNpcArchetype archetype, string nodeContext)
@@ -227,85 +236,45 @@ public class FarmSceneFactory : SceneFactory
             var sceneNpc = new SceneNpc(entity);
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);
-            scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(home.DisplayName.ToLowerInvariant());
+            scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(home);
         }
     }
 
-    private NpcSchedule BuildScheduleForRole(string archetypeId, Area bedroom)
+    /// <summary>
+    /// A farm worker's day. Night is always their own bed — see <see cref="BuildingSchedule"/> — and
+    /// the day is spent across the outbuildings their role actually works, with the longhouse hall as
+    /// the place they turn up to eat and be found.
+    /// </summary>
+    private NpcSchedule BuildScheduleForRole(string archetypeId, Area bed, Area hall, Random rng)
     {
-        var bedroomId  = bedroom.DisplayName.ToLowerInvariant();
-        var courtyard  = _courtyard!.DisplayName.ToLowerInvariant();
-        var chickenId  = _chickenCoop!.DisplayName.ToLowerInvariant();
-        var pigstyId   = _pigsty!.DisplayName.ToLowerInvariant();
-        var gardenId   = _vegetableGarden!.DisplayName.ToLowerInvariant();
-        var orchardId  = _orchard!.DisplayName.ToLowerInvariant();
-        var shedId     = _shed!.DisplayName.ToLowerInvariant();
-        var sheepId    = _sheepPen?.DisplayName.ToLowerInvariant();
-        var dairyId    = _dairyShed?.DisplayName.ToLowerInvariant();
-        var hallId     = "hall";
-        var kitchenId  = "kitchen";
+        var yard    = _courtyard!;
+        var chicken = _chickenCoop!;
+        var pigsty  = _pigsty!;
+        var garden  = _vegetableGarden!;
+        var orchard = _orchard!;
+        var shed    = _shed!;
 
         return archetypeId switch
         {
-            "farmer" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = courtyard,
-                [TimePeriod.Morning]   = gardenId,
-                [TimePeriod.Noon]      = kitchenId,
-                [TimePeriod.Afternoon] = orchardId,
-                [TimePeriod.Evening]   = hallId,
-                [TimePeriod.Night]     = bedroomId,
-            }),
+            // The farmer is the one who does business here, so the hall is their workplace and they
+            // step out for only one period of the day.
+            "farmer" => BuildingSchedule.ForWorker(
+                bed, hall, new[] { yard, garden, orchard }, rng, awayPeriods: 1),
 
-            "shepherd" when sheepId != null => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = sheepId,
-                [TimePeriod.Morning]   = sheepId,
-                [TimePeriod.Noon]      = courtyard,
-                [TimePeriod.Afternoon] = sheepId,
-                [TimePeriod.Evening]   = hallId,
-                [TimePeriod.Night]     = bedroomId,
-            }),
+            "shepherd" when _sheepPen != null =>
+                BuildingSchedule.ForHand(bed, new[] { _sheepPen, _sheepPen, yard, hall }, rng),
 
-            "dairymaid" when dairyId != null => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = dairyId,
-                [TimePeriod.Morning]   = dairyId,
-                [TimePeriod.Noon]      = kitchenId,
-                [TimePeriod.Afternoon] = dairyId,
-                [TimePeriod.Evening]   = hallId,
-                [TimePeriod.Night]     = bedroomId,
-            }),
+            "dairymaid" when _dairyShed != null =>
+                BuildingSchedule.ForHand(bed, new[] { _dairyShed, _dairyShed, hall, yard }, rng),
 
-            "swineherd" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = pigstyId,
-                [TimePeriod.Morning]   = courtyard,
-                [TimePeriod.Noon]      = courtyard,
-                [TimePeriod.Afternoon] = pigstyId,
-                [TimePeriod.Evening]   = hallId,
-                [TimePeriod.Night]     = bedroomId,
-            }),
+            "swineherd" =>
+                BuildingSchedule.ForHand(bed, new[] { pigsty, pigsty, yard, hall }, rng),
 
-            "poultry_keeper" => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = chickenId,
-                [TimePeriod.Morning]   = orchardId,
-                [TimePeriod.Noon]      = hallId,
-                [TimePeriod.Afternoon] = chickenId,
-                [TimePeriod.Evening]   = hallId,
-                [TimePeriod.Night]     = bedroomId,
-            }),
+            "poultry_keeper" =>
+                BuildingSchedule.ForHand(bed, new[] { chicken, chicken, orchard, hall }, rng),
 
-            _ /* farmhand */ => NpcSchedule.Roaming(new()
-            {
-                [TimePeriod.Dawn]      = courtyard,
-                [TimePeriod.Morning]   = shedId,
-                [TimePeriod.Noon]      = hallId,
-                [TimePeriod.Afternoon] = gardenId,
-                [TimePeriod.Evening]   = hallId,
-                [TimePeriod.Night]     = bedroomId,
-            }),
+            _ /* farmhand and any specialist whose outbuilding did not spawn */ =>
+                BuildingSchedule.ForHand(bed, new[] { yard, shed, garden, orchard, hall }, rng),
         };
     }
 
@@ -346,14 +315,16 @@ public class FarmSceneFactory : SceneFactory
         };
 
         // One guaranteed root bed
-        garden.PointsOfInterest.Add(rootBeds[rng.Next(rootBeds.Count)]());
+        int rootPick = rng.Next(rootBeds.Count);
+        garden.PointsOfInterest.Add(rootBeds[rootPick]());
 
-        // 1–2 more beds
-        int extraCount = rng.Next(1, 3);
+        // 1–2 more beds, drawn from everything except the root bed already planted — the guaranteed
+        // pick used to stay in the pool, so a garden could end up with two "Turnip Bed" PoIs and only
+        // one of them observable.
         var rest = new List<Func<PointOfInterest>>(rootBeds);
+        rest.RemoveAt(rootPick);
         rest.AddRange(otherBeds);
-        var extra = SampleUniqueIndices(rng, rest.Count, extraCount);
-        foreach (var idx in extra)
+        foreach (var idx in SampleUniqueIndices(rng, rest.Count, rng.Next(1, 3)))
             garden.PointsOfInterest.Add(rest[idx]());
 
         return garden;
@@ -370,19 +341,17 @@ public class FarmSceneFactory : SceneFactory
             moods: new[] { "gnarled", "shaded", "sweet", "overgrown", "old", "mossy" }
         );
 
-        // 1–2 fruit-tree species
-        int treeKinds = rng.Next(1, 3);
+        // 2–4 fruit-tree species, one stand each. This used to add each chosen species twice, which
+        // gave the orchard two PoIs called "Apple Tree" — and observation candidates are de-duplicated
+        // by name, so the second was never offered. Same PoI count, all of them reachable.
         var tools = new List<Func<PointOfInterest>>
         {
             TerrainSubfactory.BuildAppleTree, TerrainSubfactory.BuildPearTree,
             TerrainSubfactory.BuildPlumTree,  TerrainSubfactory.BuildCherryTree,
         };
-        var picks = SampleUniqueIndices(rng, tools.Count, treeKinds);
-        foreach (var idx in picks)
-        {
+        foreach (var idx in SampleUniqueIndices(rng, tools.Count, rng.Next(2, 5)))
             orchard.PointsOfInterest.Add(tools[idx]());
-            orchard.PointsOfInterest.Add(tools[idx]());
-        }
+
         return orchard;
     }
 
@@ -523,24 +492,6 @@ public class FarmSceneFactory : SceneFactory
         moods: new[] { "climbing", "tangled", "green", "fresh" }
     );
 
-    // ── Main entrance door ──────────────────────────────────────────────────
-
-    private static DoorPointOfInterest BuildMainEntranceDoor(Area courtyard, Area hall, BuildingMaterial material)
-    {
-        var matWord = material switch
-        {
-            BuildingMaterial.Stone        => "heavy oak",
-            BuildingMaterial.WattleAndDaub => "low timber",
-            BuildingMaterial.Timber       => "oak-planked",
-            _                             => "wooden",
-        };
-
-        return new DoorPointOfInterest(
-            frontArea:   courtyard,
-            backArea:    hall,
-            displayName: "Farmhouse Door",
-            descriptions: new() { $"A {matWord} door set into the front wall of the farmhouse, iron-banded and weathered" },
-            initialState: DoorState.Locked
-        );
-    }
+    // The hand-built farmhouse entrance door lived here. BuildingFactory now makes every entry door,
+    // rolls its description against the building it opens into, and applies the night rule to it.
 }

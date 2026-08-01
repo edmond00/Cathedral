@@ -126,7 +126,7 @@ public class CoastSceneFactory : SceneFactory
             scene.ConnectAreasBidirectional(a, b);
             string name = (a.DisplayName == "Estuary Flat" || b.DisplayName == "Estuary Flat") ? "Estuary Track" : "Shore Path";
             var path = new PathPointOfInterest(
-                a, b, name,
+                a, b, PathPointOfInterest.NameFor(a, b, name),
                 new() { $"A wet path running between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
                 new[] { "wet", "salt-stained", "winding" }
             );
@@ -363,8 +363,8 @@ public class CoastSceneFactory : SceneFactory
             var sceneNpc = new SceneNpc(entity);
             sceneNpc.Register(scene);
             scene.Npcs.Add(sceneNpc);
-            var beachId = _sandyBeach.DisplayName.ToLowerInvariant();
-            var rockyId = (_rockyShore ?? _sandyBeach).DisplayName.ToLowerInvariant();
+            var beachId = _sandyBeach;
+            var rockyId = _rockyShore ?? _sandyBeach;
             scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Roaming(new()
             {
                 [TimePeriod.Dawn]      = beachId,
@@ -393,7 +393,7 @@ public class CoastSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
     }
 
     private void TrySpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype, double chance)

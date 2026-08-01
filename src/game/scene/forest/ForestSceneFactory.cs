@@ -128,7 +128,7 @@ public class ForestSceneFactory : SceneFactory
                 ? "Stream Path"
                 : (a.DisplayName == "Thicket" || b.DisplayName == "Thicket") ? "Narrow Path" : "Forest Track";
             var path = new PathPointOfInterest(
-                a, b, name,
+                a, b, PathPointOfInterest.NameFor(a, b, name),
                 new() { $"A track winding between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
                 new[] { "narrow", "leaf-strewn", "winding" }
             );
@@ -280,12 +280,11 @@ public class ForestSceneFactory : SceneFactory
 
     private NpcSchedule BuildWoodcutterSchedule()
     {
-        var clearing = _clearing!.DisplayName.ToLowerInvariant();
+        var clearing = _clearing!;
         // Pick deep-wood area for morning; fall back to clearing if unavailable
-        var workArea = _allAreas.FirstOrDefault(a => a.DisplayName == "Old Growth" || a.DisplayName == "Thicket");
-        var workId   = workArea?.DisplayName.ToLowerInvariant() ?? clearing;
-        var deadwood = _allAreas.FirstOrDefault(a => a.DisplayName == "Deadwood Patch");
-        var hauleId  = deadwood?.DisplayName.ToLowerInvariant() ?? clearing;
+        var workId   = _allAreas.FirstOrDefault(a => a.DisplayName == "Old Growth" || a.DisplayName == "Thicket")
+                       ?? clearing;
+        var hauleId  = _allAreas.FirstOrDefault(a => a.DisplayName == "Deadwood Patch") ?? clearing;
 
         return NpcSchedule.Roaming(new()
         {
@@ -317,7 +316,7 @@ public class ForestSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
     }
 
     private void TrySpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype, double chance)
@@ -328,6 +327,6 @@ public class ForestSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
     }
 }

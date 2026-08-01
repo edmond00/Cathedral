@@ -1,3 +1,5 @@
+using System;
+
 namespace Cathedral.Game.Narrative.Routines;
 
 /// <summary>
@@ -21,7 +23,13 @@ public enum RoutineTargetKind
 /// about this value — it never tests concrete report types. A new report therefore only has to
 /// answer this single question to be handled correctly, both when deciding whether an unrecordable
 /// verb may be skipped and when tracking which steps a later step depends on.
+///
+/// <para>These are <b>flags</b>, because the questions are independent: a report can relocate the
+/// point of view <i>and</i> leave a one-shot change behind (unlocking a door does both). Answering
+/// them with one value each forced a choice between the two, which silently dropped the door step
+/// out of the movement prefix.</para>
 /// </summary>
+[Flags]
 public enum RoutineChainEffect
 {
     /// <summary>
@@ -31,14 +39,22 @@ public enum RoutineChainEffect
     /// <see cref="RoutineConstraint"/> anyway. A verb whose effects are all None can be skipped
     /// silently, leaving the chain around it intact.
     /// </summary>
-    None,
+    None = 0,
 
     /// <summary>
-    /// Relocates the point of view. Steps are recorded and replayed as a chain from the session's
-    /// entry point, so movement both defines where every following step happens (it is kept in the
-    /// prefix each emitted routine is built from) and breaks the chain if it is skipped.
+    /// Relocates the point of view in space (<see cref="Cathedral.Game.Scene.PoV.Where"/> /
+    /// <see cref="Cathedral.Game.Scene.PoV.InSpot"/>). See <see cref="RoutineChainEffectExtensions.Repositions"/>
+    /// for what that means to the recorder.
     /// </summary>
-    Movement,
+    Movement = 1 << 0,
+
+    /// <summary>
+    /// Relocates the point of view in time (<see cref="Cathedral.Game.Scene.PoV.When"/>) — waiting
+    /// out the morning, sleeping until dawn. Time of day is scene state exactly as location is: it
+    /// decides which NPCs are present and therefore which later steps are possible at all, so a step
+    /// that shifts it is a repositioning step, never a piece of work in itself.
+    /// </summary>
+    TimeShift = 1 << 1,
 
     /// <summary>
     /// Cannot be reproduced by a replayed chain: a hand-off to a phase a routine cannot contain
@@ -46,7 +62,19 @@ public enum RoutineChainEffect
     /// on (unlocking a door, removing an NPC). Skipping it would leave a routine that quietly assumes
     /// something replay never does, so recording stops instead.
     /// </summary>
-    Breaking,
+    Breaking = 1 << 2,
+}
+
+public static class RoutineChainEffectExtensions
+{
+    /// <summary>
+    /// True when the effect moves the point of view — in space or in time. Steps are recorded and
+    /// replayed as a chain from the session's entry point, so a repositioning step both defines the
+    /// where-and-when every following step happens at (it is kept in the prefix each emitted routine
+    /// is built from) and breaks the chain if it is left out.
+    /// </summary>
+    public static bool Repositions(this RoutineChainEffect e)
+        => (e & (RoutineChainEffect.Movement | RoutineChainEffect.TimeShift)) != 0;
 }
 
 /// <summary>

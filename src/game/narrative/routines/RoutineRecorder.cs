@@ -12,27 +12,41 @@ namespace Cathedral.Game.Narrative.Routines;
 /// talking to two neighbours is remembered as two routines, one per neighbour, rather than one chain
 /// that only replays if you want to speak to both.
 ///
-/// Recording rules:
+/// <para><b>What ends a routine.</b> Every recordable step is one of two things, and that is the
+/// whole rule:</para>
+/// <list type="bullet">
+/// <item><b>A repositioning step</b> — it moves the point of view, in space (walk to the slope,
+///   climb the cliff) or in time (wait until noon). It is not something the player set out to do; it
+///   is how they got somewhere. It joins the <i>prefix</i> and emits nothing on its own.</item>
+/// <item><b>A terminus</b> — anything else. Gathering bark, speaking to the plowman, requesting
+///   work: a piece of work that stands by itself. It emits a routine there and then (prefix + this
+///   step) and the session keeps recording, so an afternoon of foraging and two conversations is
+///   remembered as three separate routines rather than one chain that only replays if you want all
+///   of it.</item>
+/// </list>
+///
+/// <para>Other rules:</para>
 /// <list type="bullet">
 /// <item>The session's start location + time become every emitted routine's binding.</item>
-/// <item>A successful recordable verb is appended to the working chain.</item>
 /// <item>A successful <i>unrecordable</i> verb is normally skipped — the chain closes over it and
 ///   recording continues — unless its effects cannot be reproduced by a replay
 ///   (<see cref="Verb.BreaksRoutineRecording"/>), in which case the session stops there.</item>
-/// <item>A step that hands off to another phase (fight/dialogue) terminates the chain that contains
-///   it: a routine is emitted immediately for it, and the session keeps recording afterwards.</item>
+/// <item>A step that hands off to another phase (fight/dialogue) is always a terminus, even in the
+///   future case of one that also repositions.</item>
 /// <item>Failed verbs never reach the success hook, so they are naturally ignored.</item>
-/// <item>Whatever is still open when narration ends is emitted as a final routine.</item>
+/// <item>A prefix left trailing when narration ends is emitted as a routine of its own — following a
+///   track to the vegetable beds and stopping there is a "go to the beds" routine.</item>
 /// </list>
 ///
 /// <para><b>How an emitted routine is built.</b> Routines always replay from the session's entry
-/// point, so a routine is a prefix, never a tail: it is the movement steps recorded so far (they are
-/// what put the player where the terminus happened) plus the terminus itself. Everything else is
-/// dropped, which is what lets the second neighbour's routine leave out the first neighbour. That
-/// pruning is safe because a step's own requirements — item, modus mentis, acting member — travel
-/// with it as <see cref="RoutineConstraint"/>s and are re-checked at replay; only scene state a
-/// dropped step created could be missed, and that surfaces as a routine greyed out in the menu
-/// rather than as a wrong replay.</para>
+/// point, so a routine is a prefix, never a tail: it is the repositioning steps recorded so far
+/// (they are what put the player where — and when — the terminus happened) plus the terminus itself.
+/// Everything else is dropped, which is what lets the second neighbour's routine leave out the first
+/// neighbour, and the walk to the slope leave out the bark gathered on the way. That pruning is safe
+/// because a step's own requirements — item, modus mentis, acting member — travel with it as
+/// <see cref="RoutineConstraint"/>s and are re-checked at replay; only scene state a dropped step
+/// created could be missed, and that surfaces as a routine greyed out in the menu rather than as a
+/// wrong replay.</para>
 /// </summary>
 public class RoutineRecorder
 {
@@ -40,15 +54,14 @@ public class RoutineRecorder
     private readonly int _locationId;
     private readonly TimePeriod _startTime;
 
-    // The chain still open: every recordable step since the last terminus, in order.
-    private readonly List<RoutineStep> _open = new();
-    // The movement subsequence of the session — the prefix every emitted routine starts with.
+    // The repositioning subsequence of the session — the prefix every emitted routine starts with,
+    // and (since a terminus never joins it) the whole of what is still open at any moment.
     private readonly List<RoutineStep> _path = new();
     // Signatures of what has already been saved, so a session that repeats itself (or repeats an
     // older routine) does not fill the queue with copies. Pre-seeded from the existing queue, hence
     // the separate count of what THIS session produced.
     private readonly HashSet<string> _emitted = new();
-    // Steps appended to the open chain since the last emission — see EmitOpenChain.
+    // Repositioning steps appended to the prefix since the last emission — see EmitTrailingPath.
     private int _stepsSinceEmit;
 
     private bool _recording = true;
@@ -80,25 +93,25 @@ public class RoutineRecorder
         reports ??= Array.Empty<OutcomeReport>();
 
         // No target means nothing stable to record or to reason about — close the session.
-        if (target == null) { EmitOpenChain(); Stop("action had no target"); return; }
+        if (target == null) { EmitTrailingPath(); Stop("action had no target"); return; }
 
         if (!verb.CanRecordAsRoutine(scene, povBeforeMove, target, actingMember))
         {
             if (verb.BreaksRoutineRecording(scene, povBeforeMove, target, reports))
             {
-                EmitOpenChain();
+                EmitTrailingPath();
                 Stop($"'{verb.VerbId}' cannot be left out of a routine");
             }
             else
             {
                 Console.WriteLine($"RoutineRecorder: skipped unrecordable '{verb.VerbId}' — chain still open " +
-                                  $"({_open.Count} step(s))");
+                                  $"({_path.Count} step(s) of prefix)");
             }
             return;
         }
 
         var targetRef = verb.RoutineTarget(scene, povBeforeMove, target);
-        if (targetRef == null) { EmitOpenChain(); Stop($"'{verb.VerbId}' produced no stable target"); return; }
+        if (targetRef == null) { EmitTrailingPath(); Stop($"'{verb.VerbId}' produced no stable target"); return; }
 
         var step = new RoutineStep
         {
@@ -111,53 +124,57 @@ public class RoutineRecorder
             TriggeredPhase   = verb.RoutineTriggeredPhase(scene, povBeforeMove, target),
             VariantKey       = verb.RoutineVariantKey(action.PreselectedOutcome.VerbView) ?? "",
             Constraints      = BuildConstraints(action, actingMember, itemConsumed),
-            MovesPointOfView = reports.Any(r => r.RoutineChainEffect == RoutineChainEffect.Movement),
+            RepositionsPointOfView = reports.Any(r => r.RoutineChainEffect.Repositions()),
         };
 
-        // A phase hand-off ends the chain it belongs to: emit path + this step as a routine of its
-        // own and leave the working chain untouched, so later steps build on the same prefix.
-        if (step.TriggeredPhase is RoutinePhaseKind.Fight or RoutinePhaseKind.Dialogue)
+        // A hand-off to another phase is a terminus whatever else it does, so it is asked separately
+        // from the repositioning question rather than folded into it.
+        bool handsOff = step.TriggeredPhase is RoutinePhaseKind.Fight or RoutinePhaseKind.Dialogue;
+
+        if (handsOff || !step.RepositionsPointOfView)
         {
+            // Terminus: emit prefix + this step as a routine of its own and leave the prefix
+            // untouched, so later steps build on the same walk rather than dragging this one along.
             Emit(_path.Append(step));
-            // A hand-off that also relocated the player joins the prefix afterwards (never before —
+            // A terminus that also relocated the player joins the prefix afterwards (never before —
             // it would then appear twice in the routine just emitted). No verb does both today; when
-            // one does, later steps must still know how the player got where they are.
-            if (step.MovesPointOfView) _path.Add(step);
+            // one does, later steps must still know where and when the player ended up.
+            if (step.RepositionsPointOfView) _path.Add(step);
             return;
         }
 
-        _open.Add(step);
+        // Repositioning step: it only extends the prefix. Nothing is emitted — walking somewhere is
+        // not an accomplishment until either something is done there or the session ends on it.
+        _path.Add(step);
         _stepsSinceEmit++;
-        if (step.MovesPointOfView) _path.Add(step);
     }
 
-    /// <summary>Called when the narration phase ends; saves whatever chain is still open.</summary>
+    /// <summary>Called when the narration phase ends; saves the trailing prefix, if any.</summary>
     public void FinalizeAtNarrationEnd()
     {
-        EmitOpenChain();
+        EmitTrailingPath();
         _recording = false;
     }
 
     // ── Emission ──────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Emits the still-open chain, if it has anything left to say. The test is whether a step was
-    /// recorded since the last emission: with nothing new the chain is just the prefix of a routine
-    /// already saved (the walk up to the conversation), while a single new step makes it its own
-    /// piece of work — following a track to the vegetable beds after speaking to the plowman is a
-    /// "go to the beds" routine, not a leftover.
+    /// Emits the prefix as a routine of its own, if it has anything left to say. The test is whether
+    /// a repositioning step was recorded since the last emission: with nothing new the prefix is
+    /// just the opening of a routine already saved (the walk up to the conversation), while a single
+    /// new step makes it its own piece of work — following a track to the vegetable beds after
+    /// speaking to the plowman is a "go to the beds" routine, not a leftover.
     /// </summary>
-    private void EmitOpenChain()
+    private void EmitTrailingPath()
     {
-        if (_open.Count == 0 || _stepsSinceEmit == 0) return;
-        Emit(_open);
-        _open.Clear();
+        if (_path.Count == 0 || _stepsSinceEmit == 0) return;
+        Emit(_path);
     }
 
     private void Emit(IEnumerable<RoutineStep> steps)
     {
-        // Cloned: a movement prefix is shared by every routine built on it, but each routine owns
-        // its own step instances.
+        // Cloned: the repositioning prefix is shared by every routine built on it, but each routine
+        // owns its own step instances.
         var list = steps.Select(s => s.Clone()).ToList();
         if (list.Count == 0) return;
 
@@ -188,7 +205,7 @@ public class RoutineRecorder
     private void Stop(string reason)
     {
         _recording = false;
-        _open.Clear();
+        _path.Clear();
         Console.WriteLine($"RoutineRecorder: recording stopped — {reason}");
     }
 

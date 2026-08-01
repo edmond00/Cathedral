@@ -432,14 +432,11 @@ public class SceneDebugWindow : Form
 
             if (_scene.NpcSchedules.TryGetValue(npc.Id, out var schedule))
             {
-                foreach (var (_, nodeId) in schedule.ActivePeriods)
+                foreach (var (_, scheduledArea) in schedule.ActivePeriods)
                 {
-                    var matchingArea = _scene.AllAreas.FirstOrDefault(a =>
-                        string.Equals(a.DisplayName, nodeId, StringComparison.OrdinalIgnoreCase));
-
-                    if (matchingArea != null && addedNodes.Contains(matchingArea.Id.ToString()))
+                    if (addedNodes.Contains(scheduledArea.Id.ToString()))
                     {
-                        var edge = msagl.AddEdge(npcId, "at", matchingArea.Id.ToString());
+                        var edge = msagl.AddEdge(npcId, "at", scheduledArea.Id.ToString());
                         edge.Attr.Color = new MsaglColor(120, 60, 180);
                         edge.Attr.AddStyle(Microsoft.Msagl.Drawing.Style.Dotted);
                     }

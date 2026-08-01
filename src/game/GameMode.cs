@@ -45,7 +45,7 @@ public enum GameMode
     
     /// <summary>
     /// Player is managing their protagonist/companions from the main menu.
-    /// Terminal shows tabbed interface: body/organs viewer, inventory, journal.
+    /// Terminal shows tabbed interface: anatomy/organs viewer, inventory, journal.
     /// </summary>
     ProtagonistManagement,
 

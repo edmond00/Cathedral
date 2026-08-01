@@ -166,6 +166,26 @@ namespace Cathedral.Glyph.Microworld
             => _outOfRangeVertices.Contains(vertexIndex);
 
         /// <summary>
+        /// Every world vertex the avatar could currently set out for: has world data, is not blocked by
+        /// the active travel constraint, and lies inside the stat-derived travel radius.
+        ///
+        /// <para>Exists for the <c>--cli</c> driver. Travel range covers far more of the map than the
+        /// handful of immediate graph neighbours, so without this a test script can only ever reach
+        /// whatever happens to border the spawn point — which is how testing a village feature turned
+        /// into hunting for a seed that spawns beside one.</para>
+        /// </summary>
+        public IEnumerable<int> EnumerateReachableVertices()
+        {
+            for (int i = 0; i < VertexCount; i++)
+            {
+                if (i == _protagonistVertex) continue;
+                if (!vertexData.ContainsKey(i)) continue;
+                if (!IsVertexTraversable(i) || IsOutOfTravelRange(i)) continue;
+                yield return i;
+            }
+        }
+
+        /// <summary>
         /// Darkens every vertex beyond <paramref name="radius"/> from <paramref name="protagonistVertex"/>
         /// and records them so they are blocked as waypoint destinations and restored correctly
         /// when paths are cleared. Calls <see cref="ClearTravelRange"/> first.
@@ -579,6 +599,28 @@ namespace Cathedral.Glyph.Microworld
                 // ordering so the picked index maps to the same vertex every run.
                 suitableVertices.Sort();
                 int newVertex = suitableVertices[spawnRng.Next(suitableVertices.Count)];
+
+                // --start-at <name>: spawn on a named biome or location instead. Debug only — a
+                // feature that lives in one rare biome is otherwise reachable only by hunting for a
+                // seed that happens to put one within travel range of the spawn point.
+                if (Config.Debug.StartAt is { Length: > 0 } want)
+                {
+                    var match = suitableVertices.FirstOrDefault(v =>
+                        vertexData.TryGetValue(v, out var d) &&
+                        (d.Location?.Name ?? d.Biome.Name).Contains(want, StringComparison.OrdinalIgnoreCase),
+                        -1);
+
+                    if (match >= 0)
+                    {
+                        newVertex = match;
+                        Console.WriteLine($"[debug] --start-at \"{want}\" → vertex {match}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[debug] --start-at \"{want}\" matched nothing in this world — using the normal spawn");
+                    }
+                }
+
                 PlaceProtagonist(newVertex, centerCamera: true); // PlaceProtagonist restores the old position first
 
                 Console.WriteLine($"Protagonist initialized at vertex {_protagonistVertex} ({vertexData[_protagonistVertex].Biome.Name})");

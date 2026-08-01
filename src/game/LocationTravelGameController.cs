@@ -228,7 +228,7 @@ public class LocationTravelGameController : IDisposable
         => _currentMode == GameMode.MainMenu ? _mainMenuRenderer?.CliButtons() : null;
 
     /// <summary>
-    /// Opens the protagonist-management screen (body / inventory / memory tabs) from wherever the
+    /// Opens the protagonist-management screen (anatomy / inventory / memory tabs) from wherever the
     /// game currently is, and closes it again on the second call.
     ///
     /// In the running game this screen is reached by clicking through the main-menu overlay, which

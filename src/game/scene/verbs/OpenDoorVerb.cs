@@ -23,8 +23,9 @@ public class OpenDoorVerb : Verb
     {
         if (target is not DoorPointOfInterest door) return false;
 
-        // Front → back: only when unlocked
-        if (pov.Where.Id == door.FrontArea.Id && door.DoorState == DoorState.Unlocked) return true;
+        // Front → back: only when unlocked. Effective state, not authored state — an entry door is
+        // shut at night whatever it is by day, and the description the player just read says so.
+        if (pov.Where.Id == door.FrontArea.Id && door.EffectiveState(pov.When) == DoorState.Unlocked) return true;
 
         // Back → front: always (locked doors cannot trap you inside)
         if (pov.Where.Id == door.BackArea.Id) return true;

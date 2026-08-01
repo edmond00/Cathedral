@@ -727,7 +727,7 @@ public class ObservationPhaseController
     /// </summary>
     private static string GetNeutralDescription(ConcreteOutcome outcome, int locationId)
         => outcome is NarrationNode nn   ? nn.GenerateNeutralDescription(locationId)
-         : outcome is ObservationObject obs ? obs.GenerateNeutralDescription(0)
+         : outcome is ObservationObject obs ? obs.GenerateNeutralDescription(locationId)
          : outcome.DisplayName;
 
     /// <summary>

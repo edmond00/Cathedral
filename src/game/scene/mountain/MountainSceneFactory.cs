@@ -112,7 +112,7 @@ public class MountainSceneFactory : SceneFactory
                         : (a.DisplayName == "Stream Source" || b.DisplayName == "Stream Source") ? "Stream Track"
                         : "Slope Path";
             var path = new PathPointOfInterest(
-                a, b, name,
+                a, b, PathPointOfInterest.NameFor(a, b, name),
                 new() { $"A worn slope path between {a.DisplayName.ToLowerInvariant()} and {b.DisplayName.ToLowerInvariant()}" },
                 new[] { "rough", "exposed", "windswept" }
             );
@@ -271,7 +271,7 @@ public class MountainSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
     }
 
     private void SpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype)
@@ -281,7 +281,7 @@ public class MountainSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area.DisplayName.ToLowerInvariant());
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
     }
 
     private void TrySpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype, double chance)
