@@ -140,8 +140,10 @@ public static class TextSanitizationPipeline
     /// <summary>
     /// Runs the 3-layer sanitization on <paramref name="text"/> and returns the corrected result.
     /// Always runs Layer 1. Layers 2/3 degrade gracefully when unavailable.
+    /// <paramref name="sourceVocabulary"/> holds the words the request itself supplied (see
+    /// <see cref="SourceVocabulary"/>); anything built only from those is left alone.
     /// </summary>
-    public static async Task<string> SanitizeAsync(string text)
+    public static async Task<string> SanitizeAsync(string text, IReadOnlySet<string>? sourceVocabulary = null)
     {
         if (string.IsNullOrWhiteSpace(text))
             return text;
@@ -154,7 +156,7 @@ public static class TextSanitizationPipeline
             return text;
 
         // Layers 2 + 3 detection (Layer 3 → anachronisms, Layer 2 → real-world names).
-        var (anachronisms, realWorldNames) = Detect(text);
+        var (anachronisms, realWorldNames) = Detect(text, sourceVocabulary);
 
         if (anachronisms.Count == 0 && realWorldNames.Count == 0)
             return text;
@@ -180,8 +182,15 @@ public static class TextSanitizationPipeline
     /// When Catalyst failed to initialise entirely, Layer 3 falls back to the compiled regex.
     /// Callers that also want Layer-1 correction should run <see cref="ForbiddenWordsDictionary.Apply"/>
     /// first (as <see cref="SanitizeAsync"/> does), since Layer 1 is applied there, not here.
+    /// <para>
+    /// <paramref name="sourceVocabulary"/> is the words the caller's own prompt already contained (see
+    /// <see cref="SourceVocabulary"/>). A hit built entirely from those was handed to the model rather
+    /// than invented by it, so it is dropped from both lists: the game named that thing, and rewriting
+    /// it would only make the answer disagree with the line it was asked to re-express.
+    /// </para>
     /// </summary>
-    public static (List<string> anachronisms, List<string> realWorldNames) Detect(string text)
+    public static (List<string> anachronisms, List<string> realWorldNames) Detect(
+        string text, IReadOnlySet<string>? sourceVocabulary = null)
     {
         // Layer 3 (Spotter / SpottedTerms) → genuine anachronisms.
         // Layer 2 (WikiNER)                → real-world proper names.
@@ -204,6 +213,16 @@ public static class TextSanitizationPipeline
                     {
                         if (token.EntityTypes.Count == 0)
                             continue;
+
+                        // Words the request itself supplied are never the model's fault — see
+                        // SourceVocabulary. Checked before the layer split, since a game-authored
+                        // name can trip either detector.
+                        if (SourceVocabulary.Contains(sourceVocabulary, token.Value))
+                        {
+                            Console.WriteLine(
+                                $"TextSanitizationPipeline: '{token.Value}' came from the source text — left as is.");
+                            continue;
+                        }
 
                         // The Spotter tags its hits with type "FORBIDDEN"; anything else
                         // is a WikiNER named-entity type (Person/Location/Organization/…).
@@ -240,7 +259,8 @@ public static class TextSanitizationPipeline
         {
             // Regex fallback for Layer 3 when Catalyst is unavailable (anachronisms only).
             foreach (Match m in _spottedPattern.Matches(text))
-                anachronisms.Add(m.Value);
+                if (!SourceVocabulary.Contains(sourceVocabulary, m.Value))
+                    anachronisms.Add(m.Value);
         }
 
         return (anachronisms, realWorldNames);

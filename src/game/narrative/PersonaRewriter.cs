@@ -102,11 +102,13 @@ public class PersonaRewriter
         // DialogueReplica) are exempt, since a reply or a call to a companion needn't begin with "I".
         forcedPrefix ??= DefaultForcedPrefix(kind);
 
-        // The rewrite is emitted as raw text (no JSON envelope), so a nested quotation no longer
-        // terminates generation mid-sentence — double-quotes are allowed in the body charset. A dialogue
-        // reply is structured instead: a frame plus a double-quoted spoken line and nothing after it,
-        // which leaves the model no room to narrate around its own speech — see
-        // GenerateDialogueReplyGrammar.
+        // The rewrite is emitted as raw text (no JSON envelope) whose charset excludes the double-quote:
+        // the prompt shows the neutral line and the inner thought inside quotes, and a small model copies
+        // that framing back into its answer ("...with warmth, \"I focus on this lane\""). Quoting itself
+        // reads badly in narration and then breaks the sanitizer downstream, whose JSON envelope ends its
+        // string at the first quote and truncates the passage. A dialogue reply is structured instead: a
+        // frame plus a double-quoted spoken line and nothing after it, so there the quotes are the shape
+        // and are produced by the grammar itself — see GenerateDialogueReplyGrammar.
         string gbnf = kind == NarrationKind.DialogueReplica
             ? JsonConstraintGenerator.GenerateDialogueReplyGrammar(
                   addressee: addressee,
@@ -115,8 +117,14 @@ public class PersonaRewriter
             : JsonConstraintGenerator.GenerateRawTextGrammar(
                   forcedPrefix: forcedPrefix,
                   minLen: RewriteMinChars,
-                  maxLen: Config.Narrative.MaxNarrativeTextLength,
-                  allowDoubleQuote: true);
+                  maxLen: Config.Narrative.MaxNarrativeTextLength);
+
+        // Everything game-authored that went INTO the prompt: the answer may echo any of it verbatim, and
+        // when it does, the sanitizer must not treat it as the model's invention. innerThought is
+        // deliberately absent — it is the persona's own words, so a name hallucinated there would
+        // otherwise license itself here. See SourceVocabulary.
+        var sourceVocabulary = SourceVocabulary.From(neutralText, addressee, dialogueContext, speakerName);
+        preview?.OnSourceVocabulary(sourceVocabulary);
 
         // When a preview sink is supplied, stream the tokens through it; otherwise keep the one-shot
         // path so the Critic / non-preview callers are byte-for-byte unchanged. The grammar produces the
@@ -143,7 +151,9 @@ public class PersonaRewriter
         // end in sentence punctuation (it ends in the closing quote) would corrupt that shape, so the
         // truncation guard is skipped for it. Every other kind keeps the mid-sentence "…" cleanup.
         string trimmed = kind == NarrationKind.DialogueReplica ? text : TextTruncationUtils.TrimToLastSentence(text);
-        string sanitized = await TextSanitizationPipeline.SanitizeAsync(trimmed);
+        string sanitized = kind == NarrationKind.DialogueReplica
+            ? await SanitizeSpokenAsync(trimmed, sourceVocabulary)
+            : await TextSanitizationPipeline.SanitizeAsync(trimmed, sourceVocabulary);
         string restored  = NameFaking.Real(sanitized);
         preview?.OnComplete(restored);
         return restored;
@@ -182,6 +192,40 @@ public class PersonaRewriter
         return s.StartsWith(frame, StringComparison.OrdinalIgnoreCase)
             ? s.Substring(frame.Length).TrimStart()
             : s;
+    }
+
+    /// <summary>
+    /// Sanitizes a dialogue reply without handing the sanitizer the reply's own delimiters.
+    /// <para>
+    /// A reply arrives as <c>"spoken words"</c> — the quotes are the shape the dialogue layer parses
+    /// (<c>DialogueReplicaWriter.NormalizeReply</c>), not part of what was said. Passing them through
+    /// would break the sanitizer's rewrite, whose JSON envelope ends its string at the first quote: a
+    /// reply that tripped a detector came back cut off at its opening delimiter, losing the whole line.
+    /// So the quotes are peeled off, only the spoken words are sanitized, and the shape is restored —
+    /// exactly as it arrived, closing quote included or not, since a reply cut short by the token limit
+    /// must keep degrading the way the parser already expects.
+    /// </para>
+    /// <para>
+    /// The spoken part is delimited the way the parser will delimit it (first quote to next quote), so
+    /// what gets sanitized is precisely what will be kept. Anything after the closing quote — which the
+    /// grammar cannot produce, but a changed grammar or a stray token could — is carried through
+    /// untouched rather than silently dropped here; the parser drops it either way.
+    /// </para>
+    /// </summary>
+    private static async Task<string> SanitizeSpokenAsync(string reply, IReadOnlySet<string> sourceVocabulary)
+    {
+        string s = reply.Trim();
+
+        // Not the quoted shape at all (playground text, or a grammar that changed): sanitize as it is.
+        if (s.Length < 2 || s[0] != '"')
+            return await TextSanitizationPipeline.SanitizeAsync(s, sourceVocabulary);
+
+        int close = s.IndexOf('"', 1);
+        string spoken = close < 0 ? s.Substring(1) : s.Substring(1, close - 1);
+        string tail   = close < 0 ? ""             : s.Substring(close);   // the closing quote and beyond
+
+        string sanitized = await TextSanitizationPipeline.SanitizeAsync(spoken, sourceVocabulary);
+        return "\"" + sanitized + tail;
     }
 
     /// <summary>

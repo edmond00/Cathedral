@@ -14,6 +14,15 @@ public interface ILlmPreviewSink
     void OnToken(string rawToken);
 
     /// <summary>
+    /// Declares the words this request handed the model (see
+    /// <see cref="Cathedral.Game.Narrative.Sanitizer.SourceVocabulary"/>), so the live gate applies the
+    /// same exemption the committed sanitizer will. Without it a game-authored name freezes the preview
+    /// on a word the final text keeps anyway, and the player watches the box stop mid-sentence.
+    /// <para>Optional: sinks that do no detection need not implement it.</para>
+    /// </summary>
+    void OnSourceVocabulary(System.Collections.Generic.IReadOnlySet<string>? vocabulary) { }
+
+    /// <summary>
     /// Called once with the final, fully-sanitized text after generation and the post-hoc sanitizer
     /// rewrite complete. This is the authoritative text; it supersedes anything shown incrementally.
     /// </summary>

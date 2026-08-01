@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cathedral;
 using Cathedral.Game.Narrative.Preview;
+using Cathedral.Game.Narrative.Sanitizer;
 using Cathedral.LLM;
 using Cathedral.LLM.JsonConstraints;
 
@@ -73,8 +74,10 @@ public class PersonaChoiceSelector
 
     /// <summary>
     /// GBNF for the persona's free-text reasoning: restricted to the same body charset as the persona
-    /// rewrites and forced to open with "I " so it reads as a first-person want. Raw text (not JSON) —
-    /// it is consumed directly as the reasoning string and streamed into the preview as inner thought.
+    /// rewrites — the double-quote among the characters it excludes, so the thought cannot come back
+    /// quoting itself or one of the options it was shown. Forced to open with "I " so it reads as a
+    /// first-person want. Raw text (not JSON) — it is consumed directly as the reasoning string and
+    /// streamed into the preview as inner thought.
     /// </summary>
     private static readonly string ReasoningGrammar =
         JsonConstraintGenerator.GenerateRawTextGrammar("I ", ReasoningMinChars, ReasoningMaxChars);
@@ -146,6 +149,10 @@ public class PersonaChoiceSelector
         // preceding the rewrite it will hint.
         _llm.ResetInstance(slotId);
         string reasoningPrompt = BuildReasoningPrompt(prompt, labels, evaluator);
+        // The option labels and the situation are game-authored, and the reasoning quotes them back
+        // constantly ("I want to look at the square-mill lane"). Exempt them from the preview's live
+        // sanitizer gate, or the box freezes on a name the game itself chose.
+        preview?.OnSourceVocabulary(SourceVocabulary.From(labels.Append(prompt.ContextText)));
         string reasoning = preview != null
             ? await _llm.GenerateConstrainedStringStreamingAsync(
                   slotId, reasoningPrompt, gbnfGrammar: ReasoningGrammar, ReasoningMaxTokens, skipReset: false,

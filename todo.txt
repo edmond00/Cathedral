@@ -34,6 +34,7 @@ office
 
 new verbs :
 MURDER (night/bed)
+WAKE UP (night/bed)
 SIT AND WAIT
 CRUSH
 CROSS
@@ -51,8 +52,10 @@ PICKPOCKET
 MEET TO ASK TO INTRODUCE ME TO X
 BEF FOR COIN
 MEET TO GATHER KNOWLEDGE
+SLIP INTO (well, chimney, window, ...)
 (need tools)
 FISH (fishing rod, net)
 MINE (pickaxe)
 CUT WOOD (axe)
 DIG (shovel)
+BREAK (hammer)

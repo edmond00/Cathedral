@@ -53,13 +53,20 @@ public static class JsonConstraintGenerator
     /// <summary>
     /// The character class for free-form persona text: letters, digits, space and a small set of
     /// punctuation. Parentheses are opted in only where asides are wanted (dialogue inner thoughts).
-    /// Double-quotes are opted in only on the raw-text path (<paramref name="allowDoubleQuote"/>): in
-    /// the JSON template path a <c>"</c> would close the JSON string and cut generation off mid-sentence,
-    /// but raw text has no envelope, so a nested quotation is safe there. This is the single source of
-    /// truth for the body charset shared by the JSON template path and the raw-text grammar below.
+    /// <para>
+    /// The double-quote is excluded on every path, and that is deliberate on both. In the JSON template
+    /// path a <c>"</c> closes the JSON string and cuts generation off mid-sentence. On the raw-text path
+    /// there is no envelope to break, but the rewrite prompts show the model quoted material (the neutral
+    /// line, the inner thought) and it answers in kind, narrating itself in quotation marks — which then
+    /// hands the quote to the sanitizer's JSON rewrite and truncates the passage there instead. The one
+    /// place quotes belong is a spoken line, where <see cref="GenerateDialogueReplyGrammar"/> emits them
+    /// as structure rather than leaving them to the model.
+    /// </para>
+    /// This is the single source of truth for the body charset shared by the JSON template path and the
+    /// raw-text grammar below.
     /// </summary>
-    private static string BodyCharClass(bool allowParentheses, bool allowDoubleQuote = false)
-        => "[-a-zA-Z0-9 .,?!'`" + (allowParentheses ? "()" : "") + (allowDoubleQuote ? "\\\"" : "") + "]";
+    private static string BodyCharClass(bool allowParentheses)
+        => "[-a-zA-Z0-9 .,?!'`" + (allowParentheses ? "()" : "") + "]";
 
     /// <summary>
     /// Builds a standalone GBNF (its own <c>root</c> rule) for a single run of free-form persona text
@@ -69,12 +76,12 @@ public static class JsonConstraintGenerator
     /// is set (e.g. <c>"I "</c>) it becomes a literal the output must start with; otherwise the first
     /// character is forced to a letter to avoid a leading-punctuation artifact. <paramref name="minLen"/>
     /// and <paramref name="maxLen"/> bound the body generated after the prefix (in characters).
-    /// <paramref name="allowDoubleQuote"/> adds <c>"</c> to the body charset so a nested quotation can be
-    /// written — safe here because raw text is not wrapped in a JSON string.
+    /// The double-quote is not in the charset — see <see cref="BodyCharClass"/> for why raw text excludes
+    /// it too, and <see cref="GenerateDialogueReplyGrammar"/> for the one shape that has quotes.
     /// </summary>
-    public static string GenerateRawTextGrammar(string? forcedPrefix, int minLen, int maxLen, bool allowParentheses = false, bool allowDoubleQuote = false)
+    public static string GenerateRawTextGrammar(string? forcedPrefix, int minLen, int maxLen, bool allowParentheses = false)
     {
-        string charClass = BodyCharClass(allowParentheses, allowDoubleQuote);
+        string charClass = BodyCharClass(allowParentheses);
         if (string.IsNullOrEmpty(forcedPrefix))
         {
             int restMin = Math.Max(0, minLen - 1);

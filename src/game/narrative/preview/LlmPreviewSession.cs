@@ -178,6 +178,7 @@ public sealed class PreviewPart
     private string _lastSeenCandidate = "";
     private bool _frozen;                          // a forbidden term appeared → stop updating until finalize
     private bool _currentIsFree;                   // kind of the segment being fed right now
+    private IReadOnlySet<string>? _sourceVocabulary; // words this request supplied → never a detection hit
 
     public PreviewPart(string title, object lockObj, bool accumulate, string linePrefix, Func<string, string>? transform = null)
     {
@@ -254,7 +255,18 @@ public sealed class PreviewPart
             _frozen = false;
             _currentIsFree = isFree;
             _liveIsFree = isFree;
+            _sourceVocabulary = null;   // each segment declares its own (see SetSourceVocabulary)
         }
+    }
+
+    /// <summary>
+    /// The words the request feeding this segment handed the model. Set by the rewriter right after the
+    /// segment is started and before the first token, so the live gate exempts exactly what the
+    /// committed sanitizer will (see <see cref="ILlmPreviewSink.OnSourceVocabulary"/>).
+    /// </summary>
+    internal void SetSourceVocabulary(IReadOnlySet<string>? vocabulary)
+    {
+        lock (_lock) _sourceVocabulary = vocabulary;
     }
 
     /// <summary>Feed one raw token delta: accumulate the growing text and gate it on whole words + the
@@ -275,7 +287,7 @@ public sealed class PreviewPart
             // Detection runs on the pre-transform text (as the committed sanitizer does); the transform
             // (e.g. placeholder → real name) is applied only to what is displayed.
             string layered = ForbiddenWordsDictionary.Apply(candidate);
-            var (anach, names) = TextSanitizationPipeline.Detect(layered);
+            var (anach, names) = TextSanitizationPipeline.Detect(layered, _sourceVocabulary);
             if (anach.Count == 0 && names.Count == 0)
                 _liveTail = Display(layered.TrimEnd());
             else
@@ -295,7 +307,7 @@ public sealed class PreviewPart
             if (_currentIsFree)
             {
                 string layered = ForbiddenWordsDictionary.Apply(finalText.Trim());
-                var (anach, names) = TextSanitizationPipeline.Detect(layered);
+                var (anach, names) = TextSanitizationPipeline.Detect(layered, _sourceVocabulary);
                 // _liveTail is already transformed; transform the clean full text to match.
                 string shown = (anach.Count == 0 && names.Count == 0) ? Display(layered.TrimEnd()) : _liveTail;
                 if (shown.Length > 0) _finalizedSegments.Add((shown, true));
@@ -344,5 +356,6 @@ internal sealed class PreviewSegmentSink : ILlmPreviewSink
     public PreviewSegmentSink(PreviewPart part) => _part = part;
     public void OnToken(string rawToken) => _part.FeedToken(rawToken);
     public void OnComplete(string finalText) => _part.FinalizeSegment(finalText);
+    public void OnSourceVocabulary(IReadOnlySet<string>? vocabulary) => _part.SetSourceVocabulary(vocabulary);
 }
 
