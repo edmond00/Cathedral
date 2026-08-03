@@ -8,6 +8,9 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class ShepherdArchetype : PeasantArchetype
 {
     public override string ArchetypeId => "shepherd";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "husbandry";
     public override ItemTag? SellTag => ItemTag.Textile;
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 7;

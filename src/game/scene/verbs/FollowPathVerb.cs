@@ -15,6 +15,9 @@ public class FollowPathVerb : Verb
     public override string DisplayName    => "Follow";
     public override int    BaseDifficulty => 1;
 
+    /// <summary>What a success teaches: a path read and followed is terrain understood.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "topographia";
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not PathPointOfInterest path) return false;

@@ -82,6 +82,18 @@ public class AffinityTable
     /// <summary>True when this NPC currently considers <paramref name="partyMemberId"/> an enemy.</summary>
     public bool IsEnemy(string partyMemberId) => _enemies.Contains(partyMemberId);
 
+    /// <summary>
+    /// Whether this creature has been talked or gentled down out of hostility: no longer an enemy,
+    /// and left at the wary <see cref="AffinityLevel.Suspicious"/> that both <c>appease</c> and the
+    /// reconcile tree put it at.
+    ///
+    /// <para>Named here because the pair of conditions is the definition of "appeased" and was
+    /// already being spelled out in two places. <c>TameVerb</c> is the third, and taming a beast that
+    /// still wants to kill you should not be a thing anyone has to remember to prevent.</para>
+    /// </summary>
+    public bool IsAppeased(string partyMemberId)
+        => !IsEnemy(partyMemberId) && GetLevel(partyMemberId) == AffinityLevel.Suspicious;
+
     /// <summary>Marks <paramref name="partyMemberId"/> as an enemy of this NPC.</summary>
     public void SetEnemy(string partyMemberId) => _enemies.Add(partyMemberId);
 

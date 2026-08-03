@@ -20,7 +20,8 @@ public class Companion : PartyMember
     public string Description { get; set; }
 
     // ── PartyMember abstract ─────────────────────────────────────
-    public override string DisplayName => Name;
+    public override string DisplayName      => Name;
+    public override string PartyDescription => Description;
 
     public Companion(string name, string description = "", Species? species = null)
         : base(species ?? SpeciesRegistry.Human)

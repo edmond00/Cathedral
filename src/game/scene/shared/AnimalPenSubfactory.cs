@@ -33,7 +33,7 @@ public static class AnimalPenSubfactory
                 new ItemElement(new Hay()),
             },
             moods: new[] { "long", "trampled", "dusty" }
-        ));
+        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "husbandry", ["smell"] = "scenting" } });
 
         pen.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Shearing Post",
@@ -45,7 +45,7 @@ public static class AnimalPenSubfactory
                 new ItemElement(new Shears()),
             },
             moods: new[] { "polished", "wool-tufted", "low" }
-        ));
+        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "husbandry" } });
 
         return pen;
     }
@@ -68,7 +68,7 @@ public static class AnimalPenSubfactory
             referenceLemma: "trough",
             descriptions: new() { "A trough heaped with kitchen scraps and damp slop" },
             moods: new[] { "low", "dirty", "mucky" }
-        ));
+        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "husbandry", ["smell"] = "scenting" } });
 
         return pigsty;
     }
@@ -95,7 +95,7 @@ public static class AnimalPenSubfactory
                 new ItemElement(new Butter()),
             },
             moods: new[] { "tall", "wooden", "creaking" }
-        ));
+        ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "dairycraft", ["listen"] = "keen_ear" } });
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Mold Rack",
@@ -106,7 +106,7 @@ public static class AnimalPenSubfactory
                 new ItemElement(new Cheese()),
             },
             moods: new[] { "rowed", "white", "stacked" }
-        ));
+        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "dairycraft", ["smell"] = "scenting" } });
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Pail",
@@ -117,7 +117,7 @@ public static class AnimalPenSubfactory
                 new ItemElement(new Milk()),
             },
             moods: new[] { "wooden", "foaming", "warm" }
-        ));
+        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "dairycraft" } });
 
         return shed;
     }
@@ -149,7 +149,7 @@ public static class AnimalPenSubfactory
                 new ItemElement(new Straw()),
             },
             moods: new[] { "warm", "straw-lined", "dim", "fragrant" }
-        ));
+        ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "husbandry", ["listen"] = "keen_ear" } });
 
         return coop;
     }

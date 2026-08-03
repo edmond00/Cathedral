@@ -26,7 +26,7 @@ public class PeakSceneFactory : SceneFactory
     public PeakSceneFactory(string? sessionPath = null) : base(sessionPath) { }
 
     private readonly List<Area> _allAreas = new();
-    private Area? _summitApproach;
+    private Area? _summitApproach, _cirqueBasin;
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
     {
@@ -53,6 +53,11 @@ public class PeakSceneFactory : SceneFactory
         var approachAreas = new List<Area> { _summitApproach };
         if (rng.NextDouble() < 0.4) approachAreas.Add(BuildScreeGully());
 
+        // The basin lies below the approach and the cliff is its only way in or out, so it stays out
+        // of the path chain further down.
+        _cirqueBasin = BuildCirqueBasin();
+        approachAreas.Add(_cirqueBasin);
+
         // Populate sparse spots
         foreach (var area in approachAreas.Concat(summitAreas))
             PopulateArea(area, rng);
@@ -78,11 +83,13 @@ public class PeakSceneFactory : SceneFactory
         _allAreas.AddRange(approachAreas);
         _allAreas.AddRange(summitAreas);
 
-        // Connect linearly
-        for (int i = 0; i < _allAreas.Count - 1; i++)
+        // Connect linearly — minus the basin, whose only way in is the cliff.
+        var walkable = _allAreas.Where(a => a != _cirqueBasin).ToList();
+
+        for (int i = 0; i < walkable.Count - 1; i++)
         {
-            var a = _allAreas[i];
-            var b = _allAreas[i + 1];
+            var a = walkable[i];
+            var b = walkable[i + 1];
             scene.ConnectAreasBidirectional(a, b);
             string name = (a.DisplayName == "Scree Gully" || b.DisplayName == "Scree Gully") ? "Gully"
                         : (a.DisplayName == "Summit Approach" || b.DisplayName == "Summit Approach") ? "Ridge Path"
@@ -97,22 +104,63 @@ public class PeakSceneFactory : SceneFactory
             path.Register(scene);
         }
 
-        // Cliff Descent (down to Mountain — placeholder)
+        // Cliff Descent: Summit Approach → Cirque Basin. The basin is a real place now; the cliff used
+        // to point back at the approach as a placeholder for a descent into the mountain location that
+        // was never wired, which made the climb a roll with no consequence either way.
         var cliff = new CliffPointOfInterest(
-            bottomArea: _summitApproach,
-            topArea:    _summitApproach, // self-referential placeholder
+            bottomArea: _cirqueBasin,
+            topArea:    _summitApproach,
             displayName: "Cliff Descent",
-            descriptions: new() { "A steep cliff dropping away to the slopes below, the descent severe" },
+            descriptions: new() { "A steep cliff dropping away to the basin below, the descent severe" },
             icyCliff:   hasIceShelf,
             moods:      new[] { "sheer", "vertiginous", "exposed", "dangerous" }
         );
-        _summitApproach.PointsOfInterest.Add(cliff);
-        cliff.Register(scene);
+        cliff.AttachTo(scene);
 
         Console.WriteLine($"PeakSceneFactory: peak ({(pointed ? "pointed" : "rounded")}) — {_allAreas.Count} areas");
-    }
+    
+        // ── Furnishing: somewhere to sit, somewhere to hide, a hard shortcut, a climb ──
+        // Rolled, so two places of the same kind are not the same place. Runs after the sections and
+        // paths exist: shortcuts need to know what is already adjacent, and the climb needs a section
+        // to put its top area in.
+        {
+            var outdoors = scene.OutdoorAreas;
+            FurnitureSubfactory.AddSitSpots(rng, outdoors, FurnitureSubfactory.Setting.Highland);
+            FurnitureSubfactory.AddHidingPlaces(rng, outdoors, FurnitureSubfactory.Setting.Highland);
+            FurnitureSubfactory.AddShortcuts(rng, scene, outdoors, FurnitureSubfactory.Setting.Highland);
+            FurnitureSubfactory.AddExtractionPoints(rng, outdoors, FurnitureSubfactory.Setting.Highland);
+
+            var climbTop = FurnitureSubfactory.AddClimb(
+                rng, scene, outdoors[0], FurnitureSubfactory.Setting.Highland);
+            if (climbTop != null)
+            {
+                // Sections must partition the areas, so the new top belongs to the section its foot is
+                // in — an area in no section crashes the fight path outright.
+                var host = scene.Sections.First(s => s.Areas.Contains(outdoors[0]));
+                host.Areas.Add(climbTop);
+                RegisterAll(scene, climbTop);
+            }
+        }
+
+        // Landmarks, and a view from anywhere that has to be climbed to. Must run after the
+        // connectors are attached: it finds the high ground by looking for their tops.
+        MarkLandmarksAndViews(scene);
+}
 
     // ── Area builders ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// A sheltered hollow under the approach, reachable only by the cliff. Being hard to get into is
+    /// the whole of its character — it is out of the wind and out of everyone's way.
+    /// </summary>
+    private static Area BuildCirqueBasin() => new(
+        displayName: "Cirque Basin",
+        referenceLemma: "basin",
+        contextDescription: "down in the cirque basin",
+        transitionDescription: "drop into the cirque basin",
+        descriptions: new() { "A bowl of still air and old snow scooped out beneath the cliff, walled on three sides" },
+        moods: new[] { "still", "sheltered", "cold", "hidden" }
+    );
 
     private static Area BuildSummitApproach() => new(
         displayName: "Summit Approach",
@@ -207,7 +255,11 @@ public class PeakSceneFactory : SceneFactory
         TrySpawnShallow(rng, scene, new SnowHareArchetype(),      0.20);
         TrySpawnShallow(rng, scene, new MountainGoatArchetype(),  0.30);
         TrySpawnNamed  (rng, scene, new WolfArchetype(),          0.10);
-    }
+    
+        // Small life. Every location has some; which and how many is rolled, so two
+        // places of the same kind are not the same place.
+        SprinkleSmallLife(rng, scene, scene.AllAreas, SmallLife.Barren, 1, 2);
+}
 
     private void SpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype)
     {
@@ -233,6 +285,10 @@ public class PeakSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
+        // Beasts range: a wolf pinned to one clearing all day is a hazard, not an animal, and there
+        // is nothing to track about it. Speaking wilderness folk keep their authored routines.
+        scene.NpcSchedules[sceneNpc.Id] = archetype.CanSpeak
+            ? NpcSchedule.Always(area)
+            : RoamingSchedule(rng, _allAreas);
     }
 }

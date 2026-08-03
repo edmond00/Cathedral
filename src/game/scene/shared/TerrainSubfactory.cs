@@ -27,7 +27,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "ancient", "broad-crowned", "spreading", "weathered", "rough-barked" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildBeechTree() => new(
         displayName: "Beech Tree",
@@ -42,7 +42,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tall", "smooth", "pale", "still", "shaded" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildAshTree() => new(
         displayName: "Ash Tree",
@@ -56,7 +56,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tall", "grey", "fluttering", "open-canopied" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildBirchTree() => new(
         displayName: "Birch Tree",
@@ -70,7 +70,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "slender", "silver-barked", "papery", "trembling", "pale" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildPineTree() => new(
         displayName: "Pine Tree",
@@ -86,7 +86,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tall", "resinous", "dark", "wind-bent", "dense" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "scenting" } };
 
     public static PointOfInterest BuildYewTree() => new(
         displayName: "Yew Tree",
@@ -99,7 +99,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "squat", "dark", "watchful", "ancient", "shadowed" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["contemplate"] = "iconography" } };
 
     public static PointOfInterest BuildHawthornTree() => new(
         displayName: "Hawthorn Tree",
@@ -114,7 +114,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "thorny", "wind-bent", "small", "tangled", "lonely" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "hedgecraft", ["smell"] = "scenting" } };
 
     public static PointOfInterest BuildWillowTree() => new(
         displayName: "Willow Tree",
@@ -127,7 +127,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "weeping", "trailing", "soft", "damp", "shaded" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildElderTree() => new(
         displayName: "Elder Tree",
@@ -141,7 +141,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "shrubby", "fragrant", "spreading", "old" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting" } };
 
     public static PointOfInterest BuildAppleTree() => new(
         displayName: "Apple Tree",
@@ -156,7 +156,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "gnarled", "laden", "shaded", "sweet", "old" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildPearTree() => new(
         displayName: "Pear Tree",
@@ -170,7 +170,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "narrow-leaved", "laden", "tall", "ordered" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildPlumTree() => new(
         displayName: "Plum Tree",
@@ -184,7 +184,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "crowded", "fruited", "low", "spreading" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildCherryTree() => new(
         displayName: "Cherry Tree",
@@ -198,7 +198,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "dark-leaved", "laden", "modest", "tidy" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting", ["listen"] = "keen_ear" } };
 
     // ── Cut / fallen wood ────────────────────────────────────────────────────
 
@@ -214,7 +214,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "fresh-cut", "heavy", "split", "wood-scented" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "scenting" } };
 
     public static PointOfInterest BuildTreeStump() => new(
         displayName: "Tree Stump",
@@ -227,7 +227,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "weathered", "low", "damp", "mossy" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft" } };
 
     public static PointOfInterest BuildDeadfall() => new(
         displayName: "Deadfall Pile",
@@ -241,7 +241,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tangled", "dry", "weathered", "splintered" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "mycology", ["smell"] = "scenting" } };
 
     // ── Rock features ────────────────────────────────────────────────────────
 
@@ -257,7 +257,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "grey", "weathered", "massive", "silent", "half-buried" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } };
 
     public static PointOfInterest BuildRockOutcrop() => new(
         displayName: "Rock Outcrop",
@@ -272,7 +272,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "sharp-edged", "exposed", "wind-scoured", "grey" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } };
 
     public static PointOfInterest BuildRockFace() => new(
         displayName: "Rock Face",
@@ -286,7 +286,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "sheer", "looming", "wet", "fissured" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } };
 
     public static PointOfInterest BuildFallenRocks() => new(
         displayName: "Fallen Rocks",
@@ -299,7 +299,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "scattered", "loose", "treacherous", "grey" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } };
 
     public static PointOfInterest BuildCrevice() => new(
         displayName: "Crevice",
@@ -311,7 +311,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "narrow", "dark", "deep", "echoing" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildCairn() => new(
         displayName: "Cairn",
@@ -324,7 +324,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "balanced", "weathered", "lonely", "deliberate" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "archeology", ["contemplate"] = "iconography" } };
 
     // ── Water ────────────────────────────────────────────────────────────────
 
@@ -340,7 +340,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "muddy", "wet", "cool", "slick" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["listen"] = "keen_ear", ["smell"] = "scenting" } };
 
     public static PointOfInterest BuildGorgePool() => new(
         displayName: "Gorge Pool",
@@ -353,7 +353,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "still", "dark", "cold", "wet" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["listen"] = "keen_ear" } };
 
     // ── Vegetation patches ───────────────────────────────────────────────────
 
@@ -370,7 +370,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "bright", "fragrant", "scattered", "vivid" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
 
     public static PointOfInterest BuildBerryBush() => new(
         displayName: "Berry Bush",
@@ -384,7 +384,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "thorny", "dense", "fruited", "tangled" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting" } };
 
     public static PointOfInterest BuildBilberryBush() => new(
         displayName: "Bilberry Bush",
@@ -397,7 +397,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "low", "tangled", "fruited", "dusky" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting" } };
 
     public static PointOfInterest BuildSloeBush() => new(
         displayName: "Sloe Bush",
@@ -410,7 +410,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "thorny", "blue-black", "wind-bent", "wild" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "ripelore", ["smell"] = "scenting" } };
 
     public static PointOfInterest BuildMushroomCluster() => new(
         displayName: "Mushroom Cluster",
@@ -423,7 +423,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "earthy", "damp", "hidden", "small" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "mycology", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
 
     public static PointOfInterest BuildUndergrowthPatch() => new(
         displayName: "Undergrowth Patch",
@@ -438,7 +438,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tangled", "low", "shaded", "snarled" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "forage_lore", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildReedBed() => new(
         displayName: "Reed Bed",
@@ -452,7 +452,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "tall", "rustling", "wet", "papery" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "knotwork", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildMossBank() => new(
         displayName: "Moss Bank",
@@ -465,7 +465,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "soft", "damp", "green", "thick" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting" } };
 
     public static PointOfInterest BuildAlpineHerbPatch() => new(
         displayName: "Alpine Herb Patch",
@@ -479,7 +479,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "fragrant", "small", "sheltered", "rare" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "scenting", ["contemplate"] = "aesthetic" } };
 
     public static PointOfInterest BuildLichenCrust() => new(
         displayName: "Lichen Crust",
@@ -492,7 +492,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "papery", "grey-green", "weathered", "thin" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore" } };
 
     public static PointOfInterest BuildShelteredHollow() => new(
         displayName: "Sheltered Hollow",
@@ -505,7 +505,7 @@ public static class TerrainSubfactory
         },
         moods: new[] { "sheltered", "rare", "small", "still" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["listen"] = "keen_ear" } };
 
     public static PointOfInterest BuildIceFormation() => new(
         displayName: "Ice Formation",
@@ -514,5 +514,5 @@ public static class TerrainSubfactory
         items: new(),
         moods: new[] { "glittering", "wind-carved", "frozen", "still" },
         isNatural: true
-    );
+    ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "thermodynamics", ["contemplate"] = "aesthetic" } };
 }

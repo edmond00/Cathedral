@@ -55,6 +55,50 @@ public abstract class NamedNpcArchetype : NpcArchetype
     public virtual bool CanSpeak => false;
 
     /// <summary>
+    /// What a person of this sort can actually teach you about their own work — the lesson GATHER
+    /// KNOWLEDGE grants when the player asks them about their trade.
+    ///
+    /// <para>Defaults to <c>peasantry</c>, the knowledge of ordinary working life, which is the
+    /// honest answer for anyone whose trade is not a craft. Craft archetypes override it with the
+    /// craft itself, so asking a blacksmith about his work teaches metalwork and asking a miller
+    /// about his teaches milling.</para>
+    /// </summary>
+    public virtual string TradeModusMentisId => "peasantry";
+
+    /// <summary>
+    /// Archetype ids this person is willing and able to put the player in front of — see
+    /// <c>IntroduceMeVerb</c>. Empty for almost everybody.
+    ///
+    /// <para>An introduction has to be socially real to be worth having, so this is deliberately not
+    /// "anyone I share a village with": an apprentice can walk you to their own master, and a
+    /// labourer can take you to the reeve who sets their work, because in both cases the speaker has
+    /// standing with the third party. Nobody else has standing with anybody.</para>
+    /// </summary>
+    public virtual IReadOnlyList<string> CanIntroduceToArchetypes => Array.Empty<string>();
+
+    /// <summary>
+    /// What this person calls the people in <see cref="CanIntroduceToArchetypes"/> — "my master",
+    /// "the reeve". Fills <c>{third:relation}</c>, so the offer reads in their own words.
+    /// </summary>
+    public virtual string IntroductionRelation => "someone I know";
+
+    /// <summary>
+    /// Small things this sort of person keeps loose about them, for <c>PickpocketVerb</c> to find.
+    /// Empty by default, in which case a picked pocket yields only coins.
+    ///
+    /// <para>Factories rather than instances, because each pick must produce a fresh item — a shared
+    /// instance would end up in two inventories at once.</para>
+    /// </summary>
+    public virtual IReadOnlyList<Func<Narrative.Item>> PocketItems => Array.Empty<Func<Narrative.Item>>();
+
+    /// <summary>
+    /// The period this archetype sleeps through. Night for everyone so far; the property exists
+    /// because a miller starting before dawn or a watchman sleeping by day are the obvious next
+    /// content, and because <c>SceneNpc.IsSleeping</c> needs somewhere to ask.
+    /// </summary>
+    public virtual Narrative.TimePeriod SleepPeriod => Narrative.TimePeriod.Night;
+
+    /// <summary>
     /// Whether spawned NPCs confront criminals bravely (demand fight) rather than submitting.
     /// Override to true for guards, owners, or aggressive archetypes.
     /// </summary>

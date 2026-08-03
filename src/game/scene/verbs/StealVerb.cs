@@ -16,6 +16,9 @@ public class StealVerb : Verb
     public override string DisplayName    => "Steal";
     public override int    BaseDifficulty => 3;
 
+    /// <summary>What a success teaches: taking what is not yours, quietly.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "petty_thief";
+
     /// <summary>Stealing is always an illegal action.</summary>
     public override bool IsLegal => false;
 

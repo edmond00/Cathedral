@@ -8,6 +8,9 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class BlacksmithArchetype : CraftsmanArchetype
 {
     public override string ArchetypeId  => "blacksmith";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "metalcraft";
     public override ItemTag? SellTag => ItemTag.Ironwork;
     public override ItemTag? BuyTag  => ItemTag.Mineral;
     public override int    ModiMentisCount => 10;

@@ -35,6 +35,9 @@ public class MeetStrangerTree : DialogueTree
     public override string Description      => "meeting this person for the first time and exchanging introductions";
     public override string AssociatedVerbId => "meet_stranger";
 
+    /// <summary>What succeeding at this conversation teaches: a first meeting carried off well.</summary>
+    public override string? GrantedModusMentisId => "hospitality";
+
     public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
     {
         new AffinityTransitionOutcome(AffinityLevel.DistantAcquaintance),

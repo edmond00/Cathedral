@@ -35,6 +35,7 @@ public abstract class SceneFactory
 
         BuildSections(rng, locationId, scene);
         BuildNpcs(rng, locationId, scene);
+        PlaceBeastSign(scene);
         AssignVerbs(scene);
         MergeDuplicateNamedPois(scene);
         AssignStableKeys(scene);
@@ -253,6 +254,278 @@ public abstract class SceneFactory
         poi.Register(scene);
         foreach (var itemElement in poi.Items)
             itemElement.Register(scene);
+    }
+
+    /// <summary>
+    /// A wandering day: the creature moves between two or three of <paramref name="range"/>, changing
+    /// where it is every period or two.
+    ///
+    /// <para>Every beast in the game was pinned to a single area for the whole day, which made a wolf
+    /// a fixed hazard rather than an animal — you either walked into its clearing or you did not, and
+    /// nothing you could do changed which. A roaming schedule is what makes tracking mean anything:
+    /// the sign in this clearing is worth reading precisely because the wolf is somewhere else now.</para>
+    /// </summary>
+    protected static Narrative.NpcSchedule RoamingSchedule(Random rng, IReadOnlyList<Area> range)
+    {
+        if (range.Count == 0) throw new ArgumentException("A roaming range needs at least one area.", nameof(range));
+        if (range.Count == 1) return Narrative.NpcSchedule.Always(range[0]);
+
+        // Two or three haunts, held for a stretch at a time. A creature that teleported every period
+        // would be untrackable in the other direction — you would never arrive in time.
+        int hauntCount = Math.Min(range.Count, rng.Next(2, 4));
+        var haunts = SampleUniqueIndices(rng, range.Count, hauntCount).Select(i => range[i]).ToList();
+
+        var map = new Dictionary<Narrative.TimePeriod, Area?>();
+        int index = 0;
+        foreach (Narrative.TimePeriod period in Enum.GetValues<Narrative.TimePeriod>())
+        {
+            map[period] = haunts[index % haunts.Count];
+            if (rng.NextDouble() < 0.6) index++;
+        }
+
+        return Narrative.NpcSchedule.Roaming(map);
+    }
+
+    // ── Beast sign ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Puts tracks wherever a beast goes. Runs for every factory automatically, after
+    /// <c>BuildNpcs</c>, so a factory that spawns a wolf gets a trackable wolf without doing
+    /// anything about it.
+    ///
+    /// <para>Only non-speaking creatures leave sign. A woodcutter walking the same rounds leaves as
+    /// many footprints as a wolf does, but following a person is <c>stalk</c> — a different verb with
+    /// a different legality — and reading a man's tracks off the ground is not the same skill.</para>
+    /// </summary>
+    private static void PlaceBeastSign(Scene scene)
+    {
+        foreach (var npc in scene.Npcs)
+        {
+            if (!npc.IsAlive) continue;
+            if (npc.Entity is Npc.NpcEntity { CanSpeak: true }) continue;
+            if (npc.Entity is Npc.ShallowNpcEntity { Archetype: Npc.ShallowNpcArchetype { IsTiny: true } }) continue;
+            if (!scene.NpcSchedules.TryGetValue(npc.Id, out var schedule)) continue;
+
+            // One sign per area it visits. An animal that never leaves one area is not worth
+            // tracking — you are either in the area with it or you are not.
+            var visited = schedule.ActivePeriods.Select(p => p.Area).Distinct().ToList();
+            if (visited.Count < 2) continue;
+
+            string species = npc.Entity.DisplayName.ToLowerInvariant();
+            foreach (var area in visited)
+            {
+                string name = $"{npc.Entity.DisplayName} Tracks";
+                if (area.PointsOfInterest.Any(p => p.DisplayName == name)) continue;
+
+                var sign = new FootprintPointOfInterest(npc, name, new List<string>
+                {
+                    $"The prints of {(species.StartsWith('a') || species.StartsWith('e') || species.StartsWith('i') || species.StartsWith('o') || species.StartsWith('u') ? "an" : "a")} {species}, pressed into the ground and pointing away",
+                });
+
+                // Keyed here because sign is placed after the section walk would have reached it.
+                sign.StableKey = $"sign|{npc.Entity.NpcId}|{area.DisplayName}";
+                area.PointsOfInterest.Add(sign);
+                sign.Register(scene);
+            }
+        }
+    }
+
+    // ── Landmarks and horizons ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Marks the location's landmark areas and hangs a <see cref="HorizonPointOfInterest"/> in every
+    /// area you can only reach by climbing.
+    ///
+    /// <para>Call this at the end of <c>BuildSections</c>, after the connectors are attached. It
+    /// finds the high ground for itself — the top of any cliff or scale point — so a factory that
+    /// adds a climb gets its view without having to remember to.</para>
+    ///
+    /// <para><paramref name="landmarks"/> should be the two or three places in this location worth
+    /// naming from a distance: the mill, the cliff top, the standing stone. Fewer than two and a
+    /// survey has nothing to compare; <c>--verb-audit</c> reports any location that falls short.
+    /// Nulls are ignored so a factory can pass optional areas without guarding each one.</para>
+    /// </summary>
+    protected static void MarkLandmarksAndViews(Scene scene, params Area?[] landmarks)
+    {
+        var marked = landmarks.Where(a => a != null).Select(a => a!).Distinct().ToList();
+
+        // No explicit list: take the first area of each section. Sections are the location's
+        // meaningful sub-places — the farmyard, the longhouse, the forge, the tunnel network — so
+        // their heads are exactly the things a person on a roof would name. Capped at three, because
+        // a survey that lists eight places is not a survey.
+        if (marked.Count == 0)
+            marked = scene.Sections
+                .Where(s => s.Areas.Count > 0)
+                .Select(s => s.Areas[0])
+                .Distinct()
+                .Take(3)
+                .ToList();
+
+        // A location can legitimately be one section — a coast that rolled no clifftop, say — and one
+        // landmark gives a survey nothing to compare against. Top up from the far end of the area
+        // list, which for the linear layouts is the other end of the place.
+        if (marked.Count < 2)
+            foreach (var area in scene.AllAreas.AsEnumerable().Reverse())
+            {
+                if (marked.Count >= 2) break;
+                if (!marked.Contains(area)) marked.Add(area);
+            }
+
+        foreach (var area in marked) area.IsLandmark = true;
+        if (marked.Count == 0) return;
+
+        // High ground: the top of anything that has to be climbed. Doors and paths do not count —
+        // a view is about height, not about passage.
+        var high = scene.AllAreas
+            .Where(area => area.PointsOfInterest.Any(p =>
+                (p is Building.CliffPointOfInterest cliff && cliff.TopArea.Id == area.Id) ||
+                (p is Building.ScalePointOfInterest scale && scale.TopArea.Id == area.Id)))
+            .Distinct()
+            .ToList();
+
+        foreach (var area in high)
+        {
+            if (area.PointsOfInterest.OfType<HorizonPointOfInterest>().Any()) continue;
+
+            var horizon = new HorizonPointOfInterest(
+                marked,
+                "The View",
+                new() { "The country opens out below, further than anything at ground level allows" });
+
+            // Keyed here rather than left to the stable-key walk so the view's rolled prose does not
+            // depend on which area happened to be walked last.
+            horizon.StableKey = $"horizon|{area.DisplayName}";
+            area.PointsOfInterest.Add(horizon);
+            horizon.Register(scene);
+        }
+    }
+
+    // ── Shallow creature placement ────────────────────────────────────────────
+
+    /// <summary>
+    /// Puts <paramref name="count"/> instances of a shallow archetype in <paramref name="area"/>,
+    /// pinned there all day.
+    ///
+    /// <para>Lifted here because all seven wilderness factories had written the same six lines
+    /// privately, and the two inhabited ones that never got round to it — village and field — had no
+    /// small creatures at all as a result.</para>
+    /// </summary>
+    protected static void SpawnShallow(Random rng, Scene scene, Npc.ShallowNpcArchetype archetype,
+                                       Area area, int count = 1)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            var entity   = archetype.Spawn(rng, area.DisplayName.ToLowerInvariant());
+            var sceneNpc = new SceneNpc(entity);
+            sceneNpc.Register(scene);
+            scene.Npcs.Add(sceneNpc);
+            scene.NpcSchedules[sceneNpc.Id] = Narrative.NpcSchedule.Always(area);
+        }
+    }
+
+    /// <summary>
+    /// Rolls for a shallow creature and, if it lands, puts it in a random area from
+    /// <paramref name="areas"/>.
+    /// </summary>
+    protected static void TrySpawnShallow(Random rng, Scene scene, Npc.ShallowNpcArchetype archetype,
+                                          IReadOnlyList<Area> areas, double chance)
+    {
+        if (areas.Count == 0 || rng.NextDouble() > chance) return;
+        SpawnShallow(rng, scene, archetype, areas[rng.Next(areas.Count)]);
+    }
+
+    /// <summary>
+    /// Which small creatures belong somewhere. Used by <see cref="SprinkleSmallLife"/> so a factory
+    /// asks for "the sort of small life a farmyard has" rather than naming eleven archetypes.
+    /// </summary>
+    protected enum SmallLife
+    {
+        /// <summary>Buildings and streets: moths, roaches, mice, spiders.</summary>
+        Settlement,
+
+        /// <summary>Woodland: butterflies, beetles, snails, crickets, spiders.</summary>
+        Woodland,
+
+        /// <summary>Worked ground and pasture: bees, butterflies, crickets, beetles.</summary>
+        Cultivated,
+
+        /// <summary>Water margins: dragonflies, snails, lizards.</summary>
+        Waterside,
+
+        /// <summary>Bare rock and high ground: lizards, beetles, spiders. Thin, by design.</summary>
+        Barren,
+
+        /// <summary>Underground: spiders, roaches, mice. No sun-lovers.</summary>
+        Subterranean,
+    }
+
+    /// <summary>
+    /// Scatters a few tiny creatures of the appropriate sort across <paramref name="areas"/>.
+    ///
+    /// <para>Every location gets some. A place with people in it and nothing else alive reads as a
+    /// stage set, and tiny creatures are the cheapest possible fix: they carry no anatomy, no
+    /// affinity and no dialogue, and they give the player something to do — catch it or crush it —
+    /// in a room that would otherwise offer only furniture.</para>
+    ///
+    /// <para>The count is rolled, so two villages differ. The pools deliberately overlap: a spider
+    /// belongs almost anywhere, and finding the same beetle in a wood and a field is correct.</para>
+    /// </summary>
+    protected static void SprinkleSmallLife(Random rng, Scene scene, IReadOnlyList<Area> areas,
+                                            SmallLife kind, int min = 2, int max = 5)
+    {
+        if (areas.Count == 0) return;
+
+        Func<Npc.ShallowNpcArchetype>[] pool = kind switch
+        {
+            SmallLife.Settlement => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.MothArchetype(),
+                () => new Npc.Archetypes.CockroachArchetype(),
+                () => new Npc.Archetypes.HouseMouseArchetype(),
+                () => new Npc.Archetypes.GardenSpiderArchetype(),
+                () => new Npc.Archetypes.ButterflyArchetype(),
+            },
+            SmallLife.Woodland => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.ButterflyArchetype(),
+                () => new Npc.Archetypes.BeetleArchetype(),
+                () => new Npc.Archetypes.SnailArchetype(),
+                () => new Npc.Archetypes.CricketArchetype(),
+                () => new Npc.Archetypes.GardenSpiderArchetype(),
+                () => new Npc.Archetypes.MothArchetype(),
+            },
+            SmallLife.Cultivated => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.BeeArchetype(),
+                () => new Npc.Archetypes.ButterflyArchetype(),
+                () => new Npc.Archetypes.CricketArchetype(),
+                () => new Npc.Archetypes.BeetleArchetype(),
+                () => new Npc.Archetypes.SnailArchetype(),
+            },
+            SmallLife.Waterside => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.DragonflyArchetype(),
+                () => new Npc.Archetypes.SnailArchetype(),
+                () => new Npc.Archetypes.LizardArchetype(),
+                () => new Npc.Archetypes.BeetleArchetype(),
+            },
+            SmallLife.Barren => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.LizardArchetype(),
+                () => new Npc.Archetypes.BeetleArchetype(),
+                () => new Npc.Archetypes.GardenSpiderArchetype(),
+            },
+            _ => new Func<Npc.ShallowNpcArchetype>[]
+            {
+                () => new Npc.Archetypes.GardenSpiderArchetype(),
+                () => new Npc.Archetypes.CockroachArchetype(),
+                () => new Npc.Archetypes.HouseMouseArchetype(),
+            },
+        };
+
+        int count = rng.Next(min, max + 1);
+        for (int i = 0; i < count; i++)
+            SpawnShallow(rng, scene, pool[rng.Next(pool.Length)](), areas[rng.Next(areas.Count)]);
     }
 
     /// <summary>Samples <paramref name="count"/> unique indices from [0, <paramref name="total"/>).</summary>

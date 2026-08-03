@@ -15,13 +15,23 @@ namespace Cathedral.Game.Narrative.Rules;
 /// </summary>
 public class NegativeAffinityDialogueRule : IActionRule
 {
-    private static readonly System.Collections.Generic.HashSet<string> SpeakingVerbIds =
-        new() { "meet_stranger", "strengthen_relationship", "reconcile", "appease" };
+    /// <summary>
+    /// The verbs a hostile NPC will still entertain. An allowlist rather than a blocklist, because
+    /// the blocklist it replaces had to be extended by hand for every new conversation and silently
+    /// let the unlisted ones through — an enemy would happily be begged from or asked to introduce
+    /// you to their master.
+    /// </summary>
+    private static readonly System.Collections.Generic.HashSet<string> ToleratedByEnemies =
+        new() { "reconcile", "appease" };
 
     public ActionRuleResult Check(ActionRuleContext ctx)
     {
         var vo = ctx.Action.PreselectedOutcome;
-        if (!SpeakingVerbIds.Contains(vo.VerbView.Verb.VerbId)) return ActionRuleResult.Pass();
+        // Applies to any conversation, plus `appease`, which is not one but is the other way out of
+        // hostility.
+        bool speaking = vo.VerbView.Verb is Cathedral.Game.Scene.Verbs.DialogueVerb
+                     || vo.VerbView.Verb.VerbId == "appease";
+        if (!speaking) return ActionRuleResult.Pass();
         if (vo.Target is not SceneNpc sceneNpc)                  return ActionRuleResult.Pass();
         if (sceneNpc.Entity is not NpcEntity npc)                return ActionRuleResult.Pass();
 
@@ -30,7 +40,7 @@ public class NegativeAffinityDialogueRule : IActionRule
         // ── Enemy: only reconcile / appease are allowed ───────────────────────
         if (npc.AffinityTable.IsEnemy(ctx.Actor.AffinityKey))
         {
-            if (verbId is "reconcile" or "appease") return ActionRuleResult.Pass();
+            if (ToleratedByEnemies.Contains(verbId)) return ActionRuleResult.Pass();
             return ActionRuleResult.Fail(
                 $"{npc.DisplayName} is hostile and will not listen to you.");
         }

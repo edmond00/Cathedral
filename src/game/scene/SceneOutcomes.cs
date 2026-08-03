@@ -126,6 +126,207 @@ public sealed class TimeShiftOutcome : OutcomeReport
     }
 }
 
+/// <summary>
+/// A pure notice: something the character saw happen, carrying no state change of its own.
+///
+/// <para>Produced by the verbs that spend time waiting for the world to move — hiding until somebody
+/// comes or goes — where the <i>information</i> is the whole reward and the accompanying
+/// <see cref="TimeShiftOutcome"/> carries the only actual effect. Without this the player would be
+/// told the hour had changed and never told why they had been waiting.</para>
+/// </summary>
+public sealed class NoticeOutcome : OutcomeReport
+{
+    public NoticeOutcome(string text, string verbatim)
+        : base(text, OutcomeReportSeverity.Neutral, verbatim) { }
+}
+
+/// <summary>
+/// Takes a tiny creature out of the scene — caught in a hand or crushed underfoot.
+///
+/// <para>Deliberately not <see cref="NpcSlaynOutcome"/>, which spawns a corpse spot in the area. A
+/// beetle does not leave a body worth walking over to, and a butterfly you have caught is in your
+/// hand rather than on the ground. Both cases end the same way: the creature stops being alive, so
+/// <c>Scene.GetNpcsAt</c> drops it and every verb on it goes with it.</para>
+/// </summary>
+public sealed class TinyCreatureRemovedOutcome : OutcomeReport
+{
+    private readonly SceneNpc _npc;
+
+    public TinyCreatureRemovedOutcome(SceneNpc npc, bool caught)
+        : base(caught ? $"Caught: {npc.Entity.DisplayName}" : $"Crushed: {npc.Entity.DisplayName}",
+               caught ? OutcomeReportSeverity.Positive : OutcomeReportSeverity.Neutral,
+               caught
+                   ? $"caught the {npc.Entity.DisplayName.ToLowerInvariant()}"
+                   : $"crushed the {npc.Entity.DisplayName.ToLowerInvariant()}")
+    {
+        _npc = npc;
+    }
+
+    /// <summary>
+    /// Breaking: a replayed routine rebuilds the scene from scratch, and which insects it rolls is
+    /// not the set this one removed.
+    /// </summary>
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    {
+        if (_npc.Entity is ShallowNpcEntity shallow) shallow.IsAlive = false;
+        if (pov != null) pov.Focus = null;
+    }
+}
+
+/// <summary>
+/// Records the landmarks picked out from a high place, so <c>GoTowardVerb</c> can head for them.
+///
+/// <para>Knowledge, not world state: it goes on the point of view, and it is per-visit. Declares no
+/// <c>RoutineChainEffect</c> because nothing about the world moved — only what the character knows
+/// about it.</para>
+/// </summary>
+public sealed class LandmarksRevealedOutcome : OutcomeReport
+{
+    private readonly System.Collections.Generic.IReadOnlyList<Area> _landmarks;
+
+    public LandmarksRevealedOutcome(System.Collections.Generic.IReadOnlyList<Area> landmarks)
+        : base(Describe(landmarks), OutcomeReportSeverity.Positive, Verbalise(landmarks))
+    {
+        _landmarks = landmarks;
+    }
+
+    private static string Describe(System.Collections.Generic.IReadOnlyList<Area> areas)
+        => areas.Count == 0
+            ? "Nothing worth walking to"
+            : "Landmarks noted: " + string.Join(", ", areas.Select(a => a.DisplayName));
+
+    private static string Verbalise(System.Collections.Generic.IReadOnlyList<Area> areas)
+        => areas.Count == 0
+            ? "found nothing out there worth the walk"
+            : "picked out " + string.Join(" and ", areas.Select(a => a.DisplayName)) + " from up here";
+
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    {
+        if (pov == null) return;
+        foreach (var area in _landmarks) pov.RevealedLandmarks.Add(area.Id);
+    }
+}
+
+/// <summary>
+/// Swaps a point of interest for another in place — the wreck a broken thing becomes.
+///
+/// <para>Replacement rather than mutation, so the wreckage can carry its own name, its own prose and
+/// its own salvage items without the original having to anticipate any of it. The swap happens in
+/// every area holding the original, because a connector or a shared fixture can be in two.</para>
+/// </summary>
+public sealed class PoiReplacementOutcome : OutcomeReport
+{
+    private readonly PointOfInterest _original;
+    private readonly PointOfInterest _replacement;
+
+    public PoiReplacementOutcome(PointOfInterest original, PointOfInterest replacement)
+        : base($"Broken: {original.DisplayName}", OutcomeReportSeverity.Neutral,
+               $"broke {original.DisplayName.ToLowerInvariant()} apart")
+    {
+        _original    = original;
+        _replacement = replacement;
+    }
+
+    /// <summary>Breaking: a rebuilt scene has the furniture whole again, so no routine may assume otherwise.</summary>
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    {
+        if (scene == null) return;
+
+        foreach (var area in scene.AllAreas)
+        {
+            int index = area.PointsOfInterest.IndexOf(_original);
+            if (index >= 0) area.PointsOfInterest[index] = _replacement;
+
+            foreach (var spot in area.Spots)
+            {
+                int spotIndex = spot.PointsOfInterest.IndexOf(_original);
+                if (spotIndex >= 0) spot.PointsOfInterest[spotIndex] = _replacement;
+            }
+        }
+
+        // The wreck inherits the original's identity so its description seed, and any depletion
+        // already recorded against it, stay put.
+        _replacement.StableKey = _original.StableKey;
+        _replacement.Register(scene);
+        foreach (var item in _replacement.Items) item.Register(scene);
+
+        if (pov != null) pov.Focus = null;
+    }
+}
+
+/// <summary>
+/// Marks a sleeper as woken for the rest of this visit, so every ordinary conversation opens back up.
+///
+/// <para>Not persisted, and deliberately so: scenes rebuild on every arrival, and somebody you got
+/// out of bed last week is asleep again tonight.</para>
+/// </summary>
+public sealed class SleeperRousedOutcome : OutcomeReport
+{
+    private readonly SceneNpc _npc;
+
+    public SleeperRousedOutcome(SceneNpc npc)
+        : base($"Woken: {npc.Entity.DisplayName}", OutcomeReportSeverity.Neutral,
+               $"woke {npc.Entity.DisplayName}")
+    {
+        _npc = npc;
+    }
+
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov) => _npc.Roused = true;
+}
+
+/// <summary>
+/// Takes an NPC out of the location and puts them in the party.
+///
+/// <para>The body joins as it is. An <c>NpcEntity</c> wraps an <c>EnemyCombatant</c>, which is a
+/// <c>PartyMember</c> like any other, so recruitment is a list insertion — no copying of organs,
+/// skills, wounds or inventory, and therefore no copy to drift out of step with the original.</para>
+///
+/// <para>They also leave the scene: dead to <c>GetNpcsAt</c>, which is what every verb gate and the
+/// NPC placement both read, so the person you recruited is not still standing in the square. The
+/// flag is not persisted, so a <i>persistent</i> NPC would reappear on the next visit — a real gap,
+/// and the reason this records the departure in the location state as well.</para>
+/// </summary>
+public sealed class RecruitedOutcome : OutcomeReport
+{
+    private readonly SceneNpc _npc;
+
+    public RecruitedOutcome(SceneNpc npc)
+        : base($"Joined you: {npc.Entity.DisplayName}", OutcomeReportSeverity.Positive,
+               $"took {npc.Entity.DisplayName} along with me")
+    {
+        _npc = npc;
+    }
+
+    /// <summary>Breaking: a rebuilt scene would put them back where they were.</summary>
+    public override RoutineChainEffect RoutineChainEffect => RoutineChainEffect.Breaking;
+
+    public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
+    {
+        if (protagonist is not Protagonist proto) return;
+        if (_npc.Entity is not NpcEntity npc) return;
+
+        // The ceiling is checked in the verb gate too, so the action is not offered when the party is
+        // full. Checked again here because a companion can be picked up between the offer and the
+        // roll, and quietly exceeding the cap would be worse than declining.
+        int max = Verbs.TameVerb.MaxCompanions(proto);
+        if (proto.CompanionParty.Count >= max) return;
+
+        proto.CompanionParty.Add(npc.Combatant);
+        npc.IsAlive = false;                      // gone from GetNpcsAt, and so from every verb gate
+
+        if (scene != null)
+        {
+            scene.Npcs.Remove(_npc);
+            scene.NpcSchedules.Remove(_npc.Id);
+        }
+        if (pov != null) pov.Focus = null;
+    }
+}
+
 /// <summary>Leaves the current spot.</summary>
 public sealed class SpotLeaveOutcome : OutcomeReport
 {

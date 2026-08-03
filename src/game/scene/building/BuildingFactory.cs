@@ -171,7 +171,8 @@ public static class BuildingFactory
             spec.BuildingName,
             new() { buildingDescription },
             spec.ArenaGeneratorFactory ?? (seed => new RoomsGenerator { Seed = seed })
-        );
+        )
+        { IsInterior = true };
         foreach (var room in allRooms) section.Areas.Add(room);
 
         // ── Beds, in roster order ─────────────────────────────────────────────

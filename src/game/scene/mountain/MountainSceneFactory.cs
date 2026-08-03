@@ -29,7 +29,7 @@ public class MountainSceneFactory : SceneFactory
     private enum Slope { Sunny, Damp }
 
     private Slope _slope;
-    private Area? _rockLedge, _boulderField;
+    private Area? _rockLedge, _boulderField, _highCrag;
     private readonly List<Area> _allAreas = new();
 
     protected override void BuildSections(Random rng, int locationId, Scene scene)
@@ -72,8 +72,13 @@ public class MountainSceneFactory : SceneFactory
         if (!midAreas.Any(a => a.DisplayName == "Boulder Field"))
             midAreas.Add(BuildBoulderField());
 
+        // The crag sits above the ledge and is reachable only by the cliff, so it is deliberately
+        // left out of the path chain below — it is the one area here you have to climb to.
+        midAreas.Add(BuildHighCrag());
+
         _rockLedge    = midAreas.First(a => a.DisplayName == "Rock Ledge");
         _boulderField = midAreas.First(a => a.DisplayName == "Boulder Field");
+        _highCrag     = midAreas.First(a => a.DisplayName == "High Crag");
 
         foreach (var area in lowerAreas.Concat(midAreas))
             PopulateArea(area, rng);
@@ -103,10 +108,14 @@ public class MountainSceneFactory : SceneFactory
 
         // ── Connect with PathPoIs (linear chain) ─────────────────────────────
 
-        for (int i = 0; i < _allAreas.Count - 1; i++)
+        // The High Crag is left out of the chain: the cliff below is its only way in, and a path to it
+        // would be exactly the free bypass the connector exists to prevent.
+        var walkable = _allAreas.Where(a => a != _highCrag).ToList();
+
+        for (int i = 0; i < walkable.Count - 1; i++)
         {
-            var a = _allAreas[i];
-            var b = _allAreas[i + 1];
+            var a = walkable[i];
+            var b = walkable[i + 1];
             scene.ConnectAreasBidirectional(a, b);
             string name = (a.DisplayName == "Gorge" || b.DisplayName == "Gorge") ? "Gorge Passage"
                         : (a.DisplayName == "Stream Source" || b.DisplayName == "Stream Source") ? "Stream Track"
@@ -121,23 +130,51 @@ public class MountainSceneFactory : SceneFactory
             path.Register(scene);
         }
 
-        // ── Cliff Ascent on Rock Ledge (top area is conceptual; world-level wiring) ─
-        // We attach the CliffPoI as a self-referential PoI describing the climb.
-        // The parent world graph maintains the cross-location connection to the peak.
+        // ── Cliff Ascent: Rock Ledge → High Crag ─────────────────────────────
+        // The crag is a real area, reachable only by the climb. It used to be a self-referential
+        // placeholder pointing back at the ledge — the verb appeared, the roll happened, and the
+        // player did not move — on the theory that the true top was the peak location next door.
+        // Nothing ever wired that up, so the climb was a no-op for as long as it existed.
 
         var cliff = new CliffPointOfInterest(
             bottomArea: _rockLedge,
-            topArea:    _rockLedge, // same-area placeholder — actual top is in another scene
+            topArea:    _highCrag,
             displayName: "Cliff Ascent",
             descriptions: new() { "A sheer cliff rising from the ledge toward the peak above, hand-and-foot holds in the rock" },
             icyCliff:   false,
             moods:      new[] { "sheer", "exposed", "vertiginous" }
         );
-        _rockLedge.PointsOfInterest.Add(cliff);
-        cliff.Register(scene);
+        cliff.AttachTo(scene);
 
         Console.WriteLine($"MountainSceneFactory: {_slope} slope, {_allAreas.Count} areas");
-    }
+    
+        // ── Furnishing: somewhere to sit, somewhere to hide, a hard shortcut, a climb ──
+        // Rolled, so two places of the same kind are not the same place. Runs after the sections and
+        // paths exist: shortcuts need to know what is already adjacent, and the climb needs a section
+        // to put its top area in.
+        {
+            var outdoors = scene.OutdoorAreas;
+            FurnitureSubfactory.AddSitSpots(rng, outdoors, FurnitureSubfactory.Setting.Highland);
+            FurnitureSubfactory.AddHidingPlaces(rng, outdoors, FurnitureSubfactory.Setting.Highland);
+            FurnitureSubfactory.AddShortcuts(rng, scene, outdoors, FurnitureSubfactory.Setting.Highland);
+            FurnitureSubfactory.AddExtractionPoints(rng, outdoors, FurnitureSubfactory.Setting.Highland);
+
+            var climbTop = FurnitureSubfactory.AddClimb(
+                rng, scene, outdoors[0], FurnitureSubfactory.Setting.Highland);
+            if (climbTop != null)
+            {
+                // Sections must partition the areas, so the new top belongs to the section its foot is
+                // in — an area in no section crashes the fight path outright.
+                var host = scene.Sections.First(s => s.Areas.Contains(outdoors[0]));
+                host.Areas.Add(climbTop);
+                RegisterAll(scene, climbTop);
+            }
+        }
+
+        // Landmarks, and a view from anywhere that has to be climbed to. Must run after the
+        // connectors are attached: it finds the high ground by looking for their tops.
+        MarkLandmarksAndViews(scene);
+}
 
     // ── Area builders ────────────────────────────────────────────────────────
 
@@ -157,6 +194,19 @@ public class MountainSceneFactory : SceneFactory
         transitionDescription: "step onto the rock ledge",
         descriptions: new() { "A flat shelf of rock with a wide view across the country below" },
         moods: new[] { "exposed", "windswept", "wide-open", "high" }
+    );
+
+    /// <summary>
+    /// The one area on the mountain reached only by climbing. Deliberately bare — what it is for is
+    /// the view, not what is lying about on it.
+    /// </summary>
+    private static Area BuildHighCrag() => new(
+        displayName: "High Crag",
+        referenceLemma: "crag",
+        contextDescription: "on the high crag above the ledge",
+        transitionDescription: "pull yourself onto the high crag",
+        descriptions: new() { "A wind-scoured spur of rock standing clear of the slope, with nothing above it but the peak" },
+        moods: new[] { "wind-scoured", "airy", "bare", "commanding" }
     );
 
     private static Area BuildAlpineMeadow() => new(
@@ -261,7 +311,11 @@ public class MountainSceneFactory : SceneFactory
         TrySpawnShallow(rng, scene, new RavenArchetype(),        0.50);
         TrySpawnShallow(rng, scene, new AdderArchetype(),        0.25);
         TrySpawnShallow(rng, scene, new LynxArchetype(),         0.15);
-    }
+    
+        // Small life. Every location has some; which and how many is rolled, so two
+        // places of the same kind are not the same place.
+        SprinkleSmallLife(rng, scene, scene.AllAreas, SmallLife.Barren, 1, 3);
+}
 
     private void TrySpawnNamed(Random rng, Scene scene, NamedNpcArchetype archetype, double chance)
     {
@@ -271,7 +325,11 @@ public class MountainSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
+        // Beasts range: a wolf pinned to one clearing all day is a hazard, not an animal, and there
+        // is nothing to track about it. Speaking wilderness folk keep their authored routines.
+        scene.NpcSchedules[sceneNpc.Id] = archetype.CanSpeak
+            ? NpcSchedule.Always(area)
+            : RoamingSchedule(rng, _allAreas);
     }
 
     private void SpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype)

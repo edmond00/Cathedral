@@ -21,6 +21,7 @@ public class ProposeToBuyVerb : DialogueVerb
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not SceneNpc sceneNpc) return false;
+        if (SleeperGate.IsAsleep(scene, pov, target)) return false;  // wake them first
         if (sceneNpc.Entity is not NpcEntity npc) return false;
         if (!npc.CanSpeak || !npc.IsAlive) return false;
         if (npc.SellTag is null) return false;

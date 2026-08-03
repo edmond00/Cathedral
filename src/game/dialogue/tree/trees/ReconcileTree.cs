@@ -29,6 +29,9 @@ public class ReconcileTree : DialogueTree
     public override string Description      => "attempting to end hostility and reach a fragile peace";
     public override string AssociatedVerbId => "reconcile";
 
+    /// <summary>What succeeding at this conversation teaches: talking someone down out of their anger.</summary>
+    public override string? GrantedModusMentisId => "empathy";
+
     public override IReadOnlyList<IDialogueOutcome> SuccessOutcomes { get; } = new IDialogueOutcome[]
     {
         new ClearEnemyOutcome(),

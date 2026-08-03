@@ -28,6 +28,9 @@ public class ProposeToSellTree : DialogueTree
     public override string Description      => "offering the buyer goods and trying to interest them in a purchase";
     public override string AssociatedVerbId => "propose_to_sell";
 
+    /// <summary>What succeeding at this conversation teaches: talking a price into being.</summary>
+    public override string? GrantedModusMentisId => "bargaining";
+
     // Success opens the sell menu; a routine bakes in that success so replaying opens trade directly.
     public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
 

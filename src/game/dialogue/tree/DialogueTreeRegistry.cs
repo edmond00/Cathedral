@@ -23,6 +23,12 @@ public class DialogueTreeRegistry
         Register(new ProposeToBuyTree());
         Register(new ProposeToSellTree());
         Register(new RequestJobTree());
+        Register(new WakeUpTree());
+        Register(new BegForCoinTree());
+        Register(new ProvokeTree());
+        Register(new ProposeToJoinTree());
+        Register(new IntroduceMeTree());
+        Register(new GatherKnowledgeTree());
     }
 
     private void Register(DialogueTree tree) => _trees[tree.TreeId] = tree;

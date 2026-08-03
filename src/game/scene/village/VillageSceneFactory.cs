@@ -143,7 +143,44 @@ public class VillageSceneFactory : SceneFactory
 
         Console.WriteLine($"VillageSceneFactory: village built — layout={_layout}, {outdoorAreas.Count} outdoor area(s), "
                         + $"{_workshops.Count} workshop(s), {_houses.Count} house(s), {scene.AllAreas.Count} areas");
-    }
+    
+        // ── Furnishing: somewhere to sit, somewhere to hide, a hard shortcut, a climb ──
+        // Rolled, so two places of the same kind are not the same place. Runs after the sections and
+        // paths exist: shortcuts need to know what is already adjacent, and the climb needs a section
+        // to put its top area in.
+        {
+            var furnishable = scene.OutdoorAreas;
+            FurnitureSubfactory.AddSitSpots(rng, furnishable, FurnitureSubfactory.Setting.Settlement);
+            FurnitureSubfactory.AddHidingPlaces(rng, furnishable, FurnitureSubfactory.Setting.Settlement);
+            FurnitureSubfactory.AddShortcuts(rng, scene, furnishable, FurnitureSubfactory.Setting.Settlement);
+            FurnitureSubfactory.AddExtractionPoints(rng, furnishable, FurnitureSubfactory.Setting.Settlement);
+
+            var climbTop = FurnitureSubfactory.AddClimb(
+                rng, scene, furnishable[0], FurnitureSubfactory.Setting.Settlement);
+            if (climbTop != null)
+            {
+                // Sections must partition the areas, so the new top belongs to the section its foot is
+                // in — an area in no section crashes the fight path outright.
+                var host = scene.Sections.First(s => s.Areas.Contains(furnishable[0]));
+                host.Areas.Add(climbTop);
+                RegisterAll(scene, climbTop);
+
+                // The roof is only worth the climb if it leads somewhere. A chimney or a broken
+                // shutter puts you inside a house without ever touching its door — which is the whole
+                // point of the wall, and the reason SLIP INTO is an illegal action.
+                var target = _houses.Count > 0
+                    ? _houses[rng.Next(_houses.Count)].House
+                    : _workshops.Count > 0 ? _workshops[rng.Next(_workshops.Count)].Building : null;
+
+                if (target != null)
+                    FurnitureSubfactory.AddSlipIn(rng, scene, climbTop, target.PublicHall);
+            }
+        }
+
+        // Landmarks, and a view from anywhere that has to be climbed to. Must run after the
+        // connectors are attached: it finds the high ground by looking for their tops.
+        MarkLandmarksAndViews(scene);
+}
 
     /// <summary>
     /// The ways that can lead off the square. A village draws 1–3 without replacement, so both how
@@ -238,7 +275,7 @@ public class VillageSceneFactory : SceneFactory
                 new ItemElement(new Rope()),
             },
             moods: new[] { "central", "stone-rimmed", "deep", "echoing" }
-        ));
+        ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["listen"] = "keen_ear" } });
 
         if (rng.NextDouble() < 0.40)
         {
@@ -253,7 +290,7 @@ public class VillageSceneFactory : SceneFactory
                     new ItemElement(new Cloth()),
                 },
                 moods: new[] { "bright", "cluttered", "bargain-shouted" }
-            ));
+            ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bargaining", ["listen"] = "keen_ear", ["smell"] = "scenting" } });
         }
 
         return square;
@@ -339,7 +376,11 @@ public class VillageSceneFactory : SceneFactory
             if (scheduleByWorkshop.TryGetValue(building.Section.DisplayName, out var staff))
                 BuildingSchedule.StaffPublicHall(building.PublicHall, staff);
         }
-    }
+    
+        // Small life. Every location has some; which and how many is rolled, so two
+        // places of the same kind are not the same place.
+        SprinkleSmallLife(rng, scene, scene.AllAreas, SmallLife.Settlement, 2, 6);
+}
 
     /// <summary>
     /// Spawns an NPC, gives them the section of the building they live in, and files their schedule.

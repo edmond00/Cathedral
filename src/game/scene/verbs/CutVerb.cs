@@ -14,6 +14,9 @@ public class CutVerb : Verb
     public override string DisplayName    => "Cut";
     public override int    BaseDifficulty => 2;
 
+    /// <summary>What a success teaches: taking a body apart.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "butchery";
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not ItemElement) return false;

@@ -90,6 +90,39 @@ public class NpcEntity : INpcEntity
     public List<string> OwnedSectionIds { get; }
 
     /// <summary>
+    /// Set when this person has agreed, in conversation, to travel with the player. Acted on by the
+    /// controller after the dialogue session closes — the same deferred pattern
+    /// <see cref="TradeRequest"/> and <see cref="JobRequest"/> use, and for the same reason: a
+    /// dialogue outcome can reach the NPC and nothing else.
+    /// </summary>
+    public bool JoinRequested { get; set; }
+
+    /// <summary>
+    /// Set alongside <see cref="FightRequestedByDialogue"/> when the fight was goaded out of this
+    /// person specifically, so nobody else joins in. Being provoked into swinging at one person is
+    /// not a call for help — and getting somebody on their own is the entire reason to provoke them
+    /// rather than simply attack.
+    /// </summary>
+    public bool FightIsPersonal { get; set; }
+
+    /// <summary>
+    /// Copper this person handed over after a successful beg, waiting to be credited to the party
+    /// wallet once the conversation closes. Same deferred pattern as every other dialogue result.
+    /// </summary>
+    public int AlmsGiven { get; set; }
+
+    /// <summary>
+    /// The person this NPC has been asked to introduce the player to, set by <c>IntroduceMeVerb</c>
+    /// before the conversation opens and read by the dialogue adapter when it builds the context.
+    /// Same hand-off as <see cref="PendingJobOffer"/>: the verb knows which of several possible
+    /// third parties the player picked, and the adapter is where that has to arrive.
+    /// </summary>
+    public NpcEntity? PendingIntroductionTarget { get; set; }
+
+    /// <summary>Set when an introduction succeeded, so the controller can move the player to them.</summary>
+    public NpcEntity? IntroductionGranted { get; set; }
+
+    /// <summary>
     /// Set to true by a "caught red-handed" dialogue when the NPC demands combat
     /// instead of accepting an apology or lie. Checked by the game controller
     /// after dialogue ends to transition into fight mode.

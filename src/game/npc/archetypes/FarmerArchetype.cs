@@ -11,6 +11,9 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class FarmerArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId      => "farmer";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "tillage";
     public override ItemTag? SellTag        => ItemTag.Crop;
     public override ItemTag? BuyTag         => ItemTag.Tool;
     public override Species Species         => SpeciesRegistry.Human;

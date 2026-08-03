@@ -24,6 +24,13 @@ public abstract class DialogueVerb : Verb
     /// <summary>The id of the dialogue tree this verb triggers (e.g. "meet_stranger").</summary>
     protected abstract string DialogueTreeId { get; }
 
+    /// <summary>
+    /// Approaching someone and opening your mouth is the same skill whatever you then say, so every
+    /// dialogue verb teaches social interaction. What the <i>conversation</i> teaches is the tree's
+    /// business — see <see cref="DialogueTree.GrantedModusMentisId"/>, applied at the resolution.
+    /// </summary>
+    public override string? GrantedModusMentisId(Element? target) => "social_interaction";
+
     /// <summary>The routine behavior declared by the triggered tree.</summary>
     private DialogueRoutineBehavior Behavior =>
         DialogueTreeRegistry.Instance.Get(DialogueTreeId).RoutineBehavior;

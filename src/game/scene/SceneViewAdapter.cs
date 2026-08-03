@@ -204,6 +204,13 @@ public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, I
     private readonly PointOfInterest _poi;
 
     /// <summary>
+    /// The point of interest behind this observation. Exposed so placement can tell one observation
+    /// from another by what it is <i>of</i> — which is how a bed's observation is found and taken out
+    /// when the person whose bed it is climbs into it.
+    /// </summary>
+    public PointOfInterest PointOfInterest => _poi;
+
+    /// <summary>
     /// The area this observation is made from. A connector PoI (door, stair, path) sits in two areas'
     /// PoI lists and therefore yields two distinct observation objects — this is what tells them
     /// apart, so a door can read one way from the street and another from the hall inside.

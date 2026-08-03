@@ -14,6 +14,9 @@ public class MoveToAreaVerb : Verb
     public override string DisplayName    => "Move";
     public override int    BaseDifficulty => 1;
 
+    /// <summary>What a success teaches: walking somewhere on purpose is the whole of wayfaring.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "wayfaring";
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not Area targetArea) return false;

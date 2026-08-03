@@ -59,6 +59,18 @@ public static class Config
         /// when nothing in the world matches.
         /// </summary>
         public static string? StartAt { get; set; } = null;
+
+        /// <summary>
+        /// Suppresses random travel encounters. Set by <c>--no-encounters</c>. Inert at its default
+        /// of false: a run without the flag rolls for encounters exactly as it always did.
+        ///
+        /// <para>For scripted runs. A CLI script that travels somewhere and waits for
+        /// <c>LocationInteraction</c> has no way to know an encounter has put the game in
+        /// <c>EncounterPrompt</c> instead, so it sits there until its timeout and reports a failure
+        /// that has nothing to do with what it was testing. The encounter is not the thing under
+        /// test; being able to turn it off is what makes everything else testable.</para>
+        /// </summary>
+        public static bool NoEncounters { get; set; } = false;
     }
 
     #endregion

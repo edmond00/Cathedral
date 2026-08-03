@@ -33,29 +33,155 @@ office
 
 
 new verbs :
-MURDER (night/bed)
-WAKE UP (night/bed)
+
 SIT AND WAIT
-CRUSH
+- new possible outcome for action = change the period of the day
+- sit and wait = go to the next time of the day (noon -> afternoon)
+- all location need to potentially (depends on factory RNG) spawns at random areas some object where the PC can "sit and wait" (bench in village, tree stump in forest, ...)
+- related modus mentis = PATIENCE
+
+CATCH/CRUSH
+- add new various shallow npc to all the locations : various insects (butterfly, cockroach, dragonfly, snail, spider, ...), small animals (lizard, mouse, rat, ...) 
+- add new boolean "tiny" property to shallow NPC for very small ones 
+- tiny shallow NPC have different kind of verbs than normal shallow NPC : catch or crush
+- catch = loot shallow NPC parts, crush = just kill it
+- related modus mentis : crush=CRUELTY, catch=???
+
 CROSS
+- add new kind of object similar to slope/road, that connect 2 different areas of a location but need to cross (hard to cross)
+- example = bramble bush, mud puddle, fallen tree trunk, ...
+- related modus mentis : ATHLETICS ?
+
 SWIM ACROSS
+- specific water made obstacle that need to be crossed to reach other area = river, pond, creek, Cove ...
+- crossing by swimming alow to reach different area
+
 TRACK
+- for location with beast (for example forest with wolf), each beast should footprints in all the area they are at some period but not at the current period (beast are NPC so they move between area through the day)
+- footprints can be tracked -> directly move to the area the beast is currently
+- related modus mentis : tracking
+
 STALK
+- only in village, action that can be done while observing an npc
+- result in changing both the time and the location :
+    - wait the time period the observed npc change of location
+    - change to this time
+    - move to the nearest public area (dont go through locked door) of where the npc is now of where the npc is now
+- related modus mentis : stalking
+
 TAME
-EXAMINE/CONTEMPLATE/STUDY
-OBSERVE HORIZON
+- once a beast is appeased, it can then be tamed
+- tamed beast join the PC party (and so are removed from their location)
+- related modus mentis : animal taming
+
+EXAMINE/CONTEMPLATE/LISTEN/SMELL
+- observation verbs
+- around 50% of the objects in a location scene should be observable thourgh at least one of this observation verbs
+- add new kind of decorative objects in each locations : flowers/moss/mushrooms in a forest, fountain/statue in a village, ...
+- related modus mentis depends on the observed object : EXAMINE mushroom -> mycology, ....
+- EXAMINE = scientific/reason observations
+- CONTEMPLATE = beauty/artistic observations
+- LISTEN = hearing, birdsong for example
+- SMELL = odor, like flower that could be both contemplate and smell
+
+SCALE>OBSERVE HORIZON>GO TOWARD
+- make some elements can be scaled to reach top area : wall of house to reach roof, big tree in forest, ...
+- from top area : horizon observable
+- also observable from top mountain/peak
+- each location should define at least 2 "landmark" area (important area)
+- horison observation = observation tet focused on the location landmarks
+- landmark observation give access to GO TOWARD verb
+- GO TOWARD verb = directly travel to the landmark related area
+- also possible to scale well from well bottom, scale chimney from hous inside, ...
+
+MEET TO PROPOSE TO JOIN THE PARTY
+- special dialogue tree available once you met an NPC
+- succeeding it = NPC join the party (and so is removed from the location)
+
+HIDE AND WAIT
+- for new kind of object like bale of hay, bush, space beneath the tree's roots, ...
+- wait (change day period) until something change on the scene : either an NPC leaving or entering the current location
+- wait max a full day minus 1 perdiod. If hide/wait start at afternoon and no NPC enter/leave = wait until noon 
+
+PICKPOCKET
+- illegal action
+- give few copper coins
+- optionaly, each NPC archetype can define some small pocket objects that can steal from pickpocket in addition to the cooper coins
+
+MEET TO ASK TO INTRODUCE ME TO X
+- dialogue tree that if succeed, will move the PC at the location where X with a first observation of X to start this new phase 
+- need to properly handles dialogue tree mentioning third person NPC (dont exists currently)
+
+BEG FOR COIN
+- dialogue tree that is succeed grant few copper coins
+- failing decrease affinity
+
+PROVOKE
+- dialogue tree that is succeed start a fight with the npc (without him calling its allies = only the provoked npc)
+- failing decrease affinity
+
+MEET TO GATHER KNOWLEDGE
+- dialogue to try to learn something from an NPC
+- each NPC archetype need to define their own texts to express knowledge (either different dialogue tree by archetype or general template tree with many field that are filled by the NPC archetype)
+
+SLIP INTO (well, chimney, window, ...)
+- for chimney from building roof or broken window of house to go inside, well in village to reach well bottom, ...
+- related modus mentis : infiltration
+
+(sleeping NPC)
+- human NPC in village/field/farm should define sleeping period (night for all is ok for now but different pediod could be used in the futur) and their bed (bed id?)
+- if the current scene time is the NPC sleep period and the current scene area the are where is the NPC bed and the NPC is present in the scene = infere the NPC is sleeping
+- sleeping NPC : replace the NPC observation and the bed observation by an unique observatio of an NPC sleeping in his bed = special object linked to special verbs
+
+MURDER (night/bed)
+- like SLAY but easier but only for sleeping NPC
+MEET TO WAKE UP (night/bed)
+- only dialogue possible with sleeping NPC
+- fail = trigger fight with the NPC
+- success = NPC is no more considered sleeping
+
+(need tools)
+- special actions that automatically fail if not using tool
+- each of this verb define the reference tools they expect to be used (one or several)
+- trying this verbs with no tools = automatically fail
+- trying this verbs with a tool = special request to the item usage critic LLM to ask it if the used tools match the reference tool or could somehow be used instead of the reference tool
+- if tool usage critic LLM eval it is ok -> action can be tried (roll dice)
+
+FISH (fishing rod, net)
+- gather various kind of fish meat from water elements (river, pond, creek, Cove ...)
+
+MINE (pickaxe)
+- add various metal vein in mine location that can be mined to get metal ore
+
+CUT WOOD (axe)
+- to get wood piece from trees
+
+DIG (shovel)
+- some ground observation from which you can gather dirst, sand, clay, ...
+
+BREAK (hammer)
+- illegal
+- allow to break some inside furniture
+- furniture replaced by its broken version
+- possible to gather some pieces of what was composing the furniture from broken furniture
+- also possible to break house lock door to unlock it or house window to slip into it
+
+
+
+OVERALL COMMENTS :
+- most new verbs rely on new features that need to be implemented along the verb itself
+- use this new verbs and related elements to each location richer (more things to do) but also more random (more differences between 2 villages or 2 forests...)
+- succeeding any VERB should now grant a modus mentis. Also true for the old verbs. You can create new modus mentis to satisfy this constraint. Good modus mentis design are modus mentis that can be apllied in multiple description and to witch you can link a strong persona.
+- dialogue also need to grant modus mentis :
+    - the "met" action that trigger the dialogue can just grant the SOCIAL INTERACTION modus mentis
+    - then each dialogue can grant different kind of modus mentis, for example BEG FOR COIN dialogue tree -> begging modus mentis
+- good design for observables elements in the locations are elements that are associated to multiple verbs. For example, a flower that can be smelt, examine, contemplate, grab, ...
+- at least 50% of the observables elements of the game should have at least 3 related verbs
+- at least 80% of the observables elements of the game should have at least 2 related verbs
+
+
+NEXT VERSION :
+
+verbs :
 MEET TO REQUEST HOSPITALITY
 MAKE A CAMP FIRE AND WAIT
-MEET TO PROPOSE TO JOIN THE PARTY
-HIDE AND WAIT
-PICKPOCKET
-MEET TO ASK TO INTRODUCE ME TO X
-BEF FOR COIN
-MEET TO GATHER KNOWLEDGE
-SLIP INTO (well, chimney, window, ...)
-(need tools)
-FISH (fishing rod, net)
-MINE (pickaxe)
-CUT WOOD (axe)
-DIG (shovel)
-BREAK (hammer)

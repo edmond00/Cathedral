@@ -18,6 +18,9 @@ public class AppeaseVerb : Verb
     public override string DisplayName    => "Appease";
     public override int    BaseDifficulty => 3;
 
+    /// <summary>What a success teaches: reading an animal well enough to calm it.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "beast_sense";
+
     /// <summary>Appeasing is a legal, non-violent action.</summary>
     public override bool IsLegal => true;
 
@@ -27,6 +30,7 @@ public class AppeaseVerb : Verb
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not SceneNpc sceneNpc) return false;
+        if (SleeperGate.IsAsleep(scene, pov, target)) return false;  // wake them first
         if (sceneNpc.Entity is not NpcEntity npc) return false;
         if (!npc.IsAlive) return false;
         if (!scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id)) return false;

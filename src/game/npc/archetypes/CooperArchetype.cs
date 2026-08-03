@@ -8,6 +8,9 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class CooperArchetype : CraftsmanArchetype
 {
     public override string ArchetypeId => "cooper";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "cellarcraft";
     public override ItemTag? SellTag => ItemTag.Craftware;
     public override ItemTag? BuyTag  => ItemTag.Wood;
     public override int    ModiMentisCount => 8;

@@ -27,6 +27,15 @@ public class ApprenticeArchetype : CraftsmanArchetype
     public CraftsmanArchetype? Master { get; init; }
 
     public override string ArchetypeId => "apprentice";
+
+    /// <summary>
+    /// An apprentice can present you to their own master and nobody else. Empty when the apprentice
+    /// is trade-neutral, which the audits construct and which must stay viable.
+    /// </summary>
+    public override IReadOnlyList<string> CanIntroduceToArchetypes =>
+        Master == null ? Array.Empty<string>() : new[] { Master.ArchetypeId };
+
+    public override string IntroductionRelation => "my master";
     public override int    ModiMentisCount => 6;
 
     // Bound to a master and still a youth: 12–22 years.

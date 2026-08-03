@@ -16,6 +16,9 @@ public class ClimbDownVerb : Verb
     public override string DisplayName => "Climb Down";
     public override int    BaseDifficulty => 6;
 
+    /// <summary>What a success teaches: hand and foot on rock.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "clambering";
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not CliffPointOfInterest cliff) return false;

@@ -16,6 +16,9 @@ public sealed class GetUpVerb : Verb
     public override string DisplayName    => "GET UP";
     public override int    BaseDifficulty => 1;
 
+    /// <summary>What a success teaches: getting a body up and moving.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "vigor";
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
         => scene.Phase == NarrationPhase.GetUp;
 

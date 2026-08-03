@@ -109,6 +109,58 @@ public static class CriticTrees
 
     #endregion
 
+    #region Tool Substitution Tree
+
+    /// <summary>
+    /// Asks the LLM critic whether the item the player actually combined can serve as the tool a
+    /// tool-gated verb calls for. Used instead of <see cref="BuildItemAppropriatenessTree"/> whenever
+    /// the verb declares <c>ReferenceToolIds</c> — the question there is "is this better than bare
+    /// hands", which is the wrong question when bare hands are not on the table at all.
+    ///
+    /// <para>The reference tool is named in the question so the critic judges against a standard
+    /// rather than against nothing. Naming it is the whole difference: "could a rock hammer do the
+    /// work of a pickaxe" is answerable, where "does a rock hammer help" is not.</para>
+    ///
+    /// <para>The first three choices pass. <c>serves_poorly</c> passes deliberately — improvising a
+    /// tool should be allowed and then punished by the dice, not forbidden.</para>
+    /// </summary>
+    public static CriticNode BuildToolSubstitutionTree(string goalText, string referenceToolPhrase,
+                                                       string itemName, CriticContext context)
+    {
+        return new CriticNode(
+            name: "ToolSubstitution",
+            question: $"{context.BuildPreamble()}\n\nThe character wants to {goalText}.\nThis work is normally done with {referenceToolPhrase}.\nThey are holding: {itemName}.\n\nCan {itemName} do the work of {referenceToolPhrase} here?",
+            choices: new List<CriticChoice>
+            {
+                new("is_the_tool",    "the item is that tool, or near enough to be the same thing"),
+                new("serves_well",    "the item is a different thing but would do the work properly"),
+                new("serves_poorly",  "the item could be made to work, clumsily and with difficulty"),
+                new("cannot_serve",   "the item cannot do this work, however it is handled",
+                    isFailure: true, errorMessage: "That is not the tool this work needs."),
+                new("makes_no_sense", "using this item for this work makes no sense at all",
+                    isFailure: true, errorMessage: "That item is no use for this at all."),
+            });
+    }
+
+    /// <summary>
+    /// "a pickaxe" / "a fishing rod or a net" — the or-list of articled tool names for the critic
+    /// question. Ids the registry does not know are printed as themselves rather than dropped, so a
+    /// bad id shows up in the critic trace instead of silently narrowing the question.
+    /// </summary>
+    public static string ToolPhrase(IReadOnlyList<string> toolIds)
+    {
+        var names = toolIds
+            .Select(id => ItemRegistry.Instance.All.FirstOrDefault(i => i.ItemId == id)?.WithArticle()
+                          ?? id.Replace('_', ' '))
+            .ToList();
+
+        if (names.Count == 0) return "a proper tool";
+        if (names.Count == 1) return names[0];
+        return string.Join(", ", names.Take(names.Count - 1)) + " or " + names[^1];
+    }
+
+    #endregion
+
     #region Item Consumption Tree
 
     /// <summary>

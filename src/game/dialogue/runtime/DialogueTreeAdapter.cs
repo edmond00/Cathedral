@@ -125,8 +125,15 @@ public class DialogueTreeAdapter
             // Placeholder names: the LLM never sees real names. Build the mapping once, then use it
             // both to rewrite the NPC persona prompt (real → placeholder) and, later, to restore real
             // names into every generated replica.
-            var names   = DialogueNameTable.Build(_protagonist, _npc);
-            var context = new DialogueContext(_protagonist, _npc, _world, _locationId, names);
+            // The third party, when there is one, is set on the NPC by the verb that opened this —
+            // the same deferred hand-off the job offer and the trade mode use, and for the same
+            // reason: the verb knows and the adapter is where it is needed.
+            var third   = _npc.PendingIntroductionTarget;
+            var names   = DialogueNameTable.Build(_protagonist, _npc, third);
+            var context = new DialogueContext(_protagonist, _npc, _world, _locationId, names)
+            {
+                ThirdParty = third,
+            };
 
             // Acquire NPC slot (system prompt = way-to-speak description, with the NPC's real name
             // swapped for its placeholder).

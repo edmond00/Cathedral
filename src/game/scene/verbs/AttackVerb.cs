@@ -15,6 +15,9 @@ public class AttackVerb : Verb
     public override string DisplayName    => "Attack";
     public override int    BaseDifficulty => 2;
 
+    /// <summary>What a success teaches: opening a fight with your hands.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "brawling";
+
     /// <summary>Attacking a person is never a legal action.</summary>
     public override bool IsLegal => false;
 
@@ -24,6 +27,10 @@ public class AttackVerb : Verb
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not SceneNpc sceneNpc) return false;
+
+        // Tiny creatures get catch/crush instead. You do not attack a butterfly, and offering
+        // the option alongside them reads as a bug rather than as a choice.
+        if (sceneNpc.Entity.Archetype is ShallowNpcArchetype { IsTiny: true }) return false;
         if (!sceneNpc.IsAlive) return false;
         if (pov.InSpot != null) return false;  // can't attack from inside a spot
 

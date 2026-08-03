@@ -44,6 +44,9 @@ public partial class StrengthenRelationshipTree : DialogueTree
     public override string Description      => "deepening the bond with someone you already know";
     public override string AssociatedVerbId => "strengthen_relationship";
 
+    /// <summary>What succeeding at this conversation teaches: an acquaintance turned into something warmer.</summary>
+    public override string? GrantedModusMentisId => "friendship";
+
     // Small talk is repeatable and self-contained: a routine can bake in the trigger so replaying it
     // starts the chat directly (its success is rolled live each time).
     public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeTrigger;

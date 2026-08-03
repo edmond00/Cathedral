@@ -668,6 +668,24 @@ public class DialogueTreeController
                     if (report != null) reports.Add(report);
                 }
 
+                // The conversation's own lesson, on top of the experience the replies already earned.
+                // Only on success: talking your way into a fight teaches nothing about talking.
+                if (succeeded)
+                {
+                    // The tree's own lesson, plus any the branch decided — see
+                    // DialogueTree.AdditionalGrantedModusMentisIds.
+                    var taught = new List<string?> { _tree.GrantedModusMentisId };
+                    taught.AddRange(_tree.AdditionalGrantedModusMentisIds(_npc, resolution));
+
+                    foreach (var id in taught.Distinct())
+                    {
+                        var lesson = ModusMentisGrantOutcome.For(_protagonist, id);
+                        if (lesson == null) continue;
+                        lesson.Apply(_protagonist, null, null);
+                        if (lesson.ShowInUI) reports.Add(lesson);
+                    }
+                }
+
                 _npc.AffinityTable.MarkFirstContact(_partyMemberId);
 
                 // A branch can legitimately change nothing (a failure with no failure-outcome), and

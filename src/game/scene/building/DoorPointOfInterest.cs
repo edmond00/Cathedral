@@ -26,13 +26,15 @@ public enum DoorRole { Entry, Interior }
 /// The DoorPointOfInterest should be added to both <see cref="FrontArea"/>.PointsOfInterest and
 /// <see cref="BackArea"/>.PointsOfInterest so it is visible and interactable from either side.
 /// </summary>
-public class DoorPointOfInterest : PointOfInterest, IContextualDescription
+public class DoorPointOfInterest : ConnectorPointOfInterest, IContextualDescription
 {
+    protected override string ConnectorKind => "door";
+
     /// <summary>The area you approach the door from (unlock/open from this side).</summary>
-    public Area FrontArea { get; }
+    public Area FrontArea => AreaA;
 
     /// <summary>The area behind the door (always accessible from this side).</summary>
-    public Area BackArea { get; }
+    public Area BackArea => AreaB;
 
     /// <summary>Entry threshold or interior door. Drives the night rule and the outside description.</summary>
     public DoorRole Role { get; init; } = DoorRole.Interior;
@@ -75,10 +77,8 @@ public class DoorPointOfInterest : PointOfInterest, IContextualDescription
         string displayName,
         List<string> descriptions,
         DoorState initialState = DoorState.Locked)
-        : base(displayName, "door", descriptions)
+        : base(frontArea, backArea, displayName, "door", descriptions)
     {
-        FrontArea = frontArea;
-        BackArea  = backArea;
         StateProperties.Add(initialState);
     }
 

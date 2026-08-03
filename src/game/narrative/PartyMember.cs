@@ -200,6 +200,15 @@ public abstract class PartyMember
     /// </summary>
     public bool IsOverloaded => CurrentWeight > MaxCarryWeight;
 
+    /// <summary>
+    /// One line describing this member for the party panel — species, trade, what they are.
+    ///
+    /// <para>Lives here rather than on <c>Companion</c> because the roster holds any
+    /// <see cref="PartyMember"/> now: a recruited villager or a tamed wolf joins as the body it
+    /// already is, and each has something to say about itself.</para>
+    /// </summary>
+    public virtual string PartyDescription => Species?.DisplayName ?? "";
+
     /// <summary>How much must be put down before this character can travel; 0 when they are fine.</summary>
     public int ExcessWeight => Math.Max(0, CurrentWeight - MaxCarryWeight);
 

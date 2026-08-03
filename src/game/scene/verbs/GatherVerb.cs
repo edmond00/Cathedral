@@ -16,6 +16,9 @@ public class GatherVerb : Verb
     public override string DisplayName    => "Gather";
     public override int    BaseDifficulty => 1;
 
+    /// <summary>What a success teaches: taking what grows is foraging.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "forage_lore";
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not ItemElement itemEl) return false;

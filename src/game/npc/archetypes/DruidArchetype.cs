@@ -8,6 +8,9 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class DruidArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "druid";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "herblore";
     public override ItemTag? SellTag => ItemTag.Herb;
     public override Species Species => SpeciesRegistry.Human;
     public override bool DefaultPersistent => true;

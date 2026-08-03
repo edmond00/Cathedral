@@ -8,6 +8,9 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class PlowmanArchetype : PeasantArchetype
 {
     public override string ArchetypeId => "plowman";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "tillage";
     public override int    ModiMentisCount => 7;
 
     public override string RoleNoun => "plowman";

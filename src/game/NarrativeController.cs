@@ -192,7 +192,7 @@ public class NarrativeController
     // Active party member (starts as protagonist, switches to companion after Speak About)
     private PartyMember _activePartyMember = null!;
     // Companion list parallel to the companion selection choice popup choices
-    private List<Companion> _pendingCompanions = new();
+    private List<PartyMember> _pendingCompanions = new();
     // Per-member noetic point counters — keyed by DisplayName.
     // Preserved across hand-offs so returning to a member keeps their remaining points.
     private readonly Dictionary<string, int> _memberNoeticPoints = new();
@@ -1644,9 +1644,20 @@ public class NarrativeController
     {
         if (outcome is VerbOutcome verbTarget && _scene != null && _pov != null && verbTarget.Target != null)
         {
-            return succeeded
-                ? verbTarget.VerbView.Verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target, verbTarget.VerbView)
-                : verbTarget.VerbView.Verb.FailureReports(_scene, _pov, _activePartyMember, verbTarget.Target);
+            var verb = verbTarget.VerbView.Verb;
+            if (!succeeded)
+                return verb.FailureReports(_scene, _pov, _activePartyMember, verbTarget.Target);
+
+            var reports = new System.Collections.Generic.List<OutcomeReport>(
+                verb.SuccessReports(_scene, _pov, _activePartyMember, verbTarget.Target, verbTarget.VerbView));
+
+            // Doing a thing is how the thing is learned. Appended last so the lesson reads as the
+            // consequence of whatever the verb actually did, not as its headline.
+            var lesson = ModusMentisGrantOutcome.For(
+                _activePartyMember, verb.ResolveGrantedModusMentisId(verbTarget.Target));
+            if (lesson != null) reports.Add(lesson);
+
+            return reports;
         }
         return System.Array.Empty<OutcomeReport>();
     }
@@ -1956,7 +1967,7 @@ public class NarrativeController
     /// </summary>
     private async Task ExecuteSpeakingPhaseAsync(
         ModusMentis speakingModusMentis,
-        Companion companion,
+        PartyMember companion,
         KeywordRegion keywordRegion)
     {
         string keyword = keywordRegion.Keyword;
@@ -1964,7 +1975,7 @@ public class NarrativeController
 
         try
         {
-            Console.WriteLine($"NarrativeController: Speaking phase — skill={speakingModusMentis.DisplayName}, companion={companion.Name}, keyword='{keyword}'");
+            Console.WriteLine($"NarrativeController: Speaking phase — skill={speakingModusMentis.DisplayName}, companion={companion.DisplayName}, keyword='{keyword}'");
 
             // Resolve the outcome linked to this keyword
             ConcreteOutcome? linkedOutcome = null;
@@ -2008,7 +2019,7 @@ public class NarrativeController
             var speakingResult = await _observationController.GenerateSpeakingTextAsync(
                 keyword,
                 speakingModusMentis,
-                companion.Name,
+                companion.DisplayName,
                 linkedOutcome,
                 _currentNode,
                 _activePartyMember,
@@ -2030,7 +2041,7 @@ public class NarrativeController
             _narrationState.IsLoadingSpeaking = false;
             _narrationState.ErrorMessage = null;
 
-            Console.WriteLine($"NarrativeController: Speaking phase complete — active party member is now {companion.Name}");
+            Console.WriteLine($"NarrativeController: Speaking phase complete — active party member is now {companion.DisplayName}");
         }
         catch (Exception ex)
         {
@@ -2320,7 +2331,7 @@ public class NarrativeController
                     _narrationState.IsSelectingModusMentisForSpeaking = false;
                     _narrationState.SpeakingModusMentisPending = selectedModusMentis;
                     _pendingCompanions = _protagonist.CompanionParty.ToList();
-                    var companionNames = _pendingCompanions.Select(c => c.Name).ToList();
+                    var companionNames = _pendingCompanions.Select(c => c.DisplayName).ToList();
                     _narrationState.IsSelectingCompanionForSpeaking = true;
                     Vector2 screenPos2 = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
                     _choicePopup.Show(screenPos2, companionNames, "Who do you address?");
@@ -2706,7 +2717,7 @@ public class NarrativeController
             _narrationState.IsSelectingModusMentisForSpeaking = false;
             _narrationState.SpeakingModusMentisPending = selectedModusMentis;
             _pendingCompanions = _protagonist.CompanionParty.ToList();
-            var companionNames = _pendingCompanions.Select(c => c.Name).ToList();
+            var companionNames = _pendingCompanions.Select(c => c.DisplayName).ToList();
             _narrationState.IsSelectingCompanionForSpeaking = true;
             Vector2 screenPos2 = _terminalInputHandler.CellToScreen(_lastMouseX, _lastMouseY, _core.ClientSize);
             _choicePopup.Show(screenPos2, companionNames, "Who do you address?");
@@ -2767,7 +2778,7 @@ public class NarrativeController
                 var speakingMM  = _narrationState.SpeakingModusMentisPending;
                 _narrationState.SpeakingModusMentisPending = null;
                 _pendingCompanions.Clear();
-                Console.WriteLine($"NarrativeController: Speak About — companion={companion.Name}, skill={speakingMM.DisplayName}");
+                Console.WriteLine($"NarrativeController: Speak About — companion={companion.DisplayName}, skill={speakingMM.DisplayName}");
                 _narrationState.IsLoadingSpeaking = true;
                 _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
                 _ = ExecuteSpeakingPhaseAsync(speakingMM, companion, _narrationState.HoveredKeyword);
@@ -3529,6 +3540,9 @@ public class NarrativeController
             "grab"        => areaIsPrivate ? CriminalAffinityType.Thief : CriminalAffinityType.None,
             "slay"        => CriminalAffinityType.Murderer,
             "unlock_door" => CriminalAffinityType.Intruder,
+            "slip_into"   => CriminalAffinityType.Intruder,
+            "break"       => CriminalAffinityType.Vandal,
+            "pickpocket"  => CriminalAffinityType.Thief,
             _             => areaIsPrivate ? CriminalAffinityType.Intruder : CriminalAffinityType.None,
         };
     }
@@ -3600,10 +3614,17 @@ public class NarrativeController
             criticContext.CombinedItemContext = itemContext;
 
             // === CRITIC: can the item help? (single pass, neutral goal-based phrasing) ===
-            var appropriatenessTree = CriticTrees.BuildItemAppropriatenessTree(goalDescription, item.DisplayName, criticContext);
+            // A tool-gated verb asks a different question: not "does this beat bare hands" (bare hands
+            // are not an option there) but "can this do the work of the tool this needs".
+            var gatedVerb = action.PreselectedOutcome?.VerbView.Verb;
+            var appropriatenessTree = gatedVerb is { RequiresTool: true }
+                ? CriticTrees.BuildToolSubstitutionTree(
+                      goalDescription, CriticTrees.ToolPhrase(gatedVerb.ReferenceToolIds),
+                      item.DisplayName, criticContext)
+                : CriticTrees.BuildItemAppropriatenessTree(goalDescription, item.DisplayName, criticContext);
             var appropriatenessResult = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree);
             bool appropriatenessSuccess = appropriatenessResult.OverallSuccess;
-            Console.WriteLine($"NarrativeController: Item appropriateness (neutral): {(appropriatenessSuccess ? "success" : "fail")}");
+            Console.WriteLine($"NarrativeController: Item appropriateness ({(gatedVerb is { RequiresTool: true } ? "tool substitution" : "neutral")}): {(appropriatenessSuccess ? "success" : "fail")}");
 
             // Item combination always costs one noetic point, regardless of outcome
             _narrationState.ThinkingAttemptsRemaining = Math.Max(0, _narrationState.ThinkingAttemptsRemaining - 1);

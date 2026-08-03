@@ -99,6 +99,29 @@ public abstract class DialogueTree
     public virtual DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.Interrupt;
 
     /// <summary>
+    /// The modus mentis a successful resolution of this tree teaches, or null to teach nothing beyond
+    /// the experience the chosen replies already earn. Applied by the same known-vs-unknown rule
+    /// verbs use — see <c>ModusMentisGrantOutcome</c>.
+    ///
+    /// <para>This is the conversation's own lesson, and it is deliberately separate from the lesson
+    /// the <i>verb</i> teaches: walking up to someone and opening your mouth is social interaction
+    /// whatever follows (<c>DialogueVerb.GrantedModusMentisId</c>), while successfully begging a
+    /// stranger for a coin is beggary.</para>
+    /// </summary>
+    public virtual string? GrantedModusMentisId => null;
+
+    /// <summary>
+    /// Further lessons a successful resolution teaches, decided from the branch that was walked and
+    /// the person who was talking. Empty for every tree whose reward is one fixed thing.
+    ///
+    /// <para>Exists for GATHER KNOWLEDGE, where what you learn depends on what you asked about and
+    /// who you asked: the general skill of getting somebody to talk is the same every time, and the
+    /// substance of what they told you is not.</para>
+    /// </summary>
+    public virtual IEnumerable<string> AdditionalGrantedModusMentisIds(NpcEntity npc, ResolutionNode resolution)
+        => System.Array.Empty<string>();
+
+    /// <summary>
     /// Returns whether this tree can be started given the NPC's current affinity
     /// with the party member identified by <paramref name="partyMemberId"/>.
     /// </summary>

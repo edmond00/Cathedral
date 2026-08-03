@@ -68,9 +68,11 @@ public class ResolutionNode : DialogueNode
         string         successReplicaIndirect,
         string         failureReplica,
         string         failureReplicaIndirect,
-        ResolutionMode mode = ResolutionMode.DiceCheck)
+        ResolutionMode mode = ResolutionMode.DiceCheck,
+        string?        topic = null)
         : base(nodeId)
     {
+        Topic                  = topic;
         Difficulty             = System.Math.Max(1, difficulty);
         SuccessReplica         = successReplica;
         SuccessReplicaIndirect = successReplicaIndirect;
@@ -78,4 +80,14 @@ public class ResolutionNode : DialogueNode
         FailureReplicaIndirect = failureReplicaIndirect;
         Mode                   = mode;
     }
+
+    /// <summary>
+    /// What this branch was about, for trees whose lesson depends on the subject rather than on the
+    /// tree. Null for every tree where succeeding teaches one fixed thing, which is most of them.
+    ///
+    /// <para>Only GATHER KNOWLEDGE uses it so far: asking a blacksmith about his trade should teach
+    /// metalcraft and asking him about the village should teach the lie of the land, and the tree
+    /// cannot know which branch was walked without being told.</para>
+    /// </summary>
+    public string? Topic { get; }
 }

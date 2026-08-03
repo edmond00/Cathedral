@@ -35,6 +35,12 @@ public sealed class CliDriver
     private int _idleFramesSeen;
     private bool _waiting;
 
+    /// <summary>Whether the in-flight wait is an `advance` — see the drain block in <see cref="Pump"/>.</summary>
+    private bool _draining;
+
+    /// <summary>Remaining preview CONTINUE presses `advance` may make before giving up.</summary>
+    private int _drainPressesLeft;
+
     /// <summary>
     /// Wall-clock deadline for the current wait. Deliberately not a frame count: the update loop
     /// runs anywhere from 8 to 60 fps depending on what is being rendered, so a frame budget is
@@ -129,7 +135,32 @@ public sealed class CliDriver
             if (_idleFramesSeen >= _idleFramesRequired)
             {
                 _waiting = false;
-                CliMode.Emit($"wait done ({_waitDescription})");
+
+                // `advance` keeps pressing the preview box's CONTINUE until the box is gone. The box
+                // is generated in segments — goal, then chosen modus mentis, then persona fit — and
+                // each press only clears one, so a script that presses once lands mid-stack and finds
+                // no actions on screen. Draining here rather than in the command means each press gets
+                // a fresh settle before the next.
+                if (_draining)
+                {
+                    var pv = _game.CliNarration?.CliPreview();
+                    if (pv is { Active: true, Complete: true } && _drainPressesLeft > 0)
+                    {
+                        _drainPressesLeft--;
+                        CmdClick(new[] { "continue" });
+                        RestartWait($"advance ({_drainPressesLeft} press(es) left)");
+                        return;
+                    }
+
+                    _draining = false;
+                    CliMode.Emit(pv is { Active: true }
+                        ? "advance done (preview still generating — try a longer timeout)"
+                        : "advance done (no preview pending)");
+                }
+                else
+                {
+                    CliMode.Emit($"wait done ({_waitDescription})");
+                }
             }
             else if (DateTime.UtcNow >= _waitDeadline)
             {
@@ -196,6 +227,7 @@ public sealed class CliDriver
                 case "strategy":    CmdStrategy(rest);                break;
                 case "fight-end":   CmdFightEnd(rest);                break;
                 case "wait":        CmdWait(rest);                    break;
+                case "advance":     CmdAdvance(rest);                 break;
                 case "expect":      CmdExpect(rest, expectPresent: true);  break;
                 case "expect-not":  CmdExpect(rest, expectPresent: false); break;
                 case "quit":        CmdQuit();                        break;
@@ -259,6 +291,9 @@ public sealed class CliDriver
           fight-end <victory|death|runaway>
                                     force-resolve a fight to test its transition
           wait [frames]             block until the game settles (no LLM/travel/dice in flight)
+          advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone
+                                    (default up to 8 presses). Use this, not a bare `click continue`,
+                                    to get from a keyword click to the action list
           wait mode <GameMode>      block until the game reaches a mode (e.g. LocationInteraction);
                                     a timeout is reported as FAIL
           expect <text>             assert text is on screen; failure sets a non-zero exit code
@@ -285,6 +320,10 @@ public sealed class CliDriver
             var s = n.CliSnapshot();
             sb.Append($" narration[loading={s.AnyLoading} dice={(s.DiceActive ? (s.DiceRolling ? "rolling" : "settled") : "none")}");
             sb.Append($" continue={s.ShowContinue} noetic={s.Noetic}/{s.MaxNoetic}");
+            // The preview box hides the action list while it is up, which is the commonest reason
+            // a script finds nothing clickable. Say so here rather than leaving it to be guessed.
+            var pv = n.CliPreview();
+            sb.Append($" preview={(pv.Active ? (pv.Complete ? "ready" : "generating") : "none")}");
             sb.Append($" history={n.ScrollBuffer.HistoryLineCount} total={n.ScrollBuffer.TotalLines}");
             sb.Append($" scroll={n.ScrollBuffer.ScrollOffset}");
             if (s.Error != null) sb.Append($" error=\"{s.Error}\"");
@@ -619,6 +658,17 @@ public sealed class CliDriver
                 .Concat(graph?.GetConnectedNodes(_game.CliAvatarVertex) ?? Enumerable.Empty<int>())
                 .Concat(_game.CliWorld.EnumerateReachableVertices());
 
+            // `travel here` enters the location the avatar is already standing on. Worth its own
+            // word because it is what most scripts actually want and the alternative — travel to a
+            // named biome, travel-go, wait for arrival, then name it again to go in — is four
+            // commands and a race with the travel animation.
+            if (want.Equals("here", StringComparison.OrdinalIgnoreCase))
+            {
+                _game.CliClickVertex(_game.CliAvatarVertex);
+                CliMode.Emit($"ok: entering the location at vertex {_game.CliAvatarVertex}");
+                return;
+            }
+
             target = -1;
             foreach (int v in searchIn)
             {
@@ -636,7 +686,15 @@ public sealed class CliDriver
         }
 
         _game.CliClickVertex(target);
-        CliMode.Emit($"ok: travel requested to vertex {target}");
+
+        // Two quite different things happen here and the script has to know which. Picking your own
+        // vertex walks straight into the location; picking any other only *plans* a route and leaves
+        // the travel box up, waiting for `travel-go`. Reporting both as "travel requested" is how a
+        // script ends up parked at the travel box until its timeout, with nothing saying why.
+        if (target == _game.CliAvatarVertex)
+            CliMode.Emit($"ok: entering the location at vertex {target} (own vertex)");
+        else
+            CliMode.Emit($"ok: route planned to vertex {target} — call `travel-go` to set out");
     }
 
     /// <summary>
@@ -766,8 +824,39 @@ public sealed class CliDriver
         CliMode.Emit($"ok: fight force-ended as {result}");
     }
 
+    /// <summary>
+    /// Waits for the game to settle, then presses the preview box's CONTINUE until no box is left.
+    ///
+    /// <para>The narration preview arrives in segments — the goal, the modus mentis chosen for it,
+    /// the persona's willingness — and CONTINUE clears one segment at a time. A script that presses
+    /// once lands in the middle of the stack, where <c>click action</c> reports nothing on screen and
+    /// nothing explains why. This is the "press CONTINUE until the game gives me the actions back"
+    /// loop a person does without thinking about it.</para>
+    /// </summary>
+    private void CmdAdvance(string[] a)
+    {
+        int maxPresses = a.Length >= 1 && int.TryParse(a[0], out int n) ? Math.Max(1, n) : 8;
+        int secs       = a.Length >= 2 && int.TryParse(a[1], out int s) ? Math.Max(1, s) : 90;
+
+        _draining         = true;
+        _drainPressesLeft = maxPresses;
+        RestartWait($"advance (≤{maxPresses} press(es))", TimeSpan.FromSeconds(secs));
+    }
+
+    /// <summary>Re-arms the frame-driven wait, keeping whatever drain state is in flight.</summary>
+    private void RestartWait(string description, TimeSpan? timeout = null)
+    {
+        _idleFramesRequired = IdleFramesToSettle;
+        _waitCondition      = null;
+        _waitDescription    = description;
+        _idleFramesSeen     = 0;
+        _waitDeadline       = DateTime.UtcNow + (timeout ?? DefaultWaitTimeout);
+        _waiting            = true;
+    }
+
     private void CmdWait(string[] a)
     {
+        _draining = false;
         _idleFramesRequired = IdleFramesToSettle;
         _waitCondition = null;
         _waitDescription = "idle";

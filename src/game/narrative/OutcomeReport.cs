@@ -77,6 +77,77 @@ public sealed class SkillAcquisitionOutcome : OutcomeReport
     }
 }
 
+/// <summary>
+/// The lesson a successful verb teaches. Doing a thing is how the thing is learned: if the actor has
+/// no modus mentis of this kind they acquire it at level 1, and if they already have one it earns
+/// experience instead.
+///
+/// <para>This is deliberately <b>not</b> <see cref="SkillAcquisitionOutcome"/>. That one belongs to
+/// the childhood reminescence, always grants a fresh level-1 instance, and places it with
+/// <c>AcquireModusMentis</c> — which pushes through the typed long-term module and can permanently
+/// drop something out of Residual. A verb fires on every success, so it uses
+/// <c>LearnModusMentis</c> (working memory, FIFO eviction) and re-learning a known modus mentis
+/// would reset it to level 1, which is why the known case awards experience and nothing else.</para>
+///
+/// <para>Only a newly-learned modus mentis shows in the UI or narrates. The ordinary case — acting
+/// with something you already know — is silent, or every action would end with a chip saying you got
+/// slightly better at walking.</para>
+/// </summary>
+public sealed class ModusMentisGrantOutcome : OutcomeReport
+{
+    private readonly ModusMentis _template;
+    private readonly bool        _alreadyKnown;
+
+    private ModusMentisGrantOutcome(ModusMentis template, bool alreadyKnown)
+        : base(alreadyKnown ? string.Empty : $"Skill learned: {template.DisplayName}",
+               OutcomeReportSeverity.Positive,
+               alreadyKnown ? string.Empty : $"learned {template.DisplayName}")
+    {
+        _template     = template;
+        _alreadyKnown = alreadyKnown;
+    }
+
+    public override bool ShowInUI => !_alreadyKnown;
+
+    /// <summary>
+    /// Builds the grant for <paramref name="modusMentisId"/>, or null when the id is blank or does
+    /// not resolve in the registry. A null return is the silent-failure case <c>--verb-audit</c>
+    /// exists to catch: the verb declared a lesson nobody can learn.
+    /// </summary>
+    public static ModusMentisGrantOutcome? For(PartyMember actor, string? modusMentisId)
+    {
+        if (string.IsNullOrWhiteSpace(modusMentisId)) return null;
+
+        var template = ModusMentisRegistry.Instance.GetModusMentis(modusMentisId);
+        if (template == null)
+        {
+            Console.Error.WriteLine(
+                $"ModusMentisGrantOutcome: no modus mentis registered as '{modusMentisId}' — " +
+                "the verb or target declaring it teaches nothing. Check the id against ModusMentisRegistry.");
+            return null;
+        }
+
+        return new ModusMentisGrantOutcome(template, actor.GetModusMentisById(modusMentisId) != null);
+    }
+
+    public override void Apply(PartyMember protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)
+    {
+        var known = protagonist.GetModusMentisById(_template.ModusMentisId);
+        if (known != null)
+        {
+            protagonist.AwardModusMentisXp(known);
+            Console.WriteLine($"ModusMentisGrant: {protagonist.DisplayName} already knows {_template.DisplayName} — awarded XP");
+            return;
+        }
+
+        var instance = (ModusMentis)Activator.CreateInstance(_template.GetType())!;
+        instance.Level = 1;
+        var dropped = protagonist.LearnModusMentis(instance);
+        Console.WriteLine($"ModusMentisGrant: {protagonist.DisplayName} learned {_template.DisplayName}"
+                        + (dropped != null ? $" (evicted {dropped.DisplayName} from working memory)" : ""));
+    }
+}
+
 /// <summary>Grants an item that was created outside the scene (e.g. reminescence grants).</summary>
 public sealed class ItemGrantOutcome : OutcomeReport
 {

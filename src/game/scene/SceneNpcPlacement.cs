@@ -25,6 +25,13 @@ public class SceneNpcPlacement
     private readonly List<SyntheticNarrationNode> _nodes;
     private readonly Dictionary<System.Guid, SyntheticNpcObservationObject> _obsByNpcId;
 
+    /// <summary>
+    /// Sleeper observations currently standing in for a person and their bed, keyed by NPC.
+    /// Held so the swap can be undone: each entry knows which bed it displaced and which area it
+    /// displaced it from.
+    /// </summary>
+    private readonly Dictionary<System.Guid, SleepingNpcPointOfInterest> _sleepers = new();
+
     public SceneNpcPlacement(Scene scene, IEnumerable<NarrationNode> nodes)
     {
         _scene = scene;
@@ -42,12 +49,61 @@ public class SceneNpcPlacement
     /// </summary>
     public void PlaceForPeriod(TimePeriod period)
     {
+        // Put every bed back before deciding anything. Cheaper and far safer than working out which
+        // sleepers changed: the hour may have moved by one period or by five, somebody may have been
+        // woken, and a stale sleeper left behind would be a person visible in two places at once.
+        ClearSleepers();
+
         foreach (var node in _nodes)
             node.PossibleOutcomes.RemoveAll(o => o is SyntheticNpcObservationObject);
 
         foreach (var node in _nodes)
             foreach (var npc in _scene.GetNpcsAt(node.Area!, period))
+            {
+                if (TryPutToBed(npc, node.Area!, period)) continue;
+
                 if (_obsByNpcId.TryGetValue(npc.Id, out var obs))
                     node.PossibleOutcomes.Add(obs);
+            }
+    }
+
+    /// <summary>
+    /// Replaces an NPC and the bed they are lying in with a single sleeping-person observation, when
+    /// they are in fact asleep. Returns true when the swap happened, so the caller knows not to place
+    /// the ordinary NPC observation as well.
+    ///
+    /// <para>The bed is taken out of the area's PoI list rather than merely hidden, so it stops being
+    /// observable and its verbs stop being offered — searching a bed with its owner in it is not the
+    /// same act as searching an empty one, and the sleeper observation carries the verbs that do
+    /// apply.</para>
+    /// </summary>
+    private bool TryPutToBed(SceneNpc npc, Area area, TimePeriod period)
+    {
+        var probe = new PoV(area, period);
+        if (!npc.IsSleeping(_scene, probe)) return false;
+
+        var bed = Building.BuildingRooms.BedsIn(area).FirstOrDefault();
+        if (bed == null) return false;   // IsSleeping already checks this; belt and braces
+
+        var sleeper = new SleepingNpcPointOfInterest(npc, bed);
+        area.PointsOfInterest.Remove(bed);
+        area.PointsOfInterest.Add(sleeper);
+        sleeper.Register(_scene);
+
+        _sleepers[npc.Id] = sleeper;
+        return true;
+    }
+
+    /// <summary>Undoes every sleeper swap, putting the beds back where they were.</summary>
+    private void ClearSleepers()
+    {
+        foreach (var sleeper in _sleepers.Values)
+            foreach (var area in _scene.AllAreas)
+            {
+                int index = area.PointsOfInterest.IndexOf(sleeper);
+                if (index >= 0) area.PointsOfInterest[index] = sleeper.Bed;
+            }
+
+        _sleepers.Clear();
     }
 }

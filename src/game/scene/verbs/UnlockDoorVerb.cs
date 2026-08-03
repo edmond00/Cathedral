@@ -16,6 +16,9 @@ public class UnlockDoorVerb : Verb
     public override string DisplayName    => "Unlock";
     public override int    BaseDifficulty => 3;
 
+    /// <summary>What a success teaches: forcing a lock teaches locks.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "lockpicking";
+
     /// <summary>Forcing open a locked door without a key is illegal.</summary>
     public override bool IsLegal => false;
 

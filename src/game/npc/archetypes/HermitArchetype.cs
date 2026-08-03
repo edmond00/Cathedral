@@ -12,6 +12,9 @@ public class HermitArchetype : NamedNpcArchetype
     public override int MaxAgeDays => 80 * LifetimeStat.DaysPerYear;
 
     public override string ArchetypeId => "hermit";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "survivalism";
     public override ItemTag? SellTag => ItemTag.Forage;
     public override ItemTag? BuyTag  => ItemTag.Foodstuff;
     public override Species Species => SpeciesRegistry.Human;

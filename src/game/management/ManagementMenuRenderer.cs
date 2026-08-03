@@ -200,14 +200,14 @@ public class ManagementMenuRenderer
 
     /// <summary>Display name for a slot index (0 = protagonist, 1+ = companions).</summary>
     private string GetCharacterName(int index) =>
-        index == 0 ? _protagonist.DisplayName : _protagonist.CompanionParty[index - 1].Name;
+        index == 0 ? _protagonist.DisplayName : _protagonist.CompanionParty[index - 1].DisplayName;
 
     /// <summary>Whether slot index belongs to the protagonist.</summary>
     private bool IsProtagonistSlot(int index) => index == 0;
 
     /// <summary>Get the <see cref="PartyMember"/> for a slot index.</summary>
     private PartyMember GetPartyMember(int index) =>
-        index == 0 ? _protagonist : (PartyMember)_protagonist.CompanionParty[index - 1];
+        index == 0 ? _protagonist : _protagonist.CompanionParty[index - 1];
 
     // ═══════════════════════════════════════════════════════════════
     // Public API

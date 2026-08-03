@@ -17,6 +17,17 @@ public class Section : Element
     public List<Area> Areas { get; } = new();
 
     /// <summary>
+    /// Whether these areas are the inside of a building. Set only by <c>BuildingFactory</c>, which is
+    /// the only thing that makes one.
+    ///
+    /// <para>Exists because outdoor content must not be scattered indoors. A bench in a hall is fine;
+    /// a bramble thicket between a workshop store and a house pantry is not, and worse, it is a way
+    /// between two buildings that walks straight past both their locked doors. Scene furnishing asks
+    /// this rather than guessing from names.</para>
+    /// </summary>
+    public bool IsInterior { get; init; }
+
+    /// <summary>
     /// Factory that produces the fight-arena generator used when a fight breaks out in
     /// this section. The caller passes a seed (e.g. the current Area.Id hash) and gets a
     /// fully-configured generator back. Mandatory so every section declares its own arena

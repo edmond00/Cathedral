@@ -110,10 +110,10 @@ public class CaveSceneFactory : SceneFactory
             descriptions: new() { "A long timber ladder fixed against the rock, descending into the darker tunnels below" },
             moods: new[] { "long", "rope-bound", "creaking", "narrow" }
         );
-        scene.ConnectAreasBidirectional(_entrance, _mainShaft);
-        _entrance.PointsOfInterest.Add(ladder);
-        _mainShaft.PointsOfInterest.Add(ladder);
-        ladder.Register(scene);
+        // No area-graph edge: the ladder IS the way down. An edge here handed MoveToAreaVerb
+        // (difficulty 1, never fails) a free bypass around the difficulty-6 climb, so the ladder was
+        // decorative and the shaft cost nothing to enter.
+        ladder.AttachTo(scene);
 
         // ── Connect deeper rooms to Main Shaft via PathPoIs ──────────────────
 
@@ -133,7 +133,34 @@ public class CaveSceneFactory : SceneFactory
         }
 
         Console.WriteLine($"CaveSceneFactory: {_type} cave, {_allAreas.Count} areas, miner={_hasMiner}");
-    }
+    
+        // ── Furnishing: somewhere to sit, somewhere to hide, a hard shortcut, a climb ──
+        // Rolled, so two places of the same kind are not the same place. Runs after the sections and
+        // paths exist: shortcuts need to know what is already adjacent, and the climb needs a section
+        // to put its top area in.
+        {
+            var outdoors = scene.OutdoorAreas;
+            FurnitureSubfactory.AddSitSpots(rng, outdoors, FurnitureSubfactory.Setting.Underground);
+            FurnitureSubfactory.AddHidingPlaces(rng, outdoors, FurnitureSubfactory.Setting.Underground);
+            FurnitureSubfactory.AddShortcuts(rng, scene, outdoors, FurnitureSubfactory.Setting.Underground);
+            FurnitureSubfactory.AddExtractionPoints(rng, outdoors, FurnitureSubfactory.Setting.Underground);
+
+            var climbTop = FurnitureSubfactory.AddClimb(
+                rng, scene, outdoors[0], FurnitureSubfactory.Setting.Underground);
+            if (climbTop != null)
+            {
+                // Sections must partition the areas, so the new top belongs to the section its foot is
+                // in — an area in no section crashes the fight path outright.
+                var host = scene.Sections.First(s => s.Areas.Contains(outdoors[0]));
+                host.Areas.Add(climbTop);
+                RegisterAll(scene, climbTop);
+            }
+        }
+
+        // Landmarks, and a view from anywhere that has to be climbed to. Must run after the
+        // connectors are attached: it finds the high ground by looking for their tops.
+        MarkLandmarksAndViews(scene);
+}
 
     // ── Area builders ────────────────────────────────────────────────────────
 
@@ -219,7 +246,7 @@ public class CaveSceneFactory : SceneFactory
                         new ItemElement(new Rope()),
                     },
                     moods: new[] { "ordered", "iron-grey", "soot-marked" }
-                ));
+                ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } });
                 break;
 
             case "Main Shaft":
@@ -230,7 +257,7 @@ public class CaveSceneFactory : SceneFactory
                         referenceLemma: "roost",
                         descriptions: new() { "A high hollow in the rock alive with the wing-flutter of bats" },
                         moods: new[] { "high", "rustling", "fetid" }
-                    ));
+                    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "beast_sense", ["listen"] = "keen_ear", ["smell"] = "scenting" } });
                 break;
 
             case "Ore Chamber":
@@ -245,7 +272,7 @@ public class CaveSceneFactory : SceneFactory
                         new ItemElement(new IronOre()),
                     },
                     moods: new[] { "bright", "iron-red", "fresh-picked" }
-                ));
+                ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework", ["contemplate"] = "aesthetic" } });
                 break;
 
             case "Coal Seam":
@@ -259,7 +286,7 @@ public class CaveSceneFactory : SceneFactory
                         new ItemElement(new Coal()),
                     },
                     moods: new[] { "black", "glittering", "soot-stained" }
-                ));
+                ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } });
                 break;
 
             case "Underground Pool":
@@ -277,7 +304,7 @@ public class CaveSceneFactory : SceneFactory
                         new ItemElement(new Flint()),
                     },
                     moods: new[] { "loose", "treacherous", "dead-end" }
-                ));
+                ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } });
                 break;
 
             case "Side Alcove":
@@ -310,7 +337,11 @@ public class CaveSceneFactory : SceneFactory
         // Common: Rat (entrance/main shaft), Bat (deep)
         TrySpawnShallow(rng, scene, new RatArchetype(), 0.50);
         TrySpawnShallow(rng, scene, new BatArchetype(), 0.45);
-    }
+    
+        // Small life. Every location has some; which and how many is rolled, so two
+        // places of the same kind are not the same place.
+        SprinkleSmallLife(rng, scene, scene.AllAreas, SmallLife.Subterranean, 2, 4);
+}
 
     private NpcSchedule BuildMinerSchedule()
     {

@@ -8,22 +8,22 @@ namespace Cathedral.Game.Scene.Building;
 /// The StairPointOfInterest should be added to both <see cref="BottomArea"/>.PointsOfInterest and
 /// <see cref="TopArea"/>.PointsOfInterest so "go up" and "go down" verbs are available from either end.
 /// </summary>
-public class StairPointOfInterest : PointOfInterest
+public class StairPointOfInterest : ConnectorPointOfInterest
 {
+    protected override string ConnectorKind => "stair";
+
     /// <summary>The area at the foot of the stairs.</summary>
-    public Area BottomArea { get; }
+    public Area BottomArea => AreaA;
 
     /// <summary>The area at the top of the stairs.</summary>
-    public Area TopArea { get; }
+    public Area TopArea => AreaB;
 
     public StairPointOfInterest(
         Area bottomArea,
         Area topArea,
         string displayName,
         List<string> descriptions)
-        : base(displayName, "staircase", descriptions)
+        : base(bottomArea, topArea, displayName, "staircase", descriptions)
     {
-        BottomArea = bottomArea;
-        TopArea    = topArea;
     }
 }

@@ -15,6 +15,9 @@ public class GoUpStairsVerb : Verb
     public override string DisplayName    => "Go Up";
     public override int    BaseDifficulty => 1;
 
+    /// <summary>What a success teaches: stairs are footing.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "surefoot";
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not StairPointOfInterest stair) return false;

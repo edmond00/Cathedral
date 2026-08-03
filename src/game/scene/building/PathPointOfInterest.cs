@@ -11,10 +11,15 @@ namespace Cathedral.Game.Scene.Building;
 /// Should be added to both <see cref="AreaA"/>.PointsOfInterest and
 /// <see cref="AreaB"/>.PointsOfInterest so it is interactable from either side.
 /// </summary>
-public class PathPointOfInterest : PointOfInterest
+public class PathPointOfInterest : ConnectorPointOfInterest
 {
-    public Area AreaA { get; }
-    public Area AreaB { get; }
+    protected override string ConnectorKind => "path";
+
+    /// <summary>
+    /// A path is the one connector that legitimately doubles an area-graph edge: it is a named walk,
+    /// not a gate, and <c>OutdoorLayout.Link</c> always lays one down beside the edge it creates.
+    /// </summary>
+    public override bool AllowsGraphEdge => true;
 
     public PathPointOfInterest(
         Area areaA,
@@ -22,14 +27,9 @@ public class PathPointOfInterest : PointOfInterest
         string displayName,
         List<string> descriptions,
         string[]? moods = null)
-        : base(displayName, "path", descriptions, items: null, moods: moods)
+        : base(areaA, areaB, displayName, "path", descriptions, moods: moods)
     {
-        AreaA = areaA;
-        AreaB = areaB;
     }
-
-    /// <summary>Returns the area on the far side of the path relative to the given area.</summary>
-    public Area Other(Area from) => from.Id == AreaA.Id ? AreaB : AreaA;
 
     /// <summary>
     /// A display name unique to the pair of areas a path joins: "Courtyard–Pigsty Track".

@@ -25,7 +25,7 @@ public static class CampSubfactory
                     new ItemElement(new Cloth()),
                 },
                 moods: new[] { "rolled", "dirty", "low" }
-            ),
+            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["smell"] = "scenting" } },
             new PointOfInterest(
                 displayName: "Fire Pit",
                 referenceLemma: "fire",
@@ -36,7 +36,7 @@ public static class CampSubfactory
                     new ItemElement(new Twig()),
                 },
                 moods: new[] { "blackened", "circular", "cold" }
-            ),
+            ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["listen"] = "keen_ear", ["smell"] = "scenting" } },
             new PointOfInterest(
                 displayName: "Sack",
                 referenceLemma: "sack",
@@ -47,7 +47,7 @@ public static class CampSubfactory
                     new ItemElement(new Bark()),
                 },
                 moods: new[] { "leaning", "heavy", "rough" }
-            ),
+            ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft" } },
         };
     }
 
@@ -65,7 +65,7 @@ public static class CampSubfactory
                     new ItemElement(new Cloth()),
                 },
                 moods: new[] { "rolled", "dirt-darkened", "low" }
-            ),
+            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["smell"] = "scenting" } },
             new PointOfInterest(
                 displayName: "Lantern Hook",
                 referenceLemma: "lantern",
@@ -75,7 +75,7 @@ public static class CampSubfactory
                     new ItemElement(new Lantern()),
                 },
                 moods: new[] { "iron", "hanging", "soot-blackened" }
-            ),
+            ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft" } },
             new PointOfInterest(
                 displayName: "Ore Pile",
                 referenceLemma: "ore",
@@ -86,7 +86,7 @@ public static class CampSubfactory
                     new ItemElement(new IronOre()),
                 },
                 moods: new[] { "heaped", "heavy", "dark" }
-            ),
+            ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework" } },
         };
     }
 
@@ -104,7 +104,7 @@ public static class CampSubfactory
                     new ItemElement(new Cloth()),
                 },
                 moods: new[] { "salt-stiff", "low", "rolled" }
-            ),
+            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bushcraft", ["smell"] = "scenting" } },
             new PointOfInterest(
                 displayName: "Drying Frame",
                 referenceLemma: "frame",
@@ -115,7 +115,7 @@ public static class CampSubfactory
                     new ItemElement(new Herring()),
                 },
                 moods: new[] { "wind-rocked", "fragrant", "tall" }
-            ),
+            ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "anglery", ["smell"] = "scenting" } },
             new PointOfInterest(
                 displayName: "Net Pile",
                 referenceLemma: "net",
@@ -125,7 +125,7 @@ public static class CampSubfactory
                     new ItemElement(new Net()),
                 },
                 moods: new[] { "tangled", "rope-coarse", "heavy" }
-            ),
+            ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "knotwork" } },
         };
     }
 }

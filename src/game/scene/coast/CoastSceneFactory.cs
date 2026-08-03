@@ -138,7 +138,8 @@ public class CoastSceneFactory : SceneFactory
         // Cliff Base ↔ Cliff Top via CliffPoI
         if (_cliffBase != null && _cliffTop != null)
         {
-            scene.ConnectAreasBidirectional(_cliffBase, _cliffTop);
+            // No area-graph edge: the climb is the only way between base and top. An edge beside it
+            // let MoveToAreaVerb stroll up a sheer cliff face for difficulty 1.
             var cliff = new CliffPointOfInterest(
                 bottomArea: _cliffBase,
                 topArea:    _cliffTop,
@@ -146,13 +147,38 @@ public class CoastSceneFactory : SceneFactory
                 descriptions: new() { "A sheer cliff face with hand- and foot-holds, salt-stained from the spray" },
                 moods: new[] { "sheer", "wet", "salt-bitten", "vertiginous" }
             );
-            _cliffBase.PointsOfInterest.Add(cliff);
-            _cliffTop.PointsOfInterest.Add(cliff);
-            cliff.Register(scene);
+            cliff.AttachTo(scene);
         }
 
         Console.WriteLine($"CoastSceneFactory: {_identity}{(_isEstuary ? "/estuary" : "")}, fish={_fish}, fisherman={_hasFisherman}");
-    }
+    
+        // ── Furnishing: somewhere to sit, somewhere to hide, a hard shortcut, a climb ──
+        // Rolled, so two places of the same kind are not the same place. Runs after the sections and
+        // paths exist: shortcuts need to know what is already adjacent, and the climb needs a section
+        // to put its top area in.
+        {
+            var outdoors = scene.OutdoorAreas;
+            FurnitureSubfactory.AddSitSpots(rng, outdoors, FurnitureSubfactory.Setting.Water);
+            FurnitureSubfactory.AddHidingPlaces(rng, outdoors, FurnitureSubfactory.Setting.Water);
+            FurnitureSubfactory.AddShortcuts(rng, scene, outdoors, FurnitureSubfactory.Setting.Water);
+            FurnitureSubfactory.AddExtractionPoints(rng, outdoors, FurnitureSubfactory.Setting.Water);
+
+            var climbTop = FurnitureSubfactory.AddClimb(
+                rng, scene, outdoors[0], FurnitureSubfactory.Setting.Water);
+            if (climbTop != null)
+            {
+                // Sections must partition the areas, so the new top belongs to the section its foot is
+                // in — an area in no section crashes the fight path outright.
+                var host = scene.Sections.First(s => s.Areas.Contains(outdoors[0]));
+                host.Areas.Add(climbTop);
+                RegisterAll(scene, climbTop);
+            }
+        }
+
+        // Landmarks, and a view from anywhere that has to be climbed to. Must run after the
+        // connectors are attached: it finds the high ground by looking for their tops.
+        MarkLandmarksAndViews(scene);
+}
 
     // ── Area builders ────────────────────────────────────────────────────────
 
@@ -234,7 +260,7 @@ public class CoastSceneFactory : SceneFactory
                         new ItemElement(new Flint()),
                     },
                     moods: new[] { "narrow", "wet", "barnacled" }
-                ));
+                ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "stonework", ["listen"] = "keen_ear" } });
                 break;
             case "Cliff Base":
                 area.PointsOfInterest.Add(TerrainSubfactory.BuildRockFace());
@@ -252,7 +278,7 @@ public class CoastSceneFactory : SceneFactory
                         new ItemElement(new Feather()),
                     },
                     moods: new[] { "high", "salt-stained", "noisy" }
-                ));
+                ) { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "husbandry", ["listen"] = "keen_ear" } });
                 area.PointsOfInterest.Add(TerrainSubfactory.BuildLichenCrust());
                 break;
             case "Tide Pool Zone":
@@ -271,7 +297,7 @@ public class CoastSceneFactory : SceneFactory
                         new ItemElement(new Reed()),
                     },
                     moods: new[] { "glistening", "soft", "tidal" }
-                ));
+                ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["smell"] = "scenting" } });
                 area.PointsOfInterest.Add(new PointOfInterest(
                     displayName: "Willow Bank",
                     referenceLemma: "willow",
@@ -282,7 +308,7 @@ public class CoastSceneFactory : SceneFactory
                         new ItemElement(new Bark()),
                     },
                     moods: new[] { "weeping", "trailing", "wet" }
-                ));
+                ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["contemplate"] = "aesthetic" } });
                 break;
         }
     }
@@ -298,7 +324,7 @@ public class CoastSceneFactory : SceneFactory
             new ItemElement(new RopeFragment()),
         },
         moods: new[] { "bleached", "salt-stained", "tangled" }
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodcraft", ["smell"] = "scenting" } };
 
     private PointOfInterest BuildKelpBed() => new(
         displayName: "Kelp Bed",
@@ -310,7 +336,7 @@ public class CoastSceneFactory : SceneFactory
             new ItemElement(new Seaweed()),
         },
         moods: new[] { "slick", "salt-fragrant", "dark" }
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "forage_lore", ["smell"] = "scenting" } };
 
     private PointOfInterest BuildTidePool() => new(
         displayName: "Tide Pool",
@@ -324,7 +350,7 @@ public class CoastSceneFactory : SceneFactory
             new ItemElement(new Rock()),
         },
         moods: new[] { "still", "salt-bright", "small" }
-    );
+    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "anglery", ["listen"] = "keen_ear", ["smell"] = "scenting" } };
 
     private PointOfInterest BuildStrandedNet()
     {
@@ -345,7 +371,7 @@ public class CoastSceneFactory : SceneFactory
                 fishItem,
             },
             moods: new[] { "tangled", "salt-stained", "abandoned" }
-        );
+        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "knotwork" } };
     }
 
     // ── NPC construction ────────────────────────────────────────────────────
@@ -384,7 +410,11 @@ public class CoastSceneFactory : SceneFactory
 
         if (_isEstuary)
             TrySpawnShallow(rng, scene, new SandpiperArchetype(), 0.60);
-    }
+    
+        // Small life. Every location has some; which and how many is rolled, so two
+        // places of the same kind are not the same place.
+        SprinkleSmallLife(rng, scene, scene.AllAreas, SmallLife.Waterside, 2, 4);
+}
 
     private void SpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype)
     {

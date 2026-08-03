@@ -10,6 +10,9 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class CharcoalBurnerArchetype : WildernessNpcArchetype
 {
     public override string ArchetypeId => "charcoal_burner";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "firecraft";
     public override ItemTag? SellTag => ItemTag.Mineral;
     public override ItemTag? BuyTag  => ItemTag.Wood;
     public override int    ModiMentisCount => 7;

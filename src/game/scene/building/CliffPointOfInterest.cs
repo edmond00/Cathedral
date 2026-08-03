@@ -10,11 +10,17 @@ namespace Cathedral.Game.Scene.Building;
 /// Should be added to both <see cref="BottomArea"/>.PointsOfInterest and
 /// <see cref="TopArea"/>.PointsOfInterest.
 /// </summary>
-public class CliffPointOfInterest : PointOfInterest
+public class CliffPointOfInterest : ConnectorPointOfInterest
 {
-    public Area BottomArea { get; }
-    public Area TopArea    { get; }
-    public bool IcyCliff   { get; }
+    protected override string ConnectorKind => "cliff";
+
+    /// <summary>The lower of the two areas.</summary>
+    public Area BottomArea => AreaA;
+
+    /// <summary>The higher of the two areas.</summary>
+    public Area TopArea => AreaB;
+
+    public bool IcyCliff { get; }
 
     public CliffPointOfInterest(
         Area bottomArea,
@@ -23,10 +29,8 @@ public class CliffPointOfInterest : PointOfInterest
         List<string> descriptions,
         bool icyCliff = false,
         string[]? moods = null)
-        : base(displayName, "cliff", descriptions, items: null, moods: moods)
+        : base(bottomArea, topArea, displayName, "cliff", descriptions, moods: moods)
     {
-        BottomArea = bottomArea;
-        TopArea    = topArea;
-        IcyCliff   = icyCliff;
+        IcyCliff = icyCliff;
     }
 }

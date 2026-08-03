@@ -20,8 +20,30 @@ public static class ResourceRegen
 /// For example: a tree, a boulder, a patch of flowers, a piece of furniture.
 /// Contains <see cref="Narrative.Item"/>s that can be collected by interacting with this point of interest.
 /// </summary>
-public class PointOfInterest : Element
+public class PointOfInterest : Element, IVerbModusMentisSource
 {
+    /// <summary>
+    /// Per-verb modus mentis overrides, keyed by <c>VerbId</c> — see
+    /// <see cref="IVerbModusMentisSource"/>. Left null by the great majority of builders, which are
+    /// happy with whatever the verb itself teaches; set it where the object is the interesting part
+    /// of the lesson (examining a mushroom teaches mycology, not general scrutiny).
+    /// </summary>
+    public IReadOnlyDictionary<string, string>? VerbModiMentis { get; init; }
+
+    /// <inheritdoc/>
+    public string? ModusMentisFor(string verbId)
+        => VerbModiMentis != null && VerbModiMentis.TryGetValue(verbId, out var id) ? id : null;
+
+    /// <summary>
+    /// Which of the four senses this object rewards — see <see cref="SensoryProfile"/>. Null means
+    /// none, which is the default and, before the sensory verbs existed, the state of every object in
+    /// the game that held no items.
+    /// </summary>
+    public SensoryProfile? Senses { get; init; }
+
+    /// <summary>Whether this object rewards the sense behind <paramref name="verbId"/>.</summary>
+    public bool RewardsSense(string verbId) => Senses?.Rewards(verbId) ?? false;
+
     /// <summary>
     /// Whether this PoI yields a natural/wild resource (true) versus man-made/cultivated stock (false).
     /// Drives which pickup verb applies (GATHER vs GRAB) and the regeneration wait. Set freely per

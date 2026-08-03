@@ -11,6 +11,9 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class FishermanArchetype : WildernessNpcArchetype
 {
     public override string ArchetypeId => "fisherman";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "anglery";
     public override ItemTag? SellTag => ItemTag.Fish;
     public override ItemTag? BuyTag  => ItemTag.Craftware;
     public override int    ModiMentisCount => 8;

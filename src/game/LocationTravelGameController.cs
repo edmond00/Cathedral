@@ -1729,6 +1729,9 @@ public class LocationTravelGameController : IDisposable
         }
 
         // Roll for encounters. First hit wins; remaining entries are skipped.
+        // --no-encounters skips the roll entirely, for scripted runs that are testing something else.
+        if (Config.Debug.NoEncounters) return;
+
         foreach (var enc in biomeInfo.Encounters)
         {
             if (_travelRng.NextDouble() < enc.ChancePerCell)
@@ -3283,7 +3286,12 @@ public class LocationTravelGameController : IDisposable
         }
     }
 
-    private void StartFightMode(FightOutcome fightOutcome)
+    /// <param name="soloEnemy">
+    /// True for a fight the enemy was goaded into personally, which nobody else joins. Every other
+    /// fight recruits the brave NPCs of the section, which is what makes picking one in a village
+    /// square a bad idea.
+    /// </param>
+    private void StartFightMode(FightOutcome fightOutcome, bool soloEnemy = false)
     {
         if (_core.Terminal == null || _narrativeController == null)
             return;
@@ -3298,9 +3306,12 @@ public class LocationTravelGameController : IDisposable
         // Mark main enemy and all allies as enemies of the protagonist
         mainEnemy.AffinityTable.SetEnemy(protagonist.AffinityKey);
 
-        // Compute allies: brave NPCs in the same section as the player (excluding main enemy)
+        // Compute allies: brave NPCs in the same section as the player (excluding main enemy).
+        // A provoked fight skips this entirely — being goaded into swinging at one person is not a
+        // call for help, and getting somebody on their own is the whole point of provoking them.
         var allies = new List<Cathedral.Game.Npc.NpcEntity>();
-        if (scene != null && pov != null)
+        if (soloEnemy) Console.WriteLine("LocationTravelGameController: personal fight — no allies join");
+        if (!soloEnemy && scene != null && pov != null)
         {
             var section = scene.Sections.FirstOrDefault(s => s.Areas.Contains(pov.Where));
             if (section != null)
@@ -3480,12 +3491,42 @@ public class LocationTravelGameController : IDisposable
         // transition directly into fight mode instead of returning to narrative.
         if (npc.FightRequestedByDialogue)
         {
+            bool provoked = npc.FightIsPersonal;
             npc.FightRequestedByDialogue = false;   // consume the flag
+            npc.FightIsPersonal          = false;
             _dialogueAdapter = null;
-            Console.WriteLine($"LocationTravelGameController: NPC {npc.DisplayName} demanded fight — entering fight mode");
+            Console.WriteLine($"LocationTravelGameController: NPC {npc.DisplayName} demanded fight — entering fight mode"
+                            + (provoked ? " (personal — no allies)" : ""));
             var fightOutcome = new FightOutcome(npc, $"confrontation with {npc.DisplayName}");
-            StartFightMode(fightOutcome);
+            StartFightMode(fightOutcome, soloEnemy: provoked);
             return;
+        }
+
+        // A successful beg pays out here: an IDialogueOutcome can reach the NPC and nothing else, so
+        // the wallet is out of its reach the same way the trade menu is.
+        if (npc.AlmsGiven > 0 && _protagonist != null)
+        {
+            _protagonist.Party.Add(Cathedral.Game.Narrative.CoinType.Copper, npc.AlmsGiven);
+            Console.WriteLine($"LocationTravelGameController: {npc.DisplayName} gave {npc.AlmsGiven} copper");
+            npc.AlmsGiven = 0;   // consume the flag
+        }
+
+        // If an introduction succeeded, walk the player over to whoever was named and put them in
+        // focus, so the next observation is of that person. Standing with them is already set by the
+        // dialogue outcome; this is the other half — being taken there.
+        if (npc.IntroductionGranted is { } presented)
+        {
+            npc.IntroductionGranted = null;   // consume the flag
+            WalkToIntroduction(presented);
+        }
+
+        // If a propose-to-join dialogue succeeded, take them into the party and out of the scene.
+        // Deferred to here for the same reason trade and work are: a dialogue outcome can reach the
+        // NPC and nothing else, so the flag is the only thing it can set.
+        if (npc.JoinRequested)
+        {
+            npc.JoinRequested = false;   // consume the flag
+            RecruitFromDialogue(npc);
         }
 
         // If a propose-to-buy/sell dialogue succeeded, open the trade menu instead of returning.
@@ -3522,6 +3563,71 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// Transitions from narrative mode into the embedded buy/sell trade menu.
     /// </summary>
+    /// <summary>
+    /// Moves the player to wherever the newly-introduced person is standing, and focuses them.
+    ///
+    /// <para>Both halves matter. Moving is what saves the player hunting a village for somebody they
+    /// have never seen; focusing is what makes the next thing that happens an observation <i>of that
+    /// person</i>, which is how the introduction reads as an arrival rather than a teleport.</para>
+    ///
+    /// <para>If they are nowhere at this hour — the reeve keeps his own times — the standing still
+    /// stands and the walk simply does not happen. Being vouched for does not conjure somebody into
+    /// a room.</para>
+    /// </summary>
+    private void WalkToIntroduction(Cathedral.Game.Npc.NpcEntity presented)
+    {
+        var scene = _narrativeController?.Scene;
+        var pov   = _narrativeController?.CurrentPoV;
+        if (scene == null || pov == null) return;
+
+        var sceneNpc = scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, presented));
+        if (sceneNpc == null) return;
+
+        var where = scene.GetAreaOf(sceneNpc, pov.When);
+        if (where == null)
+        {
+            Console.WriteLine($"LocationTravelGameController: {presented.DisplayName} is not about at {pov.When} — introduction stands, but no walk");
+            return;
+        }
+
+        pov.Where = where;
+        pov.Focus = sceneNpc;
+        Console.WriteLine($"LocationTravelGameController: walked to {presented.DisplayName} in {where.DisplayName}");
+    }
+
+    /// <summary>
+    /// Moves an NPC who agreed to travel with the player out of the scene and into the party.
+    ///
+    /// <para>Their existing body joins unchanged — an <c>NpcEntity</c> wraps an
+    /// <c>EnemyCombatant</c>, which is a <c>PartyMember</c> — so nothing is copied and nothing can
+    /// drift. The cap is re-checked here because it may have been reached between the ask and the
+    /// answer, and quietly exceeding it would be worse than a refusal the player can see.</para>
+    /// </summary>
+    private void RecruitFromDialogue(Cathedral.Game.Npc.NpcEntity npc)
+    {
+        var scene = _narrativeController?.Scene;
+        if (_protagonist == null || scene == null) return;
+
+        int max = Cathedral.Game.Scene.Verbs.TameVerb.MaxCompanions(_protagonist);
+        if (_protagonist.CompanionParty.Count >= max)
+        {
+            Console.WriteLine($"LocationTravelGameController: {npc.DisplayName} agreed to join, but the party is full ({max})");
+            return;
+        }
+
+        _protagonist.CompanionParty.Add(npc.Combatant);
+        npc.IsAlive = false;   // gone from GetNpcsAt, and so from every verb gate and NPC placement
+
+        var sceneNpc = scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, npc));
+        if (sceneNpc != null)
+        {
+            scene.Npcs.Remove(sceneNpc);
+            scene.NpcSchedules.Remove(sceneNpc.Id);
+        }
+
+        Console.WriteLine($"LocationTravelGameController: {npc.DisplayName} joined the party ({_protagonist.CompanionParty.Count}/{max})");
+    }
+
     private void StartTradeMode(Cathedral.Game.Npc.NpcEntity npc, Cathedral.Game.Npc.Trade.TradeMode mode)
     {
         if (_core.Terminal == null || _narrativeController == null)

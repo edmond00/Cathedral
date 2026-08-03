@@ -1,0 +1,50 @@
+using System.Collections.Generic;
+using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Routines;
+
+namespace Cathedral.Game.Scene.Verbs;
+
+/// <summary>
+/// Sits down somewhere and lets one period of the day go by.
+///
+/// <para>The first verb in the game that moves the clock. <c>TimeShiftOutcome</c> and everything
+/// downstream of it — the controller noticing the period changed, re-placing NPCs for the new time,
+/// re-gating every verb — has been in place and unused; this is what finally produces one.</para>
+///
+/// <para>Difficulty 1 and no failure penalty: sitting still is not a feat. A failure is having your
+/// mind wander, or being moved along, and it costs only the attempt.</para>
+/// </summary>
+public class SitAndWaitVerb : Verb
+{
+    public override string VerbId         => "sit_and_wait";
+    public override string DisplayName    => "Sit and Wait";
+    public override int    BaseDifficulty => 1;
+
+    /// <summary>What a success teaches: letting time pass without filling it.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "patience";
+
+    public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
+        => target is SitSpotPointOfInterest && pov.Where.PointsOfInterest.Contains(target);
+
+    public override string Verbatim(Scene scene, PoV pov, Element target)
+        => $"sit on {DefiniteTarget(target)} and let the time pass";
+
+    public override IReadOnlyList<OutcomeReport> SuccessReports(Scene scene, PoV pov, PartyMember actor, Element target)
+        => new OutcomeReport[] { new TimeShiftOutcome(pov.When.Next()) };
+
+    // ── Routine recording ─────────────────────────────────────────────────────
+    // Recordable, but TimeShiftOutcome declares RoutineChainEffect.TimeShift, so the recorder treats
+    // it as repositioning rather than as a piece of work — which is exactly right: waiting until
+    // afternoon is a prefix to whatever the character actually came to do.
+
+    public override bool CanRecordAsRoutine(Scene scene, PoV pov, Element target, PartyMember actor)
+        => target is SitSpotPointOfInterest;
+
+    public override RoutineTargetRef? RoutineTarget(Scene scene, PoV pov, Element target)
+        => target is PointOfInterest poi
+            ? new RoutineTargetRef(RoutineTargetKind.PointOfInterest, poi.ReferenceLemma, poi.DisplayName)
+            : null;
+
+    public override RoutinePhaseKind RoutineTriggeredPhase(Scene scene, PoV pov, Element target)
+        => RoutinePhaseKind.Narration;
+}

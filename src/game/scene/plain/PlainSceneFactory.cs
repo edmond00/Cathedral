@@ -98,7 +98,34 @@ public class PlainSceneFactory : SceneFactory
         }
 
         Console.WriteLine($"PlainSceneFactory: Built '{_identity}' plain — {_allOutdoorAreas.Count} areas");
-    }
+    
+        // ── Furnishing: somewhere to sit, somewhere to hide, a hard shortcut, a climb ──
+        // Rolled, so two places of the same kind are not the same place. Runs after the sections and
+        // paths exist: shortcuts need to know what is already adjacent, and the climb needs a section
+        // to put its top area in.
+        {
+            var outdoors = scene.OutdoorAreas;
+            FurnitureSubfactory.AddSitSpots(rng, outdoors, FurnitureSubfactory.Setting.Farmland);
+            FurnitureSubfactory.AddHidingPlaces(rng, outdoors, FurnitureSubfactory.Setting.Farmland);
+            FurnitureSubfactory.AddShortcuts(rng, scene, outdoors, FurnitureSubfactory.Setting.Farmland);
+            FurnitureSubfactory.AddExtractionPoints(rng, outdoors, FurnitureSubfactory.Setting.Farmland);
+
+            var climbTop = FurnitureSubfactory.AddClimb(
+                rng, scene, outdoors[0], FurnitureSubfactory.Setting.Farmland);
+            if (climbTop != null)
+            {
+                // Sections must partition the areas, so the new top belongs to the section its foot is
+                // in — an area in no section crashes the fight path outright.
+                var host = scene.Sections.First(s => s.Areas.Contains(outdoors[0]));
+                host.Areas.Add(climbTop);
+                RegisterAll(scene, climbTop);
+            }
+        }
+
+        // Landmarks, and a view from anywhere that has to be climbed to. Must run after the
+        // connectors are attached: it finds the high ground by looking for their tops.
+        MarkLandmarksAndViews(scene);
+}
 
     // ── Area-pool selection ──────────────────────────────────────────────────
 
@@ -277,7 +304,11 @@ public class PlainSceneFactory : SceneFactory
             TrySpawnShallow(rng, scene, new FrogArchetype(), 0.6);
             TrySpawnShallow(rng, scene, new ToadArchetype(), 0.4);
         }
-    }
+    
+        // Small life. Every location has some; which and how many is rolled, so two
+        // places of the same kind are not the same place.
+        SprinkleSmallLife(rng, scene, scene.AllAreas, SmallLife.Cultivated, 2, 5);
+}
 
     private void TrySpawnNamed(Random rng, Scene scene, NamedNpcArchetype archetype, double chance)
     {
@@ -287,7 +318,11 @@ public class PlainSceneFactory : SceneFactory
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);
-        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(area);
+        // Beasts range: a wolf pinned to one clearing all day is a hazard, not an animal, and there
+        // is nothing to track about it. Speaking wilderness folk keep their authored routines.
+        scene.NpcSchedules[sceneNpc.Id] = archetype.CanSpeak
+            ? NpcSchedule.Always(area)
+            : RoamingSchedule(rng, scene.OutdoorAreas);
     }
 
     private void TrySpawnShallow(Random rng, Scene scene, ShallowNpcArchetype archetype, double chance)

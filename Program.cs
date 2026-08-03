@@ -41,7 +41,12 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --dither [mode[:levels[:scale]]]   Retune the final full-screen dither layer (mode off|bayer|mono|noise).");
     Console.WriteLine("                                     Resting state is bayer:6:1; game events pulse it for 0.15s.");
     Console.WriteLine("                                     In-game: F cycles the mode, G the palette depth, H the grain, J the event pulses");
+    Console.WriteLine("  --no-encounters                    DEBUG: never roll a random travel encounter. For scripted runs: an");
+    Console.WriteLine("                                     encounter puts the game in EncounterPrompt, where a script waiting");
+    Console.WriteLine("                                     for LocationInteraction hangs until its timeout");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
+    Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
+    Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
 }
@@ -76,6 +81,14 @@ if (args.Length >= 1 && args[0] == "--item-audit")
 if (args.Length >= 1 && args[0] == "--building-audit")
 {
     Console.WriteLine(Cathedral.Game.Scene.Building.BuildingAudit.BuildReport());
+    return;
+}
+
+// Verb-coverage audit: how much there is to DO in each location type, against the design targets.
+// Headless — builds scenes and asks every verb whether it applies; no LLM, no window.
+if (args.Length >= 1 && args[0] == "--verb-audit")
+{
+    Console.WriteLine(Cathedral.Game.Scene.VerbAudit.BuildReport());
     return;
 }
 
@@ -321,6 +334,9 @@ for (int i = 0; i < args.Length; i++)
     if (args[i] == "--period" && i + 1 < args.Length &&
         Enum.TryParse<Cathedral.Game.Narrative.TimePeriod>(args[i + 1], ignoreCase: true, out var forced))
         Cathedral.Config.Debug.ForcedPeriod = forced;
+
+    if (args[i] == "--no-encounters")
+        Cathedral.Config.Debug.NoEncounters = true;
 }
 
 // Check for --dither [mode[:levels[:scale]]] — turns on the final full-screen shader layer.

@@ -19,6 +19,9 @@ public class OpenDoorVerb : Verb
     public override string DisplayName    => "Open";
     public override int    BaseDifficulty => 1;
 
+    /// <summary>What a success teaches: a door passed through is a route learned.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "wayfaring";
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not DoorPointOfInterest door) return false;

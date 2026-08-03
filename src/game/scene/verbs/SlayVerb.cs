@@ -15,6 +15,9 @@ public class SlayVerb : Verb
     public override string DisplayName    => "Slay";
     public override int    BaseDifficulty => 3;
 
+    /// <summary>What a success teaches: killing without giving the other a fight.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "low_blow";
+
     /// <summary>Slaying a living person is never a legal action.</summary>
     public override bool IsLegal => false;
 
@@ -26,6 +29,10 @@ public class SlayVerb : Verb
         if (target is not SceneNpc npc) return false;
         if (!npc.IsAlive) return false;
         if (pov.InSpot != null) return false;  // can't slay from inside a spot
+
+        // Tiny creatures get catch/crush instead. Slaying a snail is not a thing anyone does, and
+        // offering it beside "crush" reads as a bug rather than as a choice.
+        if (npc.Entity.Archetype is Cathedral.Game.Npc.ShallowNpcArchetype { IsTiny: true }) return false;
 
         // NPC must be present at the current area and time
         return scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == npc.Id);

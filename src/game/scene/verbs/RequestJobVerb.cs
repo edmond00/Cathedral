@@ -65,6 +65,7 @@ public class RequestJobVerb : DialogueVerb
     private static NpcEntity? Eligible(Scene scene, PoV pov, Element target, Protagonist? actor)
     {
         if (target is not SceneNpc sceneNpc) return null;
+        if (SleeperGate.IsAsleep(scene, pov, target)) return null;   // nobody hires in their sleep
         if (sceneNpc.Entity is not NpcEntity npc) return null;
         if (!npc.CanSpeak || !npc.IsAlive) return null;
         if (!JobRegistry.Instance.HasJobs(npc.Archetype.ArchetypeId)) return null;

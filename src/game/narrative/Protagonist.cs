@@ -18,7 +18,16 @@ public class Protagonist : PartyMember
     public List<string> JournalEntries { get; set; } = new();
 
     /// <summary>Named companions travelling with the protagonist.</summary>
-    public List<Companion> CompanionParty { get; set; } = new();
+    /// <summary>
+    /// Named companions travelling with the protagonist.
+    ///
+    /// <para>Typed <see cref="PartyMember"/> rather than <c>Companion</c> so a recruited NPC joins as
+    /// the body it already is. An <c>NpcEntity</c> wraps an <c>EnemyCombatant</c>, which is a
+    /// <see cref="PartyMember"/> too, so recruiting is a list insertion rather than a copy — and a
+    /// copy is what would go stale: organs, skills, wounds and inventory all live on that body, and a
+    /// duplicate of it would silently stop being the person you recruited.</para>
+    /// </summary>
+    public List<PartyMember> CompanionParty { get; set; } = new();
 
     /// <summary>Everyone who travels together: the protagonist first, then the companions.</summary>
     public IEnumerable<PartyMember> EveryMember =>

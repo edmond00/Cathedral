@@ -138,7 +138,7 @@ public static class BuildingAudit
             CheckPartition(warnings, label, id, scene, areas);
             CheckNodeIdUniqueness(warnings, label, id, areas);
             CheckObservationNames(warnings, label, id, areas);
-            CheckDoorGraphExclusivity(warnings, label, id, scene, doors);
+            CheckConnectorGraphExclusivity(warnings, label, id, scene);
             CheckLockRules(warnings, label, id, doors);
             CheckStableKeys(warnings, label, id, scene);
             CheckNoStutter(warnings, label, id, scene);
@@ -217,26 +217,36 @@ public static class BuildingAudit
     }
 
     /// <summary>
-    /// A door and an area-graph edge between the same pair means <c>MoveToAreaVerb</c> offers a way
-    /// round the door. Harmless while every door is unlocked; the whole lock system once it is not.
+    /// A connector and an area-graph edge between the same pair means <c>MoveToAreaVerb</c> — base
+    /// difficulty 1, never fails — offers a way round the connector, which silently makes it
+    /// decorative. Harmless for a door while every door is unlocked; the whole lock system once one
+    /// is not, and the whole point of a cliff, a crossing or a river from the moment it exists.
+    ///
+    /// <para>Checked against every <see cref="ConnectorPointOfInterest"/> in the scene rather than
+    /// against a hard-coded list of types, so a connector written next year is covered the day it is
+    /// written. Paths opt out via <c>AllowsGraphEdge</c>: they are named walks, not gates.</para>
     /// </summary>
-    private static void CheckDoorGraphExclusivity(
-        List<string> w, string label, int id, Scene scene, List<DoorPointOfInterest> doors)
+    private static void CheckConnectorGraphExclusivity(List<string> w, string label, int id, Scene scene)
     {
-        foreach (var door in doors)
-        {
-            bool forward = scene.AreaGraph.TryGetValue(door.FrontArea.Id, out var f) && f.Contains(door.BackArea.Id);
-            bool back    = scene.AreaGraph.TryGetValue(door.BackArea.Id, out var b) && b.Contains(door.FrontArea.Id);
-            if (forward || back)
-                w.Add($"{label} {id}: '{door.DisplayName}' is duplicated by an area-graph edge — the lock can be walked around");
-        }
+        var connectors = scene.AllAreas
+            .SelectMany(a => a.PointsOfInterest)
+            .OfType<ConnectorPointOfInterest>()
+            .Distinct();
 
-        foreach (var stair in scene.AllAreas.SelectMany(a => a.PointsOfInterest).OfType<StairPointOfInterest>().Distinct())
+        foreach (var connector in connectors)
         {
-            bool up   = scene.AreaGraph.TryGetValue(stair.BottomArea.Id, out var s) && s.Contains(stair.TopArea.Id);
-            bool down = scene.AreaGraph.TryGetValue(stair.TopArea.Id, out var t) && t.Contains(stair.BottomArea.Id);
-            if (up || down)
-                w.Add($"{label} {id}: '{stair.DisplayName}' is duplicated by an area-graph edge");
+            if (connector.AllowsGraphEdge) continue;
+
+            bool forward = scene.AreaGraph.TryGetValue(connector.AreaA.Id, out var f) && f.Contains(connector.AreaB.Id);
+            bool back    = scene.AreaGraph.TryGetValue(connector.AreaB.Id, out var b) && b.Contains(connector.AreaA.Id);
+            if (forward || back)
+                w.Add($"{label} {id}: '{connector.DisplayName}' is duplicated by an area-graph edge — it can be walked around");
+
+            // A connector joining an area to itself moves nobody. Cheap to write by accident when a
+            // factory has not decided what the far side is yet, and invisible in play: the verb
+            // appears, the roll happens, and nothing moves.
+            if (connector.AreaA.Id == connector.AreaB.Id)
+                w.Add($"{label} {id}: '{connector.DisplayName}' joins '{connector.AreaA.DisplayName}' to itself — traversing it is a no-op");
         }
     }
 
@@ -416,11 +426,11 @@ public static class BuildingAudit
                 w.Add($"{label} {id}: '{e.DisplayName}' has no stable key");
                 return;
             }
-            // Connectors are legitimately reached twice — once from each side.
-            if (!keys.Add(e.StableKey) && e is not DoorPointOfInterest
-                                       && e is not StairPointOfInterest
-                                       && e is not PathPointOfInterest
-                                       && e is not CliffPointOfInterest)
+            // A connector lives in both its areas' PoI lists, so this walk reaches it twice. Keyed
+            // off the base type rather than a list of the connector classes that existed when this
+            // was written — that list went stale the moment crossings and scale points arrived, and
+            // reported every one of them as a collision.
+            if (!keys.Add(e.StableKey) && e is not ConnectorPointOfInterest)
                 w.Add($"{label} {id}: stable key '{e.StableKey}' is used twice");
         }
     }

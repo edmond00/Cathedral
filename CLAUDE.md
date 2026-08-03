@@ -31,6 +31,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--skip-childhood` | Skips the childhood + get-up phases and fills starting skills/items randomly. |
 | `--debug` | Lets `strategy` force action outcomes. Under `--cli` it never prompts — see below. |
 | `--start-at <name>` | Spawns the protagonist on the first biome or location matching `<name>` (`village`, `farm`, `field`, `cave`…). Without it you get wherever the seed puts you, which is usually plain or forest — testing anything village-specific otherwise means hunting for a lucky seed. |
+| `--no-encounters` | Suppresses random travel encounters. **Pass this in every script that travels.** An encounter puts the game in `EncounterPrompt`, where a script waiting for `LocationInteraction` sits until its timeout and reports a failure that has nothing to do with what it was testing. |
 | `--period <name>` | Pins the arrival time of day (`dawn`…`night`) instead of drawing one at random. Needed for anything period-gated: every building's entry door shuts at `night`, and a random draw reaches that one visit in six. |
 
 A typical invocation:
@@ -64,8 +65,11 @@ Run `help` for the authoritative list. The essentials:
   click option <n>          a dialogue reply
   click button              the footer button (LEAVE / INTERRUPT / END / CONTINUE)
   choose <n>                answer the visible popup by index
-  travel <vertex|name>      plan a route to a vertex (bypasses 3D picking entirely);
-                            clicking your own vertex enters the current location
+  travel here               enter the location the avatar is standing on — what most scripts
+                            actually want, and one command instead of four
+  travel <vertex|name>      plan a route to a vertex (bypasses 3D picking entirely). Naming
+                            somewhere else only PLANS the route and leaves the travel box up:
+                            follow with `travel-go`, wait for WorldView, then `travel here`
   travel-go                 commit the plan and set out — the TRAVEL button
   manage [tab]              open/close the protagonist screen; with a tab name
                             (Anatomy / Inventory / Memory / Humors / …) open it there
@@ -76,6 +80,9 @@ Run `help` for the authoritative list. The essentials:
 
   strategy <succeed|fail-dice|fail-plausibility|auto>
   fight-end <victory|death|runaway>
+  advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone.
+                            USE THIS, not a bare `click continue`, to get from a keyword click
+                            to the action list — see the trap below
   wait [secs] | wait mode <GameMode> [secs]
   expect <text> | expect-not <text>
   quit
@@ -127,17 +134,15 @@ strategy succeed
 click keyword attention     # keyword -> Think -> pick a modus mentis
 choose 0
 choose 0
-wait 45
-state                       # → history=0  total=19  noetic=4/5
+advance 8 120               # drain the preview box; the action list is behind it
+state                       # → preview=none, and `regions` now lists actions
 
 click action 0              # execute -> dice -> confirm
 choose 0
-wait 60
+advance 10 150
 click continue
-wait 60
-click button                # footer CONTINUE opens the next segment
-wait 60
-state                       # → history=21 total=27 noetic=5/5
+advance 10 150
+expect Skill learned        # every successful verb teaches a modus mentis
 dump
 quit
 ```
@@ -155,7 +160,14 @@ When you add UI, add its handles too, or it will not be testable:
 If the new phase is asynchronous, make sure `LocationTravelGameController.CliIsIdle()` accounts for
 it, otherwise `wait` will return while the phase is still building.
 
-**One trap worth knowing**: `NarrativeState.IsDiceRolling` rests at `true` when no roll is active
+**The trap that bites first**: the narration **preview box** sits between a keyword click and the
+action list. It is generated in segments — the goal, the modus mentis chosen for it, the persona's
+willingness — and its CONTINUE clears *one segment per press*. A script that presses once lands
+mid-stack, and `click action 0` then reports "no action 0 on screen" with nothing to say why. Use
+`advance`, which settles and presses until the box is gone. `state` reports
+`preview=none|generating|ready` so a stuck script can be diagnosed from its own output.
+
+**A second trap**: `NarrativeState.IsDiceRolling` rests at `true` when no roll is active
 (`ClearDiceRoll` sets it that way), so always gate it behind `IsDiceRollActive` when testing for
 business. This already caused one bug in `CliIsIdle`.
 
@@ -193,6 +205,11 @@ counted in **player replies** from the greeting to the dice check). Then it warn
 that are invisible until a player hits them:
 
 - a branch shorter than 2 or longer than 4 replies;
+- a `{scope:field}` token that `DialogueTemplate` cannot expand. Three scopes exist: `{you:*}` for
+  the player, `{npc:*}` for whoever is being spoken to, and `{third:*}` for a person the conversation
+  is *about* rather than *with* — the master an apprentice offers to present you to. A third party is
+  handed to the adapter through `NpcEntity.PendingIntroductionTarget` and is name-faked like any
+  other, so the LLM never sees a real name for the one person the conversation is entirely about;
 - a `{scope:field}` token that `DialogueTemplate` cannot expand — or that expands to *nothing* for
   some archetype, which it checks by spawning one NPC of every speaking archetype and expanding
   every token used by any tree against it;
@@ -255,6 +272,36 @@ attacks now pre-roll one; that check is the proof the pre-roll did not change wh
 
 Run it after touching any item, `WearableItem`, `ArmorSections`, or the weight tiers.
 
+### Checking what there is to DO in a location
+
+`--verb-audit` is the counterpart to `--building-audit`: that one checks a location is *built*
+correctly, this one checks it is *playable*. Headless, no LLM, no window:
+
+```bash
+dotnet run -- --verb-audit
+```
+
+It builds every factory across 40 location ids, asks every registered verb whether it applies to
+every observable **at every time period** (presence, locks and schedules all move with the clock),
+and reports verbs-per-observable against the design targets: **80% of observables reachable by ≥2
+verbs, 50% by ≥3**, and about half observable by at least one sense. A figure short of its target is
+marked `*`.
+
+Then it warns about the things that are silent at runtime:
+
+- an observable no verb accepts at any period — it is prose and nothing else. This was the state of
+  most of the game's furniture: the anvil, the loom, the trestle table, the ice formation all read
+  well and offered nothing but IGNORE;
+- a registered verb no sampled location ever offers — dead content, usually because nothing places
+  its target yet;
+- a verb that teaches no modus mentis, or teaches one that does not resolve in `ModusMentisRegistry`
+  (a typo grants nothing, silently — the same failure `--npc-audit` guards for in traits);
+- a `ReferenceToolIds` entry no item matches, which makes a tool-gated verb permanently *impossible*
+  rather than merely hard;
+- a location with fewer than two landmark areas, so a horizon observation has nothing to name.
+
+Run it after adding a verb, a connector type, or a batch of scene content.
+
 ### Checking buildings, scenes and NPC schedules
 
 `--building-audit` generates every location type across 60 location ids and checks the structural
@@ -275,8 +322,11 @@ sections that were generated and how often. Then it warns about:
 - two PoIs in one area sharing a display name. Observation candidates are de-duplicated by name, so
   the second is never observable and anything inside it is unreachable. `SceneFactory` merges these
   automatically now, so a warning here means something bypassed that pass;
-- an `AreaGraph` edge duplicating a door or a stair — that gives `MoveToAreaVerb` a way around the
-  lock, which is exactly how the village's one interior door used to be decorative;
+- an `AreaGraph` edge duplicating **any connector** — door, stair, cliff, crossing, water, scale
+  point. That gives `MoveToAreaVerb` (difficulty 1, never fails) a way around the gate, which is
+  exactly how the village's one interior door used to be decorative — and how, until this check was
+  generalised over `ConnectorPointOfInterest`, *every cliff in the game* was either bypassed by an
+  edge or pointed at its own area and moved nobody;
 - an entry door that is not locked at night, or a door with no rolled description;
 - an NPC with `[Night] = null`, sleeping in a room with no bed, or a room sleeping more people than
   it has beds. Wilderness factories are exempt — a wolf is allowed to sleep rough;

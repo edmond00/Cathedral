@@ -41,6 +41,17 @@ public class Area : Element
     /// </summary>
     public bool IsPrivate { get; set; }
 
+    /// <summary>
+    /// A place worth naming from a distance: the mill, the cliff top, the standing stone. Landmarks
+    /// are what a horizon observation from a high place lists, and what <c>GoTowardVerb</c> then
+    /// walks to directly.
+    ///
+    /// <para>Every factory is expected to mark <b>at least two</b> — one landmark gives a survey
+    /// nothing to compare against — and <c>--verb-audit</c> reports any location that does not.
+    /// Mark the places that read as destinations, not every area with a good description.</para>
+    /// </summary>
+    public bool IsLandmark { get; set; }
+
     public Area(
         string displayName,
         string referenceLemma,

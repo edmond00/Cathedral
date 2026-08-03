@@ -24,7 +24,7 @@ public class CompanionRemovalRenderer
     public enum ClickResult { None, Toggled, Confirmed }
 
     private readonly TerminalHUD _terminal;
-    private readonly List<Companion> _companions;
+    private readonly List<PartyMember> _companions;
     private readonly int _maxCompanions;
     private readonly HashSet<int> _selected = new();
 
@@ -38,7 +38,7 @@ public class CompanionRemovalRenderer
 
     private const int BoxWidth = 64;
 
-    public CompanionRemovalRenderer(TerminalHUD terminal, List<Companion> companions, int maxCompanions)
+    public CompanionRemovalRenderer(TerminalHUD terminal, List<PartyMember> companions, int maxCompanions)
     {
         _terminal      = terminal ?? throw new ArgumentNullException(nameof(terminal));
         _companions    = companions ?? throw new ArgumentNullException(nameof(companions));
@@ -52,7 +52,7 @@ public class CompanionRemovalRenderer
     public bool CanConfirm => _selected.Count >= RequiredRemovals;
 
     /// <summary>Companions the player ticked for removal.</summary>
-    public List<Companion> SelectedForRemoval =>
+    public List<PartyMember> SelectedForRemoval =>
         _selected.OrderBy(i => i).Select(i => _companions[i]).ToList();
 
     // ── Palette (dark purple, matching the death-screen popup) ───
@@ -121,9 +121,9 @@ public class CompanionRemovalRenderer
 
         string check = selected ? "[X]" : "[ ]";
         var c = _companions[i];
-        string label = $"{check} {c.Name}";
-        if (!string.IsNullOrWhiteSpace(c.Description))
-            label += $" — {c.Description}";
+        string label = $"{check} {c.DisplayName}";
+        if (!string.IsNullOrWhiteSpace(c.PartyDescription))
+            label += $" — {c.PartyDescription}";
         Vector4 fg = selected ? TitleColor : BodyColor;
         _terminal.Text(x, y, Truncate(label, w), fg, bg);
     }

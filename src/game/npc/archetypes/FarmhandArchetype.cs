@@ -11,6 +11,9 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class FarmhandArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId      => "farmhand";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "hard_labor";
     public override Species Species         => SpeciesRegistry.Human;
     public override bool DefaultPersistent  => true;
     public override int  ModiMentisCount    => 8;

@@ -22,6 +22,7 @@ public static class ActionRulesChecker
         new IllegalActionHighMoralityRule(),
         new IllegalActionVisualWitnessRule(),
         new UnderThreatImpossibleRule(),
+        new RequiredToolRule(),
         new InventoryCapacityRule(),
     };
 

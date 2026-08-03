@@ -80,11 +80,38 @@ public static class DialogueTemplate
             ["npc:wares"]        = c => Wares(c),
             ["you:goods"]        = c => CarriedGoods(c),
 
+            // ── A third person ────────────────────────────────────────────────
+            // The one someone is being asked ABOUT, not the one being spoken to. Every field falls
+            // back to a vague noun phrase rather than an empty string: a tree that names a third
+            // party in one branch may not have one in another, and "the man" reads better than a
+            // hole in the sentence.
+            ["third:name"]     = c => c.ThirdParty == null ? "them"
+                                    : c.Names.Placeholder("third") ?? c.ThirdParty.DisplayName,
+            ["third:role"]     = c => c.ThirdParty?.Archetype.RoleNoun ?? "someone",
+            ["third:job"]      = c => c.ThirdParty?.Archetype.BuildRoleClause(LocationNoun(c)) ?? "someone here",
+            ["third:craft"]    = c => c.ThirdParty?.Archetype.Craft ?? "their work",
+            ["third:relation"] = c => ThirdRelation(c),
+
             // ── Work ──────────────────────────────────────────────────────────
             ["npc:job_title"]    = c => c.Npc.PendingJobOffer?.Title ?? "a hand",
             ["npc:job_offer"]    = c => c.Npc.PendingJobOffer?.WithArticle() ?? "a hand",
             ["npc:job_pay"]      = c => JobPay(c),
         };
+
+    /// <summary>
+    /// How the speaker stands to the third party — what an apprentice calls their blacksmith.
+    /// Read off the archetypes rather than off an affinity table, because this is a standing
+    /// relationship in the world, not a feeling either of them has about the player.
+    /// </summary>
+    private static string ThirdRelation(DialogueContext c)
+    {
+        if (c.ThirdParty == null) return "someone I know";
+
+        var speaker = c.Npc.Archetype as NamedNpcArchetype;
+        return speaker != null && speaker.CanIntroduceToArchetypes.Contains(c.ThirdParty.Archetype.ArchetypeId)
+            ? speaker.IntroductionRelation
+            : "someone I know";
+    }
 
     /// <summary>Replaces every recognised <c>{scope:field}</c> token in <paramref name="text"/>.</summary>
     public static string Expand(string? text, DialogueContext ctx)

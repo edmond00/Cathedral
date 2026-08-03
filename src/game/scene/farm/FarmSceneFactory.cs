@@ -140,7 +140,34 @@ public class FarmSceneFactory : SceneFactory
 
         Console.WriteLine($"FarmSceneFactory: Built farm — layout={_layout}, sheep={_hasSheep} dairy={_hasDairy}, "
                         + $"{_roster.Count} worker(s), {longhouseBeds} longhouse bed(s), {barracksBeds} barracks bed(s)");
-    }
+    
+        // ── Furnishing: somewhere to sit, somewhere to hide, a hard shortcut, a climb ──
+        // Rolled, so two places of the same kind are not the same place. Runs after the sections and
+        // paths exist: shortcuts need to know what is already adjacent, and the climb needs a section
+        // to put its top area in.
+        {
+            var outdoors = scene.OutdoorAreas;
+            FurnitureSubfactory.AddSitSpots(rng, outdoors, FurnitureSubfactory.Setting.Farmland);
+            FurnitureSubfactory.AddHidingPlaces(rng, outdoors, FurnitureSubfactory.Setting.Farmland);
+            FurnitureSubfactory.AddShortcuts(rng, scene, outdoors, FurnitureSubfactory.Setting.Farmland);
+            FurnitureSubfactory.AddExtractionPoints(rng, outdoors, FurnitureSubfactory.Setting.Farmland);
+
+            var climbTop = FurnitureSubfactory.AddClimb(
+                rng, scene, outdoors[0], FurnitureSubfactory.Setting.Farmland);
+            if (climbTop != null)
+            {
+                // Sections must partition the areas, so the new top belongs to the section its foot is
+                // in — an area in no section crashes the fight path outright.
+                var host = scene.Sections.First(s => s.Areas.Contains(outdoors[0]));
+                host.Areas.Add(climbTop);
+                RegisterAll(scene, climbTop);
+            }
+        }
+
+        // Landmarks, and a view from anywhere that has to be climbed to. Must run after the
+        // connectors are attached: it finds the high ground by looking for their tops.
+        MarkLandmarksAndViews(scene);
+}
 
     /// <summary>
     /// The farm's people, decided before a single wall goes up: the farmer, whichever specialists the
@@ -219,7 +246,11 @@ public class FarmSceneFactory : SceneFactory
             SpawnShallow(rng, scene, new SheepArchetype(), _sheepPen, count: rng.Next(2, 7));
         if (_dairyShed != null)
             SpawnShallow(rng, scene, new CowArchetype(), _dairyShed, count: rng.Next(1, 3));
-    }
+    
+        // Small life. Every location has some; which and how many is rolled, so two
+        // places of the same kind are not the same place.
+        SprinkleSmallLife(rng, scene, scene.AllAreas, SmallLife.Cultivated, 2, 5);
+}
 
     private NpcEntity SpawnNamed(Random rng, NamedNpcArchetype archetype, string nodeContext)
     {
@@ -377,7 +408,7 @@ public class FarmSceneFactory : SceneFactory
                 new ItemElement(new Straw()),
             },
             moods: new[] { "tall", "dry", "sweet-smelling", "golden" }
-        ));
+        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "harvestry", ["smell"] = "scenting" } });
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Grain Sacks",
@@ -389,7 +420,7 @@ public class FarmSceneFactory : SceneFactory
                 new ItemElement(new Grain()),
             },
             moods: new[] { "heavy", "dim", "dusty", "full" }
-        ));
+        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "harvestry", ["smell"] = "scenting" } });
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Tool Rack",
@@ -402,7 +433,7 @@ public class FarmSceneFactory : SceneFactory
                 new ItemElement(new Rope()),
             },
             moods: new[] { "cluttered", "dim", "rusty", "functional" }
-        ));
+        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "metalcraft" } });
 
         shed.PointsOfInterest.Add(new PointOfInterest(
             displayName: "Barrel",
@@ -413,7 +444,7 @@ public class FarmSceneFactory : SceneFactory
                 new ItemElement(new Ale()),
             },
             moods: new[] { "heavy", "iron-banded", "dim" }
-        ));
+        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "cellarcraft", ["smell"] = "scenting" } });
 
         return shed;
     }
@@ -426,7 +457,7 @@ public class FarmSceneFactory : SceneFactory
         descriptions: new() { "A row of swollen turnips half-emerged from the dark earth" },
         items: new() { new ItemElement(new Turnip()), new ItemElement(new Turnip()) },
         moods: new[] { "earthy", "neat", "green", "damp" }
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
 
     private static PointOfInterest BuildCarrotBed() => new(
         displayName: "Carrot Bed",
@@ -434,7 +465,7 @@ public class FarmSceneFactory : SceneFactory
         descriptions: new() { "A bed of carrots, feathery tops waving above the soil" },
         items: new() { new ItemElement(new Carrot()), new ItemElement(new Carrot()) },
         moods: new[] { "bright", "feathery", "neat", "damp" }
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
 
     private static PointOfInterest BuildRadishBed() => new(
         displayName: "Radish Bed",
@@ -442,7 +473,7 @@ public class FarmSceneFactory : SceneFactory
         descriptions: new() { "A bed of fat-skinned radishes pushing through the soil" },
         items: new() { new ItemElement(new Radish()), new ItemElement(new Radish()) },
         moods: new[] { "neat", "earthy", "red-topped" }
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
 
     private static PointOfInterest BuildBeetrootBed() => new(
         displayName: "Beetroot Bed",
@@ -450,7 +481,7 @@ public class FarmSceneFactory : SceneFactory
         descriptions: new() { "A row of beetroots, leaves dark with a wine-stained edge" },
         items: new() { new ItemElement(new Beetroot()), new ItemElement(new Beetroot()) },
         moods: new[] { "ordered", "dark-leaved", "earthy" }
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
 
     private static PointOfInterest BuildParsnipBed() => new(
         displayName: "Parsnip Bed",
@@ -458,7 +489,7 @@ public class FarmSceneFactory : SceneFactory
         descriptions: new() { "A row of parsnips, pale tops half-buried in damp soil" },
         items: new() { new ItemElement(new Parsnip()), new ItemElement(new Parsnip()) },
         moods: new[] { "ordered", "pale", "earthy" }
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
 
     private static PointOfInterest BuildOnionBed() => new(
         displayName: "Onion Bed",
@@ -466,7 +497,7 @@ public class FarmSceneFactory : SceneFactory
         descriptions: new() { "A row of onions, papery tops yellowing as they ripen" },
         items: new() { new ItemElement(new Onion()), new ItemElement(new Onion()) },
         moods: new[] { "papery", "ordered", "yellowing" }
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
 
     private static PointOfInterest BuildLeekBed() => new(
         displayName: "Leek Bed",
@@ -474,7 +505,7 @@ public class FarmSceneFactory : SceneFactory
         descriptions: new() { "A row of leeks, dark-green leaves rising in tidy ranks" },
         items: new() { new ItemElement(new Leek()), new ItemElement(new Leek()) },
         moods: new[] { "ordered", "tall", "dark-leaved" }
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "seed_lore", ["smell"] = "scenting" } };
 
     private static PointOfInterest BuildCabbageBed() => new(
         displayName: "Cabbage Bed",
@@ -482,7 +513,7 @@ public class FarmSceneFactory : SceneFactory
         descriptions: new() { "A row of round cabbages, leaves curling tightly around their cores" },
         items: new() { new ItemElement(new Cabbage()), new ItemElement(new Cabbage()) },
         moods: new[] { "rounded", "ordered", "green" }
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "tillage", ["smell"] = "scenting" } };
 
     private static PointOfInterest BuildPeaBed() => new(
         displayName: "Pea Bed",
@@ -490,7 +521,7 @@ public class FarmSceneFactory : SceneFactory
         descriptions: new() { "A row of pea-vines climbing wooden stakes, pods hanging plump" },
         items: new() { new ItemElement(new Pea()), new ItemElement(new Pea()) },
         moods: new[] { "climbing", "tangled", "green", "fresh" }
-    );
+    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "tillage", ["smell"] = "scenting" } };
 
     // The hand-built farmhouse entrance door lived here. BuildingFactory now makes every entry door,
     // rolls its description against the building it opens into, and applies the night rule to it.

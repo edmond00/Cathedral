@@ -8,6 +8,9 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class WeaverArchetype : CraftsmanArchetype
 {
     public override string ArchetypeId => "weaver";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "threadwork";
     public override ItemTag? SellTag => ItemTag.Clothing;
     public override ItemTag? BuyTag  => ItemTag.Textile;
     public override int    ModiMentisCount => 8;

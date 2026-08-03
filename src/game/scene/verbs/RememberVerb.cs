@@ -15,6 +15,9 @@ public class RememberVerb : Verb
     public override string VerbId         => "remember";
     public override string DisplayName    => "Remember";
     public override int    BaseDifficulty => 0;
+
+    /// <summary>What a success teaches: reaching back into your own childhood.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "introspection";
     public override char?  DifficultyGlyphOverride => '○';
 
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)

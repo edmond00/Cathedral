@@ -17,4 +17,11 @@ public enum CriminalAffinityType
 
     /// <summary>Witnessed attacking or slaying an innocent.</summary>
     Murderer,
+
+    /// <summary>
+    /// Witnessed wrecking someone's property. Distinct from <see cref="Thief"/> because nothing was
+    /// taken and the damage stays visible: a witness to a broken loom is looking at the broken loom
+    /// for as long as it stands there.
+    /// </summary>
+    Vandal,
 }

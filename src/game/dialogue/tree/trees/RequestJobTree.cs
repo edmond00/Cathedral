@@ -33,6 +33,9 @@ public class RequestJobTree : DialogueTree
     public override string Description      => "asking a master or reeve to take you on for work";
     public override string AssociatedVerbId => "request_job";
 
+    /// <summary>What succeeding at this conversation teaches: putting yourself forward for work.</summary>
+    public override string? GrantedModusMentisId => "enterprise";
+
     // Success opens the work menu; a routine bakes in that success so replaying opens work directly.
     public override DialogueRoutineBehavior RoutineBehavior => DialogueRoutineBehavior.IncludeSuccess;
 

@@ -8,6 +8,12 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class ReeveArchetype : PeasantArchetype
 {
     public override string ArchetypeId => "reeve";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "stewardry";
+
+    /// <summary>The reeve is the person others are introduced <i>to</i>, and cannot present himself.</summary>
+    public override IReadOnlyList<string> CanIntroduceToArchetypes => Array.Empty<string>();
     public override ItemTag? SellTag => ItemTag.Crop;
     public override ItemTag? BuyTag  => ItemTag.Tool;
     public override int    ModiMentisCount => 9;

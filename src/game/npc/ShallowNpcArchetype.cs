@@ -17,6 +17,24 @@ public abstract class ShallowNpcArchetype : NpcArchetype
     /// <summary>Display name used for all instances of this type (e.g. "Chicken", "Rabbit").</summary>
     public abstract string TypeDisplayName { get; }
 
+    /// <summary>
+    /// Whether this creature is small enough that violence is not the word for it — an insect, a
+    /// snail, a mouse, a lizard. Tiny creatures are offered <c>catch</c> and <c>crush</c> instead of
+    /// <c>attack</c> and <c>slay</c>: you do not draw a weapon on a butterfly, you close your hand
+    /// on it or you step on it, and which of those you do says something about you.
+    ///
+    /// <para>Default false, so every existing creature keeps the verbs it had.</para>
+    /// </summary>
+    public virtual bool IsTiny => false;
+
+    /// <summary>
+    /// What is left of a tiny creature caught intact — a specimen, not a carcass. Empty by default;
+    /// override on the ones worth keeping. Caught creatures go straight into the inventory rather
+    /// than leaving a corpse spot on the ground, which is the difference between catching a thing
+    /// and killing it.
+    /// </summary>
+    public virtual System.Collections.Generic.List<Narrative.Item> BuildCatchYield() => new();
+
     // ── Spawn ────────────────────────────────────────────────────────────────
 
     /// <summary>Spawns a new <see cref="ShallowNpcEntity"/> from this archetype.</summary>

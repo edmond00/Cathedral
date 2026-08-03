@@ -246,6 +246,51 @@ public abstract class Verb
     /// </summary>
     public virtual Item? AcquiredItem(Element? target) => null;
 
+    // ── Tool requirements ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The <c>ItemId</c>s of the tools this verb is normally done with. Empty (the default) means the
+    /// verb needs no tool and bare hands are fine.
+    ///
+    /// <para>When non-empty the verb becomes <b>impossible without a combined item</b> — you cannot
+    /// mine a seam by hand — and the item the player did combine is put to the item-use critic, which
+    /// decides whether it is one of these tools, could stand in for one, or could not. Listing several
+    /// ids means any of them serves outright (a rod or a net will both catch fish); anything else is
+    /// the critic's judgement call, which is the point: a rock hammer is not a pickaxe but a player
+    /// who reaches for one has earned the attempt.</para>
+    ///
+    /// <para>Ids are matched against <c>ItemRegistry</c>; <c>--verb-audit</c> resolves every one, since
+    /// a typo here makes the verb permanently impossible rather than merely wrong.</para>
+    /// </summary>
+    public virtual IReadOnlyList<string> ReferenceToolIds => System.Array.Empty<string>();
+
+    /// <summary>Whether this verb cannot be attempted with bare hands.</summary>
+    public bool RequiresTool => ReferenceToolIds.Count > 0;
+
+    // ── Learning ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The modus mentis a successful execution of this verb teaches — the verb's <i>default</i>
+    /// lesson, before the target gets a say. Doing a thing is how the thing is learned: succeed at a
+    /// verb you have no modus mentis for and you acquire it at level 1; succeed at one you already
+    /// have and it earns experience instead.
+    ///
+    /// <para>Override on every verb. The target may override the override by implementing
+    /// <see cref="IVerbModusMentisSource"/> — see <see cref="ResolveGrantedModusMentisId"/>, which is
+    /// what the execution pipeline actually calls. Ids are resolved against
+    /// <c>ModusMentisRegistry</c> and a bad one grants nothing silently, so <c>--verb-audit</c>
+    /// checks that every id declared here and in every target override resolves.</para>
+    /// </summary>
+    public virtual string? GrantedModusMentisId(Element? target) => null;
+
+    /// <summary>
+    /// The modus mentis actually taught by this verb against <paramref name="target"/>: the target's
+    /// per-verb override when it has one, otherwise <see cref="GrantedModusMentisId"/>.
+    /// </summary>
+    public string? ResolveGrantedModusMentisId(Element? target)
+        => (target as IVerbModusMentisSource)?.ModusMentisFor(VerbId)
+           ?? GrantedModusMentisId(target);
+
     // ── Failure penalties ──────────────────────────────────────────────────────
     // Replaces the former LLM failure-outcome critic tree: instead of asking the critic which body
     // part is wounded, each verb declares the injuries a failure can cause and one is sampled.

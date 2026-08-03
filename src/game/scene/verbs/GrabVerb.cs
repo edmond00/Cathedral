@@ -14,6 +14,9 @@ public class GrabVerb : Verb
     public override string DisplayName    => "Grab";
     public override int    BaseDifficulty => 1;
 
+    /// <summary>What a success teaches: taking a made thing cleanly off its shelf.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "finesse";
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not ItemElement itemEl) return false;

@@ -14,6 +14,9 @@ public class EnterSpotVerb : Verb
     public override string DisplayName    => "Examine";
     public override int    BaseDifficulty => 1;
 
+    /// <summary>What a success teaches: stepping close to look at something is scrutiny.</summary>
+    public override string? GrantedModusMentisId(Element? target) => "scrutiny";
+
     public override bool IsPossible(Scene scene, PoV pov, Element target, Protagonist? actor = null)
     {
         if (target is not Spot spot) return false;

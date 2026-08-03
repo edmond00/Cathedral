@@ -132,10 +132,72 @@ public class Scene
         return result;
     }
 
+    /// <summary>
+    /// Where <paramref name="npc"/> is at <paramref name="period"/>, or null when they are absent
+    /// then (or have no schedule at all).
+    ///
+    /// <para>The reverse of <see cref="GetNpcsAt"/>, and the one the verbs that reason about
+    /// <i>somebody's day</i> need — tracking a beast to where it is now, following a person to where
+    /// they will be next, working out whether someone is asleep in their own bed.</para>
+    /// </summary>
+    public Area? GetAreaOf(SceneNpc npc, TimePeriod period)
+        => NpcSchedules.TryGetValue(npc.Id, out var schedule) ? schedule.GetArea(period) : null;
+
+    /// <summary>
+    /// An NPC's whole day, in period order: where they are at each, null where they are away.
+    /// Ordered by the enum rather than by dictionary order, because every caller reads it as a
+    /// timeline.
+    /// </summary>
+    public IEnumerable<(TimePeriod Period, Area? Area)> DayOf(SceneNpc npc)
+    {
+        foreach (TimePeriod period in Enum.GetValues<TimePeriod>())
+            yield return (period, GetAreaOf(npc, period));
+    }
+
+    /// <summary>
+    /// The next period, walking forward from <paramref name="from"/>, at which <paramref name="npc"/>
+    /// is somewhere other than where they are now — or null if they stay put all day.
+    ///
+    /// <para>Wraps through the end of the day and stops before returning to <paramref name="from"/>,
+    /// so following someone can never wait more than a full day round to the same moment.</para>
+    /// </summary>
+    public TimePeriod? NextRelocation(SceneNpc npc, TimePeriod from)
+    {
+        var current = GetAreaOf(npc, from);
+
+        for (int step = 1; step < TimePeriodExtensions.PeriodsPerDay; step++)
+        {
+            var period = from.Advance(step);
+            var there  = GetAreaOf(npc, period);
+
+            bool moved = (current == null) != (there == null)
+                         || (current != null && there != null && current.Id != there.Id);
+            if (moved) return period;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Every alive NPC scheduled somewhere in the location at <paramref name="period"/> — the roster
+    /// of who is <i>here at all</i>, as opposed to who is in one area. What a verb watching for
+    /// somebody arriving or leaving compares between periods.
+    /// </summary>
+    public List<SceneNpc> PresentAt(TimePeriod period)
+        => Npcs.Where(n => n.IsAlive && GetAreaOf(n, period) != null).ToList();
+
     // ── All areas flattened ───────────────────────────────────────────────────
 
     /// <summary>Returns all areas across all sections.</summary>
     public List<Area> AllAreas => Sections.SelectMany(s => s.Areas).ToList();
+
+    /// <summary>
+    /// Every area that is not inside a building — the open part of the location. What outdoor scene
+    /// furnishing is scattered across, and what a shortcut may join: a crossing between two rooms of
+    /// different houses is both nonsense and a way past two locked doors.
+    /// </summary>
+    public List<Area> OutdoorAreas =>
+        Sections.Where(s => !s.IsInterior).SelectMany(s => s.Areas).ToList();
 
     /// <summary>Gets an area by its UUID.</summary>
     public Area? GetArea(Guid id) => Elements.TryGetValue(id, out var el) && el is Area a ? a : null;

@@ -8,6 +8,9 @@ namespace Cathedral.Game.Npc.Archetypes;
 public class SavageArchetype : NamedNpcArchetype
 {
     public override string ArchetypeId => "savage";
+
+    /// <summary>What asking this person about their work teaches.</summary>
+    public override string TradeModusMentisId => "bushcraft";
     public override Species Species => SpeciesRegistry.Human;
     public override bool DefaultEnemy => true;
     public override bool DefaultPersistent => true;

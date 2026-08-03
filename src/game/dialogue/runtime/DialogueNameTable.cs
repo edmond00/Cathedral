@@ -23,12 +23,22 @@ public class DialogueNameTable
     private DialogueNameTable(Dictionary<string, string> roleReal) => _roleReal = roleReal;
 
     /// <summary>Builds the table for a party-member ↔ NPC conversation (the two core roles).</summary>
-    public static DialogueNameTable Build(PartyMember pc, NpcEntity npc)
-        => new(new(StringComparer.OrdinalIgnoreCase)
+    /// <param name="third">
+    /// A third person the conversation is about — the master an apprentice is offering to present
+    /// you to. Registered so <c>{third:name}</c> goes through the same real→false mapping every
+    /// other name does; without it the one name the LLM would see in plain is the one the whole
+    /// conversation is about.
+    /// </param>
+    public static DialogueNameTable Build(PartyMember pc, NpcEntity npc, NpcEntity? third = null)
+    {
+        var roles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["you"] = pc.DisplayName,
             ["npc"] = npc.DisplayName,
-        });
+        };
+        if (third != null) roles["third"] = third.DisplayName;
+        return new DialogueNameTable(roles);
+    }
 
     /// <summary>
     /// The scene false name for a role, or null when the role is not registered. Falls back to the real
