@@ -21,6 +21,7 @@ namespace Cathedral.Game.Narrative;
 ///   R7  the organ mediums of all skills whose MAIN MM this is are a subset of the MM's Organs
 ///   R8  no fighting skill has more than 2 organ mediums
 ///   R9  MM has Fighting ⇔ it is referenced by at least one fighting skill (main or secondary)
+///   R10 every organ / region has exactly one correctly-scoped IMaxLevelContributionStat
 ///
 /// Soft targets (reported by the audit, never fatal):
 ///   ~80% two-organ MMs vs ~20% one-region MMs
@@ -181,6 +182,9 @@ public static class ModusMentisRuleValidator
         foreach (var id in referencedIds.Where(id => !knownIds.Contains(id)))
             violations.Add($"[R9] fighting skills reference unknown modus mentis id '{id}'");
 
+        // R10 — every anatomy source a MM can name must own a max-level contribution stat
+        violations.AddRange(CollectMaxLevelStatViolations());
+
         // R6 — coverage: every organ and region related to at least 5 MMs
         var organCounts = CountCoverage(all, OrganIds, organArity: 2);
         var regionCounts = CountCoverage(all, RegionIds, organArity: 1);
@@ -202,6 +206,76 @@ public static class ModusMentisRuleValidator
                     counts[id]++;
         return counts;
     }
+
+    /// <summary>
+    /// R10 — every organ and every body region must own exactly one correctly-scoped
+    /// <see cref="IMaxLevelContributionStat"/>.
+    /// <para>
+    /// <see cref="PartyMember.GetMaxLevelForModusMentis"/> resolves each <c>Organs</c> entry to the
+    /// first contribution stat whose <c>RelatedOrganId</c> / <c>RelatedBodyPartId</c> matches, and
+    /// contributes <b>+0</b> when there is none. So an organ added without its stat silently caps
+    /// every modus mentis related to it at level 1 — nothing throws, nothing logs, the number in the
+    /// memory menu is just wrong — and two stats on one id make which curve applies arbitrary.
+    /// This is the same class of silent-typo failure R5 catches for the ids themselves.
+    /// </para>
+    /// </summary>
+    private static List<string> CollectMaxLevelStatViolations()
+    {
+        var violations = new List<string>();
+        var stats = DerivedStat.DiscoverAll().Where(s => s is IMaxLevelContributionStat).ToList();
+
+        foreach (var stat in stats)
+        {
+            // The resolver matches on the organ / body-part key only, so an organ-part-scoped
+            // contribution stat would never be found (paired organs are typed at organ level).
+            if (stat.RelatedOrganPartId != null)
+                violations.Add($"[R10] stat {stat.Name}: is scoped to organ part '{stat.RelatedOrganPartId}'"
+                               + " (max-level stats must be scoped to an organ or a body region)");
+
+            switch (stat.RelatedOrganId, stat.RelatedBodyPartId)
+            {
+                case (null, null):
+                    violations.Add($"[R10] stat {stat.Name}: names neither an organ nor a body region");
+                    break;
+                case ({ } organId, { } regionId):
+                    violations.Add($"[R10] stat {stat.Name}: names both organ '{organId}' and region '{regionId}'");
+                    break;
+                case ({ } organId, null) when !OrganIds.Contains(organId):
+                    violations.Add($"[R10] stat {stat.Name}: '{organId}' is not a canonical organ id"
+                                   + (RegionIds.Contains(organId) ? " (it is a region — use RelatedBodyPartId)" : ""));
+                    break;
+                case (null, { } regionId) when !RegionIds.Contains(regionId):
+                    violations.Add($"[R10] stat {stat.Name}: '{regionId}' is not a canonical body-region id"
+                                   + (OrganIds.Contains(regionId) ? " (it is an organ — use RelatedOrganId)" : ""));
+                    break;
+            }
+        }
+
+        // Exactly one stat per anatomy source: none means a silent +0, several means an arbitrary pick.
+        var byId = stats
+            .Select(s => s.RelatedOrganId ?? s.RelatedBodyPartId)
+            .Where(id => id != null)
+            .GroupBy(id => id!)
+            .ToDictionary(g => g.Key, g => g.Count());
+        foreach (var id in OrganIds.Concat(RegionIds).OrderBy(id => id))
+        {
+            int count = byId.GetValueOrDefault(id, 0);
+            if (count == 0)
+                violations.Add($"[R10] '{id}': has no max-level contribution stat "
+                               + "(every modus mentis related to it would be capped at level 1)");
+            else if (count > 1)
+                violations.Add($"[R10] '{id}': has {count} max-level contribution stats (must be exactly 1)");
+        }
+
+        return violations;
+    }
+
+    /// <summary>How many of <paramref name="ids"/> own a max-level contribution stat.</summary>
+    private static int CountMaxLevelStats(HashSet<string> ids) =>
+        DerivedStat.DiscoverAll()
+            .Where(s => s is IMaxLevelContributionStat)
+            .Select(s => s.RelatedOrganId ?? s.RelatedBodyPartId)
+            .Count(id => id != null && ids.Contains(id));
 
     // ── Audit report (--mm-audit) ─────────────────────────────────────────────
 
@@ -250,6 +324,13 @@ public static class ModusMentisRuleValidator
             .Select(kv => $"{kv.Key}={kv.Value}{(kv.Value < MinRelatedModiMentis ? "!" : "")}")));
         sb.AppendLine("regions: " + string.Join("  ", regionCounts.OrderBy(kv => kv.Value).ThenBy(kv => kv.Key)
             .Select(kv => $"{kv.Key}={kv.Value}{(kv.Value < MinRelatedModiMentis ? "!" : "")}")));
+
+        // Max-level contribution stats: a source without one grants +0 and caps its MMs at level 1.
+        int organStats  = CountMaxLevelStats(OrganIds);
+        int regionStats = CountMaxLevelStats(RegionIds);
+        sb.AppendLine($"max-level stats: {organStats}/{OrganIds.Count} organs, "
+                      + $"{regionStats}/{RegionIds.Count} regions"
+                      + (organStats == OrganIds.Count && regionStats == RegionIds.Count ? "" : "   ← see R10 above"));
         sb.AppendLine();
 
         // ── Soft targets ──

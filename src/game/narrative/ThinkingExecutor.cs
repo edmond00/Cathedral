@@ -306,13 +306,23 @@ public class ThinkingExecutor
         var prompt = new PersonaChoicePrompt(
             ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase),
             "What do you want to do?", "what they want to do");
-        // No decline option for now — the persona always commits to a real goal.
+        // The persona is shown the real goals only — it must answer as if committing to one. The
+        // decline rides in hidden, for the critic alone: personas regularly answer with something that
+        // was never on the list ("I choose to mark the boy by the wall instead"), and without a letter
+        // meaning "none of these" the critic is forced to call that a match for option A, so the
+        // character acts on an intent nobody expressed. Landing on it is a refusal — the caller's
+        // isIgnore exit fires, and the noetic point is spent all the same.
         var chosen = await _selector.SelectAsync(
             thinkingSlot, thinkingModusMentis, realOutcomes,
             o => o.ToNaturalLanguageString(),
-            prompt, preview: part?.NextSegment(isFree: true), ct: ct);
+            prompt, declineOption: "do something else entirely", declineHiddenFromPersona: true,
+            preview: part?.NextSegment(isFree: true), ct: ct);
 
-        // Null item only if the list was empty; the reasoning still explains the (non-)choice.
+        if (chosen.Item == null)
+            Console.WriteLine("ThinkingExecutor: goal reasoning matched none of the offered goals — treating as a refusal.");
+
+        // Null item ⇒ the hidden decline was matched, or the list was empty; either way the target is
+        // not worth acting on. The reasoning still explains the (non-)choice and rides into the rewrite.
         return (chosen.Item ?? IgnoreVerb.MakeOutcome(), chosen.Reasoning);
     }
 

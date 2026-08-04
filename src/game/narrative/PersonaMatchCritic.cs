@@ -77,6 +77,12 @@ public static class PersonaMatchCritic
     /// "you" inside quotes addresses someone real. Options are presented as a lettered list A, B,
     /// C … and the reply is GBNF-constrained to a single one of those letters.
     ///
+    /// <para>Set <paramref name="lastOptionIsCatchAll"/> when the final option is a "none of these"
+    /// fallback the persona was never shown (see <see cref="PersonaChoiceSelector"/>'s hidden decline).
+    /// The closing instruction then names that letter as the answer for an intention that matches no
+    /// listed target — without it the critic must map every want onto a real option, and a persona that
+    /// wandered off ("I choose to mark the boy by the wall instead") is silently forced onto option A.</para>
+    ///
     /// <para>Callers must pass at most <see cref="MaxOptions"/> options (sample beforehand). In
     /// playground mode, or when the critic is unavailable, returns a safe index (random / 0) so the
     /// scene keeps moving.</para>
@@ -87,6 +93,7 @@ public static class PersonaMatchCritic
         string reportedQuestion,
         string reasoning,
         IReadOnlyList<string> options,
+        bool lastOptionIsCatchAll = false,
         CancellationToken ct = default)
     {
         if (options == null || options.Count == 0) return -1;
@@ -102,7 +109,7 @@ public static class PersonaMatchCritic
             return 0;
         }
 
-        string prompt  = BuildPrompt(context, personaTitle, reportedQuestion, reasoning, options);
+        string prompt  = BuildPrompt(context, personaTitle, reportedQuestion, reasoning, options, lastOptionIsCatchAll);
         string grammar = BuildLetterGrammar(options.Count);
 
         try
@@ -132,7 +139,7 @@ public static class PersonaMatchCritic
     /// converting the shared second-person context and option labels via <see cref="ToThirdPerson"/>.
     /// The persona intro sentence is omitted when <paramref name="personaTitle"/> is blank.
     /// </summary>
-    private static string BuildPrompt(string context, string personaTitle, string reportedQuestion, string reasoning, IReadOnlyList<string> options)
+    private static string BuildPrompt(string context, string personaTitle, string reportedQuestion, string reasoning, IReadOnlyList<string> options, bool lastOptionIsCatchAll)
     {
         var sb = new StringBuilder();
 
@@ -152,7 +159,10 @@ public static class PersonaMatchCritic
         sb.Append("Here are the options they can choose from:\n");
         for (int i = 0; i < options.Count; i++)
             sb.Append(Letter(i)).Append(" - ").Append(ToThirdPerson(options[i].Trim())).Append('\n');
-        sb.Append("\nExtract the target of the character's intention, then select the option referring to that target.");
+        sb.Append("\nExtract the target of the character's intention, then select the option referring to that target. ");
+        if (lastOptionIsCatchAll)
+            sb.Append("If their intention is about none of the targets named above, select ")
+              .Append(Letter(options.Count - 1)).Append(" instead. ");
         sb.Append("Answer with that option's letter and nothing else.");
         return sb.ToString();
     }
@@ -209,5 +219,6 @@ You are given: some situational context, a short statement of what a character w
 Guidelines:
 - Match on meaning and intent, not on wording. Pick the option that does what they described.
 - Do not judge whether the want is wise or in character — that is already decided. Just map it to the closest option.
+- If the list ends with a catch-all option for an intention that fits none of the others, and what the character wants is about none of the listed targets, pick that catch-all rather than forcing a match.
 - Answer with EXACTLY one letter from the list and nothing else.";
 }

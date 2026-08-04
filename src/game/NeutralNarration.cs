@@ -104,11 +104,17 @@ public static class NeutralNarration
         return string.Join(" ", parts);
     }
 
-    /// <summary>Neutral reasoning for the "ignore and move on" path.</summary>
+    /// <summary>
+    /// Neutral reasoning for the "ignore and move on" path: the thinking Modus Mentis was offered the
+    /// goals this object affords and settled on none of them — either because the object affords
+    /// nothing, or because its free reasoning wandered to something that was never on the list, which
+    /// the match critic reports through its catch-all option (see <c>ThinkingExecutor.ChooseGoalAsync</c>).
+    /// Both mean the same thing to the player: nothing here is worth acting on, look elsewhere.
+    /// </summary>
     public static string ReasoningIgnore(string targetPhrase, bool isReminescence = false)
         => isReminescence
-            ? $"I remember {NounPhrase(FirstPerson(targetPhrase))}, but I let it be and move on."
-            : $"I notice {NounPhrase(FirstPerson(targetPhrase))}, but I let it be and move on.";
+            ? $"I remember {NounPhrase(FirstPerson(targetPhrase))}, but there is nothing in it worth doing, and I would rather let my mind turn to something else."
+            : $"I notice {NounPhrase(FirstPerson(targetPhrase))}, but there is nothing here worth doing, and I would rather turn my attention to something else.";
 
     /// <summary>
     /// Neutral reasoning for the "no way to do it" path: the goal was chosen but the thinking Modus

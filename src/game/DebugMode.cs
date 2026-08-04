@@ -226,14 +226,21 @@ public static class DebugMode
     /// Prompt the user to choose whether a dice roll succeeds or fails.
     /// Returns true for success, false for failure.
     /// Only called when CurrentStrategy is Custom.
+    /// <para>
+    /// The roll being overridden is <paramref name="numberOfDice"/> d6 needing
+    /// <paramref name="difficulty"/> sixes — that is the whole model, so those are the numbers
+    /// shown. Nothing else weighs on the outcome.
+    /// </para>
     /// </summary>
-    public static bool PromptDiceRoll(string actionText, double successProbability)
+    public static bool PromptDiceRoll(string actionText, int numberOfDice, int difficulty)
     {
+        string odds = $"{numberOfDice} dice, need {difficulty} six{(difficulty == 1 ? "" : "es")}";
+
         // No stdin under --cli: succeed by default so a scripted run makes progress. Pin the
         // outcome explicitly with `strategy succeed` / `strategy fail-dice`.
         if (NonInteractive)
         {
-            Cli.CliMode.Emit($"dice-roll auto=success p={successProbability:P0} (use `strategy fail-dice` to force failure)");
+            Cli.CliMode.Emit($"dice-roll auto=success ({odds}) (use `strategy fail-dice` to force failure)");
             return true;
         }
 
@@ -241,7 +248,7 @@ public static class DebugMode
         Console.WriteLine();
         Console.WriteLine($"[DEBUG] Dice Roll");
         Console.WriteLine($"  Action: {actionText}");
-        Console.WriteLine($"  Success probability: {successProbability:P0}");
+        Console.WriteLine($"  Roll: {odds}");
         Console.WriteLine($"  1) Success");
         Console.WriteLine($"  2) Failure");
         Console.Write($"  Choice [1/2]: ");
@@ -316,7 +323,7 @@ public static class DebugMode
     /// Returns the dice roll override based on the current strategy.
     /// For non-Custom strategies, returns the auto-answer without prompting.
     /// </summary>
-    public static bool GetDiceRollOverride(string actionText, double successProbability)
+    public static bool GetDiceRollOverride(string actionText, int numberOfDice, int difficulty)
     {
         switch (CurrentStrategy)
         {
@@ -338,7 +345,7 @@ public static class DebugMode
 
             case DebugStrategy.Custom:
             default:
-                return PromptDiceRoll(actionText, successProbability);
+                return PromptDiceRoll(actionText, numberOfDice, difficulty);
         }
     }
 }

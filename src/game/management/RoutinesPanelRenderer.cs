@@ -17,7 +17,8 @@ namespace Cathedral.Game.Management;
 ///     ☑ (locked) / ☐ (unlocked) checkbox that protects the routine from FIFO eviction; clicking
 ///     the name selects the routine.
 ///   Center pane (cols ~17–66) for the selected routine, in three stacked zones:
-///     TOP    — general info: name, lock state, start time, requirements, outcomes.
+///     TOP    — general info: name, lock state (clickable — the same toggle as the list
+///              checkbox, for the selected routine), start time, requirements, outcomes.
 ///     MIDDLE — a transparent "porthole" rectangle that reveals the always-rendered 3D world
 ///              behind the HUD; the host drives the world camera to focus on the routine's
 ///              location so it reads as a minimap (see <see cref="OnRoutineFocused"/>).
@@ -33,6 +34,12 @@ public class RoutinesPanelRenderer
     // Screen row whose lock/unlock checkbox the mouse is currently over (-1 = none). Tracked
     // separately from _hoveredRow so the checkbox can highlight even on a non-selected routine.
     private int _hoveredCheckboxRow = -1;
+
+    // Hit area of the center pane's lock line — the same toggle as the list checkbox, applied to
+    // the selected routine. Row is -1 while nothing is selected (no routines).
+    private int _centerLockRow = -1;
+    private int _centerLockWidth = 0;
+    private bool _hoveredCenterLock;
 
     // Currently selected routine (index into RecordedRoutines), or -1 when none/empty.
     private int _selectedIndex = -1;
@@ -71,10 +78,10 @@ public class RoutinesPanelRenderer
         _terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
     }
 
-    /// <summary>True while a routine row is hovered (for SFX feedback).</summary>
-    public bool IsHovering => _hoveredRow >= 0;
+    /// <summary>True while a routine row or the center lock line is hovered (for SFX feedback).</summary>
+    public bool IsHovering => _hoveredRow >= 0 || _hoveredCenterLock;
 
-    public void ClearHover() { _hoveredRow = -1; _hoveredCheckboxRow = -1; }
+    public void ClearHover() { _hoveredRow = -1; _hoveredCheckboxRow = -1; _hoveredCenterLock = false; }
 
     /// <summary>
     /// Called when the Routines tab becomes active. Establishes a default selection (newest routine)
@@ -97,6 +104,7 @@ public class RoutinesPanelRenderer
     public void Render(Protagonist protagonist)
     {
         _hitRows.Clear();
+        _centerLockRow = -1;
         int x = ListX;
 
         // Vertical seam between the center pane and the right list (drawn regardless of contents).
@@ -191,8 +199,17 @@ public class RoutinesPanelRenderer
         CenterText(x, row++, routine.Name, Config.Colors.BrightYellow);
         row++;
 
+        // Lock line — clickable, toggling the same flag as the list checkbox.
         string lockText = routine.Locked ? "☑ Locked" : "☐ Unlocked";
-        CenterText(x, row++, lockText, routine.Locked ? Config.Colors.MediumYellow : Config.Colors.MediumGray60);
+        _centerLockRow   = row;
+        _centerLockWidth = lockText.Length;
+        Vector4 lockFg = _hoveredCenterLock
+            ? Config.Colors.BrightYellow
+            : (routine.Locked ? Config.Colors.MediumYellow : Config.Colors.MediumGray60);
+        Vector4 lockBg = _hoveredCenterLock ? CheckboxHoverBg : Config.Colors.Black;
+        _terminal.FillRect(x, row, lockText.Length, 1, ' ', lockFg, lockBg);
+        _terminal.Text(x, row, lockText, lockFg, lockBg);
+        row++;
         CenterText(x, row++, $"Start: {routine.StartTime.Label()}    Steps: {routine.Steps.Count}", Config.Colors.LightGray75);
         row++;
 
@@ -352,18 +369,31 @@ public class RoutinesPanelRenderer
     {
         int newHover = HitTest(x, y);
         int newCheckbox = (newHover >= 0 && x >= ListX && x < ListX + CheckboxCols) ? newHover : -1;
-        if (newHover == _hoveredRow && newCheckbox == _hoveredCheckboxRow) return false;
+        bool newCenterLock = HitTestCenterLock(x, y);
+        if (newHover == _hoveredRow && newCheckbox == _hoveredCheckboxRow
+            && newCenterLock == _hoveredCenterLock) return false;
         _hoveredRow = newHover;
         _hoveredCheckboxRow = newCheckbox;
+        _hoveredCenterLock = newCenterLock;
         return true;
     }
 
     /// <summary>
-    /// Handles a click in the routine list. Clicking the checkbox cell toggles the lock; clicking the
-    /// name selects the routine (and refocuses the minimap). Returns true when something changed.
+    /// Handles a click in the routine list or on the center pane's lock line. Clicking either the
+    /// list checkbox cell or the center lock line toggles the lock; clicking a name selects the
+    /// routine (and refocuses the minimap). Returns true when something changed.
     /// </summary>
     public bool ProcessClick(int x, int y, Protagonist protagonist)
     {
+        // Center pane: the selected routine's lock line is a second handle on the same flag.
+        if (HitTestCenterLock(x, y)
+            && _selectedIndex >= 0 && _selectedIndex < protagonist.RecordedRoutines.Count)
+        {
+            var selected = protagonist.RecordedRoutines[_selectedIndex];
+            selected.Locked = !selected.Locked;
+            return true;
+        }
+
         int idx = HitTestIndex(x, y);
         if (idx < 0 || idx >= protagonist.RecordedRoutines.Count) return false;
 
@@ -399,6 +429,11 @@ public class RoutinesPanelRenderer
             if (y == row) return row;
         return -1;
     }
+
+    /// <summary>True when (x, y) falls on the center pane's lock line for the selected routine.</summary>
+    private bool HitTestCenterLock(int x, int y) =>
+        _centerLockRow >= 0 && y == _centerLockRow
+        && x >= CenterLeft && x < CenterLeft + _centerLockWidth;
 
     private int HitTestIndex(int x, int y)
     {

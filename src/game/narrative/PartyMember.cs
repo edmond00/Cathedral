@@ -689,6 +689,25 @@ public abstract class PartyMember
         return true;
     }
 
+    /// <summary>
+    /// Discards a modusMentis still sitting in working memory: it is unlinked from
+    /// <see cref="ModiMentis"/> (so it stops being usable) and its slot is freed. Working memory is
+    /// compacted afterwards, so the freed slot ends up at the *back* of the FIFO queue rather than
+    /// as a hole in the middle — that is what makes rejection a way to bank space against the next
+    /// eviction, and it keeps <see cref="MemoryModule.Prepend"/>'s shift from silently swallowing
+    /// the last entry.
+    /// Returns false if the modusMentis is not in working memory.
+    /// </summary>
+    public bool RejectModusMentis(ModusMentis modusMentis)
+    {
+        var working = GetMemoryModule(MemoryModuleType.Working);
+        if (working == null || !working.Remove(modusMentis)) return false;
+
+        working.Compact();
+        ModiMentis.Remove(modusMentis);
+        return true;
+    }
+
     /// <summary>Get a memory module by type.</summary>
     public MemoryModule? GetMemoryModule(MemoryModuleType type) =>
         MemoryModules.FirstOrDefault(m => m.Type == type);
@@ -713,12 +732,25 @@ public abstract class PartyMember
     public OrganPart? GetOrganPartById(string id) =>
         _bodyParts.SelectMany(bp => bp.Organs).SelectMany(o => o.Parts).FirstOrDefault(p => p.Id == id);
 
-    /// <summary>Returns the primary organ score for a modusMentis (used for modusMentis checks).</summary>
-    public int GetOrganScoreForModusMentis(ModusMentis modusMentis)
-    {
-        if (modusMentis.Organs.Length == 0) return 0;
-        return GetOrganById(modusMentis.Organs[0])?.Score ?? 0;
-    }
+    /// <summary>
+    /// The anatomy sources a modusMentis draws on, each with the max-level contribution it currently
+    /// grants <i>this</i> body — e.g. <c>("Eyes", +2, region: false), ("Cerebrum", +1, false)</c> or
+    /// <c>("Trunk", +4, true)</c>. Order follows <see cref="ModusMentis.Organs"/>, but no entry is
+    /// "primary": every one counts equally in <see cref="GetMaxLevelForModusMentis"/>, so the sum of
+    /// the contributions here is exactly that method's result minus its floor of 1.
+    /// A source absent from this anatomy (a beast organ on a human body) is returned under its raw
+    /// id with a contribution of 0, which is what it actually grants.
+    /// </summary>
+    public List<(string Label, int Contribution, bool IsRegion)> GetAnatomySourcesForModusMentis(
+        ModusMentis modusMentis) =>
+        modusMentis.Organs.Select(id =>
+        {
+            int contribution = GetMaxLevelContribution(id);
+            var organ = GetOrganById(id);
+            if (organ != null) return (organ.DisplayName, contribution, false);
+            var region = GetBodyPartById(id);
+            return region != null ? (region.DisplayName, contribution, true) : (id, 0, false);
+        }).ToList();
 
     // ── ModusMentis XP / leveling ──────────────────────────────────────
 

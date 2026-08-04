@@ -253,6 +253,32 @@ way to see whether a trait you just wrote actually reads well on a person.
 
 Run it after touching `NpcContentGenerator`, any archetype's generation block, or any trait.
 
+### Checking the modi mentis
+
+`--mm-audit` prints the whole MM catalogue and the health of its content rules, headless:
+
+```bash
+dotnet run -- --mm-audit
+```
+
+The hard rules (R1–R10, listed on `ModusMentisRuleValidator`) are **fatal**: `ValidateOrThrow` runs
+them at startup, so a rule-breaking MM can never reach the game — the audit is how you read what
+broke without launching. They cover function combinations, memory-type agreement, fighting-skill
+cross-references, and the two anatomy rules that are easiest to get wrong:
+
+- **R5** — an MM's `Organs` is **exactly 1 body region XOR exactly 2 distinct organs**, canonical ids
+  only, never a mix. There is no "primary" entry: every one contributes to the level cap through its
+  `IMaxLevelContributionStat` (organ +0..+3, region +0..+6), so code reading only `Organs[0]` is a bug;
+- **R10** — every organ and region owns exactly one correctly-scoped contribution stat. Without it
+  `GetMaxLevelForModusMentis` contributes +0 and silently caps every MM related to that source at
+  level 1 — a wrong number in the memory menu and nothing anywhere to say why.
+
+Then the soft targets, which only warn: the ~80/20 two-organ vs one-region split, the morality and
+memory-type distributions, ~10% discrete, and per-organ/region coverage (R6 makes fewer than 5
+related MMs fatal, so the coverage table is really about spotting the ones scraping the floor).
+
+Run it after adding or editing a modus mentis, a fighting skill, an organ, or a body region.
+
 ### Checking the item catalogue
 
 `--item-audit` reads `ItemRegistry` and reports the whole catalogue, headless. Coverage is

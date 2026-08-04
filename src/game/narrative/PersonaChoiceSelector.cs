@@ -52,7 +52,9 @@ public readonly record struct PersonaChoice<T>(T? Item, string? Reasoning) where
 ///       the want.</item>
 /// </list>
 /// If the critic lands on the decline option the call returns <c>null</c> — the caller's existing
-/// failure path (nothing to observe / ignore &amp; move on / no way to act / stay silent) fires. In
+/// failure path (nothing to observe / ignore &amp; move on / no way to act / stay silent) fires. That
+/// decline can also be <i>hidden from the persona</i> and offered to the critic alone, as a catch-all
+/// for a want that matches no real option; see the <c>declineHiddenFromPersona</c> parameter. In
 /// playground mode it short-circuits to a random real option (never declines) with no LLM consulted.
 ///
 /// <para>At most 26 options reach the critic (one letter each); if there are more, the real options
@@ -99,6 +101,14 @@ public class PersonaChoiceSelector
     /// is the label for the "do none of these" choice; picking it yields a <c>null</c> item. Pass
     /// <c>null</c> (the default) to omit the decline option entirely — the persona must then choose one
     /// of the real items, and the item is never <c>null</c> (used by dialogue, which has no refusal).
+    ///
+    /// <para><paramref name="declineHiddenFromPersona"/> makes the decline option a <b>critic-only
+    /// catch-all</b>: the persona is shown the real options alone and answers as if it had to choose
+    /// one of them, but the critic gets the extra letter and is told to use it when the want matches no
+    /// listed target. That covers the persona answering with something it was never offered ("I choose
+    /// to mark the boy by the wall instead") — without it the critic must force that onto a real option,
+    /// and the character acts on an intent nobody expressed. The visible form is for sites where
+    /// declining is itself one of the persona's choices.</para>
     /// </summary>
     public async Task<PersonaChoice<T>> SelectAsync<T>(
         int slotId,
@@ -107,6 +117,7 @@ public class PersonaChoiceSelector
         Func<T, string> describe,
         PersonaChoicePrompt prompt,
         string? declineOption = null,
+        bool declineHiddenFromPersona = false,
         ILlmPreviewSink? preview = null,
         CancellationToken ct = default) where T : class
     {
@@ -141,7 +152,12 @@ public class PersonaChoiceSelector
         // when one is offered — so the persona can genuinely opt out where the site allows it.
         var options = candidates.Select(c => (c.Label, Item: (T?)c.Item)).ToList();
         if (hasDecline) options.Add((Label: decline, Item: (T?)null));
-        var labels = options.Select(o => o.Label).ToList();
+        var criticLabels = options.Select(o => o.Label).ToList();
+
+        // A hidden decline is never listed to the persona: it answers over the real options only, and
+        // the extra letter exists solely so the critic can report "that matched none of them".
+        bool hiddenDecline = hasDecline && declineHiddenFromPersona;
+        var labels = hiddenDecline ? criticLabels.Take(candidates.Count).ToList() : criticLabels;
 
         // ── Persona stage: free-text reasoning on the Modus Mentis slot ──────────
         // Reset in and out so the reasoning neither inherits nor leaks slot history. When a preview
@@ -168,7 +184,9 @@ public class PersonaChoiceSelector
         // converts the shared second-person context/labels itself (see PersonaMatchCritic).
         string title = string.IsNullOrWhiteSpace(evaluator.PersonaReminder) ? "" : $"a {evaluator.PersonaReminder}";
 
-        int idx = await PersonaMatchCritic.PickAsync(prompt.ContextText, title, prompt.ReportedQuestion.Trim(), reasoning, labels, ct);
+        int idx = await PersonaMatchCritic.PickAsync(
+            prompt.ContextText, title, prompt.ReportedQuestion.Trim(), reasoning, criticLabels,
+            lastOptionIsCatchAll: hiddenDecline, ct: ct);
         if (idx < 0 || idx >= options.Count) return new PersonaChoice<T>(candidates[0].Item, reasoning);
         return new PersonaChoice<T>(options[idx].Item, reasoning);   // null item ⇒ decline was chosen
     }

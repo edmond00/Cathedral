@@ -1102,7 +1102,7 @@ public class NarrativeController
             bool succeeded;
             if (DebugMode.IsActive && !DebugMode.IsAutoStrategy)
             {
-                succeeded = DebugMode.GetDiceRollOverride(action.ActionText, evalResult.SuccessProbability);
+                succeeded = DebugMode.GetDiceRollOverride(action.ActionText, numberOfDice, actualDifficulty);
                 finalDiceValues = GenerateDiceValuesForResult(numberOfDice, actualDifficulty, succeeded);
             }
             else

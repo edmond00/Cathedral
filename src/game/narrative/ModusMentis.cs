@@ -33,7 +33,17 @@ public abstract class ModusMentis
     /// Ids of the anatomy sources this modusMentis draws on. Each entry may name an <b>organ</b>
     /// (e.g. "eyes", "tongue") or a <b>body region</b> (e.g. "visage", "trunk"); both contribute to
     /// the max level via their <see cref="IMaxLevelContributionStat"/> (organ +0..+3, region +0..+6).
-    /// The first entry is also used as the "primary organ" for legacy action/wound targeting.
+    /// <para>
+    /// Exactly 1 region XOR exactly 2 distinct organs, enforced at startup by rule R5 in
+    /// <see cref="ModusMentisRuleValidator"/>. <b>No entry is "primary"</b> — every one contributes
+    /// equally, so anything reading only <c>Organs[0]</c> is a bug.
+    /// </para>
+    /// <para>
+    /// This is also the <i>only</i> way anatomy reaches an outcome. Organs and regions set the level
+    /// ceiling and nothing else: an action succeeds on the dice alone — one d6 per point of summed
+    /// modus-mentis level, needing as many sixes as the difficulty — so a better organ helps only by
+    /// letting a modus mentis be raised further, never by nudging a roll.
+    /// </para>
     /// </summary>
     public abstract string[] Organs { get; }
     public int Level { get; set; }                    // current level; capped by GetMaxLevelForModusMentis (random initial)

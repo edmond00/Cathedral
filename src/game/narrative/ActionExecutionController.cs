@@ -36,7 +36,6 @@ public class ActionEvaluationResult
     public string? PlausibilityError { get; set; }
     public double DifficultyScore { get; set; }
     public int DifficultyLevel { get; set; }
-    public double SuccessProbability { get; set; }
     public ModusMentis ActionModusMentis { get; set; } = null!;
     public ModusMentis ThinkingModusMentis { get; set; } = null!;
     public ParsedNarrativeAction Action { get; set; } = null!;
@@ -138,7 +137,10 @@ public class ActionExecutionController
         // Difficulty was decided at thinking time from the persona-fit answer (verb base ± the
         // eager/willing/unsure modifier) and stored on the action. Possibility is likewise settled
         // before this point — by the coded rules (pre-execution) and persona-fit cancellation — so
-        // this method only converts difficulty into a success probability, adjusted by organ score.
+        // all this method does is normalise the difficulty into the 0..1 score the narration
+        // prompts want. It decides nothing about the outcome: success is the dice roll alone
+        // (difficulty = 6s needed, dice = summed modus-mentis levels), which is where the anatomy
+        // enters, and only through the level cap those modi mentis were raised under.
         int difficultyLevel = action.DifficultyLevel > 0
             ? action.DifficultyLevel
             : Math.Clamp(action.Verb.DifficultyFor(action.PreselectedOutcome?.VerbView.Target), 1, 10);
@@ -147,24 +149,11 @@ public class ActionExecutionController
         Console.WriteLine($"🎯 [DIFFICULTY] level {difficultyLevel}/10 (score {difficultyScore:F3}, " +
             $"{(difficultyLevel <= 3 ? "Easy" : difficultyLevel <= 6 ? "Moderate" : "Hard")})");
 
-        // Convert difficulty score to success probability
-        // Easy (0.0) = 95% success, Moderate (0.5) = 70% success, Hard (1.0) = 40% success
-        double successProbability = 0.95 - (difficultyScore * 0.55);
-
-        // Adjust for organ score (adds up to ±10% success chance)
-        string organId = actionModusMentis.Organs.Length > 0 ? actionModusMentis.Organs[0] : "hands";
-        int organScore = ActingMember.GetOrganById(organId)?.Score ?? 5;
-        successProbability += (organScore - 5) * 0.02;
-        successProbability = Math.Clamp(successProbability, 0.1, 0.95);
-
-        Console.WriteLine($"   Success probability: {successProbability:F2} (organ '{organId}': {organScore})\n");
-
         return Task.FromResult(new ActionEvaluationResult
         {
             IsPlausible = true,
             DifficultyScore = difficultyScore,
             DifficultyLevel = difficultyLevel,
-            SuccessProbability = successProbability,
             ActionModusMentis = actionModusMentis,
             ThinkingModusMentis = thinkingModusMentisUsed,
             Action = action,

@@ -56,7 +56,9 @@ public class MemoryPanelRenderer
     // the shade is what separates a section from its slots.
     private static readonly Vector4 AreaBg      = new(0.0f, 0.0f, 0.0f, 1.0f);
     private static readonly Vector4 HeaderBg    = new(0.11f, 0.11f, 0.11f, 1.0f);
-    private static readonly Vector4 FilledBg    = new(0.09f, 0.09f, 0.09f, 1.0f);
+    // Kept a clear step below HeaderBg: at 0.09 a filled slot read as the same grey as the module
+    // header band above it, and the two stopped separating.
+    private static readonly Vector4 FilledBg    = new(0.05f, 0.05f, 0.05f, 1.0f);
     private static readonly Vector4 FilledBgHov = new(0.15f, 0.15f, 0.10f, 1.0f);
     private static readonly Vector4 SelectedBg  = new(0.20f, 0.18f, 0.06f, 1.0f);
     private static readonly Vector4 EmptyBg     = new(0.0f, 0.0f, 0.0f, 1f);
@@ -65,6 +67,7 @@ public class MemoryPanelRenderer
     private static readonly Vector4 DetailBg    = new(0.0f, 0.0f, 0.0f, 1f);    // black — a flat grey breaks up under the dither layer
     private static readonly Vector4 DetailTitle = new(0.12f, 0.12f, 0.08f, 1f);
     private static readonly Vector4 BtnHovBg    = new(0.16f, 0.16f, 0.10f, 1f);
+    private static readonly Vector4 BtnHovBgDanger = new(0.14f, 0.04f, 0.20f, 1f);
 
     // ── Unified slot colors (same for every module) ─────────────
     private static readonly Vector4 TitleColor  = Config.Colors.White;
@@ -476,6 +479,18 @@ public class MemoryPanelRenderer
         const int rightX = StartX + leftW + 2;
         const int rightW = AreaWidth - leftW - 3;
 
+        // Anatomy row: every organ / region the modusMentis draws on, with the max-level bonus each
+        // one currently grants. There is no "primary" source — the sum of these is the max level in
+        // the title row (minus its floor of 1) — so all of them are listed, never just the first.
+        var    anatomy      = _member?.GetAnatomySourcesForModusMentis(modusMentis) ?? new();
+        string anatomyLabel = anatomy.Any(a => a.IsRegion) ? "Body region" : "Organs";
+        string anatomyValue = anatomy.Count == 0
+            ? "—"
+            : string.Join(", ", anatomy.Select(a => $"{a.Label} +{a.Contribution}"));
+        int anatomyRoom = leftW - 4 - anatomyLabel.Length;
+        if (anatomyValue.Length > anatomyRoom && anatomyRoom > 1)
+            anatomyValue = anatomyValue[..(anatomyRoom - 1)] + "…";
+
         // Meta lines (left column, rows 2-5)
         var metaLines = new (string label, string value, Vector4 valCol)[]
         {
@@ -484,9 +499,7 @@ public class MemoryPanelRenderer
             ("Discreet",      modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",
              modusMentis.ActsDiscretely ? Config.Colors.BrightYellow : Config.Colors.LightGray75),
             ("Morality",      modusMentis.MoralLevel.ToString(),                             Config.Colors.LightGray75),
-            ("Primary organ", modusMentis.Organs.Length > 0 ? modusMentis.Organs[0] : "—",         Config.Colors.LightGray75),
-            ("Organ score",   _member != null ? _member.GetOrganScoreForModusMentis(modusMentis).ToString() : "—",
-             Config.Colors.LightGray75),
+            (anatomyLabel,    anatomyValue,                                                  Config.Colors.LightGray75),
             ("XP",            atMaxLvl ? "MAX" : $"{modusMentis.CurrentXp} / {xpNeeded}",
              atMaxLvl ? Config.Colors.GoldYellow : Config.Colors.LightGray75),
         };
@@ -554,6 +567,11 @@ public class MemoryPanelRenderer
                 string? reason = hasFreeSlot ? null
                     : $"no free slot in {GetModuleLabel(targetModType).ToLower()}";
                 RenderButton("consolidate", "CONSOLIDATE", StartX + 2, btnRow, hasFreeSlot, reason);
+
+                // REJECT: drop the modusMentis outright. Working-memory only — it is the player's
+                // way to open a slot before the FIFO evicts something they wanted to keep.
+                RenderButton("reject", "REJECT", StartX + 2 + "[ CONSOLIDATE ]".Length + 2, btnRow,
+                             enabled: true, disabledReason: null, destructive: true);
             }
             else if (selectedModType == MemoryModuleType.Procedural
                   || selectedModType == MemoryModuleType.Semantic
@@ -592,6 +610,7 @@ public class MemoryPanelRenderer
                 {
                     case "consolidate": ExecuteConsolidate(); break;
                     case "archive":     ExecuteArchive();     break;
+                    case "reject":      ExecuteReject();      break;
                 }
                 return true;
             }
@@ -653,6 +672,28 @@ public class MemoryPanelRenderer
         if (target == null || !target.TryAdd(modusMentis)) return;
 
         srcSlot.ModusMentis = null;
+        working.Compact();   // same reason as REJECT: the freed slot belongs at the back of the queue
+        _selectedSlot = null;
+    }
+
+    /// <summary>
+    /// Discards the selected working-memory modusMentis. Delegates to
+    /// <see cref="PartyMember.RejectModusMentis"/>, which unlinks it and compacts working memory so
+    /// the freed slot lands at the back of the FIFO queue — the point of the button is to bank room
+    /// for the next thing learned, and a hole in the middle would not do that.
+    /// </summary>
+    private void ExecuteReject()
+    {
+        if (!_selectedSlot.HasValue || _member == null) return;
+        var (modType, slotIdx) = _selectedSlot.Value;
+        if (modType != MemoryModuleType.Working) return;
+
+        var working = _member.MemoryModules.FirstOrDefault(m => m.Type == MemoryModuleType.Working);
+        if (working == null || slotIdx >= working.Slots.Count) return;
+        var slot = working.Slots[slotIdx];
+        if (!slot.IsFilled) return;
+
+        _member.RejectModusMentis(slot.ModusMentis!);
         _selectedSlot = null;
     }
 
@@ -675,14 +716,19 @@ public class MemoryPanelRenderer
         _selectedSlot = null;
     }
 
-    /// <summary>Draws a labeled action button and registers its hit area.</summary>
-    private void RenderButton(string id, string label, int x, int y, bool enabled, string? disabledReason)
+    /// <summary>
+    /// Draws a labeled action button and registers its hit area. A <paramref name="destructive"/>
+    /// button highlights purple instead of yellow, so a discard does not look like the other actions.
+    /// </summary>
+    private void RenderButton(string id, string label, int x, int y, bool enabled, string? disabledReason,
+                              bool destructive = false)
     {
         string text   = $"[ {label} ]";
         bool   hov    = _hoveredButton == id && enabled;
-        Vector4 fg    = enabled ? (hov ? Config.Colors.BrightYellow : Config.Colors.LightGray85)
+        Vector4 hovFg = destructive ? Config.Colors.LightPurple : Config.Colors.BrightYellow;
+        Vector4 fg    = enabled ? (hov ? hovFg : Config.Colors.LightGray85)
                                 : SubtitleCol;
-        Vector4 bg    = hov ? BtnHovBg : DetailBg;
+        Vector4 bg    = hov ? (destructive ? BtnHovBgDanger : BtnHovBg) : DetailBg;
 
         for (int ix = x; ix < x + text.Length; ix++)
             _terminal.SetCell(ix, y, ' ', fg, bg);
