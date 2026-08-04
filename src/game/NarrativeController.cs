@@ -196,7 +196,12 @@ public class NarrativeController
     // Per-member noetic point counters — keyed by DisplayName.
     // Preserved across hand-offs so returning to a member keeps their remaining points.
     private readonly Dictionary<string, int> _memberNoeticPoints = new();
-    
+
+    // What has already been looked at in the current narration phase. Every observation request
+    // narrows its choice list by this, so a phase explores the scene instead of circling one object;
+    // it is cleared wherever the live text greys into history (see CloseNarrationSegment).
+    private readonly ObservationLedger _observationLedger = new();
+
     public NarrativeController(
         TerminalHUD terminal,
         PopupTerminalHUD popup,
@@ -366,12 +371,17 @@ public class NarrativeController
     /// node state (which refills noetic points). The node, scene and PoV are left untouched, so
     /// anything a phase added to the world — corpses from a fight, for instance — is still there.
     /// Call this when LEAVING narration for another phase; no observation pass is started.
+    ///
+    /// <para>This is the phase boundary every return-to-narration path funnels through, so it is also
+    /// where the <see cref="ObservationLedger"/> is emptied: the scene becomes fully observable again,
+    /// even standing in the same place with the same point of view.</para>
     /// </summary>
     /// <param name="separatorLabel">Caption for the rule, naming the segment that follows.</param>
     public void CloseNarrationSegment(string? separatorLabel = null)
     {
         _scrollBuffer.ConvertToHistory(separatorLabel);
         _narrationState.ResetForNewNode();
+        _observationLedger.Clear();
         _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
     }
 
@@ -414,6 +424,7 @@ public class NarrativeController
         _scrollBuffer.Clear();
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear();
+        _observationLedger.Clear();
         // New session — drop any stale post-dialogue continuity context.
         _postDialogueNpc = null;
         _postDialogueObservationMM = null;
@@ -452,6 +463,7 @@ public class NarrativeController
         _scrollBuffer.Clear();
         _activePartyMember = _protagonist;
         _memberNoeticPoints.Clear();
+        _observationLedger.Clear();
         _postDialogueNpc = null;
         _postDialogueObservationMM = null;
 
@@ -606,6 +618,7 @@ public class NarrativeController
                     _activePartyMember,
                     _protagonist.CurrentLocationId,
                     isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
+                    ledger: _observationLedger,
                     preview: _previewSession,
                     commit: CommitObservation
                 );
@@ -663,7 +676,7 @@ public class NarrativeController
 
         var blocks = await _observationController.GenerateThreatObservationAsync(
             threatOutcome, _protagonist.CurrentLocationId, _activePartyMember,
-            preview: _previewSession, commit: commit);
+            ledger: _observationLedger, preview: _previewSession, commit: commit);
         return blocks.Count > 0;
     }
 
@@ -681,7 +694,7 @@ public class NarrativeController
 
         var blocks = await _observationController.GeneratePostDialogueObservationAsync(
             npcOutcome, originMM, _protagonist.CurrentLocationId, _activePartyMember,
-            preview: _previewSession, commit: commit);
+            ledger: _observationLedger, preview: _previewSession, commit: commit);
         return blocks.Count > 0;
     }
 
@@ -1921,6 +1934,7 @@ public class NarrativeController
                 _protagonist.CurrentLocationId,
                 _activePartyMember,
                 isReminescence: _scene?.Phase == NarrationPhase.ChildhoodReminescence,
+                ledger: _observationLedger,
                 preview: _previewSession,
                 commit: CommitFocus
             );
@@ -1999,6 +2013,9 @@ public class NarrativeController
             {
                 _scrollBuffer.ConvertToHistory();
                 _narrationState.ResetForPartyMemberChange();
+                // The companion takes over the narration with their own attention: whatever the
+                // speaker had already looked at does not constrain what draws them.
+                _observationLedger.Clear();
                 _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
 
                 _scrollBuffer.AddBlock(speakingBlock);
@@ -2909,9 +2926,14 @@ public class NarrativeController
     // Note the popup selectors deliberately bypass OnMouseClick: its popup branches read the live
     // OS cursor via GetCorrectedMousePosition(), which no injected coordinate can influence.
 
-    /// <summary>Snapshot of the narration state a --cli `state` command reports.</summary>
+    /// <summary>
+    /// Snapshot of the narration state a --cli `state` command reports. <c>Observed</c> is how many
+    /// objects this narration phase has already looked at (see <see cref="ObservationLedger"/>) out of
+    /// how many the current node offers — the pair a script watches to prove observations stop
+    /// repeating themselves, and that the count resets when a phase does.
+    /// </summary>
     public (bool AnyLoading, string LoadingMessage, bool DiceActive, bool DiceRolling,
-            bool ShowContinue, int Noetic, int MaxNoetic, string? Error)
+            bool ShowContinue, int Noetic, int MaxNoetic, string? Error, int Observed, int Observable)
         CliSnapshot() => (
             _narrationState.IsAnyLoading,
             _narrationState.LoadingMessage,
@@ -2920,7 +2942,9 @@ public class NarrativeController
             _narrationState.ShowContinueButton,
             _narrationState.ThinkingAttemptsRemaining,
             _activePartyMember.MaxNoeticPoints,
-            _narrationState.ErrorMessage);
+            _narrationState.ErrorMessage,
+            _observationLedger.Count,
+            _currentNode.GetAllDirectConcreteOutcomes().Count);
 
     /// <summary>Distinct clickable keywords in the current frame, in reading order.</summary>
     public IReadOnlyList<string> CliKeywords()

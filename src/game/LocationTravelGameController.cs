@@ -1901,7 +1901,7 @@ public class LocationTravelGameController : IDisposable
         if (_core.Terminal != null)
         {
             if (_llmLoadingRenderer == null)
-                _llmLoadingRenderer = new LLMLoadingRenderer(_core.Terminal, "AI Model");
+                _llmLoadingRenderer = new LLMLoadingRenderer(_core.Terminal, "narrative engine");
 
             float progress;
             string status;

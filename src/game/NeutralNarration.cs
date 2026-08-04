@@ -76,6 +76,19 @@ public static class NeutralNarration
                           : "Nothing here draws my attention.";
 
     /// <summary>
+    /// Neutral meaning for a Modus Mentis that let its focus go part-way through an observation: it
+    /// had already described something, was offered the objects this narration phase has not looked
+    /// at yet, and chose none of them. Distinct from <see cref="ObservationNothing"/>, which is a
+    /// whole block saying nothing here ever drew it — this one closes a block that <i>did</i> observe,
+    /// and says only that there is nothing further worth attending to right now. Appended as a last
+    /// sentence in the persona's voice, with no clickable keyword.
+    /// </summary>
+    public static string ObservationNothingMore(bool isReminescence = false)
+        => isReminescence
+            ? "Nothing more surfaces from my memory now, and I let the recollection fade."
+            : "Nothing more here is worth my attention now, and I let my focus go.";
+
+    /// <summary>
     /// Neutral meaning for a refused focus: a (new) observation Modus Mentis was handed
     /// <paramref name="targetPhrase"/> (already articled) to focus on, and chose to lose interest
     /// instead of observing it. Re-expressed in that persona's voice as the whole focus block —
