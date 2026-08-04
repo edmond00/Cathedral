@@ -40,7 +40,7 @@ public class FightModeAdapter
     private readonly FightState _state;
     private readonly FightingSkillRegistry _skillRegistry;
     private readonly DiceRollComponent _dice = new();
-    private readonly Random _rng = new();
+    private readonly Random _rng = GameRng.Stream("fight-mode");
 
     // ── Source NPC (for outcome reporting) ───────────────────────────
     private readonly NpcEntity _targetNpc;

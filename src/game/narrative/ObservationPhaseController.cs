@@ -37,7 +37,7 @@ public class ObservationPhaseController
     private readonly PersonaChoiceSelector _selector;
     private readonly KeywordRenderer _keywordRenderer;
     private readonly WorldContext? _worldContext;
-    private readonly Random _random = new();
+    private readonly Random _random = GameRng.Stream("observation-phase");
 
     public ObservationPhaseController(
         LlamaServerManager llamaServer,

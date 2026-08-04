@@ -83,7 +83,7 @@ public class PersonaChoiceSelector
         JsonConstraintGenerator.GenerateRawTextGrammar("I ", ReasoningMinChars, ReasoningMaxChars);
 
     private readonly LlamaServerManager _llm;
-    private readonly Random _random = new();
+    private readonly Random _random = GameRng.Stream("persona-choice");
 
     public PersonaChoiceSelector(LlamaServerManager llm) => _llm = llm ?? throw new ArgumentNullException(nameof(llm));
 

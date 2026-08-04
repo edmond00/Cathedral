@@ -16,7 +16,9 @@ public static class PlaygroundMode
     /// <summary>Whether playground mode is active.</summary>
     public static bool IsActive { get; set; } = false;
 
-    private static readonly Random _rng = new();
+    // Master-seeded: in playground mode this generator stands in for every LLM decision in the
+    // game, so an unseeded one makes a --seed run diverge on the very first choice it makes.
+    private static readonly Random _rng = GameRng.Stream("playground");
     private static int _nextFakeSlotId = 1000;
     private static readonly Dictionary<string, int> _modusMentisIdToFakeSlot = new();
 

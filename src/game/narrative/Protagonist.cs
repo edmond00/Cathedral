@@ -145,7 +145,9 @@ public class Protagonist : PartyMember
     public void RegenerateName()
     {
         bool male = DerivedStats.First(s => s.Name == "gender").GetValue(this) > 0;
-        CharacterName = Cathedral.Game.Npc.Naming.NameGenerator.GenerateHuman(male, new System.Random());
+        // A stream, not a per-call generator: this rerolls whenever gender changes, and a fresh
+        // generator seeded the same way would hand back the same name every time.
+        CharacterName = Cathedral.Game.Npc.Naming.NameGenerator.GenerateHuman(male, GameRng.Stream("protagonist-name"));
     }
 
     // ── Starting age ─────────────────────────────────────────────

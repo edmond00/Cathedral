@@ -17,7 +17,7 @@ public static class FillMemoryMode
 {
     public static bool IsActive { get; set; } = false;
 
-    private static readonly Random _rng = new();
+    private static readonly Random _rng = GameRng.Stream("fill-memory");
 
     /// <summary>
     /// Fills every empty, usable, non-blocked slot of <paramref name="member"/>'s memory

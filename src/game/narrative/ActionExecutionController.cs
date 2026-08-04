@@ -77,7 +77,7 @@ public class ActionExecutionController
     private readonly ItemUseCritic _criticEvaluator;
     private readonly WorldContext _worldContext;
     private readonly int _locationId;
-    private readonly Random _rng = new();
+    private readonly Random _rng = GameRng.Stream("action-execution");
 
     /// <summary>Exposes the outcome narrator for item combination failure narration.</summary>
     public OutcomeNarrator OutcomeNarrator => _outcomeNarrator;
@@ -514,7 +514,7 @@ public class ActionExecutionController
         }
         
         // Roll n dice (1–6 each), succeed if sixes >= difficulty
-        var rng = new Random();
+        var rng = GameRng.Stream("dice");
         int numberOfDice = Math.Max(1, action.GetTotalModusMentisLevel());
         int sixes = 0;
         for (int i = 0; i < numberOfDice; i++)

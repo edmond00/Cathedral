@@ -70,7 +70,8 @@ public sealed class NameFakingRegistry
     private readonly List<Entry> _entries = new();
     private readonly Random _rng;
 
-    public NameFakingRegistry(int? seed = null) => _rng = seed.HasValue ? new Random(seed.Value) : new Random();
+    public NameFakingRegistry(int? seed = null)
+        => _rng = seed.HasValue ? new Random(seed.Value) : GameRng.Stream("name-faking");
 
     /// <summary>
     /// Assigns each (real, male) character a unique false name from the gendered pool. Blank or

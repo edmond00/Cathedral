@@ -53,7 +53,18 @@ public static class GameRng
     {
         lock (_lock)
         {
-            if (_initialized) return;
+            if (_initialized)
+            {
+                // Someone already resolved the seed by asking for a stream. If they resolved it to
+                // something else, this run is not the run that was asked for — and the symptom
+                // (a --seed run that never replays) gives no hint of the cause, so say so loudly.
+                if (seed.HasValue && seed.Value != _masterSeed)
+                    Console.Error.WriteLine(
+                        $"[RNG] IGNORED: seed {seed.Value} requested after the master seed was already " +
+                        $"locked to {_masterSeed}. Something read GameRng before the seed was parsed — " +
+                        "this run is NOT reproducible. Resolve the seed earlier, or make that reader lazy.");
+                return;
+            }
             _masterSeed = seed ?? Environment.TickCount;
             _initialized = true;
         }

@@ -16,7 +16,8 @@ namespace Cathedral.Game.Narrative;
 /// </summary>
 public abstract class PartyMember
 {
-    private static readonly Random _sharedRng = new Random();
+    /// <summary>Humor-queue filling, shared by every party member — master-seeded so a run replays.</summary>
+    private static readonly Random _sharedRng = GameRng.Stream("humor-queues");
 
     // ── Body ─────────────────────────────────────────────────────
     private List<BodyPart> _bodyParts;
@@ -483,7 +484,7 @@ public abstract class PartyMember
     /// </summary>
     public void InitializeModiMentis(ModusMentisRegistry registry, int modusMentisCount = 50)
     {
-        var rng = new Random();
+        var rng = GameRng.Stream("party-modimentis");
         var obs = registry.GetObservationModiMentis().OrderBy(_ => rng.Next()).Take(10);
         var think = registry.GetThinkingModiMentis().OrderBy(_ => rng.Next()).Take(20);
         var act = registry.GetActionModiMentis().OrderBy(_ => rng.Next()).Take(20);
@@ -534,7 +535,7 @@ public abstract class PartyMember
     {
         if (MemoryModules.Count == 0) InitializeMemory();
 
-        var rng = new Random();
+        var rng = GameRng.Stream("party-memory-assign");
         // Shuffle modiMentis before assigning to get a varied distribution
         var shuffled = ModiMentis.OrderBy(_ => rng.Next()).ToList();
 

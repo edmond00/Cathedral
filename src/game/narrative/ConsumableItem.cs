@@ -171,7 +171,7 @@ public abstract class ConsumableItem : Item
     /// Order matters for display: the UI reveals humors from front to back based on
     /// Nose score, and the sample is ordered most-characteristic-first.
     /// </summary>
-    public List<BodyHumor> Composition => _composition ??= GenerateComposition(new Random());
+    public List<BodyHumor> Composition => _composition ??= GenerateComposition(GameRng.Stream("item-composition"));
 
     /// <summary>
     /// Generate the composition for one instance by sampling the recipe.

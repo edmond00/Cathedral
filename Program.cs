@@ -2,6 +2,22 @@
 using Cathedral.LLM;
 using Cathedral.Game;
 
+// ── Master seed: resolved FIRST, before any other flag is looked at ──────────
+// Every other flag handler below sets a static on some mode class, and touching one of those runs
+// its static initializers — several of which ask GameRng for a stream. The first such ask resolves
+// the master seed permanently, so parsing --seed any later than this silently produced a time-based
+// run with --seed on the command line (which is exactly what happened with --skip-childhood).
+// Nothing above this line may touch game state.
+for (int i = 0; i < args.Length; i++)
+{
+    if (args[i] == "--seed" && i + 1 < args.Length && int.TryParse(args[i + 1], out int parsedSeed))
+    {
+        Cathedral.Config.Rng.Seed = parsedSeed;
+        break;
+    }
+}
+Cathedral.GameRng.Initialize(Cathedral.Config.Rng.Seed);
+
 // Check for help option
 if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
 {
@@ -314,16 +330,8 @@ if (args.Any(a => a == "--cpu"))
     Console.WriteLine();
 }
 
-// Check for --seed <n> flag (fix the master RNG seed for a reproducible run).
-// Overrides Config.Rng.Seed when present.
-for (int i = 0; i < args.Length; i++)
-{
-    if (args[i] == "--seed" && i + 1 < args.Length && int.TryParse(args[i + 1], out int parsedSeed))
-    {
-        Cathedral.Config.Rng.Seed = parsedSeed;
-        break;
-    }
-}
+// (--seed is parsed and locked in at the very top of this file — see the comment there.)
+
 // Debug placement/time flags. Both are inert unless passed, and exist so a --cli script can reach a
 // feature directly instead of depending on where the seed happened to put the protagonist.
 for (int i = 0; i < args.Length; i++)
@@ -368,10 +376,6 @@ for (int i = 0; i < args.Length; i++)
                       $"levels={Cathedral.Config.PostProcess.Levels} pixelScale={Cathedral.Config.PostProcess.PixelScale}");
     break;
 }
-
-// Resolve and lock in the master seed (null -> time-based) and print it so a
-// time-based run can be replayed later with --seed <printed value>.
-Cathedral.GameRng.Initialize(Cathedral.Config.Rng.Seed);
 
 // Validate narrative structure at startup
 try

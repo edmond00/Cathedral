@@ -13,8 +13,14 @@ public enum OutcomeReportSeverity { Positive, Negative, Neutral }
 /// </summary>
 public abstract class OutcomeReport
 {
-    public string Text { get; }
-    public OutcomeReportSeverity Severity { get; }
+    /// <summary>
+    /// The chip's line of text, and how it is coloured. Settable by subclasses because a few reports
+    /// only learn their final shape when they run — practising a modus mentis reads differently when
+    /// the practice happened to level it. Every site that renders a chip does so <i>after</i>
+    /// <see cref="Apply"/>, so a report may safely rewrite these from there; nothing else may.
+    /// </summary>
+    public string Text { get; protected set; }
+    public OutcomeReportSeverity Severity { get; protected set; }
 
     /// <summary>
     /// A short first-person verb phrase describing this outcome, written so it reads grammatically
@@ -89,14 +95,25 @@ public sealed class SkillAcquisitionOutcome : OutcomeReport
 /// <c>LearnModusMentis</c> (working memory, FIFO eviction) and re-learning a known modus mentis
 /// would reset it to level 1, which is why the known case awards experience and nothing else.</para>
 ///
-/// <para>Only a newly-learned modus mentis shows in the UI or narrates. The ordinary case — acting
-/// with something you already know — is silent, or every action would end with a chip saying you got
-/// slightly better at walking.</para>
+/// <para><b>All three cases show a chip, and only the first narrates.</b> Learning reads as
+/// "Skill learned: Metalcraft"; practising something known reads as the quieter "Skill practised:
+/// Metalcraft (3/8 xp)", or "Skill improved: Metalcraft — level 3" when that point of experience
+/// happened to fill the bar. A modus mentis already at its organ-derived ceiling earns nothing, so
+/// it shows nothing — otherwise every action would end with a chip about how you cannot get any
+/// better at walking. The practice chips are decided in <see cref="Apply"/> rather than in the
+/// constructor, because until the XP is awarded there is no telling which of the three it is.</para>
+///
+/// <para>Only the learning case carries a <see cref="OutcomeReport.Verbatim"/>. The narrator lists
+/// verbatims as the sentence of what the action came to, and "I gained a point of experience" is not
+/// a thing that happens in the fiction.</para>
 /// </summary>
 public sealed class ModusMentisGrantOutcome : OutcomeReport
 {
     private readonly ModusMentis _template;
     private readonly bool        _alreadyKnown;
+
+    /// <summary>Set by <see cref="Apply"/> when practice actually moved the bar — see <see cref="ShowInUI"/>.</summary>
+    private bool _practiceLanded;
 
     private ModusMentisGrantOutcome(ModusMentis template, bool alreadyKnown)
         : base(alreadyKnown ? string.Empty : $"Skill learned: {template.DisplayName}",
@@ -107,7 +124,7 @@ public sealed class ModusMentisGrantOutcome : OutcomeReport
         _alreadyKnown = alreadyKnown;
     }
 
-    public override bool ShowInUI => !_alreadyKnown;
+    public override bool ShowInUI => !_alreadyKnown || _practiceLanded;
 
     /// <summary>
     /// Builds the grant for <paramref name="modusMentisId"/>, or null when the id is blank or does
@@ -135,8 +152,31 @@ public sealed class ModusMentisGrantOutcome : OutcomeReport
         var known = protagonist.GetModusMentisById(_template.ModusMentisId);
         if (known != null)
         {
+            // Observe the award rather than re-deriving its rules: AwardModusMentisXp is a no-op at
+            // the organ-derived max level, and rolls the bar over into a level when it fills. Reading
+            // level and bar either side tells us which of the three happened without duplicating any
+            // of that logic here.
+            int levelBefore = known.Level;
+            int xpBefore    = known.CurrentXp;
             protagonist.AwardModusMentisXp(known);
-            Console.WriteLine($"ModusMentisGrant: {protagonist.DisplayName} already knows {_template.DisplayName} — awarded XP");
+
+            if (known.Level > levelBefore)
+            {
+                _practiceLanded = true;
+                Text     = $"Skill improved: {known.DisplayName} — level {known.Level}";
+                Severity = OutcomeReportSeverity.Positive;
+            }
+            else if (known.CurrentXp != xpBefore)
+            {
+                _practiceLanded = true;
+                Text     = $"Skill practised: {known.DisplayName} ({known.CurrentXp}/{protagonist.GetModusMentisXpThreshold()} xp)";
+                Severity = OutcomeReportSeverity.Neutral;
+            }
+
+            Console.WriteLine($"ModusMentisGrant: {protagonist.DisplayName} already knows {_template.DisplayName}"
+                            + (_practiceLanded
+                                ? $" — awarded XP ({known.CurrentXp}/{protagonist.GetModusMentisXpThreshold()}, level {known.Level})"
+                                : " — at max level, no XP awarded"));
             return;
         }
 

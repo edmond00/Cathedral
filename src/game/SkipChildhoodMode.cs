@@ -15,7 +15,9 @@ public static class SkipChildhoodMode
 {
     public static bool IsActive { get; set; } = false;
 
-    private static readonly Random _rng = new();
+    // Master-seeded: the starting skills and items this walk grants are part of what --seed is
+    // supposed to pin, since every later dice roll is measured against them.
+    private static readonly Random _rng = GameRng.Stream("skip-childhood");
 
     /// <summary>
     /// Random-walks the reminescence catalog starting at the entry reminescence,

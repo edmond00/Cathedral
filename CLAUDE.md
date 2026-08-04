@@ -27,8 +27,8 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--cli-script <file>` | Run a command script at startup (implies `--cli`). |
 | `--cli-timeout <secs>` | Hard limit before the run closes itself. **Always pass this** — without it a script that never reaches `quit` hangs forever. |
 | `--playground` | Replaces every LLM call with instant placeholder text. No model, no server, no waiting. |
-| `--seed <n>` | Fixes the master RNG (world, spawn, dice) so a run is repeatable. |
-| `--skip-childhood` | Skips the childhood + get-up phases and fills starting skills/items randomly. |
+| `--seed <n>` | Fixes the master RNG so the run is repeatable — world, spawn, dice, the starting kit, and every choice `--playground` stands in for. Two runs with the same seed produce byte-identical `[cli]` output; only LLM text (which carries no seed) is exempt. |
+| `--skip-childhood` | Skips the childhood + get-up phases and fills starting skills/items randomly — from the master seed, so the same seed gives the same kit. |
 | `--debug` | Lets `strategy` force action outcomes. Under `--cli` it never prompts — see below. |
 | `--start-at <name>` | Spawns the protagonist on the first biome or location matching `<name>` (`village`, `farm`, `field`, `cave`…). Without it you get wherever the seed puts you, which is usually plain or forest — testing anything village-specific otherwise means hunting for a lucky seed. |
 | `--no-encounters` | Suppresses random travel encounters. **Pass this in every script that travels.** An encounter puts the game in `EncounterPrompt`, where a script waiting for `LocationInteraction` sits until its timeout and reports a failure that has nothing to do with what it was testing. |
@@ -43,6 +43,14 @@ dotnet run -- --playground --skip-childhood --debug --seed 42 \
 
 The process exits **non-zero** if any `expect` assertion failed or any `wait` timed out, so a
 script doubles as a regression test.
+
+**Never write `new Random()`.** Every generator comes from `GameRng` (`src/Rng.cs`): `Stream("tag")`
+for anything drawn from repeatedly, `For("tag")` for a one-shot, `DerivedSeed("tag")` when something
+else wants a plain seed. One unseeded generator anywhere in the pipeline makes `--seed` a lie, and
+the symptom — a script that passes four times and fails the fifth — never points at the cause. The
+seed is resolved at the very top of `Program.cs`, before any other flag is parsed, because touching
+a mode class runs its static initializers; a reader that beats the parse locks in a time-based seed
+and `Initialize` will say so on stderr.
 
 ### Command vocabulary
 
@@ -74,8 +82,9 @@ Run `help` for the authoritative list. The essentials:
   manage [tab]              open/close the protagonist screen; with a tab name
                             (Anatomy / Inventory / Memory / Humors / …) open it there
   select [item name]        show a carried item's info panel; bare `select` lists what
-                            is carried. Note the starting kit is randomised even under
-                            --seed, so discover the names rather than hard-coding them
+                            is carried (open `manage Inventory` first). The starting kit
+                            is random but seed-stable, so discover the names on one run
+                            and they hold for every later run at that seed
   scroll up|down [n]        scroll the shared history buffer
 
   strategy <succeed|fail-dice|fail-plausibility|auto>
@@ -127,7 +136,8 @@ click menu New
 wait mode ProtagonistCreation 20
 click continue
 wait mode WorldView 60
-travel 4597                 # clicking your own vertex enters the current location
+travel here                 # enters the location under your feet; never hard-code a vertex
+                            # number — it moves the moment anything upstream of spawn changes
 wait mode LocationInteraction 60
 
 strategy succeed

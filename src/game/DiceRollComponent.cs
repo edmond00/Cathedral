@@ -34,7 +34,9 @@ public class DiceRollComponent
     private int[]  _secondaryCounters = Array.Empty<int>();
     private int[]  _secondaryWaits    = Array.Empty<int>();
 
-    private readonly Random _rng = new();
+    // Drives the tumbling faces during the animation, not the result — but seeded all the same, so
+    // that a replayed run is identical frame for frame rather than merely identical in outcome.
+    private readonly Random _rng = GameRng.Stream("dice-animation");
 
     // ── Animation timing ──────────────────────────────────────────────
     private DateTime _lastFrameUpdate = DateTime.MinValue;
@@ -87,7 +89,7 @@ public class DiceRollComponent
     private int _hoveredQueue  = -1;   // button under the cursor; -1 = none
     private int _hoveredDie    = -1;   // primary die under the cursor; -1 = none
 
-    private readonly Random _humorRng = new();
+    private readonly Random _humorRng = GameRng.Stream("dice-humor");
     private readonly (int X, int Y, int Width)[] _humorButtons = new (int, int, int)[4];
     private (int X, int Y)[] _primaryDiceCells = Array.Empty<(int, int)>();
 

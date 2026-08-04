@@ -50,7 +50,7 @@ public static class Blueprint2Constraint
         
         // Create individual action fields with pre-determined outcomes
         var actionFields = new JsonField[numberOfActions];
-        var rng = new Random();
+        var rng = GameRng.Stream("blueprint-constraint");
         
         for (int i = 0; i < numberOfActions; i++)
         {

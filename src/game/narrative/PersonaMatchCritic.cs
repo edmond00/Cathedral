@@ -32,6 +32,15 @@ public static class PersonaMatchCritic
     private static int _slotId = -1;
     private static bool _initialized;
 
+    /// <summary>
+    /// The playground stand-in for the critic's judgement. Master-seeded, so a <c>--playground</c>
+    /// run picks the same options in the same order every time — without this, no scripted run is
+    /// reproducible, because every persona choice in the game funnels through here. Locked because
+    /// picks are made from whichever background thread is generating narration, and a shared
+    /// <see cref="Random"/> is not thread-safe.
+    /// </summary>
+    private static readonly Random _playgroundRng = GameRng.Stream("persona-match-playground");
+
     public static bool IsReady => _initialized && _slotId >= 0;
 
     /// <summary>
@@ -85,7 +94,7 @@ public static class PersonaMatchCritic
             throw new ArgumentException($"PersonaMatchCritic.PickAsync: {options.Count} options exceeds {MaxOptions}; sample before calling.");
 
         if (PlaygroundMode.IsActive)
-            return new Random().Next(options.Count);
+            lock (_playgroundRng) return _playgroundRng.Next(options.Count);
 
         if (!IsReady || _llm == null || !_llm.IsServerReady)
         {

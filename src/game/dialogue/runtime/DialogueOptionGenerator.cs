@@ -30,7 +30,7 @@ public class DialogueOptionGenerator
     private readonly PersonaChoiceSelector  _selector;
     private readonly PersonaRewriter        _rewriter;
     private readonly ModusMentisSlotManager _slots;
-    private readonly Random                 _rng = new();
+    private readonly Random                 _rng = GameRng.Stream("dialogue-options");
 
     public DialogueOptionGenerator(LlamaServerManager llm, ModusMentisSlotManager slots)
     {

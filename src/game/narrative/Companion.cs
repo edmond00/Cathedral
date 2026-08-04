@@ -49,7 +49,7 @@ public class Companion : PartyMember
     /// </summary>
     public static List<Companion> GenerateRandom(ModusMentisRegistry registry, int count = 3)
     {
-        var rng = new Random();
+        var rng = GameRng.Stream("companion-pool");
         var shuffled = (Companion[])
             new Companion[_pool.Length];
 

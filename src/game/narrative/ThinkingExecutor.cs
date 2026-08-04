@@ -41,7 +41,7 @@ public class ThinkingExecutor
         _selector = new PersonaChoiceSelector(llmManager);
     }
 
-    private readonly Random _rng = new();
+    private readonly Random _rng = GameRng.Stream("thinking");
 
     /// <summary>
     /// GOAL (decision) → optional IGNORE early-exit → HOW (decision) → reasoning rewrite →

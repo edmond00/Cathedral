@@ -55,7 +55,7 @@ public class DialogueTreeController
     private string                            _lastPreviewText = ""; // last rendered preview text, to tick on change
 
     private NpcLineNode                       _currentNode;
-    private readonly Random                   _rng = new();
+    private readonly Random                   _rng = GameRng.Stream("dialogue-tree");
 
     // ── Branch accumulation (reset per conversation) ───────────────────────────
     /// <summary>Summed levels of the Modi Mentis that voiced each chosen reply so far.</summary>
