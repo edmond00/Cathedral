@@ -320,6 +320,10 @@ public sealed class CliDriver
             var s = n.CliSnapshot();
             sb.Append($" narration[loading={s.AnyLoading} dice={(s.DiceActive ? (s.DiceRolling ? "rolling" : "settled") : "none")}");
             sb.Append($" continue={s.ShowContinue} noetic={s.Noetic}/{s.MaxNoetic}");
+            // Objects this narration phase has already observed, out of what the node offers. They are
+            // withheld from every later choice list of the phase, so a stuck-looking observation that
+            // keeps naming the same thing is diagnosable from here.
+            sb.Append($" observed={s.Observed}/{s.Observable}");
             // The preview box hides the action list while it is up, which is the commonest reason
             // a script finds nothing clickable. Say so here rather than leaving it to be guessed.
             var pv = n.CliPreview();

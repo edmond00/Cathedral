@@ -59,7 +59,10 @@ Run `help` for the authoritative list. The essentials:
 
 ```
   state                     mode + phase flags (loading, dice, noetic, history/total lines)
-                            plus carry[cur/max] and the travel blocker when overloaded
+                            plus carry[cur/max] and the travel blocker when overloaded, and
+                            observed[done/total] — objects this narration phase has already
+                            looked at, which are withheld from every later observation choice
+                            of the phase and released again when the phase ends
   dump [--color]            the terminal grid as text; --color tags each row dim/mix/lit
   regions                   what is actionable right now — the handles `click` accepts
   world                     avatar vertex, biome and location
