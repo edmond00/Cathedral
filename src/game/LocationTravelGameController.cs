@@ -548,6 +548,8 @@ public class LocationTravelGameController : IDisposable
                     SwapReminescenceForChildhoodMemory(_protagonist);
                 if (FillMemoryMode.IsActive && _protagonist != null)
                     FillMemoryMode.FillEmptySlots(_protagonist);
+                if (_protagonist != null)
+                    FillPartyMode.FillIfActive(_protagonist);
                 _isInNarrativeMode = false;
                 _narrativeController = null;
                 SetMode(GameMode.GetUp);
@@ -2523,6 +2525,7 @@ public class LocationTravelGameController : IDisposable
             SwapReminescenceForChildhoodMemory(_protagonist);
             if (FillMemoryMode.IsActive)
                 FillMemoryMode.FillEmptySlots(_protagonist);
+            FillPartyMode.FillIfActive(_protagonist);
             SetMode(GameMode.WorldView);
             return;
         }

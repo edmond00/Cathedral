@@ -100,6 +100,13 @@ public class ManagementMenuRenderer
     private const int ContentStartRow = 4;
     private const int FooterSepRow = 92;
 
+    /// <summary>
+    /// Where the Anatomy tab's organ rows begin: below the two identity lines (anatomy, species) and
+    /// the blank that separates them from the body regions. Other tabs start at
+    /// <see cref="ContentStartRow"/> — only this one carries the identity block.
+    /// </summary>
+    private const int AnatomyStatsStartRow = ContentStartRow + 3;
+
     // ── Hit-test regions (computed on render) ────────────────────
     private readonly List<(int row, int tabIndex)> _tabHitRows = new();
     private readonly List<(int row, int charIndex)> _charHitRows = new();
@@ -131,7 +138,7 @@ public class ManagementMenuRenderer
         _bodyViewer = new BodyArtViewer(terminal, protagonist, artData)
         {
             ArtOffsetX = SepCol + 1,  // left boundary of the middle panel
-            StatsStartRow = ContentStartRow,
+            StatsStartRow = AnatomyStatsStartRow,
             ShowScoreEditControls = false,
             ShowClickHints = false
         };
@@ -245,6 +252,7 @@ public class ManagementMenuRenderer
         switch (_activeTab)
         {
             case ManagementTab.Anatomy:
+                RenderAnatomyIdentity();
                 int lastRow = _bodyViewer.RenderOrganStats();
                 int descRow = _bodyViewer.RenderHoveredOrganDescription(lastRow);
                 _bodyViewer.RenderHoveredDetail(descRow);
@@ -287,6 +295,7 @@ public class ManagementMenuRenderer
         {
             _bodyViewer.ShowWounds = true;
             _bodyViewer.RenderBodyArt();
+            RenderAnatomyIdentity();
             int lastRow = _bodyViewer.RenderOrganStats();
             int descRow = _bodyViewer.RenderHoveredOrganDescription(lastRow);
             _bodyViewer.RenderHoveredDetail(descRow);
@@ -724,6 +733,32 @@ public class ManagementMenuRenderer
         _terminal.Text(BodyArtViewer.PanelContentX, RightTitleRow, title, Config.Colors.BrightYellow, Config.Colors.Black);
         _terminal.Text(BodyArtViewer.PanelContentX, RightSepRow, "──────────────────────────────", Config.Colors.DarkGray35, Config.Colors.Black);
     }
+
+    /// <summary>
+    /// The two identity lines heading the Anatomy tab: which anatomy this body is built on, and which
+    /// species it belongs to. Both matter to read the panel below — a beast's regions are muzzle and
+    /// limbs where a human's are visage, upper and lower limbs, and the species is what sets the organ
+    /// ceilings the bars are drawn against. A wolf and a cat share an anatomy and differ in nothing
+    /// else the panel shows, so neither line alone identifies a companion.
+    /// </summary>
+    private void RenderAnatomyIdentity()
+    {
+        var member = GetPartyMember(_selectedCharacterIndex);
+
+        void Line(int row, string label, string value)
+        {
+            _terminal.Text(BodyArtViewer.PanelContentX, row, label,
+                Config.Colors.DarkGray35, Config.Colors.Black);
+            _terminal.Text(BodyArtViewer.PanelContentX + IdentityValueX, row, value,
+                Config.Colors.LightGray75, Config.Colors.Black);
+        }
+
+        Line(ContentStartRow,     "Anatomy", member.AnatomyType.ToString());
+        Line(ContentStartRow + 1, "Species", member.Species.DisplayName);
+    }
+
+    /// <summary>Column, relative to the panel's content edge, the identity values line up on.</summary>
+    private const int IdentityValueX = 10;
 
     private void RenderInventoryPlaceholder()
     {

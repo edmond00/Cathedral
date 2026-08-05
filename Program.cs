@@ -50,6 +50,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --skip-childhood                   Skip the childhood reminescence + get-up phases; randomly fill starting skills/items as if they had run");
     Console.WriteLine("  --mm                               After the childhood reminescence phase, fill every empty memory slot with random unheld modiMentis");
     Console.WriteLine("  --weapons                          Give the protagonist a starter weapon loadout (Arming Sword, Hunting Bow, Round Shield)");
+    Console.WriteLine("  --fill-party                       DEBUG: after the childhood phase, fill the party to max_companions with generated");
+    Console.WriteLine("                                     NPCs — the last slot a beast, every slot before it a human");
     Console.WriteLine("  --cpu                              Run LLM on CPU only (no GPU offloading)");
     Console.WriteLine("  --seed <n>                         Fix the master RNG seed for a reproducible run (world, spawn, dice)");
     Console.WriteLine("  --start-at <name>                  DEBUG: spawn on the first biome/location matching <name> (e.g. village, farm)");
@@ -304,6 +306,17 @@ if (args.Any(a => a == "--mm"))
     Console.ForegroundColor = ConsoleColor.Magenta;
     Console.WriteLine("*** FILL-MEMORY MODE ACTIVE ***");
     Console.WriteLine("After the childhood reminescence phase, empty memory slots are filled with random unheld modiMentis.");
+    Console.ResetColor();
+    Console.WriteLine();
+}
+
+// Check for --fill-party flag (fill the companion roster to its heart-derived ceiling after childhood)
+if (args.Any(a => a == "--fill-party"))
+{
+    Cathedral.Game.FillPartyMode.IsActive = true;
+    Console.ForegroundColor = ConsoleColor.Magenta;
+    Console.WriteLine("*** FILL-PARTY MODE ACTIVE ***");
+    Console.WriteLine("After the childhood phase, the party is filled to max_companions with generated NPCs (last one a beast).");
     Console.ResetColor();
     Console.WriteLine();
 }

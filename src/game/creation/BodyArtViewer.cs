@@ -600,10 +600,14 @@ public class BodyArtViewer
 
     /// <summary>
     /// Age readout in the bottom-right of the art area, kept clear of the HP bar (top-left).
-    ///   Row 1: current age / lifetime, in days.
+    ///   Row 1: current age, in days.
     ///   Row 2: a short bar and percentage showing how much life is left.
     /// Both are derived — age from the member's birth time against the global clock, lifetime from
     /// the heart — so nothing here needs refreshing when either changes.
+    ///
+    /// <para>The lifetime itself is deliberately not spelled out: "Age 5022/17280 d" is wide enough
+    /// to crowd the art beside it, and the bar underneath already says how much of a life has been
+    /// spent — which is the thing being read at a glance.</para>
     /// </summary>
     private void RenderAgeReadout()
     {
@@ -616,14 +620,14 @@ public class BodyArtViewer
         int percent    = (int)Math.Round(fraction * 100f);
 
         // "Age " mirrors the "HP  " prefix on the opposite corner — both four cells wide.
-        string label = $"Age {age}/{lifetime} d";
+        string label = $"Age {age} d";
         string pct   = $"{percent}%";
 
         // Right-align both rows against the art area's right edge, kept clear of the separator.
         // Anchored to the bottom-right of the art area so it never collides with the HP bar
         // in the top-left corner, then nudged up 2 rows and right 8 columns to clear the feet.
         int rightEdge = Math.Min(ArtOffsetX + _artData.Width - 1 + 8, PanelX - 3);
-        int barRow    = ArtOffsetY + _artData.Height - 1 - 2;
+        int barRow    = ArtOffsetY + _artData.Height - 1 - 2 + BeastAgeRowDrop;
         int labelRow  = barRow - 1;
 
         int rowWidth = Math.Max(label.Length, AgeBarWidth + 1 + pct.Length);
@@ -648,6 +652,14 @@ public class BodyArtViewer
 
     /// <summary>Width in cells of the remaining-lifetime bar.</summary>
     private const int AgeBarWidth = 10;
+
+    /// <summary>
+    /// Rows the age readout is pushed down by on a beast. The anchor is the bottom of the art, which
+    /// on the human sits below the feet but on a quadruped lands among the forelegs — the readout
+    /// printed straight through the claws. Beast art is shallower there, so it can simply drop.
+    /// </summary>
+    private int BeastAgeRowDrop =>
+        _protagonist.AnatomyType == Cathedral.Game.Narrative.AnatomyType.Beast ? 4 : 0;
 
     /// <summary>Bar colour by remaining life: it sours as the end approaches.</summary>
     private static Vector4 AgeBarColor(float remainingFraction) => remainingFraction switch

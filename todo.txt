@@ -1,29 +1,16 @@
 humor outcome
 all MM functions after childhood reminescence
-LLM loading screen messages
 organ name in humor button during dices rolls
 childhood XP
-stats related to multiples organs
-MM max level
-item description written 2 times
-overall MM properties fixs
 overall beast fixs
 2 same keywords on observation text, click the second, interact with object related to the first
 "John" in free reasoning thought preview
-request work to reeve -> use body humor to pass dice roll check -> reeve still refuse to give work
-bottle of ale (instead of ale)
-NPC coherent generation with text description and content parrallel generation
 no success sound during dice roll if natural success (no use of body humor modificator)
 phlegm not appliable
 childhood : leave temple -> grandfather story
-mention of town while speaking in a forest : need more context
+time of the day context, anatomy (beast) context, ...
 (You wonder ...) in dialogue inner thought (2nd person)
 routine + traveling NPC ?
-working memory full = can not learn more MM = remove FIFO
-NPC sleeping in bed
-
-Error during dialogue last NPC replica generation after dice roll :
-DialogueTreeControllerr Resolution line failed: GenerateConstrainedStringStreamingAsync failed: BadRequest - {"error":{"code":400,"message":"request (2263 tokens) exceeds the available context size (2048 tokens), try increasing it","type":"exceed_context_size_error","n_prompt_tokens":2263,"n_ctx":2048}}
 
 
 words to prevent :
