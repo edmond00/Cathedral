@@ -441,7 +441,7 @@ public class NarrativeController
             _recorder = new RoutineRecorder(_protagonist, _locationId, period);
 
         _narrationState.IsLoadingObservations = true;
-        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+        _narrationState.LoadingMessage = ObservationLoadingMessage();
 
         // Fire-and-forget async task
         _ = GenerateObservationsAsync();
@@ -478,11 +478,30 @@ public class NarrativeController
     /// Start the observation phase while preserving scroll buffer history.
     /// Always reached through <see cref="BeginNarrationSegment"/>, which performs the required
     /// grey-into-history + node reset first.
+    /// <para>
+    /// <b>The active member carries across the segment boundary.</b> Speak About hands the narration
+    /// to a companion, and the hand-off has to survive the action that follows it — resetting to the
+    /// protagonist here took the narration straight back the moment the companion's own action
+    /// resolved. This is the same visit continuing (an action, a fight, a conversation, a move to
+    /// another area); a genuinely fresh session goes through <see cref="StartObservationPhase"/>,
+    /// which still opens on the protagonist.
+    /// </para>
     /// </summary>
     private void StartObservationPhaseWithHistory()
     {
-        _activePartyMember = _protagonist;
+        // The one case the hand-off cannot survive: a companion who has left the party since (dead of
+        // old age, or dropped over the party cap). There is no one to narrate as, so the protagonist
+        // takes over.
+        if (_activePartyMember != _protagonist && !_protagonist.CompanionParty.Contains(_activePartyMember))
+        {
+            Console.WriteLine($"NarrativeController: active member '{_activePartyMember.DisplayName}' is no longer in the party — narration returns to the protagonist");
+            _activePartyMember = _protagonist;
+        }
+
         _memberNoeticPoints.Clear(); // New node — everyone starts with a fresh counter
+        // ResetForNewNode refilled the counter already, but from whoever was active when the segment
+        // closed; restate it from the member who will actually act, since their maxima differ.
+        _narrationState.ThinkingAttemptsRemaining = _activePartyMember.MaxNoeticPoints;
         // Re-apply the current time period so this segment's nodes get their NPCs (re)placed and
         // their state-dependent verbs re-expanded (affinity above all: "introduce myself" is for
         // strangers only, and a dialogue may just have changed that).
@@ -490,8 +509,8 @@ public class NarrativeController
 
         // Just set loading state and start generation
         _narrationState.IsLoadingObservations = true;
-        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
-        
+        _narrationState.LoadingMessage = ObservationLoadingMessage();
+
         Console.WriteLine($"NarrativeController: Started observation phase (with history preserved)");
         Console.WriteLine($"  History lines: {_scrollBuffer.HistoryLineCount}");
         Console.WriteLine($"  Total lines: {_scrollBuffer.TotalLines}");
@@ -564,6 +583,15 @@ public class NarrativeController
             }
         }
     }
+
+    /// <summary>
+    /// The footer message for an observation wait. The childhood phase runs the same code, but there
+    /// are no surroundings there and the narration says a memory surfaces — so it says so too.
+    /// </summary>
+    private string ObservationLoadingMessage()
+        => _scene?.Phase == NarrationPhase.ChildhoodReminescence
+            ? Config.LoadingMessages.Remembering
+            : Config.LoadingMessages.GeneratingObservations;
 
     /// <summary>
     /// Generate observations from selected modiMentis (async).
@@ -1108,7 +1136,7 @@ public class NarrativeController
 
             // Start dice roll animation (with humor modifiers for the acting member)
             NarrationDiceStart(numberOfDice, actualDifficulty, _activePartyMember);
-            _narrationState.LoadingMessage = "Rolling dice...";
+            _narrationState.LoadingMessage = Config.LoadingMessages.RollingDice;
 
             // Roll each die independently (1–6) and count sixes
             int[] finalDiceValues;
@@ -1275,7 +1303,7 @@ public class NarrativeController
         // Humor modifiers are offered here exactly as in the main action roll: rising from the ground
         // exhausted is precisely the check a spent humor should be able to swing.
         NarrationDiceStart(numberOfDice, getUpDifficulty, _activePartyMember);
-        _narrationState.LoadingMessage = "Rolling dice...";
+        _narrationState.LoadingMessage = Config.LoadingMessages.RollingDice;
 
         int[] finalDiceValues = new int[numberOfDice];
         for (int i = 0; i < numberOfDice; i++)
@@ -1315,7 +1343,9 @@ public class NarrativeController
     {
         try
         {
-            _narrationState.LoadingMessage = Cathedral.Config.LoadingMessages.EvaluatingAction;
+            // This runs after the dice, on the CONTINUE: what is being generated is the result of the
+            // attempt, not the attempt itself.
+            _narrationState.LoadingMessage = Config.LoadingMessages.NarratingOutcome;
 
             // Choose the narration hint for the LLM based on success/failure.
             OutcomeBase outcomeForPrompt = succeeded
@@ -1443,9 +1473,10 @@ public class NarrativeController
             : new InlineOutcome("memory", "remember this childhood moment");
 
         // Generate outcome narration through the LLM exactly as any other action — streamed into the
-        // preview box, with the memory block committed on its CONTINUE.
+        // preview box, with the memory block committed on its CONTINUE. The footer says what is
+        // actually being recovered: nothing is attempted here, a childhood memory comes back.
         _narrationState.IsLoadingAction = true;
-        _narrationState.LoadingMessage  = Config.LoadingMessages.EvaluatingAction;
+        _narrationState.LoadingMessage  = Config.LoadingMessages.Remembering;
 
         _previewSession.Reset();
         var previewPart = _previewSession.BeginPart(PreviewTitles.For(actionMm));
@@ -1625,7 +1656,7 @@ public class NarrativeController
         try
         {
             _previewSession.Reset();
-            _narrationState.LoadingMessage = "Narrating the outcome...";
+            _narrationState.LoadingMessage = Config.LoadingMessages.NarratingOutcome;
             string title = eval.ActionModusMentis != null ? PreviewTitles.For(eval.ActionModusMentis) : "OUTCOME";
             var part = _previewSession.BeginPart(title);
             // Gather the verb's outcome reports up-front so their verbatims can be woven into the
@@ -2140,7 +2171,7 @@ public class NarrativeController
             _ui.RenderDiceComponent(_dice, _narrationState.IsDiceRollButtonHovered);
 
             string diceStatus = _narrationState.IsDiceRolling
-                ? "Rolling dice..."
+                ? Config.LoadingMessages.RollingDice
                 : (_dice.IsCurrentlySuccess ? "Success! Click Continue to see the outcome" : "Failed! Click Continue to see the outcome");
             _ui.RenderStatusBar(diceStatus);
             return;
@@ -2364,7 +2395,7 @@ public class NarrativeController
                     {
                         // Focus observation phase
                         _narrationState.IsLoadingFocusObservation = true;
-                        _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+                        _narrationState.LoadingMessage = ObservationLoadingMessage();
                         _narrationState.IsSelectingObservationModusMentis = false;
 
                         // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
@@ -2752,7 +2783,7 @@ public class NarrativeController
         {
             // Focus observation phase
             _narrationState.IsLoadingFocusObservation = true;
-            _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+            _narrationState.LoadingMessage = ObservationLoadingMessage();
             _narrationState.IsSelectingObservationModusMentis = false;
 
             // Resolve focus outcome: prefer KeywordOutcomeMap, then LinkedOutcome, then keyword lookup
@@ -2797,7 +2828,7 @@ public class NarrativeController
                 _pendingCompanions.Clear();
                 Console.WriteLine($"NarrativeController: Speak About — companion={companion.DisplayName}, skill={speakingMM.DisplayName}");
                 _narrationState.IsLoadingSpeaking = true;
-                _narrationState.LoadingMessage = Config.LoadingMessages.GeneratingObservations;
+                _narrationState.LoadingMessage = Config.LoadingMessages.Speaking;
                 _ = ExecuteSpeakingPhaseAsync(speakingMM, companion, _narrationState.HoveredKeyword);
             }
             else
@@ -3313,7 +3344,7 @@ public class NarrativeController
 
         int diceCount = ProtagonistRunawayDiceCount();
         NarrationDiceStart(diceCount, 1, subtitle: "RUNAWAY CHECK — feet", difficultyVerb: "to flee");
-        _narrationState.LoadingMessage = "Rolling dice...";
+        _narrationState.LoadingMessage = Config.LoadingMessages.RollingDice;
 
         // Fixed animation window (no async work backs this roll, unlike thinking checks).
         await Task.Delay(Config.Dice.AnimationDurationMs);
@@ -3613,8 +3644,10 @@ public class NarrativeController
     /// </summary>
     private async Task ExecuteItemCombinationAsync(ParsedNarrativeAction action, Item item)
     {
+        // Nothing is attempted yet — the critic is deciding whether the item helps at all, and the
+        // action it may reword is still waiting behind its own button.
         _narrationState.IsLoadingAction = true;
-        _narrationState.LoadingMessage = Config.LoadingMessages.EvaluatingAction;
+        _narrationState.LoadingMessage = Config.LoadingMessages.CombiningItem;
 
         try
         {

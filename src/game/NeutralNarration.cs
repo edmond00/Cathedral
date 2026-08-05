@@ -280,6 +280,20 @@ public static class NeutralNarration
     public static string Question()
         => "What do you make of it?";
 
+    /// <summary>
+    /// The whole of what a party member says to a companion about something they noticed: call
+    /// attention, describe, ask — as one line.
+    /// <para>
+    /// The three parts used to be three separate rewrite requests, and a small model rewriting one
+    /// sentence at a time has no way to see the address as a single utterance: it re-established the
+    /// situation on every line ("You hear the creak of old ropes…", then "You hear 'bout that slick
+    /// trunk…"), and each line paid the persona and setting preamble again. One request produces one
+    /// spoken turn.
+    /// </para>
+    /// </summary>
+    public static string SpokenReport(string companionName, string subject)
+        => $"{Attention(companionName)} {Description(subject)} {Question()}";
+
     // Dialogue neutral text now lives on the dialogue tree nodes themselves (direct speech with
     // {scope:field} template tokens) and flows through Cathedral.Game.Dialogue.Runtime.DialogueTemplate
     // + DialogueReplicaWriter — not through this class.

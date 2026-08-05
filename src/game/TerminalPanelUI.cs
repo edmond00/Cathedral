@@ -239,8 +239,8 @@ public abstract class TerminalPanelUI
 
     /// <summary>
     /// Draw the status bar with the current loading message, its trailing ellipsis animated
-    /// (0–3 dots cycling) instead of static — e.g. "Observing surroundings", "Observing surroundings.",
-    /// "Observing surroundings..". Any literal trailing dots/ellipsis on <paramref name="message"/>
+    /// (0–3 dots cycling) instead of static — e.g. "The senses wander", "The senses wander.",
+    /// "The senses wander..". Any literal trailing dots/ellipsis on <paramref name="message"/>
     /// are stripped first so the animation is the only source of "...". Used at the bottom of the
     /// panel while the LLM is generating, alongside <see cref="RenderCenterProgressBar"/>.
     /// </summary>

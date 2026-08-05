@@ -12,9 +12,12 @@ namespace Cathedral.Game.Narrative;
 
 /// <summary>The kind of text being rewritten — selects the persona styling instruction.</summary>
 /// <remarks>
-/// <c>Speaking</c> is self-narration spoken aloud to a companion ("come look at this"); it uses the
-/// first-person narration framing. <c>DialogueReplica</c> is a turn in a two-person conversation —
-/// framed as direct speech where "I" is the speaker and "you" is the interlocutor being addressed.
+/// <c>Speaking</c> (an address to a companion during narration — "come look at this") and
+/// <c>DialogueReplica</c> (a turn in a two-person conversation) are both <i>spoken</i> kinds: one
+/// person says words to another, so both are generated the same way, behind the
+/// <see cref="JsonConstraintGenerator.DialogueReplyFrame"/> and inside quotes. What differs is only
+/// the situation line at the top of the prompt and what the caller gets back — a dialogue turn keeps
+/// the quoted shape its parser expects, a spoken address is unwrapped to the bare words.
 /// </remarks>
 public enum NarrationKind { Observation, Reasoning, Action, Outcome, Speaking, DialogueReplica }
 
@@ -90,12 +93,16 @@ public class PersonaRewriter
             return playgroundText;
         }
 
-        string prompt = kind == NarrationKind.DialogueReplica
-            ? BuildDialoguePrompt(neutralText, addressee, dialogueContext, speakerName,
-                                  FooterFor(kind, personaReminder2, styleInstruction))
-            : BuildPrompt(neutralText, InstructionFor(kind, addressee),
-                          FooterFor(kind, personaReminder2, styleInstruction),
-                          innerThought);
+        string footer = FooterFor(kind, personaReminder2, styleInstruction);
+        string prompt = kind switch
+        {
+            NarrationKind.DialogueReplica =>
+                BuildDialoguePrompt(neutralText, addressee, dialogueContext, speakerName, footer),
+            NarrationKind.Speaking =>
+                BuildSpeakingPrompt(neutralText, addressee, footer),
+            _ =>
+                BuildPrompt(neutralText, InstructionFor(kind), footer, innerThought),
+        };
         // Every first-person narration kind opens with "I " so a small model cannot drift into a
         // detached, non-first-person opening (e.g. "Data flows through my eyes..."). An explicit
         // forcedPrefix (the action's "I will ", say) still wins; spoken kinds (Speaking,
@@ -106,10 +113,10 @@ public class PersonaRewriter
         // the prompt shows the neutral line and the inner thought inside quotes, and a small model copies
         // that framing back into its answer ("...with warmth, \"I focus on this lane\""). Quoting itself
         // reads badly in narration and then breaks the sanitizer downstream, whose JSON envelope ends its
-        // string at the first quote and truncates the passage. A dialogue reply is structured instead: a
+        // string at the first quote and truncates the passage. A spoken kind is structured instead: a
         // frame plus a double-quoted spoken line and nothing after it, so there the quotes are the shape
         // and are produced by the grammar itself — see GenerateDialogueReplyGrammar.
-        string gbnf = kind == NarrationKind.DialogueReplica
+        string gbnf = IsSpokenKind(kind)
             ? JsonConstraintGenerator.GenerateDialogueReplyGrammar(
                   addressee: addressee,
                   spokenMinLen: RewriteMinChars,
@@ -129,7 +136,7 @@ public class PersonaRewriter
         // When a preview sink is supplied, stream the tokens through it; otherwise keep the one-shot
         // path so the Critic / non-preview callers are byte-for-byte unchanged. The grammar produces the
         // rewritten sentence directly, so the returned string is the text itself — no field to parse.
-        // A dialogue reply arrives behind the "I say : " frame, which is scaffolding for the model and
+        // A spoken kind arrives behind the "I say to X : " frame, which is scaffolding for the model and
         // must not be seen: the token stream is filtered so the preview box never shows it either.
         Action<string, int>? onToken = preview == null ? null : MakeTokenForwarder(preview, kind, addressee);
         string text = preview != null
@@ -138,7 +145,7 @@ public class PersonaRewriter
                   onTokenStreamed: onToken)
             : await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
 
-        if (kind == NarrationKind.DialogueReplica)
+        if (IsSpokenKind(kind))
             text = StripReplyFrame(text, addressee);
 
         if (string.IsNullOrWhiteSpace(text))
@@ -147,17 +154,32 @@ public class PersonaRewriter
             preview?.OnComplete(fallback);
             return fallback;
         }
-        // A dialogue reply is a complete structured string ("spoken") — appending "..." when it does not
+        // A spoken kind is a complete structured string ("spoken") — appending "..." when it does not
         // end in sentence punctuation (it ends in the closing quote) would corrupt that shape, so the
         // truncation guard is skipped for it. Every other kind keeps the mid-sentence "…" cleanup.
-        string trimmed = kind == NarrationKind.DialogueReplica ? text : TextTruncationUtils.TrimToLastSentence(text);
-        string sanitized = kind == NarrationKind.DialogueReplica
+        string trimmed = IsSpokenKind(kind) ? text : TextTruncationUtils.TrimToLastSentence(text);
+        string sanitized = IsSpokenKind(kind)
             ? await SanitizeSpokenAsync(trimmed, sourceVocabulary)
             : await TextSanitizationPipeline.SanitizeAsync(trimmed, sourceVocabulary);
         string restored  = NameFaking.Real(sanitized);
+
+        // A dialogue turn keeps the quoted shape — DialogueReplicaWriter.NormalizeReply is the one place
+        // that unwraps it, on both sides of a conversation. A spoken address has no such parser waiting,
+        // so the words between the quotes are extracted here and the caller gets the line itself.
+        if (kind == NarrationKind.Speaking)
+            restored = UnwrapSpoken(restored);
+
         preview?.OnComplete(restored);
         return restored;
     }
+
+    /// <summary>
+    /// The kinds that are words one character says to another: generated behind the
+    /// <see cref="JsonConstraintGenerator.DialogueReplyFrame"/> and inside quotes, rather than as a run
+    /// of first-person narration.
+    /// </summary>
+    private static bool IsSpokenKind(NarrationKind kind)
+        => kind is NarrationKind.Speaking or NarrationKind.DialogueReplica;
 
     /// <summary>
     /// Asks the persona slot to pick one of <paramref name="options"/> (constrained choice).
@@ -195,6 +217,22 @@ public class PersonaRewriter
     }
 
     /// <summary>
+    /// Extracts the spoken words from the <c>"spoken"</c> shape the grammar produces (frame already
+    /// stripped), for the callers that want the line rather than the shape. Mirrors
+    /// <c>DialogueReplicaWriter.NormalizeReply</c> — same rules, so both spoken kinds are unwrapped
+    /// identically: first quote to next quote, and a graceful fall back to the trimmed text when the
+    /// quotes are not there (playground placeholder text, or a generation cut off by the token limit).
+    /// </summary>
+    private static string UnwrapSpoken(string raw)
+    {
+        string s = (raw ?? string.Empty).Trim();
+        if (s.Length < 2 || s[0] != '"') return s.Trim('"');
+
+        int close = s.IndexOf('"', 1);
+        return close < 0 ? s.Trim('"') : s.Substring(1, close - 1).Trim();
+    }
+
+    /// <summary>
     /// Sanitizes a dialogue reply without handing the sanitizer the reply's own delimiters.
     /// <para>
     /// A reply arrives as <c>"spoken words"</c> — the quotes are the shape the dialogue layer parses
@@ -229,16 +267,27 @@ public class PersonaRewriter
     }
 
     /// <summary>
-    /// The per-token preview callback. For every kind but a dialogue reply it forwards tokens straight
-    /// through; for a dialogue reply it withholds the leading frame, then forwards everything after it,
-    /// so the player watches the spoken line appear rather than <c>I say to Emily : "…</c>. The frame's
-    /// length depends on the addressee's name, so it is measured here rather than assumed.
+    /// The per-token preview callback. For a narration kind it forwards tokens straight through; for a
+    /// spoken kind it withholds the leading frame, then forwards everything after it, so the player
+    /// watches the spoken line appear rather than <c>I say to Emily : "…</c>. The frame's length depends
+    /// on the addressee's name, so it is measured here rather than assumed.
+    /// <para>
+    /// A <see cref="NarrationKind.Speaking"/> address also drops the delimiting quotes as they stream:
+    /// its caller is handed the bare words (see <see cref="UnwrapSpoken"/>), so leaving them in would
+    /// show the player a quoted line that loses its quotes the moment generation finishes and
+    /// <c>OnComplete</c> supersedes it. The grammar's body excludes the double-quote, so the only ones
+    /// in the stream are the delimiters and dropping every occurrence is exact. A dialogue reply keeps
+    /// them: there the quoted shape is what the caller gets and what the box has always shown.
+    /// </para>
     /// </summary>
     private static Action<string, int> MakeTokenForwarder(
         Preview.ILlmPreviewSink preview, NarrationKind kind, string? addressee)
     {
-        if (kind != NarrationKind.DialogueReplica)
+        if (!IsSpokenKind(kind))
             return (token, _) => preview.OnToken(token);
+
+        bool dropQuotes = kind == NarrationKind.Speaking;
+        Func<string, string> show = dropQuotes ? s => s.Replace("\"", "") : s => s;
 
         int frameLength = JsonConstraintGenerator.DialogueReplyFrame(addressee).Length;
         var head = new System.Text.StringBuilder();
@@ -248,7 +297,8 @@ public class PersonaRewriter
         {
             if (framePassed)
             {
-                preview.OnToken(token);
+                string shown = show(token);
+                if (shown.Length > 0) preview.OnToken(shown);
                 return;
             }
 
@@ -258,7 +308,7 @@ public class PersonaRewriter
             framePassed = true;
             // Defensive: if no frame is there (grammar changed, or a stray leading space), show what
             // arrived rather than silently eating the first characters of the line.
-            string rest = StripReplyFrame(head.ToString(), addressee);
+            string rest = show(StripReplyFrame(head.ToString(), addressee));
             if (rest.Length > 0) preview.OnToken(rest);
         };
     }
@@ -320,10 +370,44 @@ This sentence is written in the first person, and that ""I"" is you — it descr
         string context = string.IsNullOrWhiteSpace(dialogueContext)
             ? ""
             : $" You are speaking of {dialogueContext.Trim().TrimEnd('.')}.";
+
+        return BuildSpokenPrompt(neutralText, addressee,
+                                 $"You are {speaker}. You are speaking directly to {who}.{context}", footer);
+    }
+
+    /// <summary>
+    /// Prompt for an address to a companion during narration — the party member calling someone over to
+    /// look at what they have just noticed. Same shape as <see cref="BuildDialoguePrompt"/>, because it
+    /// is the same act: words one person says to another, framed and quoted so the model has a place to
+    /// report the speaking outside the quotes and leaves the quotes to hold speech alone.
+    /// <para>
+    /// <paramref name="neutralText"/> is the whole address (see <c>NeutralNarration.SpokenReport</c>) —
+    /// call attention, describe, ask — rewritten in one request. Sentence by sentence, a small model
+    /// re-established the situation on every line and paid the persona and setting preamble three times
+    /// for one utterance.
+    /// </para>
+    /// </summary>
+    private static string BuildSpeakingPrompt(string neutralText, string? addressee, string footer)
+    {
+        string who = string.IsNullOrWhiteSpace(addressee) ? "your companion" : addressee!.Trim();
+
+        return BuildSpokenPrompt(neutralText, addressee,
+            $"You are speaking directly to {who}, calling {who} over to tell them what you have just noticed.",
+            footer);
+    }
+
+    /// <summary>
+    /// The body shared by every spoken kind: the situation, the line to say behind the
+    /// <see cref="JsonConstraintGenerator.DialogueReplyFrame"/>, the rewrite task, the output shape, and
+    /// the line again at the end. <paramref name="situation"/> is the one clause that differs between a
+    /// dialogue turn and an address to a companion.
+    /// </summary>
+    private static string BuildSpokenPrompt(string neutralText, string? addressee, string situation, string footer)
+    {
         string frame = JsonConstraintGenerator.DialogueReplyFrame(addressee);
         string framed = $"{frame}\"{neutralText.Trim().Trim('"')}\"";
 
-        return $@"You are {speaker}. You are speaking directly to {who}.{context}
+        return $@"{situation}
 
 This is what you must say:
 {framed}
@@ -343,7 +427,7 @@ The line to say in your own words:
 {framed}";
     }
 
-    private static string InstructionFor(NarrationKind kind, string? addressee) => kind switch
+    private static string InstructionFor(NarrationKind kind) => kind switch
     {
         NarrationKind.Observation =>
             "Re-express this perception in your own voice, keeping the same meaning.",
@@ -353,8 +437,8 @@ The line to say in your own words:
             "Re-express this intended action in your own voice, concretely and naturally. The action you intend and its target are literal facts that must be preserved exactly: state plainly what you will do, never drop, blur, or replace the action itself — restyle only how it is told, not what is done.",
         NarrationKind.Outcome =>
             "Re-express this result in your own voice — what happens and how it feels to you — while keeping the same meaning and whether it succeeded or failed.",
-        NarrationKind.Speaking =>
-            $"Say this to {addressee ?? "your companion"} as direct speech in your own voice, keeping the same meaning.",
+        // Speaking and DialogueReplica never reach here: a spoken kind's whole prompt is built by
+        // BuildSpokenPrompt, which states the task itself rather than appending an instruction line.
         _ => "Re-express this in your own voice, keeping the same meaning.",
     };
 
@@ -374,12 +458,11 @@ The line to say in your own words:
     private static string FooterFor(NarrationKind kind, string? personaReminder2, string? styleInstruction) =>
         kind switch
         {
-            // A dialogue turn. The shape, the pronouns and the interlocutor's name are stated by
-            // BuildDialoguePrompt, which owns the reply shape; the footer carries only the clauses every
-            // kind shares (length, grounding, style, character, setting).
+            // A spoken kind. The shape, the pronouns and the interlocutor's name are stated by
+            // BuildSpokenPrompt, which owns the reply shape; the footer carries only voice, style and
+            // setting.
             NarrationKind.DialogueReplica =>
                 Config.Narrative.DialogueAnswerInstructionFor(personaReminder2, styleInstruction),
-            // Speaking carries its own 2nd-person dialogue reminder (single sentence per line).
             NarrationKind.Speaking =>
                 Config.Narrative.SpeakingAnswerInstructionFor(personaReminder2, styleInstruction),
             // Observation (merged attention + detail), Reasoning (inner thought), and Outcome

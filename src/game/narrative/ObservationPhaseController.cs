@@ -46,6 +46,13 @@ public class ObservationPhaseController
     private readonly WorldContext? _worldContext;
     private readonly Random _random = GameRng.Stream("observation-phase");
 
+    /// <summary>
+    /// How many keyword candidates a spoken address asks for before the party's own names are filtered
+    /// out. One is not enough: the address opens by naming the companion, so the best-ranked noun can
+    /// be that name, and the block would end up with no clickable word at all.
+    /// </summary>
+    private const int KeywordCandidatesForSpeaking = 4;
+
     public ObservationPhaseController(
         LlamaServerManager llamaServer,
         ModusMentisSlotManager slotManager,
@@ -826,7 +833,8 @@ public class ObservationPhaseController
 
     /// <summary>
     /// Generates a Speaking block: the active party member addresses a companion about a keyword.
-    /// Three neutral lines (call attention → describe → ask) are each rewritten as direct speech.
+    /// The three neutral lines (call attention → describe → ask) are merged into one address and
+    /// rewritten as direct speech in a single request — see <see cref="NeutralNarration.SpokenReport"/>.
     /// </summary>
     public async Task<NarrationBlock?> GenerateSpeakingTextAsync(
         string keyword,
@@ -852,45 +860,56 @@ public class ObservationPhaseController
             var style = speakingModusMentis.StyleInstruction;
             var descr = GetNeutralDescription(linkedOutcome, locationId);
 
-            // Three spoken lines stream into one stacked preview part (same modus mentis); CONTINUE
-            // unlocks only once all three are done. The part carries the deferred commit (finalize below).
+            // One request, one spoken turn, one preview segment; the part carries the deferred commit
+            // (finalize below). The rewriter returns the words between the quotes — the address is
+            // generated behind the same `I say to X : "…"` frame a dialogue reply is.
             var part = preview?.BeginAccumulatingPart(PreviewTitles.For(speakingModusMentis));
-            var sentence1 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Attention(companionName), NarrationKind.Speaking, r2, companionName, keepHistory: true, styleInstruction: style, preview: part?.NextSegment(), ct: ct)).Trim().Trim('"');
-            var sentence2 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Description(descr), NarrationKind.Speaking, r2, companionName, keepHistory: true, styleInstruction: style, preview: part?.NextSegment(), ct: ct)).Trim().Trim('"');
-            var sentence3 = (await _rewriter.RewriteAsync(slotId, NeutralNarration.Question(), NarrationKind.Speaking, r2, companionName, keepHistory: true, styleInstruction: style, preview: part?.NextSegment(), ct: ct)).Trim().Trim('"');
+            var spoken = (await _rewriter.RewriteAsync(
+                slotId, NeutralNarration.SpokenReport(companionName, descr), NarrationKind.Speaking,
+                r2, companionName, keepHistory: true, styleInstruction: style,
+                preview: part?.NextSegment(), ct: ct)).Trim().Trim('"');
 
-            var parts = new[] { sentence1, sentence2, sentence3 }
-                .Where(s => !string.IsNullOrWhiteSpace(s))
-                .ToList();
-
-            if (parts.Count == 0)
+            if (string.IsNullOrWhiteSpace(spoken))
             {
                 preview?.Reset();
-                Console.WriteLine("ObservationPhaseController: All speaking sentences empty.");
+                Console.WriteLine("ObservationPhaseController: Speaking line empty.");
                 return null;
             }
 
-            var spokenText = $"\"{string.Join(" ", parts)}\"";
+            var spokenText = $"\"{spoken}\"";
 
-            // Keyword: prefer the linked outcome's noun if the persona kept it; else the description line's last word.
+            // Keyword: extracted from the spoken line by the same rule every observation uses — a noun
+            // the persona actually wrote, ranked by relatedness to the object's reference lemma. A word
+            // the line does not contain cannot be clicked, and the hand-off depends on this click: the
+            // companion becomes the active member with this block as their observation root, so a
+            // speaking block with no keyword leaves them nothing to look at or think about.
+            //
+            // Several candidates are asked for rather than one because the address names the companion
+            // ("Ahoy James, cast an eye…") and a proper name is a noun like any other — the party's own
+            // names are skipped so the click lands on the thing spoken about, not the person spoken to.
+            var partyWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var name in new[] { companionName, actingMember.DisplayName })
+                foreach (var w in (name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                    partyWords.Add(w.Trim('.', ',', '\'', '"'));
+
             var allExtractedKeywords = new List<string>();
             var speakingKeywordOutcomeMap = new Dictionary<string, ConcreteOutcome>(StringComparer.OrdinalIgnoreCase);
-            var fullText = (sentence1 + " " + sentence2 + " " + sentence3).Trim();
-            var candidate = NeutralNarration.KeywordFromPhrase(descr);
-            string? kw = (candidate != null && Regex.IsMatch(fullText, $@"\b{Regex.Escape(candidate)}\b", RegexOptions.IgnoreCase))
-                ? candidate
-                : NeutralNarration.KeywordFromPhrase(sentence2);
+            string? kw = KeywordExtractor
+                .ExtractKeywords(spoken, GetReferenceLemma(linkedOutcome), KeywordCandidatesForSpeaking)
+                .FirstOrDefault(k => !partyWords.Contains(k));
             if (kw != null)
             {
                 allExtractedKeywords.Add(kw);
                 speakingKeywordOutcomeMap[kw] = linkedOutcome;
             }
+            else
+            {
+                Console.Error.WriteLine("ObservationPhaseController: Speaking line yielded no keyword — the companion will have nothing to click.");
+            }
 
-            // Attach the keyword list to every sentence; the renderer highlights only where it appears.
-            var speakingSentences = new List<NarrationSentence>();
-            if (!string.IsNullOrWhiteSpace(sentence1)) speakingSentences.Add(new NarrationSentence(sentence1, allExtractedKeywords));
-            if (!string.IsNullOrWhiteSpace(sentence2)) speakingSentences.Add(new NarrationSentence(sentence2, allExtractedKeywords));
-            if (!string.IsNullOrWhiteSpace(sentence3)) speakingSentences.Add(new NarrationSentence(sentence3, allExtractedKeywords));
+            // One sentence covering the whole address; the renderer highlights only where the keyword
+            // appears within it.
+            var speakingSentences = new List<NarrationSentence> { new NarrationSentence(spoken, allExtractedKeywords) };
 
             var block = new NarrationBlock(
                 Type: NarrationBlockType.Speaking,

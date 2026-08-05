@@ -563,23 +563,44 @@ public static class Config
 
     #region Loading Messages
     
+    /// <summary>
+    /// The footer line under the narration panel while the game is busy. It is the player's only signal
+    /// for what the wait is <i>for</i>, so each phase gets its own — but it is read from inside the
+    /// fiction, so none of them names the machinery. "Narrating the outcome" tells the player there is
+    /// an LLM writing a paragraph for them; "What follows" tells them the same thing about the world.
+    /// <para>
+    /// The register, for anything added here: three or four words, impersonal, present tense, no "you",
+    /// no names, no verb the UI performs (generating, evaluating, loading). Say what is happening in the world,
+    /// vaguely enough that it fits both a success and a failure — the message is up before the result
+    /// is known. The trailing ellipsis is stripped and re-animated by
+    /// <c>TerminalPanelUI.RenderWaitingStatus</c>; it is written here only so the strings read whole.
+    /// </para>
+    /// Dialogue keeps its own set, built per NPC in <c>DialogueTreeUI.BuildGeneratingText</c>.
+    /// </summary>
     public static class LoadingMessages
     {
-        // General
-        public const string Default = "Loading...";
-        
-        // Phase 6 - Observation/Narration
-        public const string GeneratingObservations = "Observing surroundings...";
-        public const string ThinkingDeeply = "Thinking about what to do...";
-        public const string EvaluatingAction = "Taking action...";
-        
-        // Location Travel
-        public const string Thinking = "Thinking...";
-        public const string EvaluatingDifficulty = "Evaluating action difficulty...";
-        public const string DeterminingOutcome = "Determining outcome...";
-        public const string NarratingDemise = "Narrating your demise...";
-        public const string GeneratingActions = "Generating actions...";
-        public const string GeneratingNarrative = "Generating narrative...";
+        // General — only ever seen between phases, on a state reset.
+        public const string Default = "The world stirs...";
+
+        // Observation phase — the senses reaching out, or a memory surfacing during the childhood
+        // phase, where there are no surroundings to observe.
+        public const string GeneratingObservations = "The senses wander...";
+        public const string Remembering = "A memory surfaces...";
+
+        // Thinking phase (keyword → modus mentis → actions).
+        public const string ThinkingDeeply = "The mind turns...";
+
+        // Speak About — the active member addresses a companion. Deliberately nameless: the player
+        // picked the companion one click ago, so the name adds nothing here, and a footer that names
+        // people is a footer that has to know which name is the real one.
+        public const string Speaking = "Words take shape...";
+
+        // Action: intent weighed (plausibility + difficulty) → dice → outcome. Three distinct waits,
+        // and the last says nothing about which way it went — it is written before the player knows.
+        public const string EvaluatingAction = "Intent gathers...";
+        public const string RollingDice = "The bones fall...";
+        public const string NarratingOutcome = "What follows...";
+        public const string CombiningItem = "The hand weighs it...";
     }
     
     #endregion
@@ -717,16 +738,20 @@ public static class Config
         }
 
         /// <summary>
-        /// Like <see cref="AnswerInstructionFor"/> but adds a 2nd-person dialogue reminder
-        /// for speaking prompts where the character is directly addressing a companion.
+        /// The footer for an address to a companion during narration. It is
+        /// <see cref="DialogueAnswerInstructionFor"/>, because the two are the same act: words one
+        /// character says to another, generated behind the same <c>I say to X : "…"</c> frame.
+        /// <para>
+        /// It used to carry the pronoun rules, the shape ("no narration, no third-person phrasing")
+        /// and a one-sentence length clause on top of a full grounding clause. The first two the
+        /// spoken prompt now states beside the grammar that enforces them, and a second wording of a
+        /// rule reads to a small model as a second rule. The length clause had to go outright: the
+        /// address is generated as one utterance of three merged sentences, so "answer in one short
+        /// sentence and stop" contradicted the line it was attached to.
+        /// </para>
         /// </summary>
         public static string SpeakingAnswerInstructionFor(string? personaReminder2, string? styleInstruction = null)
-        {
-            string style = string.IsNullOrWhiteSpace(styleInstruction) ? DefaultStyleInstruction : styleInstruction.Trim();
-            return personaReminder2 != null
-                ? $"{OneSentenceClause} {GroundingClause} {style} Stay in the character of {personaReminder2}. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing. {SettingReminder}"
-                : $"{OneSentenceClause} {GroundingClause} {style} Stay in character. Address your companion as \"you\" and refer to yourself as \"I\". No narration, no third-person phrasing. {SettingReminder}";
-        }
+            => DialogueAnswerInstructionFor(personaReminder2, styleInstruction);
 
         /// <summary>
         /// The one sentence of guidance a dialogue reply gets: whose voice to choose the words in, and
