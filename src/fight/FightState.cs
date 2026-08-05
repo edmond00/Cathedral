@@ -42,6 +42,12 @@ public enum TurnPhase
     SkillLearningRoll,
     /// <summary>Learning dice finished; showing result, waiting for "Continue".</summary>
     WaitingForLearningComplete,
+    /// <summary>
+    /// A buff's vital-heat cost is being drawn, one humor at a time, with the consumption box up.
+    /// Purely informational — it plays out and hands the turn back, with no Continue button and no
+    /// decision to make, which is why there is no waiting-for-complete twin phase.
+    /// </summary>
+    AnimatingVitalHeat,
 }
 
 /// <summary>
@@ -114,8 +120,64 @@ public class FightState
     /// </summary>
     public HashSet<(string MediumKey, string SkillId)> UsedActionsThisTurn { get; } = new();
 
+    /// <summary>
+    /// Whether <paramref name="fighter"/> has already spent this (medium, skill) pair this turn.
+    ///
+    /// <para>
+    /// Go through here rather than testing <see cref="UsedActionsThisTurn"/> directly: an effect
+    /// may lift the rule (Iron Nerves lets a fighter repeat a skill), and that exemption has to
+    /// live in exactly one place or it will hold in some of the dozen call sites and not others.
+    /// </para>
+    /// </summary>
+    public bool IsActionUsed(Fighter fighter, string mediumKey, string skillId)
+    {
+        if (!UsedActionsThisTurn.Contains((mediumKey, skillId))) return false;
+        return !fighter.ActiveEffects.Any(e => e.BypassesUsedActions);
+    }
+
+    /// <summary>Record that <paramref name="fighter"/> has spent this (medium, skill) pair this turn.</summary>
+    public void MarkActionUsed(Fighter fighter, string mediumKey, string skillId)
+        => UsedActionsThisTurn.Add((mediumKey, skillId));
+
+    /// <summary>Undo a <see cref="MarkActionUsed"/> — used when an action is cancelled before it resolves.</summary>
+    public void UnmarkActionUsed(Fighter fighter, string mediumKey, string skillId)
+        => UsedActionsThisTurn.Remove((mediumKey, skillId));
+
     /// <summary>True once the active fighter has attempted to flee this turn.</summary>
     public bool RunUsedThisTurn { get; set; }
+
+    // ── Vital-heat consumption (buff skills) ──────────────────────────
+    // Travel already shows the player every humor it burns; a buff spending up to ten of them in
+    // silence was the odd one out. These carry what the box needs while it plays.
+
+    /// <summary>Fighter paying, or null when no consumption box is up.</summary>
+    public Fighter? VitalHeatFighter { get; private set; }
+    /// <summary>Name of the skill being paid for.</summary>
+    public string VitalHeatSkillName { get; private set; } = "";
+    /// <summary>How much heat the skill asked for.</summary>
+    public int VitalHeatRequired { get; private set; }
+    /// <summary>The humors actually drawn, in rotation order. Shorter than required when queues run dry.</summary>
+    public IReadOnlyList<BodyHumor> VitalHeatDrawn { get; private set; } = System.Array.Empty<BodyHumor>();
+
+    /// <summary>Arm the consumption box. The heat has already been spent by the caller.</summary>
+    public void BeginVitalHeatConsumption(Fighter fighter, string skillName, int required,
+                                          IReadOnlyList<BodyHumor> drawn)
+    {
+        VitalHeatFighter   = fighter;
+        VitalHeatSkillName = skillName;
+        VitalHeatRequired  = required;
+        VitalHeatDrawn     = drawn;
+        Phase              = TurnPhase.AnimatingVitalHeat;
+    }
+
+    /// <summary>Tear the consumption box down.</summary>
+    public void ClearVitalHeatConsumption()
+    {
+        VitalHeatFighter   = null;
+        VitalHeatSkillName = "";
+        VitalHeatRequired  = 0;
+        VitalHeatDrawn     = System.Array.Empty<BodyHumor>();
+    }
 
     // ── Action log ───────────────────────────────────────────────────
     private const int MaxLogLines = 200;

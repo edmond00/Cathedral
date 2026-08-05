@@ -26,6 +26,72 @@ public abstract class FightStatusEffect
     /// <summary>Called at the start of the affected fighter's turn.</summary>
     public virtual void OnTurnStart(Fighter owner, FightState state, Random rng) { }
 
+    /// <summary>
+    /// Called at the END of the affected fighter's turn.
+    ///
+    /// <para>
+    /// Turn-scoped buffs expire here, and they have to: expiry used to run only in
+    /// <see cref="Fighter.StartTurn"/>, so an effect applied on the owner's turn survived every
+    /// other fighter's turn and died at the owner's <em>next</em> one — a full round, not a turn.
+    /// An effect that genuinely wants the round (Cold Blood, which fires while enemies attack)
+    /// simply does not expire here.
+    /// </para>
+    /// </summary>
+    public virtual void OnTurnEnd(Fighter owner, FightState state, Random rng) { }
+
+    // ── Passive queries ───────────────────────────────────────────────────────
+    // Inert by default. Each is read at exactly one resolution site (named in its summary) so a
+    // new effect never has to be threaded through the combat path by hand.
+
+    /// <summary>Extra dice added to the owner's DEFENCE pool. Read by <c>SkillAction.Execute</c>.</summary>
+    public virtual int BonusDefenseDice => 0;
+
+    /// <summary>Extra dice added to the owner's ATTACK pool. Read by <c>SkillAction.Execute</c>.</summary>
+    public virtual int BonusAttackDice => 0;
+
+    /// <summary>
+    /// When true, a wound this fighter suffers is the most severe one available rather than a
+    /// uniform draw. Read by <c>FightResolver.PickWound</c> — note it is queried on the ATTACKER,
+    /// since it is the attacker's ferocity that picks the wound.
+    /// </summary>
+    public virtual bool ForcesHighestSeverityWound => false;
+
+    /// <summary>Lifts the once-per-turn rule. Read by <see cref="FightState.IsActionUsed"/>.</summary>
+    public virtual bool BypassesUsedActions => false;
+
+    /// <summary>Allows re-rolling a failed runaway check. Read by the RUN button guard.</summary>
+    public virtual bool AllowsRunawayRetry => false;
+
+    /// <summary>Multiplies the owner's tiles-per-CP. Read by <see cref="Fighter.EffectiveMoveSpeed"/>.</summary>
+    public virtual int MoveSpeedMultiplier => 1;
+
+    /// <summary>Lets the owner path through HardObstacle cells. Read by the movement passability test.</summary>
+    public virtual bool AllowsHardObstacleCrossing => false;
+
+    // ── Resolution events ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Called on each of the ATTACKER's effects once an attack of theirs has resolved.
+    /// </summary>
+    public virtual void OnAttackResolved(Fighter owner, Fighter target, bool isHit,
+                                         FightState state, Random rng) { }
+
+    /// <summary>
+    /// Called on each of the DEFENDER's effects once an attack against them has resolved.
+    /// <paramref name="defenseSucceeded"/> is true when the attack missed.
+    /// Returning true from <see cref="EndsAttackerTurnOnSuccessfulDefense"/> is what actually
+    /// interrupts the attacker — this hook is for logging and bookkeeping.
+    /// </summary>
+    public virtual void OnDefended(Fighter owner, Fighter attacker, bool defenseSucceeded,
+                                   FightState state, Random rng) { }
+
+    /// <summary>
+    /// When true and the owner successfully defends, the attacker's turn ends immediately.
+    /// Surfaced as a flag on <c>FightResolver.AttackResult</c> rather than acted on in the
+    /// resolver, which is static and must not drive turn order.
+    /// </summary>
+    public virtual bool EndsAttackerTurnOnSuccessfulDefense => false;
+
     /// <summary>Short display label shown in the UI status indicator (e.g. "B2" for Bleeding level 2).</summary>
     public abstract string DisplayLabel { get; }
 

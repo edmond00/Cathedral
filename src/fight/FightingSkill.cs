@@ -30,10 +30,17 @@ public enum FightingSkillEffect
     Defense,
     /// <summary>Allows jumping over HardObstacle cells.</summary>
     SpecialMovement,
-    /// <summary>Other utility effects (rage, blood lust, run, etc.).</summary>
+    /// <summary>Other utility effects.</summary>
     Utility,
     /// <summary>Alias for <see cref="Utility"/> — other utility effects.</summary>
     Other,
+    /// <summary>
+    /// A self-applied buff: no target, no dice, no wound. It costs vital heat instead — see
+    /// <see cref="FightingSkill.VitalHeatCostFor"/> — and its whole effect is the
+    /// <see cref="FightStatusEffect"/> returned by <see cref="FightingSkill.CreateBuffEffect"/>.
+    /// Rolling dice for one would be meaningless: there is nothing to hit and nothing to resist.
+    /// </summary>
+    Buff,
 }
 
 /// <summary>
@@ -187,9 +194,10 @@ public abstract class FightingSkill
     /// <summary>
     /// True when this skill targets only the user — clicking the action button
     /// executes it immediately without requiring an arena cell click.
-    /// DefensePosture, Utility, Other, and Defense skills are self-targeted by default.
+    /// Buff, DefensePosture, Utility, Other, and Defense skills are self-targeted by default.
     /// </summary>
     public virtual bool IsSelfTargeting =>
+        EffectType == FightingSkillEffect.Buff ||
         EffectType == FightingSkillEffect.DefensePosture ||
         EffectType == FightingSkillEffect.Utility ||
         EffectType == FightingSkillEffect.Other ||
@@ -208,7 +216,7 @@ public abstract class FightingSkill
     /// <summary>
     /// Sum of levels from all known MMs (main + secondary) for this fighter.
     /// </summary>
-    private int GetTotalMmLevel(Fighter f)
+    public int GetTotalMmLevel(Fighter f)
     {
         int total = 0;
         foreach (var mm in f.Member.LearnedModiMentis)
@@ -222,20 +230,117 @@ public abstract class FightingSkill
     }
 
     /// <summary>
-    /// Total dice for a given fighter:
-    /// <c>BaseDice + medium_level × MediumLevelMultiplicator + mm_level × SkillLevelMultiplicator</c>
-    /// where mm_level is the sum of all known MM levels (main + secondary).
+    /// The itemised terms behind <see cref="TotalLevel"/>, so the info panel can show a player
+    /// <em>where</em> a skill's strength comes from instead of one opaque number.
+    /// <see cref="Total"/> is what the level formulas consume.
+    /// </summary>
+    /// <param name="MediumLabel">Display name of the medium the level was read from.</param>
+    /// <param name="MediumLevel">Raw medium level (organ / organ-part / body-part score, or weapon level).</param>
+    /// <param name="MediumMultiplicator">This skill's <see cref="MediumLevelMultiplicator"/>.</param>
+    /// <param name="ModiMentis">Each contributing modus mentis and its level, in registry order.</param>
+    /// <param name="SkillMultiplicator">This skill's <see cref="SkillLevelMultiplicator"/>.</param>
+    public readonly record struct LevelBreakdown(
+        string MediumLabel,
+        int MediumLevel,
+        int MediumMultiplicator,
+        IReadOnlyList<(string Id, int Level)> ModiMentis,
+        int SkillMultiplicator)
+    {
+        /// <summary>Summed modus-mentis levels, before the skill multiplicator.</summary>
+        public int MmLevel => ModiMentis.Sum(m => m.Level);
+
+        /// <summary>The single figure that feeds both the dice count and the buff vital-heat cost.</summary>
+        public int Total => MediumLevel * MediumMultiplicator + MmLevel * SkillMultiplicator;
+    }
+
+    /// <summary>
+    /// Itemised level terms for this fighter. Same arithmetic as <see cref="TotalLevel"/> — that
+    /// method delegates here — so the panel can never drift from the roll.
+    /// </summary>
+    public LevelBreakdown GetLevelBreakdown(Fighter f, string? organPartId = null,
+                                            FightingMedium? activeMedium = null)
+    {
+        var medium = activeMedium ?? Medium;
+        var mms = f.Member.LearnedModiMentis
+            .Where(mm => mm.ModusMentisId == RequiredModusMentisId
+                      || SecondaryModusMentisIds.Contains(mm.ModusMentisId))
+            .Select(mm => (mm.ModusMentisId, mm.Level))
+            .ToList();
+        return new LevelBreakdown(medium.DisplayName, medium.GetLevel(f, organPartId),
+                                  MediumLevelMultiplicator, mms, SkillLevelMultiplicator);
+    }
+
+    /// <summary>
+    /// This fighter's effective level with the skill:
+    /// <c>medium_level × MediumLevelMultiplicator + mm_level × SkillLevelMultiplicator</c>.
+    ///
+    /// <para>
+    /// Split out from <see cref="TotalDice"/> because level no longer only ever means dice: a
+    /// <see cref="FightingSkillEffect.Buff"/> spends it in the opposite direction, reducing the
+    /// vital heat the buff costs (<see cref="VitalHeatCostFor"/>). One formula, two readings.
+    /// </para>
+    ///
     /// When <paramref name="organPartId"/> is supplied, the medium level is that organ part's
     /// score (e.g. a left-hand punch uses only the left hand's level) instead of the whole organ.
     /// When <paramref name="activeMedium"/> is supplied it overrides <see cref="Medium"/> for the
     /// level lookup — used when a multi-medium skill is executed from a non-primary medium tab.
     /// </summary>
-    public int TotalDice(Fighter f, string? organPartId = null, FightingMedium? activeMedium = null)
+    public int TotalLevel(Fighter f, string? organPartId = null, FightingMedium? activeMedium = null)
     {
         int mediumLevel = (activeMedium ?? Medium).GetLevel(f, organPartId);
         int mmLevel     = GetTotalMmLevel(f);
-        return BaseDice + mediumLevel * MediumLevelMultiplicator + mmLevel * SkillLevelMultiplicator;
+        return mediumLevel * MediumLevelMultiplicator + mmLevel * SkillLevelMultiplicator;
     }
+
+    /// <summary>
+    /// Total dice for a given fighter: <c>BaseDice + <see cref="TotalLevel"/></c>.
+    /// </summary>
+    public int TotalDice(Fighter f, string? organPartId = null, FightingMedium? activeMedium = null)
+        => BaseDice + TotalLevel(f, organPartId, activeMedium);
+
+    /// <summary>Cheapest a buff can ever get, however skilled the fighter.</summary>
+    public const int MinBuffVitalHeat = 1;
+    /// <summary>What a buff costs a fighter with no relevant level at all.</summary>
+    public const int MaxBuffVitalHeat = 10;
+
+    /// <summary>
+    /// Vital heat this skill drains from <paramref name="f"/>'s humor queues when used.
+    ///
+    /// <para>
+    /// For a <see cref="FightingSkillEffect.Buff"/> this is the whole cost model, and it runs
+    /// <em>backwards</em> from the dice one: level does not buy more dice, it buys a cheaper buff,
+    /// from <see cref="MaxBuffVitalHeat"/> down to <see cref="MinBuffVitalHeat"/>. Every other
+    /// skill keeps its flat authored <see cref="VitalHeatCost"/>.
+    /// </para>
+    /// </summary>
+    public virtual int VitalHeatCostFor(Fighter f, string? organPartId = null,
+                                        FightingMedium? activeMedium = null)
+        => EffectType == FightingSkillEffect.Buff
+            ? Math.Clamp(MaxBuffVitalHeat - TotalLevel(f, organPartId, activeMedium),
+                         MinBuffVitalHeat, MaxBuffVitalHeat)
+            : VitalHeatCost;
+
+    /// <summary>
+    /// The status effect a <see cref="FightingSkillEffect.Buff"/> applies to its user. Returning a
+    /// fresh instance per call (as <see cref="SpecialEffects"/> does) keeps two fighters — or two
+    /// uses — from sharing one mutable effect object.
+    /// Null for everything that is not a buff.
+    /// </summary>
+    public virtual FightStatusEffect? CreateBuffEffect(Fighter owner) => null;
+
+    /// <summary>
+    /// The effect a SELF-TARGETED skill that still rolls dice grants, given how many sixes it got.
+    /// Feint is the only such skill: it has something to roll against (someone must be convinced)
+    /// but no one to wound.
+    ///
+    /// <para>
+    /// A self-targeted roll must never produce a wound — that was exactly the old bug in which a
+    /// parry could injure the person parrying — so <c>FinishAttackResolution</c> routes every
+    /// self-targeted roll here instead of into wound selection. Returning null means the roll
+    /// simply had no effect.
+    /// </para>
+    /// </summary>
+    public virtual FightStatusEffect? CreateRolledEffect(Fighter owner, int sixes) => null;
 
     /// <summary>
     /// Returns true when the fighter can use this skill in the current combat state.

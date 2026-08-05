@@ -47,6 +47,19 @@ public record FightingMedium
         new() { Type = MediumType.WeaponMedium };
 
     /// <summary>
+    /// Plain label for this medium, independent of any fighter — "hands", "upper limbs", "weapon".
+    /// The info panel's own <c>MediumLabelFor</c> is richer (it can name the specific organ part or
+    /// the equipped weapon); this is the fighter-free fallback used by
+    /// <see cref="FightingSkill.LevelBreakdown"/>.
+    /// </summary>
+    public string DisplayName => Type switch
+    {
+        MediumType.OrganMedium    => (OrganId    ?? "organ").Replace('_', ' '),
+        MediumType.BodyPartMedium => (BodyPartId ?? "region").Replace('_', ' '),
+        _                         => "weapon",
+    };
+
+    /// <summary>
     /// Returns the level of this medium for a given fighter.
     /// For an organ medium, this is the organ's current score — or, when
     /// <paramref name="organPartId"/> is supplied and matches one of the organ's parts,

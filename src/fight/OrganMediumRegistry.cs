@@ -40,7 +40,7 @@ public static class OrganMediumRegistry
                 new[] { "bite", "flesh_tear" }),
 
             new OrganMediumCategory("legs", "Leg",
-                new[] { "run", "knee_strike", "dodge", "jump", "defensive_posture" }),
+                new[] { "sprint", "knee_strike", "dodge", "jump", "defensive_posture" }),
 
             new OrganMediumCategory("arms", "Arm",
                 new[] { "push", "elbow_strike" }),

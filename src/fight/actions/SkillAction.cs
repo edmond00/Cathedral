@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Cathedral.Game.Narrative;
 
 namespace Cathedral.Fight.Actions;
 
@@ -47,11 +49,52 @@ public class SkillAction : IFightAction
         int cost = Skill.CineticPointsCost;
         Attacker.CurrentCineticPoints = Math.Max(0, Attacker.CurrentCineticPoints - cost);
 
-        // Handle defense posture differently — no dice roll needed
-        if (Skill.EffectType == FightingSkillEffect.DefensePosture)
+        // ── Buffs: vital heat, no dice ────────────────────────────────────────────
+        // A buff has no target and nothing to hit, so there is nothing for dice to decide. It is
+        // paid for in vital heat instead, and the effect is applied here — before the animation —
+        // so the STATE pane shows it while the consumption box is still up.
+        if (Skill.EffectType == FightingSkillEffect.Buff)
         {
-            Attacker.IsDefensePostureActive = true;
-            state.AddLog($"{Attacker.DisplayName} takes a defensive stance.  [-{cost} CP]");
+            var effect = Skill.CreateBuffEffect(Attacker);
+            int vh = Skill.VitalHeatCostFor(Attacker, OrganPartId, ActiveMedium);
+
+            var drawn = new List<BodyHumor>(vh);
+            for (int i = 0; i < vh; i++)
+            {
+                var humor = Attacker.Member.HumorQueues.ConsumeCycled(Attacker.Member, rng);
+                if (humor == null) break;           // queues fully critical — nothing left to spend
+                drawn.Add(humor);
+            }
+
+            if (effect != null)
+            {
+                Attacker.ActiveEffects.Add(effect);
+                effect.OnApply(Attacker, Attacker, state, rng);
+                if (effect.IsExpired) Attacker.ActiveEffects.Remove(effect);
+            }
+
+            // "X uses Y" — never "X uses Y on X". There is no second party here.
+            state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName}.  [-{cost} CP, -{drawn.Count} VH]",
+                LogEntryType.SpecialEffect);
+
+            state.BeginVitalHeatConsumption(Attacker, Skill.DisplayName, vh, drawn);
+            return;
+        }
+
+        // Defensive guards are bought, not rolled for: defence IS a dice count, so the skill hands
+        // its level straight to the pool the next incoming attack is measured against. (These used
+        // to run the attack path against the user's own defence, which is how a parry could wound
+        // the person parrying.)
+        if (Skill.EffectType == FightingSkillEffect.DefensePosture
+         || Skill.EffectType == FightingSkillEffect.Defense)
+        {
+            int dice = Skill.TotalDice(Attacker, OrganPartId, ActiveMedium);
+            var guard = Skill.EffectType == FightingSkillEffect.DefensePosture
+                ? new DefensePostureEffect(dice)
+                : (FightStatusEffect)new GuardEffect(Skill.DisplayName, dice);
+            Attacker.ActiveEffects.Add(guard);
+            guard.OnApply(Attacker, Attacker, state, rng);
+            state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName}.  [-{cost} CP]");
             state.Phase = TurnPhase.TurnEnding;
             return;
         }
@@ -82,10 +125,12 @@ public class SkillAction : IFightAction
         int armor = Target.ArmorDice(state.PendingArmorSection);
 
         // Natural attack dice apply only to offensive rolls against another fighter,
-        // not to self-targeted (defense/utility) skills.
+        // not to self-targeted (defense/utility) skills. Effect bonuses fold in on both sides:
+        // a feint's carry-over on the attack, a parry or stance on the defence.
         state.DiceNumberOfDice          = Skill.TotalDice(Attacker, OrganPartId, ActiveMedium)
-                                          + (Target != Attacker ? Attacker.NaturalAttack : 0);
-        state.DiceSecondaryNumberOfDice = Target.NaturalDefense + armor;
+                                          + (Target != Attacker ? Attacker.NaturalAttack : 0)
+                                          + Attacker.BonusAttackDice;
+        state.DiceSecondaryNumberOfDice = Target.NaturalDefense + armor + Target.BonusDefenseDice;
         state.DiceDifficulty            = state.DiceSecondaryNumberOfDice; // kept for logging
         state.IsDiceRolling             = true;
         state.DiceFinalValues           = null;
@@ -95,6 +140,8 @@ public class SkillAction : IFightAction
         string aim = armor > 0
             ? $" (aimed at the {Prettify(state.PendingArmorSection)}, armour +{armor})"
             : "";
-        state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName} on {Target.DisplayName}{aim}.  [-{cost} CP]");
+        // Self-targeted skills read "X uses Y", never "X uses Y on X".
+        string on = Target != Attacker ? $" on {Target.DisplayName}" : "";
+        state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName}{on}{aim}.  [-{cost} CP]");
     }
 }

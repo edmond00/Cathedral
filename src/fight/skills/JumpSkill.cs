@@ -5,7 +5,7 @@ public sealed class JumpSkill : FightingSkill
 {
     public override string SkillId                => "jump";
     public override string DisplayName            => "Jump";
-    public override string Description            => "Leap over obstacles — move ignoring intermediate terrain.";
+    public override string Description            => "Ready to vault — movement may cross hard obstacles this turn.";
     public override string RequiredModusMentisId  => "athletics";
     public override string[] SecondaryModusMentisIds => new[] { "acrobatics", "brute_force" };
     public override FightingMedium[] Mediums => new[] { FightingMedium.Organ("legs") };
@@ -13,6 +13,7 @@ public sealed class JumpSkill : FightingSkill
     public override int BaseDice                  => 0;
     public override int MediumLevelMultiplicator  => 1;
     public override int SkillLevelMultiplicator   => 1;
-    public override FightingSkillEffect EffectType => FightingSkillEffect.Other;
-    public override WoundTargetMode WoundTargetMode => WoundTargetMode.Random;
+    public override FightingSkillEffect EffectType => FightingSkillEffect.Buff;
+
+    public override FightStatusEffect CreateBuffEffect(Fighter owner) => new JumpEffect();
 }

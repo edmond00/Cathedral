@@ -61,7 +61,6 @@ public class FightModeAdapter
     private HashSet<(int X, int Y)>? _hoverSkillCells; // hover-preview blink on map
 
     // ── UI state ────────────────────────────────────────────────────
-    private int _actionLogScrollOffset;
     private int _actionMenuScrollOffset;          // vertical scroll of the top-left action menu
     private int _actionMenuMaxScroll;             // max scroll for the action menu (set each redraw)
     private bool _draggingMenuScrollbar;          // true while the user drags the action-menu scrollbar
@@ -100,6 +99,13 @@ public class FightModeAdapter
     // ── Blink ───────────────────────────────────────────────────────
     private double _blinkTimer;
     private bool _blinkOn = true;
+    /// <summary>
+    /// Full on+off blink cycle, in real seconds. Stated as a duration rather than tuned against a
+    /// tick count: the caller's delta is the controller's real update interval (~0.1 s), not a
+    /// 60 FPS frame, and the old 0.06/0.03 pair only looked right because the fight was being fed
+    /// a hard-coded 1/60 that had nothing to do with elapsed time.
+    /// </summary>
+    private const double BlinkPeriodSeconds = 0.36;
 
     // ── AI delay ────────────────────────────────────────────────────
     private int _aiDelayFrames;
@@ -114,8 +120,14 @@ public class FightModeAdapter
     private const float DiceRollDuration = Config.Dice.AnimationDurationSeconds;
     private double _diceElapsed;
 
-    // ── Elapsed time tracking (caller must provide delta) ───────────
-    private double _lastDeltaTime;
+    // ── Vital-heat box timing ───────────────────────────────────────
+    /// <summary>
+    /// How long the buff's vital-heat consumption box stays up, in real seconds. Deliberately much
+    /// shorter than a dice roll: there is no outcome to await, only a cost to witness.
+    /// </summary>
+    private const float VitalHeatBoxDuration = 1.6f;
+    private double _vitalHeatElapsed;
+
 
     /// <summary>
     /// The result of the fight once it's over. <see cref="FightAdapterResult.Ongoing"/> while in progress.
@@ -278,23 +290,27 @@ public class FightModeAdapter
         ?? AiPersonality.FromArchetypeFlags(npc.IsBrave, npc.AuthorityLevel);
 
     /// <summary>
-    /// Called every frame. Pass the frame delta time for animations.
+    /// Called on every controller tick. <paramref name="deltaTime"/> is elapsed REAL seconds since
+    /// the last call (roughly <see cref="Config.GlyphSphere.UpdateInterval"/>), and every animation here is
+    /// paced against it — so a caller that passes a made-up constant stretches or compresses the
+    /// dice roll and the blink by whatever the ratio happens to be.
     /// </summary>
     public void Update(double deltaTime)
     {
-        _lastDeltaTime = deltaTime;
-
         // End a scrollbar drag once the mouse button is released.
         if (_draggingMenuScrollbar && !_terminal.IsLeftMouseDown)
             _draggingMenuScrollbar = false;
 
-        // Music filter: DiceRoll only while the dice are actually tumbling, otherwise Fighting.
-        // It stops the instant the animation settles and the values are locked in (IsRolling
-        // flips false in Complete/CompleteDual), not when the settled overlay is dismissed.
-        // SetFilter no-ops when the requested filter matches the active one, so calling
-        // it every frame is safe.
+        // Music filter: Fighting for the whole fight, INCLUDING while the dice tumble.
+        // Filters are mutually exclusive (AmbianceEngine.SetFilter cancels the running one), so
+        // asking for DiceRoll here used to tear down the entire Fighting layer — drone, saw pulse
+        // and drums — for the length of every roll, then rebuild it from scratch. The dice ticks
+        // are SFX and layer over the music on their own channel, which is what MusicFilter.DiceRoll
+        // already promises ("the ambient music continues underneath unchanged").
+        // SetFilter no-ops when the requested filter matches the active one, so calling it every
+        // frame is safe.
         if (_setMusicFilter != null && !_state.IsOver)
-            _setMusicFilter(_dice.IsRolling ? MusicFilter.DiceRoll : MusicFilter.Fighting);
+            _setMusicFilter(MusicFilter.Fighting);
 
         // ── Fight ended ───────────────────────────────────────────
         if (_state.IsOver && Result == FightAdapterResult.Ongoing)
@@ -379,7 +395,7 @@ public class FightModeAdapter
         // Skip the in-arena exit blink while the localization overlay is up so the
         // SetCell doesn't punch through the body art.
         _blinkTimer += deltaTime;
-        bool newBlink = (_blinkTimer % 0.06) < 0.03;
+        bool newBlink = (_blinkTimer % BlinkPeriodSeconds) < (BlinkPeriodSeconds / 2);
         if (newBlink != _blinkOn)
         {
             _blinkOn = newBlink;
@@ -417,6 +433,21 @@ public class FightModeAdapter
             }
         }
 
+        // ── Vital-heat consumption box ─────────────────────────────
+        // A buff's cost, played out one humor at a time. No Continue button: there is nothing to
+        // decide, so it runs its length and hands the turn straight back.
+        if (_state.Phase == TurnPhase.AnimatingVitalHeat)
+        {
+            _vitalHeatElapsed += deltaTime;
+            if (_vitalHeatElapsed >= VitalHeatBoxDuration)
+            {
+                var payer = _state.VitalHeatFighter;
+                _state.ClearVitalHeatConsumption();
+                _vitalHeatElapsed = 0;
+                if (payer != null) ContinueTurnOrEnd(payer);
+            }
+        }
+
         // ── AI turn ────────────────────────────────────────────────
         if (_state.Phase == TurnPhase.SelectingAction &&
             _state.ActiveFighter is { IsPlayerControlled: false })
@@ -434,6 +465,9 @@ public class FightModeAdapter
     {
         if (_state.IsOver) return;
         if (_state.Phase == TurnPhase.AnimatingMovement) return;
+        // The vital-heat box plays out on its own clock; clicking through it would leave the buff
+        // applied but the turn mid-resolution.
+        if (_state.Phase == TurnPhase.AnimatingVitalHeat) return;
 
         // Terrain-interrupt popup is modal — any click dismisses it and ends the turn.
         if (_terrainInterruptMsg != null)
@@ -511,7 +545,10 @@ public class FightModeAdapter
             }
             if (y == FightModeUI.RunButtonRow)
             {
-                if (_state.RunUsedThisTurn) return;
+                // Survival Instinct lifts the once-per-turn limit on the runaway check, so a
+                // failed roll can be attempted again for as long as the turn lasts.
+                bool mayRetry = active.ActiveEffects.Any(e => e.AllowsRunawayRetry);
+                if (_state.RunUsedThisTurn && !mayRetry) return;
                 if (active.X == FightArea.ExitCol && active.Y == FightArea.ExitRow)
                 {
                     _state.RunUsedThisTurn = true;
@@ -537,12 +574,15 @@ public class FightModeAdapter
                     {
                         if (row.SkillIndex < 0 || row.SkillIndex >= _currentUnlockedSkills.Count) break;
                         var skill = _currentUnlockedSkills[row.SkillIndex];
-                        if (_state.UsedActionsThisTurn.Contains((row.MediumKey, skill.SkillId))) break;
+                        if (_state.IsActionUsed(active, row.MediumKey, skill.SkillId)) break;
                         if (skill.IsSelfTargeting)
                         {
-                            _state.UsedActionsThisTurn.Add((row.MediumKey, skill.SkillId));
+                            _state.MarkActionUsed(active, row.MediumKey, skill.SkillId);
+                            // The tab's medium must be passed here too — dropping it made a
+                            // multi-medium self skill compute its level off the primary medium.
                             ExecuteAction(new Actions.SkillAction(active, active, skill,
-                                FightModeUI.OrganPartIdFromKey(row.MediumKey)));
+                                FightModeUI.OrganPartIdFromKey(row.MediumKey),
+                                ActiveMediumFromKey(skill, row.MediumKey)));
                         }
                         else
                         {
@@ -554,7 +594,7 @@ public class FightModeAdapter
                     {
                         if (row.SkillIndex < 0 || row.SkillIndex >= _currentLearnableSkills.Count) break;
                         var skill = _currentLearnableSkills[row.SkillIndex];
-                        if (_state.UsedActionsThisTurn.Contains((row.MediumKey, skill.SkillId))) break;
+                        if (_state.IsActionUsed(active, row.MediumKey, skill.SkillId)) break;
                         SetLearnableSkillMode(row.SkillIndex, row.MediumKey);
                         break;
                     }
@@ -583,7 +623,7 @@ public class FightModeAdapter
             string mediumKey = _selectedMediumKey ?? DefaultMediumKeyFor(skill);
             if (skill.IsSelfTargeting)
             {
-                _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
+                _state.MarkActionUsed(active, mediumKey, skill.SkillId);
                 ExecuteAction(new Actions.SkillAction(active, active, skill,
                     FightModeUI.OrganPartIdFromKey(mediumKey),
                     ActiveMediumFromKey(skill, mediumKey)));
@@ -596,13 +636,14 @@ public class FightModeAdapter
                          f.X == ax && f.Y == ay);
                 if (target != null)
                 {
-                    _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
-                    TryUseSkillOnTarget(active, target, skill, mediumKey);                }
+                    _state.MarkActionUsed(active, mediumKey, skill.SkillId);
+                    TryUseSkillOnTarget(active, target, skill, mediumKey);
+                }
                 else
                 {
                     int cost = skill.CineticPointsCost;
                     active.CurrentCineticPoints = Math.Max(0, active.CurrentCineticPoints - cost);
-                    _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
+                    _state.MarkActionUsed(active, mediumKey, skill.SkillId);
                     _state.AddLog($"{active.DisplayName} uses {skill.DisplayName} — nothing there.  [-{cost} CP]", LogEntryType.Miss);
                     ContinueTurnOrEnd(active);
                 }
@@ -613,10 +654,12 @@ public class FightModeAdapter
             var skill = _currentLearnableSkills[_selectedLearnableSkillIndex];
             string mediumKey = _selectedMediumKey ?? DefaultMediumKeyFor(skill);
             _pendingLearnMediumKey = mediumKey;
-            // For DefensePosture-type learnable skills, learn without targeting
-            if (skill.EffectType == FightingSkillEffect.DefensePosture)
+            // Learn a self-targeting skill without picking a target. This used to test only for
+            // DefensePosture, which left every other self-targeting skill — the buffs, parry,
+            // dodge — waiting for an enemy click that their own targeting rules never highlight.
+            if (skill.IsSelfTargeting)
             {
-                _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
+                _state.MarkActionUsed(active, mediumKey, skill.SkillId);
                 StartLearningAttempt(active, null, skill);
             }
             else
@@ -627,7 +670,7 @@ public class FightModeAdapter
                          f.X == ax && f.Y == ay);
                 if (target != null)
                 {
-                    _state.UsedActionsThisTurn.Add((mediumKey, skill.SkillId));
+                    _state.MarkActionUsed(active, mediumKey, skill.SkillId);
                     StartLearningAttempt(active, target, skill);
                 }
             }
@@ -655,30 +698,12 @@ public class FightModeAdapter
     }
 
     /// <summary>
-    /// Resolves the active <see cref="FightingMedium"/> for a skill from a left-panel tab key.
-    /// For organ tabs ("organ:xxx" or "organpart:xxx") returns the matching medium in the skill;
-    /// for body-part tabs ("bodypart:xxx") returns the matching body-part medium; otherwise null.
+    /// Moved to <see cref="FightModeUI.ActiveMediumFromKey"/>, beside the other medium-key parsers,
+    /// so the info panel resolves the medium exactly the way the roll does. Kept as a forwarder
+    /// because the adapter reads far better without the prefix everywhere.
     /// </summary>
     private static FightingMedium? ActiveMediumFromKey(FightingSkill skill, string? mediumKey)
-    {
-        if (mediumKey == null) return null;
-        if (mediumKey.StartsWith(FightModeUI.OrganKeyPrefix, StringComparison.Ordinal))
-        {
-            string organId = mediumKey[FightModeUI.OrganKeyPrefix.Length..];
-            return skill.GetMediumForOrganId(organId);
-        }
-        if (mediumKey.StartsWith(FightModeUI.OrganPartKeyPrefix, StringComparison.Ordinal))
-        {
-            // part key — the organ id is inferred from Mediums; return the first organ-type medium
-            return skill.Mediums.FirstOrDefault(m => m.Type == MediumType.OrganMedium);
-        }
-        if (mediumKey.StartsWith(FightModeUI.BodyPartKeyPrefix, StringComparison.Ordinal))
-        {
-            string bodyPartId = mediumKey[FightModeUI.BodyPartKeyPrefix.Length..];
-            return skill.GetMediumForBodyPartId(bodyPartId);
-        }
-        return null;
-    }
+        => FightModeUI.ActiveMediumFromKey(skill, mediumKey);
 
     /// <summary>Called by the game loop when a terminal cell is hovered.</summary>
     public void OnCellHovered(int x, int y)
@@ -737,7 +762,7 @@ public class FightModeAdapter
                                                     ax, ay, _state.Fighters, active);
                 if (path != null && path.Count > 0)
                 {
-                    double budget = active.CurrentCineticPoints * (double)Math.Max(1, active.MoveSpeed);
+                    double budget = active.CurrentCineticPoints * (double)active.EffectiveMoveSpeed;
                     int px = active.X, py = active.Y;
                     double acc = 0;
                     int affordable = 0;
@@ -816,8 +841,20 @@ public class FightModeAdapter
                 {
                     var s = _currentUnlockedSkills[i];
                     string mk = DefaultMediumKeyFor(s);
-                    if (!_state.UsedActionsThisTurn.Contains((mk, s.SkillId)))
+                    if (_state.IsActionUsed(active, mk, s.SkillId)) return;
+                    // Mirror the panel path: a self-targeting skill has no target to pick, so it
+                    // fires here. Arming targeting instead left the fighter's own tile as the only
+                    // highlight and demanded a click on their own symbol to get anywhere.
+                    if (s.IsSelfTargeting)
+                    {
+                        _state.MarkActionUsed(active, mk, s.SkillId);
+                        ExecuteAction(new Actions.SkillAction(active, active, s,
+                            FightModeUI.OrganPartIdFromKey(mk), ActiveMediumFromKey(s, mk)));
+                    }
+                    else
+                    {
                         SetSkillMode(i, mk);
+                    }
                 }
                 return;
             }
@@ -837,31 +874,59 @@ public class FightModeAdapter
                 _state.AddLog("Must reach the exit tile (⎆) to run away.");
             return;
         }
-        if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Escape)
-        {
-            if (!_isMoveMode) SetMoveMode();
-            return;
-        }
-
-        if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.PageUp)
-            _actionLogScrollOffset = Math.Min(_actionLogScrollOffset + 5, _state.ActionLog.Count);
-        if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.PageDown)
-            _actionLogScrollOffset = Math.Max(0, _actionLogScrollOffset - 5);
+        // ESC is routed through TryCancelSelection by the launcher, not handled here — see that
+        // method. The log is not scrollable any more (it shows the most recent lines and nothing
+        // else), so PageUp/PageDown are gone with it.
     }
 
-    /// <summary>Called by the game loop for mouse wheel scrolling.</summary>
+    /// <summary>
+    /// True while the fight is advancing on its own and a CLI script should keep waiting: dice in
+    /// flight, a fighter stepping along a path, the vital-heat box playing, or the AI about to act.
+    ///
+    /// <para>
+    /// Every self-advancing phase has to be listed here. One that is missed makes <c>wait</c>
+    /// return mid-animation, and the failure surfaces as an unrelated assertion further down the
+    /// script — see the note in CLAUDE.md about <c>CliIsIdle</c>.
+    /// </para>
+    /// </summary>
+    public bool CliIsBusy =>
+        !_state.IsOver
+        && (_state.Phase == TurnPhase.AnimatingDice
+         || _state.Phase == TurnPhase.AnimatingMovement
+         || _state.Phase == TurnPhase.AnimatingVitalHeat
+         || _state.Phase == TurnPhase.SkillLearningRoll
+         || _state.Phase == TurnPhase.TurnEnding
+         // An AI fighter holding the turn is about to move without any input from us.
+         || (_state.Phase == TurnPhase.SelectingAction
+             && _state.ActiveFighter is { IsPlayerControlled: false }));
+
+    /// <summary>
+    /// ESC's first job: back out of whatever is armed. Returns true when something was actually
+    /// cancelled, so the caller can fall through to opening the main menu when nothing was.
+    /// </summary>
+    public bool TryCancelSelection()
+    {
+        if (_state.IsOver) return false;
+        // Only the action-selection phase has anything to back out of; while dice are animating or
+        // a picker is up, ESC would otherwise strand the turn half-resolved.
+        if (_state.Phase != TurnPhase.SelectingAction) return true;
+        if (_isMoveMode && _selectedSkillIndex < 0 && _selectedLearnableSkillIndex < 0) return false;
+        SetMoveMode();
+        return true;
+    }
+
+    /// <summary>
+    /// Called by the game loop for mouse wheel scrolling.
+    /// Only the top-left action menu scrolls — the log always shows its most recent lines.
+    /// </summary>
     public void OnMouseWheel(float delta)
     {
-        // When the cursor is over the top-left action menu during action selection, the wheel
-        // scrolls that menu; otherwise it scrolls the action log.
         bool overActionMenu = _hoverX >= 0 && _hoverX < FightModeUI.ActionMenuRight
                            && _hoverY >= 0 && _hoverY < 20
                            && _state.Phase == TurnPhase.SelectingAction
                            && _state.ActiveFighter?.IsPlayerControlled == true;
         if (overActionMenu)
             _actionMenuScrollOffset = Math.Clamp(_actionMenuScrollOffset - (int)delta, 0, _actionMenuMaxScroll);
-        else
-            _actionLogScrollOffset = Math.Max(0, _actionLogScrollOffset - (int)delta);
     }
 
     // ── Action-menu scrollbar geometry / drag helpers ─────────────────
@@ -974,7 +1039,7 @@ public class FightModeAdapter
     private HashSet<(int X, int Y)> ComputeReachableCells(Fighter fighter)
     {
         var result = new HashSet<(int, int)>();
-        double budget = fighter.CurrentCineticPoints * (double)Math.Max(1, fighter.MoveSpeed);
+        double budget = fighter.CurrentCineticPoints * (double)fighter.EffectiveMoveSpeed;
         if (budget <= 0) return result;
 
         var dist = new Dictionary<(int, int), double>();
@@ -1053,7 +1118,7 @@ public class FightModeAdapter
         var path = FightResolver.BfsPath(_state.Area, fighter.X, fighter.Y, ax, ay, _state.Fighters, fighter);
         if (path == null || path.Count == 0) return;
 
-        double budget = fighter.CurrentCineticPoints * (double)Math.Max(1, fighter.MoveSpeed);
+        double budget = fighter.CurrentCineticPoints * (double)fighter.EffectiveMoveSpeed;
         if (budget <= 0) return;
 
         int px = fighter.X, py = fighter.Y;
@@ -1094,7 +1159,7 @@ public class FightModeAdapter
                 onCancel: () =>
                 {
                     _localizationOverlay = null;
-                    _state.UsedActionsThisTurn.Remove((usedKey, skill.SkillId));
+                    _state.UnmarkActionUsed(attacker, usedKey, skill.SkillId);
                     _state.PendingSkill = null;
                     _state.PendingTarget = null;
                     _state.PendingBodyPartId = null;
@@ -1390,9 +1455,38 @@ public class FightModeAdapter
             return;
         }
 
+        // ── Self-targeted rolls never wound the roller ────────────────────────────
+        // Feint is the only skill left here: it rolls (someone must be convinced) but has no one
+        // to hurt. Routing it through the attack resolver would measure it against the roller's own
+        // defence and, on a six, wound them — which is exactly how parry used to injure the person
+        // parrying. The sixes become an effect instead.
+        if (_state.PendingTarget == active)
+        {
+            var skill = _state.PendingSkill;
+            int sixes = _state.DiceFinalValues.Count(v => v == 6);
+            var rolled = skill.CreateRolledEffect(active, sixes);
+            if (rolled != null)
+            {
+                active.ActiveEffects.Add(rolled);
+                rolled.OnApply(active, active, _state, _rng);
+                if (rolled.IsExpired) active.ActiveEffects.Remove(rolled);
+            }
+            else
+            {
+                _state.AddLog($"{skill.DisplayName} comes to nothing. ({sixes} sixes)", LogEntryType.Miss);
+            }
+            _state.CheckFightEnd();
+            if (!_state.IsOver) ContinueTurnOrEnd(active);
+            return;
+        }
+
+        // `state` MUST be passed: FightResolver gates the whole SpecialEffects block on it being
+        // non-null, so omitting it (which a named `defenseDiceValues:` argument silently does)
+        // makes bleeding, knockdown, immobilize and pushback dead code.
         var result = FightResolver.ResolveAttack(
             active, _state.PendingTarget, _state.PendingSkill,
             _state.DiceFinalValues, _state.PendingBodyPartId, _rng,
+            state: _state,
             defenseDiceValues: _state.DiceSecondaryFinalValues);
 
         if (result.IsHit && result.Wound != null)
@@ -1406,8 +1500,17 @@ public class FightModeAdapter
         }
 
         _state.CheckFightEnd();
-        if (!_state.IsOver)
-            ContinueTurnOrEnd(active);
+        if (_state.IsOver) return;
+
+        // Cold Blood on the defender: a blow turned aside breaks the attacker off outright.
+        if (result.AttackerTurnEnded)
+        {
+            _state.AddLog($"{active.DisplayName}'s turn is broken off.", LogEntryType.SpecialEffect);
+            ContinueTurnOrEnd(active, forceEnd: true);
+            return;
+        }
+
+        ContinueTurnOrEnd(active);
     }
 
     /// <summary>
@@ -1416,7 +1519,11 @@ public class FightModeAdapter
     /// the behavior already used after movement). Used after attack resolution so a failed
     /// or low-cost skill doesn't waste the whole turn.
     /// </summary>
-    private void ContinueTurnOrEnd(Fighter active)
+    /// <param name="forceEnd">
+    /// End the turn regardless of remaining Cinetic Points — used when something outside the
+    /// fighter's control cuts them off, such as a defender's Cold Blood breaking the attack.
+    /// </param>
+    private void ContinueTurnOrEnd(Fighter active, bool forceEnd = false)
     {
         // Clear pending action state so the next selection starts clean
         _state.PendingSkill = null;
@@ -1426,6 +1533,12 @@ public class FightModeAdapter
         _state.DiceSecondaryFinalValues = null;
         _state.DiceNumberOfDice = 0;
         _state.DiceSecondaryNumberOfDice = 0;
+
+        if (forceEnd)
+        {
+            EndTurn(active);
+            return;
+        }
 
         if (active.CurrentCineticPoints <= 0)
         {
@@ -1501,6 +1614,10 @@ public class FightModeAdapter
     private void EndTurn(Fighter active)
     {
         active.HasActedThisTurn = true;
+        // Turn-scoped buffs expire HERE, not at the departing fighter's next StartTurn — that pass
+        // only comes round after everyone else has acted, which would stretch every "this turn"
+        // buff across a full round.
+        active.EndTurn(_state, _rng);
         _state.AdvanceToNextFighter(_rng);
         RefreshSkillList();
 
@@ -1526,8 +1643,6 @@ public class FightModeAdapter
                 _bleedPopupCollapsed = bleed.LastDrainPushedToCritical;
             }
         }
-
-        _actionLogScrollOffset = 0;
 
         // Knockdown recovery — runs after bleed-popup capture so its dice flow takes priority.
         MaybeStartKnockdownRecovery(next);
@@ -1638,16 +1753,16 @@ public class FightModeAdapter
     /// Decide what the left-bottom info box should describe: the hovered action
     /// if the mouse is over one, otherwise the currently selected action.
     /// </summary>
-    private (FightModeUI.LeftInfoKind Kind, FightingSkill? Skill, string? OrganPartId, string? ActiveOrganId) ResolveLeftInfo(Fighter active)
+    private (FightModeUI.LeftInfoKind Kind, FightingSkill? Skill, string? OrganPartId, string? ActiveOrganId, string? MediumKey) ResolveLeftInfo(Fighter active)
     {
-        if (!active.IsPlayerControlled) return (FightModeUI.LeftInfoKind.None, null, null, null);
+        if (!active.IsPlayerControlled) return (FightModeUI.LeftInfoKind.None, null, null, null, null);
 
         if (_hoveredButtonRow == FightModeUI.MoveButtonRow)
-            return (FightModeUI.LeftInfoKind.Move, null, null, null);
+            return (FightModeUI.LeftInfoKind.Move, null, null, null, null);
         if (_hoveredButtonRow == FightModeUI.EndTurnButtonRow)
-            return (FightModeUI.LeftInfoKind.EndTurn, null, null, null);
+            return (FightModeUI.LeftInfoKind.EndTurn, null, null, null, null);
         if (_hoveredButtonRow == FightModeUI.RunButtonRow)
-            return (FightModeUI.LeftInfoKind.Run, null, null, null);
+            return (FightModeUI.LeftInfoKind.Run, null, null, null, null);
 
         if (_hoveredButtonRow >= 0)
         {
@@ -1658,13 +1773,13 @@ public class FightModeAdapter
                 string? organId  = FightModeUI.OrganIdFromKey(r.MediumKey);
                 if (r.Kind == LeftPanelRowKind.UnlockedSkill
                     && r.SkillIndex >= 0 && r.SkillIndex < _currentUnlockedSkills.Count)
-                    return (FightModeUI.LeftInfoKind.Skill, _currentUnlockedSkills[r.SkillIndex], partId, organId);
+                    return (FightModeUI.LeftInfoKind.Skill, _currentUnlockedSkills[r.SkillIndex], partId, organId, r.MediumKey);
                 if (r.Kind == LeftPanelRowKind.LearnableSkill
                     && r.SkillIndex >= 0 && r.SkillIndex < _currentLearnableSkills.Count)
-                    return (FightModeUI.LeftInfoKind.LearnableSkill, _currentLearnableSkills[r.SkillIndex], partId, organId);
+                    return (FightModeUI.LeftInfoKind.LearnableSkill, _currentLearnableSkills[r.SkillIndex], partId, organId, r.MediumKey);
                 if (r.Kind == LeftPanelRowKind.UnaffordableSkill
                     && r.SkillIndex >= 0 && r.SkillIndex < _currentUnaffordableSkills.Count)
-                    return (FightModeUI.LeftInfoKind.Skill, _currentUnaffordableSkills[r.SkillIndex], partId, organId);
+                    return (FightModeUI.LeftInfoKind.Skill, _currentUnaffordableSkills[r.SkillIndex], partId, organId, r.MediumKey);
                 break;
             }
         }
@@ -1672,14 +1787,17 @@ public class FightModeAdapter
         string? selPartId  = FightModeUI.OrganPartIdFromKey(_selectedMediumKey);
         string? selOrganId = FightModeUI.OrganIdFromKey(_selectedMediumKey);
         if (_selectedSkillIndex >= 0 && _selectedSkillIndex < _currentUnlockedSkills.Count)
-            return (FightModeUI.LeftInfoKind.Skill, _currentUnlockedSkills[_selectedSkillIndex], selPartId, selOrganId);
+            return (FightModeUI.LeftInfoKind.Skill, _currentUnlockedSkills[_selectedSkillIndex], selPartId, selOrganId, _selectedMediumKey);
         if (_selectedLearnableSkillIndex >= 0 && _selectedLearnableSkillIndex < _currentLearnableSkills.Count)
-            return (FightModeUI.LeftInfoKind.LearnableSkill, _currentLearnableSkills[_selectedLearnableSkillIndex], selPartId, selOrganId);
+            return (FightModeUI.LeftInfoKind.LearnableSkill, _currentLearnableSkills[_selectedLearnableSkillIndex], selPartId, selOrganId, _selectedMediumKey);
         if (_isMoveMode)
-            return (FightModeUI.LeftInfoKind.Move, null, null, null);
+            return (FightModeUI.LeftInfoKind.Move, null, null, null, null);
 
-        return (FightModeUI.LeftInfoKind.None, null, null, null);
+        return (FightModeUI.LeftInfoKind.None, null, null, null, null);
     }
+
+    /// <summary>Repaint the whole fight UI now — used when returning from the pause menu.</summary>
+    public void Redraw() => FullRedraw();
 
     private void FullRedraw()
     {
@@ -1699,7 +1817,9 @@ public class FightModeAdapter
                 _currentUnlockedSkills, _currentLearnableSkills, _currentUnaffordableSkills,
                 isMove, _selectedSkillIndex, _selectedLearnableSkillIndex,
                 _expandedMediumKey, _hoveredButtonRow,
-                _state.UsedActionsThisTurn, _state.RunUsedThisTurn,
+                _state,
+                // Survival Instinct makes the RUN button live again after a failed check.
+                _state.RunUsedThisTurn && !active.ActiveEffects.Any(e => e.AllowsRunawayRetry),
                 _actionMenuScrollOffset,
                 _draggingMenuScrollbar || IsOnActionScrollbar(_hoverX, _hoverY),
                 out _actionMenuMaxScroll);
@@ -1710,13 +1830,13 @@ public class FightModeAdapter
             _hoverSkillCells = ComputeHoverSkillCells(_hoveredButtonRow, active);
 
             // Bottom-half info panel — hovered action > selected action > none
-            var (infoKind, infoSkill, infoPartId, infoOrganId) = ResolveLeftInfo(active);
-            FightModeUI.RenderLeftInfoPanel(_terminal, infoKind, infoSkill, active, infoPartId, infoOrganId);
+            var (infoKind, infoSkill, infoPartId, infoOrganId, infoMediumKey) = ResolveLeftInfo(active);
+            FightModeUI.RenderLeftInfoPanel(_terminal, infoKind, infoSkill, active, infoPartId, infoOrganId, infoMediumKey);
         }
 
         FightModeUI.RenderCenterPanel(_terminal, _state.Area, _state.Fighters,
             active, _blinkOn, _highlightCells, _isAttackHighlight, _previewPath, _hoverSkillCells,
-            _previewAttackCell);
+            _previewAttackCell, _hoveredFighter);
 
         // Localization picker is rendered via the overlay path below; nothing to do here.
 
@@ -1733,10 +1853,14 @@ public class FightModeAdapter
             ? _rightPanelRows.FirstOrDefault(r => r.Fighter == _hoveredFighter).Y
             : -1;
         _rightPanelRows = FightModeUI.RenderRightPanel(_terminal, _state.Area, _state, initHoverY);
-        FightModeUI.RenderBottomPanel(_terminal, _state.ActionLog, _actionLogScrollOffset);
+        FightModeUI.RenderBottomPanel(_terminal, _state.ActionLog);
 
         if (_dice.IsVisible)
             FightModeUI.RenderDiceOverlay(_terminal, _dice, _continueHovered);
+
+        if (_state.Phase == TurnPhase.AnimatingVitalHeat && _state.VitalHeatFighter != null)
+            FightModeUI.RenderVitalHeatBox(_terminal, _state.VitalHeatFighter.DisplayName,
+                _state.VitalHeatSkillName, _state.VitalHeatRequired, _state.VitalHeatDrawn);
 
         // Localization picker box — drawn last so it sits on top of the fight UI.
         if (_localizationOverlay != null && _state.Phase == TurnPhase.WaitingForBodyPartChoice)
@@ -1765,7 +1889,6 @@ public class FightModeAdapter
         _expandedMediumKey = null;
         _actionMenuScrollOffset = 0;
         RecomputeHighlight();
-        _actionLogScrollOffset = 0;
         _previewPath = null;
         _hoverSkillCells = null;
         _hoveredButtonRow = -1;

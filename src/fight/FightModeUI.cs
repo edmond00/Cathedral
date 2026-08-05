@@ -138,14 +138,15 @@ public static class FightModeUI
 
         y++; // spacer
 
-        // Combat stats — one per line
-        int damageRes = fighter.Member.DerivedStats
-            .First(s => s.Name == "damage_resistance").GetValue(fighter.Member);
+        // Combat stats — one per line. DEF and MOV show the EFFECTIVE figures, so a stance or a
+        // sprint is visible in the numbers the player is actually going to be measured by.
+        int def = fighter.NaturalDefense + fighter.BonusDefenseDice;
+        string defSuffix = fighter.BonusDefenseDice > 0 ? $" (+{fighter.BonusDefenseDice})" : "";
+        string movSuffix = fighter.EffectiveMoveSpeed != Math.Max(1, fighter.MoveSpeed) ? " ×" : "";
         terminal.Text(x, y++, $"INIT: {fighter.InitiativeValue}", Config.Colors.LightGray, Config.Colors.Black);
         terminal.Text(x, y++, $"ATK : {fighter.NaturalAttack}",   Config.Colors.LightGray, Config.Colors.Black);
-        terminal.Text(x, y++, $"DEF : {fighter.NaturalDefense}",  Config.Colors.LightGray, Config.Colors.Black);
-        terminal.Text(x, y++, $"MOV : {fighter.MoveSpeed}",        Config.Colors.LightGray, Config.Colors.Black);
-        terminal.Text(x, y++, $"DR  : {damageRes}",                Config.Colors.LightGray, Config.Colors.Black);
+        terminal.Text(x, y++, $"DEF : {def}{defSuffix}",          Config.Colors.LightGray, Config.Colors.Black);
+        terminal.Text(x, y++, $"MOV : {fighter.EffectiveMoveSpeed}{movSuffix}", Config.Colors.LightGray, Config.Colors.Black);
         terminal.Text(x, y++, $"RUN : {fighter.RunawayDiceCount}d",Config.Colors.LightGray, Config.Colors.Black);
         terminal.Text(x, y++, $"MCP : {fighter.MaxCineticPoints}", Config.Colors.LightGray, Config.Colors.Black);
 
@@ -218,7 +219,10 @@ public static class FightModeUI
         bool isMoveMode, int selectedSkillIndex, int selectedLearnableSkillIndex,
         string? expandedMediumKey,
         int hoveredButtonRow,
-        IReadOnlySet<(string MediumKey, string SkillId)>? usedActions,
+        // The fight state rather than the raw used-actions set: whether a row counts as spent is
+        // FightState.IsActionUsed's call, and it can be lifted by an effect (Iron Nerves). Reading
+        // the set directly would keep greying out rows the fighter can in fact use again.
+        FightState? state,
         bool runUsed,
         int scrollOffset,
         bool scrollbarHot,
@@ -437,7 +441,7 @@ public static class FightModeUI
 
                 renderers.Add(rowY =>
                 {
-                    bool used = usedActions?.Contains((sKey, sSkill.SkillId)) == true;
+                    bool used = state?.IsActionUsed(fighter, sKey, sSkill.SkillId) == true;
                     bool sel = !isMoveMode && !used && !sUnaff
                         && (sLearn ? sIdx == selectedLearnableSkillIndex : sIdx == selectedSkillIndex);
                     bool hov = !sel && !used && hoveredButtonRow == rowY;
@@ -559,7 +563,7 @@ public static class FightModeUI
     /// </summary>
     public static void RenderLeftInfoPanel(TerminalHUD terminal,
         LeftInfoKind kind, FightingSkill? skill, Fighter? fighter,
-        string? organPartId = null, string? activeOrganId = null)
+        string? organPartId = null, string? activeOrganId = null, string? mediumKey = null)
     {
         // Top-right box (cols ActionMenuRight..100, rows 0..TopRows-1)
         int boxX = ActionMenuRight;
@@ -588,6 +592,8 @@ public static class FightModeUI
             for (int i = 0; i < s.Length && y < boxH - 1; i += innerW)
                 TextLine(s.Substring(i, Math.Min(innerW, s.Length - i)), col);
         }
+        // Pad-or-clip to a fixed width so the level-breakdown rows column up.
+        static string Trim(string s, int w) => s.Length > w ? s[..w] : s.PadRight(w);
 
         switch (kind)
         {
@@ -598,9 +604,9 @@ public static class FightModeUI
                 if (fighter != null)
                 {
                     y++;
-                    int maxSteps = fighter.CurrentCineticPoints * Math.Max(1, fighter.MoveSpeed);
+                    int maxSteps = fighter.CurrentCineticPoints * fighter.EffectiveMoveSpeed;
                     TextLine($"Range : {maxSteps} tiles", Config.Colors.LightGray);
-                    TextLine($"Speed : {Math.Max(1, fighter.MoveSpeed)}/CP", Config.Colors.LightGray);
+                    TextLine($"Speed : {fighter.EffectiveMoveSpeed}/CP", Config.Colors.LightGray);
                 }
                 break;
 
@@ -632,25 +638,62 @@ public static class FightModeUI
                 y++;
                 WrapText(skill.Description ?? "", Config.Colors.White);
                 y++;
-                TextLine($"Dice  : {skill.TotalDice(fighter, organPartId) + (skill.IsSelfTargeting ? 0 : fighter.NaturalAttack)}", Config.Colors.LightGray);
+                // Resolve the medium the SAME way the roll does, or a multi-medium skill quotes
+                // its primary medium's numbers while the roll uses the tab's.
+                var activeMedium = ActiveMediumFromKey(skill, mediumKey);
+                var breakdown    = skill.GetLevelBreakdown(fighter, organPartId, activeMedium);
+                bool isBuff      = skill.EffectType == FightingSkillEffect.Buff;
+
+                if (isBuff)
+                {
+                    // A buff has no target and rolls nothing — vital heat IS its cost model, and
+                    // level makes it cheaper rather than stronger. A dice line here would be a lie.
+                    TextLine($"VH    : {skill.VitalHeatCostFor(fighter, organPartId, activeMedium)}",
+                             Config.Colors.Orange);
+                }
+                else
+                {
+                    TextLine($"Dice  : {skill.TotalDice(fighter, organPartId, activeMedium) + (skill.IsSelfTargeting ? 0 : fighter.NaturalAttack)}",
+                             Config.Colors.LightGray);
+                }
                 TextLine($"Cost  : {skill.CineticPointsCost} CP", Config.Colors.LightGray);
-                TextLine(skill.MinRange > 1
-                    ? $"Range : {skill.MinRange}-{skill.Range}"
-                    : $"Range : {skill.Range}", Config.Colors.LightGray);
+                if (!isBuff)
+                    TextLine(skill.MinRange > 1
+                        ? $"Range : {skill.MinRange}-{skill.Range}"
+                        : $"Range : {skill.Range}", Config.Colors.LightGray);
                 TextLine($"Effect: {skill.EffectType}", Config.Colors.LightGray);
-                TextLine($"Wound : {skill.WoundTargetMode}", Config.Colors.LightGray);
+                if (skill.EffectType == FightingSkillEffect.Attack)
+                    TextLine($"Wound : {skill.WoundTargetMode}", Config.Colors.LightGray);
+
+                // ── Where the level comes from ────────────────────────────────
+                // The single figure above is the sum of terms the player can actually raise, so
+                // spell them out: which medium, which modi mentis, and what each contributes.
+                y++;
+                TextLine($"LEVEL {breakdown.Total}", Config.Colors.DarkYellowGrey);
+                TextLine($"  {Trim(breakdown.MediumLabel, 12)} {breakdown.MediumLevel}"
+                       + (breakdown.MediumMultiplicator != 1 ? $"x{breakdown.MediumMultiplicator}" : ""),
+                         Config.Colors.MediumGray60);
+                if (breakdown.ModiMentis.Count == 0)
+                    TextLine("  (no modus mentis)", Config.Colors.DarkGray);
+                else
+                    foreach (var (id, lvl) in breakdown.ModiMentis)
+                        TextLine($"  {Trim(id.Replace('_', ' '), 12)} {lvl}"
+                               + (breakdown.SkillMultiplicator != 1 ? $"x{breakdown.SkillMultiplicator}" : ""),
+                                 Config.Colors.MediumGray60);
+
                 if (isLearn)
                 {
-                    string? learnOrganId   = activeOrganId;
-                    string? learnBodyPartId = BodyPartIdFromKey(null); // resolved below via key is not available here; use MediumPosition
+                    string? learnOrganId    = activeOrganId;
+                    string? learnBodyPartId = BodyPartIdFromKey(mediumKey);
                     int diff = Math.Max(0, (learnOrganId    != null ? skill.GetMediumPositionForOrganId(learnOrganId)
+                                         : learnBodyPartId != null ? skill.GetMediumPositionForBodyPartId(learnBodyPartId)
                                          : skill.MediumPosition) - 1);
                     int dice = Math.Max(1, fighter.FightLearningStat);
                     y++;
                     TextLine($"LEARN: {dice}d", titleC);
                     TextLine($"need {diff} sixes", titleC);
                 }
-                else if (skill.VitalHeatCost > 0)
+                else if (!isBuff && skill.VitalHeatCost > 0)
                 {
                     y++;
                     TextLine($"VH cost: {skill.VitalHeatCost}", Config.Colors.Orange);
@@ -710,6 +753,39 @@ public static class FightModeUI
         key != null && key.StartsWith(OrganPartKeyPrefix, StringComparison.Ordinal)
             ? key[OrganPartKeyPrefix.Length..]
             : null;
+
+    /// <summary>
+    /// Resolves the active <see cref="FightingMedium"/> for a skill from a left-panel tab key.
+    /// For organ tabs ("organ:xxx" / "organpart:xxx") returns the matching organ medium in the
+    /// skill; for body-part tabs ("bodypart:xxx") the matching body-part medium; otherwise null.
+    ///
+    /// <para>
+    /// It lives here rather than on the adapter because both the roll and the INFO panel must agree
+    /// on it. A multi-medium skill (flesh_tear is in both the fangs and teeth lists) has a different
+    /// level under each tab, so a panel that skipped this would quote the primary medium's dice
+    /// while the roll used the tab's.
+    /// </para>
+    /// </summary>
+    public static FightingMedium? ActiveMediumFromKey(FightingSkill skill, string? mediumKey)
+    {
+        if (mediumKey == null) return null;
+        if (mediumKey.StartsWith(OrganKeyPrefix, StringComparison.Ordinal))
+        {
+            string organId = mediumKey[OrganKeyPrefix.Length..];
+            return skill.GetMediumForOrganId(organId);
+        }
+        if (mediumKey.StartsWith(OrganPartKeyPrefix, StringComparison.Ordinal))
+        {
+            // part key — the organ id is inferred from Mediums; return the first organ-type medium
+            return skill.Mediums.FirstOrDefault(m => m.Type == MediumType.OrganMedium);
+        }
+        if (mediumKey.StartsWith(BodyPartKeyPrefix, StringComparison.Ordinal))
+        {
+            string bodyPartId = mediumKey[BodyPartKeyPrefix.Length..];
+            return skill.GetMediumForBodyPartId(bodyPartId);
+        }
+        return null;
+    }
 
     /// <summary>Human-readable label for an organ id (e.g. "hands" → "Hands").</summary>
     private static string OrganLabel(string? organId)
@@ -856,9 +932,12 @@ public static class FightModeUI
         _                          => Config.Colors.White,
     };
 
-    /// <summary>Draw the action log in the bottom panel (full width, newest entries at bottom).</summary>
+    /// <summary>
+    /// Draw the action log in the bottom panel (full width, newest entries at bottom).
+    /// Always shows the tail — there is no scroll offset; the fight's history lives in the moment.
+    /// </summary>
     public static void RenderBottomPanel(TerminalHUD terminal,
-        IReadOnlyList<(string Text, LogEntryType Type)> actionLog, int scrollOffset)
+        IReadOnlyList<(string Text, LogEntryType Type)> actionLog)
     {
         int panelH = 100 - BotStart;
         terminal.FillRect(0, BotStart, 100, panelH, ' ', Config.Colors.White, Config.Colors.Black);
@@ -884,7 +963,7 @@ public static class FightModeUI
         }
 
         int total = wrappedLines.Count;
-        int firstVisible = Math.Max(0, total - visibleLines - scrollOffset);
+        int firstVisible = Math.Max(0, total - visibleLines);
         for (int i = 0; i < visibleLines && firstVisible + i < total; i++)
         {
             var (text, type) = wrappedLines[firstVisible + i];
@@ -908,7 +987,8 @@ public static class FightModeUI
                                           bool isAttackHighlight = false,
                                           IReadOnlyList<(int X, int Y)>? previewPath = null,
                                           HashSet<(int X, int Y)>? hoverCells = null,
-                                          (int X, int Y)? attackPreviewCell = null)
+                                          (int X, int Y)? attackPreviewCell = null,
+                                          Fighter? hoveredFighter = null)
     {
         // Always render the full terrain so state changes (hover/selection ending) are
         // properly reflected — without this, dimmed cells would persist after hover ends.
@@ -1008,6 +1088,13 @@ public static class FightModeUI
                 // Inverted colors: swap fg and bg of the fighter glyph
                 terminal.SetCell(tx, ty, f.DisplayChar, Config.Colors.Black, f.DisplayColor);
             }
+            else if (f == hoveredFighter)
+            {
+                // Hovering this fighter's INITIATIVE row: mark them on the map. The pairing already
+                // worked the other way round (hovering the map highlighted the row), which made the
+                // list readable from the arena but not the arena readable from the list.
+                terminal.SetCell(tx, ty, f.DisplayChar, Config.Colors.Black, Config.Colors.Yellow);
+            }
             else if (hoverCells != null && hoverCells.Contains((f.X, f.Y)))
             {
                 var hfg = new Vector4(
@@ -1097,6 +1184,66 @@ public static class FightModeUI
             "(click anywhere to continue)",
             Config.Colors.DarkYellowGrey, Config.Colors.Black);
     }
+
+    // ── Vital-heat consumption box (buff skills) ─────────────────────
+
+    /// <summary>
+    /// Shows what a buff cost: the skill, the heat asked for, and every humor the rotation actually
+    /// drew, in order and in its own colour.
+    ///
+    /// <para>
+    /// A sibling of the travel box rather than a reuse of it — <c>TravelProgressRenderer</c> is
+    /// pinned bottom-centre, where the fight's full-width action log lives, and its content is
+    /// trip-shaped (cells travelled, biome). This one sits over the arena like every other fight
+    /// overlay and names the skill instead. There is no Continue button: the box reports a cost
+    /// already paid, so there is nothing to accept.
+    /// </para>
+    /// </summary>
+    public static void RenderVitalHeatBox(TerminalHUD terminal, string fighterName, string skillName,
+        int required, IReadOnlyList<BodyHumor> drawn)
+    {
+        // Tall enough for the header, the two summary rows and one row per humor drawn.
+        int boxH = 7 + Math.Max(1, drawn.Count);
+        int boxW = InterruptW;
+        int boxX = CenterX + (FightArea.Width  - boxW) / 2;
+        int boxY = CenterY + (FightArea.Height - boxH) / 2;
+
+        terminal.DimRect(0, 0, terminal.Width, terminal.Height,
+            Config.Colors.DarkGray35, Config.Colors.Black);
+        terminal.FillRect(boxX, boxY, boxW, boxH, ' ', Config.Colors.White, Config.Colors.Black);
+        terminal.DrawBox(boxX, boxY, boxW, boxH, BoxStyle.Double, Config.Colors.Orange, Config.Colors.Black);
+
+        int tx = boxX + 2;
+        terminal.Text(tx, boxY + 1, "── VITAL HEAT ──", Config.Colors.Orange, Config.Colors.Black);
+        terminal.Text(tx, boxY + 3, Truncate($"{fighterName} — {skillName}", boxW - 4),
+            Config.Colors.Yellow, Config.Colors.Black);
+
+        int totalHeat = drawn.Sum(h => h.VitalHeat);
+        terminal.Text(tx, boxY + 4, $"  Heat required : {required}",
+            Config.Colors.LightGray, Config.Colors.Black);
+
+        int row = boxY + 6;
+        if (drawn.Count == 0)
+        {
+            // Every queue was already critical — the buff still applied, but nothing was left to burn.
+            terminal.Text(tx, row, "  nothing left to burn",
+                Config.Colors.DarkGray, Config.Colors.Black);
+        }
+        else
+        {
+            foreach (var h in drawn)
+            {
+                string sign = h.VitalHeat >= 0 ? "+" : "";
+                terminal.Text(tx, row++, Truncate($"  {h.Symbol} {h.Name} {sign}{h.VitalHeat}", boxW - 4),
+                    h.Color, Config.Colors.Black);
+            }
+            terminal.Text(tx, row, $"  drawn: {drawn.Count} humor(s), {totalHeat} heat",
+                Config.Colors.DarkYellowGrey, Config.Colors.Black);
+        }
+    }
+
+    /// <summary>Clip <paramref name="s"/> to <paramref name="w"/> cells.</summary>
+    private static string Truncate(string s, int w) => s.Length > w ? s[..w] : s;
 
     /// <summary>
     /// Draws a purplish overlay box describing a mid-move terrain interrupt.

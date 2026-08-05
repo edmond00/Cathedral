@@ -17,6 +17,18 @@ public static class FightAI
     private const double JitterScale = 0.05;
     private const int    MoveSamples = 8;
 
+    // ── Scoring floors ────────────────────────────────────────────────────────
+    // The planner picks the highest-scoring candidate, so these three constants decide whether a
+    // fighter ever does anything. END used to sit at 0.0 alongside real actions whose scores are
+    // net of their costs, so any turn where nothing scored positive ended in silence.
+
+    /// <summary>Ending the turn is the floor of the world: strictly worse than doing anything legal.</summary>
+    private const double EndTurnScore = -1.0;
+    /// <summary>Any legal attack outscores ending the turn, however expensive.</summary>
+    private const double ViableActionFloor = 0.05;
+    /// <summary>Any step that closes the distance outscores ending the turn, however rough the ground.</summary>
+    private const double ClosingMoveFloor = 0.10;
+
     public static IFightAction DecideAction(
         Fighter ai,
         FightState state,
@@ -37,7 +49,10 @@ public static class FightAI
         var primary     = ChoosePriorityTarget(ai, partyFighters, state);
 
         var candidates = new List<Candidate>(32);
-        candidates.Add(Candidate.End(ai, score: 0.0));
+        // Ending the turn is the FALLBACK, never a peer. Seeded at 0.0 it silently won any turn
+        // where every real option scored ≤ 0 — which is most of them, since attacks and moves both
+        // subtract costs — and the enemy would stand still with a party fighter beside it.
+        candidates.Add(Candidate.End(ai, score: EndTurnScore));
 
         // ── Attack candidates ──────────────────────────────────────────
         foreach (var skill in registry.GetAttackSkills())
@@ -45,7 +60,7 @@ public static class FightAI
             if (!skill.IsUnlocked(ai)) continue;
             if (ai.CurrentCineticPoints < skill.CineticPointsCost) continue;
             string mediumKey = DefaultMediumKey(skill);
-            if (state.UsedActionsThisTurn.Contains((mediumKey, skill.SkillId))) continue;
+            if (state.IsActionUsed(ai, mediumKey, skill.SkillId)) continue;
 
             foreach (var target in partyFighters)
             {
@@ -74,7 +89,7 @@ public static class FightAI
             if (!skill.IsUnlocked(ai)) continue;
             if (ai.CurrentCineticPoints < skill.CineticPointsCost) continue;
             string mediumKey = DefaultMediumKey(skill);
-            if (state.UsedActionsThisTurn.Contains((mediumKey, skill.SkillId))) continue;
+            if (state.IsActionUsed(ai, mediumKey, skill.SkillId)) continue;
 
             // Defense gets more attractive when hurt and when threats are nearby.
             double score = incomingThreat * personality.Caution * (1.2 - hpRatio)
@@ -88,7 +103,7 @@ public static class FightAI
             if (!skill.IsUnlocked(ai)) continue;
             if (ai.CurrentCineticPoints < skill.CineticPointsCost) continue;
             string mediumKey = DefaultMediumKey(skill);
-            if (state.UsedActionsThisTurn.Contains((mediumKey, skill.SkillId))) continue;
+            if (state.IsActionUsed(ai, mediumKey, skill.SkillId)) continue;
 
             double score = ScoreUtility(skill, ai, personality);
             candidates.Add(Candidate.SelfSkill(ai, skill, score));
@@ -112,6 +127,11 @@ public static class FightAI
 
                 double score = progress * (0.6 + 0.6 * personality.Aggression)
                              - slipCost * (0.5 + personality.Caution);
+
+                // Any step that actually closes the gap must beat standing still, whatever the
+                // terrain costs. Without this floor a treacherous approach scores negative, loses
+                // to END, and the enemy simply never crosses the arena.
+                if (progress > 0) score = Math.Max(score, ClosingMoveFloor);
 
                 // Tiny preference for keeping the previously focused target in sight.
                 if (ai.LastAttackTargetIdx is int lid
@@ -141,7 +161,7 @@ public static class FightAI
         // ── Apply the winning candidate's side effects ─────────────────
         if (best.Kind == CandidateKind.Attack && best.Skill != null && best.Target != null)
         {
-            state.UsedActionsThisTurn.Add((DefaultMediumKey(best.Skill), best.Skill.SkillId));
+            state.MarkActionUsed(ai, DefaultMediumKey(best.Skill), best.Skill.SkillId);
             ai.LastAttackTargetIdx = state.Fighters.IndexOf(best.Target);
             state.PendingBodyPartId = best.Skill.WoundTargetMode == WoundTargetMode.PlayerChooses
                 ? PickBodyPart(best.Target, personality, rng)
@@ -149,7 +169,7 @@ public static class FightAI
         }
         else if (best.Kind == CandidateKind.SelfSkill && best.Skill != null)
         {
-            state.UsedActionsThisTurn.Add((DefaultMediumKey(best.Skill), best.Skill.SkillId));
+            state.MarkActionUsed(ai, DefaultMediumKey(best.Skill), best.Skill.SkillId);
         }
 
         return best.Build();
@@ -242,7 +262,11 @@ public static class FightAI
         }
 
         score -= skill.CineticPointsCost * 0.10;
-        score -= skill.VitalHeatCost     * 0.20;
+        score -= skill.VitalHeatCostFor(ai) * 0.20;
+
+        // An attack that is legal here always beats ending the turn — the cost subtractions above
+        // otherwise push cheap attacks below zero and hand the turn to END.
+        score = Math.Max(score, ViableActionFloor);
 
         // Ranged attacks already at range — no movement cost to consider.
         return score;
@@ -253,13 +277,16 @@ public static class FightAI
         // Generic base value scaled by Cunning (uses utility moves more deliberately).
         double score = 0.3 * p.Cunning;
 
-        // Visceral / vital-heat-costing skills (Rage, BloodLust, ColdBlood, IronNerves):
-        // valuable when CP is plentiful and the fighter is hurt. Cost is paid in VH.
-        if (skill.VitalHeatCost > 0)
+        // Buffs and other vital-heat skills: valuable when the fighter is hurt. The cost must come
+        // from VitalHeatCostFor, not the authored flat VitalHeatCost — a buff's real cost falls
+        // with level, and reading the static 2..10 made every viscera skill score negative and so
+        // never be chosen by anyone.
+        int vh = skill.VitalHeatCostFor(ai);
+        if (vh > 0)
         {
             double hpRatio = ai.MaxHp > 0 ? ai.CurrentHp / (double)ai.MaxHp : 1.0;
             score += (1.0 - hpRatio) * 0.6 * p.Aggression;
-            score -= skill.VitalHeatCost * 0.25;
+            score -= vh * 0.25;
         }
         else
         {
@@ -293,13 +320,23 @@ public static class FightAI
     {
         var fullPath = FightResolver.BfsPath(
             state.Area, ai.X, ai.Y, target.X, target.Y, state.Fighters, ai);
+
+        // The target's own cell is occupied, so a direct BFS to it can fail even when the fighter
+        // could perfectly well walk up beside them. Retry against the neighbouring cells before
+        // giving up — without this, a blocked route is indistinguishable from "nowhere to go" and
+        // the turn ends with the enemy rooted in place.
+        if (fullPath == null || fullPath.Count == 0)
+            fullPath = BestPathAdjacentTo(ai, state, target);
         if (fullPath == null || fullPath.Count == 0) yield break;
 
-        // Stop one cell short so we don't overlap the target.
-        int stopAt = Math.Max(0, fullPath.Count - 1);
+        // Stop one cell short so we don't overlap the target. A path that already ends adjacent
+        // (the fallback above) is walked in full.
+        bool endsAdjacent = ChebyshevDist(fullPath[^1].X, fullPath[^1].Y, target.X, target.Y) <= 1
+                         && (fullPath[^1].X != target.X || fullPath[^1].Y != target.Y);
+        int stopAt = endsAdjacent ? fullPath.Count : Math.Max(0, fullPath.Count - 1);
         if (stopAt == 0) yield break;
 
-        double budget = ai.CurrentCineticPoints * ai.MoveSpeed;
+        double budget = ai.CurrentCineticPoints * ai.EffectiveMoveSpeed;
         double accCost = 0;
         int px = ai.X, py = ai.Y;
         int affordable = 0;
@@ -328,6 +365,26 @@ public static class FightAI
             var path = fullPath.Take(affordable).ToList();
             yield return (path, path[^1]);
         }
+    }
+
+    /// <summary>
+    /// Shortest route to any cell bordering <paramref name="target"/>, used when a direct path to
+    /// the target's own (occupied) cell fails. Returns null when the fighter is genuinely boxed in.
+    /// </summary>
+    private static List<(int X, int Y)>? BestPathAdjacentTo(Fighter ai, FightState state, Fighter target)
+    {
+        List<(int X, int Y)>? best = null;
+        for (int dy = -1; dy <= 1; dy++)
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            if (dx == 0 && dy == 0) continue;
+            int nx = target.X + dx, ny = target.Y + dy;
+            if (!FightResolver.CanMoveTo(state.Area, nx, ny, state.Fighters, ai)) continue;
+            var path = FightResolver.BfsPath(state.Area, ai.X, ai.Y, nx, ny, state.Fighters, ai);
+            if (path == null || path.Count == 0) continue;
+            if (best == null || path.Count < best.Count) best = path;
+        }
+        return best;
     }
 
     // ── Body-part picker ───────────────────────────────────────────────

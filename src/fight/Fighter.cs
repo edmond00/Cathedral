@@ -43,6 +43,37 @@ public class Fighter
     // ── Derived stat shortcuts ────────────────────────────────────
     public int MaxCineticPoints   => GetCombatStat("cinetic_points");
     public int MoveSpeed          => GetCombatStat("move_speed");
+
+    /// <summary>
+    /// Tiles per Cinetic Point actually available right now — the raw <see cref="MoveSpeed"/> stat
+    /// floored at 1 and scaled by any active effect (Sprint doubles it).
+    ///
+    /// <para>
+    /// Every movement budget must read this rather than <c>Math.Max(1, MoveSpeed)</c>: the range
+    /// preview, the path cost, the AI's reachability search and the MOVE info panel all have to
+    /// agree, or the player is shown a range they cannot walk.
+    /// </para>
+    /// </summary>
+    public int EffectiveMoveSpeed
+    {
+        get
+        {
+            int speed = Math.Max(1, MoveSpeed);
+            foreach (var e in ActiveEffects)
+                speed *= Math.Max(1, e.MoveSpeedMultiplier);
+            return speed;
+        }
+    }
+
+    /// <summary>True when an active effect lets this fighter path through HardObstacle cells (Jump).</summary>
+    public bool CanCrossHardObstacles => ActiveEffects.Any(e => e.AllowsHardObstacleCrossing);
+
+    /// <summary>Total bonus defence dice granted by active effects (Parry, Dodge, postures).</summary>
+    public int BonusDefenseDice => ActiveEffects.Sum(e => e.BonusDefenseDice);
+
+    /// <summary>Total bonus attack dice granted by active effects (Feint's carry-over).</summary>
+    public int BonusAttackDice => ActiveEffects.Sum(e => e.BonusAttackDice);
+
     public int BaseNaturalDefense => GetCombatStat("natural_defense");
     /// <summary>Natural defense including active posture bonus.</summary>
     public int NaturalDefense     => BaseNaturalDefense + (IsDefensePostureActive ? 2 : 0);
@@ -111,6 +142,26 @@ public class Fighter
         for (int i = ActiveEffects.Count - 1; i >= 0; i--)
         {
             ActiveEffects[i].OnTurnStart(this, state, rng);
+            if (ActiveEffects[i].IsExpired)
+                ActiveEffects.RemoveAt(i);
+        }
+    }
+
+    /// <summary>
+    /// Called as this fighter's turn ends, before the initiative order advances.
+    ///
+    /// <para>
+    /// This is where "lasts this turn" actually means this turn. Without it the only expiry pass is
+    /// <see cref="StartTurn"/>, which runs a full round later — so a buff taken on your turn would
+    /// still be up while every enemy acted. Effects that DO want the round (Cold Blood defends
+    /// during enemy turns) just leave <see cref="FightStatusEffect.OnTurnEnd"/> alone.
+    /// </para>
+    /// </summary>
+    public void EndTurn(FightState state, Random rng)
+    {
+        for (int i = ActiveEffects.Count - 1; i >= 0; i--)
+        {
+            ActiveEffects[i].OnTurnEnd(this, state, rng);
             if (ActiveEffects[i].IsExpired)
                 ActiveEffects.RemoveAt(i);
         }

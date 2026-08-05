@@ -75,21 +75,25 @@ public static class FightResolver
 
     // ── Movement ─────────────────────────────────────────────────────
 
-    /// <summary>Returns true if the cell is in bounds, not a hard obstacle, and not occupied.</summary>
+    /// <summary>
+    /// Returns true if the cell is in bounds, passable for <paramref name="mover"/>, and unoccupied.
+    /// Hard obstacles block everyone except a mover carrying an effect that clears them (Jump).
+    /// </summary>
     public static bool CanMoveTo(FightArea area, int tx, int ty, IEnumerable<Fighter> fighters, Fighter mover)
     {
         if (!area.IsInBounds(tx, ty)) return false;
-        if (area.GetCell(tx, ty).Type == TerrainType.HardObstacle) return false;
+        if (area.GetCell(tx, ty).Type == TerrainType.HardObstacle && !mover.CanCrossHardObstacles)
+            return false;
         return !fighters.Any(f => f.IsAlive && f != mover && f.X == tx && f.Y == ty);
     }
 
     /// <summary>How many cinetic points a move of <paramref name="pathLength"/> cardinal steps costs.</summary>
     public static int MovementCineticCost(int pathLength, Fighter mover) =>
-        (int)Math.Ceiling(pathLength / (double)Math.Max(1, mover.MoveSpeed));
+        (int)Math.Ceiling(pathLength / (double)mover.EffectiveMoveSpeed);
 
     /// <summary>How many cinetic points a move whose total weighted cost is <paramref name="pathCost"/> costs.</summary>
     public static int MovementCineticCost(double pathCost, Fighter mover) =>
-        (int)Math.Ceiling(pathCost / Math.Max(1, mover.MoveSpeed));
+        (int)Math.Ceiling(pathCost / (double)mover.EffectiveMoveSpeed);
 
     /// <summary>
     /// Compute the total movement cost of a path (cardinal step = 1.0, diagonal step = 1.5).
@@ -169,7 +173,8 @@ public static class FightResolver
             foreach (var (nx, ny) in Neighbors(cx, cy))
             {
                 if (!area.IsInBounds(nx, ny)) continue;
-                if (area.GetCell(nx, ny).Type == TerrainType.HardObstacle) continue;
+                if (area.GetCell(nx, ny).Type == TerrainType.HardObstacle && !mover.CanCrossHardObstacles)
+                    continue;
                 bool isDestination = nx == tx && ny == ty;
                 if (!isDestination && !CanMoveTo(area, nx, ny, fighters, mover)) continue;
 
@@ -191,7 +196,13 @@ public static class FightResolver
 
     // ── Attack resolution ─────────────────────────────────────────────
 
-    public record AttackResult(int SixesCount, int NaturalDefense, int DefenseSixes, bool IsHit, Wound? Wound);
+    /// <param name="AttackerTurnEnded">
+    /// Set when the defender turned the blow aside AND holds an effect that breaks the attacker off
+    /// (Cold Blood). Surfaced as a flag rather than acted on here: this resolver is static and must
+    /// not drive turn order — <c>FinishAttackResolution</c> is what ends the turn.
+    /// </param>
+    public record AttackResult(int SixesCount, int NaturalDefense, int DefenseSixes, bool IsHit,
+                               Wound? Wound, bool AttackerTurnEnded = false);
 
     /// <summary>
     /// Count 6s in <paramref name="diceValues"/> (attack) and in <paramref name="defenseDiceValues"/>
@@ -217,24 +228,11 @@ public static class FightResolver
                 foreach (var mm in skill.GetContributingModiMentis(attacker))
                     attacker.Member.AwardModusMentisXp(mm);
 
-            wound = PickWound(defender, skill, playerChosenBodyPartId, rng);
-
-            // Damage resistance check: defender's damage_resistance stat
-            // If defender rolls at least 1 success (1d6 per resistance point >= 4),
-            // downgrade wound severity: High→Medium, Medium→Low
-            int resistance = GetFighterCombatStat(defender, "damage_resistance");
-            if (resistance > 0 && wound != null)
-            {
-                int resistSixes = 0;
-                for (int i = 0; i < resistance; i++)
-                    if (rng.Next(1, 7) >= 4) resistSixes++;
-
-                if (resistSixes > 0)
-                {
-                    var downgraded = DowngradeWound(defender, wound, skill, playerChosenBodyPartId, rng);
-                    if (downgraded != null) wound = downgraded;
-                }
-            }
+            // A landed blow wounds. There is no post-hoc mitigation roll any more: damage
+            // resistance downgraded severity invisibly, after the fact, which the player never saw
+            // and could not plan around. Resilience is now measured over the long run instead —
+            // see the wound_healing stat.
+            wound = PickWound(attacker, defender, skill, playerChosenBodyPartId, rng);
 
             // Apply special effects from the skill to the target
             if (state != null)
@@ -269,51 +267,59 @@ public static class FightResolver
                 attacker.Member.HumorQueues.ConsumeVitalHeatCycled(attacker.Member, rng);
         }
 
-        return new AttackResult(sixes, def, defenseSixes, isHit, wound);
-    }
-
-    private static int GetFighterCombatStat(Fighter f, string statName)
-    {
-        var stat = f.Member.DerivedStats.FirstOrDefault(s => s.Name == statName);
-        return stat?.GetValue(f.Member) ?? 0;
-    }
-
-    /// <summary>
-    /// Attempt to downgrade a wound one severity level.
-    /// High → Medium (pick a medium wound from same body part),
-    /// Medium → Low (pick a wildcard wound).
-    /// Returns null if no downgrade is possible.
-    /// </summary>
-    private static Wound? DowngradeWound(Fighter defender, Wound current, FightingSkill skill,
-                                          string? playerChosenBodyPartId, Random rng)
-    {
-        if (current.Handicap == WoundHandicap.Low) return null;
-
-        if (current.Handicap == WoundHandicap.High)
+        // ── Effect events ─────────────────────────────────────────────────────────
+        // Both sides get told how it went, on copies of the lists — a handler may add or expire an
+        // effect (Feint spends itself here), which would otherwise mutate the list being walked.
+        bool attackerTurnEnded = false;
+        if (state != null)
         {
-            // Downgrade to Medium: find a medium wound for the same body part
-            var mediumWounds = WoundRegistry.All.Values
-                .Where(w => w.Handicap == WoundHandicap.Medium && w.AffectsBodyPart(current.TargetId))
-                .ToList();
-            return mediumWounds.Count > 0 ? mediumWounds[rng.Next(mediumWounds.Count)] : null;
+            foreach (var e in attacker.ActiveEffects.ToList())
+                e.OnAttackResolved(attacker, defender, isHit, state, rng);
+
+            bool defenseSucceeded = !isHit;
+            foreach (var e in defender.ActiveEffects.ToList())
+            {
+                e.OnDefended(defender, attacker, defenseSucceeded, state, rng);
+                if (defenseSucceeded && e.EndsAttackerTurnOnSuccessfulDefense)
+                    attackerTurnEnded = true;
+            }
+
+            for (int i = attacker.ActiveEffects.Count - 1; i >= 0; i--)
+                if (attacker.ActiveEffects[i].IsExpired) attacker.ActiveEffects.RemoveAt(i);
+            for (int i = defender.ActiveEffects.Count - 1; i >= 0; i--)
+                if (defender.ActiveEffects[i].IsExpired) defender.ActiveEffects.RemoveAt(i);
         }
 
-        // Medium → Low: pick any wildcard
-        var wildcards = WoundRegistry.WildcardTemplates.Cast<Wound>().ToList();
-        return wildcards.Count > 0 ? wildcards[rng.Next(wildcards.Count)] : null;
+        return new AttackResult(sixes, def, defenseSixes, isHit, wound, attackerTurnEnded);
     }
 
     // ── Wound selection ───────────────────────────────────────────────
 
     /// <summary>
-    /// Pick an appropriate wound for the defender based on the skill's targeting mode.
+    /// Pick a wound for the defender from the pool the resolved hit location allows.
+    ///
+    /// <para>
+    /// A plain uniform draw, unless the <paramref name="attacker"/> carries an effect that strikes
+    /// to ruin (Blood Lust), in which case the worst wound the blow could have caused is the one it
+    /// causes. Note the effect is queried on the attacker, not the defender: it is the attacker's
+    /// ferocity that decides how the blow lands.
+    /// </para>
+    ///
     /// Returns null if no valid wound pool is available.
     /// </summary>
-    public static Wound? PickWound(Fighter defender, FightingSkill skill,
+    public static Wound? PickWound(Fighter? attacker, Fighter defender, FightingSkill skill,
                                     string? playerChosenBodyPartId, Random rng)
     {
         var wounds = GetWoundPool(defender, skill, playerChosenBodyPartId, rng);
         if (wounds.Count == 0) return null;
+
+        if (attacker != null && attacker.ActiveEffects.Any(e => e.ForcesHighestSeverityWound))
+        {
+            var worst = wounds.Max(w => w.Handicap);
+            var severe = wounds.Where(w => w.Handicap == worst).ToList();
+            return severe[rng.Next(severe.Count)];
+        }
+
         return wounds[rng.Next(wounds.Count)];
     }
 

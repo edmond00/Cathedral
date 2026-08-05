@@ -177,11 +177,21 @@ public class LocationTravelGameController : IDisposable
     /// navigation can't clobber it.
     /// </summary>
     public GameMode MenuReturnMode =>
-        _dialogueAdapter != null ? GameMode.Dialogue
+        // A live fight outranks everything: it is running underneath the menu, and returning to
+        // WorldView instead would strand it — the fight would still be there, unreachable.
+        _fightAdapter != null    ? GameMode.Fighting
+        : _dialogueAdapter != null ? GameMode.Dialogue
         : _workAdapter != null   ? GameMode.Working
         : _tradeAdapter != null  ? GameMode.Trading
         : _isInNarrativeMode     ? GameMode.LocationInteraction
         :                          GameMode.WorldView;
+
+    /// <summary>
+    /// ESC in a fight: cancel whatever the player has armed. Returns false when there was nothing
+    /// to cancel, which is the launcher's cue to open the pause menu instead.
+    /// </summary>
+    public bool CliTryCancelFightSelection()
+        => _currentMode == GameMode.Fighting && _fightAdapter?.TryCancelSelection() == true;
     
     /// <summary>
     /// Gets the terminal input handler for coordinate conversion (null if no terminal).
@@ -298,6 +308,11 @@ public class LocationTravelGameController : IDisposable
     public bool CliIsIdle()
     {
         if (_currentMode == GameMode.Traveling) return false;
+
+        // Fight mode has its own self-advancing phases (dice, movement, the vital-heat box). A
+        // script that acted and dumped immediately would otherwise read a half-resolved turn.
+        if (_currentMode == GameMode.Fighting && _fightAdapter != null)
+            return !_fightAdapter.CliIsBusy;
 
         if (_currentMode == GameMode.Dialogue)
         {
@@ -460,7 +475,7 @@ public class LocationTravelGameController : IDisposable
         // Travel encounter fight update (outside narrative mode)
         if (_inTravelEncounter && _currentMode == GameMode.Fighting && _fightAdapter != null)
         {
-            _fightAdapter.Update(1.0 / 60.0);
+            _fightAdapter.Update(deltaTime);
             if (_fightAdapter.IsOver)
                 OnFightCompleted();
             return;
@@ -478,7 +493,7 @@ public class LocationTravelGameController : IDisposable
             // Check if fight/dialogue mode is active (sub-modes within narrative)
             if (_currentMode == GameMode.Fighting && _fightAdapter != null)
             {
-                _fightAdapter.Update(1.0 / 60.0); // Approximate delta for 60 FPS
+                _fightAdapter.Update(deltaTime);
 
                 if (_fightAdapter.IsOver)
                 {
@@ -2922,6 +2937,10 @@ public class LocationTravelGameController : IDisposable
 
         if (_core.Terminal != null)
             _core.Terminal.Visible = true;
+
+        // Repaint at once. This is re-entered when the pause menu is dismissed as well as on first
+        // entry, and without it the menu's pixels stay on screen until the next update tick.
+        _fightAdapter?.Redraw();
     }
     
     private void OnEnterDialogue()

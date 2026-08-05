@@ -57,8 +57,14 @@ public class FightingSkillRegistry
         _byId.Values.Where(s => s.EffectType == FightingSkillEffect.Defense
                               || s.EffectType == FightingSkillEffect.DefensePosture);
 
-    /// <summary>Utility skills — viscera VH skills (Rage, BloodLust, ColdBlood, IronNerves), Feint, Run, Jump…</summary>
+    /// <summary>
+    /// Utility skills — the viscera buffs (Rage, BloodLust, ColdBlood, IronNerves,
+    /// SurvivalInstinct), Sprint, Jump, Feint. <see cref="FightingSkillEffect.Buff"/> must stay in
+    /// this filter: it is how <c>FightAI</c> discovers these skills at all, so dropping it would
+    /// silently make every buff player-only.
+    /// </summary>
     public IEnumerable<FightingSkill> GetUtilitySkills() =>
         _byId.Values.Where(s => s.EffectType == FightingSkillEffect.Utility
-                              || s.EffectType == FightingSkillEffect.Other);
+                              || s.EffectType == FightingSkillEffect.Other
+                              || s.EffectType == FightingSkillEffect.Buff);
 }

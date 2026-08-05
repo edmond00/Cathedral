@@ -131,20 +131,10 @@ public class InitiativeStat : DerivedStat
     public override string FormatValue(int value) => $"+{value}";
 }
 
-/// <summary>
-/// Damage resistance — number of dice rolled to downgrade incoming wound severity.
-/// One success (4+) downgrades: High → Medium → Low.
-/// Source: viscera organ (torso).
-/// Formula: score / 2 (range 0–5 typical).
-/// </summary>
-public class DamageResistanceStat : DerivedStat
-{
-    public override string Name            => "damage_resistance";
-    public override string DisplayName     => "Damage Resistance";
-    public override string? RelatedOrganId => "viscera";
-    protected override int CalculateValue(int sourceScore) => sourceScore / 2;
-    public override string FormatValue(int value) => $"{value} dice";
-}
+// The viscera's combat stat used to be `damage_resistance`, a hidden roll that downgraded a wound's
+// severity after the blow had already landed. The player never saw it fire and could not plan
+// around it. Constitution is expressed over the long run instead — see WoundHealingStat, which took
+// over this slot.
 
 /// <summary>
 /// Fight learning — dice used when attempting to learn an unknown fighting skill in combat.

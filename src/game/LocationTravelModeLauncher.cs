@@ -319,10 +319,14 @@ public static class LocationTravelModeLauncher
             {
                 if (gameController?.CurrentMode == GameMode.Fighting)
                 {
-                    // ESC during fight: pass to fight adapter (cancels skill mode or does nothing)
-                    if (gameController is LocationTravelGameController ltgc)
+                    // ESC during a fight backs out of whatever is armed first — a selected skill,
+                    // a move target. When nothing is armed it opens the pause menu, exactly like
+                    // every other mode. Fighting used to be the one mode with no way to the menu.
+                    if (gameController is LocationTravelGameController ltgc
+                        && !ltgc.CliTryCancelFightSelection())
                     {
-                        ltgc.OnKeyDown(args.Key);
+                        Console.WriteLine("ESC pressed - opening pause menu over fight");
+                        gameController.SetMode(GameMode.MainMenu);
                     }
                 }
                 else if (gameController?.CurrentMode == GameMode.Dialogue)
