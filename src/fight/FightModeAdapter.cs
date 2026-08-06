@@ -1085,7 +1085,12 @@ public class FightModeAdapter
             pq.TryDequeue(out var cur, out var curCost);
             var (cx, cy) = cur;
             if (curCost > dist.GetValueOrDefault(cur, double.MaxValue)) continue;
-            if (cx != fighter.X || cy != fighter.Y) result.Add((cx, cy));
+            // Reached cells are only offered as destinations if the fighter could stand there.
+            // A vaulter's route runs THROUGH hard obstacles, so the flood spreads across them
+            // (below) while they never appear as somewhere to stop.
+            if ((cx != fighter.X || cy != fighter.Y)
+                && FightResolver.CanMoveTo(_state.Area, cx, cy, _state.Fighters, fighter))
+                result.Add((cx, cy));
 
             foreach (var (nx, ny) in new[]
             {
@@ -1093,7 +1098,7 @@ public class FightModeAdapter
                 (cx-1,cy-1),(cx+1,cy-1),(cx-1,cy+1),(cx+1,cy+1)
             })
             {
-                if (!FightResolver.CanMoveTo(_state.Area, nx, ny, _state.Fighters, fighter)) continue;
+                if (!FightResolver.CanPassThrough(_state.Area, nx, ny, _state.Fighters, fighter)) continue;
                 double stepCost = FightResolver.MovementStepCost(_state.Area, cx, cy, nx, ny);
                 double newCost = curCost + stepCost;
                 if (newCost > budget) continue;
@@ -1879,6 +1884,20 @@ public class FightModeAdapter
         return rows;
     }
 
+    /// <summary>
+    /// Where the active fighter could move to right now, and how many of those cells are hard
+    /// obstacles. The second figure must always be zero — a vault crosses an obstacle, it never
+    /// ends on one — and the first grows once Jump opens routes that were walled off.
+    /// </summary>
+    public (int Reachable, int HardObstacles) CliMoveRange()
+    {
+        var active = _state.ActiveFighter;
+        if (active == null) return (0, 0);
+        var cells = ComputeReachableCells(active);
+        int hard = cells.Count(c => _state.Area.GetCell(c.X, c.Y).Type == TerrainType.HardObstacle);
+        return (cells.Count, hard);
+    }
+
     /// <summary>Fighters in initiative order, for `click fighter &lt;name&gt;`.</summary>
     public IReadOnlyList<(string Name, int X, int Y, bool Alive, bool IsEnemy)> CliFighters()
         => _state.Fighters
@@ -1994,9 +2013,11 @@ public class FightModeAdapter
         string fx = active != null && active.ActiveEffects.Count > 0
             ? " fx=" + string.Join(",", active.ActiveEffects.Select(e => e.EffectId))
             : "";
+        var (reach, hard) = CliMoveRange();
         return $"phase={_state.Phase} active={active?.DisplayName ?? "-"} "
              + $"cp={active?.CurrentCineticPoints}/{active?.MaxCineticPoints} "
-             + $"hp={active?.CurrentHp}/{active?.MaxHp}{fx}";
+             + $"hp={active?.CurrentHp}/{active?.MaxHp} "
+             + $"move[cells={reach} onObstacle={hard}]{fx}";
     }
 
     private void FullRedraw()

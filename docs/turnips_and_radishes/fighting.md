@@ -532,8 +532,10 @@ charge fails and the Cinetic Points are spent on the attempt.
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : This turn, movement may cross hard obstacles (they cost no more to enter than
-  open ground). The distance itself is still bought with Cinetic Points as usual.
+- Special Effect : This turn, movement may cross hard obstacles — routes run straight through
+  them instead of around. You cannot come to rest on one: a vault clears the rock, it does not
+  perch on it, so obstacles open as a way through and never as a destination. The distance itself
+  is still bought with Cinetic Points as usual.
 
 25. Defensive Posture
 

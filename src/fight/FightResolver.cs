@@ -140,10 +140,28 @@ public static class FightResolver
     // ── Movement ─────────────────────────────────────────────────────
 
     /// <summary>
-    /// Returns true if the cell is in bounds, passable for <paramref name="mover"/>, and unoccupied.
-    /// Hard obstacles block everyone except a mover carrying an effect that clears them (Jump).
+    /// Whether <paramref name="mover"/> may <b>come to rest</b> on this cell: in bounds, unoccupied,
+    /// and not a hard obstacle.
+    ///
+    /// <para>
+    /// A hard obstacle blocks this for everyone, Jump included. You clear a boulder, you do not
+    /// perch on top of it — so vaulting opens a <em>route</em> through obstacles without ever making
+    /// one a destination. See <see cref="CanPassThrough"/> for the traversal question.
+    /// </para>
     /// </summary>
     public static bool CanMoveTo(FightArea area, int tx, int ty, IEnumerable<Fighter> fighters, Fighter mover)
+    {
+        if (!area.IsInBounds(tx, ty)) return false;
+        if (area.GetCell(tx, ty).Type == TerrainType.HardObstacle) return false;
+        return !fighters.Any(f => f.IsAlive && f != mover && f.X == tx && f.Y == ty);
+    }
+
+    /// <summary>
+    /// Whether <paramref name="mover"/> may <b>cross</b> this cell on the way somewhere else.
+    /// Same as <see cref="CanMoveTo"/>, except a hard obstacle is passable while an effect clears
+    /// them (Jump). A living fighter still blocks the way either way — you vault rock, not people.
+    /// </summary>
+    public static bool CanPassThrough(FightArea area, int tx, int ty, IEnumerable<Fighter> fighters, Fighter mover)
     {
         if (!area.IsInBounds(tx, ty)) return false;
         if (area.GetCell(tx, ty).Type == TerrainType.HardObstacle && !mover.CanCrossHardObstacles)
@@ -237,10 +255,15 @@ public static class FightResolver
             foreach (var (nx, ny) in Neighbors(cx, cy))
             {
                 if (!area.IsInBounds(nx, ny)) continue;
-                if (area.GetCell(nx, ny).Type == TerrainType.HardObstacle && !mover.CanCrossHardObstacles)
-                    continue;
                 bool isDestination = nx == tx && ny == ty;
-                if (!isDestination && !CanMoveTo(area, nx, ny, fighters, mover)) continue;
+
+                if (isDestination)
+                {
+                    // The destination may be occupied — routes are planned toward a fighter to
+                    // approach or attack them — but it can never be a hard obstacle, jumping or not.
+                    if (area.GetCell(nx, ny).Type == TerrainType.HardObstacle) continue;
+                }
+                else if (!CanPassThrough(area, nx, ny, fighters, mover)) continue;
 
                 double stepCost = MovementStepCost(area, cx, cy, nx, ny);
                 double newCost  = curCost + stepCost;
