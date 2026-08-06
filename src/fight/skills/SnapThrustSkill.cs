@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Snap Thrust — fast stabbing thrust.</summary>
@@ -14,5 +16,7 @@ public sealed class SnapThrustSkill : FightingSkill
     public override int MediumLevelMultiplicator  => 1;
     public override int SkillLevelMultiplicator   => 1;
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
-    public override WoundTargetMode WoundTargetMode => WoundTargetMode.Random;
+    public override DamageType DamageTypes         => DamageType.Piercing;
+    public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
+    public override string? TargetBodyPartId       => "trunk,upper_limbs,visage";
 }

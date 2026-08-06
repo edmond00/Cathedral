@@ -111,10 +111,27 @@ public abstract class FightingSkill
     /// <summary>Primary effect type.</summary>
     public abstract FightingSkillEffect EffectType { get; }
 
+    /// <summary>
+    /// The kind of harm this skill does — cutting, piercing, blunt, or a combination.
+    /// Only used when a blow lands somewhere with no authored wound: the generic wound it leaves
+    /// then matches the weapon rather than being the same graze for everything. See
+    /// <c>FightResolver.Wildcards</c>. <see cref="DamageType.None"/> (the default) means any.
+    /// </summary>
+    public virtual DamageType DamageTypes => DamageType.None;
+
     /// <summary>How the wound target is chosen.</summary>
     public virtual WoundTargetMode WoundTargetMode => WoundTargetMode.Random;
 
-    /// <summary>Body part id to target when <see cref="WoundTargetMode"/> is <see cref="WoundTargetMode.FixedBodyPart"/>.</summary>
+    /// <summary>
+    /// Where this skill lands, when <see cref="WoundTargetMode"/> is
+    /// <see cref="WoundTargetMode.FixedBodyPart"/>.
+    ///
+    /// <para>
+    /// A comma-separated list means "one of these", drawn before the roll — "trunk,upper_limbs" for
+    /// a bite that takes the body or an arm. Ids absent from the defender's anatomy are skipped, so
+    /// a list can name both the human and beast forms of a location safely.
+    /// </para>
+    /// </summary>
     public virtual string? TargetBodyPartId => null;
 
     /// <summary>Maximum Euclidean distance from attacker to a valid target cell. Default 1 (adjacent melee).</summary>
@@ -341,6 +358,33 @@ public abstract class FightingSkill
     /// </para>
     /// </summary>
     public virtual FightStatusEffect? CreateRolledEffect(Fighter owner, int sixes) => null;
+
+    /// <summary>
+    /// For a <see cref="FightingSkillEffect.DefensePosture"/> skill, whether the guard is beaten
+    /// aside the first time a blow gets through it. True for Cover — a shield you have been driven
+    /// off is no longer between you and anything — false for a braced stance, which holds for the
+    /// turn regardless.
+    /// </summary>
+    public virtual bool GuardBreaksOnDamage => false;
+
+    /// <summary>
+    /// A riposte: the skill can only be used when the fighter has already turned a melee attack
+    /// aside since their last turn. Counter Strike is the only one — it is what the skill IS, and
+    /// the reason it hits as hard as it does for one Cinetic Point.
+    /// </summary>
+    public virtual bool RequiresSuccessfulDefense => false;
+
+    /// <summary>
+    /// How far this skill may charge: the attacker closes the distance and then strikes, in one
+    /// action. Zero (the default) means an ordinary attack, which reaches only as far as
+    /// <see cref="Range"/> without moving.
+    ///
+    /// <para>
+    /// The lunges declare it. It is why they can be aimed at someone several cells away when every
+    /// other melee skill is limited to a neighbour: the reach is the run-up, not the weapon.
+    /// </para>
+    /// </summary>
+    public virtual int ChargeDistance => 0;
 
     /// <summary>
     /// Returns true when the fighter can use this skill in the current combat state.

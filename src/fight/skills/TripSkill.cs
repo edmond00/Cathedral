@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Trip — sweep the legs. Knocks target down.</summary>
@@ -15,6 +17,7 @@ public sealed class TripSkill : FightingSkill
     public override int SkillLevelMultiplicator   => 1;
     public override FightStatusEffect[] SpecialEffects => new FightStatusEffect[] { new KnockdownEffect() };
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
+    public override DamageType DamageTypes         => DamageType.Contending;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
-    public override string? TargetBodyPartId      => "lower_limbs";
+    public override string? TargetBodyPartId       => "legs,feet";
 }

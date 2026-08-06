@@ -1572,7 +1572,8 @@ public class FightModeAdapter
         string popupMsg;
         if (terrain == TerrainType.DangerousTerrain)
         {
-            var lowWounds = WoundRegistry.All.Values
+            // The stumbler's own catalogue — a wolf grazes itself on wolf wounds.
+            var lowWounds = WoundRegistry.ForAnatomy(mover.Member)
                 .Where(w => w.Handicap == WoundHandicap.Low)
                 .ToList();
             if (lowWounds.Count > 0)

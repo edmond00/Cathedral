@@ -107,6 +107,36 @@ public static class FightResolver
     public static bool IsInSkillRange(Fighter attacker, Fighter target, FightingSkill skill)
         => IsInSkillRange(target.X - attacker.X, target.Y - attacker.Y, skill);
 
+    /// <summary>Grid steps between two fighters, counting a diagonal as one — the movement metric.</summary>
+    public static int ChebyshevDistance(Fighter a, Fighter b)
+        => Math.Max(Math.Abs(a.X - b.X), Math.Abs(a.Y - b.Y));
+
+    /// <summary>
+    /// Where a charging attacker ends up: the cell beside <paramref name="target"/> reached by the
+    /// shortest route, provided that route is no longer than <paramref name="maxSteps"/>.
+    /// Null when there is no clear run — the charge then fails rather than teleporting anyone.
+    /// </summary>
+    public static (int X, int Y)? ChargeLandingCell(Fighter attacker, Fighter target,
+                                                    FightState state, int maxSteps)
+    {
+        (int X, int Y)? best = null;
+        int bestLen = int.MaxValue;
+
+        for (int dy = -1; dy <= 1; dy++)
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            if (dx == 0 && dy == 0) continue;
+            int nx = target.X + dx, ny = target.Y + dy;
+            if (nx == attacker.X && ny == attacker.Y) return (attacker.X, attacker.Y); // already there
+            if (!CanMoveTo(state.Area, nx, ny, state.Fighters, attacker)) continue;
+
+            var path = BfsPath(state.Area, attacker.X, attacker.Y, nx, ny, state.Fighters, attacker);
+            if (path == null || path.Count == 0 || path.Count > maxSteps) continue;
+            if (path.Count < bestLen) { bestLen = path.Count; best = (nx, ny); }
+        }
+        return best;
+    }
+
     // ── Movement ─────────────────────────────────────────────────────
 
     /// <summary>
@@ -311,6 +341,11 @@ public static class FightResolver
                 e.OnAttackResolved(attacker, defender, isHit, state, rng);
 
             bool defenseSucceeded = !isHit;
+
+            // Turning a melee blow aside is the opening a riposte needs.
+            if (defenseSucceeded && skill.Range <= 1)
+                defender.HasDefendedMeleeSinceOwnTurn = true;
+
             foreach (var e in defender.ActiveEffects.ToList())
             {
                 e.OnDefended(defender, attacker, defenseSucceeded, state, rng);
@@ -369,14 +404,18 @@ public static class FightResolver
         var validOrganIds     = allOrgans.Select(o => o.Id).ToHashSet();
         var validOrganPartIds = allOrgans.SelectMany(o => o.Parts).Select(p => p.Id).ToHashSet();
 
-        var anatomyWounds = WoundRegistry.All.Values
+        // The defender's OWN catalogue, not the human one — a wolf's harm is broken forelegs and
+        // torn-off fangs, none of which exist in the human list.
+        var catalogue = WoundRegistry.ForAnatomy(defender.Member).ToList();
+
+        var anatomyWounds = catalogue
             .Where(w => w.TargetKind == WoundTargetKind.Wildcard
                      || (w.TargetKind == WoundTargetKind.BodyPart  && validBodyPartIds.Contains(w.TargetId))
                      || (w.TargetKind == WoundTargetKind.Organ     && validOrganIds.Contains(w.TargetId))
                      || (w.TargetKind == WoundTargetKind.OrganPart && validOrganPartIds.Contains(w.TargetId)))
             .ToList();
 
-        return anatomyWounds.Count > 0 ? anatomyWounds : WoundRegistry.All.Values.ToList();
+        return anatomyWounds.Count > 0 ? anatomyWounds : catalogue;
     }
 
     /// <summary>
@@ -406,6 +445,47 @@ public static class FightResolver
         }
 
         return null;   // wildcard remainder
+    }
+
+    /// <summary>
+    /// Draws ONE location from a skill's authored list — "trunk,upper_limbs" for a blow that takes
+    /// the body or an arm — weighted the same bucket-proportional way as
+    /// <see cref="PreRollHitLocation"/>, so a large region is likelier than a small organ.
+    ///
+    /// <para>
+    /// Drawing before the roll rather than filtering after it is what lets armour work: the defence
+    /// pool is sized from a single resolved section, so a skill that could land in two places has to
+    /// pick which one before anyone rolls anything.
+    /// </para>
+    ///
+    /// <para>
+    /// Ids the defender does not have are skipped, so a list may name both the human and the beast
+    /// form of a location. Returns null when none of them exist on this body — the caller then falls
+    /// back to a wildcard graze.
+    /// </para>
+    /// </summary>
+    public static string? PreRollAmong(Fighter defender, string targetIds, Random rng)
+    {
+        var pool = BuildAnatomyWoundPool(defender);
+        if (pool.Count == 0) return null;
+
+        var candidates = targetIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                  .Select(s => s.Trim())
+                                  .Where(s => s.Length > 0)
+                                  .Select(id => (Id: id, Weight: FilterByTargetSingle(pool, id, defender).Count))
+                                  .Where(c => c.Weight > 0)
+                                  .ToList();
+        if (candidates.Count == 0) return null;
+
+        int total = candidates.Sum(c => c.Weight);
+        int roll  = rng.Next(total);
+        int acc   = 0;
+        foreach (var c in candidates)
+        {
+            acc += c.Weight;
+            if (roll < acc) return c.Id;
+        }
+        return candidates[^1].Id;
     }
 
     /// <summary>
@@ -453,17 +533,50 @@ public static class FightResolver
                                              string? resolvedLocationId, Random rng)
     {
         var anatomyWounds = BuildAnatomyWoundPool(defender);
-        if (resolvedLocationId is null) return Wildcards(anatomyWounds);
+        var generic = Wildcards(anatomyWounds, skill.DamageTypes);
+
+        if (resolvedLocationId is null) return generic;
 
         var filtered = FilterByTarget(anatomyWounds, resolvedLocationId, defender);
-        return filtered.Count > 0 ? filtered : Wildcards(anatomyWounds);
+        if (filtered.Count == 0) return generic;
+
+        // A landed blow can be a named injury of that location OR a generic one of the weapon's
+        // kind — a sword to the arm breaks it or merely opens a Cut. Without this every hit would
+        // be a maiming: once every attack has an authored localisation, the location filter
+        // excludes wildcards entirely, and Cut / Puncture / Contusion drop out of combat for good.
+        var pool = new List<Wound>(filtered);
+        foreach (var w in generic)
+            if (w.TargetKind == WoundTargetKind.Wildcard && !pool.Contains(w))
+                pool.Add(w);
+        return pool;
     }
 
-    /// <summary>Generic wounds that belong to no particular place, used as the honest fallback.</summary>
-    private static List<Wound> Wildcards(List<Wound> pool)
+    /// <summary>
+    /// Generic wounds that belong to no particular place, used as the honest fallback.
+    ///
+    /// <para>
+    /// Narrowed to the ones matching <paramref name="damageTypes"/>, so the graze a weapon leaves
+    /// looks like the weapon: a blade Cuts, a spear Punctures, a mace leaves a Contusion. A skill
+    /// that declares no damage type (or whose type has no matching wildcard on this anatomy) draws
+    /// from all of them, which is what everything did before types existed.
+    /// </para>
+    /// </summary>
+    private static List<Wound> Wildcards(List<Wound> pool, DamageType damageTypes = DamageType.None)
     {
         var wildcards = pool.Where(w => w.TargetKind == WoundTargetKind.Wildcard).ToList();
-        return wildcards.Count > 0 ? wildcards : pool;
+        if (wildcards.Count == 0) return pool;
+
+        if (damageTypes != DamageType.None)
+        {
+            var typed = wildcards
+                .OfType<WildcardWound>()
+                .Where(w => (w.DamageType & damageTypes) != 0)
+                .Cast<Wound>()
+                .ToList();
+            if (typed.Count > 0) return typed;
+        }
+
+        return wildcards;
     }
 
     /// <summary>
@@ -488,6 +601,20 @@ public static class FightResolver
                 if (seen.Add(w)) combined.Add(w);
         return combined;
     }
+
+    /// <summary>
+    /// How many wounds in <paramref name="pool"/> a single anatomy id can produce. Exposed for
+    /// <c>--item-audit</c>, which uses it to prove every authored localisation reaches something.
+    /// </summary>
+    public static int CountWoundsFor(List<Wound> pool, string targetId, Fighter defender)
+        => FilterByTargetSingle(pool, targetId, defender).Count;
+
+    /// <summary>
+    /// The generic wounds a blow of <paramref name="damageTypes"/> can leave. Exposed for
+    /// <c>--item-audit</c>, which uses it to show that each weapon grazes in its own way.
+    /// </summary>
+    public static IEnumerable<Wound> GrazeWoundsFor(List<Wound> pool, DamageType damageTypes)
+        => Wildcards(pool, damageTypes).Where(w => w.TargetKind == WoundTargetKind.Wildcard);
 
     /// <summary>
     /// Find wounds in <paramref name="wounds"/> that match the single anatomy id
@@ -518,10 +645,21 @@ public static class FightResolver
             return result;
         }
 
-        // organ: organ-level wounds for the organ in its parent body part
+        // An organ gathers what is inside it too — its own wounds and its parts'. Containment
+        // cascades at every tier, not just from body parts: aiming at the legs has to be able to
+        // break a knee, since that is where the leg wounds are actually authored (left_leg,
+        // right_leg). Without this, targeting an organ whose harm lives one level down — legs,
+        // feet, arms — found nothing and quietly degraded to a graze.
         var organParent = defender.Member.BodyParts.FirstOrDefault(b => b.Organs.Any(o => o.Id == targetId));
         if (organParent != null)
-            return wounds.Where(w => w.AffectsOrgan(targetId, organParent.Id)).ToList();
+        {
+            var organ  = organParent.Organs.First(o => o.Id == targetId);
+            var result = wounds.Where(w => w.AffectsOrgan(targetId, organParent.Id)).ToList();
+            foreach (var part in organ.Parts)
+                foreach (var w in wounds.Where(w => w.AffectsOrganPart(part.Id, organ.Id, organParent.Id)))
+                    if (!result.Contains(w)) result.Add(w);
+            return result;
+        }
 
         // organ part: organ-part-level wounds for the specific part
         foreach (var bp in defender.Member.BodyParts)

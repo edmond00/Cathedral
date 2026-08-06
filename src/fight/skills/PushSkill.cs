@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Push — shove the opponent back one step.</summary>
@@ -15,6 +17,7 @@ public sealed class PushSkill : FightingSkill
     public override int SkillLevelMultiplicator   => 1;
     public override FightStatusEffect[] SpecialEffects => new FightStatusEffect[] { new PushbackEffect(1) };
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
+    public override DamageType DamageTypes         => DamageType.Contending;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
-    public override string? TargetBodyPartId      => "backbone";
+    public override string? TargetBodyPartId       => "trunk";
 }

@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Throat Grip — crushing grip on the throat. Immobilizes and causes heavy bleeding.</summary>
@@ -15,6 +17,7 @@ public sealed class ThroatGripSkill : FightingSkill
     public override int SkillLevelMultiplicator   => 2;
     public override FightStatusEffect[] SpecialEffects => new FightStatusEffect[] { new ImmobilizeEffect(), new BleedingEffect(3) };
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
+    public override DamageType DamageTypes         => DamageType.Piercing;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
-    public override string? TargetBodyPartId      => "pulmones";
+    public override string? TargetBodyPartId       => "pulmones";
 }

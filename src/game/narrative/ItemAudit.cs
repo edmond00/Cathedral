@@ -67,6 +67,7 @@ public static class ItemAudit
         warnings.AddRange(CheckWeapons(items, sb));
         warnings.AddRange(CheckWeights(items, sb));
         warnings.AddRange(CheckHitLocationDistribution(sb));
+        warnings.AddRange(CheckSkillLocalizations(sb));
 
         sb.AppendLine();
         if (warnings.Count == 0)
@@ -131,6 +132,101 @@ public static class ItemAudit
         }
         sb.AppendLine();
 
+        return warnings;
+    }
+
+    // ── Skill localisations ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Checks that every attack's authored localisation can actually wound where it says it does.
+    ///
+    /// <para>
+    /// A target id that resolves to nothing does not throw and does not warn at runtime: the pool
+    /// falls back to a wildcard, so the skill still "works" and just quietly stops being able to
+    /// cause anything worse than a graze. Three skills were in that state — <c>trip</c> aimed at
+    /// the legs, <c>bite</c> at the arms — because the wounds for those organs are authored one
+    /// tier down, on <c>left_leg</c> and <c>right_arm</c>. Nothing in the game would have said so.
+    /// </para>
+    ///
+    /// <para>
+    /// Run against both anatomies, since a skill may legitimately name a location only one species
+    /// has; a warning is only raised when a location reaches nothing on <em>either</em>.
+    /// </para>
+    /// </summary>
+    private static List<string> CheckSkillLocalizations(StringBuilder sb)
+    {
+        var warnings = new List<string>();
+        var registry = Fight.FightingSkillRegistry.Instance;
+
+        // A human and a beast: their anatomies name different regions (a beast has limbs and a
+        // muzzle where a human has upper_limbs and a visage), so a location that reaches nothing on
+        // one may be exactly right on the other.
+        var bodies = new (string Name, Fight.Fighter Fighter)[]
+        {
+            ("human", new Fight.Fighter(new Protagonist(), 0, 0, false, Fight.FighterFaction.Enemy)),
+            ("beast", new Fight.Fighter(new EnemyCombatant("beast", new WolfSpecies()), 0, 0, false,
+                                        Fight.FighterFaction.Enemy)),
+        };
+        var pools = bodies.ToDictionary(b => b.Name, b => Fight.FightResolver.BuildAnatomyWoundPool(b.Fighter));
+
+        sb.AppendLine("── Skill localisations ───────────────────────────────────────────────");
+        sb.AppendLine();
+        sb.AppendLine("  Wounds each authored localisation can reach, per anatomy. A zero on BOTH means");
+        sb.AppendLine("  the blow can only ever graze there, however well it is rolled.");
+        sb.AppendLine();
+        sb.AppendLine($"  {"skill",-19} {"human",-26} {"beast",-16} {"damage",-20} graze");
+
+        foreach (var skill in registry.GetAll()
+                     .Where(s => s.WoundTargetMode == Fight.WoundTargetMode.FixedBodyPart
+                              && s.TargetBodyPartId != null)
+                     .OrderBy(s => s.SkillId))
+        {
+            var parts = skill.TargetBodyPartId!.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                               .Select(p => p.Trim()).ToList();
+
+            var perBody = new Dictionary<string, List<string>>();
+            int grandTotal = 0;
+
+            foreach (var (name, fighter) in bodies)
+            {
+                var shown = new List<string>();
+                foreach (var part in parts)
+                {
+                    int n = Fight.FightResolver.CountWoundsFor(pools[name], part, fighter);
+                    grandTotal += n;
+                    if (n > 0) shown.Add($"{part}:{n}");
+                }
+                perBody[name] = shown;
+            }
+
+            // Only a location unreachable on EVERY anatomy is a real gap.
+            foreach (var part in parts)
+            {
+                bool anywhere = bodies.Any(b =>
+                    Fight.FightResolver.CountWoundsFor(pools[b.Name], part, b.Fighter) > 0);
+                if (!anywhere)
+                    warnings.Add($"{skill.SkillId}: localisation '{part}' reaches no authored wound on any " +
+                                 "anatomy — the blow will always degrade to a wildcard graze there");
+            }
+
+            // The generic wound this weapon leaves when it lands without breaking anything —
+            // proof the damage type is actually reaching wildcard selection.
+            var humanFighter = bodies[0].Fighter;
+            var graze = Fight.FightResolver.GrazeWoundsFor(pools["human"], skill.DamageTypes)
+                             .Select(w => w.WoundName).Distinct().OrderBy(n => n);
+
+            sb.AppendLine($"  {skill.SkillId,-19} {string.Join(" ", perBody["human"]),-26} " +
+                          $"{string.Join(" ", perBody["beast"]),-16} {skill.DamageTypes,-20} {string.Join("/", graze)}");
+
+            if (skill.DamageTypes == DamageType.None)
+                warnings.Add($"{skill.SkillId}: no damage type — its grazes are indistinguishable from every " +
+                             "other weapon's");
+
+            if (grandTotal == 0)
+                warnings.Add($"{skill.SkillId}: NO authored wound anywhere in its localisation — " +
+                             "this attack can never cause more than a graze");
+        }
+        sb.AppendLine();
         return warnings;
     }
 

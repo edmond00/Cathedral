@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Crushing Blow — devastating blow to face, trunk or head.</summary>
@@ -14,5 +16,7 @@ public sealed class CrushingBlowSkill : FightingSkill
     public override int MediumLevelMultiplicator  => 2;
     public override int SkillLevelMultiplicator   => 2;
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
-    public override WoundTargetMode WoundTargetMode => WoundTargetMode.Random;
+    public override DamageType DamageTypes         => DamageType.Contending | DamageType.Piercing;
+    public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
+    public override string? TargetBodyPartId       => "visage,trunk,encephalon";
 }

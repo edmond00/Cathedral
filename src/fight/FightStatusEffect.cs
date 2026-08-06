@@ -311,7 +311,8 @@ public sealed class PushbackEffect : FightStatusEffect
         // Slam into wall: apply bonus backbone wound
         if (hitWall)
         {
-            var backboneWounds = WoundRegistry.All.Values
+            // The slammed fighter's own catalogue, not the human one.
+            var backboneWounds = WoundRegistry.ForAnatomy(target.Member)
                 .Where(w => w.AffectsOrgan("backbone", "trunk"))
                 .ToList();
             if (backboneWounds.Count > 0)

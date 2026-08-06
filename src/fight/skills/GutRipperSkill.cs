@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Gut Ripper — disemboweling claw strike. Causes severe bleeding.</summary>
@@ -15,6 +17,7 @@ public sealed class GutRipperSkill : FightingSkill
     public override int SkillLevelMultiplicator   => 3;
     public override FightStatusEffect[] SpecialEffects => new FightStatusEffect[] { new BleedingEffect(3) };
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
+    public override DamageType DamageTypes         => DamageType.Cutting;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
-    public override string? TargetBodyPartId      => "viscera";
+    public override string? TargetBodyPartId       => "viscera";
 }

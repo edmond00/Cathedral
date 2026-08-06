@@ -32,43 +32,87 @@ public abstract class TurnScopedBuffEffect : FightStatusEffect
 }
 
 /// <summary>
+/// Base for effects that must survive the owner's own turn ending, because what they answer happens
+/// on somebody <em>else's</em> turn — anything defensive.
+///
+/// <para>
+/// The distinction is not pedantry. A guard expiring at <see cref="OnTurnEnd"/> is gone before the
+/// first enemy swings, which makes it literally unusable: you brace, your turn ends because bracing
+/// cost your last Cinetic Point, and the brace evaporates. These expire at the owner's next
+/// <see cref="OnTurnStart"/> instead — one full round, which is exactly the window in which blows
+/// arrive.
+/// </para>
+/// </summary>
+public abstract class RoundScopedBuffEffect : FightStatusEffect
+{
+    public override void OnTurnStart(Fighter owner, FightState state, Random rng) => IsExpired = true;
+}
+
+/// <summary>
 /// Defensive stance — the old <c>Fighter.IsDefensePostureActive</c> flag, promoted to an effect.
 /// <para>
 /// It was a bool on the fighter, which meant the STATE pane could not see it: a player who took a
 /// stance got no confirmation anywhere that they had. As an effect it lists itself.
 /// </para>
 /// </summary>
-public sealed class DefensePostureEffect : TurnScopedBuffEffect
+public sealed class DefensePostureEffect : RoundScopedBuffEffect
 {
-    private readonly int _dice;
+    private readonly int  _dice;
+    private readonly bool _breaksOnDamage;
+    private readonly string _label;
 
-    public DefensePostureEffect(int dice) => _dice = Math.Max(0, dice);
+    /// <param name="breaksOnDamage">
+    /// Cover only. A shield holds against everything until something gets through it, and then it
+    /// is out of position — unlike a braced stance, which holds for the turn regardless.
+    /// </param>
+    public DefensePostureEffect(string label, int dice, bool breaksOnDamage = false)
+    {
+        _label          = label;
+        _dice           = Math.Max(0, dice);
+        _breaksOnDamage = breaksOnDamage;
+    }
 
     public override string EffectId      => "defense_posture";
     public override string DisplayLabel  => $"D{_dice}";
     public override Vector4 DisplayColor => Config.Colors.Yellow;
-    public override string DisplayName   => $"Defensive stance (+{_dice})";
+    public override string DisplayName   => $"{_label} (+{_dice})";
     public override string Description   =>
-        $"Braced. Adds {_dice} dice to the defence pool against every attack until the end of this turn.";
+        $"Braced. Adds {_dice} dice to the defence pool against every attack until your next turn"
+        + (_breaksOnDamage ? ", and breaks the moment a blow gets through." : ".");
 
     public override int BonusDefenseDice => _dice;
 
     public override void OnApply(Fighter target, Fighter source, FightState state, Random rng) =>
         state.AddLog($"{target.DisplayName} braces — +{_dice} defence dice.", LogEntryType.SpecialEffect);
+
+    public override void OnDefended(Fighter owner, Fighter attacker, bool defenseSucceeded,
+                                    FightState state, Random rng)
+    {
+        if (!_breaksOnDamage || defenseSucceeded) return;
+        IsExpired = true;
+        state.AddLog($"{owner.DisplayName}'s {_label.ToLowerInvariant()} is beaten aside.",
+            LogEntryType.SpecialEffect);
+    }
 }
 
 /// <summary>
-/// Parry / Dodge — a reactive guard bought up front.
+/// Parry / Dodge — a reactive guard bought up front, and spent on ONE incoming attack.
+///
 /// <para>
 /// Defence in this game IS a number of dice, so a guard skill has no reason to roll on use: it
-/// hands its level straight to the pool the next incoming attack is measured against. (Previously
-/// these went down the attack path against the user's own defence, which is how a parry could
-/// wound the person parrying.)
+/// hands its level straight to the pool the next attack is measured against. (Previously these went
+/// down the attack path against the user's own defence, which is how a parry could wound the person
+/// parrying.)
+/// </para>
+///
+/// <para>
+/// Unlike a stance, a guard covers a single blow — you parry <em>a</em> thrust — so it expires as
+/// soon as one attack has been measured against it, hit or miss.
 /// </para>
 /// </summary>
-public sealed class GuardEffect : TurnScopedBuffEffect
+public sealed class GuardEffect : RoundScopedBuffEffect
 {
-    private readonly int    _dice;
+    private int _dice;
     private readonly string _label;
 
     public GuardEffect(string label, int dice)
@@ -82,12 +126,23 @@ public sealed class GuardEffect : TurnScopedBuffEffect
     public override Vector4 DisplayColor => Config.Colors.Yellow;
     public override string DisplayName   => $"{_label} (+{_dice})";
     public override string Description   =>
-        $"Guarding. Adds {_dice} dice to the defence pool against every attack until the end of this turn.";
+        $"Guarding. Adds {_dice} dice to the defence pool against the next attack, then is spent.";
 
     public override int BonusDefenseDice => _dice;
 
     public override void OnApply(Fighter target, Fighter source, FightState state, Random rng) =>
-        state.AddLog($"{target.DisplayName} guards — +{_dice} defence dice.", LogEntryType.SpecialEffect);
+        state.AddLog($"{target.DisplayName} guards — +{_dice} defence dice on the next blow.",
+            LogEntryType.SpecialEffect);
+
+    /// <summary>Spent by the blow it answered, whether or not it turned it.</summary>
+    public override void OnDefended(Fighter owner, Fighter attacker, bool defenseSucceeded,
+                                    FightState state, Random rng)
+    {
+        _dice = 0;
+        IsExpired = true;
+        state.AddLog($"{owner.DisplayName}'s {_label.ToLowerInvariant()} is spent.",
+            LogEntryType.SpecialEffect);
+    }
 }
 
 /// <summary>Sprint — twice the ground per Cinetic Point for the rest of the turn.</summary>

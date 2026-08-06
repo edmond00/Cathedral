@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Seize — grab and restrain. Immobilizes the target.</summary>
@@ -15,5 +17,6 @@ public sealed class SeizeSkill : FightingSkill
     public override int SkillLevelMultiplicator   => 1;
     public override FightStatusEffect[] SpecialEffects => new FightStatusEffect[] { new ImmobilizeEffect() };
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
-    public override WoundTargetMode WoundTargetMode => WoundTargetMode.Random;
+    public override DamageType DamageTypes         => DamageType.Contending;
+    public override WoundTargetMode WoundTargetMode => WoundTargetMode.PlayerChooses;
 }

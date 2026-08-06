@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Sighted Shot — aimed shot targeting the heart/viscera.</summary>
@@ -14,8 +16,9 @@ public sealed class SightedShotSkill : FightingSkill
     public override int MediumLevelMultiplicator  => 1;
     public override int SkillLevelMultiplicator   => 2;
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
+    public override DamageType DamageTypes         => DamageType.Piercing;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
-    public override string? TargetBodyPartId      => "viscera";
+    public override string? TargetBodyPartId       => "heart";
     public override int Range                     => 8;
     public override int MinRange                  => 2;
 }

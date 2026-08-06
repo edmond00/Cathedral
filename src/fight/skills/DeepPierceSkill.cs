@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Deep Pierce — deep stabbing thrust. Player chooses target. Causes bleeding.</summary>
@@ -15,5 +17,6 @@ public sealed class DeepPierceSkill : FightingSkill
     public override int SkillLevelMultiplicator   => 3;
     public override FightStatusEffect[] SpecialEffects => new FightStatusEffect[] { new BleedingEffect(3) };
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
+    public override DamageType DamageTypes         => DamageType.Piercing;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.PlayerChooses;
 }

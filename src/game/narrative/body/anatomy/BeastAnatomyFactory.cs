@@ -41,6 +41,7 @@ public sealed class BeastAnatomyFactory : IAnatomyFactory
         Add(new BeastBrokenBackboneWound());           Add(new BeastTailAmputeeWound());
         Add(new BeastBrokenRibsWound());
         Add(new BeastEviscerationWound());             Add(new BeastPiercedPaunchWound());
+        Add(new BeastPiercedHeartWound());
         Add(new BeastTornedOffFangWound());
         Add(new BeastBrokenLeftForelegWound());        Add(new BeastBrokenRightForelegWound());
         Add(new BeastCrippledLeftForelegWound());      Add(new BeastCrippledRightForelegWound());

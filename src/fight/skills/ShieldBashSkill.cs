@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Shield Bash — bash with the shield targeting face or trunk.</summary>
@@ -14,5 +16,7 @@ public sealed class ShieldBashSkill : FightingSkill
     public override int MediumLevelMultiplicator  => 1;
     public override int SkillLevelMultiplicator   => 1;
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
-    public override WoundTargetMode WoundTargetMode => WoundTargetMode.Random;
+    public override DamageType DamageTypes         => DamageType.Contending;
+    public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
+    public override string? TargetBodyPartId       => "visage,trunk";
 }

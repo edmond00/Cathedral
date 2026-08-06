@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Driving Lunge — charging lunge into the trunk. Long charge distance.</summary>
@@ -14,7 +16,9 @@ public sealed class DrivingLungeSkill : FightingSkill
     public override int MediumLevelMultiplicator  => 2;
     public override int SkillLevelMultiplicator   => 2;
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
+    public override DamageType DamageTypes         => DamageType.Cutting | DamageType.Piercing;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
-    public override string? TargetBodyPartId      => "backbone";
+    public override string? TargetBodyPartId       => "trunk";
     public override int Range                     => 5;
+    public override int ChargeDistance            => 5;
 }

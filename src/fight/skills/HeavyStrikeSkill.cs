@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Heavy Strike — massive blow. Player chooses target. Knocks back.</summary>
@@ -15,5 +17,6 @@ public sealed class HeavyStrikeSkill : FightingSkill
     public override int SkillLevelMultiplicator   => 2;
     public override FightStatusEffect[] SpecialEffects => new FightStatusEffect[] { new PushbackEffect(1) };
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
+    public override DamageType DamageTypes         => DamageType.Contending | DamageType.Cutting;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.PlayerChooses;
 }

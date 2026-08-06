@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Uppercut — rising strike targeting head.</summary>
@@ -14,5 +16,7 @@ public sealed class UppercutSkill : FightingSkill
     public override int MediumLevelMultiplicator  => 1;
     public override int SkillLevelMultiplicator   => 2;
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
-    public override WoundTargetMode WoundTargetMode => WoundTargetMode.Random;
+    public override DamageType DamageTypes         => DamageType.Contending;
+    public override WoundTargetMode WoundTargetMode => WoundTargetMode.FixedBodyPart;
+    public override string? TargetBodyPartId       => "visage,encephalon";
 }

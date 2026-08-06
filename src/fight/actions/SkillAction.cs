@@ -90,8 +90,9 @@ public class SkillAction : IFightAction
         {
             bool isPosture = Skill.EffectType == FightingSkillEffect.DefensePosture;
             int dice = Skill.TotalDice(Attacker, OrganPartId, ActiveMedium);
+            // A posture covers every blow this turn; a parry or dodge covers one.
             FightStatusEffect guard = isPosture
-                ? new DefensePostureEffect(dice)
+                ? new DefensePostureEffect(Skill.DisplayName, dice, Skill.GuardBreaksOnDamage)
                 : new GuardEffect(Skill.DisplayName, dice);
             Attacker.ActiveEffects.Add(guard);
             guard.OnApply(Attacker, Attacker, state, rng);
@@ -102,6 +103,28 @@ public class SkillAction : IFightAction
             // acting on whatever Cinetic Points remain.
             state.Phase = isPosture ? TurnPhase.TurnEnding : TurnPhase.SelectingAction;
             return;
+        }
+
+        // ── Charge: close the distance, then strike ───────────────────────────────
+        // A lunge's long reach is the run-up, not the weapon. Without this the attacker would stab
+        // someone five cells away without moving, which is what "Range 5" alone meant.
+        if (Skill.ChargeDistance > 0 && Target != Attacker
+            && FightResolver.ChebyshevDistance(Attacker, Target) > 1)
+        {
+            var landing = FightResolver.ChargeLandingCell(Attacker, Target, state, Skill.ChargeDistance);
+            if (landing == null)
+            {
+                // Nothing to charge across — the route is blocked or too long. The blow is spent
+                // covering ground it cannot cover.
+                state.AddLog($"{Attacker.DisplayName}'s charge is blocked — no clear run at {Target.DisplayName}.  [-{cost} CP]",
+                    LogEntryType.Miss);
+                state.Phase = TurnPhase.SelectingAction;
+                return;
+            }
+            Attacker.X = landing.Value.X;
+            Attacker.Y = landing.Value.Y;
+            state.AddLog($"{Attacker.DisplayName} charges to ({landing.Value.X},{landing.Value.Y}).",
+                LogEntryType.SpecialEffect);
         }
 
         // Set up dice roll for the window to animate (two-roll: attack dice vs defense dice)
@@ -118,7 +141,11 @@ public class SkillAction : IFightAction
         if (Target != Attacker)
         {
             if (Skill.WoundTargetMode == WoundTargetMode.FixedBodyPart)
-                state.PendingBodyPartId = Skill.TargetBodyPartId;
+                // The authored target may be a list — "one of these" — and one has to be drawn now,
+                // before the roll, because armour is charged against a single resolved section.
+                state.PendingBodyPartId = Skill.TargetBodyPartId is { } ids
+                    ? FightResolver.PreRollAmong(Target, ids, rng)
+                    : null;
             else if (Skill.WoundTargetMode == WoundTargetMode.Random)
                 state.PendingBodyPartId = FightResolver.PreRollHitLocation(Target, rng);
             // PlayerChooses already wrote PendingBodyPartId from the localization overlay.

@@ -1,3 +1,5 @@
+using Cathedral.Game.Narrative;
+
 namespace Cathedral.Fight.Skills;
 
 /// <summary>Punch — basic punch. Player chooses target.</summary>
@@ -14,5 +16,6 @@ public sealed class PunchSkill : FightingSkill
     public override int MediumLevelMultiplicator  => 1;
     public override int SkillLevelMultiplicator   => 1;
     public override FightingSkillEffect EffectType => FightingSkillEffect.Attack;
+    public override DamageType DamageTypes         => DamageType.Contending;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.PlayerChooses;
 }

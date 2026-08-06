@@ -14,6 +14,28 @@ public enum WoundHandicap
 }
 
 /// <summary>
+/// How a blow injures — the shape of the harm rather than where it lands.
+///
+/// <para>
+/// A flags enum because a weapon can do more than one: an axe both cuts and crushes, a pickaxe both
+/// crushes and pierces. It decides which generic wound a glancing blow leaves —
+/// see <see cref="WildcardWound.DamageType"/> — so a sword's near-miss is a Cut and a mace's is a
+/// Contusion, instead of every weapon in the game grazing identically.
+/// </para>
+/// </summary>
+[System.Flags]
+public enum DamageType
+{
+    None       = 0,
+    /// <summary>Edged. Leaves a Cut.</summary>
+    Cutting    = 1 << 0,
+    /// <summary>Pointed. Leaves a Puncture.</summary>
+    Piercing   = 1 << 1,
+    /// <summary>Blunt. Leaves a Contusion.</summary>
+    Contending = 1 << 2,
+}
+
+/// <summary>
 /// What kind of location a wound targets.
 /// </summary>
 public enum WoundTargetKind

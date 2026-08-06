@@ -7,7 +7,14 @@
 - however, sae skill can only be done once
 - ATTACK_LEVEL dices and DEFENSE_LEVEL dices are rolled, if the number of attack 6s is greater than the defense 6s, attack touch.
 - if attack touch, wound added to one of the attack possible localization
-- damage resistance (derived stat) check is done by who receive the attack, if fail medium/high wound is added, else if success, low handicap wound is added
+- a wound heals on its own if it is low or medium handicap: the wound healing derived stat
+  (viscera) sets how many days it takes, from 1000 down to 100. High handicap wounds are permanent,
+  and so are the wounds a character was created with. The clock only advances on travel and work,
+  so recovery is measured in journeys.
+- where an attack has several possible localizations, ONE is drawn before the dice are rolled —
+  it has to be, because the defender's armour for that section is counted into the defense pool.
+- if the drawn localization has no wound authored for it, the blow leaves a generic wound instead
+  (cut / puncture / contusion), chosen to match the attack's damage type
 
 ## fight skill learning :
 
@@ -29,8 +36,13 @@
 
 - attack localization is based on human anatomy
 - some attack can let the player choose the localization, in this case, the opponenent specific anatomy is used on the UI to let the player choose where to attack
-- if an attack  is localized to a body part/organ that don't exist on the specific ennemy anatomy, attack automatically fail
-- when the localization is a body part, the applied damage can either be a damage of this body part or a damage of he organ in this body part
+- if an attack is localized to a body part/organ that don't exist on the specific ennemy anatomy,
+  that localization is simply skipped; if none of the attack's localizations exist there, the blow
+  lands as a generic wound rather than failing outright
+- containment cascades at every tier: a localization gathers its own wounds, its organs' and its
+  organ-parts' — aiming at the legs can break a knee, aiming at the visage can take an eye
+- each anatomy has its own wound catalogue: a beast suffers broken forelegs and torn-off fangs,
+  never the human list
 
 ## bleeding
 
@@ -51,6 +63,10 @@ opponent can not attack this turn unless it succeed a knockdown recovery
 ## charge
 
 Normal melee attack only available on neighbor cells opponent but charge attack available on a radius defined by the attack to simluate charge distance before the attack
+
+The attacker actually closes the ground: on use, they move to the nearest free cell beside the
+target and strike from there, all in one action. If no route within the charge distance exists the
+charge fails and the Cinetic Points are spent on the attempt.
 
 # MODUS MENTIS
 
@@ -130,7 +146,7 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 
 ### leg
 
-1. run
+1. sprint
 2. knee strike
 3. dodge
 4. jump
@@ -322,7 +338,7 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 
 9. Uppercut
 
-- Mediums : hands #3
+- Mediums : hands #2
 - Cinetic Points : 3
 - Main MM : Uppercut
 - Secondary MM : Pugilatus / Iron Fist
@@ -347,7 +363,7 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 
 11. Palm Strike
 
-- Mediums : hands #5
+- Mediums : hands #3
 - Cinetic Points : 3
 - Main MM : Iron Fist
 - Secondary MM : Pugilatus / Battlecraft
@@ -467,7 +483,9 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
 
-21. Run
+21. Sprint
+
+(named "sprint", not "run": the fight UI already has a RUN AWAY button for fleeing combat)
 
 - Mediums : leg #1
 - Cinetic Points : 1
@@ -502,7 +520,8 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 - Localization : Self
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 2
-- Special Effect : Add LEVEL defenses to the next received attack this turn
+- Special Effect : Add LEVEL defenses to the next attack received this turn, then is spent
+  (whether or not it turned the blow)
 
 24. Jump
 
@@ -513,7 +532,8 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Move LEVEL distance ignoring any intermediate obstacles
+- Special Effect : This turn, movement may cross hard obstacles (they cost no more to enter than
+  open ground). The distance itself is still bought with Cinetic Points as usual.
 
 25. Defensive Posture
 
@@ -524,7 +544,7 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 - Type : Defense
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Add LEVEL defenses to the all the next received attacks this turn
+- Special Effect : Add LEVEL defenses to all the attacks received this turn
 
 26. Push
 
@@ -636,7 +656,8 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 - Localization : Self
 - Medium Level Multiplicator : 2
 - Skill Level Multiplicator : 1
-- Special Effect : Add LEVEL defenses to the next received attack this turn
+- Special Effect : Add LEVEL defenses to the next attack received this turn, then is spent
+  (whether or not it turned the blow)
 
 35. Deep Pierce
 
@@ -811,7 +832,8 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 - Localization : Self
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Add LEVEL defenses to the all the next received attacks this turn, break if damage received
+- Special Effect : Add LEVEL defenses to all the attacks received this turn. Breaks the moment a
+  blow gets through.
 
 49. Shield Bash
 

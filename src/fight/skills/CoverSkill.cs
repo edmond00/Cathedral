@@ -14,5 +14,6 @@ public sealed class CoverSkill : FightingSkill
     public override int MediumLevelMultiplicator  => 1;
     public override int SkillLevelMultiplicator   => 1;
     public override FightingSkillEffect EffectType => FightingSkillEffect.DefensePosture;
+    public override bool GuardBreaksOnDamage      => true;
     public override WoundTargetMode WoundTargetMode => WoundTargetMode.Random;
 }

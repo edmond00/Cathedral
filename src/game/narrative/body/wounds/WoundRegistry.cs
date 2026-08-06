@@ -18,6 +18,19 @@ public static class WoundRegistry
     public static readonly IReadOnlyList<WildcardWound> WildcardTemplates =
         All.Values.OfType<WildcardWound>().ToList();
 
+    /// <summary>
+    /// The wound catalogue for <paramref name="member"/>'s own anatomy.
+    ///
+    /// <para>
+    /// <see cref="All"/> is the HUMAN catalogue. Reading it for every body meant a beast could only
+    /// ever suffer the human wounds whose ids happened to coincide with beast anatomy — backbone,
+    /// paunch, viscera — while every beast-specific wound (a broken foreleg, a torn-off fang) was
+    /// unreachable. Each anatomy factory has always carried its own map; nothing asked it for one.
+    /// </para>
+    /// </summary>
+    public static IEnumerable<Wound> ForAnatomy(PartyMember member)
+        => AnatomyFactoryRegistry.GetFactory(member.AnatomyType).GetWoundClassMap().Values;
+
     private static Dictionary<char, Wound> BuildRegistry()
     {
         var dict = new Dictionary<char, Wound>();
@@ -32,6 +45,7 @@ public static class WoundRegistry
         Add(new BrokenBackboneWound());       Add(new BrokenRibsWound());
         Add(new EviscerationWound());         Add(new PiercedPaunchWound());
         Add(new GenitalMutilationWound());    Add(new DisfiguredWound());
+        Add(new PiercedHeartWound());
         Add(new BrokenArmLeftWound());        Add(new BrokenArmRightWound());
         Add(new ShoulderDislocationLeftWound()); Add(new ShoulderDislocationRightWound());
         Add(new FingersAmputeeLeftWound());   Add(new FingersAmputeeRightWound());

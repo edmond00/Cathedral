@@ -293,22 +293,35 @@ public sealed class BeastTornOffLeftHindclawsWound : Wound
     public override string TargetId => "left_hindclaws";
 }
 
+/// <summary>Pierced Heart — the beast form of <see cref="PiercedHeartWound"/>.</summary>
+public sealed class BeastPiercedHeartWound : Wound
+{
+    public override char WoundId => 'F';
+    public override string WoundName => "Pierced Heart";
+    public override WoundHandicap Handicap => WoundHandicap.High;
+    public override WoundTargetKind TargetKind => WoundTargetKind.Organ;
+    public override string TargetId => "heart";
+}
+
 // ─── Wildcard (Low handicap: -1 HP only, no organ effect) ────────────────
 
 public sealed class BeastContusionWound : WildcardWound
 {
     public override char WoundId => 'C';
     public override string WoundName => "Contusion";
+    public override DamageType DamageType => DamageType.Contending;
 }
 
 public sealed class BeastCutWound : WildcardWound
 {
     public override char WoundId => 'D';
     public override string WoundName => "Cut";
+    public override DamageType DamageType => DamageType.Cutting;
 }
 
 public sealed class BeastPunctureWound : WildcardWound
 {
     public override char WoundId => 'E';
     public override string WoundName => "Puncture";
+    public override DamageType DamageType => DamageType.Piercing;
 }

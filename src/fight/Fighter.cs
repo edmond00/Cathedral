@@ -39,6 +39,17 @@ public class Fighter
     /// <summary>True when an ImmobilizeEffect is active — no movement this turn.</summary>
     public bool IsImmobilized { get; set; }
 
+    /// <summary>
+    /// True once this fighter has turned a melee attack aside since their own last turn — the
+    /// opening a riposte needs (<see cref="FightingSkill.RequiresSuccessfulDefense"/>).
+    ///
+    /// <para>
+    /// Set while defending, which happens during someone <em>else's</em> turn, and cleared at the
+    /// end of this fighter's own — so the counter has exactly one turn in which to be taken.
+    /// </para>
+    /// </summary>
+    public bool HasDefendedMeleeSinceOwnTurn { get; set; }
+
     // ── Derived stat shortcuts ────────────────────────────────────
     public int MaxCineticPoints   => GetCombatStat("cinetic_points");
     public int MoveSpeed          => GetCombatStat("move_speed");
@@ -161,6 +172,9 @@ public class Fighter
     /// </summary>
     public void EndTurn(FightState state, Random rng)
     {
+        // The riposte opening closes with the turn it was earned for.
+        HasDefendedMeleeSinceOwnTurn = false;
+
         for (int i = ActiveEffects.Count - 1; i >= 0; i--)
         {
             ActiveEffects[i].OnTurnEnd(this, state, rng);
@@ -177,9 +191,15 @@ public class Fighter
     }
 
     // ── Skill access ──────────────────────────────────────────────
-    /// <summary>All fighting skills this fighter can currently use (ModusMentis + medium available + CP cost met).</summary>
+    /// <summary>
+    /// All fighting skills this fighter can currently use: they know it, the medium is available,
+    /// they can afford it, and any precondition the skill sets is met — a riposte only exists in
+    /// the window after a blow has been turned aside.
+    /// </summary>
     public IEnumerable<FightingSkill> GetUnlockedSkills(FightingSkillRegistry registry) =>
-        registry.GetAll().Where(s => s.IsUnlocked(this) && CurrentCineticPoints >= s.CineticPointsCost);
+        registry.GetAll().Where(s => s.IsUnlocked(this)
+                                  && CurrentCineticPoints >= s.CineticPointsCost
+                                  && (!s.RequiresSuccessfulDefense || HasDefendedMeleeSinceOwnTurn));
 
     /// <summary>Fighting skills this fighter knows but cannot currently afford (IsUnlocked but CP cost exceeds CurrentCineticPoints).</summary>
     public IEnumerable<FightingSkill> GetUnaffordableKnownSkills(FightingSkillRegistry registry) =>
