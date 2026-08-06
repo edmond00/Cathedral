@@ -29,7 +29,6 @@ public class Fighter
     // ── Turn state ───────────────────────────────────────────────
     public int CurrentCineticPoints { get; set; }
     public bool HasActedThisTurn { get; set; }
-    public bool IsDefensePostureActive { get; set; }
     public int InitiativeRoll { get; set; }  // Set at fight start: rng.Next(1,7) + InitiativeValue
 
     // ── Status effects ────────────────────────────────────────────
@@ -75,8 +74,12 @@ public class Fighter
     public int BonusAttackDice => ActiveEffects.Sum(e => e.BonusAttackDice);
 
     public int BaseNaturalDefense => GetCombatStat("natural_defense");
-    /// <summary>Natural defense including active posture bonus.</summary>
-    public int NaturalDefense     => BaseNaturalDefense + (IsDefensePostureActive ? 2 : 0);
+    /// <summary>
+    /// The defence pool before armour. A stance or a guard adds to it through
+    /// <see cref="BonusDefenseDice"/> now — it used to be a flat +2 behind a bool on this class,
+    /// which the STATE pane could not see and so never reported to the player.
+    /// </summary>
+    public int NaturalDefense     => BaseNaturalDefense;
 
     /// <summary>
     /// Bonus defence dice from worn armour covering <paramref name="sectionId"/>. A null section
@@ -134,9 +137,8 @@ public class Fighter
     /// </summary>
     public void StartTurn(FightState state, Random rng)
     {
-        CurrentCineticPoints   = Math.Max(1, MaxCineticPoints);
-        HasActedThisTurn       = false;
-        IsDefensePostureActive = false;
+        CurrentCineticPoints = Math.Max(1, MaxCineticPoints);
+        HasActedThisTurn     = false;
 
         // Process status effects (bleeding, knockdown expiry, etc.)
         for (int i = ActiveEffects.Count - 1; i >= 0; i--)
@@ -170,9 +172,8 @@ public class Fighter
     /// <summary>Parameterless overload for contexts without state/rng (legacy / init).</summary>
     public void StartTurn()
     {
-        CurrentCineticPoints   = Math.Max(1, MaxCineticPoints);
-        HasActedThisTurn       = false;
-        IsDefensePostureActive = false;
+        CurrentCineticPoints = Math.Max(1, MaxCineticPoints);
+        HasActedThisTurn     = false;
     }
 
     // ── Skill access ──────────────────────────────────────────────

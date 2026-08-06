@@ -1710,6 +1710,18 @@ public class FightModeAdapter
         {
             var act = _state.ActiveFighter;
             if (act != null) EndTurn(act);
+            return;
+        }
+
+        // An action that resolved without a dice roll and left the fighter free to act again — a
+        // parry, a dodge — still ends the turn once there is nothing left to spend. Same rule
+        // ContinueTurnOrEnd applies after a roll; without it a fighter at 0 CP would sit on a
+        // turn they cannot use.
+        if (_state.Phase == TurnPhase.SelectingAction
+            && _state.ActiveFighter is { } active && active.CurrentCineticPoints <= 0)
+        {
+            _state.AddLog($"{active.DisplayName} has no Cinetic Points left — turn ends.");
+            EndTurn(active);
         }
     }
 

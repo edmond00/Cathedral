@@ -88,14 +88,19 @@ public class SkillAction : IFightAction
         if (Skill.EffectType == FightingSkillEffect.DefensePosture
          || Skill.EffectType == FightingSkillEffect.Defense)
         {
+            bool isPosture = Skill.EffectType == FightingSkillEffect.DefensePosture;
             int dice = Skill.TotalDice(Attacker, OrganPartId, ActiveMedium);
-            var guard = Skill.EffectType == FightingSkillEffect.DefensePosture
+            FightStatusEffect guard = isPosture
                 ? new DefensePostureEffect(dice)
-                : (FightStatusEffect)new GuardEffect(Skill.DisplayName, dice);
+                : new GuardEffect(Skill.DisplayName, dice);
             Attacker.ActiveEffects.Add(guard);
             guard.OnApply(Attacker, Attacker, state, rng);
             state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName}.  [-{cost} CP]");
-            state.Phase = TurnPhase.TurnEnding;
+
+            // A posture is a commitment — settling into it is the whole turn, as it always was.
+            // A parry or a dodge is a cheaper reactive guard and leaves the fighter free to keep
+            // acting on whatever Cinetic Points remain.
+            state.Phase = isPosture ? TurnPhase.TurnEnding : TurnPhase.SelectingAction;
             return;
         }
 
