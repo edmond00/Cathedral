@@ -595,7 +595,20 @@ public class FightModeAdapter
                         if (row.SkillIndex < 0 || row.SkillIndex >= _currentLearnableSkills.Count) break;
                         var skill = _currentLearnableSkills[row.SkillIndex];
                         if (_state.IsActionUsed(active, row.MediumKey, skill.SkillId)) break;
-                        SetLearnableSkillMode(row.SkillIndex, row.MediumKey);
+                        // A self-targeting skill has no target to pick, so the attempt starts here —
+                        // exactly as for one already known. Arming targeting instead left the
+                        // fighter's own tile as the only highlight, so clicking the action appeared
+                        // to do nothing at all until you also clicked your own symbol.
+                        if (skill.IsSelfTargeting)
+                        {
+                            _pendingLearnMediumKey = row.MediumKey;
+                            _state.MarkActionUsed(active, row.MediumKey, skill.SkillId);
+                            StartLearningAttempt(active, null, skill);
+                        }
+                        else
+                        {
+                            SetLearnableSkillMode(row.SkillIndex, row.MediumKey);
+                        }
                         break;
                     }
                 }
@@ -1416,7 +1429,10 @@ public class FightModeAdapter
             _state.Phase = TurnPhase.SelectingAction;
             RefreshSkillList();
 
-            if (skill.EffectType == FightingSkillEffect.DefensePosture)
+            // Self-targeting covers every buff, both guards and both postures — all of which store
+            // no target, so testing only for DefensePosture dropped the rest here: the modus mentis
+            // was learned and then the skill the player had actually asked for never happened.
+            if (skill.IsSelfTargeting)
             {
                 ExecuteAction(new Actions.SkillAction(active, active, skill,
                     FightModeUI.OrganPartIdFromKey(learnedMediumKey),
@@ -1824,10 +1840,20 @@ public class FightModeAdapter
             return Array.Empty<(string, string, bool)>();
 
         var rows = new List<(string, string, bool)>();
+        // Learnable skills are listed too, marked "(learn)": attempting one is an ordinary thing a
+        // player does every fight, and leaving them out of the CLI meant the whole learn-then-perform
+        // path — where two bugs were hiding — could not be driven by a script at all.
         foreach (var skill in _currentUnlockedSkills)
         {
             string key = DefaultMediumKeyFor(skill);
             rows.Add((skill.DisplayName, key,
+                      !_state.IsActionUsed(active, key, skill.SkillId)
+                      && active.CurrentCineticPoints >= skill.CineticPointsCost));
+        }
+        foreach (var skill in _currentLearnableSkills)
+        {
+            string key = DefaultMediumKeyFor(skill);
+            rows.Add((skill.DisplayName + " (learn)", key,
                       !_state.IsActionUsed(active, key, skill.SkillId)
                       && active.CurrentCineticPoints >= skill.CineticPointsCost));
         }
@@ -1851,13 +1877,43 @@ public class FightModeAdapter
         if (active == null || !active.IsPlayerControlled) return "not the player's turn";
         if (_state.Phase != TurnPhase.SelectingAction) return $"busy (phase={_state.Phase})";
 
+        // `regions` prints learnables with a "(learn)" marker; accept it back so its output can be
+        // pasted straight into a script.
+        if (name.EndsWith("(learn)", StringComparison.OrdinalIgnoreCase))
+            name = name[..^"(learn)".Length].TrimEnd();
+
         int idx = _currentUnlockedSkills
             .Select((s, i) => (s, i))
             .Where(t => t.s.DisplayName.StartsWith(name, StringComparison.OrdinalIgnoreCase))
             .Select(t => t.i)
             .DefaultIfEmpty(-1)
             .First();
-        if (idx < 0) return $"no usable skill matching \"{name}\"";
+
+        if (idx < 0)
+        {
+            // Not a known skill — try the learnable list, so `click skill <name>` drives an attempt
+            // exactly as clicking the row does.
+            int learnIdx = _currentLearnableSkills
+                .Select((s, i) => (s, i))
+                .Where(t => t.s.DisplayName.StartsWith(name, StringComparison.OrdinalIgnoreCase))
+                .Select(t => t.i)
+                .DefaultIfEmpty(-1)
+                .First();
+            if (learnIdx < 0) return $"no usable or learnable skill matching \"{name}\"";
+
+            var learnable = _currentLearnableSkills[learnIdx];
+            string learnKey = DefaultMediumKeyFor(learnable);
+            if (_state.IsActionUsed(active, learnKey, learnable.SkillId))
+                return $"{learnable.DisplayName} already attempted this turn";
+            if (active.CurrentCineticPoints < learnable.CineticPointsCost)
+                return $"{learnable.DisplayName} costs more CP than remains";
+
+            _pendingLearnMediumKey = learnKey;
+            _state.MarkActionUsed(active, learnKey, learnable.SkillId);
+            if (learnable.IsSelfTargeting) StartLearningAttempt(active, null, learnable);
+            else                           SetLearnableSkillMode(learnIdx, learnKey);
+            return null;
+        }
 
         var skill = _currentUnlockedSkills[idx];
         string key = DefaultMediumKeyFor(skill);
