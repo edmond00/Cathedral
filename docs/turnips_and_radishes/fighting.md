@@ -488,7 +488,11 @@ charge fails and the Cinetic Points are spent on the attempt.
 (named "sprint", not "run": the fight UI already has a RUN AWAY button for fleeing combat)
 
 - Mediums : leg #1
-- Cinetic Points : 1
+- Cinetic Points : 0
+  (free, and it has to be: a movement budget is CP x speed, so charging a point to double the
+  speed halves the multiplicand exactly as it doubles the multiplier. At 2 CP the skill was worth
+  nothing at all, and above that it bought a third more ground rather than twice. It is still paid
+  for in vital heat, like every buff.)
 - Main MM : Athletics
 - Secondary MM : Acrobatics / Survivalism
 - Type : Other
