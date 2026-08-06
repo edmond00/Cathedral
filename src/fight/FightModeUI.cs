@@ -582,14 +582,28 @@ public static class FightModeUI
         terminal.Text(x, y++, "INFO", Config.Colors.DarkYellowGrey, Config.Colors.Black);
         terminal.Text(x, y++, new string('─', innerW), Config.Colors.DarkGray, Config.Colors.Black);
 
+        // Last row that is inside the box; boxH - 1 is the border itself.
+        int lastRow = boxH - 2;
+
         void TextLine(string s, Vector4 col)
         {
+            if (y > lastRow) return;   // never write over the frame
             if (s.Length > innerW) s = s[..innerW];
             terminal.Text(x, y++, s, col, Config.Colors.Black);
         }
+        // Write at a column offset on the row TextLine will use next, without consuming it —
+        // for a second column beside an existing one.
+        void TextAt(int col0, string s, Vector4 col)
+        {
+            if (y > lastRow) return;
+            int room = innerW - col0;
+            if (room <= 0) return;
+            if (s.Length > room) s = s[..room];
+            terminal.Text(x + col0, y, s, col, Config.Colors.Black);
+        }
         void WrapText(string s, Vector4 col)
         {
-            for (int i = 0; i < s.Length && y < boxH - 1; i += innerW)
+            for (int i = 0; i < s.Length && y <= lastRow; i += innerW)
                 TextLine(s.Substring(i, Math.Min(innerW, s.Length - i)), col);
         }
         // Pad-or-clip to a fixed width so the level-breakdown rows column up.
@@ -668,11 +682,37 @@ public static class FightModeUI
                 // ── Where the level comes from ────────────────────────────────
                 // The single figure above is the sum of terms the player can actually raise, so
                 // spell them out: which medium, which modi mentis, and what each contributes.
+                // The learning check rides in the right-hand column of these same rows — stacked
+                // underneath, it ran off the bottom of the box and wrote over the frame.
+                const int LearnCol = 20;
+
+                // Learning numbers, computed once: how many dice the cerebellum gives, and how many
+                // sixes must actually come up. The roll succeeds on sixes STRICTLY greater than the
+                // difficulty, so the figure to show is difficulty + 1 — "need 0 sixes" was the one
+                // thing it could never mean.
+                int learnDice = 0, learnNeeded = 0;
+                if (isLearn)
+                {
+                    string? learnBodyPartId = BodyPartIdFromKey(mediumKey);
+                    int position = activeOrganId   != null ? skill.GetMediumPositionForOrganId(activeOrganId)
+                                 : learnBodyPartId != null ? skill.GetMediumPositionForBodyPartId(learnBodyPartId)
+                                 : skill.MediumPosition;
+                    learnDice   = Math.Max(1, fighter.FightLearningStat);
+                    learnNeeded = Math.Max(0, position - 1) + 1;
+                }
+
                 y++;
+                if (isLearn) TextAt(LearnCol, "LEARN", titleC);
                 TextLine($"LEVEL {breakdown.Total}", Config.Colors.DarkYellowGrey);
+
+                if (isLearn) TextAt(LearnCol, $"  {learnDice}d roll", titleC);
                 TextLine($"  {Trim(breakdown.MediumLabel, 12)} {breakdown.MediumLevel}"
                        + (breakdown.MediumMultiplicator != 1 ? $"x{breakdown.MediumMultiplicator}" : ""),
                          Config.Colors.MediumGray60);
+
+                if (isLearn)
+                    TextAt(LearnCol, $"  need {learnNeeded}"
+                                   + (learnNeeded > learnDice ? " !" : ""), titleC);
                 if (breakdown.ModiMentis.Count == 0)
                     TextLine("  (no modus mentis)", Config.Colors.DarkGray);
                 else
@@ -681,19 +721,7 @@ public static class FightModeUI
                                + (breakdown.SkillMultiplicator != 1 ? $"x{breakdown.SkillMultiplicator}" : ""),
                                  Config.Colors.MediumGray60);
 
-                if (isLearn)
-                {
-                    string? learnOrganId    = activeOrganId;
-                    string? learnBodyPartId = BodyPartIdFromKey(mediumKey);
-                    int diff = Math.Max(0, (learnOrganId    != null ? skill.GetMediumPositionForOrganId(learnOrganId)
-                                         : learnBodyPartId != null ? skill.GetMediumPositionForBodyPartId(learnBodyPartId)
-                                         : skill.MediumPosition) - 1);
-                    int dice = Math.Max(1, fighter.FightLearningStat);
-                    y++;
-                    TextLine($"LEARN: {dice}d", titleC);
-                    TextLine($"need {diff} sixes", titleC);
-                }
-                else if (!isBuff && skill.VitalHeatCost > 0)
+                if (!isLearn && !isBuff && skill.VitalHeatCost > 0)
                 {
                     y++;
                     TextLine($"VH cost: {skill.VitalHeatCost}", Config.Colors.Orange);
@@ -946,7 +974,12 @@ public static class FightModeUI
         terminal.Text(1, BotStart + 1, "LOG", Config.Colors.DarkYellowGrey, Config.Colors.Black);
 
         int lineWidth = 98;
-        int visibleLines = panelH - 3;
+        // Rows: BotStart is the top border, +1 the "LOG" header, +2 a blank, then text, and the
+        // last row of the panel is the bottom border. That leaves panelH - 4 usable rows — one
+        // fewer than the obvious arithmetic, and the missing one is why the newest line was being
+        // written straight over the frame.
+        int firstTextRow = BotStart + 3;
+        int visibleLines = panelH - 4;
 
         var wrappedLines = new List<(string Text, LogEntryType Type)>();
         foreach (var (text, type) in actionLog)
@@ -967,7 +1000,7 @@ public static class FightModeUI
         for (int i = 0; i < visibleLines && firstVisible + i < total; i++)
         {
             var (text, type) = wrappedLines[firstVisible + i];
-            terminal.Text(1, BotStart + 3 + i, text,
+            terminal.Text(1, firstTextRow + i, text,
                 LogEntryColor(type), Config.Colors.Black);
         }
     }
@@ -1200,10 +1233,13 @@ public static class FightModeUI
     /// </para>
     /// </summary>
     public static void RenderVitalHeatBox(TerminalHUD terminal, string fighterName, string skillName,
-        int required, IReadOnlyList<BodyHumor> drawn)
+        int required, IReadOnlyList<BodyHumor> drawn, BodyHumor? latest, bool exhausted)
     {
-        // Tall enough for the header, the two summary rows and one row per humor drawn.
-        int boxH = 7 + Math.Max(1, drawn.Count);
+        // Fixed height — the bar fills, the box does not grow. A box that resized as each humor
+        // landed would jump under the reader every step.
+        const int BarW = 22;
+        const int LabelW = 5;
+        int boxH = 9;
         int boxW = InterruptW;
         int boxX = CenterX + (FightArea.Width  - boxW) / 2;
         int boxY = CenterY + (FightArea.Height - boxH) / 2;
@@ -1214,32 +1250,41 @@ public static class FightModeUI
         terminal.DrawBox(boxX, boxY, boxW, boxH, BoxStyle.Double, Config.Colors.Orange, Config.Colors.Black);
 
         int tx = boxX + 2;
-        terminal.Text(tx, boxY + 1, "── VITAL HEAT ──", Config.Colors.Orange, Config.Colors.Black);
-        terminal.Text(tx, boxY + 3, Truncate($"{fighterName} — {skillName}", boxW - 4),
+        const string title = "── VITAL HEAT ──";
+        terminal.Text(boxX + (boxW - title.Length) / 2, boxY + 1, title,
+            Config.Colors.Orange, Config.Colors.Black);
+        terminal.Text(tx, boxY + 2, Truncate($"{fighterName} — {skillName}", boxW - 4),
             Config.Colors.Yellow, Config.Colors.Black);
 
-        int totalHeat = drawn.Sum(h => h.VitalHeat);
-        terminal.Text(tx, boxY + 4, $"  Heat required : {required}",
+        // The bar, laid out exactly as the travel box lays its out: [label][bar][counter].
+        int filled = required > 0
+            ? (int)Math.Round(Math.Clamp(drawn.Count / (double)required, 0, 1) * BarW)
+            : BarW;
+        terminal.Text(tx, boxY + 4, "VH   ", Config.Colors.DarkYellowGrey, Config.Colors.Black);
+        for (int i = 0; i < BarW; i++)
+        {
+            bool on = i < filled;
+            terminal.SetCell(tx + LabelW + i, boxY + 4, on ? '═' : '─',
+                on ? Config.Colors.Orange : Config.Colors.DarkGray35, Config.Colors.Black);
+        }
+        terminal.Text(tx + LabelW + BarW + 1, boxY + 4, $"{drawn.Count}/{required}",
             Config.Colors.LightGray, Config.Colors.Black);
 
-        int row = boxY + 6;
-        if (drawn.Count == 0)
+        // The humor being burned right now, in its own colour — the travel box's flash line.
+        if (latest != null)
         {
-            // Every queue was already critical — the buff still applied, but nothing was left to burn.
-            terminal.Text(tx, row, "  nothing left to burn",
-                Config.Colors.DarkGray, Config.Colors.Black);
+            string sign = latest.VitalHeat >= 0 ? "+" : "";
+            terminal.Text(tx, boxY + 6,
+                Truncate($"{latest.Symbol} {latest.Name} {sign}{latest.VitalHeat}", boxW - 4),
+                latest.Color, Config.Colors.Black);
         }
+
+        if (exhausted)
+            terminal.Text(tx, boxY + 7, "nothing left to burn",
+                Config.Colors.BrightPurple, Config.Colors.Black);
         else
-        {
-            foreach (var h in drawn)
-            {
-                string sign = h.VitalHeat >= 0 ? "+" : "";
-                terminal.Text(tx, row++, Truncate($"  {h.Symbol} {h.Name} {sign}{h.VitalHeat}", boxW - 4),
-                    h.Color, Config.Colors.Black);
-            }
-            terminal.Text(tx, row, $"  drawn: {drawn.Count} humor(s), {totalHeat} heat",
+            terminal.Text(tx, boxY + 7, $"{drawn.Sum(h => h.VitalHeat)} heat spent",
                 Config.Colors.DarkYellowGrey, Config.Colors.Black);
-        }
     }
 
     /// <summary>Clip <paramref name="s"/> to <paramref name="w"/> cells.</summary>

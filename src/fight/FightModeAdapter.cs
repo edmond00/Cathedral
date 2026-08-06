@@ -122,11 +122,14 @@ public class FightModeAdapter
 
     // ── Vital-heat box timing ───────────────────────────────────────
     /// <summary>
-    /// How long the buff's vital-heat consumption box stays up, in real seconds. Deliberately much
-    /// shorter than a dice roll: there is no outcome to await, only a cost to witness.
+    /// Real seconds between humors as the buff's cost is drawn. One humor per step, matching the
+    /// cadence travel burns them at — the box exists to be watched, not waited out.
     /// </summary>
-    private const float VitalHeatBoxDuration = 1.6f;
+    private const float VitalHeatStepSeconds = 0.18f;
+    /// <summary>Steps to hold the finished bar before handing the turn back.</summary>
+    private const int VitalHeatHoldSteps = 4;
     private double _vitalHeatElapsed;
+    private int _vitalHeatHoldSteps;
 
 
     /// <summary>
@@ -439,12 +442,28 @@ public class FightModeAdapter
         if (_state.Phase == TurnPhase.AnimatingVitalHeat)
         {
             _vitalHeatElapsed += deltaTime;
-            if (_vitalHeatElapsed >= VitalHeatBoxDuration)
+            if (_vitalHeatElapsed >= VitalHeatStepSeconds)
             {
-                var payer = _state.VitalHeatFighter;
-                _state.ClearVitalHeatConsumption();
                 _vitalHeatElapsed = 0;
-                if (payer != null) ContinueTurnOrEnd(payer);
+                // One humor per step, exactly as travel burns them, so the bar fills and each
+                // humor gets its moment on screen instead of the whole cost landing at once.
+                if (!_state.DrawNextVitalHeat(_rng))
+                {
+                    // Nothing left to draw — hold the finished bar briefly, then hand the turn back.
+                    _vitalHeatHoldSteps++;
+                    if (_vitalHeatHoldSteps >= VitalHeatHoldSteps)
+                    {
+                        var payer = _state.VitalHeatFighter;
+                        bool dry  = _state.VitalHeatExhausted;
+                        int drawn = _state.VitalHeatDrawn.Count;
+                        if (dry && payer != null)
+                            _state.AddLog($"{payer.DisplayName} has no heat left to burn — only {drawn} drawn.",
+                                LogEntryType.SpecialEffect);
+                        _state.ClearVitalHeatConsumption();
+                        _vitalHeatHoldSteps = 0;
+                        if (payer != null) ContinueTurnOrEnd(payer);
+                    }
+                }
             }
         }
 
@@ -2041,7 +2060,8 @@ public class FightModeAdapter
 
         if (_state.Phase == TurnPhase.AnimatingVitalHeat && _state.VitalHeatFighter != null)
             FightModeUI.RenderVitalHeatBox(_terminal, _state.VitalHeatFighter.DisplayName,
-                _state.VitalHeatSkillName, _state.VitalHeatRequired, _state.VitalHeatDrawn);
+                _state.VitalHeatSkillName, _state.VitalHeatRequired, _state.VitalHeatDrawn,
+                _state.VitalHeatLatest, _state.VitalHeatExhausted);
 
         // Localization picker box — drawn last so it sits on top of the fight UI.
         if (_localizationOverlay != null && _state.Phase == TurnPhase.WaitingForBodyPartChoice)

@@ -58,14 +58,6 @@ public class SkillAction : IFightAction
             var effect = Skill.CreateBuffEffect(Attacker);
             int vh = Skill.VitalHeatCostFor(Attacker, OrganPartId, ActiveMedium);
 
-            var drawn = new List<BodyHumor>(vh);
-            for (int i = 0; i < vh; i++)
-            {
-                var humor = Attacker.Member.HumorQueues.ConsumeCycled(Attacker.Member, rng);
-                if (humor == null) break;           // queues fully critical — nothing left to spend
-                drawn.Add(humor);
-            }
-
             if (effect != null)
             {
                 Attacker.ActiveEffects.Add(effect);
@@ -74,10 +66,12 @@ public class SkillAction : IFightAction
             }
 
             // "X uses Y" — never "X uses Y on X". There is no second party here.
-            state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName}.  [-{cost} CP, -{drawn.Count} VH]",
+            state.AddLog($"{Attacker.DisplayName} uses {Skill.DisplayName}.  [-{cost} CP, -{vh} VH]",
                 LogEntryType.SpecialEffect);
 
-            state.BeginVitalHeatConsumption(Attacker, Skill.DisplayName, vh, drawn);
+            // The heat is drawn one humor at a time while the box plays — see
+            // FightState.DrawNextVitalHeat. Taking it all here would leave the bar nothing to fill.
+            state.BeginVitalHeatConsumption(Attacker, Skill.DisplayName, vh);
             return;
         }
 

@@ -147,8 +147,10 @@ public class FightState
     public bool RunUsedThisTurn { get; set; }
 
     // ── Vital-heat consumption (buff skills) ──────────────────────────
-    // Travel already shows the player every humor it burns; a buff spending up to ten of them in
-    // silence was the odd one out. These carry what the box needs while it plays.
+    // Travel already shows the player every humor it burns, one at a time, against a filling bar.
+    // A buff spending up to ten of them was the odd one out, so it is paid the same way: the cost
+    // is NOT taken up front — it is drawn humor by humor while the box is on screen, which is what
+    // gives the bar something to fill and the flash something to show.
 
     /// <summary>Fighter paying, or null when no consumption box is up.</summary>
     public Fighter? VitalHeatFighter { get; private set; }
@@ -156,18 +158,51 @@ public class FightState
     public string VitalHeatSkillName { get; private set; } = "";
     /// <summary>How much heat the skill asked for.</summary>
     public int VitalHeatRequired { get; private set; }
-    /// <summary>The humors actually drawn, in rotation order. Shorter than required when queues run dry.</summary>
-    public IReadOnlyList<BodyHumor> VitalHeatDrawn { get; private set; } = System.Array.Empty<BodyHumor>();
 
-    /// <summary>Arm the consumption box. The heat has already been spent by the caller.</summary>
-    public void BeginVitalHeatConsumption(Fighter fighter, string skillName, int required,
-                                          IReadOnlyList<BodyHumor> drawn)
+    private readonly List<BodyHumor> _vitalHeatDrawn = new();
+    /// <summary>The humors drawn so far, in rotation order.</summary>
+    public IReadOnlyList<BodyHumor> VitalHeatDrawn => _vitalHeatDrawn;
+
+    /// <summary>The humor drawn most recently — what the box flashes.</summary>
+    public BodyHumor? VitalHeatLatest { get; private set; }
+
+    /// <summary>True once the queues ran dry before the cost was met.</summary>
+    public bool VitalHeatExhausted { get; private set; }
+
+    /// <summary>Nothing left to draw: the cost is met, or the body has no more heat to give.</summary>
+    public bool VitalHeatComplete =>
+        VitalHeatFighter == null || VitalHeatExhausted || _vitalHeatDrawn.Count >= VitalHeatRequired;
+
+    /// <summary>
+    /// Arm the consumption box. The heat is spent by <see cref="DrawNextVitalHeat"/> as the
+    /// animation runs, not here.
+    /// </summary>
+    public void BeginVitalHeatConsumption(Fighter fighter, string skillName, int required)
     {
         VitalHeatFighter   = fighter;
         VitalHeatSkillName = skillName;
         VitalHeatRequired  = required;
-        VitalHeatDrawn     = drawn;
+        VitalHeatExhausted = false;
+        VitalHeatLatest    = null;
+        _vitalHeatDrawn.Clear();
         Phase              = TurnPhase.AnimatingVitalHeat;
+    }
+
+    /// <summary>
+    /// Burn one more humor toward the cost. Returns false when there is nothing left to draw —
+    /// either the cost is paid or every queue has gone critical.
+    /// </summary>
+    public bool DrawNextVitalHeat(Random rng)
+    {
+        if (VitalHeatFighter == null || VitalHeatExhausted) return false;
+        if (_vitalHeatDrawn.Count >= VitalHeatRequired) return false;
+
+        var humor = VitalHeatFighter.Member.HumorQueues.ConsumeCycled(VitalHeatFighter.Member, rng);
+        if (humor == null) { VitalHeatExhausted = true; return false; }
+
+        _vitalHeatDrawn.Add(humor);
+        VitalHeatLatest = humor;
+        return true;
     }
 
     /// <summary>Tear the consumption box down.</summary>
@@ -176,7 +211,9 @@ public class FightState
         VitalHeatFighter   = null;
         VitalHeatSkillName = "";
         VitalHeatRequired  = 0;
-        VitalHeatDrawn     = System.Array.Empty<BodyHumor>();
+        VitalHeatExhausted = false;
+        VitalHeatLatest    = null;
+        _vitalHeatDrawn.Clear();
     }
 
     // ── Action log ───────────────────────────────────────────────────
