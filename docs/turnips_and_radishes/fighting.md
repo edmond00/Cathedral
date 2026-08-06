@@ -405,7 +405,7 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Add LEVEL dices to runaway dice roll done this turn
+- Special Effect : allow to retry runaway dice roll as many times you want this turn
 
 16. Cold Blood
 
@@ -417,7 +417,7 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect :
+- Special Effect :  during this turn, succeeding a defense interrupt the ennemy turn
 
 17. Rage
 
@@ -429,7 +429,7 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Refill cinetic points
+- Special Effect : during this turn, succeeding an attack refill the cinetic points (only once by turn)
 
 18. Blood Lust
 
@@ -441,7 +441,7 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Add LEVEL dices to all attack dices roll during this turn
+- Special Effect : always choose the wound with the highest severity when selecting the wound, for all the fight, not just this turn
 
 19. Iron Nerves
 
@@ -453,7 +453,7 @@ Normal melee attack only available on neighbor cells opponent but charge attack 
 - Type : Other
 - Medium Level Multiplicator : 1
 - Skill Level Multiplicator : 1
-- Special Effect : Allow to redo skill already done this turn
+- Special Effect : Allow to redo skill already done this turn (except run away)
 
 20. Bite
 
