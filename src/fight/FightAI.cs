@@ -64,10 +64,10 @@ public static class FightAI
 
             foreach (var target in partyFighters)
             {
-                double dx = ai.X - target.X, dy = ai.Y - target.Y;
-                double dist = Math.Sqrt(dx * dx + dy * dy);
-                if (dist > skill.Range + 0.001) continue;
-                if (dist + 0.001 < skill.MinRange) continue;
+                // Same range test the player's target highlighting uses. These were separate
+                // computations, and the AI's rejected diagonal neighbours — which is why an enemy
+                // would walk up beside someone and then end its turn.
+                if (!FightResolver.IsInSkillRange(ai, target, skill)) continue;
                 if (skill.Range > 1 &&
                     !FightResolver.HasLineOfSight(state.Area, ai.X, ai.Y, target.X, target.Y))
                     continue;

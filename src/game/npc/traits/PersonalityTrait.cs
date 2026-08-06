@@ -118,8 +118,11 @@ public class PersonalityTrait
                 part.Score += delta;   // OrganPart.Score clamps to [0, MaxScore]
         }
 
+        // HISTORICAL, not inflicted: a trait wound is part of who this person is — the shepherd's
+        // scar, the smith's deafness — and must never heal off. Stamping these with the current day
+        // instead would quietly erase every NPC's backstory after one long work stint.
         foreach (var wound in Wounds)
-            body.Wounds.Add(wound());
+            body.Wounds.Add(WoundInstance.Historical(wound()));
 
         foreach (var item in Items)
             NpcBelongings.Give(body, item());

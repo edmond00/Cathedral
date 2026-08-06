@@ -203,7 +203,7 @@ public class ActionExecutionController
 
         // Determine actual outcome and (on failure) its consequences.
         OutcomeBase actualOutcome;
-        Wound? failureWound = null;
+        WoundInstance? failureWound = null;
         bool witnessDetected = false;
         Cathedral.Game.Npc.NpcEntity? detectedWitness = null;
         bool fightTriggered = false;
@@ -524,16 +524,19 @@ public class ActionExecutionController
     /// blocked by the coded rules before execution, so only Audio (and, for combat verbs, Visual
     /// threat) reach here.
     /// </summary>
-    private (Wound? wound, bool witnessDetected, Cathedral.Game.Npc.NpcEntity? detectedWitness,
+    private (WoundInstance? wound, bool witnessDetected, Cathedral.Game.Npc.NpcEntity? detectedWitness,
              bool fightTriggered, Cathedral.Game.Npc.NpcEntity? fightEnemy)
         ResolveFailureConsequences(ActionEvaluationResult evalResult)
     {
         var action = evalResult.Action;
         bool discrete = evalResult.ActionModusMentis?.ActsDiscretely ?? false;
 
-        // Verb-authored penalty (wound or none), sampled uniformly.
+        // Verb-authored penalty (wound or none), sampled uniformly. Wrapped as an instance stamped
+        // with today's date: this happened during the run, so it is a wound that can heal — unlike
+        // the historical ones a character was generated with.
         var target = action.PreselectedOutcome?.VerbView.Target;
-        Wound? wound = action.Verb.SampleFailurePenalty(target, _rng);
+        var template = action.Verb.SampleFailurePenalty(target, _rng);
+        WoundInstance? wound = template != null ? WoundInstance.Inflicted(template) : null;
         Console.WriteLine(wound != null
             ? $"💥 [FAILURE PENALTY] {wound.WoundName} ({WoundLocationLabel(wound)}, {wound.Handicap})"
             : "💥 [FAILURE PENALTY] no injury");
@@ -564,7 +567,7 @@ public class ActionExecutionController
     }
 
     /// <summary>Returns a readable location label for a wound, using WildcardZoneHint as fallback.</summary>
-    private static string WoundLocationLabel(Wound wound)
+    private static string WoundLocationLabel(WoundInstance wound)
     {
         var raw = wound.TargetId.Length > 0
             ? wound.TargetId
@@ -647,7 +650,7 @@ public class ActionExecutionResult
     /// <summary>
     /// The wound inflicted on the protagonist if action failed with a physical injury (null otherwise).
     /// </summary>
-    public Wound? FailureWound { get; set; }
+    public WoundInstance? FailureWound { get; set; }
     
     /// <summary>
     /// The plausibility error message if action was rejected as implausible.

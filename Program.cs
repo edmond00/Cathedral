@@ -62,6 +62,15 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --no-encounters                    DEBUG: never roll a random travel encounter. For scripted runs: an");
     Console.WriteLine("                                     encounter puts the game in EncounterPrompt, where a script waiting");
     Console.WriteLine("                                     for LocationInteraction hangs until its timeout");
+    Console.WriteLine("  --start-fight <creature>           DEBUG: begin a fight on reaching the world map (wolf, bear, bandit, brigand).");
+    Console.WriteLine("                                     The only way a script can reach fight mode: the real routes in are a random");
+    Console.WriteLine("                                     travel encounter (which scripts disable) or provoking an NPC through dialogue");
+    Console.WriteLine("  --advance-days <n>                 DEBUG: push the world clock forward <n> days on first arrival at the world");
+    Console.WriteLine("                                     map. The clock only moves on travel and work, and a wound takes 100-1000");
+    Console.WriteLine("                                     days to close, so this is how a script sees healing without simulating years");
+    Console.WriteLine("  --grant-mm <id[,id...]>[:lvl]      DEBUG: grant the named modi mentis at <lvl> (default 1) after character");
+    Console.WriteLine("                                     creation. Fighting skills are gated behind their modi mentis, so this is what");
+    Console.WriteLine("                                     makes a given skill reachable — and level sets a buff's vital-heat cost");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
@@ -358,6 +367,33 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--no-encounters")
         Cathedral.Config.Debug.NoEncounters = true;
+
+    if (args[i] == "--start-fight" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.StartFight = args[i + 1];
+
+    if (args[i] == "--advance-days" && i + 1 < args.Length &&
+        double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out var advDays))
+        Cathedral.Config.Debug.AdvanceDays = advDays;
+
+    // --grant-mm <id[,id...]>[:level]
+    if (args[i] == "--grant-mm" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+    {
+        var spec  = args[i + 1];
+        int level = 1;
+        int colon = spec.LastIndexOf(':');
+        if (colon > 0 && int.TryParse(spec[(colon + 1)..], out var lvl))
+        {
+            level = lvl;
+            spec  = spec[..colon];
+        }
+        var ids = spec.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                      .Select(s => s.Trim())
+                      .Where(s => s.Length > 0)
+                      .ToArray();
+        if (ids.Length > 0)
+            Cathedral.Config.Debug.GrantModiMentis = (ids, level);
+    }
 }
 
 // Check for --dither [mode[:levels[:scale]]] — turns on the final full-screen shader layer.

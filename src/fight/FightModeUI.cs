@@ -46,8 +46,8 @@ public static class FightModeUI
     private const int BotStart   = 80;
     private const int LeftEnd    = 20;
     private const int RightStart = 80;
-    private const int CenterX    = 20;  // Matches FightAreaRenderer.OffsetX
-    private const int CenterY    = 20;  // Matches FightAreaRenderer.OffsetY
+    public  const int CenterX    = 20;  // Matches FightAreaRenderer.OffsetX
+    public  const int CenterY    = 20;  // Matches FightAreaRenderer.OffsetY
 
     // ── Top panel split: action menu on the left half, action info on the right half ──
     /// <summary>X boundary inside the top panel: cols [0..ActionMenuRight) = action menu, [ActionMenuRight..100) = info.</summary>

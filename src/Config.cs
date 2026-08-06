@@ -71,6 +71,39 @@ public static class Config
         /// test; being able to turn it off is what makes everything else testable.</para>
         /// </summary>
         public static bool NoEncounters { get; set; } = false;
+
+        /// <summary>
+        /// Days to push the world clock forward once the run reaches the world map, on top of
+        /// whatever travel and work have accrued. Set by <c>--advance-days &lt;n&gt;</c>.
+        /// Inert at its default of 0.
+        ///
+        /// <para>For scripted runs. <see cref="Game.Narrative.GameClock"/> only moves on travel
+        /// arrival and work stints, and a wound takes 100–1000 days to close — so without this a
+        /// script that wants to see healing happen has to simulate years of journeys. Applied once,
+        /// at the first entry to the world view, and then cleared.</para>
+        /// </summary>
+        public static double AdvanceDays { get; set; } = 0;
+
+        /// <summary>
+        /// Modi mentis to grant the protagonist after character creation, and the level to set them
+        /// to. Set by <c>--grant-mm &lt;id[,id…]&gt;[:level]</c>. Null means grant nothing.
+        ///
+        /// <para>For scripted runs. Fighting skills are gated behind their modi mentis, so without
+        /// this a script cannot reach the buffs at all — and cannot exercise both ends of the
+        /// level-derived vital-heat curve, which is the whole of a buff's cost model.</para>
+        /// </summary>
+        public static (string[] Ids, int Level)? GrantModiMentis { get; set; } = null;
+
+        /// <summary>
+        /// Creature to fight immediately on reaching the world map, e.g. "wolf". Set by
+        /// <c>--start-fight &lt;creature&gt;</c>. Null means no debug fight.
+        ///
+        /// <para>For scripted runs, and the flag the rest of the fight work depends on: the only
+        /// real ways into a fight are a random travel encounter (which every script disables with
+        /// <c>--no-encounters</c>) and provoking a location NPC through a conversation and a check.
+        /// Neither is a reasonable prerequisite for testing combat itself.</para>
+        /// </summary>
+        public static string? StartFight { get; set; } = null;
     }
 
     #endregion

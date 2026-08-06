@@ -414,7 +414,7 @@ public class FightModeAdapter
                 _state.DiceFinalValues = finalValues;
                 if (_dice.IsDual)
                 {
-                    var defenseValues = GenerateDiceValues(_state.DiceSecondaryNumberOfDice);
+                    var defenseValues = GenerateDefenseDiceValues(_state.DiceSecondaryNumberOfDice);
                     _state.DiceSecondaryFinalValues = defenseValues;
                     // Enemy attack: display is swapped (defense=primary), so pass defense first.
                     bool isEnemyAttack = _state.ActiveFighter?.IsPlayerControlled == false
@@ -1084,19 +1084,15 @@ public class FightModeAdapter
             result.Add((attacker.X, attacker.Y));
             return result;
         }
-        // Include every cell within Euclidean range (donut: MinRange <= dist <= Range) + LOS.
+        // Every reachable cell + LOS. Range is FightResolver's call, not ours — the AI's candidate
+        // filter asks the same question, and the two answering it differently is how an enemy could
+        // stand diagonally adjacent to someone it was unable to attack.
         int range = skill.Range;
-        int minR  = Math.Max(1, skill.MinRange);
-        int rangeSq = range * range;
-        int minSq   = minR * minR;
         for (int dy = -range; dy <= range; dy++)
         for (int dx = -range; dx <= range; dx++)
         {
-            int distSq = dx * dx + dy * dy;
-            if (distSq > rangeSq) continue;
-            if (distSq < minSq)   continue;
+            if (!FightResolver.IsInSkillRange(dx, dy, skill)) continue;
             int tx = attacker.X + dx, ty = attacker.Y + dy;
-            if (tx == attacker.X && ty == attacker.Y) continue;
             if (!_state.Area.IsInBounds(tx, ty)) continue;
             if (_state.Area.GetCell(tx, ty).Type == TerrainType.HardObstacle) continue;
             if (!FightResolver.HasLineOfSight(_state.Area, attacker.X, attacker.Y, tx, ty)) continue;
@@ -1799,6 +1795,122 @@ public class FightModeAdapter
     /// <summary>Repaint the whole fight UI now — used when returning from the pause menu.</summary>
     public void Redraw() => FullRedraw();
 
+    // ── CLI driving surface ───────────────────────────────────────────────────
+    // Named handles for --cli scripts. Without these a fight can only be driven by `click cell`,
+    // counting rows off a dump — which CLAUDE.md warns against precisely because it breaks on the
+    // next layout change and reads as nothing at all.
+
+    /// <summary>
+    /// Every skill the active fighter can act on right now, as (display name, medium key, usable).
+    /// Expanding a medium tab is not required — this lists what <see cref="CliClickSkill"/> accepts.
+    /// </summary>
+    public IReadOnlyList<(string Name, string MediumKey, bool Usable)> CliSkills()
+    {
+        var active = _state.ActiveFighter;
+        if (active == null || !active.IsPlayerControlled || _state.IsOver)
+            return Array.Empty<(string, string, bool)>();
+
+        var rows = new List<(string, string, bool)>();
+        foreach (var skill in _currentUnlockedSkills)
+        {
+            string key = DefaultMediumKeyFor(skill);
+            rows.Add((skill.DisplayName, key,
+                      !_state.IsActionUsed(active, key, skill.SkillId)
+                      && active.CurrentCineticPoints >= skill.CineticPointsCost));
+        }
+        return rows;
+    }
+
+    /// <summary>Fighters in initiative order, for `click fighter &lt;name&gt;`.</summary>
+    public IReadOnlyList<(string Name, int X, int Y, bool Alive, bool IsEnemy)> CliFighters()
+        => _state.Fighters
+            .Select(f => (f.DisplayName, f.X, f.Y, f.IsAlive, f.Faction == FighterFaction.Enemy))
+            .ToList();
+
+    /// <summary>
+    /// Use the named skill (case-insensitive prefix match). Self-targeting skills execute at once;
+    /// targeted ones arm targeting, and the caller follows with <see cref="CliClickFighter"/>.
+    /// Returns an error string, or null on success.
+    /// </summary>
+    public string? CliClickSkill(string name)
+    {
+        var active = _state.ActiveFighter;
+        if (active == null || !active.IsPlayerControlled) return "not the player's turn";
+        if (_state.Phase != TurnPhase.SelectingAction) return $"busy (phase={_state.Phase})";
+
+        int idx = _currentUnlockedSkills
+            .Select((s, i) => (s, i))
+            .Where(t => t.s.DisplayName.StartsWith(name, StringComparison.OrdinalIgnoreCase))
+            .Select(t => t.i)
+            .DefaultIfEmpty(-1)
+            .First();
+        if (idx < 0) return $"no usable skill matching \"{name}\"";
+
+        var skill = _currentUnlockedSkills[idx];
+        string key = DefaultMediumKeyFor(skill);
+        if (_state.IsActionUsed(active, key, skill.SkillId)) return $"{skill.DisplayName} already used this turn";
+        if (active.CurrentCineticPoints < skill.CineticPointsCost) return $"{skill.DisplayName} costs more CP than remains";
+
+        if (skill.IsSelfTargeting)
+        {
+            _state.MarkActionUsed(active, key, skill.SkillId);
+            ExecuteAction(new Actions.SkillAction(active, active, skill,
+                FightModeUI.OrganPartIdFromKey(key), ActiveMediumFromKey(skill, key)));
+        }
+        else
+        {
+            SetSkillMode(idx, key);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Press the settled dice box's CONTINUE. The turn does not resolve until this is pressed, so a
+    /// script that skips it stalls in <see cref="TurnPhase.WaitingForDiceComplete"/> forever —
+    /// which reads as "the enemy did nothing" rather than "the box is still up".
+    /// </summary>
+    public string? CliDiceContinue()
+    {
+        if (_state.Phase != TurnPhase.WaitingForDiceComplete)
+            return $"no settled dice box (phase={_state.Phase})";
+        var region = _dice.ContinueButtonRegion;
+        if (region.Width <= 0) return "dice box has no Continue button";
+        OnCellClicked(region.X, region.Y);
+        return null;
+    }
+
+    /// <summary>End the active fighter's turn — the END TURN button.</summary>
+    public string? CliEndTurn()
+    {
+        var active = _state.ActiveFighter;
+        if (active == null || !active.IsPlayerControlled) return "not the player's turn";
+        if (_state.Phase != TurnPhase.SelectingAction) return $"busy (phase={_state.Phase})";
+        ExecuteAction(new Actions.EndTurnAction(active));
+        return null;
+    }
+
+    /// <summary>Click the named fighter's map cell — the target step for a non-self skill.</summary>
+    public string? CliClickFighter(string name)
+    {
+        var target = _state.Fighters.FirstOrDefault(
+            f => f.DisplayName.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+        if (target == null) return $"no fighter matching \"{name}\"";
+        OnCellClicked(FightModeUI.CenterX + target.X, FightModeUI.CenterY + target.Y);
+        return null;
+    }
+
+    /// <summary>One-line summary of the fight for `state`.</summary>
+    public string CliState()
+    {
+        var active = _state.ActiveFighter;
+        string fx = active != null && active.ActiveEffects.Count > 0
+            ? " fx=" + string.Join(",", active.ActiveEffects.Select(e => e.EffectId))
+            : "";
+        return $"phase={_state.Phase} active={active?.DisplayName ?? "-"} "
+             + $"cp={active?.CurrentCineticPoints}/{active?.MaxCineticPoints} "
+             + $"hp={active?.CurrentHp}/{active?.MaxHp}{fx}";
+    }
+
     private void FullRedraw()
     {
         var active = _state.ActiveFighter;
@@ -1895,8 +2007,50 @@ public class FightModeAdapter
         _topPanelFighter = null;
     }
 
-    private int[] GenerateDiceValues(int count)
+    /// <summary>
+    /// Roll <paramref name="count"/> d6 for the ATTACK pool. Under <c>--debug</c> the preset
+    /// strategy pins the result, exactly as it does for narration checks: `strategy succeed` makes
+    /// every die a six, `strategy fail-dice` makes none of them one.
+    ///
+    /// <para>
+    /// Fight dice used to ignore the strategy entirely, which made every combat consequence — a
+    /// wound, a bleed, a knockdown, and therefore healing — unreachable from a script except by
+    /// waiting for luck.
+    /// </para>
+    /// </summary>
+    private int[] GenerateDiceValues(int count) => RollPool(count, forAttacker: true);
+
+    /// <summary>
+    /// Roll the DEFENCE pool. The strategy is inverted here: forcing the attack to succeed means
+    /// forcing the defence to fail, or the extra sixes would cancel each other out.
+    /// </summary>
+    private int[] GenerateDefenseDiceValues(int count) => RollPool(count, forAttacker: false);
+
+    private int[] RollPool(int count, bool forAttacker)
     {
+        if (DebugMode.IsActive)
+        {
+            // A six is a success; anything else is not. 1 is used for a forced failure so the
+            // rendered dice read as plainly bad rather than near-misses.
+            int? forced = DebugMode.CurrentStrategy switch
+            {
+                DebugStrategy.Succeed      => forAttacker ? 6 : 1,
+                DebugStrategy.FailDiceRoll => forAttacker ? 1 : 6,
+                _                          => null,
+            };
+            if (forced is int v)
+            {
+                // `strategy succeed` must actually succeed. A fighter whose pool is empty — an
+                // unlevelled organ with no contributing modus mentis — would otherwise roll no
+                // dice, produce no sixes, and miss no matter what the strategy asked for, which
+                // makes every downstream consequence (wounds, bleeds, healing) untestable.
+                int n = forced == 6 ? Math.Max(1, count) : count;
+                var pinned = new int[n];
+                for (int i = 0; i < n; i++) pinned[i] = v;
+                return pinned;
+            }
+        }
+
         var vals = new int[count];
         for (int i = 0; i < count; i++)
             vals[i] = _rng.Next(1, 7);

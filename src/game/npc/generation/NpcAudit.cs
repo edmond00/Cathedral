@@ -80,7 +80,9 @@ public static class NpcAudit
         sb.AppendLine($"  observed  : {npc.ObservationHint}");
         sb.AppendLine($"  introduces: {npc.SelfIntroduction}");
         sb.AppendLine($"  on work   : {npc.OpinionOn(Dialogue.Tree.DialogueTopic.Work)}");
-        sb.AppendLine($"  wounds    : {Describe(body.Wounds.Select(w => w.WoundName))}");
+        sb.AppendLine($"  wounds    : {Describe(body.Wounds.Select(w =>
+            $"{w.WoundName} [{(w.CanHeal ? "heals" : w.Handicap == WoundHandicap.High ? "permanent" : "old")}]"))}");
+        sb.AppendLine($"  heals in  : {body.WoundHealDurationDays} d (viscera-derived)");
         sb.AppendLine($"  carries   : {Describe(body.GetAllItems().Select(i => i.DisplayName))}");
         sb.AppendLine($"  skills    : {Describe(body.ModiMentis.Select(m => $"{m.ModusMentisId} {m.Level}"))}");
 
@@ -187,6 +189,22 @@ public static class NpcAudit
                 levels.AddRange(body.ModiMentis.Select(m => m.Level));
                 itemCounts.Add(body.GetAllItems().Count);
                 woundCounts.Add(body.Wounds.Count);
+
+                // Two separately generated bodies must never share a wound OBJECT. WoundRegistry
+                // hands out one shared template per wound type, and appending those directly is
+                // how per-injury state (art position, healing date) used to leak between every
+                // character in the process. Reference equality is the only way to catch a
+                // regression here — the wounds are supposed to look identical.
+                foreach (var w in first.Combatant.Wounds)
+                    if (second.Combatant.Wounds.Any(o => ReferenceEquals(o, w)))
+                        warnings.Add($"{archetype.ArchetypeId}: two NPCs share one wound instance " +
+                                     $"({w.WoundName}) — per-injury state will leak between them");
+
+                // Backstory wounds must be historical, or one long work stint heals every scar off
+                // every NPC in the world.
+                foreach (var w in first.Combatant.Wounds.Where(w => w.InflictedOnDay.HasValue))
+                    warnings.Add($"{archetype.ArchetypeId}: trait wound '{w.WoundName}' is dated " +
+                                 $"(day {w.InflictedOnDay}) and will heal away — it should be historical");
 
                 warnings.AddRange(CheckIndividual(first));
             }

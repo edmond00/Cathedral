@@ -228,24 +228,28 @@ public sealed class CoinGrantOutcome : OutcomeReport
     }
 }
 
-/// <summary>Inflicts a wound on the protagonist. Produced by the LLM failure critic.</summary>
+/// <summary>
+/// Inflicts a wound on the protagonist. Produced by the LLM failure critic.
+/// Carries a <see cref="WoundInstance"/> rather than a bare template so the wildcard zone hint —
+/// where on the body the critic decided the blow landed — survives as far as the body art.
+/// </summary>
 public sealed class WoundInflictionOutcome : OutcomeReport
 {
-    public Wound Wound { get; }
+    public WoundInstance Wound { get; }
 
-    public WoundInflictionOutcome(Wound wound)
+    public WoundInflictionOutcome(WoundInstance wound)
         : base(FormatText(wound), OutcomeReportSeverity.Negative, FormatVerbatim(wound))
     {
         Wound = wound;
     }
 
-    private static string WoundLocation(Wound w)
+    private static string WoundLocation(WoundInstance w)
         => (w.TargetId.Length > 0 ? w.TargetId : w.WildcardZoneHint ?? "body").Replace('_', ' ');
 
-    private static string FormatText(Wound w)
+    private static string FormatText(WoundInstance w)
         => $"Wound: {w.WoundName} — {WoundLocation(w)}";
 
-    private static string FormatVerbatim(Wound w)
+    private static string FormatVerbatim(WoundInstance w)
         => $"suffered {w.WoundName.ToLowerInvariant()} to my {WoundLocation(w)}";
 
     public override void Apply(PartyMember protagonist, Cathedral.Game.Scene.Scene? scene, Cathedral.Game.Scene.PoV? pov)

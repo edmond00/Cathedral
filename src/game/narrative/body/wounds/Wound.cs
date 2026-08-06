@@ -27,10 +27,17 @@ public enum WoundTargetKind
 }
 
 /// <summary>
-/// Abstract base class for a wound. Each concrete wound type is a subclass.
+/// A KIND of wound — the catalogue entry, not an injury on anybody.
 /// Wounds affect organ parts, organs, or body parts and modify derived stat calculations
 /// via <see cref="DerivedStat.GetEffectiveScore"/>; when a source is disabled the stat degrades
 /// to its <see cref="DerivedStat.WorstValue"/>.
+///
+/// <para>
+/// <b>Immutable, deliberately.</b> <see cref="WoundRegistry.All"/> hands out one shared instance
+/// per type, so a settable property here is a property shared by every character in the process —
+/// which is exactly what went wrong when glyph positions lived on this class. Anything true of one
+/// person's injury rather than of the injury itself belongs on <see cref="WoundInstance"/>.
+/// </para>
 /// </summary>
 public abstract class Wound
 {
@@ -53,21 +60,9 @@ public abstract class Wound
     /// </summary>
     public abstract string TargetId { get; }
 
-    /// <summary>
-    /// Art X coordinate for wildcard wounds placed on the body ASCII art.
-    /// Null for wounds whose positions come from wounds.txt.
-    /// </summary>
-    public int? ArtX { get; set; }
-
-    /// <summary>Art Y coordinate for wildcard wounds placed on the body ASCII art.</summary>
-    public int? ArtY { get; set; }
-
-    /// <summary>
-    /// For wildcard wounds created from the failure critic tree, constrains art placement
-    /// to cells belonging to the chosen location. Stores a body-part id (e.g. "trunk") or
-    /// organ-part id (e.g. "left_arm"). Null means any free body cell (legacy behaviour).
-    /// </summary>
-    public string? WildcardZoneHint { get; set; }
+    // Art position (ArtX/ArtY) and the wildcard zone hint used to live here as settable properties.
+    // They describe one person's injury, not the kind of injury, and on a shared registry instance
+    // that meant every character shared them. They now live on WoundInstance.
 
     /// <summary>Returns true if the given organ part is directly or transitively affected by this wound.
     /// Note: BodyPart-targeted wounds do NOT cascade down to organs/organ-parts.

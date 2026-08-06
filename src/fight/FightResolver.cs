@@ -73,6 +73,40 @@ public static class FightResolver
         }
     }
 
+    // ── Range ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Whether a skill of this range can reach a cell <paramref name="dx"/>,<paramref name="dy"/>
+    /// away. The single definition of "in range" — the player's target highlighting and the AI's
+    /// candidate filter both go through here, and used to each compute it themselves.
+    ///
+    /// <para>
+    /// Range is Euclidean, which keeps a bow's reach circular, <em>plus</em> the eight surrounding
+    /// cells always count as adjacent. That exception is not cosmetic: movement is 8-connected, so
+    /// fighters constantly end up diagonally neighbouring — at Euclidean distance 1.41, which a
+    /// melee range of 1 rejected. Two fighters could stand side by side and neither could swing.
+    /// It is the real cause of enemies that walk up to someone and then pass their turn.
+    /// </para>
+    ///
+    /// <para>A minimum range (a bow that cannot fire point-blank) still overrides the exception.</para>
+    /// </summary>
+    public static bool IsInSkillRange(int dx, int dy, FightingSkill skill)
+    {
+        if (dx == 0 && dy == 0) return false;         // never target your own cell
+
+        int minR = Math.Max(1, skill.MinRange);
+        int distSq = dx * dx + dy * dy;
+
+        // Diagonal adjacency, unless the skill refuses point-blank.
+        if (minR <= 1 && Math.Abs(dx) <= 1 && Math.Abs(dy) <= 1) return true;
+
+        return distSq <= skill.Range * skill.Range && distSq >= minR * minR;
+    }
+
+    /// <inheritdoc cref="IsInSkillRange(int,int,FightingSkill)"/>
+    public static bool IsInSkillRange(Fighter attacker, Fighter target, FightingSkill skill)
+        => IsInSkillRange(target.X - attacker.X, target.Y - attacker.Y, skill);
+
     // ── Movement ─────────────────────────────────────────────────────
 
     /// <summary>
@@ -501,8 +535,14 @@ public static class FightResolver
 
     // -- Wound application --
 
+    /// <summary>
+    /// Record <paramref name="wound"/> on <paramref name="target"/>.
+    /// The template is wrapped in a fresh <see cref="WoundInstance"/> stamped with the current day,
+    /// which is both what makes it heal later and what keeps <see cref="WoundRegistry"/>'s shared
+    /// template objects from being handed out to two different bodies at once.
+    /// </summary>
     public static void ApplyWound(Fighter target, Wound wound) =>
-        target.Member.Wounds.Add(wound);
+        target.Member.Wounds.Add(WoundInstance.Inflicted(wound));
 
     // -- Skill learning --
 

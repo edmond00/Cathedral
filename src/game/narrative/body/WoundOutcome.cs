@@ -9,9 +9,9 @@ namespace Cathedral.Game.Narrative;
 public class WoundOutcome : OutcomeBase
 {
     /// <summary>The wound to apply, or null if no wound was determined.</summary>
-    public Wound? Wound { get; }
+    public WoundInstance? Wound { get; }
 
-    public WoundOutcome(Wound? wound)
+    public WoundOutcome(WoundInstance? wound)
     {
         Wound = wound;
     }

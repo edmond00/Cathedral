@@ -32,6 +32,8 @@ public class BodyArtViewer
     public const int PanelContentX = 70;
     public const int PanelContentW = 28;
     public const int MaxBarWidth = 5;
+    /// <summary>Cells in the wound-healing bar. Matches the age readout's bar so the two read alike.</summary>
+    private const int HealBarWidth = 10;
 
     // ── Creation point budget ─────────────────────────────────────
     public const int PointBudget = 25;
@@ -69,7 +71,7 @@ public class BodyArtViewer
     private string? _hoveredRawPartName;    /// <summary>-1 when hovering the ◄ button, +1 when hovering the ► button, 0 otherwise.</summary>
     private int _hoveredArrowDelta = 0;
     private char? _hoveredWoundId;          // set when mouse is precisely on a wound ∅ glyph
-    private Wound? _hoveredWoundInstance;  // specific wound instance being hovered (used for wildcard position)
+    private WoundInstance? _hoveredWoundInstance;  // the specific injury being hovered, not just its kind
     // ── Blink state ──────────────────────────────────────────────
     private readonly Stopwatch _blinkStopwatch = Stopwatch.StartNew();
     private double _lastBlinkTime;
@@ -282,21 +284,18 @@ public class BodyArtViewer
         }
         changed = changed || newArrowDelta != _hoveredArrowDelta;
 
-        // Check if hovering precisely on a wound glyph (only when ShowWounds is active)
+        // Check if hovering precisely on a wound glyph (only when ShowWounds is active).
+        // Same resolver the render loop uses, so what the player points at is what they see.
         char? newWoundId = null;
-        Wound? newWoundInstance = null;
+        WoundInstance? newWoundInstance = null;
         if (ShowWounds && artX >= 0 && artX < _artData.Width && artY >= 0 && artY < _artData.Height)
         {
-            foreach (var wound in _protagonist.Wounds)
+            foreach (var (wound, pos) in ResolveWoundPositions())
             {
-                bool hit;
-                if (wound.ArtX != null)
-                    hit = wound.ArtX.Value == artX && wound.ArtY!.Value == artY;
-                else if (_artData.WoundPositions.TryGetValue(wound.WoundId, out var positions))
-                    hit = positions.Any(p => p.x == artX && p.y == artY);
-                else
-                    hit = false;
-                if (hit) { newWoundId = wound.WoundId; newWoundInstance = wound; break; }
+                if (pos.x != artX || pos.y != artY) continue;
+                newWoundId = wound.WoundId;
+                newWoundInstance = wound;
+                break;
             }
         }
 
@@ -494,52 +493,13 @@ public class BodyArtViewer
         // Overlay wound glyphs (∅) on the body art, blinking orange/dark-grey (body submenu only)
         if (ShowWounds)
         {
-            // Assign free art positions to any wildcard wounds that haven't been placed yet
-            var occupiedByWounds = new HashSet<(int, int)>(
-                _artData.WoundPositions.Values.SelectMany(v => v).Select(p => (p.x, p.y)));
-            // Also count already-placed wildcard instances
-            foreach (var w in _protagonist.Wounds)
-                if (w.ArtX != null) occupiedByWounds.Add((w.ArtX.Value, w.ArtY!.Value));
-            // Collect all free body cells once, then pick randomly for each unplaced wildcard
-            var freeCells = new List<(int x, int y)>();
-            for (int fy2 = 0; fy2 < _artData.Height; fy2++)
-                for (int fx2 = 0; fx2 < _artData.Width; fx2++)
-                    if (_artData.IsBodyCell(fx2, fy2) && !occupiedByWounds.Contains((fx2, fy2)))
-                        freeCells.Add((fx2, fy2));
-            var rng = new Random();
-            foreach (var wound in _protagonist.Wounds.Where(w => w.ArtX == null && w.TargetKind == Cathedral.Game.Narrative.WoundTargetKind.Wildcard))
-            {
-                if (freeCells.Count == 0) break;
-                // Prefer cells in the wound's target zone; fall back to any free cell
-                var pool = wound.WildcardZoneHint != null
-                    ? freeCells.Where(p => IsWoundCellInZone(p.x, p.y, wound.WildcardZoneHint)).ToList()
-                    : freeCells;
-                if (pool.Count == 0) pool = freeCells;
-                int idx = rng.Next(pool.Count);
-                var chosen = pool[idx];
-                freeCells.Remove(chosen);
-                wound.ArtX = chosen.x;
-                wound.ArtY = chosen.y;
-                occupiedByWounds.Add(chosen);
-            }
-
             Vector4 woundColor = _blinkOn ? Config.Colors.Purple : Config.Colors.DarkGray35;
-            foreach (var wound in _protagonist.Wounds)
+            foreach (var (_, pos) in ResolveWoundPositions())
             {
-                IEnumerable<(int x, int y)> positions;
-                if (wound.ArtX != null)
-                    positions = new[] { (wound.ArtX.Value, wound.ArtY!.Value) };
-                else if (_artData.WoundPositions.TryGetValue(wound.WoundId, out var wpos))
-                    positions = wpos;
-                else
-                    continue;
-                foreach (var (wx, wy) in positions)
-                {
-                    int tx = ArtOffsetX + wx;
-                    int ty = ArtOffsetY + wy;
-                    if (tx >= 0 && tx < PanelX - 1 && ty >= 0 && ty < _terminal.Height)
-                        _terminal.SetCell(tx, ty, '∅', woundColor, Config.Colors.Black);
-                }
+                int tx = ArtOffsetX + pos.x;
+                int ty = ArtOffsetY + pos.y;
+                if (tx >= 0 && tx < PanelX - 1 && ty >= 0 && ty < _terminal.Height)
+                    _terminal.SetCell(tx, ty, '∅', woundColor, Config.Colors.Black);
             }
         }
 
@@ -561,6 +521,113 @@ public class BodyArtViewer
     }
 
     /// <summary>
+    /// Where every one of the subject's wounds draws its ∅ glyph — one cell each, no two the same.
+    ///
+    /// <para>
+    /// The single source of truth for both the render loop and the hover hit-test, which used to
+    /// duplicate the logic and could therefore disagree about what the player was pointing at.
+    /// </para>
+    ///
+    /// <para>
+    /// A wound's <em>anchor</em> is its canonical cell in <c>wounds.txt</c>, or — for a wildcard,
+    /// which has no authored position — the centre of its zone hint, or the middle of the body.
+    /// If that cell is already taken the glyph moves to the nearest free body cell instead of
+    /// drawing on top: two Black Eyes used to render as one, with the second invisible and
+    /// unhoverable even though it was costing HP. Resolved positions are cached on the instance so
+    /// they stay put between frames.
+    /// </para>
+    /// </summary>
+    private List<(WoundInstance Wound, (int x, int y) Pos)> ResolveWoundPositions()
+    {
+        var result   = new List<(WoundInstance, (int, int))>();
+        var occupied = new HashSet<(int, int)>();
+
+        // Wounds already placed keep their cell — placement must not shuffle between frames.
+        foreach (var w in _protagonist.Wounds)
+            if (w.ArtX != null) occupied.Add((w.ArtX.Value, w.ArtY!.Value));
+
+        foreach (var wound in _protagonist.Wounds)
+        {
+            if (wound.ArtX != null)
+            {
+                result.Add((wound, (wound.ArtX.Value, wound.ArtY!.Value)));
+                continue;
+            }
+
+            var anchor = AnchorCellFor(wound);
+            if (anchor == null) continue;   // nothing in the art represents this wound
+
+            var cell = NearestFreeBodyCell(anchor.Value, occupied);
+            if (cell == null) continue;     // body art completely full
+
+            wound.ArtX = cell.Value.x;
+            wound.ArtY = cell.Value.y;
+            occupied.Add(cell.Value);
+            result.Add((wound, cell.Value));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// The cell a wound would ideally occupy: its authored <c>wounds.txt</c> position, else the
+    /// centre of the zone it was dealt to, else the middle of the body.
+    /// </summary>
+    private (int x, int y)? AnchorCellFor(WoundInstance wound)
+    {
+        if (_artData.WoundPositions.TryGetValue(wound.WoundId, out var wpos) && wpos.Count > 0)
+            return (wpos[0].x, wpos[0].y);
+
+        // Wildcards have no authored cell. Aim at the middle of the hinted zone when there is one.
+        if (wound.WildcardZoneHint != null)
+        {
+            var zone = new List<(int x, int y)>();
+            for (int y = 0; y < _artData.Height; y++)
+                for (int x = 0; x < _artData.Width; x++)
+                    if (_artData.IsBodyCell(x, y) && IsWoundCellInZone(x, y, wound.WildcardZoneHint))
+                        zone.Add((x, y));
+            if (zone.Count > 0)
+                return (zone.Sum(p => p.x) / zone.Count, zone.Sum(p => p.y) / zone.Count);
+        }
+
+        var body = new List<(int x, int y)>();
+        for (int y = 0; y < _artData.Height; y++)
+            for (int x = 0; x < _artData.Width; x++)
+                if (_artData.IsBodyCell(x, y)) body.Add((x, y));
+        if (body.Count == 0) return null;
+        return (body.Sum(p => p.x) / body.Count, body.Sum(p => p.y) / body.Count);
+    }
+
+    /// <summary>
+    /// The unoccupied body cell closest to <paramref name="anchor"/>, searched in rings outward.
+    /// Deterministic — no RNG, so the same wounds land in the same places on every run at a seed.
+    /// </summary>
+    private (int x, int y)? NearestFreeBodyCell((int x, int y) anchor, HashSet<(int, int)> occupied)
+    {
+        if (_artData.IsBodyCell(anchor.x, anchor.y) && !occupied.Contains(anchor))
+            return anchor;
+
+        int maxRadius = Math.Max(_artData.Width, _artData.Height);
+        for (int r = 1; r <= maxRadius; r++)
+        {
+            (int x, int y)? best = null;
+            int bestDistSq = int.MaxValue;
+            for (int dy = -r; dy <= r; dy++)
+            for (int dx = -r; dx <= r; dx++)
+            {
+                // Only the ring's edge — the interior was covered by smaller radii.
+                if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue;
+                int nx = anchor.x + dx, ny = anchor.y + dy;
+                if (nx < 0 || ny < 0 || nx >= _artData.Width || ny >= _artData.Height) continue;
+                if (!_artData.IsBodyCell(nx, ny) || occupied.Contains((nx, ny))) continue;
+                int d = dx * dx + dy * dy;
+                if (d < bestDistSq) { bestDistSq = d; best = (nx, ny); }
+            }
+            if (best != null) return best;
+        }
+        return null;
+    }
+
     /// <summary>
     /// Returns true if the art cell at (x, y) belongs to the given zone hint.
     /// Checks body-part id first, then organ-part name and organ name from organs.csv.
@@ -675,18 +742,12 @@ public class BodyArtViewer
         if (_hoveredWoundId != null)
         {
             int wx = -1, wy = -1;
+            // The resolved cell is the only source now: every wound has one, including the ones
+            // whose canonical position was taken and which were moved to a neighbouring cell.
             if (_hoveredWoundInstance?.ArtX != null)
             {
-                // Wildcard wound: use stored art position
                 wx = ArtOffsetX + _hoveredWoundInstance.ArtX.Value;
                 wy = ArtOffsetY + _hoveredWoundInstance.ArtY!.Value;
-            }
-            else if (_artData.WoundPositions.TryGetValue(_hoveredWoundId.Value, out var wpositions) && wpositions.Count > 0)
-            {
-                // Pick the rightmost wound glyph position as arrow origin
-                var rightmost = wpositions.OrderByDescending(p => p.x).First();
-                wx = ArtOffsetX + rightmost.x;
-                wy = ArtOffsetY + rightmost.y;
             }
             // Arrow target: row 53 = "minRow+1=50, +2 header, +1 WOUND label" i.e. title line of wound detail
             int targetRow = 54;
@@ -1027,6 +1088,38 @@ public class BodyArtViewer
                     _terminal.Text(PanelContentX, wRow, $"Affects: {hovered.TargetId}", Config.Colors.MediumGray60, Config.Colors.Black);
                     wRow++;
                 }
+
+                // ── Healing ──────────────────────────────────────────────────────
+                // Where a wound is on its way to closing, or why it never will be.
+                wRow++;
+                if (hovered.Handicap == Cathedral.Game.Narrative.WoundHandicap.High)
+                {
+                    _terminal.Text(PanelContentX, wRow, "Permanent — will not heal",
+                        Config.Colors.BrightPurple, Config.Colors.Black);
+                    wRow++;
+                }
+                else if (!hovered.CanHeal)
+                {
+                    // No infliction date: something the character already carried when the run began.
+                    _terminal.Text(PanelContentX, wRow, "An old wound",
+                        Config.Colors.MediumGray60, Config.Colors.Black);
+                    wRow++;
+                }
+                else
+                {
+                    int total = _protagonist.WoundHealDurationDays;
+                    double p  = hovered.HealProgress(total);
+                    int filled = (int)Math.Round(p * HealBarWidth);
+                    string bar = new string('█', filled) + new string('░', HealBarWidth - filled);
+                    _terminal.Text(PanelContentX, wRow, $"Healing  {bar}  {(int)Math.Round(p * 100)}%",
+                        Config.Colors.Yellow, Config.Colors.Black);
+                    wRow++;
+                    _terminal.Text(PanelContentX, wRow,
+                        $"         {(int)Math.Round(hovered.DaysOld)} of {total} days",
+                        Config.Colors.MediumGray60, Config.Colors.Black);
+                    wRow++;
+                }
+
                 if (!string.IsNullOrEmpty(hovered.Description))
                 {
                     wRow++;
@@ -1253,10 +1346,17 @@ public class BodyArtViewer
             {
                 _terminal.Text(PanelContentX, row, "Wounds", Config.Colors.BrightPurple, Config.Colors.Black);
                 row++;
+                int healDays = _protagonist.WoundHealDurationDays;
                 foreach (var wound in wounds)
                 {
                     string sev = wound.Handicap == Cathedral.Game.Narrative.WoundHandicap.High ? "●" : "◌";
-                    string line = $"  {sev} {wound.WoundName}";
+                    // Healing percentage inline, so a glance at the organ tells you which of its
+                    // wounds are on their way out. Blank for anything that will never close.
+                    string heal = wound.CanHeal
+                        ? $" {(int)Math.Round(wound.HealProgress(healDays) * 100),3}%"
+                        : "";
+                    string line = $"  {sev} {wound.WoundName}{heal}";
+                    if (line.Length > PanelContentW) line = line[..PanelContentW];
                     Vector4 wc = wound.Handicap == Cathedral.Game.Narrative.WoundHandicap.High
                         ? (_blinkOn ? Config.Colors.BrightPurple : Config.Colors.DarkGray35)
                         : Config.Colors.MediumGray60;

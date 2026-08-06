@@ -34,6 +34,9 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--no-encounters` | Suppresses random travel encounters. **Pass this in every script that travels.** An encounter puts the game in `EncounterPrompt`, where a script waiting for `LocationInteraction` sits until its timeout and reports a failure that has nothing to do with what it was testing. |
 | `--period <name>` | Pins the arrival time of day (`dawn`…`night`) instead of drawing one at random. Needed for anything period-gated: every building's entry door shuts at `night`, and a random draw reaches that one visit in six. |
 | `--fill-party` | Fills the companion roster to its heart-derived ceiling (`max_companions`) right after the childhood phase, with NPCs generated from random archetypes — the **last** slot a beast, every slot before it a human. Recruiting even one companion in play takes a conversation and a check (or an appease *and* a tame), which is a long approach for anything that just needs a populated party. Note the ceiling is the *heart* score, and a protagonist accepted straight out of creation has a heart of 1 — so a plain script gets one beast and nothing else. For humans too, raise the heart first (`click cell 94 24` on the creation screen bumps it, four presses reaching 5). |
+| `--start-fight <creature>` | Drops straight into a fight on reaching the world map (`wolf`, `bear`, `bandit`, `brigand`). **The only way a script can reach fight mode at all** — the real routes in are a random travel encounter (which every script disables with `--no-encounters`, precisely because it fires unpredictably) and provoking a location NPC through a conversation and a check. |
+| `--grant-mm <id[,id…]>[:lvl]` | Grants the named modi mentis at `lvl` (default 1) after character creation. Fighting skills are gated behind their modi mentis, so this is what makes a given skill reachable — and since a **buff's cost falls as its level rises**, it is also how you exercise both ends of that curve. Unknown ids are reported on stderr. |
+| `--advance-days <n>` | Pushes the world clock forward `n` days on first arrival at the world map. The clock only moves on travel arrival and work stints while a wound needs 100–1000 days to close, so without this nothing about healing is observable. Fires once, before anything has happened — for healing *a wound taken in play*, use the `clock` command instead. |
 
 A typical invocation:
 
@@ -75,6 +78,11 @@ Run `help` for the authoritative list. The essentials:
   click keyword <name>      a narration keyword
   click action <n>          a narration action
   click option <n>          a dialogue reply
+  click skill <name>        a fighting skill, by name. Self-targeting skills (every buff, and
+                            parry/dodge/the postures) execute at once; an attack arms targeting
+                            and you follow with `click fighter`
+  click fighter <name>      a fighter's map cell — the target step for an attack
+  click end-turn            the fight's END TURN button
   click button              the footer button (LEAVE / INTERRUPT / END / CONTINUE)
   choose <n>                answer the visible popup by index
   travel here               enter the location the avatar is standing on — what most scripts
@@ -91,6 +99,10 @@ Run `help` for the authoritative list. The essentials:
                             and they hold for every later run at that seed
   scroll up|down [n]        scroll the shared history buffer
 
+  clock <days>              push the world clock forward, then run the wound-healing sweep and
+                            report how many wounds closed. The clock otherwise only moves on
+                            travel arrival and work stints, so this is the only way to see a
+                            wound taken in play heal within a script
   strategy <succeed|fail-dice|fail-plausibility|auto>
   fight-end <victory|death|runaway>
   advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone.
@@ -127,6 +139,60 @@ strategy auto           # no override; LLM/RNG decide
 
 `strategy custom` degrades to `auto`, since per-node prompting is interactive by nature.
 Set the strategy *before* the action that should be affected.
+
+**Fight dice honour it too.** `strategy succeed` pins every attack die to a six and every defence
+die to a one (and `fail-dice` the reverse), so a script can make a blow land instead of waiting for
+luck. A forced success also guarantees at least one die: a fighter with an unlevelled organ and no
+contributing modus mentis rolls an empty pool, which would otherwise miss no matter what was asked
+for — and every consequence downstream of a hit (wounds, bleeding, knockdown, healing) would be
+unreachable.
+
+### What a fight is made of
+
+Three rules the rest of the fight code assumes, all of them recent:
+
+- **A buff costs vital heat, not dice.** `FightingSkillEffect.Buff` — the five viscera skills plus
+  Sprint and Jump — has no target and nothing to hit, so it rolls nothing. It costs
+  `clamp(10 − level, 1, 10)` vital heat, which means **level makes a buff cheaper, not stronger**,
+  and its whole effect is the `FightStatusEffect` returned by `CreateBuffEffect`. A consumption box
+  plays for `VitalHeatBoxDuration` and hands the turn straight back — no Continue button, because
+  there is nothing to decide.
+- **Defence is a number of dice, so guards are bought rather than rolled.** Parry, Dodge, Cover and
+  Defensive Posture cost CP and immediately grant `+TotalDice` to the defence pool for the turn.
+  Feint is the one self-targeting skill that still rolls (someone has to be convinced) and its
+  sixes become bonus attack dice. **No self-targeted roll can ever produce a wound** —
+  `FinishAttackResolution` routes them to `CreateRolledEffect` instead. That guard is not
+  theoretical: it is why a parry used to be able to injure the person parrying.
+- **Adjacency is 8-way, including for attacks.** `FightResolver.IsInSkillRange` is the single
+  definition, used by both the player's target highlighting and the AI's candidate filter. Range is
+  Euclidean (so a bow's reach stays circular) *plus* the eight surrounding cells always count.
+  Without that exception a diagonal neighbour sits at distance 1.41, out of melee range 1, and two
+  fighters could stand side by side unable to swing at each other — which is what made enemies walk
+  up to someone and then pass their turn.
+
+A "this turn" effect expires in `Fighter.EndTurn`, not `StartTurn`: the start-of-turn pass only
+comes round after every other fighter has acted, which would stretch it to a full round. Cold Blood
+genuinely wants the round (it fires while enemies attack) and so leaves `OnTurnEnd` alone; Blood
+Lust lasts the whole fight and expires nowhere.
+
+### Wounds and healing
+
+A `Wound` is a **catalogue entry and immutable**; `WoundInstance` is one injury on one body.
+`WoundRegistry.All` hands out a single shared template per wound type, so anything settable on
+`Wound` would be shared by every character in the process — which is exactly what went wrong when
+glyph positions lived there. Per-injury state (the infliction day, the resolved art cell) belongs
+on the instance.
+
+`WoundInstance.InflictedOnDay` being **null means historical** — an NPC's trait scars, a
+protagonist's starting injuries — and historical wounds never heal. Everything created during play
+uses `WoundInstance.Inflicted`, which stamps `GameClock.Days`. Get this wrong in either direction
+and one long work stint erases every NPC's backstory.
+
+Only Low and Medium wounds heal, over `wound_healing` days (100–1000, from the viscera). Progress is
+*derived* from the clock rather than ticked, the same trick `PartyMember.BirthTimeDays` uses for
+age: nothing to keep in sync, and correct whenever it happens to be read. The sweep runs on entry to
+the world view, before the old-age check — healing restores HP and lifetime is wound-aware, so a
+heart wound that closed on the journey must not still be counted a line later.
 
 ### A worked example
 

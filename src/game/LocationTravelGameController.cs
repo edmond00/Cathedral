@@ -563,6 +563,9 @@ public class LocationTravelGameController : IDisposable
                     SwapReminescenceForChildhoodMemory(_protagonist);
                 if (FillMemoryMode.IsActive && _protagonist != null)
                     FillMemoryMode.FillEmptySlots(_protagonist);
+                // After the fill modes, so an explicitly named modus mentis wins the last free slot.
+                if (_protagonist != null)
+                    GrantModiMentisMode.GrantIfActive(_protagonist);
                 if (_protagonist != null)
                     FillPartyMode.FillIfActive(_protagonist);
                 _isInNarrativeMode = false;
@@ -2160,9 +2163,24 @@ public class LocationTravelGameController : IDisposable
         // Disable narration mode (world is interactive and in focus)
         _core.SetNarrationMode(false);
 
-        // Age gate: the clock only advances on travel and work, so returning to the world map is
-        // the moment anyone can have aged past their lifetime. Check before anything else — a dead
-        // protagonist ends the run outright.
+        // --advance-days: a debug-only shove of the world clock, applied once on first arrival at
+        // the world map and then cleared. Inert at its default of 0.
+        if (Config.Debug.AdvanceDays > 0)
+        {
+            double days = Config.Debug.AdvanceDays;
+            Config.Debug.AdvanceDays = 0;
+            Cathedral.Game.Narrative.GameClock.Advance(days);
+            Console.WriteLine($"[debug] --advance-days: clock pushed forward {days} d (now {Cathedral.Game.Narrative.GameClock.Days:F1} d)");
+        }
+
+        // Healing gate: the clock only advances on travel and work, so returning to the world map
+        // is the moment wounds can have closed. Runs BEFORE the age check, because closing a wound
+        // restores HP and lifetime is wound-aware — a heart wound that healed on the journey must
+        // not still be counted against the person when their span is measured a line later.
+        HealPartyWounds();
+
+        // Age gate: the same moment anyone can have aged past their lifetime. Check before anything
+        // else — a dead protagonist ends the run outright.
         if (CheckOldAgeDeaths())
         {
             _core.SetWorldInteractionsEnabled(false);
@@ -2179,8 +2197,107 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // --start-fight: drop straight into a fight on the first arrival at the world map.
+        // Inert unless the flag is passed.
+        if (Config.Debug.StartFight != null)
+        {
+            string creature = Config.Debug.StartFight;
+            Config.Debug.StartFight = null;
+            if (StartDebugFight(creature)) return;
+        }
+
         EnterWorldViewInteractive();
     }
+
+    /// <summary>
+    /// Debug-only: begin a fight against a freshly spawned <paramref name="creatureName"/>, with no
+    /// travel encounter and no scene. Returns false when the name has no fight-capable archetype.
+    ///
+    /// <para>
+    /// This is the only way a <c>--cli</c> script can reach fight mode at all. The two real routes
+    /// in are a random travel encounter — which every script disables with <c>--no-encounters</c>,
+    /// precisely because it fires unpredictably — and provoking a location NPC, which takes a
+    /// conversation and a check. Neither is a reasonable prerequisite for testing the fight itself.
+    /// It reuses the ENGAGE button's construction path, so what a script drives is what a player
+    /// would get.
+    /// </para>
+    /// </summary>
+    private bool StartDebugFight(string creatureName)
+    {
+        if (_core.Terminal == null || _protagonist == null) return false;
+        if (!TravelEncounterArchetypes.TryGetValue(creatureName, out var archetypeFactory))
+        {
+            Console.Error.WriteLine(
+                $"[debug] --start-fight: no fight-capable archetype named '{creatureName}'. " +
+                $"Known: {string.Join(", ", TravelEncounterArchetypes.Keys)}");
+            return false;
+        }
+
+        // _consumptionBiome is only set once a journey has been made, so on the very first arrival
+        // at the world map it is still "unknown". Read the avatar's actual biome instead, and fall
+        // back to plain if even that is unavailable — this must never throw.
+        string biomeName = _interface.GetBiomeNameAt(_interface.GetAvatarVertex()) ?? "plain";
+        if (!Cathedral.Glyph.Microworld.BiomeDatabase.Biomes.ContainsKey(biomeName))
+            biomeName = "plain";
+
+        var npc = archetypeFactory().Spawn(GameRng.Stream("debug-start-fight"), biomeName);
+        npc.AffinityTable.SetEnemy(_protagonist.AffinityKey);
+
+        // Seeded from the master RNG, not the wall clock, so the arena is reproducible under --seed.
+        var biome = Cathedral.Glyph.Microworld.BiomeDatabase.Biomes[biomeName];
+        var arena = biome.ArenaGeneratorFactory(GameRng.DerivedSeed("debug-start-fight-arena"));
+
+        _interface.MovementPaused = true;
+        _inTravelEncounter = true;
+        _fightAdapter = new FightModeAdapter(
+            _core.Terminal,
+            _core.PopupTerminal,
+            npc,
+            _protagonist,
+            arena,
+            allies: new List<Cathedral.Game.Npc.NpcEntity>(),
+            sfxTrigger: e => _ambianceEngine?.TriggerGameEvent(e),
+            setMusicFilter: f => _ambianceEngine?.SetFilter(f));
+
+        Console.WriteLine($"[debug] --start-fight: fighting {npc.DisplayName} ({creatureName})");
+        SetMode(GameMode.Fighting);
+        return true;
+    }
+
+    /// <summary>
+    /// Closes any wound on the protagonist or a companion that has had time to mend, and reports
+    /// each one. Only Low and Medium wounds ever heal, and only ones suffered during the run — see
+    /// <see cref="PartyMember.HealWounds"/>.
+    ///
+    /// <para>
+    /// Deliberately quiet: a line each, no modal. Healing takes hundreds of days, so it is a thing
+    /// the player notices in the anatomy panel over a long run rather than an event to interrupt
+    /// them for.
+    /// </para>
+    /// </summary>
+    private int HealPartyWounds()
+    {
+        if (_protagonist == null) return 0;
+
+        int closedCount = 0;
+        foreach (var closed in _protagonist.HealWounds())
+        {
+            Console.WriteLine($"🩹 [HEALED] {_protagonist.DisplayName}: {closed.WoundName} has closed.");
+            closedCount++;
+        }
+
+        foreach (var companion in _protagonist.CompanionParty)
+            foreach (var closed in companion.HealWounds())
+            {
+                Console.WriteLine($"🩹 [HEALED] {companion.DisplayName}: {closed.WoundName} has closed.");
+                closedCount++;
+            }
+
+        return closedCount;
+    }
+
+    /// <summary>Run the healing sweep on demand — the CLI <c>clock</c> command's other half.</summary>
+    public int CliHealPartyWounds() => HealPartyWounds();
 
     /// <summary>
     /// Ages the party: kills the protagonist outright if they have outlived their lifetime, and
@@ -2540,6 +2657,8 @@ public class LocationTravelGameController : IDisposable
             SwapReminescenceForChildhoodMemory(_protagonist);
             if (FillMemoryMode.IsActive)
                 FillMemoryMode.FillEmptySlots(_protagonist);
+            // After the fill modes, so an explicitly named modus mentis wins the last free slot.
+            GrantModiMentisMode.GrantIfActive(_protagonist);
             FillPartyMode.FillIfActive(_protagonist);
             SetMode(GameMode.WorldView);
             return;

@@ -226,6 +226,7 @@ public sealed class CliDriver
                 case "scroll":      CmdScroll(rest);                  break;
                 case "strategy":    CmdStrategy(rest);                break;
                 case "fight-end":   CmdFightEnd(rest);                break;
+                case "clock":       CmdClock(rest);                   break;
                 case "wait":        CmdWait(rest);                    break;
                 case "advance":     CmdAdvance(rest);                 break;
                 case "expect":      CmdExpect(rest, expectPresent: true);  break;
@@ -273,6 +274,12 @@ public sealed class CliDriver
           click keyword <name>      click a narration keyword
           click action <n>          click a narration action by index
           click option <n>          pick a dialogue reply by index
+          clock <days>              DEBUG: push the world clock forward, then heal any wound
+                                    whose time has come (the clock otherwise only moves on
+                                    travel and work, and wounds take 100-1000 days to close)
+          click skill <name>        use a fighting skill by name (see `regions` in a fight)
+          click fighter <name>      click a fighter's map cell — the target step for an attack
+          click end-turn            end the active fighter's turn (the END TURN button)
           click menu <label>        press a main-menu button (New, Continue, …)
           click button              press the footer button (LEAVE/INTERRUPT/END/CONTINUE)
           click continue            confirm the dice overlay
@@ -389,6 +396,30 @@ public sealed class CliDriver
         CliMode.EmitBlock(sb.ToString().TrimEnd());
     }
 
+    /// <summary>
+    /// <c>clock &lt;days&gt;</c> — push the world clock forward and run the wound-healing sweep.
+    ///
+    /// <para>
+    /// Debug-only, and the only practical way to test healing from a script: the clock advances
+    /// solely on travel arrival and work stints, while a wound needs 100–1000 days to close. Unlike
+    /// the <c>--advance-days</c> flag, which fires once before anything has happened, this can be
+    /// called at the point in a script where the protagonist is actually wounded.
+    /// </para>
+    /// </summary>
+    private void CmdClock(string[] a)
+    {
+        if (a.Length == 0 || !double.TryParse(a[0], System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out double days) || days <= 0)
+        {
+            CliMode.Emit("error: clock <days>  (positive number)");
+            return;
+        }
+
+        Narrative.GameClock.Advance(days);
+        int closed = _game.CliHealPartyWounds();
+        CliMode.Emit($"ok: clock at {Narrative.GameClock.Days:F1} d; {closed} wound(s) closed");
+    }
+
     private void CmdRegions()
     {
         bool any = false;
@@ -462,6 +493,17 @@ public sealed class CliDriver
             any = true;
         }
 
+        if (_game.CurrentMode == GameMode.Fighting && _game.CliFight is { } fight)
+        {
+            CliMode.Emit(fight.CliState());
+            foreach (var (name, key, usable) in fight.CliSkills())
+                CliMode.Emit($"  click skill \"{name}\"{(usable ? "" : "  (unavailable)")}   [{key}]");
+            foreach (var (name, fx, fy, alive, isEnemy) in fight.CliFighters())
+                CliMode.Emit($"  click fighter \"{name}\"  ({fx},{fy}) {(isEnemy ? "enemy" : "party")}{(alive ? "" : " DEAD")}");
+            CliMode.Emit("  click end-turn");
+            any = true;
+        }
+
         if (_game.CurrentMode == GameMode.WorldView)
         {
             CliMode.Emit("  travel <vertex|name>  — see `destinations`");
@@ -527,7 +569,7 @@ public sealed class CliDriver
 
     private void CmdClick(string[] a)
     {
-        if (a.Length == 0) { CliMode.Emit("error: click <keyword|action|option|button|continue|cell> …"); return; }
+        if (a.Length == 0) { CliMode.Emit("error: click <keyword|action|option|skill|fighter|end-turn|menu|button|continue|cell> …"); return; }
 
         switch (a[0].ToLowerInvariant())
         {
@@ -555,6 +597,31 @@ public sealed class CliDriver
                 Report(dc.CliSelectOption(idx), $"picked option {idx}");
                 break;
             }
+            case "skill":
+            {
+                if (a.Length < 2) { CliMode.Emit("error: click skill <name>"); return; }
+                var f = _game.CurrentMode == GameMode.Fighting ? _game.CliFight : null;
+                if (f == null) { CliMode.Emit("error: not in a fight"); return; }
+                string name = string.Join(' ', a[1..]).Trim('"');
+                Report(f.CliClickSkill(name), $"used skill \"{name}\"");
+                break;
+            }
+            case "end-turn":
+            {
+                var f = _game.CurrentMode == GameMode.Fighting ? _game.CliFight : null;
+                if (f == null) { CliMode.Emit("error: not in a fight"); return; }
+                Report(f.CliEndTurn(), "ended the turn");
+                break;
+            }
+            case "fighter":
+            {
+                if (a.Length < 2) { CliMode.Emit("error: click fighter <name>"); return; }
+                var f = _game.CurrentMode == GameMode.Fighting ? _game.CliFight : null;
+                if (f == null) { CliMode.Emit("error: not in a fight"); return; }
+                string name = string.Join(' ', a[1..]).Trim('"');
+                Report(f.CliClickFighter(name), $"clicked fighter \"{name}\"");
+                break;
+            }
             case "button":
             {
                 var dc = _game.CliDialogue?.Controller;
@@ -575,6 +642,12 @@ public sealed class CliDriver
                     _game.CliHoverCell(cc.X, cc.Y);
                     _game.CliClickCell(cc.X, cc.Y);
                     CliMode.Emit("ok: accepted protagonist");
+                    return;
+                }
+                // A fight's dice box has its own Continue, and it blocks the turn until pressed.
+                if (_game.CurrentMode == GameMode.Fighting && _game.CliFight is { } cf)
+                {
+                    Report(cf.CliDiceContinue(), "confirmed dice");
                     return;
                 }
                 var dc = _game.CliDialogue?.Controller;

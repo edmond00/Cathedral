@@ -63,7 +63,7 @@ public abstract class PartyMember
 
     // ── Wounds ───────────────────────────────────────────────────
     /// <summary>Active wounds currently affecting this party member.</summary>
-    public List<Wound> Wounds { get; private set; } = new();
+    public List<WoundInstance> Wounds { get; private set; } = new();
 
     // ── Age ───────────────────────────────────────────────────────
     /// <summary>
@@ -152,7 +152,7 @@ public abstract class PartyMember
         LearnedModiMentis = ModiMentis; // same reference
         Inventory = new List<Item>();
         MemoryModules = new List<MemoryModule>(); // populated after modiMentis are assigned via InitializeMemory()
-        Wounds = new List<Wound>();
+        Wounds = new List<WoundInstance>();
 
         // Initialise all 13 anchor slots to empty lists
         EquippedItems = new Dictionary<EquipmentAnchor, List<Item>>();
@@ -796,13 +796,13 @@ public abstract class PartyMember
     /// <summary>
     /// Return all wounds that affect the given organ part (directly or via its organ/body part).
     /// </summary>
-    public List<Wound> GetWoundsForOrganPart(string organPartId, string organId, string bodyPartId) =>
+    public List<WoundInstance> GetWoundsForOrganPart(string organPartId, string organId, string bodyPartId) =>
         Wounds.Where(w => w.AffectsOrganPart(organPartId, organId, bodyPartId)).ToList();
 
     /// <summary>
     /// Return all wounds that affect any organ part belonging to the given body part.
     /// </summary>
-    public List<Wound> GetWoundsForBodyPart(string bodyPartId) =>
+    public List<WoundInstance> GetWoundsForBodyPart(string bodyPartId) =>
         Wounds.Where(w => w.AffectsBodyPart(bodyPartId)
                        || _bodyParts.FirstOrDefault(bp => bp.Id == bodyPartId)?.Organs
                               .Any(o => w.AffectsOrgan(o.Id, bodyPartId)) == true
@@ -830,6 +830,44 @@ public abstract class PartyMember
     public bool IsOrganPartDisabled(string organPartId, string organId, string bodyPartId) =>
         Wounds.Any(w => w.AffectsOrganPart(organPartId, organId, bodyPartId)
                      && w.Handicap == WoundHandicap.High);
+
+    // ── Healing ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Days this body needs to close a wound it can close, from the <c>wound_healing</c> stat.
+    /// Wound-aware, so an injured viscera lengthens the recovery of everything else.
+    /// </summary>
+    public int WoundHealDurationDays
+    {
+        get
+        {
+            var stat = DerivedStats.FirstOrDefault(s => s.Name == "wound_healing");
+            return stat?.GetValue(this) ?? WoundHealingStat.SlowestHealDays;
+        }
+    }
+
+    /// <summary>
+    /// Remove every wound that has had time to close, and report what closed.
+    ///
+    /// <para>
+    /// Only Low and Medium wounds ever heal, and only ones actually suffered during the run —
+    /// <see cref="WoundInstance.CanHeal"/> is the single place that rule lives. Healing restores HP
+    /// for free, since <see cref="CurrentHp"/> is <see cref="MaxHp"/> minus the wound count.
+    /// </para>
+    ///
+    /// <para>
+    /// Call this when the clock has moved (see <see cref="GameClock"/>), not every frame: nothing
+    /// changes between advances, because progress is measured against <see cref="GameClock.Days"/>
+    /// rather than ticked.
+    /// </para>
+    /// </summary>
+    public List<WoundInstance> HealWounds()
+    {
+        int duration = WoundHealDurationDays;
+        var closed = Wounds.Where(w => w.CanHeal && w.DaysOld >= duration).ToList();
+        foreach (var w in closed) Wounds.Remove(w);
+        return closed;
+    }
 
     /// <summary>
     /// Maximum HP = trunk body part score, defined by <see cref="HealthPointStat"/>.
