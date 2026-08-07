@@ -13,10 +13,18 @@ public class RoutineTargetRef
 {
     public RoutineTargetKind Kind { get; set; } = RoutineTargetKind.None;
 
-    /// <summary>Stable identity key — ReferenceLemma for Area/PoI, display name for NPCs.</summary>
+    /// <summary>
+    /// Coarse identity key — ReferenceLemma for Area/PoI, ItemId for items, display name for NPCs.
+    /// For Area/PoI this only <i>categorises</i> (every path is "path", every door "door"), so
+    /// <see cref="RoutineTargetResolver"/> matches <see cref="DisplayName"/> first and falls back here.
+    /// </summary>
     public string Key { get; set; } = "";
 
-    /// <summary>Human-readable display name captured at record time (for UI / debugging).</summary>
+    /// <summary>
+    /// Display name captured at record time. For Area/PoI targets this is the <b>identifying</b> field
+    /// the resolver matches on, not merely UI text — areas are uniquely named scene-wide and
+    /// <c>SceneFactory</c> merges same-named PoIs within an area.
+    /// </summary>
     public string DisplayName { get; set; } = "";
 
     public RoutineTargetRef() { }

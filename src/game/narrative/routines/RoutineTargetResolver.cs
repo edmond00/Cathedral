@@ -16,22 +16,34 @@ public static class RoutineTargetResolver
     /// view for the current step: PoI/Item targets prefer a match in the current area (so the verb's
     /// <c>IsPossible</c>, which is scoped to the PoV, accepts the resolved instance), falling back to a
     /// scene-wide search.
+    ///
+    /// <para><b>Display name identifies, the lemma only categorises.</b> A <c>ReferenceLemma</c> is a
+    /// keyword-similarity anchor, not an identity: every <c>PathPointOfInterest</c> is lemma "path" and
+    /// every door is lemma "door", so a courtyard with five tracks off it matched whichever the walk
+    /// laid down first — a routine that recorded "follow the Courtyard–Pigsty Track" replayed as a walk
+    /// to the chicken coop. Display names are the disambiguated ones (paths name both endpoints, areas
+    /// are unique scene-wide, and <c>SceneFactory</c> merges same-named PoIs within an area), so they
+    /// are tried first and the lemma is kept only as a fallback for routines recorded before this.</para>
     /// </summary>
     public static Element? Resolve(Scene.Scene scene, PoV pov, RoutineTargetRef target)
     {
         switch (target.Kind)
         {
             case RoutineTargetKind.Area:
-                return scene.AllAreas.FirstOrDefault(a => KeyMatches(a.ReferenceLemma, target.Key));
+                return scene.AllAreas.FirstOrDefault(a => KeyMatches(a.DisplayName, target.DisplayName))
+                    ?? scene.AllAreas.FirstOrDefault(a => KeyMatches(a.ReferenceLemma, target.Key));
 
             case RoutineTargetKind.PointOfInterest:
             {
-                // Current area first, then scene-wide.
-                var local = pov.Where.PointsOfInterest.FirstOrDefault(p => KeyMatches(p.ReferenceLemma, target.Key));
-                if (local != null) return local;
-                return scene.AllAreas
-                    .SelectMany(a => a.PointsOfInterest)
-                    .FirstOrDefault(p => KeyMatches(p.ReferenceLemma, target.Key));
+                // Current area first, then scene-wide — and by display name before lemma at each scope,
+                // so a local lemma collision can never beat the right object one area away.
+                var localPois = pov.Where.PointsOfInterest;
+                var allPois   = scene.AllAreas.SelectMany(a => a.PointsOfInterest);
+
+                return localPois.FirstOrDefault(p => KeyMatches(p.DisplayName, target.DisplayName))
+                    ?? allPois.FirstOrDefault(p => KeyMatches(p.DisplayName, target.DisplayName))
+                    ?? localPois.FirstOrDefault(p => KeyMatches(p.ReferenceLemma, target.Key))
+                    ?? allPois.FirstOrDefault(p => KeyMatches(p.ReferenceLemma, target.Key));
             }
 
             case RoutineTargetKind.Npc:
@@ -59,6 +71,8 @@ public static class RoutineTargetResolver
         return null;
     }
 
+    // An empty key never matches: a RoutineTargetRef deserialised without a DisplayName would
+    // otherwise match the first element whose name happened to be empty.
     private static bool KeyMatches(string a, string b)
-        => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+        => b.Length > 0 && string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 }

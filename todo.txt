@@ -1,3 +1,24 @@
+                 
+#                 ______________
+#                /\.............\   
+#                \/\ proscribed  \  
+#                 \ \  palimpsest \ 
+#                  \ \-------------\ 
+#                   \/\             \ 
+#                    \ \_____________\
+#                     \/_____________/ 
+
+
+PLAYTEST :
+- fight debuging
+- slay>corpse debug
+- illegal actions
+- beast constraints + better context
+- llama auto setup
+- exe build
+- manual
+- childhood -> death run
+
 humor outcome
 all MM functions after childhood reminescence
 organ name in humor button during dices rolls
@@ -11,6 +32,8 @@ childhood : leave temple -> grandfather story
 time of the day context, anatomy (beast) context, ...
 (You wonder ...) in dialogue inner thought (2nd person)
 routine + traveling NPC ?
+during routine replay, following the courtyard-pigsty track moved me to the chicken coop (during routine recording, it was properly moved me to the pigsty)
+During the "ROUTINE COMPLETE" box message display, background is fully black instead of transparent outside the box so the worl can be seen
 
 
 words to prevent :
@@ -172,3 +195,18 @@ NEXT VERSION :
 verbs :
 MEET TO REQUEST HOSPITALITY
 MAKE A CAMP FIRE AND WAIT
+
+COSMOLOGY :
+
+- Adswaru : 1st Principium of the axioms.
+- Silance : 2nd Principium of nothing.
+- Adswaru+Silance = Repance : 3rd Principium of the destruction.
+- Adswaru+Repance = Rede : 4th Principium of the randomness.
+- Adswaru+Repance = Rhema : 5th Principium of the consciousness.
+- Adswaru+Repance = Rhesis : 6th Principium of the judgment.
+- Adswaru+Repance = Qoth : 7th Principium of the reality.
+
+Qoth+Rede : world 1 = cosmic forest --Repance-> ashes
+Qoth+Rhena : world 2 = cosmic orgia --Repance-> tears
+Qoth+Rhesis : world 3 = cosmic temple --Repance-> 
+ether+tears+sand : world 4 = cosmic sea

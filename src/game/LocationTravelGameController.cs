@@ -3302,7 +3302,9 @@ public class LocationTravelGameController : IDisposable
         _routineOutcomeBox = new RoutineOutcomeBox(_core.Terminal, routine.Name, lines);
         _core.SetWorldInteractionsEnabled(false);
         _interface.SetWorldInteractionsEnabled(false);
-        _core.Terminal.Clear();
+        // Modal overlay over the world: reset to transparent rather than a bare Clear, which paints
+        // opaque black and hid the sphere behind the box. Capture clicks so none reach the world.
+        SetTransparentWorldOverlay(clickPassthrough: false);
         _routineOutcomeBox.Render();
     }
 
