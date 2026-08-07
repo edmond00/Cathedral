@@ -137,7 +137,7 @@ public static class Config
 
     #region Terminal Configuration
     public static class Name {
-        public const string GameTitle = "proscribed palimpsests";
+        public const string GameTitle = "proscribed palimpsest";
         public const string Chapter = "Volume 1";
         public const string ChapterSubtitle = "Turnips and Radishes";
     }
@@ -1007,15 +1007,29 @@ public static class Config
         public const double TopP = 0.95;
 
         // Anti-repetition. Passed to the llama.cpp server at launch (not per request), so these
-        // apply to every call — narration, dialogue and constrained single-token alike.
-        // Three mechanisms stack here, so each is kept at or below its conventional value:
-        //   RepeatPenalty   — llama.cpp default 1.0 (off); 1.1 is the usual mild setting.
+        // apply to every call — narration, dialogue and constrained single-token alike. That reach is
+        // the thing to keep in mind: the windows are the llama.cpp defaults (--repeat-last-n 64,
+        // --dry-penalty-last-n -1 = whole context), and neither is set here, so all three look at the
+        // PROMPT as well as at what has been generated. Our prompts are written to be echoed — the
+        // option labels a choice must name back, the sentence PersonaRewriter must re-express — so any
+        // penalty raised here is aimed partly at vocabulary the game itself supplied.
+        //   RepeatPenalty   — llama.cpp default 1.0 (off), and left off deliberately. It is a FLAT
+        //                     divisor on any token seen in the last 64, so ordinary function words in
+        //                     the prompt tail take the same hit as a looping phrase. At the usual mild
+        //                     1.1 that measurably cost grammar: ~3% of persona-choice answers (10/330,
+        //                     qwen2.5-3b at the sampler above) dropped the "to" out of "I want to …"
+        //                     and returned "I want focus on the muck heap". At 1.0 and 1.05 it was
+        //                     0/420. Turning it off cost nothing it was there for — repeated 4-grams
+        //                     in long narration stayed at 0.0%, the same as with it on, because DRY
+        //                     already covers looping (all three off gives 0.5%).
         //   FrequencyPenalty— llama.cpp default 0.0; usual range 0.1-0.3. Above that a 3B model
         //                     starts avoiding words it ought to repeat (names, a recurring object).
+        //                     Measured clean of the effect above (0/60 at 0.2 with repeat off).
         //   DryMultiplier   — default 0.0 (off); 0.8 is the recommended on-value. Penalises
         //                     repeated *sequences* rather than tokens, so it curbs verbatim
-        //                     looping without flattening vocabulary. Set to 0 to disable.
-        public const double RepeatPenalty = 1.1;
+        //                     looping without flattening vocabulary. Set to 0 to disable. This is what
+        //                     carries anti-repetition now, and it is also clean of the effect (0/60).
+        public const double RepeatPenalty = 1.0;
         public const double FrequencyPenalty = 0.2;
         public const double DryMultiplier = 0.8;
 

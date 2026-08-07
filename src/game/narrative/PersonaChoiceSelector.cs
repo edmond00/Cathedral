@@ -46,7 +46,34 @@ public readonly record struct PersonaChoicePrompt(
 /// </summary>
 public enum PersonaOpening { Intent, Willingness }
 
-/// <summary>The literal openings and the prompt wording behind each <see cref="PersonaOpening"/>.</summary>
+/// <summary>
+/// The literal openings and the prompt wording behind each <see cref="PersonaOpening"/>.
+/// <para>
+/// <b>Every opening must be directly followable by an option label.</b> The labels are bare verb
+/// phrases ("focus on a pig", "slay the pig", "greet them warmly") or, at a willingness site, bare
+/// adjectives ("reluctant to do it") — so an opening ends where the label can be glued straight on.
+/// That is why it is <c>"I want to "</c> and not <c>"I want "</c>: the infinitive marker belongs to
+/// the grammar, not to the model.
+/// </para>
+/// <para>
+/// <b>Never end a literal one function word short.</b> A prefix is not injected — llama.cpp satisfies
+/// it by filtering candidate tokens, so everything after the literal is still sampled, penalties and
+/// all. <c>"I want "</c> leaves exactly one word owed ("to") at the very moment the model is straining
+/// to emit the option label, and the prompt has just shown it <c>"I want"</c> closed inside quotes as
+/// a complete opening. It skips: "I want focus on the dead pig" — intermittently, on the prompt that
+/// worked a moment earlier. Measured on qwen2.5-3b at the shipped sampler it is ~5% of answers that
+/// take the "want" branch, and it needs the server's anti-repetition flags (see
+/// <c>Config.LLM.RepeatPenalty</c> / <c>FrequencyPenalty</c> / <c>DryMultiplier</c>, passed at launch)
+/// to appear at all — without them it did not occur in 240 samples, which is why a plain probe against
+/// a default server will not reproduce it.
+/// </para>
+/// <para>
+/// So the rule is not "force the person" but <b>force up to the last function word</b>. A literal that
+/// can be followed by <i>any</i> content word is safe (<c>"I will "</c> in the action rewrite,
+/// <c>"I want to "</c> here); one that owes a specific small word is not, because that word is exactly
+/// what the penalties and the label's pull conspire against.
+/// </para>
+/// </summary>
 public static class PersonaOpenings
 {
     /// <summary>The GBNF alternatives, trailing space included — the output starts with exactly one.</summary>
@@ -59,11 +86,16 @@ public static class PersonaOpenings
     /// <summary>The same set as the prompt asks for it, so instruction and grammar cannot disagree.</summary>
     public static string PromptPhrase(PersonaOpening opening) => Quote(Prefixes(opening));
 
+    // "I would/could/can" already take a bare infinitive ("I would focus on a pig"); only "want"
+    // needs the marker, so only it carries one.
     private static readonly string[] IntentPrefixes =
-        { "I want ", "I would ", "I could ", "I can " };
+        { "I want to ", "I would ", "I could ", "I can " };
 
+    // "I am" is the one that pairs with the adjective labels ("I am reluctant to do it") — the whole
+    // reason this set exists. The modals pair with the deed instead ("I can do it"), which is equally
+    // answerable, and "want" carries its marker here for the same reason as above.
     private static readonly string[] WillingnessPrefixes =
-        { "I am ", "I want ", "I can ", "I could ", "I should ", "I don't ", "I can't ", "I shouldn't " };
+        { "I am ", "I want to ", "I can ", "I could ", "I should ", "I don't ", "I can't ", "I shouldn't " };
 
     private static string Quote(IReadOnlyList<string> prefixes)
     {
