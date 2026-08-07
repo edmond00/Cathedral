@@ -85,6 +85,31 @@ public abstract class Verb
     }
 
     /// <summary>
+    /// <b>Subject</b> pronoun for a named NPC target — "he"/"she"/"it" — for the clause of a verbatim
+    /// where the NPC is the one doing something ("see where he goes"). <see cref="NpcPronoun"/> is the
+    /// object form and reads as broken English in that position ("see where him goes"), which the
+    /// persona then faithfully copies into the action text.
+    /// </summary>
+    protected static string NpcSubjectPronoun(Element target)
+    {
+        if (target is not SceneNpc { Entity: NpcEntity npc }) return "they";
+        if (npc.Combatant.AnatomyType != AnatomyType.Human) return "it";
+        return NpcLabelResolver.GenderIsMale(npc.Combatant) ? "he" : "she";
+    }
+
+    /// <summary>
+    /// <b>Possessive</b> determiner for a named NPC target — "his"/"her"/"its" — for a verbatim naming
+    /// something the NPC owns ("go through his pockets"). Same reason as
+    /// <see cref="NpcSubjectPronoun"/>: the object form gives "go through him pockets".
+    /// </summary>
+    protected static string NpcPossessive(Element target)
+    {
+        if (target is not SceneNpc { Entity: NpcEntity npc }) return "their";
+        if (npc.Combatant.AnatomyType != AnatomyType.Human) return "its";
+        return NpcLabelResolver.GenderIsMale(npc.Combatant) ? "his" : "her";
+    }
+
+    /// <summary>
     /// Builds the verbatim for an item-pickup verb (grab/gather/steal/cut), e.g. "gather some moss",
     /// "grab an apple", "steal a wool cloak". The item name is routed through
     /// <see cref="Item.WithArticle"/> so mass nouns ("moss", "bread") and plurals get "some" rather

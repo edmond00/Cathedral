@@ -37,11 +37,13 @@ public class AttackVerb : Verb
     }
 
     // Named NPCs are introduced once in the prompt's attention line, so the verbatim refers back
-    // by pronoun; shallow wildlife keeps its type name ("attack the crab").
+    // by pronoun; shallow wildlife keeps its type name, articled and lower-cased by DefiniteTarget
+    // ("attack the crab") — the bare DisplayName read as a proper noun ("attack Pig") and the persona
+    // copied it straight into the action text.
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => target is SceneNpc { Entity: NpcEntity }
             ? $"attack {NpcPronoun(target)}"
-            : $"attack {target.DisplayName}";
+            : $"attack {DefiniteTarget(target)}";
 
     // Read out of context in the routines menu, so the pronoun is replaced by the name.
     public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)

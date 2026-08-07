@@ -180,12 +180,11 @@ public class ThinkingExecutor
         // GBNF prefix constraint forces the styled rewrite to open with the same literal. This
         // guarantees the prefix can be stripped cleanly to form the button label (DisplayText);
         // ActionText keeps the canonical "try to …" form the item critic expects.
-        const string actionPrefix = "I will ";
         string styledAction = await _rewriter.RewriteAsync(
-            actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: actionPrefix, styleInstruction: skill.StyleInstruction, innerThought: fitThought, preview: actionPart?.NextSegment(), ct: cancellationToken);
+            actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, innerThought: fitThought, preview: actionPart?.NextSegment(), ct: cancellationToken);
         if (string.IsNullOrWhiteSpace(styledAction))
-            styledAction = actionPrefix + (skill.ActsDiscretely ? "discretely " : "") + goalPhrase;
-        string bareAction = StripPrefix(styledAction, actionPrefix);
+            styledAction = ActionPrefix + (skill.ActsDiscretely ? "discretely " : "") + goalPhrase;
+        string bareAction = StripPrefix(styledAction, ActionPrefix);
 
         // Difficulty: verb base ± the persona-fit modifier (eager −1 / willing 0 / reluctant +1),
         // clamped to 1..10. Auto-success phases carry difficulty 0 (rendered with the ○ glyph).
@@ -257,9 +256,13 @@ public class ThinkingExecutor
 
         string situation = ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, observedPhrase).TrimEnd();
         string lead = situation.Length == 0 ? "" : situation + " ";
+        // A willingness site: its options are bare adjectives ("reluctant to do it"), so the reasoning
+        // opens on a copula or a modal rather than on a bare "I" the model completes with the label
+        // itself ("I reluctant to do it.").
         var prompt = new PersonaChoicePrompt(
             $"{lead}You are considering whether to {goalPhrase}.\n\n",
-            "Do you want to do it?", "whether they want to do it");
+            "Do you want to do it?", "whether they want to do it",
+            PersonaOpening.Willingness);
 
         var chosen = await _selector.SelectAsync(
             actionSlot, skill, PersonaFitActions,
@@ -394,7 +397,15 @@ public class ThinkingExecutor
 
     /// <summary>
     /// Reformulates an action to incorporate a combined item, in the action Modus Mentis's voice.
-    /// Returns the styled display text (no "try to " prefix).
+    /// Returns the styled display text (the "I will " opening stripped, so it reads as a button label).
+    /// <para>
+    /// Generated exactly like the plain action above: the neutral sentence is the same
+    /// <see cref="NeutralNarration.ActionIntent"/> "I will …" statement, the rewrite is GBNF-forced to
+    /// open with the same literal, and the same literal is stripped off the answer. Without the forced
+    /// prefix this path fell back to the kind's default "I ", and the persona wrote the deed as
+    /// something already under way — "I slice into the pig's belly … using an arming sword" — where
+    /// every other action button reads as an intention.
+    /// </para>
     /// </summary>
     public async Task<string?> ExecuteItemReformulationAsync(
         ParsedNarrativeAction originalAction,
@@ -410,11 +421,18 @@ public class ThinkingExecutor
 
         int slot = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
         _llmManager.ResetInstance(slot);
-        string neutral = $"{ActionDisplay(originalAction)} using {item.WithArticle()}";
-        string styled = await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Action, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken);
+        string neutral = NeutralNarration.ActionIntent($"{ActionDisplay(originalAction)} using {item.WithArticle()}");
+        string styled = await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Action, mm.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken);
         if (string.IsNullOrWhiteSpace(styled)) return null;
-        return StripTryToPrefix(styled);
+        return StripPrefix(styled, ActionPrefix);
     }
+
+    /// <summary>
+    /// The opening every action rewrite is generated behind, and stripped of afterwards to form the
+    /// button label. It is <see cref="NeutralNarration.ActionIntent"/>'s opening, the GBNF forced
+    /// prefix, and the fallback's opening — one literal, so the three cannot drift apart.
+    /// </summary>
+    private const string ActionPrefix = "I will ";
 
     private static string ActionDisplay(ParsedNarrativeAction action)
         => !string.IsNullOrWhiteSpace(action.DisplayText)

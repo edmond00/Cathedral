@@ -80,19 +80,44 @@ public static class JsonConstraintGenerator
     /// it too, and <see cref="GenerateDialogueReplyGrammar"/> for the one shape that has quotes.
     /// </summary>
     public static string GenerateRawTextGrammar(string? forcedPrefix, int minLen, int maxLen, bool allowParentheses = false)
+        => GenerateRawTextGrammar(
+               string.IsNullOrEmpty(forcedPrefix) ? System.Array.Empty<string>() : new[] { forcedPrefix! },
+               minLen, maxLen, allowParentheses);
+
+    /// <summary>
+    /// The same raw-text grammar, opened by <b>one of several</b> literals rather than a single one:
+    /// the output must start with exactly one of <paramref name="forcedPrefixes"/>, and the model
+    /// chooses which. An empty list means no forced opening (first character forced to a letter).
+    /// <para>
+    /// This is what turns "begin with I" into "begin with a verb phrase that can actually continue".
+    /// A lone <c>"I "</c> prefix constrains the person but not the syntax, and a small model finishes it
+    /// with whatever completes the option label it was shown — "I reluctant to do it.", "I attack Pig".
+    /// Forcing the choice among <c>"I am "</c>, <c>"I want "</c>, <c>"I could "</c> and the rest leaves
+    /// the model free to pick its stance while making the ungrammatical and the present-tense-narrating
+    /// openings unreachable.
+    /// </para>
+    /// </summary>
+    public static string GenerateRawTextGrammar(
+        IReadOnlyList<string> forcedPrefixes, int minLen, int maxLen, bool allowParentheses = false)
     {
         string charClass = BodyCharClass(allowParentheses);
-        if (string.IsNullOrEmpty(forcedPrefix))
+        var prefixes = (forcedPrefixes ?? System.Array.Empty<string>())
+            .Where(p => !string.IsNullOrEmpty(p))
+            .ToList();
+
+        if (prefixes.Count == 0)
         {
             int restMin = Math.Max(0, minLen - 1);
             int restMax = Math.Max(restMin, maxLen - 1);
             return $"root ::= [a-zA-Z] {charClass}{{{restMin},{restMax}}}\n";
         }
 
-        string escaped = forcedPrefix.Replace("\\", "\\\\").Replace("\"", "\\\"");
         int bodyMin = Math.Max(0, minLen);
         int bodyMax = Math.Max(bodyMin, maxLen);
-        return $"root ::= \"{escaped}\" {charClass}{{{bodyMin},{bodyMax}}}\n";
+        string alternatives = string.Join(
+            " | ", prefixes.Select(p => "\"" + p.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""));
+        string opening = prefixes.Count == 1 ? alternatives : $"( {alternatives} )";
+        return $"root ::= {opening} {charClass}{{{bodyMin},{bodyMax}}}\n";
     }
 
     /// <summary>

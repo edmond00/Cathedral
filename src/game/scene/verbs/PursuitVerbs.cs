@@ -90,7 +90,7 @@ public class StalkVerb : Verb
         => Plan(scene, pov, target) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"follow {NpcPronoun(target)} at a distance and see where {NpcPronoun(target)} goes";
+        => $"follow {NpcPronoun(target)} at a distance and see where {NpcSubjectPronoun(target)} goes";
 
     public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
         => $"follow {NpcName(target)} to see where they go";

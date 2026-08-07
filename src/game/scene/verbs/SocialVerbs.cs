@@ -150,7 +150,7 @@ public class GatherKnowledgeVerb : SocialDialogueVerb
         => Available(scene, pov, target) != null;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
-        => $"ask {NpcPronoun(target)} what {NpcPronoun(target)} knows";
+        => $"ask {NpcPronoun(target)} what {NpcSubjectPronoun(target)} knows";
 
     public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
         => $"ask {NpcName(target)} what they know";
@@ -205,7 +205,7 @@ public class PickpocketVerb : Verb
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => target is SleepingNpcPointOfInterest
             ? "go through their pockets while they sleep"
-            : $"go through {NpcPronoun(target)} pockets";
+            : $"go through {NpcPossessive(target)} pockets";
 
     public override string RoutineLabel(Scene scene, PoV pov, Element target, VerbView? view = null)
         => $"pick {SleeperGate.Name(target)}'s pocket";

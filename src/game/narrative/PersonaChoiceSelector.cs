@@ -27,7 +27,52 @@ namespace Cathedral.Game.Narrative;
 /// </list>
 /// All three are constant across one selection, so the reasoning prompt's prefix stays cacheable.
 /// </summary>
-public readonly record struct PersonaChoicePrompt(string ContextText, string OpenQuestion, string ReportedQuestion);
+public readonly record struct PersonaChoicePrompt(
+    string ContextText, string OpenQuestion, string ReportedQuestion,
+    PersonaOpening Opening = PersonaOpening.Intent);
+
+/// <summary>
+/// Which set of openings a site's free-text reasoning is constrained to (GBNF) and told to use (prompt).
+/// <list type="bullet">
+/// <item><see cref="Intent"/> — a site that asks <i>what</i> the persona chooses ("What do you want to
+///       do?", "What do you want to say?"). The answer must state a want, not narrate a deed: asked
+///       only to begin with "I", a small model answers "I attack Pig" — the present tense of something
+///       already happening, when nothing has happened yet and the choice is still being made.</item>
+/// <item><see cref="Willingness"/> — a site that asks <i>whether</i> the persona will ("Do you want to
+///       do it?"), whose options are bare adjectives ("reluctant to do it"). Beginning with "I" alone,
+///       the model glues the label straight on and produces "I reluctant to do it."; the copula and the
+///       modals give it somewhere grammatical to land.</item>
+/// </list>
+/// </summary>
+public enum PersonaOpening { Intent, Willingness }
+
+/// <summary>The literal openings and the prompt wording behind each <see cref="PersonaOpening"/>.</summary>
+public static class PersonaOpenings
+{
+    /// <summary>The GBNF alternatives, trailing space included — the output starts with exactly one.</summary>
+    public static IReadOnlyList<string> Prefixes(PersonaOpening opening) => opening switch
+    {
+        PersonaOpening.Willingness => WillingnessPrefixes,
+        _                          => IntentPrefixes,
+    };
+
+    /// <summary>The same set as the prompt asks for it, so instruction and grammar cannot disagree.</summary>
+    public static string PromptPhrase(PersonaOpening opening) => Quote(Prefixes(opening));
+
+    private static readonly string[] IntentPrefixes =
+        { "I want ", "I would ", "I could ", "I can " };
+
+    private static readonly string[] WillingnessPrefixes =
+        { "I am ", "I want ", "I can ", "I could ", "I should ", "I don't ", "I can't ", "I shouldn't " };
+
+    private static string Quote(IReadOnlyList<string> prefixes)
+    {
+        var quoted = prefixes.Select(p => $"\"{p.TrimEnd()}\"").ToList();
+        return quoted.Count == 1
+            ? quoted[0]
+            : string.Join(", ", quoted.Take(quoted.Count - 1)) + " or " + quoted[^1];
+    }
+}
 
 /// <summary>
 /// Result of a persona choice: the picked <see cref="Item"/> (<c>null</c> ⇒ the decline option was
@@ -77,12 +122,16 @@ public class PersonaChoiceSelector
     /// <summary>
     /// GBNF for the persona's free-text reasoning: restricted to the same body charset as the persona
     /// rewrites — the double-quote among the characters it excludes, so the thought cannot come back
-    /// quoting itself or one of the options it was shown. Forced to open with "I " so it reads as a
-    /// first-person want. Raw text (not JSON) — it is consumed directly as the reasoning string and
-    /// streamed into the preview as inner thought.
+    /// quoting itself or one of the options it was shown. Forced to open with one of the site's
+    /// <see cref="PersonaOpening"/> literals, so it reads as a first-person <i>want</i> or <i>stance</i>
+    /// rather than as narration of a deed. Raw text (not JSON) — it is consumed directly as the
+    /// reasoning string and streamed into the preview as inner thought.
     /// </summary>
-    private static readonly string ReasoningGrammar =
-        JsonConstraintGenerator.GenerateRawTextGrammar("I ", ReasoningMinChars, ReasoningMaxChars);
+    private static readonly Dictionary<PersonaOpening, string> ReasoningGrammars =
+        Enum.GetValues<PersonaOpening>().ToDictionary(
+            o => o,
+            o => JsonConstraintGenerator.GenerateRawTextGrammar(
+                     PersonaOpenings.Prefixes(o), ReasoningMinChars, ReasoningMaxChars));
 
     private readonly LlamaServerManager _llm;
     private readonly Random _random = GameRng.Stream("persona-choice");
@@ -169,12 +218,13 @@ public class PersonaChoiceSelector
         // constantly ("I want to look at the square-mill lane"). Exempt them from the preview's live
         // sanitizer gate, or the box freezes on a name the game itself chose.
         preview?.OnSourceVocabulary(SourceVocabulary.From(labels.Append(prompt.ContextText)));
+        string grammar = ReasoningGrammars[prompt.Opening];
         string reasoning = preview != null
             ? await _llm.GenerateConstrainedStringStreamingAsync(
-                  slotId, reasoningPrompt, gbnfGrammar: ReasoningGrammar, ReasoningMaxTokens, skipReset: false,
+                  slotId, reasoningPrompt, gbnfGrammar: grammar, ReasoningMaxTokens, skipReset: false,
                   onTokenStreamed: (t, _) => preview.OnToken(t))
             : await _llm.GenerateConstrainedStringAsync(
-                  slotId, reasoningPrompt, gbnfGrammar: ReasoningGrammar, ReasoningMaxTokens, skipReset: false);
+                  slotId, reasoningPrompt, gbnfGrammar: grammar, ReasoningMaxTokens, skipReset: false);
         reasoning = reasoning.Trim();
         preview?.OnComplete(reasoning);
         if (reasoning.Length == 0) return new PersonaChoice<T>(candidates[0].Item, null);   // no signal → first real option
@@ -216,7 +266,11 @@ public class PersonaChoiceSelector
             "but do NOT invent facts or events: do not narrate anything you say or do, or anything that happens in the world " +
             "(no conversations, no actions, no outcomes). Whatever you imagine beyond the plain choice must be phrased as an " +
             "inner thought — what you privately think or feel — never stated as something that is actually happening. " +
-            "Answer in one short sentence, in your own voice, beginning with \"I\".");
+            "Nothing has happened yet: you are still deciding, so say what you want or intend, never what you are doing. " +
+            // The same set the grammar forces (PersonaOpenings), so instruction and constraint agree —
+            // a model told "begin with I" and forced to begin with "I want " spends its first tokens
+            // fighting the grammar.
+            $"Answer in one short sentence, in your own voice, beginning with {PersonaOpenings.PromptPhrase(prompt.Opening)}.");
 
         if (!string.IsNullOrWhiteSpace(evaluator.PersonaReminder2))
             sb.Append("\n\nStay in the character of ").Append(evaluator.PersonaReminder2).Append('.');
