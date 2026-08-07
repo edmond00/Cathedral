@@ -1222,16 +1222,28 @@ public class NarrativeController
             // Difficulty = number of 6s needed to succeed (1-10, from LLM evaluation)
             int actualDifficulty = evalResult.DifficultyLevel;
 
-            // Start dice roll animation (with humor modifiers for the acting member)
-            NarrationDiceStart(numberOfDice, actualDifficulty, _activePartyMember);
-            _narrationState.LoadingMessage = Config.LoadingMessages.RollingDice;
-
-            // Roll each die independently (1–6) and count sixes
+            // Roll each die independently (1–6) and count sixes. The forced-outcome branch runs
+            // BEFORE the animation starts because a forced success may have to lower the difficulty
+            // (see below) and the animation is drawn against it.
             int[] finalDiceValues;
             bool succeeded;
             if (DebugMode.IsActive && !DebugMode.IsAutoStrategy)
             {
                 succeeded = DebugMode.GetDiceRollOverride(action.ActionText, numberOfDice, actualDifficulty);
+
+                // A forced success has to be a roll the pool can actually show. A verb harder than
+                // the chain that reached it — tame is difficulty 4 off three modi mentis — needs more
+                // sixes than there are dice, which no arrangement satisfies: the roll is then simply
+                // impossible, and `strategy succeed` asking for it used to hang the game outright
+                // (GenerateDiceValuesForResult spinning for a six it had nowhere left to put). Cap the
+                // demand at the pool, the way the fight path guarantees a forced success one die.
+                if (succeeded && actualDifficulty > numberOfDice)
+                {
+                    Console.WriteLine($"NarrativeController: forced success needs {actualDifficulty} sixes from " +
+                                      $"{numberOfDice} dice — difficulty capped at {numberOfDice} for this roll");
+                    actualDifficulty = numberOfDice;
+                }
+
                 finalDiceValues = GenerateDiceValuesForResult(numberOfDice, actualDifficulty, succeeded);
             }
             else
@@ -1242,6 +1254,10 @@ public class NarrativeController
                 int sixesCount = finalDiceValues.Count(v => v == 6);
                 succeeded = sixesCount >= actualDifficulty;
             }
+
+            // Start dice roll animation (with humor modifiers for the acting member)
+            NarrationDiceStart(numberOfDice, actualDifficulty, _activePartyMember);
+            _narrationState.LoadingMessage = Config.LoadingMessages.RollingDice;
 
             Console.WriteLine($"NarrativeController: Rolled {finalDiceValues.Count(v => v == 6)} sixes out of {numberOfDice} dice (need {actualDifficulty}) → {(succeeded ? "SUCCESS" : "FAILURE")}");
 
@@ -1638,8 +1654,11 @@ public class NarrativeController
         
         if (succeeded)
         {
-            // Ensure at least 'difficulty' sixes
-            int sixesNeeded = difficulty;
+            // Ensure at least 'difficulty' sixes — but never ask for more sixes than there are dice.
+            // The tail loop below places one six per pass and has nowhere to put the surplus, so an
+            // unclamped demand spins forever. Callers clamp too; this is the backstop, because a hang
+            // here freezes the whole game with nothing on screen to say why.
+            int sixesNeeded = Math.Min(difficulty, numberOfDice);
             int sixesPlaced = 0;
             
             for (int i = 0; i < numberOfDice; i++)
@@ -3526,6 +3545,13 @@ public class NarrativeController
                     _scene.AddPointOfInterestToArea(_pov.Where, remains);
                     if (enemy == npc) mainCorpse ??= remains;
                 }
+
+                // Out of play for good — the same door the slay verb and the two recruit routes use,
+                // so a location does not stand its dead back up on the next visit. An enemy with no
+                // SceneNpc (a --start-fight creature) was never in the scene and needs no removal.
+                var fallen = _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, enemy));
+                if (fallen != null) _scene.RemoveNpcFromPlay(fallen);
+
                 Console.WriteLine($"NarrativeController: Corpse spawned for {enemy.DisplayName}");
             }
 

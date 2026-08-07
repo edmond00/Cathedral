@@ -11,6 +11,15 @@ namespace Cathedral.Game.Npc;
 public class ShallowNpcEntity : INpcEntity
 {
     public string NpcId    { get; }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Shallow wildlife has no generated name to derive an id from, but its <see cref="NpcId"/> is
+    /// drawn from the location-seeded spawn rng and so already comes out the same on every build —
+    /// which is exactly what a persistent id has to be.
+    /// </remarks>
+    public string PersistentId => NpcId;
+
     public string DisplayName { get; }
     public bool   IsAlive     { get; set; } = true;
 

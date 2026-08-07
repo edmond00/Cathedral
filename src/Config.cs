@@ -131,6 +131,31 @@ public static class Config
         /// Neither is a reasonable prerequisite for testing combat itself.</para>
         /// </summary>
         public static string? StartFight { get; set; } = null;
+
+        /// <summary>
+        /// Beast archetype to add to every scene as it is built, e.g. "wolf". Set by
+        /// <c>--spawn-beast &lt;name&gt;</c>. Null means add nothing.
+        ///
+        /// <para>For scripted runs. Every beast a wilderness factory places is rolled (a wolf 10–20%
+        /// of the time, a boar 25–40%) and then given a roaming schedule, so whether one is standing
+        /// where the script opens is two coin flips deep — and the beast is the whole subject of
+        /// appease/tame. This puts one in the opening area at every period, flagged an enemy by the
+        /// same first-contact pass that flags a rolled one.</para>
+        /// </summary>
+        public static string? SpawnBeast { get; set; } = null;
+
+        /// <summary>
+        /// Verb id the playground's goal choice must land on, e.g. "tame". Set by
+        /// <c>--goal-only &lt;verb-id&gt;</c> and by the CLI's <c>goal</c> command, which is what a
+        /// script uses when the goal has to change between steps. Null (the default) leaves the
+        /// choice to the RNG, exactly as before.
+        ///
+        /// <para><c>--playground</c> replaces the persona's "what do you want to do?" with a uniform
+        /// draw over every goal the observed object offers, so a script that means to appease — and
+        /// then to tame — a beast offering a dozen goals is not testing anything it can name. Ignored
+        /// for a thinking phase where no goal matches, which then draws as usual.</para>
+        /// </summary>
+        public static string? GoalOnly { get; set; } = null;
     }
 
     #endregion

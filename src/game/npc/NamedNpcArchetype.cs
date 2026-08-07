@@ -197,7 +197,7 @@ public abstract class NamedNpcArchetype : NpcArchetype
         var affinityTable = affinityResolver?.Invoke(stableId) ?? new AffinityTable();
 
         return new NpcEntity(
-            npcId, combatant, this,
+            npcId, stableId, combatant, this,
             DefaultPersistent,
             text,
             canSpeak:              CanSpeak,

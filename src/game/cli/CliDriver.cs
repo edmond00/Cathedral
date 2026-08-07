@@ -225,6 +225,7 @@ public sealed class CliDriver
                 case "key":         CmdKey(rest);                     break;
                 case "scroll":      CmdScroll(rest);                  break;
                 case "strategy":    CmdStrategy(rest);                break;
+                case "goal":        CmdGoal(rest);                    break;
                 case "fight-end":   CmdFightEnd(rest);                break;
                 case "clock":       CmdClock(rest);                   break;
                 case "wait":        CmdWait(rest);                    break;
@@ -295,6 +296,8 @@ public sealed class CliDriver
         Control
           strategy <succeed|fail-dice|fail-plausibility|auto>
                                     pin action outcomes (needs --debug)
+          goal <verb-id|none>       pin the playground's goal choice to one verb (e.g. `goal tame`),
+                                    set before the keyword click it should apply to
           fight-end <victory|death|runaway>
                                     force-resolve a fight to test its transition
           wait [frames]             block until the game settles (no LLM/travel/dice in flight)
@@ -880,6 +883,36 @@ public sealed class CliDriver
         if (!DebugMode.IsActive)
             CliMode.Emit("warning: --debug is not enabled, so action outcomes are not overridden");
         CliMode.Emit($"ok: strategy={parsed.Value}");
+    }
+
+    /// <summary>
+    /// Pins the playground's goal choice to one verb, the way <c>strategy</c> pins the dice. Set it
+    /// before the keyword click whose thinking phase should land on that goal; <c>goal none</c> (or
+    /// <c>auto</c>) hands the choice back to the RNG. Same switch as <c>--goal-only</c> — a command
+    /// too, because a script that appeases a beast and then tames it needs to change it mid-run.
+    /// </summary>
+    private static void CmdGoal(string[] a)
+    {
+        if (a.Length == 0) { CliMode.Emit($"goal={Config.Debug.GoalOnly ?? "auto"}"); return; }
+
+        string want = a[0].ToLowerInvariant();
+        if (want is "none" or "auto" or "off")
+        {
+            Config.Debug.GoalOnly = null;
+            CliMode.Emit("ok: goal=auto");
+            return;
+        }
+
+        if (Cathedral.Game.Scene.Verbs.VerbRegistry.Instance.Get(want) == null)
+        {
+            CliMode.Emit($"error: no verb '{want}'");
+            return;
+        }
+
+        Config.Debug.GoalOnly = want;
+        if (!PlaygroundMode.IsActive)
+            CliMode.Emit("warning: --playground is not enabled, so the goal is chosen by the persona, not this");
+        CliMode.Emit($"ok: goal={want}");
     }
 
     private void CmdFightEnd(string[] a)

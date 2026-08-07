@@ -33,8 +33,13 @@ public abstract class SceneFactory
         var rng   = CreateSeededRandom(locationId);
         var scene = new Scene();
 
+        // Hand the location's persistent stores to the scene before anything is built: the departed
+        // list is read a few lines down, and depletion is read as items are placed.
+        _locationState?.AttachTo(scene);
+
         BuildSections(rng, locationId, scene);
         BuildNpcs(rng, locationId, scene);
+        DropDepartedNpcs(scene);
         PlaceBeastSign(scene);
         AssignVerbs(scene);
         MergeDuplicateNamedPois(scene);
@@ -260,6 +265,32 @@ public abstract class SceneFactory
         }
 
         return Narrative.NpcSchedule.Roaming(map);
+    }
+
+    // ── Departed NPCs ─────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Takes out everyone this location has already lost — killed, tamed into the party, or talked
+    /// into joining it (see <c>Scene.RemoveNpcFromPlay</c>, which records them).
+    ///
+    /// <para>Runs for every factory automatically, straight after <c>BuildNpcs</c>, so no factory has
+    /// to know the rule and a new one cannot forget it. Before <see cref="PlaceBeastSign"/> on
+    /// purpose: sign is placed per living beast, and a departed wolf that still left tracks would
+    /// give the player a trail to follow to nothing.</para>
+    ///
+    /// <para>No-op when no location state was injected — which is every headless audit, so they keep
+    /// seeing the full population a factory can produce.</para>
+    /// </summary>
+    private static void DropDepartedNpcs(Scene scene)
+    {
+        if (scene.DepartedNpcs.Count == 0) return;
+
+        foreach (var npc in scene.Npcs.Where(n => scene.DepartedNpcs.Contains(n.Entity.PersistentId)).ToList())
+        {
+            scene.Npcs.Remove(npc);
+            scene.NpcSchedules.Remove(npc.Id);
+            Console.WriteLine($"SceneFactory: '{npc.Entity.DisplayName}' left this location for good — not rebuilt");
+        }
     }
 
     // ── Beast sign ────────────────────────────────────────────────────────────

@@ -16,6 +16,15 @@ public class NpcEntity : INpcEntity
     public string NpcId { get; }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// The name-derived <c>{archetypeId}_{name}</c> that <see cref="NamedNpcArchetype.Spawn"/> also
+    /// files affinity under. It used to be computed inside Spawn and dropped, which left the entity
+    /// holding only <see cref="NpcId"/> — random for anyone non-persistent, and so useless to
+    /// anything that has to recognise this individual on the next visit.
+    /// </remarks>
+    public string PersistentId { get; }
+
+    /// <inheritdoc/>
     public string DisplayName => Combatant.DisplayName;
 
     /// <summary>The underlying party member used for anatomy, wounds, stats, and combat.</summary>
@@ -196,6 +205,7 @@ public class NpcEntity : INpcEntity
 
     public NpcEntity(
         string              npcId,
+        string              persistentId,
         EnemyCombatant      combatant,
         NamedNpcArchetype   archetype,
         bool                isPersistent,
@@ -207,6 +217,7 @@ public class NpcEntity : INpcEntity
         IReadOnlyList<string>? ownedSectionIds      = null)
     {
         NpcId                      = npcId;
+        PersistentId               = persistentId;
         Combatant                  = combatant;
         Archetype                  = archetype;
         IsPersistent               = isPersistent;

@@ -10,8 +10,19 @@ namespace Cathedral.Game.Npc;
 /// </summary>
 public interface INpcEntity
 {
-    /// <summary>Stable identifier for persistence or disambiguation.</summary>
+    /// <summary>Per-build identifier, used for disambiguation inside one scene.</summary>
     string NpcId { get; }
+
+    /// <summary>
+    /// The id that names <b>this individual</b> across rebuilds of the location — the key everything
+    /// in <see cref="Cathedral.Game.LocationInstanceState"/> is filed under.
+    ///
+    /// <para>Not <see cref="NpcId"/>, which for a non-persistent NPC carries a random number and so
+    /// names a different string every build. This is derived from the archetype and the generated
+    /// name, both of which are functions of the location seed, so the same creature answers to the
+    /// same id on every visit.</para>
+    /// </summary>
+    string PersistentId { get; }
 
     /// <summary>Display name shown in narration and UI.</summary>
     string DisplayName { get; }

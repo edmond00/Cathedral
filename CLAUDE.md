@@ -38,6 +38,8 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--fill-party` | Fills the companion roster to its heart-derived ceiling (`max_companions`) right after the childhood phase, with NPCs generated from random archetypes — the **last** slot a beast, every slot before it a human. Recruiting even one companion in play takes a conversation and a check (or an appease *and* a tame), which is a long approach for anything that just needs a populated party. Note the ceiling is the *heart* score, and a protagonist accepted straight out of creation has a heart of 1 — so a plain script gets one beast and nothing else. For humans too, raise the heart first (`click cell 94 24` on the creation screen bumps it, four presses reaching 5). |
 | `--start-fight <creature>` | Drops straight into a fight on reaching the world map (`wolf`, `bear`, `bandit`, `brigand`). **The only way a script can reach fight mode at all** — the real routes in are a random travel encounter (which every script disables with `--no-encounters`, precisely because it fires unpredictably) and provoking a location NPC through a conversation and a check. |
 | `--grant-mm <id[,id…]>[:lvl]` | Grants the named modi mentis at `lvl` (default 1) after character creation. Fighting skills are gated behind their modi mentis, so this is what makes a given skill reachable — and since a **buff's cost falls as its level rises**, it is also how you exercise both ends of that curve. Unknown ids are reported on stderr. |
+| `--spawn-beast <name>` | Puts a beast (`wolf`, `boar`, `bear`, `black bear`, `stray dog`, `fox`, `cat`) in the **opening area** of every scene, at every period, flagged an enemy by the same first-contact pass that flags a rolled one. Everything a script does *to* a beast — appease, tame, track — starts with one being where the script opens, and no factory guarantees that: a wolf is rolled 10–20% of the time, a boar 25–40%, and whichever is rolled then roams between areas with the hour. Follows `--start-area`, since it spawns into whichever area narration opens in. |
+| `--goal-only <verb-id>` | Forces the playground's goal choice onto one verb. `--playground` replaces the persona's "what do you want to do?" with a **uniform draw over every goal the observed object offers**, so a script meaning to `appease` a beast — and then `tame` it — is otherwise picking out of a dozen. The CLI's `goal` command sets the same switch, which is what a script that needs two different goals in one run should use. Inert when no goal in a phase matches, which then draws as usual. |
 | `--advance-days <n>` | Pushes the world clock forward `n` days on first arrival at the world map. The clock only moves on travel arrival and work stints while a wound needs 100–1000 days to close, so without this nothing about healing is observable. Fires once, before anything has happened — for healing *a wound taken in play*, use the `clock` command instead. |
 
 A typical invocation:
@@ -106,6 +108,11 @@ Run `help` for the authoritative list. The essentials:
                             travel arrival and work stints, so this is the only way to see a
                             wound taken in play heal within a script
   strategy <succeed|fail-dice|fail-plausibility|auto>
+  goal <verb-id|none>       pin the playground's goal draw to one verb, the way `strategy` pins
+                            the dice — set it BEFORE the keyword click whose thinking phase
+                            should land on it. `goal none` hands the choice back to the RNG.
+                            Same switch as `--goal-only`; a command because a script that
+                            appeases a beast and then tames it needs two different goals
   fight-end <victory|death|runaway>
   advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone.
                             USE THIS, not a bare `click continue`, to get from a keyword click
@@ -141,6 +148,14 @@ strategy auto           # no override; LLM/RNG decide
 
 `strategy custom` degrades to `auto`, since per-node prompting is interactive by nature.
 Set the strategy *before* the action that should be affected.
+
+**A forced narration success caps the difficulty at the dice pool.** A verb harder than the chain
+that reached it — `tame` is difficulty 4, and a keyword→think→act chain of three unlevelled modi
+mentis rolls three dice — needs more sixes than there are dice, so no arrangement of the pool
+succeeds. `strategy succeed` asking for one used to **hang the game outright** (the forced-values
+generator spinning for a six it had nowhere left to put, window alive and answering nothing). The
+roll now caps the demand at the pool and says so on stdout, the same way the fight path guarantees a
+forced success at least one die.
 
 **Fight dice honour it too.** `strategy succeed` pins every attack die to a six and every defence
 die to a one (and `fail-dice` the reverse), so a script can make a blow land instead of waiting for
@@ -239,6 +254,74 @@ Historical note: a corpse used to be an enterable `Spot` holding one PoI per bod
 the only content the `Spot`/`PoV.InSpot` axis ever had — no factory built one. The axis is gone.
 Nothing in `docs/` ever planned other spot content; the `# spots` sections in the location design
 docs use the word in its pre-`c3fef5a` sense, meaning what is now a `PointOfInterest`.
+
+### Recruiting: taming a beast, and the two-step it belongs to
+
+Both routes into the party — `tame` for a beast, the `propose_to_join` dialogue for a person — end in
+the same three writes: the NPC's `EnemyCombatant` is added to `Protagonist.CompanionParty` (nothing
+is copied: an `NpcEntity` wraps the combatant, which *is* a `PartyMember`), `NpcEntity.IsAlive` is set
+false so `Scene.GetNpcsAt` stops returning them, and the `SceneNpc` is dropped from `scene.Npcs` and
+`scene.NpcSchedules`. `RecruitedOutcome` does it for the verb, `RecruitFromDialogue` for the tree; the
+ceiling (`max_companions`, heart-derived) is re-checked in both, because a companion can be picked up
+between the offer and the roll and quietly exceeding the cap is worse than declining.
+
+Two things make the removal actually show:
+
+- **`tame` requires an appeased beast, not merely a non-hostile one.** `AffinityTable.IsAppeased` is
+  "not an enemy *and* at Suspicious" — which only `appease` and the reconcile tree produce. So a wild
+  beast takes two rolls at two separate phases, and `tame` is not even offered until the first lands.
+  A beast that was never hostile is not tameable at all: it sits at Stranger, which `appease` (enemy
+  or AnnoyingAcquaintance only) will not touch either.
+- **The observation object goes with the NPC at the next segment boundary, not at the outcome.**
+  `SceneNpcPlacement` owns one `SyntheticNpcObservationObject` per scene NPC and re-places them all
+  in `PlaceForPeriod`, which runs from `ApplyTimePeriod` — and `StartObservationPhaseWithHistory`
+  re-applies the current period precisely so every new segment re-places NPCs. Within the segment
+  that tamed it the stale object is still in the node; it is harmless (every verb gate reads
+  `GetNpcsAt`, so only IGNORE survives the refresh, and the segment is over anyway), and the phase
+  after it is gone. `cli/tame_beast.cli` is the regression script — `state` drops one observable
+  across the tame, and `--observe-only` on the beast reports nothing matching afterwards.
+
+### What survives a visit
+
+A scene is **rebuilt from its factory on every arrival** and thrown away on leaving, and the build is
+a pure function of the location id (`CreateSeededRandom(locationId)`) — so the same rooms, the same
+people and the same animals come back *identical*, down to names, stats and belongings. Anything the
+player changed therefore has to be recorded in `LocationInstanceState` or it did not happen.
+
+That class is the whole of a location's permanent memory, and a save file will read and write exactly
+its fields. Four rules govern anything added to it:
+
+- **plain data only** — dictionaries, sets and lists of primitives or enums, so it round-trips
+  through `ToJson` with no custom converter. A `Guid` is re-minted by the next build and would point
+  at nothing;
+- **keyed by a stable id** — `INpcEntity.PersistentId` for a person or an animal (the name-derived
+  `{archetypeId}_{name}`, *not* `NpcId`, which carries a random number for anyone non-persistent),
+  `ItemElement.DepletionKey` for a picked slot;
+- **mutable in place, shared by reference** — `LocationInstanceState.AttachTo(scene)` hands the live
+  collections to the scene, so gameplay writes land in the saved state with no save step. This is why
+  it is a class and not a record: a `with`-copy would silently detach a store the scene still writes;
+- **wired in one place** — a new fact is one property plus one line in `AttachTo`.
+
+Three facts live there today: `NpcAffinity`, `ItemDepletions`, and `DepartedNpcs` — everyone this
+location has lost for good. Corpses, wounds dealt and forced doors are deliberately *not* there: they
+are one visit's business.
+
+**Every departure goes through `Scene.RemoveNpcFromPlay`** — the slay/murder verbs, a won fight,
+`TameVerb`'s `RecruitedOutcome` and the `propose_to_join` tree. It does the three writes that make
+someone gone from this visit (not alive, out of `Npcs`, out of `NpcSchedules`) and the fourth that
+makes them gone from every later one (the id into `DepartedNpcs`). `SceneFactory.Build` drops those
+ids straight after `BuildNpcs` and before `PlaceBeastSign`, so a departed beast leaves no tracks to
+follow to nothing. Departure is **permanent**: a replacement drawn from the same seed would be the
+very individual that left, so the spot in the world stays empty.
+
+**A scene factory is built per scene, never reused.** Each one keeps working state while it builds —
+the area list it wires paths through, a village's workshops and houses — and none of it is meant to
+outlive the scene. `_sceneFactories` therefore holds `Func<SceneFactory>`, not instances. Sharing one
+instance let that state pile up: the second build of a plain ran its path wiring and its beast
+placement over eight areas, four belonging to a scene that no longer existed, and since the two
+builds produce identically-named areas the corruption was invisible in the log. The audits never saw
+it because they always built one factory per location — which is now what the game does too, so a
+green audit finally covers the path the game takes.
 
 ### A worked example
 

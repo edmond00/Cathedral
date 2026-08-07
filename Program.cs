@@ -71,6 +71,12 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --start-fight <creature>           DEBUG: begin a fight on reaching the world map (wolf, bear, bandit, brigand).");
     Console.WriteLine("                                     The only way a script can reach fight mode: the real routes in are a random");
     Console.WriteLine("                                     travel encounter (which scripts disable) or provoking an NPC through dialogue");
+    Console.WriteLine("  --spawn-beast <name>               DEBUG: put a beast (wolf, boar, bear, black bear, stray dog, fox) in the opening");
+    Console.WriteLine("                                     area of every scene, at every period. A wilderness factory only rolls one in");
+    Console.WriteLine("                                     10-40% of the time and then lets it roam, so appease/tame are otherwise luck");
+    Console.WriteLine("  --goal-only <verb-id>              DEBUG: the playground's goal choice must land on this verb (e.g. tame). Without");
+    Console.WriteLine("                                     it --playground draws uniformly over every goal the observed object offers.");
+    Console.WriteLine("                                     The CLI's `goal` command sets the same thing, for a script that needs to change it");
     Console.WriteLine("  --advance-days <n>                 DEBUG: push the world clock forward <n> days on first arrival at the world");
     Console.WriteLine("                                     map. The clock only moves on travel and work, and a wound takes 100-1000");
     Console.WriteLine("                                     days to close, so this is how a script sees healing without simulating years");
@@ -382,6 +388,12 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--start-fight" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.StartFight = args[i + 1];
+
+    if (args[i] == "--spawn-beast" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.SpawnBeast = args[i + 1];
+
+    if (args[i] == "--goal-only" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.GoalOnly = args[i + 1];
 
     if (args[i] == "--advance-days" && i + 1 < args.Length &&
         double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,

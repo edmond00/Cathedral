@@ -172,16 +172,17 @@ public static class LocationTravelModeLauncher
             Console.WriteLine("Creating game controller...");
             gameController = new LocationTravelGameController(core, microworldInterface, ambianceEngine);
 
-            // Register scene factories for specific biome types
-            gameController.RegisterSceneFactory("farm",     new FarmSceneFactory());
-            gameController.RegisterSceneFactory("plain",    new PlainSceneFactory());
-            gameController.RegisterSceneFactory("field",    new FieldSceneFactory());
-            gameController.RegisterSceneFactory("forest",   new ForestSceneFactory());
-            gameController.RegisterSceneFactory("village",  new VillageSceneFactory());
-            gameController.RegisterSceneFactory("cave",     new CaveSceneFactory());
-            gameController.RegisterSceneFactory("mountain", new MountainSceneFactory());
-            gameController.RegisterSceneFactory("peak",     new PeakSceneFactory());
-            gameController.RegisterSceneFactory("coast",    new CoastSceneFactory());
+            // Register scene factories for specific biome types. Constructors, not instances — one
+            // factory is built per scene so its working state cannot outlive the location.
+            gameController.RegisterSceneFactory("farm",     () => new FarmSceneFactory());
+            gameController.RegisterSceneFactory("plain",    () => new PlainSceneFactory());
+            gameController.RegisterSceneFactory("field",    () => new FieldSceneFactory());
+            gameController.RegisterSceneFactory("forest",   () => new ForestSceneFactory());
+            gameController.RegisterSceneFactory("village",  () => new VillageSceneFactory());
+            gameController.RegisterSceneFactory("cave",     () => new CaveSceneFactory());
+            gameController.RegisterSceneFactory("mountain", () => new MountainSceneFactory());
+            gameController.RegisterSceneFactory("peak",     () => new PeakSceneFactory());
+            gameController.RegisterSceneFactory("coast",    () => new CoastSceneFactory());
             
             // Attach the LLM server if it is ready
             if (PlaygroundMode.IsActive && llamaServer != null)

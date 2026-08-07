@@ -1,302 +1,139 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Cathedral.Game.Dialogue.Affinity;
-using Cathedral.Glyph.Microworld.LocationSystem;
 
 namespace Cathedral.Game;
 
 /// <summary>
-/// Represents the runtime state of a specific location instance.
-/// Tracks the player's progress, current position, and action history at a location.
+/// Everything about one location that outlives the visit.
+///
+/// <para>A scene is <b>rebuilt from its factory on every arrival</b> and thrown away on leaving —
+/// deterministically, since <c>SceneFactory.CreateSeededRandom</c> is seeded by the location id
+/// alone, so the same rooms, the same people and the same animals come back identical every time.
+/// Everything the player <i>changed</i> therefore has to live here, or it did not happen. Corpses,
+/// wounds dealt, doors forced and the rest are deliberately not here: they are one visit's business.
+/// </para>
+///
+/// <para><b>The contract for anything added to this class</b> — it is short, and worth keeping short,
+/// because a save file will read and write exactly these fields:</para>
+///
+/// <list type="number">
+/// <item><b>Plain data only.</b> Dictionaries, sets and lists of primitives or enums. No object
+/// references, no <c>Guid</c>s, nothing that means something only inside one built scene — a
+/// <c>Guid</c> is re-minted by the next build and would point at nothing. This is what makes the
+/// class round-trip through <see cref="ToJson"/> with no custom converter.</item>
+/// <item><b>Keyed by a stable id.</b> The key must name the same thing in the next build:
+/// <see cref="Npc.INpcEntity.PersistentId"/> for a person or an animal,
+/// <c>ItemElement.DepletionKey</c> for a picked slot. Both are derived from build-order-stable data,
+/// not from run-time identity.</item>
+/// <item><b>Mutable in place, shared by reference.</b> <see cref="AttachTo"/> hands the live
+/// collections to the scene, so gameplay writes land here directly and persist with no save step.
+/// That is why this is a class and not a record: <c>with</c>-copies would silently detach a store
+/// the scene is still writing to.</item>
+/// <item><b>Wired in one place.</b> Add the property, then add its line to <see cref="AttachTo"/>.
+/// Nothing else should reach into a location's state to hand a store to a scene.</item>
+/// </list>
 /// </summary>
-public record LocationInstanceState
+public sealed class LocationInstanceState
 {
-    /// <summary>
-    /// Unique identifier for this location (typically derived from vertex index or position hash).
-    /// </summary>
-    public string LocationId { get; init; }
-    
-    /// <summary>
-    /// Type of location (forest, tavern, dungeon, etc.).
-    /// </summary>
-    public string LocationType { get; init; }
-    
-    /// <summary>
-    /// Current sublocation within this location (e.g., "forest_edge", "tavern_main_hall").
-    /// </summary>
-    public string CurrentSublocation { get; init; }
-    
-    /// <summary>
-    /// Current state values for each state category.
-    /// Key: State category ID (e.g., "time_of_day", "weather")
-    /// Value: Current state ID (e.g., "morning", "clear")
-    /// </summary>
-    public Dictionary<string, string> CurrentStates { get; init; }
-    
-    /// <summary>
-    /// History of all actions taken at this location.
-    /// </summary>
-    public List<PlayerAction> ActionHistory { get; init; }
-    
-    /// <summary>
-    /// Timestamp of when this location was last visited.
-    /// </summary>
-    public DateTime LastVisited { get; init; }
-    
-    /// <summary>
-    /// Number of turns/actions taken during the current visit.
-    /// Resets to 0 when leaving the location.
-    /// </summary>
-    public int CurrentTurnCount { get; init; }
-    
-    /// <summary>
-    /// Total number of turns/actions taken at this location across all visits.
-    /// </summary>
-    public int TotalTurnCount { get; init; }
-    
-    /// <summary>
-    /// Number of times this location has been visited.
-    /// </summary>
-    public int VisitCount { get; init; }
+    /// <summary>World vertex this state belongs to, as a string.</summary>
+    public string LocationId { get; init; } = "";
+
+    /// <summary>Biome or location name it was built from ("plain", "village", …).</summary>
+    public string LocationType { get; init; } = "";
+
+    // ── Persisted facts ───────────────────────────────────────────────────────
 
     /// <summary>
-    /// Per-NPC affinity data, keyed by the NPC's stable name-derived id
-    /// (<c>{archetypeId}_{name}</c> — see <see cref="Npc.NamedNpcArchetype.Spawn"/>).
-    /// Each inner dictionary is the shared backing store for that NPC's <see cref="AffinityTable"/>.
-    /// Mutable in place — changes during dialogue are preserved automatically.
+    /// Per-NPC affinity, keyed by <see cref="Npc.INpcEntity.PersistentId"/>. Each inner dictionary is
+    /// the backing store of that NPC's <see cref="AffinityTable"/>, so a dialogue that changes how
+    /// someone feels about you writes straight through to here.
+    ///
+    /// <para>The key must be per NPC, not per role: keying by archetype alone once made every
+    /// same-role NPC in a location share one table, so befriending one plowman befriended them
+    /// all.</para>
     /// </summary>
-    public Dictionary<string, Dictionary<string, AffinityLevel>> NpcAffinityData { get; init; }
+    public Dictionary<string, Dictionary<string, AffinityLevel>> NpcAffinity { get; init; } = new();
 
     /// <summary>
-    /// The persistent <see cref="AffinityTable"/> for one NPC, wrapping this location's backing
-    /// store for <paramref name="npcKey"/> (created on first use — later mutations persist with no
-    /// explicit save step). The key must be unique per NPC, not per role: keying by archetype alone
-    /// once made every same-role NPC in a location share one table, so befriending one plowman
-    /// befriended them all.
-    /// </summary>
-    public AffinityTable AffinityFor(string npcKey)
-    {
-        if (!NpcAffinityData.TryGetValue(npcKey, out var dict))
-            NpcAffinityData[npcKey] = dict = new Dictionary<string, AffinityLevel>();
-        return new AffinityTable(dict);
-    }
-
-    /// <summary>
-    /// Item-depletion timestamps: <see cref="Cathedral.Game.Scene.ItemElement.DepletionKey"/> → the
-    /// <c>Protagonist.GameTimeDays</c> at which that slot was last picked. Mutated in place during a
-    /// visit (the scene shares this dictionary), so depletion persists across visits with no explicit
-    /// save step. A slot is depleted while <c>now − pickedAt &lt; PoI.RegenDays</c>.
+    /// Item-depletion timestamps: <c>ItemElement.DepletionKey</c> → the <c>GameClock.Days</c> at
+    /// which that slot was last picked. A slot is depleted while <c>now − pickedAt &lt;
+    /// PoI.RegenDays</c>, so a berry bush stripped bare stays bare for a while and then does not.
     /// </summary>
     public Dictionary<string, double> ItemDepletions { get; init; } = new();
 
     /// <summary>
-    /// Creates a new location instance state with default values.
+    /// NPCs that are gone from this location for good, by
+    /// <see cref="Npc.INpcEntity.PersistentId"/> — killed, or taken into the party by taming or by
+    /// agreement.
+    ///
+    /// <para>Without this the rebuild brings them straight back, because it is a pure function of the
+    /// location id: a wolf you tamed would be padding beside you <i>and</i> waiting in the clearing,
+    /// and anyone you killed would be alive again on your next visit. Departure is permanent — the
+    /// spot in the world stays empty rather than re-rolling a replacement, since a replacement drawn
+    /// from the same seed would be the very individual that left.</para>
     /// </summary>
-    public LocationInstanceState(
-        string locationId,
-        string locationType,
-        string currentSublocation,
-        Dictionary<string, string> currentStates)
+    public HashSet<string> DepartedNpcs { get; init; } = new();
+
+    // ── Wiring ────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Hands this location's live stores to a freshly built <paramref name="scene"/>. The scene holds
+    /// the same collection objects, not copies, so anything it writes during the visit is already
+    /// saved when the player walks out.
+    ///
+    /// <para>The single seam between persistent state and a scene: a new persisted fact needs one
+    /// line here and nothing anywhere else.</para>
+    /// </summary>
+    public void AttachTo(Scene.Scene scene)
     {
-        LocationId = locationId ?? throw new ArgumentNullException(nameof(locationId));
-        LocationType = locationType ?? throw new ArgumentNullException(nameof(locationType));
-        CurrentSublocation = currentSublocation ?? throw new ArgumentNullException(nameof(currentSublocation));
-        CurrentStates = currentStates ?? throw new ArgumentNullException(nameof(currentStates));
-        ActionHistory = new List<PlayerAction>();
-        LastVisited = DateTime.UtcNow;
-        CurrentTurnCount = 0;
-        TotalTurnCount = 0;
-        VisitCount = 1;
-        NpcAffinityData = new Dictionary<string, Dictionary<string, AffinityLevel>>();
+        scene.ItemDepletions = ItemDepletions;
+        scene.DepartedNpcs   = DepartedNpcs;
     }
 
     /// <summary>
-    /// Creates a minimal location state for the scene backend, keyed by world vertex. The legacy
-    /// graph-system fields (sublocation, state categories, action history) are left empty; the
-    /// scene system only uses <see cref="NpcAffinityData"/> and <see cref="ItemDepletions"/>.
+    /// The persistent <see cref="AffinityTable"/> for one NPC, wrapping this location's backing store
+    /// for <paramref name="persistentId"/> (created on first use — later mutations persist with no
+    /// explicit save step). Handed to <c>NamedNpcArchetype.Spawn</c> as its affinity resolver.
     /// </summary>
-    public static LocationInstanceState ForScene(int vertex, string locationType)
+    public AffinityTable AffinityFor(string persistentId)
     {
-        return new LocationInstanceState(
-            locationId: vertex.ToString(),
-            locationType: locationType,
-            currentSublocation: string.Empty,
-            currentStates: new Dictionary<string, string>());
+        if (!NpcAffinity.TryGetValue(persistentId, out var dict))
+            NpcAffinity[persistentId] = dict = new Dictionary<string, AffinityLevel>();
+        return new AffinityTable(dict);
     }
 
-    /// <summary>
-    /// Creates an initial location state from a blueprint.
-    /// </summary>
-    public static LocationInstanceState FromBlueprint(
-        string locationId,
-        LocationBlueprint blueprint,
-        string? startingSublocation = null)
+    /// <summary>Records that an NPC has left this location for good.</summary>
+    public void MarkDeparted(string persistentId) => DepartedNpcs.Add(persistentId);
+
+    /// <summary>True when this NPC has already left and must not be rebuilt into the scene.</summary>
+    public bool HasDeparted(string persistentId) => DepartedNpcs.Contains(persistentId);
+
+    // ── Construction & serialisation ──────────────────────────────────────────
+
+    /// <summary>The state of a location visited for the first time.</summary>
+    public static LocationInstanceState ForScene(int vertex, string locationType) => new()
     {
-        if (blueprint == null)
-            throw new ArgumentNullException(nameof(blueprint));
+        LocationId   = vertex.ToString(),
+        LocationType = locationType,
+    };
 
-        // Determine starting sublocation (first one if not specified)
-        string sublocation = startingSublocation ?? blueprint.Sublocations.Keys.First();
-        
-        // Initialize states with default values from blueprint
-        var states = new Dictionary<string, string>();
-        foreach (var (categoryId, category) in blueprint.StateCategories)
-        {
-            states[categoryId] = category.DefaultStateId;
-        }
-
-        return new LocationInstanceState(locationId, blueprint.LocationType, sublocation, states);
-    }
-
-    /// <summary>
-    /// Creates a copy with updated sublocation.
-    /// </summary>
-    public LocationInstanceState WithSublocation(string newSublocation)
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        return this with { CurrentSublocation = newSublocation };
-    }
+        WriteIndented = true,
+        Converters    = { new JsonStringEnumConverter() },
+    };
 
-    /// <summary>
-    /// Creates a copy with an updated state value.
-    /// </summary>
-    public LocationInstanceState WithState(string categoryId, string stateId)
-    {
-        var newStates = new Dictionary<string, string>(CurrentStates)
-        {
-            [categoryId] = stateId
-        };
-        return this with { CurrentStates = newStates };
-    }
+    /// <summary>Serialises the whole state. Every property above is plain data, so this is total.</summary>
+    public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
 
-    /// <summary>
-    /// Creates a copy with multiple state updates applied.
-    /// </summary>
-    public LocationInstanceState WithStates(Dictionary<string, string> stateChanges)
-    {
-        var newStates = new Dictionary<string, string>(CurrentStates);
-        foreach (var (category, state) in stateChanges)
-        {
-            newStates[category] = state;
-        }
-        return this with { CurrentStates = newStates };
-    }
-
-    /// <summary>
-    /// Creates a copy with an action added to history and incremented turn counts.
-    /// </summary>
-    public LocationInstanceState WithAction(PlayerAction action)
-    {
-        var newHistory = new List<PlayerAction>(ActionHistory) { action };
-        return this with
-        {
-            ActionHistory = newHistory,
-            CurrentTurnCount = CurrentTurnCount + 1,
-            TotalTurnCount = TotalTurnCount + 1,
-            LastVisited = DateTime.UtcNow
-        };
-    }
-
-    /// <summary>
-    /// Creates a copy with the current turn count reset (for new visit).
-    /// </summary>
-    public LocationInstanceState WithNewVisit()
-    {
-        return this with
-        {
-            CurrentTurnCount = 0,
-            VisitCount = VisitCount + 1,
-            LastVisited = DateTime.UtcNow
-        };
-    }
-
-    /// <summary>
-    /// Applies an action result to this location state.
-    /// Creates a new state with all changes from the action result applied.
-    /// </summary>
-    public LocationInstanceState ApplyActionResult(ActionResult actionResult, PlayerAction action)
-    {
-        if (actionResult == null)
-            throw new ArgumentNullException(nameof(actionResult));
-        if (action == null)
-            throw new ArgumentNullException(nameof(action));
-
-        // Start with current state
-        var newState = this;
-        
-        // Add action to history with incremented turn counts
-        newState = newState.WithAction(action);
-        
-        // Apply state changes
-        if (actionResult.StateChanges.Count > 0)
-        {
-            newState = newState.WithStates(actionResult.StateChanges);
-        }
-        
-        // Apply sublocation change
-        if (actionResult.NewSublocation != null)
-        {
-            newState = newState.WithSublocation(actionResult.NewSublocation);
-        }
-        
-        return newState;
-    }
-
-    /// <summary>
-    /// Gets the last action taken, or null if no actions have been taken.
-    /// </summary>
-    public PlayerAction? GetLastAction()
-    {
-        return ActionHistory.Count > 0 ? ActionHistory[^1] : null;
-    }
-
-    /// <summary>
-    /// Gets the last N actions taken.
-    /// </summary>
-    public List<PlayerAction> GetRecentActions(int count)
-    {
-        if (count <= 0)
-            return new List<PlayerAction>();
-        
-        int startIndex = Math.Max(0, ActionHistory.Count - count);
-        int takeCount = Math.Min(count, ActionHistory.Count);
-        
-        return ActionHistory.Skip(startIndex).Take(takeCount).ToList();
-    }
-
-    /// <summary>
-    /// Serializes this location state to JSON.
-    /// </summary>
-    public string ToJson()
-    {
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Converters = { new JsonStringEnumConverter() }
-        };
-        return JsonSerializer.Serialize(this, options);
-    }
-
-    /// <summary>
-    /// Deserializes a location state from JSON.
-    /// </summary>
+    /// <summary>Reads a state back. A field absent from an older save keeps its empty default.</summary>
     public static LocationInstanceState? FromJson(string json)
-    {
-        var options = new JsonSerializerOptions
-        {
-            Converters = { new JsonStringEnumConverter() }
-        };
-        return JsonSerializer.Deserialize<LocationInstanceState>(json, options);
-    }
+        => JsonSerializer.Deserialize<LocationInstanceState>(json, JsonOptions);
 
-    /// <summary>
-    /// Gets a summary string for debugging.
-    /// </summary>
     public override string ToString()
-    {
-        return $"Location {LocationId} ({LocationType}) - {CurrentSublocation} - " +
-               $"Turn {CurrentTurnCount}/{TotalTurnCount} - Visit #{VisitCount}";
-    }
+        => $"Location {LocationId} ({LocationType}) — {NpcAffinity.Count} known NPC(s), " +
+           $"{DepartedNpcs.Count} departed, {ItemDepletions.Count} depleted slot(s)";
 }

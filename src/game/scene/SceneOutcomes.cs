@@ -288,13 +288,11 @@ public sealed class RecruitedOutcome : OutcomeReport
         if (proto.CompanionParty.Count >= max) return;
 
         proto.CompanionParty.Add(npc.Combatant);
-        npc.IsAlive = false;                      // gone from GetNpcsAt, and so from every verb gate
 
-        if (scene != null)
-        {
-            scene.Npcs.Remove(_npc);
-            scene.NpcSchedules.Remove(_npc.Id);
-        }
+        // One door for every way out of the world: gone from GetNpcsAt (and so from every verb gate),
+        // out of the scene's NPC list and schedules, and recorded as departed so the next build of
+        // this location does not stand them back where they were.
+        scene?.RemoveNpcFromPlay(_npc);
         if (pov != null) pov.Focus = null;
     }
 }
@@ -352,8 +350,12 @@ public sealed class NpcSlaynOutcome : OutcomeReport
     public override void Apply(PartyMember protagonist, Scene? scene, PoV? pov)
     {
         if (scene == null || pov == null) return;
-        _sceneNpc.Entity.IsAlive = false;
-        foreach (var remains in _sceneNpc.Entity.GenerateCorpse())
+
+        // The body is made from the entity, so it survives the removal that follows.
+        var remainsList = _sceneNpc.Entity.GenerateCorpse();
+        scene.RemoveNpcFromPlay(_sceneNpc);
+
+        foreach (var remains in remainsList)
             scene.AddPointOfInterestToArea(pov.Where, remains);
         pov.Focus = null;
     }

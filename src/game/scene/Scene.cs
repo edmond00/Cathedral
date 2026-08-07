@@ -48,6 +48,14 @@ public class Scene
     public Dictionary<string, double> ItemDepletions { get; set; } = new();
 
     /// <summary>
+    /// NPCs gone from this location for good, by <see cref="Npc.INpcEntity.PersistentId"/>. Pointed
+    /// at the owning <c>LocationInstanceState.DepartedNpcs</c> (shared backing store, handed over by
+    /// <c>LocationInstanceState.AttachTo</c>) so a departure recorded mid-visit survives the rebuild
+    /// that happens on the next arrival. Written only through <see cref="RemoveNpcFromPlay"/>.
+    /// </summary>
+    public HashSet<string> DepartedNpcs { get; set; } = new();
+
+    /// <summary>
     /// True while this scene is a throwaway used for routine <i>virtual</i> replay. Picking verbs must
     /// not mutate real state (inventory, depletion timestamps) when set.
     /// </summary>
@@ -73,6 +81,34 @@ public class Scene
     /// on the next frame to either rebuild the scene as the next reminescence or exit the phase.
     /// </summary>
     public ReminescenceTransitionRequest? PendingReminescenceTransition { get; set; }
+
+    /// <summary>
+    /// Takes an NPC out of play for good: killed, tamed into the party, or talked into joining it.
+    ///
+    /// <para><b>The one door every departure comes through</b> — the slay/murder verbs, a won fight,
+    /// <c>TameVerb</c>'s <c>RecruitedOutcome</c> and the <c>propose_to_join</c> tree all end here. It
+    /// does the three things that make someone gone from <i>this</i> visit (marks them not alive, so
+    /// <see cref="GetNpcsAt"/> and with it every verb gate stops seeing them; drops them from the NPC
+    /// list and the schedule table) and the fourth that makes them gone from every <i>later</i> one:
+    /// records the persistent id, which the next build reads to leave them out.</para>
+    ///
+    /// <para>That fourth write is the whole point of routing these together. Without it the rebuild —
+    /// a pure function of the location id — hands back the individual who left, so a tamed wolf pads
+    /// beside you and waits in the clearing at the same time, and anyone killed is alive on the next
+    /// visit. It is exactly the kind of step a fifth departure route would forget.</para>
+    ///
+    /// <para>Virtual replay is exempt from the persistent half: a throwaway scene must not be able to
+    /// empty a real location.</para>
+    /// </summary>
+    public void RemoveNpcFromPlay(SceneNpc npc)
+    {
+        npc.Entity.IsAlive = false;
+        Npcs.Remove(npc);
+        NpcSchedules.Remove(npc.Id);
+
+        if (!IsVirtualReplay)
+            DepartedNpcs.Add(npc.Entity.PersistentId);
+    }
 
     // ── Element registration ──────────────────────────────────────────────────
 

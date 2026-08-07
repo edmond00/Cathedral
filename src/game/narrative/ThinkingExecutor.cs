@@ -301,7 +301,10 @@ public class ThinkingExecutor
         if (realOutcomes.Count == 0) return (IgnoreVerb.MakeOutcome(), null);
 
         if (PlaygroundMode.IsActive)
-            return (realOutcomes[_rng.Next(realOutcomes.Count)], null);
+        {
+            var pool = GoalOnlyFilter(realOutcomes);
+            return (pool[_rng.Next(pool.Count)], null);
+        }
 
         // The Modus Mentis reasons over the goals ("What do you want to do?") and the neutral critic
         // maps that to one — or to the decline option, which is the ignore outcome. Each goal phrase
@@ -327,6 +330,28 @@ public class ThinkingExecutor
         // Null item ⇒ the hidden decline was matched, or the list was empty; either way the target is
         // not worth acting on. The reasoning still explains the (non-)choice and rides into the rewrite.
         return (chosen.Item ?? IgnoreVerb.MakeOutcome(), chosen.Reasoning);
+    }
+
+    /// <summary>
+    /// Narrows a playground goal draw to the verb <c>--goal-only</c> (or the CLI's <c>goal</c>
+    /// command) names. Returns the pool untouched at the flag's default, and again when no goal in it
+    /// matches — a phase where the named verb does not apply then draws as usual rather than being
+    /// unable to choose anything.
+    /// </summary>
+    private static List<ConcreteOutcome> GoalOnlyFilter(List<ConcreteOutcome> outcomes)
+    {
+        var wanted = Config.Debug.GoalOnly;
+        if (string.IsNullOrWhiteSpace(wanted)) return outcomes;
+
+        var matched = outcomes
+            .Where(o => o is VerbOutcome vo &&
+                        string.Equals(vo.VerbView.Verb.VerbId, wanted, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (matched.Count > 0) return matched;
+
+        Console.WriteLine($"[debug] --goal-only '{wanted}': no such goal here — drawing from all {outcomes.Count}.");
+        return outcomes;
     }
 
     // ── Decision: HOW (skill) ──────────────────────────────────────────────────

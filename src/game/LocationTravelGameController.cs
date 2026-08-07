@@ -144,6 +144,7 @@ public class LocationTravelGameController : IDisposable
     
     // Location state storage (keyed by vertex index)
     private readonly Dictionary<int, LocationInstanceState> _locationStates = new();
+
     
     // Feature generators for different location types
     private readonly Dictionary<string, LocationFeatureGenerator> _generators = new();
@@ -151,8 +152,9 @@ public class LocationTravelGameController : IDisposable
     // Narration graph factories for different biomes
     private readonly Dictionary<string, NarrationGraphFactory> _narrationFactories = new();
 
-    // Scene factories for biomes that use the Scene system directly (not graph-based)
-    private readonly Dictionary<string, SceneFactory> _sceneFactories = new();
+    // Scene factories for biomes that use the Scene system directly (not graph-based). Constructors,
+    // not instances: a factory carries working state while it builds and must not be reused.
+    private readonly Dictionary<string, Func<SceneFactory>> _sceneFactories = new();
     
     // Local LLM server; when set, narrative generation is enabled. Null = no LLM (fallback narration).
     private LlamaServerManager? _llamaServer;
@@ -2549,8 +2551,12 @@ public class LocationTravelGameController : IDisposable
     /// <summary>
     /// Registers a scene factory for a specific biome (Scene system, not graph-based).
     /// Takes precedence over the default PlainSceneFactory fallback.
+    ///
+    /// <para>Takes a <b>constructor</b>, not an instance: <see cref="BuildSceneForLocation"/> calls it
+    /// once per build so no factory's working state can leak into the next scene. See the note
+    /// there.</para>
     /// </summary>
-    public void RegisterSceneFactory(string biomeName, SceneFactory factory)
+    public void RegisterSceneFactory(string biomeName, Func<SceneFactory> factory)
     {
         _sceneFactories[biomeName.ToLowerInvariant()] = factory;
         Console.WriteLine($"LocationTravelGameController: Registered scene factory for biome '{biomeName}'");
@@ -3345,11 +3351,20 @@ public class LocationTravelGameController : IDisposable
         var locationName = biomeInfo.location?.Name.ToLowerInvariant();
         var sessionPath  = _llamaServer.SessionLogDir;
 
-        if ((locationName == null || !_sceneFactories.TryGetValue(locationName, out var sceneFactory)) &&
-            !_sceneFactories.TryGetValue(biomeName, out sceneFactory))
+        if ((locationName == null || !_sceneFactories.TryGetValue(locationName, out var newFactory)) &&
+            !_sceneFactories.TryGetValue(biomeName, out newFactory))
         {
-            sceneFactory = new PlainSceneFactory(sessionPath);
+            newFactory = () => new PlainSceneFactory(sessionPath);
         }
+
+        // A factory per build, never a shared one. Every factory keeps working state while it builds
+        // (the area list it wires paths through, a village's workshops and houses), and none of it is
+        // meant to outlive the scene — what survives a visit lives in LocationInstanceState. Reusing
+        // one instance let that working state pile up: the second build of a plain ran its path
+        // wiring and its beast placement over eight areas, four of them belonging to a scene that no
+        // longer existed. The audits always built one factory per location, which is why they never
+        // saw it; this makes the game do what they do.
+        var sceneFactory = newFactory();
 
         // Get-or-create the persistent per-location state, then build the scene from it.
         if (!_locationStates.TryGetValue(vertexIndex, out var state))
@@ -3361,6 +3376,10 @@ public class LocationTravelGameController : IDisposable
 
         var scene = sceneFactory.Build(vertexIndex, state);
 
+        // Debug: --spawn-beast puts one where the script opens. Before the first-contact pass below,
+        // so it is flagged an enemy exactly like a beast the factory rolled.
+        Cathedral.Game.Scene.DebugBeastSpawn.Apply(scene, vertexIndex);
+
         // Seed default-enemy archetypes (wolves, bears, boars, …) as enemies of the protagonist,
         // but only on first contact: a persistent NPC the player has already met (e.g. reconciled)
         // keeps its recorded relationship instead of being re-flagged hostile on every revisit.
@@ -3370,8 +3389,8 @@ public class LocationTravelGameController : IDisposable
                 && npcEnt.AffinityTable.IsStranger(_protagonist.AffinityKey))
                 npcEnt.AffinityTable.SetEnemy(_protagonist.AffinityKey);
 
-        // Share the depletion store with the persistent state, then apply current depletion (regen).
-        scene.ItemDepletions = state.ItemDepletions;
+        // The persistent stores are already shared with the scene (LocationInstanceState.AttachTo,
+        // called from SceneFactory.Build); apply the depletion that has regenerated since.
         ApplyDepletion(scene, Cathedral.Game.Narrative.GameClock.Days);
 
         // Scene-wide false names: map the protagonist, party companions and every named (human) NPC to
@@ -3755,14 +3774,12 @@ public class LocationTravelGameController : IDisposable
         }
 
         _protagonist.CompanionParty.Add(npc.Combatant);
-        npc.IsAlive = false;   // gone from GetNpcsAt, and so from every verb gate and NPC placement
 
+        // Same door as taming and killing: not alive, out of the scene, and recorded as departed so
+        // the next build of this location does not leave them standing where they were.
         var sceneNpc = scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, npc));
-        if (sceneNpc != null)
-        {
-            scene.Npcs.Remove(sceneNpc);
-            scene.NpcSchedules.Remove(sceneNpc.Id);
-        }
+        if (sceneNpc != null) scene.RemoveNpcFromPlay(sceneNpc);
+        else                  npc.IsAlive = false;
 
         Console.WriteLine($"LocationTravelGameController: {npc.DisplayName} joined the party ({_protagonist.CompanionParty.Count}/{max})");
     }
